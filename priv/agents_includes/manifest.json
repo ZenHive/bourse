@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "_doc": "Pinned external @-import sources for AGENTS.md generation (task 471). Each CLAUDE.md @~/.claude/includes/* line must resolve here — never via $HOME. Update a pin by replacing the file and refreshing sha256/bytes, then run mix ccxt.agents_md.",
+  "max_depth": 5,
+  "includes": {
+    "~/.claude/includes/critical-rules.md": {
+      "path": "priv/agents_includes/critical-rules.md",
+      "sha256": "a6333ed783e1f3f0dd1e87dbe1682cf8be1cbcb12029cf8f85ba7e258fdcb74f",
+      "bytes": 14313
+    },
+    "~/.claude/includes/harness-workflow.md": {
+      "path": "priv/agents_includes/harness-workflow.md",
+      "sha256": "688b1149b623f8abcf4bbfe308dc9b9612067f6f532055cc7e9477641cce7a0f",
+      "bytes": 42889
+    },
+    "~/.claude/includes/ex-unit-json.md": {
+      "path": "priv/agents_includes/ex-unit-json.md",
+      "sha256": "c09d6aa08054bb763e813a537d2bffd1b0802031f0918dfe65771f625a5d6d78",
+      "bytes": 9348
+    }
+  }
+}

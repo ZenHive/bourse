@@ -4,10 +4,10 @@ defmodule Bourse.Unified.RequestShapeTest do
   alias Bourse.Credentials
   alias Bourse.Error
   alias Bourse.Exchange
+  alias Bourse.ReferenceSlice
   alias Bourse.Signing.Hyperliquid
   alias Bourse.Unified.RequestShape
   alias Bourse.Unified.RequestShape.Bybit
-  alias Bourse.ReferenceSlice
 
   @receive_timeout_ms 1_000
 

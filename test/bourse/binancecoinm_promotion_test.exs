@@ -2,9 +2,9 @@ defmodule Bourse.BinancecoinmPromotionTest do
   use ExUnit.Case, async: true
 
   alias Bourse.Exchange
+  alias Bourse.ReferenceSlice
   alias Bourse.Spec
   alias Bourse.Test.RequestCollector
-  alias Bourse.ReferenceSlice
 
   @supported_methods ~w(
     cancelAllOrders

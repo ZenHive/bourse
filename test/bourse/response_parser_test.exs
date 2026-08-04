@@ -5,10 +5,10 @@ defmodule Bourse.ResponseParserTest do
   alias Bourse.Market
   alias Bourse.Order
   alias Bourse.Position
+  alias Bourse.ReferenceSlice
   alias Bourse.ResponseParser
   alias Bourse.Ticker
   alias Bourse.Trade
-  alias Bourse.ReferenceSlice
 
   setup_all do
     field_maps = runtime_field_maps()

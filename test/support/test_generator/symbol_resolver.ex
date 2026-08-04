@@ -30,8 +30,8 @@ defmodule Bourse.Test.Generator.SymbolResolver do
   adds a new exchange.
   """
 
-  alias Bourse.Spec
   alias Bourse.ReferenceSlice
+  alias Bourse.Spec
 
   # Spot aliases first for CEX ubiquity. Linear-perp forms next (covers
   # futures-only and DEX venues). Inverse-perp after. Bare USDC spot forms

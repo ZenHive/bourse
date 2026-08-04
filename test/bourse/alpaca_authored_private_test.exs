@@ -4,8 +4,8 @@ defmodule Bourse.AlpacaAuthoredPrivateTest do
   alias Bourse.Credentials
   alias Bourse.Dispatch
   alias Bourse.Exchange
-  alias Bourse.Test.RequestCollector
   alias Bourse.ReferenceSlice
+  alias Bourse.Test.RequestCollector
 
   @order_id "task429-paper-order"
   @client_order_id "task429-client-order"

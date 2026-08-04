@@ -1,8 +1,8 @@
 defmodule Bourse.SpecTest do
   use ExUnit.Case, async: true
 
-  alias Bourse.Spec.Schema
   alias Bourse.ReferenceSlice
+  alias Bourse.Spec.Schema
 
   describe "load!/1" do
     test "loads and decodes bybit spec" do
