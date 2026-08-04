@@ -199,7 +199,7 @@ defmodule Bourse.MixProject do
   defp aliases do
     [
       tidewave: [
-        "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Tidewave, port: 4003) end)'"
+        "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Tidewave, port: 4029) end)'"
       ],
       precommit: [
         "format --check-formatted",
@@ -227,6 +227,12 @@ defmodule Bourse.MixProject do
         # errors. The committed exact-set baseline rejects lost provenance.
         "cmd env MIX_ENV=test mix ccxt.oracle_gate",
         "ccxt.check_lighter_signer",
+        # CLAUDE.md's mechanical claims (modules, mix tasks, repo paths, the
+        # signing pattern list, Application children) vs the tree, plus AGENTS.md
+        # freshness — the cross-family reviewer reads AGENTS.md, not CLAUDE.md,
+        # so a stale render makes it grade against rules we already changed.
+        "ccxt.claude_check",
+        "ccxt.agents_md --check",
         # Client-vs-domain boundary: the trading domain may depend on the client,
         # never the reverse, so extracting it later stays a file move.
         "cmd env MIX_ENV=test mix test.json --quiet test/bourse/domain_boundary_test.exs",

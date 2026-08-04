@@ -1,0 +1,10 @@
+# Project-scoped MCP configuration for Codex.
+#
+# Mirrors .mcp.json (Claude), .cursor/mcp.json (Cursor) and .grok/config.toml
+# (Grok). Adding or re-porting a server is not done until all four agree.
+
+[mcp_servers.tidewave]
+url = "http://localhost:4029/tidewave/mcp"
+
+[mcp_servers.tidewave.tools.project_eval]
+approval_mode = "approve"

@@ -1,0 +1,10 @@
+# Project-scoped MCP configuration for Grok.
+#
+# Mirrors .mcp.json (Claude), .cursor/mcp.json (Cursor) and .codex/config.toml
+# (Codex). Only the [mcp_servers] section is supported in project-level files.
+
+[mcp_servers.tidewave]
+# `mix tidewave` serves this on the port registered in ~/.claude/tidewave-ports.md.
+url = "http://localhost:4029/tidewave/mcp"
+enabled = true
+startup_timeout_sec = 15
