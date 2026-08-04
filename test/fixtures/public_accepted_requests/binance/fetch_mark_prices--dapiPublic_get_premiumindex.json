@@ -1,0 +1,33 @@
+{
+  "acceptance": {
+    "branch": "dapiPublic_get_premiumindex",
+    "capture_date": "2026-07-26",
+    "captured_at": "2026-07-26T05:54:54.658Z",
+    "endpoint": "premiumIndex",
+    "host": "dapi.binance.com",
+    "http_status": 200,
+    "method": "fetchMarkPrices",
+    "sections": [
+      "dapiPublic"
+    ],
+    "venue": "binance"
+  },
+  "oracle": "public_exchange_acceptance",
+  "replay": {
+    "markets": [],
+    "pagination_cursors": [
+      null
+    ],
+    "params": {},
+    "timestamp_ms_override": 1785045294658
+  },
+  "requests": [
+    {
+      "body": null,
+      "headers": [],
+      "method": "GET",
+      "url": "https://dapi.binance.com/dapi/v1/premiumIndex"
+    }
+  ],
+  "schema_version": 1
+}

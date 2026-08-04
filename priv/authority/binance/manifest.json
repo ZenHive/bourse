@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "venue": "binance",
+  "official_docs_url": "https://developers.binance.com/en/docs/products/spot",
+  "selection_reason": "Rank 1: Binance's own OpenAPI is machine-readable and covers the spot REST contract. The repository explicitly excludes futures and options, so Binance USD-M has a separate authority manifest.",
+  "fetch_script": "scripts/fetch_authority.sh",
+  "artifacts": [
+    {
+      "id": "spot-openapi",
+      "kind": "openapi-yaml",
+      "source_url": "https://github.com/binance/binance-api-swagger/blob/64b327c0addadd191ca0dca8e6b4cebd8a97c05c/spot_api.yaml",
+      "fetch_url": "https://raw.githubusercontent.com/binance/binance-api-swagger/64b327c0addadd191ca0dca8e6b4cebd8a97c05c/spot_api.yaml",
+      "filename": "spot_api.yaml",
+      "retrieved_at": "2026-07-22",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "64b327c0addadd191ca0dca8e6b4cebd8a97c05c"
+      },
+      "sha256": "0dd2f133e12dac2510cf5db1a4eb5de6e3c30c86b24c08867322030939df5e1c",
+      "bytes": 999028,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific license published",
+        "evidence_url": "https://api.github.com/repos/binance/binance-api-swagger/license",
+        "handling": "reference_only",
+        "reason": "The official repository has no detected license; public readability is not redistribution permission."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://raw.githubusercontent.com/binance/binance-api-swagger/master/spot_api.yaml"
+      }
+    },
+    {
+      "id": "spot-errors",
+      "kind": "official-errors-markdown",
+      "source_url": "https://github.com/binance/binance-spot-api-docs/blob/a5e0bc3ddc0fd7e6bb696849323b74423fa3a54d/errors.md",
+      "fetch_url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/a5e0bc3ddc0fd7e6bb696849323b74423fa3a54d/errors.md",
+      "filename": "errors.md",
+      "retrieved_at": "2026-07-22",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "a5e0bc3ddc0fd7e6bb696849323b74423fa3a54d"
+      },
+      "sha256": "6ab135ccdce95701394746c59e58327c8093c462706e5febc73f4500e0a679d8",
+      "bytes": 20129,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific license published",
+        "evidence_url": "https://api.github.com/repos/binance/binance-spot-api-docs/license",
+        "handling": "reference_only",
+        "reason": "The official repository has no detected license; the normalized enumeration records facts without redistributing the source text."
+      },
+      "drift": {
+        "mode": "git_head",
+        "repository_url": "https://github.com/binance/binance-spot-api-docs.git"
+      }
+    }
+  ],
+  "error_enumeration": {
+    "path": "errors.json",
+    "source_artifact_id": "spot-errors",
+    "source_url": "https://github.com/binance/binance-spot-api-docs/blob/a5e0bc3ddc0fd7e6bb696849323b74423fa3a54d/errors.md",
+    "retrieved_at": "2026-07-22",
+    "sha256": "f213e2172c87a9b479ce80fde8209e8b15381a862da2b9eb7a780cabdc9ed63c",
+    "bytes": 9125
+  }
+}

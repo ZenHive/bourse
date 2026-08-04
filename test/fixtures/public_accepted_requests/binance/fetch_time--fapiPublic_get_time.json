@@ -1,0 +1,33 @@
+{
+  "acceptance": {
+    "branch": "fapiPublic_get_time",
+    "capture_date": "2026-07-26",
+    "captured_at": "2026-07-26T05:55:19.419Z",
+    "endpoint": "time",
+    "host": "fapi.binance.com",
+    "http_status": 200,
+    "method": "fetchTime",
+    "sections": [
+      "fapiPublic"
+    ],
+    "venue": "binance"
+  },
+  "oracle": "public_exchange_acceptance",
+  "replay": {
+    "markets": [],
+    "pagination_cursors": [
+      null
+    ],
+    "params": {},
+    "timestamp_ms_override": 1785045319419
+  },
+  "requests": [
+    {
+      "body": null,
+      "headers": [],
+      "method": "GET",
+      "url": "https://fapi.binance.com/fapi/v1/time"
+    }
+  ],
+  "schema_version": 1
+}

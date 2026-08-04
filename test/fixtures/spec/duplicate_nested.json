@@ -1,0 +1,8 @@
+{
+  "endpoints": {
+    "request": {
+      "source": "params",
+      "source": "code"
+    }
+  }
+}

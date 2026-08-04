@@ -1,0 +1,1 @@
+{"authenticated":true,"body":{},"call_opts":{},"captured_at":"2026-08-04T00:00:47.956186Z","endpoint":"fapi/v1/adlQuantile","environment":"testnet-demo","exchange":"binanceusdm","host":"demo-fapi.binance.com","method":"fetch_position_adl_rank","params":{"symbol":"BTC/USDT:USDT"},"symbol":"BTC/USDT:USDT","timeframe":null}

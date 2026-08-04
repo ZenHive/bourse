@@ -1,0 +1,28 @@
+{
+  "body": {
+    "closeTime": 1781996254834,
+    "count": 2186650,
+    "firstId": 7806718892,
+    "highPrice": "64370.90",
+    "lastId": 7808911426,
+    "lastPrice": "64278.70",
+    "lastQty": "0.002",
+    "lowPrice": "63136.20",
+    "openPrice": "63295.20",
+    "openTime": 1781909820000,
+    "priceChange": "983.50",
+    "priceChangePercent": "1.554",
+    "quoteVolume": "6318760290.35",
+    "symbol": "BTCUSDT",
+    "volume": "99179.261",
+    "weightedAvgPrice": "63710.50"
+  },
+  "call_opts": {
+    "endpoint_index": 0
+  },
+  "captured_at": "2026-06-20T22:57:39.578756Z",
+  "exchange": "binanceusdm",
+  "method": "fetch_ticker",
+  "symbol": "BTC/USDT:USDT",
+  "timeframe": null
+}

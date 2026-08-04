@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "venue": "deribit",
+  "official_docs_url": "https://docs.deribit.com/",
+  "selection_reason": "Rank 1: Deribit's documentation directly publishes the OpenAPI 3 document used to render its API reference; it outranks prose pages and CCXT interpretations.",
+  "fetch_script": "scripts/fetch_authority.sh",
+  "artifacts": [
+    {
+      "id": "api-openapi",
+      "kind": "openapi-json",
+      "source_url": "https://docs.deribit.com/specifications/deribit_openapi.json",
+      "fetch_url": "https://docs.deribit.com/specifications/deribit_openapi.json",
+      "filename": "deribit_openapi.json",
+      "retrieved_at": "2026-07-22",
+      "upstream_pin": {
+        "type": "document_version_http_etag",
+        "value": "2.1.1; W/\"690e3806053a9d2edbf9d7c52d675f5a\""
+      },
+      "sha256": "70ba4617642d18aaff2bbcb7127bec499c4ef3ba34b6f5b12cb9cbdadbcffd2d",
+      "bytes": 1369497,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific license published",
+        "evidence_url": "https://www.deribit.com/pages/information/terms-of-service",
+        "handling": "reference_only",
+        "reason": "The OpenAPI response names no redistribution license; it remains a hash-pinned external reference."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.deribit.com/specifications/deribit_openapi.json"
+      }
+    },
+    {
+      "id": "error-codes",
+      "kind": "official-errors-html",
+      "source_url": "https://docs.deribit.com/articles/errors",
+      "fetch_url": "https://docs.deribit.com/articles/errors",
+      "filename": "errors.html",
+      "retrieved_at": "2026-07-22",
+      "upstream_pin": {
+        "type": "http_last_modified",
+        "value": "Wed, 22 Jul 2026 04:22:13 GMT"
+      },
+      "sha256": "09c5c24292623784c57f0715cf6806248dd0ab7956655719b26d7955ba8e1008",
+      "bytes": 1656801,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific license published",
+        "evidence_url": "https://www.deribit.com/pages/information/terms-of-service",
+        "handling": "reference_only",
+        "reason": "The official error reference publishes no redistribution grant; only its normalized facts are committed."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.deribit.com/articles/errors"
+      }
+    }
+  ],
+  "error_enumeration": {
+    "path": "errors.json",
+    "source_artifact_id": "error-codes",
+    "source_url": "https://docs.deribit.com/articles/errors",
+    "retrieved_at": "2026-07-22",
+    "sha256": "bab9d4a2c0c0e0407523395b3c0d9f5e575261acd088dbdec8917eb1dd4364df",
+    "bytes": 19564
+  }
+}

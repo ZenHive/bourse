@@ -1,0 +1,84 @@
+{
+  "acceptance": {
+    "branch": "public_get_v5_market_tickers",
+    "capture_date": "2026-07-26",
+    "captured_at": "2026-07-26T05:56:17.600Z",
+    "endpoint": "v5/market/tickers",
+    "host": "api.bybit.com",
+    "http_status": 200,
+    "method": "fetchOptionChain",
+    "sections": [
+      "public"
+    ],
+    "venue": "bybit"
+  },
+  "oracle": "public_exchange_acceptance",
+  "replay": {
+    "markets": [
+      {
+        "active": false,
+        "base": "BTC",
+        "baseId": "BTC",
+        "contract": true,
+        "contractSize": 1,
+        "expiry": 1748592000000,
+        "expiryDatetime": "2025-05-30T08:00:00.000Z",
+        "future": false,
+        "id": "BTC-30MAY25-70000-C-USDT",
+        "info": null,
+        "inverse": null,
+        "limits": {
+          "amount": {
+            "max": null,
+            "min": null
+          },
+          "cost": {
+            "max": null,
+            "min": null
+          },
+          "leverage": {
+            "max": null,
+            "min": null
+          },
+          "price": {
+            "max": null,
+            "min": null
+          }
+        },
+        "linear": null,
+        "margin": false,
+        "option": true,
+        "optionType": "call",
+        "precision": {
+          "amount": 0.01,
+          "price": 5
+        },
+        "quote": "USDT",
+        "quoteId": "USDT",
+        "settle": "USDT",
+        "settleId": "USDT",
+        "spot": false,
+        "strike": 70000,
+        "swap": false,
+        "symbol": "BTC/USDT:USDT-250530-70000-C",
+        "type": "option"
+      }
+    ],
+    "pagination_cursors": [
+      null
+    ],
+    "params": {
+      "symbol": "BTC/USDT:USDT-250530-70000-C"
+    },
+    "timestamp_ms_override": 1785045377600
+  },
+  "requests": [
+    {
+      "body": null,
+      "headers": [],
+      "method": "GET",
+      "url": "https://api.bybit.com/v5/market/tickers?baseCoin=BTC&category=option"
+    }
+  ],
+  "schema_version": 1
+}

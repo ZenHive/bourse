@@ -1,0 +1,33 @@
+{
+  "acceptance": {
+    "branch": "dapiPublic_get_ticker_24hr",
+    "capture_date": "2026-07-26",
+    "captured_at": "2026-07-26T05:55:13.664Z",
+    "endpoint": "ticker/24hr",
+    "host": "dapi.binance.com",
+    "http_status": 200,
+    "method": "fetchTickers",
+    "sections": [
+      "dapiPublic"
+    ],
+    "venue": "binance"
+  },
+  "oracle": "public_exchange_acceptance",
+  "replay": {
+    "markets": [],
+    "pagination_cursors": [
+      null
+    ],
+    "params": {},
+    "timestamp_ms_override": 1785045313664
+  },
+  "requests": [
+    {
+      "body": null,
+      "headers": [],
+      "method": "GET",
+      "url": "https://dapi.binance.com/dapi/v1/ticker/24hr"
+    }
+  ],
+  "schema_version": 1
+}

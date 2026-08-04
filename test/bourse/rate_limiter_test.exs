@@ -1,0 +1,319 @@
+defmodule Bourse.RateLimiterTest do
+  use Bourse.Test.Case, async: true
+
+  alias Bourse.RateLimiter
+
+  @moduletag trace_messages: true
+
+  setup do
+    # Start a fresh rate limiter per test with a unique name
+    name = :"rate_limiter_#{:erlang.unique_integer([:positive])}"
+    start_supervised!({RateLimiter, name: name})
+    {:ok, name: name}
+  end
+
+  describe "check_rate/4" do
+    test "returns :ok when within limits", %{name: name} do
+      key = {"binance", :public}
+      rate_limit = %{requests: 10, period: 1000}
+
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 1, name)
+    end
+
+    test "returns :ok for nil rate_limit", %{name: name} do
+      key = {"binance", :public}
+      assert :ok = RateLimiter.check_rate(key, nil, 1, name)
+    end
+
+    test "returns {:delay, ms} when over limit", %{name: name} do
+      key = {"binance", :public}
+      rate_limit = %{requests: 5, period: 1000}
+
+      # Fill up capacity
+      for _ <- 1..5 do
+        assert :ok = RateLimiter.check_rate(key, rate_limit, 1, name)
+      end
+
+      # Next request should be delayed
+      assert {:delay, delay_ms} = RateLimiter.check_rate(key, rate_limit, 1, name)
+      assert delay_ms > 0
+      assert delay_ms <= 1001
+    end
+
+    test "weighted costs consume proportional capacity", %{name: name} do
+      key = {"binance", :public}
+      rate_limit = %{requests: 10, period: 1000}
+
+      # Single request with cost 8 — leaves 2
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 8, name)
+
+      # Cost 2 fits exactly
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 2, name)
+
+      # Cost 1 exceeds
+      assert {:delay, _} = RateLimiter.check_rate(key, rate_limit, 1, name)
+    end
+
+    test "uses default period when not specified", %{name: name} do
+      key = {"binance", :public}
+      rate_limit = %{requests: 2}
+
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 1, name)
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 1, name)
+      assert {:delay, _} = RateLimiter.check_rate(key, rate_limit, 1, name)
+    end
+
+    test "a single cost exceeding max_weight is let through but not recorded", %{name: name} do
+      key = {"binance", :public}
+      rate_limit = %{requests: 5, period: 1000}
+
+      # cost > max_weight — allowed through (never blocks forever) and NOT recorded
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 10, name)
+      assert RateLimiter.get_cost(key, 1000, name) == 0
+    end
+  end
+
+  describe "reset_all/1" do
+    test "clears every tracked key", %{name: name} do
+      rate_limit = %{requests: 1, period: 1000}
+      key_a = {"binance", :public}
+      key_b = {"bybit", "api_key", "ip"}
+
+      assert :ok = RateLimiter.check_rate(key_a, rate_limit, 1, name)
+      assert :ok = RateLimiter.check_rate(key_b, rate_limit, 1, name)
+      assert {:delay, _} = RateLimiter.check_rate(key_a, rate_limit, 1, name)
+
+      assert :ok = RateLimiter.reset_all(name)
+      assert :ok = RateLimiter.check_rate(key_a, rate_limit, 1, name)
+      assert :ok = RateLimiter.check_rate(key_b, rate_limit, 1, name)
+    end
+  end
+
+  describe "per-credential isolation" do
+    test "different bucket axes have independent limits for the same credential", %{name: name} do
+      rate_limit = %{requests: 1, period: 1000}
+
+      ip_key = {"binance", "api_key_a", "ip"}
+      order_key = {"binance", "api_key_a", "order_weight"}
+
+      assert :ok = RateLimiter.check_rate(ip_key, rate_limit, 1, name)
+      assert {:delay, _} = RateLimiter.check_rate(ip_key, rate_limit, 1, name)
+
+      assert :ok = RateLimiter.check_rate(order_key, rate_limit, 1, name)
+    end
+
+    test "different API keys have independent limits", %{name: name} do
+      rate_limit = %{requests: 2, period: 1000}
+
+      key_a = {"binance", "api_key_a"}
+      key_b = {"binance", "api_key_b"}
+
+      # Fill key_a
+      assert :ok = RateLimiter.check_rate(key_a, rate_limit, 2, name)
+      assert {:delay, _} = RateLimiter.check_rate(key_a, rate_limit, 1, name)
+
+      # key_b still has capacity
+      assert :ok = RateLimiter.check_rate(key_b, rate_limit, 1, name)
+    end
+
+    test "public and authenticated keys are separate", %{name: name} do
+      rate_limit = %{requests: 1, period: 1000}
+
+      public_key = {"binance", :public}
+      auth_key = {"binance", "my_api_key"}
+
+      assert :ok = RateLimiter.check_rate(public_key, rate_limit, 1, name)
+      assert {:delay, _} = RateLimiter.check_rate(public_key, rate_limit, 1, name)
+
+      # Auth key unaffected
+      assert :ok = RateLimiter.check_rate(auth_key, rate_limit, 1, name)
+    end
+
+    test "different exchanges have independent limits", %{name: name} do
+      rate_limit = %{requests: 1, period: 1000}
+
+      assert :ok = RateLimiter.check_rate({"binance", :public}, rate_limit, 1, name)
+      assert {:delay, _} = RateLimiter.check_rate({"binance", :public}, rate_limit, 1, name)
+
+      # Bybit unaffected
+      assert :ok = RateLimiter.check_rate({"bybit", :public}, rate_limit, 1, name)
+    end
+  end
+
+  describe "get_cost/3" do
+    test "returns total cost within window", %{name: name} do
+      key = {"binance", :public}
+      rate_limit = %{requests: 100, period: 1000}
+
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 3, name)
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 5, name)
+
+      assert RateLimiter.get_cost(key, 1000, name) == 8
+    end
+
+    test "returns 0 for unknown key", %{name: name} do
+      assert RateLimiter.get_cost({"unknown", :public}, 1000, name) == 0
+    end
+  end
+
+  describe "reset/2" do
+    test "clears tracking for a key", %{name: name} do
+      key = {"binance", :public}
+      rate_limit = %{requests: 1, period: 1000}
+
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 1, name)
+      assert {:delay, _} = RateLimiter.check_rate(key, rate_limit, 1, name)
+
+      RateLimiter.reset(key, name)
+      # Drain cast mailbox before asserting (call waits for prior messages)
+      _ = :sys.get_state(name)
+
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 1, name)
+    end
+  end
+
+  describe "wait_for_capacity/4" do
+    test "returns :ok immediately when within limits", %{name: name} do
+      key = {"binance", :public}
+      rate_limit = %{requests: 10, period: 1000}
+
+      assert :ok = RateLimiter.wait_for_capacity(key, rate_limit, 1, name)
+    end
+
+    test "returns :ok for nil rate_limit", %{name: name} do
+      assert :ok = RateLimiter.wait_for_capacity({"x", :public}, nil, 1, name)
+    end
+
+    test "blocks over the delay then succeeds once capacity frees up", %{name: name} do
+      key = {"binance", :public}
+      rate_limit = %{requests: 1, period: 30}
+
+      # Consume the only slot; the next request is over limit and must wait.
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 1, name)
+
+      # wait_for_capacity sleeps the returned delay and retries until the window frees.
+      assert :ok = RateLimiter.wait_for_capacity(key, rate_limit, 1, name)
+    end
+  end
+
+  describe "record_request/3" do
+    test "manually records a request cost", %{name: name} do
+      key = {"binance", :public}
+
+      RateLimiter.record_request(key, 5, name)
+      # Drain cast mailbox before asserting (call waits for prior messages)
+      _ = :sys.get_state(name)
+
+      assert RateLimiter.get_cost(key, 1000, name) == 5
+    end
+  end
+
+  describe "check_rates/2" do
+    test "records all bucket costs when every bucket has capacity", %{name: name} do
+      ip_key = {"binance", :public, "ip"}
+      order_key = {"binance", :public, "order_weight"}
+      rate_limit = %{requests: 10, period: 1000}
+
+      assert :ok =
+               RateLimiter.check_rates(
+                 [
+                   {ip_key, rate_limit, 3},
+                   {order_key, rate_limit, 2}
+                 ],
+                 name
+               )
+
+      assert RateLimiter.get_cost(ip_key, 1000, name) == 3
+      assert RateLimiter.get_cost(order_key, 1000, name) == 2
+    end
+
+    test "does not partially record when any bucket is over limit", %{name: name} do
+      ip_key = {"binance", :public, "ip"}
+      order_key = {"binance", :public, "order_weight"}
+      rate_limit = %{requests: 1, period: 1000}
+
+      assert :ok = RateLimiter.check_rate(order_key, rate_limit, 1, name)
+
+      assert {:delay, _} =
+               RateLimiter.check_rates(
+                 [
+                   {ip_key, rate_limit, 1},
+                   {order_key, rate_limit, 1}
+                 ],
+                 name
+               )
+
+      assert RateLimiter.get_cost(ip_key, 1000, name) == 0
+      assert RateLimiter.get_cost(order_key, 1000, name) == 1
+    end
+
+    test "per-key window state stays bounded under sustained volume (no growth between cleanup ticks)",
+         %{name: name} do
+      # Production path (HTTP.maybe_rate_limit → check_rates). High capacity so every
+      # request records; short window so entries age out before the 60s cleanup tick.
+      key = {"binance", :public, "ip"}
+      period_ms = 50
+      rate_limit = %{requests: 10_000, period: period_ms}
+      burst = 100
+
+      for _ <- 1..burst do
+        assert :ok = RateLimiter.check_rates([{key, rate_limit, 1}], name)
+      end
+
+      state_after_burst = :sys.get_state(name)
+      assert length(Map.get(state_after_burst, key, [])) == burst
+
+      # Age out of the rate window without waiting for the cleanup timer
+      Process.sleep(period_ms + 20)
+
+      assert :ok = RateLimiter.check_rates([{key, rate_limit, 1}], name)
+
+      state_after_write = :sys.get_state(name)
+      entries = Map.get(state_after_write, key, [])
+
+      # Window-trim on write: only in-window samples remain (the new request).
+      # Without the fix this would be burst+1 and grow until the cleanup tick.
+      assert length(entries) == 1
+      assert RateLimiter.get_cost(key, period_ms, name) == 1
+    end
+
+    test "uses the default period when a bucket rate_limit omits it", %{name: name} do
+      key = {"binance", :public, "ip"}
+      rate_limit = %{requests: 2}
+
+      assert :ok = RateLimiter.check_rates([{key, rate_limit, 1}], name)
+      assert :ok = RateLimiter.check_rates([{key, rate_limit, 1}], name)
+      assert {:delay, _} = RateLimiter.check_rates([{key, rate_limit, 1}], name)
+    end
+  end
+
+  describe "cleanup" do
+    test "expired timestamps are not counted toward cost", %{name: name} do
+      key = {"binance", :public}
+      period_ms = 50
+      rate_limit = %{requests: 100, period: period_ms}
+
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 10, name)
+
+      # Wait for entries to age past the rate window (real time, not cast-sync)
+      Process.sleep(period_ms + 20)
+
+      assert RateLimiter.get_cost(key, period_ms, name) == 0
+    end
+
+    test "the periodic :cleanup pass keeps in-window entries", %{name: name} do
+      key = {"binance", :public}
+      rate_limit = %{requests: 100, period: 1000}
+
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 3, name)
+
+      # Drive the periodic sweep directly (no 60s wait); the synchronous call
+      # after it drains the message so the state reflects the cleanup pass.
+      send(name, :cleanup)
+      _ = :sys.get_state(name)
+
+      # Recent entry is younger than the max-age horizon, so it survives.
+      assert RateLimiter.get_cost(key, 1000, name) == 3
+    end
+  end
+end

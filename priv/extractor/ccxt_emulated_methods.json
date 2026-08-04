@@ -1,0 +1,1394 @@
+{
+  "ccxt_version": "4.5.42",
+  "extracted_at": "2026-03-10T12:21:55.832Z",
+  "exchange_count": 52,
+  "method_count": 113,
+  "counts": {
+    "rest": 110,
+    "ws": 3,
+    "has_emulated": 112,
+    "no_http_captured": 1
+  },
+  "emulated_methods": {
+    "ascendex": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      },
+      {
+        "name": "fetchFundingRate",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7805,
+        "source": "async fetchFundingRate (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchLeverage",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 3303,
+        "source": "async fetchLeverage (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchMarginMode",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 3112,
+        "source": "async fetchMarginMode (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchMarketLeverageTiers",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7327,
+        "source": "async fetchMarketLeverageTiers (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchOpenInterest",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 3367,
+        "source": "async fetchOpenInterest (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "aster": [
+      {
+        "name": "fetchCanceledAndClosedOrders",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 6905,
+        "source": "async fetchCanceledAndClosedOrders (symbol: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      },
+      {
+        "name": "fetchCanceledOrders",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 6901,
+        "source": "async fetchCanceledOrders (symbol: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      },
+      {
+        "name": "fetchClosedOrders",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 6893,
+        "source": "async fetchClosedOrders (symbol: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      },
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      },
+      {
+        "name": "fetchFundingInterval",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7825,
+        "source": "async fetchFundingInterval (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchIsolatedBorrowRate",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 6005,
+        "source": "async fetchIsolatedBorrowRate (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchLeverage",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 3303,
+        "source": "async fetchLeverage (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchMarginMode",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 3112,
+        "source": "async fetchMarginMode (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchMarketLeverageTiers",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7327,
+        "source": "async fetchMarketLeverageTiers (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchTradingLimits",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 3152,
+        "source": "async fetchTradingLimits (symbols: Strings = undefined, params = {}"
+      },
+      {
+        "name": "fetchTransactionFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5961,
+        "source": "async fetchTransactionFee (code: string, params = {}"
+      }
+    ],
+    "binance": [
+      {
+        "name": "fetchCanceledAndClosedOrders",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/binance.ts",
+        "source_line": 7582,
+        "source": "async fetchCanceledAndClosedOrders (symbol: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      },
+      {
+        "name": "fetchCanceledOrders",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/binance.ts",
+        "source_line": 7551,
+        "source": "async fetchCanceledOrders (symbol: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      },
+      {
+        "name": "fetchClosedOrders",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/binance.ts",
+        "source_line": 7520,
+        "source": "async fetchClosedOrders (symbol: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      },
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      },
+      {
+        "name": "fetchFundingInterval",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7825,
+        "source": "async fetchFundingInterval (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchIsolatedBorrowRate",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/binance.ts",
+        "source_line": 12442,
+        "source": "async fetchIsolatedBorrowRate (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchLeverage",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 3303,
+        "source": "async fetchLeverage (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchMarketLeverageTiers",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7327,
+        "source": "async fetchMarketLeverageTiers (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchTradingLimits",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/binance.ts",
+        "source_line": 13517,
+        "source": "async fetchTradingLimits (symbols: Strings = undefined, params = {}"
+      },
+      {
+        "name": "fetchTransactionFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5961,
+        "source": "async fetchTransactionFee (code: string, params = {}"
+      }
+    ],
+    "bingx": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      }
+    ],
+    "bitbns": [
+      {
+        "name": "fetchTicker",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 6181,
+        "source": "async fetchTicker (symbol: string, params = {}"
+      }
+    ],
+    "bitfinex": [
+      {
+        "name": "fetchFundingRate",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7805,
+        "source": "async fetchFundingRate (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "bitflyer": [
+      {
+        "name": "fetchClosedOrders",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/bitflyer.ts",
+        "source_line": 834,
+        "source": "async fetchClosedOrders (symbol: Str = undefined, since: Int = undefined, limit: Int = 100, params = {}"
+      },
+      {
+        "name": "fetchOpenOrders",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/bitflyer.ts",
+        "source_line": 816,
+        "source": "async fetchOpenOrders (symbol: Str = undefined, since: Int = undefined, limit: Int = 100, params = {}"
+      },
+      {
+        "name": "fetchOrder",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/bitflyer.ts",
+        "source_line": 851,
+        "source": "async fetchOrder (id: string, symbol: Str = undefined, params = {}"
+      }
+    ],
+    "bitget": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      },
+      {
+        "name": "fetchPositionHistory",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8742,
+        "source": "async fetchPositionHistory (symbol: string, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "bitmart": [
+      {
+        "name": "watchPosition",
+        "scope": "ws",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "missing",
+        "source_path": null,
+        "source_line": null,
+        "source": null
+      }
+    ],
+    "bitmex": [
+      {
+        "name": "fetchDepositsWithdrawals",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/bitmex.ts",
+        "source_line": 1421,
+        "source": "async fetchDepositsWithdrawals (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      },
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      },
+      {
+        "name": "fetchFundingRate",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7805,
+        "source": "async fetchFundingRate (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchLeverage",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 3303,
+        "source": "async fetchLeverage (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchOpenInterest",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 3367,
+        "source": "async fetchOpenInterest (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "bitopro": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      }
+    ],
+    "bitrue": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      }
+    ],
+    "bitso": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      }
+    ],
+    "bitstamp": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      },
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "bitvavo": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      }
+    ],
+    "blofin": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      }
+    ],
+    "btcmarkets": [
+      {
+        "name": "fetchClosedOrders",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/btcmarkets.ts",
+        "source_line": 1281,
+        "source": "async fetchClosedOrders (symbol: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      },
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "bybit": [
+      {
+        "name": "fetchBidsAsks",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/bybit.ts",
+        "source_line": 2609,
+        "source": "async fetchBidsAsks (symbols: Strings = undefined, params = {}"
+      },
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      },
+      {
+        "name": "fetchFundingRate",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7805,
+        "source": "async fetchFundingRate (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchPositionHistory",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8742,
+        "source": "async fetchPositionHistory (symbol: string, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "coinbase": [
+      {
+        "name": "fetchDepositAddress",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7011,
+        "source": "async fetchDepositAddress (code: string, params = {}"
+      },
+      {
+        "name": "fetchTradingFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7767,
+        "source": "async fetchTradingFee (symbol: string, params = {}"
+      }
+    ],
+    "coinbaseexchange": [
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "coinex": [
+      {
+        "name": "fetchMarketLeverageTiers",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7327,
+        "source": "async fetchMarketLeverageTiers (symbol: string, params = {}"
+      }
+    ],
+    "coinmate": [
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "cryptocom": [
+      {
+        "name": "fetchClosedOrders",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 6893,
+        "source": "async fetchClosedOrders (symbol: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      },
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      }
+    ],
+    "derive": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      }
+    ],
+    "digifinex": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      }
+    ],
+    "exmo": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      },
+      {
+        "name": "fetchOrder",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/exmo.ts",
+        "source_line": 1745,
+        "source": "async fetchOrder (id: string, symbol: Str = undefined, params = {}"
+      },
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "gate": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      },
+      {
+        "name": "fetchPositionHistory",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8742,
+        "source": "async fetchPositionHistory (symbol: string, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "gemini": [
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "hashkey": [
+      {
+        "name": "fetchMarketLeverageTiers",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7327,
+        "source": "async fetchMarketLeverageTiers (symbol: string, params = {}"
+      }
+    ],
+    "hibachi": [
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "hitbtc": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      },
+      {
+        "name": "fetchMarginMode",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 3112,
+        "source": "async fetchMarginMode (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "hollaex": [
+      {
+        "name": "fetchDepositAddress",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7011,
+        "source": "async fetchDepositAddress (code: string, params = {}"
+      }
+    ],
+    "htx": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      },
+      {
+        "name": "fetchMarketLeverageTiers",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7327,
+        "source": "async fetchMarketLeverageTiers (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchPositionHistory",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8742,
+        "source": "async fetchPositionHistory (symbol: string, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "hyperliquid": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      },
+      {
+        "name": "fetchTicker",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 6181,
+        "source": "async fetchTicker (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchClosedOrders",
+        "scope": "rest",
+        "reasons": [
+          "authored_delegate"
+        ],
+        "defined_in": "hyperliquid",
+        "source_path": "ts/src/hyperliquid.ts",
+        "source_line": 2680,
+        "source": "async fetchClosedOrders (...) delegates to fetchOrders and filters closed"
+      },
+      {
+        "name": "fetchCanceledOrders",
+        "scope": "rest",
+        "reasons": [
+          "authored_delegate"
+        ],
+        "defined_in": "hyperliquid",
+        "source_path": "ts/src/hyperliquid.ts",
+        "source_line": 2705,
+        "source": "async fetchCanceledOrders (...) delegates to fetchOrders and filters canceled"
+      },
+      {
+        "name": "fetchCanceledAndClosedOrders",
+        "scope": "rest",
+        "reasons": [
+          "authored_delegate"
+        ],
+        "defined_in": "hyperliquid",
+        "source_path": "ts/src/hyperliquid.ts",
+        "source_line": 2730,
+        "source": "async fetchCanceledAndClosedOrders (...) delegates to fetchOrders and filters canceled, closed, rejected"
+      }
+    ],
+    "indodax": [
+      {
+        "name": "fetchDepositAddress",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7011,
+        "source": "async fetchDepositAddress (code: string, params = {}"
+      },
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "kraken": [
+      {
+        "name": "fetchOrderTrades",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/kraken.ts",
+        "source_line": 2385,
+        "source": "async fetchOrderTrades (id: string, symbol: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "krakenfutures": [
+      {
+        "name": "fetchFundingRate",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7805,
+        "source": "async fetchFundingRate (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchMarketLeverageTiers",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7327,
+        "source": "async fetchMarketLeverageTiers (symbol: string, params = {}"
+      }
+    ],
+    "latoken": [
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/latoken.ts",
+        "source_line": 1508,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "lbank": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      }
+    ],
+    "mercado": [
+      {
+        "name": "fetchMyTrades",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/mercado.ts",
+        "source_line": 958,
+        "source": "async fetchMyTrades (symbol: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "mexc": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      },
+      {
+        "name": "fetchMarketLeverageTiers",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7327,
+        "source": "async fetchMarketLeverageTiers (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchPosition",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/mexc.ts",
+        "source_line": 5116,
+        "source": "async fetchPosition (symbol: string, params = {}"
+      },
+      {
+        "name": "fetchPositionHistory",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8742,
+        "source": "async fetchPositionHistory (symbol: string, since: Int = undefined, limit: Int = undefined, params = {}"
+      },
+      {
+        "name": "fetchTransactionFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5961,
+        "source": "async fetchTransactionFee (code: string, params = {}"
+      }
+    ],
+    "modetrade": [
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "novadax": [
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "okx": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      },
+      {
+        "name": "fetchPositionHistory",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8742,
+        "source": "async fetchPositionHistory (symbol: string, since: Int = undefined, limit: Int = undefined, params = {}"
+      },
+      {
+        "name": "watchLiquidations",
+        "scope": "ws",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "missing",
+        "source_path": null,
+        "source_line": null,
+        "source": null
+      },
+      {
+        "name": "watchMyLiquidations",
+        "scope": "ws",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "missing",
+        "source_path": null,
+        "source_line": null,
+        "source": null
+      }
+    ],
+    "oxfun": [
+      {
+        "name": "fetchMarketLeverageTiers",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7327,
+        "source": "async fetchMarketLeverageTiers (symbol: string, params = {}"
+      }
+    ],
+    "phemex": [
+      {
+        "name": "fetchMarketLeverageTiers",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7327,
+        "source": "async fetchMarketLeverageTiers (symbol: string, params = {}"
+      }
+    ],
+    "poloniex": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      },
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "tokocrypto": [
+      {
+        "name": "fetchClosedOrders",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/tokocrypto.ts",
+        "source_line": 2033,
+        "source": "async fetchClosedOrders (symbol: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      },
+      {
+        "name": "fetchMarketLeverageTiers",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 7327,
+        "source": "async fetchMarketLeverageTiers (symbol: string, params = {}"
+      }
+    ],
+    "wavesexchange": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      }
+    ],
+    "whitebit": [
+      {
+        "name": "fetchDepositWithdrawFee",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 5976,
+        "source": "async fetchDepositWithdrawFee (code: string, params = {}"
+      },
+      {
+        "name": "fetchTradingLimits",
+        "scope": "rest",
+        "reasons": [
+          "no_http_captured"
+        ],
+        "defined_in": "exchange",
+        "source_path": "ts/src/whitebit.ts",
+        "source_line": 983,
+        "source": "async fetchTradingLimits (symbols: Strings = undefined, params = {}"
+      }
+    ],
+    "woo": [
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ],
+    "woofipro": [
+      {
+        "name": "fetchTransactions",
+        "scope": "rest",
+        "reasons": [
+          "has_emulated"
+        ],
+        "defined_in": "base",
+        "source_path": "ts/src/base/Exchange.ts",
+        "source_line": 8102,
+        "source": "async fetchTransactions (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}"
+      }
+    ]
+  }
+}

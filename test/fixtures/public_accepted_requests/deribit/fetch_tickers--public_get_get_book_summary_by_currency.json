@@ -1,0 +1,35 @@
+{
+  "acceptance": {
+    "branch": "public_get_get_book_summary_by_currency",
+    "capture_date": "2026-07-26",
+    "captured_at": "2026-07-26T05:56:29.380Z",
+    "endpoint": "get_book_summary_by_currency",
+    "host": "www.deribit.com",
+    "http_status": 200,
+    "method": "fetchTickers",
+    "sections": [
+      "public"
+    ],
+    "venue": "deribit"
+  },
+  "oracle": "public_exchange_acceptance",
+  "replay": {
+    "markets": [],
+    "pagination_cursors": [
+      null
+    ],
+    "params": {
+      "code": "BTC"
+    },
+    "timestamp_ms_override": 1785045389380
+  },
+  "requests": [
+    {
+      "body": null,
+      "headers": [],
+      "method": "GET",
+      "url": "https://www.deribit.com/api/v2/public/get_book_summary_by_currency?currency=BTC"
+    }
+  ],
+  "schema_version": 1
+}

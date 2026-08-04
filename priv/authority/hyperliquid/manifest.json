@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "venue": "hyperliquid",
+  "official_docs_url": "https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api",
+  "selection_reason": "Rank 1: Hyperliquid publishes no OpenAPI description. GitBook's official llms-full snapshot preserves the exchange's complete API prose in one machine-readable artifact and outranks SDK examples for general field semantics.",
+  "fetch_script": "scripts/fetch_authority.sh",
+  "artifacts": [
+    {
+      "id": "docs-full",
+      "kind": "llms-full-text",
+      "source_url": "https://hyperliquid.gitbook.io/hyperliquid-docs/llms-full.txt",
+      "fetch_url": "https://hyperliquid.gitbook.io/hyperliquid-docs/llms-full.txt",
+      "filename": "llms-full.txt",
+      "retrieved_at": "2026-07-22",
+      "upstream_pin": {
+        "type": "http_etag",
+        "value": "7cfb85c2e972515a5f71a0976db85464"
+      },
+      "sha256": "7bd65f92fe573e36fac6e62ec5547b3b0d264792796a3e3c5a94ed65d0364439",
+      "bytes": 484001,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific license published",
+        "evidence_url": "https://app.hyperliquid.xyz/terms",
+        "handling": "reference_only",
+        "reason": "The official GitBook corpus publishes no reuse license; the separately MIT-licensed SDK does not license the docs."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://hyperliquid.gitbook.io/hyperliquid-docs/llms-full.txt"
+      }
+    }
+  ],
+  "error_enumeration": {
+    "path": "errors.json",
+    "source_artifact_id": "docs-full",
+    "source_url": "https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/error-responses",
+    "retrieved_at": "2026-07-22",
+    "sha256": "ebfd0223ce456c4c6e4830f9402bff8429b789e0f0e45c8fe0c62a66411121c1",
+    "bytes": 2971
+  }
+}

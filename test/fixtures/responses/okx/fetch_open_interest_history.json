@@ -1,0 +1,25 @@
+{
+  "authenticated": false,
+  "body": {
+    "code": "0",
+    "data": [
+      ["1784649600000", "2830404860.7702", "6024096502.2173"],
+      ["1784563200000", "2700101525.1827", "7065746086.1989"],
+      ["1784476800000", "2656327879.5727", "2959659237.1541"]
+    ],
+    "msg": ""
+  },
+  "call_opts": {},
+  "captured_at": "2026-07-22T10:28:25.282045Z",
+  "endpoint": "api/v5/rubik/stat/contracts/open-interest-volume",
+  "environment": "testnet-demo",
+  "exchange": "okx",
+  "host": "my.okx.com",
+  "method": "fetch_open_interest_history",
+  "params": {
+    "ccy": "BTC",
+    "period": "1D"
+  },
+  "symbol": "BTC/USDT:USDT",
+  "timeframe": "1d"
+}

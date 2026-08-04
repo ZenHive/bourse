@@ -1,0 +1,61 @@
+{
+  "acceptance": {
+    "business_success": "retCode=0 with orderId; accepted order cancelled",
+    "capture_date": "2026-07-22",
+    "captured_at": "2026-07-22T10:20:56.448Z",
+    "endpoint": "v5/order/create",
+    "host": "api-demo.bybit.com",
+    "http_status": 200,
+    "method": "create_order",
+    "venue": "bybit"
+  },
+  "label": "Oracle: exchange-acceptance tier 1 vs bybit create_order accepted 2026-07-22 (v5/order/create @ api-demo.bybit.com, HTTP 200, retCode=0 with orderId; accepted order cancelled).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {
+      "base_url": "https://api-demo.bybit.com"
+    },
+    "method": "create_order",
+    "nonce_override": 1784715656321,
+    "params": {
+      "amount": 0.1444444234234234,
+      "price": 46.083,
+      "side": "buy",
+      "symbol": "LTC/USDT",
+      "type": "limit"
+    },
+    "timestamp_ms_override": 1784715656320
+  },
+  "request": {
+    "body": "{\"category\":\"spot\",\"orderType\":\"Limit\",\"price\":\"46.08\",\"qty\":\"0.14444\",\"side\":\"Buy\",\"symbol\":\"LTCUSDT\"}",
+    "headers": [
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "x-bapi-api-key",
+        "key"
+      ],
+      [
+        "x-bapi-recv-window",
+        "5000"
+      ],
+      [
+        "x-bapi-sign",
+        "7bdbd0b324a489be632fde1072eefdee66f0f8abeb3af5359155d41524785845"
+      ],
+      [
+        "x-bapi-timestamp",
+        "1784715656320"
+      ]
+    ],
+    "method": "POST",
+    "url": "https://api-demo.bybit.com/v5/order/create"
+  },
+  "schema_version": 1
+}

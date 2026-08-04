@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "venue": "alpaca",
+  "authority": {
+    "retrieved_at": "2026-07-23",
+    "source_artifact_id": "trading-api-create-order",
+    "source_sha256": "a96386b92df2b8951c285aff1d9ffca4a19a52c5a4eb7bf5c9e7e94c34942ad4",
+    "source_url": "https://docs.alpaca.markets/us/reference/postorder"
+  },
+  "codes": {
+    "40010001": [
+      "Request validation failed; the response message identifies the rejected rule."
+    ],
+    "40110000": [
+      "Authentication credentials are missing or invalid."
+    ],
+    "40310000": [
+      "The caller is not authorized to perform the operation."
+    ],
+    "40410000": [
+      "The requested resource was not found."
+    ],
+    "42210000": [
+      "One or more parameters are invalid, such as an invalid options symbol."
+    ],
+    "42910000": [
+      "Too many requests; the caller exceeded the API rate limit."
+    ]
+  },
+  "exact_messages": {
+    "forbidden.": [
+      "The requested resource is forbidden."
+    ]
+  },
+  "retired_codes": [],
+  "dropped_non_authoritative_identifiers": [],
+  "unmapped_code_disposition": "exchange_error",
+  "live_probe": {
+    "identifier": "40010001",
+    "ccxt_type": "bad_request",
+    "observed_at": "2026-07-23",
+    "evidence": "test/bourse/alpaca_authored_integration_test.exs: paper API rejects an order missing qty and notional with its provider code"
+  },
+  "maintenance_adjudication": {
+    "status": "no_documented_maintenance_code",
+    "identifiers": [],
+    "ccxt_class": "OnMaintenance",
+    "ccxt_type": "exchange_not_available",
+    "adjudicated_at": "2026-07-23",
+    "source": "Alpaca Trading API error responses",
+    "finding": "Alpaca's official Trading API response schemas document validation, authentication, authorization, not-found, rate-limit, and server errors, but no dedicated maintenance identifier."
+  }
+}

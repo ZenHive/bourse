@@ -1,0 +1,32 @@
+{
+  "kind": "ccxt_reference_corpus",
+  "schema_version": 1,
+  "pins": {
+    "source": {
+      "path": "ccxt/js/VERSION",
+      "sha256": "c956fa6729e0f4bae6e84d11df89c4a5abc1a9dd72a998d81bc72e2ba4000a05"
+    },
+    "static_fixtures": {
+      "path": "ccxt/ts/src/test/static/VINTAGES.md",
+      "sha256": "cdbd39ddda4dfd62b71a1d73a1f77cc5c996762a2708b05828a04d7249447189"
+    }
+  },
+  "exchange_count": 15,
+  "exchanges": [
+    "alpaca",
+    "binance",
+    "binancecoinm",
+    "binanceusdm",
+    "bybit",
+    "coinmetro",
+    "deepcoin",
+    "deribit",
+    "derive",
+    "hyperliquid",
+    "kraken",
+    "lighter",
+    "okx",
+    "weex",
+    "whitebit"
+  ]
+}

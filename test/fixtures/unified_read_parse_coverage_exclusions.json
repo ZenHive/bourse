@@ -1,0 +1,336 @@
+{
+  "alpaca": [],
+  "binance": [
+    {
+      "method": "fetchIndexOHLCV",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchL2OrderBook",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchMarkOHLCV",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchOrderTrades",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchPositionADLRank",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchPositionMode",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchPositions",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchPremiumIndexOHLCV",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchStatus",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchTime",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchTransactionFees",
+      "tracking_task": 550
+    }
+  ],
+  "binancecoinm": [
+    {
+      "method": "fetchPositionMode",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchPositions",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchTime",
+      "tracking_task": 550
+    }
+  ],
+  "binanceusdm": [
+    {
+      "method": "fetchIndexOHLCV",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchL2OrderBook",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchMarkOHLCV",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchOrderTrades",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchPositionADLRank",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchPositionMode",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchPositions",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchPremiumIndexOHLCV",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchStatus",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchTime",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchTransactionFees",
+      "tracking_task": 550
+    }
+  ],
+  "bybit": [
+    {
+      "method": "fetchCanceledOrders",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchClosedOrder",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchClosedOrders",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchConvertCurrencies",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchDepositAddress",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchFundingRateHistory",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchIndexOHLCV",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchL2OrderBook",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchMarkOHLCV",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchMarketLeverageTiers",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchMarkets",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchOpenInterestHistory",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchOpenOrder",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchOrderClassic",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchOrderTrades",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchPositionADLRank",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchPremiumIndexOHLCV",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchStatus",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchTime",
+      "tracking_task": 550
+    }
+  ],
+  "deribit": [
+    {
+      "method": "fetchL2OrderBook",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchMarkets",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchStatus",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchTime",
+      "tracking_task": 550
+    }
+  ],
+  "derive": [
+    {
+      "method": "fetchCanceledOrders",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchFundingRateHistory",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchL2OrderBook",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchLedger",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchTime",
+      "tracking_task": 550
+    }
+  ],
+  "hyperliquid": [
+    {
+      "method": "fetchBalance",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchCanceledAndClosedOrders",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchCanceledOrders",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchClosedOrders",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchFundingRateHistory",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchL2OrderBook",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchMarkets",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchOpenInterest",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchPosition",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchStatus",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchTime",
+      "tracking_task": 550
+    }
+  ],
+  "lighter": [],
+  "okx": [
+    {
+      "method": "fetchAccounts",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchConvertCurrencies",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchDepositAddress",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchFundingInterval",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchFundingRateHistory",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchIndexOHLCV",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchL2OrderBook",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchMarkOHLCV",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchMarkets",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchOrderTrades",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchPositionMode",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchPositionsForSymbol",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchStatus",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchTime",
+      "tracking_task": 550
+    },
+    {
+      "method": "fetchUnderlyingAssets",
+      "tracking_task": 550
+    }
+  ]
+}

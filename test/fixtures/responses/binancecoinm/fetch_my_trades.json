@@ -1,0 +1,1 @@
+{"authenticated":true,"body":[],"body_populated":false,"call_opts":{},"captured_at":"2026-07-26T05:47:39.286981Z","endpoint":"dapi/v1/userTrades","environment":"testnet-demo","exchange":"binancecoinm","host":"demo-dapi.binance.com","method":"fetch_my_trades","params":{"limit":10,"symbol":"BTCUSD_PERP"},"symbol":"BTC/USD:BTC","timeframe":null}

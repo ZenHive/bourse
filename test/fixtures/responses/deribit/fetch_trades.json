@@ -1,0 +1,85 @@
+{
+  "body": {
+    "jsonrpc": "2.0",
+    "result": {
+      "has_more": true,
+      "trades": [
+        {
+          "amount": 10.0,
+          "contracts": 1.0,
+          "direction": "sell",
+          "index_price": 64046.98,
+          "instrument_name": "BTC-PERPETUAL",
+          "mark_price": 64043.65,
+          "price": 64044.5,
+          "tick_direction": 2,
+          "timestamp": 1781993732608,
+          "trade_id": "434762295",
+          "trade_seq": 292347398
+        },
+        {
+          "amount": 10.0,
+          "contracts": 1.0,
+          "direction": "sell",
+          "index_price": 64046.98,
+          "instrument_name": "BTC-PERPETUAL",
+          "mark_price": 64043.65,
+          "price": 64045.5,
+          "tick_direction": 2,
+          "timestamp": 1781993732608,
+          "trade_id": "434762294",
+          "trade_seq": 292347397
+        },
+        {
+          "amount": 2.0e3,
+          "contracts": 200.0,
+          "direction": "sell",
+          "index_price": 64066.45,
+          "instrument_name": "BTC-PERPETUAL",
+          "mark_price": 64063.93,
+          "price": 64048.0,
+          "tick_direction": 2,
+          "timestamp": 1781993728012,
+          "trade_id": "434762289",
+          "trade_seq": 292347396
+        },
+        {
+          "amount": 2.0e3,
+          "contracts": 200.0,
+          "direction": "sell",
+          "index_price": 64066.45,
+          "instrument_name": "BTC-PERPETUAL",
+          "mark_price": 64063.93,
+          "price": 64049.0,
+          "tick_direction": 2,
+          "timestamp": 1781993728012,
+          "trade_id": "434762288",
+          "trade_seq": 292347395
+        },
+        {
+          "amount": 2.0e3,
+          "contracts": 200.0,
+          "direction": "sell",
+          "index_price": 64066.45,
+          "instrument_name": "BTC-PERPETUAL",
+          "mark_price": 64063.93,
+          "price": 64050.0,
+          "tick_direction": 2,
+          "timestamp": 1781993727968,
+          "trade_id": "434762281",
+          "trade_seq": 292347394
+        }
+      ]
+    },
+    "testnet": false,
+    "usDiff": 275,
+    "usIn": 1781993751558055,
+    "usOut": 1781993751558330
+  },
+  "call_opts": {},
+  "captured_at": "2026-06-20T22:15:51.560358Z",
+  "exchange": "deribit",
+  "method": "fetch_trades",
+  "symbol": "BTC-PERPETUAL",
+  "timeframe": null
+}

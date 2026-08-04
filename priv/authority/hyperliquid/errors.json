@@ -1,0 +1,87 @@
+{
+  "authority": {
+    "retrieved_at": "2026-07-22",
+    "source_artifact_id": "docs-full",
+    "source_sha256": "7bd65f92fe573e36fac6e62ec5547b3b0d264792796a3e3c5a94ed65d0364439",
+    "source_url": "https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/error-responses"
+  },
+  "codes": {
+    "BadAloPx": [
+      "Post only order would have immediately matched, bbo was {bbo}."
+    ],
+    "BadTriggerPx": [
+      "Invalid TP/SL price."
+    ],
+    "InsufficientSpotBalance": [
+      "(Spot-only) Order has insufficient spot balance to trade"
+    ],
+    "IocCancel": [
+      "Order could not immediately match against any resting orders."
+    ],
+    "MarketOrderNoLiquidity": [
+      "No liquidity available for market order."
+    ],
+    "MinTradeNtl": [
+      "Order must have minimum value of $10."
+    ],
+    "MinTradeSpotNtl": [
+      "Order must have minimum value of 10 {quote\\_token}."
+    ],
+    "MissingOrder": [
+      "Order was never placed, already canceled, or filled."
+    ],
+    "OpenInterestIncrease": [
+      "Order would increase open interest too quickly"
+    ],
+    "Oracle": [
+      "Order price too far from oracle"
+    ],
+    "PerpMargin": [
+      "Insufficient margin to place order."
+    ],
+    "PerpMaxPosition": [
+      "Order would cause position to exceed margin tier limit at current leverage"
+    ],
+    "PositionFlipAtOpenInterestCap": [
+      "Order would increase open interest while open interest is capped"
+    ],
+    "PositionIncreaseAtOpenInterestCap": [
+      "Order would increase open interest while open interest is capped"
+    ],
+    "ReduceOnly": [
+      "Reduce only order would increase position."
+    ],
+    "Tick": [
+      "Price must be divisible by tick size."
+    ],
+    "TooAggressiveAtOpenInterestCap": [
+      "Order rejected due to price more aggressive than oracle while at open interest cap"
+    ]
+  },
+  "dropped_non_authoritative_identifiers": [],
+  "exact_messages": {
+    "unknownOid": [
+      "Published order-status response for an unknown order identifier"
+    ]
+  },
+  "live_probe": {
+    "ccxt_type": "order_not_found",
+    "evidence": "test/bourse/hyperliquid_authored_integration_test.exs: live cancel with missing oid reaches Hyperliquid after load_markets",
+    "historical_evidence": "roadmap/tasks.toml: task 355 records the MissingOrder response observed on testnet 2026-07-18",
+    "identifier": "MissingOrder",
+    "observed_at": "2026-07-18"
+  },
+  "retired_codes": [],
+  "schema_version": 1,
+  "unmapped_code_disposition": "exchange_error",
+  "venue": "hyperliquid",
+  "maintenance_adjudication": {
+    "adjudicated_at": "2026-07-22",
+    "ccxt_class": "OnMaintenance",
+    "ccxt_type": "exchange_not_available",
+    "identifiers": [],
+    "source": "Hyperliquid error enumeration (string statuses)",
+    "finding": "Official Hyperliquid error enumeration documents trading/reject statuses only; no dedicated maintenance code.",
+    "status": "no_documented_maintenance_code"
+  }
+}

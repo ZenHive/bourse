@@ -1,0 +1,5709 @@
+{
+  "auth": {
+    "authenticated_sections": [
+      "private"
+    ],
+    "signing_config": {},
+    "signing_pattern": "derive",
+    "sign_recipe": {
+      "private": {
+        "auth_headers": [
+          {
+            "name": "X-LyraWallet",
+            "source": "api_key"
+          },
+          {
+            "name": "X-LyraTimestamp",
+            "source": "timestamp"
+          },
+          {
+            "name": "X-LyraSignature",
+            "source": "signature"
+          }
+        ],
+        "canonical_string": null,
+        "crypto_op": {
+          "algo": "custom",
+          "reason": "EIP-191 personal_sign of timestamp for REST headers; EIP-712 order body signature additive"
+        },
+        "custom_signing_details": {
+          "order_auth": {
+            "placement": "body.signature",
+            "precondition": false,
+            "scheme": "eip712_fixed_domain"
+          },
+          "primitives": [
+            "keccak",
+            "secp256k1",
+            "eip191",
+            "eip712"
+          ],
+          "rest_auth": {
+            "signature_header": "X-LyraSignature",
+            "signature_message": "timestamp_ms_string",
+            "signature_scheme": "eip191_personal_sign",
+            "signer": "credentials.secret (registered session key)",
+            "timestamp_header": "X-LyraTimestamp",
+            "timestamp_unit": "ms",
+            "wallet_header": "X-LyraWallet",
+            "wallet_source": "credentials.api_key"
+          },
+          "signals": [
+            "signMessage",
+            "signOrder",
+            "X-LyraWallet",
+            "X-LyraTimestamp",
+            "X-LyraSignature"
+          ]
+        },
+        "custom_signing_scheme": "eip191_headers_plus_eip712_order",
+        "nonce": null,
+        "patch_count": 0,
+        "pre_sign_transforms": null,
+        "signature_placement": {
+          "key": "X-LyraSignature",
+          "location": "header"
+        },
+        "timestamp": {
+          "format": "string",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": "custom_signing_family"
+      }
+    }
+  },
+  "authored": true,
+  "capabilities": {
+    "features": null,
+    "has": {
+      "fetchGreeks": true,
+      "addMargin": false,
+      "borrowCrossMargin": false,
+      "borrowIsolatedMargin": false,
+      "cancelAllOrders": true,
+      "cancelAllOrdersAfter": false,
+      "cancelOrder": true,
+      "cancelOrders": false,
+      "cancelOrdersForSymbols": false,
+      "closeAllPositions": false,
+      "closePosition": false,
+      "createLimitOrder": true,
+      "createMarketBuyOrderWithCost": false,
+      "createMarketOrder": true,
+      "createMarketOrderWithCost": false,
+      "createMarketOrderWs": true,
+      "createMarketSellOrderWithCost": false,
+      "createOrder": true,
+      "createOrders": false,
+      "createReduceOnlyOrder": false,
+      "createStopOrder": false,
+      "createTriggerOrder": false,
+      "editOrder": true,
+      "fetchAccounts": false,
+      "fetchBalance": true,
+      "fetchBorrowInterest": false,
+      "fetchBorrowRateHistories": false,
+      "fetchBorrowRateHistory": false,
+      "fetchCanceledAndClosedOrders": false,
+      "fetchCanceledOrders": true,
+      "fetchClosedOrders": true,
+      "fetchCrossBorrowRate": false,
+      "fetchCrossBorrowRates": false,
+      "fetchCurrencies": true,
+      "fetchCurrenciesWs": "emulated",
+      "fetchDepositAddress": false,
+      "fetchDepositAddresses": false,
+      "fetchDepositWithdrawFee": "emulated",
+      "fetchDepositWithdrawFees": false,
+      "fetchDeposits": true,
+      "fetchFundingHistory": true,
+      "fetchFundingRate": true,
+      "fetchFundingRateHistory": true,
+      "fetchFundingRates": false,
+      "fetchIndexOHLCV": false,
+      "fetchIsolatedBorrowRate": false,
+      "fetchIsolatedBorrowRates": false,
+      "fetchL2OrderBook": true,
+      "fetchLedger": true,
+      "fetchLeverage": false,
+      "fetchLeverageTiers": false,
+      "fetchLiquidations": false,
+      "fetchMarkOHLCV": false,
+      "fetchMarketLeverageTiers": false,
+      "fetchMarkets": true,
+      "fetchMyLiquidations": false,
+      "fetchMyTrades": true,
+      "fetchOHLCV": false,
+      "fetchOpenInterest": false,
+      "fetchOpenInterestHistory": false,
+      "fetchOpenInterests": false,
+      "fetchOpenOrders": true,
+      "fetchOptionMarkets": true,
+      "fetchOrder": false,
+      "fetchOrderBook": false,
+      "fetchOrderTrades": true,
+      "fetchOrders": true,
+      "fetchPosition": false,
+      "fetchPositionMode": false,
+      "fetchPositions": true,
+      "fetchPositionsRisk": false,
+      "fetchPremiumIndexOHLCV": false,
+      "fetchSpotMarkets": true,
+      "fetchSwapMarkets": true,
+      "fetchTicker": true,
+      "fetchTickers": false,
+      "fetchTime": true,
+      "fetchTrades": true,
+      "fetchTradingFee": false,
+      "fetchTradingFees": false,
+      "fetchTransfer": false,
+      "fetchTransfers": false,
+      "fetchWithdrawal": false,
+      "fetchWithdrawals": true,
+      "future": false,
+      "margin": false,
+      "option": true,
+      "privateAPI": true,
+      "publicAPI": true,
+      "reduceMargin": false,
+      "repayCrossMargin": false,
+      "repayIsolatedMargin": false,
+      "sandbox": true,
+      "setLeverage": false,
+      "setMarginMode": false,
+      "setPositionMode": false,
+      "spot": false,
+      "swap": false,
+      "transfer": false,
+      "withdraw": false
+    },
+    "timeframes": {
+      "12h": "12h",
+      "15m": "15m",
+      "1M": "1M",
+      "1d": "1d",
+      "1h": "1h",
+      "1m": "1m",
+      "1w": "1w",
+      "2h": "2h",
+      "30m": "30m",
+      "3d": "3d",
+      "3m": "3m",
+      "4h": "4h",
+      "5m": "5m",
+      "8h": "8h"
+    }
+  },
+  "config": {
+    "credentials": {
+      "accountId": false,
+      "apiKey": false,
+      "login": false,
+      "password": false,
+      "privateKey": true,
+      "secret": false,
+      "token": false,
+      "twofa": false,
+      "uid": false,
+      "walletAddress": true
+    },
+    "flags": {
+      "dex": true
+    },
+    "limits": {
+      "amount": {
+        "max": null,
+        "min": null
+      },
+      "cost": {
+        "max": null,
+        "min": null
+      },
+      "leverage": {
+        "max": null,
+        "min": null
+      },
+      "price": {
+        "max": null,
+        "min": null
+      }
+    },
+    "rate_limit_meta": {
+      "enableRateLimit": true,
+      "timeout": 10000
+    },
+    "routing": {
+      "accountsByType": null,
+      "networks": null,
+      "timeInForce": null
+    },
+    "status": {
+      "eta": null,
+      "info": null,
+      "status": "ok",
+      "updated": null,
+      "url": null
+    }
+  },
+  "endpoints": {
+    "descriptors": {
+      "fetchBalance": {
+        "async": true,
+        "description": "query for balance and get the amount of funds available for trading or funds locked in orders",
+        "errors": null,
+        "name": "fetchBalance",
+        "params_doc": {
+          "params": "extra parameters specific to the exchange API endpoint"
+        },
+        "returns": {
+          "description": "a [balance structure]{@link https://docs.ccxt.com/?id=balance-structure}",
+          "type": "object"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Balances>"
+        },
+        "source": "async fetchBalance (params = {}): Promise<Balances> {\n        await this.loadMarkets ();\n        let deriveWalletAddress = undefined;\n        [ deriveWalletAddress, params ] = this.handleDeriveWalletAddress ('fetchBalance', params);\n        const request = {\n            'wallet': deriveWalletAddress,\n        };\n        const response = await this.privatePostGetAllPortfolios (this.extend (request, params));\n        //\n        // {\n        //     \"result\": [{\n        //             \"subaccount_id\": 130837,\n        //             \"label\": \"\",\n        //             \"currency\": \"all\",\n        //             \"margin_type\": \"SM\",\n        //             \"is_under_liquidation\": false,\n        //             \"positions_value\": \"0\",\n        //             \"collaterals_value\": \"318.0760325000001103035174310207366943359375\",\n        //             \"subaccount_value\": \"318.0760325000001103035174310207366943359375\",\n        //             \"positions_maintenance_margin\": \"0\",\n        //             \"positions_initial_margin\": \"0\",\n        //             \"collaterals_maintenance_margin\": \"238.557024375000082727638073265552520751953125\",\n        //             \"collaterals_initial_margin\": \"190.845619500000083235136116854846477508544921875\",\n        //             \"maintenance_margin\": \"238.557024375000082727638073265552520751953125\",\n        //             \"initial_margin\": \"190.845619500000083235136116854846477508544921875\",\n        //             \"open_orders_margin\": \"0\",\n        //             \"projected_margin_change\": \"0\",\n        //             \"open_orders\": [],\n        //             \"positions\": [],\n        //             \"collaterals\": [\n        //                 {\n        //                     \"asset_type\": \"erc20\",\n        //                     \"asset_name\": \"ETH\",\n        //                     \"currency\": \"ETH\",\n        //                     \"amount\": \"0.1\",\n        //                     \"mark_price\": \"3180.760325000000438272\",\n        //                     \"mark_value\": \"318.0760325000001103035174310207366943359375\",\n        //                     \"cumulative_interest\": \"0\",\n        //                     \"pending_interest\": \"0\",\n        //                     \"initial_margin\": \"190.845619500000083235136116854846477508544921875\",\n        //                     \"maintenance_margin\": \"238.557024375000082727638073265552520751953125\",\n        //                     \"realized_pnl\": \"0\",\n        //                     \"average_price\": \"3184.891931\",\n        //                     \"unrealized_pnl\": \"-0.413161\",\n        //                     \"total_fees\": \"0\",\n        //                     \"average_price_excl_fees\": \"3184.891931\",\n        //                     \"realized_pnl_excl_fees\": \"0\",\n        //                     \"unrealized_pnl_excl_fees\": \"-0.413161\",\n        //                     \"open_orders_margin\": \"0\",\n        //                     \"creation_timestamp\": 1736860533493\n        //                 }\n        //             ]\n        //     }],\n        //     \"id\": \"27b9a64e-3379-4ce6-a126-9fb941c4a970\"\n        // }\n        //\n        const result = this.safeList (response, 'result');\n        return this.parseBalance (result);\n    }",
+        "unresolved_reason": null
+      },
+      "fetchClosedOrders": {
+        "async": true,
+        "description": "fetches information on multiple orders made by the user",
+        "errors": null,
+        "name": "fetchClosedOrders",
+        "params_doc": {
+          "limit": "the maximum number of order structures to retrieve",
+          "params": "extra parameters specific to the exchange API endpoint",
+          "params.paginate": "set to true if you want to fetch orders with pagination",
+          "since": "the earliest time in ms to fetch orders for",
+          "symbol": "unified market symbol of the market orders were made in"
+        },
+        "returns": {
+          "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+          "type": "Order[]"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": "undefined",
+              "name": "symbol",
+              "optional": true,
+              "type": "Str"
+            },
+            {
+              "default": "undefined",
+              "name": "since",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "undefined",
+              "name": "limit",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Order[]>"
+        },
+        "source": "async fetchClosedOrders (symbol: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}): Promise<Order[]> {\n        await this.loadMarkets ();\n        const extendedParams = this.extend (params, { 'status': 'filled' });\n        return await this.fetchOrders (symbol, since, limit, extendedParams);\n    }",
+        "unresolved_reason": null
+      },
+      "fetchCurrencies": {
+        "async": true,
+        "description": "fetches all available currencies on an exchange",
+        "errors": null,
+        "name": "fetchCurrencies",
+        "params_doc": {
+          "params": "extra parameters specific to the exchange API endpoint"
+        },
+        "returns": {
+          "description": "an associative dictionary of currencies",
+          "type": "object"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Currencies>"
+        },
+        "source": "async fetchCurrencies (params = {}): Promise<Currencies> {\n        const tokenResponse = await this.publicGetGetAllCurrencies (params);\n        //\n        //    {\n        //        \"result\": [\n        //            {\n        //                \"currency\": \"SEI\",\n        //                \"instrument_types\": [\n        //                    \"perp\"\n        //                ],\n        //                \"protocol_asset_addresses\": {\n        //                    \"perp\": \"0x7225889B75fd34C68eA3098dAE04D50553C09840\",\n        //                    \"option\": null,\n        //                    \"spot\": null,\n        //                    \"underlying_erc20\": null\n        //                },\n        //                \"managers\": [\n        //                    {\n        //                        \"address\": \"0x28c9ddF9A3B29c2E6a561c1BC520954e5A33de5D\",\n        //                        \"margin_type\": \"SM\",\n        //                        \"currency\": null\n        //                    }\n        //                ],\n        //                \"srm_im_discount\": \"0\",\n        //                \"srm_mm_discount\": \"0\",\n        //                \"pm2_collateral_discounts\": [],\n        //                \"borrow_apy\": \"0\",\n        //                \"supply_apy\": \"0\",\n        //                \"total_borrow\": \"0\",\n        //                \"total_supply\": \"0\",\n        //                \"asset_cap_and_supply_per_manager\": {\n        //                    \"perp\": {\n        //                        \"SM\": [\n        //                            {\n        //                                \"current_open_interest\": \"0\",\n        //                                \"interest_cap\": \"2000000\",\n        //                                \"manager_currency\": null\n        //                            }\n        //                        ]\n        //                    },\n        //                    \"option\": {},\n        //                    \"erc20\": {}\n        //                },\n        //                \"market_type\": \"SRM_PERP_ONLY\",\n        //                \"spot_price\": \"0.2193542905042081\",\n        //                \"spot_price_24h\": \"0.238381655533635830\"\n        //            },\n        //     \"id\": \"7e07fe1d-0ab4-4d2b-9e22-b65ce9e232dc\"\n        // }\n        //\n        const currencies = this.safeList (tokenResponse, 'result', []);\n        return this.parseCurrencies (currencies);\n    }",
+        "unresolved_reason": null
+      },
+      "fetchDeposits": {
+        "async": true,
+        "description": "fetch all deposits made to an account",
+        "errors": null,
+        "name": "fetchDeposits",
+        "params_doc": {
+          "code": "unified currency code",
+          "limit": "the maximum number of deposits structures to retrieve",
+          "params": "extra parameters specific to the exchange API endpoint",
+          "params.subaccount_id": "*required* the subaccount id",
+          "since": "the earliest time in ms to fetch deposits for"
+        },
+        "returns": {
+          "description": "a list of [transaction structures]{@link https://docs.ccxt.com/?id=transaction-structure}",
+          "type": "object[]"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": "undefined",
+              "name": "code",
+              "optional": true,
+              "type": "Str"
+            },
+            {
+              "default": "undefined",
+              "name": "since",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "undefined",
+              "name": "limit",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Transaction[]>"
+        },
+        "source": "async fetchDeposits (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}): Promise<Transaction[]> {\n        await this.loadMarkets ();\n        let subaccountId = undefined;\n        [ subaccountId, params ] = this.handleDeriveSubaccountId ('fetchDeposits', params);\n        const request: Dict = {\n            'subaccount_id': subaccountId,\n        };\n        if (since !== undefined) {\n            request['start_timestamp'] = since;\n        }\n        const response = await this.privatePostGetDepositHistory (this.extend (request, params));\n        //\n        // {\n        //     \"result\": {\n        //         \"events\": [\n        //             {\n        //                 \"timestamp\": 1736860533599,\n        //                 \"transaction_id\": \"f2069395-ec00-49f5-925a-87202a5d240f\",\n        //                 \"asset\": \"ETH\",\n        //                 \"amount\": \"0.1\",\n        //                 \"tx_status\": \"settled\",\n        //                 \"tx_hash\": \"0xeda21a315c59302a19c42049b4cef05a10b685302b6cc3edbaf49102d91166d4\",\n        //                 \"error_log\": {}\n        //             }\n        //         ]\n        //     },\n        //     \"id\": \"ceebc730-22ab-40cd-9941-33ceb2a74389\"\n        // }\n        //\n        const currency = this.safeCurrency (code);\n        const result = this.safeDict (response, 'result', {});\n        const events = this.safeList (result, 'events');\n        return this.parseTransactions (events, currency, since, limit, params);\n    }",
+        "unresolved_reason": null
+      },
+      "fetchFundingRate": {
+        "async": true,
+        "description": "fetch the current funding rate",
+        "errors": null,
+        "name": "fetchFundingRate",
+        "params_doc": {
+          "params": "extra parameters specific to the exchange API endpoint",
+          "symbol": "unified market symbol"
+        },
+        "returns": {
+          "description": "a [funding rate structure]{@link https://docs.ccxt.com/?id=funding-rate-structure}",
+          "type": "object"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": null,
+              "name": "symbol",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<FundingRate>"
+        },
+        "source": "async fetchFundingRate (symbol: string, params = {}): Promise<FundingRate> {\n        const response = await this.fetchFundingRateHistory (symbol, undefined, 1, params);\n        //\n        // [\n        //     {\n        //         \"info\": {\n        //             \"timestamp\": 1736157600000,\n        //             \"funding_rate\": \"-0.000008872\"\n        //         },\n        //         \"symbol\": \"BTC/USD:USDC\",\n        //         \"fundingRate\": -0.000008872,\n        //         \"timestamp\": 1736157600000,\n        //         \"datetime\": \"2025-01-06T10:00:00.000Z\"\n        //     }\n        // ]\n        //\n        const data = this.safeDict (response, 0);\n        return this.parseFundingRate (data);\n    }",
+        "unresolved_reason": null
+      },
+      "fetchMarkets": {
+        "async": true,
+        "description": "retrieves data on all markets for bybit",
+        "errors": null,
+        "name": "fetchMarkets",
+        "params_doc": {
+          "params": "extra parameters specific to the exchange API endpoint"
+        },
+        "returns": {
+          "description": "an array of objects representing market data",
+          "type": "object[]"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Market[]>"
+        },
+        "source": "async fetchMarkets (params = {}): Promise<Market[]> {\n        const spotMarketsPromise = this.fetchSpotMarkets (params);\n        const swapMarketsPromise = this.fetchSwapMarkets (params);\n        const optionMarketsPromise = this.fetchOptionMarkets (params);\n        const [ spotMarkets, swapMarkets, optionMarkets ] = await Promise.all ([ spotMarketsPromise, swapMarketsPromise, optionMarketsPromise ]);\n        //\n        // {\n        //     \"result\": {\n        //         \"instruments\": [\n        //             {\n        //                 \"instrument_type\": \"perp\",\n        //                 \"instrument_name\": \"BTC-PERP\",\n        //                 \"scheduled_activation\": 1701840228,\n        //                 \"scheduled_deactivation\": 9223372036854776000,\n        //                 \"is_active\": true,\n        //                 \"tick_size\": \"0.1\",\n        //                 \"minimum_amount\": \"0.01\",\n        //                 \"maximum_amount\": \"10000\",\n        //                 \"amount_step\": \"0.001\",\n        //                 \"mark_price_fee_rate_cap\": \"0\",\n        //                 \"maker_fee_rate\": \"0.00005\",\n        //                 \"taker_fee_rate\": \"0.0003\",\n        //                 \"base_fee\": \"0.1\",\n        //                 \"base_currency\": \"BTC\",\n        //                 \"quote_currency\": \"USD\",\n        //                 \"option_details\": null,\n        //                 \"perp_details\": {\n        //                     \"index\": \"BTC-USD\",\n        //                     \"max_rate_per_hour\": \"0.004\",\n        //                     \"min_rate_per_hour\": \"-0.004\",\n        //                     \"static_interest_rate\": \"0.0000125\",\n        //                     \"aggregate_funding\": \"10538.574363381759146829\",\n        //                     \"funding_rate\": \"0.0000125\"\n        //                 },\n        //                 \"erc20_details\": null,\n        //                 \"base_asset_address\": \"0xDBa83C0C654DB1cd914FA2710bA743e925B53086\",\n        //                 \"base_asset_sub_id\": \"0\",\n        //                 \"pro_rata_fraction\": \"0\",\n        //                 \"fifo_min_allocation\": \"0\",\n        //                 \"pro_rata_amount_step\": \"0.1\"\n        //             }\n        //         ],\n        //         \"pagination\": {\n        //             \"num_pages\": 1,\n        //             \"count\": 1\n        //         }\n        //     },\n        //     \"id\": \"a06bc0b2-8e78-4536-a21f-f785f225b5a5\"\n        // }\n        //\n        let result = this.arrayConcat (spotMarkets, swapMarkets);\n        result = this.arrayConcat (result, optionMarkets);\n        return result;\n    }",
+        "unresolved_reason": null
+      },
+      "fetchOpenOrders": {
+        "async": true,
+        "description": "fetches information on multiple orders made by the user",
+        "errors": null,
+        "name": "fetchOpenOrders",
+        "params_doc": {
+          "limit": "the maximum number of order structures to retrieve",
+          "params": "extra parameters specific to the exchange API endpoint",
+          "params.paginate": "set to true if you want to fetch orders with pagination",
+          "since": "the earliest time in ms to fetch orders for",
+          "symbol": "unified market symbol of the market orders were made in"
+        },
+        "returns": {
+          "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+          "type": "Order[]"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": "undefined",
+              "name": "symbol",
+              "optional": true,
+              "type": "Str"
+            },
+            {
+              "default": "undefined",
+              "name": "since",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "undefined",
+              "name": "limit",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Order[]>"
+        },
+        "source": "async fetchOpenOrders (symbol: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}): Promise<Order[]> {\n        await this.loadMarkets ();\n        const extendedParams = this.extend (params, { 'status': 'open' });\n        return await this.fetchOrders (symbol, since, limit, extendedParams);\n    }",
+        "unresolved_reason": null
+      },
+      "fetchOptionMarkets": {
+        "async": true,
+        "description": null,
+        "errors": null,
+        "name": "fetchOptionMarkets",
+        "params_doc": null,
+        "returns": null,
+        "signature": {
+          "params": [
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Market[]>"
+        },
+        "source": "async fetchOptionMarkets (params = {}): Promise<Market[]> {\n        const request: Dict = {\n            'expired': false,\n            'instrument_type': 'option',\n        };\n        const response = await this.publicPostGetAllInstruments (this.extend (request, params));\n        const result = this.safeDict (response, 'result', {});\n        const data = this.safeList (result, 'instruments', []);\n        return this.parseMarkets (data);\n    }",
+        "unresolved_reason": "no_jsdoc"
+      },
+      "fetchOrders": {
+        "async": true,
+        "description": "fetches information on multiple orders made by the user",
+        "errors": null,
+        "name": "fetchOrders",
+        "params_doc": {
+          "limit": "the maximum number of order structures to retrieve",
+          "params": "extra parameters specific to the exchange API endpoint",
+          "params.paginate": "set to true if you want to fetch orders with pagination",
+          "params.subaccount_id": "*required* the subaccount id",
+          "params.trigger": "whether the order is a trigger/algo order",
+          "since": "the earliest time in ms to fetch orders for",
+          "symbol": "unified market symbol of the market orders were made in"
+        },
+        "returns": {
+          "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+          "type": "Order[]"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": "undefined",
+              "name": "symbol",
+              "optional": true,
+              "type": "Str"
+            },
+            {
+              "default": "undefined",
+              "name": "since",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "undefined",
+              "name": "limit",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Order[]>"
+        },
+        "source": "async fetchOrders (symbol: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}): Promise<Order[]> {\n        await this.loadMarkets ();\n        let paginate = false;\n        [ paginate, params ] = this.handleOptionAndParams (params, 'fetchOrders', 'paginate');\n        if (paginate) {\n            return await this.fetchPaginatedCallIncremental ('fetchOrders', symbol, since, limit, params, 'page', 500) as Order[];\n        }\n        const isTrigger = this.safeBool2 (params, 'trigger', 'stop', false);\n        params = this.omit (params, [ 'trigger', 'stop' ]);\n        let subaccountId = undefined;\n        [ subaccountId, params ] = this.handleDeriveSubaccountId ('fetchOrders', params);\n        const request: Dict = {\n            'subaccount_id': subaccountId,\n        };\n        let market: Market = undefined;\n        if (symbol !== undefined) {\n            market = this.market (symbol);\n            request['instrument_name'] = market['id'];\n        }\n        if (limit !== undefined) {\n            request['page_size'] = limit;\n        } else {\n            request['page_size'] = 500;\n        }\n        if (isTrigger) {\n            request['status'] = 'untriggered';\n        }\n        const response = await this.privatePostGetOrders (this.extend (request, params));\n        //\n        // {\n        //     \"result\": {\n        //         \"subaccount_id\": 130837,\n        //         \"orders\": [\n        //             {\n        //                 \"subaccount_id\": 130837,\n        //                 \"order_id\": \"63a80cb8-387b-472b-a838-71cd9513c365\",\n        //                 \"instrument_name\": \"BTC-PERP\",\n        //                 \"direction\": \"buy\",\n        //                 \"label\": \"test1234\",\n        //                 \"quote_id\": null,\n        //                 \"creation_timestamp\": 1737551053207,\n        //                 \"last_update_timestamp\": 1737551053207,\n        //                 \"limit_price\": \"10000\",\n        //                 \"amount\": \"0.01\",\n        //                 \"filled_amount\": \"0\",\n        //                 \"average_price\": \"0\",\n        //                 \"order_fee\": \"0\",\n        //                 \"order_type\": \"limit\",\n        //                 \"time_in_force\": \"post_only\",\n        //                 \"order_status\": \"open\",\n        //                 \"max_fee\": \"211\",\n        //                 \"signature_expiry_sec\": 1737551652765,\n        //                 \"nonce\": 1737551052765,\n        //                 \"signer\": \"0x30CB7B06AdD6749BbE146A6827502B8f2a79269A\",\n        //                 \"signature\": \"0x35535ccb1bcad509ecc435c79e966174db6403fc9aeee1e237d08a941014c57b59279dfe4be39e081f9921a53eaad59cb2a151d9f52f2d05fc47e6280254952e1c\",\n        //                 \"cancel_reason\": \"\",\n        //                 \"mmp\": false,\n        //                 \"is_transfer\": false,\n        //                 \"replaced_order_id\": null,\n        //                 \"trigger_type\": null,\n        //                 \"trigger_price_type\": null,\n        //                 \"trigger_price\": null,\n        //                 \"trigger_reject_message\": null\n        //             }\n        //         ],\n        //         \"pagination\": {\n        //             \"num_pages\": 1,\n        //             \"count\": 1\n        //         }\n        //     },\n        //     \"id\": \"e5a88d4f-7ac7-40cd-aec9-e0e8152b8b92\"\n        // }\n        //\n        const data = this.safeValue (response, 'result');\n        const page = this.safeInteger (params, 'page');\n        if (page !== undefined) {\n            const pagination = this.safeDict (data, 'pagination');\n            const currentPage = this.safeInteger (pagination, 'num_pages');\n            if (page > currentPage) {\n                return [];\n            }\n        }\n        const orders = this.safeList (data, 'orders');\n        return this.parseOrders (orders, market, since, limit);\n    }",
+        "unresolved_reason": null
+      },
+      "fetchPositions": {
+        "async": true,
+        "description": "fetch all open positions",
+        "errors": null,
+        "name": "fetchPositions",
+        "params_doc": {
+          "params": "extra parameters specific to the exchange API endpoint",
+          "params.subaccount_id": "*required* the subaccount id",
+          "symbols": "not used by kraken fetchPositions ()"
+        },
+        "returns": {
+          "description": "a list of [position structure]{@link https://docs.ccxt.com/?id=position-structure}",
+          "type": "object[]"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": "undefined",
+              "name": "symbols",
+              "optional": true,
+              "type": "Strings"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Position[]>"
+        },
+        "source": "async fetchPositions (symbols: Strings = undefined, params = {}): Promise<Position[]> {\n        await this.loadMarkets ();\n        let subaccountId = undefined;\n        [ subaccountId, params ] = this.handleDeriveSubaccountId ('fetchPositions', params);\n        const request: Dict = {\n            'subaccount_id': subaccountId,\n        };\n        params = this.omit (params, [ 'subaccount_id' ]);\n        const response = await this.privatePostGetPositions (this.extend (request, params));\n        //\n        // {\n        //     \"result\": {\n        //         \"subaccount_id\": 130837,\n        //         \"positions\": [\n        //             {\n        //                 \"instrument_type\": \"perp\",\n        //                 \"instrument_name\": \"BTC-PERP\",\n        //                 \"amount\": \"-0.02\",\n        //                 \"average_price\": \"102632.9105389869500088\",\n        //                 \"realized_pnl\": \"0\",\n        //                 \"unrealized_pnl\": \"-2.6455959784245548835819950103759765625\",\n        //                 \"total_fees\": \"2.255789220260999824\",\n        //                 \"average_price_excl_fees\": \"102745.7\",\n        //                 \"realized_pnl_excl_fees\": \"0\",\n        //                 \"unrealized_pnl_excl_fees\": \"-0.3898067581635550595819950103759765625\",\n        //                 \"net_settlements\": \"-4.032902047219498639\",\n        //                 \"cumulative_funding\": \"-0.004677736347850093\",\n        //                 \"pending_funding\": \"0\",\n        //                 \"mark_price\": \"102765.190337908177752979099750518798828125\",\n        //                 \"index_price\": \"102767.657193800017641472\",\n        //                 \"delta\": \"1\",\n        //                 \"gamma\": \"0\",\n        //                 \"vega\": \"0\",\n        //                 \"theta\": \"0\",\n        //                 \"mark_value\": \"1.38730606879471451975405216217041015625\",\n        //                 \"maintenance_margin\": \"-101.37788426911356509663164615631103515625\",\n        //                 \"initial_margin\": \"-132.2074413704858670826070010662078857421875\",\n        //                 \"open_orders_margin\": \"264.116085900726830004714429378509521484375\",\n        //                 \"leverage\": \"8.6954476205089299495699106539379941746377322586618\",\n        //                 \"liquidation_price\": \"109125.705451984322280623018741607666015625\",\n        //                 \"creation_timestamp\": 1738065303840\n        //             }\n        //         ]\n        //     },\n        //     \"id\": \"167350f1-d9fc-41d4-9797-1c78f83fda8e\"\n        // }\n        //\n        const result = this.safeDict (response, 'result', {});\n        const positions = this.safeList (result, 'positions', []);\n        return this.parsePositions (positions, symbols);\n    }",
+        "unresolved_reason": null
+      },
+      "fetchSpotMarkets": {
+        "async": true,
+        "description": null,
+        "errors": null,
+        "name": "fetchSpotMarkets",
+        "params_doc": null,
+        "returns": null,
+        "signature": {
+          "params": [
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Market[]>"
+        },
+        "source": "async fetchSpotMarkets (params = {}): Promise<Market[]> {\n        const request: Dict = {\n            'expired': false,\n            'instrument_type': 'erc20',\n        };\n        const response = await this.publicPostGetAllInstruments (this.extend (request, params));\n        const result = this.safeDict (response, 'result', {});\n        const data = this.safeList (result, 'instruments', []);\n        return this.parseMarkets (data);\n    }",
+        "unresolved_reason": "no_jsdoc"
+      },
+      "fetchSwapMarkets": {
+        "async": true,
+        "description": null,
+        "errors": null,
+        "name": "fetchSwapMarkets",
+        "params_doc": null,
+        "returns": null,
+        "signature": {
+          "params": [
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Market[]>"
+        },
+        "source": "async fetchSwapMarkets (params = {}): Promise<Market[]> {\n        const request: Dict = {\n            'expired': false,\n            'instrument_type': 'perp',\n        };\n        const response = await this.publicPostGetAllInstruments (this.extend (request, params));\n        const result = this.safeDict (response, 'result', {});\n        const data = this.safeList (result, 'instruments', []);\n        return this.parseMarkets (data);\n    }",
+        "unresolved_reason": "no_jsdoc"
+      },
+      "fetchGreeks": {
+        "async": true,
+        "description": "fetches option greeks from Derive nested option_pricing on get_ticker",
+        "errors": null,
+        "name": "fetchGreeks",
+        "params_doc": {
+          "params": "extra parameters specific to the exchange API endpoint",
+          "symbol": "unified symbol of the market to fetch greeks for"
+        },
+        "returns": {
+          "description": "a greeks structure",
+          "type": "object"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": null,
+              "name": "symbol",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Greeks>"
+        },
+        "source": null,
+        "unresolved_reason": null
+      },
+      "fetchTicker": {
+        "async": true,
+        "description": "fetches a price ticker, a statistical calculation with the information calculated over the past 24 hours for a specific market",
+        "errors": null,
+        "name": "fetchTicker",
+        "params_doc": {
+          "params": "extra parameters specific to the exchange API endpoint",
+          "symbol": "unified symbol of the market to fetch the ticker for"
+        },
+        "returns": {
+          "description": "a [ticker structure]{@link https://docs.ccxt.com/?id=ticker-structure}",
+          "type": "object"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": null,
+              "name": "symbol",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Ticker>"
+        },
+        "source": "async fetchTicker (symbol: string, params = {}): Promise<Ticker> {\n        await this.loadMarkets ();\n        const market = this.market (symbol);\n        const request: Dict = {\n            'instrument_name': market['id'],\n        };\n        const response = await this.publicPostGetTicker (this.extend (request, params));\n        //\n        // spot\n        //\n        // {\n        //     \"result\": {\n        //         \"instrument_type\": \"perp\",\n        //         \"instrument_name\": \"BTC-PERP\",\n        //         \"scheduled_activation\": 1701840228,\n        //         \"scheduled_deactivation\": 9223372036854776000,\n        //         \"is_active\": true,\n        //         \"tick_size\": \"0.1\",\n        //         \"minimum_amount\": \"0.01\",\n        //         \"maximum_amount\": \"10000\",\n        //         \"amount_step\": \"0.001\",\n        //         \"mark_price_fee_rate_cap\": \"0\",\n        //         \"maker_fee_rate\": \"0.00005\",\n        //         \"taker_fee_rate\": \"0.0003\",\n        //         \"base_fee\": \"0.1\",\n        //         \"base_currency\": \"BTC\",\n        //         \"quote_currency\": \"USD\",\n        //         \"option_details\": null,\n        //         \"perp_details\": {\n        //             \"index\": \"BTC-USD\",\n        //             \"max_rate_per_hour\": \"0.004\",\n        //             \"min_rate_per_hour\": \"-0.004\",\n        //             \"static_interest_rate\": \"0.0000125\",\n        //             \"aggregate_funding\": \"10512.580833189805742522\",\n        //             \"funding_rate\": \"-0.000022223906766867\"\n        //         },\n        //         \"erc20_details\": null,\n        //         \"base_asset_address\": \"0xDBa83C0C654DB1cd914FA2710bA743e925B53086\",\n        //         \"base_asset_sub_id\": \"0\",\n        //         \"pro_rata_fraction\": \"0\",\n        //         \"fifo_min_allocation\": \"0\",\n        //         \"pro_rata_amount_step\": \"0.1\",\n        //         \"best_ask_amount\": \"0.012\",\n        //         \"best_ask_price\": \"99567.9\",\n        //         \"best_bid_amount\": \"0.129\",\n        //         \"best_bid_price\": \"99554.5\",\n        //         \"five_percent_bid_depth\": \"11.208\",\n        //         \"five_percent_ask_depth\": \"11.42\",\n        //         \"option_pricing\": null,\n        //         \"index_price\": \"99577.2\",\n        //         \"mark_price\": \"99543.642926357933902181684970855712890625\",\n        //         \"stats\": {\n        //             \"contract_volume\": \"464.712\",\n        //             \"num_trades\": \"10681\",\n        //             \"open_interest\": \"72.804739389481989861\",\n        //             \"high\": \"99519.1\",\n        //             \"low\": \"97254.1\",\n        //             \"percent_change\": \"0.0128\",\n        //             \"usd_change\": \"1258.1\"\n        //         },\n        //         \"timestamp\": 1736140984000,\n        //         \"min_price\": \"97591.2\",\n        //         \"max_price\": \"101535.1\"\n        //     },\n        //     \"id\": \"bbd7c271-c2be-48f7-b93a-26cf6d4cb79f\"\n        // }\n        //\n        const data = this.safeDict (response, 'result', {});\n        return this.parseTicker (data, market);\n    }",
+        "unresolved_reason": null
+      },
+      "fetchTrades": {
+        "async": true,
+        "description": "get the list of most recent trades for a particular symbol",
+        "errors": null,
+        "name": "fetchTrades",
+        "params_doc": {
+          "limit": "the maximum amount of trades to fetch",
+          "params": "extra parameters specific to the exchange API endpoint",
+          "params.until": "the latest time in ms to fetch trades for",
+          "since": "timestamp in ms of the earliest trade to fetch",
+          "symbol": "unified symbol of the market to fetch trades for"
+        },
+        "returns": {
+          "description": "a list of [trade structures]{@link https://docs.ccxt.com/?id=public-trades}",
+          "type": "Trade[]"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": null,
+              "name": "symbol",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "default": "undefined",
+              "name": "since",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "undefined",
+              "name": "limit",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Trade[]>"
+        },
+        "source": "async fetchTrades (symbol: string, since: Int = undefined, limit: Int = undefined, params = {}): Promise<Trade[]> {\n        await this.loadMarkets ();\n        const request: Dict = {};\n        let market = undefined;\n        if (symbol !== undefined) {\n            market = this.market (symbol);\n            request['instrument_name'] = market['id'];\n        }\n        if (limit !== undefined) {\n            if (limit > 1000) {\n                limit = 1000;\n            }\n            request['page_size'] = limit; // default 100, max 1000\n        }\n        if (since !== undefined) {\n            request['from_timestamp'] = since;\n        }\n        const until = this.safeInteger (params, 'until');\n        params = this.omit (params, [ 'until' ]);\n        if (until !== undefined) {\n            request['to_timestamp'] = until;\n        }\n        const response = await this.publicPostGetTradeHistory (this.extend (request, params));\n        //\n        // {\n        //     \"result\": {\n        //         \"trades\": [\n        //             {\n        //                 \"trade_id\": \"9dbc88b0-f0c4-4439-9cc1-4e6409d4eafb\",\n        //                 \"instrument_name\": \"BTC-PERP\",\n        //                 \"timestamp\": 1736153910930,\n        //                 \"trade_price\": \"98995.3\",\n        //                 \"trade_amount\": \"0.033\",\n        //                 \"mark_price\": \"98990.875914388161618263\",\n        //                 \"index_price\": \"99038.050611100001501184\",\n        //                 \"direction\": \"sell\",\n        //                 \"quote_id\": null,\n        //                 \"wallet\": \"0x88B6BB87fbFac92a34F8155aaA35c87B5b166fA9\",\n        //                 \"subaccount_id\": 8250,\n        //                 \"tx_status\": \"settled\",\n        //                 \"tx_hash\": \"0x020bd735b312f867f17f8cc254946d87cfe9f2c8ff3605035d8129082eb73723\",\n        //                 \"trade_fee\": \"0.980476701049890015\",\n        //                 \"liquidity_role\": \"taker\",\n        //                 \"realized_pnl\": \"-2.92952402688793509\",\n        //                 \"realized_pnl_excl_fees\": \"-1.949047325838045075\"\n        //             }\n        //         ],\n        //         \"pagination\": {\n        //             \"num_pages\": 598196,\n        //             \"count\": 598196\n        //         }\n        //     },\n        //     \"id\": \"b8539544-6975-4497-8163-5e51a38e4aa7\"\n        // }\n        //\n        const result = this.safeDict (response, 'result', {});\n        const data = this.safeList (result, 'trades', []);\n        return this.parseTrades (data, market, since, limit);\n    }",
+        "unresolved_reason": null
+      },
+      "fetchWithdrawals": {
+        "async": true,
+        "description": "fetch all withdrawals made from an account",
+        "errors": null,
+        "name": "fetchWithdrawals",
+        "params_doc": {
+          "code": "unified currency code",
+          "limit": "the maximum number of withdrawals structures to retrieve",
+          "params": "extra parameters specific to the exchange API endpoint",
+          "params.subaccount_id": "*required* the subaccount id",
+          "since": "the earliest time in ms to fetch withdrawals for"
+        },
+        "returns": {
+          "description": "a list of [transaction structures]{@link https://docs.ccxt.com/?id=transaction-structure}",
+          "type": "object[]"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": "undefined",
+              "name": "code",
+              "optional": true,
+              "type": "Str"
+            },
+            {
+              "default": "undefined",
+              "name": "since",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "undefined",
+              "name": "limit",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Transaction[]>"
+        },
+        "source": "async fetchWithdrawals (code: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}): Promise<Transaction[]> {\n        await this.loadMarkets ();\n        let subaccountId = undefined;\n        [ subaccountId, params ] = this.handleDeriveSubaccountId ('fetchWithdrawals', params);\n        const request: Dict = {\n            'subaccount_id': subaccountId,\n        };\n        if (since !== undefined) {\n            request['start_timestamp'] = since;\n        }\n        const response = await this.privatePostGetWithdrawalHistory (this.extend (request, params));\n        //\n        // {\n        //     \"result\": {\n        //         \"events\": [\n        //             {\n        //                 \"timestamp\": 1736860533599,\n        //                 \"transaction_id\": \"f2069395-ec00-49f5-925a-87202a5d240f\",\n        //                 \"asset\": \"ETH\",\n        //                 \"amount\": \"0.1\",\n        //                 \"tx_status\": \"settled\",\n        //                 \"tx_hash\": \"0xeda21a315c59302a19c42049b4cef05a10b685302b6cc3edbaf49102d91166d4\",\n        //                 \"error_log\": {}\n        //             }\n        //         ]\n        //     },\n        //     \"id\": \"ceebc730-22ab-40cd-9941-33ceb2a74389\"\n        // }\n        //\n        const currency = this.safeCurrency (code);\n        const result = this.safeDict (response, 'result', {});\n        const events = this.safeList (result, 'events');\n        return this.parseTransactions (events, currency, since, limit, params);\n    }",
+        "unresolved_reason": null
+      }
+    },
+    "handlers": {
+      "error": [
+        {
+          "exception_class": "ExchangeError",
+          "predicate_kind": "identifier_check",
+          "predicate_limbs": [
+            {
+              "kind": "identifier_check",
+              "raw": "error !== undefined",
+              "values": null
+            }
+          ],
+          "predicate_raw": "error !== undefined",
+          "predicate_values": null
+        }
+      ],
+      "parse": {
+        "fetchGreeks": [
+          "parseGreeks"
+        ],
+        "cancelOrder": [
+          "parseOrder"
+        ],
+        "createOrder": [
+          "parseOrder",
+          "parseToNumeric",
+          "parseUnits"
+        ],
+        "editOrder": [
+          "parseOrder",
+          "parseToNumeric",
+          "parseUnits"
+        ],
+        "fetchBalance": [
+          "parseBalance"
+        ],
+        "fetchClosedOrders": [
+          "parseOrders"
+        ],
+        "fetchCurrencies": [
+          "parseCurrencies"
+        ],
+        "fetchDeposits": [
+          "parseTransactions"
+        ],
+        "fetchFundingHistory": [
+          "parseIncomes"
+        ],
+        "fetchFundingRate": [
+          "parseFundingRate"
+        ],
+        "fetchMarkets": [
+          "parseMarkets"
+        ],
+        "fetchMyTrades": [
+          "parseTrades"
+        ],
+        "fetchOpenOrders": [
+          "parseOrders"
+        ],
+        "fetchOptionMarkets": [
+          "parseMarkets"
+        ],
+        "fetchOrderTrades": [
+          "parseTrades"
+        ],
+        "fetchOrders": [
+          "parseOrders"
+        ],
+        "fetchPositions": [
+          "parsePositions"
+        ],
+        "fetchSpotMarkets": [
+          "parseMarkets"
+        ],
+        "fetchSwapMarkets": [
+          "parseMarkets"
+        ],
+        "fetchTicker": [
+          "parseTicker"
+        ],
+        "fetchTrades": [
+          "parseTrades"
+        ],
+        "fetchWithdrawals": [
+          "parseTransactions"
+        ],
+        "parseOrder": [
+          "parseOrderStatus",
+          "parseTimeInForce"
+        ],
+        "parsePosition": [
+          "parseNumber"
+        ],
+        "parseTransaction": [
+          "parseTransactionStatus"
+        ]
+      },
+      "signing": {
+        "branches": [
+          {
+            "is_else": false,
+            "matches": {
+              "method": [
+                "POST"
+              ]
+            },
+            "predicate_raw": "method === 'POST'",
+            "source_span": {
+              "end": 129381,
+              "start": 128849
+            }
+          }
+        ],
+        "sections": []
+      }
+    },
+    "request": {
+      "defaults": {
+      "fetchGreeks": {
+        "instrument_name": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "unified_param",
+          "value": null
+        }
+      },
+        "cancelAllOrders": {
+          "subaccount_id": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          }
+        },
+        "cancelOrder": {
+          "instrument_name": {
+            "kind": "reference",
+            "reason": "identifier_reference",
+            "source": "symbol",
+            "source_class": "optional",
+            "value": null
+          },
+          "order_id": {
+            "kind": "reference",
+            "source": "id",
+            "source_class": "unified_param"
+          },
+          "subaccount_id": {
+            "kind": "reference",
+            "reason": "identifier_reference",
+            "source": "subaccount_id",
+            "source_class": "optional",
+            "value": null
+          }
+        },
+        "createOrder": {
+          "amount": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "direction": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "instrument_name": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "limit_price": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "max_fee": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "nonce": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "order_type": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "referral_code": {
+            "kind": "unresolved",
+            "reason": "dynamic_construction",
+            "value": null
+          },
+          "signature_expiry_sec": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "signer": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "subaccount_id": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          }
+        },
+        "editOrder": {
+          "amount": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "direction": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "instrument_name": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "limit_price": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "max_fee": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "nonce": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "order_id_to_cancel": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "order_type": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "signature_expiry_sec": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "signer": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "subaccount_id": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          }
+        },
+        "fetchBalance": {
+          "wallet": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "source": "api_key",
+            "source_class": "credential",
+            "value": null
+          }
+        },
+        "fetchCanceledOrders": {
+          "subaccount_id": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          }
+        },
+        "fetchClosedOrders": {
+          "subaccount_id": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          }
+        },
+        "fetchDeposits": {
+          "subaccount_id": {
+            "kind": "reference",
+            "reason": "identifier_reference",
+            "source": "subaccount_id",
+            "source_class": "optional",
+            "value": null
+          }
+        },
+        "fetchFundingHistory": {
+          "subaccount_id": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          }
+        },
+        "fetchFundingRate": {
+          "instrument_name": {
+            "kind": "reference",
+            "source": "symbol",
+            "source_class": "unified_param"
+          }
+        },
+        "fetchFundingRateHistory": {
+          "instrument_name": {
+            "kind": "reference",
+            "reason": "identifier_reference",
+            "source": "symbol",
+            "source_class": "unified_param",
+            "value": null
+          }
+        },
+        "fetchMyTrades": {
+          "subaccount_id": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          }
+        },
+        "fetchOpenOrders": {
+          "status": {
+            "kind": "literal",
+            "reason": null,
+            "value": "open"
+          },
+          "subaccount_id": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          }
+        },
+        "fetchOptionMarkets": {
+          "expired": {
+            "kind": "literal",
+            "reason": null,
+            "value": false
+          },
+          "instrument_type": {
+            "kind": "literal",
+            "reason": null,
+            "value": "option"
+          }
+        },
+        "fetchOrderTrades": {
+          "order_id": {
+            "kind": "reference",
+            "reason": "identifier_reference",
+            "source": "id",
+            "source_class": "unified_param",
+            "value": null
+          },
+          "subaccount_id": {
+            "kind": "reference",
+            "reason": "identifier_reference",
+            "source": "subaccount_id",
+            "source_class": "optional",
+            "value": null
+          }
+        },
+        "fetchOrders": {
+          "subaccount_id": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          }
+        },
+        "fetchPositions": {
+          "subaccount_id": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          }
+        },
+        "fetchSpotMarkets": {
+          "expired": {
+            "kind": "literal",
+            "reason": null,
+            "value": false
+          },
+          "instrument_type": {
+            "kind": "literal",
+            "reason": null,
+            "value": "erc20"
+          }
+        },
+        "fetchSwapMarkets": {
+          "expired": {
+            "kind": "literal",
+            "reason": null,
+            "value": false
+          },
+          "instrument_type": {
+            "kind": "literal",
+            "reason": null,
+            "value": "perp"
+          }
+        },
+        "fetchTicker": {
+          "instrument_name": {
+            "kind": "reference",
+            "reason": "identifier_reference",
+            "source": "symbol",
+            "source_class": "unified_param",
+            "value": null
+          }
+        },
+        "fetchTrades": {
+          "from_timestamp": {
+            "source": "since",
+            "source_class": "optional"
+          },
+          "instrument_name": {
+            "kind": "reference",
+            "source": "symbol",
+            "source_class": "unified_param"
+          },
+          "page_size": {
+            "source": "limit",
+            "source_class": "optional"
+          },
+          "to_timestamp": {
+            "source": "until",
+            "source_class": "optional"
+          }
+        },
+        "fetchWithdrawals": {
+          "subaccount_id": {
+            "kind": "reference",
+            "reason": "identifier_reference",
+            "source": "subaccount_id",
+            "source_class": "optional",
+            "value": null
+          }
+        }
+      },
+      "endpoint_selection": {
+        "cancelAllOrders": {
+          "consume": [],
+          "default": "private_post_cancel_all",
+          "rules": [
+            {
+              "endpoint": "private_post_cancel_by_instrument",
+              "when": {
+                "instrument_name": "present"
+              }
+            }
+          ]
+        },
+        "cancelOrder": {
+          "consume": [],
+          "default": "private_post_cancel",
+          "rules": [
+            {
+              "endpoint": "private_post_cancel_by_label",
+              "when": {
+                "label": "present"
+              }
+            },
+            {
+              "endpoint": "private_post_cancel_trigger_order",
+              "when": {
+                "trigger": "present"
+              }
+            }
+          ]
+        },
+        "createOrder": {
+          "consume": [
+            "debug"
+          ],
+          "default": "private_post_order",
+          "rules": [
+            {
+              "endpoint": "private_post_order_debug",
+              "when": {
+                "debug": true
+              }
+            }
+          ]
+        }
+      },
+      "shape": {
+        "private": {
+          "body_encoding": "json",
+          "content_type": "application/json",
+          "endpoints": [
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "cancel"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "cancel_all"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "cancel_batch_quotes"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "cancel_batch_rfqs"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "cancel_by_instrument"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "cancel_by_label"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "cancel_by_nonce"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "cancel_quote"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "cancel_rfq"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "cancel_trigger_order"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "change_subaccount_label"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "create_subaccount"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "deposit"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "edit_session_key"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "execute_quote"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "expired_and_cancelled_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_account"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_all_portfolios"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_collaterals"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_deposit_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_erc20_transfer_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_funding_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_interest_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_invite_code"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_liquidation_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_liquidator_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_margin"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_mmp_config"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_notificationsv"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_open_orders"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_option_settlement_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_order"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_order_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_orders"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_positions"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_quotes"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_rfqs"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_subaccount"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_subaccount_value_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_subaccounts"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_trade_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_withdrawal_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "liquidate"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "order"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "order_debug"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "poll_quotes"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "poll_rfqs"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "register_invite"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "register_scoped_session_key"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "replace"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "reset_mmp"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "rfq_get_best_quote"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "send_quote"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "send_rfq"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "session_keys"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "set_cancel_on_disconnect"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "set_mmp_config"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "transfer_erc20"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "transfer_position"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "transfer_positions"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "update_notifications"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "withdraw"
+            }
+          ],
+          "patch_count": 0,
+          "unresolved_reason": null
+        },
+        "public": {
+          "body_encoding": "json",
+          "content_type": "application/json",
+          "endpoints": [
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "get_all_currencies"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "build_register_session_key_tx"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "create_subaccount_debug"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "deposit_debug"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "deregister_session_key"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "estimate_integrator_points"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "execute_quote_debug"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_all_currencies"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_all_instruments"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_all_points"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_bridge_balances"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_currency"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_descendant_tree"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_ethena_participants"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_etherfi_effective_balances"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_funding_rate_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_instrument"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_instruments"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_interest_rate_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_invite_code"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_kelp_effective_balances"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_latest_signed_feeds"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_liquidation_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_live_incidents"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_maker_program_scores"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_maker_programs"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_margin"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_option_settlement_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_option_settlement_prices"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_points"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_points_leaderboard"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_spot_feed_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_spot_feed_history_candles"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_swell_percent_points"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_ticker"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_time"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_trade_history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_transaction"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_tree_roots"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_vault_assets"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_vault_balances"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_vault_share"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "get_vault_statistics"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "login"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "margin_watch"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "register_invite"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "register_session_key"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "send_quote_debug"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "statistics"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "validate_invite_code"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "withdraw_debug"
+            }
+          ],
+          "patch_count": 0,
+          "unresolved_reason": null
+        }
+      }
+    },
+    "transaction_classification": {
+      "fetchGreeks": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "cancelAllOrders": {
+        "on_chain": false,
+        "transactional": true
+      },
+      "cancelOrder": {
+        "on_chain": false,
+        "transactional": true
+      },
+      "createOrder": {
+        "on_chain": false,
+        "transactional": true
+      },
+      "editOrder": {
+        "on_chain": false,
+        "transactional": true
+      },
+      "fetchBalance": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchCanceledOrders": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchClosedOrders": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchCurrencies": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchDeposits": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchFundingHistory": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchFundingRate": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchFundingRateHistory": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchMarkets": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchMyTrades": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchOpenOrders": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchOptionMarkets": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchOrderTrades": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchOrders": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchPositions": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchSpotMarkets": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchSwapMarkets": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchTicker": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchTime": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchTrades": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchWithdrawals": {
+        "on_chain": false,
+        "transactional": false
+      }
+    },
+    "unified": {
+      "fetchGreeks": [
+        "publicPostGetTicker"
+      ],
+      "cancelAllOrders": [
+        "privatePostCancelAll",
+        "privatePostCancelByInstrument"
+      ],
+      "cancelOrder": [
+        "privatePostCancel",
+        "privatePostCancelByLabel",
+        "privatePostCancelTriggerOrder"
+      ],
+      "createOrder": [
+        "privatePostOrder",
+        "privatePostOrderDebug"
+      ],
+      "editOrder": [
+        "privatePostReplace"
+      ],
+      "fetchBalance": [
+        "privatePostGetAllPortfolios"
+      ],
+      "fetchCanceledOrders": [
+        "privatePostGetOrders"
+      ],
+      "fetchClosedOrders": [
+        "privatePostGetOrders"
+      ],
+      "fetchCurrencies": [
+        "publicGetGetAllCurrencies"
+      ],
+      "fetchDeposits": [
+        "privatePostGetDepositHistory"
+      ],
+      "fetchFundingHistory": [
+        "privatePostGetFundingHistory"
+      ],
+      "fetchFundingRate": [
+        "publicPostGetFundingRateHistory"
+      ],
+      "fetchFundingRateHistory": [
+        "publicPostGetFundingRateHistory"
+      ],
+      "fetchMarkets": [
+        "publicPostGetAllInstruments"
+      ],
+      "fetchMyTrades": [
+        "privatePostGetTradeHistory"
+      ],
+      "fetchOpenOrders": [
+        "privatePostGetOrders"
+      ],
+      "fetchOptionMarkets": [
+        "publicPostGetAllInstruments"
+      ],
+      "fetchOrderTrades": [
+        "privatePostGetTradeHistory"
+      ],
+      "fetchOrders": [
+        "privatePostGetOrders"
+      ],
+      "fetchPositions": [
+        "privatePostGetPositions"
+      ],
+      "fetchSpotMarkets": [
+        "publicPostGetAllInstruments"
+      ],
+      "fetchSwapMarkets": [
+        "publicPostGetAllInstruments"
+      ],
+      "fetchTicker": [
+        "publicPostGetTicker"
+      ],
+      "fetchTime": [
+        "publicPostGetTime"
+      ],
+      "fetchTrades": [
+        "publicPostGetTradeHistory"
+      ],
+      "fetchWithdrawals": [
+        "privatePostGetWithdrawalHistory"
+      ]
+    }
+  },
+  "errors": {
+    "class_hierarchy": {
+      "ancestors": {
+        "AccountNotEnabled": [
+          "PermissionDenied",
+          "AuthenticationError",
+          "ExchangeError",
+          "BaseError"
+        ],
+        "AccountSuspended": [
+          "AuthenticationError",
+          "ExchangeError",
+          "BaseError"
+        ],
+        "AddressPending": [
+          "InvalidAddress",
+          "ExchangeError",
+          "BaseError"
+        ],
+        "ArgumentsRequired": [
+          "ExchangeError",
+          "BaseError"
+        ],
+        "AuthenticationError": [
+          "ExchangeError",
+          "BaseError"
+        ],
+        "BadRequest": [
+          "ExchangeError",
+          "BaseError"
+        ],
+        "BadResponse": [
+          "OperationFailed",
+          "BaseError"
+        ],
+        "BadSymbol": [
+          "BadRequest",
+          "ExchangeError",
+          "BaseError"
+        ],
+        "BaseError": [],
+        "CancelPending": [
+          "OperationFailed",
+          "BaseError"
+        ],
+        "ChecksumError": [
+          "InvalidNonce",
+          "NetworkError",
+          "OperationFailed",
+          "BaseError"
+        ],
+        "ContractUnavailable": [
+          "InvalidOrder",
+          "ExchangeError",
+          "BaseError"
+        ],
+        "DDoSProtection": [
+          "NetworkError",
+          "OperationFailed",
+          "BaseError"
+        ],
+        "DuplicateOrderId": [
+          "InvalidOrder",
+          "ExchangeError",
+          "BaseError"
+        ],
+        "ExchangeClosedByUser": [
+          "ExchangeError",
+          "BaseError"
+        ],
+        "ExchangeError": [
+          "BaseError"
+        ],
+        "ExchangeNotAvailable": [
+          "NetworkError",
+          "OperationFailed",
+          "BaseError"
+        ],
+        "InsufficientFunds": [
+          "ExchangeError",
+          "BaseError"
+        ],
+        "InvalidAddress": [
+          "ExchangeError",
+          "BaseError"
+        ],
+        "InvalidNonce": [
+          "NetworkError",
+          "OperationFailed",
+          "BaseError"
+        ],
+        "InvalidOrder": [
+          "ExchangeError",
+          "BaseError"
+        ],
+        "InvalidProxySettings": [
+          "ExchangeError",
+          "BaseError"
+        ],
+        "ManualInteractionNeeded": [
+          "OperationRejected",
+          "ExchangeError",
+          "BaseError"
+        ],
+        "MarginModeAlreadySet": [
+          "NoChange",
+          "OperationRejected",
+          "ExchangeError",
+          "BaseError"
+        ],
+        "MarketClosed": [
+          "OperationRejected",
+          "ExchangeError",
+          "BaseError"
+        ],
+        "NetworkError": [
+          "OperationFailed",
+          "BaseError"
+        ],
+        "NoChange": [
+          "OperationRejected",
+          "ExchangeError",
+          "BaseError"
+        ],
+        "NotSupported": [
+          "ExchangeError",
+          "BaseError"
+        ],
+        "NullResponse": [
+          "BadResponse",
+          "OperationFailed",
+          "BaseError"
+        ],
+        "OnMaintenance": [
+          "ExchangeNotAvailable",
+          "NetworkError",
+          "OperationFailed",
+          "BaseError"
+        ],
+        "OperationFailed": [
+          "BaseError"
+        ],
+        "OperationRejected": [
+          "ExchangeError",
+          "BaseError"
+        ],
+        "OrderImmediatelyFillable": [
+          "InvalidOrder",
+          "ExchangeError",
+          "BaseError"
+        ],
+        "OrderNotCached": [
+          "InvalidOrder",
+          "ExchangeError",
+          "BaseError"
+        ],
+        "OrderNotFillable": [
+          "InvalidOrder",
+          "ExchangeError",
+          "BaseError"
+        ],
+        "OrderNotFound": [
+          "InvalidOrder",
+          "ExchangeError",
+          "BaseError"
+        ],
+        "PermissionDenied": [
+          "AuthenticationError",
+          "ExchangeError",
+          "BaseError"
+        ],
+        "RateLimitExceeded": [
+          "NetworkError",
+          "OperationFailed",
+          "BaseError"
+        ],
+        "RequestTimeout": [
+          "NetworkError",
+          "OperationFailed",
+          "BaseError"
+        ],
+        "RestrictedLocation": [
+          "OperationRejected",
+          "ExchangeError",
+          "BaseError"
+        ],
+        "UnsubscribeError": [
+          "BaseError"
+        ]
+      },
+      "flat_parents": {
+        "AccountNotEnabled": "PermissionDenied",
+        "AccountSuspended": "AuthenticationError",
+        "AddressPending": "InvalidAddress",
+        "ArgumentsRequired": "ExchangeError",
+        "AuthenticationError": "ExchangeError",
+        "BadRequest": "ExchangeError",
+        "BadResponse": "OperationFailed",
+        "BadSymbol": "BadRequest",
+        "BaseError": null,
+        "CancelPending": "OperationFailed",
+        "ChecksumError": "InvalidNonce",
+        "ContractUnavailable": "InvalidOrder",
+        "DDoSProtection": "NetworkError",
+        "DuplicateOrderId": "InvalidOrder",
+        "ExchangeClosedByUser": "ExchangeError",
+        "ExchangeError": "BaseError",
+        "ExchangeNotAvailable": "NetworkError",
+        "InsufficientFunds": "ExchangeError",
+        "InvalidAddress": "ExchangeError",
+        "InvalidNonce": "NetworkError",
+        "InvalidOrder": "ExchangeError",
+        "InvalidProxySettings": "ExchangeError",
+        "ManualInteractionNeeded": "OperationRejected",
+        "MarginModeAlreadySet": "NoChange",
+        "MarketClosed": "OperationRejected",
+        "NetworkError": "OperationFailed",
+        "NoChange": "OperationRejected",
+        "NotSupported": "ExchangeError",
+        "NullResponse": "BadResponse",
+        "OnMaintenance": "ExchangeNotAvailable",
+        "OperationFailed": "BaseError",
+        "OperationRejected": "ExchangeError",
+        "OrderImmediatelyFillable": "InvalidOrder",
+        "OrderNotCached": "InvalidOrder",
+        "OrderNotFillable": "InvalidOrder",
+        "OrderNotFound": "InvalidOrder",
+        "PermissionDenied": "AuthenticationError",
+        "RateLimitExceeded": "NetworkError",
+        "RequestTimeout": "NetworkError",
+        "RestrictedLocation": "OperationRejected",
+        "UnsubscribeError": "BaseError"
+      },
+      "tree": {
+        "BaseError": {
+          "ExchangeError": {
+            "ArgumentsRequired": {},
+            "AuthenticationError": {
+              "AccountSuspended": {},
+              "PermissionDenied": {
+                "AccountNotEnabled": {}
+              }
+            },
+            "BadRequest": {
+              "BadSymbol": {}
+            },
+            "ExchangeClosedByUser": {},
+            "InsufficientFunds": {},
+            "InvalidAddress": {
+              "AddressPending": {}
+            },
+            "InvalidOrder": {
+              "ContractUnavailable": {},
+              "DuplicateOrderId": {},
+              "OrderImmediatelyFillable": {},
+              "OrderNotCached": {},
+              "OrderNotFillable": {},
+              "OrderNotFound": {}
+            },
+            "InvalidProxySettings": {},
+            "NotSupported": {},
+            "OperationRejected": {
+              "ManualInteractionNeeded": {},
+              "MarketClosed": {},
+              "NoChange": {
+                "MarginModeAlreadySet": {}
+              },
+              "RestrictedLocation": {}
+            }
+          },
+          "OperationFailed": {
+            "BadResponse": {
+              "NullResponse": {}
+            },
+            "CancelPending": {},
+            "NetworkError": {
+              "DDoSProtection": {},
+              "ExchangeNotAvailable": {
+                "OnMaintenance": {}
+              },
+              "InvalidNonce": {
+                "ChecksumError": {}
+              },
+              "RateLimitExceeded": {},
+              "RequestTimeout": {}
+            }
+          },
+          "UnsubscribeError": {}
+        }
+      }
+    },
+    "handle_errors": {
+      "exception_scopes": {},
+
+      "runtime_body_checks": [],
+      "runtime_code_fields": [
+        "code",
+        "ret_code",
+        "retCode",
+        "error_code"
+      ],
+      "error_code_fields": [
+        {
+          "field": "code",
+          "field2": null,
+          "method": "safeString",
+          "object": "error",
+          "object_path": [
+            "response",
+            "error"
+          ],
+          "roles": [
+            "error_code"
+          ],
+          "sentinel_values": null
+        }
+      ]
+    },
+    "retry_classification": {
+      "auth": [
+        "AuthenticationError"
+      ],
+      "network": [
+        "RequestTimeout"
+      ],
+      "non_retryable": [
+        "BadRequest",
+        "ExchangeError",
+        "InsufficientFunds",
+        "InvalidOrder",
+        "OrderNotFound"
+      ],
+      "rate_limit": [
+        "DDoSProtection",
+        "RateLimitExceeded"
+      ],
+      "server_busy": [
+        "ExchangeNotAvailable"
+      ]
+    },
+    "status_map": {
+      "400": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ],
+      "401": [
+        {
+          "class": "AuthenticationError",
+          "source": "http_exceptions"
+        }
+      ],
+      "403": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ],
+      "404": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ],
+      "405": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ],
+      "407": [
+        {
+          "class": "AuthenticationError",
+          "source": "http_exceptions"
+        }
+      ],
+      "408": [
+        {
+          "class": "RequestTimeout",
+          "source": "http_exceptions"
+        }
+      ],
+      "409": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ],
+      "410": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ],
+      "418": [
+        {
+          "class": "DDoSProtection",
+          "source": "http_exceptions"
+        }
+      ],
+      "422": [
+        {
+          "class": "ExchangeError",
+          "source": "http_exceptions"
+        }
+      ],
+      "429": [
+        {
+          "class": "RateLimitExceeded",
+          "source": "http_exceptions"
+        }
+      ],
+      "451": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ],
+      "500": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ],
+      "501": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ],
+      "502": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ],
+      "503": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ],
+      "504": [
+        {
+          "class": "RequestTimeout",
+          "source": "http_exceptions"
+        }
+      ],
+      "511": [
+        {
+          "class": "AuthenticationError",
+          "source": "http_exceptions"
+        }
+      ],
+      "520": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ],
+      "521": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ],
+      "522": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ],
+      "525": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ],
+      "526": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ],
+      "530": [
+        {
+          "class": "ExchangeNotAvailable",
+          "source": "http_exceptions"
+        }
+      ]
+    }
+  },
+  "exchange": {
+    "alias": false,
+    "certified": false,
+    "country": [],
+    "id": "derive",
+    "name": "derive",
+    "pro": true,
+    "referral": {
+      "discount": 0,
+      "url": "https://www.derive.xyz/invite/3VB0B"
+    },
+    "version": "v1"
+  },
+  "fees": {
+    "funding": {
+      "deposit": {},
+      "percentage": "__undefined",
+      "tierBased": "__undefined",
+      "withdraw": {}
+    },
+    "static_market_fees": false,
+    "trading": {
+      "maker": "__undefined",
+      "percentage": "__undefined",
+      "taker": "__undefined",
+      "tierBased": "__undefined"
+    }
+  },
+  "frozen": true,
+  "hand_owned": true,
+  "markets": {
+    "symbol_patterns": {
+      "option": {
+        "case": "upper",
+        "date_format": "yyyymmdd",
+        "pattern": "option_base_yyyymmdd",
+        "prefix": null,
+        "separator": "",
+        "suffix": null
+      },
+      "spot": {
+        "case": "upper",
+        "date_format": null,
+        "pattern": "dash_upper",
+        "prefix": null,
+        "separator": "-",
+        "suffix": null
+      },
+      "swap": {
+        "case": "upper",
+        "date_format": null,
+        "pattern": "suffix_perp",
+        "prefix": null,
+        "separator": "-",
+        "suffix": "-PERP"
+      }
+    },
+    "option_quantity": {
+      "canonical_unit": "base",
+      "contract_size": null,
+      "wire_field": "amount",
+      "wire_unit": "base"
+    },
+    "greeks_conventions": {
+      "delta": {
+        "supported": true,
+        "native_field": "option_pricing.delta",
+        "denomination": "underlying",
+        "unit": "ratio",
+        "bump_size": 1.0,
+        "time_basis": null
+      },
+      "gamma": {
+        "supported": true,
+        "native_field": "option_pricing.gamma",
+        "denomination": "delta",
+        "unit": "delta_per_underlying_unit",
+        "bump_size": 1.0,
+        "time_basis": null
+      },
+      "vega": {
+        "supported": true,
+        "native_field": "option_pricing.vega",
+        "denomination": "option_premium",
+        "unit": "premium_per_vol_point",
+        "bump_size": 0.01,
+        "time_basis": null
+      },
+      "theta": {
+        "supported": true,
+        "native_field": "option_pricing.theta",
+        "denomination": "option_premium",
+        "unit": "premium_per_day",
+        "bump_size": 1.0,
+        "time_basis": "calendar_day"
+      },
+      "rho": {
+        "supported": true,
+        "native_field": "option_pricing.rho",
+        "denomination": "option_premium",
+        "unit": "premium_per_interest_point",
+        "bump_size": 0.01,
+        "time_basis": null
+      }
+    },
+    "currencies": {
+      "AAVE": {
+        "code": "AAVE",
+        "fees": {},
+        "id": "AAVE",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "ADA": {
+        "code": "ADA",
+        "fees": {},
+        "id": "ADA",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "ARB": {
+        "code": "ARB",
+        "fees": {},
+        "id": "ARB",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "AVAX": {
+        "code": "AVAX",
+        "fees": {},
+        "id": "AVAX",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "BITCOIN": {
+        "code": "BITCOIN",
+        "fees": {},
+        "id": "BITCOIN",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "BNB": {
+        "code": "BNB",
+        "fees": {},
+        "id": "BNB",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "BTC": {
+        "code": "BTC",
+        "fees": {},
+        "id": "BTC",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "CBADA": {
+        "code": "CBADA",
+        "fees": {},
+        "id": "CBADA",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "CBBTC": {
+        "code": "CBBTC",
+        "fees": {},
+        "id": "CBBTC",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "CC": {
+        "code": "CC",
+        "fees": {},
+        "id": "CC",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "DAI": {
+        "code": "DAI",
+        "fees": {},
+        "id": "DAI",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "DEGEN": {
+        "code": "DEGEN",
+        "fees": {},
+        "id": "DEGEN",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "DOGE": {
+        "code": "DOGE",
+        "fees": {},
+        "id": "DOGE",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "DRV": {
+        "code": "DRV",
+        "fees": {},
+        "id": "DRV",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "EBTC": {
+        "code": "EBTC",
+        "fees": {},
+        "id": "EBTC",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "EIGEN": {
+        "code": "EIGEN",
+        "fees": {},
+        "id": "EIGEN",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "ENA": {
+        "code": "ENA",
+        "fees": {},
+        "id": "ENA",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "ETH": {
+        "code": "ETH",
+        "fees": {},
+        "id": "ETH",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "FXUSDC": {
+        "code": "FXUSDC",
+        "fees": {},
+        "id": "FXUSDC",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "HYPE": {
+        "code": "HYPE",
+        "fees": {},
+        "id": "HYPE",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "JITOSOL": {
+        "code": "JITOSOL",
+        "fees": {},
+        "id": "JITOSOL",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "KHYPE": {
+        "code": "KHYPE",
+        "fees": {},
+        "id": "KHYPE",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "LBTC": {
+        "code": "LBTC",
+        "fees": {},
+        "id": "LBTC",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "LINK": {
+        "code": "LINK",
+        "fees": {},
+        "id": "LINK",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "MUSD": {
+        "code": "MUSD",
+        "fees": {},
+        "id": "MUSD",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "NEAR": {
+        "code": "NEAR",
+        "fees": {},
+        "id": "NEAR",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "OLAS": {
+        "code": "OLAS",
+        "fees": {},
+        "id": "OLAS",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "OP": {
+        "code": "OP",
+        "fees": {},
+        "id": "OP",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "PEPE": {
+        "code": "PEPE",
+        "fees": {},
+        "id": "PEPE",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "PUFETH": {
+        "code": "PUFETH",
+        "fees": {},
+        "id": "PUFETH",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "RSETH": {
+        "code": "RSETH",
+        "fees": {},
+        "id": "RSETH",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "RSWETH": {
+        "code": "RSWETH",
+        "fees": {},
+        "id": "RSWETH",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "SDAI": {
+        "code": "SDAI",
+        "fees": {},
+        "id": "SDAI",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "SEI": {
+        "code": "SEI",
+        "fees": {},
+        "id": "SEI",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "SFP": {
+        "code": "SFP",
+        "fees": {},
+        "id": "SFP",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "SNX": {
+        "code": "SNX",
+        "fees": {},
+        "id": "SNX",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "SOL": {
+        "code": "SOL",
+        "fees": {},
+        "id": "SOL",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "SOLVBTC": {
+        "code": "SOLVBTC",
+        "fees": {},
+        "id": "SOLVBTC",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "SOLVBTCBBN": {
+        "code": "SOLVBTCBBN",
+        "fees": {},
+        "id": "SOLVBTCBBN",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "SUI": {
+        "code": "SUI",
+        "fees": {},
+        "id": "SUI",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "SUSDE": {
+        "code": "SUSDE",
+        "fees": {},
+        "id": "SUSDE",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "TAO": {
+        "code": "TAO",
+        "fees": {},
+        "id": "TAO",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "TIA": {
+        "code": "TIA",
+        "fees": {},
+        "id": "TIA",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "TRUMP": {
+        "code": "TRUMP",
+        "fees": {},
+        "id": "TRUMP",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "UNI": {
+        "code": "UNI",
+        "fees": {},
+        "id": "UNI",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "USDC": {
+        "code": "USDC",
+        "fees": {},
+        "id": "USDC",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "USDE": {
+        "code": "USDE",
+        "fees": {},
+        "id": "USDE",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "USDH": {
+        "code": "USDH",
+        "fees": {},
+        "id": "USDH",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "USDT": {
+        "code": "USDT",
+        "fees": {},
+        "id": "USDT",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "WEETH": {
+        "code": "WEETH",
+        "fees": {},
+        "id": "WEETH",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "WIF": {
+        "code": "WIF",
+        "fees": {},
+        "id": "WIF",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "WLD": {
+        "code": "WLD",
+        "fees": {},
+        "id": "WLD",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "WSTETH": {
+        "code": "WSTETH",
+        "fees": {},
+        "id": "WSTETH",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "XAUT": {
+        "code": "XAUT",
+        "fees": {},
+        "id": "XAUT",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "XRP": {
+        "code": "XRP",
+        "fees": {},
+        "id": "XRP",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      },
+      "ZEC": {
+        "code": "ZEC",
+        "fees": {},
+        "id": "ZEC",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "networks": {}
+      }
+    },
+    "patterns": {
+      "currency_aliases": {
+        "BCHSV": "BSV",
+        "XBT": "BTC"
+      },
+      "option": {
+        "anomalies": [],
+        "anomaly_count": 0,
+        "case": "upper",
+        "examples": [
+          {
+            "baseId": "ZEC",
+            "id": "ZEC-20260925-800-P",
+            "quoteId": "USDC",
+            "symbol": "ZEC/USDC:USDC-260925-800-P"
+          },
+          {
+            "baseId": "ZEC",
+            "id": "ZEC-20260925-800-C",
+            "quoteId": "USDC",
+            "symbol": "ZEC/USDC:USDC-260925-800-C"
+          },
+          {
+            "baseId": "ZEC",
+            "id": "ZEC-20260925-700-P",
+            "quoteId": "USDC",
+            "symbol": "ZEC/USDC:USDC-260925-700-P"
+          }
+        ],
+        "id_structure": "base_expiry_strike_type",
+        "sample_count": 100,
+        "separator": null,
+        "suffix": null
+      },
+      "spot": {
+        "anomalies": [],
+        "anomaly_count": 0,
+        "case": "upper",
+        "examples": [
+          {
+            "baseId": "WSTETH",
+            "id": "WSTETH-USDC",
+            "quoteId": "USDC",
+            "symbol": "WSTETH/USDC"
+          },
+          {
+            "baseId": "WEETH",
+            "id": "WEETH-USDC",
+            "quoteId": "USDC",
+            "symbol": "WEETH/USDC"
+          },
+          {
+            "baseId": "USDT",
+            "id": "USDT-USDC",
+            "quoteId": "USDC",
+            "symbol": "USDT/USDC"
+          }
+        ],
+        "id_structure": "baseId_quoteId",
+        "sample_count": 20,
+        "separator": "-",
+        "suffix": null
+      },
+      "swap": {
+        "anomalies": [],
+        "anomaly_count": 0,
+        "case": "upper",
+        "examples": [
+          {
+            "baseId": "BTC",
+            "id": "BTC-PERP",
+            "quoteId": "USD",
+            "symbol": "BTC/USD:USDC"
+          },
+          {
+            "baseId": "ETH",
+            "id": "ETH-PERP",
+            "quoteId": "USD",
+            "symbol": "ETH/USD:USDC"
+          },
+          {
+            "baseId": "ZEC",
+            "id": "ZEC-PERP",
+            "quoteId": "USD",
+            "symbol": "ZEC/USD:USDC"
+          }
+        ],
+        "id_structure": "baseId_quoteId",
+        "sample_count": 16,
+        "separator": "-",
+        "suffix": "-PERP"
+      }
+    }
+  },
+  "normalization": {
+    "field_maps": {
+      "_unresolved_reason": null,
+      "balance": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "datetime": null,
+          "debt": null,
+          "free": null,
+          "info": null,
+          "timestamp": null,
+          "total": {
+            "coercion": "safeNumber",
+            "collection_key": "collaterals",
+            "index_coercion": "safeCurrencyCode",
+            "index_key": "currency",
+            "kind": "keyed_collection",
+            "value_key": "amount"
+          },
+          "used": null
+        }
+      },
+      "borrow_interest": null,
+      "borrow_rate": null,
+      "currency": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "id": {
+            "coercion": "safeString",
+            "key": "currency"
+          },
+          "limits": {
+            "default": {
+              "deposit": {
+                "max": null,
+                "min": null
+              },
+              "withdraw": {
+                "max": null,
+                "min": null
+              }
+            }
+          }
+        }
+      },
+      "deposit_address": null,
+      "funding_history": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "amount": null,
+          "code": {
+            "coercion": "safeString",
+            "default": "USDC"
+          },
+          "datetime": {
+            "coercion": "iso8601",
+            "format": "ms",
+            "key": "timestamp"
+          },
+          "id": null,
+          "info": null,
+          "rate": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "funding"
+          },
+          "symbol": null,
+          "timestamp": {
+            "coercion": "safeInteger",
+            "format": "ms",
+            "key": "timestamp"
+          }
+        }
+      },
+      "funding_rate": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "datetime": null,
+          "estimatedSettlePrice": null,
+          "fundingDatetime": {
+            "coercion": "iso8601",
+            "format": "ms",
+            "key": "timestamp"
+          },
+          "fundingRate": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "funding_rate"
+          },
+          "fundingTimestamp": {
+            "coercion": "safeInteger",
+            "format": "ms",
+            "key": "timestamp"
+          },
+          "indexPrice": null,
+          "info": null,
+          "interestRate": null,
+          "interval": null,
+          "markPrice": null,
+          "nextFundingDatetime": null,
+          "nextFundingRate": null,
+          "nextFundingTimestamp": null,
+          "previousFundingDatetime": null,
+          "previousFundingRate": null,
+          "previousFundingTimestamp": null,
+          "symbol": null,
+          "timestamp": null
+        }
+      },
+      "funding_rate_history": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "datetime": {
+            "coercion": "iso8601",
+            "format": "ms",
+            "key": "timestamp"
+          },
+          "fundingRate": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "funding_rate"
+          },
+          "info": null,
+          "symbol": null,
+          "timestamp": {
+            "coercion": "safeInteger",
+            "format": "ms",
+            "key": "timestamp"
+          }
+        }
+      },
+      "greeks": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "askImpliedVolatility": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "option_pricing.ask_iv"
+          },
+          "askPrice": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "best_ask_price"
+          },
+          "askSize": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "best_ask_amount"
+          },
+          "bidImpliedVolatility": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "option_pricing.bid_iv"
+          },
+          "bidPrice": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "best_bid_price"
+          },
+          "bidSize": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "best_bid_amount"
+          },
+          "datetime": null,
+          "delta": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "option_pricing.delta"
+          },
+          "gamma": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "option_pricing.gamma"
+          },
+          "info": null,
+          "lastPrice": null,
+          "markImpliedVolatility": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "option_pricing.iv"
+          },
+          "markPrice": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "option_pricing.mark_price"
+          },
+          "rho": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "option_pricing.rho"
+          },
+          "symbol": null,
+          "theta": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "option_pricing.theta"
+          },
+          "timestamp": {
+            "coercion": "safeInteger",
+            "format": "ms",
+            "key": "timestamp"
+          },
+          "underlyingPrice": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "index_price"
+          },
+          "vega": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "option_pricing.vega"
+          }
+        }
+      },
+      "income": {
+        "_unresolved_reason": null,
+        "extras": [
+          {
+            "coercion": "safeString",
+            "key": "funding",
+            "unified_key": "rate"
+          }
+        ],
+        "field_map": {
+          "amount": null,
+          "code": {
+            "coercion": "safeCurrencyCode",
+            "format": null,
+            "key": "USDC"
+          },
+          "datetime": null,
+          "id": null,
+          "info": null,
+          "symbol": null,
+          "timestamp": {
+            "coercion": "safeInteger",
+            "format": "ms",
+            "key": "timestamp"
+          }
+        }
+      },
+      "ledger_entry": null,
+      "leverage": null,
+      "leverage_tiers": null,
+      "liquidation": null,
+      "long_short_ratio": null,
+      "margin_mode": null,
+      "market": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "active": {
+            "coercion": "safeBool",
+            "format": null,
+            "key": "is_active"
+          },
+          "base": {
+            "coercion": "safeCurrencyCode",
+            "format": null,
+            "key": "base_currency"
+          },
+          "baseId": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "base_currency"
+          },
+          "contract": {
+            "coercion": "safeBool",
+            "key": "_bourse_contract"
+          },
+          "contractSize": null,
+          "created": null,
+          "expiry": {
+            "coercion": "safeTimestamp",
+            "format": "ms",
+            "key": "_bourse_expiry"
+          },
+          "expiryDatetime": null,
+          "future": null,
+          "id": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "instrument_name"
+          },
+          "info": null,
+          "inverse": {
+            "coercion": "safeBool",
+            "key": "_bourse_inverse"
+          },
+          "limits": {
+            "sub_field_map": {
+              "amount": {
+                "sub_field_map": {
+                  "max": {
+                    "coercion": "safeNumber",
+                    "format": null,
+                    "key": "maximum_amount"
+                  },
+                  "min": {
+                    "coercion": "safeNumber",
+                    "format": null,
+                    "key": "minimum_amount"
+                  }
+                }
+              },
+              "cost": {
+                "sub_field_map": {
+                  "max": null,
+                  "min": null
+                }
+              },
+              "leverage": {
+                "sub_field_map": {
+                  "max": null,
+                  "min": null
+                }
+              },
+              "price": {
+                "sub_field_map": {
+                  "max": null,
+                  "min": null
+                }
+              }
+            }
+          },
+          "linear": {
+            "coercion": "safeBool",
+            "key": "_bourse_linear"
+          },
+          "maker": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "maker_fee_rate"
+          },
+          "margin": null,
+          "nativeAmountStep": null,
+          "nativeQuantityField": null,
+          "nativeQuantityUnit": null,
+          "option": {
+            "coercion": "safeBool",
+            "key": "_bourse_option"
+          },
+          "optionType": {
+            "coercion": "safeString",
+            "key": "_bourse_option_type"
+          },
+          "percentage": null,
+          "precision": {
+            "sub_field_map": {
+              "amount": {
+                "coercion": "safeNumber",
+                "format": null,
+                "key": "amount_step"
+              },
+              "price": {
+                "coercion": "safeNumber",
+                "format": null,
+                "key": "tick_size"
+              }
+            }
+          },
+          "quantityUnit": null,
+          "quote": {
+            "coercion": "safeCurrencyCode",
+            "format": null,
+            "key": "quote_currency"
+          },
+          "quoteId": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "quote_currency"
+          },
+          "settle": {
+            "coercion": "safeCurrencyCode",
+            "format": null,
+            "key": "_bourse_settle"
+          },
+          "settleId": null,
+          "spot": {
+            "coercion": "safeBool",
+            "key": "_bourse_spot"
+          },
+          "strike": {
+            "coercion": "safeInteger",
+            "format": null,
+            "key": "_bourse_strike"
+          },
+          "subType": null,
+          "swap": {
+            "coercion": "safeBool",
+            "key": "_bourse_swap"
+          },
+          "symbol": {
+            "coercion": "safeString",
+            "key": "_bourse_symbol"
+          },
+          "taker": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "taker_fee_rate"
+          },
+          "tierBased": null,
+          "type": {
+            "coercion": "safeString",
+            "key": "_bourse_market_type"
+          }
+        }
+      },
+      "ohlcv": null,
+      "open_interest": null,
+      "option": null,
+      "option_position": null,
+      "order": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "amount": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "amount"
+          },
+          "average": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "average_price",
+            "zero_as_nil": true
+          },
+          "clientOrderId": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "label",
+            "zero_as_nil": false
+          },
+          "cost": {
+            "coercion": "safeNumber",
+            "kind": "computed",
+            "op": "mul",
+            "operands": [
+              "filled_amount",
+              "average_price"
+            ]
+          },
+          "datetime": null,
+          "fee": {
+            "sub_field_map": {
+              "cost": {
+                "coercion": "safeString",
+                "format": null,
+                "key": "order_fee"
+              },
+              "currency": {
+                "coercion": "safeString",
+                "default": "USDC"
+              },
+              "rate": null
+            }
+          },
+          "fees": null,
+          "filled": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "filled_amount"
+          },
+          "id": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "order_id"
+          },
+          "info": null,
+          "lastTradeTimestamp": null,
+          "lastUpdateTimestamp": {
+            "coercion": "safeInteger",
+            "format": null,
+            "key": "last_update_timestamp"
+          },
+          "postOnly": {
+            "enum_map": {
+              "fok": false,
+              "gtc": false,
+              "ioc": false,
+              "post_only": true
+            },
+            "key": "time_in_force"
+          },
+          "price": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "limit_price"
+          },
+          "reduceOnly": {
+            "coercion": "safeBool",
+            "format": null,
+            "key": "reduce_only"
+          },
+          "remaining": null,
+          "side": {
+            "coercion": "safeString",
+            "enum_map": null,
+            "format": null,
+            "key": "direction"
+          },
+          "status": {
+            "enum_map": {
+              "canceled": "canceled",
+              "cancelled": "canceled",
+              "expired": "canceled",
+              "filled": "closed",
+              "open": "open",
+              "rejected": "rejected",
+              "untriggered": "open"
+            },
+            "key": "order_status"
+          },
+          "stopLossPrice": {
+            "else": null,
+            "guard": {
+              "field": "trigger_type",
+              "in": [
+                "stoploss"
+              ]
+            },
+            "kind": "when",
+            "then": {
+              "coercion": "safeNumber",
+              "key": "trigger_price"
+            }
+          },
+          "stopPrice": {
+            "else": null,
+            "guard": {
+              "field": "trigger_type",
+              "in": [
+                "stoploss"
+              ]
+            },
+            "kind": "when",
+            "then": {
+              "coercion": "safeNumber",
+              "key": "trigger_price"
+            }
+          },
+          "symbol": null,
+          "takeProfitPrice": null,
+          "timeInForce": {
+            "enum_map": {
+              "fok": "FOK",
+              "gtc": "GTC",
+              "ioc": "IOC",
+              "post_only": "PO"
+            },
+            "key": "time_in_force"
+          },
+          "timestamp": {
+            "coercion": "safeInteger2",
+            "format": "ms",
+            "key": "creation_timestamp"
+          },
+          "trades": null,
+          "triggerPrice": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "trigger_price"
+          },
+          "type": {
+            "coercion": "safeStringLower",
+            "enum_map": null,
+            "format": null,
+            "key": "order_type"
+          }
+        }
+      },
+      "position": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "collateral": null,
+          "contractSize": {
+            "coercion": "safeNumber",
+            "default": 1
+          },
+          "contracts": {
+            "coercion": "safeNumber",
+            "key": "amount",
+            "kind": "absolute"
+          },
+          "cumulativeFunding": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "cumulative_funding"
+          },
+          "datetime": null,
+          "entryPrice": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "average_price"
+          },
+          "hedged": null,
+          "id": null,
+          "info": null,
+          "initialMargin": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "initial_margin"
+          },
+          "initialMarginPercentage": null,
+          "lastPrice": null,
+          "lastUpdateTimestamp": null,
+          "leverage": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "leverage"
+          },
+          "liquidationPrice": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "liquidation_price"
+          },
+          "maintenanceMargin": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "maintenance_margin"
+          },
+          "maintenanceMarginPercentage": null,
+          "marginMode": null,
+          "marginRatio": null,
+          "markPrice": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "mark_price"
+          },
+          "netSettlements": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "net_settlements"
+          },
+          "notional": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "_bourse_notional"
+          },
+          "pendingFunding": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "pending_funding"
+          },
+          "percentage": {
+            "coercion": "safeNumber",
+            "kind": "computed",
+            "op": "pnl_percentage",
+            "operands": [
+              "unrealized_pnl",
+              "initial_margin"
+            ]
+          },
+          "realizedPnl": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "realized_pnl"
+          },
+          "side": {
+            "key": "amount",
+            "kind": "sign_direction",
+            "negative": "short",
+            "positive": "long",
+            "zero": null
+          },
+          "stopLossPrice": null,
+          "symbol": null,
+          "takeProfitPrice": null,
+          "timestamp": {
+            "coercion": "safeInteger",
+            "format": "ms",
+            "key": "creation_timestamp"
+          },
+          "totalFees": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "total_fees"
+          },
+          "unrealizedPnl": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "unrealized_pnl"
+          }
+        }
+      },
+      "settlement": null,
+      "ticker": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "ask": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "best_ask_price"
+          },
+          "askVolume": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "best_ask_amount"
+          },
+          "average": null,
+          "baseVolume": null,
+          "bid": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "best_bid_price"
+          },
+          "bidVolume": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "best_bid_amount"
+          },
+          "change": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "stats.percent_change"
+          },
+          "close": null,
+          "datetime": null,
+          "high": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "stats.high"
+          },
+          "indexPrice": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "index_price"
+          },
+          "info": null,
+          "last": null,
+          "low": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "stats.low"
+          },
+          "markPrice": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "mark_price"
+          },
+          "open": null,
+          "percentage": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "stats.percent_change",
+            "scale": 100
+          },
+          "previousClose": null,
+          "quoteVolume": null,
+          "symbol": null,
+          "timestamp": {
+            "coercion": "safeInteger",
+            "format": "ms",
+            "key": "timestamp"
+          },
+          "vwap": null
+        }
+      },
+      "trade": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "amount": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "trade_amount"
+          },
+          "cost": {
+            "coercion": "safeNumber",
+            "kind": "computed",
+            "op": "mul",
+            "operands": [
+              "trade_amount",
+              "trade_price"
+            ]
+          },
+          "datetime": null,
+          "fee": {
+            "sub_field_map": {
+              "cost": {
+                "coercion": "safeNumber",
+                "format": null,
+                "key": "trade_fee"
+              },
+              "currency": {
+                "coercion": "safeString",
+                "default": "USDC"
+              },
+              "rate": null
+            }
+          },
+          "id": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "trade_id"
+          },
+          "info": null,
+          "order": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "order_id"
+          },
+          "price": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "trade_price"
+          },
+          "side": {
+            "coercion": "safeStringLower",
+            "enum_map": null,
+            "format": null,
+            "key": "direction"
+          },
+          "symbol": null,
+          "takerOrMaker": {
+            "coercion": "safeString",
+            "enum_map": null,
+            "format": null,
+            "key": "liquidity_role"
+          },
+          "timestamp": {
+            "coercion": "safeInteger",
+            "format": "ms",
+            "key": "timestamp"
+          },
+          "type": null
+        }
+      },
+      "trading_fee": null,
+      "trading_fees": null,
+      "transaction": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "address": null,
+          "addressFrom": null,
+          "addressTo": null,
+          "amount": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "amount"
+          },
+          "currency": {
+            "coercion": "safeCurrencyCode",
+            "format": null,
+            "key": "asset"
+          },
+          "datetime": null,
+          "fee": null,
+          "id": null,
+          "info": null,
+          "network": null,
+          "status": {
+            "enum_map": {
+              "cancelled": "canceled",
+              "failed": "failed",
+              "pending": "pending",
+              "settled": "ok"
+            },
+            "key": "tx_status"
+          },
+          "tag": null,
+          "tagFrom": null,
+          "tagTo": null,
+          "timestamp": {
+            "coercion": "safeInteger",
+            "format": "ms",
+            "key": "timestamp"
+          },
+          "txid": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "tx_hash"
+          },
+          "type": null,
+          "updated": null
+        }
+      },
+      "transfer": null
+    },
+    "response_envelopes": {
+      "greeks": {
+        "fetchGreeks": {
+          "default": null,
+          "fallback_keys": [],
+          "key": "result"
+        }
+      },
+      "_unresolved_reason": null,
+      "balance": {
+        "fetchBalance": {
+          "default": null,
+          "fallback_keys": [],
+          "key": "result"
+        }
+      },
+      "currency": {
+        "fetchCurrencies": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "result"
+        }
+      },
+      "deposit_address": null,
+      "funding_history": {
+        "fetchFundingHistory": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "result.events"
+        }
+      },
+      "funding_rate": {
+        "fetchFundingRate": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "result.funding_rate_history"
+        }
+      },
+      "funding_rate_history": {
+        "fetchFundingRateHistory": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "result.funding_rate_history"
+        }
+      },
+      "market": {
+        "fetchMarkets": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "result.instruments"
+        },
+        "fetchOptionMarkets": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "result.instruments"
+        },
+        "fetchSpotMarkets": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "result.instruments"
+        },
+        "fetchSwapMarkets": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "result.instruments"
+        }
+      },
+      "ohlcv": null,
+      "order": {
+        "cancelOrder": {
+          "default": null,
+          "fallback_keys": [],
+          "key": "result"
+        },
+        "createOrder": {
+          "default": null,
+          "fallback_keys": [],
+          "key": "result.order"
+        },
+        "editOrder": {
+          "default": null,
+          "fallback_keys": [],
+          "key": "result.order"
+        },
+        "fetchClosedOrders": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "result.orders"
+        },
+        "fetchCanceledOrders": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "result.orders"
+        },
+        "fetchOpenOrders": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "result.orders"
+        },
+        "fetchOrders": {
+          "default": null,
+          "fallback_keys": [],
+          "key": "result.orders"
+        }
+      },
+      "position": {
+        "fetchPositions": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "result.positions"
+        }
+      },
+      "ticker": {
+        "fetchTicker": {
+          "default": {},
+          "fallback_keys": [],
+          "key": "result"
+        }
+      },
+      "trade": {
+        "fetchMyTrades": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "result.trades"
+        },
+        "fetchOrderTrades": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "result.trades"
+        },
+        "fetchTrades": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "result.trades"
+        }
+      },
+      "transaction": {
+        "fetchDeposits": {
+          "default": null,
+          "fallback_keys": [],
+          "key": "result.events"
+        },
+        "fetchWithdrawals": {
+          "default": null,
+          "fallback_keys": [],
+          "key": "result.events"
+        }
+      }
+    }
+  },
+  "oracles": {
+    "live_tier1": {
+      "grades": true
+    },
+    "private_real_recordings": {
+      "grades": true
+    }
+  },
+  "rate_limits": {
+    "buckets": {
+      "buckets": [
+        {
+          "algorithm": "leakyBucket",
+          "axes": [
+            "request"
+          ],
+          "cost_default": 1,
+          "max_size": 1,
+          "rate_limit_ms": 50,
+          "refill_per_sec": 20,
+          "rolling_window_ms": 60000
+        }
+      ],
+      "source": "describe",
+      "unresolved_reason": null
+    },
+    "endpoint_cost_binding": {
+      "axes": [
+        "request"
+      ],
+      "bucket_index": 0
+    },
+    "per_endpoint_cost": {
+      "private.post.cancel": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.cancel_all": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.cancel_batch_quotes": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.cancel_batch_rfqs": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.cancel_by_instrument": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.cancel_by_label": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.cancel_by_nonce": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.cancel_quote": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.cancel_rfq": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.cancel_trigger_order": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.change_subaccount_label": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.create_subaccount": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.deposit": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.edit_session_key": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.execute_quote": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.expired_and_cancelled_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_account": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_all_portfolios": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_collaterals": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_deposit_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_erc20_transfer_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_funding_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_interest_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_invite_code": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_liquidation_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_liquidator_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_margin": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_mmp_config": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_notificationsv": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_open_orders": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_option_settlement_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_order": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_order_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_orders": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_positions": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_quotes": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_rfqs": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_subaccount": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_subaccount_value_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_subaccounts": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_trade_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.get_withdrawal_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.liquidate": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.order": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.order_debug": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.poll_quotes": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.poll_rfqs": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.register_invite": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.register_scoped_session_key": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.replace": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.reset_mmp": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.rfq_get_best_quote": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.send_quote": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.send_rfq": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.session_keys": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.set_cancel_on_disconnect": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.set_mmp_config": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.transfer_erc20": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.transfer_position": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.transfer_positions": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.update_notifications": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.withdraw": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.get_all_currencies": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.build_register_session_key_tx": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.create_subaccount_debug": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.deposit_debug": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.deregister_session_key": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.estimate_integrator_points": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.execute_quote_debug": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_all_currencies": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_all_instruments": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_all_points": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_bridge_balances": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_currency": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_descendant_tree": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_ethena_participants": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_etherfi_effective_balances": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_funding_rate_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_instrument": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_instruments": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_interest_rate_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_invite_code": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_kelp_effective_balances": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_latest_signed_feeds": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_liquidation_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_live_incidents": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_maker_program_scores": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_maker_programs": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_margin": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_option_settlement_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_option_settlement_prices": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_points": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_points_leaderboard": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_spot_feed_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_spot_feed_history_candles": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_swell_percent_points": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_ticker": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_time": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_trade_history": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_transaction": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_tree_roots": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_vault_assets": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_vault_balances": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_vault_share": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.get_vault_statistics": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.login": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.margin_watch": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.register_invite": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.register_session_key": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.send_quote_debug": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.statistics": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.validate_invite_code": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.withdraw_debug": {
+        "axes": {},
+        "cost": 1
+      }
+    }
+  },
+  "raw": {
+    "describe": {
+      "alias": false,
+      "api": {
+        "private": {
+          "post": [
+            "get_account",
+            "create_subaccount",
+            "get_subaccount",
+            "get_subaccounts",
+            "get_all_portfolios",
+            "change_subaccount_label",
+            "get_notificationsv",
+            "update_notifications",
+            "deposit",
+            "withdraw",
+            "transfer_erc20",
+            "transfer_position",
+            "transfer_positions",
+            "order",
+            "replace",
+            "order_debug",
+            "get_order",
+            "get_orders",
+            "get_open_orders",
+            "cancel",
+            "cancel_by_label",
+            "cancel_by_nonce",
+            "cancel_by_instrument",
+            "cancel_all",
+            "cancel_trigger_order",
+            "get_order_history",
+            "get_trade_history",
+            "get_deposit_history",
+            "get_withdrawal_history",
+            "send_rfq",
+            "cancel_rfq",
+            "cancel_batch_rfqs",
+            "get_rfqs",
+            "poll_rfqs",
+            "send_quote",
+            "cancel_quote",
+            "cancel_batch_quotes",
+            "get_quotes",
+            "poll_quotes",
+            "execute_quote",
+            "rfq_get_best_quote",
+            "get_margin",
+            "get_collaterals",
+            "get_positions",
+            "get_option_settlement_history",
+            "get_subaccount_value_history",
+            "expired_and_cancelled_history",
+            "get_funding_history",
+            "get_interest_history",
+            "get_erc20_transfer_history",
+            "get_liquidation_history",
+            "liquidate",
+            "get_liquidator_history",
+            "session_keys",
+            "edit_session_key",
+            "register_scoped_session_key",
+            "get_mmp_config",
+            "set_mmp_config",
+            "reset_mmp",
+            "set_cancel_on_disconnect",
+            "get_invite_code",
+            "register_invite"
+          ]
+        },
+        "public": {
+          "get": [
+            "get_all_currencies"
+          ],
+          "post": [
+            "build_register_session_key_tx",
+            "register_session_key",
+            "deregister_session_key",
+            "login",
+            "statistics",
+            "get_all_currencies",
+            "get_currency",
+            "get_instrument",
+            "get_all_instruments",
+            "get_instruments",
+            "get_ticker",
+            "get_latest_signed_feeds",
+            "get_option_settlement_prices",
+            "get_spot_feed_history",
+            "get_spot_feed_history_candles",
+            "get_funding_rate_history",
+            "get_trade_history",
+            "get_option_settlement_history",
+            "get_liquidation_history",
+            "get_interest_rate_history",
+            "get_transaction",
+            "get_margin",
+            "margin_watch",
+            "validate_invite_code",
+            "get_points",
+            "get_all_points",
+            "get_points_leaderboard",
+            "get_descendant_tree",
+            "get_tree_roots",
+            "get_swell_percent_points",
+            "get_vault_assets",
+            "get_etherfi_effective_balances",
+            "get_kelp_effective_balances",
+            "get_bridge_balances",
+            "get_ethena_participants",
+            "get_vault_share",
+            "get_vault_statistics",
+            "get_vault_balances",
+            "estimate_integrator_points",
+            "create_subaccount_debug",
+            "deposit_debug",
+            "withdraw_debug",
+            "send_quote_debug",
+            "execute_quote_debug",
+            "get_invite_code",
+            "register_invite",
+            "get_time",
+            "get_live_incidents",
+            "get_maker_programs",
+            "get_maker_program_scores"
+          ]
+        }
+      },
+      "certified": false,
+      "commonCurrencies": {
+        "BCHSV": "BSV",
+        "XBT": "BTC"
+      },
+      "countries": [],
+      "currencies": {},
+      "dex": true,
+      "enableRateLimit": true,
+      "exceptions": {
+        "broad": {},
+        "exact": {
+          "-32000": "__function:RateLimitExceeded",
+          "-32100": "__function:RateLimitExceeded",
+          "-32600": "__function:BadRequest",
+          "-32601": "__function:BadRequest",
+          "-32602": "__function:InvalidOrder",
+          "-32603": "__function:InvalidOrder",
+          "-32700": "__function:BadRequest",
+          "10000": "__function:BadRequest",
+          "10001": "__function:BadRequest",
+          "10002": "__function:BadRequest",
+          "10003": "__function:BadRequest",
+          "10004": "__function:InvalidOrder",
+          "10005": "__function:BadRequest",
+          "10006": "__function:BadRequest",
+          "10007": "__function:BadRequest",
+          "10008": "__function:BadRequest",
+          "10009": "__function:BadRequest",
+          "10010": "__function:InvalidOrder",
+          "10011": "__function:InsufficientFunds",
+          "10012": "__function:InsufficientFunds",
+          "10013": "__function:ExchangeError",
+          "10014": "__function:ExchangeError",
+          "11000": "__function:InsufficientFunds",
+          "11002": "__function:InvalidOrder",
+          "11003": "__function:InvalidOrder",
+          "11004": "__function:InvalidOrder",
+          "11005": "__function:InvalidOrder",
+          "11006": "__function:OrderNotFound",
+          "11007": "__function:InvalidOrder",
+          "11008": "__function:InvalidOrder",
+          "11009": "__function:InvalidOrder",
+          "11010": "__function:InvalidOrder",
+          "11011": "__function:InvalidOrder",
+          "11012": "__function:InvalidOrder",
+          "11013": "__function:InvalidOrder",
+          "11014": "__function:InvalidOrder",
+          "11015": "__function:InvalidOrder",
+          "11016": "__function:InvalidOrder",
+          "11017": "__function:InvalidOrder",
+          "11018": "__function:InvalidOrder",
+          "11019": "__function:InvalidOrder",
+          "11020": "__function:InsufficientFunds",
+          "11021": "__function:InvalidOrder",
+          "11022": "__function:InvalidOrder",
+          "11023": "__function:InvalidOrder",
+          "11024": "__function:InvalidOrder",
+          "11025": "__function:InvalidOrder",
+          "11026": "__function:BadRequest",
+          "11027": "__function:InvalidOrder",
+          "11028": "__function:InvalidOrder",
+          "11050": "__function:InvalidOrder",
+          "11051": "__function:InvalidOrder",
+          "11052": "__function:InvalidOrder",
+          "11053": "__function:InvalidOrder",
+          "11054": "__function:InvalidOrder",
+          "11055": "__function:InvalidOrder",
+          "11100": "__function:InvalidOrder",
+          "11101": "__function:InvalidOrder",
+          "11102": "__function:InvalidOrder",
+          "11103": "__function:InvalidOrder",
+          "11104": "__function:InvalidOrder",
+          "11105": "__function:InvalidOrder",
+          "11106": "__function:InvalidOrder",
+          "11107": "__function:InvalidOrder",
+          "11200": "__function:InvalidOrder",
+          "11201": "__function:InvalidOrder",
+          "11202": "__function:InvalidOrder",
+          "11203": "__function:InvalidOrder",
+          "12000": "__function:InvalidOrder",
+          "12001": "__function:InvalidOrder",
+          "12002": "__function:BadRequest",
+          "12003": "__function:BadRequest",
+          "13000": "__function:BadRequest",
+          "14000": "__function:BadRequest",
+          "14001": "__function:InvalidOrder",
+          "14002": "__function:BadRequest",
+          "14008": "__function:BadRequest",
+          "14009": "__function:BadRequest",
+          "14010": "__function:BadRequest",
+          "14011": "__function:BadRequest",
+          "14012": "__function:BadRequest",
+          "14013": "__function:BadRequest",
+          "14014": "__function:InvalidOrder",
+          "14015": "__function:BadRequest",
+          "14016": "__function:BadRequest",
+          "14017": "__function:BadRequest",
+          "14018": "__function:BadRequest",
+          "14019": "__function:BadRequest",
+          "14020": "__function:BadRequest",
+          "14021": "__function:BadRequest",
+          "14022": "__function:AuthenticationError",
+          "14023": "__function:InvalidOrder",
+          "14024": "__function:BadRequest",
+          "14025": "__function:BadRequest",
+          "14026": "__function:BadRequest",
+          "14027": "__function:AuthenticationError",
+          "14028": "__function:BadRequest",
+          "14029": "__function:AuthenticationError",
+          "14030": "__function:BadRequest",
+          "14031": "__function:AuthenticationError",
+          "14032": "__function:BadRequest",
+          "16000": "__function:AuthenticationError",
+          "16001": "__function:AuthenticationError",
+          "16100": "__function:AuthenticationError",
+          "17000": "__function:BadRequest",
+          "17001": "__function:BadRequest",
+          "17002": "__function:BadRequest",
+          "17003": "__function:BadRequest",
+          "17004": "__function:BadRequest",
+          "17005": "__function:BadRequest",
+          "17006": "__function:BadRequest",
+          "17007": "__function:BadRequest",
+          "18000": "__function:BadRequest",
+          "18001": "__function:BadRequest",
+          "18002": "__function:BadRequest",
+          "18003": "__function:BadRequest",
+          "18004": "__function:BadRequest",
+          "18005": "__function:BadRequest",
+          "18006": "__function:BadRequest",
+          "18007": "__function:BadRequest",
+          "19000": "__function:BadRequest",
+          "9000": "__function:InvalidOrder"
+        }
+      },
+      "fees": {
+        "funding": {
+          "deposit": {},
+          "percentage": "__undefined",
+          "tierBased": "__undefined",
+          "withdraw": {}
+        },
+        "trading": {
+          "maker": "__undefined",
+          "percentage": "__undefined",
+          "taker": "__undefined",
+          "tierBased": "__undefined"
+        }
+      },
+      "has": {
+        "CORS": "__undefined",
+        "addMargin": false,
+        "borrowCrossMargin": false,
+        "borrowIsolatedMargin": false,
+        "borrowMargin": "__undefined",
+        "cancelAllOrders": true,
+        "cancelAllOrdersAfter": false,
+        "cancelAllOrdersWs": "__undefined",
+        "cancelOrder": true,
+        "cancelOrderWithClientOrderId": "__undefined",
+        "cancelOrderWs": "__undefined",
+        "cancelOrders": false,
+        "cancelOrdersForSymbols": false,
+        "cancelOrdersWithClientOrderId": "__undefined",
+        "cancelOrdersWs": "__undefined",
+        "closeAllPositions": false,
+        "closePosition": false,
+        "createDepositAddress": "__undefined",
+        "createLimitBuyOrder": "__undefined",
+        "createLimitBuyOrderWs": "__undefined",
+        "createLimitOrder": true,
+        "createLimitOrderWs": "__undefined",
+        "createLimitSellOrder": "__undefined",
+        "createLimitSellOrderWs": "__undefined",
+        "createMarketBuyOrder": "__undefined",
+        "createMarketBuyOrderWithCost": false,
+        "createMarketBuyOrderWithCostWs": "__undefined",
+        "createMarketBuyOrderWs": "__undefined",
+        "createMarketOrder": true,
+        "createMarketOrderWithCost": false,
+        "createMarketOrderWithCostWs": "__undefined",
+        "createMarketOrderWs": true,
+        "createMarketSellOrder": "__undefined",
+        "createMarketSellOrderWithCost": false,
+        "createMarketSellOrderWithCostWs": "__undefined",
+        "createMarketSellOrderWs": "__undefined",
+        "createOrder": true,
+        "createOrderWithTakeProfitAndStopLoss": "__undefined",
+        "createOrderWithTakeProfitAndStopLossWs": "__undefined",
+        "createOrderWs": "__undefined",
+        "createOrders": false,
+        "createPostOnlyOrder": "__undefined",
+        "createPostOnlyOrderWs": "__undefined",
+        "createReduceOnlyOrder": false,
+        "createReduceOnlyOrderWs": "__undefined",
+        "createStopLimitOrder": "__undefined",
+        "createStopLimitOrderWs": "__undefined",
+        "createStopLossOrder": "__undefined",
+        "createStopLossOrderWs": "__undefined",
+        "createStopMarketOrder": "__undefined",
+        "createStopMarketOrderWs": "__undefined",
+        "createStopOrder": false,
+        "createStopOrderWs": "__undefined",
+        "createTakeProfitOrder": "__undefined",
+        "createTakeProfitOrderWs": "__undefined",
+        "createTrailingAmountOrder": "__undefined",
+        "createTrailingAmountOrderWs": "__undefined",
+        "createTrailingPercentOrder": "__undefined",
+        "createTrailingPercentOrderWs": "__undefined",
+        "createTriggerOrder": false,
+        "createTriggerOrderWs": "__undefined",
+        "deposit": "__undefined",
+        "editOrder": true,
+        "editOrderWithClientOrderId": "__undefined",
+        "editOrderWs": "__undefined",
+        "editOrders": "__undefined",
+        "fetchADLRank": "__undefined",
+        "fetchAccounts": false,
+        "fetchBalance": true,
+        "fetchBalanceWs": "__undefined",
+        "fetchBidsAsks": "__undefined",
+        "fetchBorrowInterest": false,
+        "fetchBorrowRate": "__undefined",
+        "fetchBorrowRateHistories": false,
+        "fetchBorrowRateHistory": false,
+        "fetchBorrowRates": "__undefined",
+        "fetchBorrowRatesPerSymbol": "__undefined",
+        "fetchCanceledAndClosedOrders": false,
+        "fetchCanceledOrders": true,
+        "fetchClosedOrder": "__undefined",
+        "fetchClosedOrders": true,
+        "fetchClosedOrdersWs": "__undefined",
+        "fetchConvertCurrencies": "__undefined",
+        "fetchConvertQuote": "__undefined",
+        "fetchConvertTrade": "__undefined",
+        "fetchConvertTradeHistory": "__undefined",
+        "fetchCrossBorrowRate": false,
+        "fetchCrossBorrowRates": false,
+        "fetchCurrencies": true,
+        "fetchCurrenciesWs": "emulated",
+        "fetchDeposit": "__undefined",
+        "fetchDepositAddress": false,
+        "fetchDepositAddresses": false,
+        "fetchDepositAddressesByNetwork": "__undefined",
+        "fetchDepositWithdrawFee": "emulated",
+        "fetchDepositWithdrawFees": false,
+        "fetchDeposits": true,
+        "fetchDepositsWithdrawals": "__undefined",
+        "fetchDepositsWs": "__undefined",
+        "fetchFundingHistory": true,
+        "fetchFundingInterval": "__undefined",
+        "fetchFundingIntervals": "__undefined",
+        "fetchFundingRate": true,
+        "fetchFundingRateHistory": true,
+        "fetchFundingRates": false,
+        "fetchGreeks": true,
+        "fetchIndexOHLCV": false,
+        "fetchIsolatedBorrowRate": false,
+        "fetchIsolatedBorrowRates": false,
+        "fetchIsolatedPositions": "__undefined",
+        "fetchL2OrderBook": true,
+        "fetchL3OrderBook": "__undefined",
+        "fetchLastPrices": "__undefined",
+        "fetchLedger": true,
+        "fetchLedgerEntry": "__undefined",
+        "fetchLeverage": false,
+        "fetchLeverageTiers": false,
+        "fetchLeverages": "__undefined",
+        "fetchLiquidations": false,
+        "fetchLongShortRatio": "__undefined",
+        "fetchLongShortRatioHistory": "__undefined",
+        "fetchMarginAdjustmentHistory": "__undefined",
+        "fetchMarginMode": "__undefined",
+        "fetchMarginModes": "__undefined",
+        "fetchMarkOHLCV": false,
+        "fetchMarkPrices": "__undefined",
+        "fetchMarketLeverageTiers": false,
+        "fetchMarkets": true,
+        "fetchMarketsWs": "__undefined",
+        "fetchMyLiquidations": false,
+        "fetchMySettlementHistory": "__undefined",
+        "fetchMyTrades": true,
+        "fetchMyTradesWs": "__undefined",
+        "fetchOHLCV": false,
+        "fetchOHLCVWs": "__undefined",
+        "fetchOpenInterest": false,
+        "fetchOpenInterestHistory": false,
+        "fetchOpenInterests": false,
+        "fetchOpenOrder": "__undefined",
+        "fetchOpenOrders": true,
+        "fetchOpenOrdersWs": "__undefined",
+        "fetchOption": "__undefined",
+        "fetchOptionChain": "__undefined",
+        "fetchOrder": false,
+        "fetchOrderBook": false,
+        "fetchOrderBookWs": "__undefined",
+        "fetchOrderBooks": "__undefined",
+        "fetchOrderTrades": true,
+        "fetchOrderWithClientOrderId": "__undefined",
+        "fetchOrderWs": "__undefined",
+        "fetchOrders": true,
+        "fetchOrdersByStatus": "__undefined",
+        "fetchOrdersWs": "__undefined",
+        "fetchPosition": false,
+        "fetchPositionADLRank": "__undefined",
+        "fetchPositionHistory": "__undefined",
+        "fetchPositionMode": false,
+        "fetchPositionWs": "__undefined",
+        "fetchPositions": true,
+        "fetchPositionsADLRank": "__undefined",
+        "fetchPositionsForSymbol": "__undefined",
+        "fetchPositionsForSymbolWs": "__undefined",
+        "fetchPositionsHistory": "__undefined",
+        "fetchPositionsRisk": false,
+        "fetchPositionsWs": "__undefined",
+        "fetchPremiumIndexOHLCV": false,
+        "fetchSettlementHistory": "__undefined",
+        "fetchStatus": "__undefined",
+        "fetchTicker": true,
+        "fetchTickerWs": "__undefined",
+        "fetchTickers": false,
+        "fetchTickersWs": "__undefined",
+        "fetchTime": true,
+        "fetchTrades": true,
+        "fetchTradesWs": "__undefined",
+        "fetchTradingFee": false,
+        "fetchTradingFees": false,
+        "fetchTradingFeesWs": "__undefined",
+        "fetchTradingLimits": "__undefined",
+        "fetchTransactionFee": "__undefined",
+        "fetchTransactionFees": "__undefined",
+        "fetchTransactions": "__undefined",
+        "fetchTransfer": false,
+        "fetchTransfers": false,
+        "fetchUnderlyingAssets": "__undefined",
+        "fetchVolatilityHistory": "__undefined",
+        "fetchWithdrawAddresses": "__undefined",
+        "fetchWithdrawal": false,
+        "fetchWithdrawalWhitelist": "__undefined",
+        "fetchWithdrawals": true,
+        "fetchWithdrawalsWs": "__undefined",
+        "future": false,
+        "margin": false,
+        "option": false,
+        "privateAPI": true,
+        "publicAPI": true,
+        "reduceMargin": false,
+        "repayCrossMargin": false,
+        "repayIsolatedMargin": false,
+        "sandbox": true,
+        "setLeverage": false,
+        "setMargin": "__undefined",
+        "setMarginMode": false,
+        "setPositionMode": false,
+        "signIn": "__undefined",
+        "spot": false,
+        "swap": false,
+        "transfer": false,
+        "unWatchMyTrades": "__undefined",
+        "unWatchOHLCV": "__undefined",
+        "unWatchOHLCVForSymbols": "__undefined",
+        "unWatchOrderBook": "__undefined",
+        "unWatchOrderBookForSymbols": "__undefined",
+        "unWatchOrders": "__undefined",
+        "unWatchPositions": "__undefined",
+        "unWatchTicker": "__undefined",
+        "unWatchTickers": "__undefined",
+        "unWatchTrades": "__undefined",
+        "unWatchTradesForSymbols": "__undefined",
+        "watchBalance": "__undefined",
+        "watchBidsAsks": "__undefined",
+        "watchLiquidations": "__undefined",
+        "watchLiquidationsForSymbols": "__undefined",
+        "watchMyLiquidations": "__undefined",
+        "watchMyLiquidationsForSymbols": "__undefined",
+        "watchMyTrades": "__undefined",
+        "watchOHLCV": "__undefined",
+        "watchOHLCVForSymbols": "__undefined",
+        "watchOrderBook": "__undefined",
+        "watchOrderBookForSymbols": "__undefined",
+        "watchOrders": "__undefined",
+        "watchOrdersForSymbols": "__undefined",
+        "watchPosition": "__undefined",
+        "watchPositions": "__undefined",
+        "watchStatus": "__undefined",
+        "watchTicker": "__undefined",
+        "watchTickers": "__undefined",
+        "watchTrades": "__undefined",
+        "watchTradesForSymbols": "__undefined",
+        "withdraw": false,
+        "ws": "__undefined"
+      },
+      "hostname": "derive.xyz",
+      "httpExceptions": {
+        "400": "__function:ExchangeNotAvailable",
+        "401": "__function:AuthenticationError",
+        "403": "__function:ExchangeNotAvailable",
+        "404": "__function:ExchangeNotAvailable",
+        "405": "__function:ExchangeNotAvailable",
+        "407": "__function:AuthenticationError",
+        "408": "__function:RequestTimeout",
+        "409": "__function:ExchangeNotAvailable",
+        "410": "__function:ExchangeNotAvailable",
+        "418": "__function:DDoSProtection",
+        "422": "__function:ExchangeError",
+        "429": "__function:RateLimitExceeded",
+        "451": "__function:ExchangeNotAvailable",
+        "500": "__function:ExchangeNotAvailable",
+        "501": "__function:ExchangeNotAvailable",
+        "502": "__function:ExchangeNotAvailable",
+        "503": "__function:ExchangeNotAvailable",
+        "504": "__function:RequestTimeout",
+        "511": "__function:AuthenticationError",
+        "520": "__function:ExchangeNotAvailable",
+        "521": "__function:ExchangeNotAvailable",
+        "522": "__function:ExchangeNotAvailable",
+        "525": "__function:ExchangeNotAvailable",
+        "526": "__function:ExchangeNotAvailable",
+        "530": "__function:ExchangeNotAvailable"
+      },
+      "id": "derive",
+      "limits": {
+        "amount": {
+          "max": "__undefined",
+          "min": "__undefined"
+        },
+        "cost": {
+          "max": "__undefined",
+          "min": "__undefined"
+        },
+        "leverage": {
+          "max": "__undefined",
+          "min": "__undefined"
+        },
+        "price": {
+          "max": "__undefined",
+          "min": "__undefined"
+        }
+      },
+      "markets": "__undefined",
+      "name": "derive",
+      "options": {
+        "deriveWalletAddress": "",
+        "id": "0x0ad42b8e602c2d3d475ae52d678cf63d84ab2749"
+      },
+      "paddingMode": 5,
+      "precisionMode": 4,
+      "pro": true,
+      "rateLimit": 50,
+      "rateLimiterAlgorithm": "leakyBucket",
+      "requiredCredentials": {
+        "accountId": false,
+        "apiKey": false,
+        "login": false,
+        "password": false,
+        "privateKey": true,
+        "secret": false,
+        "token": false,
+        "twofa": false,
+        "uid": false,
+        "walletAddress": true
+      },
+      "rollingWindowSize": 60000,
+      "status": {
+        "eta": "__undefined",
+        "info": "__undefined",
+        "status": "ok",
+        "updated": "__undefined",
+        "url": "__undefined"
+      },
+      "timeframes": {
+        "12h": "12h",
+        "15m": "15m",
+        "1M": "1M",
+        "1d": "1d",
+        "1h": "1h",
+        "1m": "1m",
+        "1w": "1w",
+        "2h": "2h",
+        "30m": "30m",
+        "3d": "3d",
+        "3m": "3m",
+        "4h": "4h",
+        "5m": "5m",
+        "8h": "8h"
+      },
+      "timeout": 10000,
+      "urls": {
+        "api": {
+          "private": "https://api.lyra.finance/private",
+          "public": "https://api.lyra.finance/public"
+        },
+        "api_management": "__undefined",
+        "doc": "https://docs.derive.xyz/docs/",
+        "fees": "https://docs.derive.xyz/reference/fees-1/",
+        "logo": "https://github.com/user-attachments/assets/f835b95f-033a-43dd-b6bb-24e698fc498c",
+        "referral": "https://www.derive.xyz/invite/3VB0B",
+        "test": {
+          "private": "https://api-demo.lyra.finance/private",
+          "public": "https://api-demo.lyra.finance/public"
+        },
+        "www": "https://www.derive.xyz/"
+      },
+      "version": "v1"
+    },
+    "url_templates": {
+      "private": {
+        "api_param": "private",
+        "http_method": "POST",
+        "resolved_url": null,
+        "sample_path": "get_account",
+        "url_prefix": null
+      },
+      "public": {
+        "api_param": "public",
+        "http_method": "GET",
+        "resolved_url": "https://api.lyra.finance/public/get_all_currencies",
+        "sample_path": "get_all_currencies",
+        "url_prefix": "https://api.lyra.finance/public/"
+      }
+    }
+  },
+  "schema_version": 3,
+  "testnet": {
+    "pattern": "separate_host",
+    "sandbox_flag_field": null,
+    "unresolved_reason": null,
+    "urls": {
+      "private": "https://api-demo.lyra.finance/private",
+      "public": "https://api-demo.lyra.finance/public"
+    }
+  },
+  "urls": {
+    "api": {
+      "ws": {
+        "private": "wss://api.lyra.finance/ws",
+        "public": "wss://api.lyra.finance/ws",
+        "sandbox_private": "wss://api-demo.lyra.finance/ws",
+        "sandbox_public": "wss://api-demo.lyra.finance/ws"
+      }
+    },
+    "api_management": "__undefined",
+    "doc": "https://docs.derive.xyz/docs/",
+    "fees": "https://docs.derive.xyz/reference/fees-1/",
+    "logo": "https://github.com/user-attachments/assets/f835b95f-033a-43dd-b6bb-24e698fc498c",
+    "www": "https://www.derive.xyz/"
+  },
+  "websocket": {
+    "auth": {
+      "authenticate_defined": true,
+      "credentials": [
+        "privateKey"
+      ],
+      "mechanism": "sign_in_message",
+      "message": {
+        "keys": [
+          "id",
+          "method",
+          "params"
+        ],
+        "method": "public/login",
+        "op": null
+      },
+      "resolved_from": "self",
+      "source": "pro_authenticate",
+      "unresolved_reason": null
+    },
+    "dispatch": {
+      "discriminators": [],
+      "entries": [
+        {
+          "channel": "orderbook",
+          "handler": "handleOrderBook"
+        },
+        {
+          "channel": "ticker",
+          "handler": "handleTicker"
+        },
+        {
+          "channel": "trades",
+          "handler": "handleTrade"
+        },
+        {
+          "channel": "orders",
+          "handler": "handleOrder"
+        },
+        {
+          "channel": "mytrades",
+          "handler": "handleMyTrade"
+        },
+        {
+          "channel": "public/login",
+          "handler": "handleAuth"
+        },
+        {
+          "channel": "unsubscribe",
+          "handler": "handleUnSubscribe"
+        }
+      ],
+      "handle_message_defined": true,
+      "kind": "routed",
+      "resolved_from": "self",
+      "source": "pro_handle_message",
+      "unresolved": [],
+      "unresolved_reason": null
+    },
+    "heartbeat": {
+      "has_pong_handler": false,
+      "keep_alive_ms": 9000,
+      "keep_alive_resolved_from": "self",
+      "max_ping_pong_misses": 2,
+      "ping_kind": "native_frame",
+      "ping_payload": null,
+      "ping_payload_kind": null,
+      "source": "pro_describe",
+      "unresolved_reason": null
+    },
+    "ohlcv_semantics": {
+      "cache_limit_default": null,
+      "cache_limit_field": null,
+      "cache_type": null,
+      "closed_signal": null,
+      "ohlcv_defined": false,
+      "resolved_from": null,
+      "source": "none",
+      "timeframe_key": null,
+      "unresolved": [],
+      "unresolved_reason": "no_ws_ohlcv",
+      "update_model": "none"
+    },
+    "orderbook_semantics": {
+      "apply_mode": "replace",
+      "checksum": {
+        "algorithm": null,
+        "field": null,
+        "present": false
+      },
+      "discriminator": {
+        "delta_values": [],
+        "field": null,
+        "snapshot_values": []
+      },
+      "handle_orderbook_defined": true,
+      "resolved_from": "self",
+      "sequence_fields": [],
+      "source": "pro_handle_orderbook",
+      "unresolved_reason": null
+    },
+    "subscribe": {
+      "args_key": "id",
+      "channels": {
+        "watchMyTrades": [
+          ":{symbol}"
+        ],
+        "watchOrders": [
+          ":{symbol}"
+        ],
+        "watchTicker": [
+          "ticker.{symbol}.100"
+        ],
+        "watchTrades": [
+          "trades.{symbol}"
+        ]
+      },
+      "discriminant": "method",
+      "envelope_keys": [
+        "id",
+        "method"
+      ],
+      "mechanism": "json_message",
+      "resolved_from": "self",
+      "source": "pro_watch",
+      "subscribe_op": "subscribe",
+      "unresolved_reason": null,
+      "unsubscribe_op": "unsubscribe"
+    },
+    "trades_semantics": {
+      "cache_limit_default": 1000,
+      "cache_limit_field": "tradesLimit",
+      "cache_type": "ArrayCache",
+      "dedup_key": null,
+      "my_trades": {
+        "cache_limit_default": 1000,
+        "cache_limit_field": "tradesLimit",
+        "cache_type": "ArrayCacheBySymbolById",
+        "dedup_key": null,
+        "defined": true
+      },
+      "resolved_from": "self",
+      "source": "pro_handle_trades",
+      "trades_defined": true,
+      "unresolved": [
+        {
+          "reason": "dedup_key_not_classifiable"
+        }
+      ],
+      "unresolved_reason": null,
+      "update_model": "append"
+    },
+    "urls": {
+      "private": "wss://api.lyra.finance/ws",
+      "public": "wss://api.lyra.finance/ws",
+      "sandbox_private": "wss://api-demo.lyra.finance/ws",
+      "sandbox_public": "wss://api-demo.lyra.finance/ws",
+      "unresolved_reason": null
+    }
+  },
+  "emulated_methods": [
+    {
+      "name": "fetchDepositWithdrawFee",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    }
+  ]
+}

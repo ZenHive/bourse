@@ -1,0 +1,106 @@
+{
+  "body": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "index_price": 62624.56,
+        "interest_1h": 0.0000018024020609198117,
+        "interest_8h": 0.0000016369240380522479,
+        "prev_index_price": 62485.55,
+        "timestamp": 1785762000000
+      },
+      {
+        "index_price": 63275.75,
+        "interest_1h": 1.9576657335945801e-7,
+        "interest_8h": -0.0000018355568002757016,
+        "prev_index_price": 62624.56,
+        "timestamp": 1785765600000
+      },
+      {
+        "index_price": 63895.03,
+        "interest_1h": 2.062677808269203e-7,
+        "interest_8h": 0.0000011190915714547803,
+        "prev_index_price": 63275.75,
+        "timestamp": 1785769200000
+      },
+      {
+        "index_price": 63624.51,
+        "interest_1h": 2.406945513912475e-7,
+        "interest_8h": 0.0000028827722620265847,
+        "prev_index_price": 63895.03,
+        "timestamp": 1785772800000
+      },
+      {
+        "index_price": 63709,
+        "interest_1h": 4.1219993811418474e-7,
+        "interest_8h": 0.0000025593218014459057,
+        "prev_index_price": 63624.51,
+        "timestamp": 1785776400000
+      },
+      {
+        "index_price": 63848.8,
+        "interest_1h": 1.0117772733898281e-7,
+        "interest_8h": 0.0000026716624002356193,
+        "prev_index_price": 63709,
+        "timestamp": 1785780000000
+      },
+      {
+        "index_price": 63808.2,
+        "interest_1h": 0,
+        "interest_8h": 0.0000026682326313726822,
+        "prev_index_price": 63848.8,
+        "timestamp": 1785783600000
+      },
+      {
+        "index_price": 63806.26,
+        "interest_1h": 0,
+        "interest_8h": 0.0000029416753944290523,
+        "prev_index_price": 63808.2,
+        "timestamp": 1785787200000
+      },
+      {
+        "index_price": 63733.09,
+        "interest_1h": 0,
+        "interest_8h": 0.0000011409383497072937,
+        "prev_index_price": 63806.26,
+        "timestamp": 1785790800000
+      },
+      {
+        "index_price": 63548.78,
+        "interest_1h": 0,
+        "interest_8h": 9.53947661591017e-7,
+        "prev_index_price": 63733.09,
+        "timestamp": 1785794400000
+      },
+      {
+        "index_price": 63553.9,
+        "interest_1h": 6.585838262088263e-10,
+        "interest_8h": 7.560280381497688e-7,
+        "prev_index_price": 63548.78,
+        "timestamp": 1785798000000
+      },
+      {
+        "index_price": 63468.58,
+        "interest_1h": 3.744828644533425e-7,
+        "interest_8h": 8.88800800171591e-7,
+        "prev_index_price": 63553.9,
+        "timestamp": 1785801600000
+      }
+    ],
+    "testnet": true,
+    "usDiff": 242,
+    "usIn": 1785801751587474,
+    "usOut": 1785801751587716
+  },
+  "call_opts": {},
+  "captured_at": "2026-08-04T00:02:31.724Z",
+  "exchange": "deribit",
+  "method": "fetch_funding_rate_history",
+  "params": {
+    "end_timestamp": 1785801751293,
+    "instrument_name": "BTC-PERPETUAL",
+    "start_timestamp": 1785758551293
+  },
+  "symbol": "BTC/USD:BTC",
+  "timeframe": null
+}

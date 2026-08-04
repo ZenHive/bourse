@@ -1,0 +1,45 @@
+# The directory Mix will write compiled artifacts to.
+/_build/
+
+# If you run "mix test --cover", coverage assets end up here.
+/cover/
+
+# The directory Mix downloads your dependencies sources to.
+/deps/
+
+# Where third-party dependencies like ExDoc output generated docs.
+/doc/
+/native/lighter_signer/build/
+/priv/native/lighter_signer/*/
+
+# Temporary files, for example, from tests.
+/tmp/
+
+# If the VM crashes, it generates a dump, let's ignore it too.
+erl_crash.dump
+
+# Also ignore archive artifacts (built via "mix archive.build").
+*.ez
+
+# Ignore package tarball (built via "mix hex.build").
+bourse-*.tar
+
+# Hex docs cache
+/.hex-docs/
+
+# Superpowers workflow files
+/docs/superpowers/
+
+# Brainstorm/plan handoff files
+/.thoughts/
+
+# In-tree extraction artifacts. The cloned CCXT source, raw AST/describe dumps,
+# and signing fixtures under this tree are working inputs — not tracked.
+# Intentionally force-tracked exceptions (already in the index):
+#   priv/specs/json/ccxt/ts/src/test/static/  — Task 168 static fixture oracle
+#   priv/specs/json/ccxt/js/                  — Task 177 pinned browser CCXT + runner
+/priv/specs/json/ccxt/
+/priv/specs/json/ccxt_bundle.js
+/priv/specs/json/ccxt_version.json
+/priv/specs/json/discoveries/
+/priv/specs/json/fixtures/

@@ -1,0 +1,41 @@
+{
+  "acceptance": {
+    "business_success": "HTTP 2xx COIN-M account payload without an error code",
+    "capture_date": "2026-07-26",
+    "captured_at": "2026-07-26T05:33:06.906Z",
+    "endpoint": "dapi/v1/account",
+    "host": "demo-dapi.binance.com",
+    "http_status": 200,
+    "method": "fetch_balance",
+    "venue": "binancecoinm"
+  },
+  "label": "Oracle: exchange-acceptance tier 1 vs binancecoinm fetch_balance accepted 2026-07-26 (dapi/v1/account @ demo-dapi.binance.com, HTTP 200, HTTP 2xx COIN-M account payload without an error code).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "fetch_balance",
+    "nonce_override": 1785043984469,
+    "params": {},
+    "timestamp_ms_override": 1785043984468
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "content-type",
+        "application/x-www-form-urlencoded"
+      ],
+      [
+        "x-mbx-apikey",
+        "key"
+      ]
+    ],
+    "method": "GET",
+    "url": "https://demo-dapi.binance.com/dapi/v1/account?timestamp=1785043984468&signature=51e499752568007e9f2431bb8444d736923e71ff743fafc4a3ea5bdffd33d3b0"
+  },
+  "schema_version": 1
+}

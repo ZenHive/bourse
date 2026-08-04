@@ -1,0 +1,65 @@
+name: Lighter signer
+
+on:
+  pull_request:
+    paths:
+      - "native/lighter_signer/**"
+      - "lib/bourse/dispatch.ex"
+      - "lib/bourse/signing/lighter.ex"
+      - "lib/bourse/signing/lighter/**"
+      - "lib/mix/tasks/ccxt.build_lighter_signer.ex"
+      - "lib/mix/tasks/ccxt.check_lighter_signer.ex"
+      - "test/bourse/signing/lighter_native_test.exs"
+      - "mix.exs"
+      - ".github/workflows/lighter-signer.yml"
+  push:
+    branches: [main]
+    paths:
+      - "native/lighter_signer/**"
+      - "lib/bourse/dispatch.ex"
+      - "lib/bourse/signing/lighter.ex"
+      - "lib/bourse/signing/lighter/**"
+      - "lib/mix/tasks/ccxt.build_lighter_signer.ex"
+      - "lib/mix/tasks/ccxt.check_lighter_signer.ex"
+      - "test/bourse/signing/lighter_native_test.exs"
+      - "mix.exs"
+      - ".github/workflows/lighter-signer.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14
+            target: darwin-arm64
+          - runner: ubuntu-24.04
+            target: linux-amd64
+          - runner: ubuntu-24.04-arm
+            target: linux-arm64
+          - runner: windows-2025
+            target: windows-amd64
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "27"
+          elixir-version: "1.18"
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.1"
+          cache-dependency-path: native/lighter_signer/go.sum
+      - run: mix deps.get
+      - run: mix ccxt.build_lighter_signer --target ${{ matrix.target }}
+      - run: go test ./...
+        working-directory: native/lighter_signer
+      - run: mix test.json --quiet --include native test/bourse/signing/lighter_native_test.exs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lighter-signer-${{ matrix.target }}
+          path: priv/native/lighter_signer/${{ matrix.target }}/

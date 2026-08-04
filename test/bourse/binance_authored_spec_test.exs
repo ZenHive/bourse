@@ -1,0 +1,2494 @@
+defmodule Bourse.BinanceAuthoredSpecTest do
+  use ExUnit.Case, async: false
+
+  alias Bourse.Balance
+  alias Bourse.BorrowInterest
+  alias Bourse.Conversion
+  alias Bourse.Exchange
+  alias Bourse.Greeks
+  alias Bourse.Position
+  alias Bourse.Symbol
+  alias Bourse.Test.RequestCollector
+  alias Bourse.Unified
+  alias Bourse.Unified.ReadParse
+  alias Bourse.Unified.RequestShape
+
+  @non_usdt_tickers_fixture "test/fixtures/responses/binance/fetch_tickers_non_usdt_quotes.json"
+  @external_resource @non_usdt_tickers_fixture
+
+  test "authored selectors choose spot and USD-M account endpoints" do
+    assert Exchange.new!("binance").endpoint_selection["fetchBalance"]["default"] == "private_get_account"
+
+    assert Exchange.new!("binanceusdm").endpoint_selection["fetchBalance"]["default"] ==
+             "fapiPrivateV3_get_account"
+  end
+
+  test "Binance sandbox routes futures APIs to the current Demo Trading hosts" do
+    for exchange_id <- ["binance", "binanceusdm"] do
+      urls = Exchange.new!(exchange_id, sandbox: true).base_urls
+
+      assert urls["dapiPrivate"] == "https://demo-dapi.binance.com/dapi/v1"
+      assert urls["dapiPublic"] == "https://demo-dapi.binance.com/dapi/v1"
+      assert urls["fapiPrivateV3"] == "https://demo-fapi.binance.com/fapi/v3"
+      assert urls["fapiPublic"] == "https://demo-fapi.binance.com/fapi/v1"
+      assert urls["private"] == "https://testnet.binance.vision/api/v3"
+    end
+  end
+
+  test "portfolio borrow interest selects PAPI and unwraps documented rows" do
+    body = %{
+      "total" => "1",
+      "rows" => [
+        %{
+          "txId" => "1656187724899910076",
+          "interestAccuredTime" => "1707562800000",
+          "asset" => "USDT",
+          "rawAsset" => "USDT",
+          "principal" => "0.00011146",
+          "interest" => "0.000000010",
+          "interestRate" => "0.00089489",
+          "type" => "PERIODIC"
+        }
+      ]
+    }
+
+    {requests, stub} = path_body_stub(body)
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret")
+
+    assert {:ok, [%BorrowInterest{} = interest]} =
+             Unified.call(
+               exchange,
+               :fetch_borrow_interest,
+               "fetchBorrowInterest",
+               %{"code" => "USDT", "portfolioMargin" => true},
+               plug: {Req.Test, stub},
+               timestamp_ms_override: 1_700_000_000_000
+             )
+
+    request = RequestCollector.one!(requests)
+    assert request.request_path == "/papi/v1/margin/marginInterestHistory"
+    assert URI.decode_query(request.query_string)["asset"] == "USDT"
+    assert interest.currency == "USDT"
+    assert interest.margin_mode == "cross"
+    assert interest.timestamp == 1_707_562_800_000
+    assert_in_delta interest.amount_borrowed, 0.00011146, 1.0e-12
+    assert_in_delta interest.interest, 1.0e-8, 1.0e-14
+
+    isolated = put_in(body, ["rows", Access.at(0), "isolatedSymbol"], "BNBUSDT")
+
+    assert {:ok, [%BorrowInterest{margin_mode: "isolated"}]} =
+             ReadParse.parse(
+               exchange,
+               Bourse.Binance,
+               :fetch_borrow_interest,
+               "fetchBorrowInterest",
+               isolated,
+               %{},
+               :parse_borrow_interest,
+               true
+             )
+  end
+
+  test "single-symbol option marks use Binance's native symbol query and normalize into greeks" do
+    row = %{
+      "symbol" => "ETH-231229-800-C",
+      "markPrice" => "1789.2",
+      "bidIV" => "-0.00000001",
+      "askIV" => "-0.00000001",
+      "markIV" => "0.708575",
+      "delta" => "-0.91110168",
+      "theta" => "-1.0575559",
+      "gamma" => "0.0001436",
+      "vega" => "2.00337645",
+      "highPriceLimit" => "1982.4",
+      "lowPriceLimit" => "1596",
+      "riskFreeInterest" => "0.065"
+    }
+
+    {requests, stub} = path_body_stub([row])
+    symbol = "ETH/USDT:USDT-231229-800-C"
+
+    assert {:ok, %{^symbol => %Greeks{} = greeks}} =
+             Unified.call(
+               Exchange.new!("binance"),
+               :fetch_all_greeks,
+               "fetchAllGreeks",
+               %{"symbols" => [symbol]},
+               plug: {Req.Test, stub}
+             )
+
+    request = RequestCollector.one!(requests)
+    assert request.request_path == "/eapi/v1/mark"
+    assert URI.decode_query(request.query_string) == %{"symbol" => "ETH-231229-800-C"}
+    assert greeks.symbol == symbol
+    assert greeks.mark_price == 1789.2
+    assert greeks.mark_implied_volatility == 0.708575
+    assert greeks.info["riskFreeInterest"] == "0.065"
+  end
+
+  test "multi-symbol option marks drop the unified list and filter client-side" do
+    rows =
+      for id <- ["ETH-231229-800-C", "ETH-231229-900-C", "BTC-231229-40000-C"] do
+        %{"symbol" => id, "markPrice" => "1.0", "markIV" => "0.5", "delta" => "-0.5"}
+      end
+
+    {requests, stub} = path_body_stub(rows)
+    requested = ["ETH/USDT:USDT-231229-800-C", "ETH/USDT:USDT-231229-900-C"]
+
+    assert {:ok, greeks} =
+             Unified.call(
+               Exchange.new!("binance"),
+               :fetch_all_greeks,
+               "fetchAllGreeks",
+               %{"symbols" => requested},
+               plug: {Req.Test, stub}
+             )
+
+    # Binance's Option Mark Price schema defines a single optional `symbol` and no
+    # `symbols[]` list, so a multi-symbol read must send neither and narrow after parse.
+    request = RequestCollector.one!(requests)
+    assert request.request_path == "/eapi/v1/mark"
+    assert URI.decode_query(request.query_string) == %{}
+
+    assert greeks |> Map.keys() |> Enum.sort() == Enum.sort(requested)
+  end
+
+  test "borrow interest maps cross and isolated filters to Binance's documented query fields" do
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret")
+
+    assert_borrow_interest_request(
+      exchange,
+      %{"code" => "USDT", "since" => 1_700_000_000_000, "until" => 1_700_086_400_000, "limit" => 25},
+      %{
+        "asset" => "USDT",
+        "startTime" => "1700000000000",
+        "endTime" => "1700086400000",
+        "size" => "25"
+      }
+    )
+
+    assert_borrow_interest_request(
+      exchange,
+      %{"code" => "USDT", "symbol" => "BTC/USDT"},
+      %{"asset" => "USDT", "isolatedSymbol" => "BTCUSDT"}
+    )
+  end
+
+  test "order-history reads map since and omit an absent limit" do
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret")
+    since = 1_700_000_000_000
+
+    for {method, js_name, params, expected} <- [
+          {:fetch_orders, "fetchOrders", %{"symbol" => "BTC/USDT", "since" => since, "limit" => 25},
+           %{"symbol" => "BTCUSDT", "startTime" => Integer.to_string(since), "limit" => "25"}},
+          {:fetch_closed_orders, "fetchClosedOrders", %{"symbol" => "BTC/USDT", "since" => since},
+           %{"symbol" => "BTCUSDT", "startTime" => Integer.to_string(since)}}
+        ] do
+      {requests, stub} = path_body_stub([])
+
+      assert {:ok, []} =
+               Unified.call(exchange, method, js_name, params,
+                 plug: {Req.Test, stub},
+                 timestamp_ms_override: since
+               )
+
+      request = RequestCollector.one!(requests)
+      assert request.request_path == "/api/v3/allOrders"
+
+      query = request |> RequestCollector.query() |> Map.drop(["timestamp", "signature", "recvWindow"])
+      assert query == expected
+      refute Enum.any?(query, fn {_key, value} -> value == "" end)
+    end
+  end
+
+  test "convert quote uses request currencies and the venue price ratio" do
+    body = %{
+      "ratio" => "0.999351",
+      "inverseRatio" => "1.00065",
+      "validTimestamp" => "1718724795211",
+      "toAmount" => "4.99675625",
+      "fromAmount" => "5"
+    }
+
+    assert {:ok,
+            %Conversion{
+              id: nil,
+              from_currency: "USDC",
+              from_amount: 5.0,
+              to_currency: "USDT",
+              to_amount: 4.99675625,
+              price: 0.999351,
+              timestamp: 1_718_724_795_211,
+              datetime: "2024-06-18T15:33:15.211Z",
+              info: ^body
+            }} =
+             ReadParse.parse(
+               Exchange.new!("binance"),
+               Bourse.Binance,
+               :fetch_convert_quote,
+               "fetchConvertQuote",
+               body,
+               %{"from_code" => "USDC", "to_code" => "USDT", "amount" => 5},
+               :parse_conversion,
+               false
+             )
+  end
+
+  # The parse above supplies its own params map, so it cannot prove which key
+  # names the unified layer actually hands the parser. Binance's quote response
+  # omits both asset codes, so the currencies exist only if `from_code`/`to_code`
+  # survive the real dispatch — assert that end to end.
+  test "convert quote currencies come from the dispatched unified params" do
+    body = %{
+      "quoteId" => "12415572564",
+      "ratio" => "0.999351",
+      "inverseRatio" => "1.00065",
+      "validTimestamp" => "1718724795211",
+      "toAmount" => "4.99675625",
+      "fromAmount" => "5"
+    }
+
+    {requests, stub} = path_body_stub(body)
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret")
+
+    assert {:ok, %Conversion{} = conversion} =
+             Unified.call(
+               exchange,
+               :fetch_convert_quote,
+               "fetchConvertQuote",
+               %{"from_code" => "USDC", "to_code" => "USDT", "amount" => 5},
+               plug: {Req.Test, stub},
+               timestamp_ms_override: 1_700_000_000_000
+             )
+
+    assert_path_body_request(requests, "/sapi/v1/convert/getQuote")
+    assert conversion.id == "12415572564"
+    assert conversion.from_currency == "USDC"
+    assert conversion.to_currency == "USDT"
+    assert conversion.price == 0.999351
+  end
+
+  test "every shaped Binance method resolves its identifier references" do
+    for exchange <- Enum.map(["binance", "binanceusdm"], &Exchange.new!/1),
+        {_method, js_name, required, _description} <- Unified.method_defs(),
+        Map.has_key?(exchange.request_param_shape, js_name) do
+      params = Map.new(required, &{Atom.to_string(&1), identifier_value(&1)})
+
+      assert is_map(RequestShape.apply(params, exchange, js_name)),
+             "#{exchange.id} #{js_name} left an identifier reference unresolved"
+    end
+  end
+
+  # Task 418 — dormant futuresTransfer / verifyGiftCode shape entries (not in
+  # method_defs/0) still resolve their Bourse identifier renames so the task-267
+  # shaped-method sweep stays green without exposing the methods on the unified API.
+  test "dormant futuresTransfer and verifyGiftCode bind their Bourse argument names" do
+    futures_params = %{"code" => "USDT", "amount" => 1.5, "type" => 1}
+    verify_params = %{"id" => "0033002404219823"}
+
+    for exchange_id <- ["binance", "binanceusdm"] do
+      exchange = Exchange.new!(exchange_id)
+
+      assert RequestShape.apply(futures_params, exchange, "futuresTransfer") == %{
+               "amount" => 1.5,
+               "asset" => "USDT",
+               "type" => 1
+             }
+
+      assert RequestShape.apply(verify_params, exchange, "verifyGiftCode") == %{
+               "referenceNo" => "0033002404219823"
+             }
+    end
+  end
+
+  test "shaped-method sweep reports zero unresolved identifier_reference for binance family" do
+    # Mirrors task 267's apply/3 sweep over every request_param_shape method,
+    # seeding inventory-shaped args for the two dormant methods that are not in
+    # method_defs/0. Any unresolved identifier_reference raises ArgumentError.
+    seed = %{
+      "code" => "USDT",
+      "amount" => 1,
+      "type" => 1,
+      "id" => "ref-418",
+      "symbol" => "BTC/USDT",
+      "address" => "addr",
+      "from_code" => "USDC",
+      "to_code" => "USDT",
+      "hedge_mode" => true
+    }
+
+    for exchange_id <- ["binance", "binanceusdm"] do
+      exchange = Exchange.new!(exchange_id)
+
+      for {js_name, _entries} <- exchange.request_param_shape do
+        assert is_map(RequestShape.apply(seed, exchange, js_name)),
+               "#{exchange_id} #{js_name} left an identifier reference unresolved"
+      end
+    end
+  end
+
+  test "convert quote and position mode bind their unified argument names" do
+    convert_params = Unified.build_params([:from_code, :to_code, :amount], ["USDC", "USDT", 3], [])
+    position_params = Unified.build_params([:hedge_mode], [true], [])
+
+    for exchange_id <- ["binance", "binanceusdm"] do
+      exchange = Exchange.new!(exchange_id)
+
+      assert RequestShape.apply(convert_params, exchange, "fetchConvertQuote") == %{
+               "fromAmount" => 3,
+               "fromAsset" => "USDC",
+               "toAsset" => "USDT"
+             }
+
+      assert RequestShape.apply(position_params, exchange, "setPositionMode") == %{
+               "dualSidePosition" => "true"
+             }
+    end
+  end
+
+  test "inverse positions use the loaded market contract size and do not invent cross collateral" do
+    exchange =
+      "binance"
+      |> Exchange.new!()
+      |> Exchange.put_markets([
+        %{"id" => "ETHUSD_PERP", "symbol" => "ETH/USD:ETH", "contractSize" => 10}
+      ])
+
+    row = %{
+      "symbol" => "ETHUSD_PERP",
+      "positionAmt" => "2",
+      "notionalValue" => "0.01",
+      "unRealizedProfit" => "0.0001",
+      "leverage" => "20",
+      "marginType" => "cross",
+      "markPrice" => "2000",
+      "updateTime" => "1722105622903"
+    }
+
+    assert {:ok, [%Position{} = position]} =
+             ReadParse.parse(
+               exchange,
+               Bourse.Binance,
+               :fetch_positions,
+               "fetchPositions",
+               [row],
+               %{"type" => "inverse"},
+               :parse_position,
+               true
+             )
+
+    assert position.contracts == 2
+    assert position.contract_size == 10
+    assert position.notional == 0.01
+    assert position.initial_margin == 0.0005
+    assert position.maintenance_margin == nil
+    assert position.margin_ratio == nil
+    assert position.percentage == nil
+    assert position.collateral == nil
+  end
+
+  # Binance reuses one exchange id across market types: `BTCUSDT` is both the
+  # spot market (contractSize null) and the USD-M linear swap (contractSize 1).
+  # A position row is always a contract, so the spot record must never win the
+  # lookup — a bare id match resolves spot first and reports contract_size nil.
+  test "linear positions resolve the contract market when spot shares the exchange id" do
+    exchange =
+      "binanceusdm"
+      |> Exchange.new!()
+      |> Exchange.put_markets([
+        %Bourse.Market{id: "BTCUSDT", symbol: "BTC/USDT", type: "spot", spot: true, contract: false},
+        %Bourse.Market{
+          id: "BTCUSDT",
+          symbol: "BTC/USDT:USDT",
+          type: "swap",
+          swap: true,
+          contract: true,
+          linear: true,
+          contract_size: 1
+        }
+      ])
+
+    row = %{
+      "symbol" => "BTCUSDT",
+      "positionAmt" => "0.009",
+      "notional" => "607.52416678",
+      "leverage" => "80",
+      "marginType" => "cross",
+      "initialMargin" => "7.59405208",
+      "maintMargin" => "2.43009666",
+      "unRealizedProfit" => "0.51106678",
+      "markPrice" => "67502.68519858",
+      "updateTime" => "1722161166529"
+    }
+
+    assert {:ok, [%Position{} = position]} =
+             ReadParse.parse(
+               exchange,
+               Bourse.Binanceusdm,
+               :fetch_positions,
+               "fetchPositions",
+               [row],
+               %{},
+               :parse_position,
+               true
+             )
+
+    assert position.contract_size == 1
+    assert position.notional == 607.52416678
+    assert position.initial_margin == 7.59405208
+    assert position.maintenance_margin == 2.43009666
+    assert position.margin_ratio == nil
+    assert position.percentage == 6.73
+    assert position.collateral == nil
+  end
+
+  # Bourse binance.ts keeps spot/linear/inverse under sandbox and drops only the
+  # sapi margin pairs (`!isDemoEnv`) and `option`. Binance's testnet publishes no
+  # sapi/eapi base, so either wave rides the dapi template and answers -5000 for
+  # `/dapi/v1/margin/allPairs` — the stub raises on any path outside the set, so
+  # a re-introduced margin/option wave fails here rather than live.
+  test "binance sandbox fetch_markets fans out to spot, linear and inverse only" do
+    {paths, stub} =
+      recording_markets_stub(%{
+        "/api/v3/exchangeInfo" => %{"symbols" => []},
+        "/fapi/v1/exchangeInfo" => %{"symbols" => []},
+        "/dapi/v1/exchangeInfo" => %{"symbols" => []}
+      })
+
+    result =
+      Unified.call(Exchange.new!("binance", sandbox: true), :fetch_markets, "fetchMarkets", %{}, plug: {Req.Test, stub})
+
+    assert_recorded_paths(
+      paths,
+      [
+        "/api/v3/exchangeInfo",
+        "/dapi/v1/exchangeInfo",
+        "/fapi/v1/exchangeInfo"
+      ],
+      "unexpected Binance sandbox fetchMarkets path"
+    )
+
+    assert {:ok, []} = result
+  end
+
+  # Bourse binanceusdm.ts pins `options.fetchMarkets.types` to `['linear']` — the
+  # no-arg fan-out collapses to the single fapi surface on mainnet and sandbox
+  # alike, so the coin-margined `margin/allPairs` wave never runs.
+  test "binanceusdm fetch_markets uses the fapi surface alone on mainnet and sandbox" do
+    for sandbox <- [false, true] do
+      {paths, stub} = recording_markets_stub(%{"/fapi/v1/exchangeInfo" => %{"symbols" => []}})
+
+      result =
+        Unified.call(Exchange.new!("binanceusdm", sandbox: sandbox), :fetch_markets, "fetchMarkets", %{},
+          plug: {Req.Test, stub}
+        )
+
+      assert_recorded_paths(paths, ["/fapi/v1/exchangeInfo"], "unexpected Binance USD-M fetchMarkets path")
+      assert {:ok, []} = result
+    end
+  end
+
+  # Bourse binancecoinm.ts pins `options.fetchMarkets.types` to `['inverse']` —
+  # COIN-M is dapi-only. Without the surface filter the inherited multi-surface
+  # fan-out hits spot/fapi/eapi as well and, with a null market envelope, each
+  # exchangeInfo map becomes one all-nil Market (task 415).
+  test "binancecoinm fetch_markets uses the dapi surface alone on mainnet and sandbox" do
+    for sandbox <- [false, true] do
+      {paths, stub} = recording_markets_stub(%{"/dapi/v1/exchangeInfo" => %{"symbols" => []}})
+
+      result =
+        Unified.call(Exchange.new!("binancecoinm", sandbox: sandbox), :fetch_markets, "fetchMarkets", %{},
+          plug: {Req.Test, stub}
+        )
+
+      assert_recorded_paths(paths, ["/dapi/v1/exchangeInfo"], "unexpected Binance COIN-M fetchMarkets path")
+      assert {:ok, []} = result
+    end
+  end
+
+  # Offline pin for task 415: recorded dapi exchangeInfo (GET /dapi/v1/exchangeInfo)
+  # must unwrap the symbols[] list and yield identity-bearing Market rows. Live
+  # authority: Binance COIN-M Exchange Information docs + observed 2026-07-19
+  # mainnet traffic (30 instruments under symbols[]).
+  @coinm_markets_fixture "test/fixtures/responses/binancecoinm/fetch_markets.json"
+  @external_resource @coinm_markets_fixture
+
+  test "binancecoinm fetch_markets parses recorded dapi exchangeInfo symbols" do
+    body = @coinm_markets_fixture |> File.read!() |> Jason.decode!() |> Map.fetch!("body")
+    wire_symbols = body["symbols"]
+    assert is_list(wire_symbols) and wire_symbols != []
+
+    assert {:ok, markets} =
+             ReadParse.parse(
+               Exchange.new!("binancecoinm"),
+               Bourse.Binancecoinm,
+               :fetch_markets,
+               "fetchMarkets",
+               body,
+               %{},
+               :parse_market,
+               true
+             )
+
+    assert length(markets) == length(wire_symbols)
+
+    for {market, raw} <- Enum.zip(markets, wire_symbols) do
+      assert %Bourse.Market{} = market
+      assert is_binary(market.id) and market.id != ""
+      assert market.id == raw["symbol"]
+      assert is_binary(market.symbol) and market.symbol != ""
+      assert is_binary(market.type) and market.type != ""
+      assert market.base == raw["baseAsset"]
+      assert market.quote == raw["quoteAsset"]
+      assert market.settle == raw["marginAsset"]
+      assert String.contains?(market.symbol, "/")
+      assert String.contains?(market.symbol, ":#{raw["marginAsset"]}")
+
+      case raw["contractType"] do
+        "PERPETUAL" -> assert market.type == "swap"
+        _ -> assert market.type == "future"
+      end
+    end
+
+    # Identity samples from the recorded payload (not inferred from code).
+    by_id = Map.new(markets, &{&1.id, &1})
+    assert %Bourse.Market{symbol: "BTC/USD:BTC", type: "swap"} = by_id["BTCUSD_PERP"]
+    assert %Bourse.Market{symbol: "ETH/USD:ETH", type: "swap"} = by_id["ETHUSD_PERP"]
+    assert %Bourse.Market{symbol: "BTC/USD:BTC-260925", type: "future"} = by_id["BTCUSD_260925"]
+
+    exchange = "binancecoinm" |> Exchange.new!() |> Exchange.put_markets(markets)
+    assert Symbol.to_exchange_id("BTC/USD:BTC", exchange) == "BTCUSD_PERP"
+    assert Symbol.to_exchange_id("BTC/USD:BTC-260925", exchange) == "BTCUSD_260925"
+  end
+
+  test "Binance order lifecycle endpoints follow spot and USD-M surfaces" do
+    assert_private_path(
+      "binance",
+      :create_order,
+      %{"symbol" => "BTC/USDT", "type" => "limit", "side" => "buy", "amount" => 0.001},
+      :post,
+      "/api/v3/order"
+    )
+
+    assert_private_path(
+      "binance",
+      :fetch_order,
+      %{"id" => "12345", "symbol" => "BTC/USDT"},
+      :get,
+      "/api/v3/order",
+      fn params ->
+        assert params["orderId"] == "12345"
+        refute Map.has_key?(params, "id")
+      end
+    )
+
+    assert_private_path(
+      "binance",
+      :fetch_orders,
+      %{"symbol" => "BTC/USDT"},
+      :get,
+      "/api/v3/allOrders"
+    )
+
+    assert_private_path(
+      "binance",
+      :cancel_order,
+      %{"id" => "12345", "symbol" => "BTC/USDT"},
+      :delete,
+      "/api/v3/order",
+      fn params ->
+        assert params["orderId"] == "12345"
+        refute Map.has_key?(params, "id")
+      end
+    )
+
+    assert_private_path(
+      "binanceusdm",
+      :create_order,
+      %{"symbol" => "BTC/USDT:USDT", "type" => "limit", "side" => "buy", "amount" => 0.001},
+      :post,
+      "/fapi/v1/order"
+    )
+
+    assert_private_path(
+      "binanceusdm",
+      :fetch_order,
+      %{"id" => "12345", "symbol" => "BTC/USDT:USDT"},
+      :get,
+      "/fapi/v1/order",
+      fn params ->
+        assert params["orderId"] == "12345"
+        refute Map.has_key?(params, "id")
+      end
+    )
+
+    assert_private_path(
+      "binanceusdm",
+      :cancel_order,
+      %{"id" => "12345", "symbol" => "BTC/USDT:USDT"},
+      :delete,
+      "/fapi/v1/order",
+      fn params ->
+        assert params["orderId"] == "12345"
+        refute Map.has_key?(params, "id")
+      end
+    )
+  end
+
+  test "fetch_tickers selects Binance's authored market surface from plural symbols" do
+    for {symbols, expected_path} <- [
+          {["BTC/USDT"], "/api/v3/ticker/24hr"},
+          {["BTC/USDT:USDT"], "/fapi/v1/ticker/24hr"},
+          {["BTC/USD:BTC"], "/dapi/v1/ticker/24hr"},
+          {["BTC/USDT:USDT-260630-100000-C"], "/eapi/v1/ticker"}
+        ] do
+      {requests, stub} = ticker_stub()
+
+      assert {:ok, _tickers} =
+               Unified.call(Exchange.new!("binance"), :fetch_tickers, "fetchTickers", %{"symbols" => symbols},
+                 plug: {Req.Test, stub}
+               )
+
+      assert_ticker_request(requests, expected_path)
+    end
+  end
+
+  test "symbol-less fetch_tickers uses Binance's authored spot default" do
+    {requests, stub} = ticker_stub()
+
+    assert {:ok, _tickers} =
+             Unified.call(Exchange.new!("binance"), :fetch_tickers, "fetchTickers", %{}, plug: {Req.Test, stub})
+
+    assert_ticker_request(requests, "/api/v3/ticker/24hr")
+  end
+
+  test "spot fetch_tickers keys compact ids from loaded market identity" do
+    rows =
+      @non_usdt_tickers_fixture
+      |> File.read!()
+      |> Jason.decode!()
+
+    # Shaped like a live binance `fetch_markets/1` row: `:symbol` still carries the
+    # RAW compact id (verified live 2026-07-19), so the split MUST come from the
+    # exchange-reported `baseAsset`/`quoteAsset` pair. Keep `:symbol` raw here or the
+    # test silently pins the fallback branch instead of the real one.
+    markets = [
+      %Bourse.Market{id: "AAVEBNB", symbol: "AAVEBNB", base: "AAVE", quote: "BNB"},
+      %Bourse.Market{id: "AAVETRY", symbol: "AAVETRY", base: "AAVE", quote: "TRY"},
+      %Bourse.Market{id: "AAVEBRL", symbol: "AAVEBRL", base: "AAVE", quote: "BRL"},
+      %Bourse.Market{id: "AAVEBKRW", symbol: "AAVEBKRW", base: "AAVE", quote: "BKRW"},
+      %Bourse.Market{id: "LINKUSD1", symbol: "LINKUSD1", base: "LINK", quote: "USD1"}
+    ]
+
+    exchange = "binance" |> Exchange.new!() |> Exchange.put_markets(markets)
+    {requests, stub} = ticker_rows_stub(rows)
+
+    assert {:ok, tickers} =
+             Unified.call(exchange, :fetch_tickers, "fetchTickers", %{}, plug: {Req.Test, stub})
+
+    assert_ticker_rows_request(requests, "/api/v3/ticker/24hr", nil)
+
+    assert tickers |> Map.keys() |> Enum.sort() == ["AAVE/BKRW", "AAVE/BNB", "AAVE/BRL", "AAVE/TRY", "LINK/USD1"]
+    assert Enum.all?(tickers, fn {symbol, ticker} -> ticker.symbol == symbol end)
+  end
+
+  test "spot fetch_tickers loads only spot identity when markets are unloaded" do
+    rows = @non_usdt_tickers_fixture |> File.read!() |> Jason.decode!()
+
+    market_rows =
+      for {id, base, quote} <- [
+            {"AAVEBNB", "AAVE", "BNB"},
+            {"AAVETRY", "AAVE", "TRY"},
+            {"AAVEBRL", "AAVE", "BRL"},
+            {"AAVEBKRW", "AAVE", "BKRW"},
+            {"LINKUSD1", "LINK", "USD1"}
+          ] do
+        %{"symbol" => id, "baseAsset" => base, "quoteAsset" => quote}
+      end
+
+    {paths, stub} = ticker_and_spot_markets_stub(rows, market_rows)
+
+    result = Unified.call(Exchange.new!("binance"), :fetch_tickers, "fetchTickers", %{}, plug: {Req.Test, stub})
+
+    assert_recorded_paths(
+      paths,
+      ["/api/v3/exchangeInfo", "/api/v3/ticker/24hr"],
+      "unexpected Binance unloaded-markets path"
+    )
+
+    assert {:ok, tickers} = result
+    assert tickers |> Map.keys() |> Enum.sort() == ["AAVE/BKRW", "AAVE/BNB", "AAVE/BRL", "AAVE/TRY", "LINK/USD1"]
+  end
+
+  test "spot fetch_tickers rows with no listed market keep their raw id" do
+    rows = @non_usdt_tickers_fixture |> File.read!() |> Jason.decode!()
+
+    # Live binance returns a handful of rows (NBTBIDR, AXSBIDR on 2026-07-19) that are
+    # absent from /api/v3/exchangeInfo entirely. With no instrument identity to split
+    # on, the raw id is the honest key — never a guessed quote boundary.
+    markets = [%Bourse.Market{id: "AAVEBNB", symbol: "AAVEBNB", base: "AAVE", quote: "BNB"}]
+
+    exchange = "binance" |> Exchange.new!() |> Exchange.put_markets(markets)
+    {requests, stub} = ticker_rows_stub(rows)
+
+    assert {:ok, tickers} =
+             Unified.call(exchange, :fetch_tickers, "fetchTickers", %{}, plug: {Req.Test, stub})
+
+    assert_ticker_rows_request(requests, "/api/v3/ticker/24hr", nil)
+
+    assert tickers |> Map.keys() |> Enum.sort() ==
+             ["AAVE/BNB", "AAVEBKRW", "AAVEBRL", "AAVETRY", "LINKUSD1"]
+  end
+
+  test "symbol-less binanceusdm fetch_tickers routes by family, defaulting to linear fapi (task 368)" do
+    for {params, expected_path} <- [
+          {%{}, "/fapi/v1/ticker/24hr"},
+          {%{"type" => "linear"}, "/fapi/v1/ticker/24hr"},
+          {%{"type" => "inverse"}, "/dapi/v1/ticker/24hr"},
+          {%{"subType" => "inverse"}, "/dapi/v1/ticker/24hr"},
+          # Families the binanceusdm default must not swallow: these keep
+          # falling through to the generic market-type inference.
+          {%{"type" => "future"}, "/dapi/v1/ticker/24hr"},
+          {%{"type" => "spot"}, "/api/v3/ticker"}
+        ] do
+      {requests, stub} = ticker_stub()
+
+      assert {:ok, _tickers} =
+               Unified.call(Exchange.new!("binanceusdm"), :fetch_tickers, "fetchTickers", params, plug: {Req.Test, stub})
+
+      assert_ticker_request(requests, expected_path)
+    end
+  end
+
+  # Task 373 — same default-family seam as task 368, for the other multi-endpoint
+  # binanceusdm reads that still fell through to `hd(configs)` (COIN-M dapi).
+  test "symbol-less binanceusdm no-arg reads default to linear fapi (task 373)" do
+    for {method, js_name, params, expected_path, body} <- [
+          {:fetch_positions, "fetchPositions", %{}, "/fapi/v3/positionRisk", []},
+          {:fetch_positions, "fetchPositions", %{"type" => "linear"}, "/fapi/v3/positionRisk", []},
+          {:fetch_positions, "fetchPositions", %{"type" => "inverse"}, "/dapi/v1/positionRisk", []},
+          {:fetch_positions, "fetchPositions", %{"subType" => "inverse"}, "/dapi/v1/positionRisk", []},
+          # Inverse symbol grammar (task 366) must still select COIN-M dapi.
+          {:fetch_positions, "fetchPositions", %{"symbol" => "BTC/USD:BTC"}, "/dapi/v1/positionRisk", []},
+          # type=future is the COIN-M delivery surface — authored inverse/future rule
+          # (task 378) pins positionRisk, not the old bare-hd account sibling.
+          {:fetch_positions, "fetchPositions", %{"type" => "future"}, "/dapi/v1/positionRisk", []},
+          {:fetch_open_orders, "fetchOpenOrders", %{}, "/fapi/v1/openOrders", []},
+          {:fetch_open_orders, "fetchOpenOrders", %{"type" => "linear"}, "/fapi/v1/openOrders", []},
+          {:fetch_open_orders, "fetchOpenOrders", %{"type" => "inverse"}, "/dapi/v1/openOrders", []},
+          {:fetch_open_orders, "fetchOpenOrders", %{"subType" => "inverse"}, "/dapi/v1/openOrders", []},
+          {:fetch_open_orders, "fetchOpenOrders", %{"type" => "future"}, "/dapi/v1/openOrders", []},
+          # type=spot routes to the spot private openOrders surface via authored
+          # endpoint_selection (task 378) — no longer bare-hd to COIN-M dapi.
+          {:fetch_open_orders, "fetchOpenOrders", %{"type" => "spot"}, "/api/v3/openOrders", []},
+          {:fetch_funding_rates, "fetchFundingRates", %{}, "/fapi/v1/premiumIndex", []},
+          {:fetch_funding_rates, "fetchFundingRates", %{"type" => "linear"}, "/fapi/v1/premiumIndex", []},
+          {:fetch_funding_rates, "fetchFundingRates", %{"type" => "inverse"}, "/dapi/v1/premiumIndex", []},
+          {:fetch_funding_rates, "fetchFundingRates", %{"subType" => "inverse"}, "/dapi/v1/premiumIndex", []},
+          {:fetch_funding_rates, "fetchFundingRates", %{"type" => "future"}, "/dapi/v1/premiumIndex", []},
+          {:fetch_time, "fetchTime", %{}, "/fapi/v1/time", %{"serverTime" => 1_700_000_000_000}},
+          {:fetch_time, "fetchTime", %{"type" => "linear"}, "/fapi/v1/time", %{"serverTime" => 1_700_000_000_000}},
+          {:fetch_time, "fetchTime", %{"type" => "inverse"}, "/dapi/v1/time", %{"serverTime" => 1_700_000_000_000}},
+          {:fetch_time, "fetchTime", %{"type" => "future"}, "/dapi/v1/time", %{"serverTime" => 1_700_000_000_000}},
+          {:fetch_time, "fetchTime", %{"type" => "spot"}, "/api/v3/time", %{"serverTime" => 1_700_000_000_000}}
+        ] do
+      {requests, stub} = path_body_stub(body)
+      exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret", sandbox: true)
+
+      assert {:ok, _} =
+               Unified.call(exchange, method, js_name, params,
+                 plug: {Req.Test, stub},
+                 timestamp_ms_override: 1_700_000_000_000
+               )
+
+      assert_path_body_request(requests, expected_path)
+    end
+  end
+
+  test "fetch_tickers filters Binance ticker maps by requested symbols" do
+    for {exchange_id, symbol, path, expected_query, params, rows} <- [
+          {"binance", "BTC/USDT", "/api/v3/ticker/24hr", ~s(["BTCUSDT"]), %{},
+           [
+             %{"symbol" => "BTCUSDT", "lastPrice" => "65000"},
+             %{"symbol" => "ETHUSDT", "lastPrice" => "3000"}
+           ]},
+          {"binanceusdm", "BTC/USDT:USDT", "/fapi/v1/ticker/24hr", nil, %{},
+           [
+             %{"symbol" => "BTCUSDT", "lastPrice" => "65000"},
+             %{"symbol" => "ETHUSDT", "lastPrice" => "3000"}
+           ]},
+          {"binanceusdm", "BTC/USD:BTC", "/dapi/v1/ticker/24hr", nil, %{"type" => "inverse"},
+           [
+             %{"symbol" => "BTCUSD_PERP", "lastPrice" => "65000"},
+             %{"symbol" => "ETHUSD_PERP", "lastPrice" => "3000"}
+           ]},
+          {"binanceusdm", "BTC/USD:BTC-260925", "/dapi/v1/ticker/24hr", nil, %{"type" => "inverse"},
+           [%{"symbol" => "BTCUSD_260925", "lastPrice" => "65000"}]},
+          {"binanceusdm", "ETH/USDT:USDT-251226", "/fapi/v1/ticker/24hr", nil, %{},
+           [%{"symbol" => "ETHUSDT_251226", "lastPrice" => "3000"}]}
+        ] do
+      {requests, stub} = ticker_rows_stub(rows)
+
+      assert {:ok, %{^symbol => %{last: last}} = tickers} =
+               Unified.call(
+                 Exchange.new!(exchange_id),
+                 :fetch_tickers,
+                 "fetchTickers",
+                 Map.put(params, "symbols", [symbol]),
+                 plug: {Req.Test, stub}
+               )
+
+      assert_ticker_rows_request(requests, path, expected_query)
+
+      assert is_number(last)
+      assert map_size(tickers) == 1
+    end
+  end
+
+  @tag :network
+  test "live Binance ticker reads retain only requested symbols" do
+    for {exchange_id, symbol, opts} <- [
+          {"binance", "BTC/USDT", []},
+          {"binanceusdm", "BTC/USDT:USDT", []},
+          {"binanceusdm", "BTC/USD:BTC", [type: "inverse"]}
+        ] do
+      exchange = Exchange.new!(exchange_id, sandbox: true)
+
+      assert {:ok, %{^symbol => _ticker} = tickers} =
+               Bourse.fetch_tickers(exchange, Keyword.put(opts, :symbols, [symbol]))
+
+      assert map_size(tickers) == 1
+    end
+  end
+
+  test "Binance create_order uppercases side and type on the wire" do
+    {requests, stub} = order_stub()
+
+    assert {:ok, _} =
+             Unified.call(
+               Exchange.new!("binanceusdm", api_key: "key", secret: "secret", sandbox: true),
+               :create_order,
+               "createOrder",
+               %{"symbol" => "BTC/USDT:USDT", "type" => "limit", "side" => "buy", "amount" => 0.001, "price" => 10_000},
+               plug: {Req.Test, stub},
+               timestamp_ms_override: 1_700_000_000_000
+             )
+
+    assert_order_request(requests, :post, "/fapi/v1/order", fn params ->
+      assert params["symbol"] == "BTCUSDT"
+      assert params["side"] == "BUY"
+      assert params["type"] == "LIMIT"
+      assert params["quantity"] == "0.001"
+      refute Map.has_key?(params, "amount")
+    end)
+  end
+
+  test "Binance batch orders JSON-encode transformed orders as a query parameter" do
+    {requests, stub} = order_stub()
+
+    orders = [%{"symbol" => "LTC/USDT:USDT", "type" => "limit", "side" => "buy", "amount" => 0.1, "price" => 60}]
+    exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret", sandbox: true)
+
+    assert {:ok, _} =
+             Unified.call(exchange, :create_orders, "createOrders", %{"orders" => orders},
+               plug: {Req.Test, stub},
+               timestamp_ms_override: 1_700_000_000_000
+             )
+
+    assert_order_request(requests, :post, "/fapi/v1/batchOrders", fn params ->
+      assert [order] = Jason.decode!(params["batchOrders"])
+      assert order["symbol"] == "LTCUSDT"
+      assert order["side"] == "BUY"
+      assert order["type"] == "LIMIT"
+      assert order["quantity"] == "0.1"
+      assert String.starts_with?(order["newClientOrderId"], "x-xcKtGhcu")
+
+      refute Map.has_key?(params, "orders")
+    end)
+  end
+
+  # The pinned CCXT static request fixture supplies the LIMIT compatibility vector, but the
+  # signing fixture gate carries no binance `createOrders` case — so the byte-for-byte
+  # claim had no test. Pin it here: field order and number formatting are both load-bearing.
+  @batch_orders_fixture "priv/reference_cache/request/binance.json"
+  @external_resource @batch_orders_fixture
+
+  test "Binance batch LIMIT orders reproduce the CCXT compatibility fixture byte-for-byte" do
+    expected =
+      @batch_orders_fixture
+      |> File.read!()
+      |> Jason.decode!()
+      |> get_in(["methods", "createOrders"])
+      |> hd()
+      |> Map.fetch!("output")
+
+    assert [_, expected_batch] = Regex.run(~r/batchOrders=(\[.*?\])&recvWindow/, expected)
+
+    orders = [
+      %{
+        "symbol" => "LTC/USDT:USDT",
+        "type" => "limit",
+        "side" => "buy",
+        "amount" => 0.1,
+        "price" => 60,
+        "clientOrderId" => "x-xcKtGhcub371e14dda9e4fda804421"
+      },
+      %{
+        "symbol" => "LTC/USDT:USDT",
+        "type" => "limit",
+        "side" => "buy",
+        "amount" => 0.11,
+        "price" => 61,
+        "clientOrderId" => "x-xcKtGhcu2b5cffec484a42138cdf8e"
+      }
+    ]
+
+    exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret", sandbox: true)
+    built = RequestShape.Binance.build(%{"orders" => orders}, "createOrders", exchange)
+
+    assert built["batchOrders"] == expected_batch
+  end
+
+  test "Binance batch orders use the fields required by each order type" do
+    {requests, stub} = order_stub()
+
+    orders = [
+      %{"symbol" => "LTC/USDT:USDT", "type" => "market", "side" => "buy", "amount" => 0.1},
+      %{
+        "symbol" => "LTC/USDT:USDT",
+        "type" => "stop",
+        "side" => "buy",
+        "amount" => 0.1,
+        "price" => 60,
+        "stopPrice" => 59
+      },
+      %{"symbol" => "LTC/USDT:USDT", "type" => "stop_market", "side" => "buy", "amount" => 0.1, "stopPrice" => 59},
+      %{
+        "symbol" => "LTC/USDT:USDT",
+        "type" => "trailing_stop_market",
+        "side" => "buy",
+        "amount" => 0.1,
+        "callbackRate" => 0.5
+      },
+      %{"symbol" => "LTC/USDT:USDT", "type" => "take_profit_market", "side" => "buy", "stopPrice" => 59}
+    ]
+
+    exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret", sandbox: true)
+
+    assert {:ok, _} =
+             Unified.call(exchange, :create_orders, "createOrders", %{"orders" => orders},
+               plug: {Req.Test, stub},
+               timestamp_ms_override: 1_700_000_000_000
+             )
+
+    assert_order_request(requests, :post, "/fapi/v1/batchOrders", fn params ->
+      assert [market, stop, stop_market, trailing, close_position] = Jason.decode!(params["batchOrders"])
+
+      assert %{"symbol" => "LTCUSDT", "side" => "BUY", "type" => "MARKET", "quantity" => "0.1"} = market
+      refute Map.has_key?(market, "price")
+      refute Map.has_key?(market, "timeInForce")
+
+      assert %{
+               "type" => "STOP",
+               "quantity" => "0.1",
+               "price" => "60",
+               "stopPrice" => "59"
+             } = stop
+
+      assert %{"type" => "STOP_MARKET", "quantity" => "0.1", "stopPrice" => "59"} = stop_market
+      refute Map.has_key?(stop_market, "price")
+
+      assert %{"type" => "TRAILING_STOP_MARKET", "quantity" => "0.1", "callbackRate" => "0.5"} = trailing
+      refute Map.has_key?(trailing, "price")
+
+      # Binance rejects `quantity` alongside `closePosition: true`, so an
+      # amount-less element must omit it rather than send an empty value.
+      assert %{"type" => "TAKE_PROFIT_MARKET", "stopPrice" => "59"} = close_position
+      refute Map.has_key?(close_position, "quantity")
+    end)
+  end
+
+  test "Binance batch orders forward their documented type-scoped optional fields" do
+    exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret", sandbox: true)
+
+    orders = [
+      %{
+        "symbol" => "LTC/USDT:USDT",
+        "type" => "limit",
+        "side" => "buy",
+        "amount" => 0.1,
+        "timeInForce" => "gtd",
+        "reduceOnly" => true,
+        "positionSide" => "LONG",
+        "priceMatch" => "OPPONENT",
+        "selfTradePreventionMode" => "EXPIRE_BOTH",
+        "goodTillDate" => 1_800_000_000_000
+      },
+      %{
+        "symbol" => "LTC/USDT:USDT",
+        "type" => "stop_market",
+        "side" => "sell",
+        "closePosition" => true,
+        "positionSide" => "SHORT",
+        "workingType" => "MARK_PRICE",
+        "priceProtect" => true,
+        "selfTradePreventionMode" => "EXPIRE_TAKER",
+        "stopPrice" => 59
+      },
+      %{
+        "symbol" => "LTC/USDT:USDT",
+        "type" => "trailing_stop_market",
+        "side" => "sell",
+        "amount" => 0.1,
+        "callbackRate" => 0.5,
+        "activationPrice" => 61,
+        "workingType" => "CONTRACT_PRICE"
+      }
+    ]
+
+    assert %{"batchOrders" => batch_orders} = RequestShape.Binance.build(%{"orders" => orders}, "createOrders", exchange)
+
+    assert [limit, close_position, trailing] = Jason.decode!(batch_orders)
+
+    assert %{
+             "type" => "LIMIT",
+             "timeInForce" => "GTD",
+             "reduceOnly" => "true",
+             "positionSide" => "LONG",
+             "priceMatch" => "OPPONENT",
+             "selfTradePreventionMode" => "EXPIRE_BOTH",
+             "goodTillDate" => 1_800_000_000_000
+           } = limit
+
+    refute Map.has_key?(limit, "price")
+
+    assert %{
+             "type" => "STOP_MARKET",
+             "closePosition" => "true",
+             "positionSide" => "SHORT",
+             "workingType" => "MARK_PRICE",
+             "priceProtect" => "true",
+             "selfTradePreventionMode" => "EXPIRE_TAKER"
+           } = close_position
+
+    refute Map.has_key?(close_position, "quantity")
+
+    assert %{
+             "type" => "TRAILING_STOP_MARKET",
+             "activationPrice" => 61,
+             "workingType" => "CONTRACT_PRICE"
+           } = trailing
+  end
+
+  # The builder keeps the allowlist it VALIDATES against separate from the
+  # per-type list it EMITS from. A field added to the first but not the second
+  # validates clean and then vanishes — the exact silent drop this carve exists
+  # to kill. Assert every allowlisted optional reaches the wire for its type.
+  test "every allowlisted optional element field reaches the wire for its order type" do
+    exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret", sandbox: true)
+
+    base = %{
+      "LIMIT" => %{"type" => "limit", "amount" => 0.1, "price" => 60},
+      "MARKET" => %{"type" => "market", "amount" => 0.1},
+      "STOP" => %{"type" => "stop", "amount" => 0.1, "price" => 60, "stopPrice" => 59},
+      "TAKE_PROFIT" => %{"type" => "take_profit", "amount" => 0.1, "price" => 60, "stopPrice" => 59},
+      "STOP_MARKET" => %{"type" => "stop_market", "amount" => 0.1, "stopPrice" => 59},
+      "TAKE_PROFIT_MARKET" => %{"type" => "take_profit_market", "amount" => 0.1, "stopPrice" => 59},
+      "TRAILING_STOP_MARKET" => %{"type" => "trailing_stop_market", "amount" => 0.1, "callbackRate" => 0.5}
+    }
+
+    optionals = %{
+      "LIMIT" => ~w(reduceOnly positionSide priceMatch selfTradePreventionMode goodTillDate),
+      "MARKET" => ~w(reduceOnly positionSide selfTradePreventionMode),
+      "STOP" => ~w(reduceOnly positionSide workingType priceProtect priceMatch selfTradePreventionMode goodTillDate),
+      "TAKE_PROFIT" =>
+        ~w(reduceOnly positionSide workingType priceProtect priceMatch selfTradePreventionMode goodTillDate),
+      "STOP_MARKET" => ~w(reduceOnly closePosition positionSide workingType priceProtect selfTradePreventionMode),
+      "TAKE_PROFIT_MARKET" => ~w(reduceOnly closePosition positionSide workingType priceProtect selfTradePreventionMode),
+      "TRAILING_STOP_MARKET" => ~w(reduceOnly positionSide workingType activationPrice selfTradePreventionMode)
+    }
+
+    for {type, fields} <- optionals, field <- fields do
+      order =
+        base
+        |> Map.fetch!(type)
+        |> Map.put("symbol", "LTC/USDT:USDT")
+        |> Map.put("side", "buy")
+        |> put_optional_probe(field)
+
+      assert %{"batchOrders" => batch} =
+               RequestShape.Binance.build(%{"orders" => [order]}, "createOrders", exchange)
+
+      assert [encoded] = Jason.decode!(batch)
+
+      assert Map.has_key?(encoded, field),
+             "#{type} silently dropped allowlisted field #{field}: #{inspect(encoded)}"
+    end
+  end
+
+  # `priceMatch` replaces `price`, `goodTillDate` requires GTD, and the
+  # close-all element rejects a caller-supplied size — so each probe carries
+  # the companion its field needs to be a legal element.
+  defp put_optional_probe(order, "priceMatch"), do: order |> Map.delete("price") |> Map.put("priceMatch", "OPPONENT")
+
+  defp put_optional_probe(order, "goodTillDate") do
+    order |> Map.put("timeInForce", "GTD") |> Map.put("goodTillDate", 1_800_000_000_000)
+  end
+
+  defp put_optional_probe(order, "closePosition"), do: order |> Map.delete("amount") |> Map.put("closePosition", true)
+  defp put_optional_probe(order, "reduceOnly"), do: Map.put(order, "reduceOnly", true)
+  defp put_optional_probe(order, "priceProtect"), do: Map.put(order, "priceProtect", true)
+  defp put_optional_probe(order, "positionSide"), do: Map.put(order, "positionSide", "LONG")
+  defp put_optional_probe(order, "workingType"), do: Map.put(order, "workingType", "MARK_PRICE")
+  defp put_optional_probe(order, "activationPrice"), do: Map.put(order, "activationPrice", 61)
+
+  defp put_optional_probe(order, "selfTradePreventionMode"), do: Map.put(order, "selfTradePreventionMode", "EXPIRE_TAKER")
+
+  test "Binance batch orders reject conflicting and incomplete priced elements" do
+    exchange = Exchange.new!("binanceusdm")
+
+    build = fn order -> RequestShape.Binance.build(%{"orders" => [order]}, "createOrders", exchange) end
+    limit = %{"symbol" => "LTC/USDT:USDT", "type" => "limit", "side" => "buy", "amount" => 0.1}
+
+    # Neither `price` nor `priceMatch`: the venue would answer -1102; name the
+    # missing key client-side instead of shipping an unpriced LIMIT.
+    assert_raise ArgumentError, ~r/requires "price" or "priceMatch"/, fn -> build.(limit) end
+
+    assert_raise ArgumentError, ~r/"priceMatch" cannot be used with "price"/, fn ->
+      build.(Map.merge(limit, %{"price" => 60, "priceMatch" => "OPPONENT"}))
+    end
+
+    # `closePosition: true` sizes itself from the open position.
+    assert_raise ArgumentError, ~r/"amount" cannot be used with "closePosition"/, fn ->
+      build.(%{
+        "symbol" => "LTC/USDT:USDT",
+        "type" => "stop_market",
+        "side" => "sell",
+        "stopPrice" => 59,
+        "amount" => 0.1,
+        "closePosition" => true
+      })
+    end
+
+    # `closePosition: false` is a legal explicit value and must not trip the
+    # close-all exclusions.
+    assert %{"batchOrders" => _} =
+             build.(%{
+               "symbol" => "LTC/USDT:USDT",
+               "type" => "stop_market",
+               "side" => "sell",
+               "stopPrice" => 59,
+               "amount" => 0.1,
+               "closePosition" => false
+             })
+  end
+
+  test "Binance batch orders fail loudly for unknown and inapplicable element fields" do
+    exchange = Exchange.new!("binanceusdm")
+
+    assert_raise ArgumentError, ~r/"mystery".*LIMIT/, fn ->
+      RequestShape.Binance.build(
+        %{
+          "orders" => [
+            %{
+              "symbol" => "LTC/USDT:USDT",
+              "type" => "limit",
+              "side" => "buy",
+              "amount" => 0.1,
+              "price" => 60,
+              "mystery" => true
+            }
+          ]
+        },
+        "createOrders",
+        exchange
+      )
+    end
+
+    assert_raise ArgumentError, ~r/"activationPrice".*LIMIT/, fn ->
+      RequestShape.Binance.build(
+        %{
+          "orders" => [
+            %{
+              "symbol" => "LTC/USDT:USDT",
+              "type" => "limit",
+              "side" => "buy",
+              "amount" => 0.1,
+              "price" => 60,
+              "activationPrice" => 59
+            }
+          ]
+        },
+        "createOrders",
+        exchange
+      )
+    end
+  end
+
+  test "Binance batch edits JSON-encode transformed orders as a query parameter" do
+    {requests, stub} = order_stub()
+
+    orders = [%{"id" => "556886677", "symbol" => "LTC/USDT:USDT", "side" => "buy", "amount" => 0.1, "price" => 60}]
+    exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret", sandbox: true)
+
+    assert {:ok, _} =
+             Unified.call(exchange, :edit_orders, "editOrders", %{"orders" => orders},
+               plug: {Req.Test, stub},
+               timestamp_ms_override: 1_700_000_000_000
+             )
+
+    assert_order_request(requests, :put, "/fapi/v1/batchOrders", fn params ->
+      assert [%{"orderId" => "556886677", "symbol" => "LTCUSDT", "side" => "BUY", "quantity" => "0.1", "price" => "60"}] =
+               Jason.decode!(params["batchOrders"])
+
+      refute Map.has_key?(params, "orders")
+    end)
+  end
+
+  @tag :network
+  test "Binance testnet validates an invalid batch after request shaping" do
+    api_key = System.get_env("BINANCE_FUTURES_TEST_API_KEY")
+    secret = System.get_env("BINANCE_FUTURES_TEST_API_SECRET")
+
+    if is_nil(api_key) or is_nil(secret) do
+      flunk("""
+      Missing Binance USD-M testnet credentials!
+
+      Set these environment variables:
+        export BINANCE_FUTURES_TEST_API_KEY="your_key"
+        export BINANCE_FUTURES_TEST_API_SECRET="your_secret"
+
+      Get credentials at: https://demo.binance.com/en/my/settings/api-management
+      """)
+    end
+
+    exchange = Exchange.new!("binanceusdm", api_key: api_key, secret: secret, sandbox: true)
+    orders = [%{"symbol" => "INVALID/USDT:USDT", "type" => "limit", "side" => "buy", "amount" => 0.1, "price" => 1}]
+
+    assert {:ok, [%{info: %{"code" => -1121, "msg" => "Invalid symbol."}}]} =
+             Unified.call(exchange, :create_orders, "createOrders", %{"orders" => orders}, [])
+  end
+
+  @tag :network
+  test "Binance testnet receives reduceOnly in a LIMIT batch element" do
+    api_key = System.get_env("BINANCE_FUTURES_TEST_API_KEY")
+    secret = System.get_env("BINANCE_FUTURES_TEST_API_SECRET")
+
+    if is_nil(api_key) or is_nil(secret) do
+      flunk("""
+      Missing Binance USD-M testnet credentials!
+
+      Set these environment variables:
+        export BINANCE_FUTURES_TEST_API_KEY="your_key"
+        export BINANCE_FUTURES_TEST_API_SECRET="your_secret"
+
+      Get credentials at: https://demo.binance.com/en/my/settings/api-management
+      """)
+    end
+
+    exchange = Exchange.new!("binanceusdm", api_key: api_key, secret: secret, sandbox: true)
+
+    assert {:ok, %{last: last}} =
+             Unified.call(exchange, :fetch_ticker, "fetchTicker", %{"symbol" => "LTC/USDT:USDT"}, [])
+
+    # LTCUSDT's tick size is 0.01; an unrounded `last * 0.9` is rejected with
+    # -1111 "Precision is over the maximum" BEFORE the venue evaluates
+    # reduceOnly, which would make this probe a generic rejection rather than
+    # evidence the field was honored.
+    price = Float.round(last * 0.9, 2)
+
+    # The USD-M demo account is in Hedge Mode (`dualSidePosition: true`, live
+    # 2026-07-29). Without `positionSide` the venue answers -4061; with
+    # `positionSide` + `reduceOnly` it answers -1106 "Parameter 'reduceonly'
+    # sent when not required" — both prove the batch element reached the
+    # venue with reduceOnly. One-way mode used to answer -2022 for a reduce-
+    # only with no position; pin the hedge-mode evidence instead.
+    assert {:ok, [%{info: %{"code" => code, "msg" => msg}}]} =
+             Unified.call(
+               exchange,
+               :create_orders,
+               "createOrders",
+               %{
+                 "orders" => [
+                   %{
+                     "symbol" => "LTC/USDT:USDT",
+                     "type" => "limit",
+                     "side" => "sell",
+                     "amount" => 0.2,
+                     "price" => price,
+                     "reduceOnly" => true,
+                     "positionSide" => "LONG"
+                   }
+                 ]
+               },
+               []
+             )
+
+    assert code == -1106
+    assert msg == "Parameter 'reduceonly' sent when not required."
+  end
+
+  @tag :network
+  test "Binance testnet validates each non-limit batch order shape" do
+    api_key = System.get_env("BINANCE_FUTURES_TEST_API_KEY")
+    secret = System.get_env("BINANCE_FUTURES_TEST_API_SECRET")
+
+    if is_nil(api_key) or is_nil(secret) do
+      flunk("""
+      Missing Binance USD-M testnet credentials!
+
+      Set these environment variables:
+        export BINANCE_FUTURES_TEST_API_KEY="your_key"
+        export BINANCE_FUTURES_TEST_API_SECRET="your_secret"
+
+      Get credentials at: https://demo.binance.com/en/my/settings/api-management
+      """)
+    end
+
+    exchange = Exchange.new!("binanceusdm", api_key: api_key, secret: secret, sandbox: true)
+
+    # A VALID symbol is load-bearing: Binance validates the symbol before the order
+    # type, so an invalid-symbol probe short-circuits at -1121 and goes green for any
+    # element shape — including one that omits a mandatory field. Every element below
+    # is sub-minimum notional or far from market, so none can execute or rest.
+    submit = fn order ->
+      assert {:ok, [%{info: info}]} =
+               Unified.call(exchange, :create_orders, "createOrders", %{"orders" => [order]}, [])
+
+      info
+    end
+
+    # MARKET carries quantity only; it reaches the notional check, proving the venue
+    # accepted the element rather than rejecting its shape.
+    assert %{"code" => -4164} =
+             submit.(%{"symbol" => "LTC/USDT:USDT", "type" => "market", "side" => "buy", "amount" => 0.001})
+
+    # The conditional family is refused wholesale by this endpoint (see C-T332 and the
+    # prod-verification ledger). Pinning -4120 makes a venue change loud: if Binance
+    # starts accepting these, this goes red and the ledger entry can be closed.
+    for order <- [
+          %{"type" => "stop", "amount" => 0.001, "price" => 5000, "stopPrice" => 5000},
+          %{"type" => "take_profit", "amount" => 0.001, "price" => 10, "stopPrice" => 10},
+          %{"type" => "stop_market", "amount" => 0.001, "stopPrice" => 5000},
+          %{"type" => "take_profit_market", "amount" => 0.001, "stopPrice" => 10},
+          %{"type" => "trailing_stop_market", "amount" => 0.001, "callbackRate" => 1.0}
+        ] do
+      info = submit.(Map.merge(%{"symbol" => "LTC/USDT:USDT", "side" => "buy"}, order))
+
+      assert %{"code" => -4120} = info,
+             """
+             Expected -4120 (order type unsupported on batchOrders) for #{order["type"]}, got:
+               #{inspect(info)}
+
+             If Binance now accepts this type, close the binanceusdm batchOrders entry in
+             docs/prod-verification-ledger.md and promote C-T332's conditional family to tier 1.
+             """
+    end
+  end
+
+  test "authored Binance option examples classify and round-trip through the real spec" do
+    exchange = Exchange.new!("binance")
+
+    assert exchange.symbol_patterns.option.pattern == :option_base_yymmdd
+
+    symbol = "BTC/USDT:USDT-260925-145000-C"
+    native = Symbol.to_exchange_id(symbol, exchange)
+
+    assert native == "BTC-260925-145000-C"
+    assert Symbol.from_exchange_id(native, exchange, :option) == symbol
+  end
+
+  test "spot account rows parse free, locked, and exact totals" do
+    body = %{
+      "updateTime" => 1_701_856_395_927,
+      "balances" => [%{"asset" => "BTC", "free" => "0.91974100", "locked" => "0.00025900"}]
+    }
+
+    {requests, stub} = account_stub(body)
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
+
+    assert {:ok, %Balance{} = balance} =
+             Unified.call(exchange, :fetch_balance, "fetchBalance", %{}, plug: {Req.Test, stub})
+
+    assert_account_request(requests, "/api/v3/account")
+
+    assert balance.free == %{"BTC" => 0.919741}
+    assert balance.used == %{"BTC" => 0.000259}
+    assert balance.total == %{"BTC" => 0.92}
+  end
+
+  test "USD-M assets map provider-defined wallet axes in multi-assets mode" do
+    body = %{
+      "assets" => [
+        %{
+          "asset" => "BNB",
+          "availableBalance" => "18.19275360",
+          "initialMargin" => "0.00000000",
+          "maxWithdrawAmount" => "0.00000000",
+          "walletBalance" => "0.00000000"
+        },
+        %{
+          "asset" => "USDT",
+          "availableBalance" => "45.00000000",
+          "initialMargin" => "3.97738800",
+          "maxWithdrawAmount" => "31.02261200",
+          "walletBalance" => "35.00000000"
+        }
+      ],
+      "positions" => []
+    }
+
+    {requests, stub} = account_stub(body)
+    exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret", sandbox: true)
+
+    assert {:ok, %Balance{} = balance} =
+             Unified.call(exchange, :fetch_balance, "fetchBalance", %{}, plug: {Req.Test, stub})
+
+    assert_account_request(requests, "/fapi/v3/account")
+
+    assert balance.free == %{"BNB" => 0.0, "USDT" => 31.022612}
+    assert balance.used == %{"BNB" => 0.0, "USDT" => 3.977388}
+    assert balance.total == %{"BNB" => 0.0, "USDT" => 35.0}
+    assert Enum.all?(balance.used, fn {_asset, used} -> used >= 0 end)
+  end
+
+  test "Binance-family plural trading-fee contracts expose their documented boundaries" do
+    spot = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
+
+    assert {:error,
+            %Bourse.Error{
+              type: :not_supported,
+              message: "No base URL for section sapi on binance (sandbox)"
+            }} = Unified.call(spot, :fetch_trading_fees, "fetchTradingFees", %{}, [])
+
+    usdm = Exchange.new!("binanceusdm", api_key: "key", secret: "secret", sandbox: true)
+
+    refute Exchange.has?(usdm, "fetchTradingFees")
+    assert Bourse.Binanceusdm.__unified_endpoint__(:fetch_trading_fees) == []
+
+    assert {:error,
+            %Bourse.Error{
+              type: :not_supported,
+              message: "binanceusdm does not support fetchTradingFees"
+            }} = Unified.call(usdm, :fetch_trading_fees, "fetchTradingFees", %{}, [])
+  end
+
+  test "OHLCV endpoint selection distinguishes market families and price variants" do
+    cases = [
+      {"binance", "BTC/USDT", nil, "/api/v3/klines"},
+      {"binanceusdm", "BTC/USDT:USDT", nil, "/fapi/v1/klines"},
+      {"binanceusdm", "BTC/USD:BTC", nil, "/dapi/v1/klines"},
+      {"binanceusdm", "BTC/USDT:USDT", "mark", "/fapi/v1/markPriceKlines"},
+      {"binanceusdm", "BTC/USD:BTC", "index", "/dapi/v1/indexPriceKlines"}
+    ]
+
+    for {exchange_id, symbol, price_variant, expected_path} <- cases do
+      {requests, stub} = ohlcv_stub()
+      params = %{"symbol" => symbol, "timeframe" => "1m", "price" => price_variant}
+
+      assert {:ok, [[1_700_000_000_000, 1.0, 2.0, 0.5, 1.5, 10.0]]} =
+               Unified.call(Exchange.new!(exchange_id), :fetch_ohlcv, "fetchOHLCV", params, plug: {Req.Test, stub})
+
+      assert_ohlcv_request(requests, expected_path)
+    end
+
+    {requests, stub} = ohlcv_stub()
+
+    assert {:ok, [[1_700_000_000_000, 1.0, 2.0, 0.5, 1.5, 10.0]]} =
+             Unified.call(
+               Exchange.new!("binanceusdm"),
+               :fetch_ohlcv,
+               "fetchOHLCV",
+               %{"symbol" => "BTC/USD:BTC", "timeframe" => "1m", "subType" => "inverse"},
+               plug: {Req.Test, stub}
+             )
+
+    assert_ohlcv_request(requests, "/dapi/v1/klines")
+  end
+
+  test "authored market field maps set type and active from venue keys" do
+    for exchange_id <- ["binance", "binanceusdm"] do
+      map = Exchange.new!(exchange_id).module.__field_maps__()["market"]["field_map"]
+
+      assert {:ok, %Bourse.Market{type: "swap", active: true}} =
+               Bourse.ResponseParser.apply_mappings(
+                 %{"contractType" => "PERPETUAL", "status" => "TRADING", "marginAsset" => "USDT"},
+                 map,
+                 target: Bourse.Market
+               )
+
+      assert {:ok, %Bourse.Market{type: "future", active: false}} =
+               Bourse.ResponseParser.apply_mappings(
+                 %{"contractType" => "CURRENT_QUARTER", "status" => "PENDING_TRADING"},
+                 map,
+                 target: Bourse.Market
+               )
+
+      # Spot rows have no contractType — type stays nil at the field-map layer so
+      # market_type_from_raw can still fill "spot" from baseAsset/quoteAsset.
+      assert {:ok, %Bourse.Market{type: nil, active: true}} =
+               Bourse.ResponseParser.apply_mappings(
+                 %{"status" => "TRADING", "baseAsset" => "BTC", "quoteAsset" => "USDT"},
+                 map,
+                 target: Bourse.Market
+               )
+    end
+  end
+
+  test "fetch_markets derives spot and USD-M boolean flags from type and settle" do
+    spot_body = %{
+      "symbols" => [
+        %{
+          "symbol" => "BTCUSDT",
+          "status" => "TRADING",
+          "baseAsset" => "BTC",
+          "quoteAsset" => "USDT",
+          "baseAssetPrecision" => 8,
+          "quotePrecision" => 8,
+          "filters" => [
+            %{"filterType" => "PRICE_FILTER", "tickSize" => "0.01", "minPrice" => "0.01", "maxPrice" => "1000000"},
+            %{"filterType" => "LOT_SIZE", "stepSize" => "0.00001", "minQty" => "0.00001", "maxQty" => "9000"}
+          ]
+        }
+      ]
+    }
+
+    swap_body = %{
+      "symbols" => [
+        %{
+          "symbol" => "BTCUSDT",
+          "status" => "TRADING",
+          "contractType" => "PERPETUAL",
+          "baseAsset" => "BTC",
+          "quoteAsset" => "USDT",
+          "marginAsset" => "USDT",
+          "baseAssetPrecision" => 8,
+          "quotePrecision" => 8,
+          "filters" => [
+            %{"filterType" => "PRICE_FILTER", "tickSize" => "0.1", "minPrice" => "0.1", "maxPrice" => "1000000"},
+            %{"filterType" => "LOT_SIZE", "stepSize" => "0.001", "minQty" => "0.001", "maxQty" => "1000"}
+          ]
+        }
+      ]
+    }
+
+    inverse_body = %{
+      "symbols" => [
+        %{
+          "symbol" => "BTCUSD_PERP",
+          "status" => "TRADING",
+          "contractType" => "PERPETUAL",
+          "baseAsset" => "BTC",
+          "quoteAsset" => "USD",
+          "marginAsset" => "BTC",
+          "baseAssetPrecision" => 8,
+          "quotePrecision" => 8,
+          "filters" => [
+            %{"filterType" => "PRICE_FILTER", "tickSize" => "0.1", "minPrice" => "0.1", "maxPrice" => "1000000"},
+            %{"filterType" => "LOT_SIZE", "stepSize" => "1", "minQty" => "1", "maxQty" => "1000000"}
+          ]
+        }
+      ]
+    }
+
+    # Pin one section per call (endpoint_index) so the stub answers a single shape.
+    spot_index = market_endpoint_index!("binance", "public")
+    fapi_index = market_endpoint_index!("binanceusdm", "fapiPublic")
+    dapi_index = market_endpoint_index!("binanceusdm", "dapiPublic")
+
+    {unexpected, stub} = markets_stub(%{"/api/v3/exchangeInfo" => spot_body})
+
+    spot_result =
+      Unified.call(Exchange.new!("binance"), :fetch_markets, "fetchMarkets", %{},
+        endpoint_index: spot_index,
+        plug: {Req.Test, stub}
+      )
+
+    assert_no_unexpected_paths(unexpected, "unexpected Binance spot markets path")
+    assert {:ok, [%Bourse.Market{} = spot]} = spot_result
+
+    assert spot.symbol == "BTC/USDT"
+    assert spot.type == "spot"
+    assert spot.spot == true
+    assert spot.swap == false
+    assert spot.contract == false
+    assert spot.linear == false
+    assert spot.inverse == false
+    assert spot.active == true
+    assert is_nil(spot.settle)
+
+    {unexpected, stub} =
+      markets_stub(%{
+        "/fapi/v1/exchangeInfo" => swap_body,
+        "/dapi/v1/exchangeInfo" => inverse_body
+      })
+
+    usdm = Exchange.new!("binanceusdm")
+
+    linear_result =
+      Unified.call(usdm, :fetch_markets, "fetchMarkets", %{},
+        endpoint_index: fapi_index,
+        plug: {Req.Test, stub}
+      )
+
+    assert_no_unexpected_paths(unexpected, "unexpected Binance USD-M markets path")
+    assert {:ok, [%Bourse.Market{} = linear]} = linear_result
+
+    assert linear.symbol == "BTC/USDT:USDT"
+    assert linear.type == "swap"
+    assert linear.swap == true
+    assert linear.spot == false
+    assert linear.contract == true
+    assert linear.linear == true
+    assert linear.inverse == false
+    assert linear.active == true
+    assert linear.settle == "USDT"
+
+    assert {:ok, [%Bourse.Market{} = inverse]} =
+             Unified.call(usdm, :fetch_markets, "fetchMarkets", %{},
+               endpoint_index: dapi_index,
+               plug: {Req.Test, stub}
+             )
+
+    assert inverse.symbol == "BTC/USD:BTC"
+    assert inverse.type == "swap"
+    assert inverse.swap == true
+    assert inverse.contract == true
+    assert inverse.linear == false
+    assert inverse.inverse == true
+    assert inverse.settle == "BTC"
+  end
+
+  test "fetch_markets derives maker/taker, tick-size precision and filter limits (task 164)" do
+    # Offline regression for the Binance-owned market-semantics slice:
+    # - maker/taker from the published fee schedule (not exchangeInfo, not private tradeFee)
+    # - precision amount/price = LOT_SIZE.stepSize / PRICE_FILTER.tickSize (tick sizes, not digits)
+    # - limits from the instrument's own filters[] (LOT_SIZE / PRICE_FILTER / NOTIONAL|MIN_NOTIONAL)
+    spot_body = %{
+      "symbols" => [
+        %{
+          "symbol" => "BTCUSDT",
+          "status" => "TRADING",
+          "baseAsset" => "BTC",
+          "quoteAsset" => "USDT",
+          "baseAssetPrecision" => 8,
+          "quotePrecision" => 8,
+          "filters" => [
+            %{
+              "filterType" => "PRICE_FILTER",
+              "tickSize" => "0.01",
+              "minPrice" => "0.01",
+              "maxPrice" => "1000000"
+            },
+            %{
+              "filterType" => "LOT_SIZE",
+              "stepSize" => "0.00001",
+              "minQty" => "0.00001",
+              "maxQty" => "9000"
+            },
+            %{
+              "filterType" => "MARKET_LOT_SIZE",
+              "stepSize" => "0.00001",
+              "minQty" => "0.00000",
+              "maxQty" => "128.93"
+            },
+            %{
+              "filterType" => "NOTIONAL",
+              "minNotional" => "5.00000000",
+              "maxNotional" => "9000000.00000000"
+            }
+          ]
+        }
+      ]
+    }
+
+    linear_body = %{
+      "symbols" => [
+        %{
+          "symbol" => "BTCUSDT",
+          "status" => "TRADING",
+          "contractType" => "PERPETUAL",
+          "baseAsset" => "BTC",
+          "quoteAsset" => "USDT",
+          "marginAsset" => "USDT",
+          "baseAssetPrecision" => 8,
+          "quotePrecision" => 8,
+          "filters" => [
+            %{
+              "filterType" => "PRICE_FILTER",
+              "tickSize" => "0.1",
+              "minPrice" => "556.8",
+              "maxPrice" => "4529764"
+            },
+            %{
+              "filterType" => "LOT_SIZE",
+              "stepSize" => "0.001",
+              "minQty" => "0.001",
+              "maxQty" => "1000"
+            },
+            %{"filterType" => "MIN_NOTIONAL", "notional" => "50"}
+          ]
+        }
+      ]
+    }
+
+    inverse_body = %{
+      "symbols" => [
+        %{
+          "symbol" => "BTCUSD_PERP",
+          "status" => "TRADING",
+          "contractType" => "PERPETUAL",
+          "baseAsset" => "BTC",
+          "quoteAsset" => "USD",
+          "marginAsset" => "BTC",
+          "baseAssetPrecision" => 8,
+          "quotePrecision" => 8,
+          "filters" => [
+            %{
+              "filterType" => "PRICE_FILTER",
+              "tickSize" => "0.1",
+              "minPrice" => "1000",
+              "maxPrice" => "4520958"
+            },
+            %{
+              "filterType" => "LOT_SIZE",
+              "stepSize" => "1",
+              "minQty" => "1",
+              "maxQty" => "1000000"
+            }
+          ]
+        }
+      ]
+    }
+
+    spot_index = market_endpoint_index!("binance", "public")
+    fapi_index = market_endpoint_index!("binanceusdm", "fapiPublic")
+    dapi_index = market_endpoint_index!("binanceusdm", "dapiPublic")
+
+    {unexpected, stub} = markets_stub(%{"/api/v3/exchangeInfo" => spot_body})
+
+    assert {:ok, [%Bourse.Market{} = spot]} =
+             Unified.call(Exchange.new!("binance"), :fetch_markets, "fetchMarkets", %{},
+               endpoint_index: spot_index,
+               plug: {Req.Test, stub}
+             )
+
+    assert_no_unexpected_paths(unexpected, "unexpected Binance spot markets path")
+
+    assert spot.symbol == "BTC/USDT"
+    assert spot.maker == 0.001
+    assert spot.taker == 0.001
+    assert spot.percentage == true
+    assert spot.tier_based == false
+    assert spot.precision_mode == "tick_size"
+    assert_in_delta spot.precision["price"], 0.01, 1.0e-12
+    assert_in_delta spot.precision["amount"], 0.00001, 1.0e-12
+    assert_in_delta spot.limits["amount"]["min"], 0.00001, 1.0e-12
+    assert_in_delta spot.limits["amount"]["max"], 9000.0, 1.0e-9
+    assert_in_delta spot.limits["price"]["min"], 0.01, 1.0e-12
+    assert_in_delta spot.limits["price"]["max"], 1_000_000.0, 1.0e-6
+    assert_in_delta spot.limits["cost"]["min"], 5.0, 1.0e-12
+    assert_in_delta spot.limits["cost"]["max"], 9_000_000.0, 1.0e-3
+    assert_in_delta spot.limits["market"]["max"], 128.93, 1.0e-9
+
+    {unexpected, stub} =
+      markets_stub(%{
+        "/fapi/v1/exchangeInfo" => linear_body,
+        "/dapi/v1/exchangeInfo" => inverse_body
+      })
+
+    usdm = Exchange.new!("binanceusdm")
+
+    assert {:ok, [%Bourse.Market{} = linear]} =
+             Unified.call(usdm, :fetch_markets, "fetchMarkets", %{},
+               endpoint_index: fapi_index,
+               plug: {Req.Test, stub}
+             )
+
+    assert_no_unexpected_paths(unexpected, "unexpected Binance USD-M markets path")
+
+    assert linear.symbol == "BTC/USDT:USDT"
+    assert linear.maker == 0.0002
+    assert linear.taker == 0.0005
+    assert linear.percentage == true
+    assert linear.tier_based == true
+    assert linear.precision_mode == "tick_size"
+    assert_in_delta linear.precision["price"], 0.1, 1.0e-12
+    assert_in_delta linear.precision["amount"], 0.001, 1.0e-12
+    assert_in_delta linear.limits["amount"]["min"], 0.001, 1.0e-12
+    assert_in_delta linear.limits["price"]["min"], 556.8, 1.0e-9
+    assert_in_delta linear.limits["cost"]["min"], 50.0, 1.0e-12
+
+    assert {:ok, [%Bourse.Market{} = inverse]} =
+             Unified.call(usdm, :fetch_markets, "fetchMarkets", %{},
+               endpoint_index: dapi_index,
+               plug: {Req.Test, stub}
+             )
+
+    assert inverse.symbol == "BTC/USD:BTC"
+    assert inverse.maker == 0.0001
+    assert inverse.taker == 0.0005
+    assert inverse.precision_mode == "tick_size"
+    assert_in_delta inverse.precision["price"], 0.1, 1.0e-12
+    assert_in_delta inverse.precision["amount"], 1.0, 1.0e-12
+    assert_in_delta inverse.limits["amount"]["min"], 1.0, 1.0e-12
+    assert_in_delta inverse.limits["price"]["min"], 1000.0, 1.0e-9
+  end
+
+  test "recorded exchangeInfo fixture pins filter-derived market semantics (task 164)" do
+    fixture = Jason.decode!(File.read!("test/fixtures/responses/binance/fetch_markets.json"))
+    responses = fixture["responses"]
+
+    spot_resp =
+      Enum.find(responses, fn resp ->
+        body = resp["body"] || %{}
+        symbols = body["symbols"] || []
+        Enum.any?(symbols, &(&1["symbol"] == "BTCUSDT" and is_nil(&1["contractType"])))
+      end)
+
+    assert is_map(spot_resp), "recorded fixture must include a spot BTCUSDT exchangeInfo body"
+
+    spot_row =
+      Enum.find(spot_resp["body"]["symbols"], fn row ->
+        row["symbol"] == "BTCUSDT" and is_nil(row["contractType"])
+      end)
+
+    filters = Map.get(spot_row, "filters", [])
+    price_filter = Enum.find(filters, &(&1["filterType"] == "PRICE_FILTER"))
+    lot_filter = Enum.find(filters, &(&1["filterType"] == "LOT_SIZE"))
+    notional_filter = Enum.find(filters, &(&1["filterType"] in ["NOTIONAL", "MIN_NOTIONAL"]))
+
+    assert is_map(price_filter)
+    assert is_map(lot_filter)
+    assert is_map(notional_filter)
+
+    body = %{"symbols" => [spot_row]}
+    {unexpected, stub} = markets_stub(%{"/api/v3/exchangeInfo" => body})
+
+    assert {:ok, [%Bourse.Market{} = market]} =
+             Unified.call(Exchange.new!("binance"), :fetch_markets, "fetchMarkets", %{},
+               endpoint_index: market_endpoint_index!("binance", "public"),
+               plug: {Req.Test, stub}
+             )
+
+    assert_no_unexpected_paths(unexpected, "unexpected Binance recorded markets path")
+
+    assert market.symbol == "BTC/USDT"
+    assert market.maker == 0.001
+    assert market.taker == 0.001
+    assert market.precision_mode == "tick_size"
+    assert_in_delta market.precision["price"], String.to_float(price_filter["tickSize"]), 1.0e-12
+    assert_in_delta market.precision["amount"], String.to_float(lot_filter["stepSize"]), 1.0e-12
+    assert_in_delta market.limits["amount"]["min"], String.to_float(lot_filter["minQty"]), 1.0e-12
+    assert_in_delta market.limits["amount"]["max"], String.to_float(lot_filter["maxQty"]), 1.0e-9
+    assert_in_delta market.limits["price"]["min"], String.to_float(price_filter["minPrice"]), 1.0e-12
+    assert_in_delta market.limits["price"]["max"], String.to_float(price_filter["maxPrice"]), 1.0e-6
+
+    expected_cost_min =
+      case notional_filter do
+        %{"minNotional" => min} -> String.to_float(min)
+        %{"notional" => min} -> String.to_float(min)
+      end
+
+    assert_in_delta market.limits["cost"]["min"], expected_cost_min, 1.0e-12
+  end
+
+  test "spot fetch_markets splits non-USDT quotes on exchangeInfo baseAsset/quoteAsset" do
+    # Live 2026-07-19: 1116/5966 binance spot markets came back with the raw compact
+    # id as `:symbol` because the separator-less id was split by pattern. One row per
+    # quote asset observed raw that day.
+    rows =
+      for {id, base, quote} <- [
+            {"AAVEBNB", "AAVE", "BNB"},
+            {"AAVETRY", "AAVE", "TRY"},
+            {"AAVEBRL", "AAVE", "BRL"},
+            {"AAVEBKRW", "AAVE", "BKRW"},
+            {"LINKUSD1", "LINK", "USD1"}
+          ] do
+        %{
+          "symbol" => id,
+          "status" => "TRADING",
+          "baseAsset" => base,
+          "quoteAsset" => quote,
+          "baseAssetPrecision" => 8,
+          "quotePrecision" => 8,
+          "filters" => []
+        }
+      end
+
+    {unexpected, stub} = markets_stub(%{"/api/v3/exchangeInfo" => %{"symbols" => rows}})
+
+    result =
+      Unified.call(Exchange.new!("binance"), :fetch_markets, "fetchMarkets", %{},
+        endpoint_index: market_endpoint_index!("binance", "public"),
+        plug: {Req.Test, stub}
+      )
+
+    assert_no_unexpected_paths(unexpected, "unexpected Binance spot markets path")
+    assert {:ok, markets} = result
+
+    assert Enum.map(markets, & &1.symbol) ==
+             ["AAVE/BNB", "AAVE/TRY", "AAVE/BRL", "AAVE/BKRW", "LINK/USD1"]
+
+    assert Enum.all?(markets, &(&1.type == "spot" and is_nil(&1.settle)))
+  end
+
+  test "capital transaction rows retain endpoint-specific status and sparse acknowledgements" do
+    exchange = Exchange.new!("binance")
+
+    deposit = %{
+      "amount" => "10",
+      "coin" => "USDT",
+      "network" => "TRX",
+      "status" => "0",
+      "address" => "deposit-address",
+      "insertTime" => "1714923704000",
+      "transferType" => "1"
+    }
+
+    withdrawal = %{
+      "id" => "withdrawal-id",
+      "amount" => "9",
+      "transactionFee" => "1",
+      "coin" => "USDT",
+      "network" => "TRX",
+      "status" => "1",
+      "address" => "withdrawal-address",
+      "addressTag" => "memo",
+      "applyTime" => "2024-05-05 15:38:56",
+      "transferType" => "0"
+    }
+
+    assert {:ok, [%Bourse.Transaction{type: "deposit", status: "pending", network: "TRC20", internal: true}]} =
+             ReadParse.parse(
+               exchange,
+               Bourse.Binance,
+               :fetch_deposits,
+               "fetchDeposits",
+               [deposit],
+               %{},
+               :parse_transaction,
+               true
+             )
+
+    assert {:ok,
+            [
+              %Bourse.Transaction{
+                type: "withdrawal",
+                status: "canceled",
+                timestamp: 1_714_923_536_000,
+                fee: %{"currency" => "USDT", "cost" => 1.0},
+                tag: "memo",
+                internal: false
+              }
+            ]} =
+             ReadParse.parse(
+               exchange,
+               Bourse.Binance,
+               :fetch_withdrawals,
+               "fetchWithdrawals",
+               [withdrawal],
+               %{},
+               :parse_transaction,
+               true
+             )
+
+    assert {:ok, %Bourse.Transaction{id: "withdrawal-id", currency: "USDT", type: nil, amount: nil, fee: nil}} =
+             ReadParse.parse(
+               exchange,
+               Bourse.Binance,
+               :withdraw,
+               "withdraw",
+               %{"id" => "withdrawal-id"},
+               %{"code" => "USDT"},
+               :parse_transaction,
+               false
+             )
+  end
+
+  test "spot order reads remain complete while ACKs retain only Binance-supplied values" do
+    exchange = Exchange.new!("binance")
+
+    read = %{
+      "symbol" => "LTCUSDT",
+      "orderId" => "3397148653",
+      "clientOrderId" => "client-id",
+      "price" => "0.00000000",
+      "origQty" => "0.10000000",
+      "executedQty" => "0.10000000",
+      "cummulativeQuoteQty" => "9.08000000",
+      "status" => "FILLED",
+      "timeInForce" => "GTC",
+      "type" => "MARKET",
+      "side" => "SELL",
+      "time" => "1679571174472",
+      "updateTime" => "1679571174472"
+    }
+
+    ack = %{
+      "symbol" => "BTCUSDT",
+      "orderId" => 18_211_862,
+      "orderListId" => -1,
+      "clientOrderId" => "bourse-task336-observed",
+      "transactTime" => 1_784_366_516_871
+    }
+
+    assert {:ok, %Bourse.Order{status: "closed", amount: 0.1, filled: 0.1, cost: 9.08}} =
+             ReadParse.parse(exchange, Bourse.Binance, :fetch_order, "fetchOrder", read, %{}, :parse_order, false)
+
+    assert {:ok, [%Bourse.Order{status: "closed", amount: 0.1, filled: 0.1, cost: 9.08}]} =
+             ReadParse.parse(exchange, Bourse.Binance, :fetch_orders, "fetchOrders", [read], %{}, :parse_order, true)
+
+    assert {:ok,
+            %Bourse.Order{
+              id: "18211862",
+              client_order_id: "bourse-task336-observed",
+              timestamp: 1_784_366_516_871,
+              last_update_timestamp: 1_784_366_516_871,
+              symbol: "BTC/USDT",
+              amount: nil,
+              filled: nil,
+              cost: nil,
+              status: nil
+            }} =
+             ReadParse.parse(
+               exchange,
+               Bourse.Binance,
+               :create_order,
+               "createOrder",
+               ack,
+               %{"symbol" => "BTC/USDT"},
+               :parse_order,
+               false
+             )
+  end
+
+  test "Binance order acknowledgements preserve only venue-stated values" do
+    exchange = Exchange.new!("binance")
+
+    # RESULT mode: the ACK keys PLUS order state, but no executedQty. Binance
+    # therefore states no fill fact.
+    result_mode = %{
+      "symbol" => "BTCUSDT",
+      "orderId" => 18_211_862,
+      "orderListId" => -1,
+      "clientOrderId" => "bourse-task336-result",
+      "transactTime" => 1_784_366_516_871,
+      "origQty" => "0.00200000",
+      "status" => "NEW",
+      "type" => "LIMIT",
+      "side" => "BUY"
+    }
+
+    assert {:ok, %Bourse.Order{status: "open", amount: 0.002, filled: nil, cost: nil, remaining: nil}} =
+             ReadParse.parse(
+               exchange,
+               Bourse.Binance,
+               :create_order,
+               "createOrder",
+               result_mode,
+               %{"symbol" => "BTC/USDT"},
+               :parse_order,
+               false
+             )
+
+    # Binance USD-M algo cancel acknowledgement has no executedQty, so it must
+    # not manufacture a zero fill.
+    algo_ack = %{"algoId" => "3386", "clientAlgoId" => "SQPifLIBAzZf0o4YAOGIwm", "code" => "200", "msg" => "success"}
+
+    assert {:ok, %Bourse.Order{id: "3386", filled: nil, amount: nil, cost: nil, status: nil}} =
+             ReadParse.parse(
+               exchange,
+               Bourse.Binance,
+               :cancel_order,
+               "cancelOrder",
+               algo_ack,
+               %{},
+               :parse_order,
+               false
+             )
+  end
+
+  test "Binance ignores a negative working-time sentinel for the order timestamp" do
+    exchange = Exchange.new!("binance")
+
+    trailing_order = %{
+      "symbol" => "ETHUSDT",
+      "orderId" => "2672907",
+      "transactTime" => "1758618616599",
+      "origQty" => "0.00860000",
+      "executedQty" => "0.00000000",
+      "status" => "NEW",
+      "type" => "TAKE_PROFIT",
+      "side" => "BUY",
+      "workingTime" => "-1"
+    }
+
+    assert {:ok, %Bourse.Order{timestamp: 1_758_618_616_599}} =
+             ReadParse.parse(
+               exchange,
+               Bourse.Binance,
+               :create_order,
+               "createOrder",
+               trailing_order,
+               %{"symbol" => "ETH/USDT"},
+               :parse_order,
+               false
+             )
+  end
+
+  test "Binance Futures cancel all acknowledgements remain venue bodies" do
+    acknowledgement = %{"code" => "200", "msg" => "The operation of cancel all open order is done."}
+
+    for {exchange_id, module, symbol} <- [
+          {"binanceusdm", Bourse.Binanceusdm, "BTC/USDT:USDT"},
+          {"binancecoinm", Bourse.Binancecoinm, "BTC/USD:BTC"}
+        ] do
+      assert {:ok, ^acknowledgement} =
+               ReadParse.parse(
+                 Exchange.new!(exchange_id),
+                 module,
+                 :cancel_all_orders,
+                 "cancelAllOrders",
+                 acknowledgement,
+                 %{"symbol" => symbol},
+                 :parse_order,
+                 true
+               )
+    end
+  end
+
+  # Binance's Deposit History page enumerates five status codes verbatim:
+  # "0: pending, 6: credited but cannot withdraw, 7: Wrong Deposit,
+  #  8: Waiting User confirm, 1: success". Bourse's map carries only 0/1/6, so 7
+  # and 8 must not regress back to nil. See docs/authored-spec-carves/binance.md.
+  test "deposit status covers every code Binance documents, including 7 and 8" do
+    exchange = Exchange.new!("binance")
+
+    parse_status = fn code ->
+      row = %{
+        "amount" => "1",
+        "coin" => "USDT",
+        "network" => "TRX",
+        "status" => code,
+        "address" => "deposit-address",
+        "insertTime" => "1714923704000",
+        "transferType" => "0"
+      }
+
+      {:ok, [%Bourse.Transaction{status: status}]} =
+        ReadParse.parse(exchange, Bourse.Binance, :fetch_deposits, "fetchDeposits", [row], %{}, :parse_transaction, true)
+
+      status
+    end
+
+    assert parse_status.("0") == "pending"
+    assert parse_status.("1") == "ok"
+    assert parse_status.("6") == "ok"
+    assert parse_status.("7") == "failed"
+    assert parse_status.("8") == "pending"
+  end
+
+  # An open-ended venue vocabulary: the authored map normalizes three ids, and
+  # anything else must survive as Binance's own string rather than nil.
+  test "capital network ids outside the authored map survive unnormalized" do
+    exchange = Exchange.new!("binance")
+
+    parse_network = fn network ->
+      row = %{
+        "amount" => "1",
+        "coin" => "USDT",
+        "network" => network,
+        "status" => "1",
+        "address" => "deposit-address",
+        "insertTime" => "1714923704000",
+        "transferType" => "0"
+      }
+
+      {:ok, [%Bourse.Transaction{network: parsed}]} =
+        ReadParse.parse(exchange, Bourse.Binance, :fetch_deposits, "fetchDeposits", [row], %{}, :parse_transaction, true)
+
+      parsed
+    end
+
+    assert parse_network.("TRX") == "TRC20"
+    assert parse_network.("ETH") == "ERC20"
+    assert parse_network.("BSC") == "BEP20"
+    assert parse_network.("BTC") == "BTC"
+    assert parse_network.("ARBITRUM") == "ARBITRUM"
+  end
+
+  defp account_stub(body) do
+    stub = unique_stub("binance_account")
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+      Req.Test.json(conn, body)
+    end)
+
+    {requests, stub}
+  end
+
+  defp assert_account_request(requests, expected_path) do
+    conn = RequestCollector.one!(requests)
+    assert conn.request_path == expected_path
+  end
+
+  defp ohlcv_stub do
+    stub = unique_stub("binance_ohlcv")
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+      Req.Test.json(conn, [[1_700_000_000_000, "1", "2", "0.5", "1.5", "10"]])
+    end)
+
+    {requests, stub}
+  end
+
+  defp assert_ohlcv_request(requests, expected_path) do
+    conn = RequestCollector.one!(requests)
+    assert conn.request_path == expected_path
+    query = URI.decode_query(conn.query_string)
+    refute query["price"]
+    refute query["type"]
+    refute query["subType"]
+    refute query["sub_type"]
+  end
+
+  defp ticker_stub do
+    stub = unique_stub("binance_tickers")
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+      Req.Test.json(conn, [])
+    end)
+
+    {requests, stub}
+  end
+
+  defp assert_ticker_request(requests, expected_path) do
+    conn = RequestCollector.one!(requests)
+    assert conn.request_path == expected_path
+  end
+
+  defp path_body_stub(body) do
+    stub = unique_stub("binance_path_body")
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+      Req.Test.json(conn, body)
+    end)
+
+    {requests, stub}
+  end
+
+  defp assert_path_body_request(requests, expected_path) do
+    conn = RequestCollector.one!(requests)
+    assert conn.request_path == expected_path
+  end
+
+  defp assert_borrow_interest_request(exchange, params, expected_query) do
+    {requests, stub} = path_body_stub(%{"rows" => []})
+
+    assert {:ok, []} =
+             Unified.call(exchange, :fetch_borrow_interest, "fetchBorrowInterest", params,
+               plug: {Req.Test, stub},
+               timestamp_ms_override: 1_700_000_000_000
+             )
+
+    request = RequestCollector.one!(requests)
+    assert request.request_path == "/sapi/v1/margin/interestHistory"
+
+    query =
+      request.query_string
+      |> URI.decode_query()
+      |> Map.drop(["timestamp", "signature", "recvWindow"])
+
+    assert query == expected_query
+  end
+
+  defp ticker_rows_stub(rows) do
+    stub = unique_stub("binance_ticker_rows")
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+      Req.Test.json(conn, rows)
+    end)
+
+    {requests, stub}
+  end
+
+  defp assert_ticker_rows_request(requests, expected_path, expected_query) do
+    conn = RequestCollector.one!(requests)
+    assert conn.request_path == expected_path
+
+    query = URI.decode_query(conn.query_string)
+
+    if expected_query do
+      assert query["symbols"] == expected_query
+    else
+      refute Map.has_key?(query, "symbols")
+    end
+  end
+
+  defp ticker_and_spot_markets_stub(ticker_rows, market_rows) do
+    stub = unique_stub("binance_tickers_unloaded_markets")
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+
+      case conn.request_path do
+        "/api/v3/ticker/24hr" -> Req.Test.json(conn, ticker_rows)
+        "/api/v3/exchangeInfo" -> Req.Test.json(conn, %{"symbols" => market_rows})
+        _path -> Req.Test.json(conn, ticker_rows)
+      end
+    end)
+
+    {requests, stub}
+  end
+
+  # Fan-out dispatches each surface from its own Task, so the hit paths are
+  # collected in an Agent rather than the test process' mailbox.
+  defp recording_markets_stub(path_bodies) when is_map(path_bodies) do
+    stub = unique_stub("binance_markets_recording")
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+      Req.Test.json(conn, Map.get(path_bodies, conn.request_path, %{"symbols" => []}))
+    end)
+
+    {requests, stub}
+  end
+
+  defp recorded_paths(requests) do
+    requests
+    |> RequestCollector.requests()
+    |> Enum.map(& &1.conn.request_path)
+    |> Enum.sort()
+  end
+
+  defp assert_recorded_paths(paths, expected_paths, diagnostic) do
+    actual_paths = recorded_paths(paths)
+
+    assert actual_paths == expected_paths, "#{diagnostic}: #{inspect(actual_paths)}"
+  end
+
+  defp markets_stub(path_bodies) when is_map(path_bodies) do
+    stub = unique_stub("binance_markets")
+    {:ok, unexpected} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      case Map.fetch(path_bodies, conn.request_path) do
+        {:ok, body} ->
+          Req.Test.json(conn, body)
+
+        # A raise here would be swallowed by Bourse.HTTP's transport rescue, so the
+        # path is collected for the caller to assert on after the call returns.
+        :error ->
+          conn = RequestCollector.capture(unexpected, conn)
+          Req.Test.json(conn, %{"symbols" => []})
+      end
+    end)
+
+    {unexpected, stub}
+  end
+
+  defp assert_no_unexpected_paths(unexpected, diagnostic) do
+    paths =
+      unexpected
+      |> RequestCollector.requests()
+      |> Enum.map(& &1.conn.request_path)
+      |> Enum.sort()
+
+    assert paths == [], "#{diagnostic}: #{inspect(paths)}"
+  end
+
+  defp assert_private_path(exchange_id, method, params, verb, expected_path, assert_params \\ fn _params -> :ok end) do
+    {requests, stub} = order_stub()
+    exchange = Exchange.new!(exchange_id, api_key: "key", secret: "secret", sandbox: true)
+    js_name = Unified.js_name_for!(method)
+
+    assert {:ok, _} =
+             Unified.call(exchange, method, js_name, params,
+               plug: {Req.Test, stub},
+               timestamp_ms_override: 1_700_000_000_000
+             )
+
+    assert_order_request(requests, verb, expected_path, assert_params)
+  end
+
+  defp order_stub do
+    stub = unique_stub("binance_order")
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      {conn, body} = RequestCollector.capture_with_body(requests, conn)
+      params = request_params(conn, body)
+      Req.Test.json(conn, %{"orderId" => 12_345, "symbol" => params["symbol"], "status" => "NEW"})
+    end)
+
+    {requests, stub}
+  end
+
+  defp assert_order_request(requests, verb, expected_path, assert_params) do
+    %{conn: conn, body: body} = RequestCollector.one_request!(requests)
+
+    assert conn.method == verb |> Atom.to_string() |> String.upcase()
+    assert conn.request_path == expected_path
+
+    params =
+      conn
+      |> request_params(body)
+      |> Map.drop(["timestamp", "signature", "recvWindow"])
+
+    assert_params.(params)
+  end
+
+  defp request_params(conn, raw_body) do
+    query = URI.decode_query(conn.query_string || "")
+
+    body =
+      case raw_body do
+        "" -> %{}
+        raw_body -> URI.decode_query(raw_body)
+      end
+
+    Map.merge(query, body)
+  end
+
+  defp market_endpoint_index!(exchange_id, section) do
+    configs = Exchange.new!(exchange_id).module.__unified_endpoint__(:fetch_markets)
+
+    index =
+      Enum.find_index(configs, fn config ->
+        section in config.sections
+      end)
+
+    assert is_integer(index), "no fetch_markets section #{inspect(section)}"
+    index
+  end
+
+  defp identifier_value(:symbol), do: "BTCUSDT"
+  defp identifier_value(:timeframe), do: "1m"
+  defp identifier_value(:code), do: "USDT"
+  defp identifier_value(:id), do: "1"
+  defp identifier_value(:amount), do: 1
+  defp identifier_value(:type), do: "limit"
+  defp identifier_value(:side), do: "buy"
+  defp identifier_value(:address), do: "not-a-real-address"
+  defp identifier_value(:from_code), do: "USDT"
+  defp identifier_value(:to_code), do: "BTC"
+  defp identifier_value(:leverage), do: 2
+  defp identifier_value(:margin_mode), do: "isolated"
+  defp identifier_value(:hedged), do: true
+  defp identifier_value(_key), do: "identifier"
+
+  defp unique_stub(prefix), do: "#{prefix}_#{System.unique_integer([:positive])}"
+end

@@ -1,0 +1,33 @@
+{
+  "acceptance": {
+    "branch": "public_get_public_mark_price",
+    "capture_date": "2026-07-26",
+    "captured_at": "2026-07-26T05:57:13.282Z",
+    "endpoint": "public/mark-price",
+    "host": "www.okx.com",
+    "http_status": 200,
+    "method": "fetchMarkPrices",
+    "sections": [
+      "public"
+    ],
+    "venue": "okx"
+  },
+  "oracle": "public_exchange_acceptance",
+  "replay": {
+    "markets": [],
+    "pagination_cursors": [
+      null
+    ],
+    "params": {},
+    "timestamp_ms_override": 1785045433282
+  },
+  "requests": [
+    {
+      "body": null,
+      "headers": [],
+      "method": "GET",
+      "url": "https://www.okx.com/api/v5/public/mark-price?instType=SWAP"
+    }
+  ],
+  "schema_version": 1
+}

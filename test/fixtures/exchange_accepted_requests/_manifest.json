@@ -1,0 +1,152 @@
+{
+  "count": 12,
+  "generated_at": "2026-08-04T01:18:11Z",
+  "goldens": [
+    {
+      "business_success": "HTTP 2xx paper-account payload",
+      "capture_date": "2026-07-26",
+      "captured_at": "2026-07-26T05:32:58.799Z",
+      "endpoint": "v2/account",
+      "host": "paper-api.alpaca.markets",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs alpaca fetch_balance accepted 2026-07-26 (v2/account @ paper-api.alpaca.markets, HTTP 200, HTTP 2xx paper-account payload).",
+      "method": "fetch_balance",
+      "path": "alpaca/fetch_balance.json",
+      "venue": "alpaca"
+    },
+    {
+      "business_success": "HTTP 2xx stock snapshot payload",
+      "capture_date": "2026-07-26",
+      "captured_at": "2026-07-26T05:32:57.516Z",
+      "endpoint": "v2/stocks/{symbol}/snapshot",
+      "host": "data.alpaca.markets",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs alpaca fetch_ticker accepted 2026-07-26 (v2/stocks/{symbol}/snapshot @ data.alpaca.markets, HTTP 200, HTTP 2xx stock snapshot payload).",
+      "method": "fetch_ticker",
+      "path": "alpaca/fetch_ticker.json",
+      "venue": "alpaca"
+    },
+    {
+      "business_success": "HTTP 2xx account payload without an error code",
+      "capture_date": "2026-07-22",
+      "captured_at": "2026-07-22T10:20:56.892Z",
+      "endpoint": "api/v3/account",
+      "host": "testnet.binance.vision",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binance fetch_balance accepted 2026-07-22 (api/v3/account @ testnet.binance.vision, HTTP 200, HTTP 2xx account payload without an error code).",
+      "method": "fetch_balance",
+      "path": "binance/fetch_balance.json",
+      "venue": "binance"
+    },
+    {
+      "business_success": "HTTP 2xx filtered order-history list without an error code",
+      "capture_date": "2026-08-04",
+      "captured_at": "2026-08-04T01:18:11.687Z",
+      "endpoint": "api/v3/allOrders",
+      "host": "testnet.binance.vision",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binance fetch_orders accepted 2026-08-04 (api/v3/allOrders @ testnet.binance.vision, HTTP 200, HTTP 2xx filtered order-history list without an error code).",
+      "method": "fetch_orders",
+      "path": "binance/fetch_orders.json",
+      "venue": "binance"
+    },
+    {
+      "business_success": "HTTP 2xx COIN-M account payload without an error code",
+      "capture_date": "2026-07-26",
+      "captured_at": "2026-07-26T05:33:06.906Z",
+      "endpoint": "dapi/v1/account",
+      "host": "demo-dapi.binance.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binancecoinm fetch_balance accepted 2026-07-26 (dapi/v1/account @ demo-dapi.binance.com, HTTP 200, HTTP 2xx COIN-M account payload without an error code).",
+      "method": "fetch_balance",
+      "path": "binancecoinm/fetch_balance.json",
+      "venue": "binancecoinm"
+    },
+    {
+      "business_success": "HTTP 2xx futures account payload without an error code",
+      "capture_date": "2026-07-23",
+      "captured_at": "2026-07-23T05:36:03.689Z",
+      "endpoint": "fapi/v3/account",
+      "host": "demo-fapi.binance.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binanceusdm fetch_balance accepted 2026-07-23 (fapi/v3/account @ demo-fapi.binance.com, HTTP 200, HTTP 2xx futures account payload without an error code).",
+      "method": "fetch_balance",
+      "path": "binanceusdm/fetch_balance.json",
+      "venue": "binanceusdm"
+    },
+    {
+      "business_success": "retCode=0 with orderId; accepted order cancelled",
+      "capture_date": "2026-07-22",
+      "captured_at": "2026-07-22T10:20:56.448Z",
+      "endpoint": "v5/order/create",
+      "host": "api-demo.bybit.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs bybit create_order accepted 2026-07-22 (v5/order/create @ api-demo.bybit.com, HTTP 200, retCode=0 with orderId; accepted order cancelled).",
+      "method": "create_order",
+      "path": "bybit/create_order.json",
+      "venue": "bybit"
+    },
+    {
+      "business_success": "JSON-RPC result map with no error member",
+      "capture_date": "2026-07-22",
+      "captured_at": "2026-07-22T10:20:55.645Z",
+      "endpoint": "private/get_account_summaries",
+      "host": "test.deribit.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs deribit fetch_balance accepted 2026-07-22 (private/get_account_summaries @ test.deribit.com, HTTP 200, JSON-RPC result map with no error member).",
+      "method": "fetch_balance",
+      "path": "deribit/fetch_balance.json",
+      "venue": "deribit"
+    },
+    {
+      "business_success": "JSON-RPC result list with no error member",
+      "capture_date": "2026-07-22",
+      "captured_at": "2026-07-22T10:21:00.902Z",
+      "endpoint": "private/get_all_portfolios",
+      "host": "api-demo.lyra.finance",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs derive fetch_balance accepted 2026-07-22 (private/get_all_portfolios @ api-demo.lyra.finance, HTTP 200, JSON-RPC result list with no error member).",
+      "method": "fetch_balance",
+      "path": "derive/fetch_balance.json",
+      "venue": "derive"
+    },
+    {
+      "business_success": "status=ok with resting oid; accepted order cancelled",
+      "capture_date": "2026-07-22",
+      "captured_at": "2026-07-22T10:20:59.047Z",
+      "endpoint": "exchange:order",
+      "host": "api.hyperliquid-testnet.xyz",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs hyperliquid create_order accepted 2026-07-22 (exchange:order @ api.hyperliquid-testnet.xyz, HTTP 200, status=ok with resting oid; accepted order cancelled).",
+      "method": "create_order",
+      "path": "hyperliquid/create_order.json",
+      "venue": "hyperliquid"
+    },
+    {
+      "business_success": "code=200 authenticated inactive-order payload",
+      "capture_date": "2026-07-26",
+      "captured_at": "2026-07-26T05:36:55.381Z",
+      "endpoint": "accountInactiveOrders",
+      "host": "testnet.zklighter.elliot.ai",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs lighter fetch_closed_orders accepted 2026-07-26 (accountInactiveOrders @ testnet.zklighter.elliot.ai, HTTP 200, code=200 authenticated inactive-order payload).",
+      "method": "fetch_closed_orders",
+      "path": "lighter/fetch_closed_orders.json",
+      "venue": "lighter"
+    },
+    {
+      "business_success": "code=0",
+      "capture_date": "2026-07-23",
+      "captured_at": "2026-07-23T09:08:14.300Z",
+      "endpoint": "api/v5/account/balance",
+      "host": "www.okx.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs okx fetch_balance accepted 2026-07-23 (api/v5/account/balance @ www.okx.com, HTTP 200, code=0).",
+      "method": "fetch_balance",
+      "path": "okx/fetch_balance.json",
+      "venue": "okx"
+    }
+  ],
+  "oracle": "exchange_acceptance",
+  "schema_version": 1
+}

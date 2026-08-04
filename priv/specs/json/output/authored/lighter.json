@@ -1,0 +1,2469 @@
+{
+  "auth": {
+    "authenticated_sections": [
+      "private"
+    ],
+    "signing_config": {},
+    "signing_pattern": "lighter",
+    "sign_recipe": {
+      "private": {
+        "auth_headers": null,
+        "canonical_string": null,
+        "crypto_op": null,
+        "custom_signing_details": {
+          "primitives": [
+            "official_lighter_go_signer"
+          ],
+          "signals": [
+            "createAuthToken",
+            "signCreateOrder",
+            "signCancelOrder"
+          ]
+        },
+        "custom_signing_scheme": "zk_schnorr",
+        "nonce": null,
+        "patch_count": 0,
+        "pre_sign_transforms": null,
+        "signature_placement": null,
+        "timestamp": null,
+        "unresolved_reason": "custom_signing_family"
+      }
+    }
+  },
+  "authored": true,
+  "capabilities": {
+    "features": {
+      "default": {
+        "createOrder": {
+          "iceberg": false,
+          "leverage": false,
+          "marketBuyByCost": false,
+          "marketBuyRequiresPrice": false,
+          "selfTradePrevention": false,
+          "timeInForce": {
+            "FOK": true,
+            "GTD": false,
+            "IOC": true,
+            "PO": true
+          },
+          "trailing": false
+        },
+        "sandbox": true
+      }
+    },
+    "has": {
+      "fetchTradingFee": false,
+      "fetchBorrowRateHistory": false,
+      "spot": false,
+      "setPositionMode": false,
+      "createMarketOrderWithCost": false,
+      "fetchLiquidations": false,
+      "createMarketBuyOrderWithCost": false,
+      "setMarginMode": false,
+      "fetchOrderBook": true,
+      "fetchTransfer": false,
+      "createStopOrder": false,
+      "fetchAllGreeks": false,
+      "fetchFundingHistory": false,
+      "fetchPositionMode": false,
+      "createReduceOnlyOrder": false,
+      "fetchFundingRate": false,
+      "setLeverage": false,
+      "fetchIndexOHLCV": false,
+      "fetchGreeks": false,
+      "fetchPositionsRisk": false,
+      "createMarketSellOrderWithCost": false,
+      "addMargin": false,
+      "repayIsolatedMargin": false,
+      "editOrder": false,
+      "fetchMarginMode": false,
+      "createTriggerOrder": false,
+      "fetchIsolatedBorrowRate": false,
+      "createPostOnlyOrder": false,
+      "repayCrossMargin": false,
+      "fetchTime": false,
+      "fetchDepositWithdrawFees": false,
+      "closeAllPositions": false,
+      "fetchMarkOHLCV": false,
+      "borrowCrossMargin": false,
+      "fetchOrders": false,
+      "fetchDeposits": false,
+      "fetchOrderTrades": false,
+      "option": false,
+      "future": false,
+      "fetchMarketLeverageTiers": false,
+      "fetchPositions": false,
+      "fetchFundingRates": false,
+      "fetchDepositAddress": false,
+      "fetchBorrowInterest": false,
+      "fetchStatus": false,
+      "fetchClosedOrders": true,
+      "setMargin": false,
+      "fetchOpenInterest": false,
+      "fetchDepositAddresses": false,
+      "fetchTransfers": false,
+      "fetchBorrowRateHistories": false,
+      "fetchCurrenciesWs": false,
+      "cancelAllOrders": false,
+      "withdraw": false,
+      "fetchLeverage": false,
+      "sandbox": false,
+      "borrowMargin": false,
+      "fetchMarkets": true,
+      "fetchWithdrawal": false,
+      "fetchOHLCV": true,
+      "swap": false,
+      "createSubAccount": false,
+      "fetchBorrowRates": false,
+      "cancelOrder": true,
+      "fetchOpenInterests": false,
+      "fetchOpenOrders": true,
+      "fetchWithdrawals": false,
+      "fetchDepositWithdrawFee": false,
+      "fetchCanceledAndClosedOrders": false,
+      "fetchCrossBorrowRates": false,
+      "fetchFundingRateHistory": false,
+      "fetchCurrencies": false,
+      "fetchLedger": false,
+      "fetchOption": false,
+      "transfer": false,
+      "fetchMyTrades": false,
+      "fetchPremiumIndexOHLCV": false,
+      "createOrder": true,
+      "fetchTrades": false,
+      "fetchCanceledOrders": false,
+      "fetchBorrowRate": false,
+      "fetchBorrowRatesPerSymbol": false,
+      "privateAPI": false,
+      "fetchL2OrderBook": false,
+      "margin": false,
+      "cancelOrdersForSymbols": false,
+      "fetchPosition": false,
+      "fetchLeverageTiers": false,
+      "closePosition": false,
+      "reduceMargin": false,
+      "fetchIsolatedBorrowRates": false,
+      "cancelOrders": false,
+      "fetchTicker": true,
+      "fetchVolatilityHistory": false,
+      "createMarketOrderWs": false,
+      "fetchCrossBorrowRate": false,
+      "fetchTickers": false,
+      "createLimitOrder": false,
+      "fetchBalance": false,
+      "fetchMyLiquidations": false,
+      "borrowIsolatedMargin": false,
+      "createOrders": false,
+      "createMarketOrder": false,
+      "fetchOptionChain": false,
+      "publicAPI": false,
+      "fetchAccounts": false,
+      "cancelAllOrdersAfter": false,
+      "fetchTradingFees": false,
+      "fetchOrder": false,
+      "fetchOpenInterestHistory": false
+    },
+    "timeframes": {
+      "12h": "12h",
+      "15m": "15m",
+      "1d": "1d",
+      "1h": "1h",
+      "1m": "1m",
+      "1w": "1w",
+      "30m": "30m",
+      "4h": "4h",
+      "5m": "5m"
+    }
+  },
+  "config": {
+    "credentials": {
+      "accountId": false,
+      "apiKey": true,
+      "login": false,
+      "password": false,
+      "privateKey": true,
+      "secret": true,
+      "token": false,
+      "twofa": false,
+      "uid": true,
+      "walletAddress": false
+    },
+    "flags": {
+      "dex": true,
+      "quoteJsonNumbers": false
+    },
+    "limits": {
+      "amount": {
+        "max": null,
+        "min": null
+      },
+      "cost": {
+        "max": null,
+        "min": null
+      },
+      "leverage": {
+        "max": null,
+        "min": null
+      },
+      "price": {
+        "max": null,
+        "min": null
+      }
+    },
+    "rate_limit_meta": {
+      "enableRateLimit": true,
+      "timeout": 10000
+    },
+    "routing": {
+      "accountsByType": null,
+      "networks": null,
+      "timeInForce": null
+    },
+    "status": {
+      "eta": null,
+      "info": null,
+      "status": "ok",
+      "updated": null,
+      "url": null
+    }
+  },
+  "endpoints": {
+    "descriptors": {
+      "cancelOrder": {
+        "name": "cancelOrder",
+        "provider_operation_id": "sendTx",
+        "signature": {
+          "return_type": "Promise<Order>"
+        }
+      },
+      "createOrder": {
+        "name": "createOrder",
+        "provider_operation_id": "sendTx",
+        "signature": {
+          "return_type": "Promise<Order>"
+        }
+      },
+      "fetchClosedOrders": {
+        "name": "fetchClosedOrders",
+        "provider_operation_id": "accountInactiveOrders",
+        "signature": {
+          "return_type": "Promise<Order[]>"
+        }
+      },
+      "fetchMarkets": {
+        "name": "fetchMarkets",
+        "provider_operation_id": "orderBookDetails",
+        "signature": {
+          "return_type": "Promise<Market[]>"
+        }
+      },
+      "fetchOHLCV": {
+        "name": "fetchOHLCV",
+        "provider_operation_id": "candles",
+        "signature": {
+          "return_type": "Promise<OHLCV[]>"
+        }
+      },
+      "fetchOpenOrders": {
+        "name": "fetchOpenOrders",
+        "provider_operation_id": "accountActiveOrders",
+        "signature": {
+          "return_type": "Promise<Order[]>"
+        }
+      },
+      "fetchOrderBook": {
+        "name": "fetchOrderBook",
+        "provider_operation_id": "orderBookOrders",
+        "signature": {
+          "return_type": "Promise<OrderBook>"
+        }
+      },
+      "fetchTicker": {
+        "name": "fetchTicker",
+        "provider_operation_id": "orderBookDetails",
+        "signature": {
+          "return_type": "Promise<Ticker>"
+        }
+      }
+    },
+    "handlers": {
+      "error": [
+        {
+          "field": "code",
+          "success_values": [
+            0,
+            200
+          ]
+        }
+      ],
+      "parse": {
+        "fetchClosedOrders": [
+          "parseOrders"
+        ],
+        "fetchMarkets": [
+          "parseMarkets"
+        ],
+        "fetchOHLCV": [
+          "parseOHLCVs"
+        ],
+        "fetchOpenOrders": [
+          "parseOrders"
+        ],
+        "fetchOrderBook": [
+          "parseOrderBook"
+        ],
+        "fetchTicker": [
+          "parseTicker"
+        ]
+      },
+      "signing": {
+        "scheme": "first_party_lighter_helper",
+        "sections": [
+          "private"
+        ]
+      }
+    },
+    "request": {
+      "defaults": {
+        "cancelOrder": {
+          "__bourse_lighter_transaction_operation": {
+            "kind": "literal",
+            "reason": null,
+            "value": "cancel_order"
+          }
+        },
+        "createOrder": {
+          "__bourse_lighter_transaction_operation": {
+            "kind": "literal",
+            "reason": null,
+            "value": "create_order"
+          }
+        },
+        "fetchClosedOrders": {
+          "limit": {
+            "kind": "literal",
+            "reason": null,
+            "value": 100
+          },
+          "market_id": {
+            "kind": "unresolved",
+            "reason": "dynamic_construction",
+            "value": null
+          }
+        },
+        "fetchOHLCV": {
+          "_omit": [
+            "limit",
+            "since"
+          ],
+          "count_back": {
+            "kind": "literal",
+            "reason": null,
+            "value": 0
+          },
+          "end_timestamp": {
+            "default_limit": 100,
+            "default_timeframe_ms": 3600000,
+            "kind": "computed",
+            "limit_source": "limit",
+            "operation": "time_window_end",
+            "timeframe_source": "timeframe"
+          },
+          "market_id": {
+            "kind": "unresolved",
+            "reason": "dynamic_construction",
+            "value": null
+          },
+          "resolution": {
+            "kind": "unresolved",
+            "reason": "dynamic_construction",
+            "value": null
+          },
+          "start_timestamp": {
+            "default_limit": 100,
+            "default_timeframe_ms": 3600000,
+            "kind": "computed",
+            "limit_source": "limit",
+            "operation": "time_window_start",
+            "timeframe_source": "timeframe"
+          }
+        },
+        "fetchOpenOrders": {
+          "market_id": {
+            "kind": "unresolved",
+            "reason": "dynamic_construction",
+            "value": null
+          }
+        },
+        "fetchOrderBook": {
+          "limit": {
+            "kind": "literal",
+            "reason": null,
+            "value": 100
+          },
+          "market_id": {
+            "kind": "unresolved",
+            "reason": "dynamic_construction",
+            "value": null
+          }
+        },
+        "fetchTicker": {
+          "market_id": {
+            "kind": "unresolved",
+            "reason": "dynamic_construction",
+            "value": null
+          }
+        }
+      },
+      "shape": {
+        "private": {
+          "body_encoding": null,
+          "content_type": null,
+          "endpoints": [
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "accountActiveOrders"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "accountInactiveOrders"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "accountLimits"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "accountMetadata"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "accountTxs"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "deposit/history"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "export"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "l1Metadata"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "liquidations"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "pnl"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "positionFunding"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "publicPoolsMetadata"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "referral/points"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "trades"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "transfer/history"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "transferFeeInfo"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "withdraw/history"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "changeAccountTier"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "notification/ack"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "sendTx"
+            }
+          ],
+          "patch_count": 0,
+          "unresolved_reason": null
+        },
+        "public": {
+          "body_encoding": "none",
+          "content_type": null,
+          "endpoints": [
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "account"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "accountsByL1Address"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "announcement"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "apikeys"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "assetDetails"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "block"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "blocks"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "blockTxs"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "candles"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "currentHeight"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "exchangeStats"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "fastbridge/info"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "funding-rates"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "fundings"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "nextNonce"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "orderBookDetails"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "orderBookOrders"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "orderBooks"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "recentTrades"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "tx"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "txFromL1TxHash"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "txs"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "withdrawalDelay"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "sendTx"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "sendTxBatch"
+            }
+          ],
+          "patch_count": 0,
+          "unresolved_reason": null
+        },
+        "root": {
+          "body_encoding": "none",
+          "content_type": null,
+          "endpoints": [
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": ""
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "info"
+            }
+          ],
+          "patch_count": 0,
+          "unresolved_reason": null
+        }
+      }
+    },
+    "transaction_classification": {
+      "fetchTradingFee": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchBorrowRateHistory": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "spot": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "setPositionMode": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "createMarketOrderWithCost": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchLiquidations": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "createMarketBuyOrderWithCost": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "setMarginMode": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchOrderBook": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchTransfer": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "createStopOrder": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchAllGreeks": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchFundingHistory": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchPositionMode": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "createReduceOnlyOrder": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchFundingRate": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "setLeverage": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchIndexOHLCV": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchGreeks": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchPositionsRisk": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "createMarketSellOrderWithCost": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "addMargin": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "repayIsolatedMargin": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "editOrder": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchMarginMode": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "createTriggerOrder": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchIsolatedBorrowRate": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "createPostOnlyOrder": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "repayCrossMargin": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchTime": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchDepositWithdrawFees": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "closeAllPositions": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchMarkOHLCV": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "borrowCrossMargin": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchOrders": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchDeposits": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchOrderTrades": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "option": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "future": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchMarketLeverageTiers": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchPositions": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchFundingRates": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchDepositAddress": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchBorrowInterest": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchStatus": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchClosedOrders": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "setMargin": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchOpenInterest": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchDepositAddresses": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchTransfers": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchBorrowRateHistories": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchCurrenciesWs": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "cancelAllOrders": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "withdraw": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchLeverage": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "sandbox": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "borrowMargin": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchMarkets": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchWithdrawal": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchOHLCV": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "swap": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "createSubAccount": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchBorrowRates": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "cancelOrder": {
+        "on_chain": true,
+        "transactional": true
+      },
+      "fetchOpenInterests": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchOpenOrders": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchWithdrawals": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchDepositWithdrawFee": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchCanceledAndClosedOrders": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchCrossBorrowRates": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "publicPostSendTx": {
+        "on_chain": true,
+        "transactional": true
+      },
+      "fetchFundingRateHistory": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchCurrencies": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchLedger": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchOption": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "transfer": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "privatePostSendTx": {
+        "on_chain": true,
+        "transactional": true
+      },
+      "fetchMyTrades": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchPremiumIndexOHLCV": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "createOrder": {
+        "on_chain": true,
+        "transactional": true
+      },
+      "fetchTrades": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchCanceledOrders": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchBorrowRate": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchBorrowRatesPerSymbol": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "privateAPI": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchL2OrderBook": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "margin": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "cancelOrdersForSymbols": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchPosition": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchLeverageTiers": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "publicPostSendTxBatch": {
+        "on_chain": true,
+        "transactional": true
+      },
+      "closePosition": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "reduceMargin": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchIsolatedBorrowRates": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "cancelOrders": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchTicker": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchVolatilityHistory": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "createMarketOrderWs": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchCrossBorrowRate": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchTickers": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "createLimitOrder": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchBalance": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchMyLiquidations": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "borrowIsolatedMargin": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "createOrders": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "createMarketOrder": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchOptionChain": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "publicAPI": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchAccounts": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "cancelAllOrdersAfter": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchTradingFees": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchOrder": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchOpenInterestHistory": {
+        "on_chain": false,
+        "transactional": false
+      }
+    },
+    "unified": {
+      "fetchTradingFee": [],
+      "fetchBorrowRateHistory": [],
+      "spot": [],
+      "setPositionMode": [],
+      "createMarketOrderWithCost": [],
+      "fetchLiquidations": [],
+      "createMarketBuyOrderWithCost": [],
+      "setMarginMode": [],
+      "fetchOrderBook": [
+        "publicGetOrderBookOrders"
+      ],
+      "fetchTransfer": [],
+      "createStopOrder": [],
+      "fetchAllGreeks": [],
+      "fetchFundingHistory": [],
+      "fetchPositionMode": [],
+      "createReduceOnlyOrder": [],
+      "fetchFundingRate": [],
+      "setLeverage": [],
+      "fetchIndexOHLCV": [],
+      "fetchGreeks": [],
+      "fetchPositionsRisk": [],
+      "createMarketSellOrderWithCost": [],
+      "addMargin": [],
+      "repayIsolatedMargin": [],
+      "editOrder": [],
+      "fetchMarginMode": [],
+      "createTriggerOrder": [],
+      "fetchIsolatedBorrowRate": [],
+      "createPostOnlyOrder": [],
+      "repayCrossMargin": [],
+      "fetchTime": [],
+      "fetchDepositWithdrawFees": [],
+      "closeAllPositions": [],
+      "fetchMarkOHLCV": [],
+      "borrowCrossMargin": [],
+      "fetchOrders": [],
+      "fetchDeposits": [],
+      "fetchOrderTrades": [],
+      "option": [],
+      "future": [],
+      "fetchMarketLeverageTiers": [],
+      "fetchPositions": [],
+      "fetchFundingRates": [],
+      "fetchDepositAddress": [],
+      "fetchBorrowInterest": [],
+      "fetchStatus": [],
+      "fetchClosedOrders": [
+        "privateGetAccountInactiveOrders"
+      ],
+      "setMargin": [],
+      "fetchOpenInterest": [],
+      "fetchDepositAddresses": [],
+      "fetchTransfers": [],
+      "fetchBorrowRateHistories": [],
+      "fetchCurrenciesWs": [],
+      "cancelAllOrders": [],
+      "withdraw": [],
+      "fetchLeverage": [],
+      "sandbox": [],
+      "borrowMargin": [],
+      "fetchMarkets": [
+        "publicGetOrderBookDetails"
+      ],
+      "fetchWithdrawal": [],
+      "fetchOHLCV": [
+        "publicGetCandles"
+      ],
+      "swap": [],
+      "createSubAccount": [],
+      "fetchBorrowRates": [],
+      "cancelOrder": [
+        "privatePostSendTx"
+      ],
+      "fetchOpenInterests": [],
+      "fetchOpenOrders": [
+        "privateGetAccountActiveOrders"
+      ],
+      "fetchWithdrawals": [],
+      "fetchDepositWithdrawFee": [],
+      "fetchCanceledAndClosedOrders": [],
+      "fetchCrossBorrowRates": [],
+      "fetchFundingRateHistory": [],
+      "fetchCurrencies": [],
+      "fetchLedger": [],
+      "fetchOption": [],
+      "transfer": [],
+      "fetchMyTrades": [],
+      "fetchPremiumIndexOHLCV": [],
+      "createOrder": [
+        "privatePostSendTx"
+      ],
+      "fetchTrades": [],
+      "fetchCanceledOrders": [],
+      "fetchBorrowRate": [],
+      "fetchBorrowRatesPerSymbol": [],
+      "privateAPI": [],
+      "fetchL2OrderBook": [],
+      "margin": [],
+      "cancelOrdersForSymbols": [],
+      "fetchPosition": [],
+      "fetchLeverageTiers": [],
+      "closePosition": [],
+      "reduceMargin": [],
+      "fetchIsolatedBorrowRates": [],
+      "cancelOrders": [],
+      "fetchTicker": [
+        "publicGetOrderBookDetails"
+      ],
+      "fetchVolatilityHistory": [],
+      "createMarketOrderWs": [],
+      "fetchCrossBorrowRate": [],
+      "fetchTickers": [],
+      "createLimitOrder": [],
+      "fetchBalance": [],
+      "fetchMyLiquidations": [],
+      "borrowIsolatedMargin": [],
+      "createOrders": [],
+      "createMarketOrder": [],
+      "fetchOptionChain": [],
+      "publicAPI": [],
+      "fetchAccounts": [],
+      "cancelAllOrdersAfter": [],
+      "fetchTradingFees": [],
+      "fetchOrder": [],
+      "fetchOpenInterestHistory": []
+    }
+  },
+  "errors": {
+    "class_hierarchy": {
+      "ancestors": {},
+      "flat_parents": {},
+      "tree": {}
+    },
+    "handle_errors": {
+      "exception_scopes": {},
+
+      "runtime_body_checks": [
+        {
+          "field": "code",
+          "field2": null,
+          "roles": [
+            "error_code",
+            "status_sentinel"
+          ],
+          "sentinel_values": [
+            {
+              "operator": "!==",
+              "value": "0"
+            },
+            {
+              "operator": "!==",
+              "value": "200"
+            }
+          ]
+        }
+      ],
+      "runtime_code_fields": [
+        "code"
+      ],
+      "error_code_fields": [
+        {
+          "field": "code",
+          "field2": null,
+          "object": "response",
+          "object_path": null,
+          "roles": [
+            "error_code",
+            "status_sentinel"
+          ],
+          "sentinel_values": [
+            {
+              "operator": "!==",
+              "value": "0"
+            },
+            {
+              "operator": "!==",
+              "value": "200"
+            }
+          ]
+        },
+        {
+          "field": "message",
+          "field2": null,
+          "object": "response",
+          "object_path": null,
+          "roles": [
+            "error_message"
+          ],
+          "sentinel_values": null
+        }
+      ],
+      "exceptions": {
+        "broad": {
+          "invalid signature": "AuthenticationError"
+        },
+        "exact": {
+          "20001": "__function:BadRequest",
+          "29500": "__function:AuthenticationError"
+        }
+      }
+    }
+  },
+  "exchange": {
+    "alias": false,
+    "certified": false,
+    "country": [],
+    "id": "lighter",
+    "name": "Lighter",
+    "pro": true,
+    "referral": {
+      "discount": 0.1,
+      "url": "app.lighter.xyz/?referral=715955W9"
+    },
+    "version": "v1"
+  },
+  "fees": {
+    "funding": {
+      "deposit": {},
+      "percentage": "__undefined",
+      "tierBased": "__undefined",
+      "withdraw": {}
+    },
+    "static_market_fees": false,
+    "maker": 0,
+    "taker": 0,
+    "trading": {
+      "maker": "__undefined",
+      "percentage": "__undefined",
+      "taker": "__undefined",
+      "tierBased": "__undefined"
+    }
+  },
+  "frozen": true,
+  "hand_owned": true,
+  "markets": {
+    "symbol_patterns": {
+      "spot": {
+        "case": "upper",
+        "date_format": null,
+        "pattern": "no_separator_upper",
+        "prefix": null,
+        "separator": "",
+        "suffix": null
+      },
+      "swap": {
+        "case": "upper",
+        "date_format": null,
+        "pattern": "implicit",
+        "prefix": null,
+        "separator": "",
+        "suffix": null
+      }
+    },
+    "currencies": {
+      "AAVE": {
+        "active": true,
+        "code": "AAVE",
+        "deposit": false,
+        "fees": {},
+        "id": "7",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "name": "AAVE",
+        "networks": {},
+        "precision": 1.0e-8,
+        "type": "crypto",
+        "withdraw": false
+      },
+      "AZTEC": {
+        "active": true,
+        "code": "AZTEC",
+        "deposit": false,
+        "fees": {},
+        "id": "10",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "name": "AZTEC",
+        "networks": {},
+        "precision": 1.0e-8,
+        "type": "crypto",
+        "withdraw": false
+      },
+      "ETH": {
+        "active": true,
+        "code": "ETH",
+        "deposit": false,
+        "fees": {},
+        "id": "1",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "name": "ETH",
+        "networks": {},
+        "precision": 1.0e-8,
+        "type": "crypto",
+        "withdraw": false
+      },
+      "LDO": {
+        "active": true,
+        "code": "LDO",
+        "deposit": false,
+        "fees": {},
+        "id": "9",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "name": "LDO",
+        "networks": {},
+        "precision": 1.0e-8,
+        "type": "crypto",
+        "withdraw": false
+      },
+      "LINK": {
+        "active": true,
+        "code": "LINK",
+        "deposit": false,
+        "fees": {},
+        "id": "5",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "name": "LINK",
+        "networks": {},
+        "precision": 1.0e-8,
+        "type": "crypto",
+        "withdraw": false
+      },
+      "LIT": {
+        "active": true,
+        "code": "LIT",
+        "deposit": false,
+        "fees": {},
+        "id": "2",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "name": "LIT",
+        "networks": {},
+        "precision": 1.0e-8,
+        "type": "crypto",
+        "withdraw": false
+      },
+      "SKY": {
+        "active": true,
+        "code": "SKY",
+        "deposit": false,
+        "fees": {},
+        "id": "8",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "name": "SKY",
+        "networks": {},
+        "precision": 1.0e-8,
+        "type": "crypto",
+        "withdraw": false
+      },
+      "UNI": {
+        "active": true,
+        "code": "UNI",
+        "deposit": false,
+        "fees": {},
+        "id": "6",
+        "limits": {
+          "deposit": {},
+          "withdraw": {}
+        },
+        "name": "UNI",
+        "networks": {},
+        "precision": 1.0e-8,
+        "type": "crypto",
+        "withdraw": false
+      },
+      "USDC": {
+        "active": true,
+        "code": "USDC",
+        "deposit": true,
+        "fees": {},
+        "id": "3",
+        "limits": {
+          "deposit": {
+            "min": 1
+          },
+          "withdraw": {
+            "min": 1
+          }
+        },
+        "name": "USDC",
+        "networks": {},
+        "precision": 1.0e-6,
+        "type": "crypto",
+        "withdraw": true
+      }
+    },
+    "patterns": {
+      "currency_aliases": {},
+      "spot": {
+        "anomalies": [],
+        "anomaly_count": 0,
+        "case": null,
+        "examples": [],
+        "id_structure": "numeric",
+        "sample_count": 0,
+        "separator": null,
+        "suffix": null
+      },
+      "swap": {
+        "anomalies": [],
+        "anomaly_count": 0,
+        "case": null,
+        "examples": [
+          {
+            "baseId": "ETH",
+            "id": "0",
+            "quoteId": "USDC",
+            "symbol": "ETH/USDC:USDC"
+          },
+          {
+            "baseId": "BTC",
+            "id": "1",
+            "quoteId": "USDC",
+            "symbol": "BTC/USDC:USDC"
+          },
+          {
+            "baseId": "SOL",
+            "id": "2",
+            "quoteId": "USDC",
+            "symbol": "SOL/USDC:USDC"
+          }
+        ],
+        "id_structure": "numeric",
+        "sample_count": 3,
+        "separator": null,
+        "suffix": null
+      }
+    }
+  },
+  "normalization": {
+    "field_maps": {
+      "_unresolved_reason": null,
+      "market": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "active": null,
+          "base": {
+            "coercion": "safeCurrencyCode",
+            "format": null,
+            "key": "symbol"
+          },
+          "baseId": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "symbol"
+          },
+          "contract": null,
+          "contractSize": null,
+          "created": null,
+          "expiry": null,
+          "expiryDatetime": null,
+          "future": null,
+          "id": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "market_id"
+          },
+          "info": null,
+          "inverse": null,
+          "limits": {
+            "sub_field_map": {
+              "amount": {
+                "sub_field_map": {
+                  "max": null,
+                  "min": {
+                    "coercion": "safeNumber",
+                    "format": null,
+                    "key": "min_base_amount"
+                  }
+                }
+              },
+              "cost": {
+                "sub_field_map": {
+                  "max": null,
+                  "min": {
+                    "coercion": "safeNumber",
+                    "format": null,
+                    "key": "min_quote_amount"
+                  }
+                }
+              },
+              "leverage": {
+                "sub_field_map": {
+                  "max": null,
+                  "min": null
+                }
+              },
+              "price": {
+                "sub_field_map": {
+                  "max": null,
+                  "min": null
+                }
+              }
+            }
+          },
+          "linear": null,
+          "maker": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "maker_fee"
+          },
+          "margin": null,
+          "option": null,
+          "optionType": null,
+          "percentage": null,
+          "precision": {
+            "sub_field_map": {
+              "amount": {
+                "coercion": "parseNumber(parsePrecision(safeString))",
+                "format": null,
+                "key": "size_decimals"
+              },
+              "price": {
+                "coercion": "parseNumber(parsePrecision(safeString))",
+                "format": null,
+                "key": "price_decimals"
+              }
+            }
+          },
+          "quote": null,
+          "quoteId": null,
+          "settle": null,
+          "settleId": null,
+          "spot": null,
+          "strike": null,
+          "subType": null,
+          "swap": null,
+          "symbol": null,
+          "taker": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "taker_fee"
+          },
+          "tierBased": null,
+          "type": null
+        }
+      },
+      "ohlcv": {
+        "_unresolved_reason": null,
+        "branches": [
+          {
+            "_unresolved_reason": null,
+            "field_map": {
+              "close": {
+                "coercion": "safeNumber",
+                "format": null,
+                "index": null,
+                "key": "c"
+              },
+              "high": {
+                "coercion": "safeNumber",
+                "format": null,
+                "index": null,
+                "key": "h"
+              },
+              "low": {
+                "coercion": "safeNumber",
+                "format": null,
+                "index": null,
+                "key": "l"
+              },
+              "open": {
+                "coercion": "safeNumber",
+                "format": null,
+                "index": null,
+                "key": "o"
+              },
+              "timestamp": {
+                "coercion": "safeInteger",
+                "format": "ms",
+                "index": null,
+                "key": "t"
+              },
+              "volume": {
+                "coercion": "safeNumber",
+                "format": null,
+                "index": null,
+                "key": "v"
+              }
+            },
+            "guard": {
+              "input_shape": "object",
+              "kind": "always"
+            },
+            "shape": "array"
+          }
+        ],
+        "extras": []
+      },
+      "order": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "amount": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "initial_base_amount"
+          },
+          "average": null,
+          "clientOrderId": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "client_order_id"
+          },
+          "cost": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "filled_quote_amount"
+          },
+          "datetime": null,
+          "fee": null,
+          "fees": null,
+          "filled": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "filled_base_amount"
+          },
+          "id": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "order_id"
+          },
+          "info": null,
+          "lastTradeTimestamp": null,
+          "lastUpdateTimestamp": {
+            "coercion": "safeTimestamp",
+            "format": null,
+            "key": "updated_at"
+          },
+          "postOnly": null,
+          "price": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "price"
+          },
+          "reduceOnly": {
+            "coercion": "safeBool",
+            "format": null,
+            "key": "reduce_only"
+          },
+          "remaining": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "remaining_base_amount"
+          },
+          "side": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "side"
+          },
+          "status": {
+            "coercion": "safeString",
+            "enum_passthrough": true,
+            "format": null,
+            "key": "status"
+          },
+          "stopLossPrice": null,
+          "symbol": null,
+          "takeProfitPrice": null,
+          "timeInForce": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "time_in_force"
+          },
+          "timestamp": {
+            "coercion": "safeTimestamp",
+            "format": "s",
+            "key": "timestamp"
+          },
+          "trades": null,
+          "triggerPrice": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "trigger_price"
+          },
+          "type": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "type"
+          }
+        }
+      },
+      "ticker": {
+        "_unresolved_reason": null,
+        "extras": [
+          {
+            "coercion": "safeString",
+            "key": "open_interest",
+            "unified_key": "openInterest"
+          }
+        ],
+        "field_map": {
+          "ask": null,
+          "askVolume": null,
+          "average": null,
+          "baseVolume": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "daily_base_token_volume"
+          },
+          "bid": null,
+          "bidVolume": null,
+          "change": null,
+          "close": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "last_trade_price"
+          },
+          "datetime": null,
+          "high": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "daily_price_high"
+          },
+          "indexPrice": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "index_price"
+          },
+          "info": null,
+          "last": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "last_trade_price"
+          },
+          "low": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "daily_price_low"
+          },
+          "markPrice": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "mark_price"
+          },
+          "open": null,
+          "percentage": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "daily_price_change"
+          },
+          "previousClose": null,
+          "quoteVolume": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "daily_quote_token_volume"
+          },
+          "symbol": null,
+          "timestamp": null,
+          "vwap": null
+        }
+      }
+    },
+    "response_envelopes": {
+      "_unresolved_reason": null,
+      "market": {
+        "fetchMarkets": {
+          "default": [],
+          "fallback_keys": [
+            "spot_order_book_details"
+          ],
+          "key": "order_book_details"
+        }
+      },
+      "ohlcv": {
+        "fetchOHLCV": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "c"
+        }
+      },
+      "order": {
+        "fetchClosedOrders": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "orders"
+        },
+        "fetchOpenOrders": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "orders"
+        }
+      },
+      "ticker": {
+        "fetchTicker": {
+          "default": null,
+          "fallback_keys": [
+            "spot_order_book_details"
+          ],
+          "key": "order_book_details"
+        }
+      }
+    }
+  },
+  "oracles": {
+    "live_tier1": {
+      "grades": true
+    },
+    "private_real_recordings": {
+      "grades": false,
+      "reason": "Private recordings are captured and manifest-registered for Lighter, but offline byte-replay is deferred until build_exchange! re-points off the compatibility markets caches (task 524); tagged live testnet evidence grades authenticated behavior."
+    }
+  },
+  "rate_limits": {
+    "buckets": {
+      "buckets": [
+        {
+          "algorithm": "leakyBucket",
+          "axes": [
+            "request"
+          ],
+          "cost_default": 1,
+          "max_size": 1,
+          "rate_limit_ms": 1000,
+          "refill_per_sec": 1,
+          "rolling_window_ms": 60000
+        }
+      ],
+      "source": "describe",
+      "unresolved_reason": null
+    },
+    "endpoint_cost_binding": {
+      "axes": [
+        "request"
+      ],
+      "bucket_index": 0
+    },
+    "per_endpoint_cost": {
+      "private.get.pnl": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.get.publicPoolsMetadata": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.orderBookDetails": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.blocks": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.get.liquidations": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.nextNonce": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.get.referral/points": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.candles": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.fastbridge/info": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.get.export": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.orderBookOrders": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.exchangeStats": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.assetDetails": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.get.accountInactiveOrders": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.blockTxs": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.get.accountLimits": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.block": {
+        "axes": {},
+        "cost": 1
+      },
+      "root.get.info": {
+        "axes": {},
+        "cost": 1
+      },
+      "root.get.": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.get.trades": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.orderBooks": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.notification/ack": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.get.positionFunding": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.sendTxBatch": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.apikeys": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.post.sendTx": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.accountsByL1Address": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.get.accountMetadata": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.funding-rates": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.post.changeAccountTier": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.get.transfer/history": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.get.transferFeeInfo": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.get.withdraw/history": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.get.deposit/history": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.withdrawalDelay": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.get.accountActiveOrders": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.get.l1Metadata": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.fundings": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.currentHeight": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.txs": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.recentTrades": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.announcement": {
+        "axes": {},
+        "cost": 1
+      },
+      "private.get.accountTxs": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.txFromL1TxHash": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.account": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.tx": {
+        "axes": {},
+        "cost": 1
+      }
+    }
+  },
+  "raw": {
+    "describe": {
+      "alias": false,
+      "api": {
+        "private": {
+          "get": {
+            "accountActiveOrders": 1,
+            "accountInactiveOrders": 1,
+            "accountLimits": 1,
+            "accountMetadata": 1,
+            "accountTxs": 1,
+            "deposit/history": 1,
+            "export": 1,
+            "l1Metadata": 1,
+            "liquidations": 1,
+            "pnl": 1,
+            "positionFunding": 1,
+            "publicPoolsMetadata": 1,
+            "referral/points": 1,
+            "trades": 1,
+            "transfer/history": 1,
+            "transferFeeInfo": 1,
+            "withdraw/history": 1
+          },
+          "post": {
+            "changeAccountTier": 1,
+            "notification/ack": 1,
+            "sendTx": 1
+          }
+        },
+        "public": {
+          "get": {
+            "account": 1,
+            "accountsByL1Address": 1,
+            "announcement": 1,
+            "apikeys": 1,
+            "assetDetails": 1,
+            "block": 1,
+            "blockTxs": 1,
+            "blocks": 1,
+            "candles": 1,
+            "currentHeight": 1,
+            "exchangeStats": 1,
+            "fastbridge/info": 1,
+            "funding-rates": 1,
+            "fundings": 1,
+            "nextNonce": 1,
+            "orderBookDetails": 1,
+            "orderBookOrders": 1,
+            "orderBooks": 1,
+            "recentTrades": 1,
+            "tx": 1,
+            "txFromL1TxHash": 1,
+            "txs": 1,
+            "withdrawalDelay": 1
+          },
+          "post": {
+            "sendTx": 1,
+            "sendTxBatch": 1
+          }
+        },
+        "root": {
+          "get": {
+            "": 1,
+            "info": 1
+          }
+        }
+      },
+      "certified": false,
+      "countries": [],
+      "currencies": {},
+      "dex": true,
+      "enableRateLimit": true,
+      "exceptions": {
+        "broad": {
+          "invalid signature": "AuthenticationError"
+        },
+        "exact": {
+          "20001": "__function:BadRequest",
+          "29500": "__function:AuthenticationError"
+        }
+      },
+      "features": {
+        "default": {
+          "createOrder": {
+            "iceberg": false,
+            "leverage": false,
+            "marketBuyByCost": false,
+            "marketBuyRequiresPrice": false,
+            "selfTradePrevention": false,
+            "timeInForce": {
+              "FOK": true,
+              "GTD": false,
+              "IOC": true,
+              "PO": true
+            },
+            "trailing": false
+          },
+          "sandbox": true
+        }
+      },
+      "fees": {
+        "funding": {
+          "deposit": {},
+          "percentage": "__undefined",
+          "tierBased": "__undefined",
+          "withdraw": {}
+        },
+        "maker": 0,
+        "taker": 0,
+        "trading": {
+          "maker": "__undefined",
+          "percentage": "__undefined",
+          "taker": "__undefined",
+          "tierBased": "__undefined"
+        }
+      },
+      "hostname": "zklighter.elliot.ai",
+      "id": "lighter",
+      "limits": {
+        "amount": {
+          "max": "__undefined",
+          "min": "__undefined"
+        },
+        "cost": {
+          "max": "__undefined",
+          "min": "__undefined"
+        },
+        "leverage": {
+          "max": "__undefined",
+          "min": "__undefined"
+        },
+        "price": {
+          "max": "__undefined",
+          "min": "__undefined"
+        }
+      },
+      "markets": "__undefined",
+      "name": "Lighter",
+      "options": {
+        "accountIndex": "__undefined",
+        "apiKeyIndex": "__undefined",
+        "authDeadlineExpiry": 28800,
+        "authDeadlineMinimumRemaining": 60,
+        "builderFee": true,
+        "chainId": 304,
+        "defaultType": "swap",
+        "integratorAccountIndex": 718718,
+        "integratorMakerFee": 1000,
+        "integratorTakerFee": 1000,
+        "libraryPath": "__undefined",
+        "lighterPrivateKey": "__undefined",
+        "wasmExecPath": "__undefined"
+      },
+      "paddingMode": 5,
+      "pro": true,
+      "quoteJsonNumbers": false,
+      "rateLimit": 1000,
+      "rateLimiterAlgorithm": "leakyBucket",
+      "requiredCredentials": {
+        "accountId": false,
+        "apiKey": true,
+        "login": false,
+        "password": false,
+        "privateKey": true,
+        "secret": true,
+        "token": false,
+        "twofa": false,
+        "uid": true,
+        "walletAddress": false
+      },
+      "rollingWindowSize": 60000,
+      "status": {
+        "eta": "__undefined",
+        "info": "__undefined",
+        "status": "ok",
+        "updated": "__undefined",
+        "url": "__undefined"
+      },
+      "timeframes": {
+        "12h": "12h",
+        "15m": "15m",
+        "1d": "1d",
+        "1h": "1h",
+        "1m": "1m",
+        "1w": "1w",
+        "30m": "30m",
+        "4h": "4h",
+        "5m": "5m"
+      },
+      "timeout": 10000,
+      "urls": {
+        "api": {
+          "private": "https://mainnet.{hostname}",
+          "public": "https://mainnet.{hostname}",
+          "root": "https://mainnet.{hostname}"
+        },
+        "api_management": null,
+        "doc": "https://apidocs.lighter.xyz/",
+        "fees": "https://docs.lighter.xyz/perpetual-futures/fees",
+        "logo": "https://github.com/user-attachments/assets/ff1aaf96-bffb-4545-a750-5eba716e75d0",
+        "referral": {
+          "discount": 0.1,
+          "url": "app.lighter.xyz/?referral=715955W9"
+        },
+        "test": {
+          "private": "https://testnet.{hostname}",
+          "public": "https://testnet.{hostname}",
+          "root": "https://testnet.{hostname}"
+        },
+        "www": "https://lighter.xyz/"
+      },
+      "version": "v1"
+    },
+    "url_templates": {
+      "private": {
+        "api_param": "private",
+        "http_method": "GET",
+        "resolved_url": "https://mainnet.zklighter.elliot.ai/api/v1/accountLimits",
+        "sample_path": "accountLimits",
+        "url_prefix": "https://mainnet.zklighter.elliot.ai/api/v1/"
+      },
+      "public": {
+        "api_param": "public",
+        "http_method": "GET",
+        "resolved_url": "https://mainnet.zklighter.elliot.ai/api/v1/account",
+        "sample_path": "account",
+        "url_prefix": "https://mainnet.zklighter.elliot.ai/api/v1/"
+      },
+      "root": {
+        "api_param": "root",
+        "http_method": "GET",
+        "resolved_url": "https://mainnet.zklighter.elliot.ai",
+        "sample_path": "",
+        "url_prefix": "https://mainnet.zklighter.elliot.ai"
+      }
+    }
+  },
+  "schema_version": 3,
+  "testnet": {
+    "pattern": "separate_host",
+    "sandbox_flag_field": null,
+    "unresolved_reason": null,
+    "urls": {
+      "private": "https://testnet.zklighter.elliot.ai",
+      "public": "https://testnet.zklighter.elliot.ai",
+      "root": "https://testnet.zklighter.elliot.ai"
+    }
+  },
+  "urls": {
+    "api": {
+      "ws": {
+        "private": "wss://mainnet.zklighter.elliot.ai/stream",
+        "public": "wss://mainnet.zklighter.elliot.ai/stream",
+        "sandbox_private": "wss://testnet.zklighter.elliot.ai/stream",
+        "sandbox_public": "wss://testnet.zklighter.elliot.ai/stream"
+      }
+    },
+    "api_management": "__undefined",
+    "doc": "https://apidocs.lighter.xyz/",
+    "fees": "https://docs.lighter.xyz/perpetual-futures/fees",
+    "logo": "https://github.com/user-attachments/assets/ff1aaf96-bffb-4545-a750-5eba716e75d0",
+    "www": "https://lighter.xyz/"
+  },
+  "websocket": {
+    "auth": {
+      "reason": "not_live_verified",
+      "supported": false
+    },
+    "dispatch": {
+      "reason": "not_live_verified",
+      "supported": false
+    },
+    "heartbeat": {
+      "reason": "not_live_verified",
+      "supported": false
+    },
+    "ohlcv_semantics": {
+      "reason": "not_live_verified",
+      "supported": false
+    },
+    "orderbook_semantics": {
+      "reason": "not_live_verified",
+      "supported": false
+    },
+    "subscribe": {
+      "reason": "not_live_verified",
+      "supported": false
+    },
+    "trades_semantics": {
+      "reason": "not_live_verified",
+      "supported": false
+    },
+    "urls": {
+      "private": null,
+      "public": null,
+      "sandbox_private": null,
+      "sandbox_public": null
+    }
+  },
+  "emulated_methods": []
+}

@@ -1,0 +1,37 @@
+{
+  "acceptance": {
+    "business_success": "JSON-RPC result map with no error member",
+    "capture_date": "2026-07-22",
+    "captured_at": "2026-07-22T10:20:55.645Z",
+    "endpoint": "private/get_account_summaries",
+    "host": "test.deribit.com",
+    "http_status": 200,
+    "method": "fetch_balance",
+    "venue": "deribit"
+  },
+  "label": "Oracle: exchange-acceptance tier 1 vs deribit fetch_balance accepted 2026-07-22 (private/get_account_summaries @ test.deribit.com, HTTP 200, JSON-RPC result map with no error member).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "fetch_balance",
+    "nonce_override": 1784715654599,
+    "params": {},
+    "timestamp_ms_override": 1784715654598
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "authorization",
+        "deri-hmac-sha256 id=key,ts=1784715654598,sig=e10a789bae7f125cb3281bbaae722548ebd3a627c0d0e08de0da9a3c1699cabc,nonce=1784715654599"
+      ]
+    ],
+    "method": "GET",
+    "url": "https://test.deribit.com/api/v2/private/get_account_summaries"
+  },
+  "schema_version": 1
+}

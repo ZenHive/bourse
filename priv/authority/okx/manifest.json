@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "venue": "okx",
+  "official_docs_url": "https://www.okx.com/docs-v5/en/",
+  "selection_reason": "Rank 1: OKX publishes no first-party OpenAPI corpus. The official API v5 page is the complete provider-owned REST and WebSocket reference, so its rendered response is retained as a pinned docs snapshot by hash.",
+  "fetch_script": "scripts/fetch_authority.sh",
+  "artifacts": [
+    {
+      "id": "api-v5-docs",
+      "kind": "official-docs-html",
+      "source_url": "https://www.okx.com/docs-v5/en/",
+      "fetch_url": "https://www.okx.com/docs-v5/en/",
+      "filename": "api-v5.html",
+      "retrieved_at": "2026-07-22",
+      "upstream_pin": {
+        "type": "http_etag_last_modified",
+        "value": "W/\"6a5e0279-4ecdd8\"; Mon, 20 Jul 2026 11:11:53 GMT"
+      },
+      "sha256": "14c56ad530fdb78f58bd0dac3e5c9a9d576fe164d64159de45b28acccaaab923",
+      "bytes": 5164504,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific license published",
+        "evidence_url": "https://www.okx.com/en-us/help/okx-api-agreement",
+        "handling": "reference_only",
+        "reason": "The API agreement governs access but does not clearly grant redistribution rights for the documentation snapshot."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://www.okx.com/docs-v5/en/"
+      }
+    }
+  ],
+  "error_enumeration": {
+    "path": "errors.json",
+    "source_artifact_id": "api-v5-docs",
+    "source_url": "https://www.okx.com/docs-v5/en/#error-code",
+    "retrieved_at": "2026-07-22",
+    "sha256": "138febeb61f8da200608d5ef1cf455dd20b2e24079fe8d3c558278eea1cefbb0",
+    "bytes": 128840
+  }
+}

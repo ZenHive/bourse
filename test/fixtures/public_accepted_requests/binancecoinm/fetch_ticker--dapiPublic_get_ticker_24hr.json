@@ -1,0 +1,51 @@
+{
+  "acceptance": {
+    "branch": "dapiPublic_get_ticker_24hr",
+    "capture_date": "2026-07-26",
+    "captured_at": "2026-07-26T05:55:26.197Z",
+    "endpoint": "ticker/24hr",
+    "host": "dapi.binance.com",
+    "http_status": 200,
+    "method": "fetchTicker",
+    "sections": [
+      "dapiPublic"
+    ],
+    "venue": "binancecoinm"
+  },
+  "oracle": "public_exchange_acceptance",
+  "replay": {
+    "markets": [
+      {
+        "active": true,
+        "base": "BTC",
+        "contract": true,
+        "future": false,
+        "id": "BTCUSD_PERP",
+        "inverse": true,
+        "linear": false,
+        "option": false,
+        "quote": "USD",
+        "settle": "BTC",
+        "spot": false,
+        "swap": true,
+        "symbol": "BTC/USD:BTC"
+      }
+    ],
+    "pagination_cursors": [
+      null
+    ],
+    "params": {
+      "symbol": "BTC/USD:BTC"
+    },
+    "timestamp_ms_override": 1785045326197
+  },
+  "requests": [
+    {
+      "body": null,
+      "headers": [],
+      "method": "GET",
+      "url": "https://dapi.binance.com/dapi/v1/ticker/24hr?symbol=BTCUSD_PERP"
+    }
+  ],
+  "schema_version": 1
+}

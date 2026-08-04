@@ -1,0 +1,924 @@
+{
+  "meta": {
+    "generated_by": "CCXT.OptionReadiness",
+    "opts": {
+      "report_dir": "\"tmp/task507-review-live\""
+    },
+    "task": 402
+  },
+  "observed_at": 1784817804823,
+  "path": "/Users/efries/_DATA/worktrees/.harness/ccxt_client/run-1784815985148-7a4f9b9c/docs/option_readiness/option_readiness_1784817804823.json",
+  "schema_version": 1,
+  "venues": [
+    {
+      "book": {
+        "empty": false,
+        "instrument_count": 1530,
+        "observed": true,
+        "observed_at": 1784817804823,
+        "sample": [
+          {
+            "ask": 0.158,
+            "bid": 0.1505,
+            "symbol": "BTC/USD:BTC-260724-55000-C"
+          },
+          {
+            "ask": 0.0001,
+            "bid": null,
+            "symbol": "BTC/USD:BTC-260724-55000-P"
+          },
+          {
+            "ask": 0.143,
+            "bid": 0.134,
+            "symbol": "BTC/USD:BTC-260724-56000-C"
+          }
+        ],
+        "two_sided": true,
+        "two_sided_count": 774
+      },
+      "cells": {
+        "balances": {
+          "environment": "deribit-testnet",
+          "error": null,
+          "evidence": {
+            "currency_count": 14,
+            "timestamp": null
+          },
+          "name": "balances",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "balance currencies=14"
+        },
+        "create_fetch_cancel": {
+          "environment": "deribit-testnet",
+          "error": null,
+          "evidence": {},
+          "name": "create_fetch_cancel",
+          "observed_at": 1784817804823,
+          "outcome": "untested",
+          "summary": "lifecycle mutation skipped (pass mutate: true to exercise)"
+        },
+        "discovery": {
+          "environment": "deribit-testnet",
+          "error": null,
+          "evidence": {
+            "base": "BTC",
+            "count": 1530,
+            "sample_symbols": [
+              "BTC/USD:BTC-260724-55000-C",
+              "BTC/USD:BTC-260724-55000-P",
+              "BTC/USD:BTC-260724-56000-C",
+              "BTC/USD:BTC-260724-56000-P",
+              "BTC/USD:BTC-260724-58000-C"
+            ],
+            "venue": "deribit"
+          },
+          "name": "discovery",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "1530 option instruments for base=\"BTC\""
+        },
+        "greeks": {
+          "environment": "deribit-testnet",
+          "error": null,
+          "evidence": {
+            "conventions": {
+              "delta": {
+                "bump_size": 1.0,
+                "denomination": "underlying",
+                "native_field": "greeks.delta",
+                "supported": true,
+                "time_basis": null,
+                "unit": "ratio",
+                "value_present": true
+              },
+              "gamma": {
+                "bump_size": 1.0,
+                "denomination": "delta",
+                "native_field": "greeks.gamma",
+                "supported": true,
+                "time_basis": null,
+                "unit": "delta_per_underlying_unit",
+                "value_present": true
+              },
+              "rho": {
+                "bump_size": 0.01,
+                "denomination": "option_premium",
+                "native_field": "greeks.rho",
+                "supported": true,
+                "time_basis": null,
+                "unit": "premium_per_interest_point",
+                "value_present": true
+              },
+              "theta": {
+                "bump_size": 1.0,
+                "denomination": "option_premium",
+                "native_field": "greeks.theta",
+                "supported": true,
+                "time_basis": "calendar_day",
+                "unit": "premium_per_day",
+                "value_present": true
+              },
+              "vega": {
+                "bump_size": 0.01,
+                "denomination": "option_premium",
+                "native_field": "greeks.vega",
+                "supported": true,
+                "time_basis": null,
+                "unit": "premium_per_vol_point",
+                "value_present": true
+              }
+            },
+            "delta": 0.99999,
+            "gamma": 0.0,
+            "locally_observed_at": 1784817806930,
+            "source_timestamp": 1784817806466,
+            "symbol": "BTC/USD:BTC-260724-55000-C",
+            "theta": -0.02883,
+            "underlying_price": 64991.84,
+            "vega": 6.7e-4
+          },
+          "name": "greeks",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "greeks for BTC/USD:BTC-260724-55000-C"
+        },
+        "hedge": {
+          "environment": "deribit-testnet",
+          "error": null,
+          "evidence": {
+            "candidate_id": "same-hedge",
+            "feasible": true,
+            "quantity": 128180.0,
+            "residual_delta": 3.9950096230967347e-4,
+            "side": "sell"
+          },
+          "name": "hedge",
+          "observed_at": 1784817808035,
+          "outcome": "ok",
+          "summary": "hedge quantity=128180.0"
+        },
+        "open_orders": {
+          "environment": "deribit-testnet",
+          "error": null,
+          "evidence": {
+            "count": 0
+          },
+          "name": "open_orders",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "open_orders=0"
+        },
+        "positions": {
+          "environment": "deribit-testnet",
+          "error": null,
+          "evidence": {
+            "count": 2
+          },
+          "name": "positions",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "positions=2"
+        },
+        "preflight": {
+          "environment": "deribit-testnet",
+          "error": null,
+          "evidence": {
+            "checks": [
+              {
+                "name": "market",
+                "status": "ok"
+              },
+              {
+                "name": "quote",
+                "status": "ok"
+              },
+              {
+                "name": "greeks",
+                "status": "ok"
+              },
+              {
+                "name": "portfolio",
+                "status": "violation"
+              },
+              {
+                "name": "account_capacity",
+                "status": "ok"
+              },
+              {
+                "name": "order_sanity",
+                "status": "violation"
+              },
+              {
+                "name": "hard_limits",
+                "status": "ok"
+              },
+              {
+                "name": "hedge",
+                "status": "ok"
+              },
+              {
+                "name": "cross_venue",
+                "status": "ok"
+              }
+            ],
+            "evaluated_at": 1784817808035,
+            "failures": [
+              "%{reason: :missing_position_side, symbol: \"BTC/USD:BTC-260731-65000-C\", venue: \"deribit\", observed_at: 1784817808035, account: \"readiness\", component: :positions}",
+              "%{reason: :missing_position_side, symbol: \"BTC/USD:BTC\", venue: \"deribit\", observed_at: 1784817808035, account: \"readiness\", component: :positions}"
+            ],
+            "status": "rejected",
+            "violations": [
+              "portfolio_partial",
+              "order_sanity_failed"
+            ]
+          },
+          "name": "preflight",
+          "observed_at": 1784817808035,
+          "outcome": "ok",
+          "summary": "preflight rejected"
+        }
+      },
+      "environment": "deribit-testnet",
+      "fill_evidence": null,
+      "judgment": null,
+      "limitation": null,
+      "observed_at": 1784817804823,
+      "status": null,
+      "status_reason": "insufficient evidence to assign a terminal readiness status",
+      "venue": "deribit"
+    },
+    {
+      "book": {
+        "empty": false,
+        "instrument_count": 636,
+        "observed": true,
+        "observed_at": 1784817804823,
+        "sample": [
+          {
+            "ask": null,
+            "bid": null,
+            "symbol": "BTC/USD:USD-260724-53000-C"
+          },
+          {
+            "ask": null,
+            "bid": null,
+            "symbol": "BTC/USD:USD-260724-53000-P"
+          },
+          {
+            "ask": null,
+            "bid": null,
+            "symbol": "BTC/USD:USD-260724-54000-C"
+          }
+        ],
+        "two_sided": true,
+        "two_sided_count": 122
+      },
+      "cells": {
+        "balances": {
+          "environment": "okx-international-demo",
+          "error": null,
+          "evidence": {
+            "currency_count": 4,
+            "timestamp": null
+          },
+          "name": "balances",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "balance currencies=4"
+        },
+        "create_fetch_cancel": {
+          "environment": "okx-international-demo",
+          "error": null,
+          "evidence": {},
+          "name": "create_fetch_cancel",
+          "observed_at": 1784817804823,
+          "outcome": "untested",
+          "summary": "lifecycle mutation skipped (pass mutate: true to exercise)"
+        },
+        "discovery": {
+          "environment": "okx-international-demo",
+          "error": null,
+          "evidence": {
+            "base": "BTC",
+            "count": 636,
+            "sample_symbols": [
+              "BTC/USD:USD-260724-53000-C",
+              "BTC/USD:USD-260724-53000-P",
+              "BTC/USD:USD-260724-54000-C",
+              "BTC/USD:USD-260724-54000-P",
+              "BTC/USD:USD-260724-55000-C"
+            ],
+            "venue": "okx"
+          },
+          "name": "discovery",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "636 option instruments for base=\"BTC\""
+        },
+        "greeks": {
+          "environment": "okx-international-demo",
+          "error": null,
+          "evidence": {
+            "conventions": {
+              "delta": {
+                "bump_size": 1.0,
+                "denomination": "underlying",
+                "native_field": "deltaBS",
+                "supported": true,
+                "time_basis": null,
+                "unit": "ratio",
+                "value_present": true
+              },
+              "gamma": {
+                "bump_size": 1.0,
+                "denomination": "delta",
+                "native_field": "gammaBS",
+                "supported": true,
+                "time_basis": null,
+                "unit": "delta_per_underlying_unit",
+                "value_present": true
+              },
+              "rho": {
+                "native_field": null,
+                "supported": false,
+                "value_present": false
+              },
+              "theta": {
+                "bump_size": 1.0,
+                "denomination": "option_premium",
+                "native_field": "thetaBS",
+                "supported": true,
+                "time_basis": "calendar_day",
+                "unit": "premium_per_day",
+                "value_present": true
+              },
+              "vega": {
+                "bump_size": 0.01,
+                "denomination": "option_premium",
+                "native_field": "vegaBS",
+                "supported": true,
+                "time_basis": null,
+                "unit": "premium_per_vol_point",
+                "value_present": true
+              }
+            },
+            "delta": 0.9999917556827147,
+            "gamma": 3.1276114414639375e-10,
+            "locally_observed_at": 1784817812952,
+            "source_timestamp": 1784817804533,
+            "symbol": "BTC/USD:USD-260724-53000-C",
+            "theta": 0.0934076164579552,
+            "underlying_price": null,
+            "vega": 2.261583577962115e-5
+          },
+          "name": "greeks",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "greeks for BTC/USD:USD-260724-53000-C"
+        },
+        "hedge": {
+          "environment": "okx-international-demo",
+          "error": null,
+          "evidence": {
+            "candidate_id": "same-hedge",
+            "feasible": true,
+            "quantity": 199.97,
+            "residual_delta": 4.883596248239641e-5,
+            "side": "sell"
+          },
+          "name": "hedge",
+          "observed_at": 1784817816030,
+          "outcome": "ok",
+          "summary": "hedge quantity=199.97"
+        },
+        "open_orders": {
+          "environment": "okx-international-demo",
+          "error": null,
+          "evidence": {
+            "count": 0
+          },
+          "name": "open_orders",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "open_orders=0"
+        },
+        "positions": {
+          "environment": "okx-international-demo",
+          "error": null,
+          "evidence": {
+            "count": 0
+          },
+          "name": "positions",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "positions=0"
+        },
+        "preflight": {
+          "environment": "okx-international-demo",
+          "error": null,
+          "evidence": {
+            "checks": [
+              {
+                "name": "market",
+                "status": "ok"
+              },
+              {
+                "name": "quote",
+                "status": "ok"
+              },
+              {
+                "name": "greeks",
+                "status": "ok"
+              },
+              {
+                "name": "portfolio",
+                "status": "ok"
+              },
+              {
+                "name": "account_capacity",
+                "status": "ok"
+              },
+              {
+                "name": "order_sanity",
+                "status": "violation"
+              },
+              {
+                "name": "hard_limits",
+                "status": "ok"
+              },
+              {
+                "name": "hedge",
+                "status": "ok"
+              },
+              {
+                "name": "cross_venue",
+                "status": "ok"
+              }
+            ],
+            "evaluated_at": 1784817816030,
+            "failures": [],
+            "status": "rejected",
+            "violations": [
+              "order_sanity_failed"
+            ]
+          },
+          "name": "preflight",
+          "observed_at": 1784817816030,
+          "outcome": "ok",
+          "summary": "preflight rejected"
+        }
+      },
+      "environment": "okx-international-demo",
+      "fill_evidence": null,
+      "judgment": null,
+      "limitation": null,
+      "observed_at": 1784817804823,
+      "status": null,
+      "status_reason": "insufficient evidence to assign a terminal readiness status",
+      "venue": "okx"
+    },
+    {
+      "book": {
+        "empty": false,
+        "instrument_count": 664,
+        "observed": true,
+        "observed_at": 1784817804823,
+        "sample": [
+          {
+            "ask": 0.0,
+            "bid": 10.0,
+            "symbol": "BTC/USDT:USDT-270625-150000-P"
+          },
+          {
+            "ask": 685.0,
+            "bid": 360.0,
+            "symbol": "BTC/USDT:USDT-270625-150000-C"
+          },
+          {
+            "ask": 0.0,
+            "bid": 10.0,
+            "symbol": "BTC/USDT:USDT-270625-140000-P"
+          }
+        ],
+        "two_sided": true,
+        "two_sided_count": 596
+      },
+      "cells": {
+        "balances": {
+          "environment": "bybit-demo",
+          "error": null,
+          "evidence": {
+            "currency_count": 4,
+            "timestamp": 1784817821469
+          },
+          "name": "balances",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "balance currencies=4"
+        },
+        "create_fetch_cancel": {
+          "environment": "bybit-demo",
+          "error": null,
+          "evidence": {},
+          "name": "create_fetch_cancel",
+          "observed_at": 1784817804823,
+          "outcome": "untested",
+          "summary": "lifecycle mutation skipped (pass mutate: true to exercise)"
+        },
+        "discovery": {
+          "environment": "bybit-demo",
+          "error": null,
+          "evidence": {
+            "base": "BTC",
+            "count": 664,
+            "sample_symbols": [
+              "BTC/USDT:USDT-270625-150000-P",
+              "BTC/USDT:USDT-270625-150000-C",
+              "BTC/USDT:USDT-270625-140000-P",
+              "BTC/USDT:USDT-270625-140000-C",
+              "BTC/USDT:USDT-270625-130000-P"
+            ],
+            "venue": "bybit"
+          },
+          "name": "discovery",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "664 option instruments for base=\"BTC\""
+        },
+        "greeks": {
+          "environment": "bybit-demo",
+          "error": null,
+          "evidence": {
+            "conventions": {
+              "delta": {
+                "bump_size": 1.0,
+                "denomination": "underlying",
+                "native_field": "delta",
+                "supported": true,
+                "time_basis": null,
+                "unit": "ratio",
+                "value_present": true
+              },
+              "gamma": {
+                "bump_size": 1.0,
+                "denomination": "delta",
+                "native_field": "gamma",
+                "supported": true,
+                "time_basis": null,
+                "unit": "delta_per_underlying_unit",
+                "value_present": true
+              },
+              "rho": {
+                "native_field": null,
+                "supported": false,
+                "value_present": false
+              },
+              "theta": {
+                "bump_size": 1.0,
+                "denomination": "option_premium",
+                "native_field": "theta",
+                "supported": true,
+                "time_basis": "calendar_day",
+                "unit": "premium_per_day",
+                "value_present": true
+              },
+              "vega": {
+                "bump_size": 0.01,
+                "denomination": "option_premium",
+                "native_field": "vega",
+                "supported": true,
+                "time_basis": null,
+                "unit": "premium_per_vol_point",
+                "value_present": true
+              }
+            },
+            "delta": 0.04723277,
+            "gamma": 3.45e-6,
+            "locally_observed_at": 1784817820635,
+            "source_timestamp": null,
+            "symbol": "BTC/USDT:USDT-270625-150000-C",
+            "theta": -4.18470445,
+            "underlying_price": 67663.4,
+            "vega": 64.0444861
+          },
+          "name": "greeks",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "greeks for BTC/USDT:USDT-270625-150000-C"
+        },
+        "hedge": {
+          "environment": "bybit-demo",
+          "error": null,
+          "evidence": {},
+          "name": "hedge",
+          "observed_at": 1784817804823,
+          "outcome": "skipped",
+          "summary": "complete option Greeks and underlying price unavailable for preflight (missing source_timestamp; live ticker completion attempted)"
+        },
+        "open_orders": {
+          "environment": "bybit-demo",
+          "error": null,
+          "evidence": {
+            "count": 0
+          },
+          "name": "open_orders",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "open_orders=0"
+        },
+        "positions": {
+          "environment": "bybit-demo",
+          "error": null,
+          "evidence": {
+            "count": 0
+          },
+          "name": "positions",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "positions=0"
+        },
+        "preflight": {
+          "environment": "bybit-demo",
+          "error": null,
+          "evidence": {},
+          "name": "preflight",
+          "observed_at": 1784817804823,
+          "outcome": "skipped",
+          "summary": "complete option Greeks and underlying price unavailable for preflight (missing source_timestamp; live ticker completion attempted)"
+        }
+      },
+      "environment": "bybit-demo",
+      "fill_evidence": null,
+      "judgment": null,
+      "limitation": null,
+      "observed_at": 1784817804823,
+      "status": null,
+      "status_reason": "insufficient evidence to assign a terminal readiness status",
+      "venue": "bybit"
+    },
+    {
+      "book": {
+        "empty": true,
+        "instrument_count": 52,
+        "observed": true,
+        "observed_at": 1784817804823,
+        "sample": [
+          {
+            "ask": null,
+            "bid": null,
+            "symbol": "ZEC/USDC:USDC-260925-800-P"
+          },
+          {
+            "ask": null,
+            "bid": null,
+            "symbol": "ZEC/USDC:USDC-260925-800-C"
+          },
+          {
+            "ask": null,
+            "bid": null,
+            "symbol": "ZEC/USDC:USDC-260925-700-P"
+          }
+        ],
+        "two_sided": false,
+        "two_sided_count": 0
+      },
+      "cells": {
+        "balances": {
+          "environment": "derive-demo",
+          "error": null,
+          "evidence": {
+            "currency_count": 1,
+            "timestamp": null
+          },
+          "name": "balances",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "balance currencies=1"
+        },
+        "create_fetch_cancel": {
+          "environment": "derive-demo",
+          "error": null,
+          "evidence": {},
+          "name": "create_fetch_cancel",
+          "observed_at": 1784817804823,
+          "outcome": "untested",
+          "summary": "lifecycle mutation skipped (pass mutate: true to exercise)"
+        },
+        "discovery": {
+          "environment": "derive-demo",
+          "error": null,
+          "evidence": {
+            "base": "all",
+            "count": 52,
+            "sample_symbols": [
+              "ZEC/USDC:USDC-260925-800-P",
+              "ZEC/USDC:USDC-260925-800-C",
+              "ZEC/USDC:USDC-260925-700-P",
+              "ZEC/USDC:USDC-260925-700-C",
+              "ZEC/USDC:USDC-260925-600-P"
+            ],
+            "venue": "derive"
+          },
+          "name": "discovery",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "52 option instruments for base=:all"
+        },
+        "greeks": {
+          "environment": "derive-demo",
+          "error": null,
+          "evidence": {
+            "conventions": {
+              "delta": {
+                "bump_size": 1.0,
+                "denomination": "underlying",
+                "native_field": "option_pricing.delta",
+                "supported": true,
+                "time_basis": null,
+                "unit": "ratio",
+                "value_present": true
+              },
+              "gamma": {
+                "bump_size": 1.0,
+                "denomination": "delta",
+                "native_field": "option_pricing.gamma",
+                "supported": true,
+                "time_basis": null,
+                "unit": "delta_per_underlying_unit",
+                "value_present": true
+              },
+              "rho": {
+                "bump_size": 0.01,
+                "denomination": "option_premium",
+                "native_field": "option_pricing.rho",
+                "supported": true,
+                "time_basis": null,
+                "unit": "premium_per_interest_point",
+                "value_present": true
+              },
+              "theta": {
+                "bump_size": 1.0,
+                "denomination": "option_premium",
+                "native_field": "option_pricing.theta",
+                "supported": true,
+                "time_basis": "calendar_day",
+                "unit": "premium_per_day",
+                "value_present": true
+              },
+              "vega": {
+                "bump_size": 0.01,
+                "denomination": "option_premium",
+                "native_field": "option_pricing.vega",
+                "supported": true,
+                "time_basis": null,
+                "unit": "premium_per_vol_point",
+                "value_present": true
+              }
+            },
+            "delta": 0.34257,
+            "gamma": 0.001158,
+            "locally_observed_at": 1784817824060,
+            "source_timestamp": 1784817824000,
+            "symbol": "ZEC/USDC:USDC-260925-800-C",
+            "theta": -0.913547,
+            "underlying_price": 515.2,
+            "vega": 0.790967
+          },
+          "name": "greeks",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "greeks for ZEC/USDC:USDC-260925-800-C"
+        },
+        "hedge": {
+          "environment": "derive-demo",
+          "error": null,
+          "evidence": {
+            "candidate_id": null,
+            "feasible": false,
+            "reason": ":missing_contract_multiplier",
+            "residual_delta": 0.34257
+          },
+          "name": "hedge",
+          "observed_at": 1784817825956,
+          "outcome": "blocked",
+          "summary": "hedge infeasible: :missing_contract_multiplier"
+        },
+        "open_orders": {
+          "environment": "derive-demo",
+          "error": null,
+          "evidence": {
+            "count": 0
+          },
+          "name": "open_orders",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "open_orders=0"
+        },
+        "positions": {
+          "environment": "derive-demo",
+          "error": null,
+          "evidence": {
+            "count": 0
+          },
+          "name": "positions",
+          "observed_at": 1784817804823,
+          "outcome": "ok",
+          "summary": "positions=0"
+        },
+        "preflight": {
+          "environment": "derive-demo",
+          "error": null,
+          "evidence": {
+            "checks": [
+              {
+                "name": "market",
+                "status": "ok"
+              },
+              {
+                "name": "quote",
+                "status": "ok"
+              },
+              {
+                "name": "greeks",
+                "status": "ok"
+              },
+              {
+                "name": "portfolio",
+                "status": "ok"
+              },
+              {
+                "name": "account_capacity",
+                "status": "ok"
+              },
+              {
+                "name": "order_sanity",
+                "status": "violation"
+              },
+              {
+                "name": "hard_limits",
+                "status": "ok"
+              },
+              {
+                "name": "hedge",
+                "status": "violation"
+              },
+              {
+                "name": "cross_venue",
+                "status": "ok"
+              }
+            ],
+            "evaluated_at": 1784817825956,
+            "failures": [],
+            "status": "rejected",
+            "violations": [
+              "order_sanity_failed",
+              "hedge_infeasible"
+            ]
+          },
+          "name": "preflight",
+          "observed_at": 1784817825956,
+          "outcome": "ok",
+          "summary": "preflight rejected"
+        }
+      },
+      "environment": "derive-demo",
+      "fill_evidence": null,
+      "judgment": null,
+      "limitation": {
+        "book": {
+          "empty": true,
+          "instrument_count": 52,
+          "observed": true,
+          "observed_at": 1784817804823,
+          "sample": [
+            {
+              "ask": null,
+              "bid": null,
+              "symbol": "ZEC/USDC:USDC-260925-800-P"
+            },
+            {
+              "ask": null,
+              "bid": null,
+              "symbol": "ZEC/USDC:USDC-260925-800-C"
+            },
+            {
+              "ask": null,
+              "bid": null,
+              "symbol": "ZEC/USDC:USDC-260925-700-P"
+            }
+          ],
+          "two_sided": false,
+          "two_sided_count": 0
+        },
+        "detail": "empty or one-sided option book",
+        "kind": "market_unavailable",
+        "observed_at": 1784817804823
+      },
+      "observed_at": 1784817804823,
+      "status": "market_unavailable",
+      "status_reason": "empty or one-sided option book at 1784817804823",
+      "venue": "derive"
+    }
+  ]
+}

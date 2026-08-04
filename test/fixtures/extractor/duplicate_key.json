@@ -1,0 +1,10 @@
+{
+  "emulated_methods": {
+    "hyperliquid": [
+      {"name": "fetchClosedOrders", "source": "authored_delegate"}
+    ],
+    "hyperliquid": [
+      {"name": "fetchClosedOrders", "source": "rest"}
+    ]
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "acceptance": {
+    "branch": "public_get_get_currencies",
+    "capture_date": "2026-07-26",
+    "captured_at": "2026-07-26T05:56:24.176Z",
+    "endpoint": "get_currencies",
+    "host": "www.deribit.com",
+    "http_status": 200,
+    "method": "fetchCurrencies",
+    "sections": [
+      "public"
+    ],
+    "venue": "deribit"
+  },
+  "oracle": "public_exchange_acceptance",
+  "replay": {
+    "markets": [],
+    "pagination_cursors": [
+      null
+    ],
+    "params": {},
+    "timestamp_ms_override": 1785045384176
+  },
+  "requests": [
+    {
+      "body": null,
+      "headers": [],
+      "method": "GET",
+      "url": "https://www.deribit.com/api/v2/public/get_currencies"
+    }
+  ],
+  "schema_version": 1
+}

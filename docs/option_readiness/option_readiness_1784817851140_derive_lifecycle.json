@@ -1,0 +1,307 @@
+{
+  "meta": {
+    "generated_by": "CCXT.OptionReadiness",
+    "opts": {
+      "mutate": "true",
+      "report_dir": "\"tmp/task507-review-derive\"",
+      "venues": "[\"derive\"]"
+    },
+    "task": 402
+  },
+  "observed_at": 1784817851140,
+  "path": "/Users/efries/_DATA/worktrees/.harness/ccxt_client/run-1784815985148-7a4f9b9c/docs/option_readiness/option_readiness_1784817851140_derive_lifecycle.json",
+  "schema_version": 1,
+  "venues": [
+    {
+      "book": {
+        "empty": true,
+        "instrument_count": 52,
+        "observed": true,
+        "observed_at": 1784817851140,
+        "sample": [
+          {
+            "ask": null,
+            "bid": null,
+            "symbol": "ZEC/USDC:USDC-260925-800-P"
+          },
+          {
+            "ask": null,
+            "bid": null,
+            "symbol": "ZEC/USDC:USDC-260925-800-C"
+          },
+          {
+            "ask": null,
+            "bid": null,
+            "symbol": "ZEC/USDC:USDC-260925-700-P"
+          }
+        ],
+        "two_sided": false,
+        "two_sided_count": 0
+      },
+      "cells": {
+        "balances": {
+          "environment": "derive-demo",
+          "error": null,
+          "evidence": {
+            "currency_count": 1,
+            "timestamp": null
+          },
+          "name": "balances",
+          "observed_at": 1784817851140,
+          "outcome": "ok",
+          "summary": "balance currencies=1"
+        },
+        "create_fetch_cancel": {
+          "environment": "derive-demo",
+          "error": null,
+          "evidence": {
+            "cancel": {
+              "id": "cade6177-f250-4206-9e2c-2c5db81f31a1",
+              "observed_at": 1784817855915,
+              "ok": true,
+              "status": "canceled"
+            },
+            "client_order_id": "opt-ready-1784817851140-11",
+            "create": {
+              "id": "cade6177-f250-4206-9e2c-2c5db81f31a1",
+              "observed_at": 1784817855033,
+              "ok": true,
+              "status": "open"
+            },
+            "fetch": {
+              "id": "cade6177-f250-4206-9e2c-2c5db81f31a1",
+              "observed_at": 1784817855484,
+              "ok": true,
+              "status": "open"
+            },
+            "order_id": "cade6177-f250-4206-9e2c-2c5db81f31a1",
+            "read_back_path": "fetch_open_orders",
+            "residual_open_orders": {
+              "observed_at": 1784817856347,
+              "ok": true,
+              "value": "%{count: 0}"
+            },
+            "symbol": "ZEC/USDC:USDC-260925-800-C"
+          },
+          "name": "create_fetch_cancel",
+          "observed_at": 1784817851140,
+          "outcome": "ok",
+          "summary": "create/fetch/cancel on ZEC/USDC:USDC-260925-800-C"
+        },
+        "discovery": {
+          "environment": "derive-demo",
+          "error": null,
+          "evidence": {
+            "base": "all",
+            "count": 52,
+            "sample_symbols": [
+              "ZEC/USDC:USDC-260925-800-P",
+              "ZEC/USDC:USDC-260925-800-C",
+              "ZEC/USDC:USDC-260925-700-P",
+              "ZEC/USDC:USDC-260925-700-C",
+              "ZEC/USDC:USDC-260925-600-P"
+            ],
+            "venue": "derive"
+          },
+          "name": "discovery",
+          "observed_at": 1784817851140,
+          "outcome": "ok",
+          "summary": "52 option instruments for base=:all"
+        },
+        "greeks": {
+          "environment": "derive-demo",
+          "error": null,
+          "evidence": {
+            "conventions": {
+              "delta": {
+                "bump_size": 1.0,
+                "denomination": "underlying",
+                "native_field": "option_pricing.delta",
+                "supported": true,
+                "time_basis": null,
+                "unit": "ratio",
+                "value_present": true
+              },
+              "gamma": {
+                "bump_size": 1.0,
+                "denomination": "delta",
+                "native_field": "option_pricing.gamma",
+                "supported": true,
+                "time_basis": null,
+                "unit": "delta_per_underlying_unit",
+                "value_present": true
+              },
+              "rho": {
+                "bump_size": 0.01,
+                "denomination": "option_premium",
+                "native_field": "option_pricing.rho",
+                "supported": true,
+                "time_basis": null,
+                "unit": "premium_per_interest_point",
+                "value_present": true
+              },
+              "theta": {
+                "bump_size": 1.0,
+                "denomination": "option_premium",
+                "native_field": "option_pricing.theta",
+                "supported": true,
+                "time_basis": "calendar_day",
+                "unit": "premium_per_day",
+                "value_present": true
+              },
+              "vega": {
+                "bump_size": 0.01,
+                "denomination": "option_premium",
+                "native_field": "option_pricing.vega",
+                "supported": true,
+                "time_basis": null,
+                "unit": "premium_per_vol_point",
+                "value_present": true
+              }
+            },
+            "delta": 0.342569,
+            "gamma": 0.001158,
+            "locally_observed_at": 1784817853014,
+            "source_timestamp": 1784817853000,
+            "symbol": "ZEC/USDC:USDC-260925-800-C",
+            "theta": -0.913548,
+            "underlying_price": 515.2,
+            "vega": 0.790964
+          },
+          "name": "greeks",
+          "observed_at": 1784817851140,
+          "outcome": "ok",
+          "summary": "greeks for ZEC/USDC:USDC-260925-800-C"
+        },
+        "hedge": {
+          "environment": "derive-demo",
+          "error": null,
+          "evidence": {
+            "candidate_id": null,
+            "feasible": false,
+            "reason": ":missing_contract_multiplier",
+            "residual_delta": 0.342569
+          },
+          "name": "hedge",
+          "observed_at": 1784817856844,
+          "outcome": "blocked",
+          "summary": "hedge infeasible: :missing_contract_multiplier"
+        },
+        "open_orders": {
+          "environment": "derive-demo",
+          "error": null,
+          "evidence": {
+            "count": 0
+          },
+          "name": "open_orders",
+          "observed_at": 1784817851140,
+          "outcome": "ok",
+          "summary": "open_orders=0"
+        },
+        "positions": {
+          "environment": "derive-demo",
+          "error": null,
+          "evidence": {
+            "count": 0
+          },
+          "name": "positions",
+          "observed_at": 1784817851140,
+          "outcome": "ok",
+          "summary": "positions=0"
+        },
+        "preflight": {
+          "environment": "derive-demo",
+          "error": null,
+          "evidence": {
+            "checks": [
+              {
+                "name": "market",
+                "status": "ok"
+              },
+              {
+                "name": "quote",
+                "status": "ok"
+              },
+              {
+                "name": "greeks",
+                "status": "ok"
+              },
+              {
+                "name": "portfolio",
+                "status": "ok"
+              },
+              {
+                "name": "account_capacity",
+                "status": "ok"
+              },
+              {
+                "name": "order_sanity",
+                "status": "violation"
+              },
+              {
+                "name": "hard_limits",
+                "status": "ok"
+              },
+              {
+                "name": "hedge",
+                "status": "violation"
+              },
+              {
+                "name": "cross_venue",
+                "status": "ok"
+              }
+            ],
+            "evaluated_at": 1784817856844,
+            "failures": [],
+            "status": "rejected",
+            "violations": [
+              "order_sanity_failed",
+              "hedge_infeasible"
+            ]
+          },
+          "name": "preflight",
+          "observed_at": 1784817856844,
+          "outcome": "ok",
+          "summary": "preflight rejected"
+        }
+      },
+      "environment": "derive-demo",
+      "fill_evidence": null,
+      "judgment": null,
+      "limitation": {
+        "book": {
+          "empty": true,
+          "instrument_count": 52,
+          "observed": true,
+          "observed_at": 1784817851140,
+          "sample": [
+            {
+              "ask": null,
+              "bid": null,
+              "symbol": "ZEC/USDC:USDC-260925-800-P"
+            },
+            {
+              "ask": null,
+              "bid": null,
+              "symbol": "ZEC/USDC:USDC-260925-800-C"
+            },
+            {
+              "ask": null,
+              "bid": null,
+              "symbol": "ZEC/USDC:USDC-260925-700-P"
+            }
+          ],
+          "two_sided": false,
+          "two_sided_count": 0
+        },
+        "detail": "empty or one-sided option book",
+        "kind": "market_unavailable",
+        "observed_at": 1784817851140
+      },
+      "observed_at": 1784817851140,
+      "status": "market_unavailable",
+      "status_reason": "empty or one-sided option book at 1784817851140",
+      "venue": "derive"
+    }
+  ]
+}

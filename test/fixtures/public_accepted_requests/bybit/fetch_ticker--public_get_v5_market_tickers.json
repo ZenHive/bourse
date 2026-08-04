@@ -1,0 +1,126 @@
+{
+  "acceptance": {
+    "branch": "public_get_v5_market_tickers",
+    "capture_date": "2026-07-26",
+    "captured_at": "2026-07-26T05:56:21.885Z",
+    "endpoint": "v5/market/tickers",
+    "host": "api.bybit.com",
+    "http_status": 200,
+    "method": "fetchTicker",
+    "sections": [
+      "public"
+    ],
+    "venue": "bybit"
+  },
+  "oracle": "public_exchange_acceptance",
+  "replay": {
+    "markets": [
+      {
+        "spot": true,
+        "contractSize": null,
+        "linear": null,
+        "quoteId": "USDT",
+        "tierBased": true,
+        "index": false,
+        "maker": 0.001,
+        "inverse": null,
+        "feeSide": "get",
+        "info": {
+          "baseCoin": "BTC",
+          "innovation": "0",
+          "lotSizeFilter": {
+            "basePrecision": "0.000001",
+            "maxLimitOrderQty": "230",
+            "maxMarketOrderQty": "120",
+            "maxOrderAmt": "8000000",
+            "maxOrderQty": "230",
+            "minOrderAmt": "5",
+            "minOrderQty": "0.000001",
+            "postOnlyMaxLimitOrderSize": "1150",
+            "quotePrecision": "0.0000001"
+          },
+          "marginTrading": "utaOnly",
+          "priceFilter": {
+            "tickSize": "0.1"
+          },
+          "quoteCoin": "USDT",
+          "riskParameters": {
+            "priceLimitRatioX": "0.005",
+            "priceLimitRatioY": "0.01"
+          },
+          "stTag": "0",
+          "status": "Trading",
+          "symbol": "BTCUSDT",
+          "symbolId": "9",
+          "symbolType": "",
+          "xstockMultiplier": "1"
+        },
+        "created": null,
+        "option": false,
+        "future": false,
+        "symbol": "BTC/USDT",
+        "settle": null,
+        "precision": {
+          "amount": 1.0e-6,
+          "price": 0.1
+        },
+        "baseId": "BTC",
+        "type": "spot",
+        "strike": null,
+        "settleId": null,
+        "quote": "USDT",
+        "expiryDatetime": null,
+        "base": "BTC",
+        "swap": false,
+        "marginModes": {
+          "cross": null,
+          "isolated": null
+        },
+        "limits": {
+          "amount": {
+            "max": 230,
+            "min": 1.0e-6
+          },
+          "cost": {
+            "max": 8000000,
+            "min": 5
+          },
+          "leverage": {
+            "max": null,
+            "min": 1
+          },
+          "price": {
+            "max": null,
+            "min": null
+          }
+        },
+        "taker": 0.001,
+        "optionType": null,
+        "margin": true,
+        "contract": false,
+        "percentage": true,
+        "active": true,
+        "expiry": null,
+        "id": "BTCUSDT",
+        "lowercaseId": null,
+        "subType": null
+      }
+    ],
+    "pagination_cursors": [
+      null
+    ],
+    "params": {
+      "symbol": "BTC/USDT"
+    },
+    "timestamp_ms_override": 1785045381885
+  },
+  "requests": [
+    {
+      "body": null,
+      "headers": [],
+      "method": "GET",
+      "url": "https://api.bybit.com/v5/market/tickers?category=spot&symbol=BTCUSDT"
+    }
+  ],
+  "schema_version": 1
+}

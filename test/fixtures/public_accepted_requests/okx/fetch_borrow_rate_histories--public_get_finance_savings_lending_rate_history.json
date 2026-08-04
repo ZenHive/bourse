@@ -1,0 +1,36 @@
+{
+  "acceptance": {
+    "branch": "public_get_finance_savings_lending_rate_history",
+    "capture_date": "2026-07-26",
+    "captured_at": "2026-07-26T05:57:07.951Z",
+    "endpoint": "finance/savings/lending-rate-history",
+    "host": "www.okx.com",
+    "http_status": 200,
+    "method": "fetchBorrowRateHistories",
+    "sections": [
+      "public"
+    ],
+    "venue": "okx"
+  },
+  "oracle": "public_exchange_acceptance",
+  "replay": {
+    "markets": [],
+    "pagination_cursors": [
+      null
+    ],
+    "params": {
+      "limit": 10,
+      "since": 1785041827970
+    },
+    "timestamp_ms_override": 1785045427951
+  },
+  "requests": [
+    {
+      "body": null,
+      "headers": [],
+      "method": "GET",
+      "url": "https://www.okx.com/api/v5/finance/savings/lending-rate-history?limit=10&since=1785041827970"
+    }
+  ],
+  "schema_version": 1
+}

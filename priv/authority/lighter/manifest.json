@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "venue": "lighter",
+  "official_docs_url": "https://apidocs.lighter.xyz/",
+  "selection_reason": "Lighter publishes its REST semantics through the official API reference and the Apache-2.0 lighter-python repository's generated OpenAPI document. The OpenAPI pin owns request and response shapes; the official trading and API-key guides own signer, nonce and safety semantics.",
+  "fetch_script": "scripts/fetch_authority.sh",
+  "artifacts": [
+    {
+      "id": "rest-openapi",
+      "kind": "openapi-json",
+      "source_url": "https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json",
+      "fetch_url": "https://raw.githubusercontent.com/elliottech/lighter-python/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json",
+      "filename": "openapi.json",
+      "retrieved_at": "2026-07-23",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "6957dd8a1b36894ca9580be0d51de30aeea3bd4a"
+      },
+      "sha256": "3a53c619ef3eb537217c889d1d6bd322015548a31c045538eb547c7195c9953f",
+      "bytes": 279193,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "identified",
+        "license": "Apache-2.0",
+        "evidence_url": "https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/LICENSE",
+        "handling": "reference_only",
+        "reason": "The generated provider contract is pinned by revision and hash; committing a duplicate is unnecessary."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://raw.githubusercontent.com/elliottech/lighter-python/main/openapi.json"
+      }
+    }
+  ]
+}

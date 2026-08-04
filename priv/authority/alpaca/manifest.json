@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "venue": "alpaca",
+  "official_docs_url": "https://docs.alpaca.markets/",
+  "selection_reason": "Alpaca publishes its Trading and Market Data API contracts as official rendered documentation. The endpoint references are pinned by retrieval date and content digest; redistribution terms are unclear, so the bytes remain reference-only.",
+  "fetch_script": "scripts/fetch_authority.sh",
+  "error_enumeration": {
+    "path": "errors.json",
+    "source_artifact_id": "trading-api-create-order",
+    "source_url": "https://docs.alpaca.markets/us/reference/postorder",
+    "retrieved_at": "2026-07-23",
+    "sha256": "9ebf21e2e8efe04f6359fd9dee3b685b222abfd94d1ebcae2d5fb5702b999058",
+    "bytes": 1835
+  },
+  "artifacts": [
+    {
+      "id": "trading-api-create-order",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.alpaca.markets/us/reference/postorder",
+      "fetch_url": "https://docs.alpaca.markets/us/reference/postorder",
+      "filename": "alpaca-postorder-2026-07-23.html",
+      "retrieved_at": "2026-07-23",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-07-23"
+      },
+      "sha256": "a96386b92df2b8951c285aff1d9ffca4a19a52c5a4eb7bf5c9e7e94c34942ad4",
+      "bytes": 988881,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific redistribution license published",
+        "evidence_url": "https://docs.alpaca.markets/",
+        "handling": "reference_only",
+        "reason": "The official rendered documentation is referenced rather than redistributed because no artifact-specific license is published."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.alpaca.markets/us/reference/postorder"
+      }
+    },
+    {
+      "id": "stock-bars-single",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.alpaca.markets/us/v1.1/reference/stockbarsingle-1",
+      "fetch_url": "https://docs.alpaca.markets/us/v1.1/reference/stockbarsingle-1",
+      "filename": "alpaca-stock-bars-single-2026-08-03.html",
+      "retrieved_at": "2026-08-03",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-08-03"
+      },
+      "sha256": "e92adfe68d76ab5628aedbdb50cd6c2bceca0f03c6b5398b0d6d2b1c28621b3c",
+      "bytes": 866845,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific redistribution license published",
+        "evidence_url": "https://docs.alpaca.markets/",
+        "handling": "reference_only",
+        "reason": "The official rendered documentation is referenced rather than redistributed because no artifact-specific license is published."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.alpaca.markets/us/v1.1/reference/stockbarsingle-1"
+      }
+    },
+    {
+      "id": "crypto-snapshots",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.alpaca.markets/us/reference/cryptosnapshots-1",
+      "fetch_url": "https://docs.alpaca.markets/us/reference/cryptosnapshots-1",
+      "filename": "alpaca-crypto-snapshots-2026-07-26.html",
+      "retrieved_at": "2026-07-26",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-07-26"
+      },
+      "sha256": "fdb5984cc0def5f8e1063b7e8973296f91a938afc334b8703ede0f0e066e0769",
+      "bytes": 942249,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific redistribution license published",
+        "evidence_url": "https://docs.alpaca.markets/",
+        "handling": "reference_only",
+        "reason": "The official rendered documentation is referenced rather than redistributed because no artifact-specific license is published."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.alpaca.markets/us/reference/cryptosnapshots-1"
+      }
+    },
+    {
+      "id": "crypto-bars",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.alpaca.markets/us/reference/cryptobars-1",
+      "fetch_url": "https://docs.alpaca.markets/us/reference/cryptobars-1",
+      "filename": "alpaca-crypto-bars-2026-07-26.html",
+      "retrieved_at": "2026-07-26",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-07-26"
+      },
+      "sha256": "2625774d48ab976cebf3b8c51584c1b58ae1c42e1159fb7c9b421183c8c00472",
+      "bytes": 951775,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific redistribution license published",
+        "evidence_url": "https://docs.alpaca.markets/",
+        "handling": "reference_only",
+        "reason": "The official rendered documentation is referenced rather than redistributed because no artifact-specific license is published."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.alpaca.markets/us/reference/cryptobars-1"
+      }
+    }
+  ]
+}

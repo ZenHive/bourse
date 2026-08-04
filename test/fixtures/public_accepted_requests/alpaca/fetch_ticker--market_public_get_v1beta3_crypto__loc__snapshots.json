@@ -1,0 +1,45 @@
+{
+  "acceptance": {
+    "branch": "market_public_get_v1beta3_crypto__loc__snapshots",
+    "capture_date": "2026-07-26",
+    "captured_at": "2026-07-26T05:54:37.035Z",
+    "endpoint": "v1beta3/crypto/{loc}/snapshots",
+    "host": "data.alpaca.markets",
+    "http_status": 200,
+    "method": "fetchTicker",
+    "sections": [
+      "market",
+      "public"
+    ],
+    "venue": "alpaca"
+  },
+  "oracle": "public_exchange_acceptance",
+  "replay": {
+    "markets": [
+      {
+        "active": true,
+        "base": "BTC",
+        "id": "BTC/USD",
+        "quote": "USD",
+        "spot": true,
+        "symbol": "BTC/USD"
+      }
+    ],
+    "pagination_cursors": [
+      null
+    ],
+    "params": {
+      "symbol": "BTC/USD"
+    },
+    "timestamp_ms_override": 1785045277035
+  },
+  "requests": [
+    {
+      "body": null,
+      "headers": [],
+      "method": "GET",
+      "url": "https://data.alpaca.markets/v1beta3/crypto/us/snapshots?symbols=BTC%2FUSD"
+    }
+  ],
+  "schema_version": 1
+}
