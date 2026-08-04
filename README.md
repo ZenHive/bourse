@@ -131,8 +131,7 @@ exchange-native channel strings.
 ## Known Caveats
 
 Consumer-facing gotchas not obvious from the API signatures. Full context in
-[CLAUDE.md](https://github.com/ZenHive/bourse/blob/main/CLAUDE.md) and
-[ROADMAP.md](https://github.com/ZenHive/bourse/blob/main/ROADMAP.md).
+[CLAUDE.md](https://github.com/ZenHive/bourse/blob/main/CLAUDE.md).
 
 - **`has?/2` is support introspection, while endpoint mapping is the dispatch
   gate.** Cross-check a venue's generated `__unified_endpoints__/0` when choosing
@@ -174,7 +173,6 @@ Bourse.Bybit.__unified_endpoints__()  # Unified-method → endpoint-config mappi
 
 ## Documentation
 
-- [ROADMAP.md](https://github.com/ZenHive/bourse/blob/main/ROADMAP.md) — active work, priorities, upstream dependencies
 - [CHANGELOG.md](CHANGELOG.md) — completed tasks and known limitations
 - [CLAUDE.md](https://github.com/ZenHive/bourse/blob/main/CLAUDE.md) — architecture, design decisions, internal conventions
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to land code and authored-spec fixes

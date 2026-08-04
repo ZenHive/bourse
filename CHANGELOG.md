@@ -9,14 +9,18 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
-- Initial repository. `bourse` is extracted from the `ccxt_client` working repo,
-  which remains the authoring workbench for venue specs and venue promotion.
+- Initial repository. `bourse` is extracted from the working repo it grew up in,
+  which stays behind as the private authoring workbench `bourse-workbench`.
   Carried over: the client (`Bourse.Exchange` / `Dispatch` / `HTTP` / `Signing` /
   `Symbol` / `Unified` / `WS` plus the unified response structs), the ten authored
   runtime specs, the verification layer (`mix ccxt.oracle_gate`, the recorded
-  response and accepted-request evidence, live drift checking), and the trading
-  domain layer.
+  response and accepted-request evidence, live drift checking), the spec-authoring
+  and venue-promotion tooling, the authority corpus and its validators, and the
+  trading domain layer.
 
-  Left behind in the workbench: spec authoring and venue promotion tooling, the
-  vendored reference corpus, and the roadmap. The client carries a ~1 MB reference
-  cache slice covering exactly the supported venues instead of the full corpus.
+  Left in the workbench: the complete version-pinned CCXT reference corpus (110
+  documents), the classification tooling and corpus-wide audits that can only be
+  answered against it, and the task roadmap with its CHANGELOG gate. This
+  repository carries a 15-document reference slice covering the supported venues,
+  which its own offline tests read; both manifests pin the same upstream revision,
+  so the two copies are checkable rather than silently divergent.

@@ -32,15 +32,14 @@ every critical slot. See `docs/authored-specs.md` § Venue promotion boundary.
 ### Reference
 
 - `docs/authored-specs.md` — first-class authoring loop and epistemology
-- `CLAUDE.md` § ccxt-distill boundary (post-pivot) — historical bootstrap only
-- `../ccxt-distill/CONSUMING.md` — historical bootstrap contract
+- `CLAUDE.md` § The workbench boundary — what this repo owns and what it does not
 
 ## Code Contributions (bourse)
 
 ### Before You Start
 
 - Read `CLAUDE.md` — architectural decisions, naming conventions, and the Non-Unified Track scope policy.
-- Read `ROADMAP.md` — current focus and deferred tasks.
+- Read `CHANGELOG.md` § Unreleased — what has landed since the last release.
 - Open `priv/authority/<venue>/` before authoring a supported-venue field.
 
 ### Running the Suite
@@ -63,7 +62,8 @@ Full flag reference: see the `ex-unit-json` and `dialyzer-json` sections in `CLA
 - [ ] `mix test.json --quiet`, `mix dialyzer.json --quiet`, and `mix credo --strict` all pass.
 - [ ] `CHANGELOG.md` updated under `## [Unreleased]` with what was done and key decisions (no test counts or file-count stats).
 - [ ] `CLAUDE.md` updated only if architecture, conventions, or the module inventory changed.
-- [ ] If a discovery surfaced new work, file it through `rmap new`.
+- [ ] If a discovery surfaced new work, open an issue — the task roadmap lives in
+      the private authoring workbench, not in this repository.
 
 ### Commit Messages
 
