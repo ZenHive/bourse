@@ -101,14 +101,25 @@ defmodule Bourse.MixProject do
   # (domain may call the client, never the reverse), which is what keeps a later
   # extraction a file move rather than a refactor.
   @domain_prefixes ~w(option_proposal option_readiness option_saga portfolio_risk)
+  # Venue-promotion tooling grades a candidate against this repo's reality
+  # manifests under `test/fixtures/`, which are deliberately unpackaged — so a
+  # shipped copy could only fail on missing files.
+  @unpackaged_prefixes ~w(spec/promotion)
 
   defp client_lib_files do
-    "lib/bourse/**" |> Path.wildcard() |> Enum.reject(&domain_path?/1)
+    "lib/bourse/**" |> Path.wildcard() |> Enum.reject(&unpackaged_path?/1)
   end
 
-  defp domain_path?(path) do
+  # `Path.wildcard("lib/bourse/**")` yields directory entries as well as files,
+  # and Hex packages a listed directory recursively — so the bare `option_saga`
+  # entry must be rejected too, not just `option_saga.ex` and `option_saga/…`.
+  defp unpackaged_path?(path) do
     rest = Path.relative_to(path, "lib/bourse")
-    Enum.any?(@domain_prefixes, &(rest == "#{&1}.ex" or String.starts_with?(rest, "#{&1}/")))
+
+    Enum.any?(
+      @domain_prefixes ++ @unpackaged_prefixes,
+      &(rest in [&1, "#{&1}.ex"] or String.starts_with?(rest, "#{&1}/"))
+    )
   end
 
   defp dialyzer do

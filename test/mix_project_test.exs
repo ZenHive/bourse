@@ -7,9 +7,11 @@ defmodule Bourse.MixProjectTest do
   # native/lighter_signer ships the Go/C signer sources so consumers can build
   # the Lighter helper themselves; the compiled binary is never packaged.
   @runtime_venues ~w(alpaca binance binancecoinm binanceusdm bybit deribit derive hyperliquid lighter okx)
-  # The trading domain is developed here but is not part of the client's surface,
-  # so `lib/bourse` ships enumerated rather than as a blanket directory entry.
+  # The trading domain and the venue-promotion tooling are developed here but are
+  # not part of the client's surface, so `lib/bourse` ships enumerated rather
+  # than as a blanket directory entry.
   @domain_prefixes ~w(option_proposal option_readiness option_saga portfolio_risk)
+  @unpackaged_prefixes @domain_prefixes ++ ~w(spec/promotion)
   @expected_non_lib ~w(lib/bourse.ex lib/mix/tasks/ccxt.build_lighter_signer.ex) ++
                       ~w(native/lighter_signer mix.exs README.md LICENSE) ++
                       ["priv/specs/json/runtime_support.json"] ++
@@ -33,12 +35,20 @@ defmodule Bourse.MixProjectTest do
       {lib_bourse, rest} = Enum.split_with(files, &String.starts_with?(&1, "lib/bourse/"))
 
       assert rest == @expected_non_lib
-      assert lib_bourse == Enum.reject(Path.wildcard("lib/bourse/**"), &domain_path?/1)
+      assert lib_bourse == Enum.reject(Path.wildcard("lib/bourse/**"), &unpackaged_path?/1)
       assert lib_bourse != []
 
-      # The domain layer stays out of the tarball; the client half ships whole.
-      refute Enum.any?(files, &domain_path?/1)
-      assert Enum.all?(Path.wildcard("lib/bourse/**"), &(&1 in files or domain_path?(&1)))
+      # The domain layer and the promotion tooling stay out of the tarball; the
+      # client half ships whole.
+      refute Enum.any?(files, &unpackaged_path?/1)
+      assert Enum.all?(Path.wildcard("lib/bourse/**"), &(&1 in files or unpackaged_path?(&1)))
+
+      # Hex expands a listed directory, so a bare `lib/bourse/option_saga` entry
+      # would ship the whole excluded tree; assert on the prefix, not the
+      # predicate that produced the list.
+      for excluded <- @unpackaged_prefixes do
+        refute Enum.any?(files, &String.starts_with?(&1, "lib/bourse/#{excluded}"))
+      end
 
       refute Enum.any?(files, &String.starts_with?(&1, "priv/specs/json/ccxt"))
       refute "priv/specs/json/reference_corpus.json" in files
@@ -137,8 +147,14 @@ defmodule Bourse.MixProjectTest do
     end)
   end
 
-  defp domain_path?(path) do
+  # Hex packages a listed directory recursively, so the bare directory entry
+  # `Path.wildcard/1` returns must be excluded alongside the files under it.
+  defp unpackaged_path?(path) do
     rest = Path.relative_to(path, "lib/bourse")
-    Enum.any?(@domain_prefixes, &(rest == "#{&1}.ex" or String.starts_with?(rest, "#{&1}/")))
+
+    Enum.any?(
+      @unpackaged_prefixes,
+      &(rest in [&1, "#{&1}.ex"] or String.starts_with?(rest, "#{&1}/"))
+    )
   end
 end
