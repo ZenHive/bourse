@@ -37,7 +37,7 @@ This repo was extracted from `../ccxt_client`, which remains the **authoring wor
 **Consequences that bite if forgotten:**
 
 - Two tests deliberately stayed in the workbench because they are corpus-wide: the zero-param JSON-body gate audit (asserts a gate set across all 110 reference specs) and anything else iterating `Path.wildcard("priv/specs/json/output/*.json")` expecting the full set. **Do not re-add a corpus-wide audit here** — it would be answering a 110-venue question with 15 specs.
-- `priv/specs/json/reference_corpus.json` honestly declares the 15 carried venues (the ten supported plus `coinmetro`, `deepcoin`, `kraken`, `weex`, `whitebit`, used as parser and unsupported-venue counter-examples). Its two SHA-256 pins still name the upstream revision the slice came from, so provenance stays verifiable. **Adding a reference venue means adding its JSON *and* the manifest entry** — `Mix.Tasks.Ccxt.ReferenceCorpus` validates count, sort order and pins, and raises otherwise.
+- `priv/specs/json/reference_corpus.json` honestly declares the 15 carried venues (the ten supported plus `coinmetro`, `deepcoin`, `kraken`, `weex`, `whitebit`, used as parser and unsupported-venue counter-examples). Its two SHA-256 pins still name the upstream revision the slice came from, so provenance stays verifiable. **Adding a reference venue means adding its JSON *and* the manifest entry** — `Bourse.ReferenceSlice` validates count, sort order and pins, and raises otherwise. That module lives in `test/support/`, not `lib/`: the slice is test input, so neither the client nor the Hex package can reach it.
 
 ## 🎯 Core doctrine: provider-authoritative, reality-verified
 

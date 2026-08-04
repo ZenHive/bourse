@@ -1,14 +1,20 @@
-defmodule Mix.Tasks.Ccxt.ReferenceCorpus do
+defmodule Bourse.ReferenceSlice do
   @moduledoc """
-  Repository-only access to the version-pinned CCXT reference corpus.
+  Test-only access to the version-pinned CCXT reference slice.
 
-  Runtime support is owned by `Bourse.Spec` and never calls this module. This
-  repository carries a slice rather than the whole set: the supported venues plus
-  the few reference-only venues the test suite uses as counter-examples. The pins
-  still name the upstream revision the slice was taken from, so its provenance
-  stays verifiable; the complete set lives in the authoring workbench.
+  Runtime support is owned by `Bourse.Spec` and never reads this corpus: these
+  documents are unverified authoring references, useful to the suite as
+  counter-examples and as the CCXT-derived siblings of the authored specs.
 
-  The slice's files are excluded from the Hex package.
+  This repository carries a *slice* — the supported venues plus the few
+  reference-only venues the suite names — not the whole CCXT set. The pins still
+  identify the upstream revision it was taken from, so provenance stays
+  verifiable; the complete corpus and the tooling that maintains it live in the
+  authoring workbench.
+
+  The module lives under `test/support` rather than `lib` so neither the client
+  nor the Hex package can reach for it, and the slice's files are excluded from
+  the package.
   """
 
   alias Bourse.JsonDocument

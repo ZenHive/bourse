@@ -7,7 +7,7 @@ defmodule Bourse.Unified.RequestShapeTest do
   alias Bourse.Signing.Hyperliquid
   alias Bourse.Unified.RequestShape
   alias Bourse.Unified.RequestShape.Bybit
-  alias Mix.Tasks.Ccxt.ReferenceCorpus
+  alias Bourse.ReferenceSlice
 
   @receive_timeout_ms 1_000
 
@@ -2297,7 +2297,7 @@ defmodule Bourse.Unified.RequestShapeTest do
     test "dynamic_construction is a no-op when its source param is absent (deepcoin fetchBalance instType)" do
       reference_shape =
         "deepcoin"
-        |> ReferenceCorpus.spec_path()
+        |> ReferenceSlice.spec_path()
         |> Bourse.JsonDocument.decode_file!()
         |> get_in(["normalization", "request_param_shape", "fetchBalance"])
 

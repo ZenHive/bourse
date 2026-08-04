@@ -31,7 +31,7 @@ defmodule Bourse.Test.Generator.SymbolResolver do
   """
 
   alias Bourse.Spec
-  alias Mix.Tasks.Ccxt.ReferenceCorpus
+  alias Bourse.ReferenceSlice
 
   # Spot aliases first for CEX ubiquity. Linear-perp forms next (covers
   # futures-only and DEX venues). Inverse-perp after. Bare USDC spot forms
@@ -87,7 +87,7 @@ defmodule Bourse.Test.Generator.SymbolResolver do
   @spec markets(binary()) :: map()
   def markets(exchange_id) when is_binary(exchange_id) do
     exchange_id
-    |> ReferenceCorpus.spec_path()
+    |> ReferenceSlice.spec_path()
     |> Spec.decode_file!()
     |> get_in(["markets", "symbols_index"])
     |> case do

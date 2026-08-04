@@ -5,7 +5,7 @@ defmodule Bourse.AlpacaAuthoredPrivateTest do
   alias Bourse.Dispatch
   alias Bourse.Exchange
   alias Bourse.Test.RequestCollector
-  alias Mix.Tasks.Ccxt.ReferenceCorpus
+  alias Bourse.ReferenceSlice
 
   @order_id "task429-paper-order"
   @client_order_id "task429-client-order"
@@ -34,7 +34,7 @@ defmodule Bourse.AlpacaAuthoredPrivateTest do
 
     reference =
       "alpaca"
-      |> ReferenceCorpus.spec_path()
+      |> ReferenceSlice.spec_path()
       |> Bourse.Spec.decode_file!()
 
     reference_methods =

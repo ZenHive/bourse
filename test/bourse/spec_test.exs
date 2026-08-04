@@ -2,7 +2,7 @@ defmodule Bourse.SpecTest do
   use ExUnit.Case, async: true
 
   alias Bourse.Spec.Schema
-  alias Mix.Tasks.Ccxt.ReferenceCorpus
+  alias Bourse.ReferenceSlice
 
   describe "load!/1" do
     test "loads and decodes bybit spec" do
@@ -124,7 +124,7 @@ defmodule Bourse.SpecTest do
     test "all first-class venues load exactly one independently valid owned document" do
       for exchange_id <- Bourse.Spec.exchanges() do
         owned_path = Bourse.Spec.owned_spec_path(exchange_id)
-        reference_path = ReferenceCorpus.spec_path(exchange_id)
+        reference_path = ReferenceSlice.spec_path(exchange_id)
         owned = Bourse.Spec.decode_file!(owned_path)
 
         assert Bourse.Spec.spec_path(exchange_id) == owned_path
@@ -165,7 +165,7 @@ defmodule Bourse.SpecTest do
 
       assert Bourse.Spec.spec_path("alpaca") == owned_path
       assert Bourse.Spec.load!("alpaca") == owned
-      refute ReferenceCorpus.spec_path("alpaca") == owned_path
+      refute ReferenceSlice.spec_path("alpaca") == owned_path
       refute Map.has_key?(owned["raw"]["describe"]["api"], "broker")
       refute Map.has_key?(owned["raw"]["describe"]["urls"]["api"], "broker")
     end
@@ -270,7 +270,7 @@ defmodule Bourse.SpecTest do
     test "okx interpretive request defaults live only in the owned runtime document" do
       reference =
         "okx"
-        |> ReferenceCorpus.spec_path()
+        |> ReferenceSlice.spec_path()
         |> Bourse.Spec.decode_file!()
 
       reference_defaults = get_in(reference, ["endpoints", "request", "defaults"])
@@ -361,7 +361,7 @@ defmodule Bourse.SpecTest do
         Bourse.Spec.spec_path("kraken")
       end
 
-      assert File.exists?(ReferenceCorpus.spec_path("kraken"))
+      assert File.exists?(ReferenceSlice.spec_path("kraken"))
       assert Bourse.Spec.owned_spec_path("kraken") == nil
       assert Bourse.Spec.authored_spec_path("kraken") == nil
     end
@@ -413,7 +413,7 @@ defmodule Bourse.SpecTest do
 
     test "validates every runtime document and the separate reference corpus" do
       assert :ok = Bourse.Spec.validate_all_documents!()
-      assert :ok = ReferenceCorpus.validate_all_documents!()
+      assert :ok = ReferenceSlice.validate_all_documents!()
     end
 
     test "runtime validation excludes non-venue authored reference assets" do

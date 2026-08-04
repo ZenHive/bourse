@@ -8,7 +8,7 @@ defmodule Bourse.ResponseParserTest do
   alias Bourse.ResponseParser
   alias Bourse.Ticker
   alias Bourse.Trade
-  alias Mix.Tasks.Ccxt.ReferenceCorpus
+  alias Bourse.ReferenceSlice
 
   setup_all do
     field_maps = runtime_field_maps()
@@ -1813,7 +1813,7 @@ defmodule Bourse.ResponseParserTest do
 
   defp reference_spec(exchange_id) do
     exchange_id
-    |> ReferenceCorpus.spec_path()
+    |> ReferenceSlice.spec_path()
     |> Bourse.JsonDocument.decode_file!()
   end
 

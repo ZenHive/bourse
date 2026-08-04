@@ -4,7 +4,7 @@ defmodule Bourse.BinancecoinmPromotionTest do
   alias Bourse.Exchange
   alias Bourse.Spec
   alias Bourse.Test.RequestCollector
-  alias Mix.Tasks.Ccxt.ReferenceCorpus
+  alias Bourse.ReferenceSlice
 
   @supported_methods ~w(
     cancelAllOrders
@@ -31,7 +31,7 @@ defmodule Bourse.BinancecoinmPromotionTest do
 
   test "runtime loads the complete owned document without reference fallback" do
     owned_path = Spec.owned_spec_path("binancecoinm")
-    reference_path = ReferenceCorpus.spec_path("binancecoinm")
+    reference_path = ReferenceSlice.spec_path("binancecoinm")
     owned = Spec.decode_file!(owned_path)
 
     assert Spec.spec_path("binancecoinm") == owned_path
