@@ -5,6 +5,38 @@ Append-only schema confrontations for Derive. Follow the allocation and evidence
 
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`; this file is the complete carve record (task 466).
 
+## 2026-08-05 — ticker 24h statistics (Task 560)
+
+**C-T560d — Derive's `public/get_ticker` publishes no 24h statistics object, so unified `high`,
+`low`, `change` and `percentage` have no source on this venue (task 560). Outcome: DIVERGE from the
+inherited carve; reality tier 1.**
+
+- *Exchange semantics:* [`public/get_ticker`](https://docs.derive.xyz/reference/post_public-get-ticker)
+  documents a result object of instrument identity, book top, index/mark pricing, fee rates, option
+  and perp detail blocks, and a timestamp. It documents no 24h-statistics section, and no `stats`
+  member at any nesting level.
+- *Live evidence (2026-08-05, both hosts):* `BTC-PERP` returned **36 result keys and no `stats`
+  member** on `api.lyra.finance` (mainnet) and on `api-demo.lyra.finance` (demo). The two key sets
+  are identical, which rules out a demo-only omission. The only statistics-shaped keys present are
+  `five_percent_ask_depth` / `five_percent_bid_depth`, which are book-depth measures, not 24h
+  aggregates.
+- *Our carve:* the four unified fields are recorded as `null` in the ticker field map. Their prior
+  sources — `stats.high`, `stats.low`, and `stats.percent_change` (twice, once scaled by 100) —
+  resolved on no host and made the map advertise coverage the venue does not publish. The absence is
+  a venue characteristic, not a parse gap.
+- *Compatibility reference:* the `stats` shape survives only in the CCXT-derived descriptor's
+  embedded sample under `endpoints.descriptors.fetchTicker.source`, whose sample timestamp is
+  `1736140984000` (January 2025). The carve was adopted from that sample and never confronted; this
+  entry is the confrontation.
+- *Related non-defect, recorded so it is not re-filed:* `last` is also `null` and that is **correct**
+  — neither the live response nor the reference documents a last-traded-price field on this endpoint.
+  Populating it would mean emulating from `public/get_trade_history`, which is a design decision
+  rather than a repair.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T560d","date":"2026-08-05","semantic_source":{"kind":"provider_owned","reference":"Derive public/get_ticker result schema"},"observed_evidence":{"kind":"live_venue","reference":"api.lyra.finance and api-demo.lyra.finance public/get_ticker BTC-PERP 36 keys without stats, observed 2026-08-05"},"compatibility_reference":{"kind":"ccxt","reference":"CCXT-derived fetchTicker descriptor sample timestamp 1736140984000 carries stats"},"resolved_tier":1}
+-->
+
 ## 2026-08-04 — documented order-status coverage (Task 538)
 
 **C-T538d — Derive order statuses cover the provider's published open-order vocabulary

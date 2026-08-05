@@ -4055,18 +4055,10 @@
             "format": null,
             "key": "best_bid_amount"
           },
-          "change": {
-            "coercion": "safeNumber",
-            "format": null,
-            "key": "stats.percent_change"
-          },
+          "change": null,
           "close": null,
           "datetime": null,
-          "high": {
-            "coercion": "safeNumber",
-            "format": null,
-            "key": "stats.high"
-          },
+          "high": null,
           "indexPrice": {
             "coercion": "safeNumber",
             "format": null,
@@ -4074,23 +4066,14 @@
           },
           "info": null,
           "last": null,
-          "low": {
-            "coercion": "safeNumber",
-            "format": null,
-            "key": "stats.low"
-          },
+          "low": null,
           "markPrice": {
             "coercion": "safeNumber",
             "format": null,
             "key": "mark_price"
           },
           "open": null,
-          "percentage": {
-            "coercion": "safeNumber",
-            "format": null,
-            "key": "stats.percent_change",
-            "scale": 100
-          },
+          "percentage": null,
           "previousClose": null,
           "quoteVolume": null,
           "symbol": null,
