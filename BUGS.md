@@ -73,7 +73,13 @@ roadmap.
 
 ## 2026-08-05 — `fetch_ticker/2` returns `timestamp: nil` and `datetime: nil` on every bybit ticker — the mapped `time` key lives on the envelope the parser never sees
 
-**Status (2026-08-05):** 🆕 reported — needs triage. **Severity:** medium — not a crash and not a
+**Status (2026-08-05):** 📋 triaged — filed as workbench **task 562** ("Per-field maps cannot address
+envelope-level keys, so every bybit ticker is unstamped"), open. Symptom and cause independently
+re-verified live on 2026-08-05 before filing: unified `fetch_ticker` returned `timestamp: nil` /
+`datetime: nil` with `last: 64148.6`, while the same call's raw envelope carried
+`time: 1785918546548` and the extracted list element carried only `deliveryTime` /
+`nextFundingTime`. The fix is scoped as a parse-path mechanism change (per-field access to
+envelope-level keys), not a bybit-specific patch. **Severity:** medium — not a crash and not a
 wrong number, but every bybit ticker is unstampable, so a consumer cannot tell a fresh quote from
 a stale one or order two tickers in time. **Reporter:** orchestrator session, live probes against
 bybit testnet via this repo's Tidewave node (not a path-dep consumer).
@@ -130,7 +136,13 @@ shape, since any venue that stamps at the envelope has the same problem.
 
 ## 2026-08-05 — `fetch_ticker/2` on derive maps `high`/`low`/`change`/`percentage` from a `stats` object the venue no longer returns — four fields permanently nil
 
-**Status (2026-08-05):** 🆕 reported — needs triage. **Severity:** low-to-medium — no wrong
+**Status (2026-08-05):** ✅ **fixed** (workbench task 560). The four `stats.*` sources are recorded
+as `null` in the authored derive ticker field map, and the absence is registered as carve
+**C-T560d** in `docs/authored-spec-carves/derive.md` citing derive's own `public/get_ticker`
+reference. Re-verified live before the change on both hosts: `BTC-PERP` returned 36 result keys
+with no `stats` member on `api.lyra.finance` and on `api-demo.lyra.finance`, the two key sets
+identical. The fields stay nil — that is now the recorded venue characteristic rather than an
+unresolvable mapping. **Severity when open:** low-to-medium — no wrong
 value is produced (the fields are honestly nil), but the authored map advertises coverage that
 cannot resolve on any host, which is misleading to both consumers and future authoring sessions.
 **Reporter:** orchestrator session, live probes against derive demo **and mainnet**.
@@ -185,10 +197,18 @@ this endpoint (the map already has `"last" => :null`). Populating it would mean 
 
 ## 2026-08-05 — `Bourse.Testnet` is not supervised, so `register_all_from_env/1` exits in any consumer
 
-**Status (2026-08-05):** 🆕 reported — needs triage. The absence is deliberate (0.1.0
-`### Changed`: the credential registry left `Bourse.Application`'s children because it has
-no place in a consumer's always-on tree), so the fix is a decision between re-supervising it
-and making the client functions return a typed error instead of exiting.
+**Status (2026-08-05):** ✅ **fixed** (workbench task 561) — by the second of the two options
+below, not the first. The registry stays out of `Bourse.Application`'s children: the 0.1.0 reason
+holds, and a sandbox-only credential registry does not belong in a consumer's always-on tree.
+What changed is the failure mode. Every write (`register/3`, `register_from_env/3`,
+`register_all_from_env/1`, `unregister/2`, `clear/0`) now returns `{:error, :not_started}` instead
+of exiting the caller, every read (`creds/2`, `creds!/2`, `registered?/2`,
+`registered_exchanges/0`, `exchanges_with_creds/0`) raises an `ArgumentError` naming
+`Bourse.Testnet.start_link([])` instead of an opaque ETS badarg, and `started?/0` answers the
+question directly. Reads deliberately kept their raising behaviour: their `nil` / `false` / `[]`
+returns already mean "not registered", and widening them would let an absent registry read as an
+empty one. Exit reproduced live via this repo's Tidewave node before the fix
+(`{:exited, {:noproc, {GenServer, :call, [Bourse.Testnet, ...]}}}` with `Process.whereis/1` nil).
 
 **Affected:** `Bourse.Testnet` (not exchange-specific)
 

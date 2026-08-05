@@ -32,6 +32,20 @@ defect class rather than patched per venue.
   — Deribit was recorded as 8h for an hourly venue, overstating funding roughly
   eightfold in anything that multiplied by it.
 
+Reported by consumers against the published package:
+
+- `Bourse.Testnet` exited the calling process when the registry was not running.
+  Because the registry is deliberately not an application child, a consumer
+  calling `register_all_from_env/1` from its own `test_helper.exs` lost its
+  entire suite before a single test ran. Writes now return
+  `{:error, :not_started}` and reads raise an `ArgumentError` naming
+  `start_link/1`, instead of a `GenServer` exit and an opaque ETS badarg.
+- Derive's ticker mapped `high`, `low`, `change` and `percentage` from a `stats`
+  object the venue publishes on neither its demo nor its production host, and
+  documents nowhere — an inherited carve whose only surviving evidence was a
+  January 2025 sample. The four fields are recorded as absent, registered as
+  carve `C-T560d`.
+
 Packaging and attribution, found while auditing the extraction:
 
 - The tarball shipped `Bourse.Spec.Promotion` and its two helpers — 1,049 lines
@@ -50,6 +64,8 @@ Packaging and attribution, found while auditing the extraction:
 
 ### Added
 
+- `Bourse.Testnet.started?/0`, so a caller can ask whether the registry is
+  running rather than discover it from a failure.
 - `NOTICE`, shipped in the package. The authored venue specs still carry method
   and return descriptions taken verbatim from CCXT, `docs.ccxt.com` links
   included; CCXT is MIT, whose terms require the copyright notice to travel with
