@@ -275,4 +275,74 @@ defmodule Bourse.TestnetTest do
       assert %Bourse.Credentials{api_key: "k"} = Testnet.creds(:bybit)
     end
   end
+
+  describe "when the registry is not running" do
+    setup do
+      :ok = GenServer.stop(Testnet)
+
+      on_exit(fn ->
+        {:ok, pid} = Testnet.start_link([])
+        # The on_exit process dies immediately after this callback; leaving the
+        # link in place would take the restarted registry down with it.
+        Process.unlink(pid)
+      end)
+
+      :ok
+    end
+
+    test "started?/0 answers false" do
+      refute Testnet.started?()
+    end
+
+    test "register/3 returns a typed error instead of exiting the caller" do
+      assert {:error, :not_started} = Testnet.register(:bybit, api_key: "k", secret: "s")
+    end
+
+    test "register_from_env/3 returns a typed error when there are credentials to register" do
+      System.put_env("FAKEFX_TESTNET_API_KEY", "ak")
+      System.put_env("FAKEFX_TESTNET_API_SECRET", "sk")
+
+      assert {:error, :not_started} = Testnet.register_from_env(:fakefx, testnet: true)
+    after
+      System.delete_env("FAKEFX_TESTNET_API_KEY")
+      System.delete_env("FAKEFX_TESTNET_API_SECRET")
+    end
+
+    test "register_all_from_env/1 returns a typed error rather than exiting the calling process" do
+      # The reported failure: this exited a consumer's test_helper.exs, taking the
+      # entire suite down before a single test ran.
+      assert {:error, :not_started} =
+               Testnet.register_all_from_env([
+                 {:bybit, testnet: true},
+                 {:binance, :futures, testnet: true}
+               ])
+    end
+
+    test "register_all_from_env/1 does not report the absent registry as an empty registration list" do
+      refute Testnet.register_all_from_env([{:bybit, testnet: true}]) == []
+    end
+
+    test "unregister/2 and clear/0 return a typed error" do
+      assert {:error, :not_started} = Testnet.unregister(:bybit)
+      assert {:error, :not_started} = Testnet.clear()
+    end
+
+    test "every read raises ArgumentError naming start_link/1" do
+      for {label, call} <- [
+            {"creds/2", fn -> Testnet.creds(:bybit) end},
+            {"creds!/2", fn -> Testnet.creds!(:bybit) end},
+            {"registered?/2", fn -> Testnet.registered?(:bybit) end},
+            {"registered_exchanges/0", fn -> Testnet.registered_exchanges() end},
+            {"exchanges_with_creds/0", fn -> Testnet.exchanges_with_creds() end}
+          ] do
+        error = assert_raise ArgumentError, call
+
+        assert error.message =~ "Bourse.Testnet is not running",
+               "#{label} raised without naming the absent registry: #{error.message}"
+
+        assert error.message =~ "Bourse.Testnet.start_link([])",
+               "#{label} raised without naming the fix: #{error.message}"
+      end
+    end
+  end
 end

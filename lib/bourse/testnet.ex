@@ -14,6 +14,24 @@ defmodule Bourse.Testnet do
   Not an application child: only test and recording harnesses use it, so callers
   start it explicitly rather than every consumer paying for it at boot.
 
+  ## When the registry is not running
+
+  Because nothing in the library starts it, every function here has to answer for
+  the case where the caller forgot to. `Application.ensure_all_started(:bourse)`
+  does not help — the application starts fine, this process simply is not in its
+  tree. Ask `started?/0` when in doubt. The two halves of the API answer
+  differently, by shape:
+
+  - **Writes** (`register/3`, `register_from_env/3`, `register_all_from_env/1`,
+    `unregister/2`, `clear/0`) return `{:error, :not_started}`. They are called
+    from harness setup code, where a matchable value lets the caller report the
+    problem instead of dying inside it.
+  - **Reads** (`creds/2`, `creds!/2`, `registered?/2`, `registered_exchanges/0`,
+    `exchanges_with_creds/0`) raise `ArgumentError` naming `start_link/1`. Their
+    return shapes already mean something (`nil` is "not registered", `false` is
+    "not registered here"), and quietly widening them would let a missing
+    registry read as an empty one.
+
   ## Usage
 
       # In test_helper.exs - start the registry, then register each sandbox
@@ -72,6 +90,9 @@ defmodule Bourse.Testnet do
           {atom(), register_opts()}
           | {atom(), atom(), register_opts()}
 
+  @typedoc "Returned by every write when the registry process is not running"
+  @type not_started :: {:error, :not_started}
+
   # =============================================================================
   # Client API
   # =============================================================================
@@ -83,17 +104,29 @@ defmodule Bourse.Testnet do
   end
 
   @doc """
+  Returns `true` when the registry process is running.
+
+  The registry is not an application child, so a consumer that has not started it
+  will find every read raising and every write answering `{:error, :not_started}`.
+  """
+  @spec started?() :: boolean()
+  def started? do
+    :ets.whereis(@table) != :undefined
+  end
+
+  @doc """
   Register credentials directly.
 
-  Returns `:ok` if credentials validate, `:skipped` if required fields are missing.
+  Returns `:ok` if credentials validate, `:skipped` if required fields are
+  missing, and `{:error, :not_started}` if the registry is not running.
   """
-  @spec register(atom(), atom() | keyword(), keyword()) :: :ok | :skipped
+  @spec register(atom(), atom() | keyword(), keyword()) :: :ok | :skipped | not_started()
   def register(exchange, sandbox_key_or_opts, opts \\ [])
 
   def register(exchange, sandbox_key, opts) when is_atom(exchange) and is_atom(sandbox_key) and is_list(opts) do
     case Bourse.Credentials.new(opts) do
       {:ok, credentials} ->
-        GenServer.call(__MODULE__, {:put, {exchange, sandbox_key}, credentials})
+        call_registry({:put, {exchange, sandbox_key}, credentials})
 
       # Absent required fields → :skipped (env vars not set is a normal case)
       {:error, :missing_api_key} ->
@@ -126,10 +159,12 @@ defmodule Bourse.Testnet do
   - `:sandbox` - Value for `credentials.sandbox` (default: value of `:testnet`)
   - `:secret_suffix` - Override secret env var suffix (default: `"API_SECRET"`)
 
-  Returns `:ok` on success, `:skipped` when required env vars are absent.
+  Returns `:ok` on success, `:skipped` when required env vars are absent, and
+  `{:error, :not_started}` when there are credentials to register but no registry
+  running to hold them.
   """
   @spec register_from_env(atom(), atom() | register_opts(), register_opts()) ::
-          :ok | :skipped
+          :ok | :skipped | not_started()
   def register_from_env(exchange, sandbox_key_or_opts \\ :default, opts \\ [])
 
   def register_from_env(exchange, sandbox_key, opts) when is_atom(exchange) and is_atom(sandbox_key) and is_list(opts) do
@@ -207,37 +242,56 @@ defmodule Bourse.Testnet do
   @doc """
   Register credentials for multiple exchanges from environment variables.
 
-  Returns the list of successfully registered `{exchange, sandbox_key}` tuples.
+  Returns the list of successfully registered `{exchange, sandbox_key}` tuples,
+  or `{:error, :not_started}` if the registry is not running — an empty list
+  means every entry was skipped for absent env vars, which is a different
+  condition and stays distinguishable.
   """
-  @spec register_all_from_env([config_entry()]) :: [{atom(), atom()}]
+  @spec register_all_from_env([config_entry()]) :: [{atom(), atom()}] | not_started()
   def register_all_from_env(configs) when is_list(configs) do
-    for config <- configs,
-        result = register_config(config),
-        result != :skipped do
-      result
+    if started?() do
+      configs
+      |> Enum.reduce_while([], &accumulate_registration/2)
+      |> finish_registrations()
+    else
+      {:error, :not_started}
     end
   end
+
+  defp accumulate_registration(config, acc) do
+    case register_config(config) do
+      :skipped -> {:cont, acc}
+      {:error, :not_started} -> {:halt, {:error, :not_started}}
+      registered -> {:cont, [registered | acc]}
+    end
+  end
+
+  defp finish_registrations({:error, :not_started}), do: {:error, :not_started}
+  defp finish_registrations(registered), do: Enum.reverse(registered)
 
   defp register_config({exchange, sandbox_key, opts}) when is_atom(exchange) and is_atom(sandbox_key) and is_list(opts) do
     case register_from_env(exchange, sandbox_key, opts) do
       :ok -> {exchange, sandbox_key}
-      :skipped -> :skipped
+      other -> other
     end
   end
 
   defp register_config({exchange, opts}) when is_atom(exchange) and is_list(opts) do
     case register_from_env(exchange, :default, opts) do
       :ok -> {exchange, :default}
-      :skipped -> :skipped
+      other -> other
     end
   end
 
   @doc """
   Get credentials for an exchange/sandbox. Returns `nil` if unregistered.
+
+  Raises `ArgumentError` if the registry is not running — `nil` there would mean
+  "not registered", which is a claim this function cannot make without a table.
   """
   @spec creds(atom(), atom()) :: Bourse.Credentials.t() | nil
   def creds(exchange, sandbox_key \\ :default) when is_atom(exchange) and is_atom(sandbox_key) do
-    case :ets.lookup(@table, {exchange, sandbox_key}) do
+    case :ets.lookup(table!(), {exchange, sandbox_key}) do
       [{_key, credentials}] -> credentials
       [] -> nil
     end
@@ -264,10 +318,15 @@ defmodule Bourse.Testnet do
     end
   end
 
-  @doc "Returns `true` when credentials are registered for the given exchange/sandbox."
+  @doc """
+  Returns `true` when credentials are registered for the given exchange/sandbox.
+
+  Raises `ArgumentError` if the registry is not running — `false` there would
+  claim the credentials are absent when the registry is.
+  """
   @spec registered?(atom(), atom()) :: boolean()
   def registered?(exchange, sandbox_key \\ :default) when is_atom(exchange) and is_atom(sandbox_key) do
-    :ets.member(@table, {exchange, sandbox_key})
+    :ets.member(table!(), {exchange, sandbox_key})
   end
 
   @doc """
@@ -279,30 +338,71 @@ defmodule Bourse.Testnet do
   `on_exit` callback, which runs outside the test process). Use this instead of
   `clear/0` when concurrent (`async: true`) tests share the registry and a
   full wipe would clobber their registrations.
+
+  Returns `{:error, :not_started}` if the registry is not running.
   """
-  @spec unregister(atom(), atom()) :: :ok
+  @spec unregister(atom(), atom()) :: :ok | not_started()
   def unregister(exchange, sandbox_key \\ :default) when is_atom(exchange) and is_atom(sandbox_key) do
-    GenServer.call(__MODULE__, {:delete, {exchange, sandbox_key}})
+    call_registry({:delete, {exchange, sandbox_key}})
   end
 
-  @doc "Clears all registered credentials (for test isolation)."
-  @spec clear() :: :ok
+  @doc """
+  Clears all registered credentials (for test isolation).
+
+  Returns `{:error, :not_started}` if the registry is not running.
+  """
+  @spec clear() :: :ok | not_started()
   def clear do
-    GenServer.call(__MODULE__, :clear)
+    call_registry(:clear)
   end
 
-  @doc "List all registered `{exchange, sandbox_key}` tuples."
+  @doc """
+  List all registered `{exchange, sandbox_key}` tuples.
+
+  Raises `ArgumentError` if the registry is not running — an empty list there
+  would read as "nothing registered yet".
+  """
   @spec registered_exchanges() :: [{atom(), atom()}]
   def registered_exchanges do
-    :ets.select(@table, [{{:"$1", :_}, [], [:"$1"]}])
+    :ets.select(table!(), [{{:"$1", :_}, [], [:"$1"]}])
   end
 
-  @doc "List unique exchange atoms with any registered credentials."
+  @doc """
+  List unique exchange atoms with any registered credentials.
+
+  Raises `ArgumentError` if the registry is not running.
+  """
   @spec exchanges_with_creds() :: [atom()]
   def exchanges_with_creds do
     registered_exchanges()
     |> Enum.map(fn {exchange, _sandbox_key} -> exchange end)
     |> Enum.uniq()
+  end
+
+  # The registry is not an application child, so both halves of the API have to
+  # answer for an absent process. Writes get a matchable value; reads raise,
+  # because their `nil` / `false` / `[]` returns already mean "not registered"
+  # and must not be overloaded to also mean "no registry".
+  defp call_registry(message) do
+    if started?() do
+      GenServer.call(__MODULE__, message)
+    else
+      {:error, :not_started}
+    end
+  end
+
+  defp table! do
+    case :ets.whereis(@table) do
+      :undefined -> raise ArgumentError, not_started_message()
+      table -> table
+    end
+  end
+
+  defp not_started_message do
+    "Bourse.Testnet is not running. It is a sandbox-only credential registry and " <>
+      "deliberately not a child of Bourse.Application, so starting :bourse does not " <>
+      "start it. Start it from your test harness first: " <>
+      "{:ok, _} = Bourse.Testnet.start_link([])"
   end
 
   # =============================================================================
