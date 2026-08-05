@@ -71,6 +71,118 @@ roadmap.
 
 ---
 
+## 2026-08-05 — `fetch_ticker/2` returns `timestamp: nil` and `datetime: nil` on every bybit ticker — the mapped `time` key lives on the envelope the parser never sees
+
+**Status (2026-08-05):** 🆕 reported — needs triage. **Severity:** medium — not a crash and not a
+wrong number, but every bybit ticker is unstampable, so a consumer cannot tell a fresh quote from
+a stale one or order two tickers in time. **Reporter:** orchestrator session, live probes against
+bybit testnet via this repo's Tidewave node (not a path-dep consumer).
+
+**Method:** `Bourse.fetch_ticker/2` · **Exchange:** bybit · **Blast radius:** bybit only —
+deribit stamps `timestamp`/`datetime` correctly from the same unified call.
+
+**Call:**
+
+```elixir
+{:ok, bb} = Bourse.Exchange.new("bybit", credentials: creds, sandbox: true)
+{:ok, t} = Bourse.fetch_ticker(bb, "BTC/USDT:USDT")
+{t.timestamp, t.datetime}
+# => {nil, nil}          # every other field populated: last, bid, ask, high, low, vwap, …
+```
+
+**Observed:** `timestamp` and `datetime` nil on every call. **Expected:** the venue's response
+time, which bybit does return.
+
+**Cause:** the authored ticker field map asks for the right key —
+
+```elixir
+# priv/specs/json/output/authored/bybit.json → normalization.field_maps.ticker.field_map
+"timestamp" => %{"coercion" => "safeInteger", "format" => "ms", "key" => "time"}
+```
+
+— but `normalization.response_envelopes.ticker.fetchTicker` extracts `"result.list"`, so the
+parser is handed a **list element**, and `time` sits one level up on the **envelope**. Verified
+live (`public_get_v5_market_tickers`, category `linear`, symbol `BTCUSDT`):
+
+```elixir
+Map.keys(braw.body)            # => ["result", "retCode", "retExtInfo", "retMsg", "time"]
+braw.body["time"]              # => 1785887542111
+braw.body["result"]["list"] |> hd() |> Map.keys()
+                               # no "time" — only "deliveryTime" / "nextFundingTime", both unrelated
+```
+
+`datetime` follows `timestamp`, so it is nil for the same reason (`"datetime" => :null` in the
+map, derived post-parse).
+
+**The reality evidence for a fix is already committed.**
+`test/fixtures/responses/bybit/fetch_ticker.json` (captured 2026-06-20) preserves the whole
+envelope — `body.time == 1781993749592`, with the list element again carrying no `time`. So
+`mix ccxt.oracle_gate` is green over a recording that *contains* the value the parser cannot
+reach, which is the "coverage ratifies the bug" shape CLAUDE.md warns about. A fix is verifiable
+against the existing recording; no new capture is needed.
+
+**Suggested fix (reporter's):** the per-field map needs a way to address envelope-level keys.
+Note the mechanism already exists next door — `response_envelopes.time.fetchTime` uses
+`fallback_keys: ["result.timeNano", "result.timeSecond", "time"]`, reaching the envelope root —
+but there is no per-field equivalent, so this is a mechanism change in the parse path rather than
+a spec edit. Worth scoping before implementing; a bybit-only special case would be the wrong
+shape, since any venue that stamps at the envelope has the same problem.
+
+## 2026-08-05 — `fetch_ticker/2` on derive maps `high`/`low`/`change`/`percentage` from a `stats` object the venue no longer returns — four fields permanently nil
+
+**Status (2026-08-05):** 🆕 reported — needs triage. **Severity:** low-to-medium — no wrong
+value is produced (the fields are honestly nil), but the authored map advertises coverage that
+cannot resolve on any host, which is misleading to both consumers and future authoring sessions.
+**Reporter:** orchestrator session, live probes against derive demo **and mainnet**.
+
+**Method:** `Bourse.fetch_ticker/2` · **Exchange:** derive · **Blast radius:** derive only.
+
+**Call:**
+
+```elixir
+{:ok, dv} = Bourse.Exchange.new("derive", credentials: creds, sandbox: true)
+{:ok, t} = Bourse.fetch_ticker(dv, "BTC-PERP")
+{t.high, t.low, t.change, t.percentage}
+# => {nil, nil, nil, nil}     # bid/ask/index_price/mark_price/timestamp all populated
+```
+
+**Cause:** the authored ticker map sources those four fields from a nested `stats` object:
+
+```elixir
+# priv/specs/json/output/authored/derive.json → normalization.field_maps.ticker.field_map
+"high"       => %{"key" => "stats.high",           "coercion" => "safeNumber"}
+"low"        => %{"key" => "stats.low",            "coercion" => "safeNumber"}
+"change"     => %{"key" => "stats.percent_change", "coercion" => "safeNumber"}
+"percentage" => %{"key" => "stats.percent_change", "coercion" => "safeNumber", "scale" => 100}
+```
+
+That object does not exist in the response. Three independent checks agree:
+
+| Source | `stats` present? |
+|---|---|
+| demo `api-demo.lyra.finance` `public/get_ticker` | ❌ — 35 keys, no `stats` |
+| **mainnet** `api.lyra.finance` `public/get_ticker` | ❌ — identical 35 keys, no `stats` |
+| [official docs](https://docs.derive.xyz/reference/post_public-get-ticker) | ❌ — documented result object is exactly those 35 fields; no `stats`, no 24h-statistics section |
+
+Mainnet and demo returning the *same* key set rules out a demo-only omission. The `stats` shape
+appears only in the CCXT-derived descriptor's embedded sample under
+`endpoints.descriptors.fetchTicker.source`, whose sample timestamp is `1736140984000` —
+**January 2025**. Derive has since removed the field; the carve was inherited from CCXT and never
+confronted against the venue's own contract.
+
+**Expected:** either the four fields are sourced from somewhere the venue actually publishes, or
+the mappings are dropped and the absence is recorded as a venue characteristic.
+
+**Suggested fix (reporter's):** drop the four `stats.*` entries and add a DIVERGE entry to
+`docs/authored-spec-carves/derive.md` citing the docs URL above — this is precisely the
+confrontation step the doctrine calls for, on a carve that was adopted rather than confronted.
+Small and self-contained.
+
+**Related non-defect, recorded so it is not re-filed:** derive's `last` is also nil, and that is
+**correct** — neither the live response nor the official docs carry a last-traded-price field on
+this endpoint (the map already has `"last" => :null`). Populating it would mean emulating from
+`public/get_trade_history`, which is a design decision, not a repair.
+
 ## 2026-08-05 — `Bourse.Testnet` is not supervised, so `register_all_from_env/1` exits in any consumer
 
 **Status (2026-08-05):** 🆕 reported — needs triage. The absence is deliberate (0.1.0
