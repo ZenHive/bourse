@@ -65,6 +65,15 @@ Full flag reference: see the `ex-unit-json` and `dialyzer-json` sections in `CLA
 - [ ] If a discovery surfaced new work, open an issue — the task roadmap lives in
       the private authoring workbench, not in this repository.
 
+## Reporting a Bug
+
+File it in [BUGS.md](BUGS.md), newest entry first: the call you made, what you
+observed, what you expected, and the affected venue where it is venue-specific. A
+runnable repro is worth more than a description. Entries are triaged into scored
+tasks in the authoring workbench and get a dated note pointing at the filed id;
+nothing is deleted, so the file doubles as the record of what is already known and
+what has since been fixed.
+
 ### Commit Messages
 
 Conventional-commits format: `<type>(<scope>): <description>`. Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`. See recent history (`git log --oneline`) for examples.

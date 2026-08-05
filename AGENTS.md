@@ -391,8 +391,11 @@ This repo was extracted from `../ccxt_client`, which remains the **authoring wor
 | Does an eleventh venue get added? | **here** — `mix ccxt.promote_venue` grades its candidate against the reality manifests, and those live here. Pass the pinned CCXT reference document in from the workbench with `--reference`. |
 | Did the full CCXT reference extraction shift across all 110 venues? | workbench — this repo carries a 15-venue slice and cannot answer corpus-wide questions |
 | Roadmap and task scoring, and the CHANGELOG gate that reads it | workbench |
+| Where does a consumer file a bug? | **here**, in `BUGS.md` — this is the only repo a consumer knows. Triage into scored tasks happens in the workbench, and writes a dated note back into the entry. |
 
 **Consequences that bite if forgotten:**
+
+- **Read `BUGS.md` before chasing a reported defect.** It is the inbound consumer queue, newest first, and each entry carries a `**Status:**` header — the bug in front of you may already be filed, already fixed, or already decided against. Entries are never deleted; a fixed one keeps its repro as the evidence trail.
 
 - One test deliberately stayed in the workbench because it is corpus-wide: the zero-param JSON-body gate audit, which asserts a gate set across all 110 reference specs. The same applies to anything else that iterates every document under `priv/specs/json/output/` expecting the full set. **Do not re-add a corpus-wide audit here** — it would be answering a 110-venue question with 15 specs.
 - `priv/specs/json/reference_corpus.json` honestly declares the 15 carried venues (the ten supported plus `coinmetro`, `deepcoin`, `kraken`, `weex`, `whitebit`, used as parser and unsupported-venue counter-examples). Its two SHA-256 pins still name the upstream revision the slice came from, so provenance stays verifiable. **Adding a reference venue means adding its JSON *and* the manifest entry** — `Bourse.ReferenceSlice` validates count, sort order and pins, and raises otherwise. That module lives in `test/support/`, not `lib/`: the slice is test input, so neither the client nor the Hex package can reach it.

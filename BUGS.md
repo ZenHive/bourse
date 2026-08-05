@@ -1,0 +1,723 @@
+# Bourse — Bug Reports
+
+The inbound queue for defects consumers of this library hit. File here — this is the only
+repository a consumer needs to know. Each entry: the call, observed vs. expected, a repro,
+and consumer impact. Newest first.
+
+Triage runs in the private authoring workbench: an open entry becomes a scored task there,
+and the entry gets a dated note pointing at it. Entries are never deleted — they are the
+reporter's evidence trail.
+
+Entries before 2026-08-05 were filed while the consumers (`trading_dashboard`, `zen_quant`)
+and this library shared one repository as path deps; their probes ran via the consumer's
+Tidewave node against that path dep. Task ids in those entries refer to the workbench
+roadmap.
+
+> **Each entry's `**Status:**` header is the current state.** Where an entry was later
+> fixed, the header says so and points at the `> **Update …**` block below it that carries
+> the evidence; the original report text is kept verbatim underneath as the repro trail.
+> Reconciled 2026-07-25 — before that pass every header still read "🆕 reported" regardless
+> of the fix recorded in its own body.
+>
+> **Authority order when reconciling:** `COVERAGE.md`'s live matrix and the roadmap's landed
+> tasks first; the dated sweep banners below are point-in-time snapshots that go stale. The
+> 2026-07-25 pass initially mis-marked the lighter entry by trusting the 2026-07-15 banner
+> over the matrix — see the Correction on that entry.
+
+> **Consumer rename (2026-07-25).** The consumer previously filed here as `quantex` /
+> `Quantex.*` is now **`zen_quant` / `ZenQuant.*`** (pure rename, app `:quantex` →
+> `:zen_quant`, no behaviour change). References below were updated so the repros stay
+> runnable; commits and task ids from before the rename are unchanged.
+
+> **Re-route (2026-06-23, authored-specs pivot).** The "UPSTREAM distill / resync-gated"
+> dispositions below are **retired for first-class venues** (binance, bybit, …). Under the
+> pivot a missing/wrong interpretive slice for a first-class venue is an **authoring task**
+> here — read the provider contract → author the slice → verify against the reality gate —
+> **not** a STOP-and-wait on upstream. The first-class normalization/request-shape defects
+> below land via: **171** (author the venue's interpretive slices), **177** (fetchMarkets
+> precision/limits/flags oracle), **180** (tier-1 values for divergence-prone fields:
+> precision, inverse-perp cost, funding cadence), **181** (carve correctness — diverge from
+> CCXT's ontology where reality demands), **183** (stop masking request-malformation 4xx as
+> inconclusive). Original evidence below is kept as the consumer's repro trail.
+
+> **Live re-verification sweep (2026-07-15, v0.6.1, `trading_dashboard` Tidewave).** Re-ran
+> the filed probes against the current path dep. **Now fixed (return typed structs / succeed
+> live):**
+> - `fetch_markets` — binance `[%CCXT.Market{}]` (6024, w/ `precision`/`limits`/`type`/`settle`),
+>   hyperliquid (232, no HTTP 400), deribit (4813, no `:exchange_error` misclassify).
+> - `fetch_ticker` — binance & bybit `%CCXT.Ticker{}` fully populated (`symbol`, `last`,
+>   `base_volume`, `quote_volume`, `datetime`, `info`, `vwap`); bybit `category` injected (no
+>   "Illegal category").
+> - `fetch_order_book` — bybit `category` injected (no "Illegal category").
+> - `fetch_funding_rate` (public, no creds) → `%CCXT.FundingRate{}`; `fetch_funding_rates`
+>   map-opts → `{:ok, map}` (728, no `FunctionClauseError`; `category` injected).
+> - `fetch_trades` — bybit `%CCXT.Trade{}` with `price`/`amount`/`timestamp` populated.
+> - `fetch_volatility_history` — deribit `[%CCXT.VolatilityHistory{}]` (384; list-`:params`
+>   crash gone).
+>
+> **Residual (still open):** `fetch_ohlcv` on bybit — the **linear-perp** symbol works
+> (`"BTC/USDT:USDT"` → 200 candles), but the **spot** symbol (`"BTC/USDT"`) still errors
+> `{:error, "Category is invalid"}` (spot category resolution not wired for `fetch_ohlcv`,
+> though it is for ticker/order_book). Candles also return as raw `[ts,o,h,l,c]` arrays — no
+> `parse_ohlcvs` collection slice yet (see the parser-gap entry). Not a `trading_dashboard`
+> blocker (OHLCV is out of v1 read-only scope).
+>
+> *Triage note (2026-07-15, orchestrator):* both residuals folded into **task 171**
+> (T-D/Bybit authoring) as acceptance criteria — spot category for `fetch_ohlcv` +
+> the authored bybit OHLCV parse slice (columnar transformer mechanism exists per task 178).
+>
+> **Not re-tested:** `fetch_markets` on lighter (entry below) — lighter is WIP upstream;
+> left as-is pending the maintainer's lighter update.
+
+---
+
+## 2026-08-05 — `Bourse.Testnet` is not supervised, so `register_all_from_env/1` exits in any consumer
+
+**Status (2026-08-05):** 🆕 reported — needs triage. The absence is deliberate (0.1.0
+`### Changed`: the credential registry left `Bourse.Application`'s children because it has
+no place in a consumer's always-on tree), so the fix is a decision between re-supervising it
+and making the client functions return a typed error instead of exiting.
+
+**Affected:** `Bourse.Testnet` (not exchange-specific)
+
+**Call:**
+
+```elixir
+# consumer's test/test_helper.exs, after `mix test` has run `app.start`
+Bourse.Testnet.register_all_from_env([
+  {:bybit, testnet: true},
+  {:binance, testnet: true},
+  {:binance, :futures, testnet: true},
+  {:deribit, testnet: true}
+])
+```
+
+**Observed:**
+
+```
+** (exit) exited in: GenServer.call(Bourse.Testnet, {:put, {:bybit, :default}, #Bourse.Credentials<...>}, 5000)
+    ** (EXIT) no process: the process is not alive or there's no process currently
+              associated with the given name, possibly because its application isn't started
+    (bourse 0.1.0) lib/bourse/testnet.ex:229: Bourse.Testnet.register_config/1
+    (bourse 0.1.0) lib/bourse/testnet.ex:215: anonymous fn/2 in Bourse.Testnet.register_all_from_env/1
+    (bourse 0.1.0) lib/bourse/testnet.ex:214: Bourse.Testnet.register_all_from_env/1
+```
+
+**Expected:** `register_all_from_env/1` returns per-entry `:ok` / `:skipped` once
+`:bourse` is started, without the consumer having to know the registry is a
+separate process.
+
+**Cause:** `Bourse.Testnet` is a `GenServer` registered under its own module name
+and owning an ETS table (`lib/bourse/testnet.ex:81`), but it is absent from
+`Bourse.Application`'s children (`lib/bourse/application.ex:19-24`, which starts
+only `Bourse.RateLimiter`, `Bourse.RateLimiter.State`,
+`Bourse.Signing.Lighter.Supervisor` and `Broadcast.child_spec()`). Nothing in the
+library starts it, so every public `Testnet` function that issues a `GenServer.call`
+exits in any consumer that has not hand-started the process.
+
+`Application.ensure_all_started(:bourse)` does **not** help — the app starts fine,
+the child simply is not in the tree.
+
+**Impact:** this is not a degraded read; it exits the calling process. In a
+consumer's `test_helper.exs` it aborts the *entire* test suite before a single test
+runs, which is how it was found (trading_dashboard, 2026-08-05).
+
+**Suggested fix (reporter's):** add `Bourse.Testnet` to `Bourse.Application`'s children. If
+the registry is meant to be test-only, the alternative is to document that consumers must
+start it themselves and have the `Testnet` client functions return `{:error, :not_started}`
+instead of exiting when the process is absent — an exit from a credential-registration
+helper is surprising either way.
+
+**Consumer workaround in place:** trading_dashboard's `test/test_helper.exs` starts
+the process itself before registering, cross-referenced back to this entry.
+
+## 2026-08-03 — `fetch_ohlcv/3-4` cannot succeed on alpaca at all: silent `{:ok, []}` by default, HTTP 400 when the documented `since` option is used
+
+**Status (2026-08-03):** ✅ **fixed** in `8a413fd1` (task 532, harness run
+`run-1785742326556-48d416ee`). The stock-bars request slice now maps unified ms `since`→`start`
+and `until`→`end` as RFC-3339, carries `limit`, `_omit`s the unified `since` name from the wire,
+and authors a 60-day `default_lookback_ms` so a window-less call issues a real dated window
+(DIVERGE carve C-T532 in `docs/authored-spec-carves/alpaca.md`). Re-verified live against the
+paper account on 2026-08-03: `fetch_ohlcv/3` → 39 candles, `limit: 5` → 5, `since:` (30d) → 20.
+**Severity:** high — a documented
+unified read that has **no** working call shape on a supported venue, and whose default path
+fails *silently as success*. **Reporter:** orchestrator session (live alpaca paper account,
+`sandbox: true`), not a path-dep consumer.
+
+**Method:** `Bourse.fetch_ohlcv/3-4` · **Exchange:** alpaca · **Blast radius:** alpaca only —
+binance/bybit/okx/deribit all return candles normally (500/200/100/1000 respectively).
+
+```elixir
+{:ok, alp} = Bourse.Exchange.new("alpaca", credentials: creds, sandbox: true)
+
+Bourse.fetch_ohlcv(alp, "GLD", "1d")
+# => {:ok, []}                      # silent — indistinguishable from "no data in range"
+
+Bourse.fetch_ohlcv(alp, "GLD", "1d", limit: 30)
+# => {:ok, []}                      # limit does not help
+
+Bourse.fetch_ohlcv(alp, "GLD", "1d", since: <60d ago in ms>)
+# => {:error, %Bourse.Error{type: :exchange_error, http_status: 400,
+#      message: "unexpected query parameter(s): since"}}
+```
+
+The unified `since` option — documented on `Bourse.fetch_ohlcv/4` as *"timestamp in ms of the
+earliest candle to fetch"* — is forwarded to alpaca **verbatim and unmapped**; alpaca's bars API
+names that parameter `start` and rejects unknown query params. So the documented option 400s, and
+without it alpaca returns **HTTP 200 with an empty bar set** (it does not error on a missing
+window), which the read path faithfully reports as `{:ok, []}`.
+
+**Root cause is the request slice, not the parse layer.** Task 256's fail-loud invariant
+("empty collections are success") is behaving *correctly* here — the venue really did return
+nothing, because we asked for nothing. The authored alpaca `fetchOHLCV` request slice
+(`endpoints.request.defaults.endpoint_overrides.fetchOHLCV`) injects `feed`/`symbol` but maps
+neither `since` → `start` nor `limit`.
+
+Proof the venue is fine once the window is supplied — same account, same creds, raw endpoint:
+
+```elixir
+Bourse.Alpaca.market_private_get_v2_stocks__symbol__bars(alp,
+  %{"symbol" => "GLD", "timeframe" => "1Day", "feed" => "iex"})
+# => status 200, bars: 0            # no start → empty, no error
+
+Bourse.Alpaca.market_private_get_v2_stocks__symbol__bars(alp,
+  %{"symbol" => "GLD", "timeframe" => "1Day", "feed" => "iex", "start" => "2026-07-01"})
+# => status 200, bars: 22           # works
+```
+
+**Two non-defects checked and dismissed in the same session** (recorded so they are not
+re-reported a fourth time):
+
+- Candles returning raw `[ts, o, h, l, c, v]` arrays is the **documented contract**, not a gap —
+  `Bourse.fetch_ohlcv/4`'s generated `## Returns` reads *"A list of candles ordered as timestamp,
+  open, high, low, close, volume"*, `Bourse.OHLCV`'s moduledoc says the same, and
+  `Unified.FieldMaps` states "OHLCV carries no field map (array shape)". It is CCXT-compatible by
+  design; `Bourse.OHLCV.from_list/1` is the opt-in consumer convenience. This supersedes the
+  "no `parse_ohlcvs` collection slice yet" remark in the 2026-07-15 sweep banner above.
+- Raw endpoints returning `%{status, body, headers}` is also the contract —
+  `Bourse.Dispatch.call/4` is specced `{:ok, HTTP.response()}`. Task 380's envelope leak was about
+  **unified** methods lacking a parse slice; a raw `public_get_*` call returning the envelope is
+  correct behaviour, not a regression.
+
+---
+
+## 2026-07-25 — `fetch_order_book/3` leaks venue-native 3-element levels `[price, size, extra]` on okx — violates `%CCXT.OrderBook{}`'s documented `[price, amount]` contract
+
+**Status (2026-07-25):** ✅ **fixed** — task 514 (`14f46414`), live-confirmed; see the Update block below. Note the triage correction: the reported root cause was wrong (CCXT JS emits 3-element okx levels too), and the real defect was our own contract disagreement plus an inherited carve. **Severity when open:** high (the struct is *documented* as normalized pairs, so every consumer pattern-matches `[price, size]`; okx silently fell through those clauses into neutral/empty results rather than erroring). **Consumer:** zen_quant (path-dep, MM / Orderflow / Execution) — consumer-side hardening shipped separately as zen_quant task 50.
+
+> **Triage note (2026-07-25, orchestrator):** 📋 filed as **task 514**. Symptom confirmed live
+> (okx raw row `["64070.7","866.05","0","35"]` = `[price, sz, liquidated_orders, num_orders]`), but
+> the reported root cause is **wrong**: CCXT JS `parseBidAsk` defaults `countOrIdKey = 2` and pushes
+> a third element when present, and `okx.ts` calls `parseOrderBook` with those defaults — so CCXT JS
+> emits 3-element okx levels too. bybit is 2-element only because its rows have no third column
+> (`bybit.ts` overrides side keys, not index keys). Our parse is therefore CCXT-compatible; the real
+> defects are (a) `%CCXT.OrderBook{}`'s `@doc`/typespec promising pairs while the parser emits up to
+> three — a contract disagreement that is ours to resolve, and (b) an **inherited carve**: CCXT's
+> index-2 picks okx's *deprecated* always-zero `liquidated_orders` and discards the meaningful
+> `num_orders` at index 3, which task 514 confronts against OKX's own v5 docs and registers.
+>
+> **Update (2026-07-25):** ✅ **fixed** — task 514 landed (`14f46414`, run
+> `run-1784943923373-24fd554f`, reviewer-approved). Unified order-book levels are now exact
+> `[price, amount]` pairs on every venue; OKX's full four-column rows are preserved verbatim in
+> `OrderBook.info` (so `num_orders`, which CCXT discards, is still reachable), and a level in any
+> other shape fails loudly with `{:error, {:unexpected_order_book_level, …}}` instead of reaching
+> the consumer. The `@doc`, typespec, JSON schema (`maxItems: 2`), `best_bid`/`best_ask`, and
+> `assert_level_pair!/2` all agree with the parser now. Registered as a **deliberate divergence**
+> from CCXT 4.5.65 (carve C-T514a, tier 1) with `deliberate_divergence: true` baseline entries, so
+> a future session cannot "fix" us back toward CCXT by chasing a green fixture. Live-confirmed on
+> the landed base 2026-07-25: okx `[64084.1, 994.03]`, all arities `[2]`, `info` row
+> `["64084.1","994.03","0","46"]`. zen_quant can drop its level-shape hardening workaround.
+
+**Method:** `CCXT.fetch_order_book(ex, "BTC/USDT:USDT", limit: 5)` · **Exchange:** okx (bybit and binance are correct)
+
+`lib/bourse/order_book.ex` declares the contract explicitly:
+
+```elixir
+* `bids` - List of bid levels as `[price, amount]` pairs, highest first
+bids: [[number()]],
+```
+
+okx returns three-element levels instead:
+
+```elixir
+{:ok, okx} = CCXT.exchange(:okx)
+{:ok, ob} = CCXT.fetch_order_book(okx, "BTC/USDT:USDT", limit: 5)
+List.first(ob.asks)
+#=> [64004.4, 351.01, 0.0]        # okx: [price, size, liquidated_orders, num_orders] truncated to 3
+
+{:ok, bybit} = CCXT.exchange(:bybit)
+{:ok, ob2} = CCXT.fetch_order_book(bybit, "BTC/USDT:USDT", limit: 5)
+List.first(ob2.asks)
+#=> [64006.5, 0.727]              # correct pair
+```
+
+**Root cause (suspected):** okx's REST book rows are `[price, sz, liquidated_orders, num_orders]`. CCXT JS's `parseOrderBook`/`parseBidsAsks` projects each row down to `[price, amount]` via `parseBidAsk(bidask, priceKey=0, amountKey=1)`; the Elixir parse slice appears to pass the row through (or drop only the last element) instead of projecting to two.
+
+**Expected / Fix:** the `parse_order_book` slice projects every level to exactly `[price, amount]` for all venues, matching both CCXT JS and this struct's own `@doc`. If a venue's extra columns are worth keeping, they belong in `:info`, not in the level tuple.
+
+**Consumer impact (zen_quant, live-probed 2026-07-25):** silent degradation across three modules — the failure is invisible because none of them raise:
+
+| call | okx (3-element) | same book truncated to 2-element |
+|---|---|---|
+| `ZenQuant.Orderflow.imbalance(book, 5)` | `{:ok, 0.0}` — **a plausible "neutral book" a bot would trade on** | `{:ok, 0.69}` |
+| `ZenQuant.Orderflow.heatmap_points(book, 5)` | `{:ok, []}` | 10 points |
+| `ZenQuant.Orderflow.dom_level(book, price)` | `FunctionClauseError` | works |
+| `ZenQuant.Execution.split_order(:buy, %{quantity: 2.0}, [venue])` | `status: :unfillable`, 0 allocations against a 600+ unit top level | fills |
+
+zen_quant is hardening its own level parsers to reject unknown shapes loudly instead of returning zeros, but the normalization itself belongs here — the struct promises pairs.
+
+## 2026-06-30 — `fetch_trades/2` returns `%CCXT.Trade{}` with `price`/`amount`/`timestamp` nil — core fields stranded in `:info` (bybit)
+
+**Status (2026-06-30):** ✅ **fixed** — verified live in the 2026-07-15 v0.6.1 sweep (see the sweep banner at top): bybit `fetch_trades` returns `%CCXT.Trade{}` with `price`/`amount`/`timestamp` populated. **Severity when open:** medium (parser built the struct but left its defining fields empty — worse than a raw envelope, because the struct *looked* parsed). **Consumer:** zen_quant (path-dep, Orderflow integration suite).
+
+> **Triage note (2026-07-14):** 📋 filed as **task 199** (bybit fetch_trades nil price/amount/timestamp, regression vs 152/178) — generalized: field_map fixed against bybit's actual execution keys + cross-verified on ≥1 other first-class venue; live tier-1 AC included.
+
+**Method:** `CCXT.fetch_trades(ex, symbol)` · **Exchange:** bybit
+
+`fetch_trades` DOES return a parsed `[%CCXT.Trade{}]` list (so a `parse_trade` slice runs), but only `:symbol`, `:side`, `:fee`, `:fees` are populated — `:price`, `:amount`, and `:timestamp` are `nil`:
+
+```elixir
+{:ok, bx} = CCXT.exchange(:bybit)
+{:ok, [t | _]} = CCXT.fetch_trades(bx, "BTC/USDT:USDT")
+{t.price, t.amount, t.timestamp}        # => {nil, nil, nil}
+t.info                                  # => %{"price" => "59…", "size" => "0.0…", "time" => 178…, "side" => "Buy", …}
+```
+
+**Root cause:** the bybit `parse_trade` slice doesn't map the venue's `price` → `:price`, `size` → `:amount`, `time` → `:timestamp`. (Contrast the parser-gap entry below, which tracks *absent* parsers; here the parser exists but under-populates.) **Expected:** `%CCXT.Trade{price:, amount:, timestamp:}` populated from the venue row. **Consumer impact:** zen_quant's Orderflow paths (`cvd_delta`, `footprint_cells`, `vwap`) need price/amount per trade; with the struct fields nil they must read `t.info["price"]`/`t.info["size"]` by hand — defeating the unified contract.
+
+---
+
+## 2026-06-30 — unified `fetch_order_book/2` omits bybit's `category` injection → `{:error, "Illegal category"}` (bybit)
+
+**Status (2026-06-30):** ✅ **fixed** — verified live in the 2026-07-15 v0.6.1 sweep (see the sweep banner at top): bybit `fetch_order_book` has `category` injected, no "Illegal category". **Severity when open:** medium (request-shape gap — the `category` injection that tasks 190/192 added for `fetch_ticker`/`fetch_funding_rate(s)`/`fetch_markets` did **not** generalize to `fetch_order_book`). **Consumer:** zen_quant (path-dep, MM + Orderflow integration suites).
+
+> **Triage note (2026-07-14):** 📋 folded into **task 153** (order_book read path — moved to milestone v0_7_0): verifying the order-book parse live on bybit presupposes the category injection, so request-shape generalization + parse land as one diff. Task 153's ACs now require the no-manual-params live call.
+
+**Method:** `CCXT.fetch_order_book(ex, symbol)` · **Exchange:** bybit
+
+```elixir
+{:ok, bx} = CCXT.exchange(:bybit)
+CCXT.fetch_order_book(bx, "BTC/USDT:USDT")
+# => {:error, %CCXT.Error{type: :bad_request, code: 10001, message: "Illegal category", exchange: "bybit"}}
+
+# Workaround — caller injects category by hand:
+CCXT.fetch_order_book(bx, "BTC/USDT:USDT", params: %{"category" => "linear"})
+# => {:ok, %{status: 200, body: …}}   (raw envelope — no parse_order_book slice; see the parser-gap entry)
+```
+
+**Root cause:** bybit V5 requires a `category` param on the orderbook endpoint, same as ticker/funding/markets; the per-venue `request_param_shape` category injection (task 190) was wired for those methods but not `fetch_order_book`. **Expected:** `CCXT.fetch_order_book(bx, "BTC/USDT:USDT")` resolves the linear/spot category from the symbol like `fetch_ticker` does. **Consumer impact:** zen_quant's MM (`spread`, `imbalance`) and Orderflow (`dom_level`, `heatmap`) paths have no working bybit order-book call without a manual `params` category; deribit order_book works (returns a raw envelope, no parser).
+
+---
+
+## 2026-06-23 — unified `fetch_volatility_history/2` RAISES `encode_query/2 values cannot be lists` on `:params` keyword (deribit)
+
+**Status (2026-06-23):** ✅ **fixed** — reclassified 2026-06-30 (the generic crash was a call-site shape error, hardened by task 185), residual parse gap closed by task 200, and confirmed in the 2026-07-15 v0.6.1 sweep: deribit `fetch_volatility_history` returns `[%CCXT.VolatilityHistory{}]` (384). See both Update blocks below. **Severity when open:** high (hard crash on the documented `:params` shape — broke the `{:ok,…}|{:error,…}` contract). **Consumer:** zen_quant (path-dep, DVOL integration suite + `ZenQuant.Options.Deribit.dvol/2`).
+
+> **Update (2026-06-30, zen_quant re-probe):** ⚠️ **reclassified — the generic crash is gone.** `CCXT.fetch_volatility_history(ex, "BTC", params: %{"currency" => "BTC"})` now returns `{:ok, %{status: 200, …}}`. The RAISE was the call site passing `params:` as the **symbol positional** (`[:symbol]` is required, unified.ex:147), so the keyword list got query-encoded; calling with the symbol positional fixed by task 185's `split_opts` hardening avoids it. **Residual ccxt gap:** no `parse_volatility_history` slice → the read returns a raw `%{status, body}` envelope, not a struct (zen_quant's `parse_dvol` already hand-navigates the body, so non-blocking). Consumer fix is the zen_quant call-site migration (Task 2). *Triage note (2026-07-14): the residual parse gap is filed as **task 200** (parse_volatility_history slice for Deribit DVOL, milestone v0_7_0).*
+>
+> **Update (2026-07-14, task 200):** ✅ **residual parse gap closed.** `fetch_volatility_history` returns `[%CCXT.VolatilityHistory{info, timestamp, datetime, volatility}]` (array-of-pairs parse path; never the raw HTTP/JSON-RPC envelope). zen_quant can drop body-digging once it re-points at the typed list.
+
+**Method:** `CCXT.fetch_volatility_history(ex, params: %{…})` · **Exchange:** deribit
+
+Calling the unified method **correctly** (with an `%Exchange{}` and a `:params` keyword) still raises — the `:params` key is not split out of `opts` and gets handed verbatim to query encoding:
+
+```elixir
+{:ok, ex} = CCXT.exchange(:deribit)
+CCXT.fetch_volatility_history(ex, params: %{"currency" => "BTC"})
+# ** (RuntimeError/ArgumentError) encode_query/2 values cannot be lists,
+#    got: [params: %{"currency" => "BTC"}]
+```
+
+**Root cause:** the dispatch path passes the whole `opts` keyword list (`[params: %{…}]`) into query encoding instead of extracting `:params` as the exchange-native param map. `CCXT.Unified.split_opts/1` recognizes `:endpoint_index, :market_type, :timeout, :plug, :headers, :base_url` but **not** `:params` (verified: `split_opts(normalize: false, params: %{"a"=>1})` returns `{[], [normalize: false, params: %{"a"=>1}]}` — both land in `extra`). So `extra` carries `params: %{…}` as a literal query pair, and `encode_query` rejects the map-valued list.
+
+**Expected:** `:params` is the standard channel for exchange-native query params (CCXT JS's `params` object); it must be merged into the request query, not encoded as a literal `params=` pair. **Fix:** teach `split_opts/1` (or the request builder) to pull `:params` out of `opts` and merge its map into the venue query.
+
+**Consumer impact:** zen_quant's entire Deribit DVOL path is dead — `ZenQuant.Options.Deribit.dvol/2` (`lib/zen_quant/options/deribit.ex:272`) and all 6 `deribit_dvol_integration_test.exs` tests crash. There is no caller-side workaround: `:params` is the documented param channel.
+
+---
+
+## 2026-06-23 — unified `fetch_ohlcv/3` omits bybit's `intervalTime` mapping → `{:error, "intervalTime is invalid"}` (bybit)
+
+**Status (2026-07-25):** ✅ **fixed** — both residuals closed; see the 2026-07-25 Update block below. The filed defect (the `intervalTime` timeframe mapping) was fixed by task 190 (`de3f0a2`); the spot-category residual is live-verified gone, and the "no `parse_ohlcvs` slice" residual was a mischaracterization (the slice exists; arrays are the deliberate contract). **Severity when open:** medium (authoring gap — timeframe→venue-interval mapping was not injected; same family as the `category` / `fetch_markets` request-shape entries below).
+
+> **Update (2026-06-30, zen_quant re-probe):** ✅ **Fixed by task 190** (`de3f0a2`). The `intervalTime` rejection is gone — `CCXT.fetch_ohlcv(ex, "BTC/USDT:USDT", "1h")` returns 200 candles (linear perp symbol). The old `"BTC/USDT"` (spot) symbol now returns `"Category is invalid"` instead — that's the spot/linear category-resolution path, not the timeframe mapping this entry filed. Consumer note: zen_quant must pass the linear-perp symbol (`…:USDT`). Residual: candles return as raw arrays (no `parse_ohlcvs` collection slice — see the parser-gap entry).
+
+> **Update (2026-07-25, audit-review live re-probe):** ✅ **Both residuals closed.** Live on bybit (public, no creds): `CCXT.fetch_ohlcv(ex, "BTC/USDT", "1h", limit: 3)` → 3 candles, no `"Category is invalid"` — spot category resolution is wired. The second residual was a **mischaracterization, not a gap**: the `ohlcv` parse slice does exist (`CCXT.Unified.ReadParse.do_parse("ohlcv", …)`, `lib/bourse/unified/read_parse.ex:127`) and it *is* what produced the observed rows — it extracts the envelope payload, normalizes candle order, coerces the six standard positions (`ohlcv_timestamp` + `safeNumber`), and applies `since`/`limit`. The **list-of-arrays return is the deliberate contract**, matching CCXT's `parseOHLCVs`; `%CCXT.OHLCV{}` is the caller's opt-in conversion via `CCXT.OHLCV.from_list/1`. Consumer note for zen_quant: map with `CCXT.OHLCV.from_list/1` if structs are wanted — no client change pending. Note task 171 (the former tracking task) is `done`; nothing here is untracked.
+
+**Method:** `CCXT.fetch_ohlcv(ex, symbol, timeframe)` · **Exchange:** bybit
+
+A unified timeframe string (`"1h"`) is not translated to bybit V5's expected interval param, so the venue rejects the request:
+
+```elixir
+{:ok, ex} = CCXT.exchange(:bybit)
+CCXT.fetch_ohlcv(ex, "BTC/USDT", "1h")
+# => {:error, %CCXT.Error{type: :bad_request, code: 10001,
+#       message: "params error: intervalTime is invalid", exchange: "bybit"}}
+```
+
+The unified layer passes the timeframe through without mapping it to bybit's `interval` / `intervalTime` enum (`"1h"` → `60`). Per the authored-specs re-route above, for a first-class venue this is an **authoring task** (read CCXT JS `fetchOHLCV` `timeframes` map → inject the venue interval), not an upstream wait.
+
+**Expected:** `CCXT.fetch_ohlcv(ex, "BTC/USDT", "1h")` returns candles. **Consumer impact:** zen_quant's 8 volatility integration tests (realized/parkinson/garman_klass/yang_zhang/cone/rolling/elevated?) have no working OHLCV call path on bybit.
+
+---
+
+## 2026-06-23 — unified reads return the raw HTTP envelope (no `parseX`) for most methods zen_quant needs — parser authoring gap
+
+**Status (2026-07-25):** ✅ **fixed** — see the 2026-07-25 Update block on the bybit OHLCV entry above. Task 189 landed the options/greeks/funding parsers; the 2026-07-15 v0.6.1 sweep confirms `fetch_markets`, `fetch_ticker`, `fetch_order_book`, `fetch_funding_rate(s)`, `fetch_trades`, and `fetch_volatility_history` all return typed structs. The last standing residual — "no `parse_ohlcvs` collection slice" — was a mischaracterization: the slice exists (`lib/bourse/unified/read_parse.ex:127`) and the coerced list-of-arrays return is the deliberate CCXT-compatible contract, with `CCXT.OHLCV.from_list/1` as the caller's opt-in struct conversion. **Severity when open:** medium (authoring gap — Phase-5 parsers; not a crash, but no normalized contract). **Consumer:** zen_quant (cross-venue analytics depend on the unified field contract).
+
+> **Update (2026-06-30, zen_quant re-probe):** ⚠️ **Partially fixed by task 189** (`0a84288`). Now parsed (live-confirmed deribit): `fetch_greeks` → `%CCXT.Greeks{}`, `fetch_option_chain` → `%{symbol => %CCXT.OptionData{}}`, `fetch_funding_rate(s)` → `%CCXT.FundingRate{}` (singular) / `%{symbol => %CCXT.FundingRate{}}` (plural). **Still raw envelopes / unmapped collections:** `parse_order_book`, `parse_trades`, `parse_ohlcvs`, `parse_option_chain` are absent (`parse_option`/`parse_funding_rate`/`parse_greeks` present) — so `fetch_order_book`, `fetch_trades`, and `fetch_ohlcv` collections return raw shapes. Field gaps observed: `%OptionData{currency: nil}`. Net: the methods zen_quant's options/greeks/funding paths need are parsed; orderbook/trades/ohlcv collection parsers remain.
+
+**Methods:** `fetch_option_chain/2`, `fetch_greeks/2`, `fetch_funding_rate(s)`, `fetch_order_book/2`, `fetch_trades/2`, `fetch_ohlcv/3` · **Exchanges:** bybit, deribit (probed both)
+
+Normalization is **partially** shipped: some unified reads return a parsed struct, others return the raw `%{status, body, headers}` HTTP envelope. Verified live:
+
+```elixir
+{:ok, dx} = CCXT.exchange(:deribit)
+CCXT.fetch_ticker(dx, "BTC/USD:BTC")    # => {:ok, %CCXT.Ticker{bid: …, ask: …}}   ✅ parsed
+CCXT.fetch_option_chain(dx, "BTC")      # => {:ok, %{body: …, headers: …, status: 200}}  ⚠️ raw envelope
+CCXT.fetch_greeks(dx, "BTC-PERPETUAL")  # => {:ok, %{body: …, headers: …, status: 200}}  ⚠️ raw envelope
+```
+
+Per-exchange parser presence (probed on bybit **and** deribit — identical):
+
+| parser | present |
+|---|---|
+| `parse_ticker`, `parse_trade`, `parse_ohlcv` | ✅ |
+| `parse_funding_rate(s)`, `parse_order_book`, `parse_trades`, `parse_ohlcvs`, `parse_option_chain`, `parse_option`, `parse_greeks` | ❌ |
+
+**Expected:** unified reads return normalized structs (`%CCXT.OptionData{}`, `%CCXT.OrderBook{}`, `%CCXT.FundingRate{}`, …) like `fetch_ticker` already does — the "Phase 5 parsers" the consumer roadmap is gated on. **Fix:** author the missing `parseX` slices per the re-route (171/181) and wire them into the unified read path.
+
+**Consumer impact:** zen_quant's Options chain/GammaWalls, Greeks, Funding, Orderflow, and MM paths get raw envelopes they must navigate by hand (`body["result"]["list"]`), with no stable field contract — so the cross-venue analytics (`Execution.best_price`, `from_multi`, `basis`, options chain) that depend on uniform fields cannot run.
+
+---
+
+## 2026-06-23 — unified `fetch_funding_rates/2` RAISES `FunctionClauseError` when `opts` is a map (all exchanges)
+
+**Status (2026-06-23):** ✅ **fixed** by task 185 (`56a989e`) — see the Update block below; re-confirmed in the 2026-07-15 v0.6.1 sweep (`fetch_funding_rates` map-opts → `{:ok, map}`, 728 entries, no `FunctionClauseError`). **Severity when open:** high (broke the `{:ok,…}|{:error,…}` contract — a hard crash, not an error tuple). **Consumer:** zen_quant (path-dep, integration suite).
+
+> **Update (2026-06-30, zen_quant re-probe):** ✅ **Fixed by task 185** (`56a989e`, "reject malformed dispatch opts"). `CCXT.Unified.split_opts(%{"category" => "linear"})` now coerces the map → `{[], [{"category", "linear"}]}` instead of `FunctionClauseError`, and `CCXT.fetch_funding_rates(ex, params: %{"category" => "linear"})` returns `{:ok, %{symbol => %CCXT.FundingRate{}}}`. No raise.
+
+**Method:** `CCXT.fetch_funding_rates(ex, opts)` (any zero-required-param unified method) · **Exchange:** all (defect is in the generic dispatch path, not venue-specific)
+
+Passing exchange-native params as a **map** — the natural shape, since CCXT JS takes an
+object `params` — makes the generated unified function raise instead of returning a value:
+
+```elixir
+{:ok, ex} = CCXT.exchange(:bybit)
+CCXT.fetch_funding_rates(ex, %{"category" => "linear"})
+# ** (FunctionClauseError) no function clause matching in Keyword.split/2
+#     # 1  %{"category" => "linear"}
+#     # 2  [:endpoint_index, :market_type, :timeout, :plug, :headers, :base_url]
+#     (elixir) lib/keyword.ex:1230: Keyword.split/2
+#     (ccxt_client 0.6.1) lib/ccxt.ex:160: CCXT.fetch_funding_rates/2
+```
+
+**Root cause:** the macro-generated `def fetch_funding_rates(%Exchange{}=ex, opts \\ [])`
+(`lib/bourse.ex:160`) calls `Unified.split_opts(opts)`, which is `Keyword.split(opts, …)`.
+`Keyword.split/2` is guarded `when is_list(keywords)` and `FunctionClause`-raises on a map.
+Nothing normalizes or validates `opts` first.
+
+**Expected:** either accept a map for extra/params (convert internally), or reject it with a
+clean `{:error, %CCXT.Error{type: :bad_request}}`. A public dispatch function must never raise
+`FunctionClauseError` at the consumer. **Fix:** in `Unified.split_opts/1` (or before it), coerce
+`opts` to a keyword list (`opts |> Enum.to_list()` / `Map.to_list/1`) or `raise ArgumentError`
+with a clear message, and document that exchange params go through a dedicated `:params` key.
+
+**Consumer impact:** zen_quant's funding integration tests need to pass bybit's `category` param;
+the obvious map form crashes the test process instead of erroring, so the failure is opaque.
+
+---
+
+## 2026-06-23 — public `fetch_funding_rate/2` demands credentials ("Credentials required for fetch_markets") (bybit)
+
+**Status (2026-06-23):** ✅ **fixed** by task 187 (`760622d`) — see the Update block below; re-confirmed in the 2026-07-15 v0.6.1 sweep (public `fetch_funding_rate` → `%CCXT.FundingRate{}` with no credentials). **Severity when open:** high (public funding data unreachable without API keys).
+
+> **Update (2026-06-30, zen_quant re-probe):** ✅ **Fixed by task 187** (`760622d`, "public symbol resolution must not require credentials"). `CCXT.fetch_funding_rate(ex, "BTC/USDT:USDT")` returns `{:ok, %CCXT.FundingRate{}}` with no credentials configured.
+
+**Method:** `CCXT.fetch_funding_rate(ex, symbol)` · **Exchange:** bybit (likely any venue whose symbol resolution forces market load)
+
+A funding rate is **public** data, but the unified call fails demanding credentials:
+
+```elixir
+{:ok, ex} = CCXT.exchange(:bybit)
+CCXT.fetch_funding_rate(ex, "BTC/USDT:USDT")
+# => {:error, %CCXT.Error{type: :authentication_error,
+#       message: "Credentials required for fetch_markets", exchange: "bybit"}}
+```
+
+The symbol-bearing path resolves `"BTC/USDT:USDT"` → market, which triggers a market load that
+is (incorrectly) gated behind credentials. In CCXT JS `fetchMarkets` / `loadMarkets` are public;
+resolving a symbol for a **public** funding call must not require API keys.
+
+**Expected:** `fetch_funding_rate(ex, symbol)` works credential-free for public venues, same as
+`fetch_ticker`/`fetch_order_book`. **Fix:** market loading for symbol resolution must use the
+public endpoint; only genuinely private methods should surface `:authentication_error`.
+
+**Consumer impact:** zen_quant can't exercise per-symbol funding analytics against public bybit
+without provisioning keys it shouldn't need.
+
+---
+
+## 2026-06-23 — unified `fetch_funding_rates/1` omits bybit's required `category` → `{:error, "Illegal category"}` (bybit)
+
+**Status (2026-06-23):** ✅ **fixed** by tasks 190/192 (`de3f0a2`, `d29f53b`) — see the Update block below; re-confirmed in the 2026-07-15 v0.6.1 sweep (bybit `category` injected, no "Illegal category"). Residual carve note on malformed bybit symbols is tracked separately under 171/195. **Severity when open:** medium (authoring gap — request shape not injected; same family as the `fetch_markets` request-shape entries below).
+
+> **Update (2026-06-30, zen_quant re-probe):** ✅ **Fixed by tasks 190/192** (`de3f0a2` category injection, `d29f53b` emulated symbol resolution). `CCXT.fetch_funding_rates(ex, params: %{"category" => "linear"})` returns `{:ok, %{symbol => %CCXT.FundingRate{}}}` — no "Illegal category". Residual carve note: some bybit symbols come back malformed (`"ETCPERP/:"` trailing `/:`), tracked separately under the markets-carve work (171/195).
+
+**Method:** `CCXT.fetch_funding_rates(ex)` · **Exchange:** bybit
+
+The bare unified call doesn't inject bybit V5's mandatory `category` (linear/inverse/spot) query
+param, so the exchange rejects it:
+
+```elixir
+{:ok, ex} = CCXT.exchange(:bybit)
+CCXT.fetch_funding_rates(ex)
+# => {:error, %CCXT.Error{type: :bad_request, code: 10001,
+#       message: "Illegal category", exchange: "bybit"}}
+```
+
+This is the "symbol-bearing/contract methods need a market-category param the unified layer
+doesn't yet inject" gap the README/roadmap already flags for `fetch_ticker` et al. — here for
+`fetch_funding_rates`. Per the authored-specs re-route above, for a first-class venue this is an
+**authoring task** (read CCXT JS `fetchFundingRates` → inject `category` per market type), not an
+upstream wait.
+
+**Expected:** `CCXT.fetch_funding_rates(ex)` returns linear-perp funding without the caller
+hand-passing `category`. **Note:** the obvious workaround — passing `%{"category" => "linear"}` —
+currently hits the `FunctionClauseError` crash reported above, so there is no clean caller-side
+escape hatch today.
+
+**Consumer impact:** zen_quant's funding suite (mean/compare/cumulative/detect_spikes over bybit
+rates) has no working public call path until either the category injection lands or the map-opts
+crash is fixed.
+
+---
+
+## 2026-06-23 — `fetch_markets` on lighter misclassifies HTTP-success as `:exchange_error` — returns `{:error, …}`, no normalization (lighter)
+
+**Status (2026-06-23):** ✅ **fixed.** The classifier defect this entry filed was closed by the response-classifier task (HTTP/JSON-RPC success no longer misread as `:exchange_error` — lighter `code: 200`, deribit result-without-error), and task 195 added the `order_book_details` envelope unwrap for lighter's `fetch_markets` (206 markets). Lighter has since been promoted to a **complete authored public/private venue** (task 451, `7a7b9d58`), with `fetch_ticker` authored by task 197 and the upstream CCXT static corpus vendored into the fixture replay gate (task 501). `COVERAGE.md`'s live matrix carries lighter `fetchMarkets` ✅ and `fetchTicker` ✅. **Severity when open:** high (blocked lighter onboarding entirely).
+
+> **Correction (2026-07-25).** An earlier pass of this reconciliation marked this entry "OPEN — not re-tested", carrying forward the 2026-07-15 sweep banner's "lighter is WIP upstream" note. That note was itself stale: lighter was promoted after the sweep. `COVERAGE.md`'s live matrix — not the sweep banner — is the authority for current per-venue state.
+
+**Method:** `CCXT.fetch_markets(ex)` · **Exchange:** lighter (perp DEX, `zklighter.elliot.ai`)
+
+`fetch_markets` on lighter does not return a market list at all — it returns an **error** even though the exchange responded successfully:
+
+```elixir
+{:ok, ex} = CCXT.exchange(:lighter)
+CCXT.fetch_markets(ex)
+# => {:error, %CCXT.Error{type: :exchange_error, message: "Exchange error response",
+#       exchange: "lighter",
+#       raw: %{"code" => 200, "order_book_details" => [ %{...per-market...}, ... ]}}}
+```
+
+The raw payload carries `"code" => 200` — lighter's **success** code — and the per-market data
+under `order_book_details`. ccxt_client's error detector appears to treat the presence of a
+`"code"` key (or a non-`0` code) as an exchange error, but lighter signals success with `code: 200`.
+The success envelope is misread as a failure, so the whole call errors and **nothing is normalized**.
+
+**The data we need is all present in `.raw`** — only the envelope classification + the carve are missing:
+
+| Unified Market field | lighter `order_book_details[]` source |
+|---|---|
+| `id` / `symbol` | `market_id` / `symbol` (e.g. `"LAUNCHCOIN"`) |
+| `type` / `swap` / `contract` | `market_type` (`"perp"`) |
+| `active` | `status` (`"active"` / `"inactive"`) |
+| `maker` / `taker` | `maker_fee` (`"0.0000"`) / `taker_fee` |
+| `precision.price` / `precision.amount` | `supported_price_decimals` (6) / `supported_size_decimals` (0) |
+| `limits.amount.min` | `min_base_amount` (`"100"`) |
+| `limits.cost` | `order_quote_limit` |
+| MMR (for `limits.leverage` / consumer MMR) | `maintenance_margin_fraction` (2000) |
+| max leverage | `min_initial_margin_fraction` / `default_initial_margin_fraction` (3333) → ≈ 1/IMF |
+| `info` | the raw per-market object |
+
+**Consumer impact:** lighter has **no** `fetchTradingFee(s)` and **no** `fetchLeverageTiers`/
+`fetchMarketLeverageTiers` endpoints (`has` map all `false`), so `fetch_markets` is the **only**
+source for lighter's fees, MMR, and leverage caps. With it erroring out, `trading_dashboard` cannot
+onboard lighter for tasks 22/23/24 at all — there is no fallback endpoint. Fix is two parts:
+(1) treat lighter `code: 200` as success in the response classifier; (2) author the lighter
+`fetchMarkets` carve mapping the `order_book_details` fields above.
+
+---
+
+## 2026-06-23 — `fetch_markets` on deribit misclassifies JSON-RPC success as `:exchange_error` — drops 4636 markets (deribit)
+
+**Status (2026-06-23):** ✅ **fixed** — verified live in the 2026-07-15 v0.6.1 sweep (see the sweep banner at top): deribit `fetch_markets` returns 4813 markets, no `:exchange_error` misclassification. **Severity when open:** high (blocked deribit onboarding).
+
+**Method:** `CCXT.fetch_markets(ex)` · **Exchange:** deribit
+
+Same misclassification family as the lighter bug above, but a **JSON-RPC** envelope.
+Deribit replies with a valid JSON-RPC success — `result` holds **4636 markets** — yet
+ccxt_client flags the whole envelope as an error and extracts nothing:
+
+```elixir
+{:ok, ex} = CCXT.exchange(:deribit)
+CCXT.fetch_markets(ex)
+# => {:error, %CCXT.Error{type: :exchange_error,
+#       raw: %{"jsonrpc" => "2.0", "result" => [ ...4636 markets... ],
+#              "testnet" => false, "usIn" => ..., "usOut" => ..., "usDiff" => ...}}}
+```
+
+There is **no** `error` member in the response (JSON-RPC signals failure via an `error`
+object; this response has only `result`), so the classifier should treat presence-of-`result`
+/ absence-of-`error` as success and parse `result` as the market list. `fetch_ticker` on
+deribit works (returns a normalized `%CCXT.Ticker{}`, only `base_volume` nil), so the
+JSON-RPC envelope handling is endpoint-specific to `fetch_markets`.
+
+**Consumer impact:** deribit cannot be onboarded for tasks 22/23/24 until `fetch_markets`
+parses the JSON-RPC `result`. Fix: (1) classify deribit JSON-RPC `result`-without-`error`
+as success; (2) author the deribit `fetchMarkets` carve over the `result[]` entries.
+
+---
+
+## 2026-06-23 — `fetch_markets` + `fetch_ticker` on hyperliquid send a malformed request body (HTTP 400) (hyperliquid)
+
+**Status (2026-06-23):** ✅ **fixed** — verified live in the 2026-07-15 v0.6.1 sweep (see the sweep banner at top): hyperliquid `fetch_markets` returns 232 markets with no HTTP 400. **Severity when open:** high (blocked hyperliquid onboarding).
+
+**Method:** `CCXT.fetch_markets(ex)` / `CCXT.fetch_ticker(ex, sym)` · **Exchange:** hyperliquid
+
+Unlike lighter/deribit (success-misclassified-as-error), this is a **genuine request-shape
+bug** — hyperliquid rejects the request before returning data:
+
+```elixir
+{:ok, ex} = CCXT.exchange(:hyperliquid)
+CCXT.fetch_markets(ex)
+# => {:error, %CCXT.Error{type: :exchange_error, http_status: 400,
+#       raw: "Failed to parse the request body as JSON"}}
+CCXT.fetch_ticker(ex, "BTC/USDC:USDC")
+# => {:error, %CCXT.Error{type: :exchange_error,
+#       message: "Failed to deserialize the JSON body into the target type"}}
+```
+
+Hyperliquid's public API is a single POST `/info` endpoint that takes a JSON body
+(`{"type":"meta"}`, `{"type":"metaAndAssetCtxs"}`, etc.). The HTTP-400 / "failed to
+deserialize" responses indicate ccxt_client is sending an empty, malformed, or
+wrong-typed body — the request slice for hyperliquid's info endpoint needs authoring.
+Cross-endpoint: both `fetch_markets` and `fetch_ticker` fail the same way.
+
+**Consumer impact:** hyperliquid cannot be onboarded at all (no endpoint returns data),
+and like lighter it has no `fetchLeverageTiers` fallback — `fetch_markets` is the only
+fees/leverage source. Fix: author the hyperliquid `/info` POST request body (`request_param_shape`)
+per endpoint, then the `fetchMarkets`/`fetchTicker` carves.
+
+## 2026-06-21 — `fetch_ticker` normalization drops `symbol`, `base_volume`, `quote_volume`, `info`, `datetime` (binance)
+
+**Status (2026-06-21):** ✅ **fixed** — the 2026-07-15 v0.6.1 sweep confirms binance and bybit `fetch_ticker` return `%CCXT.Ticker{}` fully populated (`symbol`, `last`, `base_volume`, `quote_volume`, `datetime`, `info`, `vwap`), closing the `base_volume` residual that had been re-routed to task 171. History: partially fixed by Task 152 (`053f289e577c`) and Task 165 (`a2696dc1ae58`); Task 165 addressed the `datetime` and `info` defects; `base_volume` was re-routed 2026-06-23 → authored task 171 (carve correctness, 181) — see the re-route banner at top. Earlier re-test after Task 152:
+- `symbol` → `"BTC/USDT"` ✅ fixed
+- `quote_volume` → `"613813447.72..."` ✅ fixed
+- `base_volume` → still `nil` ❌ (raw `"volume"` not mapped)
+- `datetime` → fixed by Task 165 ✅
+- `info` → fixed by Task 165 ✅
+
+One of five fields remains. Original report below.
+
+**Triage (2026-06-21, verified live via tidewave):**
+- `symbol` ✅ Task 152 (`backfill_request_symbols`). `quote_volume` ✅ distill T86 (resynced `84b4101`).
+- `base_volume` ❌ → **RE-ROUTED 2026-06-23 → authored task 171** (was: UPSTREAM distill, resync-gated). The binance ticker carve maps `baseVolume` to source key `"baseVolume"`, but the raw payload carries it under `"volume"` (CCXT JS `parseTicker` reads `'volume'`) — a carve/value question to author against CCXT JS + the real binance response, not wait on upstream. Carve-correctness (diverge from CCXT's source-key choice if reality demands) is task 181.
+- `datetime` + `info` ✅ → **consumer Task 165** (universal post-parse datetime ISO8601 + info raw-body preservation in the unified read path), landed in `a2696dc1ae58`.
+
+**Method:** `CCXT.fetch_ticker(ex, "BTC/USDT")` · **Exchange:** binance (spot) · **Severity:** moderate
+
+After T144, `fetch_ticker` returns a `%CCXT.Ticker{}` struct (good — normalization is live),
+but several canonical ccxt ticker fields are `nil` even though the raw exchange payload carries them:
+
+| Ticker field   | Normalized value | Raw payload key (present) |
+|----------------|------------------|---------------------------|
+| `symbol`       | `nil`            | `"symbol" => "BTCUSDT"` (should map to unified `"BTC/USDT"`) |
+| `base_volume`  | `nil`            | `"volume" => "9870.03..."` |
+| `quote_volume` | `nil`            | `"quoteVolume" => "628810089.75..."` |
+| `datetime`     | `nil`            | derivable from `timestamp` (present, e.g. `1781995831652`) → ISO8601 |
+| `info`         | `nil`            | the raw exchange response is not preserved |
+
+Per the [ccxt ticker structure](https://docs.ccxt.com/?id=ticker-structure), `symbol`,
+`baseVolume`, `quoteVolume`, and `info` are populated fields — `info` by convention always
+holds the raw exchange response so consumers can reach exchange-specific fields the unified
+struct doesn't model. The field-map for the binance ticker read path appears to omit these
+mappings.
+
+**Repro:**
+```elixir
+{:ok, ex} = CCXT.exchange(:binance)
+{:ok, t} = CCXT.fetch_ticker(ex, "BTC/USDT")
+# t.last => "64307.36..."  (OK)
+# t.symbol / t.base_volume / t.quote_volume / t.datetime => nil
+# t.info => nil   (raw payload lost)
+```
+
+**Consumer impact:** `last`/`close` ARE populated, so `trading_dashboard`'s price-fetch path
+(`Portfolio.Capture`) works. But `info: nil` means any consumer needing a raw field must
+re-fetch raw; and `symbol: nil` makes a `%CCXT.Ticker{}` non-self-describing when tickers are
+collected into a map/stream.
+
+---
+
+## 2026-06-21 — `fetch_markets` not normalized — still returns raw exchange envelope (binance)
+
+**Status (2026-06-21):** ✅ **fixed** — the 2026-07-15 v0.6.1 sweep confirms binance `fetch_markets` returns 6024 `%CCXT.Market{}` with `precision`/`limits`/`type`/`settle` populated, closing the metadata residual re-routed to tasks 177/180/181. Inverse-perp symbol formatting remains tracked separately as Task 167. History: partially fixed by Task 152 (`053f289e577c`), Task 165 (`a2696dc1ae58`), and Task 166 (`ba68646e63f8`); Task 166 addressed the single-endpoint routing defect by fanning out across market-type endpoints, Task 165 addressed `info`. Earlier re-test after Task 152:
+
+### Re-test defects (2026-06-21, binance, `{:ok, m} = CCXT.fetch_markets(ex)`)
+
+1. **Only 38 markets, ALL coin-margined (`*_PERP`, dapi).** `length(m) == 38`; first symbols are `BTCUSD_PERP/`, `ETHUSD_PERP/`, … — no spot, no USD-M linear. `fetch_markets` appears to route to only the coin-margined `exchangeInfo`; the bulk of binance's market universe (spot + USD-M) is missing.
+2. **Malformed unified symbol — 38/38 end in a trailing `/`.** `m |> hd |> Map.get(:symbol) == "BTCUSD_PERP/"`. The symbol builder concatenates the raw id + `/` with an empty tail; expected a unified ccxt symbol (inverse perp ≈ `"BTC/USD:BTC"`), never `"BTCUSD_PERP/"`.
+3. **`limits` all empty.** `%{"amount" => %{}, "cost" => %{}, "leverage" => %{}, "market" => %{}, "price" => %{}}` — despite the raw symbol carrying `filters` (`LOT_SIZE` minQty/maxQty/stepSize, `PRICE_FILTER` tickSize). amount/price/leverage bounds are not extracted.
+4. **`precision` uses `base`/`quote`, not `amount`/`price`.** Got `%{"base" => 8, "quote" => 8}`; ccxt precision is `%{amount, price}` (here derivable from raw `quantityPrecision`/`pricePrecision`). Consumers needing tick/lot precision can't use it.
+5. **Market-type flags all `nil`.** `type/spot/swap/future/option/contract/linear/inverse/active` are `nil` on a coin-margined perpetual that should be `swap: true, contract: true, inverse: true, settle: "BTC"`. Consumers can't classify spot-vs-derivative.
+6. **`info: nil`** — raw per-symbol payload not preserved (same ccxt-convention break as the ticker bug).
+
+Original report below.
+
+**Triage (2026-06-21, verified live via tidewave):**
+- #1 only 38 coin-M markets → **consumer Task 166** (fetch_markets multi-endpoint fan-out — union spot + linear + inverse), landed in `ba68646e63f8`.
+- #2 trailing-slash symbol (`"BTCUSD_PERP/"`) → **consumer Task 167**, symbol-builder bug for inverse-perp ids.
+- #3 `limits` empty + #4 `precision` base/quote-only → **RE-ROUTED 2026-06-23 → authored tasks 177 + 180** (was: UPSTREAM distill, resync-gated). limits/precision sources (`minQty`/`stepSize`/`tickSize`) live inside binance's `filters[]` array (indexed by `filterType`); CCXT JS reads them by logic, so the carve must be authored — 177 owns the fetchMarkets precision/limits oracle, 180 the tier-1 (real-API + non-CCXT-source) value verification for divergence-prone precision.
+- #5 market-type flags all nil → **RE-ROUTED 2026-06-23 → authored tasks 177 + 181** (was: UPSTREAM distill). `spot`/`swap`/`contract`/`linear`/`inverse`/`settle`/`type` are CCXT-JS-derived by logic — author the derivation; carve correctness vs reality is 181.
+- #6 `info: nil` → **consumer Task 165** (universal info preservation), landed in `a2696dc1ae58`.
+- Per-symbol `maker`/`taker` (`member` coercion) references the exchange's STATIC fees, not response data — re-scoping tracked on blocked Task 164.
+
+**Method:** `CCXT.fetch_markets(ex)` · **Exchange:** binance · **Severity:** moderate (blocks consumer work)
+
+T144 wired the *ticker* read path, but `fetch_markets` still returns the **raw exchange body**,
+not a list of unified market structs:
+
+```elixir
+{:ok, ex} = CCXT.exchange(:binance)
+{:ok, m} = CCXT.fetch_markets(ex)
+is_list(m)                 # => false
+Map.keys(m)                # => ["exchangeFilters","rateLimits","serverTime","symbols","timezone"]
+# m["symbols"] |> List.first  => raw binance keys:
+#   "pricePrecision", "quantityPrecision", "maintMarginPercent", "liquidationFee",
+#   "quoteAsset", "contractSize", "baseAsset", "filters" => [PRICE_FILTER/LOT_SIZE/...]
+```
+
+Expected (per ccxt market structure): a list of unified market structs carrying
+`precision: %{amount, price}`, `limits: %{leverage, amount, ...}`, `maker`/`taker` fees, and
+`quote`/`base` — i.e. the per-symbol metadata that lets consumers derive precision, fees,
+leverage caps, and USD-quote resolution without parsing exchange-native shapes.
+
+**Secondary:** a bare `fetch_markets(:binance)` returned the **coin-margined (dapi) `exchangeInfo`**
+(sample symbol `"BTCUSD_PERP"`, `marginAsset: "BTC"`), not spot/usd-m — so default market-type
+routing for `fetch_markets` may also need attention.
+
+**Consumer impact:** `trading_dashboard` tasks 22/23/24 (derive USD quote-currency resolution,
+position-sizer market-param defaults, and per-exchange account-type options from ccxt market
+metadata) are gated on exactly this normalization. They remain blocked until `fetch_markets`
+returns unified per-symbol structs.
+
+---
+
+## 2026-06-21 — `fetch_ticker` on bybit fails with `Illegal category` (lower confidence)
+
+**Status (2026-06-23):** ✅ **fixed** — the 2026-07-15 v0.6.1 sweep confirms bybit `category` is injected (no "Illegal category") and `fetch_ticker` returns a fully populated `%CCXT.Ticker{}`. History: RE-ROUTED → authored task 171 (was: Task 154, blocked on upstream public request-shape data); bybit v5 `category` injection was authored as a request-shape slice (`request_param_shape`) against CCXT JS + the real bybit response. Task 183 separately ensures this `:bad_request` 4xx stops being masked as inconclusive in the sweep.
+
+**Method:** `CCXT.fetch_ticker(ex, "BTC/USDT")` · **Exchange:** bybit · **Severity:** unconfirmed
+
+```elixir
+{:ok, ex} = CCXT.exchange(:bybit)
+CCXT.fetch_ticker(ex, "BTC/USDT")
+# => {:error, %CCXT.Error{type: :bad_request, code: 10001, message: "Illegal category", exchange: "bybit"}}
+```
+
+Bybit v5 requires a `category` (`spot`/`linear`/...) param. The unified `fetch_ticker` may not be
+injecting/inferring it from the symbol. **Lower confidence** — this could be a known limitation
+or expect a market-type hint we didn't pass; needs maintainer confirmation on whether the unified
+layer is supposed to inject `category` automatically.
