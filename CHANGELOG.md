@@ -32,6 +32,16 @@ defect class rather than patched per venue.
   — Deribit was recorded as 8h for an hourly venue, overstating funding roughly
   eightfold in anything that multiplied by it.
 
+Packaging and attribution, found while auditing the extraction:
+
+- The tarball shipped `Bourse.Spec.Promotion` and its two helpers — 1,049 lines
+  of repo-internal tooling that reads deliberately unpackaged reality manifests,
+  so in a consumer project it could only fail on missing files. `Path.wildcard/1`
+  yields directory entries, Hex expands a listed directory recursively, and
+  `lib/bourse/spec` matched no exclusion prefix. Directory entries are now
+  dropped outright rather than excluded one prefix at a time, and the guard
+  asserts against the *built* tarball, where the expansion is actually visible.
+
 ### Changed
 
 - `Bourse.Testnet` no longer starts as a child of `Bourse.Application`. It is a
@@ -40,6 +50,16 @@ defect class rather than patched per venue.
 
 ### Added
 
+- `NOTICE`, shipped in the package. The authored venue specs still carry method
+  and return descriptions taken verbatim from CCXT, `docs.ccxt.com` links
+  included; CCXT is MIT, whose terms require the copyright notice to travel with
+  that text. No such notice was ever tracked, in this repository or its
+  predecessor — publishing the package is what made the omission consequential.
+- A CI workflow running the offline gate — format, warnings-as-errors, Credo,
+  Doctor, Sobelow, the offline suite, the reality oracle, the documentation
+  claims, `deps.audit` and Dialyzer. Until now those ran only on the maintainer's
+  host and through dispatch review, so an outside pull request and a fresh clone
+  had no gate at all.
 - This repository. `bourse` is extracted from the working repo it grew up in,
   which stays behind as the private authoring workbench `bourse-workbench`.
   Carried over: the client (`Bourse.Exchange` / `Dispatch` / `HTTP` / `Signing` /

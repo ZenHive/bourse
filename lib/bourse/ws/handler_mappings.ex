@@ -1,6 +1,7 @@
 defmodule Bourse.WS.HandlerMappings do
   @moduledoc """
-  Maps Bourse Pro `handle*` method names to unified `watch_*` family atoms.
+  Maps the `handle*` method names carried by the authored WebSocket slices to
+  unified `watch_*` family atoms.
 
   Non-family handlers (auth, pong, subscription management) map to `:system`.
   """

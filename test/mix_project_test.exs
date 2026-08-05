@@ -13,7 +13,7 @@ defmodule Bourse.MixProjectTest do
   @domain_prefixes ~w(option_proposal option_readiness option_saga portfolio_risk)
   @unpackaged_prefixes @domain_prefixes ++ ~w(spec/promotion)
   @expected_non_lib ~w(lib/bourse.ex lib/mix/tasks/ccxt.build_lighter_signer.ex) ++
-                      ~w(native/lighter_signer mix.exs README.md LICENSE) ++
+                      ~w(native/lighter_signer mix.exs README.md LICENSE NOTICE) ++
                       ["priv/specs/json/runtime_support.json"] ++
                       Enum.map(@runtime_venues, &"priv/specs/json/output/authored/#{&1}.json")
 
@@ -35,17 +35,13 @@ defmodule Bourse.MixProjectTest do
       {lib_bourse, rest} = Enum.split_with(files, &String.starts_with?(&1, "lib/bourse/"))
 
       assert rest == @expected_non_lib
-      assert lib_bourse == Enum.reject(Path.wildcard("lib/bourse/**"), &unpackaged_path?/1)
       assert lib_bourse != []
 
       # The domain layer and the promotion tooling stay out of the tarball; the
       # client half ships whole.
       refute Enum.any?(files, &unpackaged_path?/1)
-      assert Enum.all?(Path.wildcard("lib/bourse/**"), &(&1 in files or unpackaged_path?(&1)))
+      assert Enum.all?(Path.wildcard("lib/bourse/**/*.ex"), &(&1 in files or unpackaged_path?(&1)))
 
-      # Hex expands a listed directory, so a bare `lib/bourse/option_saga` entry
-      # would ship the whole excluded tree; assert on the prefix, not the
-      # predicate that produced the list.
       for excluded <- @unpackaged_prefixes do
         refute Enum.any?(files, &String.starts_with?(&1, "lib/bourse/#{excluded}"))
       end
@@ -53,6 +49,20 @@ defmodule Bourse.MixProjectTest do
       refute Enum.any?(files, &String.starts_with?(&1, "priv/specs/json/ccxt"))
       refute "priv/specs/json/reference_corpus.json" in files
       refute "priv/specs/json/output" in files
+    end
+
+    # Hex expands a listed directory recursively, so a directory entry ships the
+    # subtree beneath it no matter what the prefix list excludes: `option_saga`
+    # did it at depth 1, and `lib/bourse/spec` — relative path "spec", matching no
+    # prefix — did it again at depth 2 for `spec/promotion/**`. A prefix assertion
+    # cannot see either, because the directory entry is *shorter* than the prefix
+    # it smuggles in. This is the invariant that removes the class.
+    test "no lib entry is a directory Hex would expand" do
+      files = Mix.Project.config() |> Keyword.fetch!(:package) |> Keyword.fetch!(:files)
+
+      lib_dirs = Enum.filter(files, &(String.starts_with?(&1, "lib/") and File.dir?(&1)))
+
+      assert lib_dirs == []
     end
 
     test "only the consumer-facing Lighter build task ships" do
@@ -77,6 +87,60 @@ defmodule Bourse.MixProjectTest do
 
       assert String.starts_with?(license, "MIT License")
       assert license =~ "Permission is hereby granted"
+    end
+
+    test "NOTICE attributes the CCXT text the authored specs still carry" do
+      notice = File.read!("NOTICE")
+
+      # The shipped authored specs retain CCXT's own method/return descriptions,
+      # `{@link https://docs.ccxt.com/…}` references included. CCXT is MIT, whose
+      # terms require the copyright notice to travel with that text.
+      assert notice =~ "Copyright © 2024 Igor Kroitor"
+      assert notice =~ "Permission is hereby granted"
+      assert notice =~ "https://github.com/ccxt/ccxt"
+
+      shipped_specs = Path.wildcard("priv/specs/json/output/authored/*.json")
+      assert shipped_specs != []
+
+      carries_ccxt_text? =
+        Enum.any?(shipped_specs, &(&1 |> File.read!() |> String.contains?("docs.ccxt.com")))
+
+      # If the projection is ever fully re-authored the notice may go — but only
+      # then, and deliberately. While the text ships, so must the attribution.
+      assert carries_ccxt_text?,
+             "no shipped spec references docs.ccxt.com any more — re-check whether NOTICE's CCXT section is still required"
+    end
+
+    @tag :package
+    test "the built tarball ships no excluded module" do
+      out = Path.join(System.tmp_dir!(), "bourse-package-#{System.unique_integer([:positive])}")
+      on_exit(fn -> File.rm_rf!(out) end)
+
+      {output, status} =
+        System.cmd("mix", ["hex.build", "--unpack", "--output", out],
+          stderr_to_stdout: true,
+          env: [{"MIX_ENV", "dev"}]
+        )
+
+      assert status == 0, "mix hex.build failed:\n#{output}"
+
+      shipped =
+        out
+        |> Path.join("**")
+        |> Path.wildcard()
+        |> Enum.reject(&File.dir?/1)
+        |> Enum.map(&Path.relative_to(&1, out))
+
+      assert "lib/bourse.ex" in shipped
+      assert "NOTICE" in shipped
+
+      # Asserting on the real artifact is the point: `package[:files]` looked
+      # correct while Hex's directory expansion shipped `spec/promotion/**`
+      # anyway, and every predicate-level assertion agreed with the bug.
+      for excluded <- @unpackaged_prefixes do
+        offenders = Enum.filter(shipped, &String.starts_with?(&1, "lib/bourse/#{excluded}"))
+        assert offenders == [], "tarball ships excluded #{excluded}: #{inspect(offenders)}"
+      end
     end
   end
 

@@ -90,7 +90,7 @@ defmodule Bourse.MixProject do
       files:
         client_lib_files() ++
           ~w(lib/bourse.ex lib/mix/tasks/ccxt.build_lighter_signer.ex) ++
-          ~w(native/lighter_signer mix.exs README.md LICENSE) ++
+          ~w(native/lighter_signer mix.exs README.md LICENSE NOTICE) ++
           [@runtime_manifest | runtime_specs]
     ]
   end
@@ -106,19 +106,25 @@ defmodule Bourse.MixProject do
   # shipped copy could only fail on missing files.
   @unpackaged_prefixes ~w(spec/promotion)
 
+  # Hex packages a listed *directory* recursively, so any directory entry that
+  # survives here re-ships an excluded subtree whatever the prefix list says: a
+  # bare `lib/bourse/option_saga` did it at depth 1, and `lib/bourse/spec` — whose
+  # relative path is "spec", matching no prefix — did it again at depth 2 for
+  # `spec/promotion/**`. Dropping directories outright removes the class instead
+  # of naming one more prefix; `unpackaged_path?/1` then only has to judge files.
   defp client_lib_files do
-    "lib/bourse/**" |> Path.wildcard() |> Enum.reject(&unpackaged_path?/1)
+    "lib/bourse/**"
+    |> Path.wildcard()
+    |> Enum.reject(&File.dir?/1)
+    |> Enum.reject(&unpackaged_path?/1)
   end
 
-  # `Path.wildcard("lib/bourse/**")` yields directory entries as well as files,
-  # and Hex packages a listed directory recursively — so the bare `option_saga`
-  # entry must be rejected too, not just `option_saga.ex` and `option_saga/…`.
   defp unpackaged_path?(path) do
     rest = Path.relative_to(path, "lib/bourse")
 
     Enum.any?(
       @domain_prefixes ++ @unpackaged_prefixes,
-      &(rest in [&1, "#{&1}.ex"] or String.starts_with?(rest, "#{&1}/"))
+      &(rest == "#{&1}.ex" or String.starts_with?(rest, "#{&1}/"))
     )
   end
 
@@ -268,6 +274,11 @@ defmodule Bourse.MixProject do
       # Comprehensive pre-PR / CI gate: the dispatch gate + dialyzer.
       ci: [
         "check.dispatch",
+        # Builds and unpacks the real Hex tarball. Kept out of `precommit` (it
+        # shells out to `mix hex.build` per run) but required here, because Hex's
+        # recursive directory expansion is invisible in `package[:files]` — see
+        # `test/mix_project_test.exs`.
+        "cmd env MIX_ENV=test mix test.json --quiet --only package",
         "deps.audit",
         "dialyzer.json --quiet"
       ]

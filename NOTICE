@@ -1,0 +1,53 @@
+Third-party notices for `bourse`
+================================
+
+`bourse` itself is MIT licensed; see LICENSE.
+
+CCXT
+----
+
+The authored venue specifications shipped under
+`priv/specs/json/output/authored/` were bootstrapped from the CCXT project and
+retain descriptive text taken from it verbatim — method and return descriptions,
+including `{@link https://docs.ccxt.com/…}` references to CCXT's own
+documentation. Those portions are covered by the license below and are
+reproduced here as that license requires.
+
+CCXT is reference material for this library, not an authority over it: what a
+venue does is established by that venue's live behavior and its own
+provider-owned documentation. The retained text is a frozen projection, never a
+runtime dependency, and `bourse` does not link against or execute any CCXT code.
+
+    MIT License
+
+    Copyright © 2024 Igor Kroitor
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+    IN THE SOFTWARE.
+
+Source: https://github.com/ccxt/ccxt — npm package 4.5.65, the revision pinned by
+`priv/specs/json/reference_corpus.json` (`pins.source`, a SHA-256 over the
+upstream `VERSION` marker).
+
+lighter-go
+----------
+
+`native/lighter_signer` builds against the official Lighter Go signing library
+(https://github.com/elliottech/lighter-go) and its transitive Go dependencies.
+Their sources are not vendored here; `mix ccxt.build_lighter_signer` fetches them
+through the Go module proxy at build time, and each carries its own license.

@@ -23,14 +23,14 @@ defmodule Bourse.Currency do
     * `deposit` - Whether deposits are enabled
     * `withdraw` - Whether withdrawals are enabled
     * `fee` - Default withdrawal fee
-    * `fees` - Per-network withdrawal-fee map (Bourse `fees`, `%{}` when none)
-    * `limits` - Amount/withdraw/deposit min/max limits (Bourse `limits`)
+    * `fees` - Per-network withdrawal-fee map (`%{}` when none)
+    * `limits` - Amount/withdraw/deposit min/max limits
     * `networks` - Network-specific deposit/withdraw info
     * `info` - Raw exchange response
 
-  Mirrors Bourse's `safeCurrencyStructure` key set exactly (no `margin` — that is a
-  non-canonical extra only a few venues emit; the unified struct stays to the
-  shared 14-key shape the static-response fixtures assert against).
+  The key set is the shared 14-key currency shape the static-response fixtures
+  assert against; `margin` is deliberately absent, being a non-canonical extra
+  only a few venues emit.
   """
 
   import JSONSpec, only: [schema: 2]
