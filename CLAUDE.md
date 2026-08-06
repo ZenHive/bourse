@@ -236,3 +236,5 @@ The oracle / recording / replay / drift cluster — `Bourse.ExchangeAcceptanceFi
 ## Git commit configuration
 
 Conventional commits: `<type>(<scope>): <description>`. Types: feat, fix, docs, style, refactor, test, chore. Title-only; bodies only when asked. No `Co-Authored-By` footers.
+
+**Release tags come AFTER the maintainer confirms the publish went through — never before.** `mix hex.publish` is run by hand (it needs 2FA), and the release gate keeps finding things right up to the prompt: 0.2.0 gained a hexdocs-filter fix and ten broken-link fixes after the version bump was already committed. A tag cut in advance names a tree that is not what shipped, and correcting it means force-updating a pushed ref. Bump the version, get the gate green, hand off the publish — then tag the published commit.
