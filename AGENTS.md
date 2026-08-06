@@ -524,7 +524,7 @@ Loaded via `Bourse.Testnet.register_all_from_env/1` in `test_helper.exs`. Env co
 - `lib/bourse/exchanges/*.ex` — generated at compile time; never hand-edit (fix the generator).
 - `priv/specs/json/output/authored/<venue>.json` — **the complete hand-owned runtime documents** (ten venues, schema version `3`). These you DO edit, by authoring per the loop in `docs/authored-specs.md`, then proving green with `mix ccxt.oracle_gate`.
 - `priv/specs/json/output/<venue>.json` — frozen CCXT-derived **reference** siblings (the 15-venue slice), pinned by `reference_corpus.json`. Never loaded at runtime, never shipped in the Hex package; read-only authoring/test input (e.g. the test-only `markets.symbols_index` used by integration symbol selection).
-- `priv/reference_cache/` — vendored market/currency slice for `Bourse.ReplayExchange`. Compatibility reference only; the one module that reads it.
+- `priv/reference_cache/` — vendored market/currency slice for `Bourse.ReplayExchange`. Compatibility reference only; the one module that reads it. Neither the cache nor its reader is packaged.
 
 ## Architecture
 
@@ -555,8 +555,8 @@ Bourse.fetch_ticker(exchange, "BTC/USDT")     # Unified API
 | `Bourse.Dispatch` | Runtime dispatcher: path interpolation, base URL resolution (4 patterns), signing, HTTP delegation. |
 | `Bourse.HTTP` | Req wrapper — manual query encoding, safe retry GET/HEAD only, telemetry, circuit breaker. |
 | `Bourse.RateLimiter` | Per-credential weighted GenServer, sliding window. Key `{exchange, api_key \| :public}`. |
-| `Bourse.ReplayExchange` | Offline replay exchange from `priv/reference_cache/`. The **only** module reading the vendored slice. |
-| `Bourse.RecordedResponseFixtures` | Capture support and path resolution for the committed reality evidence. |
+| `Bourse.ReplayExchange` | **Repo-internal.** Offline replay exchange from `priv/reference_cache/`. The **only** module reading the vendored slice. |
+| `Bourse.RecordedResponseFixtures` | **Repo-internal.** Capture support and path resolution for the committed reality evidence. |
 | `Bourse.Application` | Supervises `Bourse.RateLimiter` + `Bourse.RateLimiter.State` + `Bourse.Signing.Lighter.Supervisor` + `Bourse.WS.Broadcast`. |
 
 **Unified response types:** 7 original (`Ticker`, `Trade`, `Order`, `Balance`, `Market`, `OHLCV`, `Fee`), 9 tier-1 core (`OrderBook`, `Position`, `Currency`, `Transaction`, `LedgerEntry`, `FundingRate`, `DepositAddress`, `TransferEntry`, `TradingFee`), 9 tier-2 derivatives, 9 tier-3 analytics.
@@ -584,6 +584,12 @@ Bourse.fetch_ticker(exchange, "BTC/USDT")     # Unified API
 `Bourse.OptionProposal`, `Bourse.OptionReadiness`, `Bourse.OptionSaga`, `Bourse.PortfolioRisk` live here but are **not part of the client's surface**. `mix.exs` keeps them out of the Hex package, and `test/bourse/domain_boundary_test.exs` (wired into `check.dispatch`) asserts the dependency stays one-directional: **the domain may call the client, never the reverse.**
 
 That guard is why the layer can stay. It was introduced while the invariant already held, so it costs no refactor — and as long as it is green, moving the domain into its own repo remains a file move rather than a refactor. **A single inbound edge turns it into one**, so don't "temporarily" reach into the domain from client code.
+
+## Repo-internal tooling inside `lib/`
+
+The oracle / recording / replay / drift cluster — `Bourse.ExchangeAcceptanceFixtures`, `Bourse.PublicAcceptedRequests`, `Bourse.OracleProvenance`, `Bourse.OracleLabel`, `Bourse.ReplayExchange`, `Bourse.RecordedResponseFixtures`, `Bourse.LiveDrift`, `Bourse.Spec.Promotion` — lives in `lib/` because the `mix ccxt.*` tasks compile in `:dev`, where `elixirc_paths/1` does not carry `test/support`. It is **not** client surface: `@unpackaged_prefixes` in `mix.exs` keeps every one of them out of the tarball and out of hexdocs, exactly as it does for the domain layer.
+
+**Anything you add to that cluster inherits the exclusion — add its prefix.** These modules read `test/fixtures/**` and `priv/reference_cache/`, which are never packaged, and they may use `:dev`/`:test`-only deps. A shipped copy fails twice over: on missing files at runtime, and at the consumer's *compile* — the original case was `Req.Plug`, which exists only from req 0.7 and only behind the `only: [:dev, :test]` `:plug` dep, so consumers resolving `~> 0.6.1` got an undefined-module warning out of two fixture modules. `test/mix_project_test.exs` gates both halves: the package file list, and an AST scan asserting no shipped module names a dependency a consumer may not have.
 
 ## Git commit configuration
 

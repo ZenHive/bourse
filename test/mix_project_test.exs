@@ -11,7 +11,24 @@ defmodule Bourse.MixProjectTest do
   # not part of the client's surface, so `lib/bourse` ships enumerated rather
   # than as a blanket directory entry.
   @domain_prefixes ~w(option_proposal option_readiness option_saga portfolio_risk)
-  @unpackaged_prefixes @domain_prefixes ++ ~w(spec/promotion)
+  @unpackaged_prefixes @domain_prefixes ++
+                         ~w(
+                           spec/promotion
+                           exchange_acceptance_fixtures
+                           public_accepted_requests
+                           oracle_provenance
+                           oracle_label
+                           replay_exchange
+                           recorded_response_fixtures
+                           live_drift
+                         )
+  # Modules a consumer is not guaranteed to have. `:plug` is `only: [:dev, :test]`
+  # here, and req declares it `optional: true` — so `Req.Plug` and `Req.Test` exist
+  # only when the consumer happens to pull plug in. `Req.Plug` is narrower still:
+  # req added it in 0.7, while `mix.exs` still admits `~> 0.6.1`, where the module
+  # does not exist at all. That is how `Req.Plug.run/1` reached downstream builds
+  # as an undefined-module warning from two shipped fixture modules.
+  @gated_modules ~w(Plug Req.Plug Req.Test)
   @expected_non_lib ~w(lib/bourse.ex lib/mix/tasks/ccxt.build_lighter_signer.ex) ++
                       ~w(native/lighter_signer mix.exs README.md LICENSE NOTICE) ++
                       ["priv/specs/json/runtime_support.json"] ++
@@ -80,6 +97,31 @@ defmodule Bourse.MixProjectTest do
 
       # Every other task stays in the repo, so the tree must still hold them.
       assert length(Path.wildcard("lib/mix/tasks/**/*.ex")) > 1
+    end
+
+    test "no shipped module names a dependency a consumer may not have" do
+      files = Mix.Project.config() |> Keyword.fetch!(:package) |> Keyword.fetch!(:files)
+
+      offenders =
+        files
+        |> Enum.filter(&String.ends_with?(&1, ".ex"))
+        |> Enum.flat_map(fn file ->
+          for {name, line} <- alias_references(file),
+              root <- @gated_modules,
+              name == root or String.starts_with?(name, root <> "."),
+              do: "#{file}:#{line} names #{name}"
+        end)
+
+      assert offenders == [],
+             """
+             Shipped modules must compile against every version of every declared
+             dependency. These do not:
+
+             #{Enum.join(offenders, "\n")}
+
+             Either drop the reference or add the file's prefix to
+             `@unpackaged_prefixes` in mix.exs (and mirror it here).
+             """
     end
 
     test "LICENSE file is MIT" do
@@ -209,6 +251,27 @@ defmodule Bourse.MixProjectTest do
       |> String.split("`", parts: 2)
       |> hd()
     end)
+  end
+
+  # Walking the AST rather than grepping is what makes the gate usable: `Req.Test`
+  # is named in a `@moduledoc` on a shipped module, and a textual scan cannot tell
+  # that mention apart from a call. An `__aliases__` node is a real reference.
+  defp alias_references(file) do
+    file
+    |> File.read!()
+    |> Code.string_to_quoted!(file: file)
+    |> Macro.prewalk([], fn
+      {:__aliases__, meta, segments} = node, acc ->
+        if Enum.all?(segments, &is_atom/1) do
+          {node, [{Enum.map_join(segments, ".", &Atom.to_string/1), meta[:line]} | acc]}
+        else
+          {node, acc}
+        end
+
+      node, acc ->
+        {node, acc}
+    end)
+    |> elem(1)
   end
 
   # Hex packages a listed directory recursively, so the bare directory entry

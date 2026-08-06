@@ -59,19 +59,58 @@ defmodule Bourse.MixProject do
     ]
   end
 
+  # The trading-domain layer is developed in this repo but is not part of the
+  # exchange client's surface, so it stays out of the tarball.
+  # `test/bourse/domain_boundary_test.exs` keeps the dependency one-directional
+  # (domain may call the client, never the reverse), which is what keeps a later
+  # extraction a file move rather than a refactor.
+  @domain_prefixes ~w(option_proposal option_readiness option_saga portfolio_risk)
+  # Repo-internal verification tooling: venue promotion grades a candidate
+  # against this repo's reality manifests, and the oracle / recording / replay /
+  # drift cluster reads `test/fixtures/**` and `priv/reference_cache/`. None of
+  # those roots are packaged, so a shipped copy could only fail on missing
+  # files — and it drags this repo's `:dev`/`:test` toolchain into a consumer's
+  # compile (`Req.Plug` exists only from req 0.7 and only behind `:plug`).
+  # Every entry here is reached solely from tests and from the `lib/mix/tasks`
+  # tooling that `package/0` already withholds.
+  @unpackaged_prefixes ~w(
+    spec/promotion
+    exchange_acceptance_fixtures
+    public_accepted_requests
+    oracle_provenance
+    oracle_label
+    replay_exchange
+    recorded_response_fixtures
+    live_drift
+  )
+
   @doc """
   ExDoc `:filter_modules` predicate — true keeps the module in the docs.
 
-  Drops the repo-internal `mix ccxt.*` tooling that `package/0` deliberately
-  leaves out of the tarball, so hexdocs never advertises a task a consumer
-  cannot run. `ccxt.build_lighter_signer` ships and stays documented.
+  Drops the repo-internal tooling that `package/0` deliberately leaves out of
+  the tarball, so hexdocs never advertises a module or task a consumer does not
+  receive: the `mix ccxt.*` tasks (all but `ccxt.build_lighter_signer`, the one
+  consumer-facing build step) and the `Bourse.*` namespaces named by
+  `@unpackaged_prefixes`.
   """
   @spec document_module?(module(), map()) :: boolean()
   def document_module?(module, _metadata) do
     name = inspect(module)
 
+    documented_task?(name) and not unpackaged_module?(name)
+  end
+
+  defp documented_task?(name) do
     not String.starts_with?(name, "Mix.Tasks.Ccxt.") or
       name == "Mix.Tasks.Ccxt.BuildLighterSigner"
+  end
+
+  defp unpackaged_module?(name) do
+    Enum.any?(@unpackaged_prefixes, fn prefix ->
+      root = "Bourse." <> Macro.camelize(prefix)
+
+      name == root or String.starts_with?(name, root <> ".")
+    end)
   end
 
   defp package do
@@ -94,17 +133,6 @@ defmodule Bourse.MixProject do
           [@runtime_manifest | runtime_specs]
     ]
   end
-
-  # The trading-domain layer is developed in this repo but is not part of the
-  # exchange client's surface, so it stays out of the tarball.
-  # `test/bourse/domain_boundary_test.exs` keeps the dependency one-directional
-  # (domain may call the client, never the reverse), which is what keeps a later
-  # extraction a file move rather than a refactor.
-  @domain_prefixes ~w(option_proposal option_readiness option_saga portfolio_risk)
-  # Venue-promotion tooling grades a candidate against this repo's reality
-  # manifests under `test/fixtures/`, which are deliberately unpackaged — so a
-  # shipped copy could only fail on missing files.
-  @unpackaged_prefixes ~w(spec/promotion)
 
   # Hex packages a listed *directory* recursively, so any directory entry that
   # survives here re-ships an excluded subtree whatever the prefix list says: a

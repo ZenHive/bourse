@@ -55,6 +55,13 @@ Packaging and attribution, found while auditing the extraction:
   `lib/bourse/spec` matched no exclusion prefix. Directory entries are now
   dropped outright rather than excluded one prefix at a time, and the guard
   asserts against the *built* tarball, where the expansion is actually visible.
+- The tarball also shipped the oracle / recording / replay / drift cluster, which
+  reads `test/fixtures/**` and `priv/reference_cache/` — neither of them packaged.
+  Two of those modules named `Req.Plug`, which exists only from req 0.7 and only
+  behind the `only: [:dev, :test]` `:plug` dependency, so a consumer resolving
+  `~> 0.6.1` compiled the package with undefined-module warnings. The cluster is
+  now excluded from both the tarball and hexdocs, and a new gate scans every
+  shipped module's AST for references to dependencies a consumer may not have.
 
 ### Changed
 
