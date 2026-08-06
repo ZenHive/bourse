@@ -260,14 +260,14 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheck do
 
   @region_labels Enum.map(@regions, &elem(&1, 0))
 
-  defp region_body(regions, label) do
-    # A label that is not a gated region at all is a typo in this module, not a
-    # drifted document — raise instead of returning "", which would make the
-    # caller's claim checks find nothing and pass unconditionally.
-    if label not in @region_labels do
-      raise ArgumentError, "#{inspect(label)} is not a gated region: #{inspect(@region_labels)}"
-    end
-
+  # A label that is not a gated region at all is a typo in this module, not a
+  # drifted document — the guard raises FunctionClauseError instead of returning
+  # "", which would make the caller's claim checks find nothing and pass
+  # unconditionally. It is a guard rather than a body `not in` check because
+  # every caller passes a literal: Dialyzer proves the body comparison can never
+  # succeed and reports it as `exact_compare`, a warning tag dialyxir cannot even
+  # format (it throws `:unknown_warning`, taking the whole run down with it).
+  defp region_body(regions, label) when label in @region_labels do
     case List.keyfind(regions, label, 0) do
       {^label, body} -> body
       nil -> ""
