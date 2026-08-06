@@ -7,6 +7,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-06
+
 ### Fixed
 
 Findings from the 2026-08-04 live venue sweep, which compared this client against
@@ -153,4 +155,5 @@ Published before this repository existed, from the tree that is now the private
   ccxt.build_lighter_signer`, the prerequisite for private Lighter calls, is the
   one task consumers receive.
 
+[0.2.0]: https://hex.pm/packages/bourse/0.2.0
 [0.1.0]: https://hex.pm/packages/bourse/0.1.0

@@ -1,7 +1,7 @@
 defmodule Bourse.MixProject do
   use Mix.Project
 
-  @version "0.1.0"
+  @version "0.2.0"
   @source_url "https://github.com/ZenHive/bourse"
   @runtime_manifest "priv/specs/json/runtime_support.json"
   @runtime_venues @runtime_manifest |> File.read!() |> :json.decode() |> Map.fetch!("venues")

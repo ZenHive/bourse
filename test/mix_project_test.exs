@@ -41,7 +41,13 @@ defmodule Bourse.MixProjectTest do
       assert config[:app] == :bourse
       assert config[:source_url] == @source_url
       assert config[:homepage_url] == @source_url
-      assert config[:version] == "0.1.0"
+      # Pinning the literal would make every release edit this test for no
+      # signal. What is worth gating is that the version being published is a
+      # real semver AND that CHANGELOG.md documents it — a bump with no entry
+      # is the failure mode, not a bump.
+      version = config[:version]
+      assert {:ok, _} = Version.parse(version)
+      assert File.read!("CHANGELOG.md") =~ "\n## [#{version}] - "
       assert is_binary(config[:description])
       assert config[:description] != ""
 

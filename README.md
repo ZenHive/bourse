@@ -3,15 +3,14 @@
 Elixir client library for ten provider-authored exchange integrations generated
 from owned JSON specs via compile-time macros.
 
-**Status:** first public release — the runtime support contract is the ten venues
-listed below.
+**Status:** the runtime support contract is the ten venues listed below.
 
 ## Installation
 
 ```elixir
 def deps do
   [
-    {:bourse, "~> 0.1"}
+    {:bourse, "~> 0.2"}
   ]
 end
 ```
