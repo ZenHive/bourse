@@ -105,6 +105,31 @@ defmodule Bourse.MixProjectTest do
       assert length(Path.wildcard("lib/mix/tasks/**/*.ex")) > 1
     end
 
+    test "hexdocs withholds every module the tarball withholds" do
+      # The docs filter and the file list are two independent lists that describe
+      # the same thing, so they drift: the trading-domain layer was excluded from
+      # the tarball but documented on hexdocs anyway, advertising 20+ modules a
+      # consumer cannot call. Deriving the module names from the withheld files
+      # is what makes the two lists check each other.
+      documented =
+        "lib/bourse/**/*.ex"
+        |> Path.wildcard()
+        |> Enum.filter(&unpackaged_path?/1)
+        |> Enum.flat_map(&defined_modules/1)
+        |> Enum.filter(&Bourse.MixProject.document_module?(&1, %{}))
+
+      assert documented == [],
+             """
+             These modules are excluded from the package but would still be
+             published to hexdocs:
+
+             #{Enum.map_join(documented, "\n", &inspect/1)}
+
+             Add the prefix to `@unpackaged_prefixes` (or `@domain_prefixes`) in
+             mix.exs — `document_module?/2` reads both.
+             """
+    end
+
     test "no shipped module names a dependency a consumer may not have" do
       files = Mix.Project.config() |> Keyword.fetch!(:package) |> Keyword.fetch!(:files)
 
@@ -273,6 +298,22 @@ defmodule Bourse.MixProjectTest do
         else
           {node, acc}
         end
+
+      node, acc ->
+        {node, acc}
+    end)
+    |> elem(1)
+  end
+
+  # Every module in this repo is declared fully qualified at the top of its file,
+  # so the `defmodule` alias segments are the real module name.
+  defp defined_modules(file) do
+    file
+    |> File.read!()
+    |> Code.string_to_quoted!(file: file)
+    |> Macro.prewalk([], fn
+      {:defmodule, _, [{:__aliases__, _, segments} | _]} = node, acc ->
+        {node, [Module.concat(segments) | acc]}
 
       node, acc ->
         {node, acc}

@@ -87,11 +87,12 @@ defmodule Bourse.MixProject do
   @doc """
   ExDoc `:filter_modules` predicate — true keeps the module in the docs.
 
-  Drops the repo-internal tooling that `package/0` deliberately leaves out of
-  the tarball, so hexdocs never advertises a module or task a consumer does not
-  receive: the `mix ccxt.*` tasks (all but `ccxt.build_lighter_signer`, the one
-  consumer-facing build step) and the `Bourse.*` namespaces named by
-  `@unpackaged_prefixes`.
+  Drops everything `package/0` deliberately leaves out of the tarball, so
+  hexdocs never advertises a module or task a consumer does not receive: the
+  `mix ccxt.*` tasks (all but `ccxt.build_lighter_signer`, the one
+  consumer-facing build step), the repo-internal tooling named by
+  `@unpackaged_prefixes`, and the trading-domain layer named by
+  `@domain_prefixes`.
   """
   @spec document_module?(module(), map()) :: boolean()
   def document_module?(module, _metadata) do
@@ -106,7 +107,7 @@ defmodule Bourse.MixProject do
   end
 
   defp unpackaged_module?(name) do
-    Enum.any?(@unpackaged_prefixes, fn prefix ->
+    Enum.any?(@domain_prefixes ++ @unpackaged_prefixes, fn prefix ->
       root = "Bourse." <> Macro.camelize(prefix)
 
       name == root or String.starts_with?(name, root <> ".")
