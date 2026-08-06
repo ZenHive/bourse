@@ -127,6 +127,19 @@ Thin wrapper over [`zen_websocket`](https://hex.pm/packages/zen_websocket)
 driven by authored per-exchange subscription and auth patterns. Callers pass
 exchange-native channel strings.
 
+A `:private` connection authenticates before it is returned, so a socket you
+hold is one the venue accepted:
+
+```elixir
+{:ok, ws} = Bourse.WS.connect(exchange, :private)
+:ok = Bourse.WS.subscribe(ws, ["order"])
+```
+
+A rejected handshake closes the socket and returns the venue's reason rather
+than a connection that would deliver nothing. `binance` and `binanceusdm` need a
+REST round-trip first and report `{:error, {:pre_auth_required, _}}`; `derive`
+has no authored handshake yet and connects without one.
+
 ## Known Caveats
 
 Consumer-facing gotchas not obvious from the API signatures. Full context in

@@ -7,6 +7,35 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Fixed
+
+- `Bourse.WS.connect(exchange, :private)` returned an open but unauthenticated
+  socket on every venue. The auth patterns and the state machine that drives
+  them both existed; nothing called them from the facade. Private subscriptions
+  on such a connection are accepted by some venues and simply never deliver, so
+  the failure surfaced as an empty stream rather than an error. A `:private`
+  connection now completes the venue's handshake before it is returned, and a
+  rejected handshake closes the socket and surfaces the venue's reason.
+  Confirmed differentially against bybit, deribit and okx: each private
+  subscribe is accepted on the authenticated connection and rejected on
+  `authenticate: false`.
+- Deribit's refusal of a subscribe is an empty `result` list, not an error
+  object — an envelope otherwise identical to success, which `subscribe/3` read
+  as acceptance. Observed on `test.deribit.com`: the same `user.portfolio.btc`
+  subscribe returns `"result" => []` unauthenticated and the channel name back
+  when authenticated.
+- `Bourse.WS.Auth.ListenKey.pre_auth/3` raised `BadMapError` on the authored
+  binance config, which carries its endpoints as a map where the module
+  expected a list. The binance family now reports the REST round-trip it needs
+  as `{:error, {:pre_auth_required, …}}`.
+
+### Added
+
+- `Bourse.WS.authenticate/2`, the handshake as a callable step, for connections
+  opened with `authenticate: false` or credentials that expired mid-session. It
+  returns the venue's session metadata (`%{ttl_ms: …}` where disclosed), which
+  is what `Bourse.WS.Adapter` schedules re-auth from.
+
 ## [0.2.0] - 2026-08-06
 
 ### Fixed

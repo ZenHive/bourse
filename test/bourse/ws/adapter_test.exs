@@ -108,10 +108,17 @@ defmodule Bourse.WS.AdapterTest do
     assert_receive {:transport_sent, subscribe_payload}
     assert Jason.decode!(subscribe_payload)["op"] == "subscribe"
 
-    assert :ok = Adapter.authenticate(adapter)
-    assert Adapter.auth_state(adapter) == :authenticated
+    # Auth completes on the venue's verdict, not on the send succeeding — so the
+    # call is in flight until the ack frame arrives. Treating the send as
+    # success is what left private connections unauthenticated and silent.
+    auth = Task.async(fn -> Adapter.authenticate(adapter) end)
     assert_receive {:transport_sent, auth_payload}
     assert Jason.decode!(auth_payload)["op"] == "auth"
+
+    send(adapter, {:ws_frame, %{"op" => "auth", "success" => true}})
+
+    assert :ok = Task.await(auth)
+    assert Adapter.auth_state(adapter) == :authenticated
 
     orderbook_topic = Broadcast.topic("bybit", :watch_order_book, "orderbook.500.BTCUSDT")
     Broadcast.subscribe(orderbook_topic)
@@ -141,7 +148,11 @@ defmodule Bourse.WS.AdapterTest do
     send(adapter, {:ws_frame, %{"topic" => "kline.BTCUSDT", "data" => [%{"open" => "1"}]}})
     assert_receive {:bourse_ws, {:routed, :watch_ohlcv, [%{"open" => "1"}], "kline.BTCUSDT", "BTCUSDT", nil}}
 
+    # Re-auth on expiry runs the same handshake, so it needs the same verdict.
+    # The frame can be queued while the adapter is already blocked waiting for
+    # it — receive scans the mailbox.
     send(adapter, :auth_expired)
+    send(adapter, {:ws_frame, %{"op" => "auth", "success" => true}})
     assert Adapter.auth_state(adapter) == :authenticated
   end
 
@@ -200,7 +211,9 @@ defmodule Bourse.WS.AdapterTest do
     assert {:noreply, connected} = Adapter.handle_info(:connect, state)
     assert connected.ws == ws
     assert_receive :restore_subscriptions
-    assert_receive {:connector_opts, [handler: handler]}
+    # The adapter opts out of the facade's connect-time handshake: it runs the
+    # handshake itself so it can read the session TTL and schedule re-auth.
+    assert_receive {:connector_opts, [handler: handler, authenticate: false]}
 
     assert {:ok, _pid} =
              Task.start(fn -> handler.({:message, %{"topic" => "tickers.BTCUSDT"}}) end)

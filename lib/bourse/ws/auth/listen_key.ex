@@ -45,7 +45,7 @@ defmodule Bourse.WS.Auth.ListenKey do
   def pre_auth(credentials, config, opts) do
     raw_type = opts[:market_type] || :spot
     market_type = normalize_market_type(raw_type)
-    endpoints = get_in(config, [:pre_auth, :endpoints]) || []
+    endpoints = normalize_endpoints(get_in(config, [:pre_auth, :endpoints]) || [])
 
     case Enum.find(endpoints, fn ep -> ep.type == market_type end) do
       nil ->
@@ -69,6 +69,19 @@ defmodule Bourse.WS.Auth.ListenKey do
            credentials: credentials
          }}
     end
+  end
+
+  # The authored specs carry the endpoints as `%{market_type => endpoint_name}`,
+  # while this module's own documented shape is a list of maps. Iterating the
+  # authored map yields `{key, value}` tuples, and `ep.type` on a tuple raises
+  # BadMapError — so the binance family used to crash here instead of reporting
+  # the REST round-trip it needs. Both shapes normalize to the list form.
+  defp normalize_endpoints(endpoints) when is_list(endpoints), do: endpoints
+
+  defp normalize_endpoints(endpoints) when is_map(endpoints) do
+    Enum.map(endpoints, fn {type, endpoint} when is_binary(endpoint) ->
+      %{type: type, endpoint: endpoint}
+    end)
   end
 
   # WS URL paths use :future/:delivery; listen key endpoints use :linear/:inverse.

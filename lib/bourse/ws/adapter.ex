@@ -8,10 +8,8 @@ defmodule Bourse.WS.Adapter do
 
   use GenServer
 
-  alias Bourse.Credentials
   alias Bourse.Exchange
   alias Bourse.WS
-  alias Bourse.WS.Auth
   alias Bourse.WS.Auth.Expiry
   alias Bourse.WS.Broadcast
   alias Bourse.WS.Config
@@ -20,6 +18,12 @@ defmodule Bourse.WS.Adapter do
   alias Bourse.WS.Semantics.Ohlcv
   alias Bourse.WS.Semantics.Orderbook
   alias Bourse.WS.Semantics.Trades
+
+  require Logger
+
+  # Must exceed Bourse.WS's own auth window so the caller does not time out on a
+  # handshake the facade is still waiting on.
+  @auth_call_timeout_ms 15_000
 
   @type section :: WS.section()
   @type auth_state :: :unauthenticated | :authenticating | :authenticated | :expired
@@ -71,9 +75,16 @@ defmodule Bourse.WS.Adapter do
     GenServer.call(server, {:subscribe, channels, opts})
   end
 
-  @doc "Runs the auth state machine when credentials are configured."
+  @doc """
+  Runs the auth state machine when credentials are configured.
+
+  The call window is longer than the GenServer default because the handshake
+  waits on the venue: `Bourse.WS.authenticate/2` allows 10s for a verdict, and a
+  5s call timeout would abandon a handshake that is still legitimately in
+  flight.
+  """
   @spec authenticate(GenServer.server()) :: :ok | {:error, term()}
-  def authenticate(server), do: GenServer.call(server, :authenticate)
+  def authenticate(server), do: GenServer.call(server, :authenticate, @auth_call_timeout_ms)
 
   @doc "Returns current auth state."
   @spec auth_state(GenServer.server()) :: auth_state()
@@ -157,9 +168,13 @@ defmodule Bourse.WS.Adapter do
       _ -> :ok
     end
 
-    case state.connect_fun.(state.exchange, state.section, handler: handler) do
+    # `authenticate: false` because the adapter runs the handshake itself: it
+    # needs the session metadata `WS.authenticate/2` returns to schedule
+    # re-auth before expiry, which the facade's connect-time handshake
+    # discards.
+    case state.connect_fun.(state.exchange, state.section, handler: handler, authenticate: false) do
       {:ok, ws} ->
-        new_state = %{state | ws: ws, auth_state: :unauthenticated}
+        new_state = authenticate_on_connect(%{state | ws: ws, auth_state: :unauthenticated})
         send(self(), :restore_subscriptions)
         {:noreply, new_state}
 
@@ -265,57 +280,46 @@ defmodule Bourse.WS.Adapter do
     end
   end
 
+  # A private connection that comes up unauthenticated is the failure mode this
+  # layer exists to prevent, and it is invisible from here: subscriptions are
+  # accepted and simply never deliver. Log the venue's reason rather than let a
+  # silent socket look healthy.
+  defp authenticate_on_connect(%{section: :private} = state) do
+    case do_authenticate(state) do
+      {:ok, authenticated} ->
+        authenticated
+
+      {:error, :no_auth_config} ->
+        state
+
+      {:error, reason} ->
+        Logger.warning(
+          "WS auth failed for #{state.exchange.id} (private): #{inspect(reason)} — " <>
+            "the connection is open but unauthenticated"
+        )
+
+        state
+    end
+  end
+
+  defp authenticate_on_connect(state), do: state
+
+  # The handshake itself lives in `Bourse.WS.authenticate/2` so the facade and
+  # the adapter cannot drift; the adapter adds only what a long-lived process
+  # needs on top — the state transition and the re-auth timer.
   defp do_authenticate(state) do
     with {:ok, config} <- fetch_ws_config(state.exchange),
-         %{auth_pattern: pattern, auth_config: auth_config} when not is_nil(pattern) <- config,
-         %Credentials{} = credentials <- state.exchange.credentials do
-      opts = [market_type: :spot]
-
-      case Auth.pre_auth(pattern, credentials, auth_config, opts) do
-        {:ok, pre_auth} when pre_auth == %{} ->
-          authenticating = %{state | auth_state: :authenticating}
-          context = %{pattern: pattern}
-          build_and_send_auth(authenticating, pattern, credentials, auth_config, context, opts)
-
-        {:ok, pre_auth} ->
-          {:error, {:pre_auth_required, pre_auth}}
-
-        {:error, _} = error ->
-          error
-      end
+         %{auth_pattern: pattern} when not is_nil(pattern) <- config,
+         {:ok, auth_meta} <- WS.authenticate(state.ws, market_type: :spot) do
+      {:ok, mark_auth_success(state, %{pattern: pattern}, config.auth_config, auth_meta)}
     else
       nil -> {:error, :no_auth_config}
-      {:error, _} = error -> error
-      _ -> {:error, :no_credentials}
-    end
-  end
-
-  defp build_and_send_auth(state, pattern, credentials, auth_config, context, opts) do
-    case Auth.build_auth_message(pattern, credentials, auth_config, opts) do
-      :no_message -> {:ok, mark_auth_success(state, context, auth_config)}
-      {:ok, message} -> send_auth_message(state, message, context, auth_config)
+      %{auth_pattern: nil} -> {:error, :no_auth_config}
       {:error, _} = error -> error
     end
   end
 
-  defp send_auth_message(state, message, context, auth_config) do
-    case WS.send_message(state.ws, message) do
-      :ok ->
-        {:ok, mark_auth_success(state, context, auth_config)}
-
-      {:ok, response} ->
-        case Auth.handle_auth_response(context.pattern, response, state) do
-          :ok -> {:ok, mark_auth_success(state, context, auth_config)}
-          {:ok, auth_meta} -> {:ok, mark_auth_success(state, context, auth_config, auth_meta)}
-          {:error, _} = error -> error
-        end
-
-      {:error, _} = error ->
-        error
-    end
-  end
-
-  defp mark_auth_success(state, context, auth_config, auth_meta \\ nil) do
+  defp mark_auth_success(state, context, auth_config, auth_meta) do
     if state.auth_timer_ref, do: Process.cancel_timer(state.auth_timer_ref)
 
     {timer_ref, _} = schedule_auth_expiry(auth_meta, auth_config)

@@ -71,6 +71,14 @@ defmodule Bourse.WS.SubscribeAck do
 
   # Derive / Deribit JSON-RPC envelopes
   defp classify_jsonrpc(%{"error" => error} = frame) when not is_nil(error), do: {:rejected, frame}
+
+  # Deribit echoes the channels it actually subscribed to. A refusal is not an
+  # error object — it is that list coming back empty, in an envelope otherwise
+  # identical to success. Observed on test.deribit.com 2026-08-06: the same
+  # `user.portfolio.btc` subscribe returns `"result" => []` unauthenticated and
+  # `"result" => ["user.portfolio.btc"]` authenticated. Reading the first as
+  # success is what turns a dead private stream into a green call.
+  defp classify_jsonrpc(%{"result" => []} = frame), do: {:rejected, frame}
   defp classify_jsonrpc(%{"result" => _}), do: :success
   defp classify_jsonrpc(%{"jsonrpc" => _}), do: :not_ack
   defp classify_jsonrpc(_), do: :not_ack

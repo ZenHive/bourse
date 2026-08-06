@@ -4,12 +4,16 @@ defmodule Bourse.WS do
   a `%Bourse.Exchange{}` to a connection so `subscribe/3` can pick the correct
   exchange-native frame builder.
 
-  ## Layer 1+2 (Task 92)
+  ## Structure
 
-  Pure URL resolution (`Bourse.WS.URLRouting`) + connection lifecycle (this module).
-  Layer 3 (auth state machine, custom reconnection) is deliberately deferred —
-  `zen_websocket` covers reconnection, backoff, heartbeat, and subscription
-  restoration natively.
+  Pure URL resolution (`Bourse.WS.URLRouting`) + connection lifecycle (this
+  module). `connect/3` authenticates a `:private` section before returning it,
+  so the socket a caller holds is one the venue accepted; `authenticate/2`
+  exposes the same handshake for callers driving it themselves. Reconnection,
+  backoff, heartbeat, and subscription restoration come from `zen_websocket`.
+
+  `Bourse.WS.Adapter` adds what a long-lived process needs on top: auth state,
+  re-auth before session expiry, and routing frames onto `Bourse.WS.Broadcast`.
 
   ## Usage
 
@@ -50,6 +54,8 @@ defmodule Bourse.WS do
   """
 
   alias Bourse.Exchange
+  alias Bourse.WS.Auth
+  alias Bourse.WS.AuthAck
   alias Bourse.WS.Channels
   alias Bourse.WS.Config
   alias Bourse.WS.Handle
@@ -60,6 +66,10 @@ defmodule Bourse.WS do
 
   # Default window to wait for an async subscribe ack/rejection after send.
   @default_ack_timeout_ms 3_000
+
+  # Auth replies cross the same socket as subscribe acks but sit behind a
+  # signature check on the venue side, so they get their own, longer window.
+  @default_auth_timeout_ms 10_000
 
   # Telemetry helpers (outbound WS messages)
   defp emit_ws_send(%Exchange{id: id}, section) do
@@ -92,16 +102,172 @@ defmodule Bourse.WS do
 
   Returns `{:error, :unsupported_exchange}` if the exchange has no WS config,
   or `{:error, :no_url_configured}` if the requested section is absent.
+
+  ## Private connections authenticate
+
+  A `:private` connection runs the venue's auth handshake before it is handed
+  back, so a socket a caller holds is one the venue has accepted. A handshake
+  that fails closes the socket and surfaces the venue's reason — an open but
+  unauthenticated private connection is never returned, because the failure it
+  produces later is a silently empty stream rather than an error.
+
+  Venues whose authored spec carries no `auth_pattern` connect without a
+  handshake: there is no frame to send. Hyperliquid is the real case — its
+  private subscriptions are scoped by address rather than by a login.
+
+  Pass `authenticate: false` to skip the handshake and drive it yourself with
+  `authenticate/2`; the connection is then unauthenticated until you do.
   """
   @spec connect(Exchange.t(), section(), keyword()) :: {:ok, t()} | {:error, term()}
   def connect(%Exchange{} = exchange, section, opts \\ []) when section in [:public, :private] do
+    {auth?, connect_opts} = Keyword.pop(opts, :authenticate, true)
+
     with {:ok, config} <- fetch_config(exchange),
          {:ok, url} <- fetch_url(exchange, section),
-         connect_opts = build_connect_opts(config, opts),
-         {:ok, zen_client} <- ZenClient.connect(url, connect_opts) do
-      {:ok, %__MODULE__{exchange: exchange, zen_client: zen_client, url: url, section: section}}
+         zen_opts = build_connect_opts(config, connect_opts),
+         {:ok, zen_client} <- ZenClient.connect(url, zen_opts) do
+      ws = %__MODULE__{exchange: exchange, zen_client: zen_client, url: url, section: section}
+
+      maybe_authenticate(ws, section, auth?, connect_opts)
     end
   end
+
+  defp maybe_authenticate(ws, :private, true, opts) do
+    case authenticate(ws, opts) do
+      {:ok, _meta} ->
+        {:ok, ws}
+
+      {:error, :no_auth_pattern} ->
+        {:ok, ws}
+
+      {:error, reason} ->
+        close(ws)
+        {:error, reason}
+    end
+  end
+
+  defp maybe_authenticate(ws, _section, _auth?, _opts), do: {:ok, ws}
+
+  @doc """
+  Runs the venue's auth handshake on an open connection.
+
+  Called for you by `connect/3` on a `:private` section; call it directly only
+  after `connect(exchange, :private, authenticate: false)`, or to re-authenticate
+  a connection whose credentials have expired.
+
+  Returns `{:ok, meta}` where `meta` carries whatever the venue disclosed about
+  the session — `%{ttl_ms: milliseconds}` on deribit, `%{}` where the venue says
+  nothing. A caller that wants to re-authenticate before expiry reads `ttl_ms`;
+  `Bourse.WS.Adapter` does exactly that.
+
+  Errors:
+
+  - `{:error, :no_auth_pattern}` — the authored spec declares no handshake
+  - `{:error, :no_credentials}` — the exchange carries none
+  - `{:error, {:pre_auth_required, data}}` — the pattern needs a REST
+    round-trip first (`:listen_key`, `:rest_token`), which this function does
+    not perform
+  - `{:error, {:auth_failed, reason}}` — the venue rejected the credentials
+  - `{:error, :auth_ack_timeout}` — no verdict arrived within the window
+
+  Pass `auth_timeout_ms:` to change the wait (default 10_000).
+  """
+  @spec authenticate(t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def authenticate(%__MODULE__{exchange: exchange} = ws, opts \\ []) do
+    with {:ok, config} <- fetch_config(exchange),
+         {:ok, pattern} <- fetch_auth_pattern(config),
+         {:ok, credentials} <- fetch_credentials(exchange),
+         auth_opts = auth_opts(opts),
+         {:ok, empty} when empty == %{} <-
+           Auth.pre_auth(pattern, credentials, config.auth_config, auth_opts),
+         {:ok, frame} <-
+           Auth.build_auth_message(pattern, credentials, config.auth_config, auth_opts) do
+      send_auth(ws, pattern, frame, auth_timeout_ms(opts))
+    else
+      # `:no_message` patterns authenticate by connecting (the credential is in
+      # the URL or in each subscribe frame), so there is nothing to await.
+      :no_message -> {:ok, %{}}
+      {:ok, pre_auth} when is_map(pre_auth) -> {:error, {:pre_auth_required, pre_auth}}
+      {:error, _} = error -> error
+    end
+  end
+
+  defp send_auth(%__MODULE__{} = ws, pattern, frame, timeout_ms) do
+    case send_message(ws, frame) do
+      # Correlated venues (deribit) answer inline through the request id.
+      {:ok, response} when is_map(response) -> adjudicate_auth(pattern, response)
+      :ok -> await_auth_ack(pattern, timeout_ms)
+      {:error, _} = error -> error
+    end
+  end
+
+  defp await_auth_ack(pattern, timeout_ms) do
+    deadline = System.monotonic_time(:millisecond) + timeout_ms
+    do_await_auth_ack(pattern, deadline, [])
+  end
+
+  defp do_await_auth_ack(pattern, deadline, requeue) do
+    left = deadline - System.monotonic_time(:millisecond)
+
+    if left <= 0 do
+      requeue_messages(requeue)
+      {:error, :auth_ack_timeout}
+    else
+      receive do
+        {:websocket_message, frame} = msg when is_map(frame) ->
+          handle_auth_frame(pattern, deadline, requeue, msg, frame)
+
+        {:websocket_unmatched_response, frame} = msg when is_map(frame) ->
+          handle_auth_frame(pattern, deadline, requeue, msg, frame)
+
+        {:ws_frame, frame} = msg when is_map(frame) ->
+          handle_auth_frame(pattern, deadline, requeue, msg, frame)
+
+        other ->
+          do_await_auth_ack(pattern, deadline, [other | requeue])
+      after
+        max(left, 0) ->
+          requeue_messages(requeue)
+          {:error, :auth_ack_timeout}
+      end
+    end
+  end
+
+  defp handle_auth_frame(pattern, deadline, requeue, msg, frame) do
+    case AuthAck.classify(pattern, frame) do
+      :auth_response ->
+        requeue_messages(requeue)
+        adjudicate_auth(pattern, frame)
+
+      :not_auth ->
+        do_await_auth_ack(pattern, deadline, [msg | requeue])
+    end
+  end
+
+  defp adjudicate_auth(pattern, response) do
+    case Auth.handle_auth_response(pattern, response, %{}) do
+      :ok -> {:ok, %{}}
+      {:ok, meta} when is_map(meta) -> {:ok, meta}
+      {:error, _} = error -> error
+    end
+  end
+
+  defp fetch_auth_pattern(%{auth_pattern: nil}), do: {:error, :no_auth_pattern}
+  defp fetch_auth_pattern(%{auth_pattern: pattern}), do: {:ok, pattern}
+
+  defp fetch_credentials(%Exchange{credentials: nil}), do: {:error, :no_credentials}
+  defp fetch_credentials(%Exchange{credentials: credentials}), do: {:ok, credentials}
+
+  # Deribit correlates its reply by request id, so every handshake needs one
+  # that has not been used on this socket before.
+  defp auth_opts(opts) do
+    opts
+    |> Keyword.take([:market_type, :request_id])
+    |> Keyword.put_new(:market_type, :spot)
+    |> Keyword.put_new_lazy(:request_id, fn -> :erlang.unique_integer([:positive]) end)
+  end
+
+  defp auth_timeout_ms(opts), do: Keyword.get(opts, :auth_timeout_ms, @default_auth_timeout_ms)
 
   @doc """
   Sends an exchange-native subscribe frame for the given channels and waits for
@@ -127,10 +293,10 @@ defmodule Bourse.WS do
   override the atom-keyed base config; string-keyed maps coexist rather than
   override.
 
-  TODO(T94): `:rest_token` (kraken) and `:inline_subscribe` (coinbase) auth
-  patterns require per-frame auth injection via `Bourse.WS.Auth.build_subscribe_auth/5`,
-  which this function does not call. Private subscribes on those exchanges ship
-  unauthenticated until the adapter layer lands (see CHANGELOG T94).
+  Per-frame auth injection (`Bourse.WS.Auth.build_subscribe_auth/5`, used by the
+  `:rest_token` and `:inline_subscribe` patterns) is not called here. No runtime
+  venue uses either pattern — both belong to exchanges outside the supported ten
+  — so this is a gap only for a venue promoted with one of them.
   """
   @spec subscribe(t(), [String.t() | map()], keyword() | map()) :: :ok | {:error, term()}
   def subscribe(%__MODULE__{exchange: exchange, zen_client: zen_client, section: section}, channels, opts \\ [])

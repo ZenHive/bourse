@@ -12,11 +12,19 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
     * deribit (`:jsonrpc_linebreak`) — connect testnet WS, send JSON-RPC
       `public/auth`, expect correlated `access_token` in the reply.
 
-  binance `:listen_key` is covered by its unit test (`pre_auth/3` is pure
-  endpoint resolution — no WS frame) and will be exercised end-to-end through
-  the adapter in T94.
+  The second half covers the handshake `Bourse.WS.connect/3` runs for a
+  `:private` section, on all three frame-based venues. Those tests are
+  deliberately *differential*: each subscribes to a private channel twice, once
+  on an authenticated connection and once on `authenticate: false`. Asserting
+  only that the authenticated call succeeds would pass just as well against a
+  venue that never checked — the rejection on the unauthenticated connection is
+  what proves the handshake is load-bearing.
 
-  Credentials: bybit + deribit testnet keys must be registered via
+  binance `:listen_key` needs a REST round-trip whose key goes into the connect
+  URL, which `connect/3` does not perform; it is asserted here to report that
+  requirement rather than to authenticate.
+
+  Credentials: bybit + deribit testnet and okx demo keys must be registered via
   `Bourse.Testnet.register_all_from_env/1` in `test_helper.exs`. Tests flunk
   with setup instructions when credentials are missing — never silent skip.
   """
@@ -43,7 +51,10 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
       creds = require_credentials!(:bybit, url: "https://testnet.bybit.com")
       exchange = Exchange.new!(:bybit, credentials: creds, sandbox: true)
 
-      {:ok, ws} = WS.connect(exchange, :private)
+      # `authenticate: false` — this test drives the handshake by hand to
+      # exercise the pattern module; letting connect/3 do it first makes the
+      # manual frame a second one (bybit answers "Repeat auth").
+      {:ok, ws} = WS.connect(exchange, :private, authenticate: false)
 
       {:ok, frame} = Auth.build_auth_message(:direct_hmac_expiry, creds, %{}, [])
       payload = Jason.encode!(frame)
@@ -90,7 +101,10 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
       creds = require_credentials!(:deribit, url: "https://test.deribit.com")
       exchange = Exchange.new!(:deribit, credentials: creds, sandbox: true)
 
-      {:ok, ws} = WS.connect(exchange, :private)
+      # `authenticate: false` — this test drives the handshake by hand to
+      # exercise the pattern module in isolation, so connect/3 must not have
+      # already run one.
+      {:ok, ws} = WS.connect(exchange, :private, authenticate: false)
 
       {:ok, frame} =
         Auth.build_auth_message(:jsonrpc_linebreak, creds, %{}, request_id: :erlang.unique_integer([:positive]))
@@ -111,6 +125,78 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
 
       assert ttl_ms == expires_in * 1_000
 
+      WS.close(ws)
+    end
+  end
+
+  # =============================================================================
+  # connect/3 — the handshake a caller actually gets
+  # =============================================================================
+
+  describe "connect/3 authenticates a :private section" do
+    test "bybit private subscribe is accepted only on the authenticated connection" do
+      creds = require_credentials!(:bybit, url: "https://testnet.bybit.com")
+      exchange = Exchange.new!(:bybit, credentials: creds, sandbox: true)
+
+      assert :ok = private_subscribe(exchange, ["order"], authenticate: true)
+
+      assert {:error, {:subscription_rejected, %{"ret_msg" => ret_msg}}} =
+               private_subscribe(exchange, ["order"], authenticate: false)
+
+      assert ret_msg =~ "not authorized"
+    end
+
+    test "deribit echoes the subscribed channel back only when authenticated" do
+      creds = require_credentials!(:deribit, url: "https://test.deribit.com")
+      exchange = Exchange.new!(:deribit, credentials: creds, sandbox: true)
+
+      assert :ok = private_subscribe(exchange, ["user.portfolio.btc"], authenticate: true)
+
+      # Deribit reports the refusal as an empty `result` list in an envelope
+      # otherwise identical to success — see Bourse.WS.SubscribeAck.
+      assert {:error, {:subscription_rejected, %{"result" => []}}} =
+               private_subscribe(exchange, ["user.portfolio.btc"], authenticate: false)
+    end
+
+    test "okx private subscribe is accepted only on the authenticated connection" do
+      creds = require_credentials!(:okx, url: "https://www.okx.com", passphrase: true)
+      exchange = Exchange.new!(:okx, credentials: creds, sandbox: true)
+      channels = [%{"channel" => "orders", "instType" => "ANY"}]
+
+      assert :ok = private_subscribe(exchange, channels, authenticate: true)
+
+      assert {:error, {:subscription_rejected, %{"code" => "60011"}}} =
+               private_subscribe(exchange, channels, authenticate: false)
+    end
+
+    test "a bad secret fails the connection with the venue's reason" do
+      creds = require_credentials!(:bybit, url: "https://testnet.bybit.com")
+      wrong = %{creds | secret: "not-the-real-secret"}
+      exchange = Exchange.new!(:bybit, credentials: wrong, sandbox: true)
+
+      # The socket opens — bybit only judges the signature — so this is exactly
+      # the case that used to hand back a live, useless connection.
+      assert {:error, {:auth_failed, %{"op" => "auth", "success" => false} = frame}} =
+               WS.connect(exchange, :private)
+
+      assert frame["ret_msg"] =~ "sign"
+    end
+
+    test "binance reports the REST pre-auth it needs instead of a dead socket" do
+      creds = require_credentials!(:binance, url: "https://testnet.binance.vision")
+      exchange = Exchange.new!(:binance, credentials: creds, sandbox: true)
+
+      assert {:error, {:pre_auth_required, %{endpoint: "privatePostUserDataStream"}}} =
+               WS.connect(exchange, :private)
+    end
+  end
+
+  defp private_subscribe(exchange, channels, opts) do
+    {:ok, ws} = WS.connect(exchange, :private, authenticate: Keyword.fetch!(opts, :authenticate))
+
+    try do
+      WS.subscribe(ws, channels)
+    after
       WS.close(ws)
     end
   end

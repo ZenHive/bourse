@@ -205,7 +205,14 @@ Bourse.fetch_ticker(exchange, "BTC/USDT")     # Unified API
 
 **Signing:** `Bourse.Signing` dispatches 8 patterns — `:hmac_sha256_query`, `:hmac_sha256_headers`, `:hmac_sha256_iso_passphrase`, `:api_key_secret_headers` (Alpaca), `:deribit`, `:hyperliquid`, `:derive`, `:lighter`. The authoritative table lives in the module's `@moduledoc`.
 
-**WebSocket:** `Bourse.WS` wraps `ZenWebsocket.Client`. **7 of the ten venues are configured and confirmed streaming live** (binance, binanceusdm, bybit, deribit, derive, hyperliquid, okx); alpaca/binancecoinm/lighter have no WS config and `connect/3` answers `{:error, :unsupported_exchange}`. **Known gap: the private path does not authenticate** — `Bourse.WS.Adapter`, which invokes the auth patterns, has no caller from the facade. `subscribe/3` returns `:ok | {:error, term()}` and surfaces venue rejections as `{:error, {:subscription_rejected, frame}}`.
+**WebSocket:** `Bourse.WS` wraps `ZenWebsocket.Client`. **7 of the ten venues are configured and confirmed streaming live** (binance, binanceusdm, bybit, deribit, derive, hyperliquid, okx); alpaca/binancecoinm/lighter have no WS config and `connect/3` answers `{:error, :unsupported_exchange}`. `subscribe/3` returns `:ok | {:error, term()}` and surfaces venue rejections as `{:error, {:subscription_rejected, frame}}`.
+
+**`connect/3` authenticates a `:private` section** through `Bourse.WS.authenticate/2`, and a failed handshake closes the socket rather than returning one — an open unauthenticated private connection fails later as a silently empty stream, not as an error. Live-verified differentially on bybit, deribit and okx (`test/bourse/ws/auth_live_smoke_test.exs`): each private subscribe is accepted authenticated and rejected on `authenticate: false`.
+
+Two auth surfaces remain **unwired, and both fail loudly rather than silently**:
+
+- **`:listen_key` (binance, binanceusdm)** needs a REST round-trip whose key is embedded in the connect URL. `connect/3` does not perform it and answers `{:error, {:pre_auth_required, …}}`.
+- **derive authors no `auth_pattern`** although the venue has a WS login, so its private section connects without a handshake. Hyperliquid's `nil` pattern is correct — its private subscriptions are scoped by address.
 
 ### Critical design decisions
 

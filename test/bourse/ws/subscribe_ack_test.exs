@@ -79,6 +79,26 @@ defmodule Bourse.WS.SubscribeAckTest do
       assert :not_ack = SubscribeAck.classify("derive", %{"channel" => "ticker"})
     end
 
+    test "deribit's empty result list is a refusal, not an acknowledgement" do
+      # Both envelopes captured on test.deribit.com 2026-08-06 from the same
+      # `user.portfolio.btc` subscribe — the only difference is whether the
+      # connection had authenticated. Deribit does not report the refusal as an
+      # error; it reports subscribing to nothing.
+      refused = %{"jsonrpc" => "2.0", "id" => 6, "result" => [], "testnet" => true}
+      accepted = %{"jsonrpc" => "2.0", "id" => 7, "result" => ["user.portfolio.btc"], "testnet" => true}
+
+      assert {:rejected, ^refused} = SubscribeAck.classify("deribit", refused)
+      assert :success = SubscribeAck.classify("deribit", accepted)
+
+      # Derive answers with a map, so it is untouched by the empty-list rule.
+      assert :success =
+               SubscribeAck.classify("derive", %{
+                 "jsonrpc" => "2.0",
+                 "result" => %{"status" => "ok", "current_subscriptions" => []},
+                 "id" => "abc"
+               })
+    end
+
     test "binance family result envelope" do
       assert :success = SubscribeAck.classify("binance", %{"id" => nil, "result" => nil})
       assert :success = SubscribeAck.classify("binanceusdm", %{"id" => 1, "result" => nil})
