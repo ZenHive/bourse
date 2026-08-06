@@ -27,7 +27,12 @@ defmodule Bourse.MixProject do
   defp docs do
     [
       main: "readme",
-      extras: ["README.md", "CHANGELOG.md", "CONTRIBUTING.md", "docs/authored-specs.md"],
+      # `docs/authored-specs.md` is deliberately absent: it is the maintainer
+      # authoring loop, and every one of its links points at something hexdocs
+      # withholds — the eleven carve registers under `docs/authored-spec-carves/`
+      # and the repo-internal `mix ccxt.*` tasks. Rendered here it produced ten
+      # broken links; README links it on GitHub instead, where they resolve.
+      extras: ["README.md", "CHANGELOG.md", "CONTRIBUTING.md"],
       source_url_pattern: "#{@source_url}/blob/main/%{path}#L%{line}",
       description: "Unified and raw REST APIs for ten complete provider-authored exchange integrations.",
       # Docs mirror the package: only `ccxt.build_lighter_signer` ships, so the

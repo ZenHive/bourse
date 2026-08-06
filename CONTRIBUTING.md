@@ -67,7 +67,7 @@ Full flag reference: see the `ex-unit-json` and `dialyzer-json` sections in `CLA
 
 ## Reporting a Bug
 
-File it in [BUGS.md](BUGS.md), newest entry first: the call you made, what you
+File it in [BUGS.md](https://github.com/ZenHive/bourse/blob/main/BUGS.md), newest entry first: the call you made, what you
 observed, what you expected, and the affected venue where it is venue-specific. A
 runnable repro is worth more than a description. Entries are triaged into scored
 tasks in the authoring workbench and get a dated note pointing at the filed id;

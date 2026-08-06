@@ -50,7 +50,7 @@ Reported by consumers against the published package:
 
 Packaging and attribution, found while auditing the extraction:
 
-- The tarball shipped `Bourse.Spec.Promotion` and its two helpers — 1,049 lines
+- The tarball shipped Bourse.Spec.Promotion and its two helpers — 1,049 lines
   of repo-internal tooling that reads deliberately unpackaged reality manifests,
   so in a consumer project it could only fail on missing files. `Path.wildcard/1`
   yields directory entries, Hex expands a listed directory recursively, and
@@ -89,7 +89,7 @@ Packaging and attribution, found while auditing the extraction:
   which stays behind as the private authoring workbench `bourse-workbench`.
   Carried over: the client (`Bourse.Exchange` / `Dispatch` / `HTTP` / `Signing` /
   `Symbol` / `Unified` / `WS` plus the unified response structs), the ten authored
-  runtime specs, the verification layer (`mix ccxt.oracle_gate`, the recorded
+  runtime specs, the verification layer (the ccxt.oracle_gate Mix task, the recorded
   response and accepted-request evidence, live drift checking), the spec-authoring
   and venue-promotion tooling, the authority corpus and its validators, and the
   trading domain layer.

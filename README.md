@@ -173,7 +173,7 @@ Bourse.Bybit.__unified_endpoints__()  # Unified-method → endpoint-config mappi
 ## Documentation
 
 - [CHANGELOG.md](CHANGELOG.md) — completed tasks and known limitations
-- [BUGS.md](BUGS.md) — the consumer bug queue: what has been reported, what is already fixed, and where to file
+- [BUGS.md](https://github.com/ZenHive/bourse/blob/main/BUGS.md) — the consumer bug queue: what has been reported, what is already fixed, and where to file
 - [CLAUDE.md](https://github.com/ZenHive/bourse/blob/main/CLAUDE.md) — architecture, design decisions, internal conventions
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to land code and authored-spec fixes
 
