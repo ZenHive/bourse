@@ -20,9 +20,13 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
   venue that never checked — the rejection on the unauthenticated connection is
   what proves the handshake is load-bearing.
 
-  binance `:listen_key` needs a REST round-trip whose key goes into the connect
-  URL, which `connect/3` does not perform; it is asserted here to report that
-  requirement rather than to authenticate.
+  The binance family is covered too, and neither half is a subscribe-ack
+  venue. binanceusdm (`:listen_key`) authenticates before the socket exists —
+  the key is a path segment — so the evidence is the issued key appearing in
+  the URL, its refresh succeeding, and a key that is not the account's failing
+  before any socket opens. binance spot (`:ws_api_signature`) opens its user
+  data stream with a signed WS-API request, and is checked against a bad
+  secret, which the venue rejects outright.
 
   Credentials: bybit + deribit testnet and okx demo keys must be registered via
   `Bourse.Testnet.register_all_from_env/1` in `test_helper.exs`. Tests flunk
@@ -36,6 +40,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
   alias Bourse.Exchange
   alias Bourse.WS
   alias Bourse.WS.Auth
+  alias Bourse.WS.ListenKey
   alias ZenWebsocket.Client, as: ZenClient
 
   @moduletag :network
@@ -182,12 +187,69 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
       assert frame["ret_msg"] =~ "sign"
     end
 
-    test "binance reports the REST pre-auth it needs instead of a dead socket" do
+    test "binance spot opens the user data stream with a signed WS-API request" do
       creds = require_credentials!(:binance, url: "https://testnet.binance.vision")
       exchange = Exchange.new!(:binance, credentials: creds, sandbox: true)
 
-      assert {:error, {:pre_auth_required, %{endpoint: "privatePostUserDataStream"}}} =
-               WS.connect(exchange, :private)
+      {:ok, ws} = WS.connect(exchange, :private)
+
+      try do
+        assert ws.url =~ "ws-api"
+        assert %{pattern: :ws_api_signature} = ws.auth
+      after
+        WS.close(ws)
+      end
+
+      # The same connection without the request: the venue accepts the socket
+      # and sends nothing, which is the whole failure class this guards.
+      {:ok, unauthenticated} = WS.connect(exchange, :private, authenticate: false)
+      assert unauthenticated.auth == nil
+      WS.close(unauthenticated)
+    end
+
+    test "binance spot rejects a bad secret rather than returning a silent socket" do
+      creds = require_credentials!(:binance, url: "https://testnet.binance.vision")
+      exchange = Exchange.new!(:binance, credentials: %{creds | secret: "not-the-real-secret"}, sandbox: true)
+
+      assert {:error, {:auth_failed, message}} = WS.connect(exchange, :private)
+      assert message =~ "Signature"
+    end
+
+    test "binanceusdm carries an issued listen key in the connect URL" do
+      creds = require_credentials!(:binanceusdm, url: "https://demo-fapi.binance.com")
+      exchange = Exchange.new!(:binanceusdm, credentials: creds, sandbox: true)
+
+      {:ok, ws} = WS.connect(exchange, :private)
+
+      try do
+        assert %{pattern: :listen_key, meta: session} = ws.auth
+        assert ws.url =~ session.listen_key
+        assert session.market_type == :linear
+
+        # The refresh has to work on the key the socket was built from — a
+        # connection whose key silently expires stops delivering without error.
+        assert :ok = ListenKey.keepalive(exchange, session)
+      after
+        WS.close(ws)
+      end
+    end
+
+    test "binanceusdm fails before the socket when the key is not the account's" do
+      creds = require_credentials!(:binanceusdm, url: "https://demo-fapi.binance.com")
+      exchange = Exchange.new!(:binanceusdm, credentials: %{creds | api_key: "not-a-real-api-key"}, sandbox: true)
+
+      # The listen key endpoint is API-key authenticated and does not check the
+      # secret, so the api key is the credential that has to be wrong here for
+      # the rejection to mean anything.
+      assert {:error, %Bourse.Error{type: :authentication_error}} = WS.connect(exchange, :private)
+    end
+
+    test "binanceusdm refuses to hand back a private connection with auth opted out" do
+      creds = require_credentials!(:binanceusdm, url: "https://demo-fapi.binance.com")
+      exchange = Exchange.new!(:binanceusdm, credentials: creds, sandbox: true)
+
+      assert {:error, {:auth_not_optional, :listen_key}} =
+               WS.connect(exchange, :private, authenticate: false)
     end
   end
 

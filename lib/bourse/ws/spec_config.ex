@@ -43,22 +43,17 @@ defmodule Bourse.WS.SpecConfig do
     "binance" => %{
       public_url: "wss://stream.binance.com:9443/ws",
       public_url_sandbox: "wss://stream.testnet.binance.vision/ws",
-      private_url: "wss://stream.binance.com:9443/ws",
-      private_url_sandbox: "wss://stream.testnet.binance.vision/ws",
+      # Spot's private stream is not on the market-stream host. Binance retired
+      # the spot listen key on 2026-02-20 — `POST /api/v3/userDataStream` now
+      # answers HTTP 410 — and the user data stream moved to the WebSocket API
+      # host, opened by a signed request rather than by a key in the path.
+      private_url: "wss://ws-api.binance.com:443/ws-api/v3",
+      private_url_sandbox: "wss://ws-api.testnet.binance.vision/ws-api/v3",
       heartbeat: %{type: :ping, interval: 180_000},
       subscription_pattern: :method_subscribe,
       subscription_config: %{separator: "@", market_id_format: :lowercase},
-      auth_pattern: :listen_key,
-      auth_config: %{
-        pre_auth: %{
-          type: :listen_key,
-          endpoints: %{
-            spot: "privatePostUserDataStream",
-            linear: "fapiPrivatePostListenKey",
-            inverse: "dapiPrivatePostListenKey"
-          }
-        }
-      }
+      auth_pattern: :ws_api_signature,
+      auth_config: %{method: "userDataStream.subscribe.signature"}
     },
     "binanceusdm" => %{
       public_url: "wss://fstream.binance.com/ws",
@@ -72,7 +67,15 @@ defmodule Bourse.WS.SpecConfig do
       auth_config: %{
         pre_auth: %{
           type: :listen_key,
-          endpoints: %{linear: "fapiPrivatePostListenKey"}
+          # binanceusdm trades linear markets only, so a caller that names no
+          # market type must not fall through to a spot endpoint the venue
+          # does not serve.
+          default_market_type: :linear,
+          endpoints: %{linear: :fapiPrivate_post_listenkey},
+          keepalive_endpoints: %{linear: :fapiPrivate_put_listenkey},
+          # Binance expires an idle key after 60 minutes and documents a
+          # 30-minute refresh.
+          keepalive_ms: 1_800_000
         }
       }
     },
@@ -256,6 +259,12 @@ defmodule Bourse.WS.SpecConfig do
 
       %{"method" => "public/auth"} ->
         {:jsonrpc_linebreak, hand_config}
+
+      # Binance spot: the signed WS-API request that opens the user data
+      # stream. Named rather than left to the fallback below, because the
+      # fallback silently keeps whatever the hand base says.
+      %{"method" => "userDataStream.subscribe.signature"} ->
+        {:ws_api_signature, hand_config}
 
       %{"method" => "public/login"} ->
         if hand_pattern, do: {hand_pattern, hand_config}, else: :keep_hand

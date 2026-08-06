@@ -83,6 +83,28 @@ defmodule Bourse.WS.AuthWiringTest do
 
       assert {:error, :auth_ack_timeout} = WS.authenticate(ws, auth_timeout_ms: 20)
     end
+
+    test "a zero window reports the timeout without waiting on the mailbox" do
+      ws = connected_ws("bybit", reply: :ok)
+
+      assert {:error, :auth_ack_timeout} = WS.authenticate(ws, auth_timeout_ms: 0)
+    end
+
+    test "reads the verdict from an unmatched-response frame too" do
+      ws = connected_ws("bybit", reply: :ok)
+
+      # zen_websocket delivers a reply it could not correlate under a different
+      # tag; the handshake must still recognise it as the verdict.
+      send(self(), {:websocket_unmatched_response, %{"op" => "auth", "success" => true}})
+
+      assert {:ok, %{}} = WS.authenticate(ws)
+    end
+
+    test "surfaces a transport failure instead of waiting out the window" do
+      ws = connected_ws("bybit", reply: {:error, :closed})
+
+      assert {:error, :closed} = WS.authenticate(ws)
+    end
   end
 
   describe "authenticate/2 on a correlated venue (deribit :jsonrpc_linebreak)" do
@@ -135,14 +157,87 @@ defmodule Bourse.WS.AuthWiringTest do
 
       assert {:error, :no_auth_pattern} = WS.authenticate(ws)
     end
+  end
 
-    test "reports the REST round-trip :listen_key needs instead of raising" do
-      # The authored config carries `endpoints` as a map while the pattern module
-      # documented a list; iterating the map used to raise BadMapError here.
-      ws = connected_ws("binance", reply: :ok)
+  describe "binance spot (:ws_api_signature)" do
+    test "signs the WS-API request that opens the user data stream" do
+      ws = connected_ws("binance", reply: {:ok, %{"id" => "1", "status" => 200, "result" => %{}}})
 
-      assert {:error, {:pre_auth_required, %{endpoint: "privatePostUserDataStream"}}} =
+      assert {:ok, %{}} = WS.authenticate(ws)
+      assert_received {:transport_sent, sent}
+
+      assert %{"method" => "userDataStream.subscribe.signature", "params" => params} =
+               Jason.decode!(sent)
+
+      assert %{"apiKey" => "test-key", "timestamp" => timestamp, "signature" => signature} = params
+      assert is_integer(timestamp)
+
+      # The venue checks the signature over the parameters sorted by name, so a
+      # signature computed over any other ordering is the failure to catch here
+      # rather than at the venue.
+      expected =
+        :hmac
+        |> :crypto.mac(:sha256, "test-secret", "apiKey=test-key&timestamp=#{timestamp}")
+        |> Base.encode16(case: :lower)
+
+      assert signature == expected
+    end
+
+    test "surfaces a non-200 status as the venue's rejection" do
+      reply = {:ok, %{"id" => "1", "status" => 401, "error" => %{"msg" => "Signature invalid."}}}
+      ws = connected_ws("binance", reply: reply)
+
+      assert {:error, {:auth_failed, "Signature invalid."}} = WS.authenticate(ws)
+    end
+  end
+
+  describe "binance futures (:listen_key)" do
+    test "refuses to open a private connection with the handshake opted out" do
+      # The key is a path segment of the URL, so there is no later handshake to
+      # run — honouring `authenticate: false` would hand back a socket that is
+      # accepted by the venue and then never delivers.
+      exchange = Exchange.new!("binanceusdm", credentials: Credentials.new!(api_key: "k", secret: "s"))
+
+      assert {:error, {:auth_not_optional, :listen_key}} =
+               WS.connect(exchange, :private, authenticate: false)
+    end
+
+    test "reports the venue's refusal to issue a key instead of opening a socket" do
+      stub = {__MODULE__, :listen_key_denied, System.unique_integer([:positive])}
+
+      Req.Test.stub(stub, fn conn ->
+        conn
+        |> Plug.Conn.put_status(401)
+        |> Req.Test.json(%{"code" => -2_015, "msg" => "Invalid API-key, IP, or permissions."})
+      end)
+
+      exchange = Exchange.new!("binanceusdm", credentials: Credentials.new!(api_key: "k", secret: "s"))
+
+      assert {:error, %Bourse.Error{code: -2_015}} =
+               WS.connect(exchange, :private, pre_auth_opts: [plug: {Req.Test, stub}])
+    end
+
+    test "reports the round-trip when asked to authenticate a socket built without one" do
+      # A hand-built connection has no key embedded, so the pattern reports what
+      # it needs rather than pretending the socket is authenticated.
+      ws = connected_ws("binanceusdm", reply: :ok)
+
+      assert {:error, {:pre_auth_required, %{endpoint: :fapiPrivate_post_listenkey}}} =
                WS.authenticate(ws)
+    end
+
+    test "reports the session already held rather than issuing a second key" do
+      session = %{
+        listen_key: "abc",
+        market_type: :linear,
+        keepalive_endpoint: :fapiPrivate_put_listenkey,
+        keepalive_ms: 1
+      }
+
+      ws = %{connected_ws("binanceusdm", reply: :ok) | auth: %{pattern: :listen_key, meta: session}}
+
+      assert {:ok, ^session} = WS.authenticate(ws)
+      refute_received {:transport_sent, _}
     end
   end
 

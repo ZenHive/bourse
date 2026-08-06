@@ -30,6 +30,9 @@ defmodule Bourse.WS.AuthAckTest do
 
     assert :auth_response =
              AuthAck.classify(:jsonrpc_linebreak, %{"error" => %{"code" => 13_009}})
+
+    assert :auth_response = AuthAck.classify(:ws_api_signature, %{"id" => "1", "status" => 200})
+    assert :auth_response = AuthAck.classify(:ws_api_signature, %{"id" => "1", "status" => 401})
   end
 
   test "leaves everything else in the mailbox" do
@@ -41,6 +44,10 @@ defmodule Bourse.WS.AuthAckTest do
     assert :not_auth = AuthAck.classify(:jsonrpc_linebreak, %{"result" => ["a.channel"]})
     assert :not_auth = AuthAck.classify(:jsonrpc_linebreak, %{"error" => nil})
 
+    # Binance's private WS-API host wraps user data in `event`; only its request
+    # replies carry a `status`.
+    assert :not_auth = AuthAck.classify(:ws_api_signature, %{"event" => %{"e" => "executionReport"}})
+
     # Patterns that authenticate without a verdict frame have no entry at all.
     assert :not_auth = AuthAck.classify(:listen_key, %{"result" => nil})
     assert :not_auth = AuthAck.classify(:rest_token, %{"event" => "auth"})
@@ -51,7 +58,15 @@ defmodule Bourse.WS.AuthAckTest do
     # `Auth.patterns/0` is the contract this table shadows. A pattern added
     # there and forgotten here degrades to a timeout, so the omission is worth
     # catching at the seam rather than at a venue.
-    frame_based = [:direct_hmac_expiry, :iso_passphrase, :jsonrpc_linebreak, :sha384_nonce, :sha512_newline]
+    frame_based = [
+      :direct_hmac_expiry,
+      :iso_passphrase,
+      :jsonrpc_linebreak,
+      :sha384_nonce,
+      :sha512_newline,
+      :ws_api_signature
+    ]
+
     frameless = [:listen_key, :rest_token, :inline_subscribe]
 
     assert Enum.sort(Auth.patterns()) == Enum.sort(frame_based ++ frameless)

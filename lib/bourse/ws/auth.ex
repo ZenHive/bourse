@@ -15,7 +15,8 @@ defmodule Bourse.WS.Auth do
   | `:jsonrpc_linebreak` | deribit | JSON-RPC `public/auth`, returns `{:ok, %{ttl_ms: _}}` |
   | `:sha384_nonce` | bitfinex | `AUTH{nonce}` HMAC-SHA384 |
   | `:sha512_newline` | gate, gateio | Gate `spot.login` HMAC-SHA512 |
-  | `:listen_key` | binance family, aster | REST pre-auth, no WS auth frame |
+  | `:listen_key` | binance USD-M / COIN-M | REST pre-auth, key travels in the WS URL |
+  | `:ws_api_signature` | binance spot | Signed WS-API request that opens the user data stream |
   | `:rest_token` | kraken | REST pre-auth, token injected into subscribe frames |
   | `:inline_subscribe` | coinbaseexchange | Auth fields inlined in each subscribe frame |
 
@@ -53,6 +54,7 @@ defmodule Bourse.WS.Auth do
   alias Bourse.WS.Auth.RestToken
   alias Bourse.WS.Auth.Sha384Nonce
   alias Bourse.WS.Auth.Sha512Newline
+  alias Bourse.WS.Auth.WsApiSignature
 
   @type pattern ::
           :direct_hmac_expiry
@@ -63,6 +65,7 @@ defmodule Bourse.WS.Auth do
           | :listen_key
           | :rest_token
           | :inline_subscribe
+          | :ws_api_signature
 
   @type config :: map()
   @type auth_message :: map()
@@ -77,7 +80,8 @@ defmodule Bourse.WS.Auth do
     :sha512_newline,
     :listen_key,
     :rest_token,
-    :inline_subscribe
+    :inline_subscribe,
+    :ws_api_signature
   ]
 
   @doc "Lists every supported auth pattern atom."
@@ -104,6 +108,8 @@ defmodule Bourse.WS.Auth do
   def pre_auth(:sha512_newline, credentials, config, opts), do: Sha512Newline.pre_auth(credentials, config, opts)
 
   def pre_auth(:inline_subscribe, credentials, config, opts), do: InlineSubscribe.pre_auth(credentials, config, opts)
+
+  def pre_auth(:ws_api_signature, credentials, config, opts), do: WsApiSignature.pre_auth(credentials, config, opts)
 
   def pre_auth(pattern, _credentials, _config, _opts), do: {:error, {:unknown_pattern, pattern}}
 
@@ -135,6 +141,9 @@ defmodule Bourse.WS.Auth do
 
   def build_auth_message(:inline_subscribe, credentials, config, opts),
     do: InlineSubscribe.build_auth_message(credentials, config, opts)
+
+  def build_auth_message(:ws_api_signature, credentials, config, opts),
+    do: WsApiSignature.build_auth_message(credentials, config, opts)
 
   def build_auth_message(pattern, _credentials, _config, _opts), do: {:error, {:unknown_pattern, pattern}}
 
@@ -188,6 +197,8 @@ defmodule Bourse.WS.Auth do
 
   def handle_auth_response(:inline_subscribe, response, state), do: InlineSubscribe.handle_auth_response(response, state)
 
+  def handle_auth_response(:ws_api_signature, response, state), do: WsApiSignature.handle_auth_response(response, state)
+
   def handle_auth_response(pattern, _response, _state), do: {:error, {:unknown_pattern, pattern}}
 
   @doc "Returns `true` for patterns that require a REST pre-auth round-trip."
@@ -212,5 +223,6 @@ defmodule Bourse.WS.Auth do
   def module_for_pattern(:listen_key), do: ListenKey
   def module_for_pattern(:rest_token), do: RestToken
   def module_for_pattern(:inline_subscribe), do: InlineSubscribe
+  def module_for_pattern(:ws_api_signature), do: WsApiSignature
   def module_for_pattern(_), do: nil
 end

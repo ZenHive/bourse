@@ -1,51 +1,63 @@
 defmodule Bourse.WS.Auth.ListenKey do
   @moduledoc """
-  Listen Key auth pattern — binance family, aster.
+  Listen key auth pattern — binance USD-M and COIN-M futures.
 
-  `pre_auth/3` resolves the correct REST endpoint for the current market
-  type from `config[:pre_auth][:endpoints]`. The actual REST call, listen
-  key extraction, WS URL embedding, and periodic refresh all happen in the
-  adapter layer (T94/T95) — this module is pure endpoint resolution so it
-  stays network-free and unit-testable.
+  The credential is not a frame: the venue issues a listen key over REST and
+  the key travels in the WebSocket URL's path. `pre_auth/3` resolves which
+  endpoint issues and which refreshes it for the requested market type;
+  `Bourse.WS.ListenKey` performs the calls and `Bourse.WS.connect/3` embeds the
+  result. This module stays network-free so endpoint resolution can be tested
+  without a venue.
 
-  ## Pre-auth Endpoints by Market Type
+  ## Scope — binance spot is not a listen key venue any more
 
-  | Market | Endpoint |
-  |---|---|
-  | Linear (USD-M) | `fapiPrivatePostListenKey` |
-  | Inverse (COIN-M) | `dapiPrivatePostListenKey` |
-  | Spot | `publicPostUserDataStream` |
-  | Margin | `sapiPostUserDataStream` |
-  | Isolated margin | `sapiPostUserDataStreamIsolated` |
-  | Portfolio margin | `papiPostListenKey` |
+  Binance removed the spot and margin listen key endpoints on 2026-02-20; a
+  `POST /api/v3/userDataStream` now answers HTTP 410 Gone (observed on
+  `testnet.binance.vision` 2026-08-06). Spot's user data stream is opened over
+  the WebSocket API instead — see `Bourse.WS.Auth.WsApiSignature`. Only the
+  futures endpoints below still issue keys.
 
-  ## Config / opts
+  ## Config
 
-      config = %{
+      auth_config = %{
         pre_auth: %{
-          endpoints: [
-            %{type: :spot, endpoint: "publicPostUserDataStream", ...},
-            %{type: :linear, endpoint: "fapiPrivatePostListenKey", ...}
-          ]
+          type: :listen_key,
+          default_market_type: :linear,
+          endpoints: %{linear: :fapiPrivate_post_listenkey},
+          keepalive_endpoints: %{linear: :fapiPrivate_put_listenkey},
+          keepalive_ms: 1_800_000
         }
       }
 
-      opts[:market_type]  # :spot | :linear | :inverse | :margin | ...
-                          # :future and :delivery are normalized to :linear/:inverse
+  `endpoints` values are generated raw endpoint names — the same atoms
+  `__endpoints__/0` reports on the exchange module — so the resolved endpoint
+  is dispatchable rather than a name that has to be translated first.
+
+  `opts[:market_type]` selects the entry (`:future`/`:delivery`/`:contract`
+  normalize to `:linear`/`:inverse`). Without it the venue's
+  `default_market_type` applies, because the market type a venue's private
+  stream covers is the venue's fact, not the caller's choice — binanceusdm has
+  only linear markets and would otherwise resolve a spot endpoint it does not
+  serve.
 
   ## Returns from `pre_auth/3`
 
-      {:ok, %{endpoint:, market_type:, api_section:, method:, path:, credentials:}}
+      {:ok, %{endpoint:, keepalive_endpoint:, market_type:, keepalive_ms:, credentials:}}
       | {:error, {:no_endpoint_for_market_type, %{requested:, normalized:, available:}}}
   """
 
   @behaviour Bourse.WS.Auth.Behaviour
 
+  # Binance expires an idle listen key 60 minutes after it is issued and
+  # documents a keepalive every 30. Used when a venue authors no interval.
+  @default_keepalive_ms 1_800_000
+
   @impl true
   def pre_auth(credentials, config, opts) do
-    raw_type = opts[:market_type] || :spot
+    pre_auth_config = get_in(config, [:pre_auth]) || %{}
+    raw_type = opts[:market_type] || pre_auth_config[:default_market_type] || :spot
     market_type = normalize_market_type(raw_type)
-    endpoints = normalize_endpoints(get_in(config, [:pre_auth, :endpoints]) || [])
+    endpoints = normalize_endpoints(pre_auth_config[:endpoints] || [])
 
     case Enum.find(endpoints, fn ep -> ep.type == market_type end) do
       nil ->
@@ -61,17 +73,22 @@ defmodule Bourse.WS.Auth.ListenKey do
         {:ok,
          %{
            endpoint: endpoint.endpoint,
+           keepalive_endpoint: keepalive_endpoint(pre_auth_config, market_type),
            market_type: market_type,
-           api_section: endpoint[:api_section],
-           # Listen key endpoints are POST by convention.
-           method: endpoint[:method] || "POST",
-           path: endpoint[:path],
+           keepalive_ms: pre_auth_config[:keepalive_ms] || @default_keepalive_ms,
            credentials: credentials
          }}
     end
   end
 
-  # The authored specs carry the endpoints as `%{market_type => endpoint_name}`,
+  defp keepalive_endpoint(pre_auth_config, market_type) do
+    pre_auth_config
+    |> Map.get(:keepalive_endpoints, %{})
+    |> normalize_endpoints()
+    |> Enum.find_value(fn ep -> if ep.type == market_type, do: ep.endpoint end)
+  end
+
+  # The authored configs carry the endpoints as `%{market_type => endpoint}`,
   # while this module's own documented shape is a list of maps. Iterating the
   # authored map yields `{key, value}` tuples, and `ep.type` on a tuple raises
   # BadMapError — so the binance family used to crash here instead of reporting
@@ -79,9 +96,7 @@ defmodule Bourse.WS.Auth.ListenKey do
   defp normalize_endpoints(endpoints) when is_list(endpoints), do: endpoints
 
   defp normalize_endpoints(endpoints) when is_map(endpoints) do
-    Enum.map(endpoints, fn {type, endpoint} when is_binary(endpoint) ->
-      %{type: type, endpoint: endpoint}
-    end)
+    Enum.map(endpoints, fn {type, endpoint} -> %{type: type, endpoint: endpoint} end)
   end
 
   # WS URL paths use :future/:delivery; listen key endpoints use :linear/:inverse.

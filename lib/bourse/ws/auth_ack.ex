@@ -37,5 +37,10 @@ defmodule Bourse.WS.AuthAck do
   def classify(:jsonrpc_linebreak, %{"result" => %{"access_token" => _}}), do: :auth_response
   def classify(:jsonrpc_linebreak, %{"error" => error}) when not is_nil(error), do: :auth_response
 
+  # Binance's WS API answers every request with a `status`, and its private host
+  # carries nothing else that does — user data arrives wrapped in `event`. Also
+  # normally correlated by request id; this is the unmatched path.
+  def classify(:ws_api_signature, %{"status" => _}), do: :auth_response
+
   def classify(_pattern, frame) when is_map(frame), do: :not_auth
 end

@@ -26,8 +26,37 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   when authenticated.
 - `Bourse.WS.Auth.ListenKey.pre_auth/3` raised `BadMapError` on the authored
   binance config, which carries its endpoints as a map where the module
-  expected a list. The binance family now reports the REST round-trip it needs
-  as `{:error, {:pre_auth_required, …}}`.
+  expected a list.
+- The binance family had no working private WebSocket path at all, and both
+  halves failed differently.
+
+  `binanceusdm` needed a REST round-trip nothing performed. `connect/3` now
+  issues the listen key before opening the socket and connects to the URL the
+  key produces, and `Bourse.WS.Adapter` refreshes it on the venue's schedule.
+  The endpoints it resolves are the generated raw endpoint names; the authored
+  config previously named CCXT methods that match no function in this client,
+  so resolution looked complete and could not be called. Confirmed against
+  `demo-fstream.binance.com`: an order placed on the account produced
+  `ORDER_TRADE_UPDATE` on the authenticated connection, and a syntactically
+  valid but wrong key produced nothing while reporting `:connected` throughout
+  — which is why `authenticate: false` is now refused for this pattern with
+  `{:error, {:auth_not_optional, :listen_key}}` rather than returning a socket
+  that cannot be authenticated later.
+
+  `binance` spot was authored against an endpoint the venue has removed:
+  Binance retired the spot and margin listen keys on 2026-02-20, and
+  `POST /api/v3/userDataStream` answers HTTP 410 Gone. The private section is
+  re-authored onto the venue's WebSocket API — host
+  `ws-api.binance.com/ws-api/v3`, opened by a signed
+  `userDataStream.subscribe.signature` request — under the new
+  `:ws_api_signature` auth pattern. Confirmed against
+  `ws-api.testnet.binance.vision`: with the request sent, an order produced
+  `executionReport` and `outboundAccountPosition`; without it, the identical
+  order produced nothing.
+- `Bourse.WS.connect/3` forced `market_type: :spot` when resolving a listen key
+  endpoint, so a venue that trades no spot resolved either an endpoint it does
+  not serve or none at all. The market type now comes from the venue's own
+  authored default unless the caller names one.
 
 ### Added
 
@@ -35,6 +64,12 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   opened with `authenticate: false` or credentials that expired mid-session. It
   returns the venue's session metadata (`%{ttl_ms: …}` where disclosed), which
   is what `Bourse.WS.Adapter` schedules re-auth from.
+- `%Bourse.WS{}` carries an `:auth` field recording which pattern the venue
+  accepted and what it disclosed about the session. A public connection and one
+  that connected without a handshake both leave it `nil`.
+- `Bourse.WS.ListenKey`, the listen key round-trip and its refresh, and
+  `connect/3`'s `:pre_auth_opts` for the request options that belong to it —
+  a timeout or a base URL override — rather than to the socket.
 
 ## [0.2.0] - 2026-08-06
 

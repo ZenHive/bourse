@@ -211,9 +211,9 @@ defmodule Bourse.WS.AdapterTest do
     assert {:noreply, connected} = Adapter.handle_info(:connect, state)
     assert connected.ws == ws
     assert_receive :restore_subscriptions
-    # The adapter opts out of the facade's connect-time handshake: it runs the
-    # handshake itself so it can read the session TTL and schedule re-auth.
-    assert_receive {:connector_opts, [handler: handler, authenticate: false]}
+    # The facade authenticates the private section and records the outcome on
+    # the connection, so the adapter no longer opts out and re-runs it.
+    assert_receive {:connector_opts, [handler: handler]}
 
     assert {:ok, _pid} =
              Task.start(fn -> handler.({:message, %{"topic" => "tickers.BTCUSDT"}}) end)
@@ -235,6 +235,73 @@ defmodule Bourse.WS.AdapterTest do
 
     restored = %{connected | subscriptions: ["tickers.BTCUSDT"]}
     assert {:noreply, ^restored} = Adapter.handle_info(:restore_subscriptions, restored)
+  end
+
+  test "adopts a listen-key connection and arms the refresh the venue requires" do
+    exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret")
+
+    session = %{
+      listen_key: "issued-key",
+      market_type: :linear,
+      keepalive_endpoint: :fapiPrivate_put_listenkey,
+      keepalive_ms: 40
+    }
+
+    ws = %WS{
+      exchange: exchange,
+      zen_client: %Client{state: :connected},
+      url: "wss://offline.test/ws/issued-key",
+      section: :private,
+      auth: %{pattern: :listen_key, meta: session}
+    }
+
+    state = %Adapter{
+      exchange: exchange,
+      section: :private,
+      subscriptions: [],
+      connect_fun: fn _exchange, _section, _opts -> {:ok, ws} end
+    }
+
+    assert {:noreply, connected} = Adapter.handle_info(:connect, state)
+
+    # The facade already authenticated; re-running the handshake would issue a
+    # second key this socket could not adopt.
+    assert connected.auth_state == :authenticated
+    assert connected.auth_context == %{pattern: :listen_key}
+    assert is_reference(connected.auth_timer_ref)
+
+    # The authored interval is used as authored — it is already the safe
+    # interval below the venue's 60-minute expiry, not a TTL to discount again.
+    assert_receive :auth_expired, 500
+  end
+
+  test "reports a refresh the venue cannot serve instead of leaving the stream silently dead" do
+    exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret")
+
+    ws = %WS{
+      exchange: exchange,
+      zen_client: %Client{state: :connected},
+      url: "wss://offline.test/ws/issued-key",
+      section: :private,
+      auth: %{pattern: :listen_key, meta: %{keepalive_endpoint: :not_a_real_endpoint}}
+    }
+
+    state = %Adapter{
+      exchange: exchange,
+      section: :private,
+      ws: ws,
+      auth_state: :authenticated,
+      auth_context: %{pattern: :listen_key}
+    }
+
+    log =
+      ExUnit.CaptureLog.capture_log(fn ->
+        assert {:noreply, expired} = Adapter.handle_info(:auth_expired, state)
+        assert expired.auth_state == :expired
+      end)
+
+    assert log =~ "auth renewal failed"
+    assert log =~ "unknown_listen_key_endpoint"
   end
 
   test "handles named starts, already-authenticated calls, and ignored messages" do

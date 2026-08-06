@@ -14,6 +14,7 @@ defmodule Bourse.WS.Adapter do
   alias Bourse.WS.Broadcast
   alias Bourse.WS.Config
   alias Bourse.WS.Envelope
+  alias Bourse.WS.ListenKey
   alias Bourse.WS.MessageRouter
   alias Bourse.WS.Semantics.Ohlcv
   alias Bourse.WS.Semantics.Orderbook
@@ -168,13 +169,13 @@ defmodule Bourse.WS.Adapter do
       _ -> :ok
     end
 
-    # `authenticate: false` because the adapter runs the handshake itself: it
-    # needs the session metadata `WS.authenticate/2` returns to schedule
-    # re-auth before expiry, which the facade's connect-time handshake
-    # discards.
-    case state.connect_fun.(state.exchange, state.section, handler: handler, authenticate: false) do
+    # The facade authenticates a private section itself and records the outcome
+    # on the connection, so the adapter reads `ws.auth` rather than running a
+    # second handshake. Opting out is not available on every venue: a listen
+    # key is part of the URL, so there is no connection to authenticate later.
+    case state.connect_fun.(state.exchange, state.section, handler: handler) do
       {:ok, ws} ->
-        new_state = authenticate_on_connect(%{state | ws: ws, auth_state: :unauthenticated})
+        new_state = adopt_connection(%{state | ws: ws, auth_state: :unauthenticated})
         send(self(), :restore_subscriptions)
         {:noreply, new_state}
 
@@ -194,9 +195,19 @@ defmodule Bourse.WS.Adapter do
   end
 
   def handle_info(:auth_expired, state) do
-    case do_authenticate(%{state | auth_state: :expired}) do
-      {:ok, new_state} -> {:noreply, new_state}
-      {:error, _} -> {:noreply, %{state | auth_state: :expired}}
+    case renew_auth(%{state | auth_state: :expired}) do
+      {:ok, new_state} ->
+        {:noreply, new_state}
+
+      {:error, reason} ->
+        # The socket stays open and stops delivering. Nothing downstream can
+        # tell that apart from a quiet market, so say it here.
+        Logger.warning(
+          "WS auth renewal failed for #{state.exchange.id} (#{state.section}): #{inspect(reason)} — " <>
+            "the connection is open but no longer authenticated"
+        )
+
+        {:noreply, %{state | auth_state: :expired}}
     end
   end
 
@@ -280,29 +291,14 @@ defmodule Bourse.WS.Adapter do
     end
   end
 
-  # A private connection that comes up unauthenticated is the failure mode this
-  # layer exists to prevent, and it is invisible from here: subscriptions are
-  # accepted and simply never deliver. Log the venue's reason rather than let a
-  # silent socket look healthy.
-  defp authenticate_on_connect(%{section: :private} = state) do
-    case do_authenticate(state) do
-      {:ok, authenticated} ->
-        authenticated
-
-      {:error, :no_auth_config} ->
-        state
-
-      {:error, reason} ->
-        Logger.warning(
-          "WS auth failed for #{state.exchange.id} (private): #{inspect(reason)} — " <>
-            "the connection is open but unauthenticated"
-        )
-
-        state
-    end
+  # `connect/3` refuses to hand back a private connection the venue rejected, so
+  # reaching here with `ws.auth` set means the handshake already succeeded — all
+  # that is left is to arm renewal from what the venue disclosed.
+  defp adopt_connection(%{ws: %WS{auth: %{pattern: pattern, meta: meta}}} = state) do
+    mark_auth_success(state, %{pattern: pattern}, auth_config_or_empty(state), meta)
   end
 
-  defp authenticate_on_connect(state), do: state
+  defp adopt_connection(state), do: state
 
   # The handshake itself lives in `Bourse.WS.authenticate/2` so the facade and
   # the adapter cannot drift; the adapter adds only what a long-lived process
@@ -319,23 +315,51 @@ defmodule Bourse.WS.Adapter do
     end
   end
 
+  # Renewal is not always re-authentication. A listen key stays valid only while
+  # it is refreshed, and the refresh extends the key the open socket was built
+  # from — re-running the handshake would mint a second key this connection
+  # could not adopt.
+  defp renew_auth(%{auth_context: %{pattern: :listen_key}, ws: %WS{auth: %{meta: session}}} = state) do
+    case ListenKey.keepalive(state.exchange, session) do
+      :ok -> {:ok, mark_auth_success(state, state.auth_context, auth_config_or_empty(state), session)}
+      {:error, _} = error -> error
+    end
+  end
+
+  defp renew_auth(state), do: do_authenticate(state)
+
+  defp auth_config_or_empty(state) do
+    case fetch_ws_config(state.exchange) do
+      {:ok, config} -> config.auth_config
+      {:error, _} -> %{}
+    end
+  end
+
   defp mark_auth_success(state, context, auth_config, auth_meta) do
     if state.auth_timer_ref, do: Process.cancel_timer(state.auth_timer_ref)
 
-    {timer_ref, _} = schedule_auth_expiry(auth_meta, auth_config)
-
-    %{state | auth_state: :authenticated, auth_context: context, auth_timer_ref: timer_ref}
+    %{
+      state
+      | auth_state: :authenticated,
+        auth_context: context,
+        auth_timer_ref: schedule_renewal(auth_meta, auth_config)
+    }
   end
 
-  defp schedule_auth_expiry(auth_meta, auth_config) do
-    case Expiry.schedule_delay_ms(Expiry.compute_ttl_ms(auth_meta, auth_config)) do
-      nil ->
-        {nil, nil}
-
-      delay_ms ->
-        ref = Process.send_after(self(), :auth_expired, delay_ms)
-        {ref, nil}
+  defp schedule_renewal(auth_meta, auth_config) do
+    case renewal_delay_ms(auth_meta, auth_config) do
+      nil -> nil
+      delay_ms -> Process.send_after(self(), :auth_expired, delay_ms)
     end
+  end
+
+  # A venue that discloses a session TTL gets the safety margin applied to it.
+  # An authored keepalive interval is already the safe interval below the
+  # venue's expiry, so it is used as authored rather than discounted twice.
+  defp renewal_delay_ms(%{keepalive_ms: ms}, _auth_config) when is_integer(ms) and ms > 0, do: ms
+
+  defp renewal_delay_ms(auth_meta, auth_config) do
+    Expiry.schedule_delay_ms(Expiry.compute_ttl_ms(auth_meta, auth_config))
   end
 
   defp fetch_ws_config(%Exchange{} = exchange) do

@@ -31679,11 +31679,22 @@
   "websocket": {
     "auth": {
       "authenticate_defined": true,
-      "credentials": [],
-      "mechanism": "url_param",
-      "message": null,
+      "credentials": [
+        "apiKey",
+        "secret"
+      ],
+      "mechanism": "sign_in_message",
+      "message": {
+        "keys": [
+          "id",
+          "method",
+          "params"
+        ],
+        "method": "userDataStream.subscribe.signature",
+        "op": null
+      },
       "resolved_from": "self",
-      "source": "pro_authenticate",
+      "source": "venue_websocket_api",
       "unresolved_reason": null
     },
     "dispatch": {
@@ -31937,9 +31948,9 @@
       "update_model": "append"
     },
     "urls": {
-      "private": "wss://stream.binance.com:9443/ws",
+      "private": "wss://ws-api.binance.com:443/ws-api/v3",
       "public": "wss://stream.binance.com:9443/ws",
-      "sandbox_private": "wss://stream.testnet.binance.vision/ws",
+      "sandbox_private": "wss://ws-api.testnet.binance.vision/ws-api/v3",
       "sandbox_public": "wss://stream.testnet.binance.vision/ws",
       "unresolved_reason": null
     }

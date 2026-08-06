@@ -11,11 +11,12 @@ defmodule Bourse.WS.AuthTest do
   alias Bourse.WS.Auth.RestToken
   alias Bourse.WS.Auth.Sha384Nonce
   alias Bourse.WS.Auth.Sha512Newline
+  alias Bourse.WS.Auth.WsApiSignature
 
   @creds %Credentials{api_key: "test_key", secret: "test_secret"}
 
   describe "patterns/0" do
-    test "lists exactly the eight behaviour-implementing atoms (excludes :expiry)" do
+    test "lists exactly the nine behaviour-implementing atoms (excludes :expiry)" do
       assert Enum.sort(Auth.patterns()) ==
                Enum.sort([
                  :direct_hmac_expiry,
@@ -25,7 +26,8 @@ defmodule Bourse.WS.AuthTest do
                  :listen_key,
                  :rest_token,
                  :sha384_nonce,
-                 :sha512_newline
+                 :sha512_newline,
+                 :ws_api_signature
                ])
     end
   end
@@ -40,6 +42,7 @@ defmodule Bourse.WS.AuthTest do
       assert Auth.module_for_pattern(:rest_token) == RestToken
       assert Auth.module_for_pattern(:sha384_nonce) == Sha384Nonce
       assert Auth.module_for_pattern(:sha512_newline) == Sha512Newline
+      assert Auth.module_for_pattern(:ws_api_signature) == WsApiSignature
     end
 
     test "returns nil for unknown patterns" do
@@ -93,7 +96,8 @@ defmodule Bourse.WS.AuthTest do
             :jsonrpc_linebreak,
             :sha384_nonce,
             :sha512_newline,
-            :inline_subscribe
+            :inline_subscribe,
+            :ws_api_signature
           ] do
         assert {:ok, %{}} = Auth.pre_auth(pattern, @creds, %{}, [])
       end
@@ -113,7 +117,8 @@ defmodule Bourse.WS.AuthTest do
             :jsonrpc_linebreak,
             :sha384_nonce,
             :sha512_newline,
-            :listen_key
+            :listen_key,
+            :ws_api_signature
           ] do
         assert nil == Auth.build_subscribe_auth(pattern, @creds, %{}, "chan", ["BTC/USDT"])
       end

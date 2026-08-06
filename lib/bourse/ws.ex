@@ -59,6 +59,7 @@ defmodule Bourse.WS do
   alias Bourse.WS.Channels
   alias Bourse.WS.Config
   alias Bourse.WS.Handle
+  alias Bourse.WS.ListenKey
   alias Bourse.WS.SubscribeAck
   alias Bourse.WS.Subscription
   alias Bourse.WS.URLRouting
@@ -83,13 +84,25 @@ defmodule Bourse.WS do
   @type section :: :public | :private
 
   @enforce_keys [:exchange, :zen_client, :url, :section]
-  defstruct [:exchange, :zen_client, :url, :section]
+  defstruct [:exchange, :zen_client, :url, :section, auth: nil]
+
+  @typedoc """
+  What the venue disclosed about the accepted handshake.
+
+  `nil` on a public connection, and on a private one that connected without a
+  handshake. Present, it names the pattern that succeeded and carries the
+  pattern's own metadata — a `ttl_ms` where the venue discloses one, the listen
+  key session where the credential lives in the URL. `Bourse.WS.Adapter` reads
+  it to schedule renewal without re-running the handshake to find out.
+  """
+  @type auth_info :: %{pattern: Auth.pattern(), meta: map()}
 
   @type t :: %__MODULE__{
           exchange: Exchange.t(),
           zen_client: ZenClient.t(),
           url: String.t(),
-          section: section()
+          section: section(),
+          auth: auth_info() | nil
         }
 
   @doc """
@@ -117,6 +130,15 @@ defmodule Bourse.WS do
 
   Pass `authenticate: false` to skip the handshake and drive it yourself with
   `authenticate/2`; the connection is then unauthenticated until you do.
+
+  ## Credentials that live in the URL
+
+  The `:listen_key` venues (binance USD-M and COIN-M) authenticate before the
+  socket exists: the venue issues a key over REST and it travels as a path
+  segment. `connect/3` performs that round-trip and connects to the resulting
+  URL, so there is nothing left to authenticate afterwards and
+  `authenticate: false` is refused with `{:error, {:auth_not_optional,
+  :listen_key}}` rather than silently returning a stream that delivers nothing.
   """
   @spec connect(Exchange.t(), section(), keyword()) :: {:ok, t()} | {:error, term()}
   def connect(%Exchange{} = exchange, section, opts \\ []) when section in [:public, :private] do
@@ -124,18 +146,46 @@ defmodule Bourse.WS do
 
     with {:ok, config} <- fetch_config(exchange),
          {:ok, url} <- fetch_url(exchange, section),
+         {:ok, url, auth} <- maybe_embed_credential(exchange, config, section, auth?, url, connect_opts),
          zen_opts = build_connect_opts(config, connect_opts),
          {:ok, zen_client} <- ZenClient.connect(url, zen_opts) do
-      ws = %__MODULE__{exchange: exchange, zen_client: zen_client, url: url, section: section}
+      ws = %__MODULE__{exchange: exchange, zen_client: zen_client, url: url, section: section, auth: auth}
 
       maybe_authenticate(ws, section, auth?, connect_opts)
     end
   end
 
+  # A listen key is a path segment, so it has to be resolved before the socket
+  # opens; every other pattern leaves the URL alone and authenticates over the
+  # open connection.
+  defp maybe_embed_credential(exchange, %{auth_pattern: :listen_key} = config, :private, true, url, opts) do
+    case ListenKey.open(exchange, Map.get(config, :auth_config, %{}), listen_key_opts(opts)) do
+      {:ok, session} -> {:ok, join_path(url, session.listen_key), %{pattern: :listen_key, meta: session}}
+      {:error, _} = error -> error
+    end
+  end
+
+  defp maybe_embed_credential(_exchange, %{auth_pattern: :listen_key}, :private, false, _url, _opts) do
+    {:error, {:auth_not_optional, :listen_key}}
+  end
+
+  defp maybe_embed_credential(_exchange, _config, _section, _auth?, url, _opts), do: {:ok, url, nil}
+
+  defp join_path(url, segment), do: String.trim_trailing(url, "/") <> "/" <> segment
+
+  # The listen key round-trip is an HTTP request of its own, so `:pre_auth_opts`
+  # carries what belongs to it — a timeout, a base URL override — rather than
+  # letting request options leak into the WebSocket connect options.
+  defp listen_key_opts(opts) do
+    Keyword.take(opts, [:market_type]) ++ Keyword.get(opts, :pre_auth_opts, [])
+  end
+
+  defp maybe_authenticate(%__MODULE__{auth: %{}} = ws, :private, true, _opts), do: {:ok, ws}
+
   defp maybe_authenticate(ws, :private, true, opts) do
     case authenticate(ws, opts) do
-      {:ok, _meta} ->
-        {:ok, ws}
+      {:ok, meta} ->
+        {:ok, %{ws | auth: %{pattern: pattern_of(ws), meta: meta}}}
 
       {:error, :no_auth_pattern} ->
         {:ok, ws}
@@ -147,6 +197,13 @@ defmodule Bourse.WS do
   end
 
   defp maybe_authenticate(ws, _section, _auth?, _opts), do: {:ok, ws}
+
+  defp pattern_of(%__MODULE__{exchange: exchange}) do
+    case fetch_config(exchange) do
+      {:ok, %{auth_pattern: pattern}} -> pattern
+      _ -> nil
+    end
+  end
 
   @doc """
   Runs the venue's auth handshake on an open connection.
@@ -165,15 +222,22 @@ defmodule Bourse.WS do
   - `{:error, :no_auth_pattern}` — the authored spec declares no handshake
   - `{:error, :no_credentials}` — the exchange carries none
   - `{:error, {:pre_auth_required, data}}` — the pattern needs a REST
-    round-trip first (`:listen_key`, `:rest_token`), which this function does
-    not perform
+    round-trip first (`:rest_token`), which this function does not perform.
+    `:listen_key` is not in that set: `connect/3` resolves it, and calling this
+    on such a connection returns the session it already holds.
   - `{:error, {:auth_failed, reason}}` — the venue rejected the credentials
   - `{:error, :auth_ack_timeout}` — no verdict arrived within the window
 
   Pass `auth_timeout_ms:` to change the wait (default 10_000).
   """
   @spec authenticate(t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def authenticate(%__MODULE__{exchange: exchange} = ws, opts \\ []) do
+  def authenticate(ws, opts \\ [])
+
+  # The credential is the URL this socket was opened with; re-running the
+  # handshake would issue a second key the open connection could not adopt.
+  def authenticate(%__MODULE__{auth: %{pattern: :listen_key, meta: meta}}, _opts), do: {:ok, meta}
+
+  def authenticate(%__MODULE__{exchange: exchange} = ws, opts) do
     with {:ok, config} <- fetch_config(exchange),
          {:ok, pattern} <- fetch_auth_pattern(config),
          {:ok, credentials} <- fetch_credentials(exchange),
@@ -259,11 +323,13 @@ defmodule Bourse.WS do
   defp fetch_credentials(%Exchange{credentials: credentials}), do: {:ok, credentials}
 
   # Deribit correlates its reply by request id, so every handshake needs one
-  # that has not been used on this socket before.
+  # that has not been used on this socket before. `:market_type` is passed
+  # through only when the caller names it — the venue's own default is the
+  # better answer, and forcing `:spot` here resolved a spot listen key endpoint
+  # on venues that trade no spot at all.
   defp auth_opts(opts) do
     opts
     |> Keyword.take([:market_type, :request_id])
-    |> Keyword.put_new(:market_type, :spot)
     |> Keyword.put_new_lazy(:request_id, fn -> :erlang.unique_integer([:positive]) end)
   end
 
@@ -446,7 +512,10 @@ defmodule Bourse.WS do
 
   defp build_connect_opts(config, opts) do
     heartbeat = Keyword.get(opts, :heartbeat_config, config.heartbeat)
-    Keyword.put(opts, :heartbeat_config, heartbeat)
+
+    opts
+    |> Keyword.delete(:pre_auth_opts)
+    |> Keyword.put(:heartbeat_config, heartbeat)
   end
 
   defp merge_subscription_config(%{subscription_config: base}, opts) when is_list(opts) do
