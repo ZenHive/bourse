@@ -190,7 +190,7 @@ defmodule Bourse.MixProject do
       {:dialyzer_json, "~> 0.2.1", only: [:dev, :test], runtime: false},
       {:styler, "~> 1.12.2", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7.19", only: [:dev, :test], runtime: false},
-      {:sobelow, "~> 0.14.1", only: [:dev, :test], runtime: false},
+      {:sobelow, "~> 0.15.0", only: [:dev, :test], runtime: false},
       # CVE tripwire: `mix deps.audit` checks mix.lock against the advisory DB
       # (hex.audit only catches retired packages). Wired into precommit.full + ci.
       {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
