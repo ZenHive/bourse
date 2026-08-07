@@ -309,7 +309,9 @@ defmodule Bourse.WS.Adapter do
          {:ok, auth_meta} <- WS.authenticate(state.ws, market_type: :spot) do
       {:ok, mark_auth_success(state, %{pattern: pattern}, config.auth_config, auth_meta)}
     else
-      nil -> {:error, :no_auth_config}
+      # `fetch_ws_config/1` already turns an unsupported exchange into an
+      # `{:error, _}`, so an unauthenticated venue reaches here only as a
+      # config whose `auth_pattern` the venue never authored.
       %{auth_pattern: nil} -> {:error, :no_auth_config}
       {:error, _} = error -> error
     end
