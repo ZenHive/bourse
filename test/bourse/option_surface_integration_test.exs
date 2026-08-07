@@ -27,6 +27,11 @@ defmodule Bourse.OptionSurfaceIntegrationTest do
     @exchange_opts exchange_opts
     @base base
 
+    # Per-venue tags exist so a runner that a venue geo-blocks can select the
+    # venues it can actually reach. `--exclude` cannot do this: these tests also
+    # carry the module's `:integration` tag, and an include wins over an exclude
+    # on the same test.
+    @tag String.to_atom("exchange_#{venue}")
     test "#{venue}: discover active options and join instrument greeks with delta sign" do
       {:ok, exchange} = Bourse.exchange(@venue, @exchange_opts)
       assert {:ok, markets} = Bourse.fetch_markets(exchange)
@@ -102,6 +107,7 @@ defmodule Bourse.OptionSurfaceIntegrationTest do
       end
     end
 
+    @tag String.to_atom("exchange_#{venue}")
     test "#{venue}: missing symbol fails explicitly" do
       {:ok, exchange} = Bourse.exchange(@venue, @exchange_opts)
       assert {:ok, markets} = Bourse.fetch_markets(exchange)
@@ -112,6 +118,7 @@ defmodule Bourse.OptionSurfaceIntegrationTest do
     end
   end
 
+  @tag :exchange_deribit
   test "stale max_age_ms fails when a venue publishes a source timestamp" do
     {:ok, exchange} = Bourse.exchange("deribit", sandbox: true)
     assert {:ok, markets} = Bourse.fetch_markets(exchange)

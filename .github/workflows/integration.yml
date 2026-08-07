@@ -55,10 +55,12 @@
 #     (needs ALPACA_API_KEY/SECRET — Alpaca has no anonymous endpoint) and
 #     the untagged "smoke inventory" test are excluded the same way.
 #
-# Known residual risk: option_surface_integration_test.exs's bybit case hits
-# api-testnet.bybit.com (not the geo-blocked demo host), so it's included —
-# but if it starts failing specifically on bybit from a GitHub runner, that's
-# the same geo-block class as above, not a code regression.
+# That residual risk landed: option_surface_integration_test.exs's bybit case
+# hits api-testnet.bybit.com, which was assumed reachable where the demo host
+# is not. It is not — both bybit tests failed from a GitHub runner on
+# 2026-08-07 while passing from an EU host, i.e. the same geo-block class, not
+# a code regression. The file's tests now carry per-venue `exchange_<venue>`
+# tags and the job selects the reachable three.
 #
 # This job is deliberately NOT a required status check: harness lands
 # approved runs by ff-pushing straight to `development`, and a required
@@ -92,8 +94,8 @@ jobs:
       - id: beam
         uses: erlef/setup-beam@v1
         with:
-          otp-version: "27"
-          elixir-version: "1.18"
+          otp-version: "29"
+          elixir-version: "1.20"
 
       - name: Cache deps & _build
         uses: actions/cache@v4
@@ -108,12 +110,17 @@ jobs:
       - run: mix deps.get
       - run: mix compile
 
-      # Whole-file-safe: every test in this file is public and non-mutating,
-      # so no tag filtering beyond the standard `:integration` opt-in is
-      # needed.
-      - name: Public option-surface probes
+      # Every test in this file is public and non-mutating, so the only
+      # filtering is per-venue reachability: bybit is selected out because
+      # api-testnet.bybit.com geo-blocks the US IPs GitHub runners egress
+      # from (observed 2026-08-07 — the same two tests pass from an EU host).
+      # This is the failure the header comment predicted, not a regression.
+      - name: Public option-surface probes (venues a GitHub runner can reach)
         run: |
-          mix test.json --quiet --include integration \
+          mix test.json --quiet \
+            --include exchange_deribit \
+            --include exchange_okx \
+            --include exchange_derive \
             test/bourse/option_surface_integration_test.exs
 
       # Per-venue tag selection: pulls in only the credential-free,
