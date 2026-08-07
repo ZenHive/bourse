@@ -5,7 +5,7 @@ defmodule Bourse.WS.SpecConfigTest do
   alias Bourse.WS.Config
   alias Bourse.WS.Subscription
 
-  @ws_venues ~w(binance binanceusdm bybit deribit derive hyperliquid okx)
+  @ws_venues ~w(binance binancecoinm binanceusdm bybit deribit derive hyperliquid okx)
 
   describe "build/1" do
     test "configured venues are a closed subset of runtime support" do
@@ -43,6 +43,24 @@ defmodule Bourse.WS.SpecConfigTest do
       config = Config.for_exchange("binanceusdm")
       assert config.public_url == "wss://fstream.binance.com/ws"
       assert config.auth_pattern == :listen_key
+    end
+
+    test "binancecoinm resolves the delivery stream and its own listen key endpoints" do
+      config = Config.for_exchange("binancecoinm")
+
+      # COIN-M is a separate host and a separate wallet from USD-M; resolving
+      # fstream or a fapi endpoint here would authenticate the wrong stream.
+      assert config.public_url == "wss://dstream.binance.com/ws"
+      assert config.public_url_sandbox == "wss://demo-dstream.binance.com/ws"
+      assert config.auth_pattern == :listen_key
+
+      assert %{
+               pre_auth: %{
+                 default_market_type: :inverse,
+                 endpoints: %{inverse: :dapiPrivate_post_listenkey},
+                 keepalive_endpoints: %{inverse: :dapiPrivate_put_listenkey}
+               }
+             } = config.auth_config
     end
 
     test "derive auth stays nil — no WS auth pattern for privateKey login" do

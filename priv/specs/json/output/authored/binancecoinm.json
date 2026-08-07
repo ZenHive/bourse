@@ -18803,8 +18803,15 @@
   },
   "websocket": {
     "auth": {
-      "reason": "not_live_verified",
-      "supported": false
+      "authenticate_defined": true,
+      "credentials": [
+        "apiKey"
+      ],
+      "mechanism": "url_param",
+      "message": null,
+      "resolved_from": "self",
+      "source": "venue_listen_key",
+      "unresolved_reason": null
     },
     "dispatch": {
       "reason": "not_live_verified",
@@ -18831,10 +18838,11 @@
       "supported": false
     },
     "urls": {
-      "private": null,
-      "public": null,
-      "sandbox_private": null,
-      "sandbox_public": null
+      "private": "wss://dstream.binance.com/ws",
+      "public": "wss://dstream.binance.com/ws",
+      "sandbox_private": "wss://demo-dstream.binance.com/ws",
+      "sandbox_public": "wss://demo-dstream.binance.com/ws",
+      "unresolved_reason": null
     }
   },
   "emulated_methods": []

@@ -138,10 +138,11 @@ hold is one the venue accepted:
 A rejected handshake closes the socket and returns the venue's reason rather
 than a connection that would deliver nothing.
 
-`binanceusdm` is the exception to "authenticate the open socket": its credential
-is a listen key issued over REST and carried in the URL, so `connect/3` obtains
-it first and `authenticate: false` is refused — there is no later handshake to
-run. `derive` has no authored handshake yet and connects without one.
+The binance futures venues are the exception to "authenticate the open socket":
+their credential is a listen key issued over REST and carried in the URL, so
+`connect/3` obtains it first and `authenticate: false` is refused — there is no
+later handshake to run. `binanceusdm` and `binancecoinm` issue separate keys for
+separate streams. `derive` has no authored handshake yet and connects without one.
 
 ## Known Caveats
 

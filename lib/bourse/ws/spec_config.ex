@@ -79,6 +79,27 @@ defmodule Bourse.WS.SpecConfig do
         }
       }
     },
+    "binancecoinm" => %{
+      public_url: "wss://dstream.binance.com/ws",
+      public_url_sandbox: "wss://demo-dstream.binance.com/ws",
+      private_url: "wss://dstream.binance.com/ws",
+      private_url_sandbox: "wss://demo-dstream.binance.com/ws",
+      heartbeat: %{type: :ping, interval: 180_000},
+      subscription_pattern: :method_subscribe,
+      subscription_config: %{separator: "@", market_id_format: :lowercase},
+      auth_pattern: :listen_key,
+      auth_config: %{
+        pre_auth: %{
+          type: :listen_key,
+          # COIN-M is the inverse half of the one demo futures account; its
+          # wallet and its listen key are separate from USD-M's.
+          default_market_type: :inverse,
+          endpoints: %{inverse: :dapiPrivate_post_listenkey},
+          keepalive_endpoints: %{inverse: :dapiPrivate_put_listenkey},
+          keepalive_ms: 1_800_000
+        }
+      }
+    },
     "bybit" => %{
       public_url: "wss://stream.{hostname}/v5/public/linear",
       public_url_sandbox: "wss://stream-testnet.{hostname}/v5/public/linear",

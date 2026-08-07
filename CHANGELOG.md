@@ -53,6 +53,17 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `ws-api.testnet.binance.vision`: with the request sent, an order produced
   `executionReport` and `outboundAccountPosition`; without it, the identical
   order produced nothing.
+- `binancecoinm` had no WebSocket configuration at all, so `Bourse.WS.connect/3`
+  answered `{:error, :unsupported_exchange}` for a venue that streams and issues
+  listen keys like its USD-M sibling. Its authored slice now carries the
+  delivery stream hosts and the `url_param` auth mechanism, and its listen key
+  resolves from `dapiPrivate_*` rather than the linear endpoints — COIN-M and
+  USD-M share one demo account and one key pair but are separate wallets with
+  separate user data streams, so the other half's key connects and delivers
+  nothing. Confirmed against `demo-dstream.binance.com`: an order placed and
+  cancelled on the COIN-M wallet produced `ORDER_TRADE_UPDATE` for both
+  transitions on the keyed socket, while a decoy key reported `:connected` and
+  received nothing.
 - `Bourse.WS.connect/3` forced `market_type: :spot` when resolving a listen key
   endpoint, so a venue that trades no spot resolved either an endpoint it does
   not serve or none at all. The market type now comes from the venue's own

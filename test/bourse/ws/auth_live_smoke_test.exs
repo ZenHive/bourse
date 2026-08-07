@@ -20,13 +20,16 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
   venue that never checked — the rejection on the unauthenticated connection is
   what proves the handshake is load-bearing.
 
-  The binance family is covered too, and neither half is a subscribe-ack
-  venue. binanceusdm (`:listen_key`) authenticates before the socket exists —
-  the key is a path segment — so the evidence is the issued key appearing in
-  the URL, its refresh succeeding, and a key that is not the account's failing
-  before any socket opens. binance spot (`:ws_api_signature`) opens its user
-  data stream with a signed WS-API request, and is checked against a bad
-  secret, which the venue rejects outright.
+  The binance family is covered too, and no part of it is a subscribe-ack
+  venue. The two futures halves (`:listen_key`) authenticate before the socket
+  exists — the key is a path segment — so the evidence is the issued key
+  appearing in the URL, its refresh succeeding, and a key that is not the
+  account's failing before any socket opens. binancecoinm additionally drives a
+  real account event past both a socket keyed by its own listen key and one
+  keyed by a decoy, because a wrong key connects and reports `:connected` while
+  delivering nothing. binance spot (`:ws_api_signature`) opens its user data
+  stream with a signed WS-API request, and is checked against a bad secret,
+  which the venue rejects outright.
 
   Credentials: bybit + deribit testnet and okx demo keys must be registered via
   `Bourse.Testnet.register_all_from_env/1` in `test_helper.exs`. Tests flunk
@@ -46,6 +49,11 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
   @moduletag :network
   @moduletag :ws_auth_smoke
   @moduletag trace_messages: 200
+
+  # 10 USD per contract and a wallet the UI faucet does not credit, so the
+  # cheapest COIN-M instrument the demo account can margin is the one to write
+  # the account-event probe against.
+  @coinm_symbol "BCHUSD_PERP"
 
   # =============================================================================
   # bybit — :direct_hmac_expiry
@@ -244,12 +252,107 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
       assert {:error, %Bourse.Error{type: :authentication_error}} = WS.connect(exchange, :private)
     end
 
+    test "binancecoinm carries a delivery listen key issued from its own wallet" do
+      creds = require_credentials!(:binancecoinm, url: "https://demo-dapi.binance.com")
+      exchange = Exchange.new!(:binancecoinm, credentials: creds, sandbox: true)
+
+      {:ok, ws} = WS.connect(exchange, :private)
+
+      try do
+        assert %{pattern: :listen_key, meta: session} = ws.auth
+        assert ws.url =~ session.listen_key
+        # USD-M and COIN-M are two wallets inside one demo account, each with
+        # its own stream — a linear key here connects and delivers nothing.
+        assert session.market_type == :inverse
+        assert ws.url =~ "dstream"
+
+        assert :ok = ListenKey.keepalive(exchange, session)
+      after
+        WS.close(ws)
+      end
+    end
+
+    @tag :dangerous
+    test "binancecoinm account events reach the keyed socket and no other" do
+      creds = require_credentials!(:binancecoinm, url: "https://demo-dapi.binance.com")
+      exchange = Exchange.new!(:binancecoinm, credentials: creds, sandbox: true)
+
+      # The control leg is a syntactically valid key that is not the account's,
+      # collected in its own process so the two streams stay distinguishable.
+      # The venue accepts the socket and reports :connected either way, so a
+      # single-leg "events arrived" assertion would pass against a connection
+      # that never carried a credential at all.
+      decoy = Task.async(fn -> collect_decoy_frames(String.duplicate("a", 64), 20_000) end)
+      {:ok, ws} = WS.connect(exchange, :private)
+
+      try do
+        order_id = place_resting_coinm_order(exchange)
+        assert {:ok, _} = cancel_coinm_order(exchange, order_id)
+
+        assert_receive {:websocket_message, %{"e" => "ORDER_TRADE_UPDATE", "o" => %{"X" => "NEW"}}}, 15_000
+
+        assert_receive {:websocket_message, %{"e" => "ORDER_TRADE_UPDATE", "o" => %{"X" => "CANCELED"}}},
+                       15_000
+
+        assert %{state: :connected, frames: []} = Task.await(decoy, 30_000)
+      after
+        WS.close(ws)
+      end
+    end
+
     test "binanceusdm refuses to hand back a private connection with auth opted out" do
       creds = require_credentials!(:binanceusdm, url: "https://demo-fapi.binance.com")
       exchange = Exchange.new!(:binanceusdm, credentials: creds, sandbox: true)
 
       assert {:error, {:auth_not_optional, :listen_key}} =
                WS.connect(exchange, :private, authenticate: false)
+    end
+  end
+
+  # A limit buy well under the mark, so it rests instead of filling — the point
+  # is the ORDER_TRADE_UPDATE the venue emits, not a position.
+  defp place_resting_coinm_order(exchange) do
+    {:ok, %{body: [%{"price" => mark} | _]}} =
+      Bourse.Binancecoinm.dapiPublic_get_ticker_price(exchange, %{"symbol" => @coinm_symbol})
+
+    {mark, ""} = Float.parse(mark)
+    price = :erlang.float_to_binary(Float.round(mark * 0.7, 2), decimals: 2)
+
+    {:ok, %{body: %{"orderId" => order_id}}} =
+      Bourse.Binancecoinm.dapiPrivate_post_order(exchange, %{
+        "symbol" => @coinm_symbol,
+        "side" => "BUY",
+        # The demo futures account runs Hedge Mode; omitting positionSide is -4061.
+        "positionSide" => "LONG",
+        "type" => "LIMIT",
+        "timeInForce" => "GTC",
+        "quantity" => "1",
+        "price" => price
+      })
+
+    order_id
+  end
+
+  defp cancel_coinm_order(exchange, order_id) do
+    Bourse.Binancecoinm.dapiPrivate_delete_order(exchange, %{"symbol" => @coinm_symbol, "orderId" => order_id})
+  end
+
+  defp collect_decoy_frames(listen_key, timeout_ms) do
+    {:ok, client} = ZenClient.connect("wss://demo-dstream.binance.com/ws/" <> listen_key)
+
+    try do
+      Process.sleep(timeout_ms)
+      %{state: ZenClient.get_state(client), frames: drain_frames([])}
+    after
+      ZenClient.close(client)
+    end
+  end
+
+  defp drain_frames(acc) do
+    receive do
+      {:websocket_message, frame} -> drain_frames([frame | acc])
+    after
+      0 -> Enum.reverse(acc)
     end
   end
 

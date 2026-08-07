@@ -226,6 +226,16 @@ defmodule Bourse.WS.AuthWiringTest do
                WS.authenticate(ws)
     end
 
+    test "binancecoinm resolves its own endpoints rather than the linear ones" do
+      # One demo account, two wallets: a COIN-M socket keyed by a fapi listen
+      # key connects and then delivers nothing, because the key belongs to the
+      # other wallet's stream.
+      ws = connected_ws("binancecoinm", reply: :ok)
+
+      assert {:error, {:pre_auth_required, %{endpoint: :dapiPrivate_post_listenkey}}} =
+               WS.authenticate(ws)
+    end
+
     test "reports the session already held rather than issuing a second key" do
       session = %{
         listen_key: "abc",
