@@ -640,8 +640,8 @@ resolves the split. Verify it with `project_registry-list` rather than guessing:
 | Role | Location | Registry field |
 |---|---|---|
 | The harness BEAM | `~/_DATA/code/harness` (`iex -S mix`) | — never the target repo |
-| Code — what gets forked, reviewed and landed | `~/_DATA/code/bourse` | `source: {:local, …}`, `target_branch: "main"` |
-| Roadmap — what gets read, scored and status-written | `~/_DATA/code/bourse_workbench` | `roadmap_path`, `roadmap_target_branch: "main"` |
+| Code — what gets forked, reviewed and landed | `~/_DATA/code/bourse` | `source` |
+| Roadmap — what gets read, scored and status-written | `~/_DATA/code/bourse_workbench` | `roadmap_path` |
 
 **Harness resolves `roadmap_path` itself** — `Harness.Roadmap` shells `rmap` there
 and owns durable roadmap writes into that repo. A dispatch call passes
@@ -652,8 +652,14 @@ between the two checkouts by hand.
 verification needs what only lives here: `mix check.dispatch`, the testnet
 credentials, the venue authority index, and this file's doctrine. Sit in the
 workbench only for deliberate roadmap surgery, where `rmap` wants to be cwd.
-Registration settings — `check_command: "mix check.dispatch"`,
-`concurrency_cap: 4`, `landing_policy: :auto`, `languages: [:elixir]`.
+
+🚨 **The two repo locations above are doctrine; every other registration value is
+not written down here on purpose.** `check_command`, `concurrency_cap`,
+`landing_policy`, `target_branch`, `reviewer` and the model pins are operator
+settings that change without anyone thinking about this file — a copy of them here
+would be stale duplication with no gate to catch it, and the registry is on this
+host only, so no CI check can ever guard it. Read them from
+`project_registry-list`, which is the authority. Never quote them into a doc.
 
 **Consequences that bite if forgotten:**
 
