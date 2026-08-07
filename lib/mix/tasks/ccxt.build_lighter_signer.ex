@@ -61,20 +61,33 @@ defmodule Mix.Tasks.Ccxt.BuildLighterSigner do
   @doc "Returns the native target identifier for the current host."
   @spec host_target() :: String.t()
   def host_target do
-    os =
-      case :os.type() do
-        {:unix, :darwin} -> "darwin"
-        {:unix, _name} -> "linux"
-        {:win32, _name} -> "windows"
-      end
+    system_architecture = List.to_string(:erlang.system_info(:system_architecture))
 
-    arch =
-      :system_architecture
-      |> :erlang.system_info()
-      |> List.to_string()
-      |> architecture()
+    target_for(:os.type(), system_architecture, System.get_env())
+  end
 
-    "#{os}-#{arch}"
+  @doc """
+  Resolves a release target from an explicit host description.
+
+  Windows reports a `:system_architecture` of `"win32"` — the OS, not the CPU —
+  so on that platform the architecture comes from the environment the Windows
+  loader populates instead. Taking the host as arguments keeps every branch
+  reachable from a test on any one machine.
+  """
+  @spec target_for({:unix | :win32, atom()}, String.t(), %{optional(String.t()) => String.t()}) ::
+          String.t()
+  def target_for(os_type, system_architecture, env \\ %{})
+
+  def target_for({:unix, :darwin}, system_architecture, _env) do
+    "darwin-" <> architecture(system_architecture)
+  end
+
+  def target_for({:unix, _name}, system_architecture, _env) do
+    "linux-" <> architecture(system_architecture)
+  end
+
+  def target_for({:win32, _name}, _system_architecture, env) do
+    "windows-" <> windows_architecture(env)
   end
 
   defp build_helper!(target, source_dir, output_dir, library_path, coverage?) do
@@ -122,6 +135,18 @@ defmodule Mix.Tasks.Ccxt.BuildLighterSigner do
       String.contains?(system_architecture, ["aarch64", "arm64"]) -> "arm64"
       String.contains?(system_architecture, ["x86_64", "amd64"]) -> "amd64"
       true -> Mix.raise("Unsupported architecture: #{system_architecture}")
+    end
+  end
+
+  # Under WOW64 `PROCESSOR_ARCHITECTURE` describes the emulated 32-bit process,
+  # and the host CPU is disclosed as `PROCESSOR_ARCHITEW6432` instead.
+  defp windows_architecture(env) do
+    case env["PROCESSOR_ARCHITEW6432"] || env["PROCESSOR_ARCHITECTURE"] do
+      nil ->
+        Mix.raise("Cannot determine Windows architecture: PROCESSOR_ARCHITECTURE is unset")
+
+      value ->
+        value |> String.downcase() |> architecture()
     end
   end
 
