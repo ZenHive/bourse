@@ -5,15 +5,17 @@ defmodule Bourse.CircuitBreakerTest do
 
   alias Bourse.CircuitBreaker
   alias Bourse.Error
+  alias Bourse.Test.CircuitBreakerControl
 
   @moduletag trace_messages: true
 
   setup do
     exchange = "binance"
     unknown_exchange = "unknown_exchange_#{System.unique_integer([:positive])}"
-    fuse_name = CircuitBreaker.fuse_name(exchange)
-    :fuse.remove(fuse_name)
-    on_exit(fn -> :fuse.remove(fuse_name) end)
+
+    # The `:test` environment disables the breaker so it cannot couple unrelated
+    # modules; this one asserts its behaviour, so it opts back in.
+    CircuitBreakerControl.isolate!(exchange)
 
     {:ok, exchange: exchange, unknown_exchange: unknown_exchange}
   end

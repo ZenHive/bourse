@@ -3,6 +3,7 @@ defmodule Bourse.Test.FixtureGateIsolationTest do
 
   alias Bourse.CircuitBreaker
   alias Bourse.RateLimiter
+  alias Bourse.Test.CircuitBreakerControl
   alias Bourse.Test.FixtureGateIsolation
 
   # A real runtime venue: fuse names resolve through Bourse.Registry, so an
@@ -10,6 +11,9 @@ defmodule Bourse.Test.FixtureGateIsolationTest do
   @venue "lighter"
 
   setup do
+    # The `:test` environment disables the breaker so it cannot couple unrelated
+    # modules; this module blows a real fuse, so it opts back in.
+    CircuitBreakerControl.isolate!(@venue)
     on_exit(fn -> FixtureGateIsolation.isolate!(@venue) end)
   end
 

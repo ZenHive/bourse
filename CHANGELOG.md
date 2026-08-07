@@ -9,6 +9,16 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- The Lighter signer helper could not talk to the BEAM on Windows. Windows opens
+  the standard streams in text mode, which rewrites `0x0A` on the way out and
+  stops reading at `0x1A` — both corrupt the length-prefixed binary frames the
+  Port protocol exchanges, so the helper exited and the next `Port.command/2`
+  raised `:epipe`. The helper now puts `stdin`/`stdout` in binary mode before
+  reading its first frame. The build itself was also broken on that platform:
+  `:erlang.system_info(:system_architecture)` answers `"win32"` there — the OS,
+  not the CPU — so `mix ccxt.build_lighter_signer` now resolves the Windows
+  architecture from the environment instead.
+
 - `Bourse.WS.connect(exchange, :private)` returned an open but unauthenticated
   socket on every venue. The auth patterns and the state machine that drives
   them both existed; nothing called them from the facade. Private subscriptions

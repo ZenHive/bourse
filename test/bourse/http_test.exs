@@ -9,6 +9,7 @@ defmodule Bourse.HTTPTest do
   alias Bourse.HTTP
   alias Bourse.RateLimiter.Info
   alias Bourse.RateLimiter.State
+  alias Bourse.Test.CircuitBreakerControl
   alias Bourse.Test.RequestCollector
 
   @moduletag capture_log: true
@@ -1274,10 +1275,10 @@ defmodule Bourse.HTTPTest do
     %{exchange | id: "#{exchange_id}_http_test_#{System.unique_integer([:positive])}"}
   end
 
+  # The `:test` environment disables the breaker so it cannot couple unrelated
+  # modules; the two cases below assert its integration, so they opt back in.
   defp isolate_fuse(exchange_id) do
-    fuse_name = CircuitBreaker.fuse_name(exchange_id)
-    :fuse.remove(fuse_name)
-    on_exit(fn -> :fuse.remove(fuse_name) end)
+    CircuitBreakerControl.isolate!(exchange_id)
   end
 
   defp zero_retry_delay(_retry_count), do: 0
