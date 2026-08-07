@@ -8,13 +8,13 @@ Eager-load only the irreducible floor; everything else is skill-on-demand via en
 
 - **`critical-rules`** — hard guardrails that must stay ambient every session (a guardrail the model invokes "when relevant" fails exactly when it doesn't realize the rule applies).
 - **`ex-unit-json`** — `mix test.json` is the test runner every session uses; its flight-recorder semantics and the "JSON-by-design — parse for real failures, never reject the envelope" rule are load-bearing for cross-family reviewers.
+- **`harness-workflow`** — this repo IS registered for harness dispatch (see below). Its guardrails fail by non-recognition (`Recover, Don't Redo`; `Settle ≠ landed`; the duplicate-land trap), so a skill-on-demand load is not equivalent.
 
 @~/.claude/includes/critical-rules.md
 @~/.claude/includes/ex-unit-json.md
+@~/.claude/includes/harness-workflow.md
 
 (`response-conventions` loads globally via `~/.claude/CLAUDE.md` — not re-imported here.)
-
-> **Add `@~/.claude/includes/harness-workflow.md` when this repo is registered for harness dispatch.** It is not imported yet because no dispatch loop runs here; the import is load-bearing only once it does.
 
 ## What this repository is
 
@@ -32,8 +32,31 @@ This repo was extracted from `../bourse_workbench`, which remains the **authorin
 | Is a supported venue's authored spec right? | **here** — the spec, its authority manifest and its reality evidence all live here |
 | Does an eleventh venue get added? | **here** — `mix ccxt.promote_venue` grades its candidate against the reality manifests, and those live here. Pass the pinned CCXT reference document in from the workbench with `--reference`. |
 | Did the full CCXT reference extraction shift across all 110 venues? | workbench — this repo carries a 15-venue slice and cannot answer corpus-wide questions |
-| Roadmap and task scoring, and the CHANGELOG gate that reads it | workbench |
+| Roadmap and task scoring, and the CHANGELOG gate that reads it | workbench — one rmap, declaring `project = "bourse"`. It is not a workbench roadmap that mentions this client; it **is** this client's roadmap. Do **not** stand up a second rmap here. |
 | Where does a consumer file a bug? | **here**, in `BUGS.md` — this is the only repo a consumer knows. Triage into scored tasks happens in the workbench, and writes a dated note back into the entry. |
+
+#### Where harness runs from — three locations, none of them optional
+
+`bourse` is registered in `Harness.ProjectRegistry`, and the registration is what
+resolves the split. Verify it with `project_registry-list` rather than guessing:
+
+| Role | Location | Registry field |
+|---|---|---|
+| The harness BEAM | `~/_DATA/code/harness` (`iex -S mix`) | — never the target repo |
+| Code — what gets forked, reviewed and landed | `~/_DATA/code/bourse` | `source: {:local, …}`, `target_branch: "main"` |
+| Roadmap — what gets read, scored and status-written | `~/_DATA/code/bourse_workbench` | `roadmap_path`, `roadmap_target_branch: "main"` |
+
+**Harness resolves `roadmap_path` itself** — `Harness.Roadmap` shells `rmap` there
+and owns durable roadmap writes into that repo. A dispatch call passes
+`project: "bourse"` and nothing else; the orchestrator never shuttles task state
+between the two checkouts by hand.
+
+**Drive the loop from this repo.** The dispatched work is bourse code, and
+verification needs what only lives here: `mix check.dispatch`, the testnet
+credentials, the venue authority index, and this file's doctrine. Sit in the
+workbench only for deliberate roadmap surgery, where `rmap` wants to be cwd.
+Registration settings — `check_command: "mix check.dispatch"`,
+`concurrency_cap: 4`, `landing_policy: :auto`, `languages: [:elixir]`.
 
 **Consequences that bite if forgotten:**
 
