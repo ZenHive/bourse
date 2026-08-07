@@ -7,6 +7,16 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Security
+
+- The Lighter signer's Go module pinned `go-ethereum` 1.15.6 and `gnark-crypto`
+  0.14.0 through `lighter-go`, carrying six advisories (four p2p denial-of-service
+  issues, an ECIES public-key validation gap in the RLPx handshake, and unchecked
+  memory allocation during gnark-crypto vector deserialization). Both are now
+  overridden to `go-ethereum` 1.17.0 and `gnark-crypto` 0.18.1. Signing is
+  unchanged: an authenticated testnet call was verified against `zklighter` before
+  and after the bump, and the parser/framing coverage gate still holds.
+
 ### Fixed
 
 - The Lighter signer helper could not talk to the BEAM on Windows. Windows opens
