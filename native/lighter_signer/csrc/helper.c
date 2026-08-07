@@ -8,6 +8,9 @@
 
 #ifndef _WIN32
 #include <sys/resource.h>
+#else
+#include <fcntl.h>
+#include <io.h>
 #endif
 
 #define PROTOCOL_VERSION 1U
@@ -541,6 +544,11 @@ static void harden_process(void) {
   if (freopen("NUL", "w", stderr) == NULL) {
     /* best-effort hardening: keep running with stderr unredirected */
   }
+  /* Windows opens the standard streams in text mode, which rewrites 0x0A on the
+     way out and stops reading at 0x1A. Both corrupt a length-prefixed binary
+     frame, so the stream has to be put in binary mode before the first frame. */
+  (void)_setmode(_fileno(stdin), _O_BINARY);
+  (void)_setmode(_fileno(stdout), _O_BINARY);
 #endif
   (void)setvbuf(stdin, NULL, _IONBF, 0U);
   (void)setvbuf(stdout, NULL, _IONBF, 0U);
