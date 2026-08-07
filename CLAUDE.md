@@ -24,7 +24,7 @@ Runtime support is a **closed set**. `Bourse.Exchanges` and `Bourse.Registry` re
 
 ### 🚧 The workbench boundary — read this before deciding where work goes
 
-This repo was extracted from `../ccxt_client`, which remains the **authoring workbench**. The split is by question, not by file type:
+This repo was extracted from `../bourse_workbench`, which remains the **authoring workbench**. The split is by question, not by file type:
 
 | Question | Repo |
 |---|---|
