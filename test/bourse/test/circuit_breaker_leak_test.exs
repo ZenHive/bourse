@@ -67,11 +67,12 @@ defmodule Bourse.Test.CircuitBreakerOptInIsSyncTest do
       "test/**/*.exs"
       |> Path.wildcard()
       |> Enum.map(&{&1, File.read!(&1)})
-      |> Enum.filter(fn {_path, source} -> source =~ "CircuitBreakerControl." end)
-      # Anchored to the `use` declaration rather than the bare phrase: prose that
-      # merely discusses `async: true` (this file's own comment, for one) is not
-      # a module that runs concurrently.
-      |> Enum.filter(fn {_path, source} -> source =~ ~r/^\s*use\s+.*async:\s*true/m end)
+      |> Enum.filter(fn {_path, source} ->
+        # The async match is anchored to the `use` declaration rather than the
+        # bare phrase: prose that merely discusses `async: true` (this file's own
+        # comment, for one) is not a module that runs concurrently.
+        source =~ "CircuitBreakerControl." and source =~ ~r/^\s*use\s+.*async:\s*true/m
+      end)
       |> Enum.map(&elem(&1, 0))
 
     assert offenders == [],
