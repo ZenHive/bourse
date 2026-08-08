@@ -29,6 +29,25 @@ permissions:
   contents: read
 
 jobs:
+  # Dependabot watches the manifest, so a transitive dependency that drops out of
+  # go.mod stops being reported even though the module graph still selects it —
+  # which is what happened when go-ethereum 1.17 absorbed golang.org/x/crypto and
+  # `go mod tidy` removed our direct requirement. Re-pinning cannot fix that: tidy
+  # drops a requirement no package imports. govulncheck asks the question that
+  # actually matters for a signing helper — is a vulnerable symbol reachable from
+  # the code we build — so it keeps reporting whether or not the manifest does.
+  vulncheck:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: native/lighter_signer/go.mod
+          cache-dependency-path: native/lighter_signer/go.sum
+      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - run: govulncheck ./...
+        working-directory: native/lighter_signer
+
   build:
     strategy:
       fail-fast: false
