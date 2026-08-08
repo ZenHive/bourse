@@ -30,6 +30,7 @@ defmodule Bourse.Unified.ReadParse do
     parse_funding_rate_history: "funding_rate_history",
     parse_funding_history: "funding_history",
     parse_greeks: "greeks",
+    parse_last_price: "last_price",
     parse_ledger_entry: "ledger_entry",
     parse_leverage: "leverage",
     parse_leverage_tiers: "leverage_tiers",
@@ -350,7 +351,18 @@ defmodule Bourse.Unified.ReadParse do
   # built from a list payload re-keyed by symbol after parsing. They are not
   # `list_return?`, but their envelope must stay list-shaped — a single-record
   # first-row unwrap would collapse them to one entry.
-  @symbol_dict_return_methods ["fetchFundingRates", "fetchOptionChain", "fetchTickers", "fetchTradingFees"]
+  @symbol_dict_return_methods [
+    "fetchFundingRates",
+    "fetchOptionChain",
+    "fetchTickers",
+    "fetchTradingFees",
+    # Plural collection tokens (MarginModes / OpenInterests / IsolatedBorrowRates)
+    # resolve via the return-type alias table to singular parse types; re-key the
+    # row list by symbol the same way fetchTickers does.
+    "fetchMarginModes",
+    "fetchOpenInterests",
+    "fetchIsolatedBorrowRates"
+  ]
 
   # CrossBorrowRates is keyed by currency code, not by symbol — the rows
   # carry `currency` with `symbol: nil`, so symbol indexing would drop every one.

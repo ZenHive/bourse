@@ -211,6 +211,7 @@ defmodule Bourse.Exchange do
     {"funding_rate_history", :parse_funding_rate_history, Bourse.FundingRateHistory},
     {"funding_history", :parse_funding_history, Bourse.FundingHistory},
     {"greeks", :parse_greeks, Bourse.Greeks},
+    {"last_price", :parse_last_price, Bourse.LastPrice},
     {"ledger_entry", :parse_ledger_entry, Bourse.LedgerEntry},
     {"leverage", :parse_leverage, Bourse.Leverage},
     {"leverage_tiers", :parse_leverage_tiers, Bourse.LeverageTier},

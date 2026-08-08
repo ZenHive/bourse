@@ -6,6 +6,27 @@ Append-only schema confrontations for Deribit. Follow the allocation and evidenc
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Deribit carve record.
 
+
+**C-T565a — `fetchLiquidations` is not a liquidation surface on Deribit; the wired
+endpoint returns settlement history (task 565). Outcome: DIVERGE; capabilities.has = false.**
+
+- *Exchange semantics:* Deribit's
+  [`public/get_last_settlements_by_instrument`](https://docs.deribit.com/api-reference/market-data/public-get_last_settlements_by_instrument)
+  returns a `settlements` array of delivery/settlement records, not forced-liquidation
+  events. The authored unified mapping pointed `fetchLiquidations` at that endpoint.
+- *Live evidence (2026-08-08, testnet):* `fetchLiquidations("BTC-PERPETUAL")` answered
+  `result.settlements` (empty list on the probe) inside a JSON-RPC envelope. No
+  liquidation price, side, or quantity fields are present.
+- *Our carve:* `capabilities.has.fetchLiquidations = false`. Declaring the method as a
+  liquidation read would alias onto `%Bourse.Liquidation{}` and silently mis-parse
+  settlement rows. Settlement history remains a net-new unified type owned by the
+  sibling of task 565.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T565a","date":"2026-08-08","semantic_source":{"kind":"provider_owned","reference":"Deribit public/get_last_settlements_by_instrument documentation"},"observed_evidence":{"kind":"live_venue","reference":"Deribit testnet fetchLiquidations BTC-PERPETUAL returned result.settlements 2026-08-08"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
+
 **C-T535a — Deribit publishes hourly funding history; an eight-hour query window is not the
 venue cadence (task 535). Outcome: DIVERGE from CCXT; reality tier 1.**
 

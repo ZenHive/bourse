@@ -3,11 +3,6 @@
   "binance": [
     {
       "failure": "no_parse_type",
-      "method": "fetchAccountPositions",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
       "method": "fetchDepositWithdrawFees",
       "tracking_task": 550
     },
@@ -18,34 +13,9 @@
       "tracking_task": 550
     },
     {
-      "failure": "no_parse_type",
-      "method": "fetchIsolatedBorrowRates",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
-      "method": "fetchLastPrices",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
-      "method": "fetchLeverageTiers",
-      "tracking_task": 550
-    },
-    {
       "failure": "no_field_map",
       "method": "fetchMarginAdjustmentHistory",
       "parse_type": "margin_modification",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
-      "method": "fetchMarginModes",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
-      "method": "fetchMyDustTrades",
       "tracking_task": 550
     },
     {
@@ -55,17 +25,7 @@
     },
     {
       "failure": "no_parse_type",
-      "method": "fetchOptionPositions",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
       "method": "fetchPositionMode",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
-      "method": "fetchPositionsRisk",
       "tracking_task": 550
     },
     {
@@ -92,11 +52,6 @@
     }
   ],
   "binanceusdm": [
-    {
-      "failure": "no_parse_type",
-      "method": "fetchAccountPositions",
-      "tracking_task": 550
-    },
     {
       "failure": "no_field_map",
       "method": "fetchConvertCurrencies",
@@ -134,47 +89,12 @@
     },
     {
       "failure": "no_parse_type",
-      "method": "fetchIsolatedBorrowRates",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
-      "method": "fetchLastPrices",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
-      "method": "fetchLeverageTiers",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
-      "method": "fetchMarginModes",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
-      "method": "fetchMyDustTrades",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
       "method": "fetchMySettlementHistory",
       "tracking_task": 550
     },
     {
       "failure": "no_parse_type",
-      "method": "fetchOptionPositions",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
       "method": "fetchPositionMode",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
-      "method": "fetchPositionsRisk",
       "tracking_task": 550
     },
     {
@@ -219,16 +139,6 @@
     },
     {
       "failure": "no_parse_type",
-      "method": "fetchDerivativesOpenInterestHistory",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
-      "method": "fetchLeverageTiers",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
       "method": "fetchMySettlementHistory",
       "tracking_task": 550
     },
@@ -251,11 +161,6 @@
     },
     {
       "failure": "no_parse_type",
-      "method": "fetchLiquidations",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
       "method": "fetchStatus",
       "tracking_task": 550
     }
@@ -266,11 +171,6 @@
       "failure": "no_field_map",
       "method": "fetchFundingHistory",
       "parse_type": "funding_history",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
-      "method": "fetchOpenInterests",
       "tracking_task": 550
     },
     {
@@ -288,11 +188,6 @@
     },
     {
       "failure": "no_parse_type",
-      "method": "fetchDeposit",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
       "method": "fetchDepositWithdrawFees",
       "tracking_task": 550
     },
@@ -304,22 +199,7 @@
     },
     {
       "failure": "no_parse_type",
-      "method": "fetchMarketsByType",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
-      "method": "fetchOpenInterests",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
       "method": "fetchPositionMode",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
-      "method": "fetchPositionsForSymbol",
       "tracking_task": 550
     },
     {
@@ -335,11 +215,6 @@
     {
       "failure": "no_parse_type",
       "method": "fetchUnderlyingAssets",
-      "tracking_task": 550
-    },
-    {
-      "failure": "no_parse_type",
-      "method": "fetchWithdrawal",
       "tracking_task": 550
     }
   ]

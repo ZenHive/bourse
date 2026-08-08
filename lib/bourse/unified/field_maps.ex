@@ -61,6 +61,7 @@ defmodule Bourse.Unified.FieldMaps do
     "funding_rate_history" => Bourse.FundingRateHistory,
     "funding_history" => Bourse.FundingHistory,
     "greeks" => Bourse.Greeks,
+    "last_price" => Bourse.LastPrice,
     "ledger_entry" => Bourse.LedgerEntry,
     "leverage" => Bourse.Leverage,
     "leverage_tiers" => Bourse.LeverageTier,

@@ -1,0 +1,205 @@
+{
+  "task": 565,
+  "aliased": {
+    "LeverageTiers": {
+      "target": "LeverageTier",
+      "methods": [
+        "fetchLeverageTiers"
+      ],
+      "venues": [
+        "binance",
+        "binanceusdm",
+        "bybit"
+      ]
+    },
+    "IsolatedBorrowRates": {
+      "target": "BorrowRate",
+      "methods": [
+        "fetchIsolatedBorrowRates"
+      ],
+      "venues": [
+        "binance",
+        "binanceusdm"
+      ]
+    },
+    "IsolatedBorrowRate": {
+      "target": "BorrowRate",
+      "methods": [
+        "fetchIsolatedBorrowRate"
+      ],
+      "venues": [
+        "binance",
+        "binanceusdm"
+      ]
+    },
+    "MarginModes": {
+      "target": "MarginMode",
+      "methods": [
+        "fetchMarginModes"
+      ],
+      "venues": [
+        "binance",
+        "binanceusdm"
+      ]
+    },
+    "OpenInterests": {
+      "target": "OpenInterest",
+      "methods": [
+        "fetchOpenInterests"
+      ],
+      "venues": [
+        "okx",
+        "hyperliquid"
+      ]
+    },
+    "Liquidations": {
+      "target": "Liquidation",
+      "methods": [],
+      "note": "token alias only; deribit fetchLiquidations flipped has=false"
+    },
+    "LastPrice[]": {
+      "target": "LastPrice",
+      "methods": [
+        "fetchLastPrices"
+      ],
+      "venues": [
+        "binance",
+        "binanceusdm"
+      ],
+      "note": "existing struct wired into parse slots + field maps"
+    }
+  },
+  "descriptor_return_types_added": {
+    "fetchAccountPositions": {
+      "return_type": "Promise<Position[]>",
+      "venues": [
+        "binance",
+        "binanceusdm"
+      ]
+    },
+    "fetchOptionPositions": {
+      "return_type": "Promise<Position[]>",
+      "venues": [
+        "binance",
+        "binanceusdm"
+      ]
+    },
+    "fetchPositionsRisk": {
+      "return_type": "Promise<Position[]>",
+      "venues": [
+        "binance",
+        "binanceusdm"
+      ]
+    },
+    "fetchMyDustTrades": {
+      "return_type": "Promise<Trade[]>",
+      "venues": [
+        "binance",
+        "binanceusdm"
+      ]
+    },
+    "fetchPositionsForSymbol": {
+      "return_type": "Promise<Position[]>",
+      "venues": [
+        "okx"
+      ]
+    },
+    "fetchDeposit": {
+      "return_type": "Promise<Transaction>",
+      "venues": [
+        "okx"
+      ]
+    },
+    "fetchWithdrawal": {
+      "return_type": "Promise<Transaction>",
+      "venues": [
+        "okx"
+      ]
+    },
+    "fetchMarketsByType": {
+      "return_type": "Promise<Market[]>",
+      "venues": [
+        "okx"
+      ]
+    },
+    "fetchDerivativesOpenInterestHistory": {
+      "return_type": "Promise<OpenInterest[]>",
+      "venues": [
+        "bybit"
+      ]
+    },
+    "fetchLastPrices": {
+      "return_type": "Promise<LastPrice[]>",
+      "venues": [
+        "binance",
+        "binanceusdm"
+      ]
+    }
+  },
+  "non_struct_contract": {
+    "fetchLeverageTiers": "parser_plan forces list_return true (flat tier rows, not dict wrapper)"
+  },
+  "has_false": {
+    "fetchLiquidations": {
+      "venues": [
+        "deribit"
+      ],
+      "carve": "C-T565a",
+      "reason": "wired endpoint public/get_last_settlements_by_instrument returns settlements, not liquidations"
+    }
+  },
+  "pending_net_new_type": [
+    "fetchStatus",
+    "fetchPositionMode",
+    "fetchDepositWithdrawFees",
+    "fetchSettlementHistory",
+    "fetchMySettlementHistory",
+    "fetchTransactionFees",
+    "fetchBorrowRateHistories",
+    "fetchUnderlyingAssets"
+  ],
+  "pending_net_new_type_venues": {
+    "fetchStatus": [
+      "binance",
+      "binanceusdm",
+      "bybit",
+      "deribit",
+      "hyperliquid",
+      "okx"
+    ],
+    "fetchPositionMode": [
+      "binance",
+      "binancecoinm",
+      "binanceusdm",
+      "okx"
+    ],
+    "fetchDepositWithdrawFees": [
+      "binance",
+      "binanceusdm",
+      "bybit",
+      "deribit",
+      "okx"
+    ],
+    "fetchSettlementHistory": [
+      "binance",
+      "binanceusdm",
+      "bybit",
+      "okx"
+    ],
+    "fetchMySettlementHistory": [
+      "binance",
+      "binanceusdm",
+      "bybit"
+    ],
+    "fetchTransactionFees": [
+      "binance",
+      "binanceusdm"
+    ],
+    "fetchBorrowRateHistories": [
+      "okx"
+    ],
+    "fetchUnderlyingAssets": [
+      "okx"
+    ]
+  }
+}

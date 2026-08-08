@@ -1,6 +1,6 @@
 {
   "count": 165,
-  "exclusion_count": 98,
+  "exclusion_count": 97,
   "exclusions": [
     {
       "branch": "eapiPublic_get_mark",
@@ -634,17 +634,6 @@
       "capture_date": "2026-07-26",
       "endpoint": "ticker",
       "method": "fetchGreeks",
-      "reason": "{:live_call_failed, \"bad_request:-32602\"}",
-      "sections": [
-        "public"
-      ],
-      "venue": "deribit"
-    },
-    {
-      "branch": "public_get_get_last_settlements_by_instrument",
-      "capture_date": "2026-07-26",
-      "endpoint": "get_last_settlements_by_instrument",
-      "method": "fetchLiquidations",
       "reason": "{:live_call_failed, \"bad_request:-32602\"}",
       "sections": [
         "public"

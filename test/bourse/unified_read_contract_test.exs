@@ -12,25 +12,29 @@ defmodule Bourse.UnifiedReadContractTest do
 
   @runtime_manifest "priv/specs/json/runtime_support.json"
   @exclusions_path "test/fixtures/unified_read_parse_coverage_exclusions.json"
+  @resolution_disposition_path "test/fixtures/unified_read_return_type_resolution.json"
   @unified_source_path "lib/bourse/unified.ex"
   @read_parse_source_path "lib/bourse/unified/read_parse.ex"
   @external_resource @runtime_manifest
   @external_resource @exclusions_path
+  @external_resource @resolution_disposition_path
   @external_resource @unified_source_path
   @external_resource @read_parse_source_path
   @venues @runtime_manifest |> File.read!() |> Jason.decode!() |> Map.fetch!("venues")
   @exclusions @exclusions_path |> File.read!() |> Jason.decode!()
+  @resolution_disposition @resolution_disposition_path |> File.read!() |> Jason.decode!()
   @recording_manifest_path "test/fixtures/responses/_manifest.json"
   @external_resource @recording_manifest_path
   @recording_manifest @recording_manifest_path |> File.read!() |> Jason.decode!()
 
   # TODO(Task 538): remove each entry as the sibling task repairs the recorded
   # collection-shape violations. Exact enumeration keeps new regressions red.
+  # fetch_last_prices is now typed as LastPrice[] (task 565); remaining gaps are
+  # collection-shape only (list vs symbol-keyed map).
   @known_runtime_gaps [
     {"binance", :fetch_bids_asks, {:row_count_collapsed, 3_673, 1}, 538},
     {"binance", :fetch_bids_asks, :not_symbol_keyed, 538},
     {"binance", :fetch_last_prices, :not_symbol_keyed, 538},
-    {"binance", :fetch_last_prices, :untyped_result, 538},
     {"binanceusdm", :fetch_funding_intervals, {:row_count_collapsed, 616, 1}, 538},
     {"binanceusdm", :fetch_funding_intervals, :not_symbol_keyed, 538}
   ]
@@ -45,15 +49,15 @@ defmodule Bourse.UnifiedReadContractTest do
 
       assert Map.new(actual, fn {venue, entries} -> {venue, length(entries)} end) == %{
                "alpaca" => 0,
-               "binance" => 16,
+               "binance" => 8,
                "binancecoinm" => 1,
-               "binanceusdm" => 19,
-               "bybit" => 9,
-               "deribit" => 3,
+               "binanceusdm" => 11,
+               "bybit" => 7,
+               "deribit" => 2,
                "derive" => 0,
-               "hyperliquid" => 3,
+               "hyperliquid" => 2,
                "lighter" => 0,
-               "okx" => 12
+               "okx" => 7
              }
 
       expected =
@@ -95,7 +99,7 @@ defmodule Bourse.UnifiedReadContractTest do
       end
     end
 
-    test "fetchTime is covered on Bybit and Deribit while OKX fetchOpenInterests is a gap" do
+    test "fetchTime is covered on Bybit and Deribit and OKX fetchOpenInterests resolves via alias" do
       cases = [
         {"bybit", Bourse.Bybit, %{"retCode" => 0, "result" => %{"timeSecond" => "1785772800"}}},
         {"deribit", Bourse.Deribit, %{"jsonrpc" => "2.0", "result" => 1_785_772_800_000}}
@@ -120,11 +124,96 @@ defmodule Bourse.UnifiedReadContractTest do
         assert is_integer(timestamp)
       end
 
-      assert %{
-               "failure" => "no_parse_type",
-               "method" => "fetchOpenInterests",
-               "tracking_task" => 550
-             } in parse_coverage_gaps("okx", authored_spec!("okx"))
+      refute Enum.any?(
+               parse_coverage_gaps("okx", authored_spec!("okx")),
+               &(&1["method"] == "fetchOpenInterests")
+             )
+    end
+
+    test "return-type resolution is total over declared reads except enumerated net-new residue" do
+      pending = MapSet.new(resolution_disposition()["pending_net_new_type"] || [])
+      contract = runtime_parse_contract()
+      method_by_js = Map.new(Unified.method_defs(), fn {method, js, _, _} -> {js, method} end)
+
+      for venue <- @venues do
+        for js_name <- supported_reads(venue, authored_spec!(venue)) do
+          method = Map.fetch!(method_by_js, js_name)
+
+          case runtime_parse_type(method, js_name, contract) do
+            {:ok, _parse_type} ->
+              :ok
+
+            :none ->
+              assert MapSet.member?(pending, js_name),
+                     "#{venue}.#{js_name} is has=true but unresolvable and not enumerated as net-new residue"
+          end
+        end
+      end
+    end
+
+    test "aliased plural tokens parse venue-own recordings into unified structs" do
+      bybit_body =
+        "test/fixtures/responses/bybit/fetch_leverage_tiers.json"
+        |> File.read!()
+        |> Jason.decode!()
+        |> Map.fetch!("body")
+
+      assert {:ok, [%Bourse.LeverageTier{} = tier | _] = tiers} =
+               ReadParse.parse(
+                 Exchange.new!("bybit"),
+                 Bourse.Bybit,
+                 :fetch_leverage_tiers,
+                 "fetchLeverageTiers",
+                 bybit_body,
+                 %{},
+                 :parse_leverage_tiers,
+                 true
+               )
+
+      assert length(tiers) > 1
+      assert is_number(tier.max_leverage)
+      assert is_binary(tier.symbol)
+
+      okx_body =
+        "test/fixtures/responses/okx/fetch_open_interests.json"
+        |> File.read!()
+        |> Jason.decode!()
+        |> Map.fetch!("body")
+
+      assert {:ok, %{} = interests} =
+               ReadParse.parse(
+                 Exchange.new!("okx"),
+                 Bourse.Okx,
+                 :fetch_open_interests,
+                 "fetchOpenInterests",
+                 okx_body,
+                 %{},
+                 :parse_open_interest,
+                 false
+               )
+
+      assert map_size(interests) > 0
+      assert %Bourse.OpenInterest{} = interests |> Map.values() |> hd()
+
+      last_prices_body =
+        "test/fixtures/responses/binance/fetch_last_prices.json"
+        |> File.read!()
+        |> Jason.decode!()
+        |> Map.fetch!("body")
+
+      assert {:ok, [%Bourse.LastPrice{} = price | _]} =
+               ReadParse.parse(
+                 Exchange.new!("binance"),
+                 Bourse.Binance,
+                 :fetch_last_prices,
+                 "fetchLastPrices",
+                 Enum.take(last_prices_body, 5),
+                 %{},
+                 :parse_last_price,
+                 true
+               )
+
+      assert is_number(price.price)
     end
   end
 
@@ -421,6 +510,8 @@ defmodule Bourse.UnifiedReadContractTest do
       assert second.id == "order-2"
     end
   end
+
+  defp resolution_disposition, do: @resolution_disposition
 
   defp authored_spec!(venue) do
     JsonDocument.decode_file!("priv/specs/json/output/authored/#{venue}.json")

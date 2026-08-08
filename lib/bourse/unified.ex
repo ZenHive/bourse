@@ -472,6 +472,7 @@ defmodule Bourse.Unified do
     "funding_rate_history" => :parse_funding_rate_history,
     "funding_history" => :parse_funding_history,
     "greeks" => :parse_greeks,
+    "last_price" => :parse_last_price,
     "ledger_entry" => :parse_ledger_entry,
     "leverage" => :parse_leverage,
     "leverage_tiers" => :parse_leverage_tiers,
@@ -504,14 +505,22 @@ defmodule Bourse.Unified do
     "Conversion" => "Conversion",
     "CrossBorrowRate" => "BorrowRate",
     "CrossBorrowRates" => "BorrowRate",
+    # Isolated borrow rates are BorrowRate rows scoped by symbol, not a separate type.
+    "IsolatedBorrowRate" => "BorrowRate",
+    "IsolatedBorrowRates" => "BorrowRate",
     "Currencies" => "Currency",
     "FundingRates" => "FundingRate",
     "FundingHistory" => "FundingHistory",
     "Leverage" => "Leverage",
     "Leverages" => "Leverage",
-    "LeverageTier" => "LeverageTier",
+    # Descriptor plural token (LeverageTiers) vs module name (LeverageTier).
+    "LeverageTiers" => "LeverageTier",
     "Liquidation" => "Liquidation",
+    "Liquidations" => "Liquidation",
     "LongShortRatio" => "LongShortRatio",
+    # Plural collection tokens already wired as singular parse types.
+    "MarginModes" => "MarginMode",
+    "OpenInterests" => "OpenInterest",
     # Descriptor return tokens use Bourse's short names; struct modules differ.
     "Option" => "OptionData",
     "OptionChain" => "OptionData",
@@ -1748,6 +1757,13 @@ defmodule Bourse.Unified do
   # `fetchTime` returns an integer millisecond timestamp, not a struct.
   defp parser_plan(:fetch_time, "fetchTime") do
     {:ok, :parse_time, false}
+  end
+
+  # Descriptor says Promise<LeverageTiers> (dict-shaped token) but every wired venue
+  # returns a flat list of tier rows — same as fetchMarketLeverageTiers. Force list
+  # return so we don't collapse the body into a single all-nil LeverageTier.
+  defp parser_plan(:fetch_leverage_tiers, "fetchLeverageTiers") do
+    {:ok, :parse_leverage_tiers, true}
   end
 
   defp parser_plan(method_atom, js_name) when is_atom(method_atom) do

@@ -80,6 +80,12 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       {"bybit", :fetch_ticker} => public("v5/market/tickers", "api.bybit.com", "BTC/USDT:USDT"),
       {"bybit", :fetch_trades} => public("v5/market/recent-trade", "api.bybit.com", "BTC/USDT:USDT"),
       {"bybit", :fetch_markets} => public("v5/market/instruments-info", "api.bybit.com", "BTC/USDT:USDT"),
+      {"bybit", :fetch_leverage_tiers} =>
+        public("v5/market/risk-limit", "api-testnet.bybit.com", nil,
+          environment: "testnet-demo",
+          exchange_opts: [sandbox: true],
+          params: %{"category" => "linear"}
+        ),
       {"deribit", :fetch_ticker} => public("public/ticker", "www.deribit.com", "BTC-PERPETUAL"),
       {"deribit", :fetch_trades} => public("public/get_last_trades_by_instrument", "www.deribit.com", "BTC-PERPETUAL"),
       {"deribit", :fetch_markets} => public("public/get_instruments", "www.deribit.com", "BTC-PERPETUAL"),
@@ -91,6 +97,8 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
         public("api/v5/public/funding-rate-history", "www.okx.com", "BTC/USDT:USDT",
           params: %{"limit" => 3, "symbol" => "BTC/USDT:USDT"}
         ),
+      {"okx", :fetch_open_interests} =>
+        public("api/v5/public/open-interest", "www.okx.com", nil, params: %{"instType" => "SWAP"}),
       {"hyperliquid", :fetch_ohlcv} =>
         public("info:candleSnapshot", "api.hyperliquid.xyz", "BTC/USDC",
           params: %{"timeframe" => @ohlcv_timeframe, "since" => 0}

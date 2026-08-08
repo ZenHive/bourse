@@ -1,5 +1,5 @@
 {
-  "count": 84,
+  "count": 86,
   "fixtures": [
     "alpaca/fetch_balance.json",
     "alpaca/fetch_markets.json",
@@ -39,6 +39,7 @@
     "binanceusdm/fetch_trades.json",
     "binanceusdm/order_lifecycle.json",
     "bybit/fetch_balance.json",
+    "bybit/fetch_leverage_tiers.json",
     "bybit/fetch_markets.json",
     "bybit/fetch_my_trades.json",
     "bybit/fetch_open_orders.json",
@@ -81,12 +82,13 @@
     "okx/fetch_my_trades.json",
     "okx/fetch_open_interest_history.json",
     "okx/fetch_open_interest_history_option.json",
+    "okx/fetch_open_interests.json",
     "okx/fetch_open_orders.json",
     "okx/fetch_positions.json",
     "okx/fetch_ticker.json",
     "okx/fetch_trades.json"
   ],
-  "generated_at": "2026-08-04T00:07:16.176511Z",
+  "generated_at": "2026-08-08T10:35:40.701877Z",
   "recordings": [
     {
       "capture_date": "2026-07-26",
@@ -440,6 +442,16 @@
       "method": "fetch_balance",
       "path": "bybit/fetch_balance.json",
       "venue": "bybit"
+    },
+    {
+      "capture_date": "2026-08-08",
+      "captured_at": "2026-08-08T10:35:40.701877Z",
+      "endpoint": "v5/market/risk-limit",
+      "host": "api-testnet.bybit.com",
+      "method": "fetch_leverage_tiers",
+      "path": "bybit/fetch_leverage_tiers.json",
+      "venue": "bybit",
+      "body_populated": true
     },
     {
       "capture_date": "2026-07-15",
@@ -858,6 +870,16 @@
       ],
       "path": "okx/fetch_open_interest_history_option.json",
       "venue": "okx"
+    },
+    {
+      "capture_date": "2026-08-08",
+      "captured_at": "2026-08-08T10:35:40.701877Z",
+      "endpoint": "api/v5/public/open-interest",
+      "host": "www.okx.com",
+      "method": "fetch_open_interests",
+      "path": "okx/fetch_open_interests.json",
+      "venue": "okx",
+      "body_populated": true
     },
     {
       "body_populated": false,

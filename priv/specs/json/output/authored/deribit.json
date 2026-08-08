@@ -183,7 +183,7 @@
       "fetchIsolatedBorrowRates": false,
       "fetchL2OrderBook": true,
       "fetchLeverageTiers": false,
-      "fetchLiquidations": true,
+      "fetchLiquidations": false,
       "fetchMarginMode": false,
       "fetchMarkOHLCV": false,
       "fetchMarkets": true,
@@ -3380,7 +3380,6 @@
     },
     "handle_errors": {
       "exception_scopes": {},
-
       "runtime_body_checks": [],
       "runtime_code_fields": [
         "code",
@@ -3731,7 +3730,7 @@
       },
       "BTC": {
         "code": "BTC",
-        "fee": 0.000010,
+        "fee": 1e-05,
         "fees": {},
         "id": "BTC",
         "limits": {

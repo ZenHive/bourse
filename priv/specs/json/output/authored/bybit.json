@@ -1991,6 +1991,19 @@
         "source": "async fetchDerivativesMarketLeverageTiers (symbol: string, params = {}): Promise<LeverageTier[]> {\n        await this.loadMarkets ();\n        const market = this.market (symbol);\n        const request: Dict = {\n            'symbol': market['id'],\n        };\n        if (market['linear']) {\n            request['category'] = 'linear';\n        } else if (market['inverse']) {\n            request['category'] = 'inverse';\n        }\n        const response = await this.publicGetV5MarketRiskLimit (this.extend (request, params));\n        //\n        //     {\n        //         \"retCode\": 0,\n        //         \"retMsg\": \"OK\",\n        //         \"result\": {\n        //             \"category\": \"inverse\",\n        //             \"list\": [\n        //                 {\n        //                     \"id\": 1,\n        //                     \"symbol\": \"BTCUSD\",\n        //                     \"riskLimitValue\": \"150\",\n        //                     \"maintenanceMargin\": \"0.5\",\n        //                     \"initialMargin\": \"1\",\n        //                     \"isLowestRisk\": 1,\n        //                     \"maxLeverage\": \"100.00\"\n        //                 },\n        //             ....\n        //             ]\n        //         },\n        //         \"retExtInfo\": {},\n        //         \"time\": 1672054488010\n        //     }\n        //\n        const result = this.safeDict (response, 'result');\n        const tiers = this.safeList (result, 'list');\n        return this.parseMarketLeverageTiers (tiers, market);\n    }",
         "unresolved_reason": "no_jsdoc"
       },
+      "fetchDerivativesOpenInterestHistory": {
+        "name": "fetchDerivativesOpenInterestHistory",
+        "description": "fetch open interest history for derivatives",
+        "async": true,
+        "signature": {
+          "return_type": "Promise<OpenInterest[]>",
+          "params": []
+        },
+        "returns": {
+          "description": "a list of open interest structures",
+          "type": "object[]"
+        }
+      },
       "fetchFundingHistory": {
         "async": true,
         "description": "fetch the history of funding payments paid and received on this account",
@@ -7595,7 +7608,6 @@
     },
     "handle_errors": {
       "exception_scopes": {},
-
       "runtime_body_checks": [
         {
           "field": "ret_code",
@@ -9558,7 +9570,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0E-9
+        "precision": 1e-09
       },
       "BTR": {
         "code": "BTR",
@@ -10603,7 +10615,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 0.000010
+        "precision": 1e-05
       },
       "ETHBTC": {
         "code": "ETHBTC",
@@ -10658,7 +10670,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0E-9
+        "precision": 1e-09
       },
       "EVAA": {
         "code": "EVAA",
@@ -11978,7 +11990,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 0.0000010
+        "precision": 1e-06
       },
       "LDO": {
         "code": "LDO",
@@ -12121,7 +12133,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 0.000010
+        "precision": 1e-05
       },
       "LUMIA": {
         "code": "LUMIA",
@@ -12440,7 +12452,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 0.000010
+        "precision": 1e-05
       },
       "METIS": {
         "code": "METIS",
@@ -12528,7 +12540,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0E-9
+        "precision": 1e-09
       },
       "MOCA": {
         "code": "MOCA",
@@ -14541,7 +14553,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 0.000010
+        "precision": 1e-05
       },
       "STG": {
         "code": "STG",
@@ -15168,7 +15180,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 0.000010
+        "precision": 1e-05
       },
       "USD1": {
         "code": "USD1",
@@ -15190,7 +15202,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0E-9
+        "precision": 1e-09
       },
       "USDE": {
         "code": "USDE",
@@ -15223,7 +15235,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0E-13
+        "precision": 1e-13
       },
       "USDTB": {
         "code": "USDTB",
@@ -15465,7 +15477,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 0.0000010
+        "precision": 1e-06
       },
       "WCT": {
         "code": "WCT",
@@ -15619,7 +15631,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 0.000010
+        "precision": 1e-05
       },
       "XAVA": {
         "code": "XAVA",
@@ -15795,7 +15807,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 0.000010
+        "precision": 1e-05
       },
       "YGG": {
         "code": "YGG",

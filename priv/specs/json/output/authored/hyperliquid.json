@@ -2103,6 +2103,13 @@
             "reason": null,
             "value": null
           }
+        },
+        "fetchOpenInterests": {
+          "type": {
+            "kind": "literal",
+            "reason": null,
+            "value": "metaAndAssetCtxs"
+          }
         }
       },
       "endpoint_selection": {
@@ -2866,7 +2873,6 @@
     },
     "handle_errors": {
       "exception_scopes": {},
-
       "runtime_body_checks": [
         {
           "field": "status",

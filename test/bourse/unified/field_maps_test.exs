@@ -84,6 +84,7 @@ defmodule Bourse.Unified.FieldMapsTest do
                "funding_rate",
                "funding_rate_history",
                "greeks",
+               "last_price",
                "ledger_entry",
                "leverage",
                "leverage_tiers",
