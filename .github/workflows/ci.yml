@@ -87,7 +87,23 @@ jobs:
         run: mix format --check-formatted
 
       - name: Compile
+        if: matrix.primary
         run: mix compile --warnings-as-errors
+
+      # The floor leg compiles WITHOUT --warnings-as-errors on purpose. That flag
+      # is this repo's development discipline for the pair we develop on; on an
+      # older compiler it measures type-inference differences rather than
+      # compatibility. Two warnings appear on 1.18 and neither reaches a
+      # consumer: 1.18's inference does not narrow `nil` out of
+      # `module_for_pattern/1`'s return in Bourse.WS.Subscription, though the
+      # `nil ->` clause above the call makes it unreachable; and :dialyzer_json
+      # declares `~> 1.19`, but it is `only: [:dev, :test], runtime: false`, so
+      # nothing a consumer installs. What this leg does assert is the question
+      # mix.exs's `~> 1.18` actually promises — the library compiles and its
+      # suites pass on the declared floor.
+      - name: Compile (declared floor)
+        if: ${{ !matrix.primary }}
+        run: mix compile
 
       # TODO(Task N) markers are first-class in this repo — see the `precommit`
       # alias in mix.exs, which passes the same flags.
