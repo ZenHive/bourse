@@ -38,6 +38,49 @@ defmodule Bourse.Test.CircuitBreakerLeakMeltTest do
   end
 end
 
+defmodule Bourse.Test.CircuitBreakerOptInIsSyncTest do
+  use ExUnit.Case, async: false
+
+  # `CircuitBreakerControl.enable!/1` re-enables the breaker with a global
+  # `Application.put_env` and, on exit, removes *every* installed fuse. Both are
+  # process-global, so the opt-in is only non-interfering while its callers run
+  # alone: ExUnit drains all async modules before it starts a sync one, and runs
+  # sync modules one at a time. Add the opt-in to an `async: true` module and the
+  # `put_env` re-arms the breaker for every module running beside it — restoring
+  # exactly the ambient coupling `config/config.exs` removed — while the cleanup
+  # yanks fuses out from under them.
+  #
+  # That invariant held only because the four current callers happen to be sync,
+  # and nothing asserted it. This is the assertion: the safety of the opt-in is a
+  # property of the whole test tree, so no single module can be trusted to defend
+  # it. A file is flagged on any `async: true`, without proving which module in it
+  # calls the control — the conservative reading is the useful one here, since a
+  # file that mixes an async module with a breaker opt-in is itself the hazard.
+  test "no test module that opts into the circuit breaker runs async" do
+    offenders =
+      "test/**/*.exs"
+      |> Path.wildcard()
+      |> Enum.map(&{&1, File.read!(&1)})
+      |> Enum.filter(fn {_path, source} -> source =~ "CircuitBreakerControl." end)
+      # Anchored to the `use` declaration rather than the bare phrase: prose that
+      # merely discusses `async: true` (this file's own comment, for one) is not
+      # a module that runs concurrently.
+      |> Enum.filter(fn {_path, source} -> source =~ ~r/^\s*use\s+.*async:\s*true/m end)
+      |> Enum.map(&elem(&1, 0))
+
+    assert offenders == [],
+           """
+           These test files opt into the circuit breaker and declare `async: true`:
+
+           #{Enum.map_join(offenders, "\n", &"  - #{&1}")}
+
+           Enabling the breaker is process-global and its cleanup removes every
+           installed fuse, so the opting-in module must run alone. Declare the
+           module `async: false`, or drop the `CircuitBreakerControl` call.
+           """
+  end
+end
+
 defmodule Bourse.Test.CircuitBreakerLeakVictimTest do
   use ExUnit.Case, async: false
 

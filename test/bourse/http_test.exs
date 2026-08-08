@@ -993,6 +993,42 @@ defmodule Bourse.HTTPTest do
 
       assert {:error, %Error{type: :circuit_open}} = HTTP.request(exchange, :get, "/test")
     end
+
+    # The case above blows the fuse by calling the breaker directly, so it pins
+    # `check_circuit_breaker/1` but not the melt half: nothing proves a failing
+    # request reaches `record_result/2` at all, nor that `request/4` hands it the
+    # *normalized* outcome. That distinction is load-bearing and only observable
+    # end-to-end — bybit reports maintenance as `retCode 180023` under HTTP 200,
+    # which classifies as `:exchange_not_available` (`retry_class: :server_busy`)
+    # and melts. Passing the raw Req result instead would classify on the status
+    # threshold, see 200, and never melt — silently disarming the breaker for
+    # every venue that signals failure in the body rather than the status line.
+    test "a 200 response the venue reads as maintenance melts the breaker through request/4" do
+      exchange_id = "bybit"
+      CircuitBreakerControl.isolate!(exchange_id, %{max_failures: 3, window_ms: 60_000, reset_ms: 60_000})
+
+      exchange = Exchange.new!(exchange_id)
+      stub = unique_stub()
+
+      Req.Test.stub(stub, fn conn ->
+        Req.Test.json(conn, %{"retCode" => 180_023, "retMsg" => "Service maintenance", "result" => %{}})
+      end)
+
+      request = fn ->
+        HTTP.request(exchange, :get, "/v5/market/time",
+          plug: {Req.Test, stub},
+          retry_delay: &zero_retry_delay/1
+        )
+      end
+
+      assert {:error, %Error{type: :exchange_not_available, retry_class: :server_busy}} = request.()
+      assert CircuitBreaker.status(exchange_id) == :ok
+
+      for _ <- 1..3, do: request.()
+
+      assert CircuitBreaker.status(exchange_id) == :blown
+      assert {:error, %Error{type: :circuit_open}} = request.()
+    end
   end
 
   # ===========================================================================
