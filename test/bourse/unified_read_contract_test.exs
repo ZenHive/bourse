@@ -7,12 +7,17 @@ defmodule Bourse.UnifiedReadContractTest do
   alias Bourse.RecordedResponseFixtures
   alias Bourse.ReplayExchange
   alias Bourse.Unified
+  alias Bourse.Unified.Descriptor
   alias Bourse.Unified.ReadParse
 
   @runtime_manifest "priv/specs/json/runtime_support.json"
   @exclusions_path "test/fixtures/unified_read_parse_coverage_exclusions.json"
+  @unified_source_path "lib/bourse/unified.ex"
+  @read_parse_source_path "lib/bourse/unified/read_parse.ex"
   @external_resource @runtime_manifest
   @external_resource @exclusions_path
+  @external_resource @unified_source_path
+  @external_resource @read_parse_source_path
   @venues @runtime_manifest |> File.read!() |> Jason.decode!() |> Map.fetch!("venues")
   @exclusions @exclusions_path |> File.read!() |> Jason.decode!()
   @recording_manifest_path "test/fixtures/responses/_manifest.json"
@@ -31,22 +36,35 @@ defmodule Bourse.UnifiedReadContractTest do
   ]
 
   describe "static parse coverage" do
-    test "every supported read without a parse slice is explicitly tracked by task 550" do
+    test "every supported read with a runtime parse gap is explicitly tracked by task 550" do
       actual =
         Map.new(@venues, fn venue ->
           spec = authored_spec!(venue)
-          supported_reads = supported_reads(spec)
-          parsed_reads = spec |> get_in(["endpoints", "handlers", "parse"]) |> parsed_reads()
-
-          {venue, supported_reads -- parsed_reads}
+          {venue, parse_coverage_gaps(venue, spec)}
         end)
+
+      assert Map.new(actual, fn {venue, entries} -> {venue, length(entries)} end) == %{
+               "alpaca" => 0,
+               "binance" => 16,
+               "binancecoinm" => 1,
+               "binanceusdm" => 19,
+               "bybit" => 9,
+               "deribit" => 3,
+               "derive" => 0,
+               "hyperliquid" => 3,
+               "lighter" => 0,
+               "okx" => 12
+             }
 
       expected =
         Map.new(@exclusions, fn {venue, entries} ->
           assert Enum.all?(entries, &(&1["tracking_task"] == 550)),
                  "#{venue} has a parse-coverage exclusion not owned by task 550"
 
-          {venue, Enum.map(entries, & &1["method"])}
+          assert Enum.all?(entries, &(&1["failure"] in ["no_parse_type", "no_field_map"])),
+                 "#{venue} has a parse-coverage exclusion without a failure kind"
+
+          {venue, entries}
         end)
 
       assert actual == expected
@@ -59,8 +77,7 @@ defmodule Bourse.UnifiedReadContractTest do
         exchange = Exchange.new!(venue)
         features = exchange.module.__features__()
         spec = authored_spec!(venue)
-        handlers = get_in(spec, ["endpoints", "handlers", "parse"]) || %{}
-        exclusions = @exclusions |> Map.fetch!(venue) |> Enum.map(& &1["method"])
+        declared_reads = declared_reads(spec)
 
         mapped_reads =
           exchange.module.__unified_endpoints__()
@@ -72,10 +89,42 @@ defmodule Bourse.UnifiedReadContractTest do
         for method <- mapped_reads,
             js_name = Map.fetch!(js_names, method),
             features[js_name] == true do
-          assert Map.has_key?(handlers, js_name) or js_name in exclusions,
-                 "#{venue}.#{js_name} has neither a parse slice nor a task-550 exclusion"
+          assert js_name in declared_reads,
+                 "#{venue}.#{js_name} is generated but absent from capabilities.has"
         end
       end
+    end
+
+    test "fetchTime is covered on Bybit and Deribit while OKX fetchOpenInterests is a gap" do
+      cases = [
+        {"bybit", Bourse.Bybit, %{"retCode" => 0, "result" => %{"timeSecond" => "1785772800"}}},
+        {"deribit", Bourse.Deribit, %{"jsonrpc" => "2.0", "result" => 1_785_772_800_000}}
+      ]
+
+      for {venue, module, body} <- cases do
+        gaps = parse_coverage_gaps(venue, authored_spec!(venue))
+        refute Enum.any?(gaps, &(&1["method"] == "fetchTime"))
+
+        assert {:ok, timestamp} =
+                 ReadParse.parse(
+                   Exchange.new!(venue),
+                   module,
+                   :fetch_time,
+                   "fetchTime",
+                   body,
+                   %{},
+                   :parse_time,
+                   false
+                 )
+
+        assert is_integer(timestamp)
+      end
+
+      assert %{
+               "failure" => "no_parse_type",
+               "method" => "fetchOpenInterests",
+               "tracking_task" => 550
+             } in parse_coverage_gaps("okx", authored_spec!("okx"))
     end
   end
 
@@ -377,7 +426,7 @@ defmodule Bourse.UnifiedReadContractTest do
     JsonDocument.decode_file!("priv/specs/json/output/authored/#{venue}.json")
   end
 
-  defp supported_reads(spec) do
+  defp declared_reads(spec) do
     spec
     |> get_in(["capabilities", "has"])
     |> Enum.filter(fn {method, value} -> value == true and String.starts_with?(method, "fetch") end)
@@ -385,13 +434,223 @@ defmodule Bourse.UnifiedReadContractTest do
     |> Enum.sort()
   end
 
-  defp parsed_reads(nil), do: []
+  defp supported_reads(venue, spec) do
+    js_name_by_method =
+      Map.new(Unified.method_defs(), fn {method, js_name, _params, _description} ->
+        {method, js_name}
+      end)
 
-  defp parsed_reads(handlers) do
-    handlers
+    declared_reads = MapSet.new(declared_reads(spec))
+    exchange = Exchange.new!(venue)
+
+    exchange.module.__unified_endpoints__()
     |> Map.keys()
+    |> Enum.map(&Map.fetch!(js_name_by_method, &1))
+    |> Enum.filter(&MapSet.member?(declared_reads, &1))
     |> Enum.sort()
   end
+
+  defp parse_coverage_gaps(venue, spec) do
+    method_by_js_name =
+      Map.new(Unified.method_defs(), fn {method, js_name, _params, _description} ->
+        {js_name, method}
+      end)
+
+    field_maps = get_in(spec, ["normalization", "field_maps"]) || %{}
+    runtime_contract = runtime_parse_contract()
+
+    venue
+    |> supported_reads(spec)
+    |> Enum.flat_map(fn js_name ->
+      method = Map.fetch!(method_by_js_name, js_name)
+
+      parse_gap(js_name, venue, method, field_maps, runtime_contract)
+    end)
+  end
+
+  defp parse_gap(js_name, venue, method, field_maps, runtime_contract) do
+    case runtime_parse_type(method, js_name, runtime_contract) do
+      {:ok, parse_type} ->
+        if Map.has_key?(field_maps, parse_type) or
+             read_parse_bypass?(runtime_contract.read_parse_bypasses, parse_type, venue, js_name) do
+          []
+        else
+          [
+            %{
+              "failure" => "no_field_map",
+              "method" => js_name,
+              "parse_type" => parse_type,
+              "tracking_task" => 550
+            }
+          ]
+        end
+
+      :none ->
+        [%{"failure" => "no_parse_type", "method" => js_name, "tracking_task" => 550}]
+    end
+  end
+
+  defp runtime_parse_contract do
+    %{
+      aliases: module_attribute_value!(@unified_source_path, :return_type_aliases),
+      parsers: module_attribute_value!(@unified_source_path, :parsers_by_parse_type),
+      parse_types_by_return: module_attribute_value!(@unified_source_path, :parse_types_by_return_type),
+      parser_slots: module_attribute_value!(@read_parse_source_path, :parser_slots),
+      read_parse_bypasses: read_parse_bypasses(),
+      special_plans: special_parser_plans()
+    }
+  end
+
+  defp runtime_parse_type(method, js_name, runtime_contract) do
+    case Map.fetch(runtime_contract.special_plans, {method, js_name}) do
+      {:ok, parser} ->
+        Map.fetch(runtime_contract.parser_slots, parser)
+
+      :error ->
+        descriptor_parse_type(js_name, runtime_contract)
+    end
+  end
+
+  defp descriptor_parse_type(js_name, runtime_contract) do
+    with %{"signature" => %{"return_type" => "Promise<" <> rest}} <-
+           Map.get(Descriptor.descriptors(), js_name),
+         type_token = rest |> String.trim_trailing(">") |> String.trim_trailing("[]"),
+         aliased_token = Map.get(runtime_contract.aliases, type_token, type_token),
+         {:ok, parse_type} <- Map.fetch(runtime_contract.parse_types_by_return, aliased_token),
+         {:ok, _parser} <- Map.fetch(runtime_contract.parsers, parse_type) do
+      {:ok, parse_type}
+    else
+      _ -> :none
+    end
+  end
+
+  defp special_parser_plans do
+    @unified_source_path
+    |> function_clauses(:parser_plan, 2)
+    |> Enum.flat_map(fn
+      %{
+        args: [method, js_name],
+        body: {:{}, _meta, [:ok, parser, _list_return?]}
+      }
+      when is_atom(method) and is_binary(js_name) and is_atom(parser) ->
+        [{{method, js_name}, parser}]
+
+      _clause ->
+        []
+    end)
+    |> Map.new()
+  end
+
+  defp read_parse_bypasses do
+    @read_parse_source_path
+    |> function_clauses(:do_parse, 8)
+    |> Enum.filter(fn %{args: args, body: body} ->
+      parser_arg = Enum.at(args, 6)
+      not ast_uses_variable?(body, variable_name(parser_arg))
+    end)
+  end
+
+  defp read_parse_bypass?(bypasses, parse_type, venue, js_name) do
+    Enum.any?(bypasses, fn %{args: [parse_type_arg, exchange, _module, js_name_arg | _], guard: guard} ->
+      domain_match?(argument_domain(parse_type_arg, guard), parse_type) and
+        domain_match?(exchange_domain(exchange, guard), venue) and
+        domain_match?(argument_domain(js_name_arg, guard), js_name)
+    end)
+  end
+
+  defp function_clauses(path, function_name, arity) do
+    ast = path |> File.read!() |> Code.string_to_quoted!(file: path)
+
+    {_ast, clauses} =
+      Macro.prewalk(ast, [], fn
+        {:defp, _meta, [head, body]} = node, acc ->
+          {call, guard} = unwrap_guard(head)
+
+          case call do
+            {^function_name, _call_meta, args} when length(args) == arity ->
+              clause = %{args: args, body: Keyword.fetch!(body, :do), guard: guard}
+              {node, [clause | acc]}
+
+            _other ->
+              {node, acc}
+          end
+
+        node, acc ->
+          {node, acc}
+      end)
+
+    Enum.reverse(clauses)
+  end
+
+  defp unwrap_guard({:when, _meta, [call, guard]}), do: {call, guard}
+  defp unwrap_guard(call), do: {call, true}
+
+  defp module_attribute_value!(path, attribute) do
+    ast = path |> File.read!() |> Code.string_to_quoted!(file: path)
+
+    {_ast, value_ast} =
+      Macro.prewalk(ast, nil, fn
+        {:@, _meta, [{^attribute, _attribute_meta, [value]}]} = node, nil -> {node, value}
+        node, acc -> {node, acc}
+      end)
+
+    eval_env = %{__ENV__ | aliases: [{FieldMaps, Bourse.Unified.FieldMaps} | __ENV__.aliases]}
+    {value, []} = Code.eval_quoted(value_ast, [], eval_env)
+    value
+  end
+
+  defp ast_uses_variable?(_ast, nil), do: false
+
+  defp ast_uses_variable?(ast, variable) do
+    {_ast, found?} =
+      Macro.prewalk(ast, false, fn
+        {^variable, _meta, context} = node, _found? when is_atom(context) or is_nil(context) ->
+          {node, true}
+
+        node, found? ->
+          {node, found?}
+      end)
+
+    found?
+  end
+
+  defp exchange_domain({:%, _meta, [_module, {:%{}, _map_meta, fields}]}, guard) do
+    fields |> Keyword.fetch!(:id) |> argument_domain(guard)
+  end
+
+  defp exchange_domain(_exchange, _guard), do: :all
+
+  defp argument_domain(value, _guard) when is_atom(value) or is_binary(value), do: [value]
+
+  defp argument_domain({name, _meta, context}, guard) when is_atom(name) and (is_atom(context) or is_nil(context)) do
+    guard_domain(guard, name) || :all
+  end
+
+  defp argument_domain(_argument, _guard), do: :all
+
+  defp guard_domain(guard, variable) do
+    {_guard, domain} =
+      Macro.prewalk(guard, nil, fn
+        {:in, _meta, [{^variable, _variable_meta, _context}, values]} = node, nil when is_list(values) ->
+          {node, Enum.map(values, &literal!/1)}
+
+        {:==, _meta, [{^variable, _variable_meta, _context}, value]} = node, nil ->
+          {node, [literal!(value)]}
+
+        node, acc ->
+          {node, acc}
+      end)
+
+    domain
+  end
+
+  defp domain_match?(:all, _value), do: true
+  defp domain_match?(domain, value), do: value in domain
+
+  defp variable_name({name, _meta, context}) when is_atom(name) and (is_atom(context) or is_nil(context)), do: name
+  defp variable_name(_argument), do: nil
+
+  defp literal!(value) when is_atom(value) or is_binary(value) or is_boolean(value), do: value
 
   defp assert_mapped_value!(raw_value, parsed_value, raw_field, unified_field) do
     refute is_nil(raw_value), "test fixture must carry #{raw_field}"

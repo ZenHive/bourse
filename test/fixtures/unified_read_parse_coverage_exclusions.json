@@ -2,334 +2,344 @@
   "alpaca": [],
   "binance": [
     {
-      "method": "fetchIndexOHLCV",
+      "failure": "no_parse_type",
+      "method": "fetchAccountPositions",
       "tracking_task": 550
     },
     {
-      "method": "fetchL2OrderBook",
+      "failure": "no_parse_type",
+      "method": "fetchDepositWithdrawFees",
       "tracking_task": 550
     },
     {
-      "method": "fetchMarkOHLCV",
+      "failure": "no_field_map",
+      "method": "fetchFundingHistory",
+      "parse_type": "funding_history",
       "tracking_task": 550
     },
     {
-      "method": "fetchOrderTrades",
+      "failure": "no_parse_type",
+      "method": "fetchIsolatedBorrowRates",
       "tracking_task": 550
     },
     {
-      "method": "fetchPositionADLRank",
+      "failure": "no_parse_type",
+      "method": "fetchLastPrices",
       "tracking_task": 550
     },
     {
+      "failure": "no_parse_type",
+      "method": "fetchLeverageTiers",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_field_map",
+      "method": "fetchMarginAdjustmentHistory",
+      "parse_type": "margin_modification",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_parse_type",
+      "method": "fetchMarginModes",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_parse_type",
+      "method": "fetchMyDustTrades",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_parse_type",
+      "method": "fetchMySettlementHistory",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_parse_type",
+      "method": "fetchOptionPositions",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_parse_type",
       "method": "fetchPositionMode",
       "tracking_task": 550
     },
     {
-      "method": "fetchPositions",
+      "failure": "no_parse_type",
+      "method": "fetchPositionsRisk",
       "tracking_task": 550
     },
     {
-      "method": "fetchPremiumIndexOHLCV",
+      "failure": "no_parse_type",
+      "method": "fetchSettlementHistory",
       "tracking_task": 550
     },
     {
+      "failure": "no_parse_type",
       "method": "fetchStatus",
       "tracking_task": 550
     },
     {
-      "method": "fetchTime",
-      "tracking_task": 550
-    },
-    {
+      "failure": "no_parse_type",
       "method": "fetchTransactionFees",
       "tracking_task": 550
     }
   ],
   "binancecoinm": [
     {
+      "failure": "no_parse_type",
       "method": "fetchPositionMode",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchPositions",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchTime",
       "tracking_task": 550
     }
   ],
   "binanceusdm": [
     {
-      "method": "fetchIndexOHLCV",
+      "failure": "no_parse_type",
+      "method": "fetchAccountPositions",
       "tracking_task": 550
     },
     {
-      "method": "fetchL2OrderBook",
+      "failure": "no_field_map",
+      "method": "fetchConvertCurrencies",
+      "parse_type": "currency",
       "tracking_task": 550
     },
     {
-      "method": "fetchMarkOHLCV",
+      "failure": "no_field_map",
+      "method": "fetchConvertQuote",
+      "parse_type": "conversion",
       "tracking_task": 550
     },
     {
-      "method": "fetchOrderTrades",
+      "failure": "no_field_map",
+      "method": "fetchConvertTrade",
+      "parse_type": "conversion",
       "tracking_task": 550
     },
     {
-      "method": "fetchPositionADLRank",
+      "failure": "no_field_map",
+      "method": "fetchConvertTradeHistory",
+      "parse_type": "conversion",
       "tracking_task": 550
     },
     {
+      "failure": "no_field_map",
+      "method": "fetchCurrencies",
+      "parse_type": "currency",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_parse_type",
+      "method": "fetchDepositWithdrawFees",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_parse_type",
+      "method": "fetchIsolatedBorrowRates",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_parse_type",
+      "method": "fetchLastPrices",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_parse_type",
+      "method": "fetchLeverageTiers",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_parse_type",
+      "method": "fetchMarginModes",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_parse_type",
+      "method": "fetchMyDustTrades",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_parse_type",
+      "method": "fetchMySettlementHistory",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_parse_type",
+      "method": "fetchOptionPositions",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_parse_type",
       "method": "fetchPositionMode",
       "tracking_task": 550
     },
     {
-      "method": "fetchPositions",
+      "failure": "no_parse_type",
+      "method": "fetchPositionsRisk",
       "tracking_task": 550
     },
     {
-      "method": "fetchPremiumIndexOHLCV",
+      "failure": "no_parse_type",
+      "method": "fetchSettlementHistory",
       "tracking_task": 550
     },
     {
+      "failure": "no_parse_type",
       "method": "fetchStatus",
       "tracking_task": 550
     },
     {
-      "method": "fetchTime",
-      "tracking_task": 550
-    },
-    {
+      "failure": "no_parse_type",
       "method": "fetchTransactionFees",
       "tracking_task": 550
     }
   ],
   "bybit": [
     {
-      "method": "fetchCanceledOrders",
+      "failure": "no_field_map",
+      "method": "fetchConvertQuote",
+      "parse_type": "conversion",
       "tracking_task": 550
     },
     {
-      "method": "fetchClosedOrder",
+      "failure": "no_field_map",
+      "method": "fetchConvertTrade",
+      "parse_type": "conversion",
       "tracking_task": 550
     },
     {
-      "method": "fetchClosedOrders",
+      "failure": "no_field_map",
+      "method": "fetchConvertTradeHistory",
+      "parse_type": "conversion",
       "tracking_task": 550
     },
     {
-      "method": "fetchConvertCurrencies",
+      "failure": "no_parse_type",
+      "method": "fetchDepositWithdrawFees",
       "tracking_task": 550
     },
     {
-      "method": "fetchDepositAddress",
+      "failure": "no_parse_type",
+      "method": "fetchDerivativesOpenInterestHistory",
       "tracking_task": 550
     },
     {
-      "method": "fetchFundingRateHistory",
+      "failure": "no_parse_type",
+      "method": "fetchLeverageTiers",
       "tracking_task": 550
     },
     {
-      "method": "fetchIndexOHLCV",
+      "failure": "no_parse_type",
+      "method": "fetchMySettlementHistory",
       "tracking_task": 550
     },
     {
-      "method": "fetchL2OrderBook",
+      "failure": "no_parse_type",
+      "method": "fetchSettlementHistory",
       "tracking_task": 550
     },
     {
-      "method": "fetchMarkOHLCV",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchMarketLeverageTiers",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchMarkets",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchOpenInterestHistory",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchOpenOrder",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchOrderClassic",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchOrderTrades",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchPositionADLRank",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchPremiumIndexOHLCV",
-      "tracking_task": 550
-    },
-    {
+      "failure": "no_parse_type",
       "method": "fetchStatus",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchTime",
       "tracking_task": 550
     }
   ],
   "deribit": [
     {
-      "method": "fetchL2OrderBook",
+      "failure": "no_parse_type",
+      "method": "fetchDepositWithdrawFees",
       "tracking_task": 550
     },
     {
-      "method": "fetchMarkets",
+      "failure": "no_parse_type",
+      "method": "fetchLiquidations",
       "tracking_task": 550
     },
     {
+      "failure": "no_parse_type",
       "method": "fetchStatus",
       "tracking_task": 550
-    },
-    {
-      "method": "fetchTime",
-      "tracking_task": 550
     }
   ],
-  "derive": [
-    {
-      "method": "fetchCanceledOrders",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchFundingRateHistory",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchL2OrderBook",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchLedger",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchTime",
-      "tracking_task": 550
-    }
-  ],
+  "derive": [],
   "hyperliquid": [
     {
-      "method": "fetchBalance",
+      "failure": "no_field_map",
+      "method": "fetchFundingHistory",
+      "parse_type": "funding_history",
       "tracking_task": 550
     },
     {
-      "method": "fetchCanceledAndClosedOrders",
+      "failure": "no_parse_type",
+      "method": "fetchOpenInterests",
       "tracking_task": 550
     },
     {
-      "method": "fetchCanceledOrders",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchClosedOrders",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchFundingRateHistory",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchL2OrderBook",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchMarkets",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchOpenInterest",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchPosition",
-      "tracking_task": 550
-    },
-    {
+      "failure": "no_parse_type",
       "method": "fetchStatus",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchTime",
       "tracking_task": 550
     }
   ],
   "lighter": [],
   "okx": [
     {
-      "method": "fetchAccounts",
+      "failure": "no_parse_type",
+      "method": "fetchBorrowRateHistories",
       "tracking_task": 550
     },
     {
-      "method": "fetchConvertCurrencies",
+      "failure": "no_parse_type",
+      "method": "fetchDeposit",
       "tracking_task": 550
     },
     {
-      "method": "fetchDepositAddress",
+      "failure": "no_parse_type",
+      "method": "fetchDepositWithdrawFees",
       "tracking_task": 550
     },
     {
-      "method": "fetchFundingInterval",
+      "failure": "no_field_map",
+      "method": "fetchMarginAdjustmentHistory",
+      "parse_type": "margin_modification",
       "tracking_task": 550
     },
     {
-      "method": "fetchFundingRateHistory",
+      "failure": "no_parse_type",
+      "method": "fetchMarketsByType",
       "tracking_task": 550
     },
     {
-      "method": "fetchIndexOHLCV",
+      "failure": "no_parse_type",
+      "method": "fetchOpenInterests",
       "tracking_task": 550
     },
     {
-      "method": "fetchL2OrderBook",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchMarkOHLCV",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchMarkets",
-      "tracking_task": 550
-    },
-    {
-      "method": "fetchOrderTrades",
-      "tracking_task": 550
-    },
-    {
+      "failure": "no_parse_type",
       "method": "fetchPositionMode",
       "tracking_task": 550
     },
     {
+      "failure": "no_parse_type",
       "method": "fetchPositionsForSymbol",
       "tracking_task": 550
     },
     {
+      "failure": "no_parse_type",
+      "method": "fetchSettlementHistory",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_parse_type",
       "method": "fetchStatus",
       "tracking_task": 550
     },
     {
-      "method": "fetchTime",
+      "failure": "no_parse_type",
+      "method": "fetchUnderlyingAssets",
       "tracking_task": 550
     },
     {
-      "method": "fetchUnderlyingAssets",
+      "failure": "no_parse_type",
+      "method": "fetchWithdrawal",
       "tracking_task": 550
     }
   ]
