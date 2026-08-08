@@ -906,10 +906,12 @@ defmodule Bourse.Unified.ReadParse do
   defp hyperliquid_native_coin(_info, %Exchange{id: id}) when id != "hyperliquid", do: nil
 
   defp hyperliquid_native_coin(info, _exchange) do
+    # userFunding rows nest the instrument under delta.coin
     Map.get(info, "coin") ||
       Map.get(info, "name") ||
       get_in(info, ["order", "coin"]) ||
-      get_in(info, ["position", "coin"])
+      get_in(info, ["position", "coin"]) ||
+      get_in(info, ["delta", "coin"])
   end
 
   # Hyperliquid market ids use the HIP-3 option map, raw spot ids, or BASE/USDC:USDC.

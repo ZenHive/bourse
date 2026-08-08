@@ -1,0 +1,70 @@
+{
+  "authenticated": true,
+  "body": [
+    {
+      "asset": "USDT",
+      "income": "-0.01286054",
+      "incomeType": "FUNDING_FEE",
+      "info": "FUNDING_FEE",
+      "symbol": "BTCUSDT",
+      "time": 1786089600000,
+      "tradeId": "",
+      "tranId": 1380186948815340520
+    },
+    {
+      "asset": "USDT",
+      "income": "-0.01298299",
+      "incomeType": "FUNDING_FEE",
+      "info": "FUNDING_FEE",
+      "symbol": "BTCUSDT",
+      "time": 1786118400000,
+      "tradeId": "",
+      "tranId": 1381394907654309440
+    },
+    {
+      "asset": "USDT",
+      "income": "-0.01060616",
+      "incomeType": "FUNDING_FEE",
+      "info": "FUNDING_FEE",
+      "symbol": "BTCUSDT",
+      "time": 1786147200000,
+      "tradeId": "",
+      "tranId": 1382602867751568310
+    },
+    {
+      "asset": "USDT",
+      "income": "0.00237407",
+      "incomeType": "FUNDING_FEE",
+      "info": "FUNDING_FEE",
+      "symbol": "BTCUSDT",
+      "time": 1786176000000,
+      "tradeId": "",
+      "tranId": 1383810827051911390
+    },
+    {
+      "asset": "USDT",
+      "income": "-0.01301586",
+      "incomeType": "FUNDING_FEE",
+      "info": "FUNDING_FEE",
+      "symbol": "BTCUSDT",
+      "time": 1786204800000,
+      "tradeId": "",
+      "tranId": 1385018787191113170
+    }
+  ],
+  "body_populated": true,
+  "call_opts": {},
+  "captured_at": "2026-08-08T23:26:17.368003Z",
+  "endpoint": "fapi/v1/income",
+  "environment": "testnet-demo",
+  "exchange": "binance",
+  "host": "demo-fapi.binance.com",
+  "method": "fetch_funding_history",
+  "params": {
+    "incomeType": "FUNDING_FEE",
+    "limit": 5,
+    "symbol": "BTC/USDT:USDT"
+  },
+  "symbol": "BTC/USDT:USDT",
+  "timeframe": null
+}

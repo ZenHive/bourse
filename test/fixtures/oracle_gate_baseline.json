@@ -24,6 +24,7 @@
         "markets.patterns.spot",
         "markets.patterns.swap",
         "normalization.field_maps.balance",
+        "normalization.field_maps.income",
         "normalization.field_maps.last_price",
         "normalization.field_maps.leverage_tiers",
         "normalization.field_maps.market",

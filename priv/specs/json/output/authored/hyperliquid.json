@@ -9482,6 +9482,39 @@
         }
       },
       "deposit_address": null,
+      "funding_history": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "amount": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "delta.usdc"
+          },
+          "code": {
+            "coercion": "safeString",
+            "default": "USDC"
+          },
+          "datetime": null,
+          "id": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "hash"
+          },
+          "info": null,
+          "rate": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "delta.fundingRate"
+          },
+          "symbol": null,
+          "timestamp": {
+            "coercion": "safeInteger",
+            "format": "ms",
+            "key": "time"
+          }
+        }
+      },
       "funding_rate": {
         "_unresolved_reason": null,
         "extras": [],
@@ -10502,6 +10535,13 @@
         }
       },
       "deposit_address": null,
+      "funding_history": {
+        "fetchFundingHistory": {
+          "default": [],
+          "fallback_keys": [],
+          "key": null
+        }
+      },
       "funding_rate": {
         "fetchFundingRate": {
           "default": null,

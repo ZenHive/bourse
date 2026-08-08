@@ -23276,6 +23276,36 @@
           }
         }
       },
+      "funding_history": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "amount": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "income"
+          },
+          "code": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "asset"
+          },
+          "datetime": null,
+          "id": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "tranId"
+          },
+          "info": null,
+          "rate": null,
+          "symbol": null,
+          "timestamp": {
+            "coercion": "safeInteger",
+            "format": "ms",
+            "key": "time"
+          }
+        }
+      },
       "funding_rate": {
         "_unresolved_reason": null,
         "extras": [],
@@ -23670,6 +23700,43 @@
             "key": "_bourse_margin_mode"
           },
           "symbol": null
+        }
+      },
+      "margin_modification": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "amount": {
+            "coercion": "safeNumber",
+            "key": "amount"
+          },
+          "code": {
+            "coercion": "safeString",
+            "key": "asset"
+          },
+          "datetime": null,
+          "info": null,
+          "marginMode": {
+            "default": "isolated"
+          },
+          "status": {
+            "default": "ok"
+          },
+          "symbol": null,
+          "timestamp": {
+            "coercion": "safeInteger",
+            "format": "ms",
+            "key": "time"
+          },
+          "total": null,
+          "type": {
+            "coercion": "safeString",
+            "enum_map": {
+              "1": "add",
+              "2": "reduce"
+            },
+            "key": "type"
+          }
         }
       },
       "market": {
@@ -24808,6 +24875,13 @@
           "key": null
         }
       },
+      "funding_history": {
+        "fetchFundingHistory": {
+          "default": [],
+          "fallback_keys": [],
+          "key": null
+        }
+      },
       "last_price": {
         "fetchLastPrices": {
           "default": [],
@@ -24820,6 +24894,13 @@
           "default": [],
           "fallback_keys": [],
           "key": "positions"
+        }
+      },
+      "margin_modification": {
+        "fetchMarginAdjustmentHistory": {
+          "default": [],
+          "fallback_keys": [],
+          "key": null
         }
       },
       "market": {
