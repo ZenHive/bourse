@@ -71,6 +71,30 @@ roadmap.
 
 ---
 
+## 2026-08-07 — binance: `fetch_funding_rate/2` leaves `interval` nil
+
+**Status (2026-08-08):** 🆕 reported — not yet triaged into a scored task. Out of scope for
+trackers 550/551 (those own parse coverage; this is a field-level carve). Belongs to the C5
+funding-interval carve register in `docs/authored-spec-carves/`, where bybit and hyperliquid
+were confronted and binance never was.
+
+**Call:** `Bourse.Exchange.new("binance")` → `Bourse.fetch_funding_rate(client, "BTC/USDT:USDT")`
+
+**Observed:** the returned `%Bourse.FundingRate{}` has `interval: nil` (rate itself is
+correct, fraction per 8h period; `mark_price` populated). Hyperliquid's
+`fetch_funding_rates/1` fills `interval: "1h"` for the same struct.
+
+**Expected:** `interval: "8h"` — the field exists on the struct precisely so consumers
+don't hardcode a venue's funding cadence, and Binance's cadence is knowable (premiumIndex
+carries `nextFundingTime`/`lastFundingRate`; the spec knows the venue funds every 8h).
+A consumer annualizing `funding_rate` via `interval` silently gets nothing to multiply by
+on binance while the same code works on hyperliquid.
+
+**Affected exchange:** binance (USDT-M perps). Not checked: bybit, okx.
+
+**Consumer workaround:** trading_dashboard `Macro.CrossVenue` avoids the current-rate
+endpoint entirely and derives cadence from `fetch_funding_rate_history` timestamps.
+
 ## 2026-08-05 — `fetch_ticker/2` returns `timestamp: nil` and `datetime: nil` on every bybit ticker — the mapped `time` key lives on the envelope the parser never sees
 
 **Status (2026-08-05):** 📋 triaged — filed as workbench **task 562** ("Per-field maps cannot address
