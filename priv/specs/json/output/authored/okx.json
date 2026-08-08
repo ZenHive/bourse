@@ -13883,51 +13883,6 @@
         }
       },
       "margin_mode": null,
-      "margin_modification": {
-        "_unresolved_reason": null,
-        "extras": [],
-        "field_map": {
-          "amount": {
-            "coercion": "safeNumber",
-            "format": null,
-            "key": "balChg"
-          },
-          "code": {
-            "coercion": "safeCurrencyCode",
-            "format": null,
-            "key": "ccy"
-          },
-          "datetime": null,
-          "info": null,
-          "marginMode": {
-            "coercion": "safeString",
-            "format": null,
-            "key": "mgnMode"
-          },
-          "status": {
-            "default": "ok"
-          },
-          "symbol": null,
-          "timestamp": {
-            "coercion": "safeInteger",
-            "format": "ms",
-            "key": "ts"
-          },
-          "total": {
-            "coercion": "safeNumber",
-            "format": null,
-            "key": "bal"
-          },
-          "type": {
-            "coercion": "safeString",
-            "enum_map": {
-              "160": "add",
-              "161": "reduce"
-            },
-            "key": "subType"
-          }
-        }
-      },
       "market": {
         "_unresolved_reason": null,
         "extras": [
@@ -15332,13 +15287,6 @@
           "key": "data"
         },
         "fetchLongShortRatioHistory": {
-          "default": [],
-          "fallback_keys": [],
-          "key": "data"
-        }
-      },
-      "margin_modification": {
-        "fetchMarginAdjustmentHistory": {
           "default": [],
           "fallback_keys": [],
           "key": "data"

@@ -1,5 +1,5 @@
 {
-  "count": 97,
+  "count": 94,
   "fixtures": [
     "alpaca/fetch_balance.json",
     "alpaca/fetch_markets.json",
@@ -13,7 +13,6 @@
     "binance/fetch_funding_history.json",
     "binance/fetch_last_prices.json",
     "binance/fetch_leverage_tiers.json",
-    "binance/fetch_margin_adjustment_history.json",
     "binance/fetch_markets.json",
     "binance/fetch_my_trades.json",
     "binance/fetch_ohlcv.json",
@@ -72,7 +71,6 @@
     "derive/fetch_positions.json",
     "derive/fetch_trades.json",
     "hyperliquid/fetch_balance.json",
-    "hyperliquid/fetch_funding_history.json",
     "hyperliquid/fetch_markets.json",
     "hyperliquid/fetch_my_trades.json",
     "hyperliquid/fetch_ohlcv.json",
@@ -86,7 +84,6 @@
     "lighter/fetch_ticker.json",
     "okx/fetch_balance.json",
     "okx/fetch_funding_rate_history.json",
-    "okx/fetch_margin_adjustment_history.json",
     "okx/fetch_markets.json",
     "okx/fetch_markets_by_type.json",
     "okx/fetch_my_trades.json",
@@ -209,15 +206,6 @@
       "host": "demo-fapi.binance.com",
       "method": "fetch_leverage_tiers",
       "path": "binance/fetch_leverage_tiers.json",
-      "venue": "binance"
-    },
-    {
-      "capture_date": "2026-08-08",
-      "captured_at": "2026-08-08T23:26:17.368003Z",
-      "endpoint": "fapi/v1/positionMargin/history",
-      "host": "demo-fapi.binance.com",
-      "method": "fetch_margin_adjustment_history",
-      "path": "binance/fetch_margin_adjustment_history.json",
       "venue": "binance"
     },
     {
@@ -778,15 +766,6 @@
       "venue": "hyperliquid"
     },
     {
-      "capture_date": "2026-08-08",
-      "captured_at": "2026-08-08T23:26:34.378808Z",
-      "endpoint": "info:userFunding",
-      "host": "api.hyperliquid-testnet.xyz",
-      "method": "fetch_funding_history",
-      "path": "hyperliquid/fetch_funding_history.json",
-      "venue": "hyperliquid"
-    },
-    {
       "capture_date": "2026-07-15",
       "captured_at": "2026-07-15T03:56:00.827173Z",
       "endpoint": "info:meta",
@@ -909,15 +888,6 @@
       "host": "www.okx.com",
       "method": "fetch_funding_rate_history",
       "path": "okx/fetch_funding_rate_history.json",
-      "venue": "okx"
-    },
-    {
-      "capture_date": "2026-08-08",
-      "captured_at": "2026-08-08T23:26:34.378808Z",
-      "endpoint": "api/v5/account/bills",
-      "host": "www.okx.com",
-      "method": "fetch_margin_adjustment_history",
-      "path": "okx/fetch_margin_adjustment_history.json",
       "venue": "okx"
     },
     {

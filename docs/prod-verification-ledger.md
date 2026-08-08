@@ -29,6 +29,58 @@ Entry template:
 > (`www.okx.com`) and `OKX_INTL_*` credentials. References to `my.okx.com` below are
 > historical negative evidence only, never the target for a new probe.
 
+### binance — populated margin-adjustment history row (task 568, filed 2026-08-09)
+- Authored slices: `binance:normalization.field_maps.margin_modification` (intentionally
+  absent while the task-550 coverage cell remains open).
+- Blocked by: the provisioned USD-M demo account returned `[]` for
+  `fapi/v1/positionMargin/history` across BTC, ETH, SOL, XRP, BNB, ADA, and DOGE. Producing a
+  row requires an isolated position plus an add/reduce-margin mutation.
+- What tier-2 already proved: Binance's USD-M contract defines `amount`, `asset`, `type` 1/2,
+  `time`, `symbol`, and `positionSide`; an empty signed demo response proves routing and auth
+  but none of those row meanings.
+- The open question: does a populated demo row preserve the documented amount, currency,
+  add/reduce type, and millisecond event time through the unified parser?
+- Exact call: after an operator-approved isolated-position margin adjustment, call
+  `Bourse.fetch_margin_adjustment_history(ex, "BTC/USDT:USDT", limit: 10)` on
+  `demo-fapi.binance.com`.
+- Expected evidence: freeze and register a populated response; assert the parsed amount,
+  currency, type, symbol, and timestamp against the same raw row; author the map and remove
+  only the Binance margin-adjustment task-550 coverage cell.
+
+### hyperliquid — populated funding history on testnet (task 568, filed 2026-08-09)
+- Authored slices: `hyperliquid:normalization.field_maps.funding_history` (intentionally absent
+  while the task-550 coverage cell remains open).
+- Blocked by: `info:userFunding` returned `[]` for the provisioned testnet wallet even with
+  `startTime: 0`. Producing a row requires holding a perpetual position across an hourly
+  funding event.
+- What tier-2 already proved: Hyperliquid's provider-owned contract defines the row's `time`,
+  `hash`, and nested `delta.coin`, `delta.usdc`, and `delta.fundingRate`; the empty testnet
+  response proves only endpoint reachability.
+- The open question: do those fields retain the documented meanings on a populated testnet
+  row and normalize to the correct unified symbol and USDC amount?
+- Exact call: after a testnet position survives a funding boundary, call
+  `Bourse.fetch_funding_history(ex, since: 0)`.
+- Expected evidence: freeze and register the populated testnet body; assert its exact id,
+  amount, rate, symbol, and timestamp; author the map and remove only the Hyperliquid funding
+  task-550 coverage cell.
+
+### okx — populated margin-adjustment bill row (task 568, filed 2026-08-09)
+- Authored slices: `okx:normalization.field_maps.margin_modification` (intentionally absent
+  while the task-550 coverage cell remains open).
+- Blocked by: the international demo account returned no type-6 rows from either the recent or
+  archive bills endpoint. Producing one requires an isolated position plus a margin mutation.
+- What tier-2 already proved: live `GET /api/v5/account/subtypes` identifies type 6 subtype
+  `160` as manual margin increase and `161` as manual margin decrease. OKX's bills contract
+  distinguishes account-level `balChg`/`bal` from position-level `posBalChg`/`posBal`; the
+  latter pair matches `MarginModification.amount`/`total`.
+- The open question: what signs and resulting position-margin totals do populated subtype
+  160/161 demo rows carry?
+- Exact call: after an operator-approved isolated-position add/reduce, call
+  `Bourse.fetch_margin_adjustment_history(ex, type: "add")` and the matching `"reduce"` read.
+- Expected evidence: freeze and register both populated bill rows; assert subtype, signed
+  `posBalChg`, resulting `posBal`, currency, margin mode, and timestamp; author the map and
+  remove only the OKX margin-adjustment task-550 coverage cell.
+
 ### bybit — conversion read field map on sandbox (task 567, filed 2026-08-08)
 - Authored slices: `bybit:normalization.field_maps.conversion` (intentionally absent while
   the three task-550 coverage cells remain open).

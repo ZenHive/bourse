@@ -7,6 +7,12 @@
       "tracking_task": 550
     },
     {
+      "failure": "no_field_map",
+      "method": "fetchMarginAdjustmentHistory",
+      "parse_type": "margin_modification",
+      "tracking_task": 550
+    },
+    {
       "failure": "no_parse_type",
       "method": "fetchMySettlementHistory",
       "tracking_task": 550
@@ -156,6 +162,12 @@
   "derive": [],
   "hyperliquid": [
     {
+      "failure": "no_field_map",
+      "method": "fetchFundingHistory",
+      "parse_type": "funding_history",
+      "tracking_task": 550
+    },
+    {
       "failure": "no_parse_type",
       "method": "fetchStatus",
       "tracking_task": 550
@@ -171,6 +183,12 @@
     {
       "failure": "no_parse_type",
       "method": "fetchDepositWithdrawFees",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_field_map",
+      "method": "fetchMarginAdjustmentHistory",
+      "parse_type": "margin_modification",
       "tracking_task": 550
     },
     {

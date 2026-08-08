@@ -50,15 +50,15 @@ defmodule Bourse.UnifiedReadContractTest do
 
       assert Map.new(actual, fn {venue, entries} -> {venue, length(entries)} end) == %{
                "alpaca" => 0,
-               "binance" => 6,
+               "binance" => 7,
                "binancecoinm" => 1,
                "binanceusdm" => 11,
                "bybit" => 7,
                "deribit" => 2,
                "derive" => 0,
-               "hyperliquid" => 1,
+               "hyperliquid" => 2,
                "lighter" => 0,
-               "okx" => 6
+               "okx" => 7
              }
 
       expected =

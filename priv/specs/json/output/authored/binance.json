@@ -23702,43 +23702,6 @@
           "symbol": null
         }
       },
-      "margin_modification": {
-        "_unresolved_reason": null,
-        "extras": [],
-        "field_map": {
-          "amount": {
-            "coercion": "safeNumber",
-            "key": "amount"
-          },
-          "code": {
-            "coercion": "safeString",
-            "key": "asset"
-          },
-          "datetime": null,
-          "info": null,
-          "marginMode": {
-            "default": "isolated"
-          },
-          "status": {
-            "default": "ok"
-          },
-          "symbol": null,
-          "timestamp": {
-            "coercion": "safeInteger",
-            "format": "ms",
-            "key": "time"
-          },
-          "total": null,
-          "type": {
-            "coercion": "safeString",
-            "enum_map": {
-              "1": "add",
-              "2": "reduce"
-            },
-            "key": "type"
-          }
-        }
-      },
       "market": {
         "_unresolved_reason": null,
         "extras": [],
@@ -24894,13 +24857,6 @@
           "default": [],
           "fallback_keys": [],
           "key": "positions"
-        }
-      },
-      "margin_modification": {
-        "fetchMarginAdjustmentHistory": {
-          "default": [],
-          "fallback_keys": [],
-          "key": null
         }
       },
       "market": {
