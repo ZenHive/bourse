@@ -19,6 +19,12 @@ defmodule Bourse.Test.CircuitBreakerControl do
 
   `overrides` are merged over the production defaults, so a test can shorten the
   window or lower the melt count without restating the rest.
+
+  Enabling the breaker is the only way a test can install or melt a fuse, so this
+  is also the only place that has to clean one up: on exit every fuse installed
+  during the run is removed. Cleaning all of them rather than a caller-named one
+  is deliberate — a test that melts a venue it did not think to declare is
+  exactly how the original leak went unnoticed.
   """
   @spec enable!(map()) :: :ok
   def enable!(overrides \\ %{}) when is_map(overrides) do
@@ -27,6 +33,8 @@ defmodule Bourse.Test.CircuitBreakerControl do
     Application.put_env(:bourse, :circuit_breaker, Map.merge(%{enabled: true}, overrides))
 
     on_exit(fn ->
+      remove_installed_fuses()
+
       case previous do
         nil -> Application.delete_env(:bourse, :circuit_breaker)
         value -> Application.put_env(:bourse, :circuit_breaker, value)
@@ -37,17 +45,26 @@ defmodule Bourse.Test.CircuitBreakerControl do
   end
 
   @doc """
-  Enables the breaker and guarantees `exchange_id` starts and ends with no
-  installed fuse, so neither a previous test nor this one leaks fuse state.
+  Enables the breaker and guarantees `exchange_id` starts with no installed fuse,
+  so a fuse left behind by an earlier run cannot decide this test's outcome.
   """
   @spec isolate!(String.t(), map()) :: :ok
   def isolate!(exchange_id, overrides \\ %{}) when is_binary(exchange_id) do
     enable!(overrides)
 
-    fuse_name = CircuitBreaker.fuse_name(exchange_id)
-    :fuse.remove(fuse_name)
-    on_exit(fn -> :fuse.remove(fuse_name) end)
+    exchange_id |> CircuitBreaker.fuse_name() |> :fuse.remove()
 
     :ok
+  end
+
+  @doc """
+  Removes every fuse the node has installed. Removing an absent fuse is a no-op,
+  so this is safe whether or not the breaker was ever enabled.
+  """
+  @spec remove_installed_fuses() :: :ok
+  def remove_installed_fuses do
+    Enum.each(CircuitBreaker.all_statuses(), fn {exchange_id, _status} ->
+      exchange_id |> CircuitBreaker.fuse_name() |> :fuse.remove()
+    end)
   end
 end
