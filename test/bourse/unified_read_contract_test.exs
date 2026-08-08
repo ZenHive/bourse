@@ -502,23 +502,26 @@ defmodule Bourse.UnifiedReadContractTest do
   end
 
   defp runtime_parse_type(method, js_name, runtime_contract) do
-    case Map.fetch(runtime_contract.special_plans, {method, js_name}) do
-      {:ok, parser} ->
-        Map.fetch(runtime_contract.parser_slots, parser)
-
-      :error ->
-        descriptor_parse_type(js_name, runtime_contract)
+    with {:ok, parser} <- runtime_parser(method, js_name, runtime_contract) do
+      Map.fetch(runtime_contract.parser_slots, parser)
     end
   end
 
-  defp descriptor_parse_type(js_name, runtime_contract) do
+  defp runtime_parser(method, js_name, runtime_contract) do
+    case Map.fetch(runtime_contract.special_plans, {method, js_name}) do
+      {:ok, parser} -> {:ok, parser}
+      :error -> descriptor_parser(js_name, runtime_contract)
+    end
+  end
+
+  defp descriptor_parser(js_name, runtime_contract) do
     with %{"signature" => %{"return_type" => "Promise<" <> rest}} <-
            Map.get(Descriptor.descriptors(), js_name),
          type_token = rest |> String.trim_trailing(">") |> String.trim_trailing("[]"),
          aliased_token = Map.get(runtime_contract.aliases, type_token, type_token),
          {:ok, parse_type} <- Map.fetch(runtime_contract.parse_types_by_return, aliased_token),
-         {:ok, _parser} <- Map.fetch(runtime_contract.parsers, parse_type) do
-      {:ok, parse_type}
+         {:ok, parser} <- Map.fetch(runtime_contract.parsers, parse_type) do
+      {:ok, parser}
     else
       _ -> :none
     end
