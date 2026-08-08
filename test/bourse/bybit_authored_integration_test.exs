@@ -12,6 +12,8 @@ defmodule Bourse.BybitAuthoredIntegrationTest do
   @trade_limit 50
   # Demo host for C28 balance branch pin (granted fake funds). Not sandbox/testnet.
   @bybit_demo_url "https://api-demo.bybit.com"
+  @demo_convert_unsupported_code 10_032
+  @demo_convert_unsupported_message "Demo trading are not supported."
 
   @moduletag :integration
   @moduletag :network
@@ -150,6 +152,27 @@ defmodule Bourse.BybitAuthoredIntegrationTest do
     # can execute.
     assert code in [10_005, "10005"]
     assert is_binary(message) and message != ""
+  end
+
+  # TODO(Task 550): replace this blocker pin with parsed sandbox values once an
+  # Exchange-enabled sandbox key/host can produce the task-567 recordings.
+  test "demo conversion reads fail at Bybit's sandbox boundary" do
+    exchange = bybit_demo_exchange!()
+
+    results = [
+      Bourse.fetch_convert_quote(exchange, "USDT", "BTC", 1, base_url: @bybit_demo_url),
+      Bourse.fetch_convert_trade(exchange, "invalid-task-567", base_url: @bybit_demo_url),
+      Bourse.fetch_convert_trade_history(exchange, base_url: @bybit_demo_url)
+    ]
+
+    for result <- results do
+      assert {:error,
+              %Error{
+                type: :exchange_error,
+                code: @demo_convert_unsupported_code,
+                message: @demo_convert_unsupported_message
+              }} = result
+    end
   end
 
   test "public option volatility maps the symbol base coin and surfaces Bybit validation" do

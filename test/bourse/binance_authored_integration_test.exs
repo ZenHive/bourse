@@ -24,6 +24,8 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
   @percentage_scale 100
   @percentage_precision 2
   @http_ok_status 200
+  @usdm_convert_demo_error_code -1000
+  @usdm_sapi_sandbox_error "No base URL for section sapi on binanceusdm (sandbox)"
 
   @moduletag :integration
   @moduletag :network
@@ -190,6 +192,42 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
       assert {:error, %Error{type: :order_not_found, code: -2013}} =
                Bourse.fetch_order(exchange, "999999999999999", symbol: symbol)
     end
+  end
+
+  # TODO(Task 550): replace this blocker pin with parsed sandbox values once
+  # Binance exposes successful task-567 conversion/currency responses there.
+  test "USD-M conversion and currency reads remain unreachable on sandbox" do
+    credentials =
+      require_credentials!(:binance, sandbox_key: :futures, url: "https://demo.binance.com/en/my/settings/api-management")
+
+    exchange = build_exchange(:binanceusdm, credentials: credentials, sandbox: true)
+
+    for result <- [
+          Bourse.fetch_convert_quote(exchange, "USDT", "BTC", 1),
+          Bourse.fetch_convert_currencies(exchange),
+          Bourse.fetch_currencies(exchange)
+        ] do
+      assert {:error, %Error{type: :not_supported, message: @usdm_sapi_sandbox_error}} = result
+    end
+
+    for {method, result} <- [
+          fetchConvertTrade: Bourse.fetch_convert_trade(exchange, "1"),
+          fetchConvertTradeHistory: Bourse.fetch_convert_trade_history(exchange)
+        ] do
+      assert {:error, %Error{type: :bad_request, message: message}} = result
+      assert message =~ "ambiguous multi-endpoint selection for #{method} on binanceusdm"
+    end
+
+    assert {:error, %Error{type: :operation_failed, code: @usdm_convert_demo_error_code}} =
+             Bourse.Binanceusdm.fapiPublic_get_convert_exchangeinfo(exchange)
+
+    # Quote creation is non-executing; accepting the returned quote is a separate endpoint.
+    assert {:error, %Error{type: :operation_failed, code: @usdm_convert_demo_error_code}} =
+             Bourse.Binanceusdm.fapiPrivate_post_convert_getquote(exchange, %{
+               "fromAsset" => "USDT",
+               "toAsset" => "BTC",
+               "fromAmount" => "1"
+             })
   end
 
   @tag :dangerous

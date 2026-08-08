@@ -29,6 +29,55 @@ Entry template:
 > (`www.okx.com`) and `OKX_INTL_*` credentials. References to `my.okx.com` below are
 > historical negative evidence only, never the target for a new probe.
 
+### bybit — conversion read field map on sandbox (task 567, filed 2026-08-08)
+- Authored slices: `bybit:normalization.field_maps.conversion` (intentionally absent while
+  the three task-550 coverage cells remain open).
+- Blocked by: neither provisioned sandbox credential can produce a successful conversion
+  response. `api-demo.bybit.com` returns `10032 "Demo trading are not supported."` for
+  `fetchConvertQuote`, `fetchConvertTrade`, and `fetchConvertTradeHistory`; the testnet key
+  reaches the same three endpoints but returns `10005` because it lacks Bybit's Exchange
+  permission.
+- What live production already proved: the read-only production probe returned a populated
+  quote, one successful history row, and that row again through convert-status. The observed
+  fields match Bybit's provider-owned quote/history/status contracts, but task 567 requires a
+  sandbox recording and does not treat production traffic as a substitute.
+- The open question: does an Exchange-enabled testnet account return the same conversion
+  fields and meanings through all three unified reads?
+- Exact call: with an Exchange-enabled `BYBIT_TESTNET_*` key, call
+  `Bourse.fetch_convert_quote(ex, "SOL", "USDT", 0.00005)`, then use an existing testnet
+  history id with `Bourse.fetch_convert_trade(ex, id)` and call
+  `Bourse.fetch_convert_trade_history(ex, limit: 10)`. Do not confirm or execute the quote.
+- Expected evidence: `retCode 0` bodies carrying the quote id, source/destination currencies
+  and amounts, venue rate, status, and millisecond clock; freeze and register all three raw
+  responses, author the conversion map, assert those exact parsed meanings, and remove only
+  the three Bybit task-550 coverage cells.
+
+### binanceusdm — conversion and currency read field maps on sandbox (task 567, filed 2026-08-08)
+- Authored slices: `binanceusdm:normalization.field_maps.conversion` and
+  `binanceusdm:normalization.field_maps.currency` (intentionally absent while the five
+  task-550 coverage cells remain open).
+- Blocked by: the authored `sapi` routes used by `fetchConvertQuote`, `fetchConvertTrade`,
+  `fetchConvertTradeHistory`, `fetchConvertCurrencies`, and `fetchCurrencies` have no USD-M
+  sandbox base URL. The first, fourth, and fifth stop with the explicit no-base error; the two
+  history/status reads currently stop earlier on ambiguous multi-endpoint selection. Direct
+  probes of USD-M's native `fapi/v1/convert/exchangeInfo` and `convert/getQuote` returned
+  Binance `-1000` / HTTP 500 on both `demo-fapi.binance.com` and the legacy
+  `testnet.binancefuture.com` host.
+- What live production already proved: the production `sapi` host returned 600 Convert asset
+  rows and 729 Wallet currency rows; Convert history returned a successful empty envelope and
+  an invalid status id returned Binance's `-1102` parameter error. Those calls establish
+  production reachability but cannot supply the sandbox-success recordings task 567 requires.
+- The open question: which sandbox-supported provider operations supply the five declared
+  reads, and do their populated rows retain the production field meanings?
+- Exact call: with the provisioned `BINANCE_FUTURES_TEST_*` key, first call
+  `Bourse.Binanceusdm.fapiPublic_get_convert_exchangeinfo(ex)` and the non-executing
+  `fapiPrivate_post_convert_getquote/2`; after the provider returns success, exercise all five
+  unified reads with sandbox mode enabled. Do not accept the quote.
+- Expected evidence: successful sandbox bodies for each declared read, including a populated
+  conversion history/status row and concrete currency rows; freeze and register each response,
+  author both maps from Binance's own contracts, assert the observed domain values, and remove
+  only the five Binance USD-M task-550 coverage cells.
+
 ### binance — documented pending and match-expiry order statuses (task 538, C-T538b, filed 2026-08-04)
 - Authored slices: `binance:normalization.field_maps.order.field_map.status`
 - Blocked by: the provisioned Spot Testnet history has no registered row carrying
