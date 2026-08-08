@@ -36,8 +36,25 @@ concurrency:
 
 jobs:
   check:
-    name: Offline checks
+    name: Offline checks (Elixir ${{ matrix.elixir }} / OTP ${{ matrix.otp }})
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The pair this repo develops on — carries the full gate.
+          - elixir: "1.20"
+            otp: "29"
+            primary: true
+          # mix.exs declares `~> 1.18`, so the declared floor gets compiled and
+          # tested here or the published minimum is a promise nothing verifies.
+          # Elixir 1.18 supports OTP 25-27, so 27 is its ceiling. Only compile
+          # and the suites run on this leg: format, Credo, Doctor, Sobelow and
+          # the docs/lock checks are version-independent repo hygiene, and
+          # running them twice buys nothing.
+          - elixir: "1.18"
+            otp: "27"
+            primary: false
     env:
       MIX_ENV: test
     steps:
@@ -46,8 +63,8 @@ jobs:
       - id: beam
         uses: erlef/setup-beam@v1
         with:
-          otp-version: "29"
-          elixir-version: "1.20"
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
 
       - name: Cache deps & _build
         uses: actions/cache@v4
@@ -62,9 +79,11 @@ jobs:
       - run: mix deps.get
 
       # Unused deps and a stale lock are cheap to catch and confusing to debug.
-      - run: mix deps.unlock --check-unused
+      - if: matrix.primary
+        run: mix deps.unlock --check-unused
 
       - name: Format
+        if: matrix.primary
         run: mix format --check-formatted
 
       - name: Compile
@@ -73,13 +92,16 @@ jobs:
       # TODO(Task N) markers are first-class in this repo — see the `precommit`
       # alias in mix.exs, which passes the same flags.
       - name: Credo
+        if: matrix.primary
         run: mix credo --strict --ignore TagTODO,TagFIXME
 
       - name: Doctor
+        if: matrix.primary
         run: mix doctor --raise
 
       # Hash-based `.sobelow-skips`; this repo's tooling ignores inline comments.
       - name: Sobelow
+        if: matrix.primary
         run: mix sobelow --skip
 
       # `--include package` builds and unpacks the real Hex tarball, which is the
@@ -101,6 +123,7 @@ jobs:
       # stale AGENTS.md makes a cross-family reviewer grade against rules that
       # have already changed.
       - name: Documentation claims
+        if: matrix.primary
         run: |
           mix ccxt.claude_check
           mix ccxt.agents_md --check
