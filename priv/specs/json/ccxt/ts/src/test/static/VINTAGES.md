@@ -31,7 +31,7 @@ tag (see the recipe below).
 `currencies/` and `response/` are two vendored views of the same CCXT parse, so
 a chain's unified network code must not depend on which one it came from. That
 invariant is asserted offline by
-`test/ccxt/recorded_response_fixtures_test.exs` ("currency caches and response
+`test/bourse/recorded_response_fixtures_test.exs` ("currency caches and response
 fixtures agree on their shared network codes"), against an adjudicated baseline
 that fails on any change in either direction.
 

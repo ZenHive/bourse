@@ -1,7 +1,8 @@
 # Lighter native signer
 
 Private Lighter requests use a host-native helper linked to the pinned official
-Go signing library. Build it with Go 1.23.1 and a C compiler:
+Go signing library. Build it with Go 1.25.0 (the version `go.mod` requires) and
+a C compiler:
 
 ```bash
 mix ccxt.build_lighter_signer
