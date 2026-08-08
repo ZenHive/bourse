@@ -850,3 +850,22 @@ ALIGNED-to-ccxt (task 366).**
 <!-- carve-evidence-status
 {"carve_id":"C-T540b","date":"2026-08-04","semantic_source":{"kind":"provider_owned","reference":"Binance Spot All Orders GET /api/v3/allOrders parameter contract in the pinned spot-openapi authority artifact"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/exchange_accepted_requests/binance/fetch_orders.json"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+## 2026-08-08 — unsupported composite and sandbox-absent reads (Task 565)
+
+**C-T565b — Do not declare a unified read when one provider response cannot satisfy it
+(task 565). Outcome: DIVERGE from the inherited capability declarations.**
+
+- *Provider boundary:* account positions and position risk require account/position rows plus
+  leverage-bracket data; selecting the bracket route alone does not return positions. The EAPI
+  option-account and SAPI dust/isolated-margin routes have no Spot Testnet host.
+- *Live evidence:* Spot/Futures sandbox probes selected either an incompatible route or reported
+  no sandbox base URL. `fetchMarginModes` also had multiple incompatible market-family routes.
+- *Our carve:* `fetchAccountPositions`, `fetchOptionPositions`, `fetchPositionsRisk`,
+  `fetchMyDustTrades`, `fetchIsolatedBorrowRates`, and `fetchMarginModes` are `has=false` on the
+  multi-market Binance surface. This prevents leverage brackets from being silently parsed as
+  positions and keeps sandbox-unverifiable reads out of the declared client surface.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T565b","date":"2026-08-08","semantic_source":{"kind":"provider_owned","reference":"Pinned Binance Spot, USD-M, and Options API artifacts in priv/authority/binance identify separate account, leverage-bracket, EAPI, and SAPI contracts"},"observed_evidence":{"kind":"live_venue","reference":"Task 565 Spot/Futures sandbox differential probes: bracket rows were selected as positions; EAPI and SAPI reported no sandbox base URL"},"compatibility_reference":null,"resolved_tier":1}
+-->

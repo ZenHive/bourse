@@ -381,3 +381,23 @@ CONFIRM venue.**
 <!-- carve-evidence-status
 {"carve_id":"C-T536","date":"2026-08-04","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M All Orders contract: GET /fapi/v1/allOrders returns active, canceled, or filled orders"},"observed_evidence":{"kind":"live_venue","reference":"USD-M demo BTC/USDT:USDT fetch_orders returned 29 mixed rows; fetch_closed_orders returned 22 closed rows and fetch_canceled_orders returned 7 canceled rows"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+## 2026-08-08 — composite positions and unavailable API families (Task 565)
+
+**C-T565c — Position reads must not parse leverage brackets as positions; SAPI/EAPI reads
+need a reachable provider sandbox (task 565). Outcome: DIVERGE from the inherited capability
+declarations.**
+
+- *Provider boundary:* USD-M position/account responses and leverage-bracket responses are
+  distinct contracts. SAPI dust/isolated-margin and EAPI option-account routes are not served by
+  the USD-M demo host.
+- *Live evidence:* demo-fapi returned 877 `{symbol, brackets}` carriers for the route selected by
+  `fetchAccountPositions` and `fetchPositionsRisk`; the old parser produced 877 mostly-empty
+  position structs. SAPI/EAPI probes had no sandbox base URL.
+- *Our carve:* `fetchAccountPositions`, `fetchOptionPositions`, `fetchPositionsRisk`,
+  `fetchMyDustTrades`, and `fetchIsolatedBorrowRates` are `has=false`. `fetchLeverageTiers`
+  remains declared and explicitly flattens the provider's nested bracket carrier.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T565c","date":"2026-08-08","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binanceusdm provider artifacts distinguish account, position-risk, and leverage-bracket responses"},"observed_evidence":{"kind":"live_venue","reference":"Task 565 demo-fapi probes observed 877 nested leverage-bracket carriers on the incorrectly selected position routes and no SAPI/EAPI sandbox host"},"compatibility_reference":null,"resolved_tier":1}
+-->

@@ -17,20 +17,14 @@
       "methods": [
         "fetchIsolatedBorrowRates"
       ],
-      "venues": [
-        "binance",
-        "binanceusdm"
-      ]
+      "note": "token alias retained; both previously declared venues are has=false pending a sandbox-backed contract"
     },
     "IsolatedBorrowRate": {
       "target": "BorrowRate",
       "methods": [
         "fetchIsolatedBorrowRate"
       ],
-      "venues": [
-        "binance",
-        "binanceusdm"
-      ]
+      "note": "singular token alias retained for the emulated method; it is not a task-565 declared-read cell"
     },
     "MarginModes": {
       "target": "MarginMode",
@@ -38,7 +32,6 @@
         "fetchMarginModes"
       ],
       "venues": [
-        "binance",
         "binanceusdm"
       ]
     },
@@ -70,48 +63,8 @@
     }
   },
   "descriptor_return_types_added": {
-    "fetchAccountPositions": {
-      "return_type": "Promise<Position[]>",
-      "venues": [
-        "binance",
-        "binanceusdm"
-      ]
-    },
-    "fetchOptionPositions": {
-      "return_type": "Promise<Position[]>",
-      "venues": [
-        "binance",
-        "binanceusdm"
-      ]
-    },
-    "fetchPositionsRisk": {
-      "return_type": "Promise<Position[]>",
-      "venues": [
-        "binance",
-        "binanceusdm"
-      ]
-    },
-    "fetchMyDustTrades": {
-      "return_type": "Promise<Trade[]>",
-      "venues": [
-        "binance",
-        "binanceusdm"
-      ]
-    },
     "fetchPositionsForSymbol": {
       "return_type": "Promise<Position[]>",
-      "venues": [
-        "okx"
-      ]
-    },
-    "fetchDeposit": {
-      "return_type": "Promise<Transaction>",
-      "venues": [
-        "okx"
-      ]
-    },
-    "fetchWithdrawal": {
-      "return_type": "Promise<Transaction>",
       "venues": [
         "okx"
       ]
@@ -120,12 +73,6 @@
       "return_type": "Promise<Market[]>",
       "venues": [
         "okx"
-      ]
-    },
-    "fetchDerivativesOpenInterestHistory": {
-      "return_type": "Promise<OpenInterest[]>",
-      "venues": [
-        "bybit"
       ]
     },
     "fetchLastPrices": {
@@ -137,9 +84,92 @@
     }
   },
   "non_struct_contract": {
-    "fetchLeverageTiers": "parser_plan forces list_return true (flat tier rows, not dict wrapper)"
+    "fetchLeverageTiers": "parser_plan forces list_return true; Binance nested symbol/brackets carriers are flattened to tier rows before parsing"
   },
   "has_false": {
+    "fetchAccountPositions": {
+      "venues": [
+        "binance",
+        "binanceusdm"
+      ],
+      "carves": [
+        "C-T565b",
+        "C-T565c"
+      ],
+      "reason": "the provider account response and leverage-bracket response must be joined; selecting either endpoint alone silently fabricates positions"
+    },
+    "fetchOptionPositions": {
+      "venues": [
+        "binance",
+        "binanceusdm"
+      ],
+      "carves": [
+        "C-T565b",
+        "C-T565c"
+      ],
+      "reason": "the EAPI account surface has no sandbox host in the authored venue contract"
+    },
+    "fetchPositionsRisk": {
+      "venues": [
+        "binance",
+        "binanceusdm"
+      ],
+      "carves": [
+        "C-T565b",
+        "C-T565c"
+      ],
+      "reason": "the provider position-risk and leverage-bracket responses require a join; direct endpoint selection does not implement the unified method"
+    },
+    "fetchMyDustTrades": {
+      "venues": [
+        "binance",
+        "binanceusdm"
+      ],
+      "carves": [
+        "C-T565b",
+        "C-T565c"
+      ],
+      "reason": "the SAPI dust-log surface is unavailable on the provider sandbox hosts"
+    },
+    "fetchIsolatedBorrowRates": {
+      "venues": [
+        "binance",
+        "binanceusdm"
+      ],
+      "carves": [
+        "C-T565b",
+        "C-T565c"
+      ],
+      "reason": "the SAPI isolated-margin surface is unavailable on the provider sandbox hosts"
+    },
+    "fetchMarginModes": {
+      "venues": [
+        "binance"
+      ],
+      "carve": "C-T565b",
+      "reason": "the multi-market venue declares multiple incompatible account routes without one provider response contract"
+    },
+    "fetchDerivativesOpenInterestHistory": {
+      "venues": [
+        "bybit"
+      ],
+      "carve": "C-T565d",
+      "reason": "the provider requires category, intervalTime, and a native symbol, but the declared method does not author a complete request binding"
+    },
+    "fetchDeposit": {
+      "venues": [
+        "okx"
+      ],
+      "carve": "C-T565e",
+      "reason": "the provider requires an existing deposit identifier and the demo account exposes no deposit history to verify one"
+    },
+    "fetchWithdrawal": {
+      "venues": [
+        "okx"
+      ],
+      "carve": "C-T565e",
+      "reason": "the provider requires an existing withdrawal identifier and the demo account exposes no withdrawal history to verify one"
+    },
     "fetchLiquidations": {
       "venues": [
         "deribit"
@@ -147,6 +177,30 @@
       "carve": "C-T565a",
       "reason": "wired endpoint public/get_last_settlements_by_instrument returns settlements, not liquidations"
     }
+  },
+  "verified_recordings": {
+    "fetchLeverageTiers": [
+      "binance",
+      "binanceusdm",
+      "bybit"
+    ],
+    "fetchLastPrices": [
+      "binance",
+      "binanceusdm"
+    ],
+    "fetchMarginModes": [
+      "binanceusdm"
+    ],
+    "fetchOpenInterests": [
+      "hyperliquid",
+      "okx"
+    ],
+    "fetchMarketsByType": [
+      "okx"
+    ],
+    "fetchPositionsForSymbol": [
+      "okx"
+    ]
   },
   "pending_net_new_type": [
     "fetchStatus",

@@ -254,7 +254,7 @@
       "fetchCrossBorrowRates": true,
       "fetchCurrencies": true,
       "fetchCurrenciesWs": "emulated",
-      "fetchDeposit": true,
+      "fetchDeposit": false,
       "fetchDepositAddress": true,
       "fetchDepositAddresses": false,
       "fetchDepositAddressesByNetwork": true,
@@ -324,7 +324,7 @@
       "fetchTransfers": true,
       "fetchUnderlyingAssets": true,
       "fetchVolatilityHistory": false,
-      "fetchWithdrawal": true,
+      "fetchWithdrawal": false,
       "fetchWithdrawalWhitelist": false,
       "fetchWithdrawals": true,
       "future": true,
@@ -4323,6 +4323,20 @@
           ]
         },
         "fetchPositions": {
+          "consume": [
+            "type"
+          ],
+          "default": "private_get_account_positions",
+          "rules": [
+            {
+              "endpoint": "private_get_account_positions_history",
+              "when": {
+                "type": "history"
+              }
+            }
+          ]
+        },
+        "fetchPositionsForSymbol": {
           "consume": [
             "type"
           ],

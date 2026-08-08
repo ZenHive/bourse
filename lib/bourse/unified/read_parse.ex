@@ -2866,6 +2866,7 @@ defmodule Bourse.Unified.ReadParse do
 
     case_result =
       case parse_type do
+        "leverage_tiers" -> flatten_binance_leverage_tiers(payload)
         "order" -> annotate_binance_orders(payload)
         "position" -> annotate_binance_positions(payload, body, params, exchange)
         "margin_mode" -> annotate_binance_margin_mode(payload)
@@ -2891,6 +2892,21 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   defp annotate_binance_borrow_and_convert_payload(payload, _parse_type, _params), do: payload
+
+  defp flatten_binance_leverage_tiers(rows) when is_list(rows) do
+    Enum.flat_map(rows, fn
+      %{"brackets" => brackets, "symbol" => symbol} when is_list(brackets) ->
+        Enum.map(brackets, &Map.put_new(&1, "symbol", symbol))
+
+      row when is_map(row) ->
+        [row]
+
+      _other ->
+        []
+    end)
+  end
+
+  defp flatten_binance_leverage_tiers(payload), do: payload
 
   defp annotate_binance_orders(rows) when is_list(rows), do: Enum.map(rows, &annotate_binance_order/1)
   defp annotate_binance_orders(%{} = row), do: annotate_binance_order(row)
@@ -4028,6 +4044,9 @@ defmodule Bourse.Unified.ReadParse do
 
   defp annotate_hyperliquid_by_type("funding_rate", payload, exchange, _js),
     do: annotate_hyperliquid_ctx_rows(payload, exchange, :funding_rate)
+
+  defp annotate_hyperliquid_by_type("open_interest", payload, exchange, _js),
+    do: annotate_hyperliquid_ctx_rows(payload, exchange, :open_interest)
 
   defp annotate_hyperliquid_by_type("order", payload, _exchange, js), do: annotate_hyperliquid_orders(payload, js)
   defp annotate_hyperliquid_by_type("position", payload, _exchange, _js), do: annotate_hyperliquid_positions(payload)

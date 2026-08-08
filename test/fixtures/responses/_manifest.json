@@ -1,5 +1,5 @@
 {
-  "count": 86,
+  "count": 93,
   "fixtures": [
     "alpaca/fetch_balance.json",
     "alpaca/fetch_markets.json",
@@ -11,6 +11,7 @@
     "binance/fetch_balance.json",
     "binance/fetch_bids_asks.json",
     "binance/fetch_last_prices.json",
+    "binance/fetch_leverage_tiers.json",
     "binance/fetch_markets.json",
     "binance/fetch_my_trades.json",
     "binance/fetch_ohlcv.json",
@@ -28,7 +29,10 @@
     "binancecoinm/order_lifecycle.json",
     "binanceusdm/fetch_balance.json",
     "binanceusdm/fetch_funding_intervals.json",
+    "binanceusdm/fetch_last_prices.json",
     "binanceusdm/fetch_ledger.json",
+    "binanceusdm/fetch_leverage_tiers.json",
+    "binanceusdm/fetch_margin_modes.json",
     "binanceusdm/fetch_markets.json",
     "binanceusdm/fetch_my_trades.json",
     "binanceusdm/fetch_ohlcv.json",
@@ -69,6 +73,7 @@
     "hyperliquid/fetch_markets.json",
     "hyperliquid/fetch_my_trades.json",
     "hyperliquid/fetch_ohlcv.json",
+    "hyperliquid/fetch_open_interests.json",
     "hyperliquid/fetch_open_orders.json",
     "hyperliquid/fetch_order_book.json",
     "hyperliquid/fetch_positions.json",
@@ -79,16 +84,18 @@
     "okx/fetch_balance.json",
     "okx/fetch_funding_rate_history.json",
     "okx/fetch_markets.json",
+    "okx/fetch_markets_by_type.json",
     "okx/fetch_my_trades.json",
     "okx/fetch_open_interest_history.json",
     "okx/fetch_open_interest_history_option.json",
     "okx/fetch_open_interests.json",
     "okx/fetch_open_orders.json",
     "okx/fetch_positions.json",
+    "okx/fetch_positions_for_symbol.json",
     "okx/fetch_ticker.json",
     "okx/fetch_trades.json"
   ],
-  "generated_at": "2026-08-08T10:35:40.701877Z",
+  "generated_at": "2026-08-08T11:13:20.839135Z",
   "recordings": [
     {
       "capture_date": "2026-07-26",
@@ -174,12 +181,21 @@
       "venue": "binance"
     },
     {
-      "capture_date": "2026-08-04",
-      "captured_at": "2026-08-04T00:01:11.560231Z",
+      "capture_date": "2026-08-08",
+      "captured_at": "2026-08-08T11:13:20.818192Z",
       "endpoint": "api/v3/ticker/price",
-      "host": "api.binance.com",
+      "host": "testnet.binance.vision",
       "method": "fetch_last_prices",
       "path": "binance/fetch_last_prices.json",
+      "venue": "binance"
+    },
+    {
+      "capture_date": "2026-08-08",
+      "captured_at": "2026-08-08T11:11:37.927657Z",
+      "endpoint": "fapi/v1/leverageBracket",
+      "host": "demo-fapi.binance.com",
+      "method": "fetch_leverage_tiers",
+      "path": "binance/fetch_leverage_tiers.json",
       "venue": "binance"
     },
     {
@@ -341,6 +357,15 @@
       "venue": "binanceusdm"
     },
     {
+      "capture_date": "2026-08-08",
+      "captured_at": "2026-08-08T11:11:43.597425Z",
+      "endpoint": "fapi/v1/ticker/price",
+      "host": "demo-fapi.binance.com",
+      "method": "fetch_last_prices",
+      "path": "binanceusdm/fetch_last_prices.json",
+      "venue": "binanceusdm"
+    },
+    {
       "body_populated": true,
       "capture_date": "2026-08-04",
       "captured_at": "2026-08-04T00:07:14.318653Z",
@@ -348,6 +373,24 @@
       "host": "demo-fapi.binance.com",
       "method": "fetch_ledger",
       "path": "binanceusdm/fetch_ledger.json",
+      "venue": "binanceusdm"
+    },
+    {
+      "capture_date": "2026-08-08",
+      "captured_at": "2026-08-08T11:11:44.663493Z",
+      "endpoint": "fapi/v1/leverageBracket",
+      "host": "demo-fapi.binance.com",
+      "method": "fetch_leverage_tiers",
+      "path": "binanceusdm/fetch_leverage_tiers.json",
+      "venue": "binanceusdm"
+    },
+    {
+      "capture_date": "2026-08-08",
+      "captured_at": "2026-08-08T11:11:45.690809Z",
+      "endpoint": "fapi/v1/symbolConfig",
+      "host": "demo-fapi.binance.com",
+      "method": "fetch_margin_modes",
+      "path": "binanceusdm/fetch_margin_modes.json",
       "venue": "binanceusdm"
     },
     {
@@ -444,14 +487,14 @@
       "venue": "bybit"
     },
     {
+      "body_populated": true,
       "capture_date": "2026-08-08",
       "captured_at": "2026-08-08T10:35:40.701877Z",
       "endpoint": "v5/market/risk-limit",
       "host": "api-testnet.bybit.com",
       "method": "fetch_leverage_tiers",
       "path": "bybit/fetch_leverage_tiers.json",
-      "venue": "bybit",
-      "body_populated": true
+      "venue": "bybit"
     },
     {
       "capture_date": "2026-07-15",
@@ -744,6 +787,15 @@
       "venue": "hyperliquid"
     },
     {
+      "capture_date": "2026-08-08",
+      "captured_at": "2026-08-08T11:11:32.061703Z",
+      "endpoint": "info:metaAndAssetCtxs",
+      "host": "api.hyperliquid-testnet.xyz",
+      "method": "fetch_open_interests",
+      "path": "hyperliquid/fetch_open_interests.json",
+      "venue": "hyperliquid"
+    },
+    {
       "body_populated": false,
       "capture_date": "2026-07-21",
       "captured_at": "2026-07-21T23:24:30.702785Z",
@@ -838,6 +890,15 @@
       "venue": "okx"
     },
     {
+      "capture_date": "2026-08-08",
+      "captured_at": "2026-08-08T11:11:51.240278Z",
+      "endpoint": "api/v5/public/instruments",
+      "host": "www.okx.com",
+      "method": "fetch_markets_by_type",
+      "path": "okx/fetch_markets_by_type.json",
+      "venue": "okx"
+    },
+    {
       "body_populated": false,
       "capture_date": "2026-07-21",
       "captured_at": "2026-07-21T23:23:38.991208Z",
@@ -872,14 +933,14 @@
       "venue": "okx"
     },
     {
+      "body_populated": true,
       "capture_date": "2026-08-08",
       "captured_at": "2026-08-08T10:35:40.701877Z",
       "endpoint": "api/v5/public/open-interest",
       "host": "www.okx.com",
       "method": "fetch_open_interests",
       "path": "okx/fetch_open_interests.json",
-      "venue": "okx",
-      "body_populated": true
+      "venue": "okx"
     },
     {
       "body_populated": false,
@@ -899,6 +960,15 @@
       "host": "www.okx.com",
       "method": "fetch_positions",
       "path": "okx/fetch_positions.json",
+      "venue": "okx"
+    },
+    {
+      "capture_date": "2026-08-08",
+      "captured_at": "2026-08-08T11:12:33.731901Z",
+      "endpoint": "api/v5/account/positions",
+      "host": "www.okx.com",
+      "method": "fetch_positions_for_symbol",
+      "path": "okx/fetch_positions_for_symbol.json",
       "venue": "okx"
     },
     {

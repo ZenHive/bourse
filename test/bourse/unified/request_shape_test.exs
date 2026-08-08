@@ -239,9 +239,11 @@ defmodule Bourse.Unified.RequestShapeTest do
              }
     end
 
-    test "maps OKX deposit/withdrawal history ids and deposit-address currency" do
-      assert %{query: %{"depId" => "dep-1"}} = okx_request(&Bourse.fetch_deposit(&1, "dep-1", &2))
-      assert %{query: %{"wdId" => "wd-1"}} = okx_request(&Bourse.fetch_withdrawal(&1, "wd-1", &2))
+    test "keeps unsupported OKX single-record histories disabled and maps deposit-address currency" do
+      {:ok, exchange} = Exchange.new("okx")
+
+      refute exchange.has["fetchDeposit"]
+      refute exchange.has["fetchWithdrawal"]
 
       assert %{query: %{"ccy" => "USDT"}} =
                okx_request(&Bourse.fetch_deposit_addresses_by_network(&1, "USDT", &2))

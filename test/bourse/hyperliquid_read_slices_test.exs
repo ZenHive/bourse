@@ -57,6 +57,7 @@ defmodule Bourse.HyperliquidReadSlicesTest do
         "funding" => "0.0001",
         "markPx" => "50000.5",
         "midPx" => "50001.0",
+        "openInterest" => "10000.5",
         "oraclePx" => "49990.0",
         "prevDayPx" => "49000.0",
         "dayNtlVlm" => "1.2e9",
@@ -66,6 +67,7 @@ defmodule Bourse.HyperliquidReadSlicesTest do
         "funding" => "-0.00005",
         "markPx" => "3000.1",
         "midPx" => "3000.2",
+        "openInterest" => "25000.25",
         "oraclePx" => "2999.0",
         "prevDayPx" => "2950.0",
         "dayNtlVlm" => "5e8",
@@ -231,6 +233,27 @@ defmodule Bourse.HyperliquidReadSlicesTest do
     assert btc.mark_price == 50_000.5
     assert btc.index_price == 49_990.0
     assert btc.interval == "1h"
+  end
+
+  test "open interests from metaAndAssetCtxs retain every venue row" do
+    exchange = Exchange.new!("hyperliquid")
+
+    assert {:ok, interests} =
+             ReadParse.parse(
+               exchange,
+               Bourse.Hyperliquid,
+               :fetch_open_interests,
+               "fetchOpenInterests",
+               @meta_and_ctxs,
+               %{},
+               :parse_open_interest,
+               false
+             )
+
+    assert map_size(interests) == 2
+    assert %Bourse.OpenInterest{} = btc = interests["BTC/USDC:USDC"]
+    assert btc.symbol == "BTC/USDC:USDC"
+    assert btc.open_interest_amount == 10_000.5
   end
 
   test "ledger entries map amount/currency/type from delta" do

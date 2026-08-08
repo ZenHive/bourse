@@ -63,7 +63,13 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       {"binance", :fetch_trades} => public("api/v3/trades", "api.binance.com", "BTC/USDT"),
       {"binance", :fetch_ohlcv} => public("api/v3/klines", "api.binance.com", "BTC/USDT", call_opts: [endpoint_index: 9]),
       {"binance", :fetch_bids_asks} => public("api/v3/ticker/bookTicker", "api.binance.com", nil),
-      {"binance", :fetch_last_prices} => public("api/v3/ticker/price", "api.binance.com", nil),
+      {"binance", :fetch_last_prices} =>
+        public("api/v3/ticker/price", "testnet.binance.vision", nil,
+          environment: "testnet-demo",
+          exchange_opts: [sandbox: true]
+        ),
+      {"binance", :fetch_leverage_tiers} =>
+        private("fapi/v1/leverageBracket", "demo-fapi.binance.com", :binanceusdm, %{}),
       {"binanceusdm", :fetch_ticker} => public("fapi/v1/ticker/price", "fapi.binance.com", "BTC/USDT:USDT"),
       {"binanceusdm", :fetch_trades} => public("fapi/v1/aggTrades", "fapi.binance.com", "BTC/USDT:USDT"),
       {"binanceusdm", :fetch_ohlcv} =>
@@ -73,6 +79,13 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
           environment: "testnet-demo",
           exchange_opts: [sandbox: true]
         ),
+      {"binanceusdm", :fetch_last_prices} =>
+        public("fapi/v1/ticker/price", "demo-fapi.binance.com", nil,
+          environment: "testnet-demo",
+          exchange_opts: [sandbox: true]
+        ),
+      {"binanceusdm", :fetch_leverage_tiers} => binance_usdm("fapi/v1/leverageBracket", %{}),
+      {"binanceusdm", :fetch_margin_modes} => binance_usdm("fapi/v1/symbolConfig", %{}),
       {"binancecoinm", :fetch_markets} => public("dapi/v1/exchangeInfo", "dapi.binance.com", "BTC/USD:BTC"),
       {"binancecoinm", :fetch_ticker} =>
         public("dapi/v1/ticker/price", "dapi.binance.com", "BTC/USD:BTC", params: %{"symbol" => "BTCUSD_PERP"}),
@@ -99,11 +112,22 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
         ),
       {"okx", :fetch_open_interests} =>
         public("api/v5/public/open-interest", "www.okx.com", nil, params: %{"instType" => "SWAP"}),
+      {"okx", :fetch_markets_by_type} =>
+        public("api/v5/public/instruments", "www.okx.com", nil,
+          environment: "testnet-demo",
+          exchange_opts: [sandbox: true],
+          params: %{"type" => "SWAP"}
+        ),
       {"hyperliquid", :fetch_ohlcv} =>
         public("info:candleSnapshot", "api.hyperliquid.xyz", "BTC/USDC",
           params: %{"timeframe" => @ohlcv_timeframe, "since" => 0}
         ),
       {"hyperliquid", :fetch_markets} => public("info:meta", "api.hyperliquid.xyz", "BTC/USDC:USDC"),
+      {"hyperliquid", :fetch_open_interests} =>
+        public("info:metaAndAssetCtxs", "api.hyperliquid-testnet.xyz", nil,
+          environment: "testnet-demo",
+          exchange_opts: [sandbox: true]
+        ),
       {"derive", :fetch_trades} => public("public/get_trade_history", "api.lyra.finance", "BTC/USDC"),
       {"derive", :fetch_markets} => public("public/get_all_instruments", "api.lyra.finance", "BTC/USDC"),
       {"lighter", :fetch_markets} =>
@@ -153,6 +177,8 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
         private("api/v5/trade/orders-pending", "www.okx.com", :okx, %{"symbol" => "BTC/USDT"}),
       {"okx", :fetch_positions} =>
         private("api/v5/account/positions", "www.okx.com", :okx, %{"symbols" => ["BTC/USDT:USDT"]}),
+      {"okx", :fetch_positions_for_symbol} =>
+        private("api/v5/account/positions", "www.okx.com", :okx, %{"symbol" => "BTC/USDT:USDT"}),
       {"okx", :fetch_my_trades} =>
         private("api/v5/trade/fills", "www.okx.com", :okx, %{
           "symbol" => "BTC/USDT",

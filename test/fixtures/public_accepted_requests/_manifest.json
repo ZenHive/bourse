@@ -1,6 +1,6 @@
 {
   "count": 165,
-  "exclusion_count": 97,
+  "exclusion_count": 96,
   "exclusions": [
     {
       "branch": "eapiPublic_get_mark",
@@ -503,17 +503,6 @@
       "endpoint": "v5/market/risk-limit",
       "method": "fetchDerivativesMarketLeverageTiers",
       "reason": "{:live_call_failed, \"bad_request:-1004\"}",
-      "sections": [
-        "public"
-      ],
-      "venue": "bybit"
-    },
-    {
-      "branch": "public_get_v5_market_open_interest",
-      "capture_date": "2026-07-26",
-      "endpoint": "v5/market/open-interest",
-      "method": "fetchDerivativesOpenInterestHistory",
-      "reason": "{:live_call_failed, \"bad_request:10001\"}",
       "sections": [
         "public"
       ],

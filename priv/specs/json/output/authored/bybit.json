@@ -517,7 +517,7 @@
       "fetchDepositWithdrawFees": true,
       "fetchDeposits": true,
       "fetchDerivativesMarketLeverageTiers": true,
-      "fetchDerivativesOpenInterestHistory": true,
+      "fetchDerivativesOpenInterestHistory": false,
       "fetchFundingHistory": true,
       "fetchFundingRate": "emulated",
       "fetchFundingRateHistory": true,

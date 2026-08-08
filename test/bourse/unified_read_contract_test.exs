@@ -36,7 +36,8 @@ defmodule Bourse.UnifiedReadContractTest do
     {"binance", :fetch_bids_asks, :not_symbol_keyed, 538},
     {"binance", :fetch_last_prices, :not_symbol_keyed, 538},
     {"binanceusdm", :fetch_funding_intervals, {:row_count_collapsed, 616, 1}, 538},
-    {"binanceusdm", :fetch_funding_intervals, :not_symbol_keyed, 538}
+    {"binanceusdm", :fetch_funding_intervals, :not_symbol_keyed, 538},
+    {"binanceusdm", :fetch_last_prices, :not_symbol_keyed, 538}
   ]
 
   describe "static parse coverage" do
@@ -131,23 +132,62 @@ defmodule Bourse.UnifiedReadContractTest do
     end
 
     test "return-type resolution is total over declared reads except enumerated net-new residue" do
-      pending = MapSet.new(resolution_disposition()["pending_net_new_type"] || [])
+      pending_by_method = resolution_disposition()["pending_net_new_type_venues"] || %{}
+      pending_methods = resolution_disposition()["pending_net_new_type"] || []
       contract = runtime_parse_contract()
       method_by_js = Map.new(Unified.method_defs(), fn {method, js, _, _} -> {js, method} end)
 
-      for venue <- @venues do
-        for js_name <- supported_reads(venue, authored_spec!(venue)) do
-          method = Map.fetch!(method_by_js, js_name)
+      unresolved =
+        for venue <- @venues,
+            js_name <- supported_reads(venue, authored_spec!(venue)),
+            method = Map.fetch!(method_by_js, js_name),
+            runtime_parse_type(method, js_name, contract) == :none,
+            do: {js_name, venue}
 
-          case runtime_parse_type(method, js_name, contract) do
-            {:ok, _parse_type} ->
-              :ok
+      expected =
+        for {js_name, venues} <- pending_by_method,
+            venue <- venues,
+            do: {js_name, venue}
 
-            :none ->
-              assert MapSet.member?(pending, js_name),
-                     "#{venue}.#{js_name} is has=true but unresolvable and not enumerated as net-new residue"
-          end
+      assert Enum.sort(unresolved) == Enum.sort(expected)
+      assert Enum.sort(pending_methods) == Enum.sort(Map.keys(pending_by_method))
+
+      for {js_name, venue} <- unresolved do
+        method = Map.fetch!(method_by_js, js_name)
+
+        case runtime_parse_type(method, js_name, contract) do
+          :none ->
+            assert venue in Map.fetch!(pending_by_method, js_name)
+
+          {:ok, _parse_type} ->
+            flunk("#{venue}.#{js_name} unexpectedly resolved while listed as net-new residue")
         end
+      end
+    end
+
+    test "each task-565 has=true resolution has a venue-own registered response" do
+      recorded = resolution_disposition()["verified_recordings"] || %{}
+
+      expected =
+        resolution_disposition()
+        |> resolved_has_true_cells()
+        |> Enum.sort()
+
+      actual =
+        for {js_name, venues} <- recorded,
+            venue <- venues,
+            do: {venue, js_name}
+
+      assert Enum.sort(actual) == expected
+
+      manifest_cells =
+        MapSet.new(@recording_manifest["recordings"], fn row -> {row["venue"], row["method"]} end)
+
+      for {venue, js_name} <- actual do
+        method = Macro.underscore(js_name)
+
+        assert MapSet.member?(manifest_cells, {venue, method}),
+               "#{venue}.#{js_name} has no manifest-registered venue response"
       end
     end
 
@@ -214,6 +254,39 @@ defmodule Bourse.UnifiedReadContractTest do
                )
 
       assert is_number(price.price)
+    end
+
+    test "Binance leverage-tier carriers flatten without losing their symbols" do
+      body = [
+        %{
+          "symbol" => "BTCUSDT",
+          "brackets" => [
+            %{
+              "bracket" => 1,
+              "initialLeverage" => 125,
+              "maintMarginRatio" => "0.004",
+              "notionalCap" => 50_000,
+              "notionalFloor" => 0
+            }
+          ]
+        }
+      ]
+
+      assert {:ok, [%Bourse.LeverageTier{} = tier]} =
+               ReadParse.parse(
+                 Exchange.new!("binanceusdm"),
+                 Bourse.Binanceusdm,
+                 :fetch_leverage_tiers,
+                 "fetchLeverageTiers",
+                 body,
+                 %{},
+                 :parse_leverage_tiers,
+                 true
+               )
+
+      assert tier.symbol == "BTCUSDT"
+      assert tier.tier == 1
+      assert tier.max_leverage == 125
     end
   end
 
@@ -512,6 +585,21 @@ defmodule Bourse.UnifiedReadContractTest do
   end
 
   defp resolution_disposition, do: @resolution_disposition
+
+  defp resolved_has_true_cells(disposition) do
+    alias_cells =
+      for {_token, entry} <- disposition["aliased"] || %{},
+          js_name <- entry["methods"] || [],
+          venue <- entry["venues"] || [],
+          do: {venue, js_name}
+
+    descriptor_cells =
+      for {js_name, entry} <- disposition["descriptor_return_types_added"] || %{},
+          venue <- entry["venues"] || [],
+          do: {venue, js_name}
+
+    Enum.uniq(alias_cells ++ descriptor_cells)
+  end
 
   defp authored_spec!(venue) do
     JsonDocument.decode_file!("priv/specs/json/output/authored/#{venue}.json")

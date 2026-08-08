@@ -1646,3 +1646,19 @@ reality tier 1 (task 514).**
 <!-- carve-evidence-status
 {"carve_id":"C-T514a","date":"2026-07-25","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 Get order book response-row semantics"},"observed_evidence":{"kind":"live_venue","reference":"OKX production GET /api/v5/market/books BTC-USDT sz=1 returned [64137.9,4.01442447,0,24] bid and [64138,0.00806502,0,3] ask on 2026-07-25"},"compatibility_reference":{"kind":"ccxt","reference":"CCXT 4.5.65 parseOrderBookBidAsk default countOrIdKey=2 and OKX default parseOrderBook call"},"resolved_tier":1}
 -->
+
+## 2026-08-08 — single deposit and withdrawal reads (Task 565)
+
+**C-T565e — Single-record transfer reads require a venue identifier observed in the demo
+account (task 565). Outcome: mark unsupported without such evidence.**
+
+- *Provider contract:* single deposit and withdrawal lookup is keyed by an existing provider
+  record identifier.
+- *Live evidence:* the international demo account returned empty deposit and withdrawal history,
+  so it supplied no identifier with which to verify either single-record response contract.
+- *Our carve:* `fetchDeposit` and `fetchWithdrawal` are `has=false`; the list history methods
+  retain their independent contracts.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T565e","date":"2026-08-08","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 deposit and withdrawal history record contracts"},"observed_evidence":{"kind":"live_venue","reference":"Task 565 www.okx.com simulated-trading account returned zero deposit and zero withdrawal history rows"},"compatibility_reference":null,"resolved_tier":1}
+-->

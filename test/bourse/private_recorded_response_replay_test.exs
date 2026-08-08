@@ -414,8 +414,30 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
     assert is_nil(parsed), identity
   end
 
+  defp assert_private_shape!(:fetch_leverage_tiers, parsed, fixture, identity) do
+    raw = fixture["body"] |> hd() |> Map.fetch!("brackets") |> hd()
+
+    assert [%Bourse.LeverageTier{} | _] = parsed, identity
+    assert Enum.any?(parsed, &ListBody.binds_wire_row?(&1, raw)), identity
+  end
+
+  defp assert_private_shape!(:fetch_margin_modes, parsed, fixture, identity) do
+    raw = hd(fixture["body"])
+
+    assert is_map(parsed) and map_size(parsed) > 0, identity
+    assert Enum.all?(parsed, fn {_symbol, mode} -> match?(%Bourse.MarginMode{}, mode) end), identity
+    assert Enum.any?(Map.values(parsed), &ListBody.binds_wire_row?(&1, raw)), identity
+  end
+
   defp assert_private_shape!(method, parsed, fixture, identity)
-       when method in [:fetch_open_orders, :fetch_canceled_orders, :fetch_positions, :fetch_my_trades, :fetch_ledger] do
+       when method in [
+              :fetch_open_orders,
+              :fetch_canceled_orders,
+              :fetch_positions,
+              :fetch_positions_for_symbol,
+              :fetch_my_trades,
+              :fetch_ledger
+            ] do
     recording = recording_for(fixture)
     declared = ListBody.declared_populated?(fixture, recording)
     actual = ListBody.body_populated?(fixture["body"])
@@ -447,6 +469,7 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
   defp expected_private_struct(:fetch_open_orders), do: Bourse.Order
   defp expected_private_struct(:fetch_canceled_orders), do: Bourse.Order
   defp expected_private_struct(:fetch_positions), do: Bourse.Position
+  defp expected_private_struct(:fetch_positions_for_symbol), do: Bourse.Position
   defp expected_private_struct(:fetch_my_trades), do: Bourse.Trade
   defp expected_private_struct(:fetch_ledger), do: Bourse.LedgerEntry
 

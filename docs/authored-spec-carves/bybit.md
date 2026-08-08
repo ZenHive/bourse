@@ -586,3 +586,20 @@ re-adjudicated (task 466).
 <!-- carve-evidence-status
 {"carve_id":"C-T347","date":"2026-07-22","semantic_source":{"kind":"provider_owned","reference":"Provider-owned documentation or schema cited in C-T347 and its register context"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Provider-owned semantics are recorded, but no independent live or recorded venue observation establishes this carve"}
 -->
+
+## 2026-08-08 — open-interest history request contract (Task 565)
+
+**C-T565d — A declared historical open-interest read must author all provider-required request
+fields (task 565). Outcome: mark unsupported.**
+
+- *Provider contract:* V5 `GET /v5/market/open-interest` requires `category`, `symbol`, and
+  `intervalTime`.
+- *Live evidence:* testnet accepted native `BTCUSDT` with `category=linear` and
+  `intervalTime=5min`; the unified method emitted an invalid-symbol request because its authored
+  binding does not resolve that complete native request.
+- *Our carve:* `fetchDerivativesOpenInterestHistory` is `has=false` rather than attaching an
+  existing struct type to an unusable request path.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T565d","date":"2026-08-08","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 Market Open Interest request contract"},"observed_evidence":{"kind":"live_venue","reference":"Task 565 api-testnet.bybit.com differential: native BTCUSDT/category/intervalTime succeeded; unified request returned provider error 10001 invalid symbol"},"compatibility_reference":null,"resolved_tier":1}
+-->
