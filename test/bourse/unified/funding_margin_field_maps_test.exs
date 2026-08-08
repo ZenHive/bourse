@@ -18,10 +18,15 @@ defmodule Bourse.Unified.FundingMarginFieldMapsTest do
       assert is_list(body) and body != []
 
       first = hd(body)
-      assert first["incomeType"] == "FUNDING_FEE"
-      assert first["asset"] == "USDT"
-      assert is_integer(first["time"])
-      assert first["tranId"]
+
+      assert Map.take(first, ["asset", "income", "incomeType", "symbol", "time", "tranId"]) == %{
+               "asset" => "USDT",
+               "income" => "-0.01286054",
+               "incomeType" => "FUNDING_FEE",
+               "symbol" => "BTCUSDT",
+               "time" => 1_786_089_600_000,
+               "tranId" => 1_380_186_948_815_340_520
+             }
 
       exchange = Exchange.new!("binance")
 
@@ -39,11 +44,11 @@ defmodule Bourse.Unified.FundingMarginFieldMapsTest do
 
       row = Enum.find(history, &(&1.id == to_string(first["tranId"]))) || hd(history)
 
-      assert row.id == to_string(first["tranId"])
+      assert row.id == "1380186948815340520"
       assert row.code == "USDT"
-      assert row.amount == Bourse.Safe.number(first["income"])
-      assert row.timestamp == first["time"]
-      assert is_binary(row.datetime)
+      assert row.amount == -0.01286054
+      assert row.timestamp == 1_786_089_600_000
+      assert row.datetime == "2026-08-07T08:00:00.000Z"
       assert row.rate == nil
       assert row.symbol == "BTC/USDT:USDT"
       assert row.info["incomeType"] == "FUNDING_FEE"
