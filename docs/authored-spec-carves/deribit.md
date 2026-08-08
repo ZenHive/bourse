@@ -6,7 +6,6 @@ Append-only schema confrontations for Deribit. Follow the allocation and evidenc
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Deribit carve record.
 
-
 **C-T565a — `fetchLiquidations` is not a liquidation surface on Deribit; the wired
 endpoint returns settlement history (task 565). Outcome: DIVERGE; capabilities.has = false.**
 
@@ -25,7 +24,6 @@ endpoint returns settlement history (task 565). Outcome: DIVERGE; capabilities.h
 <!-- carve-evidence-status
 {"carve_id":"C-T565a","date":"2026-08-08","semantic_source":{"kind":"provider_owned","reference":"Deribit public/get_last_settlements_by_instrument documentation"},"observed_evidence":{"kind":"live_venue","reference":"Deribit testnet fetchLiquidations BTC-PERPETUAL returned result.settlements 2026-08-08"},"compatibility_reference":null,"resolved_tier":1}
 -->
-
 
 **C-T535a — Deribit publishes hourly funding history; an eight-hour query window is not the
 venue cadence (task 535). Outcome: DIVERGE from CCXT; reality tier 1.**

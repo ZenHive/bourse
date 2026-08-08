@@ -88,6 +88,24 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   endpoint, so a venue that trades no spot resolved either an endpoint it does
   not serve or none at all. The market type now comes from the venue's own
   authored default unless the caller names one.
+- Fifty-one declared unified reads resolved to no parser slot: their descriptor
+  return tokens were plural collection names (`LeverageTiers`, `Liquidations`,
+  `MarginModes`, `OpenInterests`, `IsolatedBorrowRates`) that the return-type
+  table did not recognise, so the reads fell through and returned the provider's
+  raw transport envelope inside `{:ok, …}`. The alias table now maps each plural
+  token onto its singular parse type, the `last_price` parse type and
+  `Bourse.LastPrice` are wired, `fetchLeverageTiers` is forced to a list return
+  so a flat tier body is not collapsed into one all-nil record, and
+  `fetchMarginModes` / `fetchOpenInterests` / `fetchIsolatedBorrowRates` re-key
+  their row lists by symbol like `fetchTickers`.
+- Parser aliases are now gated on registered venue recordings rather than
+  declared blind. Binance leverage-tier brackets are flattened to per-symbol tier
+  rows, Hyperliquid open interest is annotated from `metaAndAssetCtxs`, and reads
+  that cannot be satisfied by a single provider response or verified against a
+  sandbox — Deribit `fetchLiquidations` (settlement history, not liquidations),
+  the Binance composite position / dust / isolated-borrow reads, and OKX single
+  deposit/withdrawal lookups — are marked unsupported with carve records instead
+  of silently mis-parsing.
 
 ### Added
 
