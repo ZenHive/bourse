@@ -22,19 +22,25 @@ defmodule Bourse.Test.CircuitBreakerLeakMeltTest do
   @venue "deribit"
 
   test "a test that blows a fuse hands the next module a closed circuit" do
+    # Registered *before* the opt-in so it runs last: ExUnit runs `on_exit`
+    # callbacks in reverse order of registration, so this one observes the state
+    # after `enable!/1`'s own cleanup, which is exactly what the next module
+    # inherits. Calling `remove_installed_fuses/0` inline here instead would only
+    # assert this test's tidiness — the registered callback is the thing that
+    # actually protects the suite, and deleting it from `enable!/1` has to turn
+    # this red.
+    on_exit(fn ->
+      assert CircuitBreaker.status(@venue) == :not_installed,
+             "enable!/1's on_exit left #{@venue} installed — the next module inherits a leaked fuse"
+
+      assert CircuitBreaker.check(@venue) == :ok
+    end)
+
     CircuitBreakerControl.isolate!(@venue)
 
     assert CircuitBreaker.check(@venue) == :ok
     Enum.each(1..10, fn _failure -> CircuitBreaker.record_failure(@venue) end)
     assert CircuitBreaker.status(@venue) == :blown
-
-    # Standing in for the next module: the cleanup `enable!/1` registers is what
-    # a later test would otherwise trip over, so run it and assert the venue is
-    # closed again. Without it this venue stays blown for the rest of the node.
-    CircuitBreakerControl.remove_installed_fuses()
-
-    assert CircuitBreaker.status(@venue) == :not_installed
-    assert CircuitBreaker.check(@venue) == :ok
   end
 end
 
