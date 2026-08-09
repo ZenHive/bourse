@@ -111,6 +111,64 @@ defmodule Bourse.LoadMarketsTest do
       assert :counters.get(markets_count, 1) == 0
       assert :counters.get(ticker_count, 1) == 1
     end
+
+    test "accepts integer and opaque string market ids from the loaded market" do
+      markets_count = :counters.new(1, [:atomics])
+      ticker_count = :counters.new(1, [:atomics])
+      stub = lighter_stub(markets_count, ticker_count)
+
+      for id <- [1, "perp-btc"] do
+        exchange =
+          "lighter"
+          |> Exchange.new!()
+          |> Exchange.put_markets([%Market{id: id, symbol: "BTC/USDC:USDC"}])
+
+        assert {:ok, %Ticker{}} =
+                 Bourse.fetch_ticker(exchange, "BTC/USDC:USDC", plug: {Req.Test, stub})
+      end
+
+      assert :counters.get(markets_count, 1) == 0
+      assert :counters.get(ticker_count, 1) == 2
+    end
+
+    test "rejects missing and unknown symbols before dispatch" do
+      exchange =
+        "lighter"
+        |> Exchange.new!()
+        |> Exchange.put_markets([%Market{id: "1", symbol: "BTC/USDC:USDC"}])
+
+      assert {:error, %Bourse.Error{type: :bad_symbol, message: missing_message}} =
+               Bourse.Unified.call(exchange, :fetch_ticker, "fetchTicker", %{}, [])
+
+      assert missing_message =~ "requires a known market symbol"
+
+      assert {:error, %Bourse.Error{type: :bad_symbol, message: unknown_message}} =
+               Bourse.fetch_ticker(exchange, "ETH/USDC:USDC")
+
+      assert unknown_message == "Unknown market symbol ETH/USDC:USDC"
+    end
+
+    test "rejects string-keyed market rows instead of guessing their id shape" do
+      exchange =
+        "lighter"
+        |> Exchange.new!()
+        |> Exchange.put_markets([%{"id" => 1, "symbol" => "BTC/USDC:USDC"}])
+
+      assert {:error, %Bourse.Error{type: :bad_symbol, message: message}} =
+               Bourse.fetch_ticker(exchange, "BTC/USDC:USDC")
+
+      assert message == "Unknown market symbol BTC/USDC:USDC"
+    end
+
+    test "rejects loaded rows without a symbol" do
+      exchange =
+        "lighter"
+        |> Exchange.new!()
+        |> Exchange.put_markets([%{id: 1}])
+
+      assert {:error, %Bourse.Error{type: :bad_symbol}} =
+               Bourse.fetch_ticker(exchange, "BTC/USDC:USDC")
+    end
   end
 
   # Lighter fetchMarkets and fetchTicker share publicGetOrderBookDetails.

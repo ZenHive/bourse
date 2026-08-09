@@ -45,10 +45,25 @@ defmodule Bourse.Unified do
 
   # First endpoint section names preferred per market type when multiple unified
   # routes exist (e.g. Binance spot "public" vs fapi/dapi/eapiPublic).
-  @spot_sections ~w(public v1)
-  @swap_sections ~w(fapiPublic fapiPublicV2 fapiPublicV3 fapiPrivate linearPublic contractPublic swapPublic)
-  @future_sections ~w(dapiPublic dapiPrivate inversePublic deliveryPublic futurePublic)
-  @option_sections ~w(eapiPublic optionPublic optionsPublic)
+  @spot_sections ~w(public v1 private sapi sapiV2 sapiV3 sapiV4)
+  @swap_sections ~w(fapiPublicV3 fapiPublicV2 fapiPublic fapiData fapiPrivateV3 fapiPrivateV2 fapiPrivate linearPublic contractPublic swapPublic)
+  @future_sections ~w(dapiPublic dapiData dapiPrivateV2 dapiPrivate inversePublic deliveryPublic futurePublic)
+  @option_sections ~w(eapiPublic eapiPrivate optionPublic optionsPublic)
+
+  @endpoint_selection_param_sets [
+    {~s(type: "spot"), %{"type" => "spot"}},
+    {~s(type: "swap"), %{"type" => "swap"}},
+    {~s(type: "future"), %{"type" => "future"}},
+    {~s(type: "option"), %{"type" => "option"}},
+    {~s(type: "linear"), %{"type" => "linear"}},
+    {~s(type: "inverse"), %{"type" => "inverse"}},
+    {~s(subType: "linear"), %{"subType" => "linear"}},
+    {~s(subType: "inverse"), %{"subType" => "inverse"}},
+    {~s(symbol: "BTC/USDT"), %{"symbol" => "BTC/USDT"}},
+    {~s(symbol: "BTC/USDT:USDT"), %{"symbol" => "BTC/USDT:USDT"}},
+    {~s(symbol: "BTC/USD:BTC"), %{"symbol" => "BTC/USD:BTC"}},
+    {~s(symbol: "BTC/USDT:USDT-260925-100000-C"), %{"symbol" => "BTC/USDT:USDT-260925-100000-C"}}
+  ]
 
   # ===========================================================================
   # Method Definitions
@@ -2147,6 +2162,35 @@ defmodule Bourse.Unified do
   @spec first_class_venues() :: [String.t()]
   def first_class_venues, do: @runtime_venues
 
+  @doc "Lists mapped unified methods that no documented endpoint-selection parameter set can reach."
+  @spec mapped_endpoint_reachability_failures() :: [{String.t(), atom()}]
+  def mapped_endpoint_reachability_failures do
+    for id <- @runtime_venues,
+        method <- Registry.module_for(id).__unified_endpoints__() |> Map.keys() |> Enum.sort(),
+        not mapped_endpoint_reachable?(id, method),
+        do: {id, method}
+  end
+
+  defp mapped_endpoint_reachable?(exchange_id, method_atom) do
+    module = Registry.module_for(exchange_id)
+
+    case module.__unified_endpoint__(method_atom) do
+      [] ->
+        true
+
+      _configs ->
+        exchange = Exchange.new!(exchange_id, api_key: "k", secret: "s", password: "p")
+        param_sets = [%{} | Enum.map(@endpoint_selection_param_sets, &elem(&1, 1))]
+
+        Enum.any?(param_sets, fn params ->
+          match?(
+            {:ok, _plan},
+            resolve_dispatch_plan(exchange, module, method_atom, js_name_for!(method_atom), params, [])
+          )
+        end)
+    end
+  end
+
   @doc """
   Lists first-class `{exchange_id, method}` pairs from the no-arg-read set that
   still resolve multi-endpoint selection by bare `hd(configs)`.
@@ -2209,9 +2253,7 @@ defmodule Bourse.Unified do
         # stage and the hd-fallback stay on the credential-reachable subset.
         reachable = credential_reachable_configs(configs, exchange)
 
-        case authored_endpoint(exchange, method_atom, configs, params, opts) ||
-               configured_endpoint(exchange, method_atom, configs) ||
-               infer_endpoint(reachable, exchange, params, opts) do
+        case selected_config(configs, reachable, exchange, method_atom, params, opts) do
           %{} = config ->
             ensure_reachable(config, configs, exchange, method_atom)
 
@@ -2219,6 +2261,12 @@ defmodule Bourse.Unified do
             unresolved_multi_endpoint(reachable, exchange, method_atom)
         end
     end
+  end
+
+  defp selected_config(configs, reachable, exchange, method_atom, params, opts) do
+    authored_endpoint(exchange, method_atom, configs, params, opts) ||
+      configured_endpoint(exchange, method_atom, configs) ||
+      infer_endpoint(reachable, exchange, params, opts)
   end
 
   # An explicitly resolved endpoint the exchange cannot call without credentials
@@ -2278,8 +2326,15 @@ defmodule Bourse.Unified do
 
   defp unresolved_multi_endpoint([only], _exchange, _method_atom), do: {:ok, only}
 
-  defp unresolved_multi_endpoint(_configs, %Exchange{id: id}, method_atom) when id in @runtime_venues do
+  defp unresolved_multi_endpoint(configs, %Exchange{id: id} = exchange, method_atom) when id in @runtime_venues do
     js = js_name_for!(method_atom)
+    hints = working_selection_hints(configs, exchange, method_atom)
+
+    resolution =
+      case hints do
+        [] -> "no documented type/subType/symbol parameter set resolves these endpoints"
+        hints -> "pass #{Enum.join(hints, " or ")}"
+      end
 
     {:error,
      Error.bad_request(
@@ -2287,8 +2342,17 @@ defmodule Bourse.Unified do
        message:
          "ambiguous multi-endpoint selection for #{js} on #{id}: " <>
            "author config.default_family and/or endpoints.request.endpoint_selection, " <>
-           "or pass type/subType/symbol (refusing bare hd(configs))"
+           resolution <> " (refusing bare hd(configs))"
      )}
+  end
+
+  defp working_selection_hints(configs, exchange, method_atom) do
+    Enum.flat_map(@endpoint_selection_param_sets, fn {label, params} ->
+      case selected_config(configs, configs, exchange, method_atom, params, []) do
+        %{} -> [label]
+        nil -> []
+      end
+    end)
   end
 
   defp authored_endpoint(%Exchange{endpoint_selection: selections} = exchange, method_atom, configs, params, opts) do
@@ -2478,11 +2542,8 @@ defmodule Bourse.Unified do
     end)
   end
 
-  # Versioned Binance private sections (fapiPrivateV2/V3, dapiPrivateV2) are
-  # part of the linear/inverse family surfaces even though the shared section
-  # lists omit them (those lists are used for generic market-type hints too).
   defp sections_for_market_type(:spot), do: @spot_sections
-  defp sections_for_market_type(:swap), do: @swap_sections ++ ~w(fapiPrivateV2 fapiPrivateV3)
-  defp sections_for_market_type(:future), do: @future_sections ++ ~w(dapiPrivateV2)
+  defp sections_for_market_type(:swap), do: @swap_sections
+  defp sections_for_market_type(:future), do: @future_sections
   defp sections_for_market_type(:option), do: @option_sections
 end

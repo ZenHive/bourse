@@ -10,6 +10,19 @@ defmodule Bourse.UnifiedTest do
   alias Bourse.TestExchange.Bybit
   alias Bourse.Unified
 
+  defmodule PrivateMarketExchange do
+    @moduledoc false
+
+    @spec __unified_endpoint__(atom()) :: [map()]
+    def __unified_endpoint__(:fetch_markets) do
+      for {name, section} <- [{:private_get_markets, "private"}, {:private_v2_get_markets, "privateV2"}] do
+        %{name: name, authenticated: true, sections: [section], path: "markets", method: :get}
+      end
+    end
+
+    def __unified_endpoint__(_method), do: []
+  end
+
   # ---------------------------------------------------------------------------
   # Method Definitions
   # ---------------------------------------------------------------------------
@@ -509,6 +522,394 @@ defmodule Bourse.UnifiedTest do
         |> Enum.sort()
 
       assert option_bases == Enum.sort(expected_bases)
+    end
+
+    test "endpoint fan-out tags every Binance market response with its section" do
+      stub = stub_json(%{"symbols" => []}, "capture_binance_market_sections")
+      exchange = Exchange.new!("binance")
+
+      assert {:ok, responses} = Unified.capture_responses(exchange, :fetch_markets, %{}, plug: {Req.Test, stub})
+
+      assert is_list(responses)
+      assert Enum.all?(responses, &match?(%{"api" => api, "body" => %{"symbols" => []}} when is_binary(api), &1))
+
+      sections = MapSet.new(responses, & &1["api"])
+      assert MapSet.subset?(MapSet.new(~w(public fapiPublic dapiPublic eapiPublic)), sections)
+    end
+  end
+
+  describe "status response errors" do
+    test "Bybit and OKX surface provider error envelopes and foreign response shapes" do
+      for {exchange_id, body, expected_message} <- [
+            {"bybit", %{"unexpected" => "bad"}, "Bybit status request failed"},
+            {"okx", %{"unexpected" => "bad"}, "OKX status request failed"}
+          ] do
+        exchange = Exchange.new!(exchange_id)
+
+        assert {:error, %Error{type: :exchange_error, message: ^expected_message}} =
+                 Bourse.fetch_status(exchange, plug: {Req.Test, stub_json(body, "status_error")})
+
+        assert {:error, {:unexpected_response_shape, "invalid"}} =
+                 Bourse.fetch_status(exchange, plug: {Req.Test, stub_json("invalid", "status_shape")})
+      end
+    end
+
+    test "OKX ignores unknown and non-map maintenance rows without inventing state" do
+      body = %{
+        "code" => "0",
+        "data" => [%{"state" => "foreign", "end" => "123"}, "foreign"]
+      }
+
+      assert {:ok, %{status: "maintenance", eta: 123}} =
+               Bourse.fetch_status(Exchange.new!("okx"),
+                 plug: {Req.Test, stub_json(body, "status_unknown_rows")}
+               )
+    end
+  end
+
+  describe "Deribit ticker argument validation" do
+    test "ignores malformed symbols and still requires one valid base or code" do
+      exchange = Exchange.new!("deribit")
+
+      for symbols <- [["not-a-unified-symbol"], [123]] do
+        assert {:error, %Error{type: :bad_request, message: message}} =
+                 Unified.call(exchange, :fetch_tickers, "fetchTickers", %{"symbols" => symbols}, [])
+
+        assert message =~ "requires a non-empty symbols list or code"
+      end
+    end
+  end
+
+  describe "multi-endpoint selection branches" do
+    test "Binance market-type strings select their matching public families" do
+      for {type, expected_path} <- [
+            {"linear", "/fapi/v1/ticker/24hr"},
+            {"inverse", "/dapi/v1/ticker/24hr"},
+            {"option", "/eapi/v1/ticker"}
+          ] do
+        {stub, requests} = raw_request_stub([])
+
+        assert {:ok, %{body: []}} =
+                 Unified.raw_call(Exchange.new!("binance"), :fetch_ticker, %{"type" => type}, plug: {Req.Test, stub})
+
+        assert RequestCollector.one!(requests).request_path == expected_path
+      end
+    end
+
+    test "Binance private families require credentials and honor swap/future signals" do
+      assert {:error, %Error{type: :authentication_error, message: message}} =
+               Unified.raw_call(Exchange.new!("binance"), :fetch_order_trades, %{"type" => "swap"})
+
+      assert message =~ "fetchOrderTrades on binance resolves to authenticated endpoint"
+      assert message =~ "credentials required"
+
+      exchange = Exchange.new!("binance", api_key: "key", secret: "secret")
+
+      for {type, expected_path} <- [
+            {"swap", "/fapi/v1/userTrades"},
+            {"delivery", "/dapi/v1/userTrades"}
+          ] do
+        {stub, requests} = raw_request_stub([])
+
+        assert {:ok, %{body: []}} =
+                 Unified.raw_call(exchange, :fetch_order_trades, %{"type" => type},
+                   plug: {Req.Test, stub},
+                   timestamp_ms_override: 1_700_000_000_000
+                 )
+
+        assert RequestCollector.one!(requests).request_path == expected_path
+      end
+    end
+
+    test "market-family priority outranks endpoint config order" do
+      {stub, requests} = raw_request_stub([])
+
+      assert {:ok, %{body: []}} =
+               Unified.raw_call(
+                 Exchange.new!("binanceusdm"),
+                 :fetch_open_interest_history,
+                 %{"type" => "linear"},
+                 plug: {Req.Test, stub}
+               )
+
+      request = RequestCollector.one!(requests)
+      assert request.host == "fapi.binance.com"
+      assert request.request_path == "/futures/data/openInterestHist"
+    end
+
+    test "a sole credential-reachable twin resolves without a family section" do
+      {stub, requests} = raw_request_stub(%{"result" => %{"list" => []}, "retCode" => 0})
+
+      assert {:ok, %{body: %{"retCode" => 0}}} =
+               Unified.raw_call(Exchange.new!("bybit"), :fetch_option_markets, %{"category" => "option"},
+                 plug: {Req.Test, stub}
+               )
+
+      assert RequestCollector.one!(requests).request_path == "/v5/market/instruments-info"
+    end
+
+    test "authored cases and market-type maps select their documented endpoints" do
+      {deribit_stub, deribit_requests} = raw_request_stub(%{"jsonrpc" => "2.0", "result" => []})
+
+      assert {:ok, _} =
+               Unified.raw_call(
+                 Exchange.new!("deribit"),
+                 :fetch_trades,
+                 %{"symbol" => "BTC/USD:BTC", "since" => 1_700_000_000_000},
+                 plug: {Req.Test, deribit_stub}
+               )
+
+      assert RequestCollector.one!(deribit_requests).request_path =~ "get_last_trades_by_instrument_and_time"
+
+      {okx_stub, okx_requests} = raw_request_stub(%{"code" => "0", "data" => []})
+
+      assert {:ok, _} =
+               Unified.raw_call(
+                 Exchange.new!("okx"),
+                 :fetch_open_interest_history,
+                 %{"type" => "option"},
+                 plug: {Req.Test, okx_stub}
+               )
+
+      assert RequestCollector.one!(okx_requests).request_path == "/api/v5/rubik/stat/option/open-interest-volume"
+    end
+
+    test "endpoint_index remains an explicit positional override" do
+      exchange = Exchange.new!("binance")
+
+      for {index, expected_path} <- [
+            {1, "/eapi/v1/ticker"},
+            {999, "/dapi/v1/ticker/24hr"}
+          ] do
+        {stub, requests} = raw_request_stub([])
+
+        assert {:ok, _} =
+                 Unified.raw_call(exchange, :fetch_ticker, %{}, endpoint_index: index, plug: {Req.Test, stub})
+
+        assert RequestCollector.one!(requests).request_path == expected_path
+      end
+    end
+
+    test "default-arity helpers preserve typed module-resolution errors" do
+      exchange = build_fake_exchange(module: nil)
+
+      assert {:error, %Error{type: :not_supported}} = Unified.load_markets(exchange)
+      assert {:error, %Error{type: :not_supported}} = Unified.capture_responses(exchange, :fetch_markets, %{})
+    end
+
+    test "a public fetchMarkets fan-out fails clearly when every config is private" do
+      exchange = build_fake_exchange(module: PrivateMarketExchange)
+
+      assert {:error, %Error{type: :not_supported, message: message}} =
+               Unified.capture_responses(exchange, :fetch_markets, %{})
+
+      assert message == "fake_exchange has no public fetchMarkets endpoints"
+    end
+
+    test "raw_call collapses a market endpoint fan-out to one request" do
+      {stub, requests} = raw_request_stub(%{"symbols" => []})
+
+      assert {:ok, _} =
+               Unified.raw_call(Exchange.new!("binance"), :fetch_markets, %{}, plug: {Req.Test, stub})
+
+      assert length(RequestCollector.requests(requests)) == 1
+    end
+
+    test "Hyperliquid's configured create-order endpoint remains authentication-gated" do
+      assert {:error, %Error{type: :authentication_error}} =
+               Unified.raw_call(Exchange.new!("hyperliquid"), :create_order, %{})
+    end
+
+    test "malformed authored rules fall through to their valid default" do
+      exchange = Exchange.new!("binance")
+
+      exchange =
+        put_in(exchange.endpoint_selection["fetchTicker"], %{
+          "default" => "public_get_ticker_24hr",
+          "rules" => [%{}]
+        })
+
+      {stub, requests} = raw_request_stub([])
+
+      assert {:ok, _} = Unified.raw_call(exchange, :fetch_ticker, %{}, plug: {Req.Test, stub})
+      assert RequestCollector.one!(requests).request_path == "/api/v3/ticker/24hr"
+    end
+
+    test "ambiguity errors name only parameter sets that resolve" do
+      exchange = Exchange.new!("bybit", api_key: "key", secret: "secret")
+
+      exchange = %{
+        exchange
+        | default_family: nil,
+          endpoint_selection: Map.delete(exchange.endpoint_selection, "fetchOptionMarkets")
+      }
+
+      assert {:error, %Error{type: :bad_request, message: message}} =
+               Unified.raw_call(exchange, :fetch_option_markets, %{})
+
+      assert message =~ "ambiguous multi-endpoint selection"
+      assert message =~ ~s(pass type: "spot")
+
+      {stub, requests} = raw_request_stub(%{"retCode" => 0, "result" => %{"list" => []}})
+
+      assert {:ok, _response} =
+               Unified.raw_call(exchange, :fetch_option_markets, %{"type" => "spot"}, plug: {Req.Test, stub})
+
+      assert RequestCollector.one!(requests).request_path == "/v5/market/instruments-info"
+    end
+  end
+
+  describe "fan-out boundary failures" do
+    test "endpoint fan-out stops on the first malformed parsed market response" do
+      assert {:error, _reason} =
+               Unified.call(
+                 Exchange.new!("binance"),
+                 :fetch_markets,
+                 "fetchMarkets",
+                 %{},
+                 plug: {Req.Test, stub_json("invalid", "bad_market_fan_out")}
+               )
+    end
+
+    test "parameter fan-out stops on the first malformed parsed market response" do
+      stub = unique_stub("bad_market_param_fan_out")
+
+      Req.Test.stub(stub, fn conn ->
+        case URI.decode_query(conn.query_string)["category"] do
+          "option" -> Req.Test.json(conn, %{"retCode" => 0, "result" => %{"list" => []}})
+          _category -> Req.Test.json(conn, "invalid")
+        end
+      end)
+
+      assert {:error, _reason} =
+               Unified.call(
+                 Exchange.new!("bybit"),
+                 :fetch_markets,
+                 "fetchMarkets",
+                 %{},
+                 plug: {Req.Test, stub}
+               )
+    end
+
+    test "empty authored market variant sets fall back to a single request" do
+      fixtures = [
+        {"bybit", fn exchange -> put_in(exchange.spec["options"]["fetchMarkets"]["types"], []) end},
+        {"okx", fn exchange -> put_in(exchange.spec["options"]["fetchMarkets"]["types"], []) end},
+        {"derive", fn exchange -> %{exchange | request_defaults: %{}} end}
+      ]
+
+      for {exchange_id, update} <- fixtures do
+        exchange = exchange_id |> Exchange.new!() |> update.()
+        {stub, requests} = raw_request_stub(%{"result" => [], "data" => [], "instruments" => []})
+
+        assert {:ok, _} = Unified.raw_call(exchange, :fetch_markets, %{}, plug: {Req.Test, stub})
+        assert length(RequestCollector.requests(requests)) == 1
+      end
+    end
+
+    test "invalid Bybit market variant values are ignored" do
+      exchange = Exchange.new!("bybit")
+      exchange = put_in(exchange.spec["options"]["fetchMarkets"]["types"], [nil])
+      {stub, requests} = raw_request_stub(%{"result" => %{"list" => []}, "retCode" => 0})
+
+      assert {:ok, _} = Unified.raw_call(exchange, :fetch_markets, %{}, plug: {Req.Test, stub})
+      assert length(RequestCollector.requests(requests)) == 1
+    end
+
+    test "OKX option discovery fails on a foreign envelope or missing raw endpoint" do
+      assert {:error, %Error{type: :exchange_error, message: message}} =
+               Unified.capture_responses(Exchange.new!("okx"), :fetch_markets, %{},
+                 plug: {Req.Test, stub_json(%{"unexpected" => true}, "bad_okx_underlyings")}
+               )
+
+      assert message =~ "Unexpected option underlying response"
+
+      exchange = %{Exchange.new!("okx") | module: Bybit}
+
+      assert {:error, %Error{type: :not_supported, message: missing_message}} =
+               Unified.capture_responses(exchange, :fetch_markets, %{})
+
+      assert missing_message =~ "does not expose public/underlying"
+    end
+  end
+
+  describe "Bybit instruments pagination boundaries" do
+    test "retains the next cursor when the page budget is exhausted" do
+      stub = unique_stub("bybit_page_budget")
+
+      Req.Test.stub(stub, fn conn ->
+        cursor = conn.query_string |> URI.decode_query() |> Map.get("cursor")
+        current = if cursor, do: String.to_integer(cursor), else: 0
+        next = Integer.to_string(current + 1)
+
+        Req.Test.json(conn, %{
+          "retCode" => 0,
+          "result" => %{"list" => [%{"symbol" => "BTCUSDT"}], "nextPageCursor" => next}
+        })
+      end)
+
+      assert {:ok, %{body: %{"result" => %{"list" => rows, "nextPageCursor" => "21"}}}} =
+               Unified.raw_call(
+                 Exchange.new!("bybit"),
+                 :fetch_future_markets,
+                 %{"category" => "linear"},
+                 plug: {Req.Test, stub}
+               )
+
+      assert length(rows) == 21
+    end
+
+    test "halts on a cursor page without a list" do
+      stub = unique_stub("bybit_page_without_list")
+
+      Req.Test.stub(stub, fn conn ->
+        case URI.decode_query(conn.query_string)["cursor"] do
+          nil ->
+            Req.Test.json(conn, %{
+              "retCode" => 0,
+              "result" => %{"list" => [%{"symbol" => "BTCUSDT"}], "nextPageCursor" => "next"}
+            })
+
+          "next" ->
+            Req.Test.json(conn, %{"retCode" => 0, "result" => %{"unexpected" => true}})
+        end
+      end)
+
+      assert {:ok, %{body: %{"result" => %{"nextPageCursor" => "next"}}}} =
+               Unified.raw_call(
+                 Exchange.new!("bybit"),
+                 :fetch_future_markets,
+                 %{"category" => "linear"},
+                 plug: {Req.Test, stub}
+               )
+    end
+
+    test "surfaces a cursor-page transport failure" do
+      stub = unique_stub("bybit_page_error")
+
+      Req.Test.stub(stub, fn conn ->
+        case URI.decode_query(conn.query_string)["cursor"] do
+          nil ->
+            Req.Test.json(conn, %{
+              "retCode" => 0,
+              "result" => %{"list" => [], "nextPageCursor" => "next"}
+            })
+
+          "next" ->
+            conn
+            |> Plug.Conn.put_resp_header("retry-after", "0")
+            |> Plug.Conn.put_status(503)
+            |> Req.Test.json(%{"error" => "unavailable"})
+        end
+      end)
+
+      assert {:error, %Error{type: :exchange_not_available}} =
+               Unified.raw_call(
+                 Exchange.new!("bybit"),
+                 :fetch_future_markets,
+                 %{"category" => "linear"},
+                 plug: {Req.Test, stub}
+               )
     end
   end
 
@@ -2050,6 +2451,18 @@ defmodule Bourse.UnifiedTest do
         "lastPrice" => "65000.00",
         "closeTime" => 1_700_000_000_000
       })
+    end)
+
+    {stub, requests}
+  end
+
+  defp raw_request_stub(response_body) do
+    stub = unique_stub("raw_request")
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+      Req.Test.json(conn, response_body)
     end)
 
     {stub, requests}

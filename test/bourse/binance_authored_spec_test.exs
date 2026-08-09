@@ -23,6 +23,79 @@ defmodule Bourse.BinanceAuthoredSpecTest do
              "fapiPrivateV3_get_account"
   end
 
+  test "Binance spot selectors reach private and SAPI endpoint families" do
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret")
+
+    for {method, params, expected_path} <- [
+          {:fetch_order_trades, %{"id" => "1", "symbol" => "BTCUSDT"}, "/api/v3/myTrades"},
+          {:fetch_open_order, %{"id" => "1", "symbol" => "BTCUSDT"}, "/api/v3/order"},
+          {:fetch_trading_fee, %{"symbol" => "BTCUSDT"}, "/sapi/v1/asset/tradeFee"},
+          {:fetch_my_liquidations, %{}, "/sapi/v1/margin/forceLiquidationRec"},
+          {:fetch_convert_trade, %{"id" => "1"}, "/sapi/v1/convert/orderStatus"},
+          {:fetch_convert_trade_history, %{}, "/sapi/v1/convert/tradeFlow"}
+        ] do
+      {requests, stub} = path_body_stub([])
+      params = Map.put(params, "type", "spot")
+
+      assert {:ok, _response} =
+               Unified.raw_call(exchange, method, params,
+                 plug: {Req.Test, stub},
+                 timestamp_ms_override: 1_700_000_000_000
+               )
+
+      request = RequestCollector.one!(requests)
+      assert request.request_path == expected_path
+      refute Map.has_key?(RequestCollector.query(request), "type")
+    end
+  end
+
+  test "USD-M position and leverage methods select semantic endpoints and parse typed results" do
+    exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret", sandbox: true)
+
+    position = %{
+      "symbol" => "KAVAUSDT",
+      "positionAmt" => "1",
+      "entryPrice" => "0.5",
+      "markPrice" => "0.6",
+      "leverage" => "20",
+      "marginType" => "cross",
+      "notional" => "0.6",
+      "unRealizedProfit" => "0.1",
+      "updateTime" => 1_700_000_000_000
+    }
+
+    assert_usdm_typed_endpoint(
+      exchange,
+      :fetch_positions_risk,
+      "fetchPositionsRisk",
+      [position],
+      "/fapi/v3/positionRisk",
+      fn result -> assert [%Position{info: ^position}] = result end
+    )
+
+    assert_usdm_typed_endpoint(
+      exchange,
+      :fetch_account_positions,
+      "fetchAccountPositions",
+      %{"positions" => [position]},
+      "/fapi/v3/account",
+      fn result -> assert [%Position{info: ^position}] = result end
+    )
+
+    leverage = %{"symbol" => "BTCUSDT", "leverage" => "20", "marginType" => "CROSSED"}
+
+    assert_usdm_typed_endpoint(
+      exchange,
+      :fetch_leverages,
+      "fetchLeverages",
+      [leverage],
+      "/fapi/v1/symbolConfig",
+      fn result ->
+        assert %Bourse.Leverage{long_leverage: 20, short_leverage: 20, info: ^leverage} = result
+      end
+    )
+  end
+
   test "Binance sandbox routes futures APIs to the current Demo Trading hosts" do
     for exchange_id <- ["binance", "binanceusdm"] do
       urls = Exchange.new!(exchange_id, sandbox: true).base_urls
@@ -2284,6 +2357,19 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     end)
 
     {requests, stub}
+  end
+
+  defp assert_usdm_typed_endpoint(exchange, method, js_name, body, expected_path, assertion) do
+    {requests, stub} = path_body_stub(body)
+
+    assert {:ok, result} =
+             Unified.call(exchange, method, js_name, %{},
+               plug: {Req.Test, stub},
+               timestamp_ms_override: 1_700_000_000_000
+             )
+
+    assert RequestCollector.one!(requests).request_path == expected_path
+    assertion.(result)
   end
 
   defp assert_path_body_request(requests, expected_path) do

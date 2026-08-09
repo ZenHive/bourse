@@ -43,6 +43,10 @@ defmodule Bourse.DefaultFamilySelectionTest do
       assert is_list(Unified.no_arg_read_methods())
       assert "binanceusdm" in Unified.first_class_venues()
     end
+
+    test "every mapped unified method has a documented reachable parameter set" do
+      assert Unified.mapped_endpoint_reachability_failures() == []
+    end
   end
 
   describe "binanceusdm no-arg routing via authored selection (task 378)" do

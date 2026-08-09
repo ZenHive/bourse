@@ -911,7 +911,7 @@
       "editOrders": true,
       "editSpotOrder": true,
       "fetchADLRank": true,
-      "fetchAccountPositions": false,
+      "fetchAccountPositions": true,
       "fetchAllGreeks": true,
       "fetchBalance": true,
       "fetchBidsAsks": true,
@@ -991,7 +991,7 @@
       "fetchPositions": true,
       "fetchPositionsADLRank": true,
       "fetchPositionsHistory": false,
-      "fetchPositionsRisk": false,
+      "fetchPositionsRisk": true,
       "fetchPremiumIndexOHLCV": true,
       "fetchSettlementHistory": true,
       "fetchStatus": true,
@@ -4400,6 +4400,28 @@
             }
           ]
         },
+        "fetchAccountPositions": {
+          "consume": [
+            "type",
+            "subType",
+            "sub_type"
+          ],
+          "default": "fapiPrivateV3_get_account",
+          "rules": [
+            {
+              "endpoint": "dapiPrivate_get_account",
+              "when": {
+                "market_family": "inverse"
+              }
+            },
+            {
+              "endpoint": "dapiPrivate_get_account",
+              "when": {
+                "market_type": "future"
+              }
+            }
+          ]
+        },
         "fetchBalance": {
           "consume": [
             "type",
@@ -4592,6 +4614,28 @@
               "endpoint": "dapiPrivateV2_get_leveragebracket",
               "when": {
                 "market_family": "future"
+              }
+            }
+          ]
+        },
+        "fetchLeverages": {
+          "consume": [
+            "type",
+            "subType",
+            "sub_type"
+          ],
+          "default": "fapiPrivate_get_symbolconfig",
+          "rules": [
+            {
+              "endpoint": "dapiPrivate_get_account",
+              "when": {
+                "market_family": "inverse"
+              }
+            },
+            {
+              "endpoint": "dapiPrivate_get_account",
+              "when": {
+                "market_type": "future"
               }
             }
           ]
@@ -4842,6 +4886,28 @@
               "endpoint": "eapiPrivate_get_position",
               "when": {
                 "market_family": "option"
+              }
+            }
+          ]
+        },
+        "fetchPositionsRisk": {
+          "consume": [
+            "type",
+            "subType",
+            "sub_type"
+          ],
+          "default": "fapiPrivateV3_get_positionrisk",
+          "rules": [
+            {
+              "endpoint": "dapiPrivate_get_positionrisk",
+              "when": {
+                "market_family": "inverse"
+              }
+            },
+            {
+              "endpoint": "dapiPrivate_get_positionrisk",
+              "when": {
+                "market_type": "future"
               }
             }
           ]
@@ -19719,10 +19785,22 @@
         "extras": [],
         "field_map": {
           "info": null,
-          "longLeverage": null,
-          "marginMode": null,
-          "shortLeverage": null,
-          "symbol": null
+          "longLeverage": {
+            "coercion": "safeInteger",
+            "key": "leverage"
+          },
+          "marginMode": {
+            "coercion": "safeStringLower",
+            "key": "marginType"
+          },
+          "shortLeverage": {
+            "coercion": "safeInteger",
+            "key": "leverage"
+          },
+          "symbol": {
+            "coercion": "safeString",
+            "key": "symbol"
+          }
         }
       },
       "leverage_tiers": {
@@ -21012,7 +21090,13 @@
           "key": null
         }
       },
-      "position": null,
+      "position": {
+        "fetchAccountPositions": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "positions"
+        }
+      },
       "ticker": null,
       "trade": null,
       "transaction": null

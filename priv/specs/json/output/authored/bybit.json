@@ -4931,6 +4931,13 @@
         "fetchOpenOrders": {
           "default": "v5/order/realtime"
         },
+        "fetchOptionMarkets": {
+          "consume": [
+            "type"
+          ],
+          "default": "public_get_v5_market_instruments_info",
+          "rules": []
+        },
         "fetchOrder": {
           "default": "v5/order/realtime"
         },

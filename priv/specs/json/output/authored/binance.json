@@ -4405,6 +4405,166 @@
             }
           ]
         },
+        "fetchConvertTrade": {
+          "consume": [
+            "type",
+            "subType",
+            "sub_type"
+          ],
+          "default": "sapi_get_convert_orderstatus",
+          "rules": []
+        },
+        "fetchConvertTradeHistory": {
+          "consume": [
+            "type",
+            "subType",
+            "sub_type"
+          ],
+          "default": "sapi_get_convert_tradeflow",
+          "rules": []
+        },
+        "fetchMyLiquidations": {
+          "consume": [
+            "type",
+            "subType",
+            "sub_type"
+          ],
+          "default": "sapi_get_margin_forceliquidationrec",
+          "rules": [
+            {
+              "endpoint": "fapiPrivate_get_forceorders",
+              "when": {
+                "market_family": "linear"
+              }
+            },
+            {
+              "endpoint": "fapiPrivate_get_forceorders",
+              "when": {
+                "market_type": "swap"
+              }
+            },
+            {
+              "endpoint": "dapiPrivate_get_forceorders",
+              "when": {
+                "market_family": "inverse"
+              }
+            },
+            {
+              "endpoint": "dapiPrivate_get_forceorders",
+              "when": {
+                "market_type": "future"
+              }
+            }
+          ]
+        },
+        "fetchOpenOrder": {
+          "consume": [
+            "type",
+            "subType",
+            "sub_type"
+          ],
+          "default": "private_get_order",
+          "rules": [
+            {
+              "endpoint": "fapiPrivate_get_openorder",
+              "when": {
+                "market_family": "linear"
+              }
+            },
+            {
+              "endpoint": "fapiPrivate_get_openorder",
+              "when": {
+                "market_type": "swap"
+              }
+            },
+            {
+              "endpoint": "dapiPrivate_get_openorder",
+              "when": {
+                "market_family": "inverse"
+              }
+            },
+            {
+              "endpoint": "dapiPrivate_get_openorder",
+              "when": {
+                "market_type": "future"
+              }
+            }
+          ]
+        },
+        "fetchOrderTrades": {
+          "consume": [
+            "type",
+            "subType",
+            "sub_type"
+          ],
+          "default": "private_get_mytrades",
+          "rules": [
+            {
+              "endpoint": "fapiPrivate_get_usertrades",
+              "when": {
+                "market_family": "linear"
+              }
+            },
+            {
+              "endpoint": "fapiPrivate_get_usertrades",
+              "when": {
+                "market_type": "swap"
+              }
+            },
+            {
+              "endpoint": "dapiPrivate_get_usertrades",
+              "when": {
+                "market_family": "inverse"
+              }
+            },
+            {
+              "endpoint": "dapiPrivate_get_usertrades",
+              "when": {
+                "market_type": "future"
+              }
+            },
+            {
+              "endpoint": "eapiPrivate_get_usertrades",
+              "when": {
+                "market_family": "option"
+              }
+            }
+          ]
+        },
+        "fetchTradingFee": {
+          "consume": [
+            "type",
+            "subType",
+            "sub_type"
+          ],
+          "default": "sapi_get_asset_tradefee",
+          "rules": [
+            {
+              "endpoint": "fapiPrivate_get_commissionrate",
+              "when": {
+                "market_family": "linear"
+              }
+            },
+            {
+              "endpoint": "fapiPrivate_get_commissionrate",
+              "when": {
+                "market_type": "swap"
+              }
+            },
+            {
+              "endpoint": "dapiPrivate_get_commissionrate",
+              "when": {
+                "market_family": "inverse"
+              }
+            },
+            {
+              "endpoint": "dapiPrivate_get_commissionrate",
+              "when": {
+                "market_type": "future"
+              }
+            }
+          ]
+        },
         "fetchBalance": {
           "consume": [
             "type",
@@ -9955,7 +10115,8 @@
         "papiGetCmConditionalOpenOrder",
         "papiGetCmOpenOrder",
         "papiGetUmConditionalOpenOrder",
-        "papiGetUmOpenOrder"
+        "papiGetUmOpenOrder",
+        "privateGetOrder"
       ],
       "fetchOpenOrders": [
         "dapiPrivateGetOpenOrders",

@@ -7,6 +7,7 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
   alias Bourse.Credentials
   alias Bourse.Error
   alias Bourse.Greeks
+  alias Bourse.Leverage
   alias Bourse.Order
   alias Bourse.Position
   alias Bourse.Test.FixtureGateIsolation
@@ -114,6 +115,26 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
 
     assert {:error, %Error{type: :authentication_error, code: -1022}} =
              Bourse.fetch_balance(invalid_usdm)
+  end
+
+  test "USD-M position risk, account positions, and leverages return typed demo data" do
+    credentials =
+      require_credentials!(:binance, sandbox_key: :futures, url: "https://demo.binance.com/en/my/settings/api-management")
+
+    exchange = build_exchange(:binanceusdm, credentials: credentials, sandbox: true)
+
+    assert {:ok, positions_risk} = Bourse.fetch_positions_risk(exchange)
+    assert positions_risk != []
+    assert Enum.all?(positions_risk, &match?(%Position{}, &1))
+
+    assert {:ok, account_positions} = Bourse.fetch_account_positions(exchange)
+    assert account_positions != []
+    assert Enum.all?(account_positions, &match?(%Position{}, &1))
+
+    assert {:ok, %Leverage{} = leverage} = Bourse.fetch_leverages(exchange)
+    assert is_binary(leverage.symbol) and leverage.symbol != ""
+    assert is_integer(leverage.long_leverage)
+    assert leverage.short_leverage == leverage.long_leverage
   end
 
   test "Binance-family symbol commission endpoints return populated rates and bad-symbol errors" do
