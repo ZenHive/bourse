@@ -50,7 +50,12 @@ defmodule Bourse.BinanceAuthoredSpecTest do
   end
 
   test "USD-M position and leverage methods select semantic endpoints and parse typed results" do
-    exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret", sandbox: true)
+    exchange =
+      "binanceusdm"
+      |> Exchange.new!(api_key: "key", secret: "secret", sandbox: true)
+      |> Exchange.put_markets([
+        %Bourse.Market{id: "IDOL", symbol: "IDOL/USDT:USDT", type: "swap", swap: true, contract: true}
+      ])
 
     position = %{
       "symbol" => "KAVAUSDT",
@@ -82,16 +87,34 @@ defmodule Bourse.BinanceAuthoredSpecTest do
       fn result -> assert [%Position{info: ^position}] = result end
     )
 
-    leverage = %{"symbol" => "BTCUSDT", "leverage" => "20", "marginType" => "CROSSED"}
+    btc_leverage = %{"symbol" => "BTCUSDT", "leverage" => "20", "marginType" => "CROSSED"}
+    eth_leverage = %{"symbol" => "ETHUSDT", "leverage" => "10", "marginType" => "ISOLATED"}
+    idol_leverage = %{"symbol" => "IDOL", "leverage" => "5", "marginType" => "CROSSED"}
 
     assert_usdm_typed_endpoint(
       exchange,
       :fetch_leverages,
       "fetchLeverages",
-      [leverage],
+      [btc_leverage, eth_leverage, idol_leverage],
       "/fapi/v1/symbolConfig",
       fn result ->
-        assert %Bourse.Leverage{long_leverage: 20, short_leverage: 20, info: ^leverage} = result
+        assert %{
+                 "BTC/USDT:USDT" => %Bourse.Leverage{
+                   long_leverage: 20,
+                   short_leverage: 20,
+                   info: ^btc_leverage
+                 },
+                 "ETH/USDT:USDT" => %Bourse.Leverage{
+                   long_leverage: 10,
+                   short_leverage: 10,
+                   info: ^eth_leverage
+                 },
+                 "IDOL/USDT:USDT" => %Bourse.Leverage{
+                   long_leverage: 5,
+                   short_leverage: 5,
+                   info: ^idol_leverage
+                 }
+               } = result
       end
     )
   end

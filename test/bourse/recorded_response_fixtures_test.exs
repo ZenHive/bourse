@@ -118,8 +118,20 @@ defmodule Bourse.RecordedResponseFixturesTest do
   test "legacy recording paths and options are deterministic" do
     assert {"binance", :fetch_markets} in RecordedResponseFixtures.capture_targets()
     assert {"deribit", :fetch_balance} in RecordedResponseFixtures.capture_targets()
+    assert {"binanceusdm", :fetch_account_positions} in RecordedResponseFixtures.capture_targets()
+    assert {"binanceusdm", :fetch_positions_risk} in RecordedResponseFixtures.capture_targets()
+    assert {"binanceusdm", :fetch_leverages} in RecordedResponseFixtures.capture_targets()
     assert RecordedResponseFixtures.capture_category("deribit", :fetch_balance) == :private
     assert RecordedResponseFixtures.capture_category("binance", :fetch_ticker) == :public
+
+    assert RecordedResponseFixtures.oracle_identity("binanceusdm", :fetch_account_positions)["endpoint"] ==
+             "fapi/v3/account"
+
+    assert RecordedResponseFixtures.oracle_identity("binanceusdm", :fetch_positions_risk)["endpoint"] ==
+             "fapi/v3/positionRisk"
+
+    assert RecordedResponseFixtures.oracle_identity("binanceusdm", :fetch_leverages)["endpoint"] ==
+             "fapi/v1/symbolConfig"
 
     assert RecordedResponseFixtures.fixture_path("binance", :fetch_markets) ==
              Path.join(RecordedResponseFixtures.fixture_root(), "binance/fetch_markets.json")

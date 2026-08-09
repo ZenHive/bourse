@@ -96,6 +96,7 @@
         "normalization.field_maps.funding_rate",
         "normalization.field_maps.last_price",
         "normalization.field_maps.ledger_entry",
+        "normalization.field_maps.leverage",
         "normalization.field_maps.leverage_tiers",
         "normalization.field_maps.margin_mode",
         "normalization.field_maps.market",

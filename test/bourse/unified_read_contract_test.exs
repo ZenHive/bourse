@@ -1001,7 +1001,8 @@ defmodule Bourse.UnifiedReadContractTest do
   defp parsed_count(nil), do: 0
   defp parsed_count(_value), do: 1
 
-  defp symbol_keyed_method?(method), do: method in [:fetch_bids_asks, :fetch_funding_intervals, :fetch_last_prices]
+  defp symbol_keyed_method?(method),
+    do: method in [:fetch_bids_asks, :fetch_funding_intervals, :fetch_last_prices, :fetch_leverages]
 
   defp unified_symbol_map?(map) when is_map(map) and not is_struct(map) do
     map_size(map) > 0 and

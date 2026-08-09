@@ -1753,7 +1753,8 @@ defmodule Bourse.Unified do
   # binanceusdm's fapi/dapi split is threaded for `fetch_tickers` only. Its contract ids are
   # otherwise self-describing, and stamping a family onto every read would override the correct
   # per-id classification on order/position/trade rows that already resolve without a hint.
-  defp endpoint_market_type(config, %Exchange{id: "binanceusdm"}, :fetch_tickers) do
+  defp endpoint_market_type(config, %Exchange{id: "binanceusdm"}, method_atom)
+       when method_atom in [:fetch_tickers, :fetch_leverages] do
     case endpoint_section(config) do
       section when section in @swap_sections -> :swap
       section when section in @future_sections -> :future

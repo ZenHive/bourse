@@ -372,6 +372,8 @@ defmodule Bourse.PortfolioRiskTest do
       contract: true,
       quantity_unit: "base",
       native_quantity_unit: "base",
+      native_amount_step: 0.01,
+      precision: %{"amount" => 0.01},
       contract_size: 1,
       strike: 100_000,
       expiry: 1_769_817_600_000,

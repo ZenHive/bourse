@@ -213,7 +213,7 @@ defmodule Bourse.Unified.ReadParse do
   # multiple `data[]` rows (posSide long/short) that must be merged — a plain
   # first-row unwrap would drop short leverage. Bybit answers a single position
   # row; field-map parse still applies when there is no posSide split.
-  defp do_parse("leverage", exchange, module, js_name, body, params, parser, _list_return?) do
+  defp do_parse("leverage", exchange, module, "fetchLeverage" = js_name, body, params, parser, _list_return?) do
     with :ok <- reject_error_envelope(body, exchange),
          {:ok, payload} <-
            Envelope.unwrap(body, module, exchange.id, "leverage", js_name, true),
@@ -353,6 +353,7 @@ defmodule Bourse.Unified.ReadParse do
   # first-row unwrap would collapse them to one entry.
   @symbol_dict_return_methods [
     "fetchFundingRates",
+    "fetchLeverages",
     "fetchOptionChain",
     "fetchTickers",
     "fetchTradingFees",
@@ -790,6 +791,7 @@ defmodule Bourse.Unified.ReadParse do
               "funding_rate_history",
               "funding_history",
               "greeks",
+              "leverage",
               "margin_mode",
               "margin_modification",
               "open_interest",
@@ -845,11 +847,39 @@ defmodule Bourse.Unified.ReadParse do
 
   defp resolve_backfilled_symbol(struct, native, exchange, info, endpoint_market_type) do
     symbol =
-      binance_contract_symbol(native, exchange) ||
+      loaded_market_symbol(exchange, native, endpoint_market_type) ||
+        binance_contract_symbol(native, exchange) ||
         resolve_backfilled_symbol_from_native(struct, native, exchange, info, endpoint_market_type)
 
     %{struct | symbol: symbol}
   end
+
+  defp loaded_market_symbol(%Exchange{markets: markets}, native, endpoint_market_type)
+       when is_list(markets) and is_binary(native) do
+    matches = Enum.filter(markets, &(binance_market_id(&1) == native))
+
+    matches
+    |> Enum.find(&market_matches_endpoint_type?(&1, endpoint_market_type))
+    |> Kernel.||(List.first(matches))
+    |> loaded_market_identity_symbol()
+  end
+
+  defp loaded_market_symbol(_exchange, _native, _endpoint_market_type), do: nil
+
+  defp market_matches_endpoint_type?(_market, nil), do: true
+
+  defp market_matches_endpoint_type?(market, endpoint_market_type) do
+    market_type = Atom.to_string(endpoint_market_type)
+
+    Map.get(market, endpoint_market_type) == true or
+      Map.get(market, market_type) == true or
+      Map.get(market, :type) == market_type or
+      Map.get(market, "type") == market_type
+  end
+
+  defp loaded_market_identity_symbol(nil), do: nil
+
+  defp loaded_market_identity_symbol(market), do: Map.get(market, :symbol) || Map.get(market, "symbol")
 
   defp resolve_backfilled_symbol_from_native(struct, native, exchange, info, endpoint_market_type) do
     market_type = endpoint_market_type || native_market_type(struct, native)

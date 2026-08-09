@@ -194,8 +194,12 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       {"binance", :fetch_my_trades} =>
         binance_spot("api/v3/myTrades", %{"symbol" => "BTC/USDT", "limit" => @history_limit}),
       {"binanceusdm", :fetch_balance} => binance_usdm("fapi/v3/account", %{}),
+      {"binanceusdm", :fetch_account_positions} => binance_usdm("fapi/v3/account", %{}),
+      {"binanceusdm", :fetch_leverages} =>
+        binance_usdm("fapi/v1/symbolConfig", %{"symbol" => "BTC/USDT:USDT"}, load_markets?: true),
       {"binanceusdm", :fetch_open_orders} => binance_usdm("fapi/v1/openOrders", %{"symbol" => "BTC/USDT:USDT"}),
       {"binanceusdm", :fetch_positions} => binance_usdm("fapi/v3/positionRisk", %{"symbols" => ["BTC/USDT:USDT"]}),
+      {"binanceusdm", :fetch_positions_risk} => binance_usdm("fapi/v3/positionRisk", %{}),
       {"binanceusdm", :fetch_my_trades} =>
         binance_usdm("fapi/v1/userTrades", %{"symbol" => "BTC/USDT:USDT", "limit" => @history_limit}),
       {"binanceusdm", :fetch_ledger} => binance_usdm("fapi/v1/income", %{"limit" => @history_limit}),
@@ -520,7 +524,8 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
 
   defp binance_spot(endpoint, params), do: private(endpoint, "testnet.binance.vision", :binance, params)
 
-  defp binance_usdm(endpoint, params), do: private(endpoint, "demo-fapi.binance.com", :binanceusdm, params)
+  defp binance_usdm(endpoint, params, opts \\ []),
+    do: private(endpoint, "demo-fapi.binance.com", :binanceusdm, params, opts)
 
   defp binance_coinm(endpoint, params, opts \\ []),
     do: private(endpoint, "demo-dapi.binance.com", :binancecoinm, params, opts)

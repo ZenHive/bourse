@@ -401,3 +401,26 @@ declarations.**
 <!-- carve-evidence-status
 {"carve_id":"C-T565c","date":"2026-08-08","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binanceusdm provider artifacts distinguish account, position-risk, and leverage-bracket responses"},"observed_evidence":{"kind":"live_venue","reference":"Task 565 demo-fapi probes observed 877 nested leverage-bracket carriers on the incorrectly selected position routes and no SAPI/EAPI sandbox host"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+## 2026-08-09 — reachable USD-M account and position selectors (Task 534)
+
+**C-T534a — Account positions, position risk, and configured leverage select their distinct
+provider contracts (task 534). Outcome: CONFIRM provider contract.**
+
+- *Provider boundary:* `GET /fapi/v3/account` carries account `positions`,
+  `GET /fapi/v3/positionRisk` returns position-risk rows, and
+  `GET /fapi/v1/symbolConfig` returns configured per-symbol leverage.
+- *Our carve:* the three unified methods select those respective FAPI routes. Account positions
+  unwrap the account `positions` member; leverage maps `symbol`, `leverage`, and `marginType`
+  into a unified-symbol-keyed collection without dropping provider rows.
+- *Live evidence:* a test-owned 0.002 BTCUSDT LONG made both position reads non-empty while the
+  symbol-config response remained populated. The three scrubbed demo responses are registered
+  in the reality manifest; the position was then closed and the account verified flat with no
+  open orders.
+- *History:* this supersedes only the USD-M position-route conclusion in C-T565c. That entry
+  remains the evidence for the prior selector defect and for the still-unavailable SAPI/EAPI
+  reads.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T534a","date":"2026-08-09","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binanceusdm/manifest.json artifact developer-docs-full; USD-M account information, position risk, and symbol configuration contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binanceusdm/fetch_account_positions.json, test/fixtures/responses/binanceusdm/fetch_positions_risk.json, and test/fixtures/responses/binanceusdm/fetch_leverages.json"},"compatibility_reference":null,"resolved_tier":1}
+-->

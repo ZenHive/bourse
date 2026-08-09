@@ -9,7 +9,10 @@ defmodule Bourse.RecordedResponseFixtures.ListBodyTest do
     fetch_open_orders
     fetch_closed_orders
     fetch_canceled_orders
+    fetch_account_positions
     fetch_positions
+    fetch_positions_risk
+    fetch_leverages
     fetch_my_trades
     fetch_ledger
   )
@@ -19,7 +22,10 @@ defmodule Bourse.RecordedResponseFixtures.ListBodyTest do
              :fetch_open_orders,
              :fetch_closed_orders,
              :fetch_canceled_orders,
+             :fetch_account_positions,
              :fetch_positions,
+             :fetch_positions_risk,
+             :fetch_leverages,
              :fetch_my_trades,
              :fetch_ledger
            ]

@@ -603,3 +603,20 @@ fields (task 565). Outcome: mark unsupported.**
 <!-- carve-evidence-status
 {"carve_id":"C-T565d","date":"2026-08-08","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 Market Open Interest request contract"},"observed_evidence":{"kind":"live_venue","reference":"Task 565 api-testnet.bybit.com differential: native BTCUSDT/category/intervalTime succeeded; unified request returned provider error 10001 invalid symbol"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+## 2026-08-09 — option-market endpoint reachability (Task 534)
+
+**C-T534c — Option-market discovery uses the V5 instruments contract (task 534). Outcome:
+CONFIRM provider contract.**
+
+- *Provider boundary:* Bybit V5 exposes option instruments through
+  `GET /v5/market/instruments-info` with the option category.
+- *Our carve:* `fetchOptionMarkets` has an explicit instruments-info default, so endpoint-section
+  priority cannot make the method unreachable.
+- *Recorded evidence:* the manifest-registered `fetch_markets` recording pins the same production
+  endpoint and its provider response envelope; focused selector tests pin the option method's
+  reachability.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T534c","date":"2026-08-09","semantic_source":{"kind":"provider_owned","reference":"priv/authority/bybit/manifest.json artifact v5-docs-source; V5 Get Instruments Info option contract"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/bybit/fetch_markets.json captured from v5/market/instruments-info"},"compatibility_reference":null,"resolved_tier":1}
+-->

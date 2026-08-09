@@ -1,5 +1,5 @@
 {
-  "count": 94,
+  "count": 97,
   "fixtures": [
     "alpaca/fetch_balance.json",
     "alpaca/fetch_markets.json",
@@ -28,11 +28,13 @@
     "binancecoinm/fetch_positions.json",
     "binancecoinm/fetch_ticker.json",
     "binancecoinm/order_lifecycle.json",
+    "binanceusdm/fetch_account_positions.json",
     "binanceusdm/fetch_balance.json",
     "binanceusdm/fetch_funding_intervals.json",
     "binanceusdm/fetch_last_prices.json",
     "binanceusdm/fetch_ledger.json",
     "binanceusdm/fetch_leverage_tiers.json",
+    "binanceusdm/fetch_leverages.json",
     "binanceusdm/fetch_margin_modes.json",
     "binanceusdm/fetch_markets.json",
     "binanceusdm/fetch_my_trades.json",
@@ -40,6 +42,7 @@
     "binanceusdm/fetch_open_orders.json",
     "binanceusdm/fetch_position_adl_rank.json",
     "binanceusdm/fetch_positions.json",
+    "binanceusdm/fetch_positions_risk.json",
     "binanceusdm/fetch_ticker.json",
     "binanceusdm/fetch_trades.json",
     "binanceusdm/order_lifecycle.json",
@@ -96,7 +99,7 @@
     "okx/fetch_ticker.json",
     "okx/fetch_trades.json"
   ],
-  "generated_at": "2026-08-08T23:27:10.369Z",
+  "generated_at": "2026-08-09T02:33:05.230331Z",
   "recordings": [
     {
       "capture_date": "2026-07-26",
@@ -349,6 +352,16 @@
       "venue": "binancecoinm"
     },
     {
+      "body_populated": true,
+      "capture_date": "2026-08-09",
+      "captured_at": "2026-08-09T02:20:27.784076Z",
+      "endpoint": "fapi/v3/account",
+      "host": "demo-fapi.binance.com",
+      "method": "fetch_account_positions",
+      "path": "binanceusdm/fetch_account_positions.json",
+      "venue": "binanceusdm"
+    },
+    {
       "capture_date": "2026-07-29",
       "captured_at": "2026-07-29T22:39:39.539288Z",
       "endpoint": "fapi/v3/account",
@@ -392,6 +405,16 @@
       "host": "demo-fapi.binance.com",
       "method": "fetch_leverage_tiers",
       "path": "binanceusdm/fetch_leverage_tiers.json",
+      "venue": "binanceusdm"
+    },
+    {
+      "body_populated": true,
+      "capture_date": "2026-08-09",
+      "captured_at": "2026-08-09T02:33:05.215674Z",
+      "endpoint": "fapi/v1/symbolConfig",
+      "host": "demo-fapi.binance.com",
+      "method": "fetch_leverages",
+      "path": "binanceusdm/fetch_leverages.json",
       "venue": "binanceusdm"
     },
     {
@@ -458,6 +481,16 @@
       "host": "testnet.binancefuture.com",
       "method": "fetch_positions",
       "path": "binanceusdm/fetch_positions.json",
+      "venue": "binanceusdm"
+    },
+    {
+      "body_populated": true,
+      "capture_date": "2026-08-09",
+      "captured_at": "2026-08-09T02:20:35.246030Z",
+      "endpoint": "fapi/v3/positionRisk",
+      "host": "demo-fapi.binance.com",
+      "method": "fetch_positions_risk",
+      "path": "binanceusdm/fetch_positions_risk.json",
       "venue": "binanceusdm"
     },
     {

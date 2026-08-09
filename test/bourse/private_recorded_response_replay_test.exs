@@ -429,12 +429,29 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
     assert Enum.any?(Map.values(parsed), &ListBody.binds_wire_row?(&1, raw)), identity
   end
 
+  defp assert_private_shape!(:fetch_leverages, parsed, fixture, identity) do
+    raw_rows = fixture["body"]
+    btc_raw = Enum.find(raw_rows, &(&1["symbol"] == "BTCUSDT"))
+
+    assert is_map(parsed) and map_size(parsed) == length(raw_rows), identity
+
+    assert Enum.all?(parsed, fn {symbol, leverage} ->
+             is_binary(symbol) and String.contains?(symbol, "/") and match?(%Bourse.Leverage{}, leverage)
+           end),
+           identity
+
+    assert %Bourse.Leverage{} = btc = Map.fetch!(parsed, "BTC/USDT:USDT")
+    assert ListBody.binds_wire_row?(btc, btc_raw), identity
+  end
+
   defp assert_private_shape!(method, parsed, fixture, identity)
        when method in [
               :fetch_open_orders,
               :fetch_canceled_orders,
+              :fetch_account_positions,
               :fetch_positions,
               :fetch_positions_for_symbol,
+              :fetch_positions_risk,
               :fetch_my_trades,
               :fetch_ledger
             ] do
@@ -457,7 +474,7 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
         assert parsed == [], identity
 
       true ->
-        raw_row = ListBody.first_wire_row(fixture["body"])
+        raw_row = private_wire_row(method, fixture["body"])
 
         assert is_map(raw_row) and map_size(raw_row) > 0,
                "#{identity} declared populated but no wire row was found under the body"
@@ -468,10 +485,24 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
 
   defp expected_private_struct(:fetch_open_orders), do: Bourse.Order
   defp expected_private_struct(:fetch_canceled_orders), do: Bourse.Order
+  defp expected_private_struct(:fetch_account_positions), do: Bourse.Position
   defp expected_private_struct(:fetch_positions), do: Bourse.Position
   defp expected_private_struct(:fetch_positions_for_symbol), do: Bourse.Position
+  defp expected_private_struct(:fetch_positions_risk), do: Bourse.Position
   defp expected_private_struct(:fetch_my_trades), do: Bourse.Trade
   defp expected_private_struct(:fetch_ledger), do: Bourse.LedgerEntry
+
+  defp private_wire_row(:fetch_account_positions, %{"positions" => rows}), do: active_position_row(rows)
+
+  defp private_wire_row(method, rows) when method in [:fetch_positions, :fetch_positions_risk] and is_list(rows),
+    do: active_position_row(rows)
+
+  defp private_wire_row(_method, body), do: ListBody.first_wire_row(body)
+
+  defp active_position_row(rows) do
+    Enum.find(rows, &(Bourse.Safe.number(&1["positionAmt"]) not in [nil, 0, 0.0])) ||
+      ListBody.first_wire_row(rows)
+  end
 
   defp assert_list_value_binding!(:fetch_positions, [], %{"positionAmt" => contracts}, identity) do
     assert Bourse.Safe.number(contracts) == 0,

@@ -117,24 +117,41 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
              Bourse.fetch_balance(invalid_usdm)
   end
 
+  @tag :dangerous
   test "USD-M position risk, account positions, and leverages return typed demo data" do
     credentials =
       require_credentials!(:binance, sandbox_key: :futures, url: "https://demo.binance.com/en/my/settings/api-management")
 
     exchange = build_exchange(:binanceusdm, credentials: credentials, sandbox: true)
+    assert {:ok, markets} = Bourse.fetch_markets(exchange)
+    exchange = Bourse.Exchange.put_markets(exchange, markets)
+    position_opts = usdm_position_opts!(exchange)
 
-    assert {:ok, positions_risk} = Bourse.fetch_positions_risk(exchange)
-    assert positions_risk != []
-    assert Enum.all?(positions_risk, &match?(%Position{}, &1))
+    assert_no_active_usdm_position!(exchange)
+    open_position!(exchange, position_opts)
 
-    assert {:ok, account_positions} = Bourse.fetch_account_positions(exchange)
-    assert account_positions != []
-    assert Enum.all?(account_positions, &match?(%Position{}, &1))
+    try do
+      assert {:ok, positions_risk} = Bourse.fetch_positions_risk(exchange)
+      assert %Position{} = active_position!(positions_risk, @usdm_lifecycle_symbol)
+      assert Enum.all?(positions_risk, &match?(%Position{}, &1))
 
-    assert {:ok, %Leverage{} = leverage} = Bourse.fetch_leverages(exchange)
-    assert is_binary(leverage.symbol) and leverage.symbol != ""
-    assert is_integer(leverage.long_leverage)
-    assert leverage.short_leverage == leverage.long_leverage
+      assert {:ok, account_positions} = Bourse.fetch_account_positions(exchange)
+      assert %Position{} = active_position!(account_positions, @usdm_lifecycle_symbol)
+      assert Enum.all?(account_positions, &match?(%Position{}, &1))
+
+      assert {:ok, leverages} = Bourse.fetch_leverages(exchange)
+      assert %Leverage{} = leverage = Map.fetch!(leverages, @usdm_lifecycle_symbol)
+
+      assert Enum.all?(leverages, fn {symbol, value} ->
+               is_binary(symbol) and String.contains?(symbol, "/") and match?(%Leverage{}, value)
+             end)
+
+      assert is_binary(leverage.symbol) and leverage.symbol != ""
+      assert is_integer(leverage.long_leverage)
+      assert leverage.short_leverage == leverage.long_leverage
+    after
+      cleanup_usdm_position!(exchange, position_opts)
+    end
   end
 
   test "Binance-family symbol commission endpoints return populated rates and bad-symbol errors" do
@@ -655,6 +672,13 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
       %Position{} = position -> position
       nil -> flunk("Binance USD-M position did not become visible: #{inspect(positions)}")
     end
+  end
+
+  defp assert_no_active_usdm_position!(exchange) do
+    assert {:ok, positions} = Bourse.fetch_positions(exchange)
+
+    refute Enum.any?(positions, &(&1.symbol == @usdm_lifecycle_symbol and &1.contracts > 0)),
+           "Binance USD-M test requires no existing long position: #{inspect(positions)}"
   end
 
   defp cleanup_usdm_position!(exchange, position_opts) do

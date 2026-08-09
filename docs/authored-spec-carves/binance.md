@@ -869,3 +869,22 @@ ALIGNED-to-ccxt (task 366).**
 <!-- carve-evidence-status
 {"carve_id":"C-T565b","date":"2026-08-08","semantic_source":{"kind":"provider_owned","reference":"Pinned Binance Spot, USD-M, and Options API artifacts in priv/authority/binance identify separate account, leverage-bracket, EAPI, and SAPI contracts"},"observed_evidence":{"kind":"live_venue","reference":"Task 565 Spot/Futures sandbox differential probes: bracket rows were selected as positions; EAPI and SAPI reported no sandbox base URL"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+## 2026-08-09 — reachable method-specific endpoint defaults (Task 534)
+
+**C-T534b — A mapped method keeps a reachable default when several API sections expose similar
+names (task 534). Outcome: CONFIRM routing boundary.**
+
+- *Provider boundary:* Spot order lookup and trade reads live under `/api/v3`; convert history,
+  margin liquidation history, and account fee reads live under their distinct SAPI families.
+- *Our carve:* `fetchOpenOrder`, `fetchOrderTrades`, `fetchConvertTrade`,
+  `fetchConvertTradeHistory`, `fetchMyLiquidations`, and `fetchTradingFee` carry explicit defaults
+  plus market-family rules where the provider exposes futures counterparts. Selection no longer
+  depends on incidental endpoint-section ordering.
+- *Verification:* exhaustive selector tests prove each mapping is reachable by a documented
+  parameter set. Spot endpoint semantics are pinned by `spot-openapi`; the SAPI routes have no
+  task-specific registered live response.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T534b","date":"2026-08-09","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binance/manifest.json artifact spot-openapi for the Spot order and trade endpoints"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Selector reachability is pinned offline, but the SAPI defaults added by task 534 have no task-specific manifest-registered live response"}
+-->
