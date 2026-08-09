@@ -6,6 +6,8 @@ defmodule Bourse.Unified.FundingMarginFieldMapsTest do
 
   use ExUnit.Case, async: true
 
+  alias Bourse.Credentials
+  alias Bourse.Error
   alias Bourse.Exchange
   alias Bourse.FundingHistory
   alias Bourse.RecordedResponseFixtures
@@ -53,6 +55,31 @@ defmodule Bourse.Unified.FundingMarginFieldMapsTest do
       assert row.symbol == "BTC/USDT:USDT"
       assert row.info["incomeType"] == "FUNDING_FEE"
       assert row.info["tranId"] == first["tranId"]
+    end
+  end
+
+  # binance declares four candidate endpoints for fetchFundingHistory
+  # (fapi, dapi, papi-cm, papi-um). Picking one by position would route a
+  # COIN-M caller to USD-M data silently, so resolution must refuse instead.
+  # Both cases resolve before dispatch and issue no request — verified by
+  # telemetry: the ambiguous call fires no [:bourse, :request, :*] event
+  # while the symbol-bearing call fires start/stop on /income.
+  describe "binance fetchFundingHistory endpoint resolution" do
+    test "refuses to guess among the four income endpoints when nothing selects one" do
+      exchange = Exchange.new!("binance", credentials: Credentials.new!(api_key: "k", secret: "s"))
+
+      assert {:error, %Error{type: :bad_request, message: message}} =
+               Bourse.fetch_funding_history(exchange, nil)
+
+      assert message =~ "ambiguous multi-endpoint selection for fetchFundingHistory on binance"
+      assert message =~ "refusing bare hd(configs)"
+    end
+
+    test "reports the credential requirement rather than an ambiguity when unauthenticated" do
+      assert {:error, %Error{type: :authentication_error, message: message}} =
+               Bourse.fetch_funding_history(Exchange.new!("binance"), nil)
+
+      assert message =~ "has only authenticated endpoints; credentials required"
     end
   end
 
