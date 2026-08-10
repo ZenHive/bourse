@@ -3,7 +3,7 @@ defmodule Mix.Tasks.Ccxt.OracleGateTest do
 
   alias Mix.Tasks.Ccxt.OracleGate
 
-  test "task reports binary slots, critical gaps, and the exact-set ratchet" do
+  test "task reports binary slots, per-venue hard passes, and the exact-set ratchet" do
     original_shell = Mix.shell()
     Mix.shell(Mix.Shell.Process)
     on_exit(fn -> Mix.shell(original_shell) end)
@@ -16,7 +16,10 @@ defmodule Mix.Tasks.Ccxt.OracleGateTest do
     end
 
     assert Enum.any?(messages, &String.contains?(&1, "verified auth.sign_recipe.private"))
-    assert Enum.any?(messages, &String.contains?(&1, "critical=true missing_methods="))
+
+    assert Enum.count(messages, &String.contains?(&1, "critical-slot hard gate passed")) ==
+             length(Bourse.Spec.exchanges())
+
     assert Enum.any?(messages, &String.contains?(&1, "verification=recorded_error"))
     assert Enum.any?(messages, &String.contains?(&1, "verification=provider_doc"))
     assert "binary oracle exact-set ratchet passed" in messages

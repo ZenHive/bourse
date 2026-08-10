@@ -6,6 +6,10 @@ defmodule Bourse.OracleProvenance do
   alias Bourse.OracleProvenance.Derivation
 
   @type ledger_entry :: %{heading: String.t(), slots: [{String.t(), String.t()}]}
+  @type critical_slot_waiver :: %{date: Date.t(), path: String.t(), venue: String.t()}
+
+  @waiver_marker "oracle-critical-slot-waiver"
+  @waiver_pattern ~r/^\s*-\s+\[oracle-critical-slot-waiver\s+(\d{4}-\d{2}-\d{2})\]\s+`([^`:]+):([^`]+)`\s*$/
 
   @doc "Parses explicit authored-slice markers from the open ledger section."
   @spec open_ledger_entries(String.t()) :: [ledger_entry()]
@@ -17,6 +21,35 @@ defmodule Bourse.OracleProvenance do
       %{heading: heading, slots: ledger_slots(body)}
     end)
     |> Enum.reject(&Enum.empty?(&1.slots))
+  end
+
+  @doc "Parses explicit dated critical-slot waivers from the open ledger section."
+  @spec critical_slot_waivers(String.t()) :: [critical_slot_waiver()]
+  def critical_slot_waivers(markdown) when is_binary(markdown) do
+    markdown
+    |> open_ledger_section()
+    |> String.split("\n")
+    |> Enum.flat_map(&parse_waiver_line!/1)
+  end
+
+  @doc "Returns hard-gate errors for critical slots without reality evidence or a valid waiver."
+  @spec critical_slot_coverage_errors([Derivation.venue_report()], [critical_slot_waiver()]) :: [String.t()]
+  def critical_slot_coverage_errors(reports, waivers) when is_list(reports) and is_list(waivers) do
+    slots = critical_slots_by_identity(reports)
+    waiver_groups = Enum.group_by(waivers, &{&1.venue, &1.path})
+
+    waiver_errors =
+      Enum.flat_map(waiver_groups, fn {identity, entries} ->
+        waiver_errors(identity, entries, Map.get(slots, identity))
+      end)
+
+    missing =
+      for {{venue, path}, %{verified: false}} <- slots,
+          !Map.has_key?(waiver_groups, {venue, path}) do
+        "#{venue}:#{path} has no reality evidence or dated production-ledger waiver"
+      end
+
+    Enum.sort(waiver_errors ++ missing)
   end
 
   @doc "Returns open-ledger conflicts for semantically verified production claims."
@@ -97,6 +130,55 @@ defmodule Bourse.OracleProvenance do
   end
 
   defp ledger_conflict_claim?(_slot), do: false
+
+  defp parse_waiver_line!(line) do
+    case Regex.run(@waiver_pattern, line, capture: :all_but_first) do
+      [date, venue, path] -> [%{date: parse_waiver_date!(date, line), path: path, venue: venue}]
+      nil -> reject_malformed_waiver!(line)
+    end
+  end
+
+  defp parse_waiver_date!(date, line) do
+    case Date.from_iso8601(date) do
+      {:ok, parsed} -> reject_future_date!(parsed, line)
+      {:error, _reason} -> raise ArgumentError, "invalid critical-slot waiver date: #{line}"
+    end
+  end
+
+  defp reject_future_date!(date, line) do
+    if Date.after?(date, Date.utc_today()) do
+      raise ArgumentError, "future-dated critical-slot waiver: #{line}"
+    else
+      date
+    end
+  end
+
+  defp reject_malformed_waiver!(line) do
+    if String.contains?(line, @waiver_marker) do
+      raise ArgumentError, "malformed critical-slot waiver: #{line}"
+    else
+      []
+    end
+  end
+
+  defp critical_slots_by_identity(reports) do
+    Map.new(for report <- reports, slot <- report.slots, slot.critical, do: {{report.venue, slot.path}, slot})
+  end
+
+  defp waiver_errors({venue, path}, entries, nil) do
+    ["#{venue}:#{path} waiver names an unknown or non-critical slot"] ++ duplicate_errors(venue, path, entries)
+  end
+
+  defp waiver_errors({venue, path}, entries, %{verified: true}) do
+    ["#{venue}:#{path} is reality-verified but retains a critical-slot waiver"] ++
+      duplicate_errors(venue, path, entries)
+  end
+
+  defp waiver_errors({venue, path}, entries, %{verified: false}), do: duplicate_errors(venue, path, entries)
+
+  defp duplicate_errors(venue, path, entries) do
+    if length(entries) == 1, do: [], else: ["#{venue}:#{path} has duplicate critical-slot waivers"]
+  end
 
   defp open_ledger_section(markdown) do
     case String.split(markdown, "\n## Open\n", parts: 2) do

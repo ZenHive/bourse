@@ -29,6 +29,154 @@ Entry template:
 > (`www.okx.com`) and `OKX_INTL_*` credentials. References to `my.okx.com` below are
 > historical negative evidence only, never the target for a new probe.
 
+### all venues — residual oracle critical slots (task 526, filed 2026-08-10)
+
+These markers are explicit hard-gate waivers, not verification. The response recordings cited by
+`mix ccxt.oracle_gate` close every slot for which the committed live call preserved sufficient
+request or populated-body evidence. The residual slots need account state, permissions,
+instrument families, or provider error conditions unavailable through the provisioned hosts and
+the far-from-market/cancel-in-session mutation discipline.
+
+#### alpaca
+
+- Blocked by: the paper account has no populated position and no distinct closed/all-order list
+  observations. Creating the missing position would require a fill; the task permits only
+  far-from-market orders cancelled in the same session.
+  - [oracle-critical-slot-waiver 2026-08-10] `alpaca:normalization.field_maps.position`
+  - [oracle-critical-slot-waiver 2026-08-10] `alpaca:request_shape.fetchClosedOrders`
+  - [oracle-critical-slot-waiver 2026-08-10] `alpaca:request_shape.fetchOrders`
+
+#### binance
+
+- Blocked by: the provisioned keys cover Spot and USD-M test/demo, not Options, Portfolio Margin,
+  SAPI production, or every COIN-M signing section. The available accounts have no nonzero
+  cross-family position, and the captured market inventory contains no currency-alias case.
+  - [oracle-critical-slot-waiver 2026-08-10] `binance:auth.sign_recipe.dapiPrivate`
+  - [oracle-critical-slot-waiver 2026-08-10] `binance:auth.sign_recipe.dapiPrivateV2`
+  - [oracle-critical-slot-waiver 2026-08-10] `binance:auth.sign_recipe.eapiPrivate`
+  - [oracle-critical-slot-waiver 2026-08-10] `binance:auth.sign_recipe.fapiPrivateV2`
+  - [oracle-critical-slot-waiver 2026-08-10] `binance:auth.sign_recipe.papi`
+  - [oracle-critical-slot-waiver 2026-08-10] `binance:auth.sign_recipe.papiV2`
+  - [oracle-critical-slot-waiver 2026-08-10] `binance:auth.sign_recipe.sapi`
+  - [oracle-critical-slot-waiver 2026-08-10] `binance:markets.patterns.currency_aliases`
+  - [oracle-critical-slot-waiver 2026-08-10] `binance:normalization.field_maps.position`
+  - [oracle-critical-slot-waiver 2026-08-10] `binance:request_shape.fetchPositions`
+  - [oracle-critical-slot-waiver 2026-08-10] `binance:request_shape.fetchTicker`
+
+#### binancecoinm
+
+- Blocked by: the demo account cannot safely manufacture the five exact exchange-error conditions,
+  and the provider inventory has no observed currency-alias case. Recorded open-orders and
+  position reads close the remaining private request-shape slots.
+  - [oracle-critical-slot-waiver 2026-08-10] `binancecoinm:errors.handle_errors.exceptions.exact.-1013`
+  - [oracle-critical-slot-waiver 2026-08-10] `binancecoinm:errors.handle_errors.exceptions.exact.-1014`
+  - [oracle-critical-slot-waiver 2026-08-10] `binancecoinm:errors.handle_errors.exceptions.exact.-2011`
+  - [oracle-critical-slot-waiver 2026-08-10] `binancecoinm:errors.handle_errors.exceptions.exact.-4050`
+  - [oracle-critical-slot-waiver 2026-08-10] `binancecoinm:errors.handle_errors.exceptions.inverse.exact.-1005`
+  - [oracle-critical-slot-waiver 2026-08-10] `binancecoinm:markets.patterns.currency_aliases`
+
+#### binanceusdm
+
+- Blocked by: this runtime spec retains cross-product signing branches for COIN-M, Options,
+  Portfolio Margin, Spot, and SAPI that the USD-M demo credential/host cannot accept. The public
+  ticker fan-out also reaches product hosts without a valid common symbol; no observed inventory
+  row exercises a currency alias.
+  - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.dapiPrivate`
+  - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.dapiPrivateV2`
+  - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.eapiPrivate`
+  - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.fapiPrivate`
+  - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.fapiPrivateV2`
+  - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.papi`
+  - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.papiV2`
+  - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.private`
+  - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.sapi`
+  - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:markets.patterns.currency_aliases`
+  - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:request_shape.fetchOrders`
+  - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:request_shape.fetchTicker`
+  - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:request_shape.fetchTickers`
+
+#### bybit
+
+- Blocked by: demo trading lacks the option-family market evidence and account/order states needed
+  by the history and singular-order variants. Batch/edit/cancel and market-cost variants require
+  stateful mutations beyond the one far-from-market create/cancel profile; the read-only testnet
+  key rejects signed creates with provider error 10024.
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:markets.patterns.currency_aliases`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:markets.patterns.option`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.cancelAllOrders`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.cancelOrder`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.cancelOrders`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.createMarketBuyOrderWithCost`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.createMarketSellOrderWithCost`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.createOrders`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.editOrder`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.editOrders`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.fetchCanceledAndClosedOrders`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.fetchCanceledOrders`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.fetchClosedOrder`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.fetchClosedOrders`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.fetchFutureMarkets`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.fetchOpenOrder`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.fetchOrder`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.fetchOrderClassic`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.fetchOrdersClassic`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.fetchPosition`
+  - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.fetchPositionsHistory`
+
+#### deribit
+
+- Blocked by: the test account has no closed-order state for a distinct closed-orders capture, and
+  the observed instrument inventory contains no currency-alias case.
+  - [oracle-critical-slot-waiver 2026-08-10] `deribit:markets.patterns.currency_aliases`
+  - [oracle-critical-slot-waiver 2026-08-10] `deribit:request_shape.fetchClosedOrders`
+
+#### derive
+
+- Blocked by: demo order books and account history do not expose populated ticker or closed/all-order
+  observations, and the provider inventory has no currency-alias case. The existing demo lifecycle
+  proves create/open/cancel, but does not produce a fill or closed-history row.
+  - [oracle-critical-slot-waiver 2026-08-10] `derive:markets.patterns.currency_aliases`
+  - [oracle-critical-slot-waiver 2026-08-10] `derive:normalization.field_maps.ticker`
+  - [oracle-critical-slot-waiver 2026-08-10] `derive:request_shape.fetchClosedOrders`
+  - [oracle-critical-slot-waiver 2026-08-10] `derive:request_shape.fetchOrders`
+
+#### hyperliquid
+
+- Blocked by: the provisioned wallet has no order history or position state, the recorded market
+  inventory is perpetual-only, and no populated ticker/order response is registered. TP/SL and
+  TWAP creation require stateful mutation protocols not covered by the safe single-order profile.
+  - [oracle-critical-slot-waiver 2026-08-10] `hyperliquid:markets.patterns.currency_aliases`
+  - [oracle-critical-slot-waiver 2026-08-10] `hyperliquid:markets.patterns.spot`
+  - [oracle-critical-slot-waiver 2026-08-10] `hyperliquid:normalization.field_maps.order`
+  - [oracle-critical-slot-waiver 2026-08-10] `hyperliquid:normalization.field_maps.ticker`
+  - [oracle-critical-slot-waiver 2026-08-10] `hyperliquid:request_shape.createOrderWithTakeProfitAndStopLoss`
+  - [oracle-critical-slot-waiver 2026-08-10] `hyperliquid:request_shape.createTwapOrder`
+  - [oracle-critical-slot-waiver 2026-08-10] `hyperliquid:request_shape.fetchCanceledAndClosedOrders`
+  - [oracle-critical-slot-waiver 2026-08-10] `hyperliquid:request_shape.fetchCanceledOrders`
+  - [oracle-critical-slot-waiver 2026-08-10] `hyperliquid:request_shape.fetchClosedOrders`
+  - [oracle-critical-slot-waiver 2026-08-10] `hyperliquid:request_shape.fetchOrders`
+
+#### lighter
+
+- Blocked by: the testnet account has no populated order evidence or currency-alias market row.
+  Create/cancel requires nonce-managed zk signing and a mutation lifecycle absent from the safe
+  accepted-request recorder.
+  - [oracle-critical-slot-waiver 2026-08-10] `lighter:markets.patterns.currency_aliases`
+  - [oracle-critical-slot-waiver 2026-08-10] `lighter:normalization.field_maps.order`
+  - [oracle-critical-slot-waiver 2026-08-10] `lighter:request_shape.cancelOrder`
+  - [oracle-critical-slot-waiver 2026-08-10] `lighter:request_shape.createOrder`
+
+#### okx
+
+- Blocked by: the international demo account has no populated order, closed-order, or position-history
+  state, and the provider inventory contains no currency-alias example. `closePosition` requires an
+  open position, which the far-from-market/cancel-in-session policy does not create.
+  - [oracle-critical-slot-waiver 2026-08-10] `okx:markets.patterns.currency_aliases`
+  - [oracle-critical-slot-waiver 2026-08-10] `okx:normalization.field_maps.order`
+  - [oracle-critical-slot-waiver 2026-08-10] `okx:request_shape.closePosition`
+  - [oracle-critical-slot-waiver 2026-08-10] `okx:request_shape.fetchClosedOrders`
+  - [oracle-critical-slot-waiver 2026-08-10] `okx:request_shape.fetchPositionsHistory`
+
 ### binance — populated margin-adjustment history row (task 568, filed 2026-08-09)
 - Authored slices: `binance:normalization.field_maps.margin_modification` (intentionally
   absent while the task-550 coverage cell remains open).

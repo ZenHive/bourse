@@ -95,6 +95,90 @@ defmodule Bourse.OracleProvenance.DerivationTest do
     refute "fetchTickers" in ticker.unverified_methods
   end
 
+  test "populated order-lifecycle steps verify the order field map", %{reports: reports} do
+    for venue <- ~w(alpaca binance binancecoinm binanceusdm bybit) do
+      assert %{verified: true, verification_paths: paths} =
+               slot(reports[venue], "normalization.field_maps.order")
+
+      assert :response in paths
+    end
+  end
+
+  test "manifest-registered accepted responses verify their recorded request shapes", %{reports: reports} do
+    assert %{verified: true, verification_citations: citations} =
+             slot(reports["alpaca"], "request_shape.fetchOpenOrders")
+
+    assert "test/fixtures/responses/alpaca/fetch_open_orders.json" in citations
+    assert verified?(reports["binancecoinm"], "request_shape.fetchPositions")
+    assert verified?(reports["lighter"], "request_shape.fetchOpenOrders")
+  end
+
+  test "provider market discriminators verify recorded instrument families", %{reports: reports} do
+    for type <- ~w(option spot swap) do
+      assert verified?(reports["derive"], "markets.patterns.#{type}")
+    end
+
+    for type <- ~w(future option spot swap) do
+      assert verified?(reports["okx"], "markets.patterns.#{type}")
+    end
+  end
+
+  test "critical coverage requires evidence or one explicit waiver", %{reports: reports} do
+    report = reports["bybit"]
+    slot_path = "request_shape.fetchClosedOrder"
+
+    assert ["bybit:#{slot_path} has no reality evidence or dated production-ledger waiver"] ==
+             [report]
+             |> OracleProvenance.critical_slot_coverage_errors([])
+             |> Enum.filter(&(&1 == "bybit:#{slot_path} has no reality evidence or dated production-ledger waiver"))
+
+    waiver = %{date: ~D[2026-08-10], path: slot_path, venue: "bybit"}
+    missing_error = "bybit:#{slot_path} has no reality evidence or dated production-ledger waiver"
+
+    refute missing_error in OracleProvenance.critical_slot_coverage_errors([report], [waiver])
+  end
+
+  test "critical coverage rejects duplicate, unknown, and stale waivers", %{reports: reports} do
+    report = reports["bybit"]
+    open = %{date: ~D[2026-08-10], path: "request_shape.fetchClosedOrder", venue: "bybit"}
+    stale = %{date: ~D[2026-08-10], path: "normalization.field_maps.ticker", venue: "bybit"}
+    unknown = %{date: ~D[2026-08-10], path: "request_shape.notReal", venue: "bybit"}
+
+    errors = OracleProvenance.critical_slot_coverage_errors([report], [open, open, stale, unknown])
+
+    assert "bybit:request_shape.fetchClosedOrder has duplicate critical-slot waivers" in errors
+    assert "bybit:normalization.field_maps.ticker is reality-verified but retains a critical-slot waiver" in errors
+    assert "bybit:request_shape.notReal waiver names an unknown or non-critical slot" in errors
+  end
+
+  test "parses only explicit valid dated critical-slot waivers from the open ledger" do
+    markdown = """
+    # Ledger
+
+    ## Open
+
+    ### bybit — blocked read (task 526, filed 2026-08-10)
+      - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.fetchPositions`
+
+    ## Closed
+
+      - [oracle-critical-slot-waiver 2026-08-09] `bybit:request_shape.fetchOrders`
+    """
+
+    assert [%{date: ~D[2026-08-10], path: "request_shape.fetchPositions", venue: "bybit"}] =
+             OracleProvenance.critical_slot_waivers(markdown)
+
+    assert_raise ArgumentError, ~r/malformed critical-slot waiver/, fn ->
+      OracleProvenance.critical_slot_waivers("# Ledger\n\n## Open\n\n  - [oracle-critical-slot-waiver] `bybit:x`")
+    end
+
+    assert_raise ArgumentError, ~r/future-dated critical-slot waiver/, fn ->
+      OracleProvenance.critical_slot_waivers(
+        "# Ledger\n\n## Open\n\n  - [oracle-critical-slot-waiver 2999-01-01] `bybit:x`"
+      )
+    end
+  end
+
   test "extension map reaches field-map keys outside the return-type vocabulary", %{reports: reports} do
     assert Derivation.method_slot_extensions() == %{
              "fetchFundingHistory" => "income",

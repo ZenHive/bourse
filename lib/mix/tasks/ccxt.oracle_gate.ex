@@ -6,8 +6,10 @@ defmodule Mix.Tasks.Ccxt.OracleGate do
       mix ccxt.oracle_gate
       mix ccxt.oracle_gate --update
 
-  Critical-slot coverage is report-only. Manifest consistency, the exact
-  verified-slot baseline, and production-ledger conflicts are gates.
+  Critical-slot coverage hard-fails per venue unless each slot has
+  manifest-registered reality evidence or an explicit dated production-ledger
+  waiver. Manifest consistency, the exact verified-slot baseline, and ledger
+  conflicts are also gates.
   """
 
   use Mix.Task
@@ -32,6 +34,7 @@ defmodule Mix.Tasks.Ccxt.OracleGate do
 
     reports = OracleProvenance.binary_reports!()
     check_open_ledger!(reports)
+    check_critical_slots!(reports)
     Enum.each(reports, &report/1)
 
     if opts[:update] do
@@ -67,6 +70,28 @@ defmodule Mix.Tasks.Ccxt.OracleGate do
       [] -> Mix.shell().info("binary oracle exact-set ratchet passed")
       differences -> Mix.raise("binary oracle exact-set ratchet failed:\n" <> bullets(differences))
     end
+  end
+
+  defp check_critical_slots!(reports) do
+    waivers = @ledger_path |> File.read!() |> OracleProvenance.critical_slot_waivers()
+
+    case OracleProvenance.critical_slot_coverage_errors(reports, waivers) do
+      [] -> report_critical_slot_passes(reports, waivers)
+      errors -> Mix.raise("critical-slot hard gate failed:\n" <> bullets(errors))
+    end
+  end
+
+  defp report_critical_slot_passes(reports, waivers) do
+    waiver_counts = Enum.frequencies_by(waivers, & &1.venue)
+
+    Enum.each(reports, fn report ->
+      critical = Enum.count(report.slots, & &1.critical)
+      waived = Map.get(waiver_counts, report.venue, 0)
+
+      Mix.shell().info(
+        "#{report.venue}: critical-slot hard gate passed (#{critical - waived} verified, #{waived} waived)"
+      )
+    end)
   end
 
   defp report(report) do

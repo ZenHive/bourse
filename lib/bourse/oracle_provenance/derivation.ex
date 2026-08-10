@@ -114,7 +114,7 @@ defmodule Bourse.OracleProvenance.Derivation do
       ensure_authority!(authority_root, venue)
 
       contributions =
-        response_contributions(spec, venue, responses) ++
+        response_contributions(spec, venue, responses, response_root) ++
           accepted_request_contributions(spec, venue, accepted, replay?) ++
           public_accepted_request_contributions(venue, public_manifest, public_accepted, replay_public?) ++
           error_contributions(spec, venue, errors, error_root) ++
@@ -205,24 +205,61 @@ defmodule Bourse.OracleProvenance.Derivation do
     end
   end
 
-  defp response_contributions(spec, venue, evidence) do
+  defp response_contributions(spec, venue, evidence, response_root) do
     evidence
     |> rows_for(venue)
     |> Enum.flat_map(fn {row, fixture} ->
-      if fixture_populated?(fixture) do
-        method = Map.fetch!(row, "method")
-        semantic = "tier1_semantic_oracle" in Map.get(row, "oracle_membership", [])
-        contribution = contribution(method, row, semantic, :response)
-
-        spec
-        |> method_slot_paths(method)
-        |> Kernel.++(market_pattern_paths(spec, method, fixture, row))
-        |> Enum.map(&Map.put(contribution, :path, &1))
-      else
-        []
-      end
+      row
+      |> response_methods(fixture)
+      |> Enum.flat_map(&response_method_contributions(spec, row, &1, response_root))
     end)
   end
+
+  defp response_method_contributions(spec, row, {method, fixture}, response_root) do
+    semantic = "tier1_semantic_oracle" in Map.get(row, "oracle_membership", [])
+
+    contribution =
+      method
+      |> contribution(row, semantic, :response)
+      |> Map.put(:citation, Path.join(response_root, Map.fetch!(row, "path")))
+
+    paths = recorded_request_paths(row, fixture, method) ++ populated_response_paths(spec, row, method, fixture)
+    Enum.map(paths, &Map.put(contribution, :path, &1))
+  end
+
+  defp populated_response_paths(spec, row, method, fixture) do
+    if fixture_populated?(fixture) do
+      spec
+      |> method_slot_paths(method)
+      |> Kernel.++(recording_slot_paths(row, method))
+      |> Kernel.++(market_pattern_paths(spec, method, fixture, row))
+    else
+      []
+    end
+  end
+
+  defp response_methods(%{"method" => "order_lifecycle"}, %{"responses" => responses}) when is_list(responses) do
+    Enum.map(responses, fn response ->
+      {Map.fetch!(response, "method"), %{"body" => Map.get(response, "body")}}
+    end)
+  end
+
+  defp response_methods(row, fixture), do: [{Map.fetch!(row, "method"), fixture}]
+
+  defp recording_slot_paths(%{"method" => "order_lifecycle"}, method) when method in ["create_order", "fetch_order"],
+    do: ["normalization.field_maps.order"]
+
+  defp recording_slot_paths(_row, _method), do: []
+
+  defp recorded_request_paths(row, fixture, method) when is_map(fixture) do
+    if is_binary(row["endpoint"]) and is_binary(row["host"]) and is_map(fixture["params"]) do
+      ["request_shape.#{js_method!(method)}"]
+    else
+      []
+    end
+  end
+
+  defp recorded_request_paths(_row, _fixture, _method), do: []
 
   defp accepted_request_contributions(spec, venue, evidence, replay?) do
     evidence
@@ -764,19 +801,31 @@ defmodule Bourse.OracleProvenance.Derivation do
     categories = Enum.map(values, &(Map.get(&1, "category") || Map.get(&1, "kind")))
     asset_classes = Enum.map(values, &Map.get(&1, "class"))
     contract_types = Enum.map(values, &Map.get(&1, "contractType"))
+    instrument_types = Enum.map(values, &(Map.get(&1, "instrument_type") || Map.get(&1, "instType")))
     market_types = Enum.map(values, &Map.get(&1, "market_type"))
 
     []
     |> maybe_add("crypto", "crypto" in asset_classes)
     |> maybe_add("equity", "us_equity" in asset_classes)
-    |> maybe_add("spot", "spot" in categories or "spot" in market_types or spot_market_body?(values))
-    |> maybe_add("option", "option" in categories or Enum.any?(values, &Map.has_key?(&1, "optionSymbols")))
-    |> maybe_add(
-      "swap",
-      "linear" in categories or Enum.any?(market_types, &(&1 in ["perp", "perpetual"])) or
-        perpetual_body?(values, contract_types)
-    )
-    |> maybe_add("future", future_body?(values, contract_types))
+    |> maybe_add("spot", spot_pattern?(values, categories, market_types, instrument_types))
+    |> maybe_add("option", option_pattern?(values, categories, instrument_types))
+    |> maybe_add("swap", swap_pattern?(values, categories, market_types, instrument_types, contract_types))
+    |> maybe_add("future", "FUTURES" in instrument_types or future_body?(values, contract_types))
+  end
+
+  defp spot_pattern?(values, categories, market_types, instrument_types) do
+    "spot" in categories or "spot" in market_types or
+      Enum.any?(instrument_types, &(&1 in ["erc20", "SPOT"])) or spot_market_body?(values)
+  end
+
+  defp option_pattern?(values, categories, instrument_types) do
+    "option" in categories or Enum.any?(instrument_types, &(&1 in ["option", "OPTION"])) or
+      Enum.any?(values, &Map.has_key?(&1, "optionSymbols"))
+  end
+
+  defp swap_pattern?(values, categories, market_types, instrument_types, contract_types) do
+    "linear" in categories or Enum.any?(market_types, &(&1 in ["perp", "perpetual"])) or
+      Enum.any?(instrument_types, &(&1 in ["perp", "SWAP"])) or perpetual_body?(values, contract_types)
   end
 
   defp spot_market_body?(maps) do
