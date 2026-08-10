@@ -5,7 +5,7 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2026-08-10
 
 ### Security
 
@@ -44,7 +44,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   as acceptance. Observed on `test.deribit.com`: the same `user.portfolio.btc`
   subscribe returns `"result" => []` unauthenticated and the channel name back
   when authenticated.
-- `Bourse.WS.Auth.ListenKey.pre_auth/3` raised `BadMapError` on the authored
+- The listen-key pre-auth step in `Bourse.WS.Auth.ListenKey` raised `BadMapError` on the authored
   binance config, which carries its endpoints as a map where the module
   expected a list.
 - The binance family had no working private WebSocket path at all, and both
@@ -107,6 +107,174 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   deposit/withdrawal lookups — are marked unsupported with carve records instead
   of silently mis-parsing.
 
+- `Bourse.create_order/6` on the binance family submitted a requested stop as a
+  naked market order. `time_in_force`, `reduce_only`, `trigger_price` and
+  `stop_loss_price` are unified options the futures write path had no authored
+  binding for, so they were dropped before signing — an order meant as a
+  protective stop reached the venue with neither its trigger nor its reduce-only
+  flag and executed immediately as an opening market sell. All four now reach the
+  signed request, and a conditional order routes to Binance's Algo Order API
+  (`POST /fapi/v1/algoOrder`) rather than the regular order endpoint, which
+  rejects migrated stop types with `-4120`. Confirmed against
+  `demo-fapi.binance.com`: an ETHUSDT stop-limit remained `NEW` carrying its
+  requested trigger, `reduceOnly=true` and `GTC`; the request is pinned by an
+  accepted-request golden and `-4120` on the retired route is pinned as a
+  recorded exchange error.
+
+- `take_profit_price` was accepted by `create_order/6` and then discarded on the
+  same path, so a take-profit order was also sent as a naked market order. It now
+  routes to the Algo book and resolves to the venue's `TAKE_PROFIT` /
+  `TAKE_PROFIT_MARKET` types by the caller's order type. Binance's Algo contract
+  accepts one conditional leg per order, so passing `stop_loss_price` and
+  `take_profit_price` together is refused up front with
+  `Bourse.Error` `:invalid_parameters` naming the two options — two-leg
+  protection on this venue is the separate order-list surface, not an algo order.
+
+- Binance USD-M conditional orders were write-only. Once placed on the Algo book
+  they were invisible to every read and cancel path: `fetch_open_orders/2`
+  returned only the regular book, `cancel_order/3` answered
+  `:order_not_found` for a live algo order, and `cancel_all_orders/2` left the
+  algo book resting. Authored order-book routes now span both books —
+  `fetch_open_orders` merges the two responses, `cancel_all_orders` broadcasts to
+  both, and `cancel_order` tries the regular book and falls through to the algo
+  book on `:order_not_found` (and only on that error). The algo cancel sends
+  `algoId` rather than `orderId`.
+
+- `Bourse.cancel_all_orders/2` on binance USD-M used a route that cancelled
+  nothing and then failed to parse the venue's acknowledgement. The call reached
+  a spot-shaped endpoint, left resting FAPI orders untouched, and returned a
+  parse error built from an all-nil order because Binance answers a bare
+  `{"code": 200, "msg": "The operation of cancel all open order is done."}`
+  envelope, not an order row. It now sends
+  `DELETE /fapi/v1/allOpenOrders?symbol=…`, treats the `code=200` body as a
+  success acknowledgement, and preserves `-1121` for an unknown symbol. Confirmed
+  against `demo-fapi.binance.com`: three resting orders were cancelled and
+  `fetch_open_orders/2` returned zero afterwards.
+
+- `Bourse.set_margin_mode/3` never sent the symbol. On the generic binance client
+  both the symbol and the margin mode were authored as unresolved identifier
+  references, so every argument variant returned Binance `-1102` while the raw
+  `POST /fapi/v1/marginType` succeeded with the same credentials. On the
+  dedicated `binanceusdm` client the same shape was worse: the unified symbol was
+  written into `marginType`, so the venue received `marginType=ETHUSDT`. The
+  unified symbol now becomes `symbol=ETHUSDT` and `"cross"` / `"isolated"` map to
+  the provider values `CROSSED` / `ISOLATED`. Verified live in both directions on
+  USD-M and COIN-M demo, with the account restored to its original mode.
+
+- `Bourse.fetch_balance(exchange, type: :swap)` on the generic binance client
+  read the Spot Testnet wallet. Atom market types did not participate in endpoint
+  selection at all, so `:swap` fell through to the spot route: futures keys got a
+  401 invalid-key response from the spot host and spot keys returned the spot
+  asset list — silently the wrong account. `fetch_swap_balance/2` was also
+  unsupported, leaving no unified route to the USD-M wallet. `:spot` now reaches
+  Spot, `:swap` reaches USD-M `fapi/v3/account`, `:delivery`/`:inverse` reach
+  COIN-M `dapi/v1/account`, and `:linear` normalizes to `:swap`. All three
+  succeeded live against their matching sandbox hosts; `:margin` is a named
+  exclusion because Spot Testnet serves no SAPI host.
+
+- An authored request parameter whose value was the boolean `false` was treated
+  as absent and replaced by the authored default. The lookup that walks a
+  parameter's source and its fallback sources stopped on the first *truthy*
+  value, so `false` never survived to the wire. The visible case was
+  `set_position_mode/2` on `binanceusdm`: asserting one-way mode lost
+  `dualSidePosition=false` and failed `-1102` instead of reaching the venue.
+  Presence is now decided by `nil`, so `false` is sent. Confirmed against
+  `demo-fapi.binance.com`: re-asserting the live one-way mode now reaches
+  Binance's business validation `-4059` with the boolean intact.
+
+- `Bourse.fetch_funding_rate/2` left `interval` nil on all three binance venues.
+  The funding-cadence carve had been confronted for bybit and hyperliquid and
+  never for binance, so the current-rate read returned a `%Bourse.FundingRate{}`
+  with no cadence at all — anything annualizing or summing funding had nothing to
+  multiply by. The current premium-index row is now joined to the venue's own
+  per-symbol funding-info list (`fundingIntervalHours`), falling back to Binance's
+  documented eight-hour cadence only when the venue publishes no adjusted row for
+  that symbol. OKX derives its cadence from the provider's own
+  `nextFundingTime − fundingTime` pair instead of an authored constant. Live
+  sandbox calls returned `interval: "8h"` on all four surfaces, against an
+  observed pre-change `interval: nil`.
+
+- The funding-interval join was wired to the USD-M list for every symbol and ran
+  only on the singular read. On the generic binance client an inverse symbol
+  looked its cadence up in the USD-M funding list, which does not carry it, and
+  `fetch_funding_rates/2` — the plural read most consumers use — was never
+  enriched at all and kept returning `interval: nil` for every row. Inverse and
+  `future` market families now resolve `dapiPublic` for both the premium index
+  and the funding-info list, and the plural read is enriched row by row. Verified
+  live: 857 symbols enriched in one call — 443 at `4h`, 413 at `8h`, 1 at `1h`.
+  The dedicated `binancecoinm` client serves the inverse read; on the generic
+  client an inverse symbol still resolves to the venue's linear pair form, which
+  the premium-index endpoint answers with an empty list — a known open defect.
+
+- The funding-interval join silently returned the wrong answer when it could not
+  identify the instrument. If no native symbol could be resolved from the parsed
+  row or the caller's params, the lookup matched nothing and fell through to the
+  eight-hour default, stamping a plausible cadence onto a row it had never
+  matched. It now refuses with a `Bourse.Error` instead of joining nothing.
+
+- `Bourse.fetch_funding_history/2` on binance returned
+  `{:error, {:no_field_map, …}}` — the parse type was declared and wired with no
+  authored field map behind it, so a declared read failed on a successful venue
+  response. The USD-M income rows now parse into `%Bourse.FundingHistory{}` with
+  `id`, `code`, `amount`, `timestamp` and normalized `symbol`, pinned against a
+  registered live row (`tranId 1380186948815340520`, `-0.01286054 USDT`,
+  `BTC/USDT:USDT`). The three remaining unparsed pairs — binance and OKX
+  `fetch_margin_adjustment_history/2`, hyperliquid `fetch_funding_history/2` —
+  stay explicitly unsupported rather than shipping a field map guessed from
+  documentation: producing a row on those venues needs an isolated position and a
+  margin mutation, or a position held across a funding boundary, so each is
+  recorded in `docs/prod-verification-ledger.md` with the exact call that would
+  close it.
+
+- Unified endpoint selection ignored version priority and the private half of
+  each venue family. The section preference lists were ordered so that
+  `fapiPublic` outranked `fapiPublicV2`/`V3`, spot listed no private or `sapi`
+  sections at all, and options listed no `eapiPrivate` — so a mapped method whose
+  only route lived in a versioned or private section could not be reached by any
+  documented parameter set. The lists are now ordered newest-version-first and
+  carry the private sections, and ten previously unreachable binance-family
+  methods gained authored selection rules: `fetchOpenOrder`, `fetchOrderTrades`,
+  `fetchMyLiquidations`, `fetchConvertTrade`, `fetchConvertTradeHistory`,
+  `fetchTradingFee`, `fetchOptionMarkets`, `fetchLeverages`,
+  `fetchAccountPositions` and `fetchPositionsRisk`.
+
+- `Bourse.fetch_leverages/2` on `binanceusdm` collapsed the venue's rows into a
+  single all-nil record. The read shared the singular `fetchLeverage` parse
+  branch, which unwraps one row, and the response was not recognized as a list
+  body — so a per-symbol leverage read returned one row with no symbol on it.
+  `fetchLeverages` now re-keys its rows by unified symbol like `fetchTickers`,
+  `fetch_account_positions/2` and `fetch_positions_risk/2` are recognized as list
+  bodies, and a leverage row whose symbol must be back-filled resolves against
+  the loaded markets first, so a native id that exists in both the linear and
+  inverse catalogs resolves to the one the answering endpoint actually serves.
+
+- Lighter's private order reads demanded a symbol the venue documents as
+  optional. `market_id` was authored as unconditional dynamic construction, so
+  `fetch_open_orders/2` and `fetch_closed_orders/2` could not be called without
+  one, although the provider's OpenAPI marks it optional on both
+  `accountActiveOrders` and `accountInactiveOrders` and states that omitting it
+  returns orders across all markets. A symbol-less call now omits `market_id`; a
+  symbol-scoped call still resolves and sends the numeric market id. Confirmed
+  against `testnet.zklighter.elliot.ai`: both endpoints answered 200 with
+  `market_id` omitted and with market `0` supplied.
+
+### Changed
+
+- Lighter order statuses now normalize to the unified vocabulary. The authored
+  slice declared `enum_passthrough`, so `%Bourse.Order{}.status` carried the
+  venue's own strings verbatim — a consumer matching on `"canceled"` missed
+  `"canceled-post-only"`, `"canceled-self-trade"`, `"canceled-reduce-only"` and
+  nine further cancellation reasons, and `"filled"` never matched `"closed"`. All
+  sixteen documented values are now enumerated: the twelve cancellation variants
+  map to `canceled`, `filled` to `closed`, and `open` / `pending` / `in-progress`
+  to `open`. The venue's own string remains available on `info`.
+
+- An ambiguous multi-endpoint refusal now names the parameter sets that would
+  resolve it. The error previously said only to author a default family or pass
+  `type`/`subType`/`symbol`; it now probes the documented selection parameter sets
+  against the method's own endpoints and reports the ones that work — or states
+  that none does, which is a different and more actionable failure.
+
 ### Added
 
 - `Bourse.WS.authenticate/2`, the handshake as a callable step, for connections
@@ -119,6 +287,37 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `Bourse.WS.ListenKey`, the listen key round-trip and its refresh, and
   `connect/3`'s `:pre_auth_opts` for the request options that belong to it —
   a timeout or a base URL override — rather than to the socket.
+
+- `Bourse.OrderList` and three unified reads for it — `fetch_order_list/2`,
+  `fetch_order_lists/2` and `fetch_open_order_lists/2`. Binance OCO groups have
+  their own `orderListId`, client id, contingency type, lifecycle status and
+  transaction time, and their `orders` entries are references rather than
+  complete order rows — so they were invisible to the unified surface entirely:
+  no read returned them, and they did not appear in `fetch_orders/2` or
+  `fetch_open_orders/2` either. The new type is venue-neutral, because Binance
+  also publishes OTO, OTOCO, OPO and OPOCO groups. Routing and the error contract
+  are confirmed against `testnet.binance.vision`: `/api/v3/allOrderList` and
+  `/api/v3/openOrderList` returned successful empty arrays, and `/api/v3/orderList`
+  without an identifier returned `-1102` naming `origClientOrderId` and
+  `orderListId`. The populated-row projection follows Binance's own contract; the
+  test account carried no order group, so those rows are not reality-verified yet.
+
+- Derive `fetch_transfers/2`, mapped to the venue's ERC-20 transfer history. The
+  capability was authored `false` while the endpoint exists and is enabled:
+  `tx_hash` becomes the transfer id, `asset`, `amount` and `timestamp` keep their
+  provider values, and `is_outgoing` selects the source and destination
+  subaccount. Confirmed against `api-demo.lyra.finance`: the authenticated call
+  returned HTTP 200 for demo subaccount 144422, with an empty event list.
+
+  Three sibling capabilities were confronted in the same pass and stay `false`
+  deliberately, each with a recorded reason rather than an unexplained gap.
+  `fetchLiquidations` — Derive's liquidation history describes portfolio auctions
+  with no instrument, price, side or contract size, so it cannot produce a
+  `%Bourse.Liquidation{}` without inventing them. `fetchBorrowInterest` — the
+  interest history is a two-sided subaccount cash ledger with no borrowed
+  currency, principal or rate. `fetchSettlementHistory` — the endpoint does serve
+  settlement rows, but this client has no typed settlement-history return
+  contract, and enabling the route would hand back a raw transport map.
 
 ## [0.2.0] - 2026-08-06
 
@@ -268,5 +467,6 @@ Published before this repository existed, from the tree that is now the private
   ccxt.build_lighter_signer`, the prerequisite for private Lighter calls, is the
   one task consumers receive.
 
+[0.3.0]: https://hex.pm/packages/bourse/0.3.0
 [0.2.0]: https://hex.pm/packages/bourse/0.2.0
 [0.1.0]: https://hex.pm/packages/bourse/0.1.0

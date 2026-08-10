@@ -1,7 +1,7 @@
 defmodule Bourse.MixProject do
   use Mix.Project
 
-  @version "0.2.0"
+  @version "0.3.0"
   @source_url "https://github.com/ZenHive/bourse"
   @runtime_manifest "priv/specs/json/runtime_support.json"
   @runtime_venues @runtime_manifest |> File.read!() |> :json.decode() |> Map.fetch!("venues")
@@ -149,8 +149,7 @@ defmodule Bourse.MixProject do
   defp client_lib_files do
     "lib/bourse/**"
     |> Path.wildcard()
-    |> Enum.reject(&File.dir?/1)
-    |> Enum.reject(&unpackaged_path?/1)
+    |> Enum.reject(&(File.dir?(&1) or unpackaged_path?(&1)))
   end
 
   defp unpackaged_path?(path) do

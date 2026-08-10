@@ -10,7 +10,7 @@ from owned JSON specs via compile-time macros.
 ```elixir
 def deps do
   [
-    {:bourse, "~> 0.2"}
+    {:bourse, "~> 0.3"}
   ]
 end
 ```
