@@ -306,7 +306,8 @@ defmodule Bourse.Unified.ReadParse do
          # echoes only `{resultStatus}`) is exempt in empty_struct?/1 — its `info`
          # is the success signal — so it survives to request-context backfill.
          :ok <- validate_parsed(parsed, list_return?),
-         {:ok, parsed} <- backfill_request_symbols(parsed, params, parse_type, list_return?) do
+         {:ok, parsed} <- backfill_request_symbols(parsed, params, parse_type, list_return?),
+         {:ok, parsed} <- backfill_native_symbols(parsed, exchange, parse_type, params) do
       # Client-side symbol/limit filtering runs
       # LAST — after request-symbol backfill — so list reads whose per-struct
       # symbol is only populated from the request (e.g. trades) are not emptied
@@ -785,42 +786,42 @@ defmodule Bourse.Unified.ReadParse do
     end
   end
 
-  defp backfill_native_symbols(parsed, exchange, parse_type, params)
-       when parse_type in [
-              "adl_rank",
-              "funding_rate",
-              "funding_rate_history",
-              "funding_history",
-              "greeks",
-              "leverage",
-              "margin_mode",
-              "margin_modification",
-              "open_interest",
-              "option",
-              "order",
-              "order_list",
-              "position",
-              "ticker",
-              "trade"
-            ] do
-    {:ok, backfill_native_symbol(parsed, exchange, endpoint_market_type(params))}
+  defp backfill_native_symbols(parsed, exchange, _parse_type, params) do
+    backfill_native_symbol(parsed, exchange, endpoint_market_type(params))
   end
 
-  defp backfill_native_symbols(parsed, _exchange, _parse_type, _params), do: {:ok, parsed}
+  defp backfill_native_symbol(%{__struct__: _module} = parsed, exchange, endpoint_market_type) do
+    backfill_one_native_symbol(parsed, exchange, endpoint_market_type)
+  end
 
   defp backfill_native_symbol(%{} = parsed, exchange, endpoint_market_type) do
-    if Map.has_key?(parsed, :__struct__) do
-      backfill_one_native_symbol(parsed, exchange, endpoint_market_type)
-    else
-      Map.new(parsed, fn {k, v} -> {k, backfill_one_native_symbol(v, exchange, endpoint_market_type)} end)
-    end
+    Enum.reduce_while(parsed, {:ok, %{}}, fn {key, value}, {:ok, acc} ->
+      case backfill_one_native_symbol(value, exchange, endpoint_market_type) do
+        {:ok, normalized} ->
+          normalized_key = normalized_symbol_key(key, value, normalized)
+          {:cont, {:ok, Map.put(acc, normalized_key, normalized)}}
+
+        {:error, _reason} = error ->
+          {:halt, error}
+      end
+    end)
   end
 
   defp backfill_native_symbol(parsed, exchange, endpoint_market_type) when is_list(parsed) do
-    Enum.map(parsed, &backfill_one_native_symbol(&1, exchange, endpoint_market_type))
+    parsed
+    |> Enum.reduce_while({:ok, []}, fn value, {:ok, acc} ->
+      case backfill_one_native_symbol(value, exchange, endpoint_market_type) do
+        {:ok, normalized} -> {:cont, {:ok, [normalized | acc]}}
+        {:error, _reason} = error -> {:halt, error}
+      end
+    end)
+    |> case do
+      {:ok, normalized} -> {:ok, Enum.reverse(normalized)}
+      {:error, _reason} = error -> error
+    end
   end
 
-  defp backfill_native_symbol(other, _exchange, _endpoint_market_type), do: other
+  defp backfill_native_symbol(other, _exchange, _endpoint_market_type), do: {:ok, other}
 
   # A parsed symbol equal to the native id is only a raw-id passthrough worth re-converting when it
   # is not already unified — some venues' native ids (e.g. "ETH/USDT") are byte-identical to the
@@ -828,33 +829,72 @@ defmodule Bourse.Unified.ReadParse do
   defp unified_symbol?(symbol) when is_binary(symbol), do: String.contains?(symbol, "/")
   defp unified_symbol?(_symbol), do: false
 
+  defp unified_symbol?(symbol, %Exchange{id: "alpaca"}) when is_binary(symbol), do: symbol != ""
+  defp unified_symbol?(symbol, _exchange), do: unified_symbol?(symbol)
+
+  defp backfill_one_native_symbol(%{__struct__: Bourse.Market} = struct, _exchange, _endpoint_market_type) do
+    {:ok, struct}
+  end
+
   defp backfill_one_native_symbol(%{symbol: symbol, info: info} = struct, exchange, endpoint_market_type)
        when is_map(info) do
     native =
       Map.get(info, "symbol") ||
         Map.get(info, "instrument_name") ||
         Map.get(info, "instId") ||
-        hyperliquid_native_coin(info, exchange)
+        hyperliquid_native_coin(info, exchange) ||
+        symbol
 
-    if is_binary(native) and backfill_symbol?(symbol, native) do
-      resolve_backfilled_symbol(struct, native, exchange, info, endpoint_market_type)
-    else
-      struct
+    cond do
+      unified_symbol?(symbol, exchange) ->
+        {:ok, struct}
+
+      is_binary(native) and backfill_symbol?(symbol, native) ->
+        resolve_backfilled_symbol(struct, native, exchange, info, endpoint_market_type)
+
+      true ->
+        {:ok, struct}
     end
   end
 
-  defp backfill_one_native_symbol(struct, _exchange, _endpoint_market_type), do: struct
+  defp backfill_one_native_symbol(%{symbol: symbol} = struct, exchange, endpoint_market_type) when is_binary(symbol) do
+    if unified_symbol?(symbol, exchange) do
+      {:ok, struct}
+    else
+      resolve_backfilled_symbol(struct, symbol, exchange, %{}, endpoint_market_type)
+    end
+  end
+
+  defp backfill_one_native_symbol(struct, _exchange, _endpoint_market_type), do: {:ok, struct}
 
   defp backfill_symbol?(symbol, native), do: is_nil(symbol) or (symbol == native and not unified_symbol?(symbol))
 
   defp resolve_backfilled_symbol(struct, native, exchange, info, endpoint_market_type) do
-    symbol =
-      loaded_market_symbol(exchange, native, endpoint_market_type) ||
-        binance_contract_symbol(native, exchange) ||
-        resolve_backfilled_symbol_from_native(struct, native, exchange, info, endpoint_market_type)
+    market_type = endpoint_market_type || native_market_type(struct, native, exchange)
 
-    %{struct | symbol: symbol}
+    symbol =
+      loaded_market_symbol(exchange, native, market_type) ||
+        binance_contract_symbol(native, exchange) ||
+        resolve_backfilled_symbol_from_native(native, exchange, info, market_type)
+
+    cond do
+      unified_symbol?(symbol, exchange) ->
+        {:ok, %{struct | symbol: symbol}}
+
+      is_nil(market_type) ->
+        {:error,
+         {:unresolved_unified_symbol,
+          %{exchange: exchange.id, market_type: nil, native_symbol: native, resolved_symbol: symbol}}}
+
+      true ->
+        {:ok, %{struct | symbol: native}}
+    end
   end
+
+  defp normalized_symbol_key(key, %{symbol: original}, %{symbol: normalized})
+       when key == original and is_binary(normalized), do: normalized
+
+  defp normalized_symbol_key(key, _original, _normalized), do: key
 
   defp loaded_market_symbol(%Exchange{markets: markets}, native, endpoint_market_type)
        when is_list(markets) and is_binary(native) do
@@ -883,10 +923,17 @@ defmodule Bourse.Unified.ReadParse do
 
   defp loaded_market_identity_symbol(market), do: Map.get(market, :symbol) || Map.get(market, "symbol")
 
-  defp resolve_backfilled_symbol_from_native(struct, native, exchange, info, endpoint_market_type) do
-    market_type = endpoint_market_type || native_market_type(struct, native)
-    resolve_native_symbol(native, exchange, market_type, info) || Symbol.from_exchange_id(native, exchange, market_type)
+  defp resolve_backfilled_symbol_from_native(native, exchange, info, market_type) do
+    resolve_native_symbol(native, exchange, market_type, info) || from_exchange_id(native, exchange, market_type)
   end
+
+  defp from_exchange_id(native, exchange, market_type) when is_atom(market_type) do
+    Symbol.from_exchange_id(native, exchange, market_type)
+  rescue
+    Bourse.Symbol.Error -> nil
+  end
+
+  defp from_exchange_id(_native, _exchange, _market_type), do: nil
 
   # Binance's contract venues use compact ids that encode the settlement currency
   # and, for delivery contracts, a YYMMDD expiry. They identify the market without
@@ -931,6 +978,13 @@ defmodule Bourse.Unified.ReadParse do
   defp endpoint_market_type(%{"_bourse_endpoint_market_type" => market_type})
        when market_type in [:spot, :swap, :future, :option], do: market_type
 
+  defp endpoint_market_type(%{"symbol" => symbol}) when is_binary(symbol) do
+    case Symbol.parse_extended(symbol) do
+      {:ok, parsed} -> Symbol.detect_market_type(parsed)
+      {:error, _reason} -> nil
+    end
+  end
+
   defp endpoint_market_type(_params), do: nil
 
   # Hyperliquid rows name the instrument as `coin` (orders/fills/positions) or
@@ -966,6 +1020,14 @@ defmodule Bourse.Unified.ReadParse do
     end
   end
 
+  defp resolve_native_symbol(native, %Exchange{id: "bybit"}, :swap, _info) when is_binary(native) do
+    if String.ends_with?(native, "PERP") do
+      native
+      |> String.trim_trailing("PERP")
+      |> Symbol.build("USDC", "USDC")
+    end
+  end
+
   defp resolve_native_symbol(_coin, _exchange, _market_type, _info), do: nil
 
   defp hyperliquid_hip3_token(%Exchange{options: options}, coin) when is_map(options) do
@@ -974,13 +1036,21 @@ defmodule Bourse.Unified.ReadParse do
 
   defp hyperliquid_hip3_token(_exchange, _coin), do: nil
 
-  defp native_market_type(%{info: %{"category" => "spot"}}, _native), do: :spot
-  defp native_market_type(%{info: %{"category" => category}}, _native) when category in ["linear", "inverse"], do: :swap
-  defp native_market_type(%{info: %{"category" => "option"}}, _native), do: :option
-  defp native_market_type(%{info: %{"kind" => "option"}}, _native), do: :option
-  defp native_market_type(%{info: %{"instrument_type" => "option"}}, _native), do: :option
+  defp native_market_type(%{info: %{"category" => "spot"}}, _native, _exchange), do: :spot
 
-  defp native_market_type(%{info: %{"instType" => inst_type}}, _native) when is_binary(inst_type) do
+  defp native_market_type(%{info: %{"category" => category}}, _native, _exchange) when category in ["linear", "inverse"],
+    do: :swap
+
+  defp native_market_type(%{info: %{"category" => "option"}}, _native, _exchange), do: :option
+  defp native_market_type(%{info: %{"kind" => "option"}}, _native, _exchange), do: :option
+  defp native_market_type(%{info: %{"instrument_type" => "option"}}, _native, _exchange), do: :option
+
+  defp native_market_type(%{info: %{"baseCoin" => base, "quoteCoin" => quote} = info}, _native, _exchange)
+       when is_binary(base) and is_binary(quote) do
+    if Map.has_key?(info, "contractType") or Map.has_key?(info, "settleCoin"), do: :swap, else: :spot
+  end
+
+  defp native_market_type(%{info: %{"instType" => inst_type}}, _native, _exchange) when is_binary(inst_type) do
     case String.upcase(inst_type) do
       "SPOT" -> :spot
       "MARGIN" -> :spot
@@ -991,16 +1061,18 @@ defmodule Bourse.Unified.ReadParse do
     end
   end
 
-  defp native_market_type(%{__struct__: Bourse.OptionData}, _native), do: :option
+  defp native_market_type(%{__struct__: Bourse.OptionData}, _native, _exchange), do: :option
 
   # Bybit option tickers (greeks) use BASE-DDMMMYY-STRIKE-C/P-SETTLE. Without an
   # option market-type hint, reverse conversion falls through to :swap and the
   # request-symbol filter empties fetchAllGreeks.
-  defp native_market_type(%{__struct__: Bourse.Greeks}, native) when is_binary(native) do
-    if bybit_option_native_id?(native), do: :option, else: native_market_type(nil, native)
+  defp native_market_type(%{__struct__: Bourse.Greeks}, native, exchange) when is_binary(native) do
+    if bybit_option_native_id?(native), do: :option, else: native_market_type(nil, native, exchange)
   end
 
-  defp native_market_type(_struct, native) when is_binary(native) do
+  defp native_market_type(_struct, _native, %Exchange{id: "bybit"}), do: nil
+
+  defp native_market_type(_struct, native, _exchange) when is_binary(native) do
     if String.contains?(native, "_") and not String.contains?(native, "-"), do: :spot, else: :swap
   end
 
@@ -1718,6 +1790,11 @@ defmodule Bourse.Unified.ReadParse do
       "got #{inspect(bad)}; missing authored normalization.field_maps.#{parse_type} slice?"
   end
 
+  defp response_error_message({:unresolved_unified_symbol, details}) do
+    "Cannot resolve unified symbol from venue-native #{inspect(details.native_symbol)} " <>
+      "for #{details.exchange}; market family: #{inspect(details.market_type)}"
+  end
+
   defp response_error_message({:unmapped_order_status, %{venue: venue, field: field, raw_value: raw_value}}) do
     "Unmapped authored order status for venue #{inspect(venue)}, field #{inspect(field)}, " <>
       "raw value #{inspect(raw_value)}"
@@ -1954,6 +2031,10 @@ defmodule Bourse.Unified.ReadParse do
     # Open-interest endpoints are single-market reads; the requested symbol is
     # more specific than reverse-parsing a venue id like Bybit `BTCUSDT`.
     {:ok, %{oi | symbol: requested_symbol(params, oi.symbol)}}
+  end
+
+  defp backfill_request_symbols(interests, params, "open_interest", true) when is_list(interests) do
+    {:ok, Enum.map(interests, &%{&1 | symbol: requested_symbol(params, &1.symbol)})}
   end
 
   defp backfill_request_symbols(%{__struct__: Bourse.Position} = position, params, "position", false) do
@@ -2203,7 +2284,10 @@ defmodule Bourse.Unified.ReadParse do
 
   defp backfill_leverage_tier_symbol(other, _params), do: other
 
-  defp requested_symbol(%{"symbol" => symbol}, _native_symbol) when is_binary(symbol), do: symbol
+  defp requested_symbol(%{"symbol" => symbol}, native_symbol) when is_binary(symbol) do
+    if unified_symbol?(symbol), do: symbol, else: native_symbol
+  end
+
   defp requested_symbol(_params, native_symbol), do: native_symbol
 
   defp put_if_nil(struct, field, value) do

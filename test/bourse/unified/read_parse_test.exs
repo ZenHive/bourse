@@ -3,7 +3,32 @@ defmodule Bourse.Unified.ReadParseTest do
 
   alias Bourse.Error
   alias Bourse.Exchange
+  alias Bourse.Unified.FieldMaps
   alias Bourse.Unified.ReadParse
+
+  defmodule NativeSymbolParser do
+    @moduledoc false
+
+    @symbol_parse_types Enum.filter(FieldMaps.parse_types(), fn parse_type ->
+                          parse_type
+                          |> FieldMaps.struct_for()
+                          |> struct()
+                          |> Map.has_key?(:symbol)
+                        end)
+
+    def __response_envelopes__, do: %{}
+    def symbol_parse_types, do: @symbol_parse_types
+
+    for parse_type <- @symbol_parse_types do
+      parser = String.to_atom("parse_#{parse_type}")
+      target = FieldMaps.struct_for(parse_type)
+
+      def unquote(parser)(body, _opts) when is_map(body) do
+        symbol = if unquote(target) == Bourse.Market, do: nil, else: body["symbol"]
+        {:ok, struct(unquote(target), symbol: symbol, info: body)}
+      end
+    end
+  end
 
   defmodule NoFieldMapParser do
     @moduledoc false
@@ -392,6 +417,53 @@ defmodule Bourse.Unified.ReadParseTest do
                  :parse_position,
                  true
                )
+    end
+
+    test "normalizes every symbol-bearing parse type without a parse-type allowlist" do
+      exchange = Exchange.new!("bybit")
+
+      body = %{
+        "baseCoin" => "0G",
+        "category" => "linear",
+        "contractType" => "LinearPerpetual",
+        "quoteCoin" => "USDT",
+        "settleCoin" => "USDT",
+        "symbol" => "0GUSDT"
+      }
+
+      for parse_type <- NativeSymbolParser.symbol_parse_types() do
+        parser = String.to_existing_atom("parse_#{parse_type}")
+
+        assert {:ok, %{symbol: "0G/USDT:USDT"}} =
+                 ReadParse.parse(
+                   exchange,
+                   NativeSymbolParser,
+                   :fetch_ticker,
+                   "symbolInvariantProbe",
+                   body,
+                   %{},
+                   parser,
+                   false
+                 ),
+               parse_type
+      end
+    end
+
+    test "fails loudly when an ambiguous native id has no row market family" do
+      assert {:error, %Error{message: message}} =
+               ReadParse.parse(
+                 Exchange.new!("bybit"),
+                 NativeSymbolParser,
+                 :fetch_leverage_tiers,
+                 "symbolInvariantProbe",
+                 %{"symbol" => "0GUSDT"},
+                 %{},
+                 :parse_leverage_tiers,
+                 false
+               )
+
+      assert message =~ "Cannot resolve unified symbol"
+      assert message =~ "0GUSDT"
     end
   end
 

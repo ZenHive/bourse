@@ -300,8 +300,8 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
     def parse_trade(_body, _opts) do
       {:ok,
        %{
-         "k" => %Bourse.Trade{
-           symbol: nil,
+         "BTCUSDT" => %Bourse.Trade{
+           symbol: "BTCUSDT",
            price: 1.0,
            info: %{"symbol" => "BTCUSDT", "category" => "linear"}
          }
@@ -1899,7 +1899,7 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
                )
     end
 
-    test "funding history with unparseable symbol defaults code to USDT" do
+    test "funding history with an unresolved market family fails loudly" do
       exchange = Exchange.new!("bybit")
 
       body = %{
@@ -1917,7 +1917,7 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
         }
       }
 
-      assert {:ok, [%Bourse.FundingHistory{code: "USDT", symbol: "NOTASYMBOL"}]} =
+      assert {:error, %Error{message: message}} =
                ReadParse.parse(
                  exchange,
                  Bourse.Bybit,
@@ -1928,6 +1928,8 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
                  :parse_funding_history,
                  true
                )
+
+      assert message =~ "Cannot resolve unified symbol"
     end
 
     test "bybit linear futures market builds expiry-suffixed symbol" do
@@ -2151,10 +2153,10 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
       refute Map.has_key?(second.info, "nextPageCursor")
     end
 
-    test "map-shaped trade parse backfills each entry's native symbol" do
+    test "map-shaped trade parse normalizes each entry and its symbol key" do
       exchange = Exchange.new!("bybit")
 
-      assert {:ok, %{"k" => %Bourse.Trade{symbol: "BTC/USDT:USDT", price: 1.0}}} =
+      assert {:ok, %{"BTC/USDT:USDT" => %Bourse.Trade{symbol: "BTC/USDT:USDT", price: 1.0}}} =
                ReadParse.parse(
                  exchange,
                  MapTradeParser,

@@ -121,7 +121,7 @@ defmodule Bourse.Unified.ReadParseSlotWiringTest do
                  false
                )
 
-      assert opt.symbol == symbol
+      assert opt.symbol == "BTC/USD:BTC-241227-240000-C"
       assert opt.currency == "BTC"
       assert opt.bid_price == 0.0385
       assert opt.ask_price == 0.042

@@ -212,7 +212,29 @@ defmodule Bourse.UnifiedReadContractTest do
 
       assert length(tiers) > 1
       assert is_number(tier.max_leverage)
-      assert is_binary(tier.symbol)
+      assert tier.symbol == "0G/USDT:USDT"
+
+      binanceusdm_body =
+        "test/fixtures/responses/binanceusdm/fetch_leverage_tiers.json"
+        |> File.read!()
+        |> Jason.decode!()
+        |> Map.fetch!("body")
+        |> Enum.filter(&(&1["symbol"] == "KAVAUSDT"))
+
+      assert {:ok, binanceusdm_tiers} =
+               ReadParse.parse(
+                 Exchange.new!("binanceusdm"),
+                 Bourse.Binanceusdm,
+                 :fetch_leverage_tiers,
+                 "fetchLeverageTiers",
+                 binanceusdm_body,
+                 %{},
+                 :parse_leverage_tiers,
+                 true
+               )
+
+      assert %Bourse.LeverageTier{symbol: "KAVA/USDT:USDT"} =
+               Enum.find(binanceusdm_tiers, &(&1.info["symbol"] == "KAVAUSDT"))
 
       okx_body =
         "test/fixtures/responses/okx/fetch_open_interests.json"
@@ -284,7 +306,7 @@ defmodule Bourse.UnifiedReadContractTest do
                  true
                )
 
-      assert tier.symbol == "BTCUSDT"
+      assert tier.symbol == "BTC/USDT:USDT"
       assert tier.tier == 1
       assert tier.max_leverage == 125
     end
