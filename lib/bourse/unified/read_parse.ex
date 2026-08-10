@@ -45,6 +45,7 @@ defmodule Bourse.Unified.ReadParse do
     parse_order_book: "order_book",
     parse_option: "option",
     parse_order: "order",
+    parse_order_list: "order_list",
     parse_position: "position",
     parse_adl_rank: "adl_rank",
     parse_ticker: "ticker",
@@ -797,6 +798,7 @@ defmodule Bourse.Unified.ReadParse do
               "open_interest",
               "option",
               "order",
+              "order_list",
               "position",
               "ticker",
               "trade"

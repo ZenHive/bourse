@@ -6,6 +6,30 @@ Append-only schema confrontations for Binance spot. Follow the allocation and ev
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance spot carve record.
 
+## 2026-08-10 — spot order-list vocabulary (Task 548)
+
+**C-T548 — Spot order groups use `OrderList`, separate from individual `Order` rows
+(task 548). Outcome: CONFIRM provider contract; named unified-type carve.** Binance's official
+[Query Order list](https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#query-order-list-user_data),
+[Query all Order lists](https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#query-all-order-lists-user_data),
+and [Query Open Order lists](https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#query-open-order-lists-user_data)
+contracts give a group its own `orderListId`, client ID, contingency type, lifecycle status, and
+transaction time. The nested `orders` entries are references, not complete order rows. Unified
+`fetchOrderList`, `fetchOrderLists`, and `fetchOpenOrderLists` therefore return
+`Bourse.OrderList`; they do not add group rows to `fetchOrders` or `fetchOpenOrders`. The type is
+venue-neutral because Binance also publishes OTO, OTOCO, OPO, and OPOCO groups, while venues
+without a compatible group contract remain unsupported.
+
+Live Spot Testnet calls on 2026-08-10 returned successful empty arrays from `/api/v3/allOrderList`
+and `/api/v3/openOrderList`; `/api/v3/orderList` without either identifier returned provider error
+`-1102` naming `origClientOrderId` and `orderListId`. Those calls verify routing and the error
+contract. The populated-row projection is provider-documentation anchored and remains
+reality-unverified because the account carried no order groups and placing one is outside task 548.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T548","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance Spot Query Order list, Query all Order lists, and Query Open Order lists contracts"},"observed_evidence":{"kind":"live_venue","reference":"Spot Testnet allOrderList/openOrderList returned HTTP 200 empty arrays; orderList without an identifier returned -1102 on 2026-08-10"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered populated order-list response is available; populated field normalization is provider-documentation anchored"}
+-->
+
 ## 2026-08-10 — futures cadence and generic USD-M routing (Tasks 573–576)
 
 **C-T573a — Current funding rates join the provider's per-symbol cadence (task 573).

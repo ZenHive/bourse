@@ -6,6 +6,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
   alias Bourse.Conversion
   alias Bourse.Exchange
   alias Bourse.Greeks
+  alias Bourse.OrderList
   alias Bourse.Position
   alias Bourse.Symbol
   alias Bourse.Test.RequestCollector
@@ -2430,6 +2431,84 @@ defmodule Bourse.BinanceAuthoredSpecTest do
              )
   end
 
+  test "spot order lists are separate typed reads with their own request mappings" do
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
+    timestamp = 1_565_245_656_253
+
+    order_references = [
+      %{"clientOrderId" => "limit-client", "orderId" => 4, "symbol" => "BTCUSDT"},
+      %{"clientOrderId" => "stop-client", "orderId" => 5, "symbol" => "BTCUSDT"}
+    ]
+
+    row = %{
+      "contingencyType" => "OCO",
+      "listClientOrderId" => "group-client",
+      "listOrderStatus" => "EXECUTING",
+      "listStatusType" => "EXEC_STARTED",
+      "orderListId" => 27,
+      "orders" => order_references,
+      "symbol" => "BTCUSDT",
+      "transactionTime" => timestamp
+    }
+
+    {single_requests, single_stub} = path_body_stub(row)
+
+    assert {:ok,
+            %OrderList{
+              id: "27",
+              client_order_id: "group-client",
+              symbol: "BTC/USDT",
+              type: "oco",
+              status: "open",
+              status_type: "exec_started",
+              timestamp: ^timestamp,
+              orders: ^order_references,
+              info: ^row
+            } = order_list} =
+             Bourse.fetch_order_list(exchange, 27,
+               plug: {Req.Test, single_stub},
+               timestamp_ms_override: @frozen_timestamp_ms
+             )
+
+    assert order_list.datetime == Bourse.Timestamp.iso8601_from_ms(timestamp)
+    single_request = RequestCollector.one!(single_requests)
+    assert single_request.request_path == "/api/v3/orderList"
+
+    assert single_request |> RequestCollector.query() |> signed_query_params() == %{
+             "orderListId" => "27"
+           }
+
+    {history_requests, history_stub} = path_body_stub([row])
+
+    assert {:ok, [%OrderList{id: "27"}]} =
+             Bourse.fetch_order_lists(exchange,
+               since: timestamp,
+               until: timestamp + 1,
+               limit: 1,
+               plug: {Req.Test, history_stub},
+               timestamp_ms_override: @frozen_timestamp_ms
+             )
+
+    history_request = RequestCollector.one!(history_requests)
+    assert history_request.request_path == "/api/v3/allOrderList"
+
+    assert history_request |> RequestCollector.query() |> signed_query_params() == %{
+             "endTime" => Integer.to_string(timestamp + 1),
+             "limit" => "1",
+             "startTime" => Integer.to_string(timestamp)
+           }
+
+    {open_requests, open_stub} = path_body_stub([row])
+
+    assert {:ok, [%OrderList{id: "27", status: "open"}]} =
+             Bourse.fetch_open_order_lists(exchange,
+               plug: {Req.Test, open_stub},
+               timestamp_ms_override: @frozen_timestamp_ms
+             )
+
+    assert RequestCollector.one!(open_requests).request_path == "/api/v3/openOrderList"
+  end
+
   test "spot order reads remain complete while ACKs retain only Binance-supplied values" do
     exchange = Exchange.new!("binance")
 
@@ -2462,6 +2541,19 @@ defmodule Bourse.BinanceAuthoredSpecTest do
 
     assert {:ok, [%Bourse.Order{status: "closed", amount: 0.1, filled: 0.1, cost: 9.08}]} =
              ReadParse.parse(exchange, Bourse.Binance, :fetch_orders, "fetchOrders", [read], %{}, :parse_order, true)
+
+    {plain_requests, plain_stub} = path_body_stub([read])
+
+    assert {:ok, [%Bourse.Order{} = plain_order]} =
+             Bourse.fetch_orders(Exchange.new!("binance", api_key: "key", secret: "secret"),
+               symbol: "LTC/USDT",
+               plug: {Req.Test, plain_stub},
+               timestamp_ms_override: @frozen_timestamp_ms
+             )
+
+    assert Map.keys(plain_order) == Map.keys(%Bourse.Order{})
+    refute Map.has_key?(plain_order, :orders)
+    assert RequestCollector.one!(plain_requests).request_path == "/api/v3/allOrders"
 
     assert {:ok,
             %Bourse.Order{
@@ -2772,6 +2864,8 @@ defmodule Bourse.BinanceAuthoredSpecTest do
 
     {requests, stub}
   end
+
+  defp signed_query_params(query), do: Map.drop(query, ["recvWindow", "signature", "timestamp"])
 
   defp assert_usdm_typed_endpoint(exchange, method, js_name, body, expected_path, assertion) do
     {requests, stub} = path_body_stub(body)

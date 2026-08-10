@@ -983,6 +983,7 @@
       "fetchOpenInterest": true,
       "fetchOpenInterestHistory": true,
       "fetchOpenOrder": true,
+      "fetchOpenOrderLists": true,
       "fetchOpenOrders": true,
       "fetchOption": true,
       "fetchOptionChain": false,
@@ -990,6 +991,8 @@
       "fetchOrder": true,
       "fetchOrderBook": true,
       "fetchOrderBooks": false,
+      "fetchOrderList": true,
+      "fetchOrderLists": true,
       "fetchOrderTrades": true,
       "fetchOrders": true,
       "fetchPosition": true,
@@ -2543,6 +2546,32 @@
         "source": "async fetchOHLCV (symbol: string, timeframe: string = '1m', since: Int = undefined, limit: Int = undefined, params = {}): Promise<OHLCV[]> {\n        await this.loadMarkets ();\n        let paginate = false;\n        [ paginate, params ] = this.handleOptionAndParams (params, 'fetchOHLCV', 'paginate', false);\n        if (paginate) {\n            return await this.fetchPaginatedCallDeterministic ('fetchOHLCV', symbol, since, limit, timeframe, params, 1000) as OHLCV[];\n        }\n        const market = this.market (symbol);\n        // binance docs say that the default limit 500, max 1500 for futures, max 1000 for spot markets\n        // the reality is that the time range wider than 500 candles won't work right\n        const defaultLimit = 500;\n        const maxLimit = 1000;\n        const price = this.safeString (params, 'price');\n        const until = this.safeInteger (params, 'until');\n        params = this.omit (params, [ 'price', 'until' ]);\n        if (since !== undefined && until !== undefined && limit === undefined) {\n            limit = maxLimit;\n        }\n        limit = (limit === undefined) ? defaultLimit : Math.min (limit, maxLimit);\n        const request: Dict = {\n            'interval': this.safeString (this.timeframes, timeframe, timeframe),\n            'limit': limit,\n        };\n        const marketId = market['id'];\n        if (price === 'index') {\n            const parts = marketId.split ('_');\n            const pair = this.safeString (parts, 0);\n            request['pair'] = pair;   // Index price takes this argument instead of symbol\n        } else {\n            request['symbol'] = marketId;\n        }\n        // const duration = this.parseTimeframe (timeframe);\n        if (since !== undefined) {\n            request['startTime'] = since;\n            //\n            // It didn't work before without the endTime\n            // https://github.com/ccxt/ccxt/issues/8454\n            //\n            if (market['inverse']) {\n                if (since > 0) {\n                    const duration = this.parseTimeframe (timeframe);\n                    const endTime = this.sum (since, limit * duration * 1000 - 1);\n                    const now = this.milliseconds ();\n                    request['endTime'] = Math.min (now, endTime);\n                }\n            }\n        }\n        if (until !== undefined) {\n            request['endTime'] = until;\n        }\n        let response = undefined;\n        if (market['option']) {\n            response = await this.eapiPublicGetKlines (this.extend (request, params));\n        } else if (price === 'mark') {\n            if (market['inverse']) {\n                response = await this.dapiPublicGetMarkPriceKlines (this.extend (request, params));\n            } else {\n                response = await this.fapiPublicGetMarkPriceKlines (this.extend (request, params));\n            }\n        } else if (price === 'index') {\n            if (market['inverse']) {\n                response = await this.dapiPublicGetIndexPriceKlines (this.extend (request, params));\n            } else {\n                response = await this.fapiPublicGetIndexPriceKlines (this.extend (request, params));\n            }\n        } else if (price === 'premiumIndex') {\n            if (market['inverse']) {\n                response = await this.dapiPublicGetPremiumIndexKlines (this.extend (request, params));\n            } else {\n                response = await this.fapiPublicGetPremiumIndexKlines (this.extend (request, params));\n            }\n        } else if (market['linear']) {\n            response = await this.fapiPublicGetKlines (this.extend (request, params));\n        } else if (market['inverse']) {\n            response = await this.dapiPublicGetKlines (this.extend (request, params));\n        } else {\n            response = await this.publicGetKlines (this.extend (request, params));\n        }\n        //\n        //     [\n        //         [1591478520000,\"0.02501300\",\"0.02501800\",\"0.02500000\",\"0.02500000\",\"22.19000000\",1591478579999,\"0.55490906\",40,\"10.92900000\",\"0.27336462\",\"0\"],\n        //         [1591478580000,\"0.02499600\",\"0.02500900\",\"0.02499400\",\"0.02500300\",\"21.34700000\",1591478639999,\"0.53370468\",24,\"7.53800000\",\"0.18850725\",\"0\"],\n        //         [1591478640000,\"0.02500800\",\"0.02501100\",\"0.02500300\",\"0.02500800\",\"154.14200000\",1591478699999,\"3.85405839\",97,\"5.32300000\",\"0.13312641\",\"0\"],\n        //     ]\n        //\n        // options (eapi)\n        //\n        //     [\n        //         {\n        //             \"open\": \"32.2\",\n        //             \"high\": \"32.2\",\n        //             \"low\": \"32.2\",\n        //             \"close\": \"32.2\",\n        //             \"volume\": \"0\",\n        //             \"interval\": \"5m\",\n        //             \"tradeCount\": 0,\n        //             \"takerVolume\": \"0\",\n        //             \"takerAmount\": \"0\",\n        //             \"amount\": \"0\",\n        //             \"openTime\": 1677096900000,\n        //             \"closeTime\": 1677097200000\n        //         }\n        //     ]\n        //\n        const candles = this.parseOHLCVs (response, market, timeframe, since, limit);\n        return candles;\n    }",
         "unresolved_reason": null
       },
+      "fetchOpenOrderLists": {
+        "async": true,
+        "description": "fetches all currently open order groups",
+        "errors": null,
+        "name": "fetchOpenOrderLists",
+        "params_doc": {
+          "params": "extra parameters specific to the exchange API endpoint"
+        },
+        "returns": {
+          "description": "a list of order-group structures",
+          "type": "OrderList[]"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<OrderList[]>"
+        },
+        "source": null,
+        "unresolved_reason": null
+      },
       "fetchOpenOrders": {
         "async": true,
         "description": "fetch all unfilled currently open orders",
@@ -2679,6 +2708,80 @@
           "return_type": "Promise<OrderBook>"
         },
         "source": "async fetchOrderBook (symbol: string, limit: Int = undefined, params = {}): Promise<OrderBook> {\n        await this.loadMarkets ();\n        const market = this.market (symbol);\n        const request: Dict = {\n            'symbol': market['id'],\n        };\n        if (limit !== undefined) {\n            request['limit'] = limit; // default 100, max 5000, see https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#order-book\n        }\n        let response = undefined;\n        if (market['option']) {\n            response = await this.eapiPublicGetDepth (this.extend (request, params));\n        } else if (market['linear']) {\n            const rpi = this.safeValue (params, 'rpi', false);\n            params = this.omit (params, 'rpi');\n            if (rpi) {\n                // rpi limit only supports 1000\n                request['limit'] = 1000;\n                response = await this.fapiPublicGetRpiDepth (this.extend (request, params));\n            } else {\n                response = await this.fapiPublicGetDepth (this.extend (request, params));\n            }\n        } else if (market['inverse']) {\n            response = await this.dapiPublicGetDepth (this.extend (request, params));\n        } else {\n            response = await this.publicGetDepth (this.extend (request, params));\n        }\n        //\n        // future\n        //\n        //     {\n        //         \"lastUpdateId\":333598053905,\n        //         \"E\":1618631511986,\n        //         \"T\":1618631511964,\n        //         \"bids\":[\n        //             [\"2493.56\",\"20.189\"],\n        //             [\"2493.54\",\"1.000\"],\n        //             [\"2493.51\",\"0.005\"]\n        //         ],\n        //         \"asks\":[\n        //             [\"2493.57\",\"0.877\"],\n        //             [\"2493.62\",\"0.063\"],\n        //             [\"2493.71\",\"12.054\"],\n        //         ]\n        //     }\n        //\n        // options (eapi)\n        //\n        //     {\n        //         \"bids\": [\n        //             [\"108.7\",\"16.08\"],\n        //             [\"106\",\"21.29\"],\n        //             [\"82.4\",\"0.02\"]\n        //         ],\n        //         \"asks\": [\n        //             [\"111.4\",\"19.52\"],\n        //             [\"119.9\",\"17.6\"],\n        //             [\"141.2\",\"31\"]\n        //         ],\n        //         \"T\": 1676771382078,\n        //         \"u\": 1015939\n        //     }\n        //\n        const timestamp = this.safeInteger (response, 'T');\n        const orderbook = this.parseOrderBook (response, symbol, timestamp);\n        orderbook['nonce'] = this.safeInteger2 (response, 'lastUpdateId', 'u');\n        return orderbook;\n    }",
+        "unresolved_reason": null
+      },
+      "fetchOrderList": {
+        "async": true,
+        "description": "fetches a specific order group",
+        "errors": null,
+        "name": "fetchOrderList",
+        "params_doc": {
+          "id": "exchange order-list identifier",
+          "params": "extra parameters specific to the exchange API endpoint"
+        },
+        "returns": {
+          "description": "an order-group structure",
+          "type": "OrderList"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": null,
+              "name": "id",
+              "optional": false,
+              "type": "Int"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<OrderList>"
+        },
+        "source": null,
+        "unresolved_reason": null
+      },
+      "fetchOrderLists": {
+        "async": true,
+        "description": "fetches historical order groups",
+        "errors": null,
+        "name": "fetchOrderLists",
+        "params_doc": {
+          "limit": "the maximum number of order-group structures to retrieve",
+          "params": "extra parameters specific to the exchange API endpoint",
+          "params.until": "the latest time in ms to fetch order groups for",
+          "since": "the earliest time in ms to fetch order groups for"
+        },
+        "returns": {
+          "description": "a list of order-group structures",
+          "type": "OrderList[]"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": "undefined",
+              "name": "since",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "undefined",
+              "name": "limit",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<OrderList[]>"
+        },
+        "source": null,
         "unresolved_reason": null
       },
       "fetchOrders": {
@@ -4226,6 +4329,22 @@
             "source": "symbol",
             "source_class": "optional",
             "value": null
+          }
+        },
+        "fetchOrderList": {
+          "orderListId": {
+            "source": "id",
+            "source_class": "unified_param"
+          }
+        },
+        "fetchOrderLists": {
+          "endTime": {
+            "source": "until",
+            "source_class": "optional"
+          },
+          "startTime": {
+            "source": "since",
+            "source_class": "optional"
           }
         },
         "fetchOrderBook": {
@@ -10332,6 +10451,9 @@
         "papiGetUmOpenOrder",
         "privateGetOrder"
       ],
+      "fetchOpenOrderLists": [
+        "privateGetOpenOrderList"
+      ],
       "fetchOpenOrders": [
         "dapiPrivateGetOpenOrders",
         "eapiPrivateGetOpenOrders",
@@ -10368,6 +10490,12 @@
         "fapiPublicGetDepth",
         "fapiPublicGetRpiDepth",
         "publicGetDepth"
+      ],
+      "fetchOrderList": [
+        "privateGetOrderList"
+      ],
+      "fetchOrderLists": [
+        "privateGetAllOrderList"
       ],
       "fetchOrderTrades": [
         "dapiPrivateGetUserTrades",
@@ -24640,6 +24768,51 @@
           }
         }
       },
+      "order_list": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "clientOrderId": {
+            "coercion": "safeString",
+            "key": "listClientOrderId"
+          },
+          "datetime": null,
+          "id": {
+            "coercion": "safeString",
+            "key": "orderListId"
+          },
+          "info": null,
+          "orders": {
+            "key": "orders"
+          },
+          "status": {
+            "coercion": "safeString",
+            "enum_map": {
+              "ALL_DONE": "closed",
+              "EXECUTING": "open",
+              "REJECT": "rejected"
+            },
+            "key": "listOrderStatus"
+          },
+          "statusType": {
+            "coercion": "safeStringLower",
+            "key": "listStatusType"
+          },
+          "symbol": {
+            "coercion": "safeString",
+            "key": "symbol"
+          },
+          "timestamp": {
+            "coercion": "safeInteger",
+            "format": "ms",
+            "key": "transactionTime"
+          },
+          "type": {
+            "coercion": "safeStringLower",
+            "key": "contingencyType"
+          }
+        }
+      },
       "position": {
         "_unresolved_reason": null,
         "extras": [],
@@ -25264,6 +25437,23 @@
           "key": null
         },
         "fetchOrders": {
+          "default": null,
+          "fallback_keys": [],
+          "key": null
+        }
+      },
+      "order_list": {
+        "fetchOpenOrderLists": {
+          "default": null,
+          "fallback_keys": [],
+          "key": null
+        },
+        "fetchOrderList": {
+          "default": null,
+          "fallback_keys": [],
+          "key": null
+        },
+        "fetchOrderLists": {
           "default": null,
           "fallback_keys": [],
           "key": null

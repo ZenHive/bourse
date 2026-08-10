@@ -98,6 +98,7 @@ defmodule Bourse.Unified.FieldMapsTest do
                "open_interest",
                "option",
                "order",
+               "order_list",
                "position",
                "ticker",
                "trade",

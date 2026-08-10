@@ -225,6 +225,7 @@ defmodule Bourse.Exchange do
     {"open_interest", :parse_open_interest, Bourse.OpenInterest},
     {"option", :parse_option, Bourse.OptionData},
     {"order", :parse_order, Bourse.Order},
+    {"order_list", :parse_order_list, Bourse.OrderList},
     {"position", :parse_position, Bourse.Position},
     {"adl_rank", :parse_adl_rank, Bourse.ADLRank},
     {"ticker", :parse_ticker, Bourse.Ticker},

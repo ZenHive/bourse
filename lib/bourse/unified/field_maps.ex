@@ -75,6 +75,7 @@ defmodule Bourse.Unified.FieldMaps do
     "open_interest" => Bourse.OpenInterest,
     "option" => Bourse.OptionData,
     "order" => Bourse.Order,
+    "order_list" => Bourse.OrderList,
     "position" => Bourse.Position,
     "adl_rank" => Bourse.ADLRank,
     "ticker" => Bourse.Ticker,

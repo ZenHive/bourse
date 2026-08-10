@@ -9,6 +9,7 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
   alias Bourse.Greeks
   alias Bourse.Leverage
   alias Bourse.Order
+  alias Bourse.OrderList
   alias Bourse.Position
   alias Bourse.Test.FixtureGateIsolation
 
@@ -29,6 +30,7 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
   @legacy_conditional_probe_price "1"
   @legacy_conditional_error_code -4120
   @bad_symbol_error_code -1121
+  @missing_order_list_identifier_error_code -1102
   @spot_write_amount 0.001
   @spot_write_price 50_000
   @poll_attempts 10
@@ -280,6 +282,29 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
       assert {:error, %Error{type: :order_not_found, code: -2013}} =
                Bourse.fetch_order(exchange, "999999999999999", symbol: symbol)
     end
+  end
+
+  test "spot order-list reads reach Binance testnet and preserve its missing-identifier error" do
+    credentials = require_credentials!(:binance, url: "https://testnet.binance.vision")
+    exchange = build_exchange(:binance, credentials: credentials, sandbox: true)
+
+    assert {:ok, historical_order_lists} = Bourse.fetch_order_lists(exchange, limit: 1)
+    assert is_list(historical_order_lists)
+    assert Enum.all?(historical_order_lists, &match?(%OrderList{}, &1))
+
+    assert {:ok, open_order_lists} = Bourse.fetch_open_order_lists(exchange)
+    assert is_list(open_order_lists)
+    assert Enum.all?(open_order_lists, &match?(%OrderList{}, &1))
+
+    assert {:error,
+            %Error{
+              type: :bad_request,
+              code: @missing_order_list_identifier_error_code,
+              message: message
+            }} = Bourse.fetch_order_list(exchange, nil)
+
+    assert message =~ "origClientOrderId"
+    assert message =~ "orderListId"
   end
 
   # TODO(Task 550): replace this blocker pin with parsed sandbox values once
