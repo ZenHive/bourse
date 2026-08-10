@@ -65,16 +65,16 @@ defmodule Bourse.Unified.FundingInterval do
         unresolved_symbol(exchange)
 
       native_symbol ->
-        with {:ok, interval} <- interval_for(body, native_symbol, exchange) do
+        with {:ok, interval} <- interval_for(body, native_symbol, exchange, funding_rate) do
           {:ok, %{funding_rate | interval: interval}}
         end
     end
   end
 
-  defp interval_for(body, native_symbol, exchange) do
+  defp interval_for(body, native_symbol, exchange, funding_rate) do
     case Enum.find(List.wrap(body), &(is_map(&1) and &1["symbol"] == native_symbol)) do
       nil ->
-        {:ok, @binance_default_interval}
+        {:ok, default_interval(funding_rate)}
 
       row ->
         case Safe.integer(row["fundingIntervalHours"]) do
@@ -83,6 +83,15 @@ defmodule Bourse.Unified.FundingInterval do
         end
     end
   end
+
+  defp default_interval(%FundingRate{info: %{"nextFundingTime" => timestamp}}) do
+    case Safe.integer(timestamp) do
+      timestamp when is_integer(timestamp) and timestamp > 0 -> @binance_default_interval
+      _ -> nil
+    end
+  end
+
+  defp default_interval(%FundingRate{}), do: nil
 
   defp native_symbol(%FundingRate{info: %{"symbol" => symbol}}, _exchange, _params) when is_binary(symbol), do: symbol
 

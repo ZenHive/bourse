@@ -27,12 +27,15 @@ failing `-1102`.
 **C-T573b — A direct current-rate read applies the existing per-symbol funding-interval carve (task 573).
 Outcome: CONFIRM venue.** C-T539b established `fundingIntervalHours` as the provider cadence
 source, but `fetchFundingRate` reads `premiumIndex`, whose row does not carry that field. The
-direct read now joins `GET /fapi/v1/fundingInfo` by native symbol and uses the documented `8h`
-default only when no adjusted-symbol row exists. Live demo FAPI changed the unified BTCUSDT
+direct read now joins `GET /fapi/v1/fundingInfo` by native symbol and uses the `8h` default from
+Binance's own
+[Introduction to Binance Futures Funding Rates](https://www.binance.com/en/support/faq/introduction-to-binance-futures-funding-rates-360033525031)
+only for perpetual contracts with a positive `nextFundingTime`. An inverse symbol selects DAPI
+for both `fetchFundingRate` and its funding-info join. Live demo FAPI changed the unified BTCUSDT
 result from `interval: nil` to `interval: "8h"`.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T573b","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M Funding Rate Info contract cited by C-T539b"},"observed_evidence":{"kind":"live_venue","reference":"Live binanceusdm BTCUSDT premiumIndex plus fundingInfo returned unified interval 8h on 2026-08-10"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T573b","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M Funding Rate Info contract cited by C-T539b and FAQ 360033525031"},"observed_evidence":{"kind":"live_venue","reference":"Live binanceusdm BTCUSDT premiumIndex plus fundingInfo returned unified interval 8h on 2026-08-10"},"compatibility_reference":null,"resolved_tier":1}
 -->
 
 ## 2026-08-04 — documented order-status coverage (Task 538)

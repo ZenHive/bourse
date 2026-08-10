@@ -4766,6 +4766,28 @@
             }
           ]
         },
+        "fetchFundingRate": {
+          "consume": [
+            "type",
+            "subType",
+            "sub_type"
+          ],
+          "default": "fapiPublic_get_premiumindex",
+          "rules": [
+            {
+              "endpoint": "dapiPublic_get_premiumindex",
+              "when": {
+                "market_family": "inverse"
+              }
+            },
+            {
+              "endpoint": "dapiPublic_get_premiumindex",
+              "when": {
+                "market_family": "future"
+              }
+            }
+          ]
+        },
         "fetchFundingRates": {
           "consume": [
             "type",

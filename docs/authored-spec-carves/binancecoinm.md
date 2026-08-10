@@ -27,15 +27,16 @@ operations across the regular and Algo books rather than retaining a market-fami
 **C-T573c — COIN-M current funding rates join DAPI funding info by native symbol (task 573).
 Outcome: CONFIRM venue.** Binance's official
 [COIN-M Funding Rate Info](https://developers.binance.com/docs/derivatives/coin-margined-futures/market-data/rest-api/Get-Funding-Rate-Info)
-contract publishes `fundingIntervalHours` for adjusted symbols; the eight-hour default for
-non-adjusted symbols comes from Binance's own funding-rate settlement announcement
-(binance.com/en/support/announcement/detail/6d707b1f7ae34f419621b4c807464ab1), not from the
-endpoint contract. `fetchFundingRate` joins `premiumIndex` to that provider row, emitting the normalized
-duration and falling back to `8h` only when the symbol has no adjustment. Live demo DAPI changed
-BTCUSD_PERP from `interval: nil` to `interval: "8h"`.
+contract publishes `fundingIntervalHours` for adjusted symbols. Binance's own
+[Introduction to Binance Futures Funding Rates](https://www.binance.com/en/support/faq/introduction-to-binance-futures-funding-rates-360033525031)
+defines the eight-hour default for perpetual contracts. `fetchFundingRate` joins `premiumIndex`
+to that provider row, emitting the normalized duration and falling back to `8h` only for an
+unmatched row with a positive `nextFundingTime`. Dated delivery futures report
+`nextFundingTime: 0` and retain `interval: nil`. Live demo DAPI changed BTCUSD_PERP from
+`interval: nil` to `interval: "8h"`.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T573c","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M Funding Rate Info contract"},"observed_evidence":{"kind":"live_venue","reference":"Live demo-dapi BTCUSD_PERP premiumIndex plus fundingInfo returned unified interval 8h on 2026-08-10"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T573c","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M Funding Rate Info contract and FAQ 360033525031"},"observed_evidence":{"kind":"live_venue","reference":"Live demo-dapi BTCUSD_PERP premiumIndex plus fundingInfo returned unified interval 8h while dated delivery rows reported nextFundingTime 0 on 2026-08-10"},"compatibility_reference":null,"resolved_tier":1}
 -->
 
 ## 2026-07-26 — market-scoped error classification (Task 515)

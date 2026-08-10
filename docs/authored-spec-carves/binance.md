@@ -50,13 +50,13 @@ reality-unverified because the account carried no order groups and placing one i
 **C-T573a — Current funding rates join the provider's per-symbol cadence (task 573).
 Outcome: CONFIRM venue.** Binance's official
 [Funding Rate Info](https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Get-Funding-Rate-Info)
-contract publishes `fundingIntervalHours` for symbols whose cadence is adjusted; the eight-hour
-default for non-adjusted symbols comes from Binance's own funding-rate settlement announcement
-(binance.com/en/support/announcement/detail/6d707b1f7ae34f419621b4c807464ab1), not from the
-endpoint contract itself. `fetchFundingRate` therefore joins its `premiumIndex` row to
-`fundingInfo` by native symbol, normalizes the provider value to a duration token such as `4h`,
-and uses `8h` only when the provider returns no adjusted row. Live demo FAPI returned `8h` for
-BTCUSDT; the pre-change unified result had `interval: nil`.
+contract publishes `fundingIntervalHours` for symbols whose cadence is adjusted. Binance's own
+[Introduction to Binance Futures Funding Rates](https://www.binance.com/en/support/faq/introduction-to-binance-futures-funding-rates-360033525031)
+defines the eight-hour default for perpetual contracts. `fetchFundingRate` therefore joins its
+`premiumIndex` row to `fundingInfo` by native symbol, normalizes the provider value to a duration
+token such as `4h`, and uses `8h` only for an unmatched row with a positive `nextFundingTime`.
+Rows with `nextFundingTime: 0`, including dated delivery futures, retain `interval: nil`. Live
+demo FAPI returned `8h` for BTCUSDT; the pre-change unified result had `interval: nil`.
 
 **C-T574a — Conditional USD-M orders use the Algo Order API and preserve unified order
 controls (task 574). Outcome: CONFIRM provider endpoint move.** Binance's official
@@ -102,7 +102,7 @@ After the carve, live futures-demo lifecycles created, fetched, and canceled a c
 through unified methods; a second conditional order disappeared after unified cancel-all.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T573a","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M Funding Rate Info contract"},"observed_evidence":{"kind":"live_venue","reference":"Live demo-fapi BTCUSDT premiumIndex plus fundingInfo returned unified interval 8h on 2026-08-10"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T573a","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M Funding Rate Info contract and FAQ 360033525031"},"observed_evidence":{"kind":"live_venue","reference":"Live demo-fapi BTCUSDT premiumIndex plus fundingInfo returned unified interval 8h on 2026-08-10"},"compatibility_reference":null,"resolved_tier":1}
 -->
 
 <!-- carve-evidence-status

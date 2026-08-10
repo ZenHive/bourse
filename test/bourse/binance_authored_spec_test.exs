@@ -32,6 +32,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
           {"binance", "BTC/USDT:USDT", "BTCUSDT", "/fapi/v1/premiumIndex", "/fapi/v1/fundingInfo"},
           {"binance", "BTC/USD:BTC", "BTCUSD_PERP", "/dapi/v1/premiumIndex", "/dapi/v1/fundingInfo"},
           {"binanceusdm", "BTC/USDT:USDT", "BTCUSDT", "/fapi/v1/premiumIndex", "/fapi/v1/fundingInfo"},
+          {"binanceusdm", "BTC/USD:BTC", "BTCUSD_PERP", "/dapi/v1/premiumIndex", "/dapi/v1/fundingInfo"},
           {"binancecoinm", "BTC/USD:BTC", "BTCUSD_PERP", "/dapi/v1/premiumIndex", "/dapi/v1/fundingInfo"}
         ] do
       {requests, stub} = funding_rate_stub(native_symbol, premium_path, funding_path, 4)
@@ -44,15 +45,16 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     end
   end
 
-  test "plural funding rates join adjusted and default cadences across the Binance family" do
-    for {exchange_id, selection_opts, native_symbols, premium_path, funding_path} <- [
-          {"binance", [], ["BTCUSDT", "ETHUSDT"], "/fapi/v1/premiumIndex", "/fapi/v1/fundingInfo"},
-          {"binance", [subType: "inverse"], ["BTCUSD_PERP", "ETHUSD_PERP"], "/dapi/v1/premiumIndex",
+  test "plural funding rates default perpetual cadences without stamping dated delivery futures" do
+    for {exchange_id, selection_opts, native_symbols, no_funding_symbol, premium_path, funding_path} <- [
+          {"binance", [], ["BTCUSDT", "ETHUSDT"], nil, "/fapi/v1/premiumIndex", "/fapi/v1/fundingInfo"},
+          {"binance", [subType: "inverse"], ["BTCUSD_PERP", "ETHUSD_PERP"], nil, "/dapi/v1/premiumIndex",
            "/dapi/v1/fundingInfo"},
-          {"binanceusdm", [], ["BTCUSDT", "ETHUSDT"], "/fapi/v1/premiumIndex", "/fapi/v1/fundingInfo"},
-          {"binancecoinm", [], ["BTCUSD_PERP", "ETHUSD_PERP"], "/dapi/v1/premiumIndex", "/dapi/v1/fundingInfo"}
+          {"binanceusdm", [], ["BTCUSDT", "ETHUSDT"], nil, "/fapi/v1/premiumIndex", "/fapi/v1/fundingInfo"},
+          {"binancecoinm", [], ["BTCUSD_PERP", "ETHUSD_PERP", "BTCUSD_260925"], "BTCUSD_260925", "/dapi/v1/premiumIndex",
+           "/dapi/v1/fundingInfo"}
         ] do
-      {requests, stub} = funding_rates_stub(native_symbols, premium_path, funding_path)
+      {requests, stub} = funding_rates_stub(native_symbols, no_funding_symbol, premium_path, funding_path)
       opts = [plug: {Req.Test, stub}] ++ selection_opts
 
       assert {:ok, rates} = Bourse.fetch_funding_rates(Exchange.new!(exchange_id, sandbox: true), opts)
@@ -62,9 +64,14 @@ defmodule Bourse.BinanceAuthoredSpecTest do
         |> Map.values()
         |> Map.new(&{&1.info["symbol"], &1})
 
-      [adjusted_symbol, default_symbol] = native_symbols
+      [adjusted_symbol, default_symbol | _rest] = native_symbols
       assert %Bourse.FundingRate{interval: "4h"} = Map.fetch!(rates_by_native_symbol, adjusted_symbol)
       assert %Bourse.FundingRate{interval: "8h"} = Map.fetch!(rates_by_native_symbol, default_symbol)
+
+      if no_funding_symbol do
+        assert %Bourse.FundingRate{info: %{"nextFundingTime" => 0}, interval: nil} =
+                 Map.fetch!(rates_by_native_symbol, no_funding_symbol)
+      end
 
       assert requests |> RequestCollector.requests() |> Enum.map(& &1.conn.request_path) ==
                [premium_path, funding_path]
@@ -105,6 +112,40 @@ defmodule Bourse.BinanceAuthoredSpecTest do
 
     assert message == "Invalid fundingIntervalHours from binance funding info"
     assert RequestCollector.one!(requests).request_path == "/fapi/v1/fundingInfo"
+  end
+
+  test "plural funding enrichment propagates an invalid provider cadence" do
+    stub = unique_stub("binance_invalid_plural_funding_interval")
+    row = %{"fundingIntervalHours" => "invalid", "symbol" => "BTCUSDT"}
+    Req.Test.stub(stub, &Req.Test.json(&1, [row]))
+
+    funding_rate = %Bourse.FundingRate{
+      info: %{"nextFundingTime" => 1_700_028_800_000, "symbol" => "BTCUSDT"}
+    }
+
+    assert {:error, %Bourse.Error{message: "Invalid fundingIntervalHours from binance funding info", raw: ^row}} =
+             FundingInterval.enrich(
+               {:ok, %{"BTC/USDT:USDT" => funding_rate}},
+               Exchange.new!("binance", sandbox: true),
+               :fetch_funding_rates,
+               %{},
+               plug: {Req.Test, stub}
+             )
+  end
+
+  test "the funding-interval join does not default without perpetual evidence" do
+    stub = unique_stub("binance_unknown_funding_interval")
+    Req.Test.stub(stub, &Req.Test.json(&1, []))
+    funding_rate = %Bourse.FundingRate{info: %{"symbol" => "BTCUSDT"}}
+
+    assert {:ok, %Bourse.FundingRate{interval: nil}} =
+             FundingInterval.enrich(
+               {:ok, funding_rate},
+               Exchange.new!("binance", sandbox: true),
+               :fetch_funding_rate,
+               %{},
+               plug: {Req.Test, stub}
+             )
   end
 
   test "plural funding enrichment preserves an interval already supplied by the primary response" do
@@ -2987,17 +3028,17 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     {requests, stub}
   end
 
-  defp funding_rates_stub([adjusted_symbol, default_symbol], premium_path, funding_path) do
+  defp funding_rates_stub([adjusted_symbol | _rest] = native_symbols, no_funding_symbol, premium_path, funding_path) do
     stub = unique_stub("binance_funding_rates")
     {:ok, requests} = RequestCollector.start_link()
 
     premium_rows =
-      Enum.map([adjusted_symbol, default_symbol], fn symbol ->
+      Enum.map(native_symbols, fn symbol ->
         %{
           "indexPrice" => "3000",
           "lastFundingRate" => "0.0001",
           "markPrice" => "3001",
-          "nextFundingTime" => 1_700_028_800_000,
+          "nextFundingTime" => if(symbol == no_funding_symbol, do: 0, else: 1_700_028_800_000),
           "symbol" => symbol,
           "time" => 1_700_000_000_000
         }
