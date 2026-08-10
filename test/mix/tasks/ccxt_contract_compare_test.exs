@@ -214,6 +214,21 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
     assert provider_only["axes"]["reachability"] == "unknown"
   end
 
+  test "an artifact omitting the completeness gate degrades to no claim instead of raising" do
+    {root, manifest, authored} = comparison_fixture()
+
+    manifest =
+      update_in(manifest, ["artifacts"], fn [source] ->
+        [update_in(source, ["authority"], &Map.delete(&1, "completeness_gate"))]
+      end)
+
+    report = ContractComparator.compare_venue!(manifest, authored, root)
+    current = report["surfaces"]["current_rest"]
+
+    refute current["completeness_claim"]
+    assert current["source_capability"] == "partial_machine_inventory"
+  end
+
   test "registered facts reject invalid axes and operations outside the union" do
     root = temporary_directory("facts")
     path = Path.join(root, "facts.json")

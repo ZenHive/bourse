@@ -299,7 +299,7 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
   defp completeness_claim?(sources, surface) do
     Enum.any?(sources, fn source ->
       source.available and source.provenance["status"] == "parsed" and
-        source.artifact["authority"]["completeness_gate"] and
+        source.artifact["authority"]["completeness_gate"] == true and
         Enum.any?(source.artifact["scope"], &(&1["surface"] == surface and &1["coverage"] == "complete"))
     end)
   end
