@@ -5,10 +5,24 @@ defmodule Bourse.AuthoredOrderStatusCoverageTest do
   # A missing arm fails here rather than on a consumer account that happens to hold
   # that history row (task 538 / hyperliquid minTradeNtlRejected).
   #
-  # Lighter deliberately preserves its provider-native status vocabulary through
-  # `enum_passthrough: true`; every other runtime venue has a closed authored map.
-
   use ExUnit.Case, async: true
+
+  @order_status_path ~w(normalization field_maps order field_map status)
+
+  # Governed, exact, and intended only to shrink. Each entry identifies one field
+  # whose provider-native vocabulary is deliberately open beyond its mapped aliases.
+  @enum_passthrough_exemptions %{
+    {"hyperliquid", ~w(normalization field_maps ledger_entry field_map type)} => %{
+      reason:
+        "Ledger delta.type carries provider-native event categories; only the two transfer aliases collapse to unified transfer.",
+      tracking: "Task 552; docs/authored-spec-carves/hyperliquid.md C-T302"
+    },
+    {"okx", ~w(normalization field_maps order field_map type)} => %{
+      reason:
+        "Known OKX ordType values normalize to unified types while additional provider-native order styles retain their identifier.",
+      tracking: "Task 552; docs/authored-spec-carves/okx.md C-T382a"
+    }
+  }
 
   # Documented raw values only — defensive aliases (e.g. hyperliquid "cancelled")
   # may exist in the authored map beyond this set.
@@ -68,7 +82,6 @@ defmodule Bourse.AuthoredOrderStatusCoverageTest do
         ))
     },
     "lighter" => %{
-      mode: :passthrough,
       source: "https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json",
       values: MapSet.new(~w(
           in-progress pending open filled canceled canceled-post-only canceled-reduce-only
@@ -91,6 +104,25 @@ defmodule Bourse.AuthoredOrderStatusCoverageTest do
     },
     "binanceusdm" => %{"EXPIRED_IN_MATCH" => "canceled"},
     "derive" => %{"expired" => "canceled"},
+    "lighter" => %{
+      "canceled" => "canceled",
+      "canceled-child" => "canceled",
+      "canceled-expired" => "canceled",
+      "canceled-invalid-balance" => "canceled",
+      "canceled-liquidation" => "canceled",
+      "canceled-margin-not-allowed" => "canceled",
+      "canceled-not-enough-liquidity" => "canceled",
+      "canceled-oco" => "canceled",
+      "canceled-position-not-allowed" => "canceled",
+      "canceled-post-only" => "canceled",
+      "canceled-reduce-only" => "canceled",
+      "canceled-self-trade" => "canceled",
+      "canceled-too-much-slippage" => "canceled",
+      "filled" => "closed",
+      "in-progress" => "open",
+      "open" => "open",
+      "pending" => "open"
+    },
     "okx" => %{"mmp_canceled" => "canceled"}
   }
 
@@ -103,22 +135,44 @@ defmodule Bourse.AuthoredOrderStatusCoverageTest do
 
       assert is_map(rule), "#{venue}: expected an authored order status rule"
 
-      if Map.get(@documented_order_statuses[venue], :mode) == :passthrough do
-        assert rule["enum_passthrough"] == true,
-               "#{venue}: expected explicit passthrough for provider statuses from #{source}"
-      else
-        enum_map = rule["enum_map"]
+      case rule["enum_map"] do
+        enum_map when is_map(enum_map) and map_size(enum_map) > 0 ->
+          authored = enum_map |> Map.keys() |> MapSet.new()
+          missing = MapSet.difference(documented, authored)
 
-        assert is_map(enum_map) and map_size(enum_map) > 0,
-               "#{venue}: expected a non-empty enum_map (not passthrough) for documented statuses from #{source}"
+          assert missing == MapSet.new(),
+                 "#{venue}: authored order.status.enum_map is missing provider-documented values " <>
+                   "#{inspect(MapSet.to_list(missing))} (source: #{source})"
 
-        authored = enum_map |> Map.keys() |> MapSet.new()
-        missing = MapSet.difference(documented, authored)
+        _missing_enum_map ->
+          assert rule["enum_passthrough"] == true,
+                 "#{venue}: expected a non-empty enum_map or explicit passthrough for statuses from #{source}"
 
-        assert missing == MapSet.new(),
-               "#{venue}: authored order.status.enum_map is missing provider-documented values " <>
-                 "#{inspect(MapSet.to_list(missing))} (source: #{source})"
+          assert Map.has_key?(@enum_passthrough_exemptions, {venue, @order_status_path}),
+                 "#{venue}: order status passthrough is absent from the governed exemption registry"
       end
+    end
+  end
+
+  test "enum passthrough exemptions exactly match every authored passthrough field" do
+    actual =
+      Bourse.Registry.exchanges()
+      |> Enum.flat_map(fn venue ->
+        venue
+        |> Bourse.Spec.load!()
+        |> enum_passthrough_paths()
+        |> Enum.map(&{venue, &1})
+      end)
+      |> MapSet.new()
+
+    expected = @enum_passthrough_exemptions |> Map.keys() |> MapSet.new()
+
+    assert actual == expected,
+           "enum_passthrough exemptions must only shrink and must match the authored specs exactly"
+
+    for {_field, %{reason: reason, tracking: tracking}} <- @enum_passthrough_exemptions do
+      assert is_binary(reason) and String.length(reason) > 40
+      assert Regex.match?(~r/Task \d+/, tracking)
     end
   end
 
@@ -127,6 +181,25 @@ defmodule Bourse.AuthoredOrderStatusCoverageTest do
     registered = @documented_order_statuses |> Map.keys() |> MapSet.new()
 
     assert registered == supported
+  end
+
+  test "unknown order statuses fail loudly for every venue without an exemption" do
+    for venue <- Bourse.Registry.exchanges(),
+        not Map.has_key?(@enum_passthrough_exemptions, {venue, @order_status_path}) do
+      rule =
+        venue
+        |> Bourse.Spec.load!()
+        |> get_in(@order_status_path)
+        |> Map.put("key", "status")
+
+      assert {:error, {:unmapped_order_status, %{venue: ^venue, field: "status", raw_value: "provider-added-status"}}} =
+               Bourse.ResponseParser.apply_mappings(
+                 %{"status" => "provider-added-status"},
+                 %{"status" => rule},
+                 target: Bourse.Order,
+                 venue: venue
+               )
+    end
   end
 
   test "documented gaps surfaced by the whole-runtime invariant have deliberate mappings" do
@@ -139,4 +212,26 @@ defmodule Bourse.AuthoredOrderStatusCoverageTest do
       assert Map.take(enum_map, Map.keys(expected)) == expected
     end
   end
+
+  defp enum_passthrough_paths(value), do: enum_passthrough_paths(value, [])
+
+  defp enum_passthrough_paths(value, path) when is_map(value) do
+    current = if value["enum_passthrough"] == true, do: [path], else: []
+
+    nested =
+      Enum.flat_map(value, fn
+        {"enum_passthrough", _value} -> []
+        {key, child} -> enum_passthrough_paths(child, path ++ [key])
+      end)
+
+    current ++ nested
+  end
+
+  defp enum_passthrough_paths(value, path) when is_list(value) do
+    value
+    |> Enum.with_index()
+    |> Enum.flat_map(fn {child, index} -> enum_passthrough_paths(child, path ++ [index]) end)
+  end
+
+  defp enum_passthrough_paths(_value, _path), do: []
 end

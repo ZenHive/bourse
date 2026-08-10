@@ -146,3 +146,28 @@ artifact `rest-openapi`).
 <!-- carve-evidence-status
 {"carve_id":"C-T541a","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"priv/authority/lighter/manifest.json artifact rest-openapi; GET /api/v1/accountActiveOrders and /api/v1/accountInactiveOrders parameters"},"observed_evidence":{"kind":"live_venue","reference":"testnet HTTP/code 200 for unified fetch_open_orders and fetch_closed_orders with omitted and symbol-resolved market_id; pinned by lighter_signing_integration_test.exs"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+## 2026-08-10 — order status vocabulary (Task 552)
+
+**C-T552 — Lighter's closed order-status vocabulary maps explicitly into unified order state
+(task 552). Outcome: DIVERGE from provider-native passthrough.**
+
+- *Exchange semantics:* the pinned provider OpenAPI defines 17 order statuses. `in-progress`,
+  `pending`, and `open` are non-terminal; `filled` is complete; `canceled` and the twelve
+  `canceled-*` reasons are canceled terminal states.
+- *Our carve:* map the three non-terminal states to unified `open`, `filled` to `closed`, and
+  every cancellation state to `canceled`. This makes `Bourse.Order.open?/1`, `closed?/1`, and
+  `canceled?/1` truthful while retaining fail-loud behavior for any provider value outside the
+  documented enum. The previous `enum_passthrough` silently bypassed those predicates.
+- *Live evidence:* the first authenticated Lighter testnet reads returned successful empty open
+  and closed collections. The repository's sole permitted mutation probe then created a
+  post-only order, observed provider status `open`, canceled it, and observed provider status
+  `canceled`; cleanup completed successfully. The provider OpenAPI supplies the complete closed
+  vocabulary that the live account cannot exercise safely in one session.
+- *Compatibility:* consumers now receive only the documented unified order states instead of
+  Lighter-native cancellation reasons in `Order.status`; the provider reason remains a transport
+  concern rather than a fourth unified lifecycle state.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T552","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"priv/authority/lighter/manifest.json artifact rest-openapi; Order.status enum at pinned lighter-python revision 6957dd8a"},"observed_evidence":{"kind":"live_venue","reference":"Lighter testnet create/fetch/cancel lifecycle on 2026-08-10 observed open then canceled; behavior pinned by test/bourse/lighter_promotion_integration_test.exs"},"compatibility_reference":null,"resolved_tier":1}
+-->

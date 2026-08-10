@@ -1805,7 +1805,25 @@
           },
           "status": {
             "coercion": "safeString",
-            "enum_passthrough": true,
+            "enum_map": {
+              "canceled": "canceled",
+              "canceled-child": "canceled",
+              "canceled-expired": "canceled",
+              "canceled-invalid-balance": "canceled",
+              "canceled-liquidation": "canceled",
+              "canceled-margin-not-allowed": "canceled",
+              "canceled-not-enough-liquidity": "canceled",
+              "canceled-oco": "canceled",
+              "canceled-position-not-allowed": "canceled",
+              "canceled-post-only": "canceled",
+              "canceled-reduce-only": "canceled",
+              "canceled-self-trade": "canceled",
+              "canceled-too-much-slippage": "canceled",
+              "filled": "closed",
+              "in-progress": "open",
+              "open": "open",
+              "pending": "open"
+            },
             "format": null,
             "key": "status"
           },
