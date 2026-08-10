@@ -7,9 +7,11 @@
 #     `fetch_ohlcv` — `fetch_order_book`, `fetch_trades`,
 #     `fetch_funding_rate`.
 #   * Public zero-arg method `fetch_status` (not in T40's set).
-#   * Private zero-arg methods with **real** testnet credentials —
+#   * Private methods with **real** testnet credentials —
 #     `fetch_balance`, `fetch_open_orders`, `fetch_my_trades`,
 #     `fetch_positions`, `fetch_account`, `fetch_trading_fees`.
+#     Venue-required symbols and account identifiers are supplied by the
+#     generator; methods without requirements stay no-arg.
 #     T67 covers the signing pipeline with bogus creds (expects an
 #     auth-shaped error); T39 covers the same pipeline end-to-end and
 #     expects a real success or a non-auth inconclusive error.
@@ -32,8 +34,13 @@
 defmodule Bourse.UnifiedMethodIntegrationProbeConfigTest do
   use ExUnit.Case, async: true
 
+  alias Bourse.Credentials
   alias Bourse.Test.Generator.SymbolResolver
   alias Bourse.Test.Generator.UnifiedMethodIntegrationProbe
+
+  @derive_demo_subaccount_id 144_422
+  @fixture_account_index 42
+  @lighter_auth_lifetime_seconds 300
 
   setup_all do
     {:ok, cases: UnifiedMethodIntegrationProbe.__collect_for_inspection__()}
@@ -68,6 +75,50 @@ defmodule Bourse.UnifiedMethodIntegrationProbeConfigTest do
 
     assert resolver.pick_symbol("lighter") == "BTC/USDC:USDC"
     assert resolver.pick_symbol("hyperliquid") == "BTC/USDC:USDC"
+  end
+
+  test "private symbol-required probes receive a resolved venue symbol", %{cases: cases} do
+    binance_symbol = SymbolResolver.pick_symbol("binance")
+    lighter_symbol = SymbolResolver.pick_symbol("lighter")
+
+    assert {:private, "binance", :fetch_my_trades, [[symbol: binance_symbol]]} in cases
+
+    assert {:private, "lighter", :fetch_open_orders,
+            [
+              [
+                symbol: lighter_symbol,
+                account_index: {:credential, :uid},
+                auth_deadline: {:unix_now_plus, @lighter_auth_lifetime_seconds}
+              ]
+            ]} in cases
+  end
+
+  test "private runtime identifiers resolve from credentials and current time", %{cases: cases} do
+    {:private, "lighter", :fetch_open_orders, args} =
+      Enum.find(cases, &match?({:private, "lighter", :fetch_open_orders, _args}, &1))
+
+    credentials = Credentials.new!(api_key: "0", secret: "unused", uid: Integer.to_string(@fixture_account_index))
+    exchange = Bourse.Exchange.new!(:lighter, credentials: credentials, sandbox: true)
+    before_resolution = System.system_time(:second)
+
+    assert [[symbol: "BTC/USDC:USDC", account_index: @fixture_account_index, auth_deadline: auth_deadline]] =
+             UnifiedMethodIntegrationProbe.__resolve_private_args__(exchange, args)
+
+    after_resolution = System.system_time(:second)
+
+    assert auth_deadline in (before_resolution + @lighter_auth_lifetime_seconds)..(after_resolution +
+                                                                                     @lighter_auth_lifetime_seconds)
+  end
+
+  test "Derive private probes receive the demo subaccount identifier", %{cases: cases} do
+    for method <- [:fetch_my_trades, :fetch_open_orders, :fetch_positions] do
+      assert {:private, "derive", method, [[subaccount_id: @derive_demo_subaccount_id]]} in cases
+    end
+  end
+
+  test "private methods without identifier requirements remain no-arg", %{cases: cases} do
+    assert {:private, "binance", :fetch_balance, []} in cases
+    assert {:private, "derive", :fetch_balance, []} in cases
   end
 end
 

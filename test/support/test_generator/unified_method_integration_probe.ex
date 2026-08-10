@@ -44,7 +44,7 @@ defmodule Bourse.Test.Generator.UnifiedMethodIntegrationProbe do
     * `:fetch_trades`
     * `:fetch_funding_rate` — uses `pick_funding_symbol/1` (perpetual only)
 
-  Private, zero-arg (real testnet credentials required):
+  Private (real testnet credentials required):
 
     * `:fetch_balance`
     * `:fetch_open_orders`
@@ -71,6 +71,8 @@ defmodule Bourse.Test.Generator.UnifiedMethodIntegrationProbe do
     * **Symbol-required methods:** a unified symbol resolves from the spec
       via `SymbolResolver.pick_symbol/1`. Exchanges without markets are
       skipped for those methods only.
+    * **Account-identifier methods:** the probe-level requirement map supplies
+      the documented identifier.
 
   ## Tags
 
@@ -99,7 +101,7 @@ defmodule Bourse.Test.Generator.UnifiedMethodIntegrationProbe do
 
   @order_book_pair_param_exchanges MapSet.new(["kraken"])
 
-  @private_zero_arg_methods [
+  @private_methods [
     :fetch_balance,
     :fetch_open_orders,
     :fetch_my_trades,
@@ -107,6 +109,21 @@ defmodule Bourse.Test.Generator.UnifiedMethodIntegrationProbe do
     :fetch_account,
     :fetch_trading_fees
   ]
+
+  @derive_demo_subaccount_id 144_422
+  @lighter_auth_lifetime_seconds 300
+
+  @private_identifier_requirements %{
+    {"binance", :fetch_my_trades} => [symbol: :resolved_symbol],
+    {"lighter", :fetch_open_orders} => [
+      symbol: :resolved_symbol,
+      account_index: {:credential, :uid},
+      auth_deadline: {:unix_now_plus, @lighter_auth_lifetime_seconds}
+    ],
+    {"derive", :fetch_my_trades} => [subaccount_id: @derive_demo_subaccount_id],
+    {"derive", :fetch_open_orders} => [subaccount_id: @derive_demo_subaccount_id],
+    {"derive", :fetch_positions} => [subaccount_id: @derive_demo_subaccount_id]
+  }
 
   @auth_classes [:public, :private]
 
@@ -219,8 +236,35 @@ defmodule Bourse.Test.Generator.UnifiedMethodIntegrationProbe do
   def public_symbol_args(_exchange_id, _method, symbol) when is_binary(symbol), do: [symbol]
 
   defp private_cases(exchange_id, module) do
-    for method <- @private_zero_arg_methods, available_private?(module, method) do
-      {:private, exchange_id, method, nil}
+    for method <- @private_methods,
+        available_private?(module, method),
+        args = private_args(exchange_id, method),
+        is_list(args) do
+      {:private, exchange_id, method, args}
+    end
+  end
+
+  defp private_args(exchange_id, method) do
+    case Map.fetch(@private_identifier_requirements, {exchange_id, method}) do
+      {:ok, params} ->
+        private_args_for_requirements(exchange_id, params)
+
+      :error ->
+        []
+    end
+  end
+
+  defp private_args_for_requirements(exchange_id, params) do
+    case Keyword.get(params, :symbol) do
+      :resolved_symbol -> private_symbol_args(exchange_id, params)
+      _other -> [params]
+    end
+  end
+
+  defp private_symbol_args(exchange_id, params) do
+    case SymbolResolver.pick_symbol(exchange_id) do
+      symbol when is_binary(symbol) -> [Keyword.replace!(params, :symbol, symbol)]
+      nil -> nil
     end
   end
 
@@ -346,9 +390,10 @@ defmodule Bourse.Test.Generator.UnifiedMethodIntegrationProbe do
     end
   end
 
-  defp build_test(:private, exchange_id, method, _extra) do
+  defp build_test(:private, exchange_id, method, args) do
     id_atom = String.to_atom(exchange_id)
     load_markets? = method == :fetch_trading_fees
+    escaped_args = Macro.escape(args)
 
     quote do
       @tag :private
@@ -368,7 +413,13 @@ defmodule Bourse.Test.Generator.UnifiedMethodIntegrationProbe do
             unquote(load_markets?)
           )
 
-        result = apply(Bourse, unquote(method), [exchange])
+        call_args =
+          unquote(__MODULE__).__resolve_private_args__(
+            exchange,
+            unquote(escaped_args)
+          )
+
+        result = apply(Bourse, unquote(method), [exchange | call_args])
 
         Bourse.IntegrationHelper.assert_private_response(
           unquote(method),
@@ -377,6 +428,30 @@ defmodule Bourse.Test.Generator.UnifiedMethodIntegrationProbe do
         )
       end
     end
+  end
+
+  @doc false
+  @spec __resolve_private_args__(Exchange.t(), [keyword()]) :: [keyword()]
+  def __resolve_private_args__(%Exchange{} = exchange, args) when is_list(args) do
+    Enum.map(args, fn params ->
+      Enum.map(params, &resolve_runtime_identifier(&1, exchange))
+    end)
+  end
+
+  defp resolve_runtime_identifier({name, {:credential, :uid}}, exchange) do
+    {name, credential_uid!(exchange)}
+  end
+
+  defp resolve_runtime_identifier({name, {:unix_now_plus, seconds}}, _exchange) do
+    {name, System.system_time(:second) + seconds}
+  end
+
+  defp resolve_runtime_identifier(param, _exchange), do: param
+
+  defp credential_uid!(%Exchange{credentials: %{uid: uid}}) when is_binary(uid), do: String.to_integer(uid)
+
+  defp credential_uid!(_exchange) do
+    raise ArgumentError, "private probe requires a numeric credential uid"
   end
 
   @doc """
