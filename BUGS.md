@@ -936,10 +936,11 @@ layer is supposed to inject `category` automatically.
 
 ## 2026-08-10 — binance fapi `create_order`: unified opts (`time_in_force`, `reduce_only`, `trigger_price`, `stop_loss_price`) werden stillschweigend verworfen — Market-Sell statt Stop-Order ausgeführt
 
-**Status (2026-08-10):** 📋 triaged — filed as workbench **task 574** ("binance fapi write path
-drops unified opts and misparses cancel confirmations"), open, together with the
-`set_margin_mode` and `cancel_all_orders` entries below (one authored-spec surface, one testnet
-lifecycle verifies all three). Includes the Algo-Order-API endpoint move (`-4120`).
+**Status (2026-08-10):** ✅ **fixed** by workbench **task 574** — see the consolidated
+"`create_order/6` dropped conditional controls and used the retired endpoint" entry above for the
+outcome. The repro below is retained as the evidence trail. `time_in_force`, `reduce_only`,
+`trigger_price` and `stop_loss_price` now reach the fapi request; conditional orders route to the
+Algo Order API (`-4120` resolved).
 
 **Method:** `Bourse.create_order/6` · **Exchange:** binance (USD-M futures, `sandbox: true`, testnet.binancefuture.com) · **Severity:** HIGH — real-money-relevant: eine als Stop gemeinte Order wurde als nackter Market-Sell ausgeführt
 
@@ -975,8 +976,9 @@ signierte fapi-Calls via Req für marginType/Stop; Limit-Orders via `params:`-Ma
 
 ## 2026-08-10 — binance `set_margin_mode/3`: symbol-Parameter erreicht den Request nicht
 
-**Status (2026-08-10):** 📋 triaged — folded into workbench **task 574** (see the `create_order`
-entry above), open.
+**Status (2026-08-10):** ✅ **fixed** by workbench **task 574** — see the consolidated
+"`set_margin_mode/3` omitted `symbol`" entry above. The unified symbol now resolves to `ETHUSDT`
+on the wire; repro retained as evidence.
 
 **Method:** `Bourse.set_margin_mode(ex, "isolated", "ETH/USDT:USDT")` · **Exchange:** binance (fapi, sandbox) · **Severity:** medium
 
@@ -989,8 +991,10 @@ Expected: symbol wird aus dem unified Symbol aufgelöst und mitgesendet.
 
 ## 2026-08-10 — binance fapi `cancel_all_orders`: Erfolgsantwort wird als all-nil Order geparst UND Orders bleiben offen
 
-**Status (2026-08-10):** 📋 triaged — folded into workbench **task 574** (see the `create_order`
-entry above), open. Task 574 requires live proof the orders actually cancel, not only the parse fix.
+**Status (2026-08-10):** ✅ **fixed** by workbench **task 574** — see the consolidated
+"`cancel_all_orders/2` used the wrong route and parsed its acknowledgement as an order" entry above.
+The call now routes to `DELETE /fapi/v1/allOpenOrders` (which actually cancels) and treats the
+`{"code":200}` acknowledgement as success. Repro retained as evidence.
 
 **Method:** `Bourse.cancel_all_orders(ex, symbol: "ETH/USDT:USDT")` · **Exchange:** binance (fapi, sandbox) · **Severity:** medium-high (meldet Fehler bei Erfolg — und der zugrundeliegende Call cancelt real nichts)
 
@@ -1010,8 +1014,10 @@ wurde, er hat die offenen fapi-Orders nicht gecancelt — möglicherweise falsch
 
 ## 2026-08-10 — binance `fetch_balance(type: :swap)` routet im Sandbox-Modus auf den Spot-Testnet
 
-**Status (2026-08-10):** 📋 triaged — filed as workbench **task 575** ("binance
-fetch_balance(type: :swap) routes to the spot testnet in sandbox"), open.
+**Status (2026-08-10):** ✅ **fixed** by workbench **task 575** — see the consolidated
+"`fetch_balance(type: :swap)` selected the Spot Testnet wallet" entry above. `:swap` now reaches
+USD-M FAPI (`fapi/v3/account`), `:delivery` reaches COIN-M DAPI, `:margin` is a named exclusion.
+Repro retained as evidence.
 
 **Method:** `Bourse.fetch_balance(ex, type: :swap)` · **Exchange:** binance (sandbox) · **Severity:** medium (führt Konsumenten auf das falsche Konto)
 
