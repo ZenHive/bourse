@@ -933,8 +933,6 @@ defmodule Bourse.Unified.ReadParse do
     Bourse.Symbol.Error -> nil
   end
 
-  defp from_exchange_id(_native, _exchange, _market_type), do: nil
-
   # Binance's contract venues use compact ids that encode the settlement currency
   # and, for delivery contracts, a YYMMDD expiry. They identify the market without
   # depending on the endpoint family, so all parsed multi-row reads share this

@@ -620,3 +620,24 @@ CONFIRM provider contract.**
 <!-- carve-evidence-status
 {"carve_id":"C-T534c","date":"2026-08-09","semantic_source":{"kind":"provider_owned","reference":"priv/authority/bybit/manifest.json artifact v5-docs-source; V5 Get Instruments Info option contract"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/bybit/fetch_markets.json captured from v5/market/instruments-info"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+## 2026-08-10 — USDC-settled perpetual native ids (Task 571)
+
+**C-T571a — Linear-category native ids with the bare `PERP` suffix are USDC-settled
+perpetuals and normalize to `COIN/USDC:USDC` (task 571). Outcome: CONFIRM venue.**
+
+- *Provider contract:* Bybit V5 lists USDC-settled perpetuals under the linear
+  category with `settleCoin` USDC; their instrument ids carry the bare `PERP`
+  suffix (`TAOPERP`), unlike USDT perps (`TAOUSDT`).
+- *Our carve:* the native-symbol backfill resolves `<COIN>PERP` under
+  `{bybit, :swap}` to `Symbol.build(coin, "USDC", "USDC")`. This retires the
+  historic `"ETCPERP/:"` malformation a consumer recorded on 2026-06-30
+  (BUGS.md) — the venue emitting the bare-`PERP` form was observed reality
+  before it was carved.
+- *Live evidence:* `fetch_tickers(bybit, params: %{"category" => "linear"})` on
+  2026-08-10 returned 68 bare-`PERP` rows, each keyed by its unified form
+  (`TAOPERP` → `TAO/USDC:USDC`, `DOGEPERP` → `DOGE/USDC:USDC`).
+
+<!-- carve-evidence-status
+{"carve_id":"C-T571a","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 Get Instruments Info linear contract (settleCoin USDC, bare PERP suffix)"},"observed_evidence":{"kind":"live_venue","reference":"api.bybit.com v5/market/tickers category=linear 2026-08-10: 68 bare-PERP rows normalize to COIN/USDC:USDC; consumer-observed native form BUGS.md 2026-06-30 (ETCPERP)"},"compatibility_reference":null,"resolved_tier":1}
+-->

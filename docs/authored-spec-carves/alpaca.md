@@ -302,3 +302,21 @@ Outcome: CONFIRM venue.**
 <!-- carve-evidence-status
 {"carve_id":"C-T539c","date":"2026-08-04","semantic_source":{"kind":"provider_owned","reference":"priv/authority/alpaca/manifest.json market-clock API reference"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/alpaca/fetch_time.json"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+## 2026-08-10 — symbols are exempt from unified-symbol backfill (Task 571)
+
+**C-T571b — Every non-empty Alpaca symbol is already the unified form, so the
+class-wide native-symbol backfill exempts the venue (task 571). Outcome: CONFIRM
+venue; documentation-anchored.**
+
+- *Provider contract:* Alpaca identifies equities by bare ticker (`GLD`) and
+  crypto pairs with the slash already present (`BTC/USD`) — there is no separate
+  venue-native compact form to normalize from.
+- *Our carve:* `unified_symbol?/2` treats any non-empty symbol as unified for
+  `%Exchange{id: "alpaca"}`, keeping slash-less stock tickers out of the
+  derivatives-style symbol grammar. Consistent with C-T428a (stock symbols
+  select the stocks data endpoints without a slash).
+
+<!-- carve-evidence-status
+{"carve_id":"C-T571b","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"priv/authority/alpaca/manifest.json asset/data API references — bare-ticker equity symbols, slashed crypto pairs"},"observed_evidence":{"kind":"recorded_venue","reference":"C-T428a live GLD probes 2026-08-03 (bare ticker accepted on stocks endpoints); no compact native form exists to backfill"},"compatibility_reference":null,"resolved_tier":1}
+-->
