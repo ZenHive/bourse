@@ -379,10 +379,10 @@ defmodule Bourse.BinanceAuthoredSpecTest do
   end
 
   test "dedicated Binance futures fetch leverage reads flat-symbol configuration" do
-    for {exchange_id, symbol, native_symbol, expected_path, response} <- [
-          {"binanceusdm", "ETH/USDT:USDT", "ETHUSDT", "/fapi/v1/symbolConfig",
-           [%{"symbol" => "ETHUSDT", "leverage" => 3, "marginType" => "ISOLATED"}]},
-          {"binancecoinm", "BTC/USD:BTC", "BTCUSD_PERP", "/dapi/v1/account",
+    for {exchange_id, symbol, native_symbol, expected_path, expected_margin_mode, response} <- [
+          {"binanceusdm", "ETH/USDT:USDT", "ETHUSDT", "/fapi/v1/symbolConfig", "cross",
+           [%{"symbol" => "ETHUSDT", "leverage" => 3, "marginType" => "CROSSED"}]},
+          {"binancecoinm", "BTC/USD:BTC", "BTCUSD_PERP", "/dapi/v1/account", nil,
            %{"positions" => [%{"symbol" => "BTCUSD_PERP", "leverage" => "3", "positionAmt" => "0"}]}}
         ] do
       {requests, stub} = body_capturing_stub(response)
@@ -394,11 +394,14 @@ defmodule Bourse.BinanceAuthoredSpecTest do
           %Bourse.Market{id: native_symbol, symbol: symbol, type: "swap", swap: true, contract: true}
         ])
 
+      # margin_mode must share fetch_margin_mode's vocabulary: CROSSED -> "cross",
+      # never the bare safeStringLower "crossed".
       assert {:ok,
               %Bourse.Leverage{
                 symbol: ^symbol,
                 long_leverage: 3,
-                short_leverage: 3
+                short_leverage: 3,
+                margin_mode: ^expected_margin_mode
               }} =
                Bourse.fetch_leverage(exchange, symbol,
                  plug: {Req.Test, stub},
@@ -740,16 +743,19 @@ defmodule Bourse.BinanceAuthoredSpecTest do
                  "BTC/USDT:USDT" => %Bourse.Leverage{
                    long_leverage: 20,
                    short_leverage: 20,
+                   margin_mode: "cross",
                    info: ^btc_leverage
                  },
                  "ETH/USDT:USDT" => %Bourse.Leverage{
                    long_leverage: 10,
                    short_leverage: 10,
+                   margin_mode: "isolated",
                    info: ^eth_leverage
                  },
                  "IDOL/USDT:USDT" => %Bourse.Leverage{
                    long_leverage: 5,
                    short_leverage: 5,
+                   margin_mode: "cross",
                    info: ^idol_leverage
                  }
                } = result

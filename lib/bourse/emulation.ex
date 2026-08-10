@@ -4,6 +4,11 @@ defmodule Bourse.Emulation do
 
   Uses extracted emulated method metadata to decide when a method should be
   derived at runtime instead of issuing HTTP or WebSocket requests.
+
+  The metadata index is cached in `:persistent_term` for the life of the VM.
+  In a long-running dev session, `recompile/0` reloads modules but does not
+  invalidate that cache — after editing a venue's `emulated_methods` slice,
+  call `Bourse.Emulation.reload!/0` or the stale index keeps answering.
   """
 
   alias Bourse.Error
