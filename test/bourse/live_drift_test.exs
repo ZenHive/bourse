@@ -196,11 +196,14 @@ defmodule Bourse.LiveDriftTest do
     refute source =~ "Application.ensure_all_started(:bourse)"
   end
 
-  test "scheduler is isolated from commit events and uploads its report on failure" do
+  test "the manual-only fallback lane is isolated from commit events and uploads its report on failure" do
     workflow = File.read!(".github/workflows/live-drift.yml")
     mix_project = File.read!("mix.exs")
 
-    assert workflow =~ "schedule:"
+    # The scheduled lane runs from the always-on operator host (workbench task
+    # 527); the GitHub job stays manual-only, so a re-added cron trigger here is
+    # a regression toward the retired duplicate lane.
+    refute workflow =~ "schedule:"
     assert workflow =~ "workflow_dispatch:"
     refute workflow =~ "pull_request:"
     refute workflow =~ "push:"

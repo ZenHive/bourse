@@ -1,11 +1,11 @@
 name: Live provider drift
 
-# The always-on operator host also runs this lane with unrestricted provider
-# reachability. The GitHub-hosted schedule retains its egress allowlist for
-# live requests while still checking every mutable contract artifact.
+# The scheduled weekly lane runs from the always-on operator host (workbench
+# task 527): full ten-venue live drift with unrestricted provider reachability
+# plus the mutable contract-artifact check (mix ccxt.authority_check --online).
+# This GitHub-hosted job is a manual-only fallback — its egress allowlist
+# tolerates the venues that geo-block GitHub runner IPs.
 on:
-  schedule:
-    - cron: "17 4 * * 1"
   workflow_dispatch:
 
 permissions:
