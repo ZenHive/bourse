@@ -12,6 +12,7 @@ defmodule Bourse.ResponseParser do
     "TRX" => %{"primary" => "TRX", "secondary" => "TRC20"},
     "BTC" => %{"primary" => "BTC", "secondary" => "BRC20"}
   }
+  @milliseconds_per_hour 3_600_000
 
   @type parser_config :: map()
   @type context :: map() | keyword()
@@ -280,6 +281,7 @@ defmodule Bourse.ResponseParser do
       |> truncate(rule["truncate"])
       |> truncate_to_market_price_precision(rule, context)
       |> coerce(rule["coercion"])
+      |> format_value(rule["format"])
     end
   end
 
@@ -1149,6 +1151,12 @@ defmodule Bourse.ResponseParser do
         nil
     end
   end
+
+  defp format_value(value, "funding_interval_milliseconds")
+       when is_integer(value) and value > 0 and rem(value, @milliseconds_per_hour) == 0,
+       do: Integer.to_string(div(value, @milliseconds_per_hour)) <> "h"
+
+  defp format_value(_value, "funding_interval_milliseconds"), do: nil
 
   defp format_value(value, _format), do: value
 

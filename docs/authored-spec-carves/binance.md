@@ -6,6 +6,60 @@ Append-only schema confrontations for Binance spot. Follow the allocation and ev
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance spot carve record.
 
+## 2026-08-10 — futures cadence and generic USD-M routing (Tasks 573–575)
+
+**C-T573a — Current funding rates join the provider's per-symbol cadence (task 573).
+Outcome: CONFIRM venue.** Binance's official
+[Funding Rate Info](https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Get-Funding-Rate-Info)
+contract publishes `fundingIntervalHours` for symbols whose cadence is adjusted and states that
+the default interval is eight hours. `fetchFundingRate` therefore joins its `premiumIndex` row to
+`fundingInfo` by native symbol, normalizes the provider value to a duration token such as `4h`,
+and uses `8h` only when the provider returns no adjusted row. Live demo FAPI returned `8h` for
+BTCUSDT; the pre-change unified result had `interval: nil`.
+
+**C-T574a — Conditional USD-M orders use the Algo Order API and preserve unified order
+controls (task 574). Outcome: CONFIRM provider endpoint move.** Binance's official
+[New Algo Order](https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/New-Algo-Order)
+contract places conditional orders at `POST /fapi/v1/algoOrder` with
+`algoType=CONDITIONAL` and `triggerPrice`. Unified `trigger_price` and `stop_loss_price` select
+that route; `time_in_force`, `reduce_only`, and the trigger reach the signed request. A live
+stop-limit remained `NEW` with the requested trigger, `reduceOnly=true`, and `GTC`. The legacy
+`POST /fapi/v1/order` returned provider error `-4120` directing clients to the Algo API.
+
+**C-T574b — Margin-mode and cancel-all writes are symbol-scoped FAPI calls (task 574).
+Outcome: CONFIRM venue.** The provider's
+[Change Margin Type](https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Change-Margin-Type)
+contract requires `symbol` and `marginType` (`ISOLATED` or `CROSSED`); the
+[Cancel All Open Orders](https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Cancel-All-Open-Orders)
+contract requires `symbol` and returns a `code=200` acknowledgement rather than an order.
+Live calls changed ETHUSDT in both directions, canceled three resting FAPI orders, and returned
+zero open orders afterward.
+
+**C-T575 — `fetchBalance(type: :swap)` is the canonical generic-Binance USD-M wallet read
+(task 575). Outcome: CONFIRM market-family routing.** On the multi-market `binance` client,
+`:spot` selects `/api/v3/account`, `:swap` selects `/fapi/v3/account`, and
+`:delivery` selects `/dapi/v1/account`; all three succeeded on their provider sandboxes.
+`:margin` is a named sandbox exclusion because Spot Testnet exposes no SAPI host. The generic
+`fetchSwapBalance` capability remains unsupported; consumers use `fetchBalance(type: :swap)`.
+The accepted-request golden pins `demo-fapi.binance.com/fapi/v3/account`, preventing a silent
+return to the Spot wallet.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T573a","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M Funding Rate Info contract"},"observed_evidence":{"kind":"live_venue","reference":"Live demo-fapi BTCUSDT premiumIndex plus fundingInfo returned unified interval 8h on 2026-08-10"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
+<!-- carve-evidence-status
+{"carve_id":"C-T574a","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M New Algo Order contract"},"observed_evidence":{"kind":"recorded_venue","reference":"Live resting ETHUSDT conditional lifecycle plus test/fixtures/exchange_accepted_requests/binance/create_order.json; legacy endpoint error -4120 observed live"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
+<!-- carve-evidence-status
+{"carve_id":"C-T574b","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M Change Margin Type and Cancel All Open Orders contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"Live ETHUSDT margin changes and resting-order cancellation plus set_margin_mode/cancel_all_orders accepted-request goldens"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
+<!-- carve-evidence-status
+{"carve_id":"C-T575","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance Spot, USD-M Account Information V3, and COIN-M Account Information contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"Live spot/USD-M/COIN-M sandbox balance probes plus test/fixtures/exchange_accepted_requests/binance/fetch_balance.json"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-04 — documented order-status coverage (Task 538)
 
 **C-T538b — Spot order statuses cover Binance's complete published vocabulary (task 538).

@@ -25,6 +25,10 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
   @acceptance_nonce_offset_ms 1
   @binance_order_history_limit 25
   @binance_order_history_window_ms 3_600_000
+  @binance_conditional_order_amount 0.02
+  @binance_conditional_trigger_ratio 0.85
+  @binance_conditional_limit_ratio 0.84
+  @binance_conditional_price_decimal_places 2
   @derive_subaccount_id 144_422
   @bybit_order_amount 0.1444444234234234
   @bybit_price_ratio 0.99
@@ -155,7 +159,17 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
   end
 
   defp profiles_for("alpaca"), do: [alpaca_market_profile(), alpaca_trader_profile()]
-  defp profiles_for("binance"), do: [binance_balance_profile(), binance_order_history_profile()]
+
+  defp profiles_for("binance") do
+    [
+      binance_balance_profile(),
+      binance_order_history_profile(),
+      binance_conditional_order_profile(),
+      binance_margin_mode_profile(),
+      binance_cancel_all_orders_profile()
+    ]
+  end
+
   defp profiles_for(venue), do: [profile(venue)]
 
   defp profile!(venue, method) do
@@ -183,11 +197,13 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
   end
 
   defp binance_balance_profile do
-    build_profile("binance", :fetch_balance, "api/v3/account", "testnet.binance.vision", :binance,
+    build_profile("binance", :fetch_balance, "fapi/v3/account", "demo-fapi.binance.com", :binanceusdm,
       sandbox: true,
+      params: %{"type" => :swap},
       sensitive_headers: ["x-mbx-apikey"],
       sensitive_query: ["signature"],
-      business_success: "HTTP 2xx account payload without an error code"
+      stub_body: %{"assets" => [], "positions" => []},
+      business_success: "HTTP 2xx USD-M account payload without an error code"
     )
   end
 
@@ -199,6 +215,51 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
       sensitive_query: ["signature"],
       stub_body: [],
       business_success: "HTTP 2xx filtered order-history list without an error code"
+    )
+  end
+
+  defp binance_conditional_order_profile do
+    build_profile("binance", :create_order, "fapi/v1/algoOrder", "demo-fapi.binance.com", :binanceusdm,
+      sandbox: true,
+      params: :binance_conditional_order,
+      sensitive_headers: ["x-mbx-apikey"],
+      sensitive_query: ["signature"],
+      stub_body: %{
+        "algoId" => 1,
+        "algoStatus" => "NEW",
+        "algoType" => "CONDITIONAL",
+        "orderType" => "STOP",
+        "symbol" => "ETHUSDT"
+      },
+      symbol: "ETH/USDT:USDT",
+      business_success: "HTTP 2xx resting conditional order with an algo id; accepted order cancelled"
+    )
+  end
+
+  defp binance_margin_mode_profile do
+    build_profile("binance", :set_margin_mode, "fapi/v1/marginType", "demo-fapi.binance.com", :binanceusdm,
+      sandbox: true,
+      params: %{"margin_mode" => "cross", "symbol" => "ETH/USDT:USDT"},
+      sensitive_headers: ["x-mbx-apikey"],
+      sensitive_query: ["signature"],
+      stub_body: %{"code" => 200, "msg" => "success"},
+      business_success: "code=200 margin-mode update; original isolated mode restored"
+    )
+  end
+
+  defp binance_cancel_all_orders_profile do
+    build_profile(
+      "binance",
+      :cancel_all_orders,
+      "fapi/v1/allOpenOrders",
+      "demo-fapi.binance.com",
+      :binanceusdm,
+      sandbox: true,
+      params: %{"symbol" => "ETH/USDT:USDT"},
+      sensitive_headers: ["x-mbx-apikey"],
+      sensitive_query: ["signature"],
+      stub_body: %{"code" => 200, "msg" => "The operation of cancel all open order is done."},
+      business_success: "code=200 symbol-scoped cancel-all acknowledgement"
     )
   end
 
@@ -403,6 +464,35 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     {:ok, params, %{}}
   end
 
+  defp request_params(exchange, %{params: :binance_conditional_order}) do
+    case Bourse.Binance.fapiPublic_get_ticker_24hr(exchange, %{"symbol" => "ETHUSDT"}) do
+      {:ok, %{body: %{"lastPrice" => last_price}}} ->
+        case Float.parse(last_price) do
+          {last, ""} ->
+            trigger_price = binance_conditional_price(last, @binance_conditional_trigger_ratio)
+            limit_price = binance_conditional_price(last, @binance_conditional_limit_ratio)
+
+            {:ok,
+             %{
+               "amount" => @binance_conditional_order_amount,
+               "price" => limit_price,
+               "reduce_only" => true,
+               "side" => "sell",
+               "symbol" => "ETH/USDT:USDT",
+               "time_in_force" => "GTC",
+               "trigger_price" => trigger_price,
+               "type" => "limit"
+             }, %{}}
+
+          _other ->
+            {:error, :binance_conditional_order_inputs_unavailable}
+        end
+
+      _other ->
+        {:error, :binance_conditional_order_inputs_unavailable}
+    end
+  end
+
   defp request_params(_exchange, %{params: params}) when is_map(params), do: {:ok, params, %{}}
 
   defp request_params(exchange, %{params: :lighter_closed_orders, symbol: symbol}) do
@@ -460,6 +550,13 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     else
       _other -> {:error, :hyperliquid_order_inputs_unavailable}
     end
+  end
+
+  defp binance_conditional_price(last, ratio) do
+    last
+    |> Kernel.*(ratio)
+    |> Float.floor(@binance_conditional_price_decimal_places)
+    |> :erlang.float_to_binary(decimals: @binance_conditional_price_decimal_places)
   end
 
   defp frozen_clock do
@@ -558,46 +655,57 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
   defp normalize_request_body(body), do: IO.iodata_to_binary(body)
 
   defp accepted_response(profile, %{status: status, body: body}) when status in @accepted_http_statuses do
-    accepted_business_response(profile.venue, body)
+    accepted_business_response(profile, body)
   end
 
   defp accepted_response(_profile, _response), do: {:error, :exchange_did_not_accept_request}
 
-  defp accepted_business_response("binance", body) when is_map(body) do
+  defp accepted_business_response(%{venue: "binance", method: :create_order, symbol: symbol}, %{"algoId" => id}) do
+    {:ok, {:binance_algo_order, id, symbol}}
+  end
+
+  defp accepted_business_response(%{venue: "binance", method: :set_margin_mode}, %{"code" => 200}) do
+    {:ok, {:binance_margin_mode, "isolated", "ETH/USDT:USDT"}}
+  end
+
+  defp accepted_business_response(%{venue: "binance", method: :cancel_all_orders}, %{"code" => 200}), do: {:ok, nil}
+
+  defp accepted_business_response(%{venue: "binance"}, body) when is_map(body) do
     if Map.has_key?(body, "code"), do: {:error, :venue_business_failure}, else: {:ok, nil}
   end
 
-  defp accepted_business_response("binance", body) when is_list(body), do: {:ok, nil}
+  defp accepted_business_response(%{venue: "binance"}, body) when is_list(body), do: {:ok, nil}
 
-  defp accepted_business_response("binancecoinm", body) when is_map(body) do
+  defp accepted_business_response(%{venue: "binancecoinm"}, body) when is_map(body) do
     if Map.has_key?(body, "code"), do: {:error, :venue_business_failure}, else: {:ok, nil}
   end
 
-  defp accepted_business_response("binanceusdm", body) when is_map(body) do
+  defp accepted_business_response(%{venue: "binanceusdm"}, body) when is_map(body) do
     if Map.has_key?(body, "code"), do: {:error, :venue_business_failure}, else: {:ok, nil}
   end
 
-  defp accepted_business_response("alpaca", body) when is_map(body) do
+  defp accepted_business_response(%{venue: "alpaca"}, body) when is_map(body) do
     if Map.has_key?(body, "message"), do: {:error, :venue_business_failure}, else: {:ok, nil}
   end
 
-  defp accepted_business_response("deribit", %{"result" => result} = body) when is_map(result) do
+  defp accepted_business_response(%{venue: "deribit"}, %{"result" => result} = body) when is_map(result) do
     if Map.has_key?(body, "error"), do: {:error, :venue_business_failure}, else: {:ok, nil}
   end
 
-  defp accepted_business_response("okx", %{"code" => "0"}), do: {:ok, nil}
-  defp accepted_business_response("derive", %{"result" => result}) when is_list(result), do: {:ok, nil}
-  defp accepted_business_response("lighter", %{"code" => code}) when code in [200, "200"], do: {:ok, nil}
+  defp accepted_business_response(%{venue: "okx"}, %{"code" => "0"}), do: {:ok, nil}
+  defp accepted_business_response(%{venue: "derive"}, %{"result" => result}) when is_list(result), do: {:ok, nil}
 
-  defp accepted_business_response("bybit", %{"retCode" => 0, "result" => %{"orderId" => id}})
+  defp accepted_business_response(%{venue: "lighter"}, %{"code" => code}) when code in [200, "200"], do: {:ok, nil}
+
+  defp accepted_business_response(%{venue: "bybit"}, %{"retCode" => 0, "result" => %{"orderId" => id}})
        when is_binary(id) and id != "", do: {:ok, {:order, id}}
 
-  defp accepted_business_response("hyperliquid", %{
+  defp accepted_business_response(%{venue: "hyperliquid"}, %{
          "status" => "ok",
          "response" => %{"data" => %{"statuses" => [%{"resting" => %{"oid" => id}} | _]}}
        }), do: {:ok, {:order, to_string(id)}}
 
-  defp accepted_business_response(_venue, _body), do: {:error, :venue_business_failure}
+  defp accepted_business_response(_profile, _body), do: {:error, :venue_business_failure}
 
   defp build_golden(profile, params, replay_context, clock, response, live_request, credentials) do
     replay =
@@ -880,6 +988,25 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
 
     case Bourse.cancel_order(exchange, order_id, opts) do
       {:ok, %Bourse.Order{}} -> :ok
+      _other -> {:error, :cleanup_failed}
+    end
+  end
+
+  defp cleanup(exchange, _profile, {:binance_algo_order, order_id, symbol}) do
+    native_symbol = Bourse.Symbol.to_exchange_id(symbol, exchange)
+
+    case Bourse.Binance.fapiPrivate_delete_algoorder(exchange, %{
+           "algoId" => order_id,
+           "symbol" => native_symbol
+         }) do
+      {:ok, %{status: status}} when status in @accepted_http_statuses -> :ok
+      _other -> {:error, :cleanup_failed}
+    end
+  end
+
+  defp cleanup(exchange, _profile, {:binance_margin_mode, margin_mode, symbol}) do
+    case Bourse.set_margin_mode(exchange, margin_mode, symbol) do
+      {:ok, %{"code" => 200}} -> :ok
       _other -> {:error, :cleanup_failed}
     end
   end

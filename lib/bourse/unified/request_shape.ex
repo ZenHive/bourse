@@ -328,7 +328,7 @@ defmodule Bourse.Unified.RequestShape do
 
   defp put_authored_reference(params, native_key, source, entry, required, js_name, context) do
     validate_unified_source!(entry, source, required, js_name, context)
-    value = Map.get(params, source, Map.get(entry, "default"))
+    value = reference_value(params, source, entry)
 
     cond do
       present?(params, Map.get(entry, "unless_present")) ->
@@ -351,20 +351,40 @@ defmodule Bourse.Unified.RequestShape do
 
   defp validate_unified_source!(_entry, _source, _required, _js_name, _context), do: :ok
 
+  defp reference_value(params, source, entry) do
+    [source | List.wrap(entry["fallback_sources"])]
+    |> Enum.find_value(&Map.get(params, &1))
+    |> case do
+      nil -> Map.get(entry, "default")
+      value -> value
+    end
+  end
+
   defp put_authored_conditional(params, native_key, cases, entry) do
     value =
       Enum.find_value(cases, Map.get(params, Map.get(entry, "source"), Map.get(entry, "default")), fn authored_case ->
         if conditions_match?(params, Map.get(authored_case, "when", %{})), do: Map.get(authored_case, "value")
       end)
 
-    if is_nil(value), do: Map.delete(params, native_key), else: Map.put(params, native_key, value)
+    if is_nil(value) do
+      Map.delete(params, native_key)
+    else
+      Map.put(params, native_key, transform_authored_value(value, Map.get(entry, "transform")))
+    end
   end
 
   defp drop_authored_sources(params, entries) do
     Enum.reduce(entries, params, fn
-      {native_key, %{"source" => source, "retain_source" => true}}, acc when source != native_key -> acc
-      {native_key, %{"source" => source}}, acc when source != native_key -> Map.delete(acc, source)
-      _, acc -> acc
+      {_native_key, %{"retain_source" => true}}, acc ->
+        acc
+
+      {native_key, %{"source" => source} = entry}, acc ->
+        [source | List.wrap(entry["fallback_sources"])]
+        |> Enum.reject(&(&1 == native_key))
+        |> Enum.reduce(acc, &Map.delete(&2, &1))
+
+      _, acc ->
+        acc
     end)
   end
 
@@ -405,9 +425,14 @@ defmodule Bourse.Unified.RequestShape do
     Enum.all?(conditions, fn
       {key, "present"} -> present?(params, key)
       {key, "absent"} -> not present?(params, key)
-      {key, expected} -> Map.get(params, key) == expected
+      {key, expected} -> authored_value_matches?(Map.get(params, key), expected)
     end)
   end
+
+  defp authored_value_matches?(actual, expected) when is_atom(actual) and is_binary(expected),
+    do: Atom.to_string(actual) == expected
+
+  defp authored_value_matches?(actual, expected), do: actual == expected
 
   defp present?(_params, nil), do: false
   defp present?(params, key), do: not is_nil(Map.get(params, key))

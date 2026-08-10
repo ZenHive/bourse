@@ -1,15 +1,15 @@
 {
   "acceptance": {
-    "business_success": "HTTP 2xx account payload without an error code",
-    "capture_date": "2026-07-22",
-    "captured_at": "2026-07-22T10:20:56.892Z",
-    "endpoint": "api/v3/account",
-    "host": "testnet.binance.vision",
+    "business_success": "HTTP 2xx USD-M account payload without an error code",
+    "capture_date": "2026-08-10",
+    "captured_at": "2026-08-10T02:43:28.996Z",
+    "endpoint": "fapi/v3/account",
+    "host": "demo-fapi.binance.com",
     "http_status": 200,
     "method": "fetch_balance",
     "venue": "binance"
   },
-  "label": "Oracle: exchange-acceptance tier 1 vs binance fetch_balance accepted 2026-07-22 (api/v3/account @ testnet.binance.vision, HTTP 200, HTTP 2xx account payload without an error code).",
+  "label": "Oracle: exchange-acceptance tier 1 vs binance fetch_balance accepted 2026-08-10 (fapi/v3/account @ demo-fapi.binance.com, HTTP 200, HTTP 2xx USD-M account payload without an error code).",
   "oracle": "exchange_acceptance",
   "provenance": {
     "credentials": "committed fixture credentials",
@@ -18,9 +18,11 @@
   "replay": {
     "call_opts": {},
     "method": "fetch_balance",
-    "nonce_override": 1784715656561,
-    "params": {},
-    "timestamp_ms_override": 1784715656560
+    "nonce_override": 1786329806868,
+    "params": {
+      "type": "swap"
+    },
+    "timestamp_ms_override": 1786329806867
   },
   "request": {
     "body": null,
@@ -35,7 +37,7 @@
       ]
     ],
     "method": "GET",
-    "url": "https://testnet.binance.vision/api/v3/account?timestamp=1784715656560&signature=284034a4fd3dd68eed6b2d73eb0a4b20887e60185366173f261357c7980ae63d"
+    "url": "https://demo-fapi.binance.com/fapi/v3/account?timestamp=1786329806867&signature=57b9cfe565a4fb5e7c3e1850130c550d0974c62fc67116c4dcaedfb749de5aa4"
   },
   "schema_version": 1
 }

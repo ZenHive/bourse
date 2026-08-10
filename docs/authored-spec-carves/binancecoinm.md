@@ -7,6 +7,20 @@ Append-only schema confrontations for Binance COIN-M. Follow the allocation and 
 venue-specific decision in the self-contained runtime document. Provider-owned evidence is
 indexed by `priv/authority/binancecoinm/manifest.json`.
 
+## 2026-08-10 — current funding-rate cadence (Task 573)
+
+**C-T573c — COIN-M current funding rates join DAPI funding info by native symbol (task 573).
+Outcome: CONFIRM venue.** Binance's official
+[COIN-M Funding Rate Info](https://developers.binance.com/docs/derivatives/coin-margined-futures/market-data/rest-api/Get-Funding-Rate-Info)
+contract publishes `fundingIntervalHours` for adjusted symbols and defines eight hours as the
+default. `fetchFundingRate` joins `premiumIndex` to that provider row, emitting the normalized
+duration and falling back to `8h` only when the symbol has no adjustment. Live demo DAPI changed
+BTCUSD_PERP from `interval: nil` to `interval: "8h"`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T573c","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M Funding Rate Info contract"},"observed_evidence":{"kind":"live_venue","reference":"Live demo-dapi BTCUSD_PERP premiumIndex plus fundingInfo returned unified interval 8h on 2026-08-10"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-07-26 — market-scoped error classification (Task 515)
 
 **C-T515c — DAPI error codes select the inverse exception map (task 515). Outcome: CONFIRMED for

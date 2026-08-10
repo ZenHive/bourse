@@ -23,6 +23,147 @@ defmodule Bourse.BinanceAuthoredSpecTest do
              "fapiPrivateV3_get_account"
   end
 
+  test "funding rates join the provider's per-symbol cadence for every Binance futures surface" do
+    for {exchange_id, symbol, native_symbol, premium_path, funding_path} <- [
+          {"binance", "BTC/USDT:USDT", "BTCUSDT", "/fapi/v1/premiumIndex", "/fapi/v1/fundingInfo"},
+          {"binanceusdm", "BTC/USDT:USDT", "BTCUSDT", "/fapi/v1/premiumIndex", "/fapi/v1/fundingInfo"},
+          {"binancecoinm", "BTC/USD:BTC", "BTCUSD_PERP", "/dapi/v1/premiumIndex", "/dapi/v1/fundingInfo"}
+        ] do
+      {requests, stub} = funding_rate_stub(native_symbol, premium_path, funding_path, 4)
+
+      assert {:ok, %Bourse.FundingRate{symbol: ^symbol, interval: "4h"}} =
+               Bourse.fetch_funding_rate(Exchange.new!(exchange_id, sandbox: true), symbol, plug: {Req.Test, stub})
+
+      assert requests |> RequestCollector.requests() |> Enum.map(& &1.conn.request_path) ==
+               [premium_path, funding_path]
+    end
+  end
+
+  test "Binance funding rates use the documented default when no adjusted per-symbol row exists" do
+    {requests, stub} = funding_rate_stub("BTCUSDT", "/fapi/v1/premiumIndex", "/fapi/v1/fundingInfo", nil)
+
+    assert {:ok, %Bourse.FundingRate{interval: "8h"}} =
+             Bourse.fetch_funding_rate(Exchange.new!("binance", sandbox: true), "BTC/USDT:USDT", plug: {Req.Test, stub})
+
+    assert length(RequestCollector.requests(requests)) == 2
+  end
+
+  test "Binance USD-M conditional order opts reach the Algo Order request" do
+    for {trigger_opt, trigger_value} <- [trigger_price: "3000", stop_loss_price: "2900"] do
+      {requests, stub} = order_stub()
+      exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
+
+      opts =
+        [
+          {trigger_opt, trigger_value},
+          time_in_force: "GTC",
+          reduce_only: true,
+          plug: {Req.Test, stub},
+          timestamp_ms_override: 1_700_000_000_000
+        ]
+
+      assert {:ok, %Bourse.Order{}} =
+               Bourse.create_order(exchange, "ETH/USDT:USDT", "market", "sell", 1, opts)
+
+      assert_order_request(requests, :post, "/fapi/v1/algoOrder", fn params ->
+        assert params["algoType"] == "CONDITIONAL"
+        assert params["quantity"] == "1"
+        assert params["reduceOnly"] == "true"
+        assert params["side"] == "SELL"
+        assert params["symbol"] == "ETHUSDT"
+        assert params["timeInForce"] == "GTC"
+        assert params["triggerPrice"] == trigger_value
+        assert params["type"] == "STOP_MARKET"
+        refute Map.has_key?(params, Atom.to_string(trigger_opt))
+      end)
+    end
+  end
+
+  test "Binance USD-M margin mode and cancel-all calls send the futures symbol" do
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
+
+    {margin_requests, margin_stub} = body_capturing_stub(%{"code" => 200, "msg" => "success"})
+
+    assert {:ok, %{"code" => 200}} =
+             Bourse.set_margin_mode(exchange, "isolated", "ETH/USDT:USDT",
+               plug: {Req.Test, margin_stub},
+               timestamp_ms_override: 1_700_000_000_000
+             )
+
+    assert_order_request(margin_requests, :post, "/fapi/v1/marginType", fn params ->
+      assert params["marginType"] == "ISOLATED"
+      assert params["symbol"] == "ETHUSDT"
+    end)
+
+    {cross_requests, cross_stub} = body_capturing_stub(%{"code" => 200, "msg" => "success"})
+
+    assert {:ok, %{"code" => 200}} =
+             Bourse.set_margin_mode(exchange, "cross", "ETH/USDT:USDT",
+               plug: {Req.Test, cross_stub},
+               timestamp_ms_override: 1_700_000_000_000
+             )
+
+    assert_order_request(cross_requests, :post, "/fapi/v1/marginType", fn params ->
+      assert params["marginType"] == "CROSSED"
+      assert params["symbol"] == "ETHUSDT"
+    end)
+
+    {cancel_requests, cancel_stub} = body_capturing_stub(%{"code" => 200, "msg" => "done"})
+
+    assert {:ok, %{"code" => 200, "msg" => "done"}} =
+             Bourse.cancel_all_orders(exchange,
+               symbol: "ETH/USDT:USDT",
+               plug: {Req.Test, cancel_stub},
+               timestamp_ms_override: 1_700_000_000_000
+             )
+
+    assert_order_request(cancel_requests, :delete, "/fapi/v1/allOpenOrders", fn params ->
+      assert params["symbol"] == "ETHUSDT"
+    end)
+  end
+
+  test "Binance balance atom types select the intended account family" do
+    credentials = [api_key: "key", secret: "secret", sandbox: true]
+
+    {swap_requests, swap_stub} = account_stub(futures_balance_body())
+
+    assert {:ok, %Balance{total: %{"USDT" => 5.0}}} =
+             Bourse.fetch_balance(Exchange.new!("binance", credentials),
+               type: :swap,
+               plug: {Req.Test, swap_stub},
+               timestamp_ms_override: 1_700_000_000_000
+             )
+
+    assert_account_request(swap_requests, "/fapi/v3/account")
+
+    {delivery_requests, delivery_stub} = account_stub(futures_balance_body())
+
+    assert {:ok, %Balance{total: %{"USDT" => 5.0}}} =
+             Bourse.fetch_balance(Exchange.new!("binance", credentials),
+               type: :delivery,
+               plug: {Req.Test, delivery_stub},
+               timestamp_ms_override: 1_700_000_000_000
+             )
+
+    assert_account_request(delivery_requests, "/dapi/v1/account")
+
+    {spot_requests, spot_stub} = account_stub(%{"balances" => [%{"asset" => "USDT", "free" => "5", "locked" => "0"}]})
+
+    assert {:ok, %Balance{total: %{"USDT" => 5.0}}} =
+             Bourse.fetch_balance(Exchange.new!("binance", credentials),
+               type: :spot,
+               plug: {Req.Test, spot_stub},
+               timestamp_ms_override: 1_700_000_000_000
+             )
+
+    assert_account_request(spot_requests, "/api/v3/account")
+
+    assert {:error, %Bourse.Error{type: :not_supported, message: message}} =
+             Bourse.fetch_balance(Exchange.new!("binance", credentials), type: :margin)
+
+    assert message == "No base URL for section sapi on binance (sandbox)"
+  end
+
   test "Binance spot selectors reach private and SAPI endpoint families" do
     exchange = Exchange.new!("binance", api_key: "key", secret: "secret")
 
@@ -2312,6 +2453,69 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     assert parse_network.("BSC") == "BEP20"
     assert parse_network.("BTC") == "BTC"
     assert parse_network.("ARBITRUM") == "ARBITRUM"
+  end
+
+  defp funding_rate_stub(native_symbol, premium_path, funding_path, interval_hours) do
+    stub = unique_stub("binance_funding_rate")
+    {:ok, requests} = RequestCollector.start_link()
+
+    premium = %{
+      "indexPrice" => "3000",
+      "lastFundingRate" => "0.0001",
+      "markPrice" => "3001",
+      "nextFundingTime" => 1_700_028_800_000,
+      "symbol" => native_symbol,
+      "time" => 1_700_000_000_000
+    }
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+
+      body =
+        case conn.request_path do
+          ^premium_path when premium_path == "/dapi/v1/premiumIndex" ->
+            [premium]
+
+          ^premium_path ->
+            premium
+
+          ^funding_path when is_integer(interval_hours) ->
+            [%{"fundingIntervalHours" => interval_hours, "symbol" => native_symbol}]
+
+          ^funding_path ->
+            []
+        end
+
+      Req.Test.json(conn, body)
+    end)
+
+    {requests, stub}
+  end
+
+  defp body_capturing_stub(body) do
+    stub = unique_stub("binance_body")
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      {conn, _raw_body} = RequestCollector.capture_with_body(requests, conn)
+      Req.Test.json(conn, body)
+    end)
+
+    {requests, stub}
+  end
+
+  defp futures_balance_body do
+    %{
+      "assets" => [
+        %{
+          "asset" => "USDT",
+          "availableBalance" => "4",
+          "initialMargin" => "1",
+          "walletBalance" => "5"
+        }
+      ],
+      "positions" => []
+    }
   end
 
   defp account_stub(body) do

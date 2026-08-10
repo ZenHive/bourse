@@ -1,0 +1,50 @@
+{
+  "acceptance": {
+    "business_success": "HTTP 2xx resting conditional order with an algo id; accepted order cancelled",
+    "capture_date": "2026-08-10",
+    "captured_at": "2026-08-10T02:43:31.538Z",
+    "endpoint": "fapi/v1/algoOrder",
+    "host": "demo-fapi.binance.com",
+    "http_status": 200,
+    "method": "create_order",
+    "venue": "binance"
+  },
+  "label": "Oracle: exchange-acceptance tier 1 vs binance create_order accepted 2026-08-10 (fapi/v1/algoOrder @ demo-fapi.binance.com, HTTP 200, HTTP 2xx resting conditional order with an algo id; accepted order cancelled).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "create_order",
+    "nonce_override": 1786329810966,
+    "params": {
+      "amount": 0.02,
+      "price": "1613.70",
+      "reduce_only": true,
+      "side": "sell",
+      "symbol": "ETH/USDT:USDT",
+      "time_in_force": "GTC",
+      "trigger_price": "1632.91",
+      "type": "limit"
+    },
+    "timestamp_ms_override": 1786329810965
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "content-type",
+        "application/x-www-form-urlencoded"
+      ],
+      [
+        "x-mbx-apikey",
+        "key"
+      ]
+    ],
+    "method": "POST",
+    "url": "https://demo-fapi.binance.com/fapi/v1/algoOrder?algoType=CONDITIONAL&price=1613.70&quantity=0.02&reduceOnly=true&side=SELL&symbol=ETHUSDT&timeInForce=GTC&timestamp=1786329810965&triggerPrice=1632.91&type=STOP&signature=b0db8836636b83bf7e81475007ea23439f873a56c77cd531c4b48229e9250e43"
+  },
+  "schema_version": 1
+}

@@ -18,6 +18,17 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
   # Far enough below market to rest without filling, inside Binance's
   # PERCENT_PRICE_BY_SIDE band (a 20_000 bid trips -1013; observed 2026-07-17).
   @usdm_lifecycle_price 50_000
+  @usdm_conditional_symbol "ETH/USDT:USDT"
+  @usdm_conditional_native_symbol "ETHUSDT"
+  @usdm_conditional_amount 0.02
+  @usdm_conditional_trigger_ratio 0.85
+  @usdm_conditional_limit_ratio 0.84
+  @usdm_conditional_price_decimal_places 2
+  @cancel_all_order_count 2
+  @legacy_conditional_probe_amount "0.001"
+  @legacy_conditional_probe_price "1"
+  @legacy_conditional_error_code -4120
+  @bad_symbol_error_code -1121
   @spot_write_amount 0.001
   @spot_write_price 50_000
   @poll_attempts 10
@@ -82,6 +93,25 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
     )
   end
 
+  test "Binance-family and OKX current funding rates publish provider cadence" do
+    probes = [
+      {:binance, "BTC/USDT:USDT", true},
+      {:binanceusdm, "BTC/USDT:USDT", true},
+      {:binancecoinm, "BTC/USD:BTC", true},
+      {:okx, "BTC/USDT:USDT", true}
+    ]
+
+    Enum.each(probes, fn {exchange_id, symbol, sandbox} ->
+      exchange = build_exchange(exchange_id, sandbox: sandbox)
+
+      assert {:ok, %Bourse.FundingRate{interval: interval}} =
+               Bourse.fetch_funding_rate(exchange, symbol)
+
+      assert is_binary(interval) and Regex.match?(~r/^\d+h$/, interval),
+             "#{exchange_id} returned invalid funding interval #{inspect(interval)}"
+    end)
+  end
+
   test "signed spot and USD-M balances parse funded account rows" do
     spot_credentials = require_credentials!(:binance, url: "https://testnet.binance.vision")
 
@@ -91,7 +121,7 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
     spot = build_exchange(:binance, credentials: spot_credentials, sandbox: true)
     usdm = build_exchange(:binanceusdm, credentials: usdm_credentials, sandbox: true)
 
-    assert {:ok, %Balance{} = spot_balance} = Bourse.fetch_balance(spot)
+    assert {:ok, %Balance{} = spot_balance} = Bourse.fetch_balance(spot, type: :spot)
     assert spot_balance.total["BTC"] == 1.0
     assert spot_balance.total["ETH"] == 1.0
     assert spot_balance.total["USDT"] == 10_000.0
@@ -105,6 +135,22 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
     assert usdm_balance.total["BNB"] == 0
     assert Enum.all?(usdm_balance.used, fn {_asset, used} -> used >= 0 end)
 
+    binance_futures = build_exchange(:binance, credentials: usdm_credentials, sandbox: true)
+
+    assert {:ok, %Balance{} = swap_balance} = Bourse.fetch_balance(binance_futures, type: :swap)
+    assert is_number(swap_balance.total["USDT"])
+
+    assert {:ok, %Balance{} = delivery_balance} =
+             Bourse.fetch_balance(binance_futures, type: :delivery)
+
+    assert is_map(delivery_balance.total)
+
+    assert {:error,
+            %Error{
+              type: :not_supported,
+              message: "No base URL for section sapi on binance (sandbox)"
+            }} = Bourse.fetch_balance(binance_futures, type: :margin)
+
     bad_signature =
       Credentials.new!(
         api_key: usdm_credentials.api_key,
@@ -112,9 +158,13 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
       )
 
     invalid_usdm = build_exchange(:binanceusdm, credentials: bad_signature, sandbox: true)
+    invalid_binance = build_exchange(:binance, credentials: bad_signature, sandbox: true)
 
     assert {:error, %Error{type: :authentication_error, code: -1022}} =
              Bourse.fetch_balance(invalid_usdm)
+
+    assert {:error, %Error{type: :authentication_error, code: -1022}} =
+             Bourse.fetch_balance(invalid_binance, type: :swap)
   end
 
   @tag :dangerous
@@ -497,6 +547,124 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
              Bourse.cancel_all_orders(exchange, symbol: "INVALID/USDT:USDT")
   end
 
+  @tag :dangerous
+  test "generic Binance USD-M writes use the Algo, margin, and symbol-scoped cancel contracts" do
+    credentials =
+      require_credentials!(:binance, sandbox_key: :futures, url: "https://demo.binance.com/en/my/settings/api-management")
+
+    exchange = build_exchange(:binance, credentials: credentials, sandbox: true)
+
+    assert {:error, %Error{code: @legacy_conditional_error_code}} =
+             Bourse.Binance.fapiPrivate_post_order(exchange, %{
+               "quantity" => @legacy_conditional_probe_amount,
+               "reduceOnly" => "true",
+               "side" => "SELL",
+               "stopPrice" => @legacy_conditional_probe_price,
+               "symbol" => @usdm_conditional_native_symbol,
+               "type" => "STOP_MARKET"
+             })
+
+    assert {:error, %Error{type: :bad_symbol, code: @bad_symbol_error_code}} =
+             Bourse.set_margin_mode(exchange, "isolated", "INVALID/USDT:USDT")
+
+    assert {:error, %Error{type: :bad_symbol, code: @bad_symbol_error_code}} =
+             Bourse.cancel_all_orders(exchange, symbol: "INVALID/USDT:USDT")
+
+    assert {:ok, %Bourse.MarginMode{margin_mode: original_margin_mode}} =
+             Bourse.fetch_margin_mode(exchange, @usdm_conditional_symbol, type: :swap)
+
+    alternate_margin_mode = if original_margin_mode == "isolated", do: "cross", else: "isolated"
+
+    try do
+      assert {:ok, %{"code" => 200}} =
+               Bourse.set_margin_mode(exchange, alternate_margin_mode, @usdm_conditional_symbol)
+
+      assert {:ok, %Bourse.MarginMode{margin_mode: ^alternate_margin_mode}} =
+               Bourse.fetch_margin_mode(exchange, @usdm_conditional_symbol, type: :swap)
+    after
+      assert {:ok, %{"code" => 200}} =
+               Bourse.set_margin_mode(exchange, original_margin_mode, @usdm_conditional_symbol)
+    end
+
+    {trigger_price, limit_price} = conditional_prices!(exchange)
+    resting_ids = create_regular_resting_orders!(exchange, limit_price)
+
+    try do
+      assert {:ok, open_orders} = Bourse.fetch_open_orders(exchange, symbol: @usdm_conditional_symbol)
+      assert Enum.all?(resting_ids, fn id -> Enum.any?(open_orders, &(&1.id == id)) end)
+
+      assert {:ok, %{"code" => 200}} =
+               Bourse.cancel_all_orders(exchange, symbol: @usdm_conditional_symbol)
+
+      assert {:ok, []} = Bourse.fetch_open_orders(exchange, symbol: @usdm_conditional_symbol)
+    after
+      assert {:ok, %{"code" => 200}} =
+               Bourse.cancel_all_orders(exchange, symbol: @usdm_conditional_symbol)
+    end
+
+    assert {:ok, %Order{}} =
+             Bourse.create_order(
+               exchange,
+               @usdm_conditional_symbol,
+               "market",
+               "buy",
+               @usdm_conditional_amount
+             )
+
+    try do
+      assert {:ok,
+              %Order{
+                reduce_only: true,
+                status: "open",
+                time_in_force: "GTC",
+                trigger_price: parsed_trigger
+              }} =
+               Bourse.create_order(
+                 exchange,
+                 @usdm_conditional_symbol,
+                 "limit",
+                 "sell",
+                 @usdm_conditional_amount,
+                 price: limit_price,
+                 reduce_only: true,
+                 time_in_force: "GTC",
+                 trigger_price: trigger_price
+               )
+
+      assert parsed_trigger == String.to_float(trigger_price)
+
+      assert {:ok, %{body: [algo_order]}} =
+               Bourse.Binance.fapiPrivate_get_openalgoorders(exchange, %{
+                 "symbol" => @usdm_conditional_native_symbol
+               })
+
+      assert algo_order["algoStatus"] == "NEW"
+      assert algo_order["reduceOnly"] == true
+      assert algo_order["timeInForce"] == "GTC"
+      assert algo_order["triggerPrice"] == trigger_price
+    after
+      assert {:ok, %{status: @http_ok_status}} =
+               Bourse.Binance.fapiPrivate_delete_algoopenorders(exchange, %{
+                 "symbol" => @usdm_conditional_native_symbol
+               })
+
+      assert {:ok, %Order{reduce_only: true}} =
+               Bourse.create_order(
+                 exchange,
+                 @usdm_conditional_symbol,
+                 "market",
+                 "sell",
+                 @usdm_conditional_amount,
+                 reduce_only: true
+               )
+
+      assert {:ok, %{body: []}} =
+               Bourse.Binance.fapiPrivateV3_get_positionrisk(exchange, %{
+                 "symbol" => @usdm_conditional_native_symbol
+               })
+    end
+  end
+
   test "every live EAPI option id round-trips through the authored option carve" do
     exchange = Bourse.Exchange.new!("binance")
     rows = live_eapi_option_rows!()
@@ -571,6 +739,42 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
     assert Enum.all?(rows, fn [timestamp, open, high, low, close, volume] ->
              is_integer(timestamp) and Enum.all?([open, high, low, close, volume], &is_number/1)
            end)
+  end
+
+  defp conditional_prices!(exchange) do
+    assert {:ok, %Bourse.Ticker{} = ticker} =
+             Bourse.fetch_ticker(exchange, @usdm_conditional_symbol)
+
+    mark_price = ticker.mark_price || ticker.last
+    assert is_number(mark_price) and mark_price > 0
+
+    trigger_price = conditional_price(mark_price, @usdm_conditional_trigger_ratio)
+    limit_price = conditional_price(mark_price, @usdm_conditional_limit_ratio)
+    {trigger_price, limit_price}
+  end
+
+  defp conditional_price(mark_price, ratio) do
+    mark_price
+    |> Kernel.*(ratio)
+    |> Float.floor(@usdm_conditional_price_decimal_places)
+    |> :erlang.float_to_binary(decimals: @usdm_conditional_price_decimal_places)
+  end
+
+  defp create_regular_resting_orders!(exchange, price) do
+    Enum.map(1..@cancel_all_order_count, fn _index ->
+      assert {:ok, %Order{id: id}} =
+               Bourse.create_order(
+                 exchange,
+                 @usdm_conditional_symbol,
+                 "limit",
+                 "buy",
+                 @usdm_conditional_amount,
+                 price: price,
+                 time_in_force: "GTC"
+               )
+
+      id
+    end)
   end
 
   defp assert_trade_rows(rows) when is_list(rows) and rows != [] do

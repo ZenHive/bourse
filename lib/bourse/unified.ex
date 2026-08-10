@@ -19,6 +19,7 @@ defmodule Bourse.Unified do
   alias Bourse.Symbol
   alias Bourse.Unified.Descriptor
   alias Bourse.Unified.FieldMaps
+  alias Bourse.Unified.FundingInterval
   alias Bourse.Unified.OrderPrecision
   alias Bourse.Unified.ReadParse
   alias Bourse.Unified.RequestShape
@@ -764,7 +765,10 @@ defmodule Bourse.Unified do
 
         with {:ok, response} <- dispatch_single(exchange, capability_name, config, params, opts) do
           parsed = parse_unified_response(exchange, module, method_atom, js_name, params, response, config)
-          maybe_resolve_binance_spot_ticker_symbols(parsed, exchange, module, method_atom, opts)
+
+          parsed
+          |> maybe_resolve_binance_spot_ticker_symbols(exchange, module, method_atom, opts)
+          |> FundingInterval.enrich(exchange, method_atom, params, opts)
         end
     end
   end
@@ -2431,8 +2435,20 @@ defmodule Bourse.Unified do
   end
 
   defp selection_conditions_match?(conditions, context) do
-    Enum.all?(conditions, fn {key, value} -> context[key] == value end)
+    Enum.all?(conditions, fn
+      {key, "present"} -> not is_nil(context[key])
+      {key, "absent"} -> is_nil(context[key])
+      {key, value} -> selection_value_matches?(context[key], value)
+    end)
   end
+
+  defp selection_value_matches?(actual, expected) when is_atom(actual) and is_binary(expected),
+    do: Atom.to_string(actual) == expected
+
+  defp selection_value_matches?(actual, expected) when is_binary(actual) and is_atom(expected),
+    do: actual == Atom.to_string(expected)
+
+  defp selection_value_matches?(actual, expected), do: actual == expected
 
   defp selection_context(params, opts, exchange) do
     market_type = infer_market_type(params, opts)
@@ -2522,6 +2538,8 @@ defmodule Bourse.Unified do
   defp selection_symbol(_params), do: nil
 
   defp normalize_market_type(type) when type in [:spot, :swap, :future, :option], do: type
+  defp normalize_market_type(:linear), do: :swap
+  defp normalize_market_type(type) when type in [:inverse, :delivery], do: :future
 
   defp normalize_market_type("spot"), do: :spot
   defp normalize_market_type("swap"), do: :swap

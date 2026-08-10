@@ -75,6 +75,28 @@ defmodule Bourse.OkxAuthoredSpecTest do
     assert balance.used["ETH"] == 0.5
   end
 
+  test "funding rate derives its cadence from the provider's adjacent funding timestamps" do
+    body = %{
+      "code" => "0",
+      "data" => [
+        %{
+          "fundingRate" => "0.0001",
+          "fundingTime" => "1700000000000",
+          "instId" => "BTC-USDT-SWAP",
+          "nextFundingTime" => "1700028800000"
+        }
+      ],
+      "msg" => ""
+    }
+
+    requests = collector()
+
+    assert {:ok, %Bourse.FundingRate{interval: "8h"}} =
+             Bourse.fetch_funding_rate(Exchange.new!("okx"), "BTC/USDT:USDT", plug: {Req.Test, stub_json(requests, body)})
+
+    assert_path!(requests, "/api/v5/public/funding-rate")
+  end
+
   describe "response slices (task 258)" do
     # C-T427a — OKX signs a commission negative; we normalize to the positive-is-cost
     # convention every other authored venue already produces. Raw stays in `info`.

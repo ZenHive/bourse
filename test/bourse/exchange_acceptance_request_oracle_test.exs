@@ -69,6 +69,39 @@ defmodule Bourse.ExchangeAcceptanceRequestOracleTest do
     end)
   end
 
+  test "Binance futures goldens pin the repaired host, endpoint, and signed params" do
+    balance = binance_golden!("fetch_balance")
+    assert_request(balance, "demo-fapi.binance.com", "/fapi/v3/account", "GET", %{})
+
+    create = binance_golden!("create_order")
+
+    assert_request(create, "demo-fapi.binance.com", "/fapi/v1/algoOrder", "POST", %{
+      "algoType" => "CONDITIONAL",
+      "reduceOnly" => "true",
+      "side" => "SELL",
+      "symbol" => "ETHUSDT",
+      "timeInForce" => "GTC",
+      "type" => "STOP"
+    })
+
+    create_query = request_query(create)
+    assert is_binary(create_query["triggerPrice"])
+    assert is_binary(create_query["price"])
+
+    margin = binance_golden!("set_margin_mode")
+
+    assert_request(margin, "demo-fapi.binance.com", "/fapi/v1/marginType", "POST", %{
+      "marginType" => "CROSSED",
+      "symbol" => "ETHUSDT"
+    })
+
+    cancel = binance_golden!("cancel_all_orders")
+
+    assert_request(cancel, "demo-fapi.binance.com", "/fapi/v1/allOpenOrders", "DELETE", %{
+      "symbol" => "ETHUSDT"
+    })
+  end
+
   test "every golden freezes distinct timestamp and nonce overrides" do
     Enum.each(@goldens, fn golden ->
       timestamp_ms = get_in(golden, ["replay", "timestamp_ms_override"])
@@ -128,5 +161,36 @@ defmodule Bourse.ExchangeAcceptanceRequestOracleTest do
 
     assert {:error, :sensitive_material_present} =
              ExchangeAcceptanceFixtures.validate_no_material({["safe", secret]}, [secret])
+  end
+
+  defp binance_golden!(method) do
+    Enum.find(@goldens, fn golden ->
+      get_in(golden, ["acceptance", "venue"]) == "binance" and
+        get_in(golden, ["acceptance", "method"]) == method
+    end) || flunk("missing Binance #{method} accepted-request golden")
+  end
+
+  defp assert_request(golden, host, path, method, expected_query) do
+    request = Map.fetch!(golden, "request")
+    uri = URI.parse(Map.fetch!(request, "url"))
+
+    assert request["method"] == method
+    assert uri.host == host
+    assert uri.path == path
+
+    query = request_query(golden)
+
+    Enum.each(expected_query, fn {key, expected} ->
+      assert query[key] == expected
+    end)
+  end
+
+  defp request_query(golden) do
+    golden
+    |> get_in(["request", "url"])
+    |> URI.parse()
+    |> Map.fetch!(:query)
+    |> URI.decode_query()
+    |> Map.drop(["signature", "timestamp"])
   end
 end

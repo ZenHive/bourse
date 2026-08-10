@@ -103,7 +103,7 @@ defmodule Bourse.Unified.ReadParse do
          _parser,
          _list_return?
        )
-       when id in ["binanceusdm", "binancecoinm"] and code in [200, "200"] do
+       when id in ["binance", "binanceusdm", "binancecoinm"] and code in [200, "200"] do
     {:ok, body}
   end
 

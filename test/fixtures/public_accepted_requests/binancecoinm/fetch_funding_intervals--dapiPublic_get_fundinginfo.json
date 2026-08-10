@@ -1,0 +1,33 @@
+{
+  "acceptance": {
+    "branch": "dapiPublic_get_fundinginfo",
+    "capture_date": "2026-08-10",
+    "captured_at": "2026-08-10T02:51:51.646Z",
+    "endpoint": "fundingInfo",
+    "host": "dapi.binance.com",
+    "http_status": 200,
+    "method": "fetchFundingIntervals",
+    "sections": [
+      "dapiPublic"
+    ],
+    "venue": "binancecoinm"
+  },
+  "oracle": "public_exchange_acceptance",
+  "replay": {
+    "markets": [],
+    "pagination_cursors": [
+      null
+    ],
+    "params": {},
+    "timestamp_ms_override": 1786330311646
+  },
+  "requests": [
+    {
+      "body": null,
+      "headers": [],
+      "method": "GET",
+      "url": "https://dapi.binance.com/dapi/v1/fundingInfo"
+    }
+  ],
+  "schema_version": 1
+}

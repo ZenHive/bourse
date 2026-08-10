@@ -1,5 +1,5 @@
 {
-  "count": 165,
+  "count": 166,
   "exclusion_count": 96,
   "exclusions": [
     {
@@ -1059,7 +1059,7 @@
       "venue": "okx"
     }
   ],
-  "generated_at": "2026-07-26T05:57:29Z",
+  "generated_at": "2026-08-10T02:51:51Z",
   "goldens": [
     {
       "branch": "market_public_get_v1beta3_crypto__loc__bars",
@@ -1128,6 +1128,20 @@
       "http_status": 200,
       "method": "fetchFundingRate",
       "path": "binancecoinm/fetch_funding_rate--dapiPublic_get_premiumindex.json",
+      "sections": [
+        "dapiPublic"
+      ],
+      "venue": "binancecoinm"
+    },
+    {
+      "branch": "dapiPublic_get_fundinginfo",
+      "capture_date": "2026-08-10",
+      "captured_at": "2026-08-10T02:51:51.646Z",
+      "endpoint": "fundingInfo",
+      "host": "dapi.binance.com",
+      "http_status": 200,
+      "method": "fetchFundingIntervals",
+      "path": "binancecoinm/fetch_funding_intervals--dapiPublic_get_fundinginfo.json",
       "sections": [
         "dapiPublic"
       ],

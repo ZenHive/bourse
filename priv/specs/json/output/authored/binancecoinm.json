@@ -995,7 +995,7 @@
       "fetchPosition": false,
       "fetchMySettlementHistory": false,
       "fetchLeverageTiers": false,
-      "fetchFundingIntervals": false,
+      "fetchFundingIntervals": true,
       "createTrailingPercentOrder": false,
       "createLimitSellOrder": false,
       "createStopLimitOrder": false,
@@ -9191,7 +9191,9 @@
       "fetchPosition": [],
       "fetchMySettlementHistory": [],
       "fetchLeverageTiers": [],
-      "fetchFundingIntervals": [],
+      "fetchFundingIntervals": [
+        "dapiPublicGetFundingInfo"
+      ],
       "createTrailingPercentOrder": [],
       "createLimitSellOrder": [],
       "createStopLimitOrder": [],
@@ -11170,7 +11172,11 @@
             "format": null,
             "key": "interestRate"
           },
-          "interval": null,
+          "interval": {
+            "coercion": "safeString",
+            "format": "funding_interval",
+            "key": "fundingIntervalHours"
+          },
           "markPrice": {
             "coercion": "safeNumber",
             "format": null,

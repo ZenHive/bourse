@@ -2,6 +2,7 @@ defmodule Bourse.ResponseParserTest do
   use ExUnit.Case, async: true
 
   alias Bourse.Balance
+  alias Bourse.FundingRate
   alias Bourse.Market
   alias Bourse.Order
   alias Bourse.Position
@@ -51,6 +52,7 @@ defmodule Bourse.ResponseParserTest do
     {"safeInteger", :absent} => {"1714923704000", 1_714_923_704_000, Ticker, "timestamp"},
     {"safeInteger", nil} => {"1714923704000", 1_714_923_704_000, Ticker, "timestamp"},
     {"safeInteger", "ms"} => {"1714923704000", 1_714_923_704_000, Ticker, "timestamp"},
+    {"safeInteger", "funding_interval_milliseconds"} => {"28800000", "8h", FundingRate, "interval"},
     {"safeInteger2", nil} => {"1714923704000", 1_714_923_704_000, Ticker, "timestamp"},
     {"safeInteger2", "ms"} => {"1714923704000", 1_714_923_704_000, Ticker, "timestamp"},
     {"safeNumber", :absent} => {"50000.5", 50_000.5, Ticker, "last"},
@@ -1760,8 +1762,8 @@ defmodule Bourse.ResponseParserTest do
           ] do
         mapping = %{"interval" => %{"key" => "interval", "format" => format}}
 
-        assert {:ok, %Bourse.FundingRate{interval: ^expected}} =
-                 ResponseParser.apply_mappings(%{"interval" => value}, mapping, target: Bourse.FundingRate)
+        assert {:ok, %FundingRate{interval: ^expected}} =
+                 ResponseParser.apply_mappings(%{"interval" => value}, mapping, target: FundingRate)
       end
     end
 

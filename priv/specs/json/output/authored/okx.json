@@ -13622,7 +13622,16 @@
           "indexPrice": null,
           "info": null,
           "interestRate": null,
-          "interval": null,
+          "interval": {
+            "coercion": "safeInteger",
+            "format": "funding_interval_milliseconds",
+            "kind": "computed",
+            "op": "sub",
+            "operands": [
+              "nextFundingTime",
+              "fundingTime"
+            ]
+          },
           "markPrice": null,
           "nextFundingDatetime": null,
           "nextFundingRate": {

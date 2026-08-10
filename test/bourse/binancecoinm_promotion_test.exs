@@ -11,6 +11,7 @@ defmodule Bourse.BinancecoinmPromotionTest do
     cancelOrder
     createOrder
     fetchBalance
+    fetchFundingIntervals
     fetchFundingRate
     fetchFundingRateHistory
     fetchFundingRates

@@ -6,6 +6,19 @@ Append-only schema confrontations for Binance USD-M. Follow the allocation and e
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance USD-M carve record.
 
+## 2026-08-10 — current funding-rate cadence (Task 573)
+
+**C-T573b — A direct current-rate read applies the existing per-symbol funding-interval carve (task 573).
+Outcome: CONFIRM venue.** C-T539b established `fundingIntervalHours` as the provider cadence
+source, but `fetchFundingRate` reads `premiumIndex`, whose row does not carry that field. The
+direct read now joins `GET /fapi/v1/fundingInfo` by native symbol and uses the documented `8h`
+default only when no adjusted-symbol row exists. Live demo FAPI changed the unified BTCUSDT
+result from `interval: nil` to `interval: "8h"`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T573b","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M Funding Rate Info contract cited by C-T539b"},"observed_evidence":{"kind":"live_venue","reference":"Live binanceusdm BTCUSDT premiumIndex plus fundingInfo returned unified interval 8h on 2026-08-10"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-04 — documented order-status coverage (Task 538)
 
 **C-T538c — USD-M order statuses cover Binance's complete published vocabulary (task 538).

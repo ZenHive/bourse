@@ -71,14 +71,66 @@ roadmap.
 
 ---
 
+## 2026-08-10 — binance USD-M: `create_order/6` dropped conditional controls and used the retired endpoint
+
+**Status (2026-08-10):** ✅ **fixed** by workbench task 574. Unified `time_in_force`,
+`reduce_only`, `trigger_price`, and `stop_loss_price` now reach the signed request; conditional
+orders route to `POST /fapi/v1/algoOrder`. A live ETHUSDT stop-limit remained `NEW` with its
+requested trigger, `reduceOnly=true`, and `GTC`; it was canceled and the test position closed.
+The accepted-request golden pins the complete request, and provider error `-4120` is pinned on
+the retired `/fapi/v1/order` route.
+
+**Observed:** a requested stop could be sent as a plain market sell with neither trigger nor
+reduce-only protection, opening a position immediately. `time_in_force` also disappeared unless
+the caller bypassed the unified option with native `timeInForce` params.
+
+**Consumer impact:** real-money-relevant; an intended protective stop could execute immediately
+as an opening market order.
+
+## 2026-08-10 — binance USD-M: `set_margin_mode/3` omitted `symbol`
+
+**Status (2026-08-10):** ✅ **fixed** by workbench task 574. The unified symbol now becomes
+`symbol=ETHUSDT`, and margin modes map to the provider values `ISOLATED` / `CROSSED`. Live changes
+in both directions returned code 200 and the account was restored to isolated mode. The signed
+request is pinned by an accepted-request golden; invalid symbols return provider error `-1121`.
+
+**Observed:** every unified argument variant returned `-1102` because the signed FAPI request
+omitted `symbol`, while raw `POST /fapi/v1/marginType` succeeded with the same credentials.
+
+## 2026-08-10 — binance USD-M: `cancel_all_orders/2` used the wrong route and parsed its acknowledgement as an order
+
+**Status (2026-08-10):** ✅ **fixed** by workbench task 574. The generic Binance client now sends
+`DELETE /fapi/v1/allOpenOrders?symbol=ETHUSDT`, treats the provider's `code=200` body as a success
+acknowledgement, and preserves bad-symbol error `-1121`. Live verification canceled three
+resting orders and `fetch_open_orders` returned zero afterward; the signed request has an
+accepted-request golden.
+
+**Observed:** the unified call returned an all-nil-order parse error and left three resting FAPI
+orders untouched; the equivalent raw symbol-scoped DELETE canceled them.
+
+## 2026-08-10 — binance: `fetch_balance(type: :swap)` selected the Spot Testnet wallet
+
+**Status (2026-08-10):** ✅ **fixed** by workbench task 575. Atom market types now participate in
+endpoint selection: `:spot` reaches Spot, `:swap` reaches USD-M FAPI, and `:delivery` reaches
+COIN-M DAPI. All three succeeded live with their matching sandbox keys. `:margin` is a named
+exclusion because Spot Testnet has no SAPI host. `fetch_balance(type: :swap)` is the documented
+canonical generic-client path; its accepted-request golden pins `demo-fapi.binance.com/fapi/v3/account`.
+
+**Observed:** futures keys received a 401 invalid-key response from the Spot host, while Spot
+keys returned the Spot asset list. `fetch_swap_balance` was also unsupported, leaving no unified
+route to the USD-M wallet.
+
 ## 2026-08-07 — binance: `fetch_funding_rate/2` leaves `interval` nil
 
-**Status (2026-08-10):** 📋 triaged — filed as workbench **task 573** ("binance
-fetch_funding_rate leaves interval nil — the C5 funding-interval carve was never confronted for
-binance"), open. Out of scope for trackers 550/551 (those own parse coverage; this is a
-field-level carve). Belongs to the C5 funding-interval carve register in
-`docs/authored-spec-carves/`, where bybit and hyperliquid were confronted and binance never was;
-task 573 also checks okx and the binance futures venues, which this entry left unprobed.
+**Status (2026-08-10):** ✅ **fixed** by workbench task 573. Binance, Binance USD-M, and Binance
+COIN-M now join the current premium-index row to the provider's per-symbol funding-info cadence,
+using the documented eight-hour default only when no adjusted row exists. OKX derives cadence
+from its provider `fundingTime` / `nextFundingTime` pair. Live sandbox calls returned `interval:
+"8h"` on all four surfaces; the pre-change Binance result with `interval: nil` was observed first.
+
+> **Update 2026-08-10:** The C5 decisions are registered under task 573 in the four venue carve
+> registers. The trading_dashboard history-timestamp workaround is no longer needed for these
+> current-rate reads.
 
 **Call:** `Bourse.Exchange.new("binance")` → `Bourse.fetch_funding_rate(client, "BTC/USDT:USDT")`
 

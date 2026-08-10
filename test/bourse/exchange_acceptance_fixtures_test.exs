@@ -5,7 +5,12 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
 
   @credential_env %{
     "alpaca" => ~w(ALPACA_API_KEY ALPACA_API_SECRET),
-    "binance" => ~w(BINANCE_TESTNET_API_KEY BINANCE_TESTNET_API_SECRET),
+    "binance" => ~w(
+        BINANCE_TESTNET_API_KEY
+        BINANCE_TESTNET_API_SECRET
+        BINANCE_FUTURES_TEST_API_KEY
+        BINANCE_FUTURES_TEST_API_SECRET
+      ),
     "binancecoinm" => ~w(BINANCE_FUTURES_TEST_API_KEY BINANCE_FUTURES_TEST_API_SECRET),
     "binanceusdm" => ~w(BINANCE_FUTURES_TEST_API_KEY BINANCE_FUTURES_TEST_API_SECRET),
     "bybit" => ~w(BYBIT_DEMO_API_KEY BYBIT_DEMO_API_SECRET),
@@ -97,17 +102,31 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
     end
   end
 
-  test "injected transport records Binance account and filtered order-history reads" do
+  test "injected transport records every Binance signed request profile" do
+    stub = {__MODULE__, :binance_acceptance_setup, System.unique_integer([:positive])}
+
+    Req.Test.stub(stub, fn conn ->
+      case {conn.method, conn.request_path} do
+        {"GET", "/fapi/v1/ticker/24hr"} -> Req.Test.json(conn, %{"lastPrice" => "2000"})
+        _other -> Req.Test.json(conn, %{"code" => 200, "msg" => "success"})
+      end
+    end)
+
     with_env(@credential_env["binance"], "offline-binance-credential", fn ->
-      assert {:ok, goldens} =
-               ExchangeAcceptanceFixtures.record_all("binance", transport: &success_transport/1)
+      with_http_stub(stub, fn ->
+        assert {:ok, goldens} =
+                 ExchangeAcceptanceFixtures.record_all("binance", transport: &success_transport/1)
 
-      assert Enum.map(goldens, &get_in(&1, ["acceptance", "method"])) == [
-               "fetch_balance",
-               "fetch_orders"
-             ]
+        assert Enum.map(goldens, &get_in(&1, ["acceptance", "method"])) == [
+                 "fetch_balance",
+                 "fetch_orders",
+                 "create_order",
+                 "set_margin_mode",
+                 "cancel_all_orders"
+               ]
 
-      assert Enum.all?(goldens, &(ExchangeAcceptanceFixtures.replay(&1) == :ok))
+        assert Enum.all?(goldens, &(ExchangeAcceptanceFixtures.replay(&1) == :ok))
+      end)
     end)
   end
 
@@ -184,6 +203,12 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
       case {request.url.host, request.url.path} do
         {"testnet.binance.vision", "/api/v3/allOrders"} ->
           []
+
+        {"demo-fapi.binance.com", "/fapi/v1/algoOrder"} ->
+          %{"algoId" => 1, "algoStatus" => "NEW", "symbol" => "ETHUSDT"}
+
+        {"demo-fapi.binance.com", path} when path in ["/fapi/v1/marginType", "/fapi/v1/allOpenOrders"] ->
+          %{"code" => 200, "msg" => "success"}
 
         {host, _path} when host in ["testnet.binance.vision", "demo-fapi.binance.com", "demo-dapi.binance.com"] ->
           %{"assets" => [], "balances" => [], "positions" => []}

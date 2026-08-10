@@ -6,6 +6,20 @@ Append-only schema confrontations for OKX. Follow the allocation and evidence ru
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete OKX carve record.
 
+## 2026-08-10 — current funding-rate cadence (Task 573)
+
+**C-T573d — Funding cadence is the provider's adjacent funding-time delta (task 573).
+Outcome: CONFIRM venue.** OKX's official
+[Get Funding Rate](https://www.okx.com/docs-v5/en/#public-data-rest-api-get-funding-rate)
+response publishes `fundingTime` and `nextFundingTime` for the instrument. The unified interval
+is their positive millisecond difference normalized to hours, rather than a venue literal. Live
+international demo returned an eight-hour delta for BTC-USDT-SWAP and the unified result now
+contains `interval: "8h"` instead of nil.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T573d","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 Get Funding Rate response contract"},"observed_evidence":{"kind":"live_venue","reference":"Live www.okx.com simulated-trading BTC-USDT-SWAP fundingTime/nextFundingTime delta returned unified interval 8h on 2026-08-10"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-04 — documented order-status coverage (Task 538)
 
 **C-T538e — OKX order statuses cover the provider's published vocabulary (task 538).

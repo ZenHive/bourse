@@ -1,0 +1,44 @@
+{
+  "acceptance": {
+    "business_success": "code=200 margin-mode update; original isolated mode restored",
+    "capture_date": "2026-08-10",
+    "captured_at": "2026-08-10T02:43:32.467Z",
+    "endpoint": "fapi/v1/marginType",
+    "host": "demo-fapi.binance.com",
+    "http_status": 200,
+    "method": "set_margin_mode",
+    "venue": "binance"
+  },
+  "label": "Oracle: exchange-acceptance tier 1 vs binance set_margin_mode accepted 2026-08-10 (fapi/v1/marginType @ demo-fapi.binance.com, HTTP 200, code=200 margin-mode update; original isolated mode restored).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "set_margin_mode",
+    "nonce_override": 1786329812077,
+    "params": {
+      "margin_mode": "cross",
+      "symbol": "ETH/USDT:USDT"
+    },
+    "timestamp_ms_override": 1786329812076
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "content-type",
+        "application/x-www-form-urlencoded"
+      ],
+      [
+        "x-mbx-apikey",
+        "key"
+      ]
+    ],
+    "method": "POST",
+    "url": "https://demo-fapi.binance.com/fapi/v1/marginType?marginType=CROSSED&symbol=ETHUSDT&timestamp=1786329812076&signature=a2a793faf65a629ed31a746f425f65f588e8b5bce7aceeb94ae701376e694024"
+  },
+  "schema_version": 1
+}

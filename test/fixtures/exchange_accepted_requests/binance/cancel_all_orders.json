@@ -1,0 +1,43 @@
+{
+  "acceptance": {
+    "business_success": "code=200 symbol-scoped cancel-all acknowledgement",
+    "capture_date": "2026-08-10",
+    "captured_at": "2026-08-10T02:43:33.501Z",
+    "endpoint": "fapi/v1/allOpenOrders",
+    "host": "demo-fapi.binance.com",
+    "http_status": 200,
+    "method": "cancel_all_orders",
+    "venue": "binance"
+  },
+  "label": "Oracle: exchange-acceptance tier 1 vs binance cancel_all_orders accepted 2026-08-10 (fapi/v1/allOpenOrders @ demo-fapi.binance.com, HTTP 200, code=200 symbol-scoped cancel-all acknowledgement).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "cancel_all_orders",
+    "nonce_override": 1786329812935,
+    "params": {
+      "symbol": "ETH/USDT:USDT"
+    },
+    "timestamp_ms_override": 1786329812934
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "content-type",
+        "application/x-www-form-urlencoded"
+      ],
+      [
+        "x-mbx-apikey",
+        "key"
+      ]
+    ],
+    "method": "DELETE",
+    "url": "https://demo-fapi.binance.com/fapi/v1/allOpenOrders?symbol=ETHUSDT&timestamp=1786329812934&signature=c072f198a5644e14acd95fb62472874cbd7a28b7a6db8af3551bc8bea0daaf34"
+  },
+  "schema_version": 1
+}

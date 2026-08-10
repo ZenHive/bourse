@@ -24,7 +24,7 @@ defmodule Bourse.OracleProvenance.DerivationTest do
     assert %{host_classes: [:testnet_demo], semantic: false} =
              slot(reports["binance"], "auth.sign_recipe.private")
 
-    refute verified?(reports["binance"], "auth.sign_recipe.fapiPrivateV3")
+    assert verified?(reports["binance"], "auth.sign_recipe.fapiPrivateV3")
     assert verified?(reports["binanceusdm"], "auth.sign_recipe.fapiPrivateV3")
     refute verified?(reports["binanceusdm"], "auth.sign_recipe.private")
 
@@ -48,7 +48,7 @@ defmodule Bourse.OracleProvenance.DerivationTest do
     assert verified?(reports["bybit"], "request_shape.createOrder")
     assert verified?(reports["hyperliquid"], "request_shape.createOrder")
 
-    assert route_sections("binance", "fetch_balance") == ["private"]
+    assert route_sections("binance", "fetch_balance") == ["fapiPrivateV3"]
     assert route_sections("binanceusdm", "fetch_balance") == ["fapiPrivateV3"]
     assert route_sections("hyperliquid", "create_order") == ["private"]
     assert route_sections("alpaca", "fetch_ticker") == ["market", "private"]
