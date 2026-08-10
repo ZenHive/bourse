@@ -884,7 +884,7 @@
       "fetchTransactions": false,
       "fetchLiquidations": false,
       "createMarketBuyOrderWithCost": false,
-      "setMarginMode": false,
+      "setMarginMode": true,
       "fetchOrderBook": true,
       "fetchTransfer": false,
       "createStopOrder": false,
@@ -3797,9 +3797,21 @@
             "source": "amount",
             "source_class": "unified_param"
           },
+          "reduceOnly": {
+            "source": "reduce_only",
+            "source_class": "optional"
+          },
           "side": {
             "source": "side",
             "source_class": "unified_param",
+            "transform": "uppercase"
+          },
+          "timeInForce": {
+            "fallback_sources": [
+              "timeInForce"
+            ],
+            "source": "time_in_force",
+            "source_class": "optional",
             "transform": "uppercase"
           },
           "type": {
@@ -3858,15 +3870,163 @@
             "reason": "identifier_reference",
             "value": null
           }
+        },
+        "setMarginMode": {
+          "marginType": {
+            "cases": [
+              {
+                "value": "CROSSED",
+                "when": {
+                  "margin_mode": "cross"
+                }
+              },
+              {
+                "value": "ISOLATED",
+                "when": {
+                  "margin_mode": "isolated"
+                }
+              }
+            ],
+            "kind": "conditional",
+            "source": "margin_mode",
+            "source_class": "unified_param"
+          },
+          "symbol": {
+            "source": "symbol",
+            "source_class": "unified_param"
+          }
+        },
+        "endpoint_overrides": {
+          "cancelOrder": {
+            "algoOrder": {
+              "_omit": [
+                "orderId"
+              ],
+              "algoId": {
+                "source": "id",
+                "source_class": "unified_param"
+              }
+            }
+          },
+          "createOrder": {
+            "algoOrder": {
+              "algoType": {
+                "kind": "literal",
+                "value": "CONDITIONAL"
+              },
+              "triggerPrice": {
+                "fallback_sources": [
+                  "stop_loss_price",
+                  "take_profit_price"
+                ],
+                "source": "trigger_price",
+                "source_class": "optional"
+              },
+              "type": {
+                "cases": [
+                  {
+                    "value": "TAKE_PROFIT_MARKET",
+                    "when": {
+                      "stop_loss_price": "absent",
+                      "take_profit_price": "present",
+                      "type": "market"
+                    }
+                  },
+                  {
+                    "value": "TAKE_PROFIT",
+                    "when": {
+                      "stop_loss_price": "absent",
+                      "take_profit_price": "present",
+                      "type": "limit"
+                    }
+                  },
+                  {
+                    "value": "TAKE_PROFIT_MARKET",
+                    "when": {
+                      "type": "take_profit_market"
+                    }
+                  },
+                  {
+                    "value": "TAKE_PROFIT",
+                    "when": {
+                      "type": "take_profit"
+                    }
+                  },
+                  {
+                    "value": "STOP_MARKET",
+                    "when": {
+                      "take_profit_price": "absent",
+                      "type": "market"
+                    }
+                  },
+                  {
+                    "value": "STOP",
+                    "when": {
+                      "take_profit_price": "absent",
+                      "type": "limit"
+                    }
+                  },
+                  {
+                    "value": "STOP_MARKET",
+                    "when": {
+                      "type": "stop_market"
+                    }
+                  },
+                  {
+                    "value": "STOP",
+                    "when": {
+                      "type": "stop"
+                    }
+                  }
+                ],
+                "kind": "conditional",
+                "source": "type",
+                "source_class": "unified_param",
+                "transform": "uppercase"
+              }
+            }
+          }
         }
       },
       "endpoint_selection": {
-        "cancelOrder": {
+        "cancelAllOrders": {
+          "book_routes": [
+            {
+              "endpoints": [
+                "dapiPrivate_delete_allopenorders",
+                "dapiPrivate_delete_algoopenorders"
+              ],
+              "mode": "broadcast",
+              "when": {
+                "market_family": "inverse"
+              }
+            }
+          ],
           "consume": [
             "subType",
             "sub_type"
           ],
-          "default": "fapiPrivate_delete_order",
+          "default": "dapiPrivate_delete_allopenorders",
+          "rules": []
+        },
+        "cancelOrder": {
+          "book_routes": [
+            {
+              "endpoints": [
+                "dapiPrivate_delete_order",
+                "dapiPrivate_delete_algoorder"
+              ],
+              "mode": "first_success",
+              "when": {
+                "market_family": "inverse"
+              }
+            }
+          ],
+          "consume": [
+            "subType",
+            "sub_type"
+          ],
+          "default": "dapiPrivate_delete_order",
           "rules": [
             {
               "endpoint": "private_delete_order",
@@ -3893,8 +4053,31 @@
             "subType",
             "sub_type"
           ],
-          "default": "fapiPrivate_post_order",
+          "default": "dapiPrivate_post_order",
           "rules": [
+            {
+              "endpoint": "dapiPrivate_post_algoorder",
+              "when": {
+                "market_family": "inverse",
+                "trigger_price": "present"
+              }
+            },
+            {
+              "endpoint": "dapiPrivate_post_algoorder",
+              "when": {
+                "market_family": "inverse",
+                "stop_loss_price": "present",
+                "take_profit_price": "absent"
+              }
+            },
+            {
+              "endpoint": "dapiPrivate_post_algoorder",
+              "when": {
+                "market_family": "inverse",
+                "stop_loss_price": "absent",
+                "take_profit_price": "present"
+              }
+            },
             {
               "endpoint": "private_post_order",
               "when": {
@@ -4239,12 +4422,24 @@
           ]
         },
         "fetchOpenOrders": {
+          "book_routes": [
+            {
+              "endpoints": [
+                "dapiPrivate_get_openorders",
+                "dapiPrivate_get_openalgoorders"
+              ],
+              "mode": "merge",
+              "when": {
+                "market_family": "inverse"
+              }
+            }
+          ],
           "consume": [
             "type",
             "subType",
             "sub_type"
           ],
-          "default": "fapiPrivate_get_openorders",
+          "default": "dapiPrivate_get_openorders",
           "rules": [
             {
               "endpoint": "dapiPrivate_get_openorders",
@@ -4590,6 +4785,16 @@
             {
               "http_verb": "DELETE",
               "path_params": [],
+              "path_template": "algoOpenOrders"
+            },
+            {
+              "http_verb": "DELETE",
+              "path_params": [],
+              "path_template": "algoOrder"
+            },
+            {
+              "http_verb": "DELETE",
+              "path_params": [],
               "path_template": "allOpenOrders"
             },
             {
@@ -4616,6 +4821,11 @@
               "http_verb": "GET",
               "path_params": [],
               "path_template": "adlQuantile"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "algoOrder"
             },
             {
               "http_verb": "GET",
@@ -4656,6 +4866,11 @@
               "http_verb": "GET",
               "path_params": [],
               "path_template": "leverageBracket"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [],
+              "path_template": "openAlgoOrders"
             },
             {
               "http_verb": "GET",
@@ -4726,6 +4941,11 @@
               "http_verb": "GET",
               "path_params": [],
               "path_template": "userTrades"
+            },
+            {
+              "http_verb": "POST",
+              "path_params": [],
+              "path_template": "algoOrder"
             },
             {
               "http_verb": "POST",
@@ -9052,7 +9272,9 @@
       "fetchTransactions": [],
       "fetchLiquidations": [],
       "createMarketBuyOrderWithCost": [],
-      "setMarginMode": [],
+      "setMarginMode": [
+        "dapiPrivatePostMarginType"
+      ],
       "fetchOrderBook": [
         "dapiPublicGetDepth"
       ],
@@ -9129,6 +9351,7 @@
       "fetchLongShortRatio": [],
       "fetchCurrenciesWs": [],
       "cancelAllOrders": [
+        "dapiPrivateDeleteAlgoOpenOrders",
         "dapiPrivateDeleteAllOpenOrders"
       ],
       "withdraw": [],
@@ -9149,10 +9372,12 @@
       "swap": [],
       "fetchBidsAsks": [],
       "cancelOrder": [
+        "dapiPrivateDeleteAlgoOrder",
         "dapiPrivateDeleteOrder"
       ],
       "fetchFundingInterval": [],
       "fetchOpenOrders": [
+        "dapiPrivateGetOpenAlgoOrders",
         "dapiPrivateGetOpenOrders"
       ],
       "fetchWithdrawals": [],
@@ -9173,6 +9398,7 @@
       "fetchOpenOrder": [],
       "fetchPremiumIndexOHLCV": [],
       "createOrder": [
+        "dapiPrivatePostAlgoOrder",
         "dapiPrivatePostOrder"
       ],
       "fetchTransactionFees": [],
@@ -16185,6 +16411,8 @@
         },
         "dapiPrivate": {
           "delete": {
+            "algoOpenOrders": 1,
+            "algoOrder": 1,
             "allOpenOrders": 1,
             "batchOrders": 5,
             "listenKey": 1,
@@ -16193,6 +16421,7 @@
           "get": {
             "account": 5,
             "adlQuantile": 5,
+            "algoOrder": 1,
             "allOrders": {
               "cost": 20,
               "noSymbol": 40
@@ -16207,6 +16436,10 @@
             "income/asyn": 5,
             "income/asyn/id": 5,
             "leverageBracket": 1,
+            "openAlgoOrders": {
+              "cost": 1,
+              "noSymbol": 5
+            },
             "openOrder": 1,
             "openOrders": {
               "cost": 1,
@@ -16229,6 +16462,7 @@
             }
           },
           "post": {
+            "algoOrder": 1,
             "batchOrders": 5,
             "countdownCancelAll": 10,
             "leverage": 1,

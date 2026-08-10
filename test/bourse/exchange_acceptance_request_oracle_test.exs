@@ -54,12 +54,13 @@ defmodule Bourse.ExchangeAcceptanceRequestOracleTest do
       assert is_binary(row["host"]) and row["host"] != ""
       assert row["label"] =~ "exchange-acceptance tier 1"
 
-      {_, method} =
-        Enum.find(ExchangeAcceptanceFixtures.profiles(), fn {venue, method} ->
-          venue == row["venue"] and Atom.to_string(method) == row["method"]
+      {_, profile, _method} =
+        Enum.find(ExchangeAcceptanceFixtures.profiles(), fn {venue, profile, method} ->
+          venue == row["venue"] and Atom.to_string(profile) == (row["profile"] || row["method"]) and
+            Atom.to_string(method) == row["method"]
         end)
 
-      assert File.exists?(ExchangeAcceptanceFixtures.fixture_path(row["venue"], method))
+      assert File.exists?(ExchangeAcceptanceFixtures.fixture_path(row["venue"], profile))
     end)
   end
 
@@ -77,8 +78,10 @@ defmodule Bourse.ExchangeAcceptanceRequestOracleTest do
 
     assert_request(create, "demo-fapi.binance.com", "/fapi/v1/algoOrder", "POST", %{
       "algoType" => "CONDITIONAL",
+      "reduceOnly" => "false",
       "side" => "SELL",
       "symbol" => "ETHUSDT",
+      "timeInForce" => "GTC",
       "type" => "TAKE_PROFIT_MARKET"
     })
 
@@ -104,6 +107,69 @@ defmodule Bourse.ExchangeAcceptanceRequestOracleTest do
     assert_request(%{"request" => algo_cancel}, "demo-fapi.binance.com", "/fapi/v1/algoOpenOrders", "DELETE", %{
       "symbol" => "ETHUSDT"
     })
+  end
+
+  test "Binance spot and futures balances retain separate accepted-request profiles" do
+    futures = binance_golden!("fetch_balance")
+    assert_request(futures, "demo-fapi.binance.com", "/fapi/v3/account", "GET", %{})
+
+    spot = binance_golden!("fetch_balance_spot")
+    assert_request(spot, "testnet.binance.vision", "/api/v3/account", "GET", %{})
+  end
+
+  test "dedicated Binance futures goldens pin Algo, margin, and cancel-all wire shapes" do
+    for {venue, host, prefix, symbol, margin_type} <- [
+          {"binanceusdm", "demo-fapi.binance.com", "fapi", "ETHUSDT", "CROSSED"},
+          {"binancecoinm", "demo-dapi.binance.com", "dapi", "BTCUSD_PERP", "ISOLATED"}
+        ] do
+      create = venue_golden!(venue, "create_order")
+
+      assert_request(create, host, "/#{prefix}/v1/algoOrder", "POST", %{
+        "algoType" => "CONDITIONAL",
+        "reduceOnly" => "false",
+        "side" => "SELL",
+        "symbol" => symbol,
+        "timeInForce" => "GTC",
+        "type" => "TAKE_PROFIT_MARKET"
+      })
+
+      assert is_binary(request_query(create)["triggerPrice"])
+
+      margin = venue_golden!(venue, "set_margin_mode")
+
+      assert_request(margin, host, "/#{prefix}/v1/marginType", "POST", %{
+        "marginType" => margin_type,
+        "symbol" => symbol
+      })
+
+      cancel = venue_golden!(venue, "cancel_all_orders")
+      assert_request(cancel, host, "/#{prefix}/v1/allOpenOrders", "DELETE", %{"symbol" => symbol})
+      assert [algo_cancel] = cancel["additional_requests"]
+
+      assert_request(%{"request" => algo_cancel}, host, "/#{prefix}/v1/algoOpenOrders", "DELETE", %{
+        "symbol" => symbol
+      })
+    end
+
+    position_mode = venue_golden!("binanceusdm", "set_position_mode")
+
+    assert_request(position_mode, "demo-fapi.binance.com", "/fapi/v1/positionSide/dual", "POST", %{
+      "dualSidePosition" => "true"
+    })
+  end
+
+  test "Binance spot order golden pins pass-through controls" do
+    spot = binance_golden!("create_order_spot")
+
+    assert_request(spot, "testnet.binance.vision", "/api/v3/order", "POST", %{
+      "newOrderRespType" => "ACK",
+      "side" => "BUY",
+      "symbol" => "BTCUSDT",
+      "timeInForce" => "GTC",
+      "type" => "LIMIT"
+    })
+
+    assert is_binary(request_query(spot)["newClientOrderId"])
   end
 
   test "every golden freezes distinct timestamp and nonce overrides" do
@@ -167,11 +233,18 @@ defmodule Bourse.ExchangeAcceptanceRequestOracleTest do
              ExchangeAcceptanceFixtures.validate_no_material({["safe", secret]}, [secret])
   end
 
-  defp binance_golden!(method) do
+  defp binance_golden!(profile) do
     Enum.find(@goldens, fn golden ->
       get_in(golden, ["acceptance", "venue"]) == "binance" and
-        get_in(golden, ["acceptance", "method"]) == method
-    end) || flunk("missing Binance #{method} accepted-request golden")
+        (get_in(golden, ["acceptance", "profile"]) || get_in(golden, ["acceptance", "method"])) == profile
+    end) || flunk("missing Binance #{profile} accepted-request golden")
+  end
+
+  defp venue_golden!(venue, profile) do
+    Enum.find(@goldens, fn golden ->
+      get_in(golden, ["acceptance", "venue"]) == venue and
+        (get_in(golden, ["acceptance", "profile"]) || get_in(golden, ["acceptance", "method"])) == profile
+    end) || flunk("missing #{venue} #{profile} accepted-request golden")
   end
 
   defp assert_request(golden, host, path, method, expected_query) do

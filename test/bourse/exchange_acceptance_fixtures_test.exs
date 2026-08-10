@@ -19,6 +19,38 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
     "okx" => ~w(OKX_INTL_API_KEY OKX_INTL_API_SECRET OKX_INTL_PASSPHRASE)
   }
 
+  test "catalog exposes every first-class profile and fixture root" do
+    venues = ExchangeAcceptanceFixtures.first_class_venues()
+    profiles = ExchangeAcceptanceFixtures.profiles()
+
+    assert venues == ~w(alpaca binance binancecoinm binanceusdm bybit deribit derive hyperliquid lighter okx)
+    assert {"binance", :fetch_balance, :fetch_balance} in profiles
+    assert {"binance", :fetch_balance_spot, :fetch_balance} in profiles
+    assert {"binance", :create_order, :create_order} in profiles
+    assert {"binancecoinm", :fetch_balance, :fetch_balance} in profiles
+    assert {"binanceusdm", :set_position_mode, :set_position_mode} in profiles
+    assert ExchangeAcceptanceFixtures.fixture_root() =~ "test/fixtures/exchange_accepted_requests"
+
+    assert ExchangeAcceptanceFixtures.manifest_path() ==
+             Path.join(ExchangeAcceptanceFixtures.fixture_root(), "_manifest.json")
+  end
+
+  test "credential material detection rejects nested values without false positives" do
+    secret = "live-secret-material"
+
+    assert {:error, :sensitive_material_present} =
+             ExchangeAcceptanceFixtures.validate_no_material(
+               %{"request" => [%{"headers" => {"authorization", secret}}]},
+               [nil, "", secret]
+             )
+
+    assert :ok =
+             ExchangeAcceptanceFixtures.validate_no_material(
+               %{"request" => [%{"headers" => {"authorization", "fixture-slot"}}]},
+               [nil, "", secret]
+             )
+  end
+
   test "fixture paths distinguish venues with multiple profiles and reject unknown methods" do
     assert_raise ArgumentError, ~r/alpaca has multiple accepted-request profiles/, fn ->
       ExchangeAcceptanceFixtures.fixture_path("alpaca")
@@ -29,6 +61,9 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
     end
 
     assert ExchangeAcceptanceFixtures.fixture_path("deribit") =~ "deribit/fetch_balance.json"
+
+    assert ExchangeAcceptanceFixtures.fixture_path("binance", :fetch_balance_spot) =~
+             "binance/fetch_balance_spot.json"
 
     assert_raise ArgumentError, ~r/unknown accepted-request profile/, fn ->
       ExchangeAcceptanceFixtures.fixture_path("deribit", :fetch_ticker)
@@ -85,7 +120,7 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
   end
 
   test "injected transport records signed reads without reaching the network" do
-    for venue <- ~w(binancecoinm binanceusdm deribit okx) do
+    for venue <- ~w(deribit okx) do
       with_env(@credential_env[venue], &credential_value(venue, &1), fn ->
         result = ExchangeAcceptanceFixtures.record(venue, transport: &success_transport/1)
 
@@ -98,6 +133,47 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
         assert get_in(golden, ["acceptance", "venue"]) == venue
         assert get_in(golden, ["acceptance", "http_status"]) == 200
         assert :ok = ExchangeAcceptanceFixtures.replay(golden)
+      end)
+    end
+  end
+
+  test "injected transport records dedicated Binance futures write profiles" do
+    stub = {__MODULE__, :dedicated_binance_acceptance_setup, System.unique_integer([:positive])}
+
+    Req.Test.stub(stub, fn conn ->
+      case {conn.method, conn.request_path} do
+        {"GET", path} when path in ["/fapi/v1/ticker/24hr", "/dapi/v1/ticker/24hr"] ->
+          Req.Test.json(conn, %{"lastPrice" => "2000"})
+
+        {"DELETE", path} when path in ["/fapi/v1/order", "/dapi/v1/order"] ->
+          conn
+          |> Plug.Conn.put_status(400)
+          |> Req.Test.json(%{"code" => -2011, "msg" => "Unknown order sent."})
+
+        {"DELETE", path} when path in ["/fapi/v1/algoOrder", "/dapi/v1/algoOrder"] ->
+          Req.Test.json(conn, %{"algoId" => 1, "algoStatus" => "CANCELED"})
+
+        {"POST", path}
+        when path in ["/fapi/v1/marginType", "/dapi/v1/marginType", "/fapi/v1/positionSide/dual"] ->
+          Req.Test.json(conn, %{"code" => 200, "msg" => "success"})
+      end
+    end)
+
+    for venue <- ~w(binanceusdm binancecoinm) do
+      with_env(@credential_env[venue], "offline-binance-futures-credential", fn ->
+        with_http_stub(stub, fn ->
+          assert {:ok, goldens} =
+                   ExchangeAcceptanceFixtures.record_all(venue, transport: &success_transport/1)
+
+          expected_profiles = ["fetch_balance", "create_order", "set_margin_mode", "cancel_all_orders"]
+
+          expected_profiles =
+            if venue == "binanceusdm", do: expected_profiles ++ ["set_position_mode"], else: expected_profiles
+
+          assert Enum.map(goldens, &get_in(&1, ["acceptance", "profile"])) == expected_profiles
+
+          assert Enum.all?(goldens, &(ExchangeAcceptanceFixtures.replay(&1) == :ok))
+        end)
       end)
     end
   end
@@ -118,6 +194,9 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
         {"DELETE", "/fapi/v1/algoOrder"} ->
           Req.Test.json(conn, %{"algoId" => 1, "algoStatus" => "CANCELED", "symbol" => "ETHUSDT"})
 
+        {"DELETE", "/api/v3/order"} ->
+          Req.Test.json(conn, %{"clientOrderId" => "task-578-spot", "orderId" => 1, "status" => "CANCELED"})
+
         _other ->
           Req.Test.json(conn, %{"code" => 200, "msg" => "success"})
       end
@@ -128,10 +207,12 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
         assert {:ok, goldens} =
                  ExchangeAcceptanceFixtures.record_all("binance", transport: &success_transport/1)
 
-        assert Enum.map(goldens, &get_in(&1, ["acceptance", "method"])) == [
+        assert Enum.map(goldens, &get_in(&1, ["acceptance", "profile"])) == [
                  "fetch_balance",
+                 "fetch_balance_spot",
                  "fetch_orders",
                  "create_order",
+                 "create_order_spot",
                  "set_margin_mode",
                  "cancel_all_orders"
                ]
@@ -227,34 +308,50 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
   end
 
   defp success_response(request) do
-    body =
-      case {request.url.host, request.url.path} do
-        {"testnet.binance.vision", "/api/v3/allOrders"} ->
-          []
-
-        {"demo-fapi.binance.com", "/fapi/v1/algoOrder"} ->
-          %{"algoId" => 1, "algoStatus" => "NEW", "symbol" => "ETHUSDT"}
-
-        {"demo-fapi.binance.com", path} when path in ["/fapi/v1/marginType", "/fapi/v1/allOpenOrders"] ->
-          %{"code" => 200, "msg" => "success"}
-
-        {host, _path} when host in ["testnet.binance.vision", "demo-fapi.binance.com", "demo-dapi.binance.com"] ->
-          %{"assets" => [], "balances" => [], "positions" => []}
-
-        {"test.deribit.com", _path} ->
-          %{"jsonrpc" => "2.0", "result" => %{}}
-
-        {"api-demo.lyra.finance", _path} ->
-          %{"id" => "offline", "result" => []}
-
-        {"www.okx.com", _path} ->
-          %{"code" => "0", "data" => [], "msg" => ""}
-
-        {host, _path} when host in ["data.alpaca.markets", "paper-api.alpaca.markets"] ->
-          %{"currency" => "USD", "equity" => "1"}
-      end
-
+    body = success_body(request.url.host, request.url.path)
     {request, Req.Response.new(status: 200, body: body)}
+  end
+
+  defp success_body("testnet.binance.vision", "/api/v3/allOrders"), do: []
+
+  defp success_body("testnet.binance.vision", "/api/v3/order") do
+    %{"clientOrderId" => "task-578-spot", "orderId" => 1, "transactTime" => 1}
+  end
+
+  defp success_body("demo-fapi.binance.com", "/fapi/v1/algoOrder") do
+    %{"algoId" => 1, "algoStatus" => "NEW", "symbol" => "ETHUSDT"}
+  end
+
+  defp success_body("demo-dapi.binance.com", "/dapi/v1/algoOrder") do
+    %{"algoId" => 1, "algoStatus" => "NEW", "symbol" => "BTCUSD_PERP"}
+  end
+
+  defp success_body("demo-fapi.binance.com", path)
+       when path in [
+              "/fapi/v1/marginType",
+              "/fapi/v1/positionSide/dual",
+              "/fapi/v1/allOpenOrders",
+              "/fapi/v1/algoOpenOrders"
+            ] do
+    %{"code" => 200, "msg" => "success"}
+  end
+
+  defp success_body("demo-dapi.binance.com", path)
+       when path in ["/dapi/v1/marginType", "/dapi/v1/allOpenOrders", "/dapi/v1/algoOpenOrders"] do
+    %{"code" => 200, "msg" => "success"}
+  end
+
+  defp success_body(host, _path)
+       when host in ["testnet.binance.vision", "demo-fapi.binance.com", "demo-dapi.binance.com"] do
+    %{"assets" => [], "balances" => [], "positions" => []}
+  end
+
+  defp success_body("test.deribit.com", _path), do: %{"jsonrpc" => "2.0", "result" => %{}}
+  defp success_body("api-demo.lyra.finance", _path), do: %{"id" => "offline", "result" => []}
+  defp success_body("www.okx.com", _path), do: %{"code" => "0", "data" => [], "msg" => ""}
+
+  defp success_body(host, _path) when host in ["data.alpaca.markets", "paper-api.alpaca.markets"] do
+    %{"currency" => "USD", "equity" => "1"}
   end
 
   defp credential_value("derive", "DERIVE_TESTNET_API_KEY") do

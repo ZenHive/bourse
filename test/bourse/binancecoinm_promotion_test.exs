@@ -25,6 +25,7 @@ defmodule Bourse.BinancecoinmPromotionTest do
     fetchTicker
     fetchTime
     fetchTrades
+    setMarginMode
   )
   @demo_host "demo-dapi.binance.com"
   @ticker_fixture "test/fixtures/responses/binancecoinm/fetch_ticker.json"

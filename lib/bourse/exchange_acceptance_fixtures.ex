@@ -25,9 +25,14 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
   @acceptance_nonce_offset_ms 1
   @binance_order_history_limit 25
   @binance_order_history_window_ms 3_600_000
+  @binance_spot_order_amount 0.001
+  @binance_spot_order_price 50_000
   @binance_conditional_order_amount 0.02
+  @binancecoinm_conditional_order_amount 1
   @binance_take_profit_trigger_ratio 1.15
+  @binancecoinm_take_profit_trigger_ratio 1.1
   @binance_conditional_price_decimal_places 2
+  @binancecoinm_conditional_price_decimal_places 1
   @derive_subaccount_id 144_422
   @bybit_order_amount 0.1444444234234234
   @bybit_price_ratio 0.99
@@ -47,11 +52,11 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
   @spec first_class_venues() :: [String.t()]
   def first_class_venues, do: @first_class_venues
 
-  @doc "Returns every configured `{venue, method}` signed acceptance profile."
-  @spec profiles() :: [{String.t(), atom()}]
+  @doc "Returns every configured `{venue, profile, method}` signed acceptance profile."
+  @spec profiles() :: [{String.t(), atom(), atom()}]
   def profiles do
     Enum.flat_map(@first_class_venues, fn venue ->
-      Enum.map(profiles_for(venue), &{venue, &1.method})
+      Enum.map(profiles_for(venue), &{venue, &1.id, &1.method})
     end)
   end
 
@@ -67,16 +72,16 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
   @spec fixture_path(String.t()) :: Path.t()
   def fixture_path(venue) when venue in @first_class_venues do
     case profiles_for(venue) do
-      [profile] -> fixture_path(venue, profile.method)
-      _profiles -> raise ArgumentError, "#{venue} has multiple accepted-request profiles; provide the method"
+      [profile] -> fixture_path(venue, profile.id)
+      _profiles -> raise ArgumentError, "#{venue} has multiple accepted-request profiles; provide the profile"
     end
   end
 
   @doc "Returns one signed profile's accepted-request golden path."
   @spec fixture_path(String.t(), atom()) :: Path.t()
-  def fixture_path(venue, method) when venue in @first_class_venues and is_atom(method) do
-    _profile = profile!(venue, method)
-    Path.join([@fixture_root, venue, "#{method}.json"])
+  def fixture_path(venue, profile_id) when venue in @first_class_venues and is_atom(profile_id) do
+    _profile = profile!(venue, profile_id)
+    Path.join([@fixture_root, venue, "#{profile_id}.json"])
   end
 
   @doc "Loads every golden named by the manifest."
@@ -105,7 +110,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     |> Enum.reduce_while({:ok, []}, fn profile, {:ok, goldens} ->
       case record_profile(profile, opts) do
         {:ok, golden} -> {:cont, {:ok, [golden | goldens]}}
-        {:error, reason} -> {:halt, {:error, {profile.method, reason}}}
+        {:error, reason} -> {:halt, {:error, {profile.id, reason}}}
       end
     end)
     |> case do
@@ -139,7 +144,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     expected = [primary | Map.get(golden, "additional_requests", [])]
 
     with {:ok, method} <- method_atom(replay["method"]),
-         profile = profile!(venue, method),
+         profile = profile!(venue, replay["profile"] || method),
          :ok <- validate_replay_identity(profile, replay),
          {:ok, exchange} <- build_fixture_exchange(profile, replay),
          {:ok, actual} <- capture_fixture_request(exchange, profile, replay) do
@@ -164,18 +169,40 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
   defp profiles_for("binance") do
     [
       binance_balance_profile(),
+      binance_spot_balance_profile(),
       binance_order_history_profile(),
       binance_take_profit_order_profile(),
+      binance_spot_order_profile(),
       binance_margin_mode_profile(),
       binance_cancel_all_orders_profile()
     ]
   end
 
+  defp profiles_for("binanceusdm") do
+    [
+      profile("binanceusdm"),
+      binanceusdm_take_profit_order_profile(),
+      binanceusdm_margin_mode_profile(),
+      binanceusdm_cancel_all_orders_profile(),
+      binanceusdm_position_mode_profile()
+    ]
+  end
+
+  defp profiles_for("binancecoinm") do
+    [
+      profile("binancecoinm"),
+      binancecoinm_take_profit_order_profile(),
+      binancecoinm_margin_mode_profile(),
+      binancecoinm_cancel_all_orders_profile()
+    ]
+  end
+
   defp profiles_for(venue), do: [profile(venue)]
 
-  defp profile!(venue, method) do
-    Enum.find(profiles_for(venue), &(&1.method == method)) ||
-      raise ArgumentError, "unknown accepted-request profile #{venue}/#{method}"
+  defp profile!(venue, profile_id) do
+    Enum.find(profiles_for(venue), fn profile ->
+      profile.id == profile_id or Atom.to_string(profile.id) == profile_id
+    end) || raise ArgumentError, "unknown accepted-request profile #{venue}/#{profile_id}"
   end
 
   defp alpaca_market_profile do
@@ -208,6 +235,19 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     )
   end
 
+  defp binance_spot_balance_profile do
+    build_profile("binance", :fetch_balance, "api/v3/account", "testnet.binance.vision", :binance,
+      profile: :fetch_balance_spot,
+      sandbox: true,
+      fixture_seed: :empty,
+      params: %{"type" => :spot},
+      sensitive_headers: ["x-mbx-apikey"],
+      sensitive_query: ["signature"],
+      stub_body: %{"balances" => []},
+      business_success: "HTTP 2xx spot account payload without an error code"
+    )
+  end
+
   defp binance_order_history_profile do
     build_profile("binance", :fetch_orders, "api/v3/allOrders", "testnet.binance.vision", :binance,
       sandbox: true,
@@ -237,6 +277,24 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     )
   end
 
+  defp binance_spot_order_profile do
+    build_profile("binance", :create_order, "api/v3/order", "testnet.binance.vision", :binance,
+      profile: :create_order_spot,
+      sandbox: true,
+      fixture_seed: :empty,
+      params: :binance_spot_order,
+      sensitive_headers: ["x-mbx-apikey"],
+      sensitive_query: ["signature"],
+      stub_body: %{
+        "clientOrderId" => "task-578-spot",
+        "orderId" => 1,
+        "transactTime" => 1
+      },
+      symbol: "BTC/USDT",
+      business_success: "HTTP 2xx spot ACK with an order id; accepted order cancelled"
+    )
+  end
+
   defp binance_margin_mode_profile do
     build_profile("binance", :set_margin_mode, "fapi/v1/marginType", "demo-fapi.binance.com", :binanceusdm,
       sandbox: true,
@@ -244,7 +302,117 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
       sensitive_headers: ["x-mbx-apikey"],
       sensitive_query: ["signature"],
       stub_body: %{"code" => 200, "msg" => "success"},
+      cleanup_margin_mode: "isolated",
+      symbol: "ETH/USDT:USDT",
       business_success: "code=200 margin-mode update; original isolated mode restored"
+    )
+  end
+
+  defp binanceusdm_take_profit_order_profile do
+    build_profile("binanceusdm", :create_order, "fapi/v1/algoOrder", "demo-fapi.binance.com", :binanceusdm,
+      sandbox: true,
+      fixture_seed: :empty,
+      params: :binanceusdm_take_profit_order,
+      sensitive_headers: ["x-mbx-apikey"],
+      sensitive_query: ["signature"],
+      stub_body: %{
+        "algoId" => 1,
+        "algoStatus" => "NEW",
+        "algoType" => "CONDITIONAL",
+        "orderType" => "TAKE_PROFIT_MARKET",
+        "symbol" => "ETHUSDT"
+      },
+      symbol: "ETH/USDT:USDT",
+      business_success: "HTTP 2xx resting USD-M take-profit order with an algo id; accepted order cancelled"
+    )
+  end
+
+  defp binanceusdm_margin_mode_profile do
+    build_profile("binanceusdm", :set_margin_mode, "fapi/v1/marginType", "demo-fapi.binance.com", :binanceusdm,
+      sandbox: true,
+      fixture_seed: :empty,
+      params: %{"margin_mode" => "cross", "symbol" => "ETH/USDT:USDT"},
+      sensitive_headers: ["x-mbx-apikey"],
+      sensitive_query: ["signature"],
+      stub_body: %{"code" => 200, "msg" => "success"},
+      cleanup_margin_mode: "isolated",
+      symbol: "ETH/USDT:USDT",
+      business_success: "code=200 USD-M margin-mode update; original isolated mode restored"
+    )
+  end
+
+  defp binanceusdm_cancel_all_orders_profile do
+    build_profile("binanceusdm", :cancel_all_orders, "fapi/v1/allOpenOrders", "demo-fapi.binance.com", :binanceusdm,
+      sandbox: true,
+      fixture_seed: :empty,
+      params: %{"symbol" => "ETH/USDT:USDT"},
+      sensitive_headers: ["x-mbx-apikey"],
+      sensitive_query: ["signature"],
+      stub_body: %{"code" => 200, "msg" => "The operation of cancel all open order is done."},
+      business_success: "code=200 USD-M symbol-scoped regular and Algo cancel-all acknowledgements"
+    )
+  end
+
+  defp binanceusdm_position_mode_profile do
+    build_profile(
+      "binanceusdm",
+      :set_position_mode,
+      "fapi/v1/positionSide/dual",
+      "demo-fapi.binance.com",
+      :binanceusdm,
+      sandbox: true,
+      fixture_seed: :empty,
+      params: %{"hedge_mode" => true},
+      sensitive_headers: ["x-mbx-apikey"],
+      sensitive_query: ["signature"],
+      stub_body: %{"code" => 200, "msg" => "success"},
+      cleanup_position_mode: false,
+      business_success: "code=200 USD-M position-mode update; original one-way mode restored"
+    )
+  end
+
+  defp binancecoinm_take_profit_order_profile do
+    build_profile("binancecoinm", :create_order, "dapi/v1/algoOrder", "demo-dapi.binance.com", :binanceusdm,
+      sandbox: true,
+      fixture_seed: :empty,
+      params: :binancecoinm_take_profit_order,
+      sensitive_headers: ["x-mbx-apikey"],
+      sensitive_query: ["signature"],
+      stub_body: %{
+        "algoId" => 1,
+        "algoStatus" => "NEW",
+        "algoType" => "CONDITIONAL",
+        "orderType" => "TAKE_PROFIT_MARKET",
+        "symbol" => "BTCUSD_PERP"
+      },
+      symbol: "BTC/USD:BTC",
+      business_success: "HTTP 2xx resting COIN-M take-profit order with an algo id; accepted order cancelled"
+    )
+  end
+
+  defp binancecoinm_margin_mode_profile do
+    build_profile("binancecoinm", :set_margin_mode, "dapi/v1/marginType", "demo-dapi.binance.com", :binanceusdm,
+      sandbox: true,
+      fixture_seed: :empty,
+      params: %{"margin_mode" => "isolated", "symbol" => "BTC/USD:BTC"},
+      sensitive_headers: ["x-mbx-apikey"],
+      sensitive_query: ["signature"],
+      stub_body: %{"code" => 200, "msg" => "success"},
+      cleanup_margin_mode: "cross",
+      symbol: "BTC/USD:BTC",
+      business_success: "code=200 COIN-M margin-mode update; original crossed mode restored"
+    )
+  end
+
+  defp binancecoinm_cancel_all_orders_profile do
+    build_profile("binancecoinm", :cancel_all_orders, "dapi/v1/allOpenOrders", "demo-dapi.binance.com", :binanceusdm,
+      sandbox: true,
+      fixture_seed: :empty,
+      params: %{"symbol" => "BTC/USD:BTC"},
+      sensitive_headers: ["x-mbx-apikey"],
+      sensitive_query: ["signature"],
+      stub_body: %{"code" => 200, "msg" => "The operation of cancel all open order is done."},
+      business_success: "code=200 COIN-M symbol-scoped regular and Algo cancel-all acknowledgements"
     )
   end
 
@@ -375,11 +543,14 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     %{
       business_success: Keyword.fetch!(opts, :business_success),
       call_opts: Keyword.get(opts, :call_opts, []),
+      cleanup_margin_mode: Keyword.get(opts, :cleanup_margin_mode),
+      cleanup_position_mode: Keyword.get(opts, :cleanup_position_mode),
       credential_env: credential_env(credential_profile),
       endpoint: endpoint,
       exchange_opts: Keyword.get(opts, :exchange_opts, []),
       fixture_seed: Keyword.get(opts, :fixture_seed, :static),
       host: host,
+      id: Keyword.get(opts, :profile, method),
       method: method,
       params: Keyword.get(opts, :params, %{}),
       prepare: Keyword.get(opts, :prepare, :none),
@@ -465,29 +636,48 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     {:ok, params, %{}}
   end
 
+  defp request_params(_exchange, %{params: :binance_spot_order}) do
+    {:ok,
+     %{
+       "amount" => @binance_spot_order_amount,
+       "newClientOrderId" => "bourse-task578-#{System.unique_integer([:positive])}",
+       "newOrderRespType" => "ACK",
+       "price" => @binance_spot_order_price,
+       "side" => "buy",
+       "symbol" => "BTC/USDT",
+       "timeInForce" => "GTC",
+       "type" => "limit"
+     }, %{}}
+  end
+
   defp request_params(exchange, %{params: :binance_take_profit_order}) do
-    case Bourse.Binance.fapiPublic_get_ticker_24hr(exchange, %{"symbol" => "ETHUSDT"}) do
-      {:ok, %{body: %{"lastPrice" => last_price}}} ->
-        case Float.parse(last_price) do
-          {last, ""} ->
-            trigger_price = binance_conditional_price(last, @binance_take_profit_trigger_ratio)
+    binance_take_profit_order_params(
+      Bourse.Binance.fapiPublic_get_ticker_24hr(exchange, %{"symbol" => "ETHUSDT"}),
+      @binance_conditional_order_amount,
+      @binance_take_profit_trigger_ratio,
+      @binance_conditional_price_decimal_places,
+      "ETH/USDT:USDT"
+    )
+  end
 
-            {:ok,
-             %{
-               "amount" => @binance_conditional_order_amount,
-               "side" => "sell",
-               "symbol" => "ETH/USDT:USDT",
-               "take_profit_price" => trigger_price,
-               "type" => "market"
-             }, %{}}
+  defp request_params(exchange, %{params: :binanceusdm_take_profit_order}) do
+    binance_take_profit_order_params(
+      Bourse.Binanceusdm.fapiPublic_get_ticker_24hr(exchange, %{"symbol" => "ETHUSDT"}),
+      @binance_conditional_order_amount,
+      @binance_take_profit_trigger_ratio,
+      @binance_conditional_price_decimal_places,
+      "ETH/USDT:USDT"
+    )
+  end
 
-          _other ->
-            {:error, :binance_take_profit_order_inputs_unavailable}
-        end
-
-      _other ->
-        {:error, :binance_take_profit_order_inputs_unavailable}
-    end
+  defp request_params(exchange, %{params: :binancecoinm_take_profit_order}) do
+    binance_take_profit_order_params(
+      Bourse.Binancecoinm.dapiPublic_get_ticker_24hr(exchange, %{"symbol" => "BTCUSD_PERP"}),
+      @binancecoinm_conditional_order_amount,
+      @binancecoinm_take_profit_trigger_ratio,
+      @binancecoinm_conditional_price_decimal_places,
+      "BTC/USD:BTC"
+    )
   end
 
   defp request_params(_exchange, %{params: params}) when is_map(params), do: {:ok, params, %{}}
@@ -549,11 +739,41 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     end
   end
 
-  defp binance_conditional_price(last, ratio) do
+  defp binance_take_profit_order_params(response, amount, ratio, decimal_places, symbol) do
+    case response do
+      {:ok, %{body: [%{"lastPrice" => _last_price} = ticker | _]}} ->
+        binance_take_profit_order_params({:ok, %{body: ticker}}, amount, ratio, decimal_places, symbol)
+
+      {:ok, %{body: %{"lastPrice" => last_price}}} ->
+        case Float.parse(last_price) do
+          {last, ""} ->
+            trigger_price = binance_conditional_price(last, ratio, decimal_places)
+
+            {:ok,
+             %{
+               "amount" => amount,
+               "reduce_only" => false,
+               "side" => "sell",
+               "symbol" => symbol,
+               "take_profit_price" => trigger_price,
+               "time_in_force" => "GTC",
+               "type" => "market"
+             }, %{}}
+
+          _other ->
+            {:error, :binance_take_profit_order_inputs_unavailable}
+        end
+
+      _other ->
+        {:error, :binance_take_profit_order_inputs_unavailable}
+    end
+  end
+
+  defp binance_conditional_price(last, ratio, decimal_places) do
     last
     |> Kernel.*(ratio)
-    |> Float.floor(@binance_conditional_price_decimal_places)
-    |> :erlang.float_to_binary(decimals: @binance_conditional_price_decimal_places)
+    |> Float.floor(decimal_places)
+    |> :erlang.float_to_binary(decimals: decimal_places)
   end
 
   defp frozen_clock do
@@ -674,15 +894,31 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
 
   defp accepted_response(_profile, _response), do: {:error, :exchange_did_not_accept_request}
 
-  defp accepted_business_response(%{venue: "binance", method: :create_order}, %{"algoId" => id}) do
+  defp accepted_business_response(%{venue: venue, method: :create_order}, %{"algoId" => id})
+       when venue in ["binance", "binancecoinm", "binanceusdm"] do
     {:ok, {:order, id}}
   end
 
-  defp accepted_business_response(%{venue: "binance", method: :set_margin_mode}, %{"code" => 200}) do
-    {:ok, {:binance_margin_mode, "isolated", "ETH/USDT:USDT"}}
+  defp accepted_business_response(%{venue: "binance", id: :create_order_spot}, %{"orderId" => id}) do
+    {:ok, {:order, id}}
   end
 
-  defp accepted_business_response(%{venue: "binance", method: :cancel_all_orders}, %{"code" => 200}), do: {:ok, nil}
+  defp accepted_business_response(
+         %{venue: venue, method: :set_margin_mode, cleanup_margin_mode: cleanup_mode, symbol: symbol},
+         %{"code" => 200}
+       )
+       when venue in ["binance", "binancecoinm", "binanceusdm"] and is_binary(cleanup_mode) do
+    {:ok, {:binance_margin_mode, cleanup_mode, symbol}}
+  end
+
+  defp accepted_business_response(%{venue: venue, method: :cancel_all_orders}, %{"code" => 200})
+       when venue in ["binance", "binancecoinm", "binanceusdm"], do: {:ok, nil}
+
+  defp accepted_business_response(
+         %{venue: "binanceusdm", method: :set_position_mode, cleanup_position_mode: cleanup_mode},
+         %{"code" => 200}
+       )
+       when is_boolean(cleanup_mode), do: {:ok, {:binance_position_mode, cleanup_mode}}
 
   defp accepted_business_response(%{venue: "binance"}, body) when is_map(body) do
     if Map.has_key?(body, "code"), do: {:error, :venue_business_failure}, else: {:ok, nil}
@@ -726,6 +962,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
       Map.merge(replay_context, %{
         "call_opts" => Map.new(profile.call_opts, fn {key, value} -> {Atom.to_string(key), value} end),
         "method" => Atom.to_string(profile.method),
+        "profile" => Atom.to_string(profile.id),
         "nonce_override" => clock["nonce"],
         "params" => params,
         "timestamp_ms_override" => clock["timestamp_ms"]
@@ -757,6 +994,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
         "host" => profile.host,
         "http_status" => status,
         "method" => Atom.to_string(profile.method),
+        "profile" => Atom.to_string(profile.id),
         "venue" => profile.venue
       },
       "oracle" => "exchange_acceptance",
@@ -815,7 +1053,8 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
   end
 
   defp validate_replay_identity(profile, replay) do
-    if replay["method"] == Atom.to_string(profile.method) and is_map(replay["params"]) and
+    if replay["method"] == Atom.to_string(profile.method) and
+         replay["profile"] in [nil, Atom.to_string(profile.id)] and is_map(replay["params"]) and
          is_integer(replay["timestamp_ms_override"]) and is_integer(replay["nonce_override"]) do
       :ok
     else
@@ -1033,6 +1272,13 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
 
   defp cleanup(exchange, _profile, {:binance_margin_mode, margin_mode, symbol}) do
     case Bourse.set_margin_mode(exchange, margin_mode, symbol) do
+      {:ok, %{"code" => 200}} -> :ok
+      _other -> {:error, :cleanup_failed}
+    end
+  end
+
+  defp cleanup(exchange, _profile, {:binance_position_mode, hedged}) do
+    case Bourse.set_position_mode(exchange, hedged) do
       {:ok, %{"code" => 200}} -> :ok
       _other -> {:error, :cleanup_failed}
     end

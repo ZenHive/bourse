@@ -89,6 +89,8 @@
         "normalization.field_maps.order",
         "normalization.field_maps.position",
         "normalization.field_maps.ticker",
+        "request_shape.cancelAllOrders",
+        "request_shape.createOrder",
         "request_shape.fetchBalance",
         "request_shape.fetchFundingIntervals",
         "request_shape.fetchFundingRate",
@@ -102,11 +104,13 @@
         "request_shape.fetchTicker",
         "request_shape.fetchTime",
         "request_shape.fetchTrades",
+        "request_shape.setMarginMode",
         "sign_path.public.dapiPublic"
       ]
     },
     "binanceusdm": {
       "verified_slots": [
+        "auth.sign_recipe.fapiPrivate",
         "auth.sign_recipe.fapiPrivateV3",
         "errors.handle_errors.exceptions.exact.-1016",
         "markets.patterns.future",
@@ -123,6 +127,8 @@
         "normalization.field_maps.position",
         "normalization.field_maps.ticker",
         "normalization.field_maps.trade",
+        "request_shape.cancelAllOrders",
+        "request_shape.createOrder",
         "request_shape.fetchADLRank",
         "request_shape.fetchAccountPositions",
         "request_shape.fetchAllGreeks",
@@ -147,6 +153,8 @@
         "request_shape.fetchPositionsRisk",
         "request_shape.fetchSettlementHistory",
         "request_shape.fetchTime",
+        "request_shape.setMarginMode",
+        "request_shape.setPositionMode",
         "sign_path.public.dapiPublic",
         "sign_path.public.eapiPublic",
         "sign_path.public.fapiPublic",

@@ -1,0 +1,52 @@
+{
+  "acceptance": {
+    "business_success": "HTTP 2xx spot ACK with an order id; accepted order cancelled",
+    "capture_date": "2026-08-10",
+    "captured_at": "2026-08-10T08:40:57.445Z",
+    "endpoint": "api/v3/order",
+    "host": "testnet.binance.vision",
+    "http_status": 200,
+    "method": "create_order",
+    "profile": "create_order_spot",
+    "venue": "binance"
+  },
+  "label": "Oracle: exchange-acceptance tier 1 vs binance create_order accepted 2026-08-10 (api/v3/order @ testnet.binance.vision, HTTP 200, HTTP 2xx spot ACK with an order id; accepted order cancelled).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "create_order",
+    "nonce_override": 1786351256929,
+    "params": {
+      "amount": 0.001,
+      "newClientOrderId": "bourse-task578-5570",
+      "newOrderRespType": "ACK",
+      "price": 50000,
+      "side": "buy",
+      "symbol": "BTC/USDT",
+      "timeInForce": "GTC",
+      "type": "limit"
+    },
+    "profile": "create_order_spot",
+    "timestamp_ms_override": 1786351256928
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "content-type",
+        "application/x-www-form-urlencoded"
+      ],
+      [
+        "x-mbx-apikey",
+        "key"
+      ]
+    ],
+    "method": "POST",
+    "url": "https://testnet.binance.vision/api/v3/order?newClientOrderId=bourse-task578-5570&newOrderRespType=ACK&price=50000&quantity=0.001&side=BUY&symbol=BTCUSDT&timeInForce=GTC&timestamp=1786351256928&type=LIMIT&signature=d1cb56893665f31596a7049f09424be3902ab2fa44b2aed254b0bfe8f8b0da88"
+  },
+  "schema_version": 1
+}

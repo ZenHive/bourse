@@ -6,6 +6,22 @@ Append-only schema confrontations for Binance USD-M. Follow the allocation and e
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance USD-M carve record.
 
+## 2026-08-10 — dedicated USD-M write routing (Task 578)
+
+**C-T578b — The dedicated USD-M client owns the same regular and Algo books as FAPI (task 578). Outcome:
+CONFIRM provider contracts.** The provider's New Algo Order contract routes conditional orders to
+`/fapi/v1/algoOrder`; the regular order endpoint remains the non-conditional book. Live demo FAPI
+accepted a conditional order carrying `timeInForce` and `reduceOnly=false`, accepted a symbol-scoped
+margin-type change with `marginType=CROSSED`, and returned `code=200` from both regular and Algo
+cancel-all calls. Before the repair, the dedicated create route omitted the order controls and the
+margin-mode shape put `ETHUSDT` in `marginType`. Reasserting the live one-way position mode now
+reaches business validation `-4059` with `dualSidePosition=false` instead of losing the boolean and
+failing `-1102`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T578b","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M New Algo Order, Change Margin Type, Change Position Mode, and cancel-all contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/exchange_accepted_requests/binanceusdm/create_order.json, set_margin_mode.json, cancel_all_orders.json, and set_position_mode.json; live position-mode regression test reached -4059"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-10 — current funding-rate cadence (Task 573)
 
 **C-T573b — A direct current-rate read applies the existing per-symbol funding-interval carve (task 573).

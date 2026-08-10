@@ -105,7 +105,6 @@ evidence beyond the batch review.
   - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.dapiPrivate`
   - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.dapiPrivateV2`
   - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.eapiPrivate`
-  - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.fapiPrivate`
   - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.fapiPrivateV2`
   - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.papi`
   - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.papiV2`

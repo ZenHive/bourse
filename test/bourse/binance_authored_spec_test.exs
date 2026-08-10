@@ -168,6 +168,85 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     end
   end
 
+  test "dedicated Binance futures conditional orders preserve opts and use the Algo book" do
+    for {exchange_id, symbol, expected_path} <- [
+          {"binanceusdm", "ETH/USDT:USDT", "/fapi/v1/algoOrder"},
+          {"binancecoinm", "BTC/USD:BTC", "/dapi/v1/algoOrder"}
+        ],
+        {trigger_opt, trigger_value, native_type} <- [
+          {:trigger_price, "3000", "STOP_MARKET"},
+          {:stop_loss_price, "2900", "STOP_MARKET"},
+          {:take_profit_price, "3100", "TAKE_PROFIT_MARKET"}
+        ] do
+      {requests, stub} = algo_order_stub()
+      exchange = Exchange.new!(exchange_id, api_key: "key", secret: "secret", sandbox: true)
+
+      opts = [
+        {trigger_opt, trigger_value},
+        time_in_force: "GTC",
+        reduce_only: true,
+        plug: {Req.Test, stub},
+        timestamp_ms_override: @frozen_timestamp_ms
+      ]
+
+      assert {:ok, %Bourse.Order{}} =
+               Bourse.create_order(exchange, symbol, "market", "sell", 1, opts)
+
+      assert_order_request(requests, :post, expected_path, fn params ->
+        assert params["algoType"] == "CONDITIONAL"
+        assert params["quantity"] == "1"
+        assert params["reduceOnly"] == "true"
+        assert params["side"] == "SELL"
+        assert params["timeInForce"] == "GTC"
+        assert params["triggerPrice"] == trigger_value
+        assert params["type"] == native_type
+        refute Map.has_key?(params, Atom.to_string(trigger_opt))
+      end)
+    end
+  end
+
+  test "Binance conditional orders reject simultaneous stop-loss and take-profit legs" do
+    for {exchange_id, symbol} <- [
+          {"binance", "ETH/USDT:USDT"},
+          {"binanceusdm", "ETH/USDT:USDT"},
+          {"binancecoinm", "BTC/USD:BTC"}
+        ] do
+      exchange = Exchange.new!(exchange_id, api_key: "key", secret: "secret", sandbox: true)
+
+      error =
+        assert_raise Bourse.Error, fn ->
+          Bourse.create_order(exchange, symbol, "market", "sell", 1,
+            stop_loss_price: "2900",
+            take_profit_price: "3100"
+          )
+        end
+
+      assert error.type == :invalid_parameters
+      assert error.message == "Binance Algo orders accept one conditional leg per order"
+    end
+  end
+
+  test "Binance spot create_order preserves native pass-through controls" do
+    {requests, stub} = order_stub()
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
+
+    assert {:ok, %Bourse.Order{}} =
+             Bourse.create_order(exchange, "BTC/USDT", "limit", "buy", 1,
+               price: "1000",
+               timeInForce: "GTC",
+               newClientOrderId: "task-578-spot",
+               newOrderRespType: "ACK",
+               plug: {Req.Test, stub},
+               timestamp_ms_override: @frozen_timestamp_ms
+             )
+
+    assert_order_request(requests, :post, "/api/v3/order", fn params ->
+      assert params["timeInForce"] == "GTC"
+      assert params["newClientOrderId"] == "task-578-spot"
+      assert params["newOrderRespType"] == "ACK"
+    end)
+  end
+
   test "Binance USD-M margin mode calls send the futures symbol" do
     exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
 
@@ -195,6 +274,42 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     assert_order_request(cross_requests, :post, "/fapi/v1/marginType", fn params ->
       assert params["marginType"] == "CROSSED"
       assert params["symbol"] == "ETHUSDT"
+    end)
+  end
+
+  test "dedicated Binance futures margin mode calls send margin type and symbol" do
+    for {exchange_id, symbol, expected_path} <- [
+          {"binanceusdm", "ETH/USDT:USDT", "/fapi/v1/marginType"},
+          {"binancecoinm", "BTC/USD:BTC", "/dapi/v1/marginType"}
+        ] do
+      {requests, stub} = body_capturing_stub(%{"code" => 200, "msg" => "success"})
+      exchange = Exchange.new!(exchange_id, api_key: "key", secret: "secret", sandbox: true)
+
+      assert {:ok, %{"code" => 200}} =
+               Bourse.set_margin_mode(exchange, "cross", symbol,
+                 plug: {Req.Test, stub},
+                 timestamp_ms_override: @frozen_timestamp_ms
+               )
+
+      assert_order_request(requests, :post, expected_path, fn params ->
+        assert params["marginType"] == "CROSSED"
+        refute params["marginType"] == params["symbol"]
+      end)
+    end
+  end
+
+  test "Binance USD-M position mode preserves false on the signed wire" do
+    {requests, stub} = body_capturing_stub(%{"code" => 200, "msg" => "success"})
+    exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret", sandbox: true)
+
+    assert {:ok, %{"code" => 200}} =
+             Bourse.set_position_mode(exchange, false,
+               plug: {Req.Test, stub},
+               timestamp_ms_override: @frozen_timestamp_ms
+             )
+
+    assert_order_request(requests, :post, "/fapi/v1/positionSide/dual", fn params ->
+      assert params["dualSidePosition"] == "false"
     end)
   end
 
@@ -281,6 +396,32 @@ defmodule Bourse.BinanceAuthoredSpecTest do
              )
 
     assert recorded_paths(requests) == ["/fapi/v1/algoOpenOrders", "/fapi/v1/allOpenOrders"]
+  end
+
+  test "dedicated Binance futures cancel_all_orders broadcasts and accepts code 200" do
+    for {exchange_id, symbol, expected_paths} <- [
+          {"binanceusdm", "ETH/USDT:USDT", ["/fapi/v1/algoOpenOrders", "/fapi/v1/allOpenOrders"]},
+          {"binancecoinm", "BTC/USD:BTC", ["/dapi/v1/algoOpenOrders", "/dapi/v1/allOpenOrders"]}
+        ] do
+      stub = unique_stub("dedicated_binance_cancel_all")
+      {:ok, requests} = RequestCollector.start_link()
+
+      Req.Test.stub(stub, fn conn ->
+        conn = RequestCollector.capture(requests, conn)
+        Req.Test.json(conn, %{"code" => 200, "msg" => "done"})
+      end)
+
+      exchange = Exchange.new!(exchange_id, api_key: "key", secret: "secret", sandbox: true)
+
+      assert {:ok, %{"code" => 200, "msg" => "done"}} =
+               Bourse.cancel_all_orders(exchange,
+                 symbol: symbol,
+                 plug: {Req.Test, stub},
+                 timestamp_ms_override: @frozen_timestamp_ms
+               )
+
+      assert recorded_paths(requests) == expected_paths
+    end
   end
 
   test "raw capture executes both book writes and preserves cancel fallback semantics" do
@@ -1293,10 +1434,10 @@ defmodule Bourse.BinanceAuthoredSpecTest do
                )
 
       expected_paths =
-        if method == :fetch_funding_rates do
-          [expected_path, String.replace(expected_path, "premiumIndex", "fundingInfo")]
-        else
-          [expected_path]
+        case {method, expected_path} do
+          {:fetch_funding_rates, path} -> [path, String.replace(path, "premiumIndex", "fundingInfo")]
+          {:fetch_open_orders, "/fapi/v1/openOrders"} -> ["/fapi/v1/openOrders", "/fapi/v1/openAlgoOrders"]
+          _other -> [expected_path]
         end
 
       assert requests |> RequestCollector.requests() |> Enum.map(& &1.conn.request_path) == expected_paths
@@ -3157,6 +3298,25 @@ defmodule Bourse.BinanceAuthoredSpecTest do
       {conn, body} = RequestCollector.capture_with_body(requests, conn)
       params = request_params(conn, body)
       Req.Test.json(conn, %{"orderId" => 12_345, "symbol" => params["symbol"], "status" => "NEW"})
+    end)
+
+    {requests, stub}
+  end
+
+  defp algo_order_stub do
+    stub = unique_stub("binance_algo_order")
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      {conn, body} = RequestCollector.capture_with_body(requests, conn)
+      params = request_params(conn, body)
+
+      Req.Test.json(conn, %{
+        "algoId" => 12_345,
+        "algoStatus" => "NEW",
+        "orderType" => params["type"],
+        "symbol" => params["symbol"]
+      })
     end)
 
     {requests, stub}

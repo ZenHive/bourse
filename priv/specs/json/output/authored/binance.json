@@ -4029,6 +4029,9 @@
             "transform": "uppercase"
           },
           "timeInForce": {
+            "fallback_sources": [
+              "timeInForce"
+            ],
             "source": "time_in_force",
             "source_class": "optional",
             "transform": "uppercase"
@@ -4076,6 +4079,7 @@
                   {
                     "value": "TAKE_PROFIT_MARKET",
                     "when": {
+                      "stop_loss_price": "absent",
                       "take_profit_price": "present",
                       "type": "market"
                     }
@@ -4083,6 +4087,7 @@
                   {
                     "value": "TAKE_PROFIT",
                     "when": {
+                      "stop_loss_price": "absent",
                       "take_profit_price": "present",
                       "type": "limit"
                     }
@@ -4102,12 +4107,14 @@
                   {
                     "value": "STOP_MARKET",
                     "when": {
+                      "take_profit_price": "absent",
                       "type": "market"
                     }
                   },
                   {
                     "value": "STOP",
                     "when": {
+                      "take_profit_price": "absent",
                       "type": "limit"
                     }
                   },
@@ -4675,13 +4682,15 @@
               "endpoint": "fapiPrivate_post_algoorder",
               "when": {
                 "market_family": "linear",
-                "stop_loss_price": "present"
+                "stop_loss_price": "present",
+                "take_profit_price": "absent"
               }
             },
             {
               "endpoint": "fapiPrivate_post_algoorder",
               "when": {
                 "market_family": "linear",
+                "stop_loss_price": "absent",
                 "take_profit_price": "present"
               }
             },

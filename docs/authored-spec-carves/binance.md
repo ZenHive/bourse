@@ -6,6 +6,21 @@ Append-only schema confrontations for Binance spot. Follow the allocation and ev
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance spot carve record.
 
+## 2026-08-10 — write-path profile separation and conditional-leg boundary (Task 578)
+
+**C-T578a — Spot order controls pass through unchanged, and one futures Algo order carries one
+conditional leg (task 578). Outcome: CONFIRM provider contracts.** Binance Spot accepted a limit order whose
+signed query carried `timeInForce`, `newClientOrderId`, and `newOrderRespType`; the order was then
+canceled. Before the repair, the same live call returned `-1102` because `timeInForce` was absent
+from the signed request. The USD-M Algo contract has one `triggerPrice` and one conditional order type per order,
+so callers supplying both stop-loss and take-profit prices are rejected before signing rather than
+silently pairing one leg's type with the other leg's price. Accepted-request identity now includes a
+profile key: spot and USD-M balance requests coexist under one unified method without replacement.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T578a","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance Spot New Order and USD-M New Algo Order contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/exchange_accepted_requests/binance/create_order_spot.json, create_order.json, fetch_balance_spot.json, and fetch_balance.json"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-10 — spot order-list vocabulary (Task 548)
 
 **C-T548 — Spot order groups use `OrderList`, separate from individual `Order` rows

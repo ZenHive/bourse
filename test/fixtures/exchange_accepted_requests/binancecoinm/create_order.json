@@ -1,0 +1,51 @@
+{
+  "acceptance": {
+    "business_success": "HTTP 2xx resting COIN-M take-profit order with an algo id; accepted order cancelled",
+    "capture_date": "2026-08-10",
+    "captured_at": "2026-08-10T08:38:26.479Z",
+    "endpoint": "dapi/v1/algoOrder",
+    "host": "demo-dapi.binance.com",
+    "http_status": 200,
+    "method": "create_order",
+    "profile": "create_order",
+    "venue": "binancecoinm"
+  },
+  "label": "Oracle: exchange-acceptance tier 1 vs binancecoinm create_order accepted 2026-08-10 (dapi/v1/algoOrder @ demo-dapi.binance.com, HTTP 200, HTTP 2xx resting COIN-M take-profit order with an algo id; accepted order cancelled).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "create_order",
+    "nonce_override": 1786351105912,
+    "params": {
+      "amount": 1,
+      "reduce_only": false,
+      "side": "sell",
+      "symbol": "BTC/USD:BTC",
+      "take_profit_price": "71694.4",
+      "time_in_force": "GTC",
+      "type": "market"
+    },
+    "profile": "create_order",
+    "timestamp_ms_override": 1786351105911
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "content-type",
+        "application/x-www-form-urlencoded"
+      ],
+      [
+        "x-mbx-apikey",
+        "key"
+      ]
+    ],
+    "method": "POST",
+    "url": "https://demo-dapi.binance.com/dapi/v1/algoOrder?algoType=CONDITIONAL&quantity=1&reduceOnly=false&side=SELL&symbol=BTCUSD_PERP&timeInForce=GTC&timestamp=1786351105911&triggerPrice=71694.4&type=TAKE_PROFIT_MARKET&signature=fb7c48ab74146d3435206963146cc8d1bd469ef92d3b47cb9412293f12421dc2"
+  },
+  "schema_version": 1
+}

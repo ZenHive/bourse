@@ -7,6 +7,21 @@ Append-only schema confrontations for Binance COIN-M. Follow the allocation and 
 venue-specific decision in the self-contained runtime document. Provider-owned evidence is
 indexed by `priv/authority/binancecoinm/manifest.json`.
 
+## 2026-08-10 — dedicated COIN-M write routing (Task 578)
+
+**C-T578c — COIN-M conditional orders use a distinct DAPI Algo book (task 578). Outcome: CONFIRM provider
+contract.** Binance's pinned COIN-M New Order contract states that migrated stop types are rejected
+by `/dapi/v1/order` and must use `/dapi/v1/algoOrder`. Live demo DAPI accepted a conditional order
+carrying `timeInForce` and `reduceOnly=false`, accepted `marginType=ISOLATED` for `BTCUSD_PERP`, and
+returned `code=200` from both regular and Algo cancel-all calls; cleanup restored the crossed margin
+mode. Before the repair, the authored DAPI create shape selected the regular order route and omitted
+these controls. The dedicated client therefore routes create, cancel, open-order, and cancel-all lifecycle
+operations across the regular and Algo books rather than retaining a market-family exclusion.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T578c","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Pinned Binance COIN-M New Order migration text plus DAPI margin-type and cancel-all contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/exchange_accepted_requests/binancecoinm/create_order.json, set_margin_mode.json, and cancel_all_orders.json"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-10 — current funding-rate cadence (Task 573)
 
 **C-T573c — COIN-M current funding rates join DAPI funding info by native symbol (task 573).

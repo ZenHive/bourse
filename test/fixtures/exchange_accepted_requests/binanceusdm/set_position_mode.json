@@ -1,0 +1,45 @@
+{
+  "acceptance": {
+    "business_success": "code=200 USD-M position-mode update; original one-way mode restored",
+    "capture_date": "2026-08-10",
+    "captured_at": "2026-08-10T08:56:59.792Z",
+    "endpoint": "fapi/v1/positionSide/dual",
+    "host": "demo-fapi.binance.com",
+    "http_status": 200,
+    "method": "set_position_mode",
+    "profile": "set_position_mode",
+    "venue": "binanceusdm"
+  },
+  "label": "Oracle: exchange-acceptance tier 1 vs binanceusdm set_position_mode accepted 2026-08-10 (fapi/v1/positionSide/dual @ demo-fapi.binance.com, HTTP 200, code=200 USD-M position-mode update; original one-way mode restored).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "set_position_mode",
+    "nonce_override": 1786352219393,
+    "params": {
+      "hedge_mode": true
+    },
+    "profile": "set_position_mode",
+    "timestamp_ms_override": 1786352219392
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "content-type",
+        "application/x-www-form-urlencoded"
+      ],
+      [
+        "x-mbx-apikey",
+        "key"
+      ]
+    ],
+    "method": "POST",
+    "url": "https://demo-fapi.binance.com/fapi/v1/positionSide/dual?dualSidePosition=true&timestamp=1786352219392&signature=0b5738a052218c80c005cc64e4bbb140417905580ff233937d03fca83067a770"
+  },
+  "schema_version": 1
+}

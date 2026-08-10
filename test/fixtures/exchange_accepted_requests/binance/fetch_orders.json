@@ -1,15 +1,16 @@
 {
   "acceptance": {
     "business_success": "HTTP 2xx filtered order-history list without an error code",
-    "capture_date": "2026-08-04",
-    "captured_at": "2026-08-04T01:18:11.687Z",
+    "capture_date": "2026-08-10",
+    "captured_at": "2026-08-10T08:40:53.079Z",
     "endpoint": "api/v3/allOrders",
     "host": "testnet.binance.vision",
     "http_status": 200,
     "method": "fetch_orders",
+    "profile": "fetch_orders",
     "venue": "binance"
   },
-  "label": "Oracle: exchange-acceptance tier 1 vs binance fetch_orders accepted 2026-08-04 (api/v3/allOrders @ testnet.binance.vision, HTTP 200, HTTP 2xx filtered order-history list without an error code).",
+  "label": "Oracle: exchange-acceptance tier 1 vs binance fetch_orders accepted 2026-08-10 (api/v3/allOrders @ testnet.binance.vision, HTTP 200, HTTP 2xx filtered order-history list without an error code).",
   "oracle": "exchange_acceptance",
   "provenance": {
     "credentials": "committed fixture credentials",
@@ -18,13 +19,14 @@
   "replay": {
     "call_opts": {},
     "method": "fetch_orders",
-    "nonce_override": 1785806291557,
+    "nonce_override": 1786351252556,
     "params": {
       "limit": 25,
-      "since": 1785802691556,
+      "since": 1786347652555,
       "symbol": "BTC/USDT"
     },
-    "timestamp_ms_override": 1785806291556
+    "profile": "fetch_orders",
+    "timestamp_ms_override": 1786351252555
   },
   "request": {
     "body": null,
@@ -39,7 +41,7 @@
       ]
     ],
     "method": "GET",
-    "url": "https://testnet.binance.vision/api/v3/allOrders?limit=25&startTime=1785802691556&symbol=BTCUSDT&timestamp=1785806291556&signature=50dc74a56109f5588f46268972c7fbd76a44686ddf3be5eaab8ee5dd2fa4e480"
+    "url": "https://testnet.binance.vision/api/v3/allOrders?limit=25&startTime=1786347652555&symbol=BTCUSDT&timestamp=1786351252555&signature=9cd84546511fe3f094d3cf2ffba4c76184e30bc62958e792eb36a5030c49a4a2"
   },
   "schema_version": 1
 }

@@ -17,6 +17,18 @@ defmodule Bourse.DefaultFamilySelectionTest do
       "createOrder" => "fapiPrivate_post_algoorder",
       "fetchOpenOrders" => "fapiPrivate_get_openalgoorders"
     },
+    "binancecoinm" => %{
+      "cancelAllOrders" => "dapiPrivate_delete_algoopenorders",
+      "cancelOrder" => "dapiPrivate_delete_algoorder",
+      "createOrder" => "dapiPrivate_post_algoorder",
+      "fetchOpenOrders" => "dapiPrivate_get_openalgoorders"
+    },
+    "binanceusdm" => %{
+      "cancelAllOrders" => "fapiPrivate_delete_algoopenorders",
+      "cancelOrder" => "fapiPrivate_delete_algoorder",
+      "createOrder" => "fapiPrivate_post_algoorder",
+      "fetchOpenOrders" => "fapiPrivate_get_openalgoorders"
+    },
     "okx" => %{
       "cancelOrder" => "trade/cancel-algos",
       "createOrder" => "trade/order-algo",
@@ -25,8 +37,6 @@ defmodule Bourse.DefaultFamilySelectionTest do
   }
 
   @alternate_create_route_exclusions %{
-    "binancecoinm" => "alternate create endpoints select a different market family, not a second book within one family",
-    "binanceusdm" => "alternate create endpoints select a different market family, not a second book within one family",
     "bybit" => "position/trading-stop manages position-level TP/SL controls rather than independently cancellable orders",
     "deribit" => "buy and sell are side-specific RPC methods writing to the same order book",
     "derive" => "the debug endpoint changes response detail while writing to the same order book"
@@ -125,10 +135,10 @@ defmodule Bourse.DefaultFamilySelectionTest do
                  )
 
         expected_paths =
-          if method == :fetch_funding_rates do
-            [expected_path, String.replace(expected_path, "premiumIndex", "fundingInfo")]
-          else
-            [expected_path]
+          case method do
+            :fetch_funding_rates -> [expected_path, String.replace(expected_path, "premiumIndex", "fundingInfo")]
+            :fetch_open_orders -> [expected_path, "/fapi/v1/openAlgoOrders"]
+            _other -> [expected_path]
           end
 
         assert requests |> RequestCollector.requests() |> Enum.map(& &1.conn.request_path) == expected_paths

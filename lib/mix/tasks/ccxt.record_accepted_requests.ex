@@ -56,13 +56,16 @@ defmodule Mix.Tasks.Ccxt.RecordAcceptedRequests do
     end
   end
 
-  defp write_golden!(%{"acceptance" => %{"venue" => venue, "method" => method}} = golden) do
-    {_venue, method_atom} =
-      Enum.find(ExchangeAcceptanceFixtures.profiles(), fn {candidate_venue, candidate_method} ->
-        candidate_venue == venue and Atom.to_string(candidate_method) == method
+  defp write_golden!(%{"acceptance" => %{"venue" => venue, "method" => method} = acceptance} = golden) do
+    profile_name = acceptance["profile"] || method
+
+    {_venue, profile_id, _method_atom} =
+      Enum.find(ExchangeAcceptanceFixtures.profiles(), fn {candidate_venue, candidate_profile, candidate_method} ->
+        candidate_venue == venue and Atom.to_string(candidate_profile) == profile_name and
+          Atom.to_string(candidate_method) == method
       end)
 
-    path = ExchangeAcceptanceFixtures.fixture_path(venue, method_atom)
+    path = ExchangeAcceptanceFixtures.fixture_path(venue, profile_id)
     File.mkdir_p!(Path.dirname(path))
     File.write!(path, Jason.encode!(golden, pretty: true) <> "\n")
     Mix.shell().info("  wrote #{path}")
@@ -100,6 +103,7 @@ defmodule Mix.Tasks.Ccxt.RecordAcceptedRequests do
       "host",
       "http_status",
       "method",
+      "profile",
       "venue"
     ])
     |> Map.put("label", Map.fetch!(golden, "label"))

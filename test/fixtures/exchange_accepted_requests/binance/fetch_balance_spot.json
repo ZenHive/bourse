@@ -1,0 +1,45 @@
+{
+  "acceptance": {
+    "business_success": "HTTP 2xx spot account payload without an error code",
+    "capture_date": "2026-08-10",
+    "captured_at": "2026-08-10T08:40:52.537Z",
+    "endpoint": "api/v3/account",
+    "host": "testnet.binance.vision",
+    "http_status": 200,
+    "method": "fetch_balance",
+    "profile": "fetch_balance_spot",
+    "venue": "binance"
+  },
+  "label": "Oracle: exchange-acceptance tier 1 vs binance fetch_balance accepted 2026-08-10 (api/v3/account @ testnet.binance.vision, HTTP 200, HTTP 2xx spot account payload without an error code).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "fetch_balance",
+    "nonce_override": 1786351250882,
+    "params": {
+      "type": "spot"
+    },
+    "profile": "fetch_balance_spot",
+    "timestamp_ms_override": 1786351250881
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "content-type",
+        "application/x-www-form-urlencoded"
+      ],
+      [
+        "x-mbx-apikey",
+        "key"
+      ]
+    ],
+    "method": "GET",
+    "url": "https://testnet.binance.vision/api/v3/account?timestamp=1786351250881&signature=f737fc64bd923fe1f9b9f9890e37455464ab054a533591207c92409cab453478"
+  },
+  "schema_version": 1
+}

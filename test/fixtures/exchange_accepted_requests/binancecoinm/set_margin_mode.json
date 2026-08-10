@@ -1,0 +1,46 @@
+{
+  "acceptance": {
+    "business_success": "code=200 COIN-M margin-mode update; original crossed mode restored",
+    "capture_date": "2026-08-10",
+    "captured_at": "2026-08-10T08:38:27.875Z",
+    "endpoint": "dapi/v1/marginType",
+    "host": "demo-dapi.binance.com",
+    "http_status": 200,
+    "method": "set_margin_mode",
+    "profile": "set_margin_mode",
+    "venue": "binancecoinm"
+  },
+  "label": "Oracle: exchange-acceptance tier 1 vs binancecoinm set_margin_mode accepted 2026-08-10 (dapi/v1/marginType @ demo-dapi.binance.com, HTTP 200, code=200 COIN-M margin-mode update; original crossed mode restored).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "set_margin_mode",
+    "nonce_override": 1786351107482,
+    "params": {
+      "margin_mode": "isolated",
+      "symbol": "BTC/USD:BTC"
+    },
+    "profile": "set_margin_mode",
+    "timestamp_ms_override": 1786351107481
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "content-type",
+        "application/x-www-form-urlencoded"
+      ],
+      [
+        "x-mbx-apikey",
+        "key"
+      ]
+    ],
+    "method": "POST",
+    "url": "https://demo-dapi.binance.com/dapi/v1/marginType?marginType=ISOLATED&symbol=BTCUSD_PERP&timestamp=1786351107481&signature=52b1795b99365782ebb525a52606f56c5ae0f018a6de7f3569046a44d4b9f2a4"
+  },
+  "schema_version": 1
+}

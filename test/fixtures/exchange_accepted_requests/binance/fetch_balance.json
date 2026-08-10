@@ -2,11 +2,12 @@
   "acceptance": {
     "business_success": "HTTP 2xx USD-M account payload without an error code",
     "capture_date": "2026-08-10",
-    "captured_at": "2026-08-10T02:43:28.996Z",
+    "captured_at": "2026-08-10T08:40:50.866Z",
     "endpoint": "fapi/v3/account",
     "host": "demo-fapi.binance.com",
     "http_status": 200,
     "method": "fetch_balance",
+    "profile": "fetch_balance",
     "venue": "binance"
   },
   "label": "Oracle: exchange-acceptance tier 1 vs binance fetch_balance accepted 2026-08-10 (fapi/v3/account @ demo-fapi.binance.com, HTTP 200, HTTP 2xx USD-M account payload without an error code).",
@@ -18,11 +19,12 @@
   "replay": {
     "call_opts": {},
     "method": "fetch_balance",
-    "nonce_override": 1786329806868,
+    "nonce_override": 1786351248747,
     "params": {
       "type": "swap"
     },
-    "timestamp_ms_override": 1786329806867
+    "profile": "fetch_balance",
+    "timestamp_ms_override": 1786351248746
   },
   "request": {
     "body": null,
@@ -37,7 +39,7 @@
       ]
     ],
     "method": "GET",
-    "url": "https://demo-fapi.binance.com/fapi/v3/account?timestamp=1786329806867&signature=57b9cfe565a4fb5e7c3e1850130c550d0974c62fc67116c4dcaedfb749de5aa4"
+    "url": "https://demo-fapi.binance.com/fapi/v3/account?timestamp=1786351248746&signature=411c6770a635a02e16b31553b33d2b15712d27f6a87d5e8f47de4a33c45e7644"
   },
   "schema_version": 1
 }

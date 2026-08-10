@@ -3930,9 +3930,21 @@
             "source": "amount",
             "source_class": "unified_param"
           },
+          "reduceOnly": {
+            "source": "reduce_only",
+            "source_class": "optional"
+          },
           "side": {
             "source": "side",
             "source_class": "unified_param",
+            "transform": "uppercase"
+          },
+          "timeInForce": {
+            "fallback_sources": [
+              "timeInForce"
+            ],
+            "source": "time_in_force",
+            "source_class": "optional",
             "transform": "uppercase"
           },
           "type": {
@@ -4283,14 +4295,27 @@
         },
         "setMarginMode": {
           "marginType": {
-            "kind": "unresolved",
-            "reason": "identifier_reference",
-            "value": null
+            "cases": [
+              {
+                "value": "CROSSED",
+                "when": {
+                  "margin_mode": "cross"
+                }
+              },
+              {
+                "value": "ISOLATED",
+                "when": {
+                  "margin_mode": "isolated"
+                }
+              }
+            ],
+            "kind": "conditional",
+            "source": "margin_mode",
+            "source_class": "unified_param"
           },
           "symbol": {
-            "kind": "unresolved",
-            "reason": "identifier_reference",
-            "value": null
+            "source": "symbol",
+            "source_class": "unified_param"
           }
         },
         "setPositionMode": {
@@ -4343,10 +4368,152 @@
             "source_class": "unified_param",
             "value": null
           }
+        },
+        "endpoint_overrides": {
+          "cancelOrder": {
+            "algoOrder": {
+              "_omit": [
+                "orderId"
+              ],
+              "algoId": {
+                "source": "id",
+                "source_class": "unified_param"
+              }
+            }
+          },
+          "createOrder": {
+            "algoOrder": {
+              "algoType": {
+                "kind": "literal",
+                "value": "CONDITIONAL"
+              },
+              "triggerPrice": {
+                "fallback_sources": [
+                  "stop_loss_price",
+                  "take_profit_price"
+                ],
+                "source": "trigger_price",
+                "source_class": "optional"
+              },
+              "type": {
+                "cases": [
+                  {
+                    "value": "TAKE_PROFIT_MARKET",
+                    "when": {
+                      "stop_loss_price": "absent",
+                      "take_profit_price": "present",
+                      "type": "market"
+                    }
+                  },
+                  {
+                    "value": "TAKE_PROFIT",
+                    "when": {
+                      "stop_loss_price": "absent",
+                      "take_profit_price": "present",
+                      "type": "limit"
+                    }
+                  },
+                  {
+                    "value": "TAKE_PROFIT_MARKET",
+                    "when": {
+                      "type": "take_profit_market"
+                    }
+                  },
+                  {
+                    "value": "TAKE_PROFIT",
+                    "when": {
+                      "type": "take_profit"
+                    }
+                  },
+                  {
+                    "value": "STOP_MARKET",
+                    "when": {
+                      "take_profit_price": "absent",
+                      "type": "market"
+                    }
+                  },
+                  {
+                    "value": "STOP",
+                    "when": {
+                      "take_profit_price": "absent",
+                      "type": "limit"
+                    }
+                  },
+                  {
+                    "value": "STOP_MARKET",
+                    "when": {
+                      "type": "stop_market"
+                    }
+                  },
+                  {
+                    "value": "STOP",
+                    "when": {
+                      "type": "stop"
+                    }
+                  }
+                ],
+                "kind": "conditional",
+                "source": "type",
+                "source_class": "unified_param",
+                "transform": "uppercase"
+              }
+            }
+          }
         }
       },
       "endpoint_selection": {
+        "cancelAllOrders": {
+          "book_routes": [
+            {
+              "endpoints": [
+                "fapiPrivate_delete_allopenorders",
+                "fapiPrivate_delete_algoopenorders"
+              ],
+              "mode": "broadcast",
+              "when": {
+                "market_family": "linear"
+              }
+            }
+          ],
+          "consume": [
+            "subType",
+            "sub_type"
+          ],
+          "default": "fapiPrivate_delete_allopenorders",
+          "rules": [
+            {
+              "endpoint": "private_delete_openorders",
+              "when": {
+                "market_family": "spot"
+              }
+            },
+            {
+              "endpoint": "dapiPrivate_delete_allopenorders",
+              "when": {
+                "market_family": "inverse"
+              }
+            },
+            {
+              "endpoint": "eapiPrivate_delete_allopenorders",
+              "when": {
+                "market_family": "option"
+              }
+            }
+          ]
+        },
         "cancelOrder": {
+          "book_routes": [
+            {
+              "endpoints": [
+                "fapiPrivate_delete_order",
+                "fapiPrivate_delete_algoorder"
+              ],
+              "mode": "first_success",
+              "when": {
+                "market_family": "linear"
+              }
+            }
+          ],
           "consume": [
             "subType",
             "sub_type"
@@ -4380,6 +4547,29 @@
           ],
           "default": "fapiPrivate_post_order",
           "rules": [
+            {
+              "endpoint": "fapiPrivate_post_algoorder",
+              "when": {
+                "market_family": "linear",
+                "trigger_price": "present"
+              }
+            },
+            {
+              "endpoint": "fapiPrivate_post_algoorder",
+              "when": {
+                "market_family": "linear",
+                "stop_loss_price": "present",
+                "take_profit_price": "absent"
+              }
+            },
+            {
+              "endpoint": "fapiPrivate_post_algoorder",
+              "when": {
+                "market_family": "linear",
+                "stop_loss_price": "absent",
+                "take_profit_price": "present"
+              }
+            },
             {
               "endpoint": "private_post_order",
               "when": {
@@ -4792,6 +4982,18 @@
           ]
         },
         "fetchOpenOrders": {
+          "book_routes": [
+            {
+              "endpoints": [
+                "fapiPrivate_get_openorders",
+                "fapiPrivate_get_openalgoorders"
+              ],
+              "mode": "merge",
+              "when": {
+                "market_family": "linear"
+              }
+            }
+          ],
           "consume": [
             "type",
             "subType",

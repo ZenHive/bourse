@@ -38,6 +38,7 @@ defmodule Bourse.Unified.RequestShape do
   # a venue default.
   @hyperliquid_ohlcv_default_start_time 0
   @hyperliquid_funding_default_limit 500
+  @binance_conditional_venues ~w(binance binancecoinm binanceusdm)
   # Nested `req` consumes these unified keys; drop after building so they never
   # leak top-level next to type/req (hyperliquid has no top-level rename targets).
   @hyperliquid_ohlcv_nested_sources ~w(symbol timeframe since limit until)
@@ -56,6 +57,7 @@ defmodule Bourse.Unified.RequestShape do
 
   def apply(params, %Exchange{request_param_shape: shape} = exchange, js_name, opts)
       when is_map(params) and is_list(opts) do
+    params = reject_multiple_binance_conditional_legs!(params, exchange, js_name)
     {params, exchange} = OrderPrecision.guard_dispatch!(params, exchange, js_name, opts)
     context = exchange |> shape_context() |> Map.put(:exchange_id, exchange.id)
 
@@ -352,13 +354,26 @@ defmodule Bourse.Unified.RequestShape do
   defp validate_unified_source!(_entry, _source, _required, _js_name, _context), do: :ok
 
   defp reference_value(params, source, entry) do
-    [source | List.wrap(entry["fallback_sources"])]
-    |> Enum.find_value(&Map.get(params, &1))
-    |> case do
+    case Enum.find([source | List.wrap(entry["fallback_sources"])], &(not is_nil(Map.get(params, &1)))) do
       nil -> Map.get(entry, "default")
-      value -> value
+      key -> Map.get(params, key)
     end
   end
+
+  defp reject_multiple_binance_conditional_legs!(
+         %{"stop_loss_price" => stop_loss, "take_profit_price" => take_profit},
+         %Exchange{id: exchange_id},
+         "createOrder"
+       )
+       when exchange_id in @binance_conditional_venues and not is_nil(stop_loss) and not is_nil(take_profit) do
+    raise Error.invalid_parameters(
+            message: "Binance Algo orders accept one conditional leg per order",
+            exchange: exchange_id,
+            raw: %{"method" => "createOrder", "reason" => "multiple_conditional_legs"}
+          )
+  end
+
+  defp reject_multiple_binance_conditional_legs!(params, _exchange, _js_name), do: params
 
   defp put_authored_conditional(params, native_key, cases, entry) do
     value =
