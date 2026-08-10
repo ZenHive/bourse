@@ -193,7 +193,8 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
       profile("binancecoinm"),
       binancecoinm_take_profit_order_profile(),
       binancecoinm_margin_mode_profile(),
-      binancecoinm_cancel_all_orders_profile()
+      binancecoinm_cancel_all_orders_profile(),
+      binancecoinm_leverage_profile()
     ]
   end
 
@@ -413,6 +414,19 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
       sensitive_query: ["signature"],
       stub_body: %{"code" => 200, "msg" => "The operation of cancel all open order is done."},
       business_success: "code=200 COIN-M symbol-scoped regular and Algo cancel-all acknowledgements"
+    )
+  end
+
+  defp binancecoinm_leverage_profile do
+    build_profile("binancecoinm", :set_leverage, "dapi/v1/leverage", "demo-dapi.binance.com", :binanceusdm,
+      sandbox: true,
+      fixture_seed: :empty,
+      params: %{"leverage" => 3, "symbol" => "BTC/USD:BTC"},
+      sensitive_headers: ["x-mbx-apikey"],
+      sensitive_query: ["signature"],
+      stub_body: %{"leverage" => 3, "maxQty" => "1000", "symbol" => "BTCUSD_PERP"},
+      symbol: "BTC/USD:BTC",
+      business_success: "HTTP 200 COIN-M leverage 3 acknowledgement for flat BTCUSD_PERP"
     )
   end
 

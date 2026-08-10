@@ -25,6 +25,9 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
   @usdm_conditional_trigger_ratio 0.85
   @usdm_conditional_limit_ratio 0.84
   @usdm_conditional_price_decimal_places 2
+  @usdm_flat_leverage_symbol "ETH/USDT:USDT"
+  @coinm_flat_leverage_symbol "BTC/USD:BTC"
+  @configured_leverage 3
   @cancel_all_order_count 2
   @legacy_conditional_probe_amount "0.001"
   @legacy_conditional_probe_price "1"
@@ -46,6 +49,7 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
 
   setup do
     FixtureGateIsolation.isolate!("binance")
+    FixtureGateIsolation.isolate!("binancecoinm")
     FixtureGateIsolation.isolate!("binanceusdm")
     :ok
   end
@@ -356,6 +360,38 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
 
     assert {:error, %Error{code: -4059, message: "No need to change position side."}} =
              Bourse.set_position_mode(exchange, hedge_mode)
+  end
+
+  @tag :dangerous
+  test "dedicated futures expose flat-symbol leverage and COIN-M write capabilities" do
+    credentials =
+      require_credentials!(:binance, sandbox_key: :futures, url: "https://demo.binance.com/en/my/settings/api-management")
+
+    usdm = build_exchange(:binanceusdm, credentials: credentials, sandbox: true)
+    coinm = build_exchange(:binancecoinm, credentials: credentials, sandbox: true)
+    assert {:ok, usdm_markets} = Bourse.fetch_markets(usdm)
+    assert {:ok, coinm_markets} = Bourse.fetch_markets(coinm)
+    usdm = Bourse.Exchange.put_markets(usdm, usdm_markets)
+    coinm = Bourse.Exchange.put_markets(coinm, coinm_markets)
+
+    assert {:ok, %{body: [flat_position]}} =
+             Bourse.Binanceusdm.fapiPrivateV3_get_positionrisk(usdm, %{"symbol" => "ETHUSDT"})
+
+    assert Bourse.Safe.number(flat_position["positionAmt"]) == 0
+
+    assert {:ok, %Leverage{symbol: @usdm_flat_leverage_symbol, long_leverage: @configured_leverage}} =
+             Bourse.fetch_leverage(usdm, @usdm_flat_leverage_symbol)
+
+    assert {:ok, %{"dualSidePosition" => hedge_mode}} = Bourse.fetch_position_mode(coinm)
+
+    assert {:error, %Error{code: -4059, message: "No need to change position side."}} =
+             Bourse.set_position_mode(coinm, hedge_mode)
+
+    assert {:ok, %{"leverage" => @configured_leverage, "symbol" => "BTCUSD_PERP"}} =
+             Bourse.set_leverage(coinm, @configured_leverage, @coinm_flat_leverage_symbol)
+
+    assert {:ok, %Leverage{symbol: @coinm_flat_leverage_symbol, long_leverage: @configured_leverage}} =
+             Bourse.fetch_leverage(coinm, @coinm_flat_leverage_symbol)
   end
 
   @tag :dangerous

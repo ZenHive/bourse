@@ -15,6 +15,7 @@ defmodule Bourse.BinancecoinmPromotionTest do
     fetchFundingRate
     fetchFundingRateHistory
     fetchFundingRates
+    fetchLeverages
     fetchMarkets
     fetchMyTrades
     fetchOpenOrders
@@ -25,8 +26,11 @@ defmodule Bourse.BinancecoinmPromotionTest do
     fetchTicker
     fetchTime
     fetchTrades
+    setLeverage
     setMarginMode
+    setPositionMode
   )
+  @emulated_methods ~w(fetchLeverage)
   @demo_host "demo-dapi.binance.com"
   @ticker_fixture "test/fixtures/responses/binancecoinm/fetch_ticker.json"
   @external_resource @ticker_fixture
@@ -55,10 +59,15 @@ defmodule Bourse.BinancecoinmPromotionTest do
     assert support |> Enum.filter(fn {_method, value} -> value == true end) |> Enum.map(&elem(&1, 0)) |> Enum.sort() ==
              Enum.sort(@supported_methods)
 
-    for {method, declaration} <- support do
-      assert declaration in [true, false]
+    assert support
+           |> Enum.filter(fn {_method, value} -> value == "emulated" end)
+           |> Enum.map(&elem(&1, 0))
+           |> Enum.sort() == Enum.sort(@emulated_methods)
 
-      if declaration do
+    for {method, declaration} <- support do
+      assert declaration in [true, false, "emulated"]
+
+      if declaration in [true, "emulated"] do
         assert routes[method] != []
         assert Enum.all?(routes[method], &String.starts_with?(&1, "dapi"))
       else

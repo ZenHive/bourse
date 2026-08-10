@@ -1,6 +1,6 @@
 {
-  "count": 18,
-  "generated_at": "2026-07-26T02:36:16.331677Z",
+  "count": 19,
+  "generated_at": "2026-08-10T12:04:29.461201Z",
   "recordings": [
     {
       "capture_date": "2026-07-26",
@@ -84,6 +84,18 @@
       "http_status": 401,
       "method": "error_invalid_signature",
       "path": "binancecoinm/error_invalid_signature.json",
+      "venue": "binancecoinm"
+    },
+    {
+      "capture_date": "2026-08-10",
+      "captured_at": "2026-08-10T12:04:29.458505Z",
+      "code": "-4059",
+      "endpoint": "dapi/v1/positionSide/dual",
+      "error_kind": "position_mode_unchanged",
+      "host": "demo-dapi.binance.com",
+      "http_status": 400,
+      "method": "error_position_mode_unchanged",
+      "path": "binancecoinm/error_position_mode_unchanged.json",
       "venue": "binancecoinm"
     },
     {

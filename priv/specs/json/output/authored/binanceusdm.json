@@ -28506,6 +28506,13 @@
       "reasons": [
         "has_emulated"
       ]
+    },
+    {
+      "name": "fetchLeverage",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
     }
   ]
 }

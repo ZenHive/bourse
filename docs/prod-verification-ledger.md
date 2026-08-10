@@ -86,10 +86,9 @@ evidence beyond the batch review.
 
 #### binancecoinm
 
-- Blocked by: the demo account cannot safely manufacture the five exact exchange-error conditions,
+- Blocked by: the demo account cannot safely manufacture the four remaining exchange-error conditions,
   and the provider inventory has no observed currency-alias case. Recorded open-orders and
   position reads close the remaining private request-shape slots.
-  - [oracle-critical-slot-waiver 2026-08-10] `binancecoinm:errors.handle_errors.exceptions.exact.-1013`
   - [oracle-critical-slot-waiver 2026-08-10] `binancecoinm:errors.handle_errors.exceptions.exact.-1014`
   - [oracle-critical-slot-waiver 2026-08-10] `binancecoinm:errors.handle_errors.exceptions.exact.-2011`
   - [oracle-critical-slot-waiver 2026-08-10] `binancecoinm:errors.handle_errors.exceptions.exact.-4050`

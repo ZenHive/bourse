@@ -1,0 +1,46 @@
+{
+  "acceptance": {
+    "business_success": "HTTP 200 COIN-M leverage 3 acknowledgement for flat BTCUSD_PERP",
+    "capture_date": "2026-08-10",
+    "captured_at": "2026-08-10T12:04:10.566Z",
+    "endpoint": "dapi/v1/leverage",
+    "host": "demo-dapi.binance.com",
+    "http_status": 200,
+    "method": "set_leverage",
+    "profile": "set_leverage",
+    "venue": "binancecoinm"
+  },
+  "label": "Oracle: exchange-acceptance tier 1 vs binancecoinm set_leverage accepted 2026-08-10 (dapi/v1/leverage @ demo-dapi.binance.com, HTTP 200, HTTP 200 COIN-M leverage 3 acknowledgement for flat BTCUSD_PERP).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "set_leverage",
+    "nonce_override": 1786363450035,
+    "params": {
+      "leverage": 3,
+      "symbol": "BTC/USD:BTC"
+    },
+    "profile": "set_leverage",
+    "timestamp_ms_override": 1786363450034
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "content-type",
+        "application/x-www-form-urlencoded"
+      ],
+      [
+        "x-mbx-apikey",
+        "key"
+      ]
+    ],
+    "method": "POST",
+    "url": "https://demo-dapi.binance.com/dapi/v1/leverage?leverage=3&symbol=BTCUSD_PERP&timestamp=1786363450034&signature=b8b86f73341865bc58849b29bad83e3d5763215a55ca662ebac64fb2cbf40791"
+  },
+  "schema_version": 1
+}

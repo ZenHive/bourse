@@ -1,6 +1,6 @@
 {
-  "count": 24,
-  "generated_at": "2026-08-10T08:57:00Z",
+  "count": 25,
+  "generated_at": "2026-08-10T12:04:10Z",
   "goldens": [
     {
       "business_success": "HTTP 2xx paper-account payload",
@@ -120,7 +120,7 @@
     {
       "business_success": "code=200 COIN-M symbol-scoped regular and Algo cancel-all acknowledgements",
       "capture_date": "2026-08-10",
-      "captured_at": "2026-08-10T08:38:30.210Z",
+      "captured_at": "2026-08-10T12:04:10.018Z",
       "endpoint": "dapi/v1/allOpenOrders",
       "host": "demo-dapi.binance.com",
       "http_status": 200,
@@ -133,7 +133,7 @@
     {
       "business_success": "HTTP 2xx resting COIN-M take-profit order with an algo id; accepted order cancelled",
       "capture_date": "2026-08-10",
-      "captured_at": "2026-08-10T08:38:26.479Z",
+      "captured_at": "2026-08-10T12:04:05.906Z",
       "endpoint": "dapi/v1/algoOrder",
       "host": "demo-dapi.binance.com",
       "http_status": 200,
@@ -146,7 +146,7 @@
     {
       "business_success": "HTTP 2xx COIN-M account payload without an error code",
       "capture_date": "2026-08-10",
-      "captured_at": "2026-08-10T08:38:25.387Z",
+      "captured_at": "2026-08-10T12:04:04.805Z",
       "endpoint": "dapi/v1/account",
       "host": "demo-dapi.binance.com",
       "http_status": 200,
@@ -157,9 +157,22 @@
       "venue": "binancecoinm"
     },
     {
+      "business_success": "HTTP 200 COIN-M leverage 3 acknowledgement for flat BTCUSD_PERP",
+      "capture_date": "2026-08-10",
+      "captured_at": "2026-08-10T12:04:10.566Z",
+      "endpoint": "dapi/v1/leverage",
+      "host": "demo-dapi.binance.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binancecoinm set_leverage accepted 2026-08-10 (dapi/v1/leverage @ demo-dapi.binance.com, HTTP 200, HTTP 200 COIN-M leverage 3 acknowledgement for flat BTCUSD_PERP).",
+      "method": "set_leverage",
+      "path": "binancecoinm/set_leverage.json",
+      "profile": "set_leverage",
+      "venue": "binancecoinm"
+    },
+    {
       "business_success": "code=200 COIN-M margin-mode update; original crossed mode restored",
       "capture_date": "2026-08-10",
-      "captured_at": "2026-08-10T08:38:27.875Z",
+      "captured_at": "2026-08-10T12:04:07.757Z",
       "endpoint": "dapi/v1/marginType",
       "host": "demo-dapi.binance.com",
       "http_status": 200,

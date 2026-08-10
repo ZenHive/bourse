@@ -2,7 +2,7 @@
   "acceptance": {
     "business_success": "HTTP 2xx COIN-M account payload without an error code",
     "capture_date": "2026-08-10",
-    "captured_at": "2026-08-10T08:38:25.387Z",
+    "captured_at": "2026-08-10T12:04:04.805Z",
     "endpoint": "dapi/v1/account",
     "host": "demo-dapi.binance.com",
     "http_status": 200,
@@ -19,10 +19,10 @@
   "replay": {
     "call_opts": {},
     "method": "fetch_balance",
-    "nonce_override": 1786351103310,
+    "nonce_override": 1786363442264,
     "params": {},
     "profile": "fetch_balance",
-    "timestamp_ms_override": 1786351103309
+    "timestamp_ms_override": 1786363442263
   },
   "request": {
     "body": null,
@@ -37,7 +37,7 @@
       ]
     ],
     "method": "GET",
-    "url": "https://demo-dapi.binance.com/dapi/v1/account?timestamp=1786351103309&signature=18c456bbd0815b88c0b7bf196b18087ce9708a5d09fffb36427c11d5774d79b4"
+    "url": "https://demo-dapi.binance.com/dapi/v1/account?timestamp=1786363442263&signature=63faea9c1a0a149a6f8c5407a6383c4d00aae96584b19a499b1772c05589647d"
   },
   "schema_version": 1
 }

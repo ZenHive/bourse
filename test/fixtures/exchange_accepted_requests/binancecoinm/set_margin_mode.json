@@ -2,7 +2,7 @@
   "acceptance": {
     "business_success": "code=200 COIN-M margin-mode update; original crossed mode restored",
     "capture_date": "2026-08-10",
-    "captured_at": "2026-08-10T08:38:27.875Z",
+    "captured_at": "2026-08-10T12:04:07.757Z",
     "endpoint": "dapi/v1/marginType",
     "host": "demo-dapi.binance.com",
     "http_status": 200,
@@ -19,13 +19,13 @@
   "replay": {
     "call_opts": {},
     "method": "set_margin_mode",
-    "nonce_override": 1786351107482,
+    "nonce_override": 1786363447383,
     "params": {
       "margin_mode": "isolated",
       "symbol": "BTC/USD:BTC"
     },
     "profile": "set_margin_mode",
-    "timestamp_ms_override": 1786351107481
+    "timestamp_ms_override": 1786363447382
   },
   "request": {
     "body": null,
@@ -40,7 +40,7 @@
       ]
     ],
     "method": "POST",
-    "url": "https://demo-dapi.binance.com/dapi/v1/marginType?marginType=ISOLATED&symbol=BTCUSD_PERP&timestamp=1786351107481&signature=52b1795b99365782ebb525a52606f56c5ae0f018a6de7f3569046a44d4b9f2a4"
+    "url": "https://demo-dapi.binance.com/dapi/v1/marginType?marginType=ISOLATED&symbol=BTCUSD_PERP&timestamp=1786363447382&signature=c9b95a8ad261a5b0b6ed965eaa37ce547a5a38d741d74101735603d92d6235f6"
   },
   "schema_version": 1
 }

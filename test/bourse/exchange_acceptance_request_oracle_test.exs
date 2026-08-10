@@ -161,6 +161,13 @@ defmodule Bourse.ExchangeAcceptanceRequestOracleTest do
     assert_request(position_mode, "demo-fapi.binance.com", "/fapi/v1/positionSide/dual", "POST", %{
       "dualSidePosition" => "true"
     })
+
+    leverage = venue_golden!("binancecoinm", "set_leverage")
+
+    assert_request(leverage, "demo-dapi.binance.com", "/dapi/v1/leverage", "POST", %{
+      "leverage" => "3",
+      "symbol" => "BTCUSD_PERP"
+    })
   end
 
   test "Binance spot order golden pins pass-through controls" do

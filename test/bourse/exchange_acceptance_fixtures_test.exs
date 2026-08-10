@@ -28,6 +28,7 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
     assert {"binance", :fetch_balance_spot, :fetch_balance} in profiles
     assert {"binance", :create_order, :create_order} in profiles
     assert {"binancecoinm", :fetch_balance, :fetch_balance} in profiles
+    assert {"binancecoinm", :set_leverage, :set_leverage} in profiles
     assert {"binanceusdm", :set_position_mode, :set_position_mode} in profiles
     assert ExchangeAcceptanceFixtures.fixture_root() =~ "test/fixtures/exchange_accepted_requests"
 
@@ -168,7 +169,10 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
           expected_profiles = ["fetch_balance", "create_order", "set_margin_mode", "cancel_all_orders"]
 
           expected_profiles =
-            if venue == "binanceusdm", do: expected_profiles ++ ["set_position_mode"], else: expected_profiles
+            case venue do
+              "binanceusdm" -> expected_profiles ++ ["set_position_mode"]
+              "binancecoinm" -> expected_profiles ++ ["set_leverage"]
+            end
 
           assert Enum.map(goldens, &get_in(&1, ["acceptance", "profile"])) == expected_profiles
 
@@ -324,6 +328,10 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
 
   defp success_body("demo-dapi.binance.com", "/dapi/v1/algoOrder") do
     %{"algoId" => 1, "algoStatus" => "NEW", "symbol" => "BTCUSD_PERP"}
+  end
+
+  defp success_body("demo-dapi.binance.com", "/dapi/v1/leverage") do
+    %{"leverage" => 3, "maxQty" => "1000", "symbol" => "BTCUSD_PERP"}
   end
 
   defp success_body("demo-fapi.binance.com", path)

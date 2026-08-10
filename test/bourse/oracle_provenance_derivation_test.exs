@@ -270,10 +270,10 @@ defmodule Bourse.OracleProvenance.DerivationTest do
   end
 
   test "a safe error class without a recording keeps one open representative", %{reports: reports} do
-    bad_request_slots = error_slots(reports["binancecoinm"], "BadRequest")
+    invalid_order_slots = error_slots(reports["binancecoinm"], "InvalidOrder")
 
-    assert Enum.count(bad_request_slots, & &1.critical) == 1
-    refute Enum.find(bad_request_slots, & &1.critical).verified
+    assert Enum.count(invalid_order_slots, & &1.critical) == 1
+    refute Enum.find(invalid_order_slots, & &1.critical).verified
   end
 
   test "recorded errors and provider-doc paths verify handle_errors distinctly", %{reports: reports} do

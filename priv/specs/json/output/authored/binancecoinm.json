@@ -879,7 +879,7 @@
       "fetchBorrowRateHistory": false,
       "spot": false,
       "editContractOrder": false,
-      "setPositionMode": false,
+      "setPositionMode": true,
       "createMarketOrderWithCost": false,
       "fetchTransactions": false,
       "fetchLiquidations": false,
@@ -893,7 +893,7 @@
       "fetchPositionMode": true,
       "createReduceOnlyOrder": false,
       "fetchFundingRate": true,
-      "setLeverage": false,
+      "setLeverage": true,
       "fetchIndexOHLCV": false,
       "createConvertTrade": false,
       "fetchGreeks": false,
@@ -956,7 +956,7 @@
       "editOrders": false,
       "createStopMarketOrder": false,
       "fetchPositionADLRank": false,
-      "fetchLeverage": false,
+      "fetchLeverage": "emulated",
       "sandbox": false,
       "fetchMarkets": true,
       "fetchClosedOrder": false,
@@ -1018,7 +1018,7 @@
       "createOrders": false,
       "createMarketOrder": false,
       "fetchDeposit": false,
-      "fetchLeverages": false,
+      "fetchLeverages": true,
       "fetchOptionChain": false,
       "publicAPI": false,
       "fetchWithdrawAddresses": false,
@@ -3896,6 +3896,28 @@
             "source_class": "unified_param"
           }
         },
+        "setPositionMode": {
+          "dualSidePosition": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "source": "hedge_mode",
+            "source_class": "unified_param",
+            "transform": "string",
+            "value": null
+          }
+        },
+        "setLeverage": {
+          "leverage": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          },
+          "symbol": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "value": null
+          }
+        },
         "endpoint_overrides": {
           "cancelOrder": {
             "algoOrder": {
@@ -4293,6 +4315,13 @@
               }
             }
           ]
+        },
+        "fetchLeverages": {
+          "consume": [
+            "symbol"
+          ],
+          "default": "dapiPrivate_get_account",
+          "rules": []
         },
         "fetchMarkets": {
           "consume": [
@@ -9267,7 +9296,9 @@
       "fetchBorrowRateHistory": [],
       "spot": [],
       "editContractOrder": [],
-      "setPositionMode": [],
+      "setPositionMode": [
+        "dapiPrivatePostPositionSideDual"
+      ],
       "createMarketOrderWithCost": [],
       "fetchTransactions": [],
       "fetchLiquidations": [],
@@ -9289,7 +9320,9 @@
       "fetchFundingRate": [
         "dapiPublicGetPremiumIndex"
       ],
-      "setLeverage": [],
+      "setLeverage": [
+        "dapiPrivatePostLeverage"
+      ],
       "fetchIndexOHLCV": [],
       "createConvertTrade": [],
       "fetchGreeks": [],
@@ -9361,7 +9394,9 @@
       "editOrders": [],
       "createStopMarketOrder": [],
       "fetchPositionADLRank": [],
-      "fetchLeverage": [],
+      "fetchLeverage": [
+        "dapiPrivateGetAccount"
+      ],
       "sandbox": [],
       "fetchMarkets": [
         "dapiPublicGetExchangeInfo"
@@ -9446,7 +9481,9 @@
       "createOrders": [],
       "createMarketOrder": [],
       "fetchDeposit": [],
-      "fetchLeverages": [],
+      "fetchLeverages": [
+        "dapiPrivateGetAccount"
+      ],
       "fetchOptionChain": [],
       "publicAPI": [],
       "fetchWithdrawAddresses": [],
@@ -11604,10 +11641,19 @@
         "extras": [],
         "field_map": {
           "info": null,
-          "longLeverage": null,
+          "longLeverage": {
+            "coercion": "safeInteger",
+            "key": "leverage"
+          },
           "marginMode": null,
-          "shortLeverage": null,
-          "symbol": null
+          "shortLeverage": {
+            "coercion": "safeInteger",
+            "key": "leverage"
+          },
+          "symbol": {
+            "coercion": "safeString",
+            "key": "symbol"
+          }
         }
       },
       "leverage_tiers": {
@@ -12844,6 +12890,13 @@
           "default": [],
           "fallback_keys": [],
           "key": null
+        }
+      },
+      "leverage": {
+        "fetchLeverages": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "positions"
         }
       },
       "margin_modification": {
@@ -19085,5 +19138,13 @@
       "unresolved_reason": null
     }
   },
-  "emulated_methods": []
+  "emulated_methods": [
+    {
+      "name": "fetchLeverage",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    }
+  ]
 }

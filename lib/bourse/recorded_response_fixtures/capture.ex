@@ -196,7 +196,7 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       {"binanceusdm", :fetch_balance} => binance_usdm("fapi/v3/account", %{}),
       {"binanceusdm", :fetch_account_positions} => binance_usdm("fapi/v3/account", %{}),
       {"binanceusdm", :fetch_leverages} =>
-        binance_usdm("fapi/v1/symbolConfig", %{"symbol" => "BTC/USDT:USDT"}, load_markets?: true),
+        binance_usdm("fapi/v1/symbolConfig", %{"symbol" => "ETH/USDT:USDT"}, load_markets?: true),
       {"binanceusdm", :fetch_open_orders} => binance_usdm("fapi/v1/openOrders", %{"symbol" => "BTC/USDT:USDT"}),
       {"binanceusdm", :fetch_positions} => binance_usdm("fapi/v3/positionRisk", %{"symbols" => ["BTC/USDT:USDT"]}),
       {"binanceusdm", :fetch_positions_risk} => binance_usdm("fapi/v3/positionRisk", %{}),
@@ -205,6 +205,8 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       {"binanceusdm", :fetch_ledger} => binance_usdm("fapi/v1/income", %{"limit" => @history_limit}),
       {"binanceusdm", :fetch_position_adl_rank} => binance_usdm("fapi/v1/adlQuantile", %{"symbol" => "BTC/USDT:USDT"}),
       {"binancecoinm", :fetch_balance} => binance_coinm("dapi/v1/account", %{}),
+      {"binancecoinm", :fetch_leverages} =>
+        binance_coinm("dapi/v1/account", %{"symbol" => "BTC/USD:BTC"}, load_markets?: true),
       {"binancecoinm", :fetch_open_orders} =>
         binance_coinm("dapi/v1/openOrders", %{"symbol" => "BTCUSD_PERP"}, symbol: "BTC/USD:BTC"),
       {"binancecoinm", :fetch_positions} => binance_coinm("dapi/v1/positionRisk", %{"symbols" => ["BTC/USD:BTC"]}),
@@ -332,6 +334,14 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
           %{},
           exchange_opts: [sandbox: true]
         ),
+      {"binancecoinm", :error_position_mode_unchanged} =>
+        "dapi/v1/positionSide/dual"
+        |> error_probe("demo-dapi.binance.com", :binancecoinm, :set_position_mode, %{"hedge_mode" => false})
+        |> Map.merge(%{
+          error_kind: "position_mode_unchanged",
+          expected_types: [:operation_failed],
+          mutation_safety: Map.put(@error_mutation_safety, "error_kind", "position_mode_unchanged")
+        }),
       {"binanceusdm", :error_bad_symbol} =>
         error_public(
           "fapi/v1/ticker/price",

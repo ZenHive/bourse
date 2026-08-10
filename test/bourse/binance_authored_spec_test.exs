@@ -341,19 +341,78 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     end
   end
 
-  test "Binance USD-M position mode preserves false on the signed wire" do
-    {requests, stub} = body_capturing_stub(%{"code" => 200, "msg" => "success"})
-    exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret", sandbox: true)
+  test "dedicated Binance futures position mode preserves false on the signed wire" do
+    for {exchange_id, expected_path} <- [
+          {"binanceusdm", "/fapi/v1/positionSide/dual"},
+          {"binancecoinm", "/dapi/v1/positionSide/dual"}
+        ] do
+      {requests, stub} = body_capturing_stub(%{"code" => 200, "msg" => "success"})
+      exchange = Exchange.new!(exchange_id, api_key: "key", secret: "secret", sandbox: true)
 
-    assert {:ok, %{"code" => 200}} =
-             Bourse.set_position_mode(exchange, false,
+      assert {:ok, %{"code" => 200}} =
+               Bourse.set_position_mode(exchange, false,
+                 plug: {Req.Test, stub},
+                 timestamp_ms_override: @frozen_timestamp_ms
+               )
+
+      assert_order_request(requests, :post, expected_path, fn params ->
+        assert params["dualSidePosition"] == "false"
+      end)
+    end
+  end
+
+  test "Binance COIN-M set leverage forwards the native symbol and leverage" do
+    response = %{"leverage" => 3, "maxQty" => "1000", "symbol" => "BTCUSD_PERP"}
+    {requests, stub} = body_capturing_stub(response)
+    exchange = Exchange.new!("binancecoinm", api_key: "key", secret: "secret", sandbox: true)
+
+    assert {:ok, ^response} =
+             Bourse.set_leverage(exchange, 3, "BTC/USD:BTC",
                plug: {Req.Test, stub},
                timestamp_ms_override: @frozen_timestamp_ms
              )
 
-    assert_order_request(requests, :post, "/fapi/v1/positionSide/dual", fn params ->
-      assert params["dualSidePosition"] == "false"
+    assert_order_request(requests, :post, "/dapi/v1/leverage", fn params ->
+      assert params["leverage"] == "3"
+      assert params["symbol"] == "BTCUSD_PERP"
     end)
+  end
+
+  test "dedicated Binance futures fetch leverage reads flat-symbol configuration" do
+    for {exchange_id, symbol, native_symbol, expected_path, response} <- [
+          {"binanceusdm", "ETH/USDT:USDT", "ETHUSDT", "/fapi/v1/symbolConfig",
+           [%{"symbol" => "ETHUSDT", "leverage" => 3, "marginType" => "ISOLATED"}]},
+          {"binancecoinm", "BTC/USD:BTC", "BTCUSD_PERP", "/dapi/v1/account",
+           %{"positions" => [%{"symbol" => "BTCUSD_PERP", "leverage" => "3", "positionAmt" => "0"}]}}
+        ] do
+      {requests, stub} = body_capturing_stub(response)
+
+      exchange =
+        exchange_id
+        |> Exchange.new!(api_key: "key", secret: "secret", sandbox: true)
+        |> Exchange.put_markets([
+          %Bourse.Market{id: native_symbol, symbol: symbol, type: "swap", swap: true, contract: true}
+        ])
+
+      assert {:ok,
+              %Bourse.Leverage{
+                symbol: ^symbol,
+                long_leverage: 3,
+                short_leverage: 3
+              }} =
+               Bourse.fetch_leverage(exchange, symbol,
+                 plug: {Req.Test, stub},
+                 timestamp_ms_override: @frozen_timestamp_ms
+               )
+
+      assert_order_request(requests, :get, expected_path, fn params ->
+        if exchange_id == "binanceusdm" do
+          assert params["symbol"] == native_symbol
+        else
+          refute Map.has_key?(params, "symbol")
+        end
+      end)
+    end
   end
 
   test "Binance USD-M open orders merge the regular and Algo books" do

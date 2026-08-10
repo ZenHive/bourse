@@ -121,6 +121,8 @@ defmodule Bourse.RecordedResponseFixturesTest do
     assert {"binanceusdm", :fetch_account_positions} in RecordedResponseFixtures.capture_targets()
     assert {"binanceusdm", :fetch_positions_risk} in RecordedResponseFixtures.capture_targets()
     assert {"binanceusdm", :fetch_leverages} in RecordedResponseFixtures.capture_targets()
+    assert {"binancecoinm", :fetch_leverages} in RecordedResponseFixtures.capture_targets()
+    assert {"binancecoinm", :error_position_mode_unchanged} in RecordedResponseFixtures.capture_targets()
     assert RecordedResponseFixtures.capture_category("deribit", :fetch_balance) == :private
     assert RecordedResponseFixtures.capture_category("binance", :fetch_ticker) == :public
 
@@ -132,6 +134,12 @@ defmodule Bourse.RecordedResponseFixturesTest do
 
     assert RecordedResponseFixtures.oracle_identity("binanceusdm", :fetch_leverages)["endpoint"] ==
              "fapi/v1/symbolConfig"
+
+    assert RecordedResponseFixtures.oracle_identity("binancecoinm", :fetch_leverages)["endpoint"] ==
+             "dapi/v1/account"
+
+    assert RecordedResponseFixtures.oracle_identity("binancecoinm", :error_position_mode_unchanged)["endpoint"] ==
+             "dapi/v1/positionSide/dual"
 
     assert RecordedResponseFixtures.fixture_path("binance", :fetch_markets) ==
              Path.join(RecordedResponseFixtures.fixture_root(), "binance/fetch_markets.json")

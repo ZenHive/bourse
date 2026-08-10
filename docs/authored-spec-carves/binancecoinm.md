@@ -7,6 +7,41 @@ Append-only schema confrontations for Binance COIN-M. Follow the allocation and 
 venue-specific decision in the self-contained runtime document. Provider-owned evidence is
 indexed by `priv/authority/binancecoinm/manifest.json`.
 
+## 2026-08-10 — position-mode and leverage capability routing (Task 586)
+
+**C-T586a — COIN-M exposes position-mode and initial-leverage writes through DAPI (task 586).
+Outcome: CONFIRM provider contract.** Binance's official
+[Change Position Mode](https://developers.binance.com/docs/derivatives/coin-margined-futures/trade/rest-api/Change-Position-Mode)
+contract defines `POST /dapi/v1/positionSide/dual` with the required string
+`dualSidePosition`; its
+[Change Initial Leverage](https://developers.binance.com/docs/derivatives/coin-margined-futures/trade/rest-api/Change-Initial-Leverage)
+contract defines `POST /dapi/v1/leverage` with `symbol` and integer `leverage`. Before this
+confrontation, both capabilities were `false` and both unified endpoint lists were empty despite
+the raw routes already being authored. Live demo DAPI returned `-4059` when one-way mode was
+reasserted with `dualSidePosition=false`, proving that the unified boolean reached business
+validation without changing the shared account mode. A leverage value of 3 for `BTCUSD_PERP`
+returned HTTP 200 with the provider's leverage acknowledgement. The position-mode validation is
+recorded as provider error evidence; an accepted-request golden would require flipping shared
+account state because the safe same-state request is intentionally non-2xx.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T586a","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M Change Position Mode and Change Initial Leverage REST contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/recorded_errors/binancecoinm/error_position_mode_unchanged.json and test/fixtures/exchange_accepted_requests/binancecoinm/set_leverage.json"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
+**C-T586b — COIN-M configured leverage is the per-symbol `leverage` in DAPI account positions
+(task 586). Outcome: CONFIRM provider contract.** Binance's official
+[Account Information](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/rest-api/account#account-information)
+contract includes `symbol`, `positionAmt`, and `leverage` in every position row. Live demo DAPI
+returned a flat `BTCUSD_PERP` row (`positionAmt=0`) with `leverage=3`. The dedicated client maps
+`fetchLeverages` to `GET /dapi/v1/account`, removes the client-side symbol filter from the signed
+query, parses the `positions` envelope, and emulates `fetchLeverage` by selecting the requested
+contract. Before this confrontation, both leverage-read capabilities were `false` with empty
+unified mappings.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T586b","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M Account Information REST contract"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binancecoinm/fetch_leverages.json"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-10 — dedicated COIN-M write routing (Task 578)
 
 **C-T578c — COIN-M conditional orders use a distinct DAPI Algo book (task 578). Outcome: CONFIRM provider

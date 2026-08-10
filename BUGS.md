@@ -123,14 +123,16 @@ Expected: unified `type` reflecting the conditional nature (e.g. the CCXT-style
 
 **Method:** `Bourse.fetch_leverage(ex, "ETH/USDT:USDT")` · **Exchange:** binanceusdm (demo-fapi, sandbox) · **Severity:** low
 
-**Status (2026-08-10):** 📋 triaged — folded into workbench **task 586** (retitled to the family scope): map `fetchLeverage` onto `GET /fapi/v1/symbolConfig` for binanceusdm with live before/after evidence; the dapi sibling is confronted in the same pass.
+**Status (2026-08-10):** ✅ fixed by task 586 — `fetch_leverage` selects the flat symbol's
+configured leverage from `GET /fapi/v1/symbolConfig`; the DAPI sibling reads its account-position
+configuration.
 
-`fetch_leverage` returns `:not_supported` for binanceusdm. The raw `symbolConfig` response
+Before task 586, `fetch_leverage` returned `:not_supported` for binanceusdm. The raw `symbolConfig` response
 that bourse's own `fetch_margin_mode` consumes already carries the `leverage` field for the
 symbol (observed: `leverage: 3` alongside `marginType: ISOLATED`), and `fetch_positions` only
-exposes leverage while a position is open — so there is currently no unified way to read the
-configured leverage of a flat symbol, even though the data is on a wire call bourse already
-makes. Workaround used: read `leverage` from `fetch_margin_mode`'s raw info.
+exposes leverage while a position is open, leaving no unified way to read the configured leverage
+of a flat symbol even though the data was on a wire call bourse already made. The consumer's
+workaround read `leverage` from `fetch_margin_mode`'s raw info.
 
 Expected: `fetch_leverage` mapped onto the symbolConfig endpoint for binanceusdm.
 

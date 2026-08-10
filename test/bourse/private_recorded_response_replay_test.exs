@@ -431,7 +431,8 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
 
   defp assert_private_shape!(:fetch_leverages, parsed, fixture, identity) do
     raw_rows = fixture["body"]
-    btc_raw = Enum.find(raw_rows, &(&1["symbol"] == "BTCUSDT"))
+    requested_symbol = fixture["symbol"]
+    [raw | _rest] = raw_rows
 
     assert is_map(parsed) and map_size(parsed) == length(raw_rows), identity
 
@@ -440,8 +441,8 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
            end),
            identity
 
-    assert %Bourse.Leverage{} = btc = Map.fetch!(parsed, "BTC/USDT:USDT")
-    assert ListBody.binds_wire_row?(btc, btc_raw), identity
+    assert %Bourse.Leverage{} = leverage = Map.fetch!(parsed, requested_symbol)
+    assert ListBody.binds_wire_row?(leverage, raw), identity
   end
 
   defp assert_private_shape!(method, parsed, fixture, identity)

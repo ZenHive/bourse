@@ -6,6 +6,22 @@ Append-only schema confrontations for Binance USD-M. Follow the allocation and e
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance USD-M carve record.
 
+## 2026-08-10 — flat-symbol configured leverage (Task 586)
+
+**C-T586c — USD-M `symbolConfig` is the configured-leverage read for flat symbols (task 586).
+Outcome: CONFIRM provider contract.** Binance's official
+[Symbol Configuration](https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Symbol-Config)
+contract defines `GET /fapi/v1/symbolConfig`, accepts an optional symbol, and returns `symbol`,
+`marginType`, and integer `leverage`. Live demo FAPI returned `leverage=3` and
+`marginType=ISOLATED` for flat `ETHUSDT`. The authored plural route and field map already targeted
+that endpoint, but `fetchLeverage` was declared emulated without an emulation registry entry, so
+the public method returned `:not_supported`. Registering the single-symbol emulation makes it
+select the requested row from the same provider response; it does not depend on an open position.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T586c","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M Symbol Configuration REST contract"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binanceusdm/fetch_leverages.json"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-10 — dedicated USD-M write routing (Task 578)
 
 **C-T578b — The dedicated USD-M client owns the same regular and Algo books as FAPI (task 578). Outcome:
