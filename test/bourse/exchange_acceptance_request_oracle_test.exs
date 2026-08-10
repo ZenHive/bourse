@@ -77,16 +77,14 @@ defmodule Bourse.ExchangeAcceptanceRequestOracleTest do
 
     assert_request(create, "demo-fapi.binance.com", "/fapi/v1/algoOrder", "POST", %{
       "algoType" => "CONDITIONAL",
-      "reduceOnly" => "true",
       "side" => "SELL",
       "symbol" => "ETHUSDT",
-      "timeInForce" => "GTC",
-      "type" => "STOP"
+      "type" => "TAKE_PROFIT_MARKET"
     })
 
     create_query = request_query(create)
     assert is_binary(create_query["triggerPrice"])
-    assert is_binary(create_query["price"])
+    refute Map.has_key?(create_query, "price")
 
     margin = binance_golden!("set_margin_mode")
 
@@ -98,6 +96,12 @@ defmodule Bourse.ExchangeAcceptanceRequestOracleTest do
     cancel = binance_golden!("cancel_all_orders")
 
     assert_request(cancel, "demo-fapi.binance.com", "/fapi/v1/allOpenOrders", "DELETE", %{
+      "symbol" => "ETHUSDT"
+    })
+
+    assert [algo_cancel] = cancel["additional_requests"]
+
+    assert_request(%{"request" => algo_cancel}, "demo-fapi.binance.com", "/fapi/v1/algoOpenOrders", "DELETE", %{
       "symbol" => "ETHUSDT"
     })
   end

@@ -749,6 +749,21 @@ defmodule Bourse.Unified do
           maybe_resolve_binance_spot_ticker_symbols(parsed, exchange, module, method_atom, opts)
         end
 
+      {:ok, {:broadcast, configs}} ->
+        js_name = js_name_for!(method_atom)
+
+        with {:ok, [response | _]} <- dispatch_fan_out(exchange, capability_name, configs, params, opts) do
+          parse_unified_response(exchange, module, method_atom, js_name, params, response, hd(configs))
+        end
+
+      {:ok, {:first_success, configs}} ->
+        js_name = js_name_for!(method_atom)
+
+        with {:ok, response, config} <-
+               dispatch_first_success(exchange, capability_name, configs, params, opts) do
+          parse_unified_response(exchange, module, method_atom, js_name, params, response, config)
+        end
+
       {:ok, {:param_fan_out, config, param_variants}} ->
         js_name = js_name_for!(method_atom)
 
@@ -910,6 +925,19 @@ defmodule Bourse.Unified do
   defp dispatch_raw_response(exchange, capability_name, {:fan_out, configs}, params, opts) do
     with {:ok, responses} <- dispatch_fan_out(exchange, capability_name, configs, params, opts) do
       {:ok, tag_raw_responses(configs, responses)}
+    end
+  end
+
+  defp dispatch_raw_response(exchange, capability_name, {:broadcast, configs}, params, opts) do
+    with {:ok, [response | _]} <- dispatch_fan_out(exchange, capability_name, configs, params, opts) do
+      {:ok, response}
+    end
+  end
+
+  defp dispatch_raw_response(exchange, capability_name, {:first_success, configs}, params, opts) do
+    with {:ok, response, _config} <-
+           dispatch_first_success(exchange, capability_name, configs, params, opts) do
+      {:ok, response}
     end
   end
 
@@ -1159,6 +1187,23 @@ defmodule Bourse.Unified do
 
       nil ->
         collect_fan_out_responses(results, configs, exchange)
+    end
+  end
+
+  defp dispatch_first_success(exchange, capability_name, configs, params, opts) do
+    dispatch_first_success_route(exchange, capability_name, configs, params, opts)
+  end
+
+  defp dispatch_first_success_route(exchange, capability_name, [config | rest], params, opts) do
+    case dispatch_single(exchange, capability_name, config, params, opts) do
+      {:ok, response} ->
+        {:ok, response, config}
+
+      {:error, %Error{type: :order_not_found}} when rest != [] ->
+        dispatch_first_success_route(exchange, capability_name, rest, params, opts)
+
+      {:error, _reason} = error ->
+        error
     end
   end
 
@@ -1834,6 +1879,12 @@ defmodule Bourse.Unified do
       {:ok, {:fan_out, configs}} ->
         {:ok, hd(configs)}
 
+      {:ok, {:broadcast, configs}} ->
+        {:ok, hd(configs)}
+
+      {:ok, {:first_success, configs}} ->
+        {:ok, hd(configs)}
+
       {:ok, {:param_fan_out, config, _param_variants}} ->
         {:ok, config}
     end
@@ -1878,18 +1929,28 @@ defmodule Bourse.Unified do
     selection_params = batch_order_selection_params(params, method_atom)
 
     plan =
-      if fan_out?(exchange, method_atom, configs, params, opts) do
-        plan_fan_out_dispatch(exchange, method_atom, capability_name, configs)
-      else
-        case select_endpoint(configs, exchange, method_atom, opts, selection_params) do
-          {:ok, config} -> {:ok, {:single, config}}
-          {:error, _} = error -> error
-        end
+      case authored_book_dispatch_plan(exchange, method_atom, configs, selection_params, opts) do
+        :none ->
+          fallback_multi_config_plan(exchange, method_atom, capability_name, configs, params, selection_params, opts)
+
+        authored_plan ->
+          authored_plan
       end
 
     case plan do
       {:ok, {:single, config}} -> finalize_single_config_plan(exchange, method_atom, config, params, opts)
       other -> other
+    end
+  end
+
+  defp fallback_multi_config_plan(exchange, method_atom, capability_name, configs, params, selection_params, opts) do
+    if fan_out?(exchange, method_atom, configs, params, opts) do
+      plan_fan_out_dispatch(exchange, method_atom, capability_name, configs)
+    else
+      case select_endpoint(configs, exchange, method_atom, opts, selection_params) do
+        {:ok, config} -> {:ok, {:single, config}}
+        {:error, _reason} = error -> error
+      end
     end
   end
 
@@ -1899,6 +1960,62 @@ defmodule Bourse.Unified do
   end
 
   defp batch_order_selection_params(params, _method_atom), do: params
+
+  defp authored_book_dispatch_plan(exchange, method_atom, configs, params, opts) do
+    selection = Map.get(exchange.endpoint_selection, js_name_for!(method_atom), %{})
+    context = selection_context(params, opts, exchange)
+
+    selection
+    |> Map.get("book_routes", [])
+    |> Enum.find(&selection_conditions_match?(Map.get(&1, "when", %{}), context))
+    |> resolve_book_dispatch_plan(configs, exchange, method_atom)
+  end
+
+  defp resolve_book_dispatch_plan(nil, _configs, _exchange, _method_atom), do: :none
+
+  defp resolve_book_dispatch_plan(%{"mode" => mode, "endpoints" => targets}, configs, exchange, method_atom)
+       when is_list(targets) do
+    selected = Enum.map(targets, fn target -> Enum.find(configs, &endpoint_target?(&1, target)) end)
+
+    with true <- selected != [] and Enum.all?(selected, &is_map/1),
+         {:ok, reachable} <- ensure_book_routes_reachable(selected, configs, exchange, method_atom) do
+      book_dispatch_plan(mode, reachable, exchange, method_atom)
+    else
+      false -> invalid_book_route(exchange, method_atom)
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp resolve_book_dispatch_plan(_route, _configs, exchange, method_atom) do
+    invalid_book_route(exchange, method_atom)
+  end
+
+  defp ensure_book_routes_reachable(selected, configs, exchange, method_atom) do
+    selected
+    |> Enum.reduce_while({:ok, []}, fn config, {:ok, reachable} ->
+      case ensure_reachable(config, configs, exchange, method_atom) do
+        {:ok, resolved} -> {:cont, {:ok, [resolved | reachable]}}
+        {:error, _reason} = error -> {:halt, error}
+      end
+    end)
+    |> case do
+      {:ok, reachable} -> {:ok, Enum.reverse(reachable)}
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp book_dispatch_plan("merge", configs, _exchange, _method_atom), do: {:ok, {:fan_out, configs}}
+  defp book_dispatch_plan("broadcast", configs, _exchange, _method_atom), do: {:ok, {:broadcast, configs}}
+  defp book_dispatch_plan("first_success", configs, _exchange, _method_atom), do: {:ok, {:first_success, configs}}
+  defp book_dispatch_plan(_mode, _configs, exchange, method_atom), do: invalid_book_route(exchange, method_atom)
+
+  defp invalid_book_route(exchange, method_atom) do
+    {:error,
+     Error.bad_request(
+       exchange: exchange.id,
+       message: "invalid authored order-book route for #{js_name_for!(method_atom)} on #{exchange.id}"
+     )}
+  end
 
   defp plan_fan_out_dispatch(%Exchange{} = exchange, method_atom, capability_name, configs) do
     case configs |> market_surface_configs(exchange, method_atom) |> credential_reachable_configs(exchange) do

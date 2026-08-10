@@ -6,7 +6,7 @@ Append-only schema confrontations for Binance spot. Follow the allocation and ev
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance spot carve record.
 
-## 2026-08-10 — futures cadence and generic USD-M routing (Tasks 573–575)
+## 2026-08-10 — futures cadence and generic USD-M routing (Tasks 573–576)
 
 **C-T573a — Current funding rates join the provider's per-symbol cadence (task 573).
 Outcome: CONFIRM venue.** Binance's official
@@ -46,6 +46,22 @@ zero open orders afterward.
 The accepted-request golden pins `demo-fapi.binance.com/fapi/v3/account`, preventing a silent
 return to the Spot wallet.
 
+**C-T576 — USD-M conditional orders use one unified lifecycle across the regular and Algo
+books (task 576). Outcome: CONFIRM provider contracts; merged-read carve.** Binance's official
+[Cancel Algo Order](https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Cancel-Algo-Order),
+[Cancel All Algo Open Orders](https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Cancel-All-Algo-Open-Orders),
+and [Current All Algo Open Orders](https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Current-All-Algo-Open-Orders)
+contracts keep conditional orders in a dedicated book at `algoOrder`, `algoOpenOrders`, and
+`openAlgoOrders`. Unified `fetchOpenOrders` merges regular and Algo rows into one list;
+`cancelOrder` tries the regular book and crosses to the Algo book only on Binance's typed
+order-not-found response; `cancelAllOrders` sends the symbol-scoped cancellation to both books.
+The provider's [New Algo Order](https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/New-Algo-Order)
+contract maps unified `take_profit_price` to `TAKE_PROFIT` or `TAKE_PROFIT_MARKET`, so it never
+becomes a bare market order on `/fapi/v1/order`. Before the carve, a live unified cancel-all
+returned `code=200` while the created Algo stop remained visible through the raw Algo endpoint.
+After the carve, live futures-demo lifecycles created, fetched, and canceled a conditional order
+through unified methods; a second conditional order disappeared after unified cancel-all.
+
 <!-- carve-evidence-status
 {"carve_id":"C-T573a","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M Funding Rate Info contract"},"observed_evidence":{"kind":"live_venue","reference":"Live demo-fapi BTCUSDT premiumIndex plus fundingInfo returned unified interval 8h on 2026-08-10"},"compatibility_reference":null,"resolved_tier":1}
 -->
@@ -60,6 +76,10 @@ return to the Spot wallet.
 
 <!-- carve-evidence-status
 {"carve_id":"C-T575","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance Spot, USD-M Account Information V3, and COIN-M Account Information contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"Live spot/USD-M/COIN-M sandbox balance probes plus test/fixtures/exchange_accepted_requests/binance/fetch_balance.json"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
+<!-- carve-evidence-status
+{"carve_id":"C-T576","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M New Algo Order, Cancel Algo Order, Cancel All Algo Open Orders, and Current All Algo Open Orders contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"Live futures-demo unified create/fetch/cancel and create/fetch/cancel-all lifecycles plus test/fixtures/exchange_accepted_requests/binance/create_order.json and cancel_all_orders.json"},"compatibility_reference":null,"resolved_tier":1}
 -->
 
 ## 2026-08-04 — documented order-status coverage (Task 538)

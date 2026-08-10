@@ -614,6 +614,7 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
     try do
       assert {:ok,
               %Order{
+                id: conditional_id,
                 reduce_only: true,
                 status: "open",
                 time_in_force: "GTC",
@@ -633,20 +634,45 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
 
       assert parsed_trigger == String.to_float(trigger_price)
 
-      assert {:ok, %{body: [algo_order]}} =
-               Bourse.Binance.fapiPrivate_get_openalgoorders(exchange, %{
-                 "symbol" => @usdm_conditional_native_symbol
-               })
+      assert {:ok, open_orders} = Bourse.fetch_open_orders(exchange, symbol: @usdm_conditional_symbol)
 
-      assert algo_order["algoStatus"] == "NEW"
-      assert algo_order["reduceOnly"] == true
-      assert algo_order["timeInForce"] == "GTC"
-      assert algo_order["triggerPrice"] == trigger_price
+      assert %Order{} = algo_order = Enum.find(open_orders, &(&1.id == conditional_id))
+
+      assert algo_order.status == "open"
+      assert algo_order.reduce_only == true
+      assert algo_order.time_in_force == "GTC"
+      assert algo_order.trigger_price == parsed_trigger
+
+      assert {:ok, %Order{id: ^conditional_id}} =
+               Bourse.cancel_order(exchange, conditional_id, symbol: @usdm_conditional_symbol)
+
+      assert {:ok, open_orders} = Bourse.fetch_open_orders(exchange, symbol: @usdm_conditional_symbol)
+      refute Enum.any?(open_orders, &(&1.id == conditional_id))
+
+      assert {:ok, %Order{id: cancel_all_id}} =
+               Bourse.create_order(
+                 exchange,
+                 @usdm_conditional_symbol,
+                 "limit",
+                 "sell",
+                 @usdm_conditional_amount,
+                 price: limit_price,
+                 reduce_only: true,
+                 time_in_force: "GTC",
+                 trigger_price: trigger_price
+               )
+
+      assert {:ok, open_orders} = Bourse.fetch_open_orders(exchange, symbol: @usdm_conditional_symbol)
+      assert Enum.any?(open_orders, &(&1.id == cancel_all_id))
+
+      assert {:ok, %{"code" => 200}} =
+               Bourse.cancel_all_orders(exchange, symbol: @usdm_conditional_symbol)
+
+      assert {:ok, open_orders} = Bourse.fetch_open_orders(exchange, symbol: @usdm_conditional_symbol)
+      refute Enum.any?(open_orders, &(&1.id == cancel_all_id))
     after
-      assert {:ok, %{status: @http_ok_status}} =
-               Bourse.Binance.fapiPrivate_delete_algoopenorders(exchange, %{
-                 "symbol" => @usdm_conditional_native_symbol
-               })
+      assert {:ok, %{"code" => 200}} =
+               Bourse.cancel_all_orders(exchange, symbol: @usdm_conditional_symbol)
 
       assert {:ok, %Order{reduce_only: true}} =
                Bourse.create_order(

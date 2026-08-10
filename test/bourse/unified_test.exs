@@ -735,6 +735,26 @@ defmodule Bourse.UnifiedTest do
       assert RequestCollector.one!(requests).request_path == "/api/v3/ticker/24hr"
     end
 
+    test "authored rules can select an endpoint when a parameter is absent" do
+      exchange = Exchange.new!("binance")
+
+      exchange =
+        put_in(exchange.endpoint_selection["fetchTicker"], %{
+          "default" => "public_get_ticker_24hr",
+          "rules" => [
+            %{
+              "endpoint" => "fapiPublic_get_ticker_24hr",
+              "when" => %{"type" => "absent"}
+            }
+          ]
+        })
+
+      {stub, requests} = raw_request_stub([])
+
+      assert {:ok, _} = Unified.raw_call(exchange, :fetch_ticker, %{}, plug: {Req.Test, stub})
+      assert RequestCollector.one!(requests).request_path == "/fapi/v1/ticker/24hr"
+    end
+
     test "ambiguity errors name only parameter sets that resolve" do
       exchange = Exchange.new!("bybit", api_key: "key", secret: "secret")
 

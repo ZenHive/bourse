@@ -107,8 +107,19 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
 
     Req.Test.stub(stub, fn conn ->
       case {conn.method, conn.request_path} do
-        {"GET", "/fapi/v1/ticker/24hr"} -> Req.Test.json(conn, %{"lastPrice" => "2000"})
-        _other -> Req.Test.json(conn, %{"code" => 200, "msg" => "success"})
+        {"GET", "/fapi/v1/ticker/24hr"} ->
+          Req.Test.json(conn, %{"lastPrice" => "2000"})
+
+        {"DELETE", "/fapi/v1/order"} ->
+          conn
+          |> Plug.Conn.put_status(400)
+          |> Req.Test.json(%{"code" => -2011, "msg" => "Unknown order sent."})
+
+        {"DELETE", "/fapi/v1/algoOrder"} ->
+          Req.Test.json(conn, %{"algoId" => 1, "algoStatus" => "CANCELED", "symbol" => "ETHUSDT"})
+
+        _other ->
+          Req.Test.json(conn, %{"code" => 200, "msg" => "success"})
       end
     end)
 
@@ -199,6 +210,23 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
   end
 
   defp success_transport(request) do
+    case {request.method, request.url.host, request.url.path} do
+      {:delete, "demo-fapi.binance.com", "/fapi/v1/order"} ->
+        {request, Req.Response.new(status: 400, body: %{"code" => -2011, "msg" => "Unknown order sent."})}
+
+      {:delete, "demo-fapi.binance.com", "/fapi/v1/algoOrder"} ->
+        {request,
+         Req.Response.new(
+           status: 200,
+           body: %{"algoId" => 1, "algoStatus" => "CANCELED", "symbol" => "ETHUSDT"}
+         )}
+
+      _other ->
+        success_response(request)
+    end
+  end
+
+  defp success_response(request) do
     body =
       case {request.url.host, request.url.path} do
         {"testnet.binance.vision", "/api/v3/allOrders"} ->

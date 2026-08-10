@@ -1,15 +1,15 @@
 {
   "acceptance": {
-    "business_success": "HTTP 2xx resting conditional order with an algo id; accepted order cancelled",
+    "business_success": "HTTP 2xx resting take-profit order with an algo id; accepted order cancelled",
     "capture_date": "2026-08-10",
-    "captured_at": "2026-08-10T02:43:31.538Z",
+    "captured_at": "2026-08-10T05:28:43.558Z",
     "endpoint": "fapi/v1/algoOrder",
     "host": "demo-fapi.binance.com",
     "http_status": 200,
     "method": "create_order",
     "venue": "binance"
   },
-  "label": "Oracle: exchange-acceptance tier 1 vs binance create_order accepted 2026-08-10 (fapi/v1/algoOrder @ demo-fapi.binance.com, HTTP 200, HTTP 2xx resting conditional order with an algo id; accepted order cancelled).",
+  "label": "Oracle: exchange-acceptance tier 1 vs binance create_order accepted 2026-08-10 (fapi/v1/algoOrder @ demo-fapi.binance.com, HTTP 200, HTTP 2xx resting take-profit order with an algo id; accepted order cancelled).",
   "oracle": "exchange_acceptance",
   "provenance": {
     "credentials": "committed fixture credentials",
@@ -18,18 +18,15 @@
   "replay": {
     "call_opts": {},
     "method": "create_order",
-    "nonce_override": 1786329810966,
+    "nonce_override": 1786339723008,
     "params": {
       "amount": 0.02,
-      "price": "1613.70",
-      "reduce_only": true,
       "side": "sell",
       "symbol": "ETH/USDT:USDT",
-      "time_in_force": "GTC",
-      "trigger_price": "1632.91",
-      "type": "limit"
+      "take_profit_price": "2206.52",
+      "type": "market"
     },
-    "timestamp_ms_override": 1786329810965
+    "timestamp_ms_override": 1786339723007
   },
   "request": {
     "body": null,
@@ -44,7 +41,7 @@
       ]
     ],
     "method": "POST",
-    "url": "https://demo-fapi.binance.com/fapi/v1/algoOrder?algoType=CONDITIONAL&price=1613.70&quantity=0.02&reduceOnly=true&side=SELL&symbol=ETHUSDT&timeInForce=GTC&timestamp=1786329810965&triggerPrice=1632.91&type=STOP&signature=b0db8836636b83bf7e81475007ea23439f873a56c77cd531c4b48229e9250e43"
+    "url": "https://demo-fapi.binance.com/fapi/v1/algoOrder?algoType=CONDITIONAL&quantity=0.02&side=SELL&symbol=ETHUSDT&timestamp=1786339723007&triggerPrice=2206.52&type=TAKE_PROFIT_MARKET&signature=9c5d53104a797a3790bca1fa5caab8196566b33fb83a6d1731c38f727e8ef43e"
   },
   "schema_version": 1
 }

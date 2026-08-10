@@ -26,8 +26,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
   @binance_order_history_limit 25
   @binance_order_history_window_ms 3_600_000
   @binance_conditional_order_amount 0.02
-  @binance_conditional_trigger_ratio 0.85
-  @binance_conditional_limit_ratio 0.84
+  @binance_take_profit_trigger_ratio 1.15
   @binance_conditional_price_decimal_places 2
   @derive_subaccount_id 144_422
   @bybit_order_amount 0.1444444234234234
@@ -135,14 +134,16 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
 
   @doc "Deterministically rebuilds and checks one committed fixture-signed golden."
   @spec replay(golden()) :: :ok | {:error, term()}
-  def replay(%{"acceptance" => %{"venue" => venue}, "replay" => replay, "request" => expected})
+  def replay(%{"acceptance" => %{"venue" => venue}, "replay" => replay, "request" => primary} = golden)
       when venue in @first_class_venues do
+    expected = [primary | Map.get(golden, "additional_requests", [])]
+
     with {:ok, method} <- method_atom(replay["method"]),
          profile = profile!(venue, method),
          :ok <- validate_replay_identity(profile, replay),
          {:ok, exchange} <- build_fixture_exchange(profile, replay),
          {:ok, actual} <- capture_fixture_request(exchange, profile, replay) do
-      compare_fixture_request(expected, actual, profile)
+      compare_fixture_requests(expected, actual, profile)
     end
   end
 
@@ -164,7 +165,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     [
       binance_balance_profile(),
       binance_order_history_profile(),
-      binance_conditional_order_profile(),
+      binance_take_profit_order_profile(),
       binance_margin_mode_profile(),
       binance_cancel_all_orders_profile()
     ]
@@ -218,21 +219,21 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     )
   end
 
-  defp binance_conditional_order_profile do
+  defp binance_take_profit_order_profile do
     build_profile("binance", :create_order, "fapi/v1/algoOrder", "demo-fapi.binance.com", :binanceusdm,
       sandbox: true,
-      params: :binance_conditional_order,
+      params: :binance_take_profit_order,
       sensitive_headers: ["x-mbx-apikey"],
       sensitive_query: ["signature"],
       stub_body: %{
         "algoId" => 1,
         "algoStatus" => "NEW",
         "algoType" => "CONDITIONAL",
-        "orderType" => "STOP",
+        "orderType" => "TAKE_PROFIT_MARKET",
         "symbol" => "ETHUSDT"
       },
       symbol: "ETH/USDT:USDT",
-      business_success: "HTTP 2xx resting conditional order with an algo id; accepted order cancelled"
+      business_success: "HTTP 2xx resting take-profit order with an algo id; accepted order cancelled"
     )
   end
 
@@ -464,32 +465,28 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     {:ok, params, %{}}
   end
 
-  defp request_params(exchange, %{params: :binance_conditional_order}) do
+  defp request_params(exchange, %{params: :binance_take_profit_order}) do
     case Bourse.Binance.fapiPublic_get_ticker_24hr(exchange, %{"symbol" => "ETHUSDT"}) do
       {:ok, %{body: %{"lastPrice" => last_price}}} ->
         case Float.parse(last_price) do
           {last, ""} ->
-            trigger_price = binance_conditional_price(last, @binance_conditional_trigger_ratio)
-            limit_price = binance_conditional_price(last, @binance_conditional_limit_ratio)
+            trigger_price = binance_conditional_price(last, @binance_take_profit_trigger_ratio)
 
             {:ok,
              %{
                "amount" => @binance_conditional_order_amount,
-               "price" => limit_price,
-               "reduce_only" => true,
                "side" => "sell",
                "symbol" => "ETH/USDT:USDT",
-               "time_in_force" => "GTC",
-               "trigger_price" => trigger_price,
-               "type" => "limit"
+               "take_profit_price" => trigger_price,
+               "type" => "market"
              }, %{}}
 
           _other ->
-            {:error, :binance_conditional_order_inputs_unavailable}
+            {:error, :binance_take_profit_order_inputs_unavailable}
         end
 
       _other ->
-        {:error, :binance_conditional_order_inputs_unavailable}
+        {:error, :binance_take_profit_order_inputs_unavailable}
     end
   end
 
@@ -571,9 +568,9 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
 
     case dispatch_capture(exchange, profile, params, clock, adapter) do
       {:ok, response} ->
-        with {:ok, request} <- captured_request(reference),
+        with {:ok, requests} <- captured_requests(reference, profile),
              {:ok, cleanup} <- accepted_response(profile, response) do
-          {:ok, response, request, cleanup}
+          {:ok, response, requests, cleanup}
         end
 
       {:error, %Bourse.Error{type: type, code: code}} ->
@@ -609,16 +606,33 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     Unified.capture_responses(exchange, profile.method, params, opts)
   end
 
-  defp captured_request(reference) do
+  defp captured_requests(reference, profile) do
     receive do
       {:accepted_request_capture, ^reference, request} ->
-        receive do
-          {:accepted_request_capture, ^reference, _extra} -> {:error, :multiple_requests_captured}
-        after
-          @no_extra_request_wait_ms -> {:ok, request}
-        end
+        drain_captured_requests(reference, [request], profile)
     after
       @capture_receive_timeout_ms -> {:error, :request_not_captured}
+    end
+  end
+
+  defp drain_captured_requests(reference, requests, profile) do
+    receive do
+      {:accepted_request_capture, ^reference, request} ->
+        drain_captured_requests(reference, [request | requests], profile)
+    after
+      @no_extra_request_wait_ms -> order_captured_requests(Enum.reverse(requests), profile)
+    end
+  end
+
+  defp order_captured_requests([request], _profile), do: {:ok, [request]}
+
+  defp order_captured_requests(requests, profile) do
+    expected_path = "/#{profile.endpoint}"
+    {primary, additional} = Enum.split_with(requests, &(URI.parse(&1["url"]).path == expected_path))
+
+    case primary do
+      [request] -> {:ok, [request | Enum.sort_by(additional, & &1["url"])]}
+      _other -> {:error, :primary_request_not_captured}
     end
   end
 
@@ -660,8 +674,8 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
 
   defp accepted_response(_profile, _response), do: {:error, :exchange_did_not_accept_request}
 
-  defp accepted_business_response(%{venue: "binance", method: :create_order, symbol: symbol}, %{"algoId" => id}) do
-    {:ok, {:binance_algo_order, id, symbol}}
+  defp accepted_business_response(%{venue: "binance", method: :create_order}, %{"algoId" => id}) do
+    {:ok, {:order, id}}
   end
 
   defp accepted_business_response(%{venue: "binance", method: :set_margin_mode}, %{"code" => 200}) do
@@ -707,7 +721,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
 
   defp accepted_business_response(_profile, _body), do: {:error, :venue_business_failure}
 
-  defp build_golden(profile, params, replay_context, clock, response, live_request, credentials) do
+  defp build_golden(profile, params, replay_context, clock, response, live_requests, credentials) do
     replay =
       Map.merge(replay_context, %{
         "call_opts" => Map.new(profile.call_opts, fn {key, value} -> {Atom.to_string(key), value} end),
@@ -718,12 +732,12 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
       })
 
     with {:ok, fixture_exchange} <- build_fixture_exchange(profile, replay),
-         {:ok, fixture_request} <- capture_fixture_request(fixture_exchange, profile, replay),
-         :ok <- compare_accepted_shape(live_request, fixture_request, profile) do
-      golden = golden(profile, replay, response.status, fixture_request)
+         {:ok, fixture_requests} <- capture_fixture_request(fixture_exchange, profile, replay),
+         :ok <- compare_accepted_shapes(live_requests, fixture_requests, profile) do
+      golden = golden(profile, replay, response.status, fixture_requests)
 
       golden
-      |> validate_no_material(live_material(live_request, credentials, profile))
+      |> validate_no_material(live_material(live_requests, credentials, profile))
       |> case do
         :ok -> {:ok, golden}
         {:error, _reason} = error -> error
@@ -731,7 +745,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     end
   end
 
-  defp golden(profile, replay, status, request) do
+  defp golden(profile, replay, status, [request | additional_requests]) do
     captured_at = DateTime.utc_now() |> DateTime.truncate(:millisecond) |> DateTime.to_iso8601()
 
     golden = %{
@@ -755,8 +769,13 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
       "schema_version" => @schema_version
     }
 
-    Map.put(golden, "label", OracleLabel.exchange_acceptance_label(golden))
+    golden
+    |> maybe_put_additional_requests(additional_requests)
+    |> Map.put("label", OracleLabel.exchange_acceptance_label(golden))
   end
+
+  defp maybe_put_additional_requests(golden, []), do: golden
+  defp maybe_put_additional_requests(golden, requests), do: Map.put(golden, "additional_requests", requests)
 
   defp build_fixture_exchange(%{fixture_seed: :empty} = profile, _replay) do
     credentials = Credentials.new!(api_key: "key", secret: "secretsecret", password: "password", uid: "uid")
@@ -790,7 +809,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     clock = %{"nonce" => replay["nonce_override"], "timestamp_ms" => replay["timestamp_ms_override"]}
 
     case dispatch_capture(exchange, profile, replay["params"], clock, adapter) do
-      {:ok, _response} -> captured_request(reference)
+      {:ok, _response} -> captured_requests(reference, profile)
       {:error, _reason} -> {:error, :fixture_request_rebuild_failed}
     end
   end
@@ -804,13 +823,29 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     end
   end
 
-  defp compare_accepted_shape(live_request, fixture_request, profile) do
-    if acceptance_shape(live_request, profile) == acceptance_shape(fixture_request, profile) do
+  defp compare_accepted_shapes(live_requests, fixture_requests, profile) do
+    live_shapes = Enum.map(live_requests, &acceptance_shape(&1, profile))
+    fixture_shapes = Enum.map(fixture_requests, &acceptance_shape(&1, profile))
+
+    if live_shapes == fixture_shapes do
       :ok
     else
       {:error, :live_and_fixture_request_shapes_differ}
     end
   end
+
+  defp compare_fixture_requests(expected, actual, profile) when length(expected) == length(actual) do
+    expected
+    |> Enum.zip(actual)
+    |> Enum.reduce_while(:ok, fn {expected_request, actual_request}, :ok ->
+      case compare_fixture_request(expected_request, actual_request, profile) do
+        :ok -> {:cont, :ok}
+        {:error, _reason} = error -> {:halt, error}
+      end
+    end)
+  end
+
+  defp compare_fixture_requests(_expected, _actual, _profile), do: {:error, :accepted_request_regressed}
 
   defp compare_fixture_request(expected, actual, %{venue: "lighter"} = profile) do
     if acceptance_shape(expected, profile) == acceptance_shape(actual, profile) do
@@ -885,11 +920,15 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
 
   defp mask_sensitive_keys(value, _sensitive_keys), do: value
 
-  defp live_material(request, credentials, profile) do
-    credential_material(credentials, profile.venue) ++
-      sensitive_header_values(request["headers"], profile.sensitive_headers) ++
-      sensitive_query_values(request["url"], profile.sensitive_query) ++
-      sensitive_body_values(request["body"], profile.sensitive_body)
+  defp live_material(requests, credentials, profile) do
+    request_material =
+      Enum.flat_map(requests, fn request ->
+        sensitive_header_values(request["headers"], profile.sensitive_headers) ++
+          sensitive_query_values(request["url"], profile.sensitive_query) ++
+          sensitive_body_values(request["body"], profile.sensitive_body)
+      end)
+
+    credential_material(credentials, profile.venue) ++ request_material
   end
 
   defp credential_material(credentials, "lighter"), do: [credentials.secret]
@@ -988,18 +1027,6 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
 
     case Bourse.cancel_order(exchange, order_id, opts) do
       {:ok, %Bourse.Order{}} -> :ok
-      _other -> {:error, :cleanup_failed}
-    end
-  end
-
-  defp cleanup(exchange, _profile, {:binance_algo_order, order_id, symbol}) do
-    native_symbol = Bourse.Symbol.to_exchange_id(symbol, exchange)
-
-    case Bourse.Binance.fapiPrivate_delete_algoorder(exchange, %{
-           "algoId" => order_id,
-           "symbol" => native_symbol
-         }) do
-      {:ok, %{status: status}} when status in @accepted_http_statuses -> :ok
       _other -> {:error, :cleanup_failed}
     end
   end

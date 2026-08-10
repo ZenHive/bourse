@@ -16,6 +16,8 @@ defmodule Bourse.BinanceAuthoredSpecTest do
 
   @non_usdt_tickers_fixture "test/fixtures/responses/binance/fetch_tickers_non_usdt_quotes.json"
   @external_resource @non_usdt_tickers_fixture
+  @frozen_timestamp_ms 1_700_000_000_000
+  @bad_request_status 400
 
   test "authored selectors choose spot and USD-M account endpoints" do
     assert Exchange.new!("binance").endpoint_selection["fetchBalance"]["default"] == "private_get_account"
@@ -63,13 +65,19 @@ defmodule Bourse.BinanceAuthoredSpecTest do
   end
 
   test "Binance USD-M conditional order opts reach the Algo Order request" do
-    for {trigger_opt, trigger_value} <- [trigger_price: "3000", stop_loss_price: "2900"] do
+    for {trigger_opt, trigger_value, order_type, native_type} <- [
+          {:trigger_price, "3000", "market", "STOP_MARKET"},
+          {:stop_loss_price, "2900", "market", "STOP_MARKET"},
+          {:take_profit_price, "3100", "market", "TAKE_PROFIT_MARKET"},
+          {:take_profit_price, "3100", "limit", "TAKE_PROFIT"}
+        ] do
       {requests, stub} = order_stub()
       exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
 
       opts =
         [
           {trigger_opt, trigger_value},
+          price: if(order_type == "limit", do: "3050"),
           time_in_force: "GTC",
           reduce_only: true,
           plug: {Req.Test, stub},
@@ -77,7 +85,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
         ]
 
       assert {:ok, %Bourse.Order{}} =
-               Bourse.create_order(exchange, "ETH/USDT:USDT", "market", "sell", 1, opts)
+               Bourse.create_order(exchange, "ETH/USDT:USDT", order_type, "sell", 1, opts)
 
       assert_order_request(requests, :post, "/fapi/v1/algoOrder", fn params ->
         assert params["algoType"] == "CONDITIONAL"
@@ -87,13 +95,13 @@ defmodule Bourse.BinanceAuthoredSpecTest do
         assert params["symbol"] == "ETHUSDT"
         assert params["timeInForce"] == "GTC"
         assert params["triggerPrice"] == trigger_value
-        assert params["type"] == "STOP_MARKET"
+        assert params["type"] == native_type
         refute Map.has_key?(params, Atom.to_string(trigger_opt))
       end)
     end
   end
 
-  test "Binance USD-M margin mode and cancel-all calls send the futures symbol" do
+  test "Binance USD-M margin mode calls send the futures symbol" do
     exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
 
     {margin_requests, margin_stub} = body_capturing_stub(%{"code" => 200, "msg" => "success"})
@@ -121,19 +129,184 @@ defmodule Bourse.BinanceAuthoredSpecTest do
       assert params["marginType"] == "CROSSED"
       assert params["symbol"] == "ETHUSDT"
     end)
+  end
 
-    {cancel_requests, cancel_stub} = body_capturing_stub(%{"code" => 200, "msg" => "done"})
+  test "Binance USD-M open orders merge the regular and Algo books" do
+    stub = unique_stub("binance_open_order_books")
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+
+      body =
+        case conn.request_path do
+          "/fapi/v1/openOrders" -> [regular_open_order()]
+          "/fapi/v1/openAlgoOrders" -> [algo_open_order()]
+        end
+
+      Req.Test.json(conn, body)
+    end)
+
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
+
+    assert {:ok, orders} =
+             Bourse.fetch_open_orders(exchange,
+               symbol: "ETH/USDT:USDT",
+               plug: {Req.Test, stub},
+               timestamp_ms_override: @frozen_timestamp_ms
+             )
+
+    assert orders |> Enum.map(& &1.id) |> Enum.sort() == ["12345", "9001"]
+
+    assert recorded_paths(requests) == ["/fapi/v1/openAlgoOrders", "/fapi/v1/openOrders"]
+  end
+
+  test "Binance USD-M cancel_order falls through order-not-found to the Algo book" do
+    stub = unique_stub("binance_cancel_order_books")
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      {conn, _body} = RequestCollector.capture_with_body(requests, conn)
+
+      case conn.request_path do
+        "/fapi/v1/order" ->
+          conn
+          |> Plug.Conn.put_status(@bad_request_status)
+          |> Req.Test.json(%{"code" => -2011, "msg" => "Unknown order sent."})
+
+        "/fapi/v1/algoOrder" ->
+          Req.Test.json(conn, %{"algoId" => "9001", "clientAlgoId" => "algo-client", "code" => "200", "msg" => "success"})
+      end
+    end)
+
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
+
+    assert {:ok, %Bourse.Order{id: "9001"}} =
+             Bourse.cancel_order(exchange, "9001",
+               symbol: "ETH/USDT:USDT",
+               plug: {Req.Test, stub},
+               timestamp_ms_override: @frozen_timestamp_ms
+             )
+
+    [regular, algo] = RequestCollector.requests(requests)
+    assert regular.conn.request_path == "/fapi/v1/order"
+    assert request_params(regular.conn, regular.body)["orderId"] == "9001"
+    assert algo.conn.request_path == "/fapi/v1/algoOrder"
+    assert request_params(algo.conn, algo.body)["algoId"] == "9001"
+  end
+
+  test "Binance USD-M cancel_all_orders broadcasts to the regular and Algo books" do
+    stub = unique_stub("binance_cancel_all_order_books")
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+      Req.Test.json(conn, %{"code" => 200, "msg" => "done"})
+    end)
+
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
 
     assert {:ok, %{"code" => 200, "msg" => "done"}} =
              Bourse.cancel_all_orders(exchange,
                symbol: "ETH/USDT:USDT",
-               plug: {Req.Test, cancel_stub},
-               timestamp_ms_override: 1_700_000_000_000
+               plug: {Req.Test, stub},
+               timestamp_ms_override: @frozen_timestamp_ms
              )
 
-    assert_order_request(cancel_requests, :delete, "/fapi/v1/allOpenOrders", fn params ->
-      assert params["symbol"] == "ETHUSDT"
+    assert recorded_paths(requests) == ["/fapi/v1/algoOpenOrders", "/fapi/v1/allOpenOrders"]
+  end
+
+  test "raw capture executes both book writes and preserves cancel fallback semantics" do
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
+
+    broadcast_stub = unique_stub("binance_capture_cancel_all_books")
+    {:ok, broadcast_requests} = RequestCollector.start_link()
+
+    Req.Test.stub(broadcast_stub, fn conn ->
+      conn = RequestCollector.capture(broadcast_requests, conn)
+      Req.Test.json(conn, %{"code" => 200, "msg" => "done"})
     end)
+
+    assert {:ok, %{body: %{"code" => 200}}} =
+             Unified.capture_responses(exchange, :cancel_all_orders, %{"symbol" => "ETH/USDT:USDT"},
+               plug: {Req.Test, broadcast_stub},
+               timestamp_ms_override: @frozen_timestamp_ms
+             )
+
+    assert recorded_paths(broadcast_requests) == ["/fapi/v1/algoOpenOrders", "/fapi/v1/allOpenOrders"]
+
+    fallback_stub = unique_stub("binance_capture_cancel_order_books")
+    {:ok, fallback_requests} = RequestCollector.start_link()
+
+    Req.Test.stub(fallback_stub, fn conn ->
+      conn = RequestCollector.capture(fallback_requests, conn)
+
+      case conn.request_path do
+        "/fapi/v1/order" ->
+          conn
+          |> Plug.Conn.put_status(@bad_request_status)
+          |> Req.Test.json(%{"code" => -2011, "msg" => "Unknown order sent."})
+
+        "/fapi/v1/algoOrder" ->
+          Req.Test.json(conn, %{"algoId" => "9001", "algoStatus" => "CANCELED"})
+      end
+    end)
+
+    assert {:ok, %{body: %{"algoId" => "9001"}}} =
+             Unified.capture_responses(exchange, :cancel_order, %{"id" => "9001", "symbol" => "ETH/USDT:USDT"},
+               plug: {Req.Test, fallback_stub},
+               timestamp_ms_override: @frozen_timestamp_ms
+             )
+
+    assert recorded_paths(fallback_requests) == ["/fapi/v1/algoOrder", "/fapi/v1/order"]
+  end
+
+  test "Binance USD-M book routing rejects unreachable and malformed authored directives" do
+    assert {:error, %Bourse.Error{type: :authentication_error}} =
+             Bourse.fetch_open_orders(Exchange.new!("binance"), symbol: "ETH/USDT:USDT")
+
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret")
+
+    for route <- [
+          %{"mode" => "merge", "endpoints" => ["missing"], "when" => %{"market_family" => "linear"}},
+          %{"mode" => "merge", "when" => %{"market_family" => "linear"}},
+          %{
+            "mode" => "unknown",
+            "endpoints" => ["fapiPrivate_get_openorders", "fapiPrivate_get_openalgoorders"],
+            "when" => %{"market_family" => "linear"}
+          }
+        ] do
+      malformed = put_in(exchange.endpoint_selection["fetchOpenOrders"]["book_routes"], [route])
+
+      assert {:error, %Bourse.Error{type: :bad_request, message: message}} =
+               Bourse.fetch_open_orders(malformed, symbol: "ETH/USDT:USDT")
+
+      assert message == "invalid authored order-book route for fetchOpenOrders on binance"
+    end
+  end
+
+  test "Binance USD-M cancel fallback stops on errors other than order-not-found" do
+    stub = unique_stub("binance_cancel_order_non_missing_error")
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+
+      conn
+      |> Plug.Conn.put_status(@bad_request_status)
+      |> Req.Test.json(%{"code" => -1121, "msg" => "Invalid symbol."})
+    end)
+
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
+
+    assert {:error, %Bourse.Error{type: :bad_symbol, code: -1121}} =
+             Bourse.cancel_order(exchange, "9001",
+               symbol: "ETH/USDT:USDT",
+               plug: {Req.Test, stub},
+               timestamp_ms_override: @frozen_timestamp_ms
+             )
+
+    assert recorded_paths(requests) == ["/fapi/v1/order"]
   end
 
   test "Binance balance atom types select the intended account family" do
@@ -2749,6 +2922,36 @@ defmodule Bourse.BinanceAuthoredSpecTest do
              )
 
     assert_order_request(requests, verb, expected_path, assert_params)
+  end
+
+  defp regular_open_order do
+    %{
+      "executedQty" => "0",
+      "orderId" => "12345",
+      "origQty" => "0.02",
+      "price" => "1500",
+      "side" => "BUY",
+      "status" => "NEW",
+      "symbol" => "ETHUSDT",
+      "time" => @frozen_timestamp_ms,
+      "timeInForce" => "GTC",
+      "type" => "LIMIT"
+    }
+  end
+
+  defp algo_open_order do
+    %{
+      "algoId" => "9001",
+      "algoStatus" => "NEW",
+      "clientAlgoId" => "algo-client",
+      "createTime" => @frozen_timestamp_ms,
+      "orderType" => "STOP",
+      "quantity" => "0.02",
+      "side" => "SELL",
+      "symbol" => "ETHUSDT",
+      "timeInForce" => "GTC",
+      "triggerPrice" => "1400"
+    }
   end
 
   defp order_stub do

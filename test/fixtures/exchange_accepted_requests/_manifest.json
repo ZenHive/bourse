@@ -1,6 +1,6 @@
 {
   "count": 15,
-  "generated_at": "2026-08-10T02:43:33Z",
+  "generated_at": "2026-08-10T05:28:47Z",
   "goldens": [
     {
       "business_success": "HTTP 2xx paper-account payload",
@@ -29,7 +29,7 @@
     {
       "business_success": "code=200 symbol-scoped cancel-all acknowledgement",
       "capture_date": "2026-08-10",
-      "captured_at": "2026-08-10T02:43:33.501Z",
+      "captured_at": "2026-08-10T05:28:47.255Z",
       "endpoint": "fapi/v1/allOpenOrders",
       "host": "demo-fapi.binance.com",
       "http_status": 200,
@@ -39,13 +39,13 @@
       "venue": "binance"
     },
     {
-      "business_success": "HTTP 2xx resting conditional order with an algo id; accepted order cancelled",
+      "business_success": "HTTP 2xx resting take-profit order with an algo id; accepted order cancelled",
       "capture_date": "2026-08-10",
-      "captured_at": "2026-08-10T02:43:31.538Z",
+      "captured_at": "2026-08-10T05:28:43.558Z",
       "endpoint": "fapi/v1/algoOrder",
       "host": "demo-fapi.binance.com",
       "http_status": 200,
-      "label": "Oracle: exchange-acceptance tier 1 vs binance create_order accepted 2026-08-10 (fapi/v1/algoOrder @ demo-fapi.binance.com, HTTP 200, HTTP 2xx resting conditional order with an algo id; accepted order cancelled).",
+      "label": "Oracle: exchange-acceptance tier 1 vs binance create_order accepted 2026-08-10 (fapi/v1/algoOrder @ demo-fapi.binance.com, HTTP 200, HTTP 2xx resting take-profit order with an algo id; accepted order cancelled).",
       "method": "create_order",
       "path": "binance/create_order.json",
       "venue": "binance"

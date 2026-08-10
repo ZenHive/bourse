@@ -6,8 +6,31 @@ defmodule Bourse.DefaultFamilySelectionTest do
   use ExUnit.Case, async: true
 
   alias Bourse.Exchange
+  alias Bourse.Spec
   alias Bourse.Test.RequestCollector
   alias Bourse.Unified
+
+  @distinct_order_book_contracts %{
+    "binance" => %{
+      "cancelAllOrders" => "fapiPrivate_delete_algoopenorders",
+      "cancelOrder" => "fapiPrivate_delete_algoorder",
+      "createOrder" => "fapiPrivate_post_algoorder",
+      "fetchOpenOrders" => "fapiPrivate_get_openalgoorders"
+    },
+    "okx" => %{
+      "cancelOrder" => "trade/cancel-algos",
+      "createOrder" => "trade/order-algo",
+      "fetchOpenOrders" => "trade/orders-algo-pending"
+    }
+  }
+
+  @alternate_create_route_exclusions %{
+    "binancecoinm" => "alternate create endpoints select a different market family, not a second book within one family",
+    "binanceusdm" => "alternate create endpoints select a different market family, not a second book within one family",
+    "bybit" => "position/trading-stop manages position-level TP/SL controls rather than independently cancellable orders",
+    "deribit" => "buy and sell are side-specific RPC methods writing to the same order book",
+    "derive" => "the debug endpoint changes response detail while writing to the same order book"
+  }
 
   describe "config.default_family slot" do
     test "binanceusdm authors linear as the venue default family" do
@@ -46,6 +69,38 @@ defmodule Bourse.DefaultFamilySelectionTest do
 
     test "every mapped unified method has a documented reachable parameter set" do
       assert Unified.mapped_endpoint_reachability_failures() == []
+    end
+  end
+
+  describe "distinct order-book routing" do
+    test "every alternate create endpoint has matching lifecycle routes or a named exclusion" do
+      candidates =
+        Spec.exchanges()
+        |> Enum.filter(fn venue ->
+          venue
+          |> Exchange.new!()
+          |> then(&alternate_create_routes(&1.endpoint_selection["createOrder"]))
+          |> Enum.any?()
+        end)
+        |> MapSet.new()
+
+      catalog =
+        @distinct_order_book_contracts
+        |> Map.keys()
+        |> Kernel.++(Map.keys(@alternate_create_route_exclusions))
+        |> MapSet.new()
+
+      assert candidates == catalog
+
+      for {venue, contract} <- @distinct_order_book_contracts,
+          {method, target} <- contract do
+        selection = Exchange.new!(venue).endpoint_selection[method]
+
+        assert target in selection_targets(selection),
+               "#{venue} #{method} does not route to distinct order book #{target}"
+      end
+
+      assert Enum.all?(@alternate_create_route_exclusions, fn {_venue, rationale} -> rationale != "" end)
     end
   end
 
@@ -102,6 +157,29 @@ defmodule Bourse.DefaultFamilySelectionTest do
     assert inverse_n > 0 and inverse_n < linear_n,
            "expected smaller inverse dapi catalog (#{inverse_n}) than linear (#{linear_n})"
   end
+
+  defp alternate_create_routes(selection) when is_map(selection) do
+    selection
+    |> selection_targets()
+    |> Enum.reject(&(&1 == selection["default"]))
+  end
+
+  defp alternate_create_routes(_selection), do: []
+
+  defp selection_targets(selection) when is_map(selection) do
+    route_targets =
+      selection
+      |> Map.get("book_routes", [])
+      |> Enum.flat_map(&Map.get(&1, "endpoints", []))
+
+    ([selection["default"]] ++
+       Enum.map(selection["rules"] || [], & &1["endpoint"]) ++
+       Enum.map(selection["cases"] || [], & &1["path"]) ++ route_targets)
+    |> Enum.filter(&is_binary/1)
+    |> Enum.uniq()
+  end
+
+  defp selection_targets(_selection), do: []
 
   defp path_body_stub(body) do
     stub = :"default_family_#{System.unique_integer([:positive])}"
