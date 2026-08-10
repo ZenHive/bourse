@@ -1,8 +1,10 @@
 name: Live provider drift
 
+# The scheduled ten-venue drift lane runs from the always-on operator host
+# (workbench task 527), where all ten venues are reachable — no unreachable
+# allowlist. This GitHub-hosted job is a manual-only fallback; its allowlist
+# below reflects GitHub-runner egress reality, not the canonical lane.
 on:
-  schedule:
-    - cron: "17 3 * * 1"
   workflow_dispatch:
 
 permissions:
