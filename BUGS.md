@@ -71,6 +71,71 @@ roadmap.
 
 ---
 
+## 2026-08-10 — binanceusdm `cancel_order` on Algo (conditional) orders: successful cancel returns a near-all-nil Order struct
+
+**Method:** `Bourse.cancel_order(ex, algo_id, symbol: "ETH/USDT:USDT")` · **Exchange:** binanceusdm (demo-fapi, sandbox) · **Severity:** low/medium
+
+**Status (2026-08-10):** 📋 triaged — folded into workbench **task 580** (algo-book read/ack parity): the thin `{algoId, code: 200, msg: success}` ack must synthesize at minimum `status: "canceled"`; live-pinned AC added.
+
+Cancelling an Algo (conditional) order succeeds on the wire — raw response
+`{"algoId": ..., "code": "200", "msg": "success"}`, and the order is confirmed gone afterwards —
+but the returned unified `Bourse.Order` struct is near-all-nil: `status`/`type`/`side`/`amount`/
+`trigger_price` all `nil`, only `id`/`symbol`/`info` populated. bourse does not synthesize
+`status: "canceled"` from the thin algo-cancel acknowledgement.
+
+Expected: at minimum `status: "canceled"` on the returned struct so callers can branch on the
+unified field without reading raw `info`.
+
+---
+
+## 2026-08-10 — binanceusdm `set_margin_mode`: `symbol:` as keyword opt crashes deep in the signing layer (DX)
+
+**Method:** `Bourse.set_margin_mode(ex, "isolated", symbol: "ETH/USDT:USDT")` (malformed — symbol is positional arg 3) · **Exchange:** binanceusdm (demo-fapi, sandbox) · **Severity:** low (DX)
+
+**Status (2026-08-10):** 📋 triaged — filed as workbench **task 587** (class-scoped): task 185's never-raise invariant extended to the param-VALUE layer — the unified boundary refuses non-encodable values with `:invalid_parameters` naming the argument, instead of a signing-layer crash.
+
+`set_margin_mode/3` takes the symbol as positional arg 3. Passing `symbol: "..."` as a keyword
+opt instead crashes deep in `Bourse.Signing.HmacRecipe.encode_query_pairs` with a Jason
+tuple-encode error. This is a caller error, but bourse should reject the malformed opts early
+with a clear message ("symbol is a positional argument") instead of surfacing a crypto-layer
+crash whose stack trace points nowhere near the actual mistake.
+
+---
+
+## 2026-08-10 — binanceusdm conditional (Algo) order: unified `type` comes back `"limit"` for a stop-market order
+
+**Method:** `Bourse.create_order(ex, "ETH/USDT:USDT", "market", "sell", 0.05, trigger_price: 1000)` · **Exchange:** binanceusdm (demo-fapi, sandbox) · **Severity:** low
+
+**Status (2026-08-10):** 📋 triaged — folded into workbench **task 580**: unified `type` on a conditional order must reflect the request that created it (stop/stop_market family), never `"limit"`; AC added alongside the algo-book read parity work.
+
+The order was correctly routed to the Algo API (`algoId` returned, resting conditional, no
+market fire) and the unified struct carries `trigger_price: 1000` / `stop_price: 1000` —
+but its unified `type` reads `"limit"`. A trigger-price order submitted with type "market"
+is a stop-market; callers branching on the unified `type` to distinguish resting limits from
+conditionals get the wrong answer and must fall back to `trigger_price != nil` or raw `info`.
+
+Expected: unified `type` reflecting the conditional nature (e.g. the CCXT-style
+`"stop_market"` / `"stop"`), consistent with the request that created it.
+
+---
+
+## 2026-08-10 — binanceusdm `fetch_leverage` `:not_supported`, though the leverage is already in the `fetch_margin_mode` payload
+
+**Method:** `Bourse.fetch_leverage(ex, "ETH/USDT:USDT")` · **Exchange:** binanceusdm (demo-fapi, sandbox) · **Severity:** low
+
+**Status (2026-08-10):** 📋 triaged — folded into workbench **task 586** (retitled to the family scope): map `fetchLeverage` onto `GET /fapi/v1/symbolConfig` for binanceusdm with live before/after evidence; the dapi sibling is confronted in the same pass.
+
+`fetch_leverage` returns `:not_supported` for binanceusdm. The raw `symbolConfig` response
+that bourse's own `fetch_margin_mode` consumes already carries the `leverage` field for the
+symbol (observed: `leverage: 3` alongside `marginType: ISOLATED`), and `fetch_positions` only
+exposes leverage while a position is open — so there is currently no unified way to read the
+configured leverage of a flat symbol, even though the data is on a wire call bourse already
+makes. Workaround used: read `leverage` from `fetch_margin_mode`'s raw info.
+
+Expected: `fetch_leverage` mapped onto the symbolConfig endpoint for binanceusdm.
+
+---
+
 ## 2026-08-10 — binance USD-M: `create_order/6` dropped conditional controls and used the retired endpoint
 
 **Status (2026-08-10):** ✅ **fixed** by workbench task 574. Unified `time_in_force`,
