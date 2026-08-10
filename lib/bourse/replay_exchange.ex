@@ -7,11 +7,19 @@ defmodule Bourse.ReplayExchange do
   call. This module builds one from the vendored market/currency corpus under
   `static_root/0`.
 
-  The cache under `priv/reference_cache/` is a vendored slice covering exactly the
-  supported venues. It is compatibility reference material only — it never
-  establishes venue semantics, and no runtime path reads it. Keeping its access in
-  one module is what bounds the dependency: only recording and replay harnesses
-  reach it, and the shipped slice stays ~1 MB rather than the full vendored corpus.
+  The market and currency directories under `priv/reference_cache/` form a vendored
+  slice for the venues exercised by the replay harnesses. It is compatibility
+  reference material only — it never establishes venue semantics, and no runtime
+  path reads it. Keeping its access in one module is what bounds the dependency:
+  only recording and replay harnesses reach it, and the slice stays ~1 MB rather
+  than the full vendored corpus.
+
+  This slice deliberately cannot be replaced by the manifest-registered response
+  recordings. Those recordings preserve provider transport envelopes; replay needs
+  normalized compatibility fields such as contract size, precision, asset indexes,
+  and currency-network metadata. Deriving those fields would require rerunning the
+  reference implementation and would no longer be byte replay. Tracking the slice
+  also keeps every replay and recording test available offline from a fresh clone.
   """
 
   alias Bourse.Credentials
@@ -55,11 +63,11 @@ defmodule Bourse.ReplayExchange do
     |> Path.expand()
   end
 
-  @doc "Directory for recorded markets caches."
+  @doc "Directory for vendored markets caches."
   @spec markets_root() :: String.t()
   def markets_root, do: Path.join(static_root(), "markets")
 
-  @doc "Directory for recorded currencies caches."
+  @doc "Directory for vendored currencies caches."
   @spec currencies_root() :: String.t()
   def currencies_root, do: Path.join(static_root(), "currencies")
 

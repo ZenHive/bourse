@@ -134,6 +134,24 @@ defmodule Bourse.SpecTest do
       end
     end
 
+    test "vendored reference slice records its storage decision and is locally complete" do
+      manifest = ReferenceSlice.load_manifest!()
+
+      assert %{
+               "mode" => "vendored",
+               "reference_documents" => reference_reason,
+               "manifest" => manifest_reason,
+               "cross_repository_revision_pin" => "pins.source.sha256"
+             } = manifest["vendoring_decision"]
+
+      assert reference_reason != ""
+      assert manifest_reason != ""
+
+      for exchange_id <- manifest["exchanges"] do
+        assert File.regular?(ReferenceSlice.spec_path(exchange_id))
+      end
+    end
+
     test "every owned document declares the static public fee trigger explicitly (task 499)" do
       for exchange_id <- Bourse.Spec.exchanges() do
         owned = exchange_id |> Bourse.Spec.owned_spec_path() |> Bourse.Spec.decode_file!()

@@ -82,6 +82,29 @@ Keep the macros and the JSON-spec format. Then:
 `binancecoinm`, `binanceusdm`, `hyperliquid`, `derive`, `lighter`. The ~100-exchange long tail stays as last-frozen vendored specs
 (public-data-only); removing the *sync tooling* does not delete the vendored files.
 
+### Vendored reference storage decisions
+
+The client deliberately tracks its two reference slices so a fresh clone can run
+the complete offline suite without fetching authoring inputs:
+
+- `priv/reference_cache/` supplies `Bourse.ReplayExchange` with normalized market
+  and currency cache fields used by request reconstruction and parser tests.
+  Manifest-registered recordings preserve provider response envelopes instead;
+  they do not contain the normalized contract sizes, precision, asset indexes, or
+  currency-network metadata that replay consumes. Rebuilding those fields would
+  require rerunning the reference implementation, so the ~1 MB cache remains a
+  separate vendored compatibility input rather than reality evidence.
+- The 15 documents in `priv/specs/json/output/` are test-only authoring references.
+  Tests read their complete endpoint trees and symbol indexes, including five
+  unsupported-venue counter-examples. Individual operation recordings cannot
+  represent that static document contract, while fetch-on-demand would put network
+  access on the offline test path; the 19 MB slice therefore remains tracked.
+- `priv/specs/json/reference_corpus.json` remains tracked with the documents because
+  it declares their closed inventory and pins their provenance. Its
+  `pins.source.sha256` is the cross-repository revision key shared with the
+  workbench's 110-document corpus. `pins.static_fixtures` verifies each repository's
+  local vintage note and is not the upstream-revision join key.
+
 ### The schema is ours — versioned compile-time contract
 
 "Our schema" is not a slogan; it is a **versioned compile-time contract WE own** (T-B / 169):
