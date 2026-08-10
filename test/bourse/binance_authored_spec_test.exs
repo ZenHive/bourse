@@ -222,7 +222,9 @@ defmodule Bourse.BinanceAuthoredSpecTest do
         end
 
       assert error.type == :invalid_parameters
-      assert error.message == "Binance Algo orders accept one conditional leg per order"
+
+      assert error.message ==
+               "binance-family create_order accepts one conditional leg per order (stop_loss_price OR take_profit_price); two-leg protection is a separate order-list surface"
     end
   end
 

@@ -367,7 +367,8 @@ defmodule Bourse.Unified.RequestShape do
        )
        when exchange_id in @binance_conditional_venues and not is_nil(stop_loss) and not is_nil(take_profit) do
     raise Error.invalid_parameters(
-            message: "Binance Algo orders accept one conditional leg per order",
+            message:
+              "binance-family create_order accepts one conditional leg per order (stop_loss_price OR take_profit_price); two-leg protection is a separate order-list surface",
             exchange: exchange_id,
             raw: %{"method" => "createOrder", "reason" => "multiple_conditional_legs"}
           )

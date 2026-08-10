@@ -43,6 +43,11 @@ defmodule Bourse.ExchangeAcceptanceRequestOracleTest do
     assert @manifest["oracle"] == "exchange_acceptance"
     assert @manifest["count"] == length(ExchangeAcceptanceFixtures.profiles())
 
+    # A profile that omits its id and duplicates a sibling's method would share
+    # a golden file while the count check above still passes — pin uniqueness.
+    profile_ids = Enum.map(ExchangeAcceptanceFixtures.profiles(), fn {venue, profile, _method} -> {venue, profile} end)
+    assert profile_ids == Enum.uniq(profile_ids)
+
     assert @manifest["goldens"] |> Enum.map(& &1["venue"]) |> Enum.uniq() |> Enum.sort() ==
              Enum.sort(ExchangeAcceptanceFixtures.first_class_venues())
 
