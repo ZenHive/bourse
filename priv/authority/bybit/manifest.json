@@ -1,8 +1,8 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "venue": "bybit",
   "official_docs_url": "https://bybit-exchange.github.io/docs/v5/intro",
-  "selection_reason": "Rank 1: Bybit publishes no OpenAPI corpus. The official Docusaurus documentation source is more complete and more precisely pinnable than a rendered-page snapshot, so the V5 source repository is pinned at one commit.",
+  "selection_reason": "Bybit publishes no OpenAPI corpus. The official V5 documentation source covers REST and WebSocket prose, while the official Postman collection provides an untyped request reference.",
   "fetch_script": "scripts/fetch_authority.sh",
   "artifacts": [
     {
@@ -30,6 +30,99 @@
       "drift": {
         "mode": "git_head",
         "repository_url": "https://github.com/bybit-exchange/docs.git"
+      },
+      "freshness": {
+        "status": "drift_detected",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The official documentation repository HEAD moved beyond the retained source archive pin."
+      },
+      "expressiveness": {
+        "level": "source_archive",
+        "limitations": [
+          "The archive contains prose, examples, and generated pages without an OpenAPI contract."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "complete",
+          "limitations": [
+            "Coverage is documentary and untyped."
+          ]
+        },
+        {
+          "surface": "current_websocket",
+          "coverage": "complete",
+          "limitations": [
+            "Coverage is documentary and untyped."
+          ]
+        },
+        {
+          "surface": "documentation_index",
+          "coverage": "complete",
+          "limitations": [
+            "The archive is the provider's V5 documentation source tree."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
+    },
+    {
+      "id": "v5-postman",
+      "kind": "postman-collection",
+      "source_url": "https://github.com/bybit-exchange/QuickStartWithPostman/blob/cf5f580b8c6d9b36eb0ff6bbd4199edcf6c626c2/V5APIs/Open API V5.postman_collection.json",
+      "fetch_url": "https://raw.githubusercontent.com/bybit-exchange/QuickStartWithPostman/cf5f580b8c6d9b36eb0ff6bbd4199edcf6c626c2/V5APIs/Open%20API%20V5.postman_collection.json",
+      "filename": "bybit-v5.postman_collection.json",
+      "retrieved_at": "2026-08-10",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "cf5f580b8c6d9b36eb0ff6bbd4199edcf6c626c2"
+      },
+      "sha256": "c4f8b14e8002c3118b0973d50884d53677dc134d3548874d060efd23cc670c73",
+      "bytes": 3074908,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No repository-level license declared",
+        "evidence_url": "https://github.com/bybit-exchange/QuickStartWithPostman",
+        "handling": "reference_only",
+        "reason": "The official repository exposes no SPDX license; the collection remains reference-only."
+      },
+      "drift": {
+        "mode": "git_head",
+        "repository_url": "https://github.com/bybit-exchange/QuickStartWithPostman.git"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The collection entered the corpus as an implementation-time baseline."
+      },
+      "expressiveness": {
+        "level": "untyped_postman",
+        "limitations": [
+          "The collection demonstrates requests but does not provide typed response schemas."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The collection is an operational sample, not a completeness inventory."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
       }
     }
   ],
@@ -40,5 +133,6 @@
     "retrieved_at": "2026-07-22",
     "sha256": "cd5041faaddf80e9809093793897458381dc825ef93ff6d392a4c3ae8d3a491c",
     "bytes": 64274
-  }
+  },
+  "rejected_candidates": []
 }

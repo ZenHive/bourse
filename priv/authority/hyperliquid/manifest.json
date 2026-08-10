@@ -1,8 +1,8 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "venue": "hyperliquid",
   "official_docs_url": "https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api",
-  "selection_reason": "Rank 1: Hyperliquid publishes no OpenAPI description. GitBook's official llms-full snapshot preserves the exchange's complete API prose in one machine-readable artifact and outranks SDK examples for general field semantics.",
+  "selection_reason": "Hyperliquid's official documentation supplies broad REST and WebSocket prose. Its Python SDK adds typed OpenAPI fragments for selected info requests, but those partial fragments cannot define the full operation inventory.",
   "fetch_script": "scripts/fetch_authority.sh",
   "artifacts": [
     {
@@ -30,6 +30,92 @@
       "drift": {
         "mode": "sha256",
         "url": "https://hyperliquid.gitbook.io/hyperliquid-docs/llms-full.txt"
+      },
+      "freshness": {
+        "status": "drift_detected",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The mutable documentation export differs from the retained pin; semantic review is required before refresh."
+      },
+      "expressiveness": {
+        "level": "prose_documentation",
+        "limitations": [
+          "The full-text export is untyped and mixes endpoint semantics with guides."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "complete",
+          "limitations": [
+            "Coverage is documentary and untyped."
+          ]
+        },
+        {
+          "surface": "current_websocket",
+          "coverage": "complete",
+          "limitations": [
+            "Coverage is documentary and untyped."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
+    },
+    {
+      "id": "python-sdk-info-subspecifications",
+      "kind": "official-sdk-source-archive",
+      "source_url": "https://github.com/hyperliquid-dex/hyperliquid-python-sdk/tree/2fdb18f9517675ea03695a0962bd19eece9c83f0/api",
+      "fetch_url": "https://codeload.github.com/hyperliquid-dex/hyperliquid-python-sdk/tar.gz/2fdb18f9517675ea03695a0962bd19eece9c83f0",
+      "filename": "hyperliquid-python-sdk-2fdb18f.tar.gz",
+      "retrieved_at": "2026-08-10",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "2fdb18f9517675ea03695a0962bd19eece9c83f0"
+      },
+      "sha256": "e48dff272dbb1a021177d0a7e3f0be092665f060ec6a6b3224c3f51b47c43896",
+      "bytes": 253093,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "permitted",
+        "license": "MIT",
+        "evidence_url": "https://github.com/hyperliquid-dex/hyperliquid-python-sdk/blob/2fdb18f9517675ea03695a0962bd19eece9c83f0/LICENSE.md",
+        "handling": "reference_only",
+        "reason": "MIT permits redistribution; the archive remains reference-only."
+      },
+      "drift": {
+        "mode": "git_head",
+        "repository_url": "https://github.com/hyperliquid-dex/hyperliquid-python-sdk.git"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The SDK API fragments entered the corpus as an implementation-time baseline."
+      },
+      "expressiveness": {
+        "level": "typed_openapi",
+        "limitations": [
+          "The YAML fragments type selected info requests only and do not describe Exchange writes or the full API."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The api/info fragments cover selected public information requests."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
       }
     }
   ],
@@ -40,5 +126,13 @@
     "retrieved_at": "2026-07-22",
     "sha256": "ebfd0223ce456c4c6e4830f9402bff8429b789e0f0e45c8fe0c62a66411121c1",
     "bytes": 2971
-  }
+  },
+  "rejected_candidates": [
+    {
+      "id": "rust-sdk-as-contract",
+      "source_url": "https://github.com/hyperliquid-dex/hyperliquid-rust-sdk",
+      "authority": "provider_owned",
+      "reason": "The audited Rust SDK contains implementation code but no distinct machine-readable contract artifact."
+    }
+  ]
 }

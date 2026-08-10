@@ -3,6 +3,7 @@ defmodule Bourse.CheckDispatchConfigTest do
 
   @reach_command "cmd env MIX_ENV=dev mix reach.check --arch --smells --strict --path lib"
   @oracle_command "cmd env MIX_ENV=test mix ccxt.oracle_gate"
+  @authority_commands ["ccxt.authority_check", "ccxt.error_authority"]
 
   test "check.dispatch uses the reality oracle as its only oracle step" do
     steps =
@@ -23,5 +24,15 @@ defmodule Bourse.CheckDispatchConfigTest do
       |> Enum.filter(&String.contains?(&1, "reach.check"))
 
     assert reach_steps == [@reach_command]
+  end
+
+  test "check.dispatch runs both authority checks offline" do
+    steps =
+      Bourse.MixProject.project()
+      |> Keyword.fetch!(:aliases)
+      |> Keyword.fetch!(:"check.dispatch")
+
+    assert Enum.filter(steps, &(&1 in @authority_commands)) == @authority_commands
+    refute Enum.any?(steps, &String.contains?(&1, "authority_check --online"))
   end
 end

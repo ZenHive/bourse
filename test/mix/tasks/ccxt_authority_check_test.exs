@@ -26,6 +26,98 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
     assert :ok = AuthorityCheck.run([])
   end
 
+  test "offline success is explicitly not a remote freshness result" do
+    previous_shell = Mix.shell()
+    Mix.shell(Mix.Shell.Process)
+    on_exit(fn -> Mix.shell(previous_shell) end)
+
+    assert :ok = AuthorityCheck.run([])
+    assert_receive {:mix_shell, :info, [message]}
+    assert message =~ "offline validation"
+    refute message =~ "upstream unchanged"
+  end
+
+  test "artifacts use the governed role vocabulary and keep versioned surfaces separate" do
+    for manifest <- AuthorityCorpus.load!(@root), artifact <- manifest["artifacts"] do
+      assert artifact["freshness"]["status"] in ~w(reviewed_current initial_baseline pinned_snapshot known_stale drift_detected)
+
+      assert artifact["expressiveness"]["level"] in ~w(typed_openapi typed_asyncapi untyped_postman documentation_index prose_documentation source_archive)
+
+      surfaces = Enum.map(artifact["scope"], & &1["surface"])
+      refute "current_rest" in surfaces and "upcoming_rest" in surfaces
+      refute "current_websocket" in surfaces and "upcoming_websocket" in surfaces
+      assert artifact["authority"]["classification"] == "provider_owned"
+    end
+  end
+
+  test "Deribit versioned contracts have distinct baselines and runtime denominators" do
+    manifest = Enum.find(AuthorityCorpus.load!(@root), &(&1["venue"] == "deribit"))
+
+    by_surface =
+      Enum.reduce(manifest["artifacts"], %{}, fn artifact, acc ->
+        Enum.reduce(artifact["scope"], acc, fn artifact_scope, scopes ->
+          Map.update(scopes, artifact_scope["surface"], [artifact["id"]], &[artifact["id"] | &1])
+        end)
+      end)
+
+    assert "api-openapi" in by_surface["current_rest"]
+    assert by_surface["upcoming_rest"] == ["upcoming-openapi"]
+    assert by_surface["current_websocket"] == ["current-asyncapi"]
+    assert by_surface["upcoming_websocket"] == ["upcoming-asyncapi"]
+    assert by_surface["documentation_index"] == ["docs-index"]
+    refute "upcoming-openapi" in by_surface["current_rest"]
+  end
+
+  test "Deribit current REST refresh is bound to its semantic diff report" do
+    manifest = Enum.find(AuthorityCorpus.load!(@root), &(&1["venue"] == "deribit"))
+    artifact = Enum.find(manifest["artifacts"], &(&1["id"] == "api-openapi"))
+
+    report =
+      Bourse.JsonDocument.decode_file!("priv/authority/deribit/current-rest-drift-2026-08-10.json")
+
+    assert report["prior"]["sha256"] ==
+             "70ba4617642d18aaff2bbcb7127bec499c4ef3ba34b6f5b12cb9cbdadbcffd2d"
+
+    assert report["current"]["sha256"] == artifact["sha256"]
+    assert report["current"]["bytes"] == artifact["bytes"]
+    assert report["operation_delta"]["count"] == 0
+    assert report["operation_delta"]["current_runtime_denominator_change"] == "not_detected"
+    assert report["operation_delta"]["authored_relation_counts"]["change_from_2026_08_04_measurement"] == 0
+    assert report["structural_deltas"] != []
+  end
+
+  test "partial or untyped sources cannot declare themselves completeness gates" do
+    root =
+      write_corpus(fn
+        "binance", manifest ->
+          manifest
+          |> put_in(["artifacts", Access.at(0), "authority", "completeness_gate"], true)
+          |> put_in(["artifacts", Access.at(0), "scope", Access.at(0), "coverage"], "partial")
+
+        _venue, manifest ->
+          manifest
+      end)
+
+    assert_raise Mix.Error, ~r/cannot be a completeness gate/, fn ->
+      AuthorityCorpus.load!(root)
+    end
+  end
+
+  test "unsupported artifact roles fail loudly" do
+    root =
+      write_corpus(fn
+        "binance", manifest ->
+          put_in(manifest, ["artifacts", Access.at(0), "scope", Access.at(0), "surface"], "future_rest")
+
+        _venue, manifest ->
+          manifest
+      end)
+
+    assert_raise Mix.Error, ~r/unsupported contract surface "future_rest"/, fn ->
+      AuthorityCorpus.load!(root)
+    end
+  end
+
   test "an upstream change reports as drift for every venue artifact, naming expected vs actual pin" do
     drifted = "drifted-upstream-content"
     drifted_head = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -206,7 +298,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
     contents = "authority"
 
     %{
-      "schema_version" => 1,
+      "schema_version" => 2,
       "venue" => venue,
       "official_docs_url" => "https://example.test/#{venue}",
       "selection_reason" => "Synthetic test manifest",
@@ -231,9 +323,32 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
             "handling" => "reference_only",
             "reason" => "Synthetic fixture"
           },
-          "drift" => %{"mode" => "sha256", "url" => "https://example.test/source"}
+          "drift" => %{"mode" => "sha256", "url" => "https://example.test/source"},
+          "freshness" => %{
+            "status" => "initial_baseline",
+            "checked_at" => "2026-08-10",
+            "mutable" => true,
+            "notes" => "Synthetic current baseline"
+          },
+          "expressiveness" => %{
+            "level" => "prose_documentation",
+            "limitations" => ["Synthetic fixture is not a typed contract"]
+          },
+          "scope" => [
+            %{
+              "surface" => "current_rest",
+              "coverage" => "partial",
+              "limitations" => ["Synthetic fixture covers one endpoint family"]
+            }
+          ],
+          "authority" => %{
+            "classification" => "provider_owned",
+            "semantic_authority" => true,
+            "completeness_gate" => false
+          }
         }
-      ]
+      ],
+      "rejected_candidates" => []
     }
   end
 end

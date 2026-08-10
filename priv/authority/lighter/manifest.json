@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "venue": "lighter",
   "official_docs_url": "https://apidocs.lighter.xyz/",
   "selection_reason": "Lighter publishes its REST semantics through the official API reference and the Apache-2.0 lighter-python repository's generated OpenAPI document. The OpenAPI pin owns request and response shapes; the official trading and API-key guides own signer, nonce and safety semantics.",
@@ -30,7 +30,34 @@
       "drift": {
         "mode": "sha256",
         "url": "https://raw.githubusercontent.com/elliottech/lighter-python/main/openapi.json"
+      },
+      "freshness": {
+        "status": "reviewed_current",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The mutable OpenAPI bytes matched the retained pin during the audit."
+      },
+      "expressiveness": {
+        "level": "typed_openapi",
+        "limitations": [
+          "The SDK OpenAPI covers REST and excludes WebSocket transaction flows."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "complete",
+          "limitations": [
+            "Completeness applies only to the SDK REST contract."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": true
       }
     }
-  ]
+  ],
+  "rejected_candidates": []
 }

@@ -12,11 +12,12 @@ These are **read-only authority references**. Never hand-patch an artifact: a
 local edit stops being the exchange's statement and voids its authority. Refresh
 provenance, pin, byte count, and hash together from upstream.
 
-Every selected artifact currently lacks a clear artifact-specific redistribution
-grant. The manifests therefore retain URL, upstream pin, retrieval date, byte
-count, and SHA-256 only. No upstream content is committed. The shared fetch
-script materializes pinned bytes into a caller-selected directory outside this
-tree and verifies them before use.
+Every artifact records independent machine-readable `freshness`,
+`expressiveness`, `scope`, and `authority` facts. Partial, stale, inconsistent,
+or untyped sources remain useful references but cannot declare themselves
+completeness gates. No upstream content is committed. The shared fetch script
+materializes pinned bytes into a caller-selected directory outside this tree and
+verifies them before use.
 
 Each venue's `errors.json` is a committed normalization of the official error
 enumeration: identifiers and concise meanings, without the upstream document's
@@ -42,19 +43,21 @@ cannot detect remote drift for reference-only artifacts. `--online` verifies eac
 pinned fetch and then compares the mutable upstream hash (or Bybit repository HEAD)
 to the recorded pin. Drift is a prompt to review the semantic diff before refreshing
 the pin, not permission to update the hash merely to make the check green.
+`initial_baseline` means the artifact entered the index at that pin; it is not a
+claim that prior remote bytes drifted.
 
 ## Selected sources
 
 | Venue | Currently pinned artifact | Contract role and limit |
 |---|---|---|
-| Alpaca | Selected official API documentation pages | Partial REST semantics; not a complete inventory |
-| Binance | Official Spot OpenAPI + error documentation | Typed Spot REST inventory at the pinned revision |
-| Binance COIN-M | Official developer-docs `llms-full.txt` | REST prose/inventory snapshot; no schema guarantee |
-| Binance USD-M | Official developer-docs `llms-full.txt` | REST prose/inventory snapshot; no schema guarantee |
-| Bybit | Official V5 documentation source archive | REST/WS prose and examples; no OpenAPI typing |
-| Deribit | Current official OpenAPI 3 + error documentation | Typed current REST inventory; upcoming REST and AsyncAPI are not yet pinned |
+| Alpaca | Official pages + repository trading/data OpenAPI | Repository schemas are provider-declared stale; pages are partial and remotely drifted |
+| Binance | Official Spot OpenAPI, docs, Postman + errors | Typed REST inventory plus untyped REST/WS references |
+| Binance COIN-M | Official developer docs + Postman | REST/WS prose and untyped request collection; no official futures OpenAPI published |
+| Binance USD-M | Official developer docs + Postman | REST/WS prose and untyped request collection; no official futures OpenAPI published |
+| Bybit | Official V5 docs source + Postman | REST/WS prose and untyped request collection |
+| Deribit | Current/upcoming OpenAPI, current/upcoming AsyncAPI, `llms.txt`, errors | Five separately scoped contract surfaces; current REST refresh has a committed semantic-diff report |
 | Derive | Official documentation `llms.txt` + error documentation | Page index and error semantics; not an OpenAPI schema |
-| Hyperliquid | Official documentation `llms-full.txt` | REST prose; SDK sub-specifications are not yet pinned |
+| Hyperliquid | Official documentation + Python SDK API fragments | Full prose plus partial typed `info` sub-specifications |
 | Lighter | Official-SDK OpenAPI 3 | Typed REST inventory at the pinned SDK revision |
 | OKX | Official API v5 documentation snapshot | REST/WS prose snapshot; no first-party OpenAPI |
 

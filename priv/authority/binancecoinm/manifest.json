@@ -1,8 +1,8 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "venue": "binancecoinm",
   "official_docs_url": "https://developers.binance.com/en/docs/products/derivatives-trading-coin-futures",
-  "selection_reason": "Rank 1: Binance does not publish COIN-M in its spot Swagger repository. Its official complete developer-docs snapshot is the broadest machine-readable first-party source and includes the COIN-M REST contract.",
+  "selection_reason": "Binance publishes COIN-M documentation and a Postman collection but no COIN-M OpenAPI in its official Swagger repository. Both accepted artifacts are untyped and cannot gate completeness.",
   "fetch_script": "scripts/fetch_authority.sh",
   "artifacts": [
     {
@@ -30,6 +30,92 @@
       "drift": {
         "mode": "sha256",
         "url": "https://developers.binance.com/en/docs/llms-full.txt"
+      },
+      "freshness": {
+        "status": "drift_detected",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The mutable documentation export differs from the retained pin; semantic review is required before refresh."
+      },
+      "expressiveness": {
+        "level": "prose_documentation",
+        "limitations": [
+          "The full-text export is untyped and spans Binance products beyond this venue."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "Relevant derivatives REST pages are a subset of the cross-product export."
+          ]
+        },
+        {
+          "surface": "current_websocket",
+          "coverage": "partial",
+          "limitations": [
+            "Relevant derivatives WebSocket pages are a subset of the cross-product export."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
+    },
+    {
+      "id": "coin-futures-postman",
+      "kind": "postman-collection",
+      "source_url": "https://github.com/binance/binance-api-postman/blob/da581021c528c044c08c6dc204ec9de406224337/collections/Binance Derivatives Trading COIN Futures API.json",
+      "fetch_url": "https://raw.githubusercontent.com/binance/binance-api-postman/da581021c528c044c08c6dc204ec9de406224337/collections/Binance%20Derivatives%20Trading%20COIN%20Futures%20API.json",
+      "filename": "binance-coin-futures.postman_collection.json",
+      "retrieved_at": "2026-08-10",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "da581021c528c044c08c6dc204ec9de406224337"
+      },
+      "sha256": "1bb70f0ff3d2bd748203c1732daec2c67cc0bce51c021155d58eee20f6944d91",
+      "bytes": 182255,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "permitted",
+        "license": "MIT",
+        "evidence_url": "https://github.com/binance/binance-api-postman/blob/da581021c528c044c08c6dc204ec9de406224337/LICENSE",
+        "handling": "reference_only",
+        "reason": "MIT permits redistribution; the collection remains reference-only."
+      },
+      "drift": {
+        "mode": "git_head",
+        "repository_url": "https://github.com/binance/binance-api-postman.git"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The collection entered the corpus as an implementation-time baseline."
+      },
+      "expressiveness": {
+        "level": "untyped_postman",
+        "limitations": [
+          "The collection demonstrates requests but does not provide typed response schemas."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The collection is an operational sample, not a completeness inventory."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
       }
     }
   ],
@@ -40,5 +126,13 @@
     "retrieved_at": "2026-07-25",
     "sha256": "721af37c59d27ddc66d7be48ee50a9557ecf6314dabcf7a804cdef72d223a91f",
     "bytes": 9519
-  }
+  },
+  "rejected_candidates": [
+    {
+      "id": "futures-openapi",
+      "source_url": "https://github.com/binance/binance-api-swagger",
+      "authority": "provider_owned",
+      "reason": "The audited official OpenAPI repository publishes spot_api.yaml only and no COIN-M or USD-M contract."
+    }
+  ]
 }

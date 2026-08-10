@@ -206,6 +206,9 @@ defmodule Bourse.LiveDriftTest do
     refute workflow =~ "push:"
     assert workflow =~ "if: always()"
     assert workflow =~ "artifacts/live-drift-report.json"
+    assert workflow =~ "mix ccxt.authority_check --online"
+    assert workflow =~ "artifacts/authority-drift-report.txt"
+    assert workflow =~ "GITHUB_STEP_SUMMARY"
     refute mix_project =~ ~s("ccxt.verify_live_drift")
   end
 

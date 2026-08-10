@@ -1,8 +1,8 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "venue": "deribit",
   "official_docs_url": "https://docs.deribit.com/",
-  "selection_reason": "Rank 1: Deribit's documentation directly publishes the OpenAPI 3 document used to render its API reference; it outranks prose pages and CCXT interpretations.",
+  "selection_reason": "Deribit directly publishes separate current and upcoming OpenAPI and AsyncAPI contracts plus a documentation index. Each version and transport remains a distinct scope, and the error page is a partial semantic source.",
   "fetch_script": "scripts/fetch_authority.sh",
   "artifacts": [
     {
@@ -11,13 +11,13 @@
       "source_url": "https://docs.deribit.com/specifications/deribit_openapi.json",
       "fetch_url": "https://docs.deribit.com/specifications/deribit_openapi.json",
       "filename": "deribit_openapi.json",
-      "retrieved_at": "2026-07-22",
+      "retrieved_at": "2026-08-10",
       "upstream_pin": {
         "type": "document_version_http_etag",
-        "value": "2.1.1; W/\"690e3806053a9d2edbf9d7c52d675f5a\""
+        "value": "2.1.1; W/\"b96f2b26a14b31dbc4cf064c3d63b14a\""
       },
-      "sha256": "70ba4617642d18aaff2bbcb7127bec499c4ef3ba34b6f5b12cb9cbdadbcffd2d",
-      "bytes": 1369497,
+      "sha256": "430b3f0bc67cc574a05e695d22d1acbbb5348c96858368bba9931c2f05350515",
+      "bytes": 1385649,
       "storage": "reference_only",
       "path": null,
       "license": {
@@ -30,6 +30,32 @@
       "drift": {
         "mode": "sha256",
         "url": "https://docs.deribit.com/specifications/deribit_openapi.json"
+      },
+      "freshness": {
+        "status": "reviewed_current",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The moved artifact was reviewed against the prior pin and the provider release notes before refresh."
+      },
+      "expressiveness": {
+        "level": "typed_openapi",
+        "limitations": [
+          "The document models JSON-RPC over HTTP and does not define WebSocket subscription channels."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "complete",
+          "limitations": [
+            "Completeness applies to the provider's current HTTP operation inventory."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": true
       }
     },
     {
@@ -57,6 +83,244 @@
       "drift": {
         "mode": "sha256",
         "url": "https://docs.deribit.com/articles/errors"
+      },
+      "freshness": {
+        "status": "drift_detected",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The mutable error page differs from the retained pin; semantic review is required before refresh."
+      },
+      "expressiveness": {
+        "level": "prose_documentation",
+        "limitations": [
+          "The source is not a typed operation inventory."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The artifact enumerates errors and does not inventory operations."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
+    },
+    {
+      "id": "upcoming-openapi",
+      "kind": "openapi-json",
+      "source_url": "https://docs.deribit.com/specifications/deribit_upcoming_openapi.json",
+      "fetch_url": "https://docs.deribit.com/specifications/deribit_upcoming_openapi.json",
+      "filename": "deribit_upcoming_openapi.json",
+      "retrieved_at": "2026-08-10",
+      "upstream_pin": {
+        "type": "document_version_http_etag",
+        "value": "2.1.1; W/\"5e8b26e0df446ae0b6b213d91184f49b\""
+      },
+      "sha256": "b3010bcb1e2b95d64e5b83b0c633b9fd61faedf664a9ed026015e1089a982d0f",
+      "bytes": 1420823,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific license published",
+        "evidence_url": "https://www.deribit.com/pages/information/terms-of-service",
+        "handling": "reference_only",
+        "reason": "The OpenAPI response names no redistribution license; it remains a hash-pinned external reference."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.deribit.com/specifications/deribit_upcoming_openapi.json"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "This distinct provider surface entered the corpus as an implementation-time baseline."
+      },
+      "expressiveness": {
+        "level": "typed_openapi",
+        "limitations": [
+          "Upcoming operations are forward-looking and never enter the current-runtime denominator."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "upcoming_rest",
+          "coverage": "complete",
+          "limitations": [
+            "Upcoming operations are forward-looking and never enter the current-runtime denominator."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": true
+      }
+    },
+    {
+      "id": "current-asyncapi",
+      "kind": "asyncapi-json",
+      "source_url": "https://docs.deribit.com/specifications/deribit_asyncapi.json",
+      "fetch_url": "https://docs.deribit.com/specifications/deribit_asyncapi.json",
+      "filename": "deribit_asyncapi.json",
+      "retrieved_at": "2026-08-10",
+      "upstream_pin": {
+        "type": "document_version_http_etag",
+        "value": "1.0.0; W/\"06f469af56a14772c8def9090ee88aa2\""
+      },
+      "sha256": "03a857e43690a171b6416bff8b910ee00b93f44dc978d2ffdef0710af5d73cb2",
+      "bytes": 562969,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific license published",
+        "evidence_url": "https://www.deribit.com/pages/information/terms-of-service",
+        "handling": "reference_only",
+        "reason": "The OpenAPI response names no redistribution license; it remains a hash-pinned external reference."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.deribit.com/specifications/deribit_asyncapi.json"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "This distinct provider surface entered the corpus as an implementation-time baseline."
+      },
+      "expressiveness": {
+        "level": "typed_asyncapi",
+        "limitations": [
+          "The document covers subscription channels and excludes HTTP-only operations."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_websocket",
+          "coverage": "complete",
+          "limitations": [
+            "The document covers subscription channels and excludes HTTP-only operations."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": true
+      }
+    },
+    {
+      "id": "upcoming-asyncapi",
+      "kind": "asyncapi-json",
+      "source_url": "https://docs.deribit.com/specifications/deribit_upcoming_asyncapi.json",
+      "fetch_url": "https://docs.deribit.com/specifications/deribit_upcoming_asyncapi.json",
+      "filename": "deribit_upcoming_asyncapi.json",
+      "retrieved_at": "2026-08-10",
+      "upstream_pin": {
+        "type": "document_version_http_etag",
+        "value": "1.0.0; W/\"2863755d34671127f41d92e5de11f775\""
+      },
+      "sha256": "5a83c3a4d36840e1e77bcb63290447ae287754a04969e588eb96ded953c70a96",
+      "bytes": 603858,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific license published",
+        "evidence_url": "https://www.deribit.com/pages/information/terms-of-service",
+        "handling": "reference_only",
+        "reason": "The OpenAPI response names no redistribution license; it remains a hash-pinned external reference."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.deribit.com/specifications/deribit_upcoming_asyncapi.json"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "This distinct provider surface entered the corpus as an implementation-time baseline."
+      },
+      "expressiveness": {
+        "level": "typed_asyncapi",
+        "limitations": [
+          "Upcoming channels are forward-looking and never enter the current-runtime denominator."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "upcoming_websocket",
+          "coverage": "complete",
+          "limitations": [
+            "Upcoming channels are forward-looking and never enter the current-runtime denominator."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": true
+      }
+    },
+    {
+      "id": "docs-index",
+      "kind": "llms-text",
+      "source_url": "https://docs.deribit.com/llms.txt",
+      "fetch_url": "https://docs.deribit.com/llms.txt",
+      "filename": "deribit-llms.txt",
+      "retrieved_at": "2026-08-10",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-08-10"
+      },
+      "sha256": "a85f66ea9357a9eb5b63158509252e81d9d4e92368ab123df20809bec5af6d94",
+      "bytes": 84862,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific license published",
+        "evidence_url": "https://www.deribit.com/pages/information/terms-of-service",
+        "handling": "reference_only",
+        "reason": "The OpenAPI response names no redistribution license; it remains a hash-pinned external reference."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.deribit.com/llms.txt"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "This distinct provider surface entered the corpus as an implementation-time baseline."
+      },
+      "expressiveness": {
+        "level": "documentation_index",
+        "limitations": [
+          "The index discovers provider pages and specifications but defines no operation schema."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "documentation_index",
+          "coverage": "index_only",
+          "limitations": [
+            "The index discovers provider pages and specifications but defines no operation schema."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
       }
     }
   ],
@@ -67,5 +331,25 @@
     "retrieved_at": "2026-07-22",
     "sha256": "bab9d4a2c0c0e0407523395b3c0d9f5e575261acd088dbdec8917eb1dd4364df",
     "bytes": 19564
-  }
+  },
+  "rejected_candidates": [
+    {
+      "id": "stale-upcoming-asyncapi-alternative",
+      "source_url": "https://docs.deribit.com/specifications/deribit_asyncapi_upcoming.json",
+      "authority": "provider_owned",
+      "reason": "The provider index also exposes this stale alternative: it has 39 channels versus current's 40 and the canonical upcoming document's 43."
+    },
+    {
+      "id": "mintlify-openapi-facade",
+      "source_url": "https://docs.deribit.com/api-reference/openapi.json",
+      "authority": "provider_owned",
+      "reason": "This 5 KB Mintlify navigation facade is not the Deribit operation contract."
+    },
+    {
+      "id": "starbase-rest-openapi",
+      "source_url": "https://docs.deribit.com/specifications/starbase_rest_openapi.json",
+      "authority": "provider_owned",
+      "reason": "Starbase direct-access order entry is a separate API and outside Bourse's Deribit JSON-RPC surface."
+    }
+  ]
 }

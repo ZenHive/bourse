@@ -277,6 +277,10 @@ defmodule Bourse.MixProject do
         # Binary reality gate over recordings, accepted requests, and recorded
         # errors. The committed exact-set baseline rejects lost provenance.
         "cmd env MIX_ENV=test mix ccxt.oracle_gate",
+        # Cheap, network-free provider-authority structure/hash and exact-error
+        # consistency checks. Remote freshness belongs to the weekly drift lane.
+        "ccxt.authority_check",
+        "ccxt.error_authority",
         "ccxt.check_lighter_signer",
         # CLAUDE.md's mechanical claims (modules, mix tasks, repo paths, the
         # signing pattern list, Application children) vs the tree, plus AGENTS.md

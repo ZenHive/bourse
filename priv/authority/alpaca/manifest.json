@@ -1,8 +1,8 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "venue": "alpaca",
   "official_docs_url": "https://docs.alpaca.markets/",
-  "selection_reason": "Alpaca publishes its Trading and Market Data API contracts as official rendered documentation. The endpoint references are pinned by retrieval date and content digest; redistribution terms are unclear, so the bytes remain reference-only.",
+  "selection_reason": "Alpaca's rendered Trading and Market Data pages are the current provider references. Its repository OpenAPI files remain useful typed history but are explicitly marked outdated by Alpaca and cannot gate current completeness.",
   "fetch_script": "scripts/fetch_authority.sh",
   "error_enumeration": {
     "path": "errors.json",
@@ -38,6 +38,32 @@
       "drift": {
         "mode": "sha256",
         "url": "https://docs.alpaca.markets/us/reference/postorder"
+      },
+      "freshness": {
+        "status": "drift_detected",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The mutable page differs from the retained pin; semantic review is required before refresh."
+      },
+      "expressiveness": {
+        "level": "prose_documentation",
+        "limitations": [
+          "The source is not a typed operation inventory."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The page covers one REST endpoint family."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
       }
     },
     {
@@ -65,6 +91,32 @@
       "drift": {
         "mode": "sha256",
         "url": "https://docs.alpaca.markets/us/v1.1/reference/stockbarsingle-1"
+      },
+      "freshness": {
+        "status": "drift_detected",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The mutable page differs from the retained pin; semantic review is required before refresh."
+      },
+      "expressiveness": {
+        "level": "prose_documentation",
+        "limitations": [
+          "The source is not a typed operation inventory."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The page covers one REST endpoint family."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
       }
     },
     {
@@ -92,6 +144,32 @@
       "drift": {
         "mode": "sha256",
         "url": "https://docs.alpaca.markets/us/reference/cryptosnapshots-1"
+      },
+      "freshness": {
+        "status": "drift_detected",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The mutable page differs from the retained pin; semantic review is required before refresh."
+      },
+      "expressiveness": {
+        "level": "prose_documentation",
+        "limitations": [
+          "The source is not a typed operation inventory."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The page covers one REST endpoint family."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
       }
     },
     {
@@ -119,7 +197,153 @@
       "drift": {
         "mode": "sha256",
         "url": "https://docs.alpaca.markets/us/reference/cryptobars-1"
+      },
+      "freshness": {
+        "status": "drift_detected",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The mutable page differs from the retained pin; semantic review is required before refresh."
+      },
+      "expressiveness": {
+        "level": "prose_documentation",
+        "limitations": [
+          "The source is not a typed operation inventory."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The page covers one REST endpoint family."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
       }
+    },
+    {
+      "id": "trading-openapi-repository",
+      "kind": "openapi-yaml",
+      "source_url": "https://github.com/alpacahq/alpaca-docs/blob/2080c5e0efbbd812c48eef9209a7a9962de67d2a/oas/trading/openapi.yaml",
+      "fetch_url": "https://raw.githubusercontent.com/alpacahq/alpaca-docs/2080c5e0efbbd812c48eef9209a7a9962de67d2a/oas/trading/openapi.yaml",
+      "filename": "alpaca-trading-openapi.yaml",
+      "retrieved_at": "2026-08-10",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "2080c5e0efbbd812c48eef9209a7a9962de67d2a"
+      },
+      "sha256": "1434bbc7512e892481a76ddbf264bf46ef829d0e9124e5ff2a29f4647ad4e28c",
+      "bytes": 70937,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No repository-level license declared",
+        "evidence_url": "https://github.com/alpacahq/alpaca-docs",
+        "handling": "reference_only",
+        "reason": "The official repository exposes no SPDX license; the files remain external references."
+      },
+      "drift": {
+        "mode": "git_head",
+        "repository_url": "https://github.com/alpacahq/alpaca-docs.git"
+      },
+      "freshness": {
+        "status": "known_stale",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The provider repository README explicitly labels these OpenAPI files outdated."
+      },
+      "expressiveness": {
+        "level": "typed_openapi",
+        "limitations": [
+          "The provider marks the repository OAS outdated; it cannot establish current completeness."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The file covers trading REST at a historical provider revision."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
+    },
+    {
+      "id": "market-data-openapi-repository",
+      "kind": "openapi-yaml",
+      "source_url": "https://github.com/alpacahq/alpaca-docs/blob/2080c5e0efbbd812c48eef9209a7a9962de67d2a/oas/data/openapi.yaml",
+      "fetch_url": "https://raw.githubusercontent.com/alpacahq/alpaca-docs/2080c5e0efbbd812c48eef9209a7a9962de67d2a/oas/data/openapi.yaml",
+      "filename": "alpaca-market-data-openapi.yaml",
+      "retrieved_at": "2026-08-10",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "2080c5e0efbbd812c48eef9209a7a9962de67d2a"
+      },
+      "sha256": "b94f6775b0d595f3284d64141738592d96b4768f382b9307ba0a59e569c54e75",
+      "bytes": 99631,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No repository-level license declared",
+        "evidence_url": "https://github.com/alpacahq/alpaca-docs",
+        "handling": "reference_only",
+        "reason": "The official repository exposes no SPDX license; the files remain external references."
+      },
+      "drift": {
+        "mode": "git_head",
+        "repository_url": "https://github.com/alpacahq/alpaca-docs.git"
+      },
+      "freshness": {
+        "status": "known_stale",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The provider repository README explicitly labels these OpenAPI files outdated."
+      },
+      "expressiveness": {
+        "level": "typed_openapi",
+        "limitations": [
+          "The provider marks the repository OAS outdated; it cannot establish current completeness."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The file covers market-data REST at a historical provider revision."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
+    }
+  ],
+  "rejected_candidates": [
+    {
+      "id": "broker-openapi",
+      "source_url": "https://github.com/alpacahq/alpaca-docs/blob/2080c5e0efbbd812c48eef9209a7a9962de67d2a/oas/broker/openapi.yaml",
+      "authority": "provider_owned",
+      "reason": "Broker account administration is outside Bourse's exchange-client surface."
+    },
+    {
+      "id": "oauth-openapi",
+      "source_url": "https://github.com/alpacahq/alpaca-docs/blob/2080c5e0efbbd812c48eef9209a7a9962de67d2a/oas/oauth/openapi.yaml",
+      "authority": "provider_owned",
+      "reason": "OAuth application administration is outside Bourse's API-key exchange-client surface."
     }
   ]
 }

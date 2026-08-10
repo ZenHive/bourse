@@ -1,10 +1,11 @@
 name: Live provider drift
 
-# The scheduled ten-venue drift lane runs from the always-on operator host
-# (workbench task 527), where all ten venues are reachable — no unreachable
-# allowlist. This GitHub-hosted job is a manual-only fallback; its allowlist
-# below reflects GitHub-runner egress reality, not the canonical lane.
+# The always-on operator host also runs this lane with unrestricted provider
+# reachability. The GitHub-hosted schedule retains its egress allowlist for
+# live requests while still checking every mutable contract artifact.
 on:
+  schedule:
+    - cron: "17 4 * * 1"
   workflow_dispatch:
 
 permissions:
@@ -31,7 +32,13 @@ jobs:
           cache-dependency-path: native/lighter_signer/go.sum
       - run: mix deps.get
       - run: mix ccxt.build_lighter_signer --target linux-amd64
+      - name: Verify mutable provider contract artifacts
+        run: |
+          mkdir -p artifacts
+          set -o pipefail
+          mix ccxt.authority_check --online 2>&1 | tee artifacts/authority-drift-report.txt
       - name: Verify live provider contracts
+        if: always()
         run: mix ccxt.verify_live_drift --report artifacts/live-drift-report.json
         env:
           # GitHub-hosted runners egress from US IPs; the binance-family demo
@@ -60,10 +67,15 @@ jobs:
           OKX_INTL_PASSPHRASE: ${{ secrets.OKX_INTL_PASSPHRASE }}
       - name: Publish durable run identity
         if: always()
-        run: echo "Live drift run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "${GITHUB_STEP_SUMMARY}"
+        run: |
+          echo "Live drift run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Contract artifact evidence: authority-drift-report.txt" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Runtime evidence: live-drift-report.json" >> "${GITHUB_STEP_SUMMARY}"
       - name: Upload scrubbed drift report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: live-drift-${{ github.run_id }}
-          path: artifacts/live-drift-report.json
+          path: |
+            artifacts/live-drift-report.json
+            artifacts/authority-drift-report.txt

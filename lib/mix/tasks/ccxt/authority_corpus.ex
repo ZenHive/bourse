@@ -6,8 +6,17 @@ defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
   @runtime_manifest Bourse.Spec.manifest_path()
   @external_resource @runtime_manifest
   @venues Bourse.Spec.exchanges()
-  @required_artifact_fields ~w(id kind source_url fetch_url filename retrieved_at upstream_pin sha256 bytes storage license drift)
+  @required_artifact_fields ~w(id kind source_url fetch_url filename retrieved_at upstream_pin sha256 bytes storage license drift freshness expressiveness scope authority)
   @required_license_fields ~w(status license evidence_url handling reason)
+  @required_freshness_fields ~w(status checked_at mutable notes)
+  @required_expressiveness_fields ~w(level limitations)
+  @required_scope_fields ~w(surface coverage limitations)
+  @required_authority_fields ~w(classification semantic_authority completeness_gate)
+  @required_rejected_candidate_fields ~w(id source_url authority reason)
+  @freshness_statuses ~w(reviewed_current initial_baseline pinned_snapshot known_stale drift_detected)
+  @expressiveness_levels ~w(typed_openapi typed_asyncapi untyped_postman documentation_index prose_documentation source_archive)
+  @contract_surfaces ~w(current_rest upcoming_rest current_websocket upcoming_websocket documentation_index)
+  @scope_coverages ~w(complete partial index_only)
   @sha256_pattern ~r/\A[0-9a-f]{64}\z/
   @date_pattern ~r/\A\d{4}-\d{2}-\d{2}\z/
 
@@ -63,17 +72,20 @@ defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
     path = Path.join([root, venue, "manifest.json"])
     document = Bourse.JsonDocument.decode_file!(path)
 
-    ensure!(document["schema_version"] == 1, "#{path}: unsupported schema_version")
+    ensure!(document["schema_version"] == 2, "#{path}: unsupported schema_version")
     ensure!(document["venue"] == venue, "#{path}: venue does not match directory")
     ensure_string!(document, "official_docs_url", path)
     ensure_string!(document, "selection_reason", path)
     ensure!(document["fetch_script"] == "scripts/fetch_authority.sh", "#{path}: fetch_script is not canonical")
     ensure_artifacts!(document["artifacts"], root, venue, path)
+    ensure_rejected_candidates!(document["rejected_candidates"], path)
     document
   end
 
   defp ensure_artifacts!(artifacts, root, venue, manifest_path) do
     ensure!(is_list(artifacts) and artifacts != [], "#{manifest_path}: artifacts must be a non-empty list")
+    ids = Enum.map(artifacts, & &1["id"])
+    ensure!(length(ids) == length(Enum.uniq(ids)), "#{manifest_path}: artifact ids must be unique")
 
     Enum.each(artifacts, fn artifact ->
       ensure_artifact!(artifact, root, venue, manifest_path)
@@ -94,7 +106,92 @@ defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
     ensure_pin!(artifact["upstream_pin"], label)
     ensure_license!(artifact["license"], artifact["storage"], label)
     ensure_drift!(artifact["drift"], label)
+    ensure_freshness!(artifact["freshness"], label)
+    ensure_expressiveness!(artifact["expressiveness"], label)
+    ensure_scope!(artifact["scope"], label)
+    ensure_authority!(artifact["authority"], artifact, label)
     ensure_storage!(artifact, root, venue, label)
+  end
+
+  defp ensure_freshness!(freshness, label) do
+    ensure!(is_map(freshness), "#{label}: freshness must be an object")
+    ensure_keys!(freshness, @required_freshness_fields, label)
+    ensure_member!(freshness["status"], @freshness_statuses, "freshness status", label)
+    ensure!(valid_format?(freshness["checked_at"], @date_pattern), "#{label}: invalid freshness check date")
+    ensure!(is_boolean(freshness["mutable"]), "#{label}: freshness mutable must be boolean")
+    ensure_string!(freshness, "notes", label)
+  end
+
+  defp ensure_expressiveness!(expressiveness, label) do
+    ensure!(is_map(expressiveness), "#{label}: expressiveness must be an object")
+    ensure_keys!(expressiveness, @required_expressiveness_fields, label)
+    ensure_member!(expressiveness["level"], @expressiveness_levels, "expressiveness level", label)
+    ensure_non_empty_strings!(expressiveness["limitations"], "expressiveness limitations", label)
+  end
+
+  defp ensure_scope!(scopes, label) do
+    ensure!(is_list(scopes) and scopes != [], "#{label}: scope must be a non-empty list")
+
+    Enum.each(scopes, fn scope ->
+      ensure!(is_map(scope), "#{label}: scope entries must be objects")
+      ensure_keys!(scope, @required_scope_fields, label)
+      ensure_member!(scope["surface"], @contract_surfaces, "contract surface", label)
+      ensure_member!(scope["coverage"], @scope_coverages, "scope coverage", label)
+      ensure_non_empty_strings!(scope["limitations"], "scope limitations", label)
+    end)
+
+    surfaces = Enum.map(scopes, & &1["surface"])
+    ensure!(length(surfaces) == length(Enum.uniq(surfaces)), "#{label}: contract surfaces must be unique")
+    ensure_separate_versions!(surfaces, "current_rest", "upcoming_rest", label)
+    ensure_separate_versions!(surfaces, "current_websocket", "upcoming_websocket", label)
+  end
+
+  defp ensure_authority!(authority, artifact, label) do
+    ensure!(is_map(authority), "#{label}: authority must be an object")
+    ensure_keys!(authority, @required_authority_fields, label)
+    ensure!(authority["classification"] == "provider_owned", "#{label}: relied-on artifacts must be provider-owned")
+    ensure!(is_boolean(authority["semantic_authority"]), "#{label}: semantic_authority must be boolean")
+    ensure!(is_boolean(authority["completeness_gate"]), "#{label}: completeness_gate must be boolean")
+
+    if authority["completeness_gate"] do
+      ensure_completeness_source!(artifact, label)
+    end
+  end
+
+  defp ensure_completeness_source!(artifact, label) do
+    typed = artifact["expressiveness"]["level"] in ~w(typed_openapi typed_asyncapi)
+    complete = Enum.all?(artifact["scope"], &(&1["coverage"] == "complete"))
+    current = artifact["freshness"]["status"] in ~w(reviewed_current initial_baseline)
+
+    ensure!(typed and complete and current, "#{label}: partial, stale, or untyped artifact cannot be a completeness gate")
+  end
+
+  defp ensure_rejected_candidates!(candidates, manifest_path) do
+    ensure!(is_list(candidates), "#{manifest_path}: rejected_candidates must be a list")
+
+    Enum.each(candidates, fn candidate ->
+      label = "#{manifest_path}:rejected:#{candidate["id"] || "unknown"}"
+      ensure!(is_map(candidate), "#{label}: candidate must be an object")
+      ensure_keys!(candidate, @required_rejected_candidate_fields, label)
+      Enum.each(@required_rejected_candidate_fields, &ensure_string!(candidate, &1, label))
+      ensure_member!(candidate["authority"], ~w(provider_owned third_party), "candidate authority", label)
+    end)
+  end
+
+  defp ensure_separate_versions!(surfaces, current, upcoming, label) do
+    ensure!(
+      not (current in surfaces and upcoming in surfaces),
+      "#{label}: current and upcoming surfaces require separate artifacts"
+    )
+  end
+
+  defp ensure_non_empty_strings!(values, field, label) do
+    valid? = is_list(values) and values != [] and Enum.all?(values, &(is_binary(&1) and &1 != ""))
+    ensure!(valid?, "#{label}: #{field} must be a non-empty string list")
+  end
+
+  defp ensure_member!(value, allowed, field, label) do
+    ensure!(value in allowed, "#{label}: unsupported #{field} #{inspect(value)}")
   end
 
   defp ensure_keys!(map, keys, label) do

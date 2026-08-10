@@ -1,8 +1,8 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "venue": "binance",
   "official_docs_url": "https://developers.binance.com/en/docs/products/spot",
-  "selection_reason": "Rank 1: Binance's own OpenAPI is machine-readable and covers the spot REST contract. The repository explicitly excludes futures and options, so Binance USD-M has a separate authority manifest.",
+  "selection_reason": "Binance's OpenAPI defines the typed Spot REST inventory; the official docs repository supplies REST and WebSocket semantics, and the Postman collection is an untyped request reference. Derivatives use separate manifests.",
   "fetch_script": "scripts/fetch_authority.sh",
   "artifacts": [
     {
@@ -30,6 +30,32 @@
       "drift": {
         "mode": "sha256",
         "url": "https://raw.githubusercontent.com/binance/binance-api-swagger/master/spot_api.yaml"
+      },
+      "freshness": {
+        "status": "reviewed_current",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The pinned revision matched the provider repository during the audit."
+      },
+      "expressiveness": {
+        "level": "typed_openapi",
+        "limitations": [
+          "The document covers Spot REST and excludes WebSocket, FIX, SBE, and derivatives."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "complete",
+          "limitations": [
+            "Completeness applies only to the Spot REST surface represented by this document."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": true
       }
     },
     {
@@ -57,6 +83,152 @@
       "drift": {
         "mode": "git_head",
         "repository_url": "https://github.com/binance/binance-spot-api-docs.git"
+      },
+      "freshness": {
+        "status": "drift_detected",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The official documentation repository HEAD moved beyond the retained error-enumeration pin."
+      },
+      "expressiveness": {
+        "level": "prose_documentation",
+        "limitations": [
+          "The source is not a typed operation inventory."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The artifact enumerates errors and does not inventory operations."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
+    },
+    {
+      "id": "spot-docs-source",
+      "kind": "official-docs-source-archive",
+      "source_url": "https://github.com/binance/binance-spot-api-docs/tree/b483413fcdf4da783cd3fcaad6fab7200a93297f",
+      "fetch_url": "https://codeload.github.com/binance/binance-spot-api-docs/tar.gz/b483413fcdf4da783cd3fcaad6fab7200a93297f",
+      "filename": "binance-spot-api-docs-b483413.tar.gz",
+      "retrieved_at": "2026-08-10",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "b483413fcdf4da783cd3fcaad6fab7200a93297f"
+      },
+      "sha256": "55d5612cd8f45b08c133433cfea7a9b39fc21daa12260946a88d3bcecb8b6a64",
+      "bytes": 667770,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No repository-level license declared",
+        "evidence_url": "https://github.com/binance/binance-spot-api-docs",
+        "handling": "reference_only",
+        "reason": "The official docs repository exposes no SPDX license; the archive remains reference-only."
+      },
+      "drift": {
+        "mode": "git_head",
+        "repository_url": "https://github.com/binance/binance-spot-api-docs.git"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "This repository archive entered the corpus as an implementation-time baseline."
+      },
+      "expressiveness": {
+        "level": "source_archive",
+        "limitations": [
+          "The repository mixes prose and schemas across REST, WebSocket, FIX, and SBE."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "complete",
+          "limitations": [
+            "Coverage is documentary; the separate OpenAPI artifact supplies REST typing."
+          ]
+        },
+        {
+          "surface": "current_websocket",
+          "coverage": "complete",
+          "limitations": [
+            "Coverage includes WebSocket API and stream documentation."
+          ]
+        },
+        {
+          "surface": "documentation_index",
+          "coverage": "complete",
+          "limitations": [
+            "The repository README indexes the supported Spot interfaces."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
+    },
+    {
+      "id": "spot-postman",
+      "kind": "postman-collection",
+      "source_url": "https://github.com/binance/binance-api-postman/blob/da581021c528c044c08c6dc204ec9de406224337/collections/Binance Spot API.json",
+      "fetch_url": "https://raw.githubusercontent.com/binance/binance-api-postman/da581021c528c044c08c6dc204ec9de406224337/collections/Binance%20Spot%20API.json",
+      "filename": "binance-spot.postman_collection.json",
+      "retrieved_at": "2026-08-10",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "da581021c528c044c08c6dc204ec9de406224337"
+      },
+      "sha256": "e6fe3bbc932e852d329fe9b6e4667222d4b68013be69a902ecc88bd998f29cc3",
+      "bytes": 238150,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "permitted",
+        "license": "MIT",
+        "evidence_url": "https://github.com/binance/binance-api-postman/blob/da581021c528c044c08c6dc204ec9de406224337/LICENSE",
+        "handling": "reference_only",
+        "reason": "MIT permits redistribution; the collection remains reference-only."
+      },
+      "drift": {
+        "mode": "git_head",
+        "repository_url": "https://github.com/binance/binance-api-postman.git"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "The collection entered the corpus as an implementation-time baseline."
+      },
+      "expressiveness": {
+        "level": "untyped_postman",
+        "limitations": [
+          "The collection demonstrates requests but does not provide typed response schemas."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The collection is an operational sample, not a completeness inventory."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
       }
     }
   ],
@@ -67,5 +239,6 @@
     "retrieved_at": "2026-07-22",
     "sha256": "f213e2172c87a9b479ce80fde8209e8b15381a862da2b9eb7a780cabdc9ed63c",
     "bytes": 9125
-  }
+  },
+  "rejected_candidates": []
 }

@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "report_type": "provider_contract_semantic_diff",
+  "venue": "deribit",
+  "artifact_id": "api-openapi",
+  "reviewed_at": "2026-08-10",
+  "prior": {
+    "retrieved_at": "2026-07-22",
+    "sha256": "70ba4617642d18aaff2bbcb7127bec499c4ef3ba34b6f5b12cb9cbdadbcffd2d",
+    "bytes": 1369497,
+    "openapi_version": "2.1.1",
+    "operation_count": 178,
+    "operation_count_evidence": "2026-08-04 provider-source audit recorded in docs/authored-specs.md"
+  },
+  "current": {
+    "retrieved_at": "2026-08-10",
+    "sha256": "430b3f0bc67cc574a05e695d22d1acbbb5348c96858368bba9931c2f05350515",
+    "bytes": 1385649,
+    "openapi_version": "2.1.1",
+    "operation_count": 178,
+    "schema_count": 411
+  },
+  "operation_delta": {
+    "count": 0,
+    "current_runtime_denominator_change": "not_detected",
+    "authored_relation_counts": {
+      "authored": 123,
+      "overlap": 116,
+      "provider_only": 62,
+      "authored_only": 7,
+      "change_from_2026_08_04_measurement": 0
+    },
+    "path_set_comparison": "unavailable_without_prior_reference_only_bytes"
+  },
+  "structural_deltas": [
+    {
+      "schema": "instrument",
+      "added_properties": [
+        "index_id",
+        "product_group"
+      ],
+      "current_example_occurrences": {
+        "index_id": 3,
+        "product_group": 3
+      },
+      "semantic_source": "https://support.deribit.com/hc/en-us/articles/38092498934045-11-August-2026",
+      "meaning": "The fields identify the instrument price index and Starbase product-group routing."
+    },
+    {
+      "schema": "order_and_trade_objects",
+      "provider_announced_but_absent_from_current_openapi": [
+        "starbase_client_order_id"
+      ],
+      "semantic_source": "https://support.deribit.com/hc/en-us/articles/38092498934045-11-August-2026",
+      "meaning": "The provider release note announces the field, but the moved current OpenAPI does not yet model it; the artifact is not internally complete for every announced response field."
+    }
+  ],
+  "review_limit": "The old bytes were reference-only and were not retained, so the prior full schema tree cannot be replayed. The dated prior operation count and the post-snapshot provider release note establish the denominator and semantic field delta without treating a third-party copy as authority.",
+  "decision": "refresh_pin",
+  "decision_reason": "The operation count, authored relation counts, and API version are unchanged, the reviewed change is additive response metadata, and the provider inconsistency is recorded as an expressiveness limit rather than promoted to a completeness claim."
+}
