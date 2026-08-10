@@ -16,6 +16,8 @@ Every artifact records independent machine-readable `freshness`,
 `expressiveness`, `scope`, and `authority` facts. Partial, stale, inconsistent,
 or untyped sources remain useful references but cannot declare themselves
 completeness gates. No upstream content is committed. The shared fetch script
+(`scripts/fetch_authority.sh` in the `bourse_workbench` authoring repo — the
+manifests' `fetch_script` value names it; this repo carries no copy)
 materializes pinned bytes into a caller-selected directory outside this tree and
 verifies them before use.
 

@@ -135,7 +135,10 @@ artifact `rest-openapi`).
 
 - *Exchange semantics:* the pinned provider OpenAPI marks `market_id` optional on both
   `accountActiveOrders` and `accountInactiveOrders`; the active-orders endpoint explicitly says
-  omission returns orders for all markets. Both endpoints still require `account_index`.
+  omission returns orders for all markets. The inactive-orders endpoint documents no omission
+  semantics — provider acceptance is verified, but cross-market coverage of the symbol-less
+  closed-orders read is unverified (the testnet account had no closed orders in two markets to
+  distinguish "all markets" from a narrower default). Both endpoints still require `account_index`.
 - *Our carve:* the two authored request bindings mark `market_id` as optional dynamic
   construction. Symbol-less unified reads omit it, while symbol-scoped reads resolve and send the
   selected market's numeric id. Account identification remains unchanged.

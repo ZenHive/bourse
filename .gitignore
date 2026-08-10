@@ -47,3 +47,6 @@ bourse-*.tar
 /priv/specs/json/ccxt_version.json
 /priv/specs/json/discoveries/
 /priv/specs/json/fixtures/
+
+# harness dispatch runtime scaffolding — excluded from delivery commits by contract
+.harness/

@@ -716,7 +716,7 @@ Artifact **freshness**, **expressiveness** and **scope** are separate axes. A ma
 
 For cross-family reviewers (codex / cursor / grok) and any dispatch run.
 
-- **`mix check.dispatch`** — the dispatch-scale gate: `precommit`, `ccxt.oracle_gate`, `ccxt.check_lighter_signer`, `ccxt.claude_check`, `ccxt.agents_md --check`, the domain-boundary guard, `ex_dna --max-clones 0`, `reach.check --arch --smells --strict`. No dialyzer (a cold worktree cold-builds the PLT for minutes).
+- **`mix check.dispatch`** — the dispatch-scale gate: `precommit`, `ccxt.oracle_gate`, `ccxt.check_lighter_signer`, `ccxt.claude_check`, `ccxt.agents_md --check`, `ccxt.authority_check` (offline), `ccxt.error_authority`, the domain-boundary guard, `ex_dna --max-clones 0`, `reach.check --arch --smells --strict`. No dialyzer (a cold worktree cold-builds the PLT for minutes).
 - **`mix precommit`** — lean local commit gate (format / compile --warnings-as-errors / credo --strict / doctor --raise / sobelow --skip / offline `test.json`).
 - **`mix precommit.full`** — adds `deps.audit` + dialyzer (local pre-PR).
 - **`mix ci`** — `check.dispatch` + `deps.audit` + dialyzer.
