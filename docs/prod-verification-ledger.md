@@ -37,6 +37,27 @@ request or populated-body evidence. The residual slots need account state, permi
 instrument families, or provider error conditions unavailable through the provisioned hosts and
 the far-from-market/cancel-in-session mutation discipline.
 
+- [oracle-critical-slot-waiver-review 2026-08-10]
+
+The review marker periodically re-acknowledges the complete open waiver set. It is valid through
+day 30; on day 31, or when a waiver is filed after the latest review, `mix ccxt.oracle_gate` names
+the affected slot and blocks until an operator rechecks every listed blocker, removes any waiver
+that can now be closed, and appends a new review marker. Markers are append-only so renewal
+history remains in this ledger. Re-acknowledgment confirms only that the blocker still exists; it
+does not turn a waiver into reality evidence.
+
+This uses the same 30-day boundary as task 579's prose-drift acknowledgment: both remain valid
+through day 30 and fail on day 31. Prose drift keeps a per-artifact `freshness.checked_at` because
+each upstream document moves independently; these waivers use one append-only batch review
+because they form one enumerated residual set whose blockers are reviewed together here.
+
+A hard evidence-expiry was rejected because read-only keys, production-only endpoints, and absent
+market state can remain genuine blockers after review; requiring closure would manufacture a
+permanent red. A shrink-only count ratchet was rejected because an unchanged count can preserve
+unreviewed waivers indefinitely or exchange one gap for another. Per-waiver `review_by` dates were
+rejected because copying one review across 79 lines creates partial-renewal drift without adding
+evidence beyond the batch review.
+
 #### alpaca
 
 - Blocked by: the paper account has no populated position and no distinct closed/all-order list

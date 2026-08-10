@@ -31,6 +31,17 @@ defmodule Mix.Tasks.Ccxt.OracleGateTest do
     end
   end
 
+  test "task rejects an expired critical-slot waiver with its renewal path" do
+    error =
+      assert_raise Mix.Error, fn ->
+        OracleGate.run([], today: ~D[2026-09-10])
+      end
+
+    assert error.message =~ "alpaca:normalization.field_maps.position waiver review expired after 30 days"
+    assert error.message =~ "[oracle-critical-slot-waiver-review YYYY-MM-DD]"
+    assert error.message =~ "docs/prod-verification-ledger.md"
+  end
+
   test "task declares the test environment" do
     preferred_envs = Bourse.MixProject.cli()[:preferred_envs]
     assert preferred_envs[:"ccxt.oracle_gate"] == :test

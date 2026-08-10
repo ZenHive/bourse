@@ -132,19 +132,37 @@ defmodule Bourse.OracleProvenance.DerivationTest do
              |> OracleProvenance.critical_slot_coverage_errors([])
              |> Enum.filter(&(&1 == "bybit:#{slot_path} has no reality evidence or dated production-ledger waiver"))
 
-    waiver = %{date: ~D[2026-08-10], path: slot_path, venue: "bybit"}
+    waiver = %{date: ~D[2026-08-10], path: slot_path, reviewed_at: ~D[2026-08-10], venue: "bybit"}
     missing_error = "bybit:#{slot_path} has no reality evidence or dated production-ledger waiver"
 
-    refute missing_error in OracleProvenance.critical_slot_coverage_errors([report], [waiver])
+    refute missing_error in OracleProvenance.critical_slot_coverage_errors([report], [waiver], ~D[2026-09-09])
   end
 
   test "critical coverage rejects duplicate, unknown, and stale waivers", %{reports: reports} do
     report = reports["bybit"]
-    open = %{date: ~D[2026-08-10], path: "request_shape.fetchClosedOrder", venue: "bybit"}
-    stale = %{date: ~D[2026-08-10], path: "normalization.field_maps.ticker", venue: "bybit"}
-    unknown = %{date: ~D[2026-08-10], path: "request_shape.notReal", venue: "bybit"}
 
-    errors = OracleProvenance.critical_slot_coverage_errors([report], [open, open, stale, unknown])
+    open = %{
+      date: ~D[2026-08-10],
+      path: "request_shape.fetchClosedOrder",
+      reviewed_at: ~D[2026-08-10],
+      venue: "bybit"
+    }
+
+    stale = %{
+      date: ~D[2026-08-10],
+      path: "normalization.field_maps.ticker",
+      reviewed_at: ~D[2026-08-10],
+      venue: "bybit"
+    }
+
+    unknown = %{
+      date: ~D[2026-08-10],
+      path: "request_shape.notReal",
+      reviewed_at: ~D[2026-08-10],
+      venue: "bybit"
+    }
+
+    errors = OracleProvenance.critical_slot_coverage_errors([report], [open, open, stale, unknown], ~D[2026-08-10])
 
     assert "bybit:request_shape.fetchClosedOrder has duplicate critical-slot waivers" in errors
     assert "bybit:normalization.field_maps.ticker is reality-verified but retains a critical-slot waiver" in errors
@@ -158,6 +176,8 @@ defmodule Bourse.OracleProvenance.DerivationTest do
     ## Open
 
     ### bybit — blocked read (task 526, filed 2026-08-10)
+      - [oracle-critical-slot-waiver-review 2026-08-09]
+      - [oracle-critical-slot-waiver-review 2026-08-10]
       - [oracle-critical-slot-waiver 2026-08-10] `bybit:request_shape.fetchPositions`
 
     ## Closed
@@ -165,11 +185,28 @@ defmodule Bourse.OracleProvenance.DerivationTest do
       - [oracle-critical-slot-waiver 2026-08-09] `bybit:request_shape.fetchOrders`
     """
 
-    assert [%{date: ~D[2026-08-10], path: "request_shape.fetchPositions", venue: "bybit"}] =
+    assert [
+             %{
+               date: ~D[2026-08-10],
+               path: "request_shape.fetchPositions",
+               reviewed_at: ~D[2026-08-10],
+               venue: "bybit"
+             }
+           ] =
              OracleProvenance.critical_slot_waivers(markdown)
 
     assert_raise ArgumentError, ~r/malformed critical-slot waiver/, fn ->
       OracleProvenance.critical_slot_waivers("# Ledger\n\n## Open\n\n  - [oracle-critical-slot-waiver] `bybit:x`")
+    end
+
+    assert_raise ArgumentError, ~r/malformed critical-slot waiver review/, fn ->
+      OracleProvenance.critical_slot_waivers("# Ledger\n\n## Open\n\n  - [oracle-critical-slot-waiver-review]")
+    end
+
+    assert_raise ArgumentError, ~r/invalid critical-slot waiver date/, fn ->
+      OracleProvenance.critical_slot_waivers(
+        "# Ledger\n\n## Open\n\n  - [oracle-critical-slot-waiver 2026-13-40] `bybit:x`"
+      )
     end
 
     assert_raise ArgumentError, ~r/future-dated critical-slot waiver/, fn ->
@@ -177,6 +214,37 @@ defmodule Bourse.OracleProvenance.DerivationTest do
         "# Ledger\n\n## Open\n\n  - [oracle-critical-slot-waiver 2999-01-01] `bybit:x`"
       )
     end
+  end
+
+  test "critical coverage bounds waiver-set review and names the renewal path", %{reports: reports} do
+    waiver = %{
+      date: ~D[2026-08-10],
+      path: "request_shape.fetchClosedOrder",
+      reviewed_at: ~D[2026-08-10],
+      venue: "bybit"
+    }
+
+    day_30_errors =
+      OracleProvenance.critical_slot_coverage_errors([reports["bybit"]], [waiver], ~D[2026-09-09])
+
+    refute Enum.any?(day_30_errors, &String.starts_with?(&1, "bybit:request_shape.fetchClosedOrder "))
+
+    assert [error] =
+             [reports["bybit"]]
+             |> OracleProvenance.critical_slot_coverage_errors([waiver], ~D[2026-09-10])
+             |> Enum.filter(&String.starts_with?(&1, "bybit:request_shape.fetchClosedOrder "))
+
+    assert error =~ "bybit:request_shape.fetchClosedOrder waiver review expired after 30 days"
+    assert error =~ "[oracle-critical-slot-waiver-review YYYY-MM-DD]"
+    assert error =~ "docs/prod-verification-ledger.md"
+
+    assert [missing_review] =
+             [reports["bybit"]]
+             |> OracleProvenance.critical_slot_coverage_errors([Map.put(waiver, :reviewed_at, nil)], ~D[2026-08-10])
+             |> Enum.filter(&String.starts_with?(&1, "bybit:request_shape.fetchClosedOrder "))
+
+    assert missing_review =~ "has no waiver-set review acknowledgment"
+    assert missing_review =~ "docs/prod-verification-ledger.md"
   end
 
   test "extension map reaches field-map keys outside the return-type vocabulary", %{reports: reports} do

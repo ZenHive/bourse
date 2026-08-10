@@ -22,11 +22,15 @@ defmodule Mix.Tasks.Ccxt.OracleGate do
 
   @impl Mix.Task
   @spec run([String.t()]) :: :ok
-  def run(args) do
+  def run(args), do: run(args, [])
+
+  @doc false
+  @spec run([String.t()], keyword()) :: :ok
+  def run(args, runtime_opts) do
     Mix.Task.run("app.config")
     {:ok, _apps} = Application.ensure_all_started(:bourse)
 
-    {opts, rest, invalid} = OptionParser.parse(args, strict: [update: :boolean])
+    {parsed_opts, rest, invalid} = OptionParser.parse(args, strict: [update: :boolean])
 
     if rest != [] or invalid != [] do
       Mix.raise("usage: mix ccxt.oracle_gate [--update]")
@@ -34,10 +38,10 @@ defmodule Mix.Tasks.Ccxt.OracleGate do
 
     reports = OracleProvenance.binary_reports!()
     check_open_ledger!(reports)
-    check_critical_slots!(reports)
+    check_critical_slots!(reports, Keyword.get(runtime_opts, :today, Date.utc_today()))
     Enum.each(reports, &report/1)
 
-    if opts[:update] do
+    if parsed_opts[:update] do
       reports
       |> OracleProvenance.binary_baseline()
       |> Jason.encode!(pretty: true)
@@ -72,10 +76,10 @@ defmodule Mix.Tasks.Ccxt.OracleGate do
     end
   end
 
-  defp check_critical_slots!(reports) do
+  defp check_critical_slots!(reports, today) do
     waivers = @ledger_path |> File.read!() |> OracleProvenance.critical_slot_waivers()
 
-    case OracleProvenance.critical_slot_coverage_errors(reports, waivers) do
+    case OracleProvenance.critical_slot_coverage_errors(reports, waivers, today) do
       [] -> report_critical_slot_passes(reports, waivers)
       errors -> Mix.raise("critical-slot hard gate failed:\n" <> bullets(errors))
     end

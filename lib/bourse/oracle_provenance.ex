@@ -6,10 +6,19 @@ defmodule Bourse.OracleProvenance do
   alias Bourse.OracleProvenance.Derivation
 
   @type ledger_entry :: %{heading: String.t(), slots: [{String.t(), String.t()}]}
-  @type critical_slot_waiver :: %{date: Date.t(), path: String.t(), venue: String.t()}
+  @type critical_slot_waiver :: %{
+          date: Date.t(),
+          path: String.t(),
+          reviewed_at: Date.t() | nil,
+          venue: String.t()
+        }
 
   @waiver_marker "oracle-critical-slot-waiver"
+  @waiver_review_marker "oracle-critical-slot-waiver-review"
   @waiver_pattern ~r/^\s*-\s+\[oracle-critical-slot-waiver\s+(\d{4}-\d{2}-\d{2})\]\s+`([^`:]+):([^`]+)`\s*$/
+  @waiver_review_pattern ~r/^\s*-\s+\[oracle-critical-slot-waiver-review\s+(\d{4}-\d{2}-\d{2})\]\s*$/
+  @waiver_review_days 30
+  @waiver_renewal_path "docs/prod-verification-ledger.md"
 
   @doc "Parses explicit authored-slice markers from the open ledger section."
   @spec open_ledger_entries(String.t()) :: [ledger_entry()]
@@ -23,24 +32,30 @@ defmodule Bourse.OracleProvenance do
     |> Enum.reject(&Enum.empty?(&1.slots))
   end
 
-  @doc "Parses explicit dated critical-slot waivers from the open ledger section."
+  @doc "Parses explicit dated critical-slot waivers and their latest review from the open ledger section."
   @spec critical_slot_waivers(String.t()) :: [critical_slot_waiver()]
   def critical_slot_waivers(markdown) when is_binary(markdown) do
-    markdown
-    |> open_ledger_section()
-    |> String.split("\n")
-    |> Enum.flat_map(&parse_waiver_line!/1)
+    lines = markdown |> open_ledger_section() |> String.split("\n")
+    reviewed_at = latest_waiver_review!(lines)
+
+    Enum.flat_map(lines, &parse_waiver_line!(&1, reviewed_at))
   end
 
   @doc "Returns hard-gate errors for critical slots without reality evidence or a valid waiver."
   @spec critical_slot_coverage_errors([Derivation.venue_report()], [critical_slot_waiver()]) :: [String.t()]
   def critical_slot_coverage_errors(reports, waivers) when is_list(reports) and is_list(waivers) do
+    critical_slot_coverage_errors(reports, waivers, Date.utc_today())
+  end
+
+  @doc false
+  @spec critical_slot_coverage_errors([Derivation.venue_report()], [critical_slot_waiver()], Date.t()) :: [String.t()]
+  def critical_slot_coverage_errors(reports, waivers, today) when is_list(reports) and is_list(waivers) do
     slots = critical_slots_by_identity(reports)
     waiver_groups = Enum.group_by(waivers, &{&1.venue, &1.path})
 
     waiver_errors =
       Enum.flat_map(waiver_groups, fn {identity, entries} ->
-        waiver_errors(identity, entries, Map.get(slots, identity))
+        waiver_errors(identity, entries, Map.get(slots, identity), today)
       end)
 
     missing =
@@ -131,10 +146,26 @@ defmodule Bourse.OracleProvenance do
 
   defp ledger_conflict_claim?(_slot), do: false
 
-  defp parse_waiver_line!(line) do
+  defp parse_waiver_line!(line, reviewed_at) do
     case Regex.run(@waiver_pattern, line, capture: :all_but_first) do
-      [date, venue, path] -> [%{date: parse_waiver_date!(date, line), path: path, venue: venue}]
-      nil -> reject_malformed_waiver!(line)
+      [date, venue, path] ->
+        [%{date: parse_waiver_date!(date, line), path: path, reviewed_at: reviewed_at, venue: venue}]
+
+      nil ->
+        reject_malformed_waiver!(line)
+    end
+  end
+
+  defp latest_waiver_review!(lines) do
+    lines
+    |> Enum.flat_map(&parse_waiver_review_line!/1)
+    |> Enum.max(Date, fn -> nil end)
+  end
+
+  defp parse_waiver_review_line!(line) do
+    case Regex.run(@waiver_review_pattern, line, capture: :all_but_first) do
+      [date] -> [parse_waiver_date!(date, line)]
+      nil -> reject_malformed_waiver_review!(line)
     end
   end
 
@@ -154,8 +185,16 @@ defmodule Bourse.OracleProvenance do
   end
 
   defp reject_malformed_waiver!(line) do
-    if String.contains?(line, @waiver_marker) do
+    if String.contains?(line, @waiver_marker) and not String.contains?(line, @waiver_review_marker) do
       raise ArgumentError, "malformed critical-slot waiver: #{line}"
+    else
+      []
+    end
+  end
+
+  defp reject_malformed_waiver_review!(line) do
+    if String.contains?(line, @waiver_review_marker) do
+      raise ArgumentError, "malformed critical-slot waiver review: #{line}"
     else
       []
     end
@@ -165,19 +204,47 @@ defmodule Bourse.OracleProvenance do
     Map.new(for report <- reports, slot <- report.slots, slot.critical, do: {{report.venue, slot.path}, slot})
   end
 
-  defp waiver_errors({venue, path}, entries, nil) do
-    ["#{venue}:#{path} waiver names an unknown or non-critical slot"] ++ duplicate_errors(venue, path, entries)
+  defp waiver_errors({venue, path}, entries, nil, today) do
+    ["#{venue}:#{path} waiver names an unknown or non-critical slot"] ++
+      duplicate_errors(venue, path, entries) ++ review_errors(venue, path, entries, today)
   end
 
-  defp waiver_errors({venue, path}, entries, %{verified: true}) do
+  defp waiver_errors({venue, path}, entries, %{verified: true}, today) do
     ["#{venue}:#{path} is reality-verified but retains a critical-slot waiver"] ++
-      duplicate_errors(venue, path, entries)
+      duplicate_errors(venue, path, entries) ++ review_errors(venue, path, entries, today)
   end
 
-  defp waiver_errors({venue, path}, entries, %{verified: false}), do: duplicate_errors(venue, path, entries)
+  defp waiver_errors({venue, path}, entries, %{verified: false}, today) do
+    duplicate_errors(venue, path, entries) ++ review_errors(venue, path, entries, today)
+  end
 
   defp duplicate_errors(venue, path, entries) do
     if length(entries) == 1, do: [], else: ["#{venue}:#{path} has duplicate critical-slot waivers"]
+  end
+
+  defp review_errors(venue, path, [%{date: filed_at} = waiver], today) do
+    reviewed_at = Map.get(waiver, :reviewed_at)
+
+    cond do
+      is_nil(reviewed_at) ->
+        [renewal_error(venue, path, "has no waiver-set review acknowledgment")]
+
+      Date.before?(reviewed_at, filed_at) ->
+        [renewal_error(venue, path, "was filed after the latest waiver-set review")]
+
+      Date.diff(today, reviewed_at) > @waiver_review_days ->
+        [renewal_error(venue, path, "waiver review expired after #{@waiver_review_days} days")]
+
+      true ->
+        []
+    end
+  end
+
+  defp review_errors(_venue, _path, _entries, _today), do: []
+
+  defp renewal_error(venue, path, reason) do
+    "#{venue}:#{path} #{reason}; recheck the blocker and append " <>
+      "`[#{@waiver_review_marker} YYYY-MM-DD]` to #{@waiver_renewal_path}"
   end
 
   defp open_ledger_section(markdown) do
