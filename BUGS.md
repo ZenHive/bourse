@@ -73,10 +73,12 @@ roadmap.
 
 ## 2026-08-07 — binance: `fetch_funding_rate/2` leaves `interval` nil
 
-**Status (2026-08-08):** 🆕 reported — not yet triaged into a scored task. Out of scope for
-trackers 550/551 (those own parse coverage; this is a field-level carve). Belongs to the C5
-funding-interval carve register in `docs/authored-spec-carves/`, where bybit and hyperliquid
-were confronted and binance never was.
+**Status (2026-08-10):** 📋 triaged — filed as workbench **task 573** ("binance
+fetch_funding_rate leaves interval nil — the C5 funding-interval carve was never confronted for
+binance"), open. Out of scope for trackers 550/551 (those own parse coverage; this is a
+field-level carve). Belongs to the C5 funding-interval carve register in
+`docs/authored-spec-carves/`, where bybit and hyperliquid were confronted and binance never was;
+task 573 also checks okx and the binance futures venues, which this entry left unprobed.
 
 **Call:** `Bourse.Exchange.new("binance")` → `Bourse.fetch_funding_rate(client, "BTC/USDT:USDT")`
 
@@ -877,3 +879,93 @@ Bybit v5 requires a `category` (`spot`/`linear`/...) param. The unified `fetch_t
 injecting/inferring it from the symbol. **Lower confidence** — this could be a known limitation
 or expect a market-type hint we didn't pass; needs maintainer confirmation on whether the unified
 layer is supposed to inject `category` automatically.
+
+---
+
+## 2026-08-10 — binance fapi `create_order`: unified opts (`time_in_force`, `reduce_only`, `trigger_price`, `stop_loss_price`) werden stillschweigend verworfen — Market-Sell statt Stop-Order ausgeführt
+
+**Status (2026-08-10):** 📋 triaged — filed as workbench **task 574** ("binance fapi write path
+drops unified opts and misparses cancel confirmations"), open, together with the
+`set_margin_mode` and `cancel_all_orders` entries below (one authored-spec surface, one testnet
+lifecycle verifies all three). Includes the Algo-Order-API endpoint move (`-4120`).
+
+**Method:** `Bourse.create_order/6` · **Exchange:** binance (USD-M futures, `sandbox: true`, testnet.binancefuture.com) · **Severity:** HIGH — real-money-relevant: eine als Stop gemeinte Order wurde als nackter Market-Sell ausgeführt
+
+```elixir
+{:ok, ex} = Bourse.exchange(:binance, api_key: ..., secret: ..., sandbox: true)
+# 1) time_in_force-Opt kommt nie an (jede Variante :GTC / "GTC" / "gtc"):
+Bourse.create_order(ex, "ETH/USDT:USDT", "limit", "buy", 0.41, price: 1822, time_in_force: "GTC")
+# => {:error, -1102 "Mandatory parameter 'timeinforce' was not sent"}
+# Workaround der ankommt: params: %{"timeInForce" => "GTC"}
+
+# 2) trigger_price + reduce_only werden verworfen — die Order ging als PLAIN MARKET SELL raus und wurde sofort ausgeführt (Position -1.28 ETH eröffnet):
+Bourse.create_order(ex, "ETH/USDT:USDT", "market", "sell", 1.28, trigger_price: 1620, reduce_only: true)
+# => {:ok, %Order{}} — raw info: type=MARKET, kein stopPrice, reduceOnly=false, status=FILLED
+
+# 3) stop_loss_price-Opt ebenso wirkungslos; ein "type"-Override via params wird vom
+#    unified type überschrieben => Conditional-Orders sind für binance aktuell NICHT baubar:
+Bourse.create_order(ex, sym, "market", "sell", 1.28, params: %{"type" => "STOP_MARKET", "stopPrice" => "1620", "reduceOnly" => "true"})
+# => {:error, -1106 "Parameter 'stopprice' sent when not required."}  (type blieb MARKET)
+```
+
+Expected: die dokumentierten unified Opts (`time_in_force`, `reduce_only`, `trigger_price`,
+`stop_loss_price` — alle in der `create_order`-Descripex-Contract-Doku gelistet) erreichen den
+fapi-Request; `trigger_price`/`stop_loss_price` mappen auf `STOP_MARKET`+`stopPrice`.
+Zusatzbefund: Binance hat Conditional-Orders von `POST /fapi/v1/order` auf die **Algo Order API**
+verschoben (`-4120 "use the Algo Order API endpoints"`; `POST /fapi/v1/algoOrder` mit
+`algoType=CONDITIONAL` + `triggerPrice`) — das binance-Mapping braucht also ohnehin den neuen Endpoint.
+Quelle: developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api, live verifiziert 2026-08-10.
+
+**Consumer impact:** trading_dashboard (Testnet-Order-Ladder 2026-08-10). Workaround lokal: rohe
+signierte fapi-Calls via Req für marginType/Stop; Limit-Orders via `params:`-Map.
+
+---
+
+## 2026-08-10 — binance `set_margin_mode/3`: symbol-Parameter erreicht den Request nicht
+
+**Status (2026-08-10):** 📋 triaged — folded into workbench **task 574** (see the `create_order`
+entry above), open.
+
+**Method:** `Bourse.set_margin_mode(ex, "isolated", "ETH/USDT:USDT")` · **Exchange:** binance (fapi, sandbox) · **Severity:** medium
+
+Jede Arg-Variante (`"isolated"`, `"ISOLATED"`, zusätzlich `params: %{"symbol" => "ETHUSDT"}`) =>
+`{:error, -1102 "Mandatory parameter 'symbol' was not sent"}`. Roher Call
+`POST /fapi/v1/marginType?symbol=ETHUSDT&marginType=ISOLATED` mit denselben Keys => 200.
+Expected: symbol wird aus dem unified Symbol aufgelöst und mitgesendet.
+
+---
+
+## 2026-08-10 — binance fapi `cancel_all_orders`: Erfolgsantwort wird als all-nil Order geparst UND Orders bleiben offen
+
+**Status (2026-08-10):** 📋 triaged — folded into workbench **task 574** (see the `create_order`
+entry above), open. Task 574 requires live proof the orders actually cancel, not only the parse fix.
+
+**Method:** `Bourse.cancel_all_orders(ex, symbol: "ETH/USDT:USDT")` · **Exchange:** binance (fapi, sandbox) · **Severity:** medium-high (meldet Fehler bei Erfolg — und der zugrundeliegende Call cancelt real nichts)
+
+```elixir
+Bourse.cancel_all_orders(ex, symbol: "ETH/USDT:USDT")
+# => {:error, %Bourse.Error{type: :exchange_error, message: "Unexpected response shape: parsed to an all-nil struct (method: cancel_all_orders)",
+#      raw: [%Bourse.Order{... alles nil, info: %{"code" => 200, "msg" => "The operation of cancel all open order is done."}}]}}
+# Beobachtung: trotz "done"-Message blieben alle 3 offenen Limit-Orders bestehen (fetch_open_orders danach: 3).
+# Roher Call DELETE /fapi/v1/allOpenOrders?symbol=ETHUSDT => 200 und cancelt tatsächlich.
+```
+
+Zwei Teilprobleme: (a) die `{"code":200,"msg":...}`-Bestätigung ist keine Order-Liste und gehört
+nicht durch den Order-Parser (=> false-negative Error); (b) welcher Endpoint auch immer getroffen
+wurde, er hat die offenen fapi-Orders nicht gecancelt — möglicherweise falsches Produkt-Routing.
+
+---
+
+## 2026-08-10 — binance `fetch_balance(type: :swap)` routet im Sandbox-Modus auf den Spot-Testnet
+
+**Status (2026-08-10):** 📋 triaged — filed as workbench **task 575** ("binance
+fetch_balance(type: :swap) routes to the spot testnet in sandbox"), open.
+
+**Method:** `Bourse.fetch_balance(ex, type: :swap)` · **Exchange:** binance (sandbox) · **Severity:** medium (führt Konsumenten auf das falsche Konto)
+
+Mit gültigen **Futures**-Testnet-Keys => `{:error, 401 "Invalid API-key"}`; mit **Spot**-Testnet-Keys
+=> `{:ok, ...}` mit dem Spot-Testnet-Asset-Grabbag (GMT/JUV/... + BTC 1.0). Roher Call
+`GET testnet.binancefuture.com/fapi/v2/balance` mit den Futures-Keys => 200 (USDT 4997.04).
+Expected: `type: :swap` trifft fapi (testnet.binancefuture.com), nicht den Spot-Testnet.
+`fetch_swap_balance` ist für binance zugleich `:not_supported` — es gibt also aktuell keinen
+funktionierenden unified Weg zum USD-M-Wallet-Stand im Sandbox-Modus.
