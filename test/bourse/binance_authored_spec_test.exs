@@ -10,6 +10,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
   alias Bourse.Symbol
   alias Bourse.Test.RequestCollector
   alias Bourse.Unified
+  alias Bourse.Unified.FundingInterval
   alias Bourse.Unified.ReadParse
   alias Bourse.Unified.RequestShape
 
@@ -37,6 +38,19 @@ defmodule Bourse.BinanceAuthoredSpecTest do
       assert requests |> RequestCollector.requests() |> Enum.map(& &1.conn.request_path) ==
                [premium_path, funding_path]
     end
+  end
+
+  test "the funding-interval join refuses instead of defaulting when no native symbol resolves" do
+    assert {:error, %Bourse.Error{message: message}} =
+             FundingInterval.enrich(
+               {:ok, %Bourse.FundingRate{interval: nil, info: %{}}},
+               Exchange.new!("binance", sandbox: true),
+               :fetch_funding_rate,
+               %{},
+               []
+             )
+
+    assert message =~ "Cannot resolve the native symbol"
   end
 
   test "Binance funding rates use the documented default when no adjusted per-symbol row exists" do

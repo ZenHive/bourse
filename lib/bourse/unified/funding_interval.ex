@@ -27,17 +27,21 @@ defmodule Bourse.Unified.FundingInterval do
         opts
       )
       when id in @binance_family do
-    with {:ok, %{body: body}} <- Unified.raw_call(exchange, :fetch_funding_intervals, params, opts),
-         {:ok, interval} <- interval(body, funding_rate, exchange, params) do
-      {:ok, %{funding_rate | interval: interval}}
+    case native_symbol(funding_rate, exchange, params) do
+      nil ->
+        unresolved_symbol(exchange)
+
+      native_symbol ->
+        with {:ok, %{body: body}} <- Unified.raw_call(exchange, :fetch_funding_intervals, params, opts),
+             {:ok, interval} <- interval_for(body, native_symbol, exchange) do
+          {:ok, %{funding_rate | interval: interval}}
+        end
     end
   end
 
   def enrich(result, _exchange, _method, _params, _opts), do: result
 
-  defp interval(body, funding_rate, exchange, params) do
-    native_symbol = native_symbol(funding_rate, exchange, params)
-
+  defp interval_for(body, native_symbol, exchange) do
     case Enum.find(List.wrap(body), &(is_map(&1) and &1["symbol"] == native_symbol)) do
       nil ->
         {:ok, @binance_default_interval}
@@ -56,6 +60,14 @@ defmodule Bourse.Unified.FundingInterval do
     do: Symbol.to_exchange_id(symbol, exchange)
 
   defp native_symbol(_funding_rate, _exchange, _params), do: nil
+
+  defp unresolved_symbol(exchange) do
+    {:error,
+     Error.exchange_error(
+       "Cannot resolve the native symbol for the #{exchange.id} funding-interval join",
+       exchange: exchange.id
+     )}
+  end
 
   defp invalid_interval(exchange, row) do
     {:error,
