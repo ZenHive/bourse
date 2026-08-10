@@ -12,8 +12,10 @@ indexed by `priv/authority/binancecoinm/manifest.json`.
 **C-T573c — COIN-M current funding rates join DAPI funding info by native symbol (task 573).
 Outcome: CONFIRM venue.** Binance's official
 [COIN-M Funding Rate Info](https://developers.binance.com/docs/derivatives/coin-margined-futures/market-data/rest-api/Get-Funding-Rate-Info)
-contract publishes `fundingIntervalHours` for adjusted symbols and defines eight hours as the
-default. `fetchFundingRate` joins `premiumIndex` to that provider row, emitting the normalized
+contract publishes `fundingIntervalHours` for adjusted symbols; the eight-hour default for
+non-adjusted symbols comes from Binance's own funding-rate settlement announcement
+(binance.com/en/support/announcement/detail/6d707b1f7ae34f419621b4c807464ab1), not from the
+endpoint contract. `fetchFundingRate` joins `premiumIndex` to that provider row, emitting the normalized
 duration and falling back to `8h` only when the symbol has no adjustment. Live demo DAPI changed
 BTCUSD_PERP from `interval: nil` to `interval: "8h"`.
 

@@ -11,8 +11,10 @@ this file is the complete Binance spot carve record.
 **C-T573a — Current funding rates join the provider's per-symbol cadence (task 573).
 Outcome: CONFIRM venue.** Binance's official
 [Funding Rate Info](https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Get-Funding-Rate-Info)
-contract publishes `fundingIntervalHours` for symbols whose cadence is adjusted and states that
-the default interval is eight hours. `fetchFundingRate` therefore joins its `premiumIndex` row to
+contract publishes `fundingIntervalHours` for symbols whose cadence is adjusted; the eight-hour
+default for non-adjusted symbols comes from Binance's own funding-rate settlement announcement
+(binance.com/en/support/announcement/detail/6d707b1f7ae34f419621b4c807464ab1), not from the
+endpoint contract itself. `fetchFundingRate` therefore joins its `premiumIndex` row to
 `fundingInfo` by native symbol, normalizes the provider value to a duration token such as `4h`,
 and uses `8h` only when the provider returns no adjusted row. Live demo FAPI returned `8h` for
 BTCUSDT; the pre-change unified result had `interval: nil`.
