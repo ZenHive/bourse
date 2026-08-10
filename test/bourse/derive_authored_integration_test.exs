@@ -21,6 +21,7 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
   alias Bourse.Test.FixtureGateIsolation
   alias Bourse.Ticker
   alias Bourse.Trade
+  alias Bourse.TransferEntry
   alias Bourse.Unified.RequestShape.Derive, as: DeriveRequestShape
 
   @moduletag :integration
@@ -105,6 +106,21 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
     assert balance.total["ETH"] == Safe.number(eth["amount"])
     assert balance.free["ETH"] == nil
     assert balance.used["ETH"] == nil
+  end
+
+  test "signed transfer history reaches live demo and returns typed entries" do
+    credentials = require_credentials!(:derive, url: @derive_testnet_url)
+
+    exchange =
+      build_exchange(:derive,
+        credentials: credentials,
+        sandbox: true,
+        options: %{"subaccount_id" => @derive_subaccount_id}
+      )
+
+    assert {:ok, transfers} = Bourse.fetch_transfers(exchange)
+    assert is_list(transfers)
+    assert Enum.all?(transfers, &match?(%TransferEntry{}, &1))
   end
 
   test "unregistered session key yields edge HTML 403 (access_restricted)" do

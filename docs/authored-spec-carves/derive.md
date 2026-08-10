@@ -5,6 +5,81 @@ Append-only schema confrontations for Derive. Follow the allocation and evidence
 
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`; this file is the complete carve record (task 466).
 
+## 2026-08-10 — capability endpoint confrontation (Task 549)
+
+**C-T549a — `fetchLiquidations` remains false despite the public and private liquidation-history
+endpoints (task 549). Outcome: DIVERGE; reality tier 2.**
+
+- *Exchange semantics:* Derive's
+  [public liquidation-history reference](https://docs.derive.xyz/reference/post_public-get-liquidation-history.md)
+  describes portfolio auctions and their bids. An auction identifies a subaccount, time range, type,
+  transaction hash, and liquidated amounts; it does not identify one instrument liquidation with a
+  price, side, contracts, or contract size.
+- *Live evidence (2026-08-10):* `public_post_get_liquidation_history`,
+  `private_post_get_liquidation_history`, and `private_post_get_liquidator_history` each returned a
+  successful response from `api-demo.lyra.finance`; the observed account/history collections were
+  empty.
+- *Our carve:* neither `private_post_get_liquidation_history` nor
+  `private_post_get_liquidator_history` can produce the instrument-scoped `%Bourse.Liquidation{}`
+  contract without inventing a symbol and trade attributes. `fetchLiquidations` remains explicitly
+  false.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T549a","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Derive public/get_liquidation_history operation schema"},"observed_evidence":{"kind":"live_venue","reference":"api-demo.lyra.finance public/private liquidation-history operations returned successful empty collections on 2026-08-10"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Live reachability was observed, but no manifest-registered populated auction can establish an instrument-scoped Liquidation mapping"}
+-->
+
+**C-T549b — `fetchTransfers` maps to `private_post_get_erc20_transfer_history`.
+Outcome: CONFIRM (task 549); reality tier 2.**
+
+- *Exchange semantics:* Derive's
+  [ERC-20 transfer-history reference](https://docs.derive.xyz/reference/post_private-get-erc20-transfer-history.md)
+  defines transfer rows with asset, amount, timestamp, transaction hash, source subaccount,
+  counterparty subaccount, and an outgoing-direction flag.
+- *Live evidence (2026-08-10):* the authenticated operation returned HTTP 200 with
+  `result.events=[]` for demo subaccount 144422. This proves the enabled route and request contract;
+  the official schema supplies the row mapping because the account had no transfer row.
+- *Our carve:* `tx_hash` becomes the transfer id; `asset`, `amount`, and `timestamp` retain their
+  provider values; `is_outgoing` selects the source and destination subaccount identifiers.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T549b","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Derive private/get_erc20_transfer_history operation schema"},"observed_evidence":{"kind":"live_venue","reference":"api-demo.lyra.finance private/get_erc20_transfer_history returned HTTP 200 for subaccount 144422 on 2026-08-10"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The successful live collection was empty; provider-documented rows are pinned by the offline parser test"}
+-->
+
+**C-T549c — `fetchBorrowInterest` remains false despite
+`private_post_get_interest_history` (task 549). Outcome: DIVERGE; reality tier 2.**
+
+- *Exchange semantics:* Derive's
+  [interest-history reference](https://docs.derive.xyz/reference/post_private-get-interest-history.md)
+  defines signed dollar interest paid or received by a subaccount. It does not expose a borrowed
+  currency, principal, interest rate, margin mode, or market symbol.
+- *Live evidence (2026-08-10):* the authenticated endpoint returned HTTP 200 with an empty events
+  collection for demo subaccount 144422.
+- *Our carve:* a two-sided subaccount interest ledger is not the accrued-interest-on-a-borrow
+  contract represented by `%Bourse.BorrowInterest{}`. Mapping it would fabricate the absent borrow
+  position, so `fetchBorrowInterest` remains explicitly false.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T549c","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Derive private/get_interest_history operation schema"},"observed_evidence":{"kind":"live_venue","reference":"api-demo.lyra.finance private/get_interest_history returned HTTP 200 for subaccount 144422 on 2026-08-10"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The endpoint describes subaccount cash interest rather than a borrow-position record"}
+-->
+
+**C-T549d — `fetchSettlementHistory` remains false despite the option-settlement-history
+endpoints (task 549). Outcome: DELIBERATE IMPLEMENTATION CARVE; reality tier 2.**
+
+- *Exchange semantics:* Derive's
+  [public option-settlement-history reference](https://docs.derive.xyz/reference/post_public-get-option-settlement-history.md)
+  defines option settlement rows with instrument, expiry, amount, settlement price, and settlement
+  PnL. The endpoint therefore supplies venue settlement history.
+- *Live evidence (2026-08-10):* both public and authenticated demo operations returned HTTP 200;
+  the public response contained settlement rows.
+- *Our carve:* Bourse has no typed settlement-history struct or parser contract; the repository's
+  return-type inventory records `fetchSettlementHistory` as a pending net-new type. Enabling the
+  route would return a raw transport map rather than the task's required typed structs. The
+  capability remains explicitly false until that unified return contract exists.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T549d","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"Derive public/get_option_settlement_history operation schema"},"observed_evidence":{"kind":"live_venue","reference":"api-demo.lyra.finance public and private option-settlement-history operations returned HTTP 200, with public settlement rows, on 2026-08-10"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The client has no typed settlement-history return contract; enabling this route would expose raw transport data"}
+-->
+
 ## 2026-08-05 — ticker 24h statistics (Task 560)
 
 **C-T560d — Derive's `public/get_ticker` publishes no 24h statistics object, so unified `high`,

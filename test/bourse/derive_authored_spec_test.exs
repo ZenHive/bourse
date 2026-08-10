@@ -7,12 +7,152 @@ defmodule Bourse.DeriveAuthoredSpecTest do
   alias Bourse.Error
   alias Bourse.Exchange
   alias Bourse.Test.RequestCollector
+  alias Bourse.TransferEntry
 
   @derive_testnet_url "https://api-demo.lyra.finance"
   @derive_testnet_subaccount_id 144_422
   @derive_option_native_id "ZEC-20260925-800-P"
   @derive_option_symbol "ZEC/USDC:USDC-260925-800-P"
   @observed_timestamp_ms 1_700_000_000_000
+  @observed_next_timestamp_ms 1_700_000_000_001
+  @derive_carve_register Path.expand("../../docs/authored-spec-carves/derive.md", __DIR__)
+  @external_resource @derive_carve_register
+  @capability_confrontations %{
+    "fetchBorrowInterest" => %{
+      carve: "C-T549c",
+      method: :fetch_borrow_interest,
+      raw: [:private_post_get_interest_history]
+    },
+    "fetchLiquidations" => %{
+      carve: "C-T549a",
+      method: :fetch_liquidations,
+      raw: [
+        :public_post_get_liquidation_history,
+        :private_post_get_liquidation_history,
+        :private_post_get_liquidator_history
+      ]
+    },
+    "fetchSettlementHistory" => %{
+      carve: "C-T549d",
+      method: :fetch_settlement_history,
+      raw: [
+        :public_post_get_option_settlement_history,
+        :private_post_get_option_settlement_history
+      ]
+    },
+    "fetchTransfers" => %{
+      carve: "C-T549b",
+      method: :fetch_transfers,
+      raw: [:private_post_get_erc20_transfer_history]
+    }
+  }
+
+  test "available Derive capability endpoints are wired or registered as deliberate carves" do
+    features = Bourse.Derive.__features__()
+    raw_endpoints = MapSet.new(Bourse.Derive.__endpoints__(), & &1.name)
+    carve_register = File.read!(@derive_carve_register)
+
+    assert Map.take(features, Map.keys(@capability_confrontations)) == %{
+             "fetchBorrowInterest" => false,
+             "fetchLiquidations" => false,
+             "fetchSettlementHistory" => false,
+             "fetchTransfers" => true
+           }
+
+    Enum.each(@capability_confrontations, fn {js_name, confrontation} ->
+      Enum.each(confrontation.raw, &assert(MapSet.member?(raw_endpoints, &1)))
+      routes = Bourse.Derive.__unified_endpoint__(confrontation.method)
+
+      if features[js_name] do
+        assert routes != []
+      else
+        assert routes == []
+        assert carve_register =~ confrontation.carve
+        assert carve_register =~ "`#{js_name}`"
+      end
+    end)
+  end
+
+  test "fetch_transfers shapes and parses Derive's documented ERC-20 transfer rows" do
+    stub = {__MODULE__, :derive_transfers, System.unique_integer([:positive])}
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+
+      Req.Test.json(conn, %{
+        "result" => %{
+          "events" => [
+            %{
+              "amount" => "12.5",
+              "asset" => "USDC",
+              "counterparty_subaccount_id" => 90_001,
+              "is_outgoing" => true,
+              "subaccount_id" => @derive_testnet_subaccount_id,
+              "timestamp" => @observed_timestamp_ms,
+              "tx_hash" => "0xoutgoing"
+            },
+            %{
+              "amount" => "3.25",
+              "asset" => "USDC",
+              "counterparty_subaccount_id" => 90_002,
+              "is_outgoing" => false,
+              "subaccount_id" => @derive_testnet_subaccount_id,
+              "timestamp" => @observed_next_timestamp_ms,
+              "tx_hash" => "0xincoming"
+            }
+          ]
+        }
+      })
+    end)
+
+    credentials =
+      Credentials.new!(
+        api_key: "0x05Fd3d190C176eB58cC4DDf38bFD1848a9786238",
+        secret: "0x0123456789012345678901234567890123456789012345678901234567890123"
+      )
+
+    exchange =
+      Exchange.new!("derive",
+        credentials: credentials,
+        options: %{"subaccount_id" => @derive_testnet_subaccount_id}
+      )
+
+    assert {:ok,
+            [
+              %TransferEntry{
+                amount: 12.5,
+                currency: "USDC",
+                from_account: "144422",
+                id: "0xoutgoing",
+                timestamp: @observed_timestamp_ms,
+                to_account: "90001"
+              },
+              %TransferEntry{
+                amount: 3.25,
+                currency: "USDC",
+                from_account: "90002",
+                id: "0xincoming",
+                timestamp: @observed_next_timestamp_ms,
+                to_account: "144422"
+              }
+            ]} =
+             Bourse.fetch_transfers(exchange,
+               code: "USDC",
+               since: @observed_timestamp_ms,
+               limit: 2,
+               until: @observed_timestamp_ms + 1_000,
+               plug: {Req.Test, stub}
+             )
+
+    assert RequestCollector.one!(requests).request_path == "/private/get_erc20_transfer_history"
+
+    assert RequestCollector.json_body!(requests) == %{
+             "end_timestamp" => @observed_timestamp_ms + 1_000,
+             "start_timestamp" => @observed_timestamp_ms,
+             "subaccount_id" => @derive_testnet_subaccount_id
+           }
+  end
 
   test "SM balance keeps provider collateral amount as total and deliberately leaves free and used unmapped" do
     field_map = Bourse.Derive.__field_maps__()["balance"]["field_map"]

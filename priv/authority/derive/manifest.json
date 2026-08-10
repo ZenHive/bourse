@@ -59,6 +59,218 @@
       }
     },
     {
+      "id": "liquidation-history",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.derive.xyz/reference/post_public-get-liquidation-history.md",
+      "fetch_url": "https://docs.derive.xyz/reference/post_public-get-liquidation-history.md",
+      "filename": "post_public-get-liquidation-history.md",
+      "retrieved_at": "2026-08-10",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-08-10"
+      },
+      "sha256": "f22abc5f034d2dbad6e0ec3202e27372a15039cf76bd847ed035476728619087",
+      "bytes": 10896,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific redistribution license published",
+        "evidence_url": "https://www.derive.xyz/terms",
+        "handling": "reference_only",
+        "reason": "The official operation reference is hash-pinned rather than redistributed because no artifact-specific license is published."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.derive.xyz/reference/post_public-get-liquidation-history.md"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "This provider operation page entered the corpus as an implementation-time baseline."
+      },
+      "expressiveness": {
+        "level": "typed_openapi",
+        "limitations": [
+          "The page covers one REST operation."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The page covers one REST operation."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
+    },
+    {
+      "id": "erc20-transfer-history",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.derive.xyz/reference/post_private-get-erc20-transfer-history.md",
+      "fetch_url": "https://docs.derive.xyz/reference/post_private-get-erc20-transfer-history.md",
+      "filename": "post_private-get-erc20-transfer-history.md",
+      "retrieved_at": "2026-08-10",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-08-10"
+      },
+      "sha256": "1b6ca15ce4485a47f6a85354e230fa4b4888b25347bda08a1830c90dbc9d040d",
+      "bytes": 5835,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific redistribution license published",
+        "evidence_url": "https://www.derive.xyz/terms",
+        "handling": "reference_only",
+        "reason": "The official operation reference is hash-pinned rather than redistributed because no artifact-specific license is published."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.derive.xyz/reference/post_private-get-erc20-transfer-history.md"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "This provider operation page entered the corpus as an implementation-time baseline."
+      },
+      "expressiveness": {
+        "level": "typed_openapi",
+        "limitations": [
+          "The page covers one REST operation."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The page covers one REST operation."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
+    },
+    {
+      "id": "interest-history",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.derive.xyz/reference/post_private-get-interest-history.md",
+      "fetch_url": "https://docs.derive.xyz/reference/post_private-get-interest-history.md",
+      "filename": "post_private-get-interest-history.md",
+      "retrieved_at": "2026-08-10",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-08-10"
+      },
+      "sha256": "fdcfa12ec45ecc0ed29f44c8d486fe1e461634b0ca702e8cb9832fe90ccc51be",
+      "bytes": 4748,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific redistribution license published",
+        "evidence_url": "https://www.derive.xyz/terms",
+        "handling": "reference_only",
+        "reason": "The official operation reference is hash-pinned rather than redistributed because no artifact-specific license is published."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.derive.xyz/reference/post_private-get-interest-history.md"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "This provider operation page entered the corpus as an implementation-time baseline."
+      },
+      "expressiveness": {
+        "level": "typed_openapi",
+        "limitations": [
+          "The page covers one REST operation."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The page covers one REST operation."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
+    },
+    {
+      "id": "option-settlement-history",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.derive.xyz/reference/post_public-get-option-settlement-history.md",
+      "fetch_url": "https://docs.derive.xyz/reference/post_public-get-option-settlement-history.md",
+      "filename": "post_public-get-option-settlement-history.md",
+      "retrieved_at": "2026-08-10",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-08-10"
+      },
+      "sha256": "5034d181522e292a2dbd6729cb646764af5eb3b46a246538118d665b9610fc16",
+      "bytes": 6395,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific redistribution license published",
+        "evidence_url": "https://www.derive.xyz/terms",
+        "handling": "reference_only",
+        "reason": "The official operation reference is hash-pinned rather than redistributed because no artifact-specific license is published."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.derive.xyz/reference/post_public-get-option-settlement-history.md"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-08-10",
+        "mutable": true,
+        "notes": "This provider operation page entered the corpus as an implementation-time baseline."
+      },
+      "expressiveness": {
+        "level": "typed_openapi",
+        "limitations": [
+          "The page covers one REST operation."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The page covers one REST operation."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
+    },
+    {
       "id": "error-codes",
       "kind": "official-errors-markdown",
       "source_url": "https://docs.derive.xyz/reference/error-codes.md",

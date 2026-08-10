@@ -148,6 +148,7 @@
       "fetchPositions": true,
       "fetchPositionsRisk": false,
       "fetchPremiumIndexOHLCV": false,
+      "fetchSettlementHistory": false,
       "fetchSpotMarkets": true,
       "fetchSwapMarkets": true,
       "fetchTicker": true,
@@ -157,7 +158,7 @@
       "fetchTradingFee": false,
       "fetchTradingFees": false,
       "fetchTransfer": false,
-      "fetchTransfers": false,
+      "fetchTransfers": true,
       "fetchWithdrawal": false,
       "fetchWithdrawals": true,
       "future": false,
@@ -763,6 +764,55 @@
         "source": "async fetchTrades (symbol: string, since: Int = undefined, limit: Int = undefined, params = {}): Promise<Trade[]> {\n        await this.loadMarkets ();\n        const request: Dict = {};\n        let market = undefined;\n        if (symbol !== undefined) {\n            market = this.market (symbol);\n            request['instrument_name'] = market['id'];\n        }\n        if (limit !== undefined) {\n            if (limit > 1000) {\n                limit = 1000;\n            }\n            request['page_size'] = limit; // default 100, max 1000\n        }\n        if (since !== undefined) {\n            request['from_timestamp'] = since;\n        }\n        const until = this.safeInteger (params, 'until');\n        params = this.omit (params, [ 'until' ]);\n        if (until !== undefined) {\n            request['to_timestamp'] = until;\n        }\n        const response = await this.publicPostGetTradeHistory (this.extend (request, params));\n        //\n        // {\n        //     \"result\": {\n        //         \"trades\": [\n        //             {\n        //                 \"trade_id\": \"9dbc88b0-f0c4-4439-9cc1-4e6409d4eafb\",\n        //                 \"instrument_name\": \"BTC-PERP\",\n        //                 \"timestamp\": 1736153910930,\n        //                 \"trade_price\": \"98995.3\",\n        //                 \"trade_amount\": \"0.033\",\n        //                 \"mark_price\": \"98990.875914388161618263\",\n        //                 \"index_price\": \"99038.050611100001501184\",\n        //                 \"direction\": \"sell\",\n        //                 \"quote_id\": null,\n        //                 \"wallet\": \"0x88B6BB87fbFac92a34F8155aaA35c87B5b166fA9\",\n        //                 \"subaccount_id\": 8250,\n        //                 \"tx_status\": \"settled\",\n        //                 \"tx_hash\": \"0x020bd735b312f867f17f8cc254946d87cfe9f2c8ff3605035d8129082eb73723\",\n        //                 \"trade_fee\": \"0.980476701049890015\",\n        //                 \"liquidity_role\": \"taker\",\n        //                 \"realized_pnl\": \"-2.92952402688793509\",\n        //                 \"realized_pnl_excl_fees\": \"-1.949047325838045075\"\n        //             }\n        //         ],\n        //         \"pagination\": {\n        //             \"num_pages\": 598196,\n        //             \"count\": 598196\n        //         }\n        //     },\n        //     \"id\": \"b8539544-6975-4497-8163-5e51a38e4aa7\"\n        // }\n        //\n        const result = this.safeDict (response, 'result', {});\n        const data = this.safeList (result, 'trades', []);\n        return this.parseTrades (data, market, since, limit);\n    }",
         "unresolved_reason": null
       },
+      "fetchTransfers": {
+        "async": true,
+        "description": "fetches ERC-20 transfer history for a Derive subaccount",
+        "errors": null,
+        "name": "fetchTransfers",
+        "params_doc": {
+          "code": "unified currency code used to filter parsed transfer entries",
+          "limit": "maximum number of parsed transfer entries to return",
+          "params": "extra parameters specific to Derive",
+          "params.subaccount_id": "Derive subaccount id",
+          "params.until": "latest transfer timestamp in milliseconds",
+          "since": "earliest transfer timestamp in milliseconds"
+        },
+        "returns": {
+          "description": "a list of unified transfer entries",
+          "type": "TransferEntry[]"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": "undefined",
+              "name": "code",
+              "optional": true,
+              "type": "Str"
+            },
+            {
+              "default": "undefined",
+              "name": "since",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "undefined",
+              "name": "limit",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<TransferEntry[]>"
+        },
+        "source": null,
+        "unresolved_reason": null
+      },
       "fetchWithdrawals": {
         "async": true,
         "description": "fetch all withdrawals made from an account",
@@ -1248,6 +1298,27 @@
           "to_timestamp": {
             "source": "until",
             "source_class": "optional"
+          }
+        },
+        "fetchTransfers": {
+          "_omit": [
+            "code",
+            "limit"
+          ],
+          "end_timestamp": {
+            "source": "until",
+            "source_class": "optional"
+          },
+          "start_timestamp": {
+            "source": "since",
+            "source_class": "optional"
+          },
+          "subaccount_id": {
+            "kind": "reference",
+            "reason": "identifier_reference",
+            "source": "subaccount_id",
+            "source_class": "optional",
+            "value": null
           }
         },
         "fetchWithdrawals": {
@@ -1991,6 +2062,10 @@
         "on_chain": false,
         "transactional": false
       },
+      "fetchTransfers": {
+        "on_chain": false,
+        "transactional": false
+      },
       "fetchWithdrawals": {
         "on_chain": false,
         "transactional": false
@@ -2075,6 +2150,9 @@
       ],
       "fetchTrades": [
         "publicPostGetTradeHistory"
+      ],
+      "fetchTransfers": [
+        "privatePostGetErc20TransferHistory"
       ],
       "fetchWithdrawals": [
         "privatePostGetWithdrawalHistory"
@@ -4205,7 +4283,65 @@
           "updated": null
         }
       },
-      "transfer": null
+      "transfer": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "amount": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "amount"
+          },
+          "currency": {
+            "coercion": "safeCurrencyCode",
+            "format": null,
+            "key": "asset"
+          },
+          "datetime": null,
+          "fromAccount": {
+            "else": {
+              "coercion": "safeString",
+              "key": "counterparty_subaccount_id"
+            },
+            "guard": {
+              "equals": true,
+              "field": "is_outgoing"
+            },
+            "kind": "when",
+            "then": {
+              "coercion": "safeString",
+              "key": "subaccount_id"
+            }
+          },
+          "id": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "tx_hash"
+          },
+          "info": null,
+          "status": null,
+          "timestamp": {
+            "coercion": "safeInteger",
+            "format": "ms",
+            "key": "timestamp"
+          },
+          "toAccount": {
+            "else": {
+              "coercion": "safeString",
+              "key": "subaccount_id"
+            },
+            "guard": {
+              "equals": true,
+              "field": "is_outgoing"
+            },
+            "kind": "when",
+            "then": {
+              "coercion": "safeString",
+              "key": "counterparty_subaccount_id"
+            }
+          }
+        }
+      }
     },
     "response_envelopes": {
       "greeks": {
@@ -4351,6 +4487,13 @@
         },
         "fetchWithdrawals": {
           "default": null,
+          "fallback_keys": [],
+          "key": "result.events"
+        }
+      },
+      "transfer": {
+        "fetchTransfers": {
+          "default": [],
           "fallback_keys": [],
           "key": "result.events"
         }
