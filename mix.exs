@@ -164,7 +164,7 @@ defmodule Bourse.MixProject do
 
   defp dialyzer do
     [
-      plt_add_apps: [:mix]
+      plt_add_apps: [:mix, :yaml_elixir]
     ]
   end
 
@@ -199,6 +199,7 @@ defmodule Bourse.MixProject do
       # CVE tripwire: `mix deps.audit` checks mix.lock against the advisory DB
       # (hex.audit only catches retired packages). Wired into precommit.full + ci.
       {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
+      {:yaml_elixir, "~> 2.12", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4.7", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.40.3", only: :dev, runtime: false},
       {:doctor, "~> 0.23.0", only: [:dev, :test], runtime: false},

@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "venue": "deribit",
+  "surfaces": {
+    "current_rest": {
+      "artifact_id": "api-openapi",
+      "sha256": "430b3f0bc67cc574a05e695d22d1acbbb5348c96858368bba9931c2f05350515",
+      "upstream_pin": {
+        "type": "document_version_http_etag",
+        "value": "2.1.1; W/\"b96f2b26a14b31dbc4cf064c3d63b14a\""
+      },
+      "expected": {
+        "path_count": 178,
+        "provider_count": 178,
+        "authored_count": 123,
+        "shared_count": 116,
+        "provider_only_count": 62,
+        "authored_only_count": 7,
+        "websocket_only_operation_count": 10,
+        "unknown_authentication_count": 178
+      }
+    },
+    "upcoming_rest": {
+      "artifact_id": "upcoming-openapi",
+      "sha256": "b3010bcb1e2b95d64e5b83b0c633b9fd61faedf664a9ed026015e1089a982d0f",
+      "upstream_pin": {
+        "type": "document_version_http_etag",
+        "value": "2.1.1; W/\"5e8b26e0df446ae0b6b213d91184f49b\""
+      },
+      "expected": {
+        "path_count": 182,
+        "provider_count": 182,
+        "websocket_only_operation_count": 10
+      }
+    },
+    "current_websocket": {
+      "artifact_id": "current-asyncapi",
+      "sha256": "03a857e43690a171b6416bff8b910ee00b93f44dc978d2ffdef0710af5d73cb2",
+      "upstream_pin": {
+        "type": "document_version_http_etag",
+        "value": "1.0.0; W/\"06f469af56a14772c8def9090ee88aa2\""
+      },
+      "expected": {
+        "channel_count": 40,
+        "provider_count": 80,
+        "message_reference_inversion_count": 80
+      }
+    },
+    "upcoming_websocket": {
+      "artifact_id": "upcoming-asyncapi",
+      "sha256": "5a83c3a4d36840e1e77bcb63290447ae287754a04969e588eb96ded953c70a96",
+      "upstream_pin": {
+        "type": "document_version_http_etag",
+        "value": "1.0.0; W/\"2863755d34671127f41d92e5de11f775\""
+      },
+      "expected": {
+        "channel_count": 43,
+        "provider_count": 86,
+        "message_reference_inversion_count": 86
+      }
+    }
+  },
+  "historical_current_rest": {
+    "retrieved_at": "2026-07-22",
+    "sha256": "70ba4617642d18aaff2bbcb7127bec499c4ef3ba34b6f5b12cb9cbdadbcffd2d",
+    "openapi_version": "2.1.1",
+    "expected": {
+      "provider_count": 178,
+      "authored_count": 123,
+      "shared_count": 116,
+      "provider_only_count": 62,
+      "authored_only_count": 7
+    },
+    "status": "historical_regression_fixture"
+  }
+}

@@ -38,6 +38,7 @@ mix ccxt.authority_check                    # offline manifest/local-hash valida
 mix ccxt.error_authority                    # offline error-enumeration adjudication
 mix ccxt.authority_check --online           # explicit network drift check
 scripts/fetch_authority.sh /tmp/ccxt-authority
+mix ccxt.contract_compare --artifacts /tmp/ccxt-authority --output /tmp/contract-reports
 ```
 
 The offline command validates manifest structure and any locally vendored bytes; it
@@ -73,6 +74,12 @@ and live provider checks, then exits nonzero if either return code is nonzero; t
 authority return code is therefore part of the alarm again. GitHub calls the same
 script and uploads both reports, so its manual fallback has identical gating
 semantics.
+
+`ccxt.contract_compare` performs no network access. It verifies each available
+artifact against this corpus, writes one deterministic report per venue, and
+states an explicit source-capability limit for missing, prose-only, partial, or
+untyped inputs. Its differences are findings for later provider confrontation,
+not implementation or deletion decisions.
 
 ## Selected sources
 
