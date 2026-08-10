@@ -27,19 +27,49 @@ defmodule Bourse.Unified.FundingInterval do
         opts
       )
       when id in @binance_family do
+    with {:ok, body} <- funding_intervals(exchange, params, opts) do
+      enrich_rate(funding_rate, body, exchange, params)
+    end
+  end
+
+  def enrich({:ok, funding_rates}, %Exchange{id: id} = exchange, :fetch_funding_rates, params, opts)
+      when id in @binance_family and is_map(funding_rates) do
+    with {:ok, body} <- funding_intervals(exchange, params, opts) do
+      enrich_rates(funding_rates, body, exchange)
+    end
+  end
+
+  def enrich(result, _exchange, _method, _params, _opts), do: result
+
+  defp funding_intervals(exchange, params, opts) do
+    with {:ok, %{body: body}} <- Unified.raw_call(exchange, :fetch_funding_intervals, params, opts) do
+      {:ok, body}
+    end
+  end
+
+  defp enrich_rates(funding_rates, body, exchange) do
+    Enum.reduce_while(funding_rates, {:ok, %{}}, fn {symbol, funding_rate}, {:ok, enriched} ->
+      case enrich_rate(funding_rate, body, exchange, %{"symbol" => symbol}) do
+        {:ok, rate} -> {:cont, {:ok, Map.put(enriched, symbol, rate)}}
+        {:error, _reason} = error -> {:halt, error}
+      end
+    end)
+  end
+
+  defp enrich_rate(%FundingRate{interval: interval} = funding_rate, _body, _exchange, _params) when not is_nil(interval),
+    do: {:ok, funding_rate}
+
+  defp enrich_rate(%FundingRate{} = funding_rate, body, exchange, params) do
     case native_symbol(funding_rate, exchange, params) do
       nil ->
         unresolved_symbol(exchange)
 
       native_symbol ->
-        with {:ok, %{body: body}} <- Unified.raw_call(exchange, :fetch_funding_intervals, params, opts),
-             {:ok, interval} <- interval_for(body, native_symbol, exchange) do
+        with {:ok, interval} <- interval_for(body, native_symbol, exchange) do
           {:ok, %{funding_rate | interval: interval}}
         end
     end
   end
-
-  def enrich(result, _exchange, _method, _params, _opts), do: result
 
   defp interval_for(body, native_symbol, exchange) do
     case Enum.find(List.wrap(body), &(is_map(&1) and &1["symbol"] == native_symbol)) do

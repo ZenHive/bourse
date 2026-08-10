@@ -753,7 +753,10 @@ defmodule Bourse.Unified do
 
         with {:ok, responses} <- dispatch_fan_out(exchange, capability_name, configs, params, opts) do
           parsed = parse_fan_out_responses(exchange, module, method_atom, js_name, params, responses)
-          maybe_resolve_binance_spot_ticker_symbols(parsed, exchange, module, method_atom, opts)
+
+          parsed
+          |> maybe_resolve_binance_spot_ticker_symbols(exchange, module, method_atom, opts)
+          |> FundingInterval.enrich(exchange, method_atom, params, opts)
         end
 
       {:ok, {:broadcast, configs}} ->
@@ -779,7 +782,9 @@ defmodule Bourse.Unified do
           parsed =
             parse_param_fan_out_responses(exchange, module, method_atom, js_name, params, param_variants, responses)
 
-          maybe_resolve_binance_spot_ticker_symbols(parsed, exchange, module, method_atom, opts)
+          parsed
+          |> maybe_resolve_binance_spot_ticker_symbols(exchange, module, method_atom, opts)
+          |> FundingInterval.enrich(exchange, method_atom, params, opts)
         end
 
       {:ok, {:single, config}} ->

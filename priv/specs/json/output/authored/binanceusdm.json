@@ -4552,6 +4552,30 @@
             }
           ]
         },
+        "fetchFundingIntervals": {
+          "consume": [
+            "symbol",
+            "symbols",
+            "type",
+            "subType",
+            "sub_type"
+          ],
+          "default": "fapiPublic_get_fundinginfo",
+          "rules": [
+            {
+              "endpoint": "dapiPublic_get_fundinginfo",
+              "when": {
+                "market_family": "inverse"
+              }
+            },
+            {
+              "endpoint": "dapiPublic_get_fundinginfo",
+              "when": {
+                "market_family": "future"
+              }
+            }
+          ]
+        },
         "fetchFundingRates": {
           "consume": [
             "type",

@@ -124,10 +124,14 @@ defmodule Bourse.DefaultFamilySelectionTest do
                    timestamp_ms_override: 1_700_000_000_000
                  )
 
-        conn = RequestCollector.one!(requests)
+        expected_paths =
+          if method == :fetch_funding_rates do
+            [expected_path, String.replace(expected_path, "premiumIndex", "fundingInfo")]
+          else
+            [expected_path]
+          end
 
-        assert conn.request_path == expected_path,
-               "expected #{expected_path}, got #{conn.request_path}"
+        assert requests |> RequestCollector.requests() |> Enum.map(& &1.conn.request_path) == expected_paths
       end
     end
 

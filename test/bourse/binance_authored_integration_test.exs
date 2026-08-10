@@ -98,6 +98,7 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
   test "Binance-family and OKX current funding rates publish provider cadence" do
     probes = [
       {:binance, "BTC/USDT:USDT", true},
+      {:binance, "BTC/USD:BTC", true},
       {:binanceusdm, "BTC/USDT:USDT", true},
       {:binancecoinm, "BTC/USD:BTC", true},
       {:okx, "BTC/USDT:USDT", true}
