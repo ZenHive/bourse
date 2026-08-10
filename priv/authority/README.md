@@ -43,10 +43,36 @@ scripts/fetch_authority.sh /tmp/ccxt-authority
 The offline command validates manifest structure and any locally vendored bytes; it
 cannot detect remote drift for reference-only artifacts. `--online` verifies each
 pinned fetch and then compares the mutable upstream hash (or Bybit repository HEAD)
-to the recorded pin. Drift is a prompt to review the semantic diff before refreshing
-the pin, not permission to update the hash merely to make the check green.
-`initial_baseline` means the artifact entered the index at that pin; it is not a
-claim that prior remote bytes drifted.
+to the recorded pin. Typed OpenAPI and AsyncAPI drift is blocking. Other governed
+roles are prose/docs for drift policy: a mismatch emits an `AUTHORITY_DRIFT` report
+line and passes only when `freshness.status` is `drift_detected` and `checked_at` is
+no more than 30 days old. The 30-day window gives the weekly lane four review
+opportunities while preventing an acknowledgment from becoming permanent. A
+missing or older acknowledgment blocks again.
+
+`checked_at` is the date a prose/docs mismatch was acknowledged, not an automatic
+pin refresh. Drift remains a prompt to review the semantic diff before refreshing
+the pin, never permission to update the hash merely to restore green. For
+`storage: reference_only`, compare the current upstream against the authored slice
+because prior upstream bytes are not retained; record the semantic review alongside
+the manifest before changing the pin. `initial_baseline` means the artifact entered
+the index at that pin; it is not a claim that prior remote bytes drifted.
+
+`authority.semantic_authority` also depends on the other axes: an artifact marked
+`known_stale`, or any artifact whose scope is only `index_only`, must set it to
+`false`. Such artifacts remain useful discovery or historical references, but they
+cannot establish current provider semantics.
+
+## Weekly lane contract
+
+`ops/live-drift.sh` is the canonical lane entry point for both the always-on operator
+host and the manual GitHub fallback. The host syncs the target branch before each
+run, invokes `bash ops/live-drift.sh artifacts`, and sends a successful healthcheck
+ping only when that command exits zero. The script always runs both authority drift
+and live provider checks, then exits nonzero if either return code is nonzero; the
+authority return code is therefore part of the alarm again. GitHub calls the same
+script and uploads both reports, so its manual fallback has identical gating
+semantics.
 
 ## Selected sources
 

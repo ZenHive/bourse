@@ -38,7 +38,9 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
   end
 
   test "artifacts use the governed role vocabulary and keep versioned surfaces separate" do
-    for manifest <- AuthorityCorpus.load!(@root), artifact <- manifest["artifacts"] do
+    manifests = AuthorityCorpus.load!(@root)
+
+    for manifest <- manifests, artifact <- manifest["artifacts"] do
       assert artifact["freshness"]["status"] in ~w(reviewed_current initial_baseline pinned_snapshot known_stale drift_detected)
 
       assert artifact["expressiveness"]["level"] in ~w(typed_openapi typed_asyncapi untyped_postman documentation_index prose_documentation source_archive)
@@ -47,7 +49,16 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
       refute "current_rest" in surfaces and "upcoming_rest" in surfaces
       refute "current_websocket" in surfaces and "upcoming_websocket" in surfaces
       assert artifact["authority"]["classification"] == "provider_owned"
+
+      if artifact["freshness"]["status"] == "known_stale" or
+           Enum.any?(artifact["scope"], &(&1["coverage"] == "index_only")) do
+        refute artifact["authority"]["semantic_authority"]
+      end
     end
+
+    refute Enum.all?(manifests, fn manifest ->
+             Enum.all?(manifest["artifacts"], & &1["authority"]["semantic_authority"])
+           end)
   end
 
   test "Deribit versioned contracts have distinct baselines and runtime denominators" do
@@ -103,6 +114,28 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
     end
   end
 
+  test "known-stale and index-only artifacts cannot claim semantic authority" do
+    for {field_path, value} <- [
+          {["freshness", "status"], "known_stale"},
+          {["scope", Access.at(0), "coverage"], "index_only"}
+        ] do
+      root =
+        write_corpus(fn
+          "binance", manifest ->
+            manifest
+            |> put_in(["artifacts", Access.at(0)] ++ field_path, value)
+            |> put_in(["artifacts", Access.at(0), "authority", "semantic_authority"], true)
+
+          _venue, manifest ->
+            manifest
+        end)
+
+      assert_raise Mix.Error, ~r/cannot claim semantic authority/, fn ->
+        AuthorityCorpus.load!(root)
+      end
+    end
+  end
+
   test "unsupported artifact roles fail loudly" do
     root =
       write_corpus(fn
@@ -118,32 +151,99 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
     end
   end
 
-  test "an upstream change reports as drift for every venue artifact, naming expected vs actual pin" do
-    drifted = "drifted-upstream-content"
-    drifted_head = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  test "typed contract drift fails based on expressiveness even when its URL looks like prose" do
+    artifact =
+      fixture_artifact()
+      |> put_in(["drift", "url"], "https://example.test/rendered-docs-page")
+      |> put_in(["expressiveness", "level"], "typed_openapi")
+      |> put_in(["freshness", "status"], "drift_detected")
 
-    for manifest <- AuthorityCorpus.load!(@root),
-        artifact <- manifest["artifacts"] do
-      error =
-        assert_raise Mix.Error, fn ->
-          AuthorityCheck.check_upstream!([Map.put(manifest, "artifacts", [artifact])],
-            fetcher: fn _url -> drifted end,
-            git_head: fn _url -> drifted_head end
-          )
-        end
-
-      assert error.message =~ "#{artifact["id"]}: upstream drift"
-
-      case artifact["drift"]["mode"] do
-        "sha256" ->
-          assert error.message =~ artifact["sha256"]
-          assert error.message =~ AuthorityCorpus.sha256(drifted)
-
-        "git_head" ->
-          assert error.message =~ artifact["upstream_pin"]["value"]
-          assert error.message =~ drifted_head
+    error =
+      assert_raise Mix.Error, fn ->
+        check_artifact!(artifact, fetcher: fn _url -> "drifted-upstream-content" end)
       end
-    end
+
+    assert error.message =~ "fixture: typed contract upstream drift"
+    assert error.message =~ artifact["sha256"]
+    assert error.message =~ AuthorityCorpus.sha256("drifted-upstream-content")
+  end
+
+  test "acknowledged prose drift warns, emits a durable report line, and exits green" do
+    previous_shell = Mix.shell()
+    Mix.shell(Mix.Shell.Process)
+    on_exit(fn -> Mix.shell(previous_shell) end)
+
+    artifact =
+      fixture_artifact()
+      |> put_in(["drift", "url"], "https://example.test/contract.json")
+      |> Map.put("fetch_url", "https://example.test/contract.json")
+      |> put_in(["freshness", "status"], "drift_detected")
+      |> put_in(["freshness", "checked_at"], "2026-08-10")
+
+    assert :ok =
+             check_artifact!(artifact,
+               fetcher: fn _url -> "drifted-upstream-content" end,
+               today: ~D[2026-08-10]
+             )
+
+    assert_receive {:mix_shell, :error, [warning]}
+    assert warning =~ "WARNING: binance/fixture prose/docs upstream drift"
+
+    assert_receive {:mix_shell, :info, [report_line]}
+    assert report_line =~ "AUTHORITY_DRIFT"
+    assert report_line =~ "venue=binance"
+    assert report_line =~ "artifact=fixture"
+    assert report_line =~ "class=prose_docs"
+    assert report_line =~ "status=acknowledged"
+    assert report_line =~ "checked_at=2026-08-10"
+  end
+
+  test "unacknowledged prose drift fails with an actionable manifest update" do
+    error =
+      assert_raise Mix.Error, fn ->
+        check_artifact!(fixture_artifact(),
+          fetcher: fn _url -> "drifted-upstream-content" end,
+          today: ~D[2026-08-10]
+        )
+      end
+
+    assert error.message =~ "unacknowledged prose/docs upstream drift"
+    assert error.message =~ "freshness.status=drift_detected"
+    assert error.message =~ "freshness.checked_at"
+  end
+
+  test "a prose drift acknowledgment older than the bounded window fails" do
+    artifact =
+      fixture_artifact()
+      |> put_in(["freshness", "status"], "drift_detected")
+      |> put_in(["freshness", "checked_at"], "2026-07-10")
+
+    error =
+      assert_raise Mix.Error, fn ->
+        check_artifact!(artifact,
+          fetcher: fn _url -> "drifted-upstream-content" end,
+          today: ~D[2026-08-10]
+        )
+      end
+
+    assert error.message =~ "stale prose/docs drift acknowledgment"
+    assert error.message =~ "31 days"
+    assert error.message =~ "30-day limit"
+  end
+
+  test "git-head drift retains typed-contract failure semantics" do
+    artifact =
+      fixture_artifact()
+      |> Map.put("drift", %{"mode" => "git_head", "repository_url" => "https://example.test/docs.git"})
+      |> put_in(["expressiveness", "level"], "typed_asyncapi")
+
+    error =
+      assert_raise Mix.Error, fn ->
+        check_artifact!(artifact, git_head: fn _url -> String.duplicate("a", 40) end)
+      end
+
+    assert error.message =~ "typed contract upstream drift"
+    assert error.message =~ artifact["upstream_pin"]["value"]
   end
 
   test "a corrupted pinned fetch reports as manifest verification failure, not drift" do
@@ -277,6 +377,53 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
         ] do
       assert :ok = AuthorityCheck.ensure_external_destination!(destination, root)
     end
+  end
+
+  test "fetch materializes verified pinned bytes outside the authority tree" do
+    unique = System.unique_integer([:positive])
+    root = Path.join(System.tmp_dir!(), "authority-root-#{unique}")
+    destination = Path.join(System.tmp_dir!(), "authority-fetch-#{unique}")
+    source = Path.join(System.tmp_dir!(), "authority-source-#{unique}.txt")
+    contents = "verified authority bytes"
+
+    File.mkdir_p!(root)
+    File.write!(source, contents)
+
+    on_exit(fn ->
+      File.rm_rf(root)
+      File.rm_rf(destination)
+      File.rm(source)
+    end)
+
+    artifact =
+      Map.merge(fixture_artifact(), %{
+        "fetch_url" => "file://#{source}",
+        "sha256" => AuthorityCorpus.sha256(contents),
+        "bytes" => byte_size(contents)
+      })
+
+    manifest = %{"venue" => "binance", "artifacts" => [artifact]}
+
+    assert :ok = AuthorityCheck.fetch!([manifest], destination, root)
+    assert File.read!(Path.join([destination, "binance", artifact["filename"]])) == contents
+  end
+
+  test "task rejects positional arguments and conflicting network modes" do
+    assert_raise Mix.Error, ~r/unexpected arguments: extra/, fn ->
+      AuthorityCheck.run(["extra"])
+    end
+
+    assert_raise Mix.Error, ~r/--online and --fetch are mutually exclusive/, fn ->
+      AuthorityCheck.run(["--online", "--fetch", "/tmp/authority"])
+    end
+  end
+
+  defp check_artifact!(artifact, opts) do
+    AuthorityCheck.check_upstream!([%{"venue" => "binance", "artifacts" => [artifact]}], opts)
+  end
+
+  defp fixture_artifact do
+    List.first(fixture_manifest("binance")["artifacts"])
   end
 
   defp write_corpus(transform) do

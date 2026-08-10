@@ -14,7 +14,9 @@ defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
   @required_authority_fields ~w(classification semantic_authority completeness_gate)
   @required_rejected_candidate_fields ~w(id source_url authority reason)
   @freshness_statuses ~w(reviewed_current initial_baseline pinned_snapshot known_stale drift_detected)
-  @expressiveness_levels ~w(typed_openapi typed_asyncapi untyped_postman documentation_index prose_documentation source_archive)
+  @typed_contract_levels ~w(typed_openapi typed_asyncapi)
+  @expressiveness_levels @typed_contract_levels ++
+                           ~w(untyped_postman documentation_index prose_documentation source_archive)
   @contract_surfaces ~w(current_rest upcoming_rest current_websocket upcoming_websocket documentation_index)
   @scope_coverages ~w(complete partial index_only)
   @sha256_pattern ~r/\A[0-9a-f]{64}\z/
@@ -67,6 +69,12 @@ defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
     ensure!(sha256(contents) == artifact["sha256"], "#{label}: SHA-256 differs from manifest")
     :ok
   end
+
+  @doc "Classifies drift policy from the manifest's governed expressiveness role."
+  @spec artifact_class(map()) :: :typed_contract | :prose_docs
+  def artifact_class(%{"expressiveness" => %{"level" => level}}) when level in @typed_contract_levels, do: :typed_contract
+
+  def artifact_class(%{"expressiveness" => %{"level" => level}}) when level in @expressiveness_levels, do: :prose_docs
 
   defp load_manifest!(root, venue) do
     path = Path.join([root, venue, "manifest.json"])
@@ -153,13 +161,24 @@ defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
     ensure!(is_boolean(authority["semantic_authority"]), "#{label}: semantic_authority must be boolean")
     ensure!(is_boolean(authority["completeness_gate"]), "#{label}: completeness_gate must be boolean")
 
+    if authority["semantic_authority"] do
+      ensure_semantic_authority!(artifact, label)
+    end
+
     if authority["completeness_gate"] do
       ensure_completeness_source!(artifact, label)
     end
   end
 
+  defp ensure_semantic_authority!(artifact, label) do
+    current = artifact["freshness"]["status"] != "known_stale"
+    semantic_scope = Enum.all?(artifact["scope"], &(&1["coverage"] != "index_only"))
+
+    ensure!(current and semantic_scope, "#{label}: known-stale or index-only artifact cannot claim semantic authority")
+  end
+
   defp ensure_completeness_source!(artifact, label) do
-    typed = artifact["expressiveness"]["level"] in ~w(typed_openapi typed_asyncapi)
+    typed = artifact_class(artifact) == :typed_contract
     complete = Enum.all?(artifact["scope"], &(&1["coverage"] == "complete"))
     current = artifact["freshness"]["status"] in ~w(reviewed_current initial_baseline)
 

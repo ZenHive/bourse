@@ -32,14 +32,8 @@ jobs:
           cache-dependency-path: native/lighter_signer/go.sum
       - run: mix deps.get
       - run: mix ccxt.build_lighter_signer --target linux-amd64
-      - name: Verify mutable provider contract artifacts
-        run: |
-          mkdir -p artifacts
-          set -o pipefail
-          mix ccxt.authority_check --online 2>&1 | tee artifacts/authority-drift-report.txt
-      - name: Verify live provider contracts
-        if: always()
-        run: mix ccxt.verify_live_drift --report artifacts/live-drift-report.json
+      - name: Verify provider authority and live contracts
+        run: bash ops/live-drift.sh artifacts
         env:
           # GitHub-hosted runners egress from US IPs; the binance-family demo
           # hosts and bybit reject them (geo-block). Local/EU runs leave this

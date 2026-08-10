@@ -198,6 +198,7 @@ defmodule Bourse.LiveDriftTest do
 
   test "the manual-only fallback lane is isolated from commit events and uploads its report on failure" do
     workflow = File.read!(".github/workflows/live-drift.yml")
+    lane = File.read!("ops/live-drift.sh")
     mix_project = File.read!("mix.exs")
 
     # The scheduled lane runs from the always-on operator host (workbench task
@@ -209,10 +210,54 @@ defmodule Bourse.LiveDriftTest do
     refute workflow =~ "push:"
     assert workflow =~ "if: always()"
     assert workflow =~ "artifacts/live-drift-report.json"
-    assert workflow =~ "mix ccxt.authority_check --online"
+    assert workflow =~ "bash ops/live-drift.sh artifacts"
     assert workflow =~ "artifacts/authority-drift-report.txt"
     assert workflow =~ "GITHUB_STEP_SUMMARY"
+    assert lane =~ "mix ccxt.authority_check --online"
+    assert lane =~ "mix ccxt.verify_live_drift --report"
+    assert lane =~ "authority_rc"
+    assert lane =~ "live_drift_rc"
     refute mix_project =~ ~s("ccxt.verify_live_drift")
+  end
+
+  test "the shared lane fails when either authority or live drift fails and always runs both" do
+    directory = Path.join(System.tmp_dir!(), "live-drift-lane-#{System.unique_integer([:positive])}")
+    bin_directory = Path.join(directory, "bin")
+    call_log = Path.join(directory, "calls.log")
+    fake_mix = Path.join(bin_directory, "mix")
+
+    File.mkdir_p!(bin_directory)
+
+    File.write!(fake_mix, """
+    #!/usr/bin/env bash
+    printf '%s\n' "$*" >> "$LANE_CALL_LOG"
+    if [[ "$1" == "ccxt.authority_check" ]]; then
+      exit "${AUTHORITY_RC}"
+    fi
+    exit "${LIVE_DRIFT_RC}"
+    """)
+
+    File.chmod!(fake_mix, 0o755)
+    on_exit(fn -> File.rm_rf(directory) end)
+
+    for {authority_rc, live_drift_rc, expected_status} <- [{7, 0, 1}, {0, 9, 1}, {0, 0, 0}] do
+      File.write!(call_log, "")
+
+      {_output, status} =
+        System.cmd("bash", ["ops/live-drift.sh", Path.join(directory, "artifacts")],
+          env: [
+            {"PATH", "#{bin_directory}:#{System.get_env("PATH")}"},
+            {"LANE_CALL_LOG", call_log},
+            {"AUTHORITY_RC", Integer.to_string(authority_rc)},
+            {"LIVE_DRIFT_RC", Integer.to_string(live_drift_rc)}
+          ],
+          stderr_to_stdout: true
+        )
+
+      assert status == expected_status
+      assert File.read!(call_log) =~ "ccxt.authority_check --online"
+      assert File.read!(call_log) =~ "ccxt.verify_live_drift --report"
+    end
   end
 
   test "declared unreachable venues move reachability capture errors out of failures" do

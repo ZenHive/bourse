@@ -22,6 +22,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheck do
 
   @default_root "priv/authority"
   @curl_timeout_seconds 120
+  @drift_acknowledgement_days 30
   @switches [online: :boolean, fetch: :string, root: :string]
 
   @impl Mix.Task
@@ -39,18 +40,18 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheck do
   @doc """
   Checks every manifest's mutable upstream for drift and its pinned bytes for corruption.
 
-  The two outcomes are distinct: a changed mutable upstream raises an
-  "upstream drift" error naming the artifact and its expected-vs-actual pin,
-  while a pinned fetch target that no longer matches the manifest raises the
-  corpus verification error (a corrupted or tampered fetch, since pinned
-  targets are immutable). `opts` accepts `:fetcher` and `:git_head` overrides
-  for offline tests.
+  Typed contract drift raises. Prose/docs drift warns only when the manifest
+  carries a current `drift_detected` acknowledgment; missing or stale
+  acknowledgments raise. A pinned fetch target mismatch remains a corpus
+  verification error. `opts` accepts `:fetcher`, `:git_head`, and `:today`
+  overrides for offline tests.
   """
   @spec check_upstream!([map()], keyword()) :: :ok
   def check_upstream!(manifests, opts \\ []) do
     fetcher = Keyword.get(opts, :fetcher, &curl!/1)
     git_head = Keyword.get(opts, :git_head, &git_head!/1)
-    Enum.each(manifests, &check_manifest!(&1, fetcher, git_head))
+    today = Keyword.get(opts, :today, Date.utc_today())
+    Enum.each(manifests, &check_manifest!(&1, fetcher, git_head, today))
     Mix.shell().info("Authority upstream check passed for #{length(manifests)} venues.")
     :ok
   end
@@ -96,11 +97,15 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheck do
     :ok
   end
 
-  defp check_manifest!(manifest, fetcher, git_head) do
+  defp check_manifest!(manifest, fetcher, git_head, today) do
     Enum.each(manifest["artifacts"], fn artifact ->
-      check_drift!(artifact, fetcher, git_head)
+      drift = detect_drift(artifact, fetcher, git_head)
+      handle_drift!(drift, manifest["venue"], artifact, today)
       verify_pinned_fetch!(artifact, fetcher)
-      Mix.shell().info("#{manifest["venue"]}/#{artifact["id"]}: upstream unchanged")
+
+      if drift == :unchanged do
+        Mix.shell().info("#{manifest["venue"]}/#{artifact["id"]}: upstream unchanged")
+      end
     end)
   end
 
@@ -131,24 +136,67 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheck do
     contents
   end
 
-  defp check_drift!(%{"drift" => %{"mode" => "sha256", "url" => url}} = artifact, fetcher, _git_head) do
+  defp detect_drift(%{"drift" => %{"mode" => "sha256", "url" => url}} = artifact, fetcher, _git_head) do
     expected = artifact["sha256"]
     actual = AuthorityCorpus.sha256(fetcher.(url))
+    if actual == expected, do: :unchanged, else: {:drift, url, expected, actual}
+  end
 
-    if actual != expected do
-      Mix.raise(
-        "#{artifact["id"]}: upstream drift — mutable target #{url} hashes #{actual}, pinned sha256 is #{expected}"
-      )
+  defp detect_drift(%{"drift" => %{"mode" => "git_head", "repository_url" => url}} = artifact, _fetcher, git_head) do
+    expected = artifact["upstream_pin"]["value"]
+    actual = git_head.(url)
+    if actual == expected, do: :unchanged, else: {:drift, url, expected, actual}
+  end
+
+  defp handle_drift!(:unchanged, _venue, _artifact, _today), do: :ok
+
+  defp handle_drift!({:drift, target, expected, actual}, venue, artifact, today) do
+    case AuthorityCorpus.artifact_class(artifact) do
+      :typed_contract ->
+        emit_drift_report(venue, artifact, "typed_contract", "blocking", target, expected, actual)
+
+        Mix.raise(
+          "#{artifact["id"]}: typed contract upstream drift — #{target} moved from pinned #{expected} to #{actual}"
+        )
+
+      :prose_docs ->
+        handle_prose_drift!(venue, artifact, today, target, expected, actual)
     end
   end
 
-  defp check_drift!(%{"drift" => %{"mode" => "git_head", "repository_url" => url}} = artifact, _fetcher, git_head) do
-    expected = artifact["upstream_pin"]["value"]
-    actual = git_head.(url)
+  defp handle_prose_drift!(venue, artifact, today, target, expected, actual) do
+    freshness = artifact["freshness"]
+    checked_at = Date.from_iso8601!(freshness["checked_at"])
+    age_days = Date.diff(today, checked_at)
 
-    if actual != expected do
-      Mix.raise("#{artifact["id"]}: upstream drift — HEAD of #{url} moved from pinned #{expected} to #{actual}")
+    cond do
+      freshness["status"] != "drift_detected" ->
+        emit_drift_report(venue, artifact, "prose_docs", "unacknowledged", target, expected, actual)
+
+        Mix.raise(
+          "#{artifact["id"]}: unacknowledged prose/docs upstream drift — set freshness.status=drift_detected " <>
+            "and freshness.checked_at to the acknowledgment date before the lane can pass"
+        )
+
+      age_days > @drift_acknowledgement_days ->
+        emit_drift_report(venue, artifact, "prose_docs", "acknowledgement_stale", target, expected, actual)
+
+        Mix.raise(
+          "#{artifact["id"]}: stale prose/docs drift acknowledgment — #{age_days} days old exceeds the " <>
+            "#{@drift_acknowledgement_days}-day limit; complete semantic review before refreshing the pin"
+        )
+
+      true ->
+        Mix.shell().error("WARNING: #{venue}/#{artifact["id"]} prose/docs upstream drift remains acknowledged")
+        emit_drift_report(venue, artifact, "prose_docs", "acknowledged", target, expected, actual)
     end
+  end
+
+  defp emit_drift_report(venue, artifact, class, status, target, expected, actual) do
+    Mix.shell().info(
+      "AUTHORITY_DRIFT venue=#{venue} artifact=#{artifact["id"]} class=#{class} status=#{status} " <>
+        "checked_at=#{artifact["freshness"]["checked_at"]} target=#{target} expected=#{expected} actual=#{actual}"
+    )
   end
 
   defp curl!(url) do

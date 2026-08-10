@@ -319,7 +319,7 @@
       ],
       "authority": {
         "classification": "provider_owned",
-        "semantic_authority": true,
+        "semantic_authority": false,
         "completeness_gate": false
       }
     }
