@@ -347,6 +347,7 @@
           },
           "market_id": {
             "kind": "unresolved",
+            "optional": true,
             "reason": "dynamic_construction",
             "value": null
           }
@@ -391,6 +392,7 @@
         "fetchOpenOrders": {
           "market_id": {
             "kind": "unresolved",
+            "optional": true,
             "reason": "dynamic_construction",
             "value": null
           }

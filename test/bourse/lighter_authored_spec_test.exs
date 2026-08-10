@@ -30,6 +30,10 @@ defmodule Bourse.LighterAuthoredSpecTest do
     assert supported_methods(spec) ==
              ~w(cancelOrder createOrder fetchClosedOrders fetchMarkets fetchOHLCV fetchOpenOrders fetchOrderBook fetchTicker)
 
+    for method <- ~w(fetchClosedOrders fetchOpenOrders) do
+      assert get_in(spec, ["endpoints", "request", "defaults", method, "market_id", "optional"]) == true
+    end
+
     Enum.each(spec["capabilities"]["has"], fn {method, declaration} ->
       endpoints = spec["endpoints"]["unified"][method]
 
@@ -181,23 +185,7 @@ defmodule Bourse.LighterAuthoredSpecTest do
 
       Req.Test.json(conn, %{
         "code" => 200,
-        "orders" => [
-          %{
-            "order_id" => "99",
-            "client_order_id" => "42",
-            "initial_base_amount" => "0.0100",
-            "filled_base_amount" => "0.0000",
-            "filled_quote_amount" => "0.000000",
-            "remaining_base_amount" => "0.0100",
-            "is_ask" => false,
-            "price" => "100.25",
-            "reduce_only" => false,
-            "status" => "open",
-            "time_in_force" => "good-till-time",
-            "timestamp" => 1_800_000_000,
-            "type" => "limit"
-          }
-        ]
+        "orders" => [private_order_body()]
       })
     end)
 
@@ -225,6 +213,46 @@ defmodule Bourse.LighterAuthoredSpecTest do
     conn = RequestCollector.one!(requests)
     assert Plug.Conn.get_req_header(conn, "authorization") == ["1800000000:1:0:fake-signature"]
     assert RequestCollector.query(conn) == %{"account_index" => "1", "market_id" => "1"}
+  end
+
+  test "private order reads omit optional market scope and retain symbol scoping" do
+    stub = unique_stub(:optional_private_read_scope)
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+
+      orders =
+        if Map.has_key?(RequestCollector.query(conn), "market_id") do
+          [private_order_body()]
+        else
+          [private_order_body(), Map.put(private_order_body(), "order_id", "100")]
+        end
+
+      Req.Test.json(conn, %{"code" => 200, "orders" => orders})
+    end)
+
+    exchange = signed_exchange()
+    common_opts = [account_index: 1, auth_deadline: 1_800_000_000, plug: {Req.Test, stub}]
+
+    assert {:ok, [_, _]} = Bourse.fetch_open_orders(exchange, common_opts)
+    assert {:ok, [_, _]} = Bourse.fetch_closed_orders(exchange, common_opts)
+    assert {:ok, [_]} = Bourse.fetch_open_orders(exchange, [{:symbol, market().symbol} | common_opts])
+    assert {:ok, [_]} = Bourse.fetch_closed_orders(exchange, [{:symbol, market().symbol} | common_opts])
+
+    assert [open_all, closed_all, open_market, closed_market] = RequestCollector.requests(requests)
+
+    assert {open_all.conn.request_path, RequestCollector.query(open_all.conn)} ==
+             {"/api/v1/accountActiveOrders", %{"account_index" => "1"}}
+
+    assert {closed_all.conn.request_path, RequestCollector.query(closed_all.conn)} ==
+             {"/api/v1/accountInactiveOrders", %{"account_index" => "1", "limit" => "100"}}
+
+    assert {open_market.conn.request_path, RequestCollector.query(open_market.conn)} ==
+             {"/api/v1/accountActiveOrders", %{"account_index" => "1", "market_id" => "1"}}
+
+    assert {closed_market.conn.request_path, RequestCollector.query(closed_market.conn)} ==
+             {"/api/v1/accountInactiveOrders", %{"account_index" => "1", "limit" => "100", "market_id" => "1"}}
   end
 
   test "unified create dispatch transports only first-party signer output" do
@@ -352,6 +380,24 @@ defmodule Bourse.LighterAuthoredSpecTest do
       "last_trade_price" => "100.25",
       "mark_price" => "100.30",
       "daily_base_token_volume" => "12.5"
+    }
+  end
+
+  defp private_order_body do
+    %{
+      "order_id" => "99",
+      "client_order_id" => "42",
+      "initial_base_amount" => "0.0100",
+      "filled_base_amount" => "0.0000",
+      "filled_quote_amount" => "0.000000",
+      "remaining_base_amount" => "0.0100",
+      "is_ask" => false,
+      "price" => "100.25",
+      "reduce_only" => false,
+      "status" => "open",
+      "time_in_force" => "good-till-time",
+      "timestamp" => 1_800_000_000,
+      "type" => "limit"
     }
   end
 

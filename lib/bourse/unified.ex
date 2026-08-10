@@ -1169,20 +1169,28 @@ defmodule Bourse.Unified do
   # cache; only fetch when the struct has not been loaded yet.
   defp maybe_resolve_market_id(%Exchange{} = exchange, js_name, params, opts)
        when is_binary(js_name) and is_map(params) do
-    if market_id_shape?(exchange, js_name) do
-      resolve_market_id_param(exchange, params, opts)
-    else
-      {:ok, params}
+    case market_id_shape(exchange, js_name) do
+      %{"optional" => true} ->
+        if is_binary(params["symbol"]), do: resolve_market_id_param(exchange, params, opts), else: {:ok, params}
+
+      %{} ->
+        resolve_market_id_param(exchange, params, opts)
+
+      nil ->
+        {:ok, params}
     end
   end
 
   defp maybe_resolve_market_id(_exchange, _js_name, params, _opts), do: {:ok, params}
 
-  defp market_id_shape?(%Exchange{request_param_shape: shape}, js_name) when is_map(shape) do
-    match?(%{"reason" => "dynamic_construction"}, get_in(shape, [js_name, "market_id"]))
+  defp market_id_shape(%Exchange{request_param_shape: shape}, js_name) when is_map(shape) do
+    case get_in(shape, [js_name, "market_id"]) do
+      %{"reason" => "dynamic_construction"} = entry -> entry
+      _ -> nil
+    end
   end
 
-  defp market_id_shape?(_exchange, _js_name), do: false
+  defp market_id_shape(_exchange, _js_name), do: nil
 
   defp resolve_market_id_param(_exchange, %{"market_id" => _id} = params, _opts) do
     {:ok, params}

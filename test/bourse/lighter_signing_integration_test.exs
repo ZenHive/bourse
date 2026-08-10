@@ -56,6 +56,35 @@ defmodule Bourse.LighterSigningIntegrationTest do
     assert message =~ "invalid signature"
   end
 
+  test "testnet accepts unified order reads with and without a market scope" do
+    credentials = require_credentials!()
+    account_index = String.to_integer(System.fetch_env!("LIGHTER_TESTNET_ACCOUNT_INDEX"))
+
+    exchange =
+      Exchange.new!("lighter",
+        credentials: credentials,
+        sandbox: true,
+        options: %{account_index: account_index}
+      )
+
+    on_exit(fn -> assert :ok = LighterSigning.terminate_helper(credentials, helper_config(exchange)) end)
+
+    opts = [account_index: account_index, auth_deadline: System.system_time(:second) + @auth_lifetime_seconds]
+
+    assert {:ok, open_orders} = Bourse.fetch_open_orders(exchange, opts)
+    assert {:ok, closed_orders} = Bourse.fetch_closed_orders(exchange, opts)
+    assert is_list(open_orders)
+    assert is_list(closed_orders)
+
+    assert {:ok, exchange} = Bourse.load_markets(exchange)
+    symbol = exchange.markets |> List.first() |> Map.fetch!(:symbol)
+
+    assert {:ok, scoped_open_orders} = Bourse.fetch_open_orders(exchange, [{:symbol, symbol} | opts])
+    assert {:ok, scoped_closed_orders} = Bourse.fetch_closed_orders(exchange, [{:symbol, symbol} | opts])
+    assert is_list(scoped_open_orders)
+    assert is_list(scoped_closed_orders)
+  end
+
   defp require_credentials! do
     required = [
       "LIGHTER_TESTNET_API_KEY_INDEX",

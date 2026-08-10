@@ -128,3 +128,21 @@ artifact `rest-openapi`).
 <!-- carve-evidence-status
 {"carve_id":"C-T540f","date":"2026-08-04","semantic_source":{"kind":"provider_owned","reference":"priv/authority/lighter/manifest.json artifact rest-openapi; GET /api/v1/candles parameters"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Provider-owned semantics and offline request shape are pinned; no task-specific live window recording is registered"}
 -->
+
+## 2026-08-10 — optional private-order market scope (Task 541)
+
+**C-T541a — Private order reads omit `market_id` when no symbol is supplied and resolve it when a symbol is supplied (task 541). Outcome: CONFIRM provider contract.**
+
+- *Exchange semantics:* the pinned provider OpenAPI marks `market_id` optional on both
+  `accountActiveOrders` and `accountInactiveOrders`; the active-orders endpoint explicitly says
+  omission returns orders for all markets. Both endpoints still require `account_index`.
+- *Our carve:* the two authored request bindings mark `market_id` as optional dynamic
+  construction. Symbol-less unified reads omit it, while symbol-scoped reads resolve and send the
+  selected market's numeric id. Account identification remains unchanged.
+- *Verification:* live testnet calls returned HTTP/code 200 for both endpoints with `market_id`
+  omitted and with market `0` supplied. The tagged integration test exercises the same four
+  unified calls against `testnet.zklighter.elliot.ai`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T541a","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"priv/authority/lighter/manifest.json artifact rest-openapi; GET /api/v1/accountActiveOrders and /api/v1/accountInactiveOrders parameters"},"observed_evidence":{"kind":"live_venue","reference":"testnet HTTP/code 200 for unified fetch_open_orders and fetch_closed_orders with omitted and symbol-resolved market_id; pinned by lighter_signing_integration_test.exs"},"compatibility_reference":null,"resolved_tier":1}
+-->
