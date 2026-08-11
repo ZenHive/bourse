@@ -10,27 +10,33 @@ defmodule Bourse.BinancecoinmPromotionTest do
     cancelAllOrders
     cancelOrder
     createOrder
+    fetchADLRank
     fetchBalance
     fetchFundingIntervals
     fetchFundingRate
     fetchFundingRateHistory
     fetchFundingRates
+    fetchLedger
+    fetchLeverageTiers
     fetchLeverages
     fetchMarkets
     fetchMyTrades
+    fetchOpenInterest
     fetchOpenOrders
     fetchOrder
     fetchOrderBook
+    fetchOrders
     fetchPositionMode
     fetchPositions
     fetchTicker
     fetchTime
     fetchTrades
+    fetchTradingFees
     setLeverage
     setMarginMode
     setPositionMode
   )
-  @emulated_methods ~w(fetchLeverage)
+  @emulated_methods ~w(fetchCanceledOrders fetchClosedOrders fetchLeverage)
   @demo_host "demo-dapi.binance.com"
   @ticker_fixture "test/fixtures/responses/binancecoinm/fetch_ticker.json"
   @external_resource @ticker_fixture

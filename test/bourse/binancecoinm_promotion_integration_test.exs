@@ -3,19 +3,24 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
 
   use ExUnit.Case, async: false
 
+  alias Bourse.ADLRank
   alias Bourse.Balance
   alias Bourse.Credentials
   alias Bourse.Error
   alias Bourse.Exchange
   alias Bourse.FundingRate
   alias Bourse.FundingRateHistory
+  alias Bourse.LedgerEntry
+  alias Bourse.LeverageTier
   alias Bourse.Market
+  alias Bourse.OpenInterest
   alias Bourse.Order
   alias Bourse.OrderBook
   alias Bourse.Position
   alias Bourse.Test.FixtureGateIsolation
   alias Bourse.Ticker
   alias Bourse.Trade
+  alias Bourse.TradingFee
 
   @moduletag :integration
   @moduletag :network
@@ -134,6 +139,71 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
 
     assert is_list(position_risk)
     assert length(position_risk) > length(account_positions)
+  end
+
+  test "live DAPI order history and account analytics return unified values" do
+    exchange = signed_exchange!()
+
+    assert {:ok, orders} = Bourse.fetch_orders(exchange, symbol: @symbol)
+    assert Enum.all?(orders, &match?(%Order{}, &1))
+    assert orders != []
+
+    assert {:ok, closed_orders} = Bourse.fetch_closed_orders(exchange, symbol: @symbol)
+    assert Enum.all?(closed_orders, &match?(%Order{status: "closed"}, &1))
+
+    assert {:ok, canceled_orders} = Bourse.fetch_canceled_orders(exchange, symbol: @symbol)
+    assert Enum.all?(canceled_orders, &match?(%Order{status: "canceled"}, &1))
+
+    assert {:ok, [%LeverageTier{} | _] = leverage_tiers} =
+             Bourse.fetch_leverage_tiers(exchange, symbol: @symbol)
+
+    assert Enum.all?(leverage_tiers, &(&1.symbol == @symbol))
+
+    assert {:ok, %OpenInterest{symbol: @symbol, open_interest_amount: amount}} =
+             Bourse.fetch_open_interest(exchange, @symbol)
+
+    assert is_number(amount) and amount >= 0
+
+    assert {:ok, %{@symbol => %TradingFee{symbol: @symbol, maker: maker, taker: taker}}} =
+             Bourse.fetch_trading_fees(exchange, symbol: @symbol)
+
+    assert is_number(maker) and maker >= 0
+    assert is_number(taker) and taker >= 0
+
+    assert {:ok, ledger} = Bourse.fetch_ledger(exchange)
+    assert Enum.all?(ledger, &match?(%LedgerEntry{}, &1))
+
+    assert {:ok, adl_rank} = Bourse.fetch_adl_rank(exchange, symbol: @symbol)
+    assert is_nil(adl_rank) or match?(%ADLRank{symbol: @symbol}, adl_rank)
+  end
+
+  test "live DAPI history and account analytics preserve provider errors" do
+    exchange = signed_exchange!()
+    invalid_symbol = "INVALID/USD:INVALID"
+
+    assert {:error, %Error{type: :bad_symbol, code: -1121}} =
+             Bourse.fetch_orders(exchange, symbol: invalid_symbol)
+
+    assert {:error, %Error{type: :bad_symbol, code: -1121}} =
+             Bourse.fetch_closed_orders(exchange, symbol: invalid_symbol)
+
+    assert {:error, %Error{type: :bad_symbol, code: -1121}} =
+             Bourse.fetch_canceled_orders(exchange, symbol: invalid_symbol)
+
+    assert {:error, %Error{type: :bad_symbol, code: -1121}} =
+             Bourse.fetch_leverage_tiers(exchange, symbol: invalid_symbol)
+
+    assert {:error, %Error{type: :bad_symbol, code: -1121}} =
+             Bourse.fetch_open_interest(exchange, invalid_symbol)
+
+    assert {:error, %Error{type: :bad_symbol, code: -1121}} =
+             Bourse.fetch_trading_fees(exchange, symbol: invalid_symbol)
+
+    assert {:error, %Error{type: :bad_symbol, code: -1121}} =
+             Bourse.fetch_adl_rank(exchange, symbol: invalid_symbol)
+
+    assert {:error, %Error{type: :bad_request, code: -1130}} =
+             Bourse.fetch_ledger(exchange, incomeType: "INVALID")
   end
 
   test "invalid API key is classified as authentication_error" do

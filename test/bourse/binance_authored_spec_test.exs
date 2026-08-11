@@ -79,13 +79,16 @@ defmodule Bourse.BinanceAuthoredSpecTest do
   end
 
   test "the funding-interval join refuses instead of defaulting when no native symbol resolves" do
+    stub = unique_stub("binance_unresolved_funding_interval")
+    Req.Test.stub(stub, &Req.Test.json(&1, []))
+
     assert {:error, %Bourse.Error{message: message}} =
              FundingInterval.enrich(
                {:ok, %Bourse.FundingRate{interval: nil, info: %{}}},
                Exchange.new!("binance", sandbox: true),
                :fetch_funding_rate,
                %{},
-               []
+               plug: {Req.Test, stub}
              )
 
     assert message =~ "Cannot resolve the native symbol"
@@ -760,6 +763,190 @@ defmodule Bourse.BinanceAuthoredSpecTest do
                  }
                } = result
       end
+    )
+  end
+
+  test "COIN-M full order history powers direct and status-filtered unified reads" do
+    exchange = Exchange.new!("binancecoinm", api_key: "key", secret: "secret", sandbox: true)
+
+    canceled = coinm_order_row(1, "CANCELED")
+    filled = coinm_order_row(2, "FILLED")
+
+    assert Exchange.has?(exchange, "fetchOrders")
+    assert exchange.has["fetchClosedOrders"] == "emulated"
+    assert exchange.has["fetchCanceledOrders"] == "emulated"
+
+    assert_coinm_typed_endpoint(
+      exchange,
+      :fetch_orders,
+      "fetchOrders",
+      %{"symbol" => "BTC/USD:BTC"},
+      [canceled, filled],
+      "/dapi/v1/allOrders",
+      fn result ->
+        assert [%Bourse.Order{id: "1", status: "canceled"}, %Bourse.Order{id: "2", status: "closed"}] = result
+      end
+    )
+
+    assert_coinm_typed_endpoint(
+      exchange,
+      :fetch_closed_orders,
+      "fetchClosedOrders",
+      %{"symbol" => "BTC/USD:BTC"},
+      [canceled, filled],
+      "/dapi/v1/allOrders",
+      fn result -> assert [%Bourse.Order{id: "2", status: "closed"}] = result end
+    )
+
+    assert_coinm_typed_endpoint(
+      exchange,
+      :fetch_canceled_orders,
+      "fetchCanceledOrders",
+      %{"symbol" => "BTC/USD:BTC"},
+      [canceled, filled],
+      "/dapi/v1/allOrders",
+      fn result -> assert [%Bourse.Order{id: "1", status: "canceled"}] = result end
+    )
+  end
+
+  test "COIN-M account analytics select DAPI endpoints and return typed structs" do
+    exchange = Exchange.new!("binancecoinm", api_key: "key", secret: "secret", sandbox: true)
+    symbol = "BTC/USD:BTC"
+
+    for capability <- ~w(fetchLeverageTiers fetchOpenInterest fetchTradingFees fetchLedger fetchADLRank) do
+      assert Exchange.has?(exchange, capability)
+    end
+
+    leverage_body = [
+      %{
+        "symbol" => "BTCUSD_PERP",
+        "brackets" => [
+          %{
+            "bracket" => 1,
+            "initialLeverage" => 125,
+            "maintMarginRatio" => "0.004",
+            "qtyCap" => 50,
+            "qtyFloor" => 0
+          }
+        ]
+      }
+    ]
+
+    assert_coinm_typed_endpoint(
+      exchange,
+      :fetch_leverage_tiers,
+      "fetchLeverageTiers",
+      %{"symbol" => symbol},
+      leverage_body,
+      "/dapi/v2/leverageBracket",
+      fn result ->
+        assert [
+                 %Bourse.LeverageTier{
+                   symbol: ^symbol,
+                   tier: 1,
+                   min_notional: nil,
+                   max_notional: nil,
+                   maintenance_margin_rate: 0.004,
+                   max_leverage: 125,
+                   info: %{"qtyFloor" => 0, "qtyCap" => 50}
+                 }
+               ] = result
+      end
+    )
+
+    open_interest = %{
+      "contractType" => "PERPETUAL",
+      "openInterest" => "15004",
+      "pair" => "BTCUSD",
+      "symbol" => "BTCUSD_PERP",
+      "time" => @frozen_timestamp_ms
+    }
+
+    assert_coinm_typed_endpoint(
+      exchange,
+      :fetch_open_interest,
+      "fetchOpenInterest",
+      %{"symbol" => symbol},
+      open_interest,
+      "/dapi/v1/openInterest",
+      fn result ->
+        assert %Bourse.OpenInterest{
+                 symbol: ^symbol,
+                 open_interest_amount: 15_004.0,
+                 timestamp: @frozen_timestamp_ms,
+                 info: ^open_interest
+               } = result
+      end
+    )
+
+    commission = %{
+      "makerCommissionRate" => "0.00015",
+      "rpiCommissionRate" => "0.00005",
+      "symbol" => "BTCUSD_PERP",
+      "takerCommissionRate" => "0.0004"
+    }
+
+    assert_coinm_typed_endpoint(
+      exchange,
+      :fetch_trading_fees,
+      "fetchTradingFees",
+      %{"symbol" => symbol},
+      commission,
+      "/dapi/v1/commissionRate",
+      fn result ->
+        assert %{
+                 ^symbol => %Bourse.TradingFee{
+                   symbol: ^symbol,
+                   maker: 0.00015,
+                   taker: 0.0004,
+                   info: ^commission
+                 }
+               } = result
+      end
+    )
+
+    income = %{
+      "asset" => "BTC",
+      "income" => "-0.00000375",
+      "incomeType" => "TRANSFER",
+      "symbol" => "",
+      "time" => @frozen_timestamp_ms,
+      "tradeId" => "7",
+      "tranId" => 42
+    }
+
+    assert_coinm_typed_endpoint(
+      exchange,
+      :fetch_ledger,
+      "fetchLedger",
+      %{},
+      [income],
+      "/dapi/v1/income",
+      fn result ->
+        assert [
+                 %Bourse.LedgerEntry{
+                   id: "42",
+                   reference_id: "7",
+                   type: "transfer",
+                   currency: "BTC",
+                   amount: -0.00000375,
+                   timestamp: @frozen_timestamp_ms,
+                   info: ^income
+                 }
+               ] = result
+      end
+    )
+
+    adl = %{"adlQuantile" => %{"BOTH" => 0, "LONG" => 0, "SHORT" => 0}, "symbol" => "BTCUSD_PERP"}
+
+    assert_coinm_typed_endpoint(
+      exchange,
+      :fetch_adl_rank,
+      "fetchADLRank",
+      %{"symbol" => symbol},
+      [adl],
+      "/dapi/v1/adlQuantile",
+      fn result -> assert %Bourse.ADLRank{symbol: ^symbol, rank: 0, info: ^adl} = result end
     )
   end
 
@@ -3228,6 +3415,50 @@ defmodule Bourse.BinanceAuthoredSpecTest do
 
     assert RequestCollector.one!(requests).request_path == expected_path
     assertion.(result)
+  end
+
+  defp assert_coinm_typed_endpoint(exchange, method, js_name, params, body, expected_path, assertion) do
+    {requests, stub} = path_body_stub(body)
+
+    assert {:ok, result} =
+             Unified.call(exchange, method, js_name, params,
+               plug: {Req.Test, stub},
+               timestamp_ms_override: @frozen_timestamp_ms
+             )
+
+    request = RequestCollector.one!(requests)
+    assert request.request_path == expected_path
+
+    if symbol = params["symbol"] do
+      assert signed_query_params(RequestCollector.query(request))["symbol"] == Symbol.to_exchange_id(symbol, exchange)
+    end
+
+    assertion.(result)
+  end
+
+  defp coinm_order_row(id, status) do
+    %{
+      "avgPrice" => "50000",
+      "clientOrderId" => "task-545-#{id}",
+      "cumBase" => "1",
+      "cumQuote" => "50000",
+      "executedQty" => "1",
+      "orderId" => id,
+      "origQty" => "1",
+      "origType" => "LIMIT",
+      "pair" => "BTCUSD",
+      "positionSide" => "LONG",
+      "price" => "50000",
+      "reduceOnly" => false,
+      "side" => "BUY",
+      "status" => status,
+      "stopPrice" => "0",
+      "symbol" => "BTCUSD_PERP",
+      "time" => @frozen_timestamp_ms,
+      "timeInForce" => "GTC",
+      "type" => "LIMIT",
+      "updateTime" => @frozen_timestamp_ms
+    }
   end
 
   defp assert_path_body_request(requests, expected_path) do

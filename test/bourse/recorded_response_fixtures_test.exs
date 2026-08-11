@@ -122,6 +122,12 @@ defmodule Bourse.RecordedResponseFixturesTest do
     assert {"binanceusdm", :fetch_positions_risk} in RecordedResponseFixtures.capture_targets()
     assert {"binanceusdm", :fetch_leverages} in RecordedResponseFixtures.capture_targets()
     assert {"binancecoinm", :fetch_leverages} in RecordedResponseFixtures.capture_targets()
+    assert {"binancecoinm", :fetch_orders} in RecordedResponseFixtures.capture_targets()
+    assert {"binancecoinm", :fetch_leverage_tiers} in RecordedResponseFixtures.capture_targets()
+    assert {"binancecoinm", :fetch_open_interest} in RecordedResponseFixtures.capture_targets()
+    assert {"binancecoinm", :fetch_trading_fees} in RecordedResponseFixtures.capture_targets()
+    assert {"binancecoinm", :fetch_ledger} in RecordedResponseFixtures.capture_targets()
+    assert {"binancecoinm", :fetch_adl_rank} in RecordedResponseFixtures.capture_targets()
     assert {"binancecoinm", :error_position_mode_unchanged} in RecordedResponseFixtures.capture_targets()
     assert RecordedResponseFixtures.capture_category("deribit", :fetch_balance) == :private
     assert RecordedResponseFixtures.capture_category("binance", :fetch_ticker) == :public
@@ -137,6 +143,12 @@ defmodule Bourse.RecordedResponseFixturesTest do
 
     assert RecordedResponseFixtures.oracle_identity("binancecoinm", :fetch_leverages)["endpoint"] ==
              "dapi/v1/account"
+
+    assert RecordedResponseFixtures.oracle_identity("binancecoinm", :fetch_leverage_tiers)["endpoint"] ==
+             "dapi/v2/leverageBracket"
+
+    assert RecordedResponseFixtures.oracle_identity("binancecoinm", :fetch_open_interest)["endpoint"] ==
+             "dapi/v1/openInterest"
 
     assert RecordedResponseFixtures.oracle_identity("binancecoinm", :error_position_mode_unchanged)["endpoint"] ==
              "dapi/v1/positionSide/dual"
@@ -218,6 +230,14 @@ defmodule Bourse.RecordedResponseFixturesTest do
           {"binancecoinm", :fetch_balance},
           {"binancecoinm", :fetch_positions},
           {"binancecoinm", :fetch_open_orders},
+          {"binancecoinm", :fetch_orders},
+          {"binancecoinm", :fetch_closed_orders},
+          {"binancecoinm", :fetch_canceled_orders},
+          {"binancecoinm", :fetch_leverage_tiers},
+          {"binancecoinm", :fetch_open_interest},
+          {"binancecoinm", :fetch_trading_fees},
+          {"binancecoinm", :fetch_ledger},
+          {"binancecoinm", :fetch_adl_rank},
           {"lighter", :fetch_ticker},
           {"lighter", :fetch_closed_orders},
           {"lighter", :fetch_open_orders}

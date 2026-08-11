@@ -7,6 +7,46 @@ Append-only schema confrontations for Binance COIN-M. Follow the allocation and 
 venue-specific decision in the self-contained runtime document. Provider-owned evidence is
 indexed by `priv/authority/binancecoinm/manifest.json`.
 
+## 2026-08-11 — order history and account analytics (Task 545)
+
+**C-T545a — full DAPI order history is the source for direct, filled, and canceled order reads
+(task 545). Outcome: CONFIRM provider contract.** Binance's COIN-M All Orders contract defines
+`GET /dapi/v1/allOrders` as the symbol-scoped history of active, canceled, and filled orders.
+The unified client maps `fetchOrders` to that response and derives `fetchClosedOrders` and
+`fetchCanceledOrders` by filtering the parsed provider statuses. Live demo DAPI returned four
+typed historical orders for `BTCUSD_PERP`; the same endpoint returned `-1121` for an invalid
+symbol.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T545a","date":"2026-08-11","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binancecoinm/manifest.json artifact developer-docs-full; COIN-M All Orders contract"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binancecoinm/fetch_orders.json, fetch_closed_orders.json, and fetch_canceled_orders.json plus the tagged live integration success/error assertions"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
+**C-T545b — leverage brackets, open interest, and commission rates remain distinct typed reads
+(task 545). Outcome: CONFIRM provider contract.** The provider's V2 Notional Bracket contract
+defines symbol-scoped `brackets` with leverage, quantity floors/caps, and maintenance ratios;
+the Open Interest contract defines contract count and observation time; the Commission Rate
+contract defines maker and taker rates. These map respectively to `LeverageTier`, `OpenInterest`,
+and `TradingFee`. The COIN-M `qtyFloor` / `qtyCap` values remain in `LeverageTier.info` instead
+of being mislabeled as unified notional bounds. Live demo DAPI returned populated success
+responses for all three and `-1121` for invalid symbols.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T545b","date":"2026-08-11","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binancecoinm/manifest.json artifact developer-docs-full; COIN-M V2 Notional Bracket, Open Interest, and Commission Rate contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/exchange_accepted_requests/binancecoinm/fetch_leverage_tiers.json, test/fixtures/public_accepted_requests/binancecoinm/fetch_open_interest--dapiPublic_get_openinterest.json, test/fixtures/responses/binancecoinm/fetch_trading_fees.json, and tagged live integration success/error assertions"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
+**C-T545c — income history is ledger data and an empty ADL object means no ranked position
+(task 545). Outcome: CONFIRM provider contract.** The Income History contract defines
+`incomeType`, signed `income`, `asset`, `time`, `tranId`, and `tradeId`, which map directly to a
+typed `LedgerEntry`. The ADL Quantile contract defines ranks from 0 through 4 by position side.
+The funded demo account returned successful empty income history and an empty ADL object; the
+client preserves those valid states as `[]` and `nil`. An invalid income type returned `-1130`,
+and an invalid ADL symbol returned `-1121`. Provider-shaped populated rows are pinned by offline
+typed parser tests because this account had no income or ranked position during the sweep.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T545c","date":"2026-08-11","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binancecoinm/manifest.json artifact developer-docs-full; COIN-M Income History and Position ADL Quantile contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binancecoinm/fetch_ledger.json and fetch_adl_rank.json plus tagged live integration success/error assertions"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The live account returned valid empty income and ADL states; populated provider-shaped rows are contract-authored and pinned offline rather than observed on this account"}
+-->
+
 ## 2026-08-10 — position-mode and leverage capability routing (Task 586)
 
 **C-T586a — COIN-M exposes position-mode and initial-leverage writes through DAPI (task 586).

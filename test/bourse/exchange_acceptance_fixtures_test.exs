@@ -171,7 +171,7 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
           expected_profiles =
             case venue do
               "binanceusdm" -> expected_profiles ++ ["set_position_mode"]
-              "binancecoinm" -> expected_profiles ++ ["set_leverage"]
+              "binancecoinm" -> expected_profiles ++ ["set_leverage", "fetch_leverage_tiers"]
             end
 
           assert Enum.map(goldens, &get_in(&1, ["acceptance", "profile"])) == expected_profiles

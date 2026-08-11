@@ -11,6 +11,7 @@ defmodule Bourse.RecordedResponseFixtures.ListBody do
 
   @list_methods [
     :fetch_open_orders,
+    :fetch_orders,
     :fetch_closed_orders,
     :fetch_canceled_orders,
     :fetch_account_positions,

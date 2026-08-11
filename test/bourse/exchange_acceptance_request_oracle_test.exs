@@ -168,6 +168,12 @@ defmodule Bourse.ExchangeAcceptanceRequestOracleTest do
       "leverage" => "3",
       "symbol" => "BTCUSD_PERP"
     })
+
+    leverage_tiers = venue_golden!("binancecoinm", "fetch_leverage_tiers")
+
+    assert_request(leverage_tiers, "demo-dapi.binance.com", "/dapi/v2/leverageBracket", "GET", %{
+      "symbol" => "BTCUSD_PERP"
+    })
   end
 
   test "Binance spot order golden pins pass-through controls" do

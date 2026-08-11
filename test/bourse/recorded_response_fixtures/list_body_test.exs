@@ -7,6 +7,7 @@ defmodule Bourse.RecordedResponseFixtures.ListBodyTest do
 
   @list_fixture_methods ~w(
     fetch_open_orders
+    fetch_orders
     fetch_closed_orders
     fetch_canceled_orders
     fetch_account_positions
@@ -20,6 +21,7 @@ defmodule Bourse.RecordedResponseFixtures.ListBodyTest do
   test "classifies list-returning private methods" do
     assert ListBody.list_methods() == [
              :fetch_open_orders,
+             :fetch_orders,
              :fetch_closed_orders,
              :fetch_canceled_orders,
              :fetch_account_positions,
@@ -31,6 +33,7 @@ defmodule Bourse.RecordedResponseFixtures.ListBodyTest do
            ]
 
     assert ListBody.list_method?(:fetch_open_orders)
+    assert ListBody.list_method?(:fetch_orders)
     assert ListBody.list_method?("fetch_positions")
     refute ListBody.list_method?(:fetch_balance)
   end

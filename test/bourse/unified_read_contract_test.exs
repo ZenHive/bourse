@@ -1043,6 +1043,7 @@ defmodule Bourse.UnifiedReadContractTest do
   end
 
   defp valid_unified_shape?(:fetch_position_adl_rank, nil), do: true
+  defp valid_unified_shape?(:fetch_adl_rank, nil), do: true
   defp valid_unified_shape?(_method, %{__struct__: _module}), do: true
 
   defp valid_unified_shape?(_method, values) when is_list(values) do

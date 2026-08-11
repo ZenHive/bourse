@@ -1649,6 +1649,22 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
                )
     end
 
+    test "COIN-M fetchADLRank treats the documented empty account object as no rank" do
+      exchange = Exchange.new!("binancecoinm")
+
+      assert {:ok, nil} =
+               ReadParse.parse(
+                 exchange,
+                 Bourse.Binancecoinm,
+                 :fetch_adl_rank,
+                 "fetchADLRank",
+                 %{},
+                 %{"symbol" => "BTC/USD:BTC"},
+                 :parse_adl_rank,
+                 false
+               )
+    end
+
     test "fetchPositionsADLRank backfills the requested symbol on each rank row" do
       exchange = Exchange.new!("bybit")
       body = bybit_adl_body()

@@ -89,6 +89,12 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       {"binancecoinm", :fetch_markets} => public("dapi/v1/exchangeInfo", "dapi.binance.com", "BTC/USD:BTC"),
       {"binancecoinm", :fetch_ticker} =>
         public("dapi/v1/ticker/price", "dapi.binance.com", "BTC/USD:BTC", params: %{"symbol" => "BTCUSD_PERP"}),
+      {"binancecoinm", :fetch_open_interest} =>
+        public("dapi/v1/openInterest", "demo-dapi.binance.com", "BTC/USD:BTC",
+          environment: "testnet-demo",
+          exchange_opts: [sandbox: true],
+          params: %{"symbol" => "BTC/USD:BTC"}
+        ),
       {"binanceusdm", :fetch_markets} => public("fapi/v1/exchangeInfo", "fapi.binance.com", "BTC/USDT:USDT"),
       {"bybit", :fetch_ticker} => public("v5/market/tickers", "api.bybit.com", "BTC/USDT:USDT"),
       {"bybit", :fetch_trades} => public("v5/market/recent-trade", "api.bybit.com", "BTC/USDT:USDT"),
@@ -209,6 +215,16 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
         binance_coinm("dapi/v1/account", %{"symbol" => "BTC/USD:BTC"}, load_markets?: true),
       {"binancecoinm", :fetch_open_orders} =>
         binance_coinm("dapi/v1/openOrders", %{"symbol" => "BTCUSD_PERP"}, symbol: "BTC/USD:BTC"),
+      {"binancecoinm", :fetch_orders} =>
+        binance_coinm("dapi/v1/allOrders", %{"symbol" => "BTC/USD:BTC", "limit" => @history_limit}),
+      {"binancecoinm", :fetch_closed_orders} =>
+        binance_coinm("dapi/v1/allOrders", %{"symbol" => "BTC/USD:BTC", "limit" => @history_limit}),
+      {"binancecoinm", :fetch_canceled_orders} =>
+        binance_coinm("dapi/v1/allOrders", %{"symbol" => "BTC/USD:BTC", "limit" => @history_limit}),
+      {"binancecoinm", :fetch_leverage_tiers} => binance_coinm("dapi/v2/leverageBracket", %{"symbol" => "BTC/USD:BTC"}),
+      {"binancecoinm", :fetch_trading_fees} => binance_coinm("dapi/v1/commissionRate", %{"symbol" => "BTC/USD:BTC"}),
+      {"binancecoinm", :fetch_ledger} => binance_coinm("dapi/v1/income", %{"limit" => @history_limit}),
+      {"binancecoinm", :fetch_adl_rank} => binance_coinm("dapi/v1/adlQuantile", %{"symbol" => "BTC/USD:BTC"}),
       {"binancecoinm", :fetch_positions} => binance_coinm("dapi/v1/positionRisk", %{"symbols" => ["BTC/USD:BTC"]}),
       {"binancecoinm", :fetch_my_trades} =>
         binance_coinm("dapi/v1/userTrades", %{"symbol" => "BTCUSD_PERP", "limit" => @history_limit},

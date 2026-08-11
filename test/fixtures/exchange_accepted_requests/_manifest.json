@@ -1,6 +1,6 @@
 {
-  "count": 25,
-  "generated_at": "2026-08-10T12:04:10Z",
+  "count": 26,
+  "generated_at": "2026-08-10T23:42:38Z",
   "goldens": [
     {
       "business_success": "HTTP 2xx paper-account payload",
@@ -154,6 +154,19 @@
       "method": "fetch_balance",
       "path": "binancecoinm/fetch_balance.json",
       "profile": "fetch_balance",
+      "venue": "binancecoinm"
+    },
+    {
+      "business_success": "HTTP 200 populated COIN-M V2 leverage-bracket response",
+      "capture_date": "2026-08-10",
+      "captured_at": "2026-08-10T23:42:38.741Z",
+      "endpoint": "dapi/v2/leverageBracket",
+      "host": "demo-dapi.binance.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binancecoinm fetch_leverage_tiers accepted 2026-08-10 (dapi/v2/leverageBracket @ demo-dapi.binance.com, HTTP 200, HTTP 200 populated COIN-M V2 leverage-bracket response).",
+      "method": "fetch_leverage_tiers",
+      "path": "binancecoinm/fetch_leverage_tiers.json",
+      "profile": "fetch_leverage_tiers",
       "venue": "binancecoinm"
     },
     {

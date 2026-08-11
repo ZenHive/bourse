@@ -1,5 +1,5 @@
 {
-  "count": 166,
+  "count": 167,
   "exclusion_count": 96,
   "exclusions": [
     {
@@ -1059,7 +1059,7 @@
       "venue": "okx"
     }
   ],
-  "generated_at": "2026-08-10T02:51:51Z",
+  "generated_at": "2026-08-10T23:39:20Z",
   "goldens": [
     {
       "branch": "market_public_get_v1beta3_crypto__loc__bars",
@@ -3386,6 +3386,20 @@
         "public"
       ],
       "venue": "okx"
+    },
+    {
+      "branch": "dapiPublic_get_openinterest",
+      "capture_date": "2026-08-10",
+      "captured_at": "2026-08-10T23:39:18.441Z",
+      "endpoint": "openInterest",
+      "host": "dapi.binance.com",
+      "http_status": 200,
+      "method": "fetchOpenInterest",
+      "path": "binancecoinm/fetch_open_interest--dapiPublic_get_openinterest.json",
+      "sections": [
+        "dapiPublic"
+      ],
+      "venue": "binancecoinm"
     }
   ],
   "oracle": "public_exchange_acceptance",

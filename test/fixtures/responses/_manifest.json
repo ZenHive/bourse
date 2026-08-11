@@ -1,5 +1,5 @@
 {
-  "count": 98,
+  "count": 106,
   "fixtures": [
     "alpaca/fetch_balance.json",
     "alpaca/fetch_markets.json",
@@ -21,13 +21,21 @@
     "binance/fetch_tickers_non_usdt_quotes.json",
     "binance/fetch_trades.json",
     "binance/order_lifecycle.json",
+    "binancecoinm/fetch_adl_rank.json",
     "binancecoinm/fetch_balance.json",
+    "binancecoinm/fetch_canceled_orders.json",
+    "binancecoinm/fetch_closed_orders.json",
+    "binancecoinm/fetch_ledger.json",
+    "binancecoinm/fetch_leverage_tiers.json",
     "binancecoinm/fetch_leverages.json",
     "binancecoinm/fetch_markets.json",
     "binancecoinm/fetch_my_trades.json",
+    "binancecoinm/fetch_open_interest.json",
     "binancecoinm/fetch_open_orders.json",
+    "binancecoinm/fetch_orders.json",
     "binancecoinm/fetch_positions.json",
     "binancecoinm/fetch_ticker.json",
+    "binancecoinm/fetch_trading_fees.json",
     "binancecoinm/order_lifecycle.json",
     "binanceusdm/fetch_account_positions.json",
     "binanceusdm/fetch_balance.json",
@@ -100,7 +108,7 @@
     "okx/fetch_ticker.json",
     "okx/fetch_trades.json"
   ],
-  "generated_at": "2026-08-10T12:04:27.130720Z",
+  "generated_at": "2026-08-10T23:34:35.210834Z",
   "recordings": [
     {
       "capture_date": "2026-07-26",
@@ -287,12 +295,60 @@
       "venue": "binance"
     },
     {
+      "capture_date": "2026-08-10",
+      "captured_at": "2026-08-10T23:34:35.205389Z",
+      "endpoint": "dapi/v1/adlQuantile",
+      "host": "demo-dapi.binance.com",
+      "method": "fetch_adl_rank",
+      "path": "binancecoinm/fetch_adl_rank.json",
+      "venue": "binancecoinm"
+    },
+    {
       "capture_date": "2026-07-26",
       "captured_at": "2026-07-26T05:46:52.610349Z",
       "endpoint": "dapi/v1/account",
       "host": "demo-dapi.binance.com",
       "method": "fetch_balance",
       "path": "binancecoinm/fetch_balance.json",
+      "venue": "binancecoinm"
+    },
+    {
+      "body_populated": true,
+      "capture_date": "2026-08-10",
+      "captured_at": "2026-08-10T23:34:21.909647Z",
+      "endpoint": "dapi/v1/allOrders",
+      "host": "demo-dapi.binance.com",
+      "method": "fetch_canceled_orders",
+      "path": "binancecoinm/fetch_canceled_orders.json",
+      "venue": "binancecoinm"
+    },
+    {
+      "body_populated": true,
+      "capture_date": "2026-08-10",
+      "captured_at": "2026-08-10T23:34:19.373969Z",
+      "endpoint": "dapi/v1/allOrders",
+      "host": "demo-dapi.binance.com",
+      "method": "fetch_closed_orders",
+      "path": "binancecoinm/fetch_closed_orders.json",
+      "venue": "binancecoinm"
+    },
+    {
+      "body_populated": false,
+      "capture_date": "2026-08-10",
+      "captured_at": "2026-08-10T23:34:32.570385Z",
+      "endpoint": "dapi/v1/income",
+      "host": "demo-dapi.binance.com",
+      "method": "fetch_ledger",
+      "path": "binancecoinm/fetch_ledger.json",
+      "venue": "binancecoinm"
+    },
+    {
+      "capture_date": "2026-08-10",
+      "captured_at": "2026-08-10T23:34:24.467470Z",
+      "endpoint": "dapi/v2/leverageBracket",
+      "host": "demo-dapi.binance.com",
+      "method": "fetch_leverage_tiers",
+      "path": "binancecoinm/fetch_leverage_tiers.json",
       "venue": "binancecoinm"
     },
     {
@@ -325,6 +381,15 @@
       "venue": "binancecoinm"
     },
     {
+      "capture_date": "2026-08-10",
+      "captured_at": "2026-08-10T23:34:27.088356Z",
+      "endpoint": "dapi/v1/openInterest",
+      "host": "demo-dapi.binance.com",
+      "method": "fetch_open_interest",
+      "path": "binancecoinm/fetch_open_interest.json",
+      "venue": "binancecoinm"
+    },
+    {
       "body_populated": false,
       "capture_date": "2026-07-26",
       "captured_at": "2026-07-26T05:47:36.990453Z",
@@ -332,6 +397,16 @@
       "host": "demo-dapi.binance.com",
       "method": "fetch_open_orders",
       "path": "binancecoinm/fetch_open_orders.json",
+      "venue": "binancecoinm"
+    },
+    {
+      "body_populated": true,
+      "capture_date": "2026-08-10",
+      "captured_at": "2026-08-10T23:34:16.644331Z",
+      "endpoint": "dapi/v1/allOrders",
+      "host": "demo-dapi.binance.com",
+      "method": "fetch_orders",
+      "path": "binancecoinm/fetch_orders.json",
       "venue": "binancecoinm"
     },
     {
@@ -351,6 +426,15 @@
       "host": "dapi.binance.com",
       "method": "fetch_ticker",
       "path": "binancecoinm/fetch_ticker.json",
+      "venue": "binancecoinm"
+    },
+    {
+      "capture_date": "2026-08-10",
+      "captured_at": "2026-08-10T23:34:29.919628Z",
+      "endpoint": "dapi/v1/commissionRate",
+      "host": "demo-dapi.binance.com",
+      "method": "fetch_trading_fees",
+      "path": "binancecoinm/fetch_trading_fees.json",
       "venue": "binancecoinm"
     },
     {

@@ -194,7 +194,8 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
       binancecoinm_take_profit_order_profile(),
       binancecoinm_margin_mode_profile(),
       binancecoinm_cancel_all_orders_profile(),
-      binancecoinm_leverage_profile()
+      binancecoinm_leverage_profile(),
+      binancecoinm_leverage_tiers_profile()
     ]
   end
 
@@ -427,6 +428,37 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
       stub_body: %{"leverage" => 3, "maxQty" => "1000", "symbol" => "BTCUSD_PERP"},
       symbol: "BTC/USD:BTC",
       business_success: "HTTP 200 COIN-M leverage 3 acknowledgement for flat BTCUSD_PERP"
+    )
+  end
+
+  defp binancecoinm_leverage_tiers_profile do
+    build_profile(
+      "binancecoinm",
+      :fetch_leverage_tiers,
+      "dapi/v2/leverageBracket",
+      "demo-dapi.binance.com",
+      :binanceusdm,
+      sandbox: true,
+      fixture_seed: :empty,
+      params: %{"symbol" => "BTC/USD:BTC"},
+      sensitive_headers: ["x-mbx-apikey"],
+      sensitive_query: ["signature"],
+      stub_body: [
+        %{
+          "brackets" => [
+            %{
+              "bracket" => 1,
+              "initialLeverage" => 125,
+              "maintMarginRatio" => "0.004",
+              "qtyCap" => 50,
+              "qtyFloor" => 0
+            }
+          ],
+          "symbol" => "BTCUSD_PERP"
+        }
+      ],
+      symbol: "BTC/USD:BTC",
+      business_success: "HTTP 200 populated COIN-M V2 leverage-bracket response"
     )
   end
 
@@ -943,6 +975,8 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
   defp accepted_business_response(%{venue: "binancecoinm"}, body) when is_map(body) do
     if Map.has_key?(body, "code"), do: {:error, :venue_business_failure}, else: {:ok, nil}
   end
+
+  defp accepted_business_response(%{venue: "binancecoinm"}, body) when is_list(body), do: {:ok, nil}
 
   defp accepted_business_response(%{venue: "binanceusdm"}, body) when is_map(body) do
     if Map.has_key?(body, "code"), do: {:error, :venue_business_failure}, else: {:ok, nil}

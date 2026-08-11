@@ -165,6 +165,9 @@ defmodule Bourse.Unified.ReadParse do
   defp do_parse("adl_rank", %Exchange{id: "binanceusdm"}, _module, "fetchPositionADLRank", body, _params, _parser, false)
        when is_map(body) and map_size(body) == 0, do: {:ok, nil}
 
+  defp do_parse("adl_rank", %Exchange{id: "binancecoinm"}, _module, "fetchADLRank", body, _params, _parser, false)
+       when is_map(body) and map_size(body) == 0, do: {:ok, nil}
+
   defp do_parse("order_book", exchange, _module, _js_name, body, params, _parser, _list_return?) do
     with :ok <- reject_error_envelope(body, exchange),
          %{} = payload <- order_book_payload(body),
@@ -298,7 +301,7 @@ defmodule Bourse.Unified.ReadParse do
          parsed = stamp_bybit_fetch_position_timestamp(parsed, body, exchange, js_name),
          {:ok, parsed} <- backfill_native_symbols(parsed, exchange, parse_type, params),
          parsed = filter_deribit_requested_tickers(parsed, exchange, js_name, params),
-         {:ok, parsed} <- shape_parsed_result(parsed, js_name, list_return?),
+         {:ok, parsed} <- shape_parsed_result(parsed, js_name, list_return?, params),
          {:ok, parsed} <- backfill_market_symbols(parsed, exchange, parse_type, payload, envelope_list?),
          # Emptiness is judged BEFORE request-symbol backfill so a genuinely
          # empty list/single parse (e.g. all-nil trades) is rejected rather than
@@ -663,28 +666,33 @@ defmodule Bourse.Unified.ReadParse do
 
   # FundingRates and OptionChain are symbol-keyed maps built from a list
   # of parsed structs — mirrors `parseFundingRates` / `parseOptionChain`.
-  defp shape_parsed_result(parsed, js_name, false) when js_name in @currency_dict_return_methods do
+  defp shape_parsed_result(parsed, js_name, false, _params) when js_name in @currency_dict_return_methods do
     case parsed do
       structs when is_list(structs) -> {:ok, index_by_currency(structs)}
       other -> {:ok, other}
     end
   end
 
-  defp shape_parsed_result(parsed, js_name, false) when js_name in @symbol_dict_return_methods do
+  defp shape_parsed_result(%Bourse.TradingFee{} = fee, "fetchTradingFees", false, params) do
+    fee = %{fee | symbol: requested_symbol(params, fee.symbol)}
+    {:ok, index_by_symbol([fee])}
+  end
+
+  defp shape_parsed_result(parsed, js_name, false, _params) when js_name in @symbol_dict_return_methods do
     case parsed do
       structs when is_list(structs) -> {:ok, index_by_symbol(structs)}
       other -> {:ok, other}
     end
   end
 
-  defp shape_parsed_result(parsed, js_name, _list_return?) when js_name in @network_dict_return_methods do
+  defp shape_parsed_result(parsed, js_name, _list_return?, _params) when js_name in @network_dict_return_methods do
     case parsed do
       structs when is_list(structs) -> {:ok, index_by_network(structs)}
       other -> {:ok, other}
     end
   end
 
-  defp shape_parsed_result(parsed, _js_name, _list_return?), do: {:ok, parsed}
+  defp shape_parsed_result(parsed, _js_name, _list_return?, _params), do: {:ok, parsed}
 
   defp maybe_enrich_list(parsed, payload, js_name) when js_name in @dict_return_methods do
     enrich(parsed, payload, true)

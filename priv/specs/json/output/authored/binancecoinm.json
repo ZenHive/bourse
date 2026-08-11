@@ -911,14 +911,14 @@
       "fetchL3OrderBook": false,
       "createPostOnlyOrder": false,
       "repayCrossMargin": false,
-      "fetchADLRank": false,
+      "fetchADLRank": true,
       "fetchTime": true,
       "fetchDepositWithdrawFees": false,
       "closeAllPositions": false,
       "fetchMarkOHLCV": false,
       "borrowCrossMargin": false,
       "fetchPositionsADLRank": false,
-      "fetchOrders": false,
+      "fetchOrders": true,
       "fetchDeposits": false,
       "fetchOrderTrades": false,
       "future": false,
@@ -936,13 +936,13 @@
       "fetchDepositsWithdrawals": false,
       "fetchPositionsHistory": false,
       "fetchConvertTradeHistory": false,
-      "fetchClosedOrders": false,
+      "fetchClosedOrders": "emulated",
       "fetchMarginModes": false,
       "fetchLastPrices": false,
       "setMargin": false,
       "fetchLongShortRatioHistory": false,
       "fetchOptionPositions": false,
-      "fetchOpenInterest": false,
+      "fetchOpenInterest": true,
       "fetchDepositAddresses": false,
       "fetchTransfers": false,
       "fetchBorrowRateHistories": false,
@@ -974,7 +974,7 @@
       "fetchFundingRateHistory": true,
       "fetchCurrencies": false,
       "fetchConvertCurrencies": false,
-      "fetchLedger": false,
+      "fetchLedger": true,
       "fetchOption": false,
       "transfer": false,
       "fetchMyTrades": true,
@@ -983,7 +983,7 @@
       "createOrder": true,
       "fetchTransactionFees": false,
       "fetchTrades": true,
-      "fetchCanceledOrders": false,
+      "fetchCanceledOrders": "emulated",
       "privateAPI": false,
       "createOrderWithTakeProfitAndStopLoss": false,
       "fetchL2OrderBook": false,
@@ -994,7 +994,7 @@
       "createLimitBuyOrder": false,
       "fetchPosition": false,
       "fetchMySettlementHistory": false,
-      "fetchLeverageTiers": false,
+      "fetchLeverageTiers": true,
       "fetchFundingIntervals": true,
       "createTrailingPercentOrder": false,
       "createLimitSellOrder": false,
@@ -1026,7 +1026,7 @@
       "fetchDepositAddressesByNetwork": false,
       "signIn": false,
       "createMarketSellOrder": false,
-      "fetchTradingFees": false,
+      "fetchTradingFees": true,
       "fetchOrder": true,
       "fetchOpenInterestHistory": false,
       "fetchUnderlyingAssets": false
@@ -9340,7 +9340,9 @@
       "fetchL3OrderBook": [],
       "createPostOnlyOrder": [],
       "repayCrossMargin": [],
-      "fetchADLRank": [],
+      "fetchADLRank": [
+        "dapiPrivateGetAdlQuantile"
+      ],
       "fetchTime": [
         "dapiPublicGetTime"
       ],
@@ -9349,7 +9351,9 @@
       "fetchMarkOHLCV": [],
       "borrowCrossMargin": [],
       "fetchPositionsADLRank": [],
-      "fetchOrders": [],
+      "fetchOrders": [
+        "dapiPrivateGetAllOrders"
+      ],
       "fetchDeposits": [],
       "fetchOrderTrades": [],
       "future": [],
@@ -9371,13 +9375,17 @@
       "fetchDepositsWithdrawals": [],
       "fetchPositionsHistory": [],
       "fetchConvertTradeHistory": [],
-      "fetchClosedOrders": [],
+      "fetchClosedOrders": [
+        "dapiPrivateGetAllOrders"
+      ],
       "fetchMarginModes": [],
       "fetchLastPrices": [],
       "setMargin": [],
       "fetchLongShortRatioHistory": [],
       "fetchOptionPositions": [],
-      "fetchOpenInterest": [],
+      "fetchOpenInterest": [
+        "dapiPublicGetOpenInterest"
+      ],
       "fetchDepositAddresses": [],
       "fetchTransfers": [],
       "fetchBorrowRateHistories": [],
@@ -9424,7 +9432,9 @@
       ],
       "fetchCurrencies": [],
       "fetchConvertCurrencies": [],
-      "fetchLedger": [],
+      "fetchLedger": [
+        "dapiPrivateGetIncome"
+      ],
       "fetchOption": [],
       "transfer": [],
       "fetchMyTrades": [
@@ -9440,7 +9450,9 @@
       "fetchTrades": [
         "dapiPublicGetAggTrades"
       ],
-      "fetchCanceledOrders": [],
+      "fetchCanceledOrders": [
+        "dapiPrivateGetAllOrders"
+      ],
       "privateAPI": [],
       "createOrderWithTakeProfitAndStopLoss": [],
       "fetchL2OrderBook": [],
@@ -9451,7 +9463,9 @@
       "createLimitBuyOrder": [],
       "fetchPosition": [],
       "fetchMySettlementHistory": [],
-      "fetchLeverageTiers": [],
+      "fetchLeverageTiers": [
+        "dapiPrivateV2GetLeverageBracket"
+      ],
       "fetchFundingIntervals": [
         "dapiPublicGetFundingInfo"
       ],
@@ -9491,7 +9505,9 @@
       "fetchDepositAddressesByNetwork": [],
       "signIn": [],
       "createMarketSellOrder": [],
-      "fetchTradingFees": [],
+      "fetchTradingFees": [
+        "dapiPrivateGetCommissionRate"
+      ],
       "fetchOrder": [
         "dapiPrivateGetOrder"
       ],
@@ -11578,9 +11594,17 @@
         "field_map": {
           "account": null,
           "after": null,
-          "amount": null,
+          "amount": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "income"
+          },
           "before": null,
-          "currency": null,
+          "currency": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "asset"
+          },
           "datetime": null,
           "direction": null,
           "fee": null,
@@ -11632,7 +11656,7 @@
               "WELCOME_BONUS": "cashback"
             },
             "format": null,
-            "key": "type"
+            "key": "incomeType"
           }
         }
       },
@@ -11672,23 +11696,13 @@
             "format": null,
             "key": "initialLeverage"
           },
-          "maxNotional": {
-            "coercion": "safeNumber2",
-            "fallback_keys": [
-              "qtyCap"
-            ],
+          "maxNotional": null,
+          "minNotional": null,
+          "symbol": {
+            "coercion": "safeString",
             "format": null,
-            "key": "notionalCap"
+            "key": "symbol"
           },
-          "minNotional": {
-            "coercion": "safeNumber2",
-            "fallback_keys": [
-              "qtyFloor"
-            ],
-            "format": null,
-            "key": "notionalFloor"
-          },
-          "symbol": null,
           "tier": {
             "coercion": "safeNumber",
             "format": null,
@@ -19139,6 +19153,20 @@
     }
   },
   "emulated_methods": [
+    {
+      "name": "fetchCanceledOrders",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "fetchClosedOrders",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
     {
       "name": "fetchLeverage",
       "scope": "rest",

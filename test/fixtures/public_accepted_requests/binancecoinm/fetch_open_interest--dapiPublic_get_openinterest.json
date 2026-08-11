@@ -1,0 +1,51 @@
+{
+  "acceptance": {
+    "branch": "dapiPublic_get_openinterest",
+    "capture_date": "2026-08-10",
+    "captured_at": "2026-08-10T23:39:18.441Z",
+    "endpoint": "openInterest",
+    "host": "dapi.binance.com",
+    "http_status": 200,
+    "method": "fetchOpenInterest",
+    "sections": [
+      "dapiPublic"
+    ],
+    "venue": "binancecoinm"
+  },
+  "oracle": "public_exchange_acceptance",
+  "replay": {
+    "markets": [
+      {
+        "active": true,
+        "base": "BTC",
+        "contract": true,
+        "future": false,
+        "id": "BTCUSD_PERP",
+        "inverse": true,
+        "linear": false,
+        "option": false,
+        "quote": "USD",
+        "settle": "BTC",
+        "spot": false,
+        "swap": true,
+        "symbol": "BTC/USD:BTC"
+      }
+    ],
+    "pagination_cursors": [
+      null
+    ],
+    "params": {
+      "symbol": "BTC/USD:BTC"
+    },
+    "timestamp_ms_override": 1786405158441
+  },
+  "requests": [
+    {
+      "body": null,
+      "headers": [],
+      "method": "GET",
+      "url": "https://dapi.binance.com/dapi/v1/openInterest?symbol=BTCUSD_PERP"
+    }
+  ],
+  "schema_version": 1
+}
