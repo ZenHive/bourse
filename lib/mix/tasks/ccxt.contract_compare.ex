@@ -13,7 +13,9 @@ defmodule Mix.Tasks.Ccxt.ContractCompare do
 
   Missing or non-machine-readable sources produce explicit capability-limited
   reports. `--venue` narrows output to one supported venue. `--facts` supplies
-  registered per-operation evidence, reachability, or runtime judgments.
+  registered reachability or runtime judgments. Manifest-registered provider
+  captures are loaded automatically and are the only facts that can advance an
+  operation's evidence axis to `verified`.
   """
 
   use Mix.Task

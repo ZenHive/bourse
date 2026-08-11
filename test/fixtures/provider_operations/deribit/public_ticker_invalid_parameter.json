@@ -1,0 +1,38 @@
+{
+  "capture_id": "public_ticker_invalid_parameter",
+  "captured_at": "2026-08-11T04:40:51.098621Z",
+  "evidence_semantics": "invalid_parameter_error",
+  "host": "test.deribit.com",
+  "operation_id": "public/ticker",
+  "operation_key": "GET /api/v2/public/ticker",
+  "provider_artifact": {
+    "artifact_id": "api-openapi",
+    "contract_scope": "current_rest",
+    "retrieved_at": "2026-08-10",
+    "sha256": "430b3f0bc67cc574a05e695d22d1acbbb5348c96858368bba9931c2f05350515",
+    "source_url": "https://docs.deribit.com/specifications/deribit_openapi.json",
+    "upstream_pin": {
+      "type": "document_version_http_etag",
+      "value": "2.1.1; W/\"b96f2b26a14b31dbc4cf064c3d63b14a\""
+    }
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      {
+        "name": "accept",
+        "value": "application/json"
+      }
+    ],
+    "method": "GET",
+    "url": "https://test.deribit.com/api/v2/public/ticker?instrument_name=BTC-NOTAREAL"
+  },
+  "response": {
+    "http_status": 400,
+    "raw_body": "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32602,\"data\":{\"reason\":\"wrong format\",\"param\":\"instrument_name\"},\"message\":\"Invalid params\"},\"testnet\":true,\"usIn\":1786423251392624,\"usOut\":1786423251392727,\"usDiff\":103}"
+  },
+  "row_fields_populated": false,
+  "schema_version": 1,
+  "scrubbed": true,
+  "venue": "deribit"
+}

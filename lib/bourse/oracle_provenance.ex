@@ -4,6 +4,7 @@ defmodule Bourse.OracleProvenance do
   """
 
   alias Bourse.OracleProvenance.Derivation
+  alias Bourse.RecordedResponseFixtures
 
   @type ledger_entry :: %{heading: String.t(), slots: [{String.t(), String.t()}]}
   @type critical_slot_waiver :: %{
@@ -89,7 +90,24 @@ defmodule Bourse.OracleProvenance do
 
   @doc "Derives binary verified/unverified reports from committed reality."
   @spec binary_reports!(keyword()) :: [Derivation.venue_report()]
-  def binary_reports!(opts \\ []), do: Derivation.reports!(opts)
+  def binary_reports!(opts \\ []) do
+    provider_opts =
+      Enum.reject(
+        [
+          root: opts[:provider_operation_root],
+          manifest_path: opts[:provider_operation_manifest],
+          plan_path: opts[:provider_operation_plan],
+          authority_root: opts[:authority_root]
+        ],
+        fn {_key, value} -> is_nil(value) end
+      )
+
+    RecordedResponseFixtures.validate_provider_operations!(provider_opts)
+
+    opts
+    |> Keyword.drop(~w(provider_operation_root provider_operation_manifest provider_operation_plan)a)
+    |> Derivation.reports!()
+  end
 
   @doc "Builds the exact verified-slot baseline for the binary oracle gate."
   @spec binary_baseline([Derivation.venue_report()]) :: map()

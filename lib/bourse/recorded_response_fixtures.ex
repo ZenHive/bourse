@@ -2,10 +2,10 @@ defmodule Bourse.RecordedResponseFixtures do
   @moduledoc """
   Capture support and path resolution for committed reality evidence.
 
-  Covers the venue response recordings under `fixture_root/0` and the real error
-  recordings under `error_fixture_root/0`: where they live, how a captured
-  fixture is scrubbed before it is committed, and how a persisted case is decoded
-  back for replay.
+  Covers the venue response recordings under `fixture_root/0`, real error
+  recordings under `error_fixture_root/0`, and exact-revision provider-operation
+  captures: where they live, how a captured fixture is scrubbed before it is
+  committed, and how a persisted case is decoded back for replay or verification.
 
   Replay-exchange construction lives in `Bourse.ReplayExchange`, which is the
   only module that reads the vendored reference market/currency corpus.
@@ -13,6 +13,8 @@ defmodule Bourse.RecordedResponseFixtures do
 
   alias Bourse.Credentials
   alias Bourse.JsonDocument
+  alias Bourse.OracleProvenance.ProviderOperations
+  alias Bourse.OracleProvenance.ProviderOperations.Capture, as: ProviderOperationCapture
   alias Bourse.RecordedResponseFixtures.Capture
 
   @doc "Loads and decodes a fixture JSON file."
@@ -134,4 +136,18 @@ defmodule Bourse.RecordedResponseFixtures do
   @doc "Returns corpus paths whose sensitive fields are not masked."
   @spec safety_violations(term()) :: [String.t()]
   defdelegate safety_violations(value), to: Capture
+
+  @doc "Captures an exact-revision reviewed provider-operation proof set."
+  @spec capture_provider_operations!(Path.t(), Path.t(), Path.t(), keyword()) :: map()
+  defdelegate capture_provider_operations!(inventory_path, plan_path, output_root, opts \\ []),
+    to: ProviderOperationCapture,
+    as: :capture_all!
+
+  @doc "Validates manifest-registered provider-operation reality evidence."
+  @spec validate_provider_operations!(keyword()) :: ProviderOperations.corpus()
+  defdelegate validate_provider_operations!(opts \\ []), to: ProviderOperations, as: :validate!
+
+  @doc "Returns provider comparison facts backed by registered live captures."
+  @spec provider_operation_facts!(keyword()) :: [map()]
+  defdelegate provider_operation_facts!(opts \\ []), to: ProviderOperations, as: :facts!
 end

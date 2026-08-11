@@ -7,6 +7,7 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
   edits specs, or turns a syntactic difference into a semantic decision.
   """
 
+  alias Bourse.RecordedResponseFixtures
   alias Mix.Tasks.Ccxt.AuthorityCorpus
   alias Mix.Tasks.Ccxt.ContractSource
 
@@ -36,7 +37,10 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
   def compare_all!(artifact_root, opts \\ []) do
     authority_root = Keyword.get(opts, :authority_root, @authority_root)
     spec_root = Keyword.get(opts, :spec_root, @spec_root)
+
     facts = load_facts(Keyword.get(opts, :facts_path))
+    provider_facts = provider_operation_facts(Keyword.get(opts, :provider_operation_opts, []))
+
     venue_filter = Keyword.get(opts, :venue)
 
     authority_root
@@ -45,7 +49,8 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
     |> Enum.map(fn manifest ->
       authored = Bourse.JsonDocument.decode_file!(Path.join(spec_root, "#{manifest["venue"]}.json"))
       venue_facts = Enum.filter(facts, &(&1["venue"] == manifest["venue"]))
-      report = compare_venue!(manifest, authored, artifact_root, venue_facts)
+      venue_provider_facts = Enum.filter(provider_facts, &(&1["venue"] == manifest["venue"]))
+      report = compare_venue_with_facts!(manifest, authored, artifact_root, venue_facts, venue_provider_facts)
       validate_committed_baseline!(report, authority_root)
       report
     end)
@@ -54,7 +59,13 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
   @doc "Builds one venue report from a validated manifest and authored document."
   @spec compare_venue!(map(), map(), Path.t(), [map()]) :: report()
   def compare_venue!(manifest, authored, artifact_root, facts \\ []) do
-    facts = Enum.map(facts, &validate_fact!(&1, "registered facts"))
+    compare_venue_with_facts!(manifest, authored, artifact_root, facts, [])
+  end
+
+  defp compare_venue_with_facts!(manifest, authored, artifact_root, facts, provider_facts) do
+    facts = Enum.map(facts, &validate_fact!(&1, "registered facts", false))
+    provider_facts = Enum.map(provider_facts, &validate_fact!(&1, "provider-operation captures", true))
+    facts = facts ++ provider_facts
 
     Enum.each(facts, fn fact ->
       ensure!(fact["venue"] == manifest["venue"], "registered facts: venue mismatch")
@@ -113,7 +124,7 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
     document = Bourse.JsonDocument.decode_file!(path)
     ensure!(document["schema_version"] == 1, "#{path}: unsupported facts schema_version")
     ensure!(is_list(document["operations"]), "#{path}: operations must be a list")
-    Enum.map(document["operations"], &validate_fact!(&1, path))
+    Enum.map(document["operations"], &validate_fact!(&1, path, false))
   end
 
   defp load_sources(manifest, artifact_root) do
@@ -461,15 +472,32 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
     }
   end
 
-  defp validate_fact!(fact, path) do
+  defp validate_fact!(fact, path, verified_capture?) do
     ensure_string!(fact, "venue", path)
     ensure_string!(fact, "operation_key", path)
     ensure_member!(fact["contract_scope"], @surfaces, "contract_scope", path)
     validate_optional_member!(fact, "runtime_scope", @runtime_scopes, path)
     validate_optional_member!(fact, "evidence", @evidence_values, path)
     validate_optional_member!(fact, "reachability", @reachability_values, path)
+    validate_evidence_source!(fact, path, verified_capture?)
     fact
   end
+
+  defp provider_operation_facts(false), do: []
+  defp provider_operation_facts(opts) when is_list(opts), do: RecordedResponseFixtures.provider_operation_facts!(opts)
+
+  defp validate_evidence_source!(%{"evidence" => "verified"} = fact, path, true) do
+    ensure!(
+      fact["evidence_source"] == "registered_live_capture",
+      "#{path}: evidence verified requires a registered live capture"
+    )
+  end
+
+  defp validate_evidence_source!(%{"evidence" => "verified"}, path, false) do
+    Mix.raise("#{path}: evidence verified requires the validated provider-operation capture corpus")
+  end
+
+  defp validate_evidence_source!(_fact, _path, _verified_capture?), do: :ok
 
   defp validate_baseline_document!(report, baseline, path) do
     ensure!(baseline["schema_version"] == 1, "#{path}: unsupported schema_version")

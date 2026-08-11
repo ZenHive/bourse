@@ -2,7 +2,12 @@ DOS.BinToAtom: Unsafe atom interpolation,lib/bourse/exchange.ex:828,77A9D97
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/bourse/unified/descriptor.ex:197,4DAD4CE
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/bourse/unified/descriptor.ex:236,560577D
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/bourse/unified_method.ex:113,564942F
+Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/bourse/oracle_provenance/provider_operations/capture.ex:164,30875D6
+Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/bourse/oracle_provenance/provider_operations/capture.ex:37,4A3C18B
 Traversal.FileModule: Directory Traversal in `File.open`,lib/bourse/spec/promotion/evidence.ex:415,1A46A28
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/bourse/json_document.ex:19,2AB9AE4
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/bourse/oracle_provenance/provider_operations.ex:226,5977FD8
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/bourse/spec/promotion.ex:96,51E7CCD
 Traversal.FileModule: Directory Traversal in `File.read`,lib/bourse/spec/promotion.ex:194,A026C2
+Traversal.FileModule: Directory Traversal in `File.write!`,lib/bourse/oracle_provenance/provider_operations/capture.ex:165,1FB42DD
+Traversal.FileModule: Directory Traversal in `File.write!`,lib/bourse/oracle_provenance/provider_operations/capture.ex:41,772354C

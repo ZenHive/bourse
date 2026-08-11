@@ -160,7 +160,7 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
         "contract_scope" => "current_rest",
         "operation_key" => "GET /api/v1/status",
         "runtime_scope" => "carved",
-        "evidence" => "verified",
+        "evidence" => "unverified",
         "reachability" => "safe"
       }
     ]
@@ -181,7 +181,7 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
     assert status["axes"] == %{
              "relation" => "shared",
              "runtime_scope" => "carved",
-             "evidence" => "verified",
+             "evidence" => "unverified",
              "reachability" => "safe",
              "contract_scope" => "current_rest"
            }
@@ -212,6 +212,25 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
     assert provider_only["axes"]["runtime_scope"] == "unknown"
     assert provider_only["axes"]["evidence"] == "unverified"
     assert provider_only["axes"]["reachability"] == "unknown"
+  end
+
+  test "authored inventory preserves unknown parameters without unified declarations" do
+    {root, manifest, authored} = comparison_fixture()
+
+    authored =
+      authored
+      |> put_in(["endpoints", "unified"], nil)
+      |> put_in(["endpoints", "request", "shape", "public", "endpoints"], [
+        %{"http_verb" => "GET", "path_template" => "status", "path_params" => nil}
+      ])
+      |> put_in(["raw", "url_templates"], %{})
+      |> put_in(["raw", "describe"], %{"urls" => %{"api" => "https://provider.example/api/v1"}})
+
+    report = ContractComparator.compare_venue!(manifest, authored, root)
+    [authored_status] = report["surfaces"]["current_rest"]["operations"] |> hd() |> Map.fetch!("authored")
+
+    assert authored_status["runtime_scope"] == "raw_only"
+    assert authored_status["parameters"] == ContractSource.unknown()
   end
 
   test "an artifact omitting the completeness gate degrades to no claim instead of raising" do
@@ -252,6 +271,26 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
       ContractComparator.load_facts(path)
     end
 
+    File.write!(
+      path,
+      Jason.encode!(%{
+        "schema_version" => 1,
+        "operations" => [
+          %{
+            "venue" => "fixture",
+            "contract_scope" => "current_rest",
+            "operation_key" => "GET /api/v1/status",
+            "evidence" => "verified",
+            "evidence_source" => "registered_live_capture"
+          }
+        ]
+      })
+    )
+
+    assert_raise Mix.Error, ~r/evidence verified requires the validated provider-operation capture corpus/, fn ->
+      ContractComparator.load_facts(path)
+    end
+
     {artifact_root, manifest, authored} = comparison_fixture()
 
     assert_raise Mix.Error, ~r/unknown operation current_rest GET \/missing/, fn ->
@@ -288,6 +327,19 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
         end
       end
     end
+  end
+
+  test "registered provider captures are the only facts that advance evidence" do
+    artifact_root = temporary_directory("registered-provider-evidence")
+    report = Enum.find(ContractComparator.compare_all!(artifact_root), &(&1["venue"] == "deribit"))
+    operations = report["surfaces"]["current_rest"]["operations"]
+
+    get_time = Enum.find(operations, &(&1["operation_key"] == "GET /api/v2/public/get_time"))
+    ticker = Enum.find(operations, &(&1["operation_key"] == "GET /api/v2/public/ticker"))
+
+    assert get_time["axes"]["evidence"] == "verified"
+    assert get_time["axes"]["reachability"] == "safe"
+    assert ticker["axes"]["evidence"] == "verified"
   end
 
   test "Deribit current and historical REST baselines bind the task-554 semantic diff" do

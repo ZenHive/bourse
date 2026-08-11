@@ -39,6 +39,7 @@ mix ccxt.error_authority                    # offline error-enumeration adjudica
 mix ccxt.authority_check --online           # explicit network drift check
 scripts/fetch_authority.sh /tmp/ccxt-authority
 mix ccxt.contract_compare --artifacts /tmp/ccxt-authority --output /tmp/contract-reports
+mix ccxt.capture_provider_operations --inventory /tmp/contract-reports/deribit.json --plan priv/authority/deribit/provider-operation-plan.json --output test/fixtures/provider_operations
 ```
 
 The offline command validates manifest structure and any locally vendored bytes; it
@@ -80,6 +81,10 @@ artifact against this corpus, writes one deterministic report per venue, and
 states an explicit source-capability limit for missing, prose-only, partial, or
 untyped inputs. Its differences are findings for later provider confrontation,
 not implementation or deletion decisions.
+
+`ccxt.capture_provider_operations` consumes that exact-revision report plus a
+separately reviewed execution plan. Provider examples remain request seeds; only
+the registered scrubbed raw request/response observation advances evidence.
 
 ## Selected sources
 
