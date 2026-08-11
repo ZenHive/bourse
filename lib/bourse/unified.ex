@@ -1284,6 +1284,12 @@ defmodule Bourse.Unified do
       %{id: id} when is_integer(id) ->
         {:ok, id}
 
+      %{"id" => id} when is_binary(id) and id != "" ->
+        {:ok, coerce_market_id(id)}
+
+      %{"id" => id} when is_integer(id) ->
+        {:ok, id}
+
       _ ->
         {:error,
          Error.bad_symbol(

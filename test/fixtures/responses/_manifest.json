@@ -1,5 +1,5 @@
 {
-  "count": 106,
+  "count": 114,
   "fixtures": [
     "alpaca/fetch_balance.json",
     "alpaca/fetch_markets.json",
@@ -90,10 +90,18 @@
     "hyperliquid/fetch_open_orders.json",
     "hyperliquid/fetch_order_book.json",
     "hyperliquid/fetch_positions.json",
+    "lighter/fetch_balance.json",
     "lighter/fetch_closed_orders.json",
+    "lighter/fetch_deposits.json",
+    "lighter/fetch_funding_rate_history.json",
     "lighter/fetch_markets.json",
+    "lighter/fetch_my_liquidations.json",
+    "lighter/fetch_my_trades.json",
     "lighter/fetch_open_orders.json",
+    "lighter/fetch_positions.json",
     "lighter/fetch_ticker.json",
+    "lighter/fetch_transfers.json",
+    "lighter/fetch_withdrawals.json",
     "okx/fetch_balance.json",
     "okx/fetch_funding_rate_history.json",
     "okx/fetch_markets.json",
@@ -108,7 +116,7 @@
     "okx/fetch_ticker.json",
     "okx/fetch_trades.json"
   ],
-  "generated_at": "2026-08-10T23:34:35.210834Z",
+  "generated_at": "2026-08-11T03:34:06.389408Z",
   "recordings": [
     {
       "capture_date": "2026-07-26",
@@ -963,6 +971,15 @@
       "venue": "hyperliquid"
     },
     {
+      "capture_date": "2026-08-11",
+      "captured_at": "2026-08-11T03:34:03.701802Z",
+      "endpoint": "account",
+      "host": "testnet.zklighter.elliot.ai",
+      "method": "fetch_balance",
+      "path": "lighter/fetch_balance.json",
+      "venue": "lighter"
+    },
+    {
       "body_populated": false,
       "capture_date": "2026-07-26",
       "captured_at": "2026-07-26T05:47:44.256937Z",
@@ -973,12 +990,49 @@
       "venue": "lighter"
     },
     {
+      "capture_date": "2026-08-11",
+      "captured_at": "2026-08-11T03:32:46.950241Z",
+      "endpoint": "deposit_history",
+      "host": "testnet.zklighter.elliot.ai",
+      "method": "fetch_deposits",
+      "path": "lighter/fetch_deposits.json",
+      "venue": "lighter"
+    },
+    {
+      "capture_date": "2026-08-11",
+      "captured_at": "2026-08-11T03:33:13.139341Z",
+      "endpoint": "fundings",
+      "host": "testnet.zklighter.elliot.ai",
+      "method": "fetch_funding_rate_history",
+      "path": "lighter/fetch_funding_rate_history.json",
+      "venue": "lighter"
+    },
+    {
       "capture_date": "2026-07-26",
       "captured_at": "2026-07-26T05:44:56.309229Z",
       "endpoint": "orderBookDetails",
       "host": "testnet.zklighter.elliot.ai",
       "method": "fetch_markets",
       "path": "lighter/fetch_markets.json",
+      "venue": "lighter"
+    },
+    {
+      "capture_date": "2026-08-11",
+      "captured_at": "2026-08-11T03:33:06.014709Z",
+      "endpoint": "liquidations",
+      "host": "testnet.zklighter.elliot.ai",
+      "method": "fetch_my_liquidations",
+      "path": "lighter/fetch_my_liquidations.json",
+      "venue": "lighter"
+    },
+    {
+      "body_populated": false,
+      "capture_date": "2026-08-11",
+      "captured_at": "2026-08-11T03:32:41.091867Z",
+      "endpoint": "trades",
+      "host": "testnet.zklighter.elliot.ai",
+      "method": "fetch_my_trades",
+      "path": "lighter/fetch_my_trades.json",
       "venue": "lighter"
     },
     {
@@ -992,12 +1046,40 @@
       "venue": "lighter"
     },
     {
+      "body_populated": true,
+      "capture_date": "2026-08-11",
+      "captured_at": "2026-08-11T03:34:06.379687Z",
+      "endpoint": "account",
+      "host": "testnet.zklighter.elliot.ai",
+      "method": "fetch_positions",
+      "path": "lighter/fetch_positions.json",
+      "venue": "lighter"
+    },
+    {
       "capture_date": "2026-07-26",
       "captured_at": "2026-07-26T05:47:41.862089Z",
       "endpoint": "orderBookDetails",
       "host": "testnet.zklighter.elliot.ai",
       "method": "fetch_ticker",
       "path": "lighter/fetch_ticker.json",
+      "venue": "lighter"
+    },
+    {
+      "capture_date": "2026-08-11",
+      "captured_at": "2026-08-11T03:33:00.019701Z",
+      "endpoint": "transfer_history",
+      "host": "testnet.zklighter.elliot.ai",
+      "method": "fetch_transfers",
+      "path": "lighter/fetch_transfers.json",
+      "venue": "lighter"
+    },
+    {
+      "capture_date": "2026-08-11",
+      "captured_at": "2026-08-11T03:32:52.483838Z",
+      "endpoint": "withdraw_history",
+      "host": "testnet.zklighter.elliot.ai",
+      "method": "fetch_withdrawals",
+      "path": "lighter/fetch_withdrawals.json",
       "venue": "lighter"
     },
     {

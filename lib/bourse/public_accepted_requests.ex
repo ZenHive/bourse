@@ -23,6 +23,7 @@ defmodule Bourse.PublicAcceptedRequests do
   @capture_timeout_ms 2_000
   @ohlcv_timeframe "1m"
   @history_window_ms 3_600_000
+  @lighter_public_account_index 0
   # Matched against normalize_name/1 output (lowercased, non-alphanumerics
   # stripped) — entries must be in that normalized form or they are unreachable.
   @sensitive_names MapSet.new(~w(
@@ -404,12 +405,20 @@ defmodule Bourse.PublicAcceptedRequests do
 
   defp optional_params(branch) do
     now = System.system_time(:millisecond)
+    lighter_account? = lighter_account_branch?(branch)
 
     []
     |> maybe_put("code", if(branch.venue == "deribit" and branch.method == :fetch_tickers, do: "BTC"))
+    |> maybe_put("by", if(lighter_account?, do: "index"))
+    |> maybe_put("value", if(lighter_account?, do: @lighter_public_account_index))
     |> maybe_put("since", if(history_branch?(branch), do: now - @history_window_ms))
     |> maybe_put("limit", if(history_branch?(branch), do: 10))
   end
+
+  defp lighter_account_branch?(%{venue: "lighter", method: method}) when method in [:fetch_balance, :fetch_positions],
+    do: true
+
+  defp lighter_account_branch?(_branch), do: false
 
   defp maybe_put(entries, _key, nil), do: entries
   defp maybe_put(entries, key, value), do: [{key, value} | entries]
@@ -418,6 +427,8 @@ defmodule Bourse.PublicAcceptedRequests do
     path = String.downcase(branch.config.path)
     String.contains?(path, "history") or String.contains?(path, "and_time")
   end
+
+  defp branch_family(%{venue: "lighter"}), do: :linear
 
   defp branch_family(branch) do
     value =

@@ -348,6 +348,19 @@ defmodule Bourse.ResponseTransformer do
     end
   end
 
+  def extract_path(data, [index | rest]) when is_list(data) and is_binary(index) do
+    case Integer.parse(index) do
+      {parsed_index, ""} when parsed_index >= 0 ->
+        case Enum.fetch(data, parsed_index) do
+          {:ok, value} -> extract_path(value, rest)
+          :error -> data
+        end
+
+      _ ->
+        data
+    end
+  end
+
   def extract_path(data, _path), do: data
 
   # Merges specified keys from the envelope into the extracted result.

@@ -1,5 +1,5 @@
 {
-  "count": 167,
+  "count": 170,
   "exclusion_count": 96,
   "exclusions": [
     {
@@ -1059,7 +1059,7 @@
       "venue": "okx"
     }
   ],
-  "generated_at": "2026-08-10T23:39:20Z",
+  "generated_at": "2026-08-11T03:42:26Z",
   "goldens": [
     {
       "branch": "market_public_get_v1beta3_crypto__loc__bars",
@@ -1090,6 +1090,20 @@
         "public"
       ],
       "venue": "alpaca"
+    },
+    {
+      "branch": "dapiPublic_get_fundinginfo",
+      "capture_date": "2026-08-10",
+      "captured_at": "2026-08-10T02:51:51.646Z",
+      "endpoint": "fundingInfo",
+      "host": "dapi.binance.com",
+      "http_status": 200,
+      "method": "fetchFundingIntervals",
+      "path": "binancecoinm/fetch_funding_intervals--dapiPublic_get_fundinginfo.json",
+      "sections": [
+        "dapiPublic"
+      ],
+      "venue": "binancecoinm"
     },
     {
       "branch": "dapiPublic_get_fundingrate",
@@ -1134,20 +1148,6 @@
       "venue": "binancecoinm"
     },
     {
-      "branch": "dapiPublic_get_fundinginfo",
-      "capture_date": "2026-08-10",
-      "captured_at": "2026-08-10T02:51:51.646Z",
-      "endpoint": "fundingInfo",
-      "host": "dapi.binance.com",
-      "http_status": 200,
-      "method": "fetchFundingIntervals",
-      "path": "binancecoinm/fetch_funding_intervals--dapiPublic_get_fundinginfo.json",
-      "sections": [
-        "dapiPublic"
-      ],
-      "venue": "binancecoinm"
-    },
-    {
       "branch": "dapiPublic_get_exchangeinfo",
       "capture_date": "2026-07-26",
       "captured_at": "2026-07-26T05:55:25.076Z",
@@ -1156,6 +1156,20 @@
       "http_status": 200,
       "method": "fetchMarkets",
       "path": "binancecoinm/fetch_markets--dapiPublic_get_exchangeinfo.json",
+      "sections": [
+        "dapiPublic"
+      ],
+      "venue": "binancecoinm"
+    },
+    {
+      "branch": "dapiPublic_get_openinterest",
+      "capture_date": "2026-08-10",
+      "captured_at": "2026-08-10T23:39:18.441Z",
+      "endpoint": "openInterest",
+      "host": "dapi.binance.com",
+      "http_status": 200,
+      "method": "fetchOpenInterest",
+      "path": "binancecoinm/fetch_open_interest--dapiPublic_get_openinterest.json",
       "sections": [
         "dapiPublic"
       ],
@@ -3052,6 +3066,34 @@
       "venue": "hyperliquid"
     },
     {
+      "branch": "public_get_account",
+      "capture_date": "2026-08-11",
+      "captured_at": "2026-08-11T03:42:23.383Z",
+      "endpoint": "account",
+      "host": "mainnet.zklighter.elliot.ai",
+      "http_status": 200,
+      "method": "fetchBalance",
+      "path": "lighter/fetch_balance--public_get_account.json",
+      "sections": [
+        "public"
+      ],
+      "venue": "lighter"
+    },
+    {
+      "branch": "public_get_fundings",
+      "capture_date": "2026-08-11",
+      "captured_at": "2026-08-11T03:42:25.110Z",
+      "endpoint": "fundings",
+      "host": "mainnet.zklighter.elliot.ai",
+      "http_status": 200,
+      "method": "fetchFundingRateHistory",
+      "path": "lighter/fetch_funding_rate_history--public_get_fundings.json",
+      "sections": [
+        "public"
+      ],
+      "venue": "lighter"
+    },
+    {
       "branch": "public_get_orderbookdetails",
       "capture_date": "2026-07-26",
       "captured_at": "2026-07-26T05:56:58.955Z",
@@ -3060,6 +3102,20 @@
       "http_status": 200,
       "method": "fetchMarkets",
       "path": "lighter/fetch_markets--public_get_orderbookdetails.json",
+      "sections": [
+        "public"
+      ],
+      "venue": "lighter"
+    },
+    {
+      "branch": "public_get_account",
+      "capture_date": "2026-08-11",
+      "captured_at": "2026-08-11T03:42:25.681Z",
+      "endpoint": "account",
+      "host": "mainnet.zklighter.elliot.ai",
+      "http_status": 200,
+      "method": "fetchPositions",
+      "path": "lighter/fetch_positions--public_get_account.json",
       "sections": [
         "public"
       ],
@@ -3386,20 +3442,6 @@
         "public"
       ],
       "venue": "okx"
-    },
-    {
-      "branch": "dapiPublic_get_openinterest",
-      "capture_date": "2026-08-10",
-      "captured_at": "2026-08-10T23:39:18.441Z",
-      "endpoint": "openInterest",
-      "host": "dapi.binance.com",
-      "http_status": 200,
-      "method": "fetchOpenInterest",
-      "path": "binancecoinm/fetch_open_interest--dapiPublic_get_openinterest.json",
-      "sections": [
-        "dapiPublic"
-      ],
-      "venue": "binancecoinm"
     }
   ],
   "oracle": "public_exchange_acceptance",

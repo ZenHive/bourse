@@ -113,6 +113,13 @@ defmodule Bourse.ResponseTransformerTest do
     test "stops and returns current level when key missing" do
       assert ResponseTransformer.transform(%{"a" => 1}, {:extract_path, ["missing"]}) == %{"a" => 1}
     end
+
+    test "walks numeric list segments in an authored envelope path" do
+      body = %{"accounts" => [%{"positions" => [%{"market_id" => 1}]}]}
+
+      assert ResponseTransformer.transform(body, {:extract_path, ["accounts", "0", "positions"]}) ==
+               [%{"market_id" => 1}]
+    end
   end
 
   describe "{:extract_path_unwrap, path}" do

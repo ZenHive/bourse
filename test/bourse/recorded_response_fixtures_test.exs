@@ -239,6 +239,14 @@ defmodule Bourse.RecordedResponseFixturesTest do
           {"binancecoinm", :fetch_ledger},
           {"binancecoinm", :fetch_adl_rank},
           {"lighter", :fetch_ticker},
+          {"lighter", :fetch_balance},
+          {"lighter", :fetch_positions},
+          {"lighter", :fetch_my_trades},
+          {"lighter", :fetch_deposits},
+          {"lighter", :fetch_withdrawals},
+          {"lighter", :fetch_transfers},
+          {"lighter", :fetch_my_liquidations},
+          {"lighter", :fetch_funding_rate_history},
           {"lighter", :fetch_closed_orders},
           {"lighter", :fetch_open_orders}
         ] do
@@ -253,6 +261,9 @@ defmodule Bourse.RecordedResponseFixturesTest do
 
     assert RecordedResponseFixtures.oracle_identity("lighter", :fetch_closed_orders)["host"] ==
              "testnet.zklighter.elliot.ai"
+
+    assert RecordedResponseFixtures.oracle_identity("lighter", :fetch_funding_rate_history)["endpoint"] ==
+             "fundings"
   end
 
   test "write capture profiles are demo-only far-from-market order lifecycles with cancel cleanup" do
@@ -488,9 +499,12 @@ defmodule Bourse.RecordedResponseFixturesTest do
           "signature" => "signed-value",
           "subaccount_id" => 144_422,
           "address" => "0x1234",
+          "from_l1_address" => "0x5678",
+          "from_account_index" => 42,
           "ordinary" => "secret-value"
         },
-        %{"id" => 5519, "email" => "account@example.test", "username" => "account-name"}
+        %{"id" => 5519, "email" => "account@example.test", "username" => "account-name"},
+        %{"account_index" => 43, "index" => 42, "l1_address" => "0x9012"}
       ]
     }
 
@@ -500,19 +514,29 @@ defmodule Bourse.RecordedResponseFixturesTest do
     assert get_in(scrubbed, ["nested", Access.at(0), "signature"]) == "***REDACTED***"
     assert get_in(scrubbed, ["nested", Access.at(0), "subaccount_id"]) == "***REDACTED***"
     assert get_in(scrubbed, ["nested", Access.at(0), "address"]) == "***REDACTED***"
+    assert get_in(scrubbed, ["nested", Access.at(0), "from_l1_address"]) == "***REDACTED***"
+    assert get_in(scrubbed, ["nested", Access.at(0), "from_account_index"]) == "***REDACTED***"
     assert get_in(scrubbed, ["nested", Access.at(0), "ordinary"]) == "***REDACTED***"
     assert get_in(scrubbed, ["nested", Access.at(1), "id"]) == "***REDACTED***"
     assert get_in(scrubbed, ["nested", Access.at(1), "email"]) == "***REDACTED***"
+    assert get_in(scrubbed, ["nested", Access.at(2), "account_index"]) == "***REDACTED***"
+    assert get_in(scrubbed, ["nested", Access.at(2), "index"]) == "***REDACTED***"
+    assert get_in(scrubbed, ["nested", Access.at(2), "l1_address"]) == "***REDACTED***"
     assert RecordedResponseFixtures.safety_violations(scrubbed) == []
 
     assert RecordedResponseFixtures.safety_violations(fixture) == [
              "$.apiKey",
              "$.nested[0].address",
+             "$.nested[0].from_account_index",
+             "$.nested[0].from_l1_address",
              "$.nested[0].signature",
              "$.nested[0].subaccount_id",
              "$.nested[1].email",
              "$.nested[1].id",
-             "$.nested[1].username"
+             "$.nested[1].username",
+             "$.nested[2].account_index",
+             "$.nested[2].index",
+             "$.nested[2].l1_address"
            ]
   end
 

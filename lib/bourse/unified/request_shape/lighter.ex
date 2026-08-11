@@ -6,8 +6,11 @@ defmodule Bourse.Unified.RequestShape.Lighter do
 
   @operation_key "__bourse_lighter_transaction_operation"
   @params_key "__bourse_lighter_transaction_params"
+  @auth_lifetime_seconds 300
   @default_order_expiry -1
   @order_type_limit 0
+  @account_methods ~w(fetchBalance fetchPositions)
+  @private_account_methods ~w(fetchDeposits fetchMyLiquidations fetchMyTrades fetchTransfers fetchWithdrawals)
   @time_in_force %{
     "GTC" => 1,
     "IOC" => 0,
@@ -34,6 +37,18 @@ defmodule Bourse.Unified.RequestShape.Lighter do
     }
 
     put_transaction(params, "cancel_order", transaction_params)
+  end
+
+  def build(params, js_name, %Exchange{} = exchange, _opts) when is_map(params) and js_name in @account_methods do
+    params
+    |> Map.put_new_lazy("by", fn -> "index" end)
+    |> Map.put_new_lazy("value", fn -> account_index!(exchange) end)
+  end
+
+  def build(params, js_name, %Exchange{} = exchange, _opts) when is_map(params) and js_name in @private_account_methods do
+    params
+    |> Map.put_new("account_index", account_index!(exchange))
+    |> Map.put_new("auth_deadline", System.system_time(:second) + @auth_lifetime_seconds)
   end
 
   def build(params, _js_name, _exchange, _opts), do: params
@@ -133,6 +148,14 @@ defmodule Bourse.Unified.RequestShape.Lighter do
 
   defp integer_param!(params, names), do: params |> first_value(names, nil) |> integer!(List.first(names))
   defp integer_param(params, names, default), do: params |> first_value(names, default) |> integer!(List.first(names))
+
+  defp account_index!(%Exchange{credentials: %{uid: uid}}) when not is_nil(uid), do: integer!(uid, "account index")
+
+  defp account_index!(%Exchange{options: options}) when is_map(options) do
+    options
+    |> first_value([:account_index, "account_index", "accountIndex"], nil)
+    |> integer!("account index")
+  end
 
   defp integer!(value, _name) when is_integer(value), do: value
 

@@ -174,3 +174,27 @@ artifact `rest-openapi`).
 <!-- carve-evidence-status
 {"carve_id":"C-T552","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"priv/authority/lighter/manifest.json artifact rest-openapi; Order.status enum at pinned lighter-python revision 6957dd8a"},"observed_evidence":{"kind":"live_venue","reference":"Lighter testnet create/fetch/cancel lifecycle on 2026-08-10 observed open then canceled; behavior pinned by test/bourse/lighter_promotion_integration_test.exs"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+## 2026-08-11 — account and history response slices (Task 546)
+
+**C-T546 — Lighter's account response supplies balance and positions, and unified history
+methods use the venue-owned history endpoints (task 546). Outcome: CONFIRM provider contract.**
+
+- *Exchange semantics:* `GET /api/v1/account` returns account `assets` and `positions` in one
+  response. The provider OpenAPI defines the account-scoped trade, deposit, withdrawal, transfer,
+  and liquidation history responses under their corresponding endpoints.
+- *Our carve:* `fetchBalance` parses `accounts[0].assets`, while `fetchPositions` parses
+  `accounts[0].positions`. The five account histories map to their matching provider operations.
+  All account-scoped reads derive the account index from the exchange credentials. Deposit and
+  withdrawal transaction timestamps are parsed as milliseconds: the live deposit response carried
+  13-digit millisecond values despite the shorter example value in the provider schema.
+- *Funding distinction:* `fetchFundingRateHistory` maps to `GET /api/v1/fundings`, Lighter's own
+  market funding history. `GET /api/v1/funding-rates` is a cross-exchange reference feed and is
+  deliberately not a unified funding source.
+- *Verification:* committed recordings under `test/fixtures/responses/lighter/` cover each of the
+  eight newly mapped methods. The tagged integration test repeats all eight unified calls against
+  `testnet.zklighter.elliot.ai` and requires real credentials rather than skipping.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T546","date":"2026-08-11","semantic_source":{"kind":"provider_owned","reference":"priv/authority/lighter/manifest.json artifact rest-openapi; account, trades, deposit/history, withdraw/history, transfer/history, liquidations, fundings and funding-rates operations"},"observed_evidence":{"kind":"live_venue","reference":"testnet HTTP/code 200 recordings for fetch_balance, fetch_positions, fetch_my_trades, fetch_deposits, fetch_withdrawals, fetch_transfers, fetch_my_liquidations and fetch_funding_rate_history under test/fixtures/responses/lighter; pinned by test/bourse/lighter_promotion_integration_test.exs"},"compatibility_reference":null,"resolved_tier":1}
+-->

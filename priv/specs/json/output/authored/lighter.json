@@ -87,12 +87,12 @@
       "fetchMarkOHLCV": false,
       "borrowCrossMargin": false,
       "fetchOrders": false,
-      "fetchDeposits": false,
+      "fetchDeposits": true,
       "fetchOrderTrades": false,
       "option": false,
       "future": false,
       "fetchMarketLeverageTiers": false,
-      "fetchPositions": false,
+      "fetchPositions": true,
       "fetchFundingRates": false,
       "fetchDepositAddress": false,
       "fetchBorrowInterest": false,
@@ -101,7 +101,7 @@
       "setMargin": false,
       "fetchOpenInterest": false,
       "fetchDepositAddresses": false,
-      "fetchTransfers": false,
+      "fetchTransfers": true,
       "fetchBorrowRateHistories": false,
       "fetchCurrenciesWs": false,
       "cancelAllOrders": false,
@@ -118,16 +118,16 @@
       "cancelOrder": true,
       "fetchOpenInterests": false,
       "fetchOpenOrders": true,
-      "fetchWithdrawals": false,
+      "fetchWithdrawals": true,
       "fetchDepositWithdrawFee": false,
       "fetchCanceledAndClosedOrders": false,
       "fetchCrossBorrowRates": false,
-      "fetchFundingRateHistory": false,
+      "fetchFundingRateHistory": true,
       "fetchCurrencies": false,
       "fetchLedger": false,
       "fetchOption": false,
       "transfer": false,
-      "fetchMyTrades": false,
+      "fetchMyTrades": true,
       "fetchPremiumIndexOHLCV": false,
       "createOrder": true,
       "fetchTrades": false,
@@ -150,8 +150,8 @@
       "fetchCrossBorrowRate": false,
       "fetchTickers": false,
       "createLimitOrder": false,
-      "fetchBalance": false,
-      "fetchMyLiquidations": false,
+      "fetchBalance": true,
+      "fetchMyLiquidations": true,
       "borrowIsolatedMargin": false,
       "createOrders": false,
       "createMarketOrder": false,
@@ -243,6 +243,13 @@
           "return_type": "Promise<Order>"
         }
       },
+      "fetchBalance": {
+        "name": "fetchBalance",
+        "provider_operation_id": "account",
+        "signature": {
+          "return_type": "Promise<Balances>"
+        }
+      },
       "fetchClosedOrders": {
         "name": "fetchClosedOrders",
         "provider_operation_id": "accountInactiveOrders",
@@ -250,11 +257,40 @@
           "return_type": "Promise<Order[]>"
         }
       },
+      "fetchDeposits": {
+        "name": "fetchDeposits",
+        "provider_operation_id": "deposit_history",
+        "signature": {
+          "return_type": "Promise<Transaction[]>"
+        }
+      },
+      "fetchFundingRateHistory": {
+        "description": "Uses Lighter's venue-native /api/v1/fundings history; /api/v1/funding-rates is the separate cross-exchange reference feed.",
+        "name": "fetchFundingRateHistory",
+        "provider_operation_id": "fundings",
+        "signature": {
+          "return_type": "Promise<FundingRateHistory[]>"
+        }
+      },
       "fetchMarkets": {
         "name": "fetchMarkets",
         "provider_operation_id": "orderBookDetails",
         "signature": {
           "return_type": "Promise<Market[]>"
+        }
+      },
+      "fetchMyLiquidations": {
+        "name": "fetchMyLiquidations",
+        "provider_operation_id": "liquidations",
+        "signature": {
+          "return_type": "Promise<Liquidation[]>"
+        }
+      },
+      "fetchMyTrades": {
+        "name": "fetchMyTrades",
+        "provider_operation_id": "trades",
+        "signature": {
+          "return_type": "Promise<Trade[]>"
         }
       },
       "fetchOHLCV": {
@@ -278,11 +314,32 @@
           "return_type": "Promise<OrderBook>"
         }
       },
+      "fetchPositions": {
+        "name": "fetchPositions",
+        "provider_operation_id": "account",
+        "signature": {
+          "return_type": "Promise<Position[]>"
+        }
+      },
       "fetchTicker": {
         "name": "fetchTicker",
         "provider_operation_id": "orderBookDetails",
         "signature": {
           "return_type": "Promise<Ticker>"
+        }
+      },
+      "fetchTransfers": {
+        "name": "fetchTransfers",
+        "provider_operation_id": "transfer_history",
+        "signature": {
+          "return_type": "Promise<TransferEntry[]>"
+        }
+      },
+      "fetchWithdrawals": {
+        "name": "fetchWithdrawals",
+        "provider_operation_id": "withdraw_history",
+        "signature": {
+          "return_type": "Promise<Transaction[]>"
         }
       }
     },
@@ -297,11 +354,26 @@
         }
       ],
       "parse": {
+        "fetchBalance": [
+          "parseBalance"
+        ],
         "fetchClosedOrders": [
           "parseOrders"
         ],
+        "fetchDeposits": [
+          "parseTransactions"
+        ],
+        "fetchFundingRateHistory": [
+          "parseFundingRate"
+        ],
         "fetchMarkets": [
           "parseMarkets"
+        ],
+        "fetchMyLiquidations": [
+          "parseLiquidations"
+        ],
+        "fetchMyTrades": [
+          "parseTrades"
         ],
         "fetchOHLCV": [
           "parseOHLCVs"
@@ -312,8 +384,17 @@
         "fetchOrderBook": [
           "parseOrderBook"
         ],
+        "fetchPositions": [
+          "parsePositions"
+        ],
         "fetchTicker": [
           "parseTicker"
+        ],
+        "fetchTransfers": [
+          "parseTransfers"
+        ],
+        "fetchWithdrawals": [
+          "parseTransactions"
         ]
       },
       "signing": {
@@ -350,6 +431,63 @@
             "optional": true,
             "reason": "dynamic_construction",
             "value": null
+          }
+        },
+        "fetchFundingRateHistory": {
+          "_omit": [
+            "limit",
+            "since",
+            "until"
+          ],
+          "count_back": {
+            "kind": "literal",
+            "reason": null,
+            "value": 0
+          },
+          "end_timestamp": {
+            "default_limit": 100,
+            "default_timeframe_ms": 3600000,
+            "kind": "computed",
+            "limit_source": "limit",
+            "operation": "time_window_end",
+            "timeframe_source": "timeframe"
+          },
+          "market_id": {
+            "kind": "unresolved",
+            "reason": "dynamic_construction",
+            "value": null
+          },
+          "resolution": {
+            "kind": "literal",
+            "reason": null,
+            "value": "1h"
+          },
+          "start_timestamp": {
+            "default_limit": 100,
+            "default_timeframe_ms": 3600000,
+            "kind": "computed",
+            "limit_source": "limit",
+            "operation": "time_window_start",
+            "timeframe_source": "timeframe"
+          }
+        },
+        "fetchMyLiquidations": {
+          "limit": {
+            "kind": "literal",
+            "reason": null,
+            "value": 100
+          }
+        },
+        "fetchMyTrades": {
+          "limit": {
+            "kind": "literal",
+            "reason": null,
+            "value": 100
+          },
+          "sort_by": {
+            "kind": "literal",
+            "reason": null,
+            "value": "timestamp"
           }
         },
         "fetchOHLCV": {
@@ -1171,12 +1309,16 @@
       "fetchMarkOHLCV": [],
       "borrowCrossMargin": [],
       "fetchOrders": [],
-      "fetchDeposits": [],
+      "fetchDeposits": [
+        "privateGetDepositHistory"
+      ],
       "fetchOrderTrades": [],
       "option": [],
       "future": [],
       "fetchMarketLeverageTiers": [],
-      "fetchPositions": [],
+      "fetchPositions": [
+        "publicGetAccount"
+      ],
       "fetchFundingRates": [],
       "fetchDepositAddress": [],
       "fetchBorrowInterest": [],
@@ -1187,7 +1329,9 @@
       "setMargin": [],
       "fetchOpenInterest": [],
       "fetchDepositAddresses": [],
-      "fetchTransfers": [],
+      "fetchTransfers": [
+        "privateGetTransferHistory"
+      ],
       "fetchBorrowRateHistories": [],
       "fetchCurrenciesWs": [],
       "cancelAllOrders": [],
@@ -1212,16 +1356,22 @@
       "fetchOpenOrders": [
         "privateGetAccountActiveOrders"
       ],
-      "fetchWithdrawals": [],
+      "fetchWithdrawals": [
+        "privateGetWithdrawHistory"
+      ],
       "fetchDepositWithdrawFee": [],
       "fetchCanceledAndClosedOrders": [],
       "fetchCrossBorrowRates": [],
-      "fetchFundingRateHistory": [],
+      "fetchFundingRateHistory": [
+        "publicGetFundings"
+      ],
       "fetchCurrencies": [],
       "fetchLedger": [],
       "fetchOption": [],
       "transfer": [],
-      "fetchMyTrades": [],
+      "fetchMyTrades": [
+        "privateGetTrades"
+      ],
       "fetchPremiumIndexOHLCV": [],
       "createOrder": [
         "privatePostSendTx"
@@ -1248,8 +1398,12 @@
       "fetchCrossBorrowRate": [],
       "fetchTickers": [],
       "createLimitOrder": [],
-      "fetchBalance": [],
-      "fetchMyLiquidations": [],
+      "fetchBalance": [
+        "publicGetAccount"
+      ],
+      "fetchMyLiquidations": [
+        "privateGetLiquidations"
+      ],
       "borrowIsolatedMargin": [],
       "createOrders": [],
       "createMarketOrder": [],
@@ -1584,6 +1738,351 @@
   "normalization": {
     "field_maps": {
       "_unresolved_reason": null,
+      "balance": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "datetime": null,
+          "debt": null,
+          "free": null,
+          "info": null,
+          "timestamp": null,
+          "total": {
+            "coercion": "safeNumber",
+            "collection_key": "assets",
+            "index_coercion": "safeCurrencyCode",
+            "index_key": "symbol",
+            "kind": "keyed_collection",
+            "operand_keys": [
+              "balance",
+              "margin_balance"
+            ],
+            "value_op": "add"
+          },
+          "used": {
+            "coercion": "safeNumber",
+            "collection_key": "assets",
+            "index_coercion": "safeCurrencyCode",
+            "index_key": "symbol",
+            "kind": "keyed_collection",
+            "value_key": "locked_balance"
+          }
+        }
+      },
+      "funding_rate_history": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "datetime": {
+            "coercion": "iso8601",
+            "format": "s",
+            "key": "timestamp"
+          },
+          "fundingRate": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "rate"
+          },
+          "info": null,
+          "symbol": null,
+          "timestamp": {
+            "coercion": "safeTimestamp",
+            "format": "s",
+            "key": "timestamp"
+          }
+        }
+      },
+      "liquidation": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "baseValue": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "trade.size"
+          },
+          "contractSize": {
+            "coercion": "safeNumber",
+            "default": 1
+          },
+          "contracts": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "trade.size"
+          },
+          "datetime": {
+            "coercion": "iso8601",
+            "format": "s",
+            "key": "executed_at"
+          },
+          "info": null,
+          "price": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "trade.price"
+          },
+          "quoteValue": {
+            "coercion": "safeNumber",
+            "kind": "computed",
+            "op": "mul",
+            "operands": [
+              "trade.size",
+              "trade.price"
+            ]
+          },
+          "side": null,
+          "symbol": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "market_id"
+          },
+          "timestamp": {
+            "coercion": "safeTimestamp",
+            "format": "s",
+            "key": "executed_at"
+          }
+        }
+      },
+      "position": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "collateral": null,
+          "contractSize": {
+            "coercion": "safeNumber",
+            "default": 1
+          },
+          "contracts": {
+            "coercion": "safeNumber",
+            "key": "position",
+            "kind": "absolute"
+          },
+          "datetime": null,
+          "entryPrice": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "avg_entry_price"
+          },
+          "hedged": null,
+          "id": null,
+          "info": null,
+          "initialMargin": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "allocated_margin"
+          },
+          "initialMarginPercentage": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "initial_margin_fraction"
+          },
+          "isolated": null,
+          "lastPrice": null,
+          "lastUpdateTimestamp": null,
+          "leverage": null,
+          "liquidationPrice": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "liquidation_price",
+            "zero_as_nil": true
+          },
+          "maintenanceMargin": null,
+          "maintenanceMarginPercentage": null,
+          "margin": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "allocated_margin"
+          },
+          "marginMode": null,
+          "marginRatio": null,
+          "markPrice": null,
+          "notional": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "position_value"
+          },
+          "percentage": null,
+          "realizedPnl": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "realized_pnl"
+          },
+          "side": {
+            "key": "sign",
+            "kind": "sign_direction",
+            "negative": "short",
+            "positive": "long",
+            "zero": null
+          },
+          "stopLossPrice": null,
+          "symbol": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "market_id"
+          },
+          "takeProfitPrice": null,
+          "timestamp": null,
+          "unrealizedPnl": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "unrealized_pnl"
+          }
+        }
+      },
+      "trade": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "amount": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "size"
+          },
+          "cost": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "usd_amount"
+          },
+          "datetime": {
+            "coercion": "iso8601",
+            "format": "s",
+            "key": "timestamp"
+          },
+          "fee": null,
+          "id": {
+            "coercion": "safeString",
+            "fallback_keys": [
+              "trade_id"
+            ],
+            "format": null,
+            "key": "trade_id_str"
+          },
+          "info": null,
+          "order": null,
+          "price": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "price"
+          },
+          "side": null,
+          "symbol": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "market_id"
+          },
+          "takerOrMaker": null,
+          "timestamp": {
+            "coercion": "safeTimestamp",
+            "format": "s",
+            "key": "timestamp"
+          },
+          "type": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "type"
+          }
+        }
+      },
+      "transaction": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "address": null,
+          "addressFrom": null,
+          "addressTo": null,
+          "amount": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "amount"
+          },
+          "currency": null,
+          "datetime": {
+            "coercion": "iso8601",
+            "format": "ms",
+            "key": "timestamp"
+          },
+          "fee": null,
+          "id": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "id"
+          },
+          "info": null,
+          "network": null,
+          "status": {
+            "coercion": "safeString",
+            "enum_map": {
+              "claimable": "pending",
+              "completed": "ok",
+              "failed": "failed",
+              "pending": "pending",
+              "refunded": "canceled"
+            },
+            "format": null,
+            "key": "status"
+          },
+          "tag": null,
+          "tagFrom": null,
+          "tagTo": null,
+          "timestamp": {
+            "coercion": "safeTimestamp",
+            "format": "ms",
+            "key": "timestamp"
+          },
+          "txid": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "l1_tx_hash"
+          },
+          "type": null,
+          "updated": null
+        }
+      },
+      "transfer": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "amount": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "amount"
+          },
+          "currency": null,
+          "datetime": {
+            "coercion": "iso8601",
+            "format": "s",
+            "key": "timestamp"
+          },
+          "fromAccount": {
+            "coercion": "safeString",
+            "fallback_keys": [
+              "from_account_index"
+            ],
+            "format": null,
+            "key": "from_route"
+          },
+          "id": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "id"
+          },
+          "info": null,
+          "status": null,
+          "timestamp": {
+            "coercion": "safeTimestamp",
+            "format": "s",
+            "key": "timestamp"
+          },
+          "toAccount": {
+            "coercion": "safeString",
+            "fallback_keys": [
+              "to_account_index"
+            ],
+            "format": null,
+            "key": "to_route"
+          }
+        }
+      },
       "market": {
         "_unresolved_reason": null,
         "extras": [],
@@ -1926,6 +2425,27 @@
     },
     "response_envelopes": {
       "_unresolved_reason": null,
+      "balance": {
+        "fetchBalance": {
+          "default": {},
+          "fallback_keys": [],
+          "key": "accounts.0"
+        }
+      },
+      "funding_rate_history": {
+        "fetchFundingRateHistory": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "fundings"
+        }
+      },
+      "liquidation": {
+        "fetchMyLiquidations": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "liquidations"
+        }
+      },
       "market": {
         "fetchMarkets": {
           "default": [],
@@ -1954,6 +2474,13 @@
           "key": "orders"
         }
       },
+      "position": {
+        "fetchPositions": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "accounts.0.positions"
+        }
+      },
       "ticker": {
         "fetchTicker": {
           "default": null,
@@ -1961,6 +2488,32 @@
             "spot_order_book_details"
           ],
           "key": "order_book_details"
+        }
+      },
+      "trade": {
+        "fetchMyTrades": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "trades"
+        }
+      },
+      "transaction": {
+        "fetchDeposits": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "deposits"
+        },
+        "fetchWithdrawals": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "withdraws"
+        }
+      },
+      "transfer": {
+        "fetchTransfers": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "transfers"
         }
       }
     }

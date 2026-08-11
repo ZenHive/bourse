@@ -70,6 +70,52 @@ defmodule Bourse.LighterPromotionIntegrationTest do
     assert message =~ "invalid param"
   end
 
+  test "live unified account and history reads succeed against Lighter testnet" do
+    credentials = require_credentials!()
+
+    assert {:ok, %Exchange{} = exchange} =
+             credentials
+             |> signed_exchange()
+             |> Bourse.load_markets()
+
+    market = Enum.find(exchange.markets, &(&1.base == "BTC" and &1.type == "swap"))
+    assert %Market{} = market
+
+    assert {:ok, %Bourse.Balance{total: total}} = Bourse.fetch_balance(exchange)
+    assert total != %{}
+    assert Enum.all?(total, fn {_currency, value} -> is_number(value) end)
+
+    assert {:ok, [%Bourse.Position{} | _] = positions} = Bourse.fetch_positions(exchange)
+    assert Enum.all?(positions, &match?(%Bourse.Position{}, &1))
+
+    assert {:ok, trades} = Bourse.fetch_my_trades(exchange)
+    assert Enum.all?(trades, &match?(%Bourse.Trade{}, &1))
+
+    assert {:ok, %{status: 200, body: %{"code" => 200, "accounts" => [account | _]}}} =
+             Bourse.Lighter.public_get_account(exchange, %{
+               "by" => "index",
+               "value" => credential_integer!(credentials.uid)
+             })
+
+    assert {:ok, deposits} = Bourse.fetch_deposits(exchange, l1_address: Map.fetch!(account, "l1_address"))
+    assert Enum.all?(deposits, &match?(%Bourse.Transaction{}, &1))
+
+    assert {:ok, withdrawals} = Bourse.fetch_withdrawals(exchange)
+    assert Enum.all?(withdrawals, &match?(%Bourse.Transaction{}, &1))
+
+    assert {:ok, transfers} = Bourse.fetch_transfers(exchange)
+    assert Enum.all?(transfers, &match?(%Bourse.TransferEntry{}, &1))
+
+    assert {:ok, liquidations} = Bourse.fetch_my_liquidations(exchange)
+    assert Enum.all?(liquidations, &match?(%Bourse.Liquidation{}, &1))
+
+    assert {:ok, [%Bourse.FundingRateHistory{symbol: symbol} | _] = funding_history} =
+             Bourse.fetch_funding_rate_history(exchange, market.symbol, limit: 10)
+
+    assert symbol == market.symbol
+    assert Enum.all?(funding_history, &match?(%Bourse.FundingRateHistory{}, &1))
+  end
+
   @tag :dangerous
   test "safe testnet limit order create, fetch, and cancel lifecycle cleans up deterministically" do
     credentials = require_credentials!()

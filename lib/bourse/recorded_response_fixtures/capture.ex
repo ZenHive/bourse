@@ -51,7 +51,8 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
   @sensitive_keys MapSet.new(~w(
     address accountnumber apikey apisecret key password passphrase secret sig signature signer uid
     user userid wallet walletaddress accountid accountalias subaccountid withdrawaladdress
-    depositaddress email username systemname referrerid memberid
+    depositaddress l1address froml1address tol1address fromaccountindex toaccountindex
+    askaccountid bidaccountid email username systemname referrerid memberid
   ))
 
   defp public_profiles do
@@ -146,6 +147,13 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
           environment: "testnet-demo",
           exchange_opts: [sandbox: true],
           load_markets?: true
+        ),
+      {"lighter", :fetch_funding_rate_history} =>
+        public("fundings", "testnet.zklighter.elliot.ai", "BTC/USDC:USDC",
+          environment: "testnet-demo",
+          exchange_opts: [sandbox: true],
+          load_markets?: true,
+          params: %{"limit" => @history_limit, "symbol" => "BTC/USDC:USDC"}
         )
     }
   end
@@ -242,7 +250,15 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       {"derive", :fetch_canceled_orders} => derive("private/get_orders", %{}),
       {"lighter", :fetch_closed_orders} =>
         lighter("accountInactiveOrders", %{}, load_markets?: true, symbol: "ETH/USDC:USDC"),
-      {"lighter", :fetch_open_orders} => lighter("accountActiveOrders", %{}, load_markets?: true, symbol: "ETH/USDC:USDC")
+      {"lighter", :fetch_open_orders} =>
+        lighter("accountActiveOrders", %{}, load_markets?: true, symbol: "ETH/USDC:USDC"),
+      {"lighter", :fetch_balance} => lighter("account", %{}, []),
+      {"lighter", :fetch_positions} => lighter("account", %{}, load_markets?: true),
+      {"lighter", :fetch_my_trades} => lighter("trades", %{}, load_markets?: true),
+      {"lighter", :fetch_deposits} => lighter("deposit_history", %{}, []),
+      {"lighter", :fetch_withdrawals} => lighter("withdraw_history", %{}, []),
+      {"lighter", :fetch_transfers} => lighter("transfer_history", %{}, []),
+      {"lighter", :fetch_my_liquidations} => lighter("liquidations", %{}, load_markets?: true)
     }
   end
 
@@ -898,6 +914,19 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
     end
   end
 
+  defp live_read_params(%Exchange{id: "lighter"} = exchange, :fetch_deposits, profile) do
+    account_index = LighterMarket.credential_integer!(exchange.credentials.uid)
+
+    with {:ok, %{status: 200, body: %{"code" => 200, "accounts" => [account | _]}}} <-
+           Bourse.Lighter.public_get_account(exchange, %{"by" => "index", "value" => account_index}),
+         l1_address when is_binary(l1_address) <- Map.get(account, "l1_address") do
+      {:ok, :fetch_deposits |> build_params(profile) |> Map.put("l1_address", l1_address)}
+    else
+      nil -> {:error, :lighter_account_missing_l1_address}
+      other -> {:error, {:lighter_account_lookup_failed, other}}
+    end
+  end
+
   defp live_read_params(_exchange, method, profile), do: {:ok, build_params(method, profile)}
 
   defp error_params(exchange, %{error_kind: "insufficient_funds"} = profile) do
@@ -1185,7 +1214,7 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
     account_identity? = account_identity_map?(map)
 
     Map.new(map, fn {key, value} ->
-      if sensitive_key?(key) or (account_identity? and normalized_key(key) == "id") do
+      if sensitive_key?(key) or (account_identity? and normalized_key(key) in ["id", "index", "accountindex"]) do
         {key, @mask}
       else
         {key, scrub_value(value, secrets)}
@@ -1218,7 +1247,9 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       child_path = path <> "." <> to_string(key)
 
       nested_violations = find_safety_violations(value, child_path)
-      sensitive? = sensitive_key?(key) or (account_identity? and normalized_key(key) == "id")
+
+      sensitive? =
+        sensitive_key?(key) or (account_identity? and normalized_key(key) in ["id", "index", "accountindex"])
 
       if sensitive? and value != @mask,
         do: [child_path | nested_violations],
@@ -1239,7 +1270,7 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
   end
 
   defp account_identity_map?(map),
-    do: Enum.any?(Map.keys(map), &(normalized_key(&1) in ["email", "username", "systemname"]))
+    do: Enum.any?(Map.keys(map), &(normalized_key(&1) in ["email", "username", "systemname", "l1address"]))
 
   defp normalized_key(key), do: key |> to_string() |> String.downcase() |> String.replace(~r/[^a-z0-9]/, "")
 end

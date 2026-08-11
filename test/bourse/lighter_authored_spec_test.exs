@@ -12,6 +12,7 @@ defmodule Bourse.LighterAuthoredSpecTest do
 
   @owned_path "priv/specs/json/output/authored/lighter.json"
   @mainnet_url "https://mainnet.zklighter.elliot.ai"
+  @public_account_index 0
   @private_key "07000000000000000300000000000000000000000000000000000000000000000000000000000000"
 
   defmodule NoopParser do
@@ -28,7 +29,12 @@ defmodule Bourse.LighterAuthoredSpecTest do
     assert String.ends_with?(Spec.authored_spec_path("lighter"), @owned_path)
 
     assert supported_methods(spec) ==
-             ~w(cancelOrder createOrder fetchClosedOrders fetchMarkets fetchOHLCV fetchOpenOrders fetchOrderBook fetchTicker)
+             ~w(cancelOrder createOrder fetchBalance fetchClosedOrders fetchDeposits fetchFundingRateHistory fetchMarkets fetchMyLiquidations fetchMyTrades fetchOHLCV fetchOpenOrders fetchOrderBook fetchPositions fetchTicker fetchTransfers fetchWithdrawals)
+
+    assert get_in(spec, ["endpoints", "unified", "fetchFundingRateHistory"]) == ["publicGetFundings"]
+
+    assert get_in(spec, ["endpoints", "descriptors", "fetchFundingRateHistory", "description"]) =~
+             "/api/v1/funding-rates is the separate cross-exchange reference feed"
 
     for method <- ~w(fetchClosedOrders fetchOpenOrders) do
       assert get_in(spec, ["endpoints", "request", "defaults", method, "market_id", "optional"]) == true
@@ -135,6 +141,116 @@ defmodule Bourse.LighterAuthoredSpecTest do
       |> Map.merge(%{"type" => "limit", "amount" => "0.01001"})
       |> LighterRequestShape.build("createOrder", exchange, [])
     end
+  end
+
+  test "account read builders source account identity and private auth defaults" do
+    exchange = signed_exchange()
+
+    assert LighterRequestShape.build(%{}, "fetchBalance", exchange, []) == %{
+             "by" => "index",
+             "value" => 1
+           }
+
+    before_deadline = System.system_time(:second)
+    private = LighterRequestShape.build(%{}, "fetchMyTrades", exchange, [])
+
+    assert private["account_index"] == 1
+    assert private["auth_deadline"] >= before_deadline
+    assert private["auth_deadline"] <= before_deadline + 300
+
+    assert LighterRequestShape.build(
+             %{"account_index" => 2, "auth_deadline" => 1_800_000_000},
+             "fetchTransfers",
+             exchange,
+             []
+           ) == %{"account_index" => 2, "auth_deadline" => 1_800_000_000}
+
+    assert LighterRequestShape.build(
+             %{"by" => "index", "value" => @public_account_index},
+             "fetchPositions",
+             exchange_with_market(),
+             []
+           ) == %{"by" => "index", "value" => @public_account_index}
+  end
+
+  test "new account and history routes parse provider response slices" do
+    stub = unique_stub(:account_and_history_reads)
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+
+      body =
+        case conn.request_path do
+          "/api/v1/account" -> account_body()
+          "/api/v1/trades" -> %{"code" => 200, "trades" => [trade_body()]}
+          "/api/v1/deposit/history" -> %{"code" => 200, "deposits" => [deposit_body()]}
+          "/api/v1/withdraw/history" -> %{"code" => 200, "withdraws" => [withdrawal_body()]}
+          "/api/v1/transfer/history" -> %{"code" => 200, "transfers" => [transfer_body()]}
+          "/api/v1/liquidations" -> %{"code" => 200, "liquidations" => [liquidation_body()]}
+          "/api/v1/fundings" -> %{"code" => 200, "fundings" => [funding_body()], "resolution" => "1h"}
+        end
+
+      Req.Test.json(conn, body)
+    end)
+
+    exchange = signed_exchange()
+    call_opts = [plug: {Req.Test, stub}]
+
+    assert {:ok, %Bourse.Balance{} = balance} = Bourse.fetch_balance(exchange, call_opts)
+    assert Bourse.Balance.get(balance, "ETH") == %{free: 3.0, used: 0.0, total: 3.0}
+    assert Bourse.Balance.get(balance, "USDC") == %{free: 10_000.0, used: 0.0, total: 10_000.0}
+
+    assert {:ok, [%Bourse.Position{} = position]} = Bourse.fetch_positions(exchange, call_opts)
+    assert position.symbol == market().symbol
+    assert position.side == "long"
+    assert position.contracts == 0.25
+    assert position.liquidation_price == 75.0
+
+    assert {:ok, [%Bourse.Trade{} = trade]} = Bourse.fetch_my_trades(exchange, call_opts)
+    assert %{id: "145", symbol: "BTC/USDC:USDC", amount: 0.1, price: 100.0, cost: 10.0} = trade
+
+    assert {:ok, [%Bourse.Transaction{id: "deposit-1", status: "ok", amount: 5.0, timestamp: 1_800_000_000_000}]} =
+             Bourse.fetch_deposits(exchange, [{:l1_address, "0xabc"} | call_opts])
+
+    assert {:ok,
+            [
+              %Bourse.Transaction{
+                id: "withdrawal-1",
+                status: "pending",
+                amount: 1.0,
+                timestamp: 1_800_000_000_000
+              }
+            ]} =
+             Bourse.fetch_withdrawals(exchange, call_opts)
+
+    assert {:ok, [%Bourse.TransferEntry{id: "transfer-1", from_account: "perps", to_account: "spot"}]} =
+             Bourse.fetch_transfers(exchange, call_opts)
+
+    assert {:ok, [%Bourse.Liquidation{symbol: "BTC/USDC:USDC", price: 80.0, contracts: 0.25}]} =
+             Bourse.fetch_my_liquidations(exchange, call_opts)
+
+    assert {:ok, [%Bourse.FundingRateHistory{} = funding]} =
+             Bourse.fetch_funding_rate_history(exchange, market().symbol,
+               since: 1_800_000_000_000,
+               limit: 1,
+               plug: {Req.Test, stub}
+             )
+
+    assert funding.symbol == market().symbol
+    assert funding.funding_rate == 0.0012
+    assert funding.timestamp == 1_800_000_000_000
+
+    assert Enum.map(RequestCollector.requests(requests), & &1.conn.request_path) == [
+             "/api/v1/account",
+             "/api/v1/account",
+             "/api/v1/trades",
+             "/api/v1/deposit/history",
+             "/api/v1/withdraw/history",
+             "/api/v1/transfer/history",
+             "/api/v1/liquidations",
+             "/api/v1/fundings"
+           ]
   end
 
   test "provider-shaped markets and object order-book levels parse completely" do
@@ -399,6 +515,92 @@ defmodule Bourse.LighterAuthoredSpecTest do
       "timestamp" => 1_800_000_000,
       "type" => "limit"
     }
+  end
+
+  defp account_body do
+    %{
+      "code" => 200,
+      "accounts" => [
+        %{
+          "available_balance" => "10000.000000",
+          "assets" => [
+            %{"symbol" => "ETH", "balance" => "3.0", "locked_balance" => "0", "margin_balance" => "0"},
+            %{"symbol" => "USDC", "balance" => "0", "locked_balance" => "0", "margin_balance" => "10000"}
+          ],
+          "positions" => [
+            %{
+              "allocated_margin" => "20",
+              "avg_entry_price" => "90",
+              "initial_margin_fraction" => "20",
+              "liquidation_price" => "75",
+              "market_id" => 1,
+              "position" => "0.25",
+              "position_value" => "25",
+              "realized_pnl" => "1",
+              "sign" => 1,
+              "unrealized_pnl" => "2"
+            }
+          ]
+        }
+      ]
+    }
+  end
+
+  defp trade_body do
+    %{
+      "market_id" => 1,
+      "price" => "100",
+      "size" => "0.1",
+      "timestamp" => 1_800_000_000,
+      "trade_id" => 145,
+      "trade_id_str" => "145",
+      "type" => "trade",
+      "usd_amount" => "10"
+    }
+  end
+
+  defp deposit_body do
+    %{
+      "amount" => "5",
+      "id" => "deposit-1",
+      "l1_tx_hash" => "0xdeposit",
+      "status" => "completed",
+      "timestamp" => 1_800_000_000_000
+    }
+  end
+
+  defp withdrawal_body do
+    %{
+      "amount" => "1",
+      "id" => "withdrawal-1",
+      "l1_tx_hash" => "0xwithdrawal",
+      "status" => "pending",
+      "timestamp" => 1_800_000_000_000
+    }
+  end
+
+  defp transfer_body do
+    %{
+      "amount" => "2",
+      "from_route" => "perps",
+      "id" => "transfer-1",
+      "timestamp" => 1_800_000_000,
+      "to_route" => "spot"
+    }
+  end
+
+  defp liquidation_body do
+    %{
+      "executed_at" => 1_800_000_000,
+      "id" => 1,
+      "market_id" => 1,
+      "trade" => %{"price" => "80", "size" => "0.25"},
+      "type" => "partial"
+    }
+  end
+
+  defp funding_body do
+    %{"direction" => "long", "rate" => "0.0012", "timestamp" => 1_800_000_000, "value" => "0.03"}
   end
 
   defp unique_stub(name), do: {__MODULE__, name, System.unique_integer([:positive])}

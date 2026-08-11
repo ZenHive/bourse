@@ -223,6 +223,50 @@ defmodule Bourse.PublicAcceptedRequestsTest do
     end
   end
 
+  test "Lighter public account and native funding branches build provider-owned requests" do
+    transport = fn request ->
+      body =
+        if URI.parse(request.url).path == "/api/v1/account" do
+          %{"accounts" => [], "code" => 200, "total" => 0}
+        else
+          %{"code" => 200, "fundings" => [], "resolution" => "1h"}
+        end
+
+      {request, Req.Response.new(status: 200, body: body)}
+    end
+
+    for method <- ~w(fetchBalance fetchPositions) do
+      branch = find_branch!("lighter", method, "public_get_account")
+
+      assert {:golden, golden} =
+               PublicAcceptedRequests.record_branch(branch,
+                 captured_at: @captured_at,
+                 pacing_ms: 0,
+                 transport: transport
+               )
+
+      request = golden["requests"] |> List.first() |> Map.fetch!("url") |> URI.parse()
+      assert request.path == "/api/v1/account"
+      assert URI.decode_query(request.query) == %{"by" => "index", "value" => "0"}
+      assert :ok = PublicAcceptedRequests.replay(golden)
+    end
+
+    funding_branch = find_branch!("lighter", "fetchFundingRateHistory", "public_get_fundings")
+
+    assert {:golden, funding} =
+             PublicAcceptedRequests.record_branch(funding_branch,
+               captured_at: @captured_at,
+               pacing_ms: 0,
+               transport: transport
+             )
+
+    request = funding["requests"] |> List.first() |> Map.fetch!("url") |> URI.parse()
+    assert request.path == "/api/v1/fundings"
+    refute request.path == "/api/v1/funding-rates"
+    assert URI.decode_query(request.query)["market_id"] == "0"
+    assert :ok = PublicAcceptedRequests.replay(funding)
+  end
+
   test "structural scrub rejects credential and account identity names without environment secrets" do
     golden = fake_golden!("binance", "fetchTime", "public_get_time")
 
