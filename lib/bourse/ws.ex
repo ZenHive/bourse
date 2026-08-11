@@ -361,7 +361,7 @@ defmodule Bourse.WS do
 
   Per-frame auth injection (`Bourse.WS.Auth.build_subscribe_auth/5`, used by the
   `:rest_token` and `:inline_subscribe` patterns) is not called here. No runtime
-  venue uses either pattern — both belong to exchanges outside the supported ten
+  venue uses either pattern — both belong to exchanges outside the supported eleven
   — so this is a gap only for a venue promoted with one of them.
   """
   @spec subscribe(t(), [String.t() | map()], keyword() | map()) :: :ok | {:error, term()}

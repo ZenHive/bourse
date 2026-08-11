@@ -13,7 +13,7 @@ defmodule Bourse.CurrencyActiveRollupTest do
   alias Bourse.ResponseParser
   alias Bourse.Unified
 
-  @first_class_venues ~w(alpaca binance binancecoinm binanceusdm bybit deribit derive hyperliquid lighter okx)
+  @first_class_venues ~w(alpaca binance binancecoinm binanceusdm bybit coinbaseexchange deribit derive hyperliquid lighter okx)
 
   for exchange_id <- @first_class_venues do
     @external_resource Path.expand(

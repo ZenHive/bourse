@@ -286,10 +286,15 @@ defmodule Bourse.ExchangeTest do
     test "non-binance-family venues resolve every base URL to no exception scope" do
       non_binance = Spec.exchanges() -- ~w(binance binancecoinm binanceusdm)
 
-      assert length(non_binance) == 7
+      assert length(non_binance) == 8
 
       for venue <- non_binance do
-        exchanges = [Exchange.new!(venue), Exchange.new!(venue, sandbox: true)]
+        exchanges =
+          if venue == "coinbaseexchange" do
+            [Exchange.new!(venue)]
+          else
+            [Exchange.new!(venue), Exchange.new!(venue, sandbox: true)]
+          end
 
         for exchange <- exchanges, {_section, url} <- base_url_entries(exchange.base_urls) do
           assert Exchange.error_scope(exchange, url) == nil,
@@ -802,6 +807,21 @@ defmodule Bourse.ExchangeTest do
 
       assert populated == []
       assert Enum.sort(empty) == Spec.exchanges()
+    end
+  end
+
+  describe "signing_from_spec/1" do
+    test "returns no signing path for an explicit public-only venue" do
+      spec = %{
+        "auth" => %{
+          "authenticated_sections" => [],
+          "sign_recipe" => %{},
+          "signing_config" => %{},
+          "signing_pattern" => nil
+        }
+      }
+
+      assert {nil, %{}} = Exchange.signing_from_spec(spec)
     end
   end
 end

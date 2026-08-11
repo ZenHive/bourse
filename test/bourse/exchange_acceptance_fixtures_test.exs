@@ -20,7 +20,7 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
   }
 
   test "catalog exposes every first-class profile and fixture root" do
-    venues = ExchangeAcceptanceFixtures.first_class_venues()
+    venues = ExchangeAcceptanceFixtures.authenticated_venues()
     profiles = ExchangeAcceptanceFixtures.profiles()
 
     assert venues == ~w(alpaca binance binancecoinm binanceusdm bybit deribit derive hyperliquid lighter okx)

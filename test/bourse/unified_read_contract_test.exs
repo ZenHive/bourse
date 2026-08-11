@@ -54,6 +54,7 @@ defmodule Bourse.UnifiedReadContractTest do
                "binancecoinm" => 1,
                "binanceusdm" => 11,
                "bybit" => 7,
+               "coinbaseexchange" => 0,
                "deribit" => 2,
                "derive" => 0,
                "hyperliquid" => 2,

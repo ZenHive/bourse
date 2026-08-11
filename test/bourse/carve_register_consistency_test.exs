@@ -21,6 +21,7 @@ defmodule Bourse.CarveRegisterConsistencyTest do
     "binancecoinm.md" => "**Canonical for Binance COIN-M's complete authored REST surface.**",
     "binanceusdm.md" => "**Canonical for this venue.**",
     "bybit.md" => "**Canonical for this venue.**",
+    "coinbaseexchange.md" => "**Canonical for this venue.**",
     "deribit.md" => "**Canonical for this venue.**",
     "derive.md" => "**Canonical for this venue.**",
     "global.md" => "**Canonical for cross-venue carves.**",

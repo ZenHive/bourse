@@ -31,7 +31,7 @@ defmodule Bourse.Unified.RequestShape do
   # Native target keys populated FROM unified `"timeframe"` (see also
   # `drop_renamed_timeframe/2`). Declared here so `identifier_value/4` can
   # prefer them over symbol when both are required (OKX `bar` vs `instId`).
-  @timeframe_native_keys ~w(interval resolution bar)
+  @timeframe_native_keys ~w(interval resolution bar granularity)
   # Hyperliquid candleSnapshot requires startTime (docs:
   # https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint#candle-snapshot).
   # When neither since nor limit is supplied, pin epoch 0 rather than relying on

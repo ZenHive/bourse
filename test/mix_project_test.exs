@@ -6,7 +6,7 @@ defmodule Bourse.MixProjectTest do
   @source_url "https://github.com/ZenHive/bourse"
   # native/lighter_signer ships the Go/C signer sources so consumers can build
   # the Lighter helper themselves; the compiled binary is never packaged.
-  @runtime_venues ~w(alpaca binance binancecoinm binanceusdm bybit deribit derive hyperliquid lighter okx)
+  @runtime_venues ~w(alpaca binance binancecoinm binanceusdm bybit coinbaseexchange deribit derive hyperliquid lighter okx)
   # The venue-promotion and oracle tooling is developed here but is not part of
   # the client's surface, so `lib/bourse` ships enumerated rather than as a
   # blanket directory entry.

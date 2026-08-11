@@ -221,6 +221,38 @@ defmodule Bourse.Spec.PromotionTest do
     assert Enum.any?(gaps, &(&1.code == :credential_setup_incomplete))
   end
 
+  test "a public-only candidate records authenticated contracts as not applicable" do
+    candidate =
+      promotion_candidate()
+      |> put_in(["auth", "authenticated_sections"], [])
+      |> put_in(["auth", "signing_config"], %{})
+      |> put_in(["auth", "signing_pattern"], nil)
+      |> put_in(["auth", "sign_recipe"], %{})
+
+    report =
+      candidate
+      |> complete_report()
+      |> update_item("contract:authenticated:success", &public_only_contract/1)
+      |> update_item("contract:authenticated:error", &public_only_contract/1)
+      |> update_item("contract:integration_tests", fn item ->
+        put_in(item, ["details", "credential_setup"], %{
+          "public_only" => true,
+          "environment_variables" => [],
+          "export_commands" => [],
+          "credentials_url" => "https://docs.example.test/public-api"
+        })
+      end)
+
+    assert {:ok, promoted} =
+             Promotion.promote(candidate, report,
+               command_runner: passing_runner(),
+               root: promotion_root!(candidate)
+             )
+
+    assert promoted["auth"]["authenticated_sections"] == []
+    assert promoted["auth"]["signing_pattern"] == nil
+  end
+
   test "an integration test that silently skips cannot promote" do
     candidate = promotion_candidate()
     source = File.read!(@integration_path) <> "\n# @moduletag :skip\n"
@@ -517,6 +549,12 @@ defmodule Bourse.Spec.PromotionTest do
       String.ends_with?(id, ":error") -> Map.put(item, "details", %{"outcome" => "error"})
       true -> item
     end
+  end
+
+  defp public_only_contract(item) do
+    item
+    |> Map.put("status", "not_applicable")
+    |> Map.delete("details")
   end
 
   defp put_capability_status(report, method, status, candidate) do

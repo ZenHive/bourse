@@ -4,7 +4,7 @@
   "vendoring_decision": {
     "mode": "vendored",
     "reference_documents": "Tracked because offline authoring, promotion, parser, request-shape, and unsupported-venue tests need complete normalized reference documents and named counter-examples. Operation recordings contain provider response envelopes, not this static reference contract; fetch-on-demand would make the offline suite depend on network access.",
-    "manifest": "Tracked beside the documents because it defines the closed 15-document inventory and pins its provenance. Without it a fresh clone could not validate slice completeness or compare the upstream revision with the authoring workbench.",
+    "manifest": "Tracked beside the documents because it defines the closed 16-document inventory and pins its provenance. Without it a fresh clone could not validate slice completeness or compare the upstream revision with the authoring workbench.",
     "cross_repository_revision_pin": "pins.source.sha256"
   },
   "pins": {
@@ -17,13 +17,14 @@
       "sha256": "b085e58464d516dbd5c31ce0e0f3f53642a0a071dce6dfd30bb4b5259e257cf5"
     }
   },
-  "exchange_count": 15,
+  "exchange_count": 16,
   "exchanges": [
     "alpaca",
     "binance",
     "binancecoinm",
     "binanceusdm",
     "bybit",
+    "coinbaseexchange",
     "coinmetro",
     "deepcoin",
     "deribit",

@@ -292,11 +292,21 @@ defmodule Bourse.SigningTest do
 
       undeclared =
         results
-        |> Enum.reject(fn {_id, pattern, _config} -> MapSet.member?(declared, pattern) end)
+        |> Enum.reject(fn
+          {id, nil, _config} ->
+            spec = Bourse.Spec.load!(id)
+            spec["auth"]["authenticated_sections"] == [] and spec["auth"]["signing_pattern"] == nil
+
+          {_id, pattern, _config} ->
+            MapSet.member?(declared, pattern)
+        end)
         |> Enum.map(fn {id, pattern, _config} -> {id, pattern} end)
         |> Enum.sort()
 
+      public_only = for {id, nil, _config} <- results, do: id
+
       assert resolved_venues == expected_venues
+      assert public_only == ["coinbaseexchange"]
 
       assert undeclared == [],
              "supported venues resolve to undeclared signing patterns: #{inspect(undeclared)}"

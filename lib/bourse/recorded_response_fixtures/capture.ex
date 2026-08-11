@@ -100,6 +100,8 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       {"bybit", :fetch_ticker} => public("v5/market/tickers", "api.bybit.com", "BTC/USDT:USDT"),
       {"bybit", :fetch_trades} => public("v5/market/recent-trade", "api.bybit.com", "BTC/USDT:USDT"),
       {"bybit", :fetch_markets} => public("v5/market/instruments-info", "api.bybit.com", "BTC/USDT:USDT"),
+      {"coinbaseexchange", :fetch_ticker} => public("products/{id}/ticker", "api.exchange.coinbase.com", "ETH-USD"),
+      {"coinbaseexchange", :fetch_ohlcv} => public("products/{id}/candles", "api.exchange.coinbase.com", "ETH-USD"),
       {"bybit", :fetch_leverage_tiers} =>
         public("v5/market/risk-limit", "api-testnet.bybit.com", nil,
           environment: "testnet-demo",
@@ -327,6 +329,16 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
   # or key-change. Invalid-signature probes sign with garbage credentials (not env).
   defp error_profiles do
     %{
+      {"coinbaseexchange", :error_bad_granularity} =>
+        error_public(
+          "products/{id}/candles",
+          "api.exchange.coinbase.com",
+          :fetch_ohlcv,
+          %{"id" => "ETH-USD", "granularity" => 61},
+          error_kind: "bad_granularity",
+          expected_types: [:bad_request],
+          raw_endpoint: :public_get_products__id__candles
+        ),
       {"alpaca", :error_bad_symbol} =>
         error_probe("v2/stocks/{symbol}/snapshot", "paper-api.alpaca.markets", :alpaca, :fetch_ticker, %{
           "symbol" => "NOTAREAL"

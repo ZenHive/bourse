@@ -13,7 +13,7 @@ defmodule Bourse.Spec do
 
       # List available exchanges:
       Bourse.Spec.exchanges()
-      #=> ["alpaca", "binance", "binancecoinm", "binanceusdm", "bybit", "deribit", "derive", "hyperliquid", "lighter", "okx"]
+      #=> ["alpaca", "binance", "binancecoinm", "binanceusdm", "bybit", "coinbaseexchange", "deribit", "derive", "hyperliquid", "lighter", "okx"]
 
   ## Schema Version
 
@@ -122,7 +122,7 @@ defmodule Bourse.Spec do
   ## Examples
 
       manifest = Bourse.Spec.load_manifest!()
-      manifest["venue_count"] #=> 10
+      manifest["venue_count"] #=> 11
 
   """
   @spec load_manifest!() :: map()
@@ -284,7 +284,7 @@ defmodule Bourse.Spec do
   @spec validate_authored_contract!(map(), String.t()) :: :ok
   def validate_authored_contract!(%{"authored" => true} = spec, exchange_id) do
     required_slots = [
-      {["auth", "sign_recipe"], :map},
+      {["auth", "sign_recipe"], :map_allow_empty},
       {["normalization", "field_maps"], :map},
       {["normalization", "response_envelopes"], :map},
       {["markets", "patterns"], :map},
@@ -292,6 +292,7 @@ defmodule Bourse.Spec do
     ]
 
     Enum.each(required_slots, &validate_authored_slot!(spec, exchange_id, &1))
+    validate_authored_signing_contract!(spec, exchange_id)
     validate_request_source_contracts!(spec, exchange_id)
   end
 
@@ -303,6 +304,7 @@ defmodule Bourse.Spec do
     valid? =
       case expected_type do
         :map -> is_map(value) and map_size(value) > 0
+        :map_allow_empty -> is_map(value)
         :list -> is_list(value) and value != []
       end
 
@@ -311,6 +313,27 @@ defmodule Bourse.Spec do
 
       raise "spec #{inspect(exchange_id)} has invalid authored slot #{slot}: " <>
               "expected non-empty #{expected_type}, got #{inspect(value)}"
+    end
+  end
+
+  defp validate_authored_signing_contract!(spec, exchange_id) do
+    auth = Map.get(spec, "auth", %{})
+    recipe = auth["sign_recipe"]
+
+    case Map.fetch(auth, "signing_pattern") do
+      {:ok, nil} ->
+        if auth["authenticated_sections"] == [] and auth["signing_config"] == %{} and recipe == %{} do
+          :ok
+        else
+          raise "spec #{inspect(exchange_id)} has invalid public-only auth contract"
+        end
+
+      _pattern when is_map(recipe) and map_size(recipe) > 0 ->
+        :ok
+
+      _pattern ->
+        raise "spec #{inspect(exchange_id)} has invalid authored slot auth.sign_recipe: " <>
+                "expected non-empty map, got #{inspect(recipe)}"
     end
   end
 

@@ -53,7 +53,7 @@ defmodule Bourse.RegistryTest do
       assert Registry.exchanges() == Bourse.Spec.exchanges()
 
       assert Registry.exchanges() ==
-               ~w(alpaca binance binancecoinm binanceusdm bybit deribit derive hyperliquid lighter okx)
+               ~w(alpaca binance binancecoinm binanceusdm bybit coinbaseexchange deribit derive hyperliquid lighter okx)
     end
 
     test "returns string IDs sorted alphabetically" do

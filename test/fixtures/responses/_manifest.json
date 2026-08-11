@@ -1,5 +1,5 @@
 {
-  "count": 114,
+  "count": 116,
   "fixtures": [
     "alpaca/fetch_balance.json",
     "alpaca/fetch_markets.json",
@@ -64,6 +64,8 @@
     "bybit/fetch_ticker.json",
     "bybit/fetch_trades.json",
     "bybit/order_lifecycle.json",
+    "coinbaseexchange/fetch_ohlcv.json",
+    "coinbaseexchange/fetch_ticker.json",
     "deribit/fetch_balance.json",
     "deribit/fetch_deposit_address.json",
     "deribit/fetch_funding_rate.json",
@@ -116,7 +118,7 @@
     "okx/fetch_ticker.json",
     "okx/fetch_trades.json"
   ],
-  "generated_at": "2026-08-11T03:34:06.389408Z",
+  "generated_at": "2026-08-11T05:37:50.255157Z",
   "recordings": [
     {
       "capture_date": "2026-07-26",
@@ -713,6 +715,24 @@
       "method": "order_lifecycle",
       "path": "bybit/order_lifecycle.json",
       "venue": "bybit"
+    },
+    {
+      "capture_date": "2026-08-11",
+      "captured_at": "2026-08-11T05:37:50.248288Z",
+      "endpoint": "products/{id}/candles",
+      "host": "api.exchange.coinbase.com",
+      "method": "fetch_ohlcv",
+      "path": "coinbaseexchange/fetch_ohlcv.json",
+      "venue": "coinbaseexchange"
+    },
+    {
+      "capture_date": "2026-08-11",
+      "captured_at": "2026-08-11T05:37:49.043234Z",
+      "endpoint": "products/{id}/ticker",
+      "host": "api.exchange.coinbase.com",
+      "method": "fetch_ticker",
+      "path": "coinbaseexchange/fetch_ticker.json",
+      "venue": "coinbaseexchange"
     },
     {
       "capture_date": "2026-07-21",

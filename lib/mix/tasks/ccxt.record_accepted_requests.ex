@@ -2,7 +2,7 @@ defmodule Mix.Tasks.Ccxt.RecordAcceptedRequests do
   @shortdoc "Freeze fixture-signed requests proven by live exchange acceptance"
 
   @moduledoc """
-  Records deterministic request goldens for the ten first-class venues.
+  Records deterministic request goldens for every credentialed venue.
 
   Each live request must receive HTTP 2xx plus venue-level business success.
   Live credentials and signatures remain in memory; only the equivalent request
@@ -33,13 +33,13 @@ defmodule Mix.Tasks.Ccxt.RecordAcceptedRequests do
     Mix.shell().info("Recorded #{length(goldens)} exchange-accepted request golden(s).")
   end
 
-  defp venues!([]), do: ExchangeAcceptanceFixtures.first_class_venues()
+  defp venues!([]), do: ExchangeAcceptanceFixtures.authenticated_venues()
 
   defp venues!([venue]) do
-    if venue in ExchangeAcceptanceFixtures.first_class_venues() do
+    if venue in ExchangeAcceptanceFixtures.authenticated_venues() do
       [venue]
     else
-      raise Mix.Error, "unknown first-class venue: #{venue}"
+      raise Mix.Error, "unknown credentialed venue: #{venue}"
     end
   end
 

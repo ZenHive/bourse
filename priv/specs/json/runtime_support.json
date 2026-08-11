@@ -1,13 +1,14 @@
 {
   "kind": "runtime_support",
   "schema_version": 3,
-  "venue_count": 10,
+  "venue_count": 11,
   "venues": [
     "alpaca",
     "binance",
     "binancecoinm",
     "binanceusdm",
     "bybit",
+    "coinbaseexchange",
     "deribit",
     "derive",
     "hyperliquid",

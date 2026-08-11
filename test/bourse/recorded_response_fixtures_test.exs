@@ -178,6 +178,27 @@ defmodule Bourse.RecordedResponseFixturesTest do
     assert fixture["params"]["symbol"] == "BTC/USDC"
   end
 
+  test "capture preserves every configured parameter variant" do
+    stub = unique_stub("parameter_variants")
+    test_process = self()
+
+    Req.Test.stub(stub, fn conn ->
+      send(test_process, {:asset_class, URI.decode_query(conn.query_string)["asset_class"]})
+      Req.Test.json(conn, [%{"id" => "asset"}])
+    end)
+
+    with_env(~w(ALPACA_API_KEY ALPACA_API_SECRET), "fixture-credential", fn ->
+      assert {:ok, fixture} = Capture.capture_fixture("alpaca", :fetch_markets, plug: {Req.Test, stub})
+      assert_receive {:asset_class, "us_equity"}
+      assert_receive {:asset_class, "crypto"}
+
+      assert fixture["responses"] == [
+               %{"body" => [%{"id" => "asset"}], "params" => %{"asset_class" => "us_equity"}},
+               %{"body" => [%{"id" => "asset"}], "params" => %{"asset_class" => "crypto"}}
+             ]
+    end)
+  end
+
   test "OHLCV capture carries its positional timeframe as a request parameter" do
     stub = unique_stub("ohlcv_timeframe")
     test_process = self()
@@ -210,11 +231,21 @@ defmodule Bourse.RecordedResponseFixturesTest do
     end
   end
 
-  test "every runtime venue can record fetch_markets reality" do
+  test "every runtime venue can record market-identity reality through a supported read" do
     targets = MapSet.new(RecordedResponseFixtures.capture_targets())
 
     for venue <- Spec.exchanges() do
-      assert MapSet.member?(targets, {venue, :fetch_markets})
+      has = Spec.load!(venue)["capabilities"]["has"]
+
+      method =
+        cond do
+          has["fetchMarkets"] -> :fetch_markets
+          has["fetchTicker"] -> :fetch_ticker
+          has["fetchOHLCV"] -> :fetch_ohlcv
+          true -> flunk("#{venue} has no supported market-identity read")
+        end
+
+      assert MapSet.member?(targets, {venue, method})
     end
   end
 
@@ -338,6 +369,7 @@ defmodule Bourse.RecordedResponseFixturesTest do
 
   test "unknown capture profiles fail explicitly" do
     assert Capture.category("unknown", :fetch_ticker) == nil
+    assert Capture.required_credentials("unknown", :fetch_ticker) == nil
     assert Capture.oracle_identity("unknown", :fetch_ticker) == nil
 
     assert {:error, {:no_capture_profile, "unknown", :fetch_ticker}} =

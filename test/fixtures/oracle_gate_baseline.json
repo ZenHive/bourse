@@ -216,6 +216,16 @@
         "sign_path.public.public"
       ]
     },
+    "coinbaseexchange": {
+      "verified_slots": [
+        "errors.handle_errors.exceptions.exact.Unsupported granularity",
+        "markets.patterns.spot",
+        "normalization.field_maps.ticker",
+        "request_shape.fetchOHLCV",
+        "request_shape.fetchTicker",
+        "sign_path.public.public"
+      ]
+    },
     "deribit": {
       "verified_slots": [
         "auth.sign_recipe.private",

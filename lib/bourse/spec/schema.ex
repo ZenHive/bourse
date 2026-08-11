@@ -20,7 +20,6 @@ defmodule Bourse.Spec.Schema do
     ~w(capabilities),
     ~w(capabilities has),
     ~w(auth),
-    ~w(auth sign_recipe),
     ~w(normalization),
     ~w(normalization field_maps),
     ~w(normalization response_envelopes),
@@ -36,6 +35,7 @@ defmodule Bourse.Spec.Schema do
 
   @required_maps [
     ~w(auth signing_config),
+    ~w(auth sign_recipe),
     ~w(config),
     ~w(endpoints request),
     ~w(errors handle_errors exception_scopes),
@@ -204,15 +204,28 @@ defmodule Bourse.Spec.Schema do
   end
 
   defp validate_signing_contract!(spec, exchange_id) do
-    case get_in(spec, ["auth", "signing_pattern"]) do
-      pattern when pattern in @signing_patterns ->
+    auth = Map.fetch!(spec, "auth")
+
+    case {auth["authenticated_sections"], auth["signing_pattern"], auth["signing_config"], auth["sign_recipe"]} do
+      {[], nil, signing_config, sign_recipe} when signing_config == %{} and sign_recipe == %{} ->
         :ok
 
-      pattern ->
+      {_sections, pattern, _signing_config, sign_recipe}
+      when pattern in @signing_patterns and is_map(sign_recipe) and map_size(sign_recipe) > 0 ->
+        :ok
+
+      {_sections, pattern, _signing_config, sign_recipe} when pattern in @signing_patterns ->
+        gap!(
+          exchange_id,
+          ~w(auth sign_recipe),
+          "expected non_empty_map for signing pattern #{inspect(pattern)}, got #{inspect(sign_recipe)}"
+        )
+
+      {_sections, pattern, _signing_config, _sign_recipe} ->
         gap!(
           exchange_id,
           ~w(auth signing_pattern),
-          "expected one of #{Enum.join(@signing_patterns, ", ")}, got #{inspect(pattern)}"
+          "expected nil for an empty public-only auth contract or one of #{Enum.join(@signing_patterns, ", ")}, got #{inspect(pattern)}"
         )
     end
   end

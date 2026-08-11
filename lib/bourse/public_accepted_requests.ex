@@ -373,6 +373,19 @@ defmodule Bourse.PublicAcceptedRequests do
     ]
   end
 
+  defp fallback_markets("coinbaseexchange") do
+    [
+      %{
+        "active" => true,
+        "base" => "ETH",
+        "id" => "ETH-USD",
+        "quote" => "USD",
+        "spot" => true,
+        "symbol" => "ETH-USD"
+      }
+    ]
+  end
+
   defp fallback_markets(_venue), do: []
 
   defp replay_inputs(exchange, branch) do

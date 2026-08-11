@@ -1,5 +1,4 @@
 defmodule Bourse.Unified do
-  @moduledoc false
   # Internal: method definitions and dispatch for unified API functions.
   #
   # The @method_defs list is the single source of truth for unified methods.
@@ -8,7 +7,9 @@ defmodule Bourse.Unified do
   # this list at compile time.
   #
   # Optional params (since, limit, price, tag, symbols, etc.) go in opts.
+  @moduledoc false
 
+  alias Bourse.CoinbaseCandlePagination
   alias Bourse.Dispatch
   alias Bourse.Emulation
   alias Bourse.Error
@@ -630,6 +631,10 @@ defmodule Bourse.Unified do
     Enum.map(@method_defs, fn {name, js_name, params} ->
       {name, js_name, params, description_for(name)}
     end)
+
+    # ===========================================================================
+    # Dispatch
+    # ===========================================================================
   end
 
   @doc "Returns the description for a unified method, curated or auto-generated."
@@ -647,10 +652,6 @@ defmodule Bourse.Unified do
     |> then(fn s -> String.upcase(String.first(s)) <> String.slice(s, 1..-1//1) end)
     |> Kernel.<>(".")
   end
-
-  # ===========================================================================
-  # Dispatch
-  # ===========================================================================
 
   @doc """
   Fetches markets and returns an enriched `%Exchange{}` with the markets cache set.
@@ -978,8 +979,50 @@ defmodule Bourse.Unified do
     dispatch_opts = Keyword.drop(opts, @selection_opts)
 
     with {:ok, params} <- maybe_resolve_market_id(exchange, capability_name, params, opts) do
-      final_params = build_final_params(exchange, capability_name, params, opts, config.path)
-      dispatch_and_paginate(exchange, capability_name, config, final_params, dispatch_opts)
+      dispatch_coinbase_pages(exchange, capability_name, config, params, opts, dispatch_opts)
+    end
+  end
+
+  defp dispatch_coinbase_pages(
+         %Exchange{id: "coinbaseexchange"} = exchange,
+         "fetchOHLCV",
+         config,
+         params,
+         opts,
+         dispatch_opts
+       ) do
+    now_ms = Keyword.get(opts, :timestamp_ms_override, System.system_time(:millisecond))
+
+    case CoinbaseCandlePagination.pagination(params, exchange.timeframes, now_ms) do
+      :single ->
+        final_params = build_final_params(exchange, "fetchOHLCV", params, opts, config.path)
+        dispatch_and_paginate(exchange, "fetchOHLCV", config, final_params, dispatch_opts)
+
+      {:paginate, pages, metadata} ->
+        with {:ok, responses} <- dispatch_coinbase_page_requests(exchange, config, pages, opts, dispatch_opts) do
+          {:ok, CoinbaseCandlePagination.merge_responses!(responses, metadata)}
+        end
+    end
+  end
+
+  defp dispatch_coinbase_pages(exchange, capability_name, config, params, opts, dispatch_opts) do
+    final_params = build_final_params(exchange, capability_name, params, opts, config.path)
+    dispatch_and_paginate(exchange, capability_name, config, final_params, dispatch_opts)
+  end
+
+  defp dispatch_coinbase_page_requests(exchange, config, pages, opts, dispatch_opts) do
+    pages
+    |> Enum.reduce_while({:ok, []}, fn %{params: params}, {:ok, responses} ->
+      final_params = build_final_params(exchange, "fetchOHLCV", params, opts, config.path)
+
+      case Dispatch.call(exchange, config, final_params, dispatch_opts) do
+        {:ok, response} -> {:cont, {:ok, [response | responses]}}
+        {:error, _reason} = error -> {:halt, error}
+      end
+    end)
+    |> case do
+      {:ok, responses} -> {:ok, Enum.reverse(responses)}
+      {:error, _reason} = error -> error
     end
   end
 

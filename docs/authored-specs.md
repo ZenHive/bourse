@@ -78,8 +78,8 @@ Keep the macros and the JSON-spec format. Then:
 4. distill + the heuristic interpretation layers (`Recipe.resolve`, `classify_pattern`,
    error-derivation) are **removed**, not reconciled.
 
-**Scope:** the 10 first-class venues — `alpaca`, `deribit`, `okx`, `bybit`, `binance`,
-`binancecoinm`, `binanceusdm`, `hyperliquid`, `derive`, `lighter`. The ~100-exchange long tail stays as last-frozen vendored specs
+**Scope:** the 11 first-class venues — `alpaca`, `deribit`, `okx`, `bybit`, `binance`,
+`binancecoinm`, `binanceusdm`, `coinbaseexchange`, `hyperliquid`, `derive`, `lighter`. The ~100-exchange long tail stays as last-frozen vendored specs
 (public-data-only); removing the *sync tooling* does not delete the vendored files.
 
 ### Vendored reference storage decisions
@@ -94,7 +94,7 @@ the complete offline suite without fetching authoring inputs:
   currency-network metadata that replay consumes. Rebuilding those fields would
   require rerunning the reference implementation, so the ~1 MB cache remains a
   separate vendored compatibility input rather than reality evidence.
-- The 15 documents in `priv/specs/json/output/` are test-only authoring references.
+- The 16 documents in `priv/specs/json/output/` are test-only authoring references.
   Tests read their complete endpoint trees and symbol indexes, including five
   unsupported-venue counter-examples. Individual operation recordings cannot
   represent that static document contract, while fetch-on-demand would put network
@@ -154,7 +154,7 @@ the complete offline suite without fetching authoring inputs:
   carries one as mechanical CCXT-projected bulk, so inferring from it would publish rates
   nobody confronted against the venue's own schedule. `true` is therefore an assertion that
   the schedule was confronted and belongs in market rows — today `binance` and `binanceusdm`
-  (carve C-T164a); the other five first-class venues declare `false`.
+  (carve C-T164a); the remaining first-class venues declare `false`.
 - **One schema, many macro outputs.** The same owned schema generates endpoints *and* (follow-on, gated on the gate) the pattern-match verification assertions. Think in macros: the schema is the single source the codegen and the tests both read.
 
 ### Venue promotion boundary
@@ -816,7 +816,7 @@ twice in this repo) despite the generic spread-the-roster guidance.
 ## Verification
 
 - **Reality oracle:** `mix ccxt.oracle_gate` grades the manifest-registered response
-  recordings, accepted-request goldens, and recorded errors for all ten venues. This is the
+  recordings, accepted-request goldens, and recorded errors for all eleven venues. This is the
   only verification oracle in `mix check.dispatch`.
 - **Suite:** `mix precommit` (offline) stays green throughout; `mix precommit.full` before PR.
 - **Live cross-check:** T39 `--include integration --include network` detects current venue

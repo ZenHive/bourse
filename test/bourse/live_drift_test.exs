@@ -6,8 +6,8 @@ defmodule Bourse.LiveDriftTest do
   alias Bourse.LiveDrift.Comparator
   alias Bourse.RecordedResponseFixtures
 
-  @venues ~w(alpaca binance binancecoinm binanceusdm bybit deribit derive hyperliquid lighter okx)
-  @expected_capture_count 20
+  @venues ~w(alpaca binance binancecoinm binanceusdm bybit coinbaseexchange deribit derive hyperliquid lighter okx)
+  @expected_capture_count 21
 
   test "profiles activate exactly one public and one private read for the support manifest" do
     assert LiveDrift.profiles() |> Map.keys() |> Enum.sort() == @venues
@@ -15,7 +15,12 @@ defmodule Bourse.LiveDriftTest do
     for {venue, profile} <- LiveDrift.profiles() do
       {public_method, _parse_type, _js_method} = profile.public
       assert RecordedResponseFixtures.capture_category(venue, public_method) == :public
-      assert RecordedResponseFixtures.capture_category(venue, profile.private) == :private
+
+      if profile.private do
+        assert RecordedResponseFixtures.capture_category(venue, profile.private) == :private
+      else
+        assert venue == "coinbaseexchange"
+      end
     end
   end
 
@@ -76,9 +81,12 @@ defmodule Bourse.LiveDriftTest do
     assert report.status == "passed"
     assert length(report.venues) == length(@venues)
 
-    assert Enum.all?(report.venues, fn venue ->
-             venue.public.status == "passed" and venue.private.status == "passed"
-           end)
+    assert Enum.all?(report.venues, fn venue -> venue.public.status == "passed" end)
+    assert Enum.find(report.venues, &(&1.venue == "coinbaseexchange")).private.status == "not_applicable"
+
+    assert report.venues
+           |> Enum.reject(&(&1.venue == "coinbaseexchange"))
+           |> Enum.all?(&(&1.private.status == "passed"))
 
     captures =
       for _index <- 1..@expected_capture_count do
@@ -89,7 +97,7 @@ defmodule Bourse.LiveDriftTest do
     expected =
       Enum.flat_map(LiveDrift.profiles(), fn {venue, profile} ->
         {public_method, _parse_type, _js_method} = profile.public
-        [{venue, public_method}, {venue, profile.private}]
+        [{venue, public_method}] ++ Enum.map(List.wrap(profile.private), &{venue, &1})
       end)
 
     assert Enum.sort(captures) == Enum.sort(expected)

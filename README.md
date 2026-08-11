@@ -1,9 +1,9 @@
 # bourse
 
-Elixir client library for ten provider-authored exchange integrations generated
+Elixir client library for eleven provider-authored exchange integrations generated
 from owned JSON specs via compile-time macros.
 
-**Status:** the runtime support contract is the ten venues listed below.
+**Status:** the runtime support contract is the eleven venues listed below.
 
 ## Installation
 
@@ -60,6 +60,7 @@ not runtime support.
 | `binancecoinm` | Perp-hedge venue (COIN-M) | Inverse perpetuals and dated futures |
 | `binanceusdm` | Perp-hedge venue (USDⓈ-M) | Linear perpetuals |
 | `bybit` | Options venue | Spot, linear/inverse perps, options |
+| `coinbaseexchange` | Public market-data venue | ETH-USD and other spot products |
 | `deribit` | Options venue | Options, futures, spot |
 | `derive` | Options venue (DEX) | On-chain options on Optimism |
 | `hyperliquid` | Perp-hedge venue (DEX) | On-chain perpetuals |
@@ -69,7 +70,7 @@ not runtime support.
 ```elixir
 Bourse.Registry.exchanges()
 #=> ["alpaca", "binance", "binancecoinm", "binanceusdm", "bybit",
-#=>  "deribit", "derive", "hyperliquid", "lighter", "okx"]
+#=>  "coinbaseexchange", "deribit", "derive", "hyperliquid", "lighter", "okx"]
 
 Bourse.Exchange.new("kraken")
 #=> {:error, {:unsupported_exchange, "kraken"}}
@@ -159,15 +160,13 @@ Consumer-facing gotchas not obvious from the API signatures. Full context in
   inject a long-tail signer. Derive and Hyperliquid expect the EVM private key
   in `credentials.secret`; Lighter uses its documented API signing key.
 
-- **Every supported venue resolves a sandbox, but sandbox *semantics* differ.**
-  `Exchange.new(id, sandbox: true)` succeeds for all ten venues; what it selects
-  is venue-specific. Some venues swap the host (Alpaca paper trading), some add
-  a header to the production host (OKX simulated trading), and some change
-  signed payload material (Lighter also switches chain id). A venue's sandbox
-  may additionally be read-only or region-restricted for signed writes, which
-  surfaces as a business error rather than a transport failure. Check the
-  venue's own sandbox documentation before treating a sandbox pass as
-  production-equivalent.
+- **Sandbox semantics differ.** Credentialed venues resolve an authored sandbox;
+  some swap the host (Alpaca paper trading), some add a header to the production
+  host (OKX simulated trading), and some change signed payload material (Lighter
+  also switches chain id). `coinbaseexchange` is deliberately public-only and
+  uses its production public host. A venue's sandbox may additionally be
+  read-only or region-restricted for signed writes, which surfaces as a business
+  error rather than a transport failure.
 
 ## Discovery
 
@@ -175,7 +174,7 @@ Consumer-facing gotchas not obvious from the API signatures. Full context in
 Bourse.describe()                      # Library overview
 Bourse.describe(Bourse, :fetch_ticker) # Method signature + params + errors + return shape
 Bourse.MCP.tools()                     # MCP tool definitions for agent autodiscovery
-Bourse.Registry.exchanges()            # List the ten runtime exchange ids
+Bourse.Registry.exchanges()            # List the eleven runtime exchange ids
 ```
 
 Per-exchange introspection (generated on every exchange module):

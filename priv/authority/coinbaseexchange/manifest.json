@@ -1,0 +1,124 @@
+{
+  "schema_version": 2,
+  "venue": "coinbaseexchange",
+  "official_docs_url": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products",
+  "selection_reason": "The provider's product candle and ticker pages are the semantic authority for the complete two-route public market-data surface authored here.",
+  "fetch_script": "scripts/fetch_authority.sh",
+  "error_enumeration": {
+    "path": "errors.json",
+    "source_artifact_id": "product-candles",
+    "source_url": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-candles",
+    "retrieved_at": "2026-08-11",
+    "sha256": "02473955f86c7a27da1afe568e7af74136e7358c2e1692460c13ba9fb8f338f5",
+    "bytes": 1556
+  },
+  "artifacts": [
+    {
+      "id": "product-candles",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-candles",
+      "fetch_url": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-candles",
+      "filename": "coinbaseexchange-product-candles-2026-08-11.html",
+      "retrieved_at": "2026-08-11",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-08-11"
+      },
+      "sha256": "821bc49d0f68b5a308f0b99ce1748d4049392568610d9d566b4595da094d28c6",
+      "bytes": 856456,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific redistribution license published",
+        "evidence_url": "https://docs.cdp.coinbase.com/",
+        "handling": "reference_only",
+        "reason": "The rendered provider documentation is referenced rather than redistributed."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-candles"
+      },
+      "freshness": {
+        "status": "reviewed_current",
+        "checked_at": "2026-08-11",
+        "mutable": true,
+        "notes": "Reviewed against the live public endpoint on the retrieval date."
+      },
+      "expressiveness": {
+        "level": "prose_documentation",
+        "limitations": [
+          "The page documents one REST operation rather than the venue-wide API."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The page covers the product candle route."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
+    },
+    {
+      "id": "product-ticker",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-ticker",
+      "fetch_url": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-ticker",
+      "filename": "coinbaseexchange-product-ticker-2026-08-11.html",
+      "retrieved_at": "2026-08-11",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-08-11"
+      },
+      "sha256": "102581cae9cd1c909fde0d4c04a17b7ae905344bc17cf6d874079a926bfd8acf",
+      "bytes": 862313,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific redistribution license published",
+        "evidence_url": "https://docs.cdp.coinbase.com/",
+        "handling": "reference_only",
+        "reason": "The rendered provider documentation is referenced rather than redistributed."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-ticker"
+      },
+      "freshness": {
+        "status": "reviewed_current",
+        "checked_at": "2026-08-11",
+        "mutable": true,
+        "notes": "Reviewed against the live public endpoint on the retrieval date."
+      },
+      "expressiveness": {
+        "level": "prose_documentation",
+        "limitations": [
+          "The page documents one REST operation rather than the venue-wide API."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "The page covers the product ticker route."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
+    }
+  ],
+  "rejected_candidates": []
+}

@@ -2090,4 +2090,8 @@ defmodule Bourse.ResponseParserTest do
     |> Enum.reverse()
     |> Enum.reduce(value, fn segment, nested -> %{segment => nested} end)
   end
+
+  defp source_data(%{"index" => index}, value) when is_integer(index) and index >= 0 do
+    List.duplicate(nil, index) ++ [value]
+  end
 end

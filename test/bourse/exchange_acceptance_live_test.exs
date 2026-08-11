@@ -32,7 +32,7 @@ defmodule Bourse.ExchangeAcceptanceLiveTest do
   test "every configured signed profile earns a live accepted request" do
     require_credentials!()
 
-    for venue <- ExchangeAcceptanceFixtures.first_class_venues() do
+    for venue <- ExchangeAcceptanceFixtures.authenticated_venues() do
       assert {:ok, goldens} = ExchangeAcceptanceFixtures.record_all(venue)
       assert goldens != []
 

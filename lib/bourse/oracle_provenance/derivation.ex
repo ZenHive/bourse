@@ -498,7 +498,9 @@ defmodule Bourse.OracleProvenance.Derivation do
       spec
       |> get_in(["markets", "patterns"])
       |> child_keys()
-      |> Enum.map(&{"markets.patterns.#{&1}", "fetchMarkets"})
+      |> Enum.flat_map(fn market_type ->
+        Enum.map(market_evidence_methods(spec), &{"markets.patterns.#{market_type}", &1})
+      end)
 
     request_slots =
       spec
@@ -567,7 +569,9 @@ defmodule Bourse.OracleProvenance.Derivation do
       spec
       |> get_in(["markets", "patterns"])
       |> child_keys()
-      |> Enum.map(&{"markets.patterns.#{&1}", "fetchMarkets"})
+      |> Enum.flat_map(fn market_type ->
+        Enum.map(market_evidence_methods(spec), &{"markets.patterns.#{market_type}", &1})
+      end)
 
     request_slots =
       spec
@@ -591,6 +595,14 @@ defmodule Bourse.OracleProvenance.Derivation do
       method_atom = Unified.method_atom_for_js_name(method)
       {method, Map.get(mapping, method_atom, [])}
     end)
+  end
+
+  defp market_evidence_methods(spec) do
+    support = get_in(spec, ["capabilities", "has"]) || %{}
+
+    ["fetchMarkets", "fetchTicker", "fetchOHLCV"]
+    |> Enum.filter(&(support[&1] == true))
+    |> Enum.take(1)
   end
 
   defp critical_slot?("auth.sign_recipe." <> _section = path, expected, _spec, _error_paths),
@@ -753,15 +765,23 @@ defmodule Bourse.OracleProvenance.Derivation do
   end
 
   defp market_pattern_paths(spec, method, fixture, row) do
-    if js_method!(method) == "fetchMarkets" do
-      known = spec |> get_in(["markets", "patterns"]) |> child_keys() |> MapSet.new()
+    js_method = js_method!(method)
+    known = spec |> get_in(["markets", "patterns"]) |> child_keys()
 
-      fixture
-      |> market_types(row)
-      |> Enum.filter(&MapSet.member?(known, &1))
-      |> Enum.map(&"markets.patterns.#{&1}")
-    else
-      []
+    cond do
+      js_method == "fetchMarkets" ->
+        known_set = MapSet.new(known)
+
+        fixture
+        |> market_types(row)
+        |> Enum.filter(&MapSet.member?(known_set, &1))
+        |> Enum.map(&"markets.patterns.#{&1}")
+
+      js_method in market_evidence_methods(spec) and length(known) == 1 ->
+        Enum.map(known, &"markets.patterns.#{&1}")
+
+      true ->
+        []
     end
   end
 

@@ -3,8 +3,9 @@ defmodule Bourse.LiveDrift do
   Scheduled, read-only verification of provider response contracts.
 
   Public responses are compared with committed reality recordings only at
-  envelope and field paths consumed by the authored runtime spec. Private
-  profiles prove one authenticated read per supported venue.
+  envelope and field paths consumed by the authored runtime spec. Credentialed
+  venues also prove one authenticated read; public-only venues declare that leg
+  not applicable.
 
   A runner environment may declare venues it cannot reach (geo-blocked hosts)
   via the `LIVE_DRIFT_UNREACHABLE_OK` env var or the `:unreachable_ok` option.
@@ -26,6 +27,7 @@ defmodule Bourse.LiveDrift do
     "binancecoinm" => %{public: {:fetch_ticker, "ticker", "fetchTicker"}, private: :fetch_balance},
     "binanceusdm" => %{public: {:fetch_ohlcv, "ohlcv", "fetchOHLCV"}, private: :fetch_balance},
     "bybit" => %{public: {:fetch_ticker, "ticker", "fetchTicker"}, private: :fetch_balance},
+    "coinbaseexchange" => %{public: {:fetch_ohlcv, "ohlcv", "fetchOHLCV"}, private: nil},
     "deribit" => %{public: {:fetch_ticker, "ticker", "fetchTicker"}, private: :fetch_balance},
     "derive" => %{public: {:fetch_trades, "trade", "fetchTrades"}, private: :fetch_balance},
     "hyperliquid" => %{public: {:fetch_ohlcv, "ohlcv", "fetchOHLCV"}, private: :fetch_balance},
@@ -65,7 +67,7 @@ defmodule Bourse.LiveDrift do
     end
   end
 
-  @doc "Runs the ten public and private read checks and returns a scrubbed report."
+  @doc "Runs every public read and each applicable private read, returning a scrubbed report."
   @spec run([option()]) :: {:ok, report()} | {:error, report() | term()}
   def run(opts \\ []) do
     case preflight(opts) do
@@ -101,12 +103,16 @@ defmodule Bourse.LiveDrift do
       {public_method, _parse_type, _js_method} = profile.public
 
       case {RecordedResponseFixtures.capture_category(venue, public_method),
-            RecordedResponseFixtures.capture_category(venue, profile.private)} do
+            private_capture_category(venue, profile.private)} do
         {:public, :private} -> {:cont, :ok}
+        {:public, :not_applicable} -> {:cont, :ok}
         categories -> {:halt, {:error, {:unsafe_live_profile, venue, categories}}}
       end
     end)
   end
+
+  defp private_capture_category(_venue, nil), do: :not_applicable
+  defp private_capture_category(venue, method), do: RecordedResponseFixtures.capture_category(venue, method)
 
   defp credentials_present(get_env) do
     missing =
@@ -121,7 +127,7 @@ defmodule Bourse.LiveDrift do
   defp credential_variables(venue, profile) do
     {public_method, _parse_type, _js_method} = profile.public
 
-    [public_method, profile.private]
+    [public_method | List.wrap(profile.private)]
     |> Enum.flat_map(&RecordedResponseFixtures.required_credentials(venue, &1))
     |> Enum.uniq()
   end
@@ -158,14 +164,7 @@ defmodule Bourse.LiveDrift do
           record_capture_error(report, venue, method, reason, unreachable_ok)
       end
 
-    {report, private_status} =
-      case capture.(venue, profile.private, capture_opts) do
-        {:ok, _private} ->
-          {report, "passed"}
-
-        {:error, reason} ->
-          record_capture_error(report, venue, profile.private, reason, unreachable_ok)
-      end
+    {report, private_status} = verify_private(venue, profile.private, report, capture, capture_opts, unreachable_ok)
 
     venue_result = %{
       private: %{method: profile.private, status: private_status},
@@ -174,6 +173,18 @@ defmodule Bourse.LiveDrift do
     }
 
     Map.update!(report, :venues, &[venue_result | &1])
+  end
+
+  defp verify_private(_venue, nil, report, _capture, _capture_opts, _unreachable_ok), do: {report, "not_applicable"}
+
+  defp verify_private(venue, method, report, capture, capture_opts, unreachable_ok) do
+    case capture.(venue, method, capture_opts) do
+      {:ok, _private} ->
+        {report, "passed"}
+
+      {:error, reason} ->
+        record_capture_error(report, venue, method, reason, unreachable_ok)
+    end
   end
 
   defp load_baseline(venue, method) do
@@ -237,7 +248,7 @@ defmodule Bourse.LiveDrift do
         "support_manifest",
         "preflight",
         "runtime_support.venues",
-        "exact_ten_venue_manifest",
+        "exact_runtime_support_manifest",
         inspect(difference),
         "priv/specs/json/runtime_support.json",
         "lib/bourse/live_drift.ex"
@@ -253,7 +264,7 @@ defmodule Bourse.LiveDrift do
         venue,
         "preflight",
         "scheduled_profile.category",
-        "{:public, :private}",
+        "{:public, :private_or_not_applicable}",
         inspect(categories),
         "lib/bourse/recorded_response_fixtures/capture.ex",
         "lib/bourse/live_drift.ex"

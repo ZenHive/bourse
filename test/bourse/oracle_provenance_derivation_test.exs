@@ -36,11 +36,21 @@ defmodule Bourse.OracleProvenance.DerivationTest do
 
   test "every runtime venue has populated fetchMarkets reality", %{reports: reports} do
     for venue <- Bourse.Spec.exchanges() do
-      assert %{verified: true, contributing_methods: methods} =
-               slot(reports[venue], "normalization.field_maps.market")
+      spec = venue |> Bourse.Spec.owned_spec_path() |> Bourse.Spec.decode_file!()
 
-      assert "fetchMarkets" in methods
+      if get_in(spec, ["capabilities", "has", "fetchMarkets"]) == true do
+        assert %{verified: true, contributing_methods: methods} =
+                 slot(reports[venue], "normalization.field_maps.market")
+
+        assert "fetchMarkets" in methods
+      end
     end
+  end
+
+  test "a public-only market-data venue proves its market carve through a supported symbol read" do
+    spec = "coinbaseexchange" |> Bourse.Spec.owned_spec_path() |> Bourse.Spec.decode_file!()
+
+    assert %{path: "markets.patterns.spot", expected_methods: ["fetchTicker"]} in Derivation.critical_slots(spec)
   end
 
   test "accepted requests verify request shape and only their exact signed route", %{reports: reports} do

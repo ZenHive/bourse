@@ -438,7 +438,7 @@ defmodule Bourse.SpecTest do
       runtime_files = Enum.map(Bourse.Spec.exchanges(), &Path.basename(Bourse.Spec.owned_spec_path(&1)))
 
       assert Enum.sort(runtime_files) ==
-               ~w(alpaca.json binance.json binancecoinm.json binanceusdm.json bybit.json deribit.json derive.json hyperliquid.json lighter.json okx.json)
+               ~w(alpaca.json binance.json binancecoinm.json binanceusdm.json bybit.json coinbaseexchange.json deribit.json derive.json hyperliquid.json lighter.json okx.json)
     end
   end
 
@@ -685,7 +685,8 @@ defmodule Bourse.SpecTest do
     end
 
     test "every authored order-status rule declares its unknown-value policy" do
-      for venue <- ~w(alpaca binance binancecoinm binanceusdm bybit deribit derive hyperliquid lighter okx) do
+      for venue <-
+            ~w(alpaca binance binancecoinm binanceusdm bybit coinbaseexchange deribit derive hyperliquid lighter okx) do
         assert Schema.validate!(owned_spec(venue), venue)
       end
     end
@@ -732,6 +733,29 @@ defmodule Bourse.SpecTest do
 
     test "accepts a complete authored slice" do
       assert :ok = Bourse.Spec.validate_authored_contract!(complete_authored_spec(), "bybit")
+    end
+
+    test "accepts an explicit public-only auth contract" do
+      spec =
+        complete_authored_spec()
+        |> put_in(["auth", "authenticated_sections"], [])
+        |> put_in(["auth", "signing_config"], %{})
+        |> put_in(["auth", "signing_pattern"], nil)
+        |> put_in(["auth", "sign_recipe"], %{})
+
+      assert :ok = Bourse.Spec.validate_authored_contract!(spec, "bybit")
+    end
+
+    test "rejects a partial public-only auth contract" do
+      spec =
+        complete_authored_spec()
+        |> put_in(["auth", "authenticated_sections"], [])
+        |> put_in(["auth", "signing_config"], %{})
+        |> put_in(["auth", "signing_pattern"], nil)
+
+      assert_raise RuntimeError, ~r/public-only auth contract/, fn ->
+        Bourse.Spec.validate_authored_contract!(spec, "bybit")
+      end
     end
 
     test "names the venue and every missing authored slot" do
@@ -867,7 +891,7 @@ defmodule Bourse.SpecTest do
       assert manifest["venue_count"] == length(manifest["venues"])
 
       assert manifest["venues"] ==
-               ~w(alpaca binance binancecoinm binanceusdm bybit deribit derive hyperliquid lighter okx)
+               ~w(alpaca binance binancecoinm binanceusdm bybit coinbaseexchange deribit derive hyperliquid lighter okx)
     end
   end
 
@@ -880,7 +904,7 @@ defmodule Bourse.SpecTest do
 
     test "contains exactly the supported venues" do
       assert Bourse.Spec.exchanges() ==
-               ~w(alpaca binance binancecoinm binanceusdm bybit deribit derive hyperliquid lighter okx)
+               ~w(alpaca binance binancecoinm binanceusdm bybit coinbaseexchange deribit derive hyperliquid lighter okx)
     end
 
     test "list is sorted alphabetically" do

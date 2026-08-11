@@ -2,7 +2,7 @@ defmodule Bourse do
   @moduledoc """
   Unified cryptocurrency exchange client library.
 
-  A provider-authored Elixir client for ten supported exchanges. Exchange
+  A provider-authored Elixir client for eleven supported exchanges. Exchange
   modules are generated from complete owned specs listed by the closed runtime
   manifest. The version-pinned CCXT corpus is authoring and compatibility
   reference material only.

@@ -181,15 +181,24 @@ defmodule Bourse.AuthoredOrderStatusCoverageTest do
     end
   end
 
-  test "coverage registry contains every runtime-supported venue" do
-    supported = MapSet.new(Bourse.Registry.exchanges())
+  test "coverage registry contains every runtime venue with an authored order field map" do
+    supported =
+      Bourse.Registry.exchanges()
+      |> Enum.filter(fn venue ->
+        venue
+        |> Bourse.Spec.load!()
+        |> get_in(["normalization", "field_maps", "order"])
+        |> is_map()
+      end)
+      |> MapSet.new()
+
     registered = @documented_order_statuses |> Map.keys() |> MapSet.new()
 
     assert registered == supported
   end
 
   test "unknown order statuses fail loudly for every venue without an exemption" do
-    for venue <- Bourse.Registry.exchanges(),
+    for venue <- Map.keys(@documented_order_statuses),
         not Map.has_key?(@enum_passthrough_exemptions, {venue, @order_status_path}) do
       rule =
         venue

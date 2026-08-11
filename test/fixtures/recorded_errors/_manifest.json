@@ -1,6 +1,6 @@
 {
-  "count": 19,
-  "generated_at": "2026-08-10T12:04:29.461201Z",
+  "count": 20,
+  "generated_at": "2026-08-11T05:37:51.404398Z",
   "recordings": [
     {
       "capture_date": "2026-07-26",
@@ -145,6 +145,18 @@
       "method": "error_invalid_signature",
       "path": "bybit/error_invalid_signature.json",
       "venue": "bybit"
+    },
+    {
+      "capture_date": "2026-08-11",
+      "captured_at": "2026-08-11T05:37:51.399293Z",
+      "code": "Unsupported granularity",
+      "endpoint": "products/{id}/candles",
+      "error_kind": "bad_granularity",
+      "host": "api.exchange.coinbase.com",
+      "http_status": 400,
+      "method": "error_bad_granularity",
+      "path": "coinbaseexchange/error_bad_granularity.json",
+      "venue": "coinbaseexchange"
     },
     {
       "capture_date": "2026-07-26",

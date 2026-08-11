@@ -42,20 +42,20 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
   @hyperliquid_price_ratio 0.5
   @hyperliquid_price_decimal_places 0
   @lighter_auth_lifetime_seconds 300
-  @first_class_venues ~w(alpaca binance binancecoinm binanceusdm bybit deribit derive hyperliquid lighter okx)
+  @authenticated_venues ~w(alpaca binance binancecoinm binanceusdm bybit deribit derive hyperliquid lighter okx)
 
   @type golden :: %{required(String.t()) => term()}
   @type transport :: (Req.Request.t() -> {Req.Request.t(), Req.Response.t() | Exception.t()})
   @type record_option :: {:transport, transport()}
 
-  @doc "Returns the ten first-class venues covered by this oracle."
-  @spec first_class_venues() :: [String.t()]
-  def first_class_venues, do: @first_class_venues
+  @doc "Returns the credentialed venues covered by this signed-request oracle."
+  @spec authenticated_venues() :: [String.t()]
+  def authenticated_venues, do: @authenticated_venues
 
   @doc "Returns every configured `{venue, profile, method}` signed acceptance profile."
   @spec profiles() :: [{String.t(), atom(), atom()}]
   def profiles do
-    Enum.flat_map(@first_class_venues, fn venue ->
+    Enum.flat_map(@authenticated_venues, fn venue ->
       Enum.map(profiles_for(venue), &{venue, &1.id, &1.method})
     end)
   end
@@ -70,7 +70,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
 
   @doc "Returns one venue's accepted-request golden path."
   @spec fixture_path(String.t()) :: Path.t()
-  def fixture_path(venue) when venue in @first_class_venues do
+  def fixture_path(venue) when venue in @authenticated_venues do
     case profiles_for(venue) do
       [profile] -> fixture_path(venue, profile.id)
       _profiles -> raise ArgumentError, "#{venue} has multiple accepted-request profiles; provide the profile"
@@ -79,7 +79,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
 
   @doc "Returns one signed profile's accepted-request golden path."
   @spec fixture_path(String.t(), atom()) :: Path.t()
-  def fixture_path(venue, profile_id) when venue in @first_class_venues and is_atom(profile_id) do
+  def fixture_path(venue, profile_id) when venue in @authenticated_venues and is_atom(profile_id) do
     _profile = profile!(venue, profile_id)
     Path.join([@fixture_root, venue, "#{profile_id}.json"])
   end
@@ -95,7 +95,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
 
   @doc "Calls a venue with one signed profile and returns its fixture-signed golden."
   @spec record(String.t(), [record_option()]) :: {:ok, golden()} | {:error, term()}
-  def record(venue, opts \\ []) when venue in @first_class_venues and is_list(opts) do
+  def record(venue, opts \\ []) when venue in @authenticated_venues and is_list(opts) do
     case profiles_for(venue) do
       [profile] -> record_profile(profile, opts)
       _profiles -> {:error, {:multiple_acceptance_profiles, venue}}
@@ -104,7 +104,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
 
   @doc "Calls every signed profile for one venue and returns safe fixture-signed goldens."
   @spec record_all(String.t(), [record_option()]) :: {:ok, [golden()]} | {:error, term()}
-  def record_all(venue, opts \\ []) when venue in @first_class_venues and is_list(opts) do
+  def record_all(venue, opts \\ []) when venue in @authenticated_venues and is_list(opts) do
     venue
     |> profiles_for()
     |> Enum.reduce_while({:ok, []}, fn profile, {:ok, goldens} ->
@@ -140,7 +140,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
   @doc "Deterministically rebuilds and checks one committed fixture-signed golden."
   @spec replay(golden()) :: :ok | {:error, term()}
   def replay(%{"acceptance" => %{"venue" => venue}, "replay" => replay, "request" => primary} = golden)
-      when venue in @first_class_venues do
+      when venue in @authenticated_venues do
     expected = [primary | Map.get(golden, "additional_requests", [])]
 
     with {:ok, method} <- method_atom(replay["method"]),

@@ -35,7 +35,7 @@ defmodule Bourse.ExchangeAcceptanceRequestOracleTest do
     DERIVE_TESTNET_API_SECRET
   )
 
-  test "manifest covers every first-class venue with accepted live evidence" do
+  test "manifest covers every credentialed venue with accepted live evidence" do
     assert ExchangeAcceptanceFixtures.fixture_root() == Path.expand("test/fixtures/exchange_accepted_requests")
     assert ExchangeAcceptanceFixtures.manifest_path() == Path.expand(@manifest_path)
     assert Enum.sort(ExchangeAcceptanceFixtures.load_all!()) == Enum.sort(@goldens)
@@ -49,7 +49,7 @@ defmodule Bourse.ExchangeAcceptanceRequestOracleTest do
     assert profile_ids == Enum.uniq(profile_ids)
 
     assert @manifest["goldens"] |> Enum.map(& &1["venue"]) |> Enum.uniq() |> Enum.sort() ==
-             Enum.sort(ExchangeAcceptanceFixtures.first_class_venues())
+             Enum.sort(ExchangeAcceptanceFixtures.authenticated_venues())
 
     Enum.each(@manifest["goldens"], fn row ->
       assert row["http_status"] in 200..299

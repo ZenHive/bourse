@@ -242,6 +242,22 @@ defmodule Bourse.Unified.ReadParseTest do
     def __response_envelopes__, do: %{}
   end
 
+  defmodule CoinbaseOhlcvParser do
+    @moduledoc false
+
+    def __response_envelopes__ do
+      %{
+        "ohlcv" => %{
+          "fetchOHLCV" => %{
+            "order" => "newest_first",
+            "row_columns" => ~w(timestamp low high open close volume),
+            "timestamp_unit" => "seconds"
+          }
+        }
+      }
+    end
+  end
+
   # Currency fakes: each builds a partial Currency per raw entry; `code`/`info`
   # are filled by ReadParse (Bourse `safeCurrencyCode` + raw `info`), not the parser.
   defmodule ResultEnvelopeCurrencyParser do
@@ -552,6 +568,27 @@ defmodule Bourse.Unified.ReadParseTest do
                ReadParse.parse(
                  exchange,
                  RowOhlcvParser,
+                 :fetch_ohlcv,
+                 "fetchOHLCV",
+                 body,
+                 %{},
+                 :parse_ohlcv,
+                 true
+               )
+    end
+
+    test "reorders Coinbase columns, scales seconds, and normalizes newest-first rows" do
+      exchange = Exchange.new!("binance")
+      body = [[1_710_327_660, "9", "12", "10", "11", "0.6"], [1_710_327_600, "8", "11", "9", "10", "0.5"]]
+
+      assert {:ok,
+              [
+                [1_710_327_600_000, 9.0, 11.0, 8.0, 10.0, 0.5],
+                [1_710_327_660_000, 10.0, 12.0, 9.0, 11.0, 0.6]
+              ]} =
+               ReadParse.parse(
+                 exchange,
+                 CoinbaseOhlcvParser,
                  :fetch_ohlcv,
                  "fetchOHLCV",
                  body,

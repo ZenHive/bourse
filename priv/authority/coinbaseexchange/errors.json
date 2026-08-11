@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "venue": "coinbaseexchange",
+  "authority": {
+    "retrieved_at": "2026-08-11",
+    "source_artifact_id": "product-candles",
+    "source_sha256": "821bc49d0f68b5a308f0b99ce1748d4049392568610d9d566b4595da094d28c6",
+    "source_url": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-candles"
+  },
+  "codes": {},
+  "exact_messages": {
+    "Unsupported granularity": [
+      "The requested candle granularity is outside the provider's documented numeric set."
+    ],
+    "granularity too small for the requested time range. Count of aggregations requested exceeds 300": [
+      "The inclusive start/end window requests more than 300 candle buckets."
+    ]
+  },
+  "retired_codes": [],
+  "dropped_non_authoritative_identifiers": [],
+  "unmapped_code_disposition": "exchange_error",
+  "live_probe": {
+    "identifier": "Unsupported granularity",
+    "ccxt_type": "bad_request",
+    "observed_at": "2026-08-11",
+    "evidence": "test/bourse/coinbaseexchange_promotion_integration_test.exs: unsupported candle granularity preserves the venue's live error semantics"
+  },
+  "maintenance_adjudication": {
+    "status": "no_documented_maintenance_code",
+    "identifiers": [],
+    "ccxt_class": "OnMaintenance",
+    "ccxt_type": "exchange_not_available",
+    "adjudicated_at": "2026-08-11",
+    "source": "Coinbase Exchange product candle and ticker API references",
+    "finding": "The selected public market-data references document request validation but no dedicated maintenance identifier."
+  }
+}

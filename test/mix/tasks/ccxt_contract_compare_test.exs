@@ -304,7 +304,7 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
     end
   end
 
-  test "all ten venues emit four scoped reports or explicit source capability limits" do
+  test "all eleven venues emit four scoped reports or explicit source capability limits" do
     artifact_root = temporary_directory("empty-authority")
     reports = ContractComparator.compare_all!(artifact_root)
 

@@ -73,7 +73,7 @@ defmodule Bourse.Spec.Promotion.Evidence do
       item_shape_gaps(report) ++
       method_inventory_gaps(candidate, methods, report_methods) ++
       decision_gaps(items, candidate, methods, subjects) ++
-      boundary_contract_gaps(items, report) ++
+      boundary_contract_gaps(items, report, candidate) ++
       integration_test_gaps(items, opts) ++
       carve_gaps(items, opts) ++
       oracle_gate_gaps(items, candidate, opts)
@@ -287,11 +287,24 @@ defmodule Bourse.Spec.Promotion.Evidence do
     end
   end
 
-  defp boundary_contract_gaps(items, report) do
+  defp boundary_contract_gaps(items, report, candidate) do
+    authenticated_ids = ~w(contract:authenticated:success contract:authenticated:error)
+
     base =
-      Enum.flat_map(@contract_ids, fn id ->
+      @contract_ids
+      |> Kernel.--(authenticated_ids)
+      |> Enum.flat_map(fn id ->
         required_contract_gap(items, id) ++ boundary_observation_gaps(items, id)
       end)
+
+    authenticated =
+      if public_only?(candidate) do
+        Enum.flat_map(authenticated_ids, &not_applicable_contract_gap(items, &1))
+      else
+        Enum.flat_map(authenticated_ids, fn id ->
+          required_contract_gap(items, id) ++ boundary_observation_gaps(items, id)
+        end)
+      end
 
     trading =
       case report["trading_venue"] do
@@ -305,7 +318,24 @@ defmodule Bourse.Spec.Promotion.Evidence do
           [Gap.new(:trading_classification_unresolved, "trading_venue must be explicitly true or false")]
       end
 
-    base ++ trading
+    base ++ authenticated ++ trading
+  end
+
+  defp public_only?(candidate) do
+    get_in(candidate, ["auth", "authenticated_sections"]) == [] and
+      get_in(candidate, ["auth", "signing_pattern"]) == nil
+  end
+
+  defp not_applicable_contract_gap(items, id) do
+    case Map.get(items, id) do
+      %{"status" => "not_applicable", "verification" => "verified"} = item ->
+        if reality_verified?(item),
+          do: [],
+          else: [Gap.new(:boundary_contract_incomplete, "contract lacks verified provider evidence", id)]
+
+      _item ->
+        [Gap.new(:boundary_contract_incomplete, "public-only authenticated contract must be not_applicable", id)]
+    end
   end
 
   defp required_contract_gap(items, id) do
@@ -426,6 +456,29 @@ defmodule Bourse.Spec.Promotion.Evidence do
     commands = setup["export_commands"]
     url = setup["credentials_url"]
 
+    if setup["public_only"] == true do
+      public_only_credential_setup_gaps(variables, commands, url)
+    else
+      authenticated_credential_setup_gaps(variables, commands, url)
+    end
+  end
+
+  defp public_only_credential_setup_gaps(variables, commands, url) do
+    Enum.reject(
+      [
+        gap_unless(
+          variables == [],
+          :credential_setup_incomplete,
+          "public-only tests must declare no environment variables"
+        ),
+        gap_unless(commands == [], :credential_setup_incomplete, "public-only tests must declare no export commands"),
+        gap_unless(is_binary(url) and url != "", :credential_setup_incomplete, "provider documentation URL is required")
+      ],
+      &is_nil/1
+    )
+  end
+
+  defp authenticated_credential_setup_gaps(variables, commands, url) do
     commands_cover_variables? =
       is_list(variables) and is_list(commands) and
         Enum.all?(variables, fn variable ->

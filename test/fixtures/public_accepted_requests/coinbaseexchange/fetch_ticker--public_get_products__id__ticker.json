@@ -1,0 +1,44 @@
+{
+  "acceptance": {
+    "branch": "public_get_products__id__ticker",
+    "capture_date": "2026-08-11",
+    "captured_at": "2026-08-11T05:38:25.547Z",
+    "endpoint": "products/{id}/ticker",
+    "host": "api.exchange.coinbase.com",
+    "http_status": 200,
+    "method": "fetchTicker",
+    "sections": [
+      "public"
+    ],
+    "venue": "coinbaseexchange"
+  },
+  "oracle": "public_exchange_acceptance",
+  "replay": {
+    "markets": [
+      {
+        "active": true,
+        "base": "ETH",
+        "id": "ETH-USD",
+        "quote": "USD",
+        "spot": true,
+        "symbol": "ETH-USD"
+      }
+    ],
+    "pagination_cursors": [
+      null
+    ],
+    "params": {
+      "symbol": "ETH-USD"
+    },
+    "timestamp_ms_override": 1786426705547
+  },
+  "requests": [
+    {
+      "body": null,
+      "headers": [],
+      "method": "GET",
+      "url": "https://api.exchange.coinbase.com/products/ETH-USD/ticker"
+    }
+  ],
+  "schema_version": 1
+}

@@ -366,7 +366,7 @@ defmodule Bourse.Exchange do
         def __features__, do: unquote(escaped_features)
 
         @doc "Returns the signing pattern and config for this exchange."
-        @spec __signing__() :: %{pattern: atom(), config: map()}
+        @spec __signing__() :: %{pattern: atom() | nil, config: map()}
         def __signing__ do
           %{pattern: unquote(signing_pattern), config: unquote(escaped_signing_config)}
         end
@@ -532,6 +532,7 @@ defmodule Bourse.Exchange do
   defp signing_pattern_description(:hyperliquid), do: "EIP-712 / action signing (DEX)"
   defp signing_pattern_description(:derive), do: "EIP-191 REST headers + EIP-712 order signing (DEX)"
   defp signing_pattern_description(:lighter), do: "first-party zk-Schnorr signer"
+  defp signing_pattern_description(nil), do: "public-only; no signing path"
   defp signing_pattern_description(_), do: "see `Bourse.Signing`"
 
   defp format_doc_capabilities(meta) do
@@ -619,10 +620,10 @@ defmodule Bourse.Exchange do
   @signature_encodings %{"base64" => :base64, "hex" => :hex, "url" => :url}
 
   @doc "Reads the explicit signing executor and configuration from an owned runtime spec."
-  @spec signing_from_spec(map()) :: {Bourse.Signing.pattern(), map()}
+  @spec signing_from_spec(map()) :: {Bourse.Signing.pattern() | nil, map()}
   def signing_from_spec(spec) when is_map(spec) do
     auth = Map.fetch!(spec, "auth")
-    pattern = Map.fetch!(@signing_patterns, Map.fetch!(auth, "signing_pattern"))
+    pattern = signing_pattern(auth)
 
     config =
       auth
@@ -641,6 +642,9 @@ defmodule Bourse.Exchange do
 
     {pattern, config}
   end
+
+  defp signing_pattern(%{"authenticated_sections" => [], "signing_pattern" => nil}), do: nil
+  defp signing_pattern(auth), do: Map.fetch!(@signing_patterns, Map.fetch!(auth, "signing_pattern"))
 
   defp signing_config_value(:signature_encoding, value), do: Map.fetch!(@signature_encodings, value)
   defp signing_config_value(_key, value), do: value

@@ -25,6 +25,7 @@ defmodule Bourse.ReplayExchange do
   alias Bourse.Credentials
   alias Bourse.Exchange
   alias Bourse.JsonDocument
+  alias Bourse.Spec
 
   @fixture_file_venue %{"binanceusdm" => "binance"}
 
@@ -112,7 +113,7 @@ defmodule Bourse.ReplayExchange do
   defp markets_cache!(exchange_id) do
     exchange_id
     |> markets_fixture_path()
-    |> JsonDocument.decode_file!()
+    |> cache_document!(exchange_id, "fetchMarkets")
     |> Map.values()
     |> maybe_inject_hyperliquid_asset_index(exchange_id)
   end
@@ -163,7 +164,21 @@ defmodule Bourse.ReplayExchange do
   defp currencies_cache!(exchange_id) do
     exchange_id
     |> currencies_fixture_path()
-    |> JsonDocument.decode_file!()
+    |> cache_document!(exchange_id, "fetchCurrencies")
+  end
+
+  defp cache_document!(path, exchange_id, capability) do
+    if File.regular?(path) do
+      JsonDocument.decode_file!(path)
+    else
+      spec = Spec.load!(exchange_id)
+
+      if get_in(spec, ["capabilities", "has", capability]) == false do
+        %{}
+      else
+        JsonDocument.decode_file!(path)
+      end
+    end
   end
 
   defp test_credentials_for("derive"), do: @dex_test_credentials

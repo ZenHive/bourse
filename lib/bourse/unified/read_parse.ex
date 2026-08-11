@@ -135,7 +135,7 @@ defmodule Bourse.Unified.ReadParse do
           candles =
             rows
             |> normalize_ohlcv_order(config)
-            |> Enum.map(&coerce_ohlcv_row/1)
+            |> Enum.map(&coerce_ohlcv_row(&1, config))
             |> filter_ohlcv_by_since(params)
             |> maybe_take_ohlcv_limit(params)
 
@@ -1676,7 +1676,21 @@ defmodule Bourse.Unified.ReadParse do
 
   # Coerce the six standard OHLCV positions to numeric values and ignore extras.
   # Hyperliquid candleSnapshot rows are objects keyed t/o/h/l/c/v (same six).
-  defp coerce_ohlcv_row([ts, o, h, l, c, v | _]) do
+  defp coerce_ohlcv_row(row, %{"row_columns" => columns, "timestamp_unit" => "seconds"})
+       when is_list(row) and is_list(columns) do
+    values = Map.new(Enum.zip(columns, row))
+
+    [
+      values |> Map.get("timestamp") |> Bourse.Safe.integer() |> seconds_to_milliseconds(),
+      Bourse.Safe.number(Map.get(values, "open")),
+      Bourse.Safe.number(Map.get(values, "high")),
+      Bourse.Safe.number(Map.get(values, "low")),
+      Bourse.Safe.number(Map.get(values, "close")),
+      Bourse.Safe.number(Map.get(values, "volume"))
+    ]
+  end
+
+  defp coerce_ohlcv_row([ts, o, h, l, c, v | _], _config) do
     [
       ohlcv_timestamp(ts),
       Bourse.Safe.number(o),
@@ -1687,7 +1701,7 @@ defmodule Bourse.Unified.ReadParse do
     ]
   end
 
-  defp coerce_ohlcv_row(%{} = row) do
+  defp coerce_ohlcv_row(%{} = row, _config) do
     [
       ohlcv_timestamp(Map.get(row, "t")),
       Bourse.Safe.number(Map.get(row, "o")),
@@ -1698,7 +1712,10 @@ defmodule Bourse.Unified.ReadParse do
     ]
   end
 
-  defp coerce_ohlcv_row(row), do: row
+  defp coerce_ohlcv_row(row, _config), do: row
+
+  defp seconds_to_milliseconds(value) when is_integer(value), do: value * 1_000
+  defp seconds_to_milliseconds(value), do: value
 
   defp ohlcv_timestamp(value) when is_binary(value) do
     case DateTime.from_iso8601(value) do

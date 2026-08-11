@@ -1,0 +1,962 @@
+{
+  "auth": {
+    "authenticated_sections": [],
+    "sign_recipe": {},
+    "signing_config": {},
+    "signing_pattern": null
+  },
+  "authored": true,
+  "capabilities": {
+    "features": {
+      "default": {
+        "createOrder": {
+          "attachedStopLossTakeProfit": "__undefined",
+          "hedged": false,
+          "iceberg": true,
+          "leverage": false,
+          "marginMode": true,
+          "marketBuyByCost": false,
+          "marketBuyRequiresPrice": false,
+          "selfTradePrevention": false,
+          "stopLossPrice": false,
+          "takeProfitPrice": false,
+          "timeInForce": {
+            "FOK": true,
+            "GTD": true,
+            "IOC": true,
+            "PO": true
+          },
+          "trailing": false,
+          "triggerDirection": false,
+          "triggerPrice": true,
+          "triggerPriceType": "__undefined"
+        },
+        "createOrders": "__undefined",
+        "fetchClosedOrders": {
+          "daysBack": 100000,
+          "daysBackCanceled": 1,
+          "limit": 100,
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": false,
+          "untilDays": 100000
+        },
+        "fetchMyTrades": {
+          "daysBack": 100000,
+          "limit": 100,
+          "marginMode": false,
+          "symbolRequired": true,
+          "untilDays": 100000
+        },
+        "fetchOHLCV": {
+          "limit": 300
+        },
+        "fetchOpenOrders": {
+          "limit": 100,
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": false
+        },
+        "fetchOrder": {
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": false
+        },
+        "fetchOrders": {
+          "daysBack": 100000,
+          "limit": 100,
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": false,
+          "untilDays": 100000
+        },
+        "sandbox": true
+      },
+      "future": {
+        "inverse": "__undefined",
+        "linear": "__undefined"
+      },
+      "spot": {
+        "extends": "default"
+      },
+      "swap": {
+        "inverse": "__undefined",
+        "linear": "__undefined"
+      }
+    },
+    "has": {
+      "fetchTradingFee": false,
+      "fetchMarginAdjustmentHistory": false,
+      "fetchSettlementHistory": false,
+      "fetchBorrowRateHistory": false,
+      "spot": false,
+      "setPositionMode": false,
+      "fetchTransactions": false,
+      "fetchLiquidations": false,
+      "repayMargin": false,
+      "setMarginMode": false,
+      "fetchOrderBook": false,
+      "createStopOrder": false,
+      "fetchPaymentMethods": false,
+      "fetchFundingHistory": false,
+      "fetchPositionMode": false,
+      "createReduceOnlyOrder": false,
+      "fetchFundingRate": false,
+      "setLeverage": false,
+      "fetchIndexOHLCV": false,
+      "fetchGreeks": false,
+      "fetchPositionsRisk": false,
+      "addMargin": false,
+      "repayIsolatedMargin": false,
+      "editOrder": false,
+      "fetchMarginMode": false,
+      "fetchIsolatedBorrowRate": false,
+      "createPostOnlyOrder": false,
+      "repayCrossMargin": false,
+      "fetchTime": false,
+      "closeAllPositions": false,
+      "fetchMarkOHLCV": false,
+      "borrowCrossMargin": false,
+      "fetchOrders": false,
+      "fetchDeposits": false,
+      "fetchOrderTrades": false,
+      "option": false,
+      "future": false,
+      "fetchMarketLeverageTiers": false,
+      "fetchPositions": false,
+      "fetchFundingRates": false,
+      "fetchDepositAddress": false,
+      "createOrderWithTakeProfitAndStopLossWs": false,
+      "fetchBorrowInterest": false,
+      "createDepositAddress": false,
+      "fetchDepositsWithdrawals": false,
+      "fetchPositionsHistory": false,
+      "fetchClosedOrders": false,
+      "fetchMarginModes": false,
+      "setMargin": false,
+      "fetchLongShortRatioHistory": false,
+      "fetchOpenInterest": false,
+      "fetchBorrowRateHistories": false,
+      "fetchLongShortRatio": false,
+      "fetchCurrenciesWs": false,
+      "CORS": false,
+      "cancelAllOrders": false,
+      "withdraw": false,
+      "fetchPositionHistory": false,
+      "createStopMarketOrder": false,
+      "fetchLeverage": false,
+      "borrowMargin": false,
+      "fetchMarkets": false,
+      "fetchOHLCV": true,
+      "swap": false,
+      "fetchBorrowRates": false,
+      "cancelOrder": false,
+      "fetchFundingInterval": false,
+      "fetchOpenInterests": false,
+      "fetchOpenOrders": false,
+      "fetchWithdrawals": false,
+      "fetchCrossBorrowRates": false,
+      "fetchFundingRateHistory": false,
+      "fetchCurrencies": false,
+      "fetchLedger": false,
+      "fetchOption": false,
+      "fetchMyTrades": false,
+      "fetchPremiumIndexOHLCV": false,
+      "createOrder": false,
+      "fetchTrades": false,
+      "fetchBorrowRate": false,
+      "fetchBorrowRatesPerSymbol": false,
+      "fetchIsolatedPositions": false,
+      "privateAPI": false,
+      "createOrderWithTakeProfitAndStopLoss": false,
+      "fetchL2OrderBook": false,
+      "margin": false,
+      "fetchPosition": false,
+      "fetchMySettlementHistory": false,
+      "fetchLeverageTiers": false,
+      "fetchFundingIntervals": false,
+      "createStopLimitOrder": false,
+      "closePosition": false,
+      "reduceMargin": false,
+      "fetchIsolatedBorrowRates": false,
+      "fetchTicker": true,
+      "fetchVolatilityHistory": false,
+      "createMarketOrderWs": false,
+      "fetchCrossBorrowRate": false,
+      "fetchTickers": false,
+      "createLimitOrder": false,
+      "fetchMarkPrices": false,
+      "fetchBalance": false,
+      "fetchMyLiquidations": false,
+      "borrowIsolatedMargin": false,
+      "fetchPositionsForSymbol": false,
+      "createMarketOrder": false,
+      "fetchLeverages": false,
+      "fetchOptionChain": false,
+      "publicAPI": false,
+      "fetchAccounts": false,
+      "fetchTradingFees": false,
+      "fetchOrder": false,
+      "fetchOpenInterestHistory": false
+    },
+    "timeframes": {
+      "15m": 900,
+      "1d": 86400,
+      "1h": 3600,
+      "1m": 60,
+      "5m": 300,
+      "6h": 21600
+    }
+  },
+  "config": {
+    "credentials": {
+      "accountId": false,
+      "apiKey": false,
+      "login": false,
+      "password": false,
+      "privateKey": false,
+      "secret": false,
+      "token": false,
+      "twofa": false,
+      "uid": false,
+      "walletAddress": false
+    },
+    "flags": {
+      "dex": false
+    },
+    "limits": {
+      "amount": {
+        "max": null,
+        "min": null
+      },
+      "cost": {
+        "max": null,
+        "min": null
+      },
+      "leverage": {
+        "max": null,
+        "min": null
+      },
+      "price": {
+        "max": null,
+        "min": null
+      }
+    },
+    "rate_limit_meta": {
+      "enableRateLimit": true,
+      "timeout": 10000
+    },
+    "routing": {
+      "accountsByType": null,
+      "networks": {},
+      "timeInForce": null
+    },
+    "status": {
+      "eta": null,
+      "info": null,
+      "status": "ok",
+      "updated": null,
+      "url": null
+    }
+  },
+  "emulated_methods": [],
+  "endpoints": {
+    "descriptors": {
+      "fetchOHLCV": {
+        "async": true,
+        "description": "Fetch Coinbase Exchange product candles.",
+        "errors": null,
+        "name": "fetchOHLCV",
+        "params_doc": {
+          "limit": "maximum candles to return",
+          "params.until": "latest candle timestamp in milliseconds",
+          "since": "earliest candle timestamp in milliseconds",
+          "symbol": "Coinbase spot product such as ETH-USD",
+          "timeframe": "one of 1m, 5m, 15m, 1h, 6h, or 1d"
+        },
+        "returns": {
+          "description": "Candles ordered timestamp, open, high, low, close, volume",
+          "type": "int[][]"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": null,
+              "name": "symbol",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "default": "1m",
+              "name": "timeframe",
+              "optional": true,
+              "type": "string"
+            },
+            {
+              "default": "undefined",
+              "name": "since",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "undefined",
+              "name": "limit",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<OHLCV[]>"
+        },
+        "source": "provider-authored public candle route",
+        "unresolved_reason": null
+      },
+      "fetchTicker": {
+        "async": true,
+        "description": "Fetch the latest Coinbase Exchange product ticker.",
+        "errors": null,
+        "name": "fetchTicker",
+        "params_doc": {
+          "symbol": "Coinbase spot product such as ETH-USD"
+        },
+        "returns": {
+          "description": "Latest trade, bid, ask, and volume ticker",
+          "type": "object"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": null,
+              "name": "symbol",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Ticker>"
+        },
+        "source": "provider-authored public ticker route",
+        "unresolved_reason": null
+      }
+    },
+    "handlers": {
+      "error": [
+        {
+          "exception_class": "BadRequest",
+          "field": "message",
+          "predicate_kind": "field_present"
+        }
+      ],
+      "parse": {
+        "fetchOHLCV": [
+          "parseOHLCVs"
+        ],
+        "fetchTicker": [
+          "parseTicker"
+        ]
+      },
+      "signing": {
+        "mechanism": null,
+        "sections": []
+      }
+    },
+    "request": {
+      "defaults": {
+        "fetchOHLCV": {
+          "_omit": [
+            "limit"
+          ],
+          "end": {
+            "kind": "reference",
+            "source": "until",
+            "source_class": "optional",
+            "transform": "milliseconds_to_rfc3339"
+          },
+          "granularity": {
+            "kind": "reference",
+            "source": "timeframe",
+            "source_class": "unified_param"
+          },
+          "id": {
+            "kind": "reference",
+            "source": "symbol",
+            "source_class": "unified_param"
+          },
+          "start": {
+            "kind": "reference",
+            "source": "since",
+            "source_class": "optional",
+            "transform": "milliseconds_to_rfc3339"
+          }
+        },
+        "fetchTicker": {
+          "id": {
+            "kind": "reference",
+            "source": "symbol",
+            "source_class": "unified_param"
+          }
+        }
+      },
+      "endpoint_selection": {},
+      "shape": {
+        "public": {
+          "body_encoding": "none",
+          "content_type": null,
+          "endpoints": [
+            {
+              "http_verb": "GET",
+              "path_params": [
+                {
+                  "name": "id",
+                  "source": "params"
+                }
+              ],
+              "path_template": "products/{id}/candles"
+            },
+            {
+              "http_verb": "GET",
+              "path_params": [
+                {
+                  "name": "id",
+                  "source": "params"
+                }
+              ],
+              "path_template": "products/{id}/ticker"
+            }
+          ]
+        }
+      }
+    },
+    "transaction_classification": {
+      "fetchOHLCV": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchTicker": {
+        "on_chain": false,
+        "transactional": false
+      }
+    },
+    "unified": {
+      "fetchTradingFee": [],
+      "fetchMarginAdjustmentHistory": [],
+      "fetchSettlementHistory": [],
+      "fetchBorrowRateHistory": [],
+      "spot": [],
+      "setPositionMode": [],
+      "fetchTransactions": [],
+      "fetchLiquidations": [],
+      "repayMargin": [],
+      "setMarginMode": [],
+      "fetchOrderBook": [],
+      "createStopOrder": [],
+      "fetchPaymentMethods": [],
+      "fetchFundingHistory": [],
+      "fetchPositionMode": [],
+      "createReduceOnlyOrder": [],
+      "fetchFundingRate": [],
+      "setLeverage": [],
+      "fetchIndexOHLCV": [],
+      "fetchGreeks": [],
+      "fetchPositionsRisk": [],
+      "addMargin": [],
+      "repayIsolatedMargin": [],
+      "editOrder": [],
+      "fetchMarginMode": [],
+      "fetchIsolatedBorrowRate": [],
+      "createPostOnlyOrder": [],
+      "repayCrossMargin": [],
+      "fetchTime": [],
+      "closeAllPositions": [],
+      "fetchMarkOHLCV": [],
+      "borrowCrossMargin": [],
+      "fetchOrders": [],
+      "fetchDeposits": [],
+      "fetchOrderTrades": [],
+      "option": [],
+      "future": [],
+      "fetchMarketLeverageTiers": [],
+      "fetchPositions": [],
+      "fetchFundingRates": [],
+      "fetchDepositAddress": [],
+      "createOrderWithTakeProfitAndStopLossWs": [],
+      "fetchBorrowInterest": [],
+      "createDepositAddress": [],
+      "fetchDepositsWithdrawals": [],
+      "fetchPositionsHistory": [],
+      "fetchClosedOrders": [],
+      "fetchMarginModes": [],
+      "setMargin": [],
+      "fetchLongShortRatioHistory": [],
+      "fetchOpenInterest": [],
+      "fetchBorrowRateHistories": [],
+      "fetchLongShortRatio": [],
+      "fetchCurrenciesWs": [],
+      "CORS": [],
+      "cancelAllOrders": [],
+      "withdraw": [],
+      "fetchPositionHistory": [],
+      "createStopMarketOrder": [],
+      "fetchLeverage": [],
+      "borrowMargin": [],
+      "fetchMarkets": [],
+      "fetchOHLCV": [
+        "publicGetProductsIdCandles"
+      ],
+      "swap": [],
+      "fetchBorrowRates": [],
+      "cancelOrder": [],
+      "fetchFundingInterval": [],
+      "fetchOpenInterests": [],
+      "fetchOpenOrders": [],
+      "fetchWithdrawals": [],
+      "fetchCrossBorrowRates": [],
+      "fetchFundingRateHistory": [],
+      "fetchCurrencies": [],
+      "fetchLedger": [],
+      "fetchOption": [],
+      "fetchMyTrades": [],
+      "fetchPremiumIndexOHLCV": [],
+      "createOrder": [],
+      "fetchTrades": [],
+      "fetchBorrowRate": [],
+      "fetchBorrowRatesPerSymbol": [],
+      "fetchIsolatedPositions": [],
+      "privateAPI": [],
+      "createOrderWithTakeProfitAndStopLoss": [],
+      "fetchL2OrderBook": [],
+      "margin": [],
+      "fetchPosition": [],
+      "fetchMySettlementHistory": [],
+      "fetchLeverageTiers": [],
+      "fetchFundingIntervals": [],
+      "createStopLimitOrder": [],
+      "closePosition": [],
+      "reduceMargin": [],
+      "fetchIsolatedBorrowRates": [],
+      "fetchTicker": [
+        "publicGetProductsIdTicker"
+      ],
+      "fetchVolatilityHistory": [],
+      "createMarketOrderWs": [],
+      "fetchCrossBorrowRate": [],
+      "fetchTickers": [],
+      "createLimitOrder": [],
+      "fetchMarkPrices": [],
+      "fetchBalance": [],
+      "fetchMyLiquidations": [],
+      "borrowIsolatedMargin": [],
+      "fetchPositionsForSymbol": [],
+      "createMarketOrder": [],
+      "fetchLeverages": [],
+      "fetchOptionChain": [],
+      "publicAPI": [],
+      "fetchAccounts": [],
+      "fetchTradingFees": [],
+      "fetchOrder": [],
+      "fetchOpenInterestHistory": []
+    }
+  },
+  "errors": {
+    "handle_errors": {
+      "error_code_fields": [
+        {
+          "field": "message",
+          "field2": null,
+          "method": "safeString",
+          "object": "response",
+          "object_path": null,
+          "roles": [
+            "error_code",
+            "error_message"
+          ],
+          "sentinel_values": null
+        }
+      ],
+      "exception_scopes": {},
+      "exceptions": {
+        "broad": {},
+        "exact": {
+          "Unsupported granularity": "__function:BadRequest",
+          "granularity too small for the requested time range. Count of aggregations requested exceeds 300": "__function:BadRequest"
+        }
+      },
+      "runtime_body_checks": [
+        {
+          "field": "message",
+          "field2": null,
+          "roles": [
+            "error_code"
+          ],
+          "sentinel_values": []
+        }
+      ],
+      "runtime_code_fields": [
+        "message"
+      ]
+    },
+    "retry_classification": {
+      "auth": [],
+      "non_retryable": [
+        "BadRequest",
+        "BadSymbol"
+      ],
+      "rate_limit": [
+        "RateLimitExceeded"
+      ]
+    },
+    "status_map": {
+      "400": "BadRequest",
+      "404": "BadSymbol",
+      "429": "RateLimitExceeded"
+    }
+  },
+  "exchange": {
+    "alias": false,
+    "certified": false,
+    "country": [
+      "US"
+    ],
+    "id": "coinbaseexchange",
+    "name": "Coinbase Exchange",
+    "pro": true,
+    "referral": null,
+    "version": null
+  },
+  "fees": {
+    "static_market_fees": false
+  },
+  "frozen": true,
+  "hand_owned": true,
+  "markets": {
+    "currencies": null,
+    "patterns": {
+      "spot": {
+        "separator": "-",
+        "type": "spot"
+      }
+    },
+    "symbol_patterns": {
+      "spot": {
+        "case": "upper",
+        "date_format": null,
+        "pattern": "dash_upper",
+        "prefix": null,
+        "separator": "-",
+        "suffix": null
+      }
+    }
+  },
+  "normalization": {
+    "field_maps": {
+      "ohlcv": {
+        "_unresolved_reason": null,
+        "branches": [
+          {
+            "_unresolved_reason": null,
+            "field_map": {
+              "close": {
+                "coercion": "safeNumber2",
+                "format": null,
+                "index": 4,
+                "key": null
+              },
+              "high": {
+                "coercion": "safeNumber2",
+                "format": null,
+                "index": 2,
+                "key": null
+              },
+              "low": {
+                "coercion": "safeNumber2",
+                "format": null,
+                "index": 1,
+                "key": null
+              },
+              "open": {
+                "coercion": "safeNumber2",
+                "format": null,
+                "index": 3,
+                "key": null
+              },
+              "timestamp": {
+                "coercion": "safeTimestamp",
+                "format": "s",
+                "index": 0,
+                "key": null
+              },
+              "volume": {
+                "coercion": "safeNumber2",
+                "format": null,
+                "index": 5,
+                "key": null
+              }
+            },
+            "guard": {
+              "input_shape": "array",
+              "kind": "always"
+            },
+            "shape": "array"
+          }
+        ],
+        "extras": []
+      },
+      "ticker": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "ask": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "ask"
+          },
+          "askVolume": null,
+          "average": null,
+          "baseVolume": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "volume"
+          },
+          "bid": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "bid"
+          },
+          "bidVolume": null,
+          "change": null,
+          "close": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "price"
+          },
+          "datetime": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "time"
+          },
+          "high": null,
+          "indexPrice": null,
+          "info": null,
+          "last": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "price"
+          },
+          "low": null,
+          "markPrice": null,
+          "open": null,
+          "percentage": null,
+          "previousClose": null,
+          "quoteVolume": null,
+          "symbol": null,
+          "timestamp": {
+            "coercion": "parse8601",
+            "format": null,
+            "key": "time"
+          },
+          "vwap": null
+        }
+      }
+    },
+    "response_envelopes": {
+      "ohlcv": {
+        "fetchOHLCV": {
+          "default": [],
+          "fallback_keys": [],
+          "key": null,
+          "order": "newest_first",
+          "row_columns": [
+            "timestamp",
+            "low",
+            "high",
+            "open",
+            "close",
+            "volume"
+          ],
+          "timestamp_unit": "seconds"
+        }
+      },
+      "ticker": {
+        "fetchTicker": {
+          "default": null,
+          "fallback_keys": [],
+          "key": null
+        }
+      }
+    }
+  },
+  "oracles": {
+    "live_tier1": {
+      "grades": true
+    },
+    "private_real_recordings": {
+      "grades": false,
+      "reason": "This venue intentionally exposes no authenticated client surface."
+    }
+  },
+  "rate_limits": {
+    "buckets": {
+      "buckets": [
+        {
+          "algorithm": "leakyBucket",
+          "axes": [
+            "request"
+          ],
+          "cost_default": 1,
+          "max_size": 10,
+          "rate_limit_ms": 100,
+          "refill_per_sec": 10,
+          "rolling_window_ms": 1000
+        }
+      ],
+      "source": "provider_public_rate_limit",
+      "unresolved_reason": null
+    },
+    "endpoint_cost_binding": {
+      "axes": [
+        "request"
+      ],
+      "bucket_index": 0
+    },
+    "per_endpoint_cost": {
+      "public.get.products/{id}/candles": {
+        "axes": {},
+        "cost": 1
+      },
+      "public.get.products/{id}/ticker": {
+        "axes": {},
+        "cost": 1
+      }
+    }
+  },
+  "raw": {
+    "describe": {
+      "api": {
+        "public": {
+          "get": [
+            "products/{id}/candles",
+            "products/{id}/ticker"
+          ]
+        }
+      },
+      "certified": false,
+      "countries": [
+        "US"
+      ],
+      "enableRateLimit": true,
+      "exceptions": {
+        "broad": {},
+        "exact": {}
+      },
+      "hostname": "exchange.coinbase.com",
+      "id": "coinbaseexchange",
+      "name": "Coinbase Exchange",
+      "pro": true,
+      "rateLimit": 100,
+      "requiredCredentials": {
+        "accountId": false,
+        "apiKey": false,
+        "login": false,
+        "password": false,
+        "privateKey": false,
+        "secret": false,
+        "token": false,
+        "twofa": false,
+        "uid": false,
+        "walletAddress": false
+      },
+      "timeframes": {
+        "15m": 900,
+        "1d": 86400,
+        "1h": 3600,
+        "1m": 60,
+        "5m": 300,
+        "6h": 21600
+      },
+      "urls": {
+        "api": {
+          "public": "https://api.exchange.coinbase.com"
+        },
+        "doc": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products",
+        "www": "https://exchange.coinbase.com"
+      },
+      "version": null
+    },
+    "url_templates": {
+      "public": {
+        "api_param": "public",
+        "http_method": "GET",
+        "resolved_url": "https://api.exchange.coinbase.com/products/ETH-USD/candles",
+        "sample_path": "products/ETH-USD/candles",
+        "url_prefix": "https://api.exchange.coinbase.com/"
+      }
+    }
+  },
+  "schema_version": 3,
+  "testnet": {},
+  "urls": {
+    "api": {
+      "ws": {
+        "private": null,
+        "public": null,
+        "sandbox_private": null,
+        "sandbox_public": null
+      }
+    },
+    "api_management": null,
+    "doc": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products",
+    "fees": null,
+    "logo": null,
+    "www": "https://exchange.coinbase.com"
+  },
+  "websocket": {
+    "auth": {
+      "reason": "REST-only public market-data contract",
+      "supported": false
+    },
+    "dispatch": {
+      "reason": "REST-only public market-data contract",
+      "supported": false
+    },
+    "heartbeat": {
+      "reason": "REST-only public market-data contract",
+      "supported": false
+    },
+    "ohlcv_semantics": {
+      "reason": "REST-only public market-data contract",
+      "supported": false
+    },
+    "orderbook_semantics": {
+      "reason": "REST-only public market-data contract",
+      "supported": false
+    },
+    "subscribe": {
+      "reason": "REST-only public market-data contract",
+      "supported": false
+    },
+    "trades_semantics": {
+      "reason": "REST-only public market-data contract",
+      "supported": false
+    },
+    "urls": {
+      "private": null,
+      "public": null,
+      "sandbox_private": null,
+      "sandbox_public": null
+    }
+  }
+}
