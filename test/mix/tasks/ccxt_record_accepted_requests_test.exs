@@ -5,7 +5,7 @@ defmodule Mix.Tasks.Ccxt.RecordAcceptedRequestsTest do
   alias Mix.Tasks.Ccxt.RecordAcceptedRequests
 
   test "task rejects unsupported venue and argument shapes" do
-    assert_raise Mix.Error, ~r/unknown first-class venue/, fn ->
+    assert_raise Mix.Error, ~r/unknown credentialed venue/, fn ->
       RecordAcceptedRequests.run(["unknown"])
     end
 

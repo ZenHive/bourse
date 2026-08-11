@@ -147,6 +147,7 @@
       "tracking_task": 550
     }
   ],
+  "coinbaseexchange": [],
   "deribit": [
     {
       "failure": "no_parse_type",

@@ -615,9 +615,9 @@ The two blind classes, both real-correctness, both passing every per-task check:
 
 ## What this repository is
 
-`bourse` (`:bourse`, namespace `Bourse.*`) — an Elixir client for ten exchange integrations: `alpaca`, `binance`, `binancecoinm`, `binanceusdm`, `bybit`, `deribit`, `derive`, `hyperliquid`, `lighter`, `okx`. One complete hand-authored JSON spec per venue drives macro-generated endpoint modules; the three DEX venues carry hand-written signing.
+`bourse` (`:bourse`, namespace `Bourse.*`) — an Elixir client for eleven exchange integrations: `alpaca`, `binance`, `binancecoinm`, `binanceusdm`, `bybit`, `coinbaseexchange`, `deribit`, `derive`, `hyperliquid`, `lighter`, `okx`. One complete hand-authored JSON spec per venue drives macro-generated endpoint modules; the three DEX venues carry hand-written signing. Coinbase Exchange is deliberately public-only and exposes candles plus ticker.
 
-Runtime support is a **closed set**. `Bourse.Exchanges` and `Bourse.Registry` read `priv/specs/json/runtime_support.json` and generate exactly ten modules; constructing anything else fails immediately with `unsupported_exchange`. There is no `config :bourse, exchanges:` knob — support is not a configuration outcome.
+Runtime support is a **closed set**. `Bourse.Exchanges` and `Bourse.Registry` read `priv/specs/json/runtime_support.json` and generate exactly eleven modules; constructing anything else fails immediately with `unsupported_exchange`. There is no `config :bourse, exchanges:` knob — support is not a configuration outcome.
 
 ### 🚧 The workbench boundary — read this before deciding where work goes
 
@@ -628,7 +628,7 @@ This repo was extracted from `../bourse_workbench`, which remains the **authorin
 | Does the client behave correctly against a supported venue? | **here** |
 | Is a supported venue's authored spec right? | **here** — the spec, its authority manifest and its reality evidence all live here |
 | Does an eleventh venue get added? | **here** — `mix ccxt.promote_venue` grades its candidate against the reality manifests, and those live here. Pass the pinned CCXT reference document in from the workbench with `--reference`. |
-| Did the full CCXT reference extraction shift across all 110 venues? | workbench — this repo carries a 15-venue slice and cannot answer corpus-wide questions |
+| Did the full CCXT reference extraction shift across all 110 venues? | workbench — this repo carries a 16-venue slice and cannot answer corpus-wide questions |
 | Roadmap and task scoring, and the CHANGELOG gate that reads it | workbench — one rmap, declaring `project = "bourse"`. It is not a workbench roadmap that mentions this client; it **is** this client's roadmap. Do **not** stand up a second rmap here. |
 | Where does a consumer file a bug? | **here**, in `BUGS.md` — this is the only repo a consumer knows. Triage into scored tasks happens in the workbench, and writes a dated note back into the entry. |
 
@@ -666,7 +666,7 @@ host only, so no CI check can ever guard it. Read them from
 - **Read `BUGS.md` before chasing a reported defect.** It is the inbound consumer queue, newest first, and each entry carries a `**Status:**` header — the bug in front of you may already be filed, already fixed, or already decided against. Entries are never deleted; a fixed one keeps its repro as the evidence trail.
 
 - One test deliberately stayed in the workbench because it is corpus-wide: the zero-param JSON-body gate audit, which asserts a gate set across all 110 reference specs. The same applies to anything else that iterates every document under `priv/specs/json/output/` expecting the full set. **Do not re-add a corpus-wide audit here** — it would be answering a 110-venue question with 15 specs.
-- `priv/specs/json/reference_corpus.json` honestly declares the 15 carried venues (the ten supported plus `coinmetro`, `deepcoin`, `kraken`, `weex`, `whitebit`, used as parser and unsupported-venue counter-examples). Its two SHA-256 pins still name the upstream revision the slice came from, so provenance stays verifiable. **Adding a reference venue means adding its JSON *and* the manifest entry** — `Bourse.ReferenceSlice` validates count, sort order and pins, and raises otherwise. That module lives in `test/support/`, not `lib/`: the slice is test input, so neither the client nor the Hex package can reach it.
+- `priv/specs/json/reference_corpus.json` honestly declares the 16 carried venues (the eleven supported plus `coinmetro`, `deepcoin`, `kraken`, `weex`, `whitebit`, used as parser and unsupported-venue counter-examples). Its two SHA-256 pins still name the upstream revision the slice came from, so provenance stays verifiable. **Adding a reference venue means adding its JSON *and* the manifest entry** — `Bourse.ReferenceSlice` validates count, sort order and pins, and raises otherwise. That module lives in `test/support/`, not `lib/`: the slice is test input, so neither the client nor the Hex package can reach it.
 
 ## 🎯 Core doctrine: provider-authoritative, reality-verified
 
@@ -689,7 +689,7 @@ host only, so no CI check can ever guard it. Read them from
 - 🚨 DO: **decolor on touch.** Comments, moduledocs and docs that cite CCXT as the *reason or authority* for a decision steer every future session back toward CCXT-as-truth. Never write a new one. `test/bourse/ccxt_authority_language_test.exs` enforces this with an explicit allowlist — a new CCXT mention in `lib/` fails the suite until it is either reworded or allowlisted with a compatibility-framed phrase.
 - ✅ DO: when a reality confrontation is **unreachable with our keys/hosts** (prod-only endpoint, region-restricted key, needs a real open position), append an entry to `docs/prod-verification-ledger.md`. The slice stays `unverified` until the ledger entry closes and the recording is registered.
 - ❌ DO NOT: treat CCXT-derived data or training/web as verification. Independence comes from execution/reality, not a second read.
-- 🚨🚨 DO (behavioral default, anchored to the ACTION): **when you set out to check whether a venue "works," your FIRST call hits the LIVE testnet.** Recipe: `creds = Bourse.Credentials.new!(api_key: System.get_env("DERIBIT_TESTNET_API_KEY"), secret: ...); {:ok, ex} = Bourse.Exchange.new("deribit", credentials: creds, sandbox: true)` → then a real `Bourse.fetch_ticker/fetch_balance`. Testnet credentials for all ten venues are provisioned (below).
+- 🚨🚨 DO (behavioral default, anchored to the ACTION): **when you set out to check whether a venue "works," your FIRST call hits the LIVE venue.** Use testnet/demo for credentialed venues and the production public host for public-only Coinbase Exchange. Recipe: `creds = Bourse.Credentials.new!(api_key: System.get_env("DERIBIT_TESTNET_API_KEY"), secret: ...); {:ok, ex} = Bourse.Exchange.new("deribit", credentials: creds, sandbox: true)` → then a real `Bourse.fetch_ticker/fetch_balance`. Testnet credentials for all ten credentialed venues are provisioned (below); Coinbase Exchange needs none.
 
 ### Venue authority index
 
@@ -702,6 +702,7 @@ Any venue-source, contract-coverage or field-judgment question opens `priv/autho
 | Binance COIN-M | [COIN-M futures](https://developers.binance.com/en/docs/products/derivatives-trading-coin-futures) | `https://demo-dapi.binance.com` | `test/fixtures/responses/binancecoinm/` |
 | Binance USD-M | [USD-M futures](https://developers.binance.com/en/docs/products/derivatives-trading-usds-futures) | `https://demo-fapi.binance.com` | `test/fixtures/responses/binanceusdm/` |
 | Bybit | [V5 API](https://bybit-exchange.github.io/docs/v5/intro) | `https://api-testnet.bybit.com` | `test/fixtures/responses/bybit/` |
+| Coinbase Exchange | [Exchange REST API](https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products) | production public only | `test/fixtures/responses/coinbaseexchange/` |
 | Deribit | [API v2](https://docs.deribit.com/) | `https://test.deribit.com` | `test/fixtures/responses/deribit/` |
 | Derive | [API reference](https://docs.derive.xyz/) | `https://api-demo.lyra.finance` | `test/fixtures/responses/derive/` |
 | Hyperliquid | [API reference](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api) | `https://api.hyperliquid-testnet.xyz` | `test/fixtures/responses/hyperliquid/` |
@@ -744,7 +745,7 @@ mix ccxt.promote_venue --prepare --reference REF --candidate CANDIDATE --report 
 mix ccxt.promote_venue --check   --candidate CANDIDATE --report REPORT [--reference REF]
 ```
 
-`REF` is a pinned CCXT reference document — supply it from the workbench corpus; this repo carries only a 15-venue slice. The task creates and grades a candidate, and never adds runtime support on its own. Its evidence report uses one binary vocabulary: `verified` requires provider-owned semantics *plus* manifest-registered reality for every critical slot; everything else is `unverified`. `--check` re-derives the method inventory from the reference, byte-verified against `report.reference.sha256`.
+`REF` is a pinned CCXT reference document — supply it from the workbench corpus; this repo carries only a 16-venue slice. The task creates and grades a candidate, and never adds runtime support on its own. Its evidence report uses one binary vocabulary: `verified` requires provider-owned semantics *plus* manifest-registered reality for every critical slot; everything else is `unverified`. `--check` re-derives the method inventory from the reference, byte-verified against `report.reference.sha256`.
 
 **Do not reject a run because `mix test.json` / `mix dialyzer.json` printed JSON** — that is the intended output format, not a failure.
 
@@ -769,7 +770,7 @@ mix ccxt.verify_live_drift                           # recordings vs live venue 
 
 ### Testnet credentials
 
-Loaded via `Bourse.Testnet.register_all_from_env/1` in `test_helper.exs`. Env convention `{EXCHANGE}[_{SANDBOX}]_TESTNET_API_KEY/_API_SECRET`, with documented exceptions below. All ten venues are provisioned.
+Loaded via `Bourse.Testnet.register_all_from_env/1` in `test_helper.exs`. Env convention `{EXCHANGE}[_{SANDBOX}]_TESTNET_API_KEY/_API_SECRET`, with documented exceptions below. All ten credentialed venues are provisioned; public-only Coinbase Exchange uses no credentials.
 
 - **Alpaca** — `ALPACA_API_KEY/SECRET`; `sandbox: true` resolves `paper-api.alpaca.markets`. Never point the lifecycle test at the live-money host.
 - **Bybit** — `BYBIT_TESTNET_API_KEY/SECRET` is **READ-ONLY**: the testnet key returns business error 10024 on any signed create (region-restricted). Don't burn a probe cycle rediscovering this. **Trade evidence runs on DEMO instead**: `BYBIT_DEMO_API_KEY/SECRET`, host `https://api-demo.bybit.com` — which is **not** `sandbox: true` (that's testnet); pass `base_url:` on the call. Requests omitting `category` fail with 10032.
@@ -789,8 +790,8 @@ Loaded via `Bourse.Testnet.register_all_from_env/1` in `test_helper.exs`. Env co
 ## Do NOT edit (generated) / DO author (frozen specs)
 
 - `lib/bourse/exchanges/*.ex` — generated at compile time; never hand-edit (fix the generator).
-- `priv/specs/json/output/authored/<venue>.json` — **the complete hand-owned runtime documents** (ten venues, schema version `3`). These you DO edit, by authoring per the loop in `docs/authored-specs.md`, then proving green with `mix ccxt.oracle_gate`.
-- `priv/specs/json/output/<venue>.json` — frozen CCXT-derived **reference** siblings (the 15-venue slice), pinned by `reference_corpus.json`. Never loaded at runtime, never shipped in the Hex package; read-only authoring/test input (e.g. the test-only `markets.symbols_index` used by integration symbol selection).
+- `priv/specs/json/output/authored/<venue>.json` — **the complete hand-owned runtime documents** (eleven venues, schema version `3`). These you DO edit, by authoring per the loop in `docs/authored-specs.md`, then proving green with `mix ccxt.oracle_gate`.
+- `priv/specs/json/output/<venue>.json` — frozen CCXT-derived **reference** siblings (the 16-venue slice), pinned by `reference_corpus.json`. Never loaded at runtime, never shipped in the Hex package; read-only authoring/test input (e.g. the test-only `markets.symbols_index` used by integration symbol selection).
 - `priv/reference_cache/` — vendored market/currency slice for `Bourse.ReplayExchange`. Compatibility reference only; the one module that reads it. Neither the cache nor its reader is packaged.
 
 ## Architecture
@@ -830,7 +831,7 @@ Bourse.fetch_ticker(exchange, "BTC/USDT")     # Unified API
 
 **Signing:** `Bourse.Signing` dispatches 8 patterns — `:hmac_sha256_query`, `:hmac_sha256_headers`, `:hmac_sha256_iso_passphrase`, `:api_key_secret_headers` (Alpaca), `:deribit`, `:hyperliquid`, `:derive`, `:lighter`. The authoritative table lives in the module's `@moduledoc`.
 
-**WebSocket:** `Bourse.WS` wraps `ZenWebsocket.Client`. **8 of the ten venues are configured and confirmed streaming live** (binance, binancecoinm, binanceusdm, bybit, deribit, derive, hyperliquid, okx); alpaca/lighter have no WS config and `connect/3` answers `{:error, :unsupported_exchange}`. `subscribe/3` returns `:ok | {:error, term()}` and surfaces venue rejections as `{:error, {:subscription_rejected, frame}}`.
+**WebSocket:** `Bourse.WS` wraps `ZenWebsocket.Client`. **8 of the eleven venues are configured and confirmed streaming live** (binance, binancecoinm, binanceusdm, bybit, deribit, derive, hyperliquid, okx); alpaca/coinbaseexchange/lighter have no WS config and `connect/3` answers `{:error, :unsupported_exchange}`. `subscribe/3` returns `:ok | {:error, term()}` and surfaces venue rejections as `{:error, {:subscription_rejected, frame}}`.
 
 **`connect/3` authenticates a `:private` section** through `Bourse.WS.authenticate/2`, and a failed handshake closes the socket rather than returning one — an open unauthenticated private connection fails later as a silently empty stream, not as an error. The accepted handshake is recorded on `ws.auth`, which is what `Bourse.WS.Adapter` schedules renewal from instead of re-running it. Live-verified differentially across six venues (`test/bourse/ws/auth_live_smoke_test.exs`).
 

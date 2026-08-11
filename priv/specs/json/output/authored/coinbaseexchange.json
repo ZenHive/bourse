@@ -591,8 +591,7 @@
       "exceptions": {
         "broad": {},
         "exact": {
-          "Unsupported granularity": "__function:BadRequest",
-          "granularity too small for the requested time range. Count of aggregations requested exceeds 300": "__function:BadRequest"
+          "Unsupported granularity": "__function:BadRequest"
         }
       },
       "runtime_body_checks": [

@@ -305,6 +305,10 @@ defmodule Bourse.RequestShapeSweepTest do
     }
   end
 
+  # lighter deposit/history marks l1_address required (see RequestShape.Lighter);
+  # supply it so the whole-venue sweep can build the shape.
+  defp params_for("lighter", "fetchDeposits"), do: %{"l1_address" => "0xabc"}
+
   defp params_for("hyperliquid", "createTwapOrder") do
     %{"symbol" => "BTC/USDC:USDC", "side" => "buy", "amount" => 1, "duration" => 60_000}
   end

@@ -21,10 +21,10 @@ defmodule Bourse.CoinbaseCandlePagination do
   @milliseconds_per_second 1_000
 
   @type page :: %{params: map(), start_ms: non_neg_integer(), end_ms: non_neg_integer()}
+  @type metadata :: %{start_ms: non_neg_integer(), end_ms: non_neg_integer(), limit: pos_integer()}
 
   @doc "Builds inclusive, non-overlapping request pages when `limit` exceeds 300."
-  @spec pagination(map(), map(), non_neg_integer()) ::
-          :single | {:paginate, [page()], %{start_ms: non_neg_integer(), end_ms: non_neg_integer(), limit: pos_integer()}}
+  @spec pagination(map(), map(), non_neg_integer()) :: :single | {:paginate, [page()], metadata()}
   def pagination(%{"limit" => limit} = params, timeframes, now_ms)
       when is_integer(limit) and limit > @max_candles_per_request do
     timeframe_ms = timeframe_ms!(params, timeframes)
@@ -38,7 +38,7 @@ defmodule Bourse.CoinbaseCandlePagination do
   def pagination(_params, _timeframes, _now_ms), do: :single
 
   @doc "Merges paged raw responses, deduplicating and retaining the requested chronological range."
-  @spec merge_responses!([map()], map()) :: map()
+  @spec merge_responses!([map()], metadata()) :: map()
   def merge_responses!([first | _] = responses, %{start_ms: start_ms, end_ms: end_ms, limit: limit}) do
     rows =
       responses
