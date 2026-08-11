@@ -198,3 +198,45 @@ methods use the venue-owned history endpoints (task 546). Outcome: CONFIRM provi
 <!-- carve-evidence-status
 {"carve_id":"C-T546","date":"2026-08-11","semantic_source":{"kind":"provider_owned","reference":"priv/authority/lighter/manifest.json artifact rest-openapi; account, trades, deposit/history, withdraw/history, transfer/history, liquidations, fundings and funding-rates operations"},"observed_evidence":{"kind":"live_venue","reference":"testnet HTTP/code 200 recordings for fetch_balance, fetch_positions, fetch_my_trades, fetch_deposits, fetch_withdrawals, fetch_transfers, fetch_my_liquidations and fetch_funding_rate_history under test/fixtures/responses/lighter; pinned by test/bourse/lighter_promotion_integration_test.exs"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+**C-T546g — Lighter's funding `rate` is a PERCENT, so the unified fraction is `rate / 100`
+(ARC follow-up to task 546). Outcome: DIVERGE from the verbatim-copy reading the original
+task shipped.**
+
+- *Exchange semantics:* the provider schema documents `Funding.rate` with no unit, but the
+  venue's own cross-field arithmetic settles it: for every live market
+  `value == mark_price × rate / 100` (funding value per one base unit). Observed on
+  2026-08-11 against `testnet.zklighter.elliot.ai` across markets 0/1/2 — e.g. market 1
+  (BTC): `rate 0.0012`, `value 0.76667760`, `value / rate × 100 = 63 890` against a live
+  mark price of `64 068.6` from `orderBookDetails`; ETH and SOL reconcile the same way. A
+  fraction reading would imply a $639 BTC, which the venue's own order book refutes.
+- *Our carve:* the authored `fundingRate` rule scales by `0.01`, so a raw `"0.0012"` row
+  parses to the unified fraction `1.2e-5` (0.0012 %/h). The original verbatim copy shipped
+  values 100× too large and was ratified by a golden computed with the same assumption —
+  the canonical golden-ratification failure mode.
+- *Class note:* every authored rate-like slot needs a recorded unit confrontation; the
+  cross-venue sweep is tracked in the workbench roadmap rather than patched per instance.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T546g","date":"2026-08-11","semantic_source":{"kind":"provider_owned","reference":"priv/authority/lighter/manifest.json artifact rest-openapi; Funding schema, fundings and orderBookDetails operations"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-11 cross-field identity value == mark_price × rate / 100 across markets 0/1/2 on testnet.zklighter.elliot.ai; pinned offline by test/bourse/lighter_authored_spec_test.exs funding expectation 1.2e-5"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
+**C-T546h — `deposit/history` additionally requires the account's `l1_address`, which the
+client requires from the caller (ARC follow-up to task 546). Outcome: CONFIRM provider
+contract, with a loud client-side requirement.**
+
+- *Exchange semantics:* the pinned OpenAPI marks BOTH `account_index` and `l1_address`
+  `required=true` for `GET /api/v1/deposit/history`, while `withdraw/history` requires only
+  `account_index` — the asymmetry is real and live-verified on 2026-08-11: with
+  `account_index` alone the venue answers `20001 "invalid param"`; with both it returns
+  HTTP 200 and populated deposit rows.
+- *Our carve:* credentials do not carry the L1 wallet address, so the request-shape builder
+  refuses `fetchDeposits` without a caller-supplied `l1_address` and raises an
+  `ArgumentError` naming the parameter and where the venue publishes it
+  (`public_get_account`), instead of shipping the venue's unspecific 20001. Automatic
+  resolution via an extra account round-trip is deliberately not performed inside request
+  building.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T546h","date":"2026-08-11","semantic_source":{"kind":"provider_owned","reference":"priv/authority/lighter/manifest.json artifact rest-openapi; deposit/history and withdraw/history required parameter lists"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-11 live probes: account_index alone → 20001 invalid param; account_index + l1_address → HTTP 200 with three deposit rows; builder refusal pinned by test/bourse/lighter_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":1}
+-->

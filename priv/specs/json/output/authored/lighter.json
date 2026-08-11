@@ -1781,7 +1781,8 @@
           "fundingRate": {
             "coercion": "safeNumber",
             "format": null,
-            "key": "rate"
+            "key": "rate",
+            "scale": 0.01
           },
           "info": null,
           "symbol": null,

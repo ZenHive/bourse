@@ -45,6 +45,22 @@ defmodule Bourse.Unified.RequestShape.Lighter do
     |> Map.put_new_lazy("value", fn -> account_index!(exchange) end)
   end
 
+  # deposit/history is the one private history endpoint whose provider contract
+  # also marks `l1_address` required (withdraw/history takes account_index alone),
+  # and the venue answers its absence with an unspecific 20001 "invalid param" —
+  # so require it loudly here instead of shipping that raw error.
+  def build(params, "fetchDeposits", %Exchange{} = exchange, _opts) when is_map(params) do
+    if not is_binary(first_value(params, ["l1_address", "l1Address"], nil)) do
+      raise ArgumentError,
+            "lighter deposit/history requires l1_address (the account's L1 wallet address, " <>
+              "published on public_get_account) — pass l1_address: \"0x…\""
+    end
+
+    params
+    |> Map.put_new("account_index", account_index!(exchange))
+    |> Map.put_new("auth_deadline", System.system_time(:second) + @auth_lifetime_seconds)
+  end
+
   def build(params, js_name, %Exchange{} = exchange, _opts) when is_map(params) and js_name in @private_account_methods do
     params
     |> Map.put_new("account_index", account_index!(exchange))

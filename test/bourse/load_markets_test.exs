@@ -148,7 +148,7 @@ defmodule Bourse.LoadMarketsTest do
       assert unknown_message == "Unknown market symbol ETH/USDC:USDC"
     end
 
-    test "rejects string-keyed market rows instead of guessing their id shape" do
+    test "rejects string-keyed market rows with non-string ids instead of guessing their shape" do
       exchange =
         "lighter"
         |> Exchange.new!()
@@ -158,6 +158,25 @@ defmodule Bourse.LoadMarketsTest do
                Bourse.fetch_ticker(exchange, "BTC/USDC:USDC")
 
       assert message == "Unknown market symbol BTC/USDC:USDC"
+    end
+
+    # The accepted-request replay seeds exchanges with raw recorded JSON market
+    # rows, whose ids are the parser's canonical STRING form — those must
+    # resolve, which is exactly the boundary the rejection above stops at.
+    test "accepts string-keyed market rows whose id is already the canonical string" do
+      markets_count = :counters.new(1, [:atomics])
+      ticker_count = :counters.new(1, [:atomics])
+      stub = lighter_stub(markets_count, ticker_count)
+
+      exchange =
+        "lighter"
+        |> Exchange.new!()
+        |> Exchange.put_markets([%{"id" => "1", "symbol" => "BTC/USDC:USDC"}])
+
+      assert {:ok, %Ticker{}} =
+               Bourse.fetch_ticker(exchange, "BTC/USDC:USDC", plug: {Req.Test, stub})
+
+      assert :counters.get(ticker_count, 1) == 1
     end
 
     test "rejects loaded rows without a symbol" do

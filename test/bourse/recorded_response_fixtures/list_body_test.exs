@@ -16,6 +16,10 @@ defmodule Bourse.RecordedResponseFixtures.ListBodyTest do
     fetch_leverages
     fetch_my_trades
     fetch_ledger
+    fetch_deposits
+    fetch_withdrawals
+    fetch_transfers
+    fetch_my_liquidations
   )
 
   test "classifies list-returning private methods" do
@@ -29,7 +33,11 @@ defmodule Bourse.RecordedResponseFixtures.ListBodyTest do
              :fetch_positions_risk,
              :fetch_leverages,
              :fetch_my_trades,
-             :fetch_ledger
+             :fetch_ledger,
+             :fetch_deposits,
+             :fetch_withdrawals,
+             :fetch_transfers,
+             :fetch_my_liquidations
            ]
 
     assert ListBody.list_method?(:fetch_open_orders)

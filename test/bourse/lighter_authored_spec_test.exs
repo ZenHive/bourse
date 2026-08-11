@@ -171,6 +171,16 @@ defmodule Bourse.LighterAuthoredSpecTest do
              exchange_with_market(),
              []
            ) == %{"by" => "index", "value" => @public_account_index}
+
+    # deposit/history additionally REQUIRES l1_address per the provider contract;
+    # without it the venue answers an unspecific 20001, so the builder fails loud.
+    deposits = LighterRequestShape.build(%{"l1_address" => "0xabc"}, "fetchDeposits", exchange, [])
+    assert deposits["l1_address"] == "0xabc"
+    assert deposits["account_index"] == 1
+
+    assert_raise ArgumentError, ~r/l1_address/, fn ->
+      LighterRequestShape.build(%{}, "fetchDeposits", exchange, [])
+    end
   end
 
   test "new account and history routes parse provider response slices" do
@@ -238,7 +248,10 @@ defmodule Bourse.LighterAuthoredSpecTest do
              )
 
     assert funding.symbol == market().symbol
-    assert funding.funding_rate == 0.0012
+    # The venue publishes `rate` in percent: for every live market
+    # `value == mark_price * rate / 100` (funding value per 1 base unit), so the
+    # unified fraction is rate / 100 — a raw "0.0012" row means 0.0012%/h.
+    assert funding.funding_rate == 1.2e-5
     assert funding.timestamp == 1_800_000_000_000
 
     assert Enum.map(RequestCollector.requests(requests), & &1.conn.request_path) == [

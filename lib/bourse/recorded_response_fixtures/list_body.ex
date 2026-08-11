@@ -19,7 +19,11 @@ defmodule Bourse.RecordedResponseFixtures.ListBody do
     :fetch_positions_risk,
     :fetch_leverages,
     :fetch_my_trades,
-    :fetch_ledger
+    :fetch_ledger,
+    :fetch_deposits,
+    :fetch_withdrawals,
+    :fetch_transfers,
+    :fetch_my_liquidations
   ]
   @shape_only_marker "empty-body: shape-only evidence"
 
