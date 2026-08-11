@@ -64,12 +64,6 @@ defmodule Bourse.MixProject do
     ]
   end
 
-  # The trading-domain layer is developed in this repo but is not part of the
-  # exchange client's surface, so it stays out of the tarball.
-  # `test/bourse/domain_boundary_test.exs` keeps the dependency one-directional
-  # (domain may call the client, never the reverse), which is what keeps a later
-  # extraction a file move rather than a refactor.
-  @domain_prefixes ~w(option_proposal option_readiness option_saga portfolio_risk)
   # Repo-internal verification tooling: venue promotion grades a candidate
   # against this repo's reality manifests, and the oracle / recording / replay /
   # drift cluster reads `test/fixtures/**` and `priv/reference_cache/`. None of
@@ -95,9 +89,8 @@ defmodule Bourse.MixProject do
   Drops everything `package/0` deliberately leaves out of the tarball, so
   hexdocs never advertises a module or task a consumer does not receive: the
   `mix ccxt.*` tasks (all but `ccxt.build_lighter_signer`, the one
-  consumer-facing build step), the repo-internal tooling named by
-  `@unpackaged_prefixes`, and the trading-domain layer named by
-  `@domain_prefixes`.
+  consumer-facing build step) and the repo-internal tooling named by
+  `@unpackaged_prefixes`.
   """
   @spec document_module?(module(), map()) :: boolean()
   def document_module?(module, _metadata) do
@@ -112,7 +105,7 @@ defmodule Bourse.MixProject do
   end
 
   defp unpackaged_module?(name) do
-    Enum.any?(@domain_prefixes ++ @unpackaged_prefixes, fn prefix ->
+    Enum.any?(@unpackaged_prefixes, fn prefix ->
       root = "Bourse." <> Macro.camelize(prefix)
 
       name == root or String.starts_with?(name, root <> ".")
@@ -156,7 +149,7 @@ defmodule Bourse.MixProject do
     rest = Path.relative_to(path, "lib/bourse")
 
     Enum.any?(
-      @domain_prefixes ++ @unpackaged_prefixes,
+      @unpackaged_prefixes,
       &(rest == "#{&1}.ex" or String.starts_with?(rest, "#{&1}/"))
     )
   end
@@ -288,9 +281,6 @@ defmodule Bourse.MixProject do
         # so a stale render makes it grade against rules we already changed.
         "ccxt.claude_check",
         "ccxt.agents_md --check",
-        # Client-vs-domain boundary: the trading domain may depend on the client,
-        # never the reverse, so extracting it later stays a file move.
-        "cmd env MIX_ENV=test mix test.json --quiet test/bourse/domain_boundary_test.exs",
         "ex_dna --max-clones 0",
         # `--strict` fails the gate on smell findings — no baseline/suppression;
         # findings are fixed, not grandfathered. Reach derives architecture

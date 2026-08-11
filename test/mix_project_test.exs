@@ -7,21 +7,19 @@ defmodule Bourse.MixProjectTest do
   # native/lighter_signer ships the Go/C signer sources so consumers can build
   # the Lighter helper themselves; the compiled binary is never packaged.
   @runtime_venues ~w(alpaca binance binancecoinm binanceusdm bybit deribit derive hyperliquid lighter okx)
-  # The trading domain and the venue-promotion tooling are developed here but are
-  # not part of the client's surface, so `lib/bourse` ships enumerated rather
-  # than as a blanket directory entry.
-  @domain_prefixes ~w(option_proposal option_readiness option_saga portfolio_risk)
-  @unpackaged_prefixes @domain_prefixes ++
-                         ~w(
-                           spec/promotion
-                           exchange_acceptance_fixtures
-                           public_accepted_requests
-                           oracle_provenance
-                           oracle_label
-                           replay_exchange
-                           recorded_response_fixtures
-                           live_drift
-                         )
+  # The venue-promotion and oracle tooling is developed here but is not part of
+  # the client's surface, so `lib/bourse` ships enumerated rather than as a
+  # blanket directory entry.
+  @unpackaged_prefixes ~w(
+    spec/promotion
+    exchange_acceptance_fixtures
+    public_accepted_requests
+    oracle_provenance
+    oracle_label
+    replay_exchange
+    recorded_response_fixtures
+    live_drift
+  )
   # Modules a consumer is not guaranteed to have. `:plug` is `only: [:dev, :test]`
   # here, and req declares it `optional: true` — so `Req.Plug` and `Req.Test` exist
   # only when the consumer happens to pull plug in. `Req.Plug` is narrower still:
@@ -60,8 +58,8 @@ defmodule Bourse.MixProjectTest do
       assert rest == @expected_non_lib
       assert lib_bourse != []
 
-      # The domain layer and the promotion tooling stay out of the tarball; the
-      # client half ships whole.
+      # The promotion tooling stays out of the tarball; the client half ships
+      # whole.
       refute Enum.any?(files, &unpackaged_path?/1)
       assert Enum.all?(Path.wildcard("lib/bourse/**/*.ex"), &(&1 in files or unpackaged_path?(&1)))
 
@@ -125,8 +123,8 @@ defmodule Bourse.MixProjectTest do
 
              #{Enum.map_join(documented, "\n", &inspect/1)}
 
-             Add the prefix to `@unpackaged_prefixes` (or `@domain_prefixes`) in
-             mix.exs — `document_module?/2` reads both.
+             Add the prefix to `@unpackaged_prefixes` in mix.exs —
+             `document_module?/2` reads it.
              """
     end
 

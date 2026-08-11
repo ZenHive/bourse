@@ -19,10 +19,9 @@
 #     also carries the file's shared `:integration` moduletag. Enabling
 #     those files here would force their `require_credentials!()` calls to
 #     flunk loudly with no secrets configured — a permanently-red job.
-#   * alpaca_authored_integration_test.exs, lighter_signing_integration_test.exs,
-#     portfolio_risk_integration_test.exs, and
-#     option_proposal/margin_impact_integration_test.exs are entirely
-#     credential-gated (Alpaca has no anonymous market-data endpoint at all).
+#   * alpaca_authored_integration_test.exs and lighter_signing_integration_test.exs
+#     are entirely credential-gated (Alpaca has no anonymous market-data
+#     endpoint at all).
 #   * lighter_promotion_integration_test.exs has exactly one public test and
 #     one `@tag :dangerous` + credentialed test in the same module — same
 #     OR-semantics limitation as above, so it's excluded too.

@@ -3,11 +3,7 @@ defmodule Bourse.BybitOrderLifecycleIntegrationTest do
 
   alias Bourse.Error
   alias Bourse.Market
-  alias Bourse.OptionProposal
-  alias Bourse.OptionSaga
   alias Bourse.Order
-  alias Bourse.PortfolioRisk
-  alias Bourse.Unified.OptionSurface
 
   @moduletag :network
   @moduletag :dangerous
@@ -30,10 +26,6 @@ defmodule Bourse.BybitOrderLifecycleIntegrationTest do
   @off_grid_divisor 3
   @poll_attempts 10
   @poll_interval_ms 250
-  @saga_attempts 12
-  @saga_approval_age_ms 60_000
-  @duplicate_seed_price_multiplier 2
-  @repeated_request_code 10_014
 
   test "creates, fetches, edits, cancels, and confirms a Bybit order lifecycle" do
     exchange = loaded_demo_exchange!()
@@ -141,156 +133,6 @@ defmodule Bourse.BybitOrderLifecycleIntegrationTest do
              )
 
     assert message =~ "below the lower limit"
-  end
-
-  test "executes a preflight-approved option saga and compensates a provider-rejected second leg" do
-    exchange = loaded_demo_exchange!()
-    market = Enum.find(exchange.markets, &(&1.option and &1.active and &1.base == "BTC"))
-    amount = market.native_amount_step || market.precision["amount"]
-    price = market.precision["price"]
-
-    assert is_number(amount) and amount > 0
-    assert is_number(price) and price > 0
-
-    assert {:ok, greeks} =
-             OptionSurface.instrument_greeks(exchange, market.symbol, request_opts: [base_url: @demo_url])
-
-    assert {:ok,
-            %{
-              status: 200,
-              body: %{"time" => source_timestamp, "result" => %{"list" => raw_greeks}}
-            }} =
-             Bourse.Bybit.public_get_v5_market_tickers(
-               exchange,
-               %{"category" => "option", "symbol" => market.id},
-               base_url: @demo_url
-             )
-
-    assert is_integer(source_timestamp)
-    assert Enum.any?(raw_greeks, &(&1["symbol"] == market.id))
-    observed_at = System.system_time(:millisecond)
-    greeks = %{greeks | source_timestamp: source_timestamp}
-    run_id = "#{observed_at}-#{System.unique_integer([:positive])}"
-
-    proposal = %{
-      legs:
-        Enum.map(["accepted", "duplicate", "unsafe-later"], fn role ->
-          %{
-            id: "#{role}-#{run_id}",
-            venue: "bybit",
-            account: "demo",
-            symbol: market.symbol,
-            side: "buy",
-            amount: amount,
-            price: price,
-            type: "limit",
-            market: market,
-            greeks: greeks,
-            exchange: exchange
-          }
-        end),
-      hedge_candidates: [],
-      risk_targets: %{},
-      hard_limits: %{},
-      venue_policy: :same_only,
-      freshness_assumptions: %{max_age_ms: @saga_approval_age_ms},
-      scopes: [PortfolioRisk.scope(exchange, "demo", base_url: @demo_url)]
-    }
-
-    assert {:ok, %Bourse.OptionProposal.Result{status: :approved} = approval} =
-             OptionProposal.preflight(proposal,
-               observed_at: observed_at,
-               max_age_ms: @saga_approval_age_ms
-             )
-
-    assert {:ok, initial} =
-             OptionSaga.new(approval,
-               now_ms: observed_at,
-               max_approval_age_ms: @saga_approval_age_ms
-             )
-
-    [accepted_leg, duplicate_leg, unsafe_leg] = initial.legs
-
-    duplicate_order =
-      create_option_order!(
-        exchange,
-        market,
-        amount,
-        price * @duplicate_seed_price_multiplier,
-        duplicate_leg.client_order_id
-      )
-
-    try do
-      assert {:ok, %Order{id: duplicate_id}} =
-               Bourse.cancel_order(exchange, duplicate_order.id,
-                 symbol: market.symbol,
-                 base_url: @demo_url
-               )
-
-      assert duplicate_id == duplicate_order.id
-      assert %Order{status: duplicate_status} = fetch_recent_order!(exchange, duplicate_id, market.symbol)
-      assert duplicate_status in ["closed", "canceled"]
-
-      exchanges = %{{"bybit", "demo"} => exchange}
-
-      assert {:ok, %{action: :submit} = accepted_command, submitted} =
-               OptionSaga.step(initial, approval, now_ms: System.system_time(:millisecond))
-
-      assert accepted_command.client_order_id == accepted_leg.client_order_id
-
-      assert {:ok, %Order{id: accepted_id, client_order_id: accepted_client_id} = accepted_order} =
-               execute_saga_command(accepted_command, exchanges)
-
-      assert accepted_client_id == accepted_leg.client_order_id
-
-      assert {:ok, running} =
-               OptionSaga.resume(submitted, accepted_command, {:ok, accepted_order},
-                 now_ms: System.system_time(:millisecond)
-               )
-
-      assert {:ok, %{action: :submit} = duplicate_command, duplicate_submitted} =
-               OptionSaga.step(running, approval, now_ms: System.system_time(:millisecond))
-
-      assert duplicate_command.client_order_id == duplicate_leg.client_order_id
-
-      assert {:error,
-              %Error{
-                code: @repeated_request_code,
-                message: duplicate_message
-              } = duplicate_error} = execute_saga_command(duplicate_command, exchanges)
-
-      assert duplicate_message == "Repeated Request."
-
-      assert {:ok, compensating} =
-               OptionSaga.resume(duplicate_submitted, duplicate_command, {:error, duplicate_error},
-                 now_ms: System.system_time(:millisecond)
-               )
-
-      assert saga_leg(compensating, duplicate_leg).state == :failed
-      assert saga_leg(compensating, unsafe_leg).state == :planned
-
-      {halted, executed} = drive_compensation!(compensating, approval, exchanges)
-      cancellation_results = for {%{action: :cancel}, outcome} <- executed, do: outcome
-
-      assert halted.status == :halted
-      assert saga_leg(halted, accepted_leg).state == :cancelled
-      assert saga_leg(halted, unsafe_leg).state == :planned
-      assert Enum.map(halted.compensations, & &1.outcome) == cancellation_results
-      assert cancellation_results != []
-      assert halted.residual_risk == []
-
-      assert %Order{status: accepted_status} = fetch_recent_order!(exchange, accepted_id, market.symbol)
-      assert accepted_status in ["closed", "canceled"]
-
-      assert {:ok, open_orders} =
-               Bourse.fetch_open_orders(exchange, symbol: market.symbol, base_url: @demo_url)
-
-      saga_client_ids = MapSet.new(Enum.map(initial.legs, & &1.client_order_id))
-      refute Enum.any?(open_orders, &MapSet.member?(saga_client_ids, &1.client_order_id))
-    after
-      cleanup_order!(exchange, duplicate_order.id, market.symbol)
-      cleanup_client_orders!(exchange, market.symbol, Enum.map(initial.legs, & &1.client_order_id))
-    end
   end
 
   test "missing demo credentials fail loudly with exact setup instructions" do
@@ -424,74 +266,6 @@ defmodule Bourse.BybitOrderLifecycleIntegrationTest do
     end
   end
 
-  defp create_option_order!(exchange, market, amount, price, client_order_id) do
-    case Bourse.create_order(exchange, market.symbol, "limit", "buy", amount,
-           price: price,
-           postOnly: true,
-           clientOrderId: client_order_id,
-           base_url: @demo_url
-         ) do
-      {:ok, %Order{id: id} = order} when is_binary(id) and id != "" -> order
-      other -> flunk("Bybit option setup order failed: #{inspect(other)}")
-    end
-  end
-
-  defp execute_saga_command(command, exchanges) do
-    request_opts =
-      if command.action == :submit do
-        [base_url: @demo_url, postOnly: true]
-      else
-        [base_url: @demo_url]
-      end
-
-    OptionSaga.execute(command, exchanges, request_opts: request_opts)
-  end
-
-  defp drive_compensation!(journal, approval, exchanges, attempts \\ @saga_attempts)
-  defp drive_compensation!(_journal, _approval, _exchanges, 0), do: flunk("Bybit saga compensation did not settle")
-
-  defp drive_compensation!(journal, approval, exchanges, attempts) do
-    case OptionSaga.step(journal, approval, now_ms: System.system_time(:millisecond)) do
-      {:halted, halted} ->
-        {halted, []}
-
-      {:ok, %{action: action} = command, prepared} when action in [:cancel, :reconcile] ->
-        outcome = execute_saga_command(command, exchanges)
-
-        assert {:ok, resumed} =
-                 OptionSaga.resume(prepared, command, outcome, now_ms: System.system_time(:millisecond))
-
-        receive do
-        after
-          @poll_interval_ms ->
-            {halted, executed} = drive_compensation!(resumed, approval, exchanges, attempts - 1)
-            {halted, [{command, outcome} | executed]}
-        end
-
-      other ->
-        flunk("unexpected Bybit saga compensation step: #{inspect(other)}")
-    end
-  end
-
-  defp saga_leg(journal, expected) do
-    Enum.find(journal.legs, &(&1.execution_id == expected.execution_id))
-  end
-
-  defp cleanup_client_orders!(exchange, symbol, client_order_ids) do
-    case Bourse.fetch_open_orders(exchange, symbol: symbol, base_url: @demo_url) do
-      {:ok, orders} ->
-        orders
-        |> Enum.filter(&(&1.client_order_id in client_order_ids))
-        |> Enum.each(&cleanup_order!(exchange, &1.id, symbol))
-
-      {:error, %Error{type: :order_not_found}} ->
-        :ok
-
-      other ->
-        flunk("Bybit saga cleanup lookup failed: #{inspect(other)}")
-    end
-  end
-
   defp market_for_symbol!(%Bourse.Exchange{markets: markets}, symbol) do
     case Enum.find(markets, &(&1.symbol == symbol)) do
       %Market{} = market -> market
@@ -512,10 +286,6 @@ defmodule Bourse.BybitOrderLifecycleIntegrationTest do
 
   defp fetch_terminal_order!(exchange, id, symbol \\ @symbol) do
     poll_order!(fn -> Bourse.fetch_closed_order(exchange, id, symbol: symbol, base_url: @demo_url) end)
-  end
-
-  defp fetch_recent_order!(exchange, id, symbol) do
-    poll_order!(fn -> Bourse.fetch_order(exchange, id, symbol: symbol, base_url: @demo_url) end)
   end
 
   defp poll_order!(request, attempts \\ @poll_attempts)

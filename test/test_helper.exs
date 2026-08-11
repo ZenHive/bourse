@@ -5,8 +5,6 @@ alias Mix.Tasks.Ccxt.BuildLighterSigner
 # Network/invalid_creds (T67) hit live exchanges; run with `mix test --include network`.
 # capability_live (T188) is the COVERAGE.md standing shortlist gate — live PUBLIC
 # per-{venue,method} matrix; include with `--include capability_live` (file-target).
-# option_readiness (T402) is the four-venue option readiness matrix — live sandbox
-# evidence collection; include with `--include option_readiness` (file-target).
 # known_defect marks a test whose assertion is CORRECT but which fails against a
 # real, filed product defect — quarantined so the gate stays honest without
 # ratifying the bug. Each one names its tracking task inline. Run the set with
@@ -54,7 +52,6 @@ ExUnit.start(
     :network,
     :invalid_creds,
     :capability_live,
-    :option_readiness,
     :known_defect,
     :native
   ]

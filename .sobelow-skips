@@ -2,10 +2,7 @@ DOS.BinToAtom: Unsafe atom interpolation,lib/bourse/exchange.ex:828,77A9D97
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/bourse/unified/descriptor.ex:197,4DAD4CE
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/bourse/unified/descriptor.ex:236,560577D
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/bourse/unified_method.ex:113,564942F
-Traversal.FileModule: Directory Traversal in `File.mkdir_p`,lib/bourse/option_readiness/report.ex:72,2B02501
 Traversal.FileModule: Directory Traversal in `File.open`,lib/bourse/spec/promotion/evidence.ex:415,1A46A28
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/bourse/json_document.ex:19,2AB9AE4
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/bourse/spec/promotion.ex:96,51E7CCD
-Traversal.FileModule: Directory Traversal in `File.read`,lib/bourse/option_readiness/report.ex:81,2FBFA2E
 Traversal.FileModule: Directory Traversal in `File.read`,lib/bourse/spec/promotion.ex:194,A026C2
-Traversal.FileModule: Directory Traversal in `File.write`,lib/bourse/option_readiness/report.ex:73,5D2A6C0

@@ -728,7 +728,6 @@ For cross-family reviewers (codex / cursor / grok) and any dispatch run.
 | Compile | `mix compile --warnings-as-errors` | silent finish = success |
 | Tests | `mix test.json --quiet` | **emits JSON by design** — parse it for real failures; the envelope is **not** a build error. Read `summary.result` / `summary.failed`. Most integration tests are excluded without `--include` tags. |
 | Reality oracle | `mix ccxt.oracle_gate` | Verifies registered response recordings, accepted-request goldens and recorded exchange errors. |
-| Domain boundary | `mix test.json test/bourse/domain_boundary_test.exs` | The client must never depend on the trading domain. |
 | Dialyzer | `mix dialyzer.json --quiet` | **emits JSON by design**. Plain `mix dialyzer` is the authoritative fallback when the JSON encoder can't serialize a warning shape. |
 | Lint | `mix credo --strict` | |
 | Security | `mix sobelow` | honors `.sobelow-skips` (hash-based), **not** inline comments |
@@ -861,13 +860,15 @@ One auth surface remains **unwired, and fails loudly rather than silently**: **d
 
 ## The trading domain layer
 
-`Bourse.OptionProposal`, `Bourse.OptionReadiness`, `Bourse.OptionSaga`, `Bourse.PortfolioRisk` live here but are **not part of the client's surface**. `mix.exs` keeps them out of the Hex package, and `test/bourse/domain_boundary_test.exs` (wired into `check.dispatch`) asserts the dependency stays one-directional: **the domain may call the client, never the reverse.**
+The trading domain — OptionProposal, OptionReadiness, OptionSaga, PortfolioRisk and their submodules — lives in its own repo, https://github.com/ZenHive/bourse_trading (private, ZenHive), which depends on this client's published Hex package. The modules keep the Bourse module namespace there; that is deliberate, not a leftover.
 
-That guard is why the layer can stay. It was introduced while the invariant already held, so it costs no refactor — and as long as it is green, moving the domain into its own repo remains a file move rather than a refactor. **A single inbound edge turns it into one**, so don't "temporarily" reach into the domain from client code.
+**The dependency stays one-directional: the domain calls the client's packaged surface, never the reverse.** Nothing in this repo may reference a domain module — a single inbound edge would couple the client to an unpublished repo. Domain logic (proposal checks, readiness collection, saga execution, exposure math) belongs in bourse_trading; venue behavior, authored specs, signing and unified parsing belong here.
+
+The `docs/option_readiness/` JSON snapshots stay in this repo as frozen evidence — `docs/prod-verification-ledger.md` cites them by path.
 
 ## Repo-internal tooling inside `lib/`
 
-The oracle / recording / replay / drift cluster — `Bourse.ExchangeAcceptanceFixtures`, `Bourse.PublicAcceptedRequests`, `Bourse.OracleProvenance`, `Bourse.OracleLabel`, `Bourse.ReplayExchange`, `Bourse.RecordedResponseFixtures`, `Bourse.LiveDrift`, `Bourse.Spec.Promotion` — lives in `lib/` because the `mix ccxt.*` tasks compile in `:dev`, where `elixirc_paths/1` does not carry `test/support`. It is **not** client surface: `@unpackaged_prefixes` in `mix.exs` keeps every one of them out of the tarball and out of hexdocs, exactly as it does for the domain layer.
+The oracle / recording / replay / drift cluster — `Bourse.ExchangeAcceptanceFixtures`, `Bourse.PublicAcceptedRequests`, `Bourse.OracleProvenance`, `Bourse.OracleLabel`, `Bourse.ReplayExchange`, `Bourse.RecordedResponseFixtures`, `Bourse.LiveDrift`, `Bourse.Spec.Promotion` — lives in `lib/` because the `mix ccxt.*` tasks compile in `:dev`, where `elixirc_paths/1` does not carry `test/support`. It is **not** client surface: `@unpackaged_prefixes` in `mix.exs` keeps every one of them out of the tarball and out of hexdocs.
 
 **Anything you add to that cluster inherits the exclusion — add its prefix.** These modules read `test/fixtures/**` and `priv/reference_cache/`, which are never packaged, and they may use `:dev`/`:test`-only deps. A shipped copy fails twice over: on missing files at runtime, and at the consumer's *compile* — the original case was `Req.Plug`, which exists only from req 0.7 and only behind the `only: [:dev, :test]` `:plug` dep, so consumers resolving `~> 0.6.1` got an undefined-module warning out of two fixture modules. `test/mix_project_test.exs` gates both halves: the package file list, and an AST scan asserting no shipped module names a dependency a consumer may not have.
 

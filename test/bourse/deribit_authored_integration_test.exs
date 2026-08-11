@@ -6,9 +6,7 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
   alias Bourse.Balance
   alias Bourse.Credentials
   alias Bourse.Error
-  alias Bourse.OptionProposal
   alias Bourse.Order
-  alias Bourse.PortfolioRisk
   alias Bourse.Position
   alias Bourse.Test.FixtureGateIsolation
 
@@ -47,66 +45,6 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
     assert {:ok, %Bourse.Greeks{} = greeks} = Bourse.fetch_greeks(exchange, market.symbol)
 
     assert Enum.all?([greeks.delta, greeks.gamma, greeks.rho, greeks.theta, greeks.vega], &is_number/1)
-  end
-
-  test "option proposal self-fetches fresh data and sizes a caller-priced inverse hedge" do
-    credentials = require_credentials!(:deribit, url: @deribit_testnet_url)
-    exchange = build_exchange(:deribit, credentials: credentials, sandbox: true)
-
-    assert {:ok, markets} = Bourse.fetch_markets(exchange)
-    assert {:ok, chain} = Bourse.fetch_option_chain(exchange, "BTC")
-
-    option_data =
-      Enum.find_value(chain, fn {symbol, data} ->
-        if is_number(data.bid_price) or is_number(data.ask_price), do: {symbol, data}
-      end)
-
-    assert {option_symbol, _data} = option_data
-    assert %Bourse.Market{} = option_market = Enum.find(markets, &(&1.symbol == option_symbol))
-    option_amount = option_market.native_amount_step || option_market.precision["amount"]
-    assert is_number(option_amount) and option_amount > 0
-
-    assert {:ok, %Bourse.Ticker{} = inverse_ticker} = Bourse.fetch_ticker(exchange, "BTC/USD:BTC")
-    inverse_price = inverse_ticker.last || inverse_ticker.bid || inverse_ticker.ask
-    assert is_number(inverse_price) and inverse_price > 0
-
-    proposal = %{
-      legs: [
-        %{
-          id: "option",
-          venue: "deribit",
-          account: "main",
-          symbol: option_symbol,
-          side: "buy",
-          amount: option_amount,
-          type: "market",
-          exchange: exchange
-        }
-      ],
-      hedge_candidates: [
-        %{
-          id: "inverse-perp",
-          venue: "deribit",
-          account: "main",
-          symbol: "BTC/USD:BTC",
-          exchange: exchange,
-          price: inverse_price
-        }
-      ],
-      risk_targets: %{delta: 0.0},
-      hard_limits: %{residual_delta_abs: 0.01},
-      venue_policy: :same_only,
-      freshness_assumptions: %{max_age_ms: 60_000},
-      scopes: [PortfolioRisk.scope(exchange, "main")]
-    }
-
-    assert {:ok, %Bourse.OptionProposal.Result{status: :approved} = result} =
-             OptionProposal.preflight(proposal)
-
-    assert Enum.find(result.checks, &(&1.name == :quote)).status == :ok
-    assert Enum.find(result.checks, &(&1.name == :greeks)).status == :ok
-    assert %{feasible?: true, candidate_id: "inverse-perp", symbol: "BTC/USD:BTC"} = result.hedge
-    assert is_number(result.hedge.quantity) and result.hedge.quantity > 0
   end
 
   @tag :dangerous

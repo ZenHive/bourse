@@ -5,6 +5,18 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+
+- The trading-domain layer (`Bourse.OptionProposal`, `Bourse.OptionReadiness`,
+  `Bourse.OptionSaga`, `Bourse.PortfolioRisk` and their submodules, tests and
+  the domain-boundary guard) moved to its own repository,
+  https://github.com/ZenHive/bourse_trading, which consumes this client's
+  published Hex package. The package contents are unchanged — these modules
+  were never in the tarball; the `@domain_prefixes` exclusion machinery in
+  `mix.exs` went with them.
+
 ## [0.3.0] - 2026-08-10
 
 ### Security
