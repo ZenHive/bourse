@@ -43,9 +43,13 @@ defmodule Bourse.AuthoredOrderStatusCoverageTest do
         ))
     },
     "binancecoinm" => %{
+      # The common-definition page omits EXPIRED_IN_MATCH, but COIN-M ships STP
+      # (selfTradePreventionMode, default EXPIRE_MAKER) and the STP FAQ + change log
+      # document EXPIRED_IN_MATCH as its resulting order status:
+      # https://developers.binance.com/docs/derivatives/usds-margined-futures/faq/stp-faq
       source:
         "https://developers.binance.com/en/docs/products/derivatives-trading-coin-futures/common-definition#order-status-status",
-      values: MapSet.new(~w(NEW PARTIALLY_FILLED FILLED CANCELED EXPIRED))
+      values: MapSet.new(~w(NEW PARTIALLY_FILLED FILLED CANCELED EXPIRED EXPIRED_IN_MATCH))
     },
     "binanceusdm" => %{
       source:
@@ -102,6 +106,7 @@ defmodule Bourse.AuthoredOrderStatusCoverageTest do
       "PENDING_CANCEL" => "open",
       "PENDING_NEW" => "open"
     },
+    "binancecoinm" => %{"EXPIRED_IN_MATCH" => "canceled"},
     "binanceusdm" => %{"EXPIRED_IN_MATCH" => "canceled"},
     "derive" => %{"expired" => "canceled"},
     "lighter" => %{

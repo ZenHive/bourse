@@ -12357,6 +12357,7 @@
               "CANCELED": "canceled",
               "CANCELLED": "canceled",
               "EXPIRED": "canceled",
+              "EXPIRED_IN_MATCH": "canceled",
               "FILLED": "closed",
               "NEW": "open",
               "PARTIALLY_FILLED": "open",

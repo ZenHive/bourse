@@ -47,6 +47,34 @@ typed parser tests because this account had no income or ranked position during 
 {"carve_id":"C-T545c","date":"2026-08-11","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binancecoinm/manifest.json artifact developer-docs-full; COIN-M Income History and Position ADL Quantile contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binancecoinm/fetch_ledger.json and fetch_adl_rank.json plus tagged live integration success/error assertions"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The live account returned valid empty income and ADL states; populated provider-shaped rows are contract-authored and pinned offline rather than observed on this account"}
 -->
 
+**C-T545d — STP expiry is part of the COIN-M order-status vocabulary (task 545 ARC pass).
+Outcome: CONFIRM provider contract.** The COIN-M common-definition status enum omits
+`EXPIRED_IN_MATCH`, but the venue ships self-trade prevention on COIN-M with
+`selfTradePreventionMode` defaulting to `EXPIRE_MAKER`, and Binance's STP FAQ and derivatives
+change log document `EXPIRED_IN_MATCH` as the status of an order expired by STP. The authored
+enum maps it to unified `canceled`, matching the `binance` and `binanceusdm` arms, so one
+STP-expired row in the `allOrders` window cannot fail the whole `fetchOrders` /
+`fetchClosedOrders` / `fetchCanceledOrders` read via the unmapped-status guard.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T545d","date":"2026-08-11","semantic_source":{"kind":"provider_owned","reference":"Binance STP FAQ and derivatives change log (developers.binance.com); COIN-M Trade REST contract documents selfTradePreventionMode default EXPIRE_MAKER"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No STP-expired order row was observable on the demo account; the arm is authored from the provider-owned STP contract and guarded by the documented-set coverage test"}
+-->
+
+**C-T545e — COIN-M open interest is a contract count and lands in the amount slot (task 545
+ARC pass). Outcome: DIVERGE from the bybit/deribit inverse carve.** `GET /dapi/v1/openInterest`
+returns `openInterest` denominated in contracts (the sibling Open Interest Statistics contract
+documents the unit as `cont`), and `Bourse.OpenInterest` defines `open_interest_amount` as
+"open interest in contracts", so the authored map places the venue number in
+`openInterestAmount` and leaves `openInterestValue` null — no notional source exists in the
+response. bybit and deribit route their inverse open-interest numbers into `openInterestValue`
+via discriminated maps because those venues publish value-denominated figures; the divergence
+is venue truth, not an oversight. A consumer wanting cross-venue-uniform OI denomination needs
+a computed conversion (contract size × count), which the client deliberately does not perform.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T545e","date":"2026-08-11","semantic_source":{"kind":"provider_owned","reference":"COIN-M Open Interest and Open Interest Statistics contracts (developers.binance.com); Bourse.OpenInterest struct contract"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binancecoinm/fetch_open_interest.json pins the contract-count reading; binance_authored_spec_test.exs asserts open_interest_amount"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-10 — position-mode and leverage capability routing (Task 586)
 
 **C-T586a — COIN-M exposes position-mode and initial-leverage writes through DAPI (task 586).
