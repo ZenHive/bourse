@@ -36,7 +36,7 @@ defmodule Bourse.OracleProvenance.ProviderOperations.Capture do
     output_root = Path.expand(output_root)
     File.mkdir_p!(output_root)
     recordings = Enum.map(captures, &write_capture!(output_root, &1))
-    manifest = build_manifest(plan, plan_path, recordings, now.())
+    manifest = build_manifest(plan, inventory, plan_path, recordings, now.())
     manifest_path = resolve_inside_root!(output_root, "_manifest.json")
     File.write!(manifest_path, Jason.encode!(manifest, pretty: true) <> "\n")
 
@@ -67,6 +67,16 @@ defmodule Bourse.OracleProvenance.ProviderOperations.Capture do
     end
   end
 
+  @doc "Authorizes a reviewed proof against the source-bound comparison inventory."
+  @spec authorize(map(), map(), map()) :: :ok | {:error, {:refused, atom()}}
+  def authorize(operation, proof, inventory_operation)
+      when is_map(operation) and is_map(proof) and is_map(inventory_operation) do
+    with :ok <- authorize(operation, proof),
+         :ok <- require_inventory_read(inventory_operation) do
+      require_inventory_public(inventory_operation)
+    end
+  end
+
   defp require_reviewed(%{"classification" => "reviewed", "decision" => "approved"}), do: :ok
   defp require_reviewed(_review), do: refused(:unclassified)
 
@@ -89,6 +99,32 @@ defmodule Bourse.OracleProvenance.ProviderOperations.Capture do
   end
 
   defp require_http_rest(_provider), do: refused(:websocket_only)
+
+  defp require_inventory_read(%{"provider" => provider}) when is_list(provider) do
+    if Enum.all?(provider, &(&1["method"] in ["GET", "HEAD"])), do: :ok, else: refused(:mutating)
+  end
+
+  defp require_inventory_read(_operation), do: refused(:unclassified)
+
+  defp require_inventory_public(%{"authored" => authored}) when is_list(authored) and authored != [] do
+    classification =
+      Enum.reduce(authored, :public, fn entry, classification ->
+        case {get_in(entry, ["authentication", "value", "required"]), classification} do
+          {true, _classification} -> :private
+          {_required, :private} -> :private
+          {false, classification} -> classification
+          {_required, _classification} -> :unclassified
+        end
+      end)
+
+    case classification do
+      :private -> refused(:private)
+      :public -> :ok
+      :unclassified -> refused(:unclassified)
+    end
+  end
+
+  defp require_inventory_public(_operation), do: refused(:unclassified)
 
   defp capture!(plan, operation, proof, request_fun, now) do
     raw_request = proof["request"]
@@ -179,13 +215,14 @@ defmodule Bourse.OracleProvenance.ProviderOperations.Capture do
     }
   end
 
-  defp build_manifest(plan, plan_path, recordings, generated_at) do
+  defp build_manifest(plan, inventory, plan_path, recordings, generated_at) do
     %{
       "schema_version" => 1,
       "corpus" => "provider_operation_reality",
       "generated_at" => generated_at |> DateTime.truncate(:microsecond) |> DateTime.to_iso8601(),
       "plan" => plan_path,
       "source_revision" => plan["source_revision"],
+      "inventory" => ProviderOperations.inventory_snapshot(plan, inventory),
       "operations" => ProviderOperations.manifest_operations(plan),
       "recordings" => recordings
     }

@@ -27,7 +27,7 @@ defmodule Bourse.OracleProvenance.ProviderOperationsTest do
     assert Enum.map(facts, &Map.take(&1, ~w(operation_key evidence reachability contract_scope))) == [
              %{
                "operation_key" => "GET /api/v2/public/get_time",
-               "evidence" => "verified",
+               "evidence" => "unverified",
                "reachability" => "safe",
                "contract_scope" => "current_rest"
              },
@@ -91,6 +91,67 @@ defmodule Bourse.OracleProvenance.ProviderOperationsTest do
     assert {:error, {:refused, :unreviewed_request_seed}} = Capture.authorize(operation, unreviewed)
   end
 
+  test "source inventory prevents private or mutating operations from being relabeled safe" do
+    plan = JsonDocument.decode_file!(@plan_path)
+    operation = hd(plan["operations"])
+    proof = hd(operation["proofs"])
+    inventory_operation = hd(inventory_for(plan)["surfaces"]["current_rest"]["operations"])
+
+    private = put_in(inventory_operation, ["authored", Access.at(0), "authentication", "value", "required"], true)
+    assert {:error, {:refused, :private}} = Capture.authorize(operation, proof, private)
+
+    mutating = put_in(inventory_operation, ["provider", Access.at(0), "method"], "POST")
+    assert {:error, {:refused, :mutating}} = Capture.authorize(operation, proof, mutating)
+  end
+
+  test "oracle validation re-applies capture authorization to a post-hoc plan edit" do
+    root = temporary_directory("post-hoc-plan-edit")
+    File.cp_r!(@fixture_root, root)
+    plan = JsonDocument.decode_file!(@plan_path)
+    changed = put_in(plan, ["operations", Access.at(0), "execution_review", "exposure"], "private")
+    changed_path = Path.join(root, "changed-plan.json")
+    File.write!(changed_path, Jason.encode!(changed, pretty: true))
+
+    assert_raise ArgumentError, ~r/capture proof public_get_time_success refused: private/, fn ->
+      ProviderOperations.validate!(
+        root: root,
+        manifest_path: Path.join(root, "_manifest.json"),
+        plan_path: changed_path
+      )
+    end
+  end
+
+  test "oracle validation rejects a public plan classification for a private inventory operation" do
+    root = temporary_directory("private-inventory-operation")
+    File.cp_r!(@fixture_root, root)
+    manifest_path = Path.join(root, "_manifest.json")
+    manifest = JsonDocument.decode_file!(manifest_path)
+
+    changed =
+      put_in(
+        manifest,
+        [
+          "inventory",
+          "surfaces",
+          "current_rest",
+          "operations",
+          Access.at(0),
+          "authored",
+          Access.at(0),
+          "authentication",
+          "value",
+          "required"
+        ],
+        true
+      )
+
+    File.write!(manifest_path, Jason.encode!(changed, pretty: true))
+
+    assert_raise ArgumentError, ~r/capture proof public_get_time_success refused: private/, fn ->
+      ProviderOperations.validate!(root: root, manifest_path: manifest_path)
+    end
+  end
+
   test "a refused operation cannot reach the request adapter" do
     root = temporary_directory("refused-before-request")
     plan = JsonDocument.decode_file!(@plan_path)
@@ -132,6 +193,7 @@ defmodule Bourse.OracleProvenance.ProviderOperationsTest do
 
   test "capture writes exact scrubbed requests and raw responses without unified parsing" do
     output_root = temporary_directory("raw-capture")
+    plan = JsonDocument.decode_file!(@plan_path)
     inventory_path = write_inventory!(output_root)
     request_fun = request_fun()
 
@@ -142,7 +204,8 @@ defmodule Bourse.OracleProvenance.ProviderOperationsTest do
       )
 
     assert length(manifest["recordings"]) == 3
-    assert Enum.map(manifest["operations"], & &1["evidence"]) == ["verified", "verified"]
+    assert Enum.map(manifest["operations"], & &1["evidence"]) == ["unverified", "verified"]
+    assert manifest["inventory"] == ProviderOperations.inventory_snapshot(plan, inventory_for(plan))
 
     fixture = JsonDocument.decode_file!(Path.join(output_root, "deribit/public_ticker_populated_success.json"))
     assert fixture["request"]["body"] == nil
@@ -285,7 +348,15 @@ defmodule Bourse.OracleProvenance.ProviderOperationsTest do
         %{
           "operation_key" => operation["operation_key"],
           "axes" => operation["inventory_axes"],
-          "provider" => [operation["provider"]]
+          "provider" => [operation["provider"]],
+          "authored" => [
+            %{
+              "authentication" => %{
+                "status" => "known",
+                "value" => %{"required" => false}
+              }
+            }
+          ]
         }
       end)
 
@@ -310,11 +381,13 @@ defmodule Bourse.OracleProvenance.ProviderOperationsTest do
               "authentication" => %{"status" => "unknown"},
               "qualifiers" => ["websocket_only"]
             }
-          ]
+          ],
+          "authored" => []
         }
       end)
 
     %{
+      "schema_version" => 1,
       "report_type" => "provider_contract_comparison",
       "venue" => plan["venue"],
       "provenance" => %{

@@ -5,6 +5,7 @@ defmodule Bourse.OracleProvenance do
 
   alias Bourse.OracleProvenance.Derivation
   alias Bourse.RecordedResponseFixtures
+  alias Bourse.RecordedResponseFixtures.RequestCongruence
 
   @type ledger_entry :: %{heading: String.t(), slots: [{String.t(), String.t()}]}
   @type critical_slot_waiver :: %{
@@ -91,6 +92,15 @@ defmodule Bourse.OracleProvenance do
   @doc "Derives binary verified/unverified reports from committed reality."
   @spec binary_reports!(keyword()) :: [Derivation.venue_report()]
   def binary_reports!(opts \\ []) do
+    congruence_opts =
+      Enum.reject(
+        [
+          root: opts[:recording_root],
+          manifest_path: opts[:recording_manifest]
+        ],
+        fn {_key, value} -> is_nil(value) end
+      )
+
     provider_opts =
       Enum.reject(
         [
@@ -102,10 +112,13 @@ defmodule Bourse.OracleProvenance do
         fn {_key, value} -> is_nil(value) end
       )
 
+    RequestCongruence.validate!(congruence_opts)
     RecordedResponseFixtures.validate_provider_operations!(provider_opts)
 
     opts
-    |> Keyword.drop(~w(provider_operation_root provider_operation_manifest provider_operation_plan)a)
+    |> Keyword.drop(
+      ~w(recording_root recording_manifest provider_operation_root provider_operation_manifest provider_operation_plan)a
+    )
     |> Derivation.reports!()
   end
 

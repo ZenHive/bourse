@@ -931,6 +931,56 @@ defmodule Bourse.Unified do
     end
   end
 
+  @doc false
+  @spec request_param_shapes(Exchange.t(), atom(), map(), keyword()) ::
+          {:ok, [map()]} | {:error, Error.t() | term()}
+  def request_param_shapes(%Exchange{} = exchange, method_atom, params, opts \\ [])
+      when is_atom(method_atom) and is_map(params) do
+    js_name = js_name_for!(method_atom)
+
+    with {:ok, module} <- require_module(exchange),
+         {:ok, resolution} <- resolve_dispatch_plan(exchange, module, method_atom, js_name, params, opts) do
+      build_request_param_shapes(exchange, js_name, resolution, params, opts)
+    end
+  end
+
+  defp build_request_param_shapes(exchange, js_name, {:single, config}, params, opts) do
+    with {:ok, params} <- maybe_resolve_market_id(exchange, js_name, params, opts) do
+      {:ok, [build_final_params(exchange, js_name, params, opts, config.path)]}
+    end
+  end
+
+  defp build_request_param_shapes(exchange, js_name, {mode, _configs}, params, opts)
+       when mode in [:fan_out, :broadcast] do
+    with {:ok, params} <- maybe_resolve_market_id(exchange, js_name, params, opts) do
+      {:ok, [build_final_params(exchange, js_name, params, opts, nil)]}
+    end
+  end
+
+  defp build_request_param_shapes(exchange, js_name, {:first_success, configs}, params, opts) do
+    with {:ok, params} <- maybe_resolve_market_id(exchange, js_name, params, opts) do
+      {:ok, Enum.map(configs, &build_final_params(exchange, js_name, params, opts, &1.path))}
+    end
+  end
+
+  defp build_request_param_shapes(exchange, js_name, {:param_fan_out, config, variants}, params, opts) do
+    variants
+    |> Enum.reduce_while({:ok, []}, fn variant, {:ok, shapes} ->
+      case maybe_resolve_market_id(exchange, js_name, Map.merge(params, variant), opts) do
+        {:ok, merged} ->
+          shape = build_final_params(exchange, js_name, merged, opts, config.path)
+          {:cont, {:ok, [shape | shapes]}}
+
+        {:error, _reason} = error ->
+          {:halt, error}
+      end
+    end)
+    |> case do
+      {:ok, shapes} -> {:ok, Enum.reverse(shapes)}
+      {:error, _reason} = error -> error
+    end
+  end
+
   defp dispatch_raw_response(exchange, capability_name, {:single, config}, params, opts) do
     dispatch_single(exchange, capability_name, config, params, opts)
   end

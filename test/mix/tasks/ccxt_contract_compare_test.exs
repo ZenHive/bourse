@@ -329,7 +329,7 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
     end
   end
 
-  test "registered provider captures are the only facts that advance evidence" do
+  test "registered provider captures advance evidence according to observation semantics" do
     artifact_root = temporary_directory("registered-provider-evidence")
     report = Enum.find(ContractComparator.compare_all!(artifact_root), &(&1["venue"] == "deribit"))
     operations = report["surfaces"]["current_rest"]["operations"]
@@ -337,7 +337,7 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
     get_time = Enum.find(operations, &(&1["operation_key"] == "GET /api/v2/public/get_time"))
     ticker = Enum.find(operations, &(&1["operation_key"] == "GET /api/v2/public/ticker"))
 
-    assert get_time["axes"]["evidence"] == "verified"
+    assert get_time["axes"]["evidence"] == "unverified"
     assert get_time["axes"]["reachability"] == "safe"
     assert ticker["axes"]["evidence"] == "verified"
   end

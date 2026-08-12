@@ -7,7 +7,7 @@
         "public_get_time_success"
       ],
       "contract_scope": "current_rest",
-      "evidence": "verified",
+      "evidence": "unverified",
       "evidence_semantics": [
         "reachability_only"
       ],
@@ -89,6 +89,336 @@
     "upstream_pin": {
       "type": "document_version_http_etag",
       "value": "2.1.1; W/\"b96f2b26a14b31dbc4cf064c3d63b14a\""
+    }
+  },
+  "inventory": {
+    "schema_version": 1,
+    "report_type": "provider_contract_comparison",
+    "venue": "deribit",
+    "provenance": {
+      "artifacts": [
+        {
+          "id": "api-openapi",
+          "sha256": "430b3f0bc67cc574a05e695d22d1acbbb5348c96858368bba9931c2f05350515",
+          "upstream_pin": {
+            "type": "document_version_http_etag",
+            "value": "2.1.1; W/\"b96f2b26a14b31dbc4cf064c3d63b14a\""
+          },
+          "metrics": {
+            "path_count": 178,
+            "unknown_authentication_count": 178
+          }
+        }
+      ]
+    },
+    "surfaces": {
+      "current_rest": {
+        "provider_count": 178,
+        "operations": [
+          {
+            "operation_key": "GET /api/v2/public/get_time",
+            "axes": {
+              "relation": "shared",
+              "runtime_scope": "unified",
+              "evidence": "unverified",
+              "reachability": "unknown",
+              "contract_scope": "current_rest"
+            },
+            "provider": [
+              {
+                "transport": "rest",
+                "method": "GET",
+                "path": "/api/v2/public/get_time",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "qualifiers": []
+              }
+            ],
+            "authored": [
+              {
+                "authentication": {
+                  "status": "known",
+                  "value": {
+                    "required": false
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "operation_key": "GET /api/v2/public/ticker",
+            "axes": {
+              "relation": "shared",
+              "runtime_scope": "unified",
+              "evidence": "unverified",
+              "reachability": "unknown",
+              "contract_scope": "current_rest"
+            },
+            "provider": [
+              {
+                "transport": "rest",
+                "method": "GET",
+                "path": "/api/v2/public/ticker",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "qualifiers": []
+              }
+            ],
+            "authored": [
+              {
+                "authentication": {
+                  "status": "known",
+                  "value": {
+                    "required": false
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "operation_key": "GET /api/v2/private/logout",
+            "axes": {
+              "relation": "shared",
+              "runtime_scope": "raw_only",
+              "evidence": "unverified",
+              "reachability": "unknown",
+              "contract_scope": "current_rest"
+            },
+            "provider": [
+              {
+                "transport": "rest",
+                "method": "GET",
+                "path": "/api/v2/private/logout",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "qualifiers": [
+                  "websocket_only"
+                ]
+              }
+            ],
+            "authored": []
+          },
+          {
+            "operation_key": "GET /api/v2/private/subscribe",
+            "axes": {
+              "relation": "shared",
+              "runtime_scope": "raw_only",
+              "evidence": "unverified",
+              "reachability": "unknown",
+              "contract_scope": "current_rest"
+            },
+            "provider": [
+              {
+                "transport": "rest",
+                "method": "GET",
+                "path": "/api/v2/private/subscribe",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "qualifiers": [
+                  "websocket_only"
+                ]
+              }
+            ],
+            "authored": []
+          },
+          {
+            "operation_key": "GET /api/v2/private/unsubscribe",
+            "axes": {
+              "relation": "shared",
+              "runtime_scope": "raw_only",
+              "evidence": "unverified",
+              "reachability": "unknown",
+              "contract_scope": "current_rest"
+            },
+            "provider": [
+              {
+                "transport": "rest",
+                "method": "GET",
+                "path": "/api/v2/private/unsubscribe",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "qualifiers": [
+                  "websocket_only"
+                ]
+              }
+            ],
+            "authored": []
+          },
+          {
+            "operation_key": "GET /api/v2/private/unsubscribe_all",
+            "axes": {
+              "relation": "shared",
+              "runtime_scope": "raw_only",
+              "evidence": "unverified",
+              "reachability": "unknown",
+              "contract_scope": "current_rest"
+            },
+            "provider": [
+              {
+                "transport": "rest",
+                "method": "GET",
+                "path": "/api/v2/private/unsubscribe_all",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "qualifiers": [
+                  "websocket_only"
+                ]
+              }
+            ],
+            "authored": []
+          },
+          {
+            "operation_key": "GET /api/v2/public/disable_heartbeat",
+            "axes": {
+              "relation": "shared",
+              "runtime_scope": "raw_only",
+              "evidence": "unverified",
+              "reachability": "unknown",
+              "contract_scope": "current_rest"
+            },
+            "provider": [
+              {
+                "transport": "rest",
+                "method": "GET",
+                "path": "/api/v2/public/disable_heartbeat",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "qualifiers": [
+                  "websocket_only"
+                ]
+              }
+            ],
+            "authored": []
+          },
+          {
+            "operation_key": "GET /api/v2/public/hello",
+            "axes": {
+              "relation": "shared",
+              "runtime_scope": "raw_only",
+              "evidence": "unverified",
+              "reachability": "unknown",
+              "contract_scope": "current_rest"
+            },
+            "provider": [
+              {
+                "transport": "rest",
+                "method": "GET",
+                "path": "/api/v2/public/hello",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "qualifiers": [
+                  "websocket_only"
+                ]
+              }
+            ],
+            "authored": []
+          },
+          {
+            "operation_key": "GET /api/v2/public/set_heartbeat",
+            "axes": {
+              "relation": "shared",
+              "runtime_scope": "raw_only",
+              "evidence": "unverified",
+              "reachability": "unknown",
+              "contract_scope": "current_rest"
+            },
+            "provider": [
+              {
+                "transport": "rest",
+                "method": "GET",
+                "path": "/api/v2/public/set_heartbeat",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "qualifiers": [
+                  "websocket_only"
+                ]
+              }
+            ],
+            "authored": []
+          },
+          {
+            "operation_key": "GET /api/v2/public/subscribe",
+            "axes": {
+              "relation": "shared",
+              "runtime_scope": "raw_only",
+              "evidence": "unverified",
+              "reachability": "unknown",
+              "contract_scope": "current_rest"
+            },
+            "provider": [
+              {
+                "transport": "rest",
+                "method": "GET",
+                "path": "/api/v2/public/subscribe",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "qualifiers": [
+                  "websocket_only"
+                ]
+              }
+            ],
+            "authored": []
+          },
+          {
+            "operation_key": "GET /api/v2/public/unsubscribe",
+            "axes": {
+              "relation": "shared",
+              "runtime_scope": "raw_only",
+              "evidence": "unverified",
+              "reachability": "unknown",
+              "contract_scope": "current_rest"
+            },
+            "provider": [
+              {
+                "transport": "rest",
+                "method": "GET",
+                "path": "/api/v2/public/unsubscribe",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "qualifiers": [
+                  "websocket_only"
+                ]
+              }
+            ],
+            "authored": []
+          },
+          {
+            "operation_key": "GET /api/v2/public/unsubscribe_all",
+            "axes": {
+              "relation": "shared",
+              "runtime_scope": "raw_only",
+              "evidence": "unverified",
+              "reachability": "unknown",
+              "contract_scope": "current_rest"
+            },
+            "provider": [
+              {
+                "transport": "rest",
+                "method": "GET",
+                "path": "/api/v2/public/unsubscribe_all",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "qualifiers": [
+                  "websocket_only"
+                ]
+              }
+            ],
+            "authored": []
+          }
+        ]
+      }
     }
   }
 }

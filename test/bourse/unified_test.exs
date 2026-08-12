@@ -10,6 +10,9 @@ defmodule Bourse.UnifiedTest do
   alias Bourse.TestExchange.Bybit
   alias Bourse.Unified
 
+  @bybit_instruments_page_limit 1000
+  @bybit_non_option_category_count 3
+
   defmodule PrivateMarketExchange do
     @moduledoc false
 
@@ -467,6 +470,88 @@ defmodule Bourse.UnifiedTest do
       assert params["category"] == "linear"
       assert params["interval"] == "60"
       refute Map.has_key?(params, "timeframe")
+    end
+
+    test "raw calls collapse authored broadcast and first-success plans to one endpoint" do
+      credentials = Bourse.Credentials.new!(api_key: "test-key", secret: "test-secret")
+      exchange = Exchange.new!("binance", credentials: credentials)
+
+      for {method, params, expected_path} <- [
+            {:cancel_all_orders, %{"symbol" => "BTC/USDT:USDT"}, "/fapi/v1/allOpenOrders"},
+            {:cancel_order, %{"id" => "1", "symbol" => "BTC/USDT:USDT"}, "/fapi/v1/order"}
+          ] do
+        {stub, requests} = raw_request_stub(%{"code" => 200})
+
+        assert {:ok, _response} =
+                 Unified.raw_call(exchange, method, params, plug: {Req.Test, stub})
+
+        assert RequestCollector.one!(requests).request_path == expected_path
+      end
+    end
+
+    test "an explicit market id bypasses dynamic market lookup" do
+      {stub, requests} = raw_request_stub(%{"code" => 200, "order_book_details" => []})
+      exchange = Exchange.new!("lighter", sandbox: true)
+
+      assert {:ok, _response} =
+               Unified.raw_call(exchange, :fetch_ticker, %{"market_id" => 0}, plug: {Req.Test, stub})
+
+      assert RequestCollector.query(requests)["market_id"] == "0"
+    end
+
+    test "COIN-M market discovery stays on the inverse provider surface" do
+      {stub, requests} = raw_request_stub(%{"symbols" => []})
+
+      assert {:ok, _response} =
+               Unified.raw_call(Exchange.new!("binancecoinm"), :fetch_markets, %{}, plug: {Req.Test, stub})
+
+      assert RequestCollector.one!(requests).request_path == "/dapi/v1/exchangeInfo"
+    end
+  end
+
+  describe "request_param_shapes/4" do
+    test "rebuilds every authored first-success request candidate" do
+      credentials = Bourse.Credentials.new!(api_key: "test-key", secret: "test-secret")
+      exchange = Exchange.new!("binance", credentials: credentials)
+
+      assert {:ok,
+              [
+                %{"orderId" => "order-1", "symbol" => "BTCUSDT"},
+                %{"algoId" => "order-1", "symbol" => "BTCUSDT"}
+              ]} =
+               Unified.request_param_shapes(exchange, :cancel_order, %{
+                 "id" => "order-1",
+                 "symbol" => "BTC/USDT:USDT"
+               })
+    end
+
+    test "rebuilds every parameter fan-out variant" do
+      assert {:ok, shapes} = Unified.request_param_shapes(Exchange.new!("bybit"), :fetch_markets, %{})
+
+      assert Enum.map(shapes, & &1["category"]) ==
+               ~w(spot linear inverse option option option option option option)
+
+      option_shapes = Enum.drop(shapes, @bybit_non_option_category_count)
+      assert Enum.map(option_shapes, & &1["baseCoin"]) == ~w(BTC ETH SOL XRP MNT DOGE)
+      assert Enum.all?(option_shapes, &(&1["limit"] == @bybit_instruments_page_limit))
+    end
+
+    test "stops parameter fan-out when a variant cannot satisfy its request shape" do
+      exchange = Exchange.new!("bybit")
+
+      request_param_shape =
+        put_in(
+          exchange.request_param_shape,
+          ["fetchMarkets", "market_id"],
+          %{"kind" => "unresolved", "reason" => "dynamic_construction"}
+        )
+
+      exchange = %{exchange | request_param_shape: request_param_shape}
+
+      assert {:error, %Error{type: :bad_symbol, message: message}} =
+               Unified.request_param_shapes(exchange, :fetch_markets, %{})
+
+      assert message == "bybit requires a known market symbol to resolve market_id"
     end
   end
 
@@ -959,6 +1044,13 @@ defmodule Bourse.UnifiedTest do
 
       assert error.message =~ "bybit_test"
       assert error.message =~ "fetchNonexistent"
+    end
+
+    test "emulated reads preserve errors from their underlying unified method" do
+      exchange = Exchange.new!("binancecoinm")
+
+      assert {:error, %Error{type: :authentication_error, message: "Credentials required for fetch_orders"}} =
+               Bourse.fetch_closed_orders(exchange, symbol: "BTC/USD:BTC")
     end
   end
 

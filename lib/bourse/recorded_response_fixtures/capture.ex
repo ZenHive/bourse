@@ -47,6 +47,23 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
     "valid_order" => false,
     "withdrawal" => false
   }
+  @param_injections %{
+    {"lighter", :fetch_closed_orders} => %{
+      "exempt_params" => ~w(account_index auth_deadline market_id),
+      "params" => ~w(account_index auth_deadline market_id),
+      "reason" => "capture selects one live account market and supplies its authenticated history scope"
+    },
+    {"lighter", :fetch_deposits} => %{
+      "exempt_params" => ~w(l1_address),
+      "params" => ~w(l1_address),
+      "reason" => "capture resolves the provisioned account's L1 address through public_get_account"
+    },
+    {"lighter", :fetch_open_orders} => %{
+      "exempt_params" => ~w(account_index auth_deadline market_id),
+      "params" => ~w(account_index auth_deadline market_id),
+      "reason" => "capture selects one live account market and supplies its authenticated history scope"
+    }
+  }
 
   @sensitive_keys MapSet.new(~w(
     address accountnumber apikey apisecret key password passphrase secret sig signature signer uid
@@ -484,6 +501,10 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
     end
   end
 
+  @doc "Returns the exact reasoned registry of capture-only request-param injections."
+  @spec param_injections() :: %{{String.t(), atom()} => %{String.t() => term()}}
+  def param_injections, do: @param_injections
+
   @doc "Captures and scrubs one configured response fixture."
   @spec capture_fixture(String.t(), atom(), [capture_option()]) :: {:ok, map()} | {:error, term()}
   def capture_fixture(exchange_id, method, call_opts \\ []) when is_list(call_opts) do
@@ -880,6 +901,8 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
   end
 
   defp capture_profile(exchange, exchange_id, method, profile, credentials) do
+    caller_params = build_params(method, profile)
+
     with {:ok, exchange} <- maybe_load_markets(exchange, profile),
          {:ok, params} <- live_read_params(exchange, method, profile),
          {:ok, response_or_responses} <-
@@ -887,6 +910,7 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       fixture =
         %{profile | params: params}
         |> metadata(exchange_id, method)
+        |> Map.put("caller_params", caller_params)
         |> put_captured_responses(List.wrap(response_or_responses))
         |> scrub(credentials)
 

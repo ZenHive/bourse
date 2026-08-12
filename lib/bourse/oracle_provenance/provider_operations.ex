@@ -17,7 +17,7 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
   @authority_root "priv/authority"
 
   @typedoc "A validated provider-operation corpus."
-  @type corpus :: %{manifest: map(), plan: map(), recordings: %{String.t() => map()}}
+  @type corpus :: %{inventory: map(), manifest: map(), plan: map(), recordings: %{String.t() => map()}}
 
   @doc "Validates the committed provider-operation corpus and returns its decoded documents."
   @spec validate!(keyword()) :: corpus()
@@ -27,9 +27,11 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
     manifest = JsonDocument.decode_file!(manifest_path)
     plan_path = Keyword.get(opts, :plan_path, manifest["plan"] || @default_plan)
     plan = JsonDocument.decode_file!(plan_path)
+    inventory = manifest["inventory"]
 
-    validate_plan_source!(plan, Keyword.get(opts, :authority_root, @authority_root))
-    validate_manifest!(manifest, plan, root, manifest_path)
+    ensure!(is_map(inventory), "#{manifest_path}: missing capture inventory snapshot")
+    validate_plan!(plan, inventory, authority_root: Keyword.get(opts, :authority_root, @authority_root))
+    validate_manifest!(manifest, plan, inventory, root, manifest_path)
   end
 
   @doc "Returns registered comparison facts derived only from validated live captures."
@@ -52,6 +54,7 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
     Enum.map(plan["operations"], fn operation ->
       axes = operation["inventory_axes"]
       review = operation["execution_review"]
+      semantics = operation["proofs"] |> Enum.map(& &1["evidence_semantics"]) |> Enum.uniq()
 
       %{
         "venue" => plan["venue"],
@@ -61,17 +64,47 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
         "runtime_scope" => axes["runtime_scope"],
         "relation" => axes["relation"],
         "reachability" => review["reachability"],
-        "evidence" => "verified",
+        "evidence" => evidence_for(semantics),
         "capture_ids" => Enum.map(operation["proofs"], & &1["capture_id"]),
-        "evidence_semantics" => operation["proofs"] |> Enum.map(& &1["evidence_semantics"]) |> Enum.uniq()
+        "evidence_semantics" => semantics
       }
     end)
+  end
+
+  @doc "Builds the source-bound inventory snapshot persisted beside captured observations."
+  @spec inventory_snapshot(map(), map()) :: map()
+  def inventory_snapshot(plan, inventory) when is_map(plan) and is_map(inventory) do
+    source = plan["source_revision"]
+    provenance = source_provenance!(inventory, source)
+    surface = inventory["surfaces"]["current_rest"]
+
+    selected_keys =
+      plan["operations"]
+      |> Enum.map(& &1["operation_key"])
+      |> Kernel.++(plan["source_inventory_facts"]["websocket_only_operation_keys"])
+      |> MapSet.new()
+
+    operations = Enum.filter(surface["operations"], &MapSet.member?(selected_keys, &1["operation_key"]))
+
+    %{
+      "schema_version" => inventory["schema_version"],
+      "report_type" => inventory["report_type"],
+      "venue" => inventory["venue"],
+      "provenance" => %{"artifacts" => [provenance]},
+      "surfaces" => %{
+        "current_rest" => %{
+          "provider_count" => surface["provider_count"],
+          "operations" => operations
+        }
+      }
+    }
   end
 
   @doc "Validates a reviewed plan against one exact-revision Task 555 comparison report."
   @spec validate_plan!(map(), map(), keyword()) :: :ok
   def validate_plan!(plan, inventory, opts \\ []) when is_map(plan) and is_map(inventory) do
     ensure!(plan["schema_version"] == 1, "provider-operation plan has unsupported schema_version")
+    ensure!(inventory["schema_version"] == 1, "capture inventory has unsupported schema_version")
     ensure!(inventory["report_type"] == "provider_contract_comparison", "capture inventory has wrong report_type")
     ensure!(plan["venue"] == inventory["venue"], "capture plan venue differs from inventory")
     ensure_path_component!(plan["venue"], "capture plan venue")
@@ -188,14 +221,14 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
       ensure!(proof["request"]["method"] == provider["method"], "capture proof HTTP method differs")
       ensure!(URI.parse(proof["request"]["url"]).path == provider["path"], "capture proof path differs")
 
-      case Capture.authorize(operation, proof) do
+      case Capture.authorize(operation, proof, inventory_operation) do
         :ok -> :ok
         {:error, {:refused, reason}} -> raise ArgumentError, "capture proof #{proof["capture_id"]} refused: #{reason}"
       end
     end)
   end
 
-  defp validate_manifest!(manifest, plan, root, manifest_path) do
+  defp validate_manifest!(manifest, plan, inventory, root, manifest_path) do
     ensure!(manifest["schema_version"] == 1, "#{manifest_path}: unsupported schema_version")
     ensure!(manifest["corpus"] == "provider_operation_reality", "#{manifest_path}: wrong corpus")
     ensure!(manifest["source_revision"] == plan["source_revision"], "#{manifest_path}: source revision differs")
@@ -217,7 +250,7 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
       end)
 
     validate_manifest_operations!(manifest["operations"], plan)
-    %{manifest: manifest, plan: plan, recordings: recordings}
+    %{inventory: inventory, manifest: manifest, plan: plan, recordings: recordings}
   end
 
   defp validate_recording!(row, %{operation: operation, proof: proof}, plan, root) do
@@ -277,6 +310,10 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
     expected = manifest_operations(plan)
 
     ensure!(registered == expected, "provider-operation manifest facts differ from reviewed plan")
+  end
+
+  defp evidence_for(semantics) do
+    if "row_fields" in semantics, do: "verified", else: "unverified"
   end
 
   defp plan_proofs(plan) do
