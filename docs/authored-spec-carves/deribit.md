@@ -506,3 +506,23 @@ CCXT's two-entry passthrough.**
 <!-- carve-evidence-status
 {"carve_id":"C25","date":"2026-07-22","semantic_source":null,"observed_evidence":{"kind":"live_venue","reference":"Partial live or recorded venue evidence cited in C25 and its register context"},"compatibility_reference":{"kind":"ccxt","reference":"CCXT source or fixture cited in C25 and its register context"},"resolved_tier":2,"known_gap_reason":"Venue behavior is recorded, but no provider-owned semantic source independent of CCXT establishes this carve"}
 -->
+
+## 2026-08-12 — rate-unit confrontation (Task 594)
+
+**C-T594g — Deribit's authored rate-like slots name their venue units (task 594).
+Outcome: CONFIRM provider units.**
+
+| Authored slot | Unit | Venue-owned confrontation |
+|---|---|---|
+| `normalization.field_maps.funding_rate.field_map.fundingRate`, `normalization.field_maps.funding_rate.field_map.interestRate`, `normalization.field_maps.funding_rate.field_map.nextFundingRate`, `normalization.field_maps.funding_rate.field_map.previousFundingRate`, `normalization.field_maps.funding_rate_history.field_map.fundingRate` | fraction for current/history funding; absent for null interest, next-rate, and previous-rate slots | Deribit defines the payment as funding rate × position size × time fraction and works `0.05%` as `0.0005`; `result`/`interest_8h` and history `interest_1h` therefore remain decimal fractions. [Funding specifications](https://support.deribit.com/hc/en-us/articles/31424939178397-Funding-Specifications) [Funding history](https://docs.deribit.com/api-reference/market-data/public-get_funding_rate_history) |
+| `normalization.field_maps.market.field_map.maker`, `normalization.field_maps.market.field_map.taker`, `normalization.field_maps.trading_fee.field_map.maker`, `normalization.field_maps.trading_fee.field_map.taker` | fraction | Deribit applies fee percentages multiplicatively in worked examples (`0.035% = 0.00035`); instrument commission fields and account fee rates retain that fraction. [Fees](https://support.deribit.com/hc/en-us/articles/25944746248989-Fees) [Instruments](https://docs.deribit.com/api-reference/market-data/public-get_instruments) |
+| `normalization.field_maps.market.field_map.percentage` | absent boolean; no numeric unit | The market fee-mode flag is null; maker/taker rates are separate. [Instruments](https://docs.deribit.com/api-reference/market-data/public-get_instruments) |
+| `normalization.field_maps.option.field_map.percentage` | percent points | Deribit documents `price_change` as the 24-hour price-change percentage and returns examples already in percent points; the authored mapping passes it through. [Ticker](https://docs.deribit.com/api-reference/market-data/public-ticker) |
+| `normalization.field_maps.position.field_map.initialMarginPercentage`, `normalization.field_maps.position.field_map.maintenanceMarginPercentage` | percent points | The authored arithmetic divides provider margin by `size_currency` and multiplies by 100, so `10` represents 10%. The position contract supplies those same-unit amounts. [Positions](https://docs.deribit.com/api-reference/account-management/private-get_positions) |
+| `normalization.field_maps.position.field_map.percentage` | percent points | The authored `pnl_percentage` operation computes floating PnL divided by initial margin and emits ×100 percent points. [Positions](https://docs.deribit.com/api-reference/account-management/private-get_positions) |
+| `normalization.field_maps.ticker.field_map.percentage` | absent; no emitted percentage or unit | The general ticker slot is null; option percentage is mapped on the option-specific surface. [Ticker](https://docs.deribit.com/api-reference/market-data/public-ticker) |
+| `normalization.field_maps.trading_fee.field_map.percentage` | boolean, not a numeric rate | The authored `true` declares that maker/taker charges are percentage-based; the numeric rates remain fractions. [Fees](https://support.deribit.com/hc/en-us/articles/25944746248989-Fees) |
+
+<!-- carve-evidence-status
+{"carve_id":"C-T594g","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Deribit funding, fee, instrument, ticker, and position contracts linked in C-T594g"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/deribit/fetch_funding_rate.json and fetch_funding_rate_history.json"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Registered funding responses establish the funding values, but the complete position and fee-rate set is documentation/arithmetic anchored rather than covered by populated registered rows"}
+-->

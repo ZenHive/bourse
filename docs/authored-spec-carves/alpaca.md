@@ -320,3 +320,17 @@ venue; documentation-anchored.**
 <!-- carve-evidence-status
 {"carve_id":"C-T571b","date":"2026-08-10","semantic_source":{"kind":"provider_owned","reference":"priv/authority/alpaca/manifest.json asset/data API references — bare-ticker equity symbols, slashed crypto pairs"},"observed_evidence":{"kind":"recorded_venue","reference":"C-T428a live GLD probes 2026-08-03 (bare ticker accepted on stocks endpoints); no compact native form exists to backfill"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+## 2026-08-12 — rate-unit confrontation (Task 594)
+
+**C-T594a — Alpaca's authored rate-like slots name their venue units (task 594).
+Outcome: CONFIRM provider units; documentation-anchored.**
+
+| Authored slot | Unit | Venue-owned confrontation |
+|---|---|---|
+| `normalization.field_maps.position.field_map.percentage` | percent points | Alpaca defines `unrealized_plpc` as percent by a factor of one and illustrates `(600 - 500) / 500 = 0.20`; the authored `scale: 100` therefore emits `20` percent points. [Positions contract](https://github.com/alpacahq/alpaca-docs/blob/master/content/api-references/broker-api/trading/positions.md) |
+| `fees.trading.maker`, `fees.trading.taker` | fraction | The authored zero rates are fraction-valued fee rates; zero is scale-invariant. Alpaca describes commission-free API trading, but no charged fill in the registered evidence establishes a non-zero rate. [Trading fees](https://alpaca.markets/support/what-are-the-fees-or-commissions-for-trading-with-alpaca) |
+
+<!-- carve-evidence-status
+{"carve_id":"C-T594a","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Alpaca positions contract and trading-fee statement linked in C-T594a"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The zero static fee rates are scale-invariant and no registered charged fill establishes a non-zero rate"}
+-->

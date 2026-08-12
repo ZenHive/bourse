@@ -82,3 +82,16 @@ Exchange client surface.
 <!-- carve-evidence-status
 {"carve_id":"C-T593e","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Coinbase Exchange Get product ticker reference (no high/low/open on the ticker route)"},"observed_evidence":{"kind":"live_venue","reference":"Registered ETH-USD ticker recording carries no high/low/open fields"},"compatibility_reference":{"kind":"ccxt","reference":"Frozen reference enriches ticker via /products/{id}/stats; deliberately not adopted"},"resolved_tier":1}
 -->
+
+## 2026-08-12 — rate-unit confrontation (Task 594)
+
+**C-T594f — Coinbase Exchange has no emitted authored rate-like number (task 594).
+Outcome: CONFIRM absence.**
+
+| Authored slot | Unit | Venue-owned confrontation |
+|---|---|---|
+| `normalization.field_maps.ticker.field_map.percentage` | absent; no emitted rate and no unit | The provider's product-ticker response has price, bid, ask, size, time, trade id, and volume, but no percentage-change field. The authored null is therefore an explicit absence rather than an assumed scale. [Get product ticker](https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-ticker) |
+
+<!-- carve-evidence-status
+{"carve_id":"C-T594f","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Coinbase Exchange Get product ticker response contract"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/coinbaseexchange/fetch_ticker.json"},"compatibility_reference":null,"resolved_tier":1}
+-->

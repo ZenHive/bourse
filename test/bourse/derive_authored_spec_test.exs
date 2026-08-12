@@ -6,8 +6,10 @@ defmodule Bourse.DeriveAuthoredSpecTest do
   alias Bourse.Credentials
   alias Bourse.Error
   alias Bourse.Exchange
+  alias Bourse.FundingHistory
   alias Bourse.Test.RequestCollector
   alias Bourse.TransferEntry
+  alias Bourse.Unified.ReadParse
 
   @derive_testnet_url "https://api-demo.lyra.finance"
   @derive_testnet_subaccount_id 144_422
@@ -71,6 +73,39 @@ defmodule Bourse.DeriveAuthoredSpecTest do
         assert carve_register =~ "`#{js_name}`"
       end
     end)
+  end
+
+  test "funding history keeps the provider funding cashflow as amount rather than rate" do
+    body = %{
+      "result" => %{
+        "events" => [
+          %{
+            "funding" => "-1.25",
+            "timestamp" => @observed_timestamp_ms
+          }
+        ]
+      }
+    }
+
+    assert {:ok,
+            [
+              %FundingHistory{
+                amount: -1.25,
+                code: "USDC",
+                rate: nil,
+                symbol: "BTC/USDC:USDC"
+              }
+            ]} =
+             ReadParse.parse(
+               Exchange.new!("derive"),
+               Bourse.Derive,
+               :fetch_funding_history,
+               "fetchFundingHistory",
+               body,
+               %{"symbol" => "BTC/USDC:USDC"},
+               :parse_funding_history,
+               true
+             )
   end
 
   test "fetch_transfers shapes and parses Derive's documented ERC-20 transfer rows" do

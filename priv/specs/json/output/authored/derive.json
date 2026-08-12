@@ -3465,7 +3465,11 @@
         "_unresolved_reason": null,
         "extras": [],
         "field_map": {
-          "amount": null,
+          "amount": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "funding"
+          },
           "code": {
             "coercion": "safeString",
             "default": "USDC"
@@ -3477,11 +3481,7 @@
           },
           "id": null,
           "info": null,
-          "rate": {
-            "coercion": "safeString",
-            "format": null,
-            "key": "funding"
-          },
+          "rate": null,
           "symbol": null,
           "timestamp": {
             "coercion": "safeInteger",
