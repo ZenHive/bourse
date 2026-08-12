@@ -9,11 +9,11 @@ defmodule Bourse.LedgerEntry do
     * `id` - Ledger entry ID
     * `timestamp` - Entry time in milliseconds
     * `datetime` - ISO 8601 datetime string
-    * `direction` - "in" or "out"
+    * `direction` - "in" or "out"; nil when the venue assigns no flow direction (zero amount)
     * `account` - Account identifier
     * `reference_id` - Related transaction/order ID
     * `reference_account` - Related account
-    * `type` - Entry type (e.g., "trade", "fee", "deposit", "withdrawal", "transfer")
+    * `type` - Entry type: a unified value ("trade", "fee", "deposit", "withdrawal", "transfer") where the venue's vocabulary is mapped; venues authored as enum-passthrough (bybit, hyperliquid, okx) emit their own literals unchanged
     * `currency` - Currency code
     * `amount` - Entry amount
     * `before` - Balance before this entry
@@ -84,11 +84,12 @@ defmodule Bourse.LedgerEntry do
                    id: "Ledger entry ID",
                    timestamp: "Entry time in milliseconds",
                    datetime: "ISO 8601 datetime string",
-                   direction: "in or out",
+                   direction: "in or out; nil when the venue assigns no flow direction (zero amount)",
                    account: "Account identifier",
                    reference_id: "Related transaction/order ID",
                    reference_account: "Related account",
-                   type: "Entry type (e.g., trade, fee, deposit, withdrawal, transfer)",
+                   type:
+                     "Entry type: unified value (trade, fee, deposit, withdrawal, transfer) where mapped; enum-passthrough venues emit their own literals",
                    currency: "Currency code",
                    amount: "Entry amount",
                    before: "Balance before this entry",
