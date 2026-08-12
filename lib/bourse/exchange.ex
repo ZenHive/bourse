@@ -462,7 +462,7 @@ defmodule Bourse.Exchange do
 
     ## Signing
 
-    Pattern: `#{signing_pattern}` — #{signing_pattern_description(signing_pattern)}
+    Pattern: #{format_signing_pattern(signing_pattern)} — #{signing_pattern_description(signing_pattern)}
 
     ## Capabilities
 
@@ -534,6 +534,9 @@ defmodule Bourse.Exchange do
   defp signing_pattern_description(:lighter), do: "first-party zk-Schnorr signer"
   defp signing_pattern_description(nil), do: "public-only; no signing path"
   defp signing_pattern_description(_), do: "see `Bourse.Signing`"
+
+  defp format_signing_pattern(nil), do: "none"
+  defp format_signing_pattern(pattern), do: "`#{pattern}`"
 
   defp format_doc_capabilities(meta) do
     samples = meta.sample_capabilities
