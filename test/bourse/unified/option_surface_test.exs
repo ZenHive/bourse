@@ -382,7 +382,7 @@ defmodule Bourse.Unified.OptionSurfaceTest do
         %{
           "best_bid_price" => 0.1,
           "best_ask_price" => 0.2,
-          "mark_iv" => 0.6,
+          "mark_iv" => 60.0,
           "open_interest" => 12.5,
           "underlying_price" => 100_000.0,
           "greeks" => %{"delta" => 0.5, "gamma" => 0.01, "vega" => 0.2, "theta" => -0.3, "rho" => 0.1}

@@ -1071,6 +1071,8 @@ defmodule Bourse.OkxAuthoredSpecTest do
           },
           %{
             "instId" => "BTC-USD_UM-261225-90000-P",
+            "askVol" => "0.8",
+            "bidVol" => "0.7",
             "delta" => "-1.2051359955599346",
             "deltaBS" => "-0.7904674450641715",
             "gamma" => "3.2733454416584755",
@@ -1079,6 +1081,7 @@ defmodule Bourse.OkxAuthoredSpecTest do
             "vegaBS" => "121.28278734752634",
             "theta" => "-0.00028299440874938396",
             "thetaBS" => "-9.906365773126579",
+            "markVol" => "0.75",
             "ts" => "1784208522102"
           }
         ]
@@ -1099,6 +1102,9 @@ defmodule Bourse.OkxAuthoredSpecTest do
       assert greeks.gamma == 0.00001349022316429954
       assert greeks.vega == 121.28278734752634
       assert greeks.theta == -9.906365773126579
+      assert greeks.bid_implied_volatility == 0.7
+      assert greeks.mark_implied_volatility == 0.75
+      assert greeks.ask_implied_volatility == 0.8
       assert greeks.delta >= -1 and greeks.delta <= 0
     end
 

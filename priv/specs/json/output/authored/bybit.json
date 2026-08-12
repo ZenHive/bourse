@@ -16659,37 +16659,7 @@
           }
         }
       },
-      "income": {
-        "_unresolved_reason": null,
-        "extras": [
-          {
-            "coercion": "safeNumber",
-            "key": "feeRate",
-            "unified_key": "rate"
-          }
-        ],
-        "field_map": {
-          "amount": {
-            "coercion": "safeNumber",
-            "format": null,
-            "key": "execFee"
-          },
-          "code": null,
-          "datetime": null,
-          "id": {
-            "coercion": "safeString",
-            "format": null,
-            "key": "execId"
-          },
-          "info": null,
-          "symbol": null,
-          "timestamp": {
-            "coercion": "safeInteger",
-            "format": "ms",
-            "key": "execTime"
-          }
-        }
-      },
+      "income": null,
       "ledger_entry": {
         "_unresolved_reason": null,
         "extras": [],

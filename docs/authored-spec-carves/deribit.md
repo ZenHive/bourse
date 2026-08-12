@@ -526,3 +526,22 @@ Outcome: CONFIRM provider units.**
 <!-- carve-evidence-status
 {"carve_id":"C-T594g","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Deribit funding, fee, instrument, ticker, and position contracts linked in C-T594g"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/deribit/fetch_funding_rate.json and fetch_funding_rate_history.json"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Registered funding responses establish the funding values, but the complete position and fee-rate set is documentation/arithmetic anchored rather than covered by populated registered rows"}
 -->
+
+**C-T600f — Deribit percent-point IV and margin sources normalize to unified fractions
+(task 600). Outcome: DIVERGE from the prior pass-through and ×100 margin rules.**
+
+| Authored slot | Unit | Venue-owned confrontation |
+|---|---|---|
+| `normalization.field_maps.funding_rate.field_map.fundingRate`, `normalization.field_maps.funding_rate_history.field_map.fundingRate` | fraction | Deribit funding arithmetic applies decimal fractions. [Funding specifications](https://support.deribit.com/hc/en-us/articles/31424939178397-Funding-Specifications) |
+| `normalization.field_maps.funding_rate.field_map.interestRate`, `normalization.field_maps.funding_rate.field_map.nextFundingRate`, `normalization.field_maps.funding_rate.field_map.previousFundingRate` | absent | These authored slots are null. [Funding history](https://docs.deribit.com/api-reference/market-data/public-get_funding_rate_history) |
+| `normalization.field_maps.greeks.field_map.askImpliedVolatility`, `normalization.field_maps.greeks.field_map.bidImpliedVolatility`, `normalization.field_maps.greeks.field_map.markImpliedVolatility` | fraction | Deribit prices `advanced=implv` in percentages (`100` means 100%); ticker `ask_iv`, `bid_iv`, and `mark_iv` use that percent-point convention. Authored `scale: 0.01` emits fractions. [Order price semantics](https://docs.deribit.com/api-reference/trading/private-buy) [Ticker](https://docs.deribit.com/api-reference/market-data/public-ticker) |
+| `normalization.field_maps.option.field_map.impliedVolatility` | absent | The option-instrument row has no authored IV; Greeks carry ticker IV. [Ticker](https://docs.deribit.com/api-reference/market-data/public-ticker) |
+| `normalization.field_maps.position.field_map.initialMarginPercentage`, `normalization.field_maps.position.field_map.maintenanceMarginPercentage` | fraction | Margin divided by same-currency `size_currency` is already a fraction; removing ×100 makes `0.1` represent 10%. [Positions](https://docs.deribit.com/api-reference/account-management/private-get_positions) |
+
+- *Live evidence (2026-08-12T08:57:33Z):* testnet `public/ticker` returned
+  `BTC-13AUG26-58000-C` with `mark_iv 59.44`, `bid_iv 0.0`, and `ask_iv 343.95`.
+  The unified values are `0.5944`, `0.0`, and `3.4395`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T600f","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Deribit order implied-volatility, ticker, positions, and funding contracts linked in C-T600f"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-12T08:57:33Z test.deribit.com public/ticker BTC-13AUG26-58000-C mark_iv 59.44 bid_iv 0.0 ask_iv 343.95; parser goldens in deribit_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The live IV row is pinned in parser expectations but is not a manifest-registered response fixture"}
+-->

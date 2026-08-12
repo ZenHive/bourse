@@ -98,7 +98,7 @@ defmodule Bourse.InstrumentGreeks do
                    conventions: "Per-Greek native field and unit conventions",
                    bid_price: "Best bid when supplied with the Greeks payload",
                    ask_price: "Best ask when supplied with the Greeks payload",
-                   mark_implied_volatility: "Mark IV when supplied",
+                   mark_implied_volatility: "Mark IV as a fraction when supplied (0.75 = 75%)",
                    underlying_price: "Underlying price when supplied",
                    source_timestamp: "Venue-reported timestamp in milliseconds",
                    observed_at: "Local observation time in milliseconds",

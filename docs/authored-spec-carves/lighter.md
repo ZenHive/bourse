@@ -257,3 +257,20 @@ transfer fee (task 592). Outcome: CONFIRM provider contract.**
 <!-- carve-evidence-status
 {"carve_id":"C-T592d","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"priv/authority/lighter/manifest.json artifact rest-openapi; DepositHistoryItem, WithdrawHistoryItem, TransferHistoryItem and Asset schemas"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/lighter/fetch_deposits.json plus provider-shaped withdrawal and transfer parser fixtures in test/bourse/lighter_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+**C-T600i — Lighter's rate-like slots normalize to the cross-venue units (task 600).
+Outcome: DIVERGE from pass-through margin; CONFIRM funding, fee, and ticker units.**
+
+| Authored slot | Unit | Venue-owned confrontation |
+|---|---|---|
+| `normalization.field_maps.funding_rate_history.field_map.fundingRate` | fraction | C-T546g proves the provider `Funding.rate` is percent points from `value = mark_price × rate / 100`; `scale: 0.01` emits a fraction. [Lighter OpenAPI](https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json) |
+| `normalization.field_maps.market.field_map.maker`, `normalization.field_maps.market.field_map.taker` | fraction | The market's decimal maker/taker fee rates are multiplicative charges; the recorded zero rates remain fractions. [Lighter OpenAPI](https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json) |
+| `fees.maker`, `fees.taker` | fraction | The venue-level zero defaults are decimal fee fractions; authenticated market rows remain authoritative. [Lighter OpenAPI](https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json) |
+| `normalization.field_maps.market.field_map.percentage` | absent | The fee-mode flag is null. [Lighter OpenAPI](https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json) |
+| `normalization.field_maps.position.field_map.initialMarginPercentage` | fraction | The provider's `initial_margin_fraction` response is percent points (`"5.00"`); authored `scale: 0.01` emits `0.05`. The recorded position pins that conversion. [Lighter OpenAPI](https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json) |
+| `normalization.field_maps.position.field_map.maintenanceMarginPercentage`, `normalization.field_maps.position.field_map.percentage` | absent | Neither position field is authored. [Lighter OpenAPI](https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json) |
+| `normalization.field_maps.ticker.field_map.percentage` | percent points | The provider publishes `daily_price_change` as the daily percentage change; the recorded ticker raw `1.3548036637247152` emits 1.3548 percent points. [Lighter OpenAPI](https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json) |
+
+<!-- carve-evidence-status
+{"carve_id":"C-T600i","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Pinned Lighter OpenAPI Funding, AccountPosition, OrderBookDetail and fee schemas"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/lighter/fetch_positions.json raw initial_margin_fraction 5.00; fetch_ticker.json raw daily_price_change 1.3548036637247152; C-T546g live funding arithmetic"},"compatibility_reference":null,"resolved_tier":1}
+-->

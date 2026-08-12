@@ -1051,3 +1051,18 @@ Outcome: CONFIRM documented and arithmetic-derived units; retain explicit gaps.*
 <!-- carve-evidence-status
 {"carve_id":"C-T594b","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance funding, ticker, position, margin-interest, option-position, and commission contracts linked in C-T594b"},"observed_evidence":{"kind":"recorded_venue","reference":"Registered Binance-family funding and commission responses plus authored cross-field arithmetic"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Borrow-rate responses lack a registered principal/rate/interest identity and the provider contract does not state fraction versus percent explicitly"}
 -->
+
+**C-T600b — Binance rate fields conform to the cross-venue unit contract (task 600).
+Outcome: CONFIRM the option-IV fraction and split emitted funding units from absent slots.**
+
+| Authored slot | Unit | Venue-owned confrontation |
+|---|---|---|
+| `normalization.field_maps.borrow_interest.field_map.interestRate`, `normalization.field_maps.borrow_rate.field_map.rate` | fraction contract; provider source unit remains unverified | Binance publishes decimal examples and Bourse exposes rate fields as fractions; C-T594b's missing principal arithmetic remains an evidence gap, not a second unified unit. [Interest history](https://developers.binance.com/docs/margin_trading/borrow-and-repay/Get-Interest-History) |
+| `normalization.field_maps.funding_rate.field_map.fundingRate`, `normalization.field_maps.funding_rate.field_map.interestRate`, `normalization.field_maps.funding_rate_history.field_map.fundingRate` | fraction | Binance defines funding payment from notional and a decimal rate. [Premium index](https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Mark-Price) |
+| `normalization.field_maps.funding_history.field_map.rate`, `normalization.field_maps.funding_rate.field_map.nextFundingRate`, `normalization.field_maps.funding_rate.field_map.previousFundingRate` | absent | These authored slots are null. [Premium index](https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Mark-Price) |
+| `normalization.field_maps.greeks.field_map.askImpliedVolatility`, `normalization.field_maps.greeks.field_map.bidImpliedVolatility`, `normalization.field_maps.greeks.field_map.markImpliedVolatility` | fraction | The option mark-price contract publishes `askIV`, `bidIV`, and `markIV` as decimal implied volatilities; the provider example `0.708575` is retained as 70.8575%. [Option mark price](https://developers.binance.com/docs/derivatives/option/market-data/Option-Mark-Price) |
+| `normalization.field_maps.option.field_map.impliedVolatility` | absent | The generic option row has no authored IV; Greeks carry it. [Option mark price](https://developers.binance.com/docs/derivatives/option/market-data/Option-Mark-Price) |
+
+<!-- carve-evidence-status
+{"carve_id":"C-T600b","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance option mark-price, premium-index, and margin-interest contracts linked in C-T600b"},"observed_evidence":{"kind":"recorded_venue","reference":"Provider-shaped Binance option mark row pinned by test/bourse/binance_authored_spec_test.exs plus registered funding responses"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The carried margin-interest response still lacks registered principal arithmetic"}
+-->

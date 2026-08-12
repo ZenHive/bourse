@@ -1875,7 +1875,8 @@
           "initialMarginPercentage": {
             "coercion": "safeNumber",
             "format": null,
-            "key": "initial_margin_fraction"
+            "key": "initial_margin_fraction",
+            "scale": 0.01
           },
           "isolated": null,
           "lastPrice": null,

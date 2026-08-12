@@ -12,7 +12,9 @@ defmodule Bourse.LighterAuthoredSpecTest do
 
   @owned_path "priv/specs/json/output/authored/lighter.json"
   @deposit_fixture "test/fixtures/responses/lighter/fetch_deposits.json"
+  @positions_fixture "test/fixtures/responses/lighter/fetch_positions.json"
   @external_resource @deposit_fixture
+  @external_resource @positions_fixture
   @mainnet_url "https://mainnet.zklighter.elliot.ai"
   @public_account_index 0
   @private_key "07000000000000000300000000000000000000000000000000000000000000000000000000000000"
@@ -217,6 +219,7 @@ defmodule Bourse.LighterAuthoredSpecTest do
     assert position.symbol == market().symbol
     assert position.side == "long"
     assert position.contracts == 0.25
+    assert position.initial_margin_percentage == 0.2
     assert position.liquidation_price == 75.0
 
     assert {:ok, [%Bourse.Trade{} = trade]} = Bourse.fetch_my_trades(exchange, call_opts)
@@ -307,6 +310,22 @@ defmodule Bourse.LighterAuthoredSpecTest do
     assert %{amount: 10_000.0, currency: "USDC", type: "deposit"} = deposit
   end
 
+  test "the recorded position margin fraction is normalized from percent points" do
+    fixture = Bourse.JsonDocument.decode_file!(@positions_fixture)
+
+    assert {:ok, [%Bourse.Position{initial_margin_percentage: 0.05}]} =
+             ReadParse.parse(
+               Exchange.new!("lighter"),
+               Bourse.Lighter,
+               :fetch_positions,
+               "fetchPositions",
+               fixture["body"],
+               %{},
+               :parse_position,
+               true
+             )
+  end
+
   test "provider-shaped markets and object order-book levels parse completely" do
     stub = unique_stub(:public_reads)
 
@@ -336,7 +355,7 @@ defmodule Bourse.LighterAuthoredSpecTest do
 
     exchange = "lighter" |> Exchange.new!() |> Exchange.put_markets([market])
 
-    assert {:ok, %Bourse.Ticker{last: 100.25, mark_price: 100.3, base_volume: 12.5}} =
+    assert {:ok, %Bourse.Ticker{last: 100.25, mark_price: 100.3, base_volume: 12.5, percentage: 1.3548}} =
              Bourse.fetch_ticker(exchange, market.symbol, plug: {Req.Test, stub})
 
     assert {:ok, %Bourse.OrderBook{} = book} =
@@ -549,6 +568,7 @@ defmodule Bourse.LighterAuthoredSpecTest do
       "quote_multiplier" => 1,
       "last_trade_price" => "100.25",
       "mark_price" => "100.30",
+      "daily_price_change" => 1.3548,
       "daily_base_token_volume" => "12.5"
     }
   end

@@ -519,3 +519,18 @@ Outcome: CONFIRM documented and arithmetic-derived units; retain explicit gaps.*
 <!-- carve-evidence-status
 {"carve_id":"C-T594d","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M funding, ticker, position, ADL, and commission contracts linked in C-T594d"},"observed_evidence":{"kind":"recorded_venue","reference":"Registered USD-M funding and commission responses plus authored cross-field arithmetic"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The carried borrow-rate rules have no USD-M provider operation, and the carried spot/inverse static schedules are not USD-M runtime evidence"}
 -->
+
+**C-T600d — Binance USD-M rate fields conform to the cross-venue unit contract (task 600).
+Outcome: CONFIRM funding and option-IV fractions.**
+
+| Authored slot | Unit | Venue-owned confrontation |
+|---|---|---|
+| `normalization.field_maps.borrow_interest.field_map.interestRate`, `normalization.field_maps.borrow_rate.field_map.rate` | fraction contract; provider source unit remains unverified | These carried spot-margin rules have no USD-M operation; any parsed value must still use the unified fraction contract. [USD-M API](https://developers.binance.com/docs/derivatives/usds-margined-futures/general-info) |
+| `normalization.field_maps.funding_rate.field_map.fundingRate`, `normalization.field_maps.funding_rate.field_map.interestRate`, `normalization.field_maps.funding_rate_history.field_map.fundingRate` | fraction | USD-M publishes decimal funding rates applied to position notional. [Premium index](https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Mark-Price) |
+| `normalization.field_maps.funding_history.field_map.rate`, `normalization.field_maps.funding_rate.field_map.nextFundingRate`, `normalization.field_maps.funding_rate.field_map.previousFundingRate` | absent | These authored slots are null. [Premium index](https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Mark-Price) |
+| `normalization.field_maps.greeks.field_map.askImpliedVolatility`, `normalization.field_maps.greeks.field_map.bidImpliedVolatility`, `normalization.field_maps.greeks.field_map.markImpliedVolatility` | fraction | The Binance option mark-price response publishes decimal IV values; no scale is needed. [Option mark price](https://developers.binance.com/docs/derivatives/option/market-data/Option-Mark-Price) |
+| `normalization.field_maps.option.field_map.impliedVolatility` | absent | The generic option row has no authored IV; Greeks carry it. [Option mark price](https://developers.binance.com/docs/derivatives/option/market-data/Option-Mark-Price) |
+
+<!-- carve-evidence-status
+{"carve_id":"C-T600d","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M premium-index and Binance option mark-price contracts linked in C-T600d"},"observed_evidence":{"kind":"recorded_venue","reference":"Registered USD-M funding response and provider-shaped option parser golden"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The carried borrow mappings have no USD-M provider operation"}
+-->

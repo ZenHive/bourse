@@ -12,7 +12,7 @@ defmodule Bourse.OptionData do
     * `timestamp` - Venue source timestamp in milliseconds
     * `datetime` - ISO 8601 datetime string for the source timestamp
     * `observed_at` - Local observation time in milliseconds (client wall clock)
-    * `implied_volatility` - Implied volatility
+    * `implied_volatility` - Implied volatility as a fraction (0.75 = 75%)
     * `open_interest` - Open interest
     * `bid_price` - Bid price
     * `ask_price` - Ask price
@@ -99,7 +99,7 @@ defmodule Bourse.OptionData do
                    timestamp: "Venue source timestamp in milliseconds",
                    datetime: "ISO 8601 datetime string for the source timestamp",
                    observed_at: "Local observation time in milliseconds",
-                   implied_volatility: "Implied volatility",
+                   implied_volatility: "Implied volatility as a fraction (0.75 = 75%)",
                    open_interest: "Open interest",
                    bid_price: "Bid price",
                    ask_price: "Ask price",

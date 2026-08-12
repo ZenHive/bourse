@@ -29,15 +29,15 @@ defmodule Bourse.Position do
     * `isolated` - Whether the position uses isolated margin
     * `hedged` - Whether position is in hedge mode
     * `maintenance_margin` - Required maintenance margin
-    * `maintenance_margin_percentage` - Maintenance margin as percentage
+    * `maintenance_margin_percentage` - Maintenance margin as a fraction (0.1 = 10%)
     * `initial_margin` - Required initial margin
-    * `initial_margin_percentage` - Initial margin as percentage
-    * `margin_ratio` - Current margin ratio
+    * `initial_margin_percentage` - Initial margin as a fraction (0.1 = 10%)
+    * `margin_ratio` - Current margin ratio as a fraction (0.1 = 10%)
     * `last_update_timestamp` - Last update timestamp
     * `last_price` - Last traded price
     * `stop_loss_price` - Stop loss price
     * `take_profit_price` - Take profit price
-    * `percentage` - Percentage PnL
+    * `percentage` - PnL in percent points (10 = 10%)
     * `margin` - Position margin
     * `info` - Raw exchange response
 
@@ -195,15 +195,15 @@ defmodule Bourse.Position do
                    isolated: "Whether the position uses isolated margin",
                    hedged: "Whether position is in hedge mode",
                    maintenance_margin: "Required maintenance margin",
-                   maintenance_margin_percentage: "Maintenance margin as percentage",
+                   maintenance_margin_percentage: "Maintenance margin as a fraction (0.1 = 10%)",
                    initial_margin: "Required initial margin",
-                   initial_margin_percentage: "Initial margin as percentage",
-                   margin_ratio: "Current margin ratio",
+                   initial_margin_percentage: "Initial margin as a fraction (0.1 = 10%)",
+                   margin_ratio: "Current margin ratio as a fraction (0.1 = 10%)",
                    last_update_timestamp: "Last update timestamp",
                    last_price: "Last traded price",
                    stop_loss_price: "Stop loss price",
                    take_profit_price: "Take profit price",
-                   percentage: "Percentage PnL",
+                   percentage: "PnL in percent points (10 = 10%)",
                    margin: "Position margin",
                    info: "Raw exchange response"
                  ]

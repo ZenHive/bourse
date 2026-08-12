@@ -4232,7 +4232,8 @@
           "askImpliedVolatility": {
             "coercion": "safeNumber",
             "format": null,
-            "key": "ask_iv"
+            "key": "ask_iv",
+            "scale": 0.01
           },
           "askPrice": {
             "coercion": "safeNumber",
@@ -4247,7 +4248,8 @@
           "bidImpliedVolatility": {
             "coercion": "safeNumber",
             "format": null,
-            "key": "bid_iv"
+            "key": "bid_iv",
+            "scale": 0.01
           },
           "bidPrice": {
             "coercion": "safeNumber",
@@ -4279,7 +4281,8 @@
           "markImpliedVolatility": {
             "coercion": "safeNumber",
             "format": null,
-            "key": "mark_iv"
+            "key": "mark_iv",
+            "scale": 0.01
           },
           "markPrice": {
             "coercion": "safeNumber",
@@ -4795,8 +4798,7 @@
             "operands": [
               "initial_margin",
               "size_currency"
-            ],
-            "scale": 100
+            ]
           },
           "lastPrice": null,
           "lastUpdateTimestamp": null,
@@ -4821,8 +4823,7 @@
             "operands": [
               "maintenance_margin",
               "size_currency"
-            ],
-            "scale": 100
+            ]
           },
           "marginMode": null,
           "marginRatio": null,

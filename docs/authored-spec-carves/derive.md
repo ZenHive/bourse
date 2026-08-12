@@ -463,3 +463,19 @@ the prior authoring mis-mapped the documented cashflow to `rate` and is correcte
 <!-- carve-evidence-status
 {"carve_id":"C-T594h","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Derive private funding-history, funding parameters/payment, instrument, trade, subaccount, and ticker contracts linked in C-T594h"},"observed_evidence":{"kind":"recorded_venue","reference":"Registered Derive funding-rate accepted requests and fetch_markets response; provider-shaped private funding-history parser regression"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No populated private funding-history response is manifest-registered; the cashflow correction is provider-schema anchored and pinned with a provider-shaped offline row"}
 -->
+
+**C-T600g — Derive rate fields conform to the cross-venue unit contract (task 600).
+Outcome: CONFIRM decimal IV and funding fractions; delete the dead income-rate sibling.**
+
+| Authored slot | Unit | Venue-owned confrontation |
+|---|---|---|
+| `normalization.field_maps.funding_rate.field_map.fundingRate`, `normalization.field_maps.funding_rate_history.field_map.fundingRate` | fraction | Derive's funding formula multiplies size, spot, hours, and a decimal rate. [Asset parameters](https://docs.derive.xyz/docs/asset-parameters-1) |
+| `normalization.field_maps.funding_history.field_map.rate`, `normalization.field_maps.funding_rate.field_map.interestRate`, `normalization.field_maps.funding_rate.field_map.nextFundingRate`, `normalization.field_maps.funding_rate.field_map.previousFundingRate` | absent | Funding history carries cash amount, while these rate slots are null. [Funding history](https://docs.derive.xyz/reference/private-get_funding_history) |
+| `normalization.field_maps.greeks.field_map.askImpliedVolatility`, `normalization.field_maps.greeks.field_map.bidImpliedVolatility`, `normalization.field_maps.greeks.field_map.markImpliedVolatility` | fraction | Derive's option-pricing response supplies IV to multiplicative volatility-shock formulas whose parameters are decimals; no percent-point scale is applied. [Ticker](https://docs.derive.xyz/reference/ticker-instrument_name-interval) [Portfolio margin](https://docs.derive.xyz/docs/portfolio-margin-1) |
+
+- `normalization.field_maps.income` is now null. Its dead extras entry mapped the provider's
+  dollar `funding` cashflow to `rate`, duplicating the error already corrected in funding history.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T600g","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Derive ticker, portfolio-margin, asset-parameter, and funding-history contracts linked in C-T600g"},"observed_evidence":{"kind":"recorded_venue","reference":"Registered Derive funding accepted requests and provider-shaped IV/funding parser goldens"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered populated option ticker or private funding-history row is carried"}
+-->

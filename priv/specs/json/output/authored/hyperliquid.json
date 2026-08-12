@@ -9549,40 +9549,7 @@
         }
       },
       "greeks": null,
-      "income": {
-        "_unresolved_reason": null,
-        "extras": [
-          {
-            "coercion": "safeNumber",
-            "key": "fundingRate",
-            "unified_key": "rate"
-          }
-        ],
-        "field_map": {
-          "amount": null,
-          "code": {
-            "coercion": "safeString",
-            "fallback_keys": [
-              "USDC"
-            ],
-            "format": null,
-            "key": "settle"
-          },
-          "datetime": null,
-          "id": {
-            "coercion": "safeString",
-            "format": null,
-            "key": "hash"
-          },
-          "info": null,
-          "symbol": null,
-          "timestamp": {
-            "coercion": "safeInteger",
-            "format": "ms",
-            "key": "time"
-          }
-        }
-      },
+      "income": null,
       "ledger_entry": {
         "_unresolved_reason": null,
         "extras": [],

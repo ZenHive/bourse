@@ -1724,3 +1724,20 @@ Outcome: CONFIRM live provider vocabulary; preserve additions explicitly.**
 <!-- carve-evidence-status
 {"carve_id":"C-T598c","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 Get bills types contract at GET /api/v5/account/subtypes"},"observed_evidence":{"kind":"live_venue","reference":"www.okx.com simulated-trading authenticated account/subtypes code=0 response on 2026-08-12 returned the 32 registered top-level type values"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+**C-T600j — OKX IV and funding fields conform to the cross-venue fraction contract
+(task 600). Outcome: CONFIRM provider decimal volatility.**
+
+<!-- rate-unit path="normalization.field_maps.greeks.field_map.askImpliedVolatility" unit="fraction" --> OKX option volatility uses decimal values; its order contract states `pxVol` uses `1` for 100%. [API v5](https://www.okx.com/docs-v5/en/)
+<!-- rate-unit path="normalization.field_maps.greeks.field_map.bidImpliedVolatility" unit="fraction" --> `bidVol` follows the same option-volatility convention. [API v5](https://www.okx.com/docs-v5/en/)
+<!-- rate-unit path="normalization.field_maps.greeks.field_map.markImpliedVolatility" unit="fraction" --> `markVol` follows the same option-volatility convention. [API v5](https://www.okx.com/docs-v5/en/)
+<!-- rate-unit path="normalization.field_maps.option.field_map.impliedVolatility" unit="absent" --> The generic option row has no authored IV. [API v5](https://www.okx.com/docs-v5/en/)
+<!-- rate-unit path="normalization.field_maps.funding_history.field_map.rate" unit="absent" --> Bills carry cash amount, not an inferred rate. [API v5](https://www.okx.com/docs-v5/en/)
+<!-- rate-unit path="normalization.field_maps.funding_rate.field_map.fundingRate" unit="fraction" --> The decimal funding rate multiplies position value. [Funding FAQ](https://www.okx.com/en-us/help/funding-fees-for-perpetual-contracts-faq)
+<!-- rate-unit path="normalization.field_maps.funding_rate.field_map.interestRate" unit="absent" --> The authored slot is null. [Funding FAQ](https://www.okx.com/en-us/help/funding-fees-for-perpetual-contracts-faq)
+<!-- rate-unit path="normalization.field_maps.funding_rate.field_map.nextFundingRate" unit="fraction" --> The provider next funding rate is a decimal fraction. [Funding FAQ](https://www.okx.com/en-us/help/funding-fees-for-perpetual-contracts-faq)
+<!-- rate-unit path="normalization.field_maps.funding_rate.field_map.previousFundingRate" unit="absent" --> The authored slot is null. [Funding FAQ](https://www.okx.com/en-us/help/funding-fees-for-perpetual-contracts-faq)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T600j","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 option volatility and funding contracts linked in C-T600j"},"observed_evidence":{"kind":"recorded_venue","reference":"Provider-shaped option-volatility parser golden and registered funding history response"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The option-volatility parser golden is provider-shaped rather than a manifest-registered live response"}
+-->

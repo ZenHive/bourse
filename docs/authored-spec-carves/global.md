@@ -595,3 +595,20 @@ first-class venue (task 540). Outcome: CONFIRM provider boundaries.**
 <!-- carve-evidence-status
 {"carve_id":"C-T540","date":"2026-08-04","semantic_source":{"kind":"provider_owned","reference":"First-class venue authority manifests and method contracts cited by the venue-specific C-T540 entries"},"observed_evidence":{"kind":"recorded_venue","reference":"Binance fetchOrders and Derive fetchTrades accepted-request goldens captured 2026-08-04"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The cross-venue request-shape invariant is complete, but only Binance and Derive carry task-specific accepted-request recordings"}
 -->
+
+## 2026-08-12 — unified rate-unit contract (Task 600)
+
+**C-T600a — Each unified rate-like field has one cross-venue unit (task 600). Outcome:
+DIVERGE from venue-native units where a pass-through would make the unified contract
+contradict itself.**
+
+- Margin percentages and implied volatility are fractions (`0.1 = 10%` and `0.75 = 75%`).
+- Funding, interest, maker/taker, and nested fee rates are fractions.
+- Ticker change and position PnL `percentage` fields are percent points (`10 = 10%`).
+- Fee `percentage` flags are booleans, not numeric rates.
+- The manifest-wide guard derives venues from `runtime_support.json`, derives extras by their
+  `unified_key`, and rejects a second unit for the same unified field.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T600a","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Venue contracts cited by C-T600b through C-T600j"},"observed_evidence":{"kind":"recorded_venue","reference":"Manifest-registered venue responses and parser goldens cited by C-T600b through C-T600j"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Several carried null or unreachable slots have provider-contract evidence without a populated venue row"}
+-->

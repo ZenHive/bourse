@@ -17,9 +17,9 @@ defmodule Bourse.Greeks do
     * `rho` - Sensitivity to interest rate
     * `bid_size` - Bid size
     * `ask_size` - Ask size
-    * `bid_implied_volatility` - Implied volatility from bid
-    * `ask_implied_volatility` - Implied volatility from ask
-    * `mark_implied_volatility` - Implied volatility from mark price
+    * `bid_implied_volatility` - Bid implied volatility as a fraction (0.75 = 75%)
+    * `ask_implied_volatility` - Ask implied volatility as a fraction (0.75 = 75%)
+    * `mark_implied_volatility` - Mark implied volatility as a fraction (0.75 = 75%)
     * `bid_price` - Bid price
     * `ask_price` - Ask price
     * `mark_price` - Mark price
@@ -112,9 +112,9 @@ defmodule Bourse.Greeks do
                    rho: "Sensitivity to interest rate",
                    bid_size: "Bid size",
                    ask_size: "Ask size",
-                   bid_implied_volatility: "Implied volatility from bid",
-                   ask_implied_volatility: "Implied volatility from ask",
-                   mark_implied_volatility: "Implied volatility from mark price",
+                   bid_implied_volatility: "Bid implied volatility as a fraction (0.75 = 75%)",
+                   ask_implied_volatility: "Ask implied volatility as a fraction (0.75 = 75%)",
+                   mark_implied_volatility: "Mark implied volatility as a fraction (0.75 = 75%)",
                    bid_price: "Bid price",
                    ask_price: "Ask price",
                    mark_price: "Mark price",

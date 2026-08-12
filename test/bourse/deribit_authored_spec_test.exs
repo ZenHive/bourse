@@ -9,12 +9,30 @@ defmodule Bourse.DeribitAuthoredSpecTest do
 
   test "nested option greeks populate the unified fields" do
     raw = %{
+      "ask_iv" => 343.95,
+      "bid_iv" => 0.0,
       "greeks" => %{"delta" => 0.7, "gamma" => 0.01, "rho" => 1.2, "theta" => -4.5, "vega" => 0.3},
+      "mark_iv" => 59.44,
       "timestamp" => 1_784_204_793_040
     }
 
     assert {:ok, %Bourse.Greeks{} = greeks} = Bourse.Deribit.parse_greeks(raw)
     assert {greeks.delta, greeks.gamma, greeks.rho, greeks.theta, greeks.vega} == {0.7, 0.01, 1.2, -4.5, 0.3}
+    assert greeks.bid_implied_volatility == 0.0
+    assert greeks.mark_implied_volatility == 0.5944
+    assert greeks.ask_implied_volatility == 3.4395
+  end
+
+  test "position margin percentages are normalized as fractions" do
+    raw = %{
+      "initial_margin" => 10,
+      "maintenance_margin" => 2,
+      "size_currency" => 100
+    }
+
+    assert {:ok, %Bourse.Position{} = position} = Bourse.Deribit.parse_position(raw)
+    assert position.initial_margin_percentage == 0.1
+    assert position.maintenance_margin_percentage == 0.02
   end
 
   test "deposit and withdrawal rows share authored transaction fields" do

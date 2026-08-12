@@ -633,6 +633,21 @@ defmodule Bourse.DeriveAuthoredSpecTest do
     }
   end
 
+  test "option implied volatility remains a fraction" do
+    raw = %{
+      "option_pricing" => %{
+        "ask_iv" => "0.93",
+        "bid_iv" => "0.92",
+        "iv" => "0.925"
+      }
+    }
+
+    assert {:ok, %Bourse.Greeks{} = greeks} = Bourse.Derive.parse_greeks(raw)
+    assert greeks.bid_implied_volatility == 0.92
+    assert greeks.mark_implied_volatility == 0.925
+    assert greeks.ask_implied_volatility == 0.93
+  end
+
   defp derive_option_read_response("/private/get_trade_history") do
     %{
       "result" => %{

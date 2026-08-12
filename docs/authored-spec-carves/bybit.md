@@ -688,3 +688,23 @@ Outcome: CONFIRM provider vocabulary; preserve provider additions explicitly.**
 <!-- carve-evidence-status
 {"carve_id":"C-T598b","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Bybit docs commit 5ccd3010 docs/v5/enum.mdx type(uta-translog) and type(contract-translog), plus transaction-log change arithmetic"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The complete provider vocabulary and explicit passthrough policy are pinned; no live account can summon every ledger type"}
 -->
+
+**C-T600e — Bybit rate fields conform to the cross-venue unit contract (task 600).
+Outcome: CONFIRM option IV and funding fractions.**
+
+| Authored slot | Unit | Venue-owned confrontation |
+|---|---|---|
+| `normalization.field_maps.funding_history.field_map.rate`, `normalization.field_maps.funding_rate.field_map.fundingRate`, `normalization.field_maps.funding_rate_history.field_map.fundingRate` | fraction | Bybit applies the decimal funding rate directly to position value. [Funding fee](https://www.bybit.com/en/help-center/article/Funding-fee-calculation) |
+| `normalization.field_maps.funding_rate.field_map.interestRate`, `normalization.field_maps.funding_rate.field_map.nextFundingRate`, `normalization.field_maps.funding_rate.field_map.previousFundingRate` | absent | These authored slots are null. [Funding fee](https://www.bybit.com/en/help-center/article/Funding-fee-calculation) |
+| `normalization.field_maps.greeks.field_map.askImpliedVolatility`, `normalization.field_maps.greeks.field_map.bidImpliedVolatility`, `normalization.field_maps.greeks.field_map.markImpliedVolatility`, `normalization.field_maps.option.field_map.impliedVolatility` | fraction | The provider ticker contract publishes option IVs as decimal values; its example `markIv: "0.7567"` means 75.67%, and the mappings pass through. [Option tickers](https://bybit-exchange.github.io/docs/v5/market/tickers) |
+| `normalization.field_maps.position.branches[0].field_map.initialMarginPercentage` | unverified fraction | `cumEntryValue / cumExitValue` is dimensionless and unscaled, so it cannot introduce a second unit; C-T594e's semantic objection to calling that ratio initial margin remains open. [Closed PnL](https://bybit-exchange.github.io/docs/v5/position/close-pnl) |
+
+- *Live evidence (2026-08-12T08:57:35Z):* testnet `/v5/market/tickers` returned
+  `BTC-21AUG26-65000-C-USDT` with `markIv "0.2789"`, `bid1Iv "0.3223"`, and
+  `ask1Iv "0.3236"`; the unified fraction is the same numeric value.
+- The unwired `income` field map is null; its extras-carried `rate` can no longer publish a
+  dead slice outside the invariant.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T600e","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 option ticker, funding-fee, and closed-PnL contracts linked in C-T600e"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-12T08:57:35Z api-testnet.bybit.com option ticker BTC-21AUG26-65000-C-USDT markIv 0.2789 bid1Iv 0.3223 ask1Iv 0.3236"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The closed-position cumEntryValue/cumExitValue ratio remains semantically unverified as initial margin"}
+-->

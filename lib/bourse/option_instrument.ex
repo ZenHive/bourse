@@ -81,7 +81,7 @@ defmodule Bourse.OptionInstrument do
                    active: "Whether the instrument is currently tradeable",
                    bid_price: "Best bid when the venue supplies it",
                    ask_price: "Best ask when the venue supplies it",
-                   implied_volatility: "Implied volatility when supplied",
+                   implied_volatility: "Implied volatility as a fraction when supplied (0.75 = 75%)",
                    open_interest: "Open interest when supplied",
                    source_timestamp: "Venue-reported timestamp in milliseconds",
                    observed_at: "Local observation time in milliseconds",

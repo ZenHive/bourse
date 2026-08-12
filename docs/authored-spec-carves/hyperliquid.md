@@ -510,3 +510,19 @@ Outcome: CONFIRM 14 literal types; preserve additions explicitly.**
 <!-- carve-evidence-status
 {"carve_id":"C-T598d","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid WebSocket subscriptions WsUserNonFundingLedgerUpdates / WsLedgerUpdate union"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Provider-owned schema pins the complete 14-type vocabulary; no account can summon every ledger event on demand"}
 -->
+
+**C-T600h — Hyperliquid funding fields conform to the cross-venue fraction contract
+(task 600). Outcome: CONFIRM and delete the dead income-rate duplicate.**
+
+<!-- rate-unit path="normalization.field_maps.funding_rate.field_map.fundingRate" unit="fraction" --> Hyperliquid applies the decimal funding rate to position notional. [Funding](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/funding)
+<!-- rate-unit path="normalization.field_maps.funding_rate.field_map.interestRate" unit="absent" --> The authored slot is null. [Funding](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/funding)
+<!-- rate-unit path="normalization.field_maps.funding_rate.field_map.nextFundingRate" unit="absent" --> The authored slot is null. [Funding](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/funding)
+<!-- rate-unit path="normalization.field_maps.funding_rate.field_map.previousFundingRate" unit="absent" --> The authored slot is null. [Funding](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/funding)
+<!-- rate-unit path="normalization.field_maps.funding_rate_history.field_map.fundingRate" unit="fraction" --> The provider `fundingRate` is the same decimal rate. [Perpetuals API](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint/perpetuals)
+
+`normalization.field_maps.income` is null; its unwired extras entry duplicated the funding rate
+without a live parse slot.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T600h","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid funding and perpetuals contracts linked in C-T600h"},"observed_evidence":{"kind":"recorded_venue","reference":"Registered Hyperliquid funding-rate-history accepted request"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The deleted income slice was unwired and had no independent response evidence"}
+-->

@@ -3634,33 +3634,7 @@
           }
         }
       },
-      "income": {
-        "_unresolved_reason": null,
-        "extras": [
-          {
-            "coercion": "safeString",
-            "key": "funding",
-            "unified_key": "rate"
-          }
-        ],
-        "field_map": {
-          "amount": null,
-          "code": {
-            "coercion": "safeCurrencyCode",
-            "format": null,
-            "key": "USDC"
-          },
-          "datetime": null,
-          "id": null,
-          "info": null,
-          "symbol": null,
-          "timestamp": {
-            "coercion": "safeInteger",
-            "format": "ms",
-            "key": "timestamp"
-          }
-        }
-      },
+      "income": null,
       "ledger_entry": null,
       "leverage": null,
       "leverage_tiers": null,
