@@ -474,13 +474,18 @@ provider contracts (task 534). Outcome: CONFIRM provider contract.**
 -->
 
 **C-T592b — USD-M income vocabulary includes change-log additions, and signed income defines
-direction (task 592). Outcome: CONFIRM provider contract.**
+direction (task 592). Outcome: CONFIRMED vocabulary membership; DIVERGE on the unified
+mapping of the two new arms (amended 2026-08-12, ARC pass).**
 
 - *Exchange semantics:* the Income History operation defines the row vocabulary and signed
   `income`; the provider change log additionally documents `AUTO_EXCHANGE` rather than leaving
-  the endpoint page as the sole vocabulary source.
-- *Our carve:* `INSURANCE_CLEAR` normalizes to `settlement`, `AUTO_EXCHANGE` to `trade`, and
-  `income` sign produces `direction` (`out` when negative, `in` otherwise).
+  the endpoint page as the sole vocabulary source. The provider defines **no semantics** for
+  `INSURANCE_CLEAR`, and describes `AUTO_EXCHANGE` only as a Multi-Assets-margin
+  auto-exchange event — a system-initiated conversion, not an order fill.
+- *Our carve:* `INSURANCE_CLEAR` normalizes to `settlement` and `AUTO_EXCHANGE` to `trade` by
+  **our judgment** (the provider is silent on meaning); `income` sign produces `direction`
+  (`out` when negative, `in` otherwise). A consumer deriving trade activity from the ledger
+  cannot distinguish `AUTO_EXCHANGE` rows from fills without reading `info`.
 - *Verification:* the full-contract documented-set guard pins both sources. The registered
   populated USD-M income recording and provider-shaped parser test pin negative rows as `out`.
 

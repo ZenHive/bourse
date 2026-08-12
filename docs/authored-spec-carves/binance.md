@@ -1005,16 +1005,23 @@ names (task 534). Outcome: CONFIRM routing boundary.**
 -->
 
 **C-T592c — the generic Binance ledger map preserves the complete futures-family income
-vocabulary and signed direction (task 592). Outcome: CONFIRM family contracts.**
+vocabulary and signed direction (task 592). Outcome: CONFIRMED vocabulary membership;
+DIVERGE on the unified mapping of the two new arms (amended 2026-08-12, ARC pass);
+map wiring UNVERIFIED against this venue's own routed endpoints.**
 
 - *Exchange semantics:* the COIN-M and USD-M Income History operations define the common
   vocabulary; the USD-M change log adds `AUTO_EXCHANGE`. Both contracts carry signed `income`.
-- *Our carve:* the shared Binance map includes `INSURANCE_CLEAR` as `settlement`,
-  `AUTO_EXCHANGE` as `trade`, and the same sign-derived `in`/`out` direction used by the
-  venue-specific futures modules.
+  Neither contract defines what `INSURANCE_CLEAR` means; `AUTO_EXCHANGE` is documented only
+  as a Multi-Assets-margin auto-exchange event.
+- *Our carve:* the shared Binance map includes `INSURANCE_CLEAR` as `settlement` and
+  `AUTO_EXCHANGE` as `trade` **by our judgment** (provider silent on meaning), and the same
+  sign-derived `in`/`out` direction used by the venue-specific futures modules.
 - *Verification:* the documented-set guard registers the endpoint contracts and change log;
-  venue-specific signed fixtures pin the direction recipe.
+  venue-specific signed fixtures pin the direction recipe. The 2026-08-12 ARC pass found this
+  venue's own map keys unconfronted against its routed income/bill endpoints (type reads
+  `type` where income rows carry `incomeType`; `amount`/`currency` authored null) — tracked
+  as a scored follow-up task; the fixtures above verify the USD-M/COIN-M modules, not this map.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T592c","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binance/manifest.json plus binancecoinm/binanceusdm developer-docs-full artifacts; both Income History contracts and the USD-M change log"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binanceusdm/fetch_ledger.json and provider-shaped COIN-M income parser fixture"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T592c","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binance/manifest.json plus binancecoinm/binanceusdm developer-docs-full artifacts; both Income History contracts and the USD-M change log"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binanceusdm/fetch_ledger.json and provider-shaped COIN-M income parser fixture"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Sibling-venue fixtures verify the USD-M/COIN-M modules; this venue's own ledger map keys (type vs incomeType, null amount/currency) are unconfronted against its routed income/bill endpoints - scored follow-up task filed 2026-08-12"}
 -->
