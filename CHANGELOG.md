@@ -7,6 +7,54 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-12
+
+### Added
+
+- New venue: `coinbaseexchange` (api.exchange.coinbase.com), the client's first
+  deliberately public-only venue — `fetch_ohlcv` and `fetch_ticker`, no auth
+  path (`capabilities.has`: 2 supported, 111 explicitly unsupported). Unified
+  symbols (`ETH/USD`) route to Coinbase's dash product ids; requests spanning
+  more than 300 rows are paginated at 299 inclusive intervals per page and
+  merged back into the venue's newest-first wire order. Live-recorded venue
+  behavior is documented in the authored spec and carve register: the series is
+  sparse (trade-less intervals are omitted) and the forming bucket appears once
+  it contains a trade. A follow-up completed half-open candle windows, covered
+  unaligned page tails, and relaxed the credential gate for public-only venues.
+- `binancecoinm` grew the venue surface it previously declared unsupported:
+  order history, leverage tiers, open interest, trading fees, ledger and ADL
+  quantile reads.
+- `lighter` now exposes balance and positions (previously absent despite the
+  account response carrying both), plus liquidations, trades, transfers and
+  withdrawal history recordings.
+- Provider-operation reality capture: recorded-evidence manifests for provider
+  operations, proven on Deribit public REST with a populated success, a
+  `get_time` success and an invalid-parameter error fixture.
+
+### Changed
+
+- `lighter` deposit history (`fetchDeposits`) now requires a caller-supplied
+  `l1_address` — the venue endpoint cannot infer the account. Callers that
+  omitted it must pass it explicitly.
+
+### Fixed
+
+- `lighter` funding rates are scaled from the venue's percent representation to
+  the unified fraction.
+- Binance-family plural funding reads no longer stamp a fabricated 8h interval
+  onto instruments that never fund; the default is gated on perpetuals.
+- Bulk list reads return unified symbols instead of venue-native ones, so their
+  rows join against other unified results.
+- Binance futures capability declarations corrected: `binancecoinm`
+  `setPositionMode`/`setLeverage` and `binanceusdm` `fetchLeverage` (via
+  `symbolConfig`) are served and now declared.
+- `binancecoinm` maps the self-trade-prevention status `EXPIRED_IN_MATCH` to
+  `canceled`, per the venue's STP contract.
+- `binanceusdm` leverage reads share the `fetch_margin_mode` vocabulary for
+  `marginMode` via the enum map.
+- String-keyed market rows are restricted to string ids, preserving the Task
+  215 rejection semantics.
+
 ### Removed
 
 - The trading-domain layer (`Bourse.OptionProposal`, `Bourse.OptionReadiness`,

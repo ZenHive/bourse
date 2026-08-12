@@ -1,7 +1,7 @@
 defmodule Bourse.MixProject do
   use Mix.Project
 
-  @version "0.3.0"
+  @version "0.4.0"
   @source_url "https://github.com/ZenHive/bourse"
   @runtime_manifest "priv/specs/json/runtime_support.json"
   @runtime_venues @runtime_manifest |> File.read!() |> :json.decode() |> Map.fetch!("venues")
@@ -15,7 +15,7 @@ defmodule Bourse.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       aliases: aliases(),
-      description: "Elixir client for ten provider-authored cryptocurrency exchange integrations.",
+      description: "Elixir client for eleven provider-authored cryptocurrency exchange integrations.",
       package: package(),
       source_url: @source_url,
       homepage_url: @source_url,
