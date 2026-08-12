@@ -596,6 +596,31 @@ first-class venue (task 540). Outcome: CONFIRM provider boundaries.**
 {"carve_id":"C-T540","date":"2026-08-04","semantic_source":{"kind":"provider_owned","reference":"First-class venue authority manifests and method contracts cited by the venue-specific C-T540 entries"},"observed_evidence":{"kind":"recorded_venue","reference":"Binance fetchOrders and Derive fetchTrades accepted-request goldens captured 2026-08-04"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The cross-venue request-shape invariant is complete, but only Binance and Derive carry task-specific accepted-request recordings"}
 -->
 
+## 2026-08-12 — InvalidNonce is retryable, not auth (Task 604)
+
+**C-T604 — Nonce/timestamp drift is a dedicated retryable error type (task 604).
+Outcome: DIVERGE from the prior lossy collapse of InvalidNonce into
+`:authentication_error`.**
+
+- *Provider semantics:* Binance documents `-1021` INVALID_TIMESTAMP as client
+  clock / `recvWindow` drift
+  ([Spot errors.md](https://github.com/binance/binance-spot-api-docs/blob/master/errors.md):
+  "Timestamp for this request is outside of the recvWindow" / "was 1000ms ahead
+  of the server's time"). Authored venues map those codes through the
+  `InvalidNonce` class; genuine signature/key failures stay
+  `AuthenticationError` (e.g. Binance `-1022`).
+- *Our carve:* `Bourse.Error` maps `"InvalidNonce"` → `:invalid_nonce` with
+  `retry_class: :network` (`should_retry?/1` true). `:authentication_error` and
+  `:permission_denied` remain `:auth` (terminal without intervention). Per-venue
+  `errors.retry_classification` tables stay class-name-keyed and unchanged.
+- *Verification:* classification unit tests pin both sides of the split; Binance
+  `-1021`/`-1022` and Bybit/OKX InvalidNonce codes resolve through
+  `Exchange.error_codes` + `HTTP.Errors.classify_response/5`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T604","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"https://github.com/binance/binance-spot-api-docs/blob/master/errors.md (-1021 INVALID_TIMESTAMP)"},"observed_evidence":{"kind":"authored_mapping","reference":"binance/binanceusdm/binancecoinm exact -1021 → InvalidNonce; bybit 10002; okx 50102/60006"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered live InvalidNonce recording; classification is pinned against authored codes and provider docs"}
+-->
+
 ## 2026-08-12 — unified rate-unit contract (Task 600)
 
 **C-T600a — Each unified rate-like field has one cross-venue unit (task 600). Outcome:

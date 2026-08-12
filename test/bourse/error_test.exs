@@ -46,6 +46,24 @@ defmodule Bourse.ErrorTest do
     end
   end
 
+  describe "invalid_nonce/1" do
+    test "creates error with defaults" do
+      error = Error.invalid_nonce()
+      assert error.type == :invalid_nonce
+      assert error.message =~ "nonce"
+      assert error.recoverable == true
+      assert error.retry_class == :network
+    end
+
+    test "creates error with custom message and code" do
+      error = Error.invalid_nonce(message: "Timestamp outside recvWindow", code: -1021, exchange: "binance")
+      assert error.type == :invalid_nonce
+      assert error.code == -1021
+      assert error.exchange == "binance"
+      assert error.message == "Timestamp outside recvWindow"
+    end
+  end
+
   describe "insufficient_funds/1" do
     test "creates error with exchange and code" do
       error = Error.insufficient_funds(exchange: "bybit", code: "10001")
@@ -198,6 +216,7 @@ defmodule Bourse.ErrorTest do
       assert Error.rate_limit_exceeded().recoverable == true
       assert Error.network_error().recoverable == true
       assert Error.exchange_not_available().recoverable == true
+      assert Error.invalid_nonce().recoverable == true
     end
 
     test "non-recoverable types" do
@@ -227,10 +246,12 @@ defmodule Bourse.ErrorTest do
       assert Error.recoverable?(:rate_limit_exceeded) == true
       assert Error.recoverable?(:network_error) == true
       assert Error.recoverable?(:exchange_not_available) == true
+      assert Error.recoverable?(:invalid_nonce) == true
     end
 
     test "returns false for non-recoverable types" do
       assert Error.recoverable?(:authentication_error) == false
+      assert Error.recoverable?(:permission_denied) == false
       assert Error.recoverable?(:insufficient_funds) == false
     end
 
@@ -269,8 +290,9 @@ defmodule Bourse.ErrorTest do
     end
 
     test "maps related classes to same type" do
-      # Multiple classes map to :authentication_error
-      assert Error.from_spec_class("InvalidNonce") == :authentication_error
+      # InvalidNonce is its own retryable type (Task 604) — not credential rejection
+      assert Error.from_spec_class("InvalidNonce") == :invalid_nonce
+      assert Error.from_spec_class("AuthenticationError") == :authentication_error
 
       # Multiple classes map to :invalid_order
       assert Error.from_spec_class("OrderImmediatelyFillable") == :invalid_order
@@ -307,11 +329,30 @@ defmodule Bourse.ErrorTest do
       assert Error.retry_class(:rate_limit_exceeded) == :rate_limit
       assert Error.retry_class(:network_error) == :network
       assert Error.retry_class(:exchange_not_available) == :server_busy
+      assert Error.retry_class(:invalid_nonce) == :network
     end
 
     test "maps auth-class types to :auth" do
       assert Error.retry_class(:authentication_error) == :auth
       assert Error.retry_class(:permission_denied) == :auth
+    end
+
+    # Task 604: nonce/timestamp drift must stay retryable; credential rejection stays terminal.
+    test "splits InvalidNonce (retryable) from AuthenticationError / PermissionDenied (terminal)" do
+      assert Error.from_spec_class("InvalidNonce") == :invalid_nonce
+      assert Error.retry_class(:invalid_nonce) == :network
+      assert Error.should_retry?(Error.retry_class(:invalid_nonce))
+      assert Error.should_retry?(Error.invalid_nonce())
+
+      assert Error.from_spec_class("AuthenticationError") == :authentication_error
+      assert Error.retry_class(:authentication_error) == :auth
+      refute Error.should_retry?(Error.retry_class(:authentication_error))
+      refute Error.should_retry?(Error.authentication_error())
+
+      assert Error.from_spec_class("PermissionDenied") == :permission_denied
+      assert Error.retry_class(:permission_denied) == :auth
+      refute Error.should_retry?(Error.retry_class(:permission_denied))
+      refute Error.should_retry?(Error.permission_denied())
     end
 
     test "maps deterministic rejections to :non_retryable" do
@@ -344,6 +385,7 @@ defmodule Bourse.ErrorTest do
       assert Error.rate_limit_exceeded().retry_class == :rate_limit
       assert Error.network_error().retry_class == :network
       assert Error.exchange_not_available().retry_class == :server_busy
+      assert Error.invalid_nonce().retry_class == :network
       assert Error.authentication_error().retry_class == :auth
       assert Error.insufficient_funds().retry_class == :non_retryable
       assert Error.exchange_error("x").retry_class == nil
@@ -365,7 +407,9 @@ defmodule Bourse.ErrorTest do
 
     test "accepts an error struct" do
       assert Error.should_retry?(Error.network_error())
+      assert Error.should_retry?(Error.invalid_nonce())
       refute Error.should_retry?(Error.authentication_error())
+      refute Error.should_retry?(Error.permission_denied())
       refute Error.should_retry?(Error.exchange_error("x"))
     end
   end
@@ -393,7 +437,8 @@ defmodule Bourse.ErrorTest do
       }
 
       assert Error.from_spec_class("AddressPending", ancestors) == :bad_request
-      assert Error.from_spec_class("ChecksumError", ancestors) == :authentication_error
+      # ChecksumError → InvalidNonce → :invalid_nonce (retryable, not auth)
+      assert Error.from_spec_class("ChecksumError", ancestors) == :invalid_nonce
       assert Error.from_spec_class("OrderNotCached", ancestors) == :invalid_order
     end
 

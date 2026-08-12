@@ -392,6 +392,7 @@ defmodule Bourse.HTTP.Errors do
   @known_error_types MapSet.new([
                        :rate_limit_exceeded,
                        :authentication_error,
+                       :invalid_nonce,
                        :insufficient_funds,
                        :invalid_order,
                        :order_not_found,
@@ -405,7 +406,6 @@ defmodule Bourse.HTTP.Errors do
                        :cloudflare_challenge,
                        :network_error
                      ])
-
   # Dispatches to the matching Error factory function, or falls back to exchange_error.
   # `raw` keeps the full response body so batch per-item detail is not dropped.
   defp build_typed_error(type, message, code, exchange_id, raw) do

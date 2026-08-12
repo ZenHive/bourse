@@ -13,9 +13,11 @@ defmodule Bourse.Error do
   - `:rate_limit_exceeded` - Too many requests, retry after `retry_after` ms
   - `:network_error` - Connection or timeout issue
   - `:exchange_not_available` - Exchange down, on maintenance, or market closed
+  - `:invalid_nonce` - Nonce/timestamp window drift (client clock skew, concurrent
+    signers, recv-window jitter); safe to retry after re-sync
 
   ### Non-recoverable (require intervention)
-  - `:authentication_error` - API key/secret rejected or invalid nonce
+  - `:authentication_error` - API key/secret rejected (credential failure)
   - `:insufficient_funds` - Not enough funds for the operation
   - `:invalid_order` - Order parameters rejected by exchange
   - `:order_not_found` - Order ID does not exist
@@ -48,6 +50,7 @@ defmodule Bourse.Error do
           :rate_limit_exceeded
           | :network_error
           | :exchange_not_available
+          | :invalid_nonce
           | :authentication_error
           | :insufficient_funds
           | :invalid_order
@@ -116,7 +119,7 @@ defmodule Bourse.Error do
   # Recoverability Classification
   # ===========================================================================
 
-  @recoverable_types [:rate_limit_exceeded, :network_error, :exchange_not_available]
+  @recoverable_types [:rate_limit_exceeded, :network_error, :exchange_not_available, :invalid_nonce]
 
   @non_recoverable_types [
     :authentication_error,
@@ -161,17 +164,18 @@ defmodule Bourse.Error do
   #
   # Canonical error_type → retry bucket. Derived from and verified against the
   # v4 `errors.retry_classification` contract across all in-scope exchanges
-  # (mix run / test asserts spec agreement). Three upstream classes collapse to
-  # an Elixir atom that maps to two buckets across the spec — resolved here to
+  # (mix run / test asserts spec agreement). Two upstream classes still collapse
+  # to an Elixir atom that maps to two buckets across the spec — resolved here to
   # the dominant/safer bucket, consistent with the existing lossy
   # `from_spec_class/1` collapse:
   #
-  #   * authentication_error — AuthenticationError(:auth) wins over the
-  #     InvalidNonce(:network) edge (InvalidNonce already collapses to
-  #     authentication_error upstream-side in this client).
   #   * bad_request — BadRequest(:non_retryable) wins over BadResponse(:server_busy).
   #   * exchange_not_available — ExchangeNotAvailable/OnMaintenance(:server_busy)
   #     win over the MarketClosed(:non_retryable) edge; the type is recoverable.
+  #
+  # InvalidNonce is intentionally NOT collapsed into authentication_error: nonce
+  # and timestamp-window failures are transient (`retry_class: :network`) while
+  # credential rejection stays `:auth`. See Task 604 / BUGS 2026-08-12.
   #
   # The per-exchange `errors.retry_classification` table is preserved verbatim
   # on `Bourse.Exchange` (class-name keyed) for faithful lookups; this atom-level
@@ -183,6 +187,7 @@ defmodule Bourse.Error do
     rate_limit_exceeded: :rate_limit,
     network_error: :network,
     exchange_not_available: :server_busy,
+    invalid_nonce: :network,
     authentication_error: :auth,
     permission_denied: :auth,
     insufficient_funds: :non_retryable,
@@ -257,7 +262,7 @@ defmodule Bourse.Error do
 
   @spec_class_mapping %{
     "AuthenticationError" => :authentication_error,
-    "InvalidNonce" => :authentication_error,
+    "InvalidNonce" => :invalid_nonce,
     "InsufficientFunds" => :insufficient_funds,
     "InvalidOrder" => :invalid_order,
     "OrderImmediatelyFillable" => :invalid_order,
@@ -402,6 +407,17 @@ defmodule Bourse.Error do
   @spec authentication_error(keyword()) :: t()
   def authentication_error(opts \\ []) do
     build(:authentication_error, "Invalid API credentials", opts)
+  end
+
+  @doc """
+  Creates an invalid-nonce / timestamp-window error.
+
+  Transient client clock skew, concurrent nonce races, and recv-window
+  jitter — not credential rejection. `retry_class` is `:network`.
+  """
+  @spec invalid_nonce(keyword()) :: t()
+  def invalid_nonce(opts \\ []) do
+    build(:invalid_nonce, "Invalid nonce or timestamp outside recv window", opts)
   end
 
   @doc "Creates an insufficient funds error."
