@@ -23,7 +23,7 @@ defmodule Bourse.Unified.Descriptor do
     @external_resource Spec.spec_path(id)
   end
 
-  @base_errors [:not_supported, :authentication_error, :rate_limit_exceeded, :network_error]
+  @base_errors [:not_supported, :authentication_error, :invalid_nonce, :rate_limit_exceeded, :network_error]
 
   @merged_descriptors Enum.reduce(@runtime_venues, %{}, fn id, acc ->
                         descriptors =

@@ -53,17 +53,34 @@ defmodule Bourse.Unified.DescriptorTest do
     end
 
     test "falls back when descriptor is absent" do
-      opts = Descriptor.build_api_opts("fetchOrderBooks", [])
+      opts = Descriptor.build_api_opts("notInTheAuthoredDescriptors", [:symbol])
 
       assert Keyword.fetch!(opts, :params)[:exchange]
+      assert Keyword.fetch!(Keyword.fetch!(opts, :params)[:symbol], :description) == "symbol"
       assert Keyword.fetch!(opts, :returns).description =~ "{:ok, map()}"
 
       assert Keyword.fetch!(opts, :errors) == [
                :not_supported,
                :authentication_error,
+               :invalid_nonce,
                :rate_limit_exceeded,
                :network_error
              ]
+    end
+
+    test "preserves optional defaults from upstream signatures" do
+      opts = Descriptor.build_api_opts("fetchOHLCV", [:symbol])
+
+      assert Keyword.fetch!(Keyword.fetch!(opts, :opts)[:timeframe], :default) in ["1m", "'1m'"]
+      refute Keyword.has_key?(Keyword.fetch!(opts, :opts)[:since], :default)
+    end
+
+    test "falls back for sparse return and parameter metadata" do
+      opts = Descriptor.build_api_opts("modifyMarginHelper", [:symbol, :amount, :type])
+
+      assert Keyword.fetch!(Keyword.fetch!(opts, :params)[:amount], :description) == "amount"
+      assert Keyword.fetch!(Keyword.fetch!(opts, :params)[:type], :description) == "type"
+      assert Keyword.fetch!(opts, :returns).description =~ "{:ok, map()}"
     end
   end
 
@@ -81,6 +98,24 @@ defmodule Bourse.Unified.DescriptorTest do
 
       assert entry.hints.params.exchange.kind == :value
       assert entry.hints.returns.description =~ "{:ok, map()}"
+    end
+
+    test "nonce and credential errors are separate in generated hints and docs" do
+      entry = Bourse.__api__(:create_order)
+
+      assert :invalid_nonce in entry.hints.errors
+      assert :authentication_error in entry.hints.errors
+
+      {:docs_v1, _, _, _, _, _, docs} = Code.fetch_docs(Bourse)
+
+      {{:function, :create_order, 6}, _, _, %{"en" => doc}, metadata} =
+        Enum.find(docs, fn
+          {{:function, :create_order, 6}, _, _, _, _} -> true
+          _ -> false
+        end)
+
+      assert doc =~ "`:invalid_nonce`"
+      assert :invalid_nonce in metadata.hints.errors
     end
 
     test "aligned margin and convert signatures are exposed through API metadata" do

@@ -19,9 +19,6 @@ defmodule Bourse.InvalidNonceClassificationTest do
   alias Bourse.Exchange
   alias Bourse.HTTP.Errors
 
-  # Provider-owned statement for the retryable classification (Task 604 AC).
-  @binance_timestamp_error_docs "https://github.com/binance/binance-spot-api-docs/blob/master/errors.md"
-
   test "InvalidNonce class is :invalid_nonce with retryable :network bucket" do
     assert Error.from_spec_class("InvalidNonce") == :invalid_nonce
     assert Error.retry_class(:invalid_nonce) == :network
@@ -41,10 +38,6 @@ defmodule Bourse.InvalidNonceClassificationTest do
   end
 
   test "binance -1021 (INVALID_TIMESTAMP) classifies as retryable :invalid_nonce" do
-    # Provider authority for retryable classification (recvWindow / clock skew):
-    assert @binance_timestamp_error_docs ==
-             "https://github.com/binance/binance-spot-api-docs/blob/master/errors.md"
-
     exchange = Exchange.new!("binance")
     assert exchange.error_codes["-1021"] == :invalid_nonce
     assert exchange.retry_classification["InvalidNonce"] == :network
