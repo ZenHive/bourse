@@ -71,6 +71,36 @@ roadmap.
 
 ---
 
+## 2026-08-12 — `InvalidNonce` classified `:authentication_error` → `retry_class :auth` (non-retryable); nonce/timestamp drift is transient
+
+**Method:** any signed call whose venue error maps through `"InvalidNonce"` (`lib/bourse/error.ex` name map) · **Exchange:** all (classification layer, not venue-specific) · **Severity:** medium (consumer-side terminal handling of a transient error)
+
+**Status (2026-08-12):** 🆕 reported
+
+Observed: `lib/bourse/error.ex` maps `"InvalidNonce" => :authentication_error` (name map, ~line 260),
+and `:authentication_error` carries `retry_class: :auth` (~line 186) — "do not retry without
+intervention", `should_retry?/1` false. The moduledoc folds it in explicitly: ":authentication_error —
+API key/secret rejected **or invalid nonce**".
+
+Expected: nonce/timestamp-window errors are typically transient (client clock skew, concurrent
+signers racing a nonce, venue-side recv-window jitter) and succeed on retry after re-sync. CCXT
+master deliberately does NOT put InvalidNonce under AuthenticationError: `ts/src/base/errors.ts`
+has `InvalidNonce → NetworkError → OperationFailed` (fetched 2026-08-12) — reference taxonomy,
+but it reflects practice: retry, don't treat as credential failure.
+
+Consumer impact (how this was found): `trading_dashboard`'s persisted order journal treats
+`retry_class :auth` as a DEFINITE rejection (`OrderLifecycle @definite_rejection_classes
+[:auth, :non_retryable]`). A transient nonce error while placing a protective stop therefore
+marks the order `:rejected` terminal and strands the guarding ladder `:rejected` while the
+position is live — a money-path dead-end triggered by a clock-skew blip.
+
+Suggested fix shape: give InvalidNonce its own type (or map it to the network/transient class)
+so `retry_class` is retryable; keep genuine credential rejection (`AuthenticationError`,
+`PermissionDenied`) as `:auth`. At minimum, split "credentials invalid" from "nonce/timestamp
+drift" so consumers can distinguish intervention-required from retry-after-resync.
+
+---
+
 ## 2026-08-10 — binanceusdm `cancel_order` on Algo (conditional) orders: successful cancel returns a near-all-nil Order struct
 
 **Method:** `Bourse.cancel_order(ex, algo_id, symbol: "ETH/USDT:USDT")` · **Exchange:** binanceusdm (demo-fapi, sandbox) · **Severity:** low/medium
