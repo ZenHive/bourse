@@ -24063,13 +24063,13 @@
           "before": null,
           "currency": null,
           "datetime": null,
-        "direction": {
-          "key": "income",
-          "kind": "sign_direction",
-          "negative": "out",
-          "positive": "in",
-          "zero": "in"
-        },
+          "direction": {
+            "key": "income",
+            "kind": "sign_direction",
+            "negative": "out",
+            "positive": "in",
+            "zero": "in"
+          },
           "fee": null,
           "id": {
             "coercion": "safeString2",
@@ -24097,9 +24097,9 @@
           },
           "type": {
             "coercion": "safeString",
-          "enum_map": {
-            "API_REBATE": "rebate",
-            "AUTO_EXCHANGE": "trade",
+            "enum_map": {
+              "API_REBATE": "rebate",
+              "AUTO_EXCHANGE": "trade",
               "COIN_SWAP_DEPOSIT": "deposit",
               "COIN_SWAP_WITHDRAW": "withdrawal",
               "COMMISSION": "commission",
@@ -24110,8 +24110,8 @@
               "DELIVERED_SETTELMENT": "settlement",
               "FEE": "fee",
               "FUNDING_FEE": "fee",
-            "INTERNAL_TRANSFER": "transfer",
-            "INSURANCE_CLEAR": "settlement",
+              "INTERNAL_TRANSFER": "transfer",
+              "INSURANCE_CLEAR": "settlement",
               "OPTIONS_PREMIUM_FEE": "fee",
               "OPTIONS_SETTLE_PROFIT": "settlement",
               "POSITION_LIMIT_INCREASE_FEE": "fee",
