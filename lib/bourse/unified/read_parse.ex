@@ -1832,9 +1832,15 @@ defmodule Bourse.Unified.ReadParse do
       "raw value #{inspect(raw_value)}"
   end
 
+  defp response_error_message({:unmapped_ledger_type, %{venue: venue, field: field, raw_value: raw_value}}) do
+    "Unmapped authored ledger type for venue #{inspect(venue)}, field #{inspect(field)}, " <>
+      "raw value #{inspect(raw_value)}"
+  end
+
   defp response_error_message(other), do: "Unified response parse failed: #{inspect(other)}"
 
   defp response_error_raw({:unmapped_order_status, details}), do: details
+  defp response_error_raw({:unmapped_ledger_type, details}), do: details
   defp response_error_raw({_tag, raw}), do: raw
   defp response_error_raw(_other), do: nil
 

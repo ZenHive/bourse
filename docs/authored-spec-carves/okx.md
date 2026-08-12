@@ -1704,3 +1704,23 @@ Outcome: CONFIRM provider arithmetic; retain one history-position gap.**
 <!-- carve-evidence-status
 {"carve_id":"C-T594j","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"OKX interest, funding, position, ticker, and fee contracts linked in C-T594j"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/okx/fetch_funding_rate_history.json plus authored cross-field arithmetic"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The history-position maintenance-margin percentage is a scale-invariant zero without a provider maintenance-margin/notional identity"}
 -->
+
+## 2026-08-12 — ledger type authority (Task 598)
+
+**C-T598c — bill types come from OKX's authenticated Get bills types enumeration (task 598).
+Outcome: CONFIRM live provider vocabulary; preserve additions explicitly.**
+
+- *Provider contract:* the bills documentation delegates the type vocabulary to authenticated
+  `GET /api/v5/account/subtypes` (Get bills types) instead of maintaining an inline enum.
+- *Live confrontation:* international demo returned `code=0` on 2026-08-12 with 32 top-level
+  types: `1`–`16`, then `20`, `22`, `24`, `26`–`30`, `32`–`35`, `37`, `38`,
+  `250`, and `251`.
+- *Our carve:* all 32 values have explicit arms. Types without an authored unified alias preserve
+  the provider number, and `enum_passthrough: true` preserves later enumeration additions rather
+  than producing `nil` between refreshes.
+- *Direction:* OKX defines positive `balChg` as a balance increase and negative as a decrease;
+  zero has no flow direction and maps to `nil`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T598c","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 Get bills types contract at GET /api/v5/account/subtypes"},"observed_evidence":{"kind":"live_venue","reference":"www.okx.com simulated-trading authenticated account/subtypes code=0 response on 2026-08-12 returned the 32 registered top-level type values"},"compatibility_reference":null,"resolved_tier":1}
+-->

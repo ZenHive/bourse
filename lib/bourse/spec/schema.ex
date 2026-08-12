@@ -150,6 +150,7 @@ defmodule Bourse.Spec.Schema do
     validate_oracles!(spec, exchange_id)
     validate_option_quantity!(spec, exchange_id)
     validate_greeks_conventions!(spec, exchange_id)
+    validate_ledger_type_policy!(spec, exchange_id)
     validate_order_status_policy!(spec, exchange_id)
     spec
   end
@@ -702,6 +703,35 @@ defmodule Bourse.Spec.Schema do
     |> get_in(["normalization", "field_maps", "order"])
     |> order_field_maps()
     |> Enum.each(&validate_order_status_rule!(&1["status"], exchange_id))
+  end
+
+  defp validate_ledger_type_policy!(spec, exchange_id) do
+    spec
+    |> get_in(["normalization", "field_maps", "ledger_entry", "field_map", "type"])
+    |> validate_ledger_type_rule!(exchange_id)
+  end
+
+  defp validate_ledger_type_rule!(nil, _exchange_id), do: :ok
+
+  defp validate_ledger_type_rule!(%{"enum_map" => enum_map} = rule, exchange_id)
+       when is_map(enum_map) and map_size(enum_map) > 0 do
+    if Map.has_key?(rule, "enum_default") do
+      gap!(
+        exchange_id,
+        ~w(normalization field_maps ledger_entry type enum_default),
+        "ledger type must fail loudly unless enum_passthrough is explicitly true"
+      )
+    end
+  end
+
+  defp validate_ledger_type_rule!(rule, exchange_id) when is_map(rule) do
+    if Map.has_key?(rule, "enum_default") do
+      gap!(
+        exchange_id,
+        ~w(normalization field_maps ledger_entry type enum_default),
+        "ledger type must not silently default an unmapped value"
+      )
+    end
   end
 
   defp order_field_maps(%{"branches" => branches}) when is_list(branches) do

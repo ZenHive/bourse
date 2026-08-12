@@ -24059,16 +24059,30 @@
         "field_map": {
           "account": null,
           "after": null,
-          "amount": null,
+        "amount": {
+          "coercion": "safeNumber",
+          "fallback_keys": [
+            "amount"
+          ],
+          "format": null,
+          "key": "income"
+        },
           "before": null,
-          "currency": null,
+        "currency": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "asset"
+        },
           "datetime": null,
-          "direction": {
-            "key": "income",
-            "kind": "sign_direction",
-            "negative": "out",
-            "positive": "in",
-            "zero": "in"
+        "direction": {
+          "fallback_keys": [
+            "amount"
+          ],
+          "key": "income",
+          "kind": "sign_direction",
+          "negative": "out",
+          "positive": "in",
+          "zero": null
           },
           "fee": null,
           "id": {
@@ -24098,31 +24112,36 @@
           "type": {
             "coercion": "safeString",
             "enum_map": {
-              "API_REBATE": "rebate",
-              "AUTO_EXCHANGE": "trade",
-              "COIN_SWAP_DEPOSIT": "deposit",
-              "COIN_SWAP_WITHDRAW": "withdrawal",
-              "COMMISSION": "commission",
-              "COMMISSION_REBATE": "rebate",
-              "CONTEST_REWARD": "cashback",
-              "CONTRACT": "trade",
-              "CROSS_COLLATERAL_TRANSFER": "transfer",
-              "DELIVERED_SETTELMENT": "settlement",
-              "FEE": "fee",
-              "FUNDING_FEE": "fee",
+            "API_REBATE": "rebate",
+            "AUTO_EXCHANGE": "trade",
+            "BFUSD_REWARD": "cashback",
+            "COIN_SWAP_DEPOSIT": "deposit",
+            "COIN_SWAP_WITHDRAW": "withdrawal",
+            "COMMISSION": "commission",
+            "COMMISSION_REBATE": "rebate",
+            "CONTEST_REWARD": "cashback",
+            "CROSS_COLLATERAL_TRANSFER": "transfer",
+            "DELIVERED_SETTELMENT": "settlement",
+            "FEE": "fee",
+            "FEE_RETURN": "rebate",
+            "FUNDING_FEE": "fee",
               "INTERNAL_TRANSFER": "transfer",
               "INSURANCE_CLEAR": "settlement",
               "OPTIONS_PREMIUM_FEE": "fee",
               "OPTIONS_SETTLE_PROFIT": "settlement",
               "POSITION_LIMIT_INCREASE_FEE": "fee",
               "REALIZED_PNL": "trade",
-              "REFERRAL_KICKBACK": "referral",
-              "TRANSFER": "transfer",
-              "WELCOME_BONUS": "cashback"
-            },
-            "format": null,
-            "key": "type"
-          }
+            "REFERRAL_KICKBACK": "referral",
+            "STRATEGY_UMFUTURES_TRANSFER": "transfer",
+            "TRANSFER": "transfer",
+            "WELCOME_BONUS": "cashback"
+          },
+          "fallback_keys": [
+            "type"
+          ],
+          "format": null,
+          "key": "incomeType"
+        }
         }
       },
       "leverage": {

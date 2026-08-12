@@ -1005,25 +1005,27 @@ names (task 534). Outcome: CONFIRM routing boundary.**
 -->
 
 **C-T592c — the generic Binance ledger map preserves the complete futures-family income
-vocabulary and signed direction (task 592). Outcome: CONFIRMED vocabulary membership;
-DIVERGE on the unified mapping of the two new arms (amended 2026-08-12, ARC pass);
-map wiring UNVERIFIED against this venue's own routed endpoints.**
+vocabulary and signed direction (task 592; amended by Task 598). Outcome: CONFIRM provider vocabulary
+and routed row shapes; DIVERGE where unified labels require judgment.**
 
-- *Exchange semantics:* the COIN-M and USD-M Income History operations define the common
-  vocabulary; the USD-M change log adds `AUTO_EXCHANGE`. Both contracts carry signed `income`.
-  Neither contract defines what `INSURANCE_CLEAR` means; `AUTO_EXCHANGE` is documented only
-  as a Multi-Assets-margin auto-exchange event.
-- *Our carve:* the shared Binance map includes `INSURANCE_CLEAR` as `settlement` and
-  `AUTO_EXCHANGE` as `trade` **by our judgment** (provider silent on meaning), and the same
-  sign-derived `in`/`out` direction used by the venue-specific futures modules.
-- *Verification:* the documented-set guard registers the endpoint contracts and change log;
-  venue-specific signed fixtures pin the direction recipe. The 2026-08-12 ARC pass found this
-  venue's own map keys unconfronted against its routed income/bill endpoints (type reads
-  `type` where income rows carry `incomeType`; `amount`/`currency` authored null) — tracked
-  as a scored follow-up task; the fixtures above verify the USD-M/COIN-M modules, not this map.
+- *Exchange semantics:* the official Binance Java SDK's USD-M `IncomeType` enum carries 22
+  literals. The options Account Funding Flow contract independently documents `asset`, signed
+  `amount`, and a `type` described as fees. The four futures/portfolio-margin routes emit
+  `incomeType`, signed `income`, and `asset`; the options route emits `type`, `amount`, and
+  `asset`.
+- *Our carve:* the generic map reads both row shapes through explicit fallback keys. `FEE` is
+  retained only for the provider-owned options contract; the unsupported `CONTRACT` arm is
+  removed. `STRATEGY_UMFUTURES_TRANSFER`, `FEE_RETURN`, and `BFUSD_REWARD` are mapped by our
+  coarse unified judgment, as are `INSURANCE_CLEAR` and `AUTO_EXCHANGE`.
+- *Direction:* provider contracts define positive as inflow and negative as outflow. They do
+  not assign a direction to zero, so the zero arm is `nil` rather than inventing an inflow.
+- *Verification:* the registered generic-Binance demo recording from `fapi/v1/income` is parsed
+  through `Bourse.Binance` and pins type, signed amount, asset, and direction. A provider-shaped
+  options row pins the `type`/`amount` fallback. The coverage guard independently transcribes
+  the pinned official SDK enums and asserts equality in both directions.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T592c","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binance/manifest.json plus binancecoinm/binanceusdm developer-docs-full artifacts; both Income History contracts and the USD-M change log"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binanceusdm/fetch_ledger.json and provider-shaped COIN-M income parser fixture"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Sibling-venue fixtures verify the USD-M/COIN-M modules; this venue's own ledger map keys (type vs incomeType, null amount/currency) are unconfronted against its routed income/bill endpoints - scored follow-up task filed 2026-08-12"}
+{"carve_id":"C-T592c","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance official Java SDK a13868d0 IncomeType and AccountFundingFlowResponseInner contracts; USD-M/COIN-M Income History contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binance/fetch_funding_history.json captured from demo-fapi.binance.com fapi/v1/income and parsed through the generic Binance ledger map"},"compatibility_reference":null,"resolved_tier":1}
 -->
 
 ## 2026-08-12 — rate-unit confrontation (Task 594)

@@ -684,6 +684,16 @@ defmodule Bourse.SpecTest do
              )
     end
 
+    test "ledger type rejects a silent enum default" do
+      binance = owned_spec("binance")
+      type_path = ["normalization", "field_maps", "ledger_entry", "field_map", "type"]
+      silent_default = update_in(binance, type_path, &Map.put(&1, "enum_default", nil))
+
+      assert_raise ArgumentError, ~r/ledger_entry\.type\.enum_default.*fail loudly/, fn ->
+        Schema.validate!(silent_default, "binance")
+      end
+    end
+
     test "every authored order-status rule declares its unknown-value policy" do
       for venue <-
             ~w(alpaca binance binancecoinm binanceusdm bybit coinbaseexchange deribit derive hyperliquid lighter okx) do

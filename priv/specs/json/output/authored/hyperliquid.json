@@ -9646,11 +9646,23 @@
             "key": "time"
           },
           "type": {
-            "coercion": "safeString",
-            "enum_map": {
-              "accountClassTransfer": "transfer",
-              "internalTransfer": "transfer"
-            },
+          "coercion": "safeString",
+          "enum_map": {
+            "accountClassTransfer": "transfer",
+            "deposit": "deposit",
+            "internalTransfer": "transfer",
+            "liquidation": "liquidation",
+            "rewardsClaim": "rewardsClaim",
+            "spotGenesis": "spotGenesis",
+            "spotTransfer": "spotTransfer",
+            "subAccountTransfer": "subAccountTransfer",
+            "vaultCreate": "vaultCreate",
+            "vaultDeposit": "vaultDeposit",
+            "vaultDistribution": "vaultDistribution",
+            "vaultLeaderCommission": "vaultLeaderCommission",
+            "vaultWithdraw": "vaultWithdraw",
+            "withdraw": "withdraw"
+          },
             "enum_passthrough": true,
             "fallback_keys": [
               "type"

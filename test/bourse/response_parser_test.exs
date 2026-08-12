@@ -905,6 +905,26 @@ defmodule Bourse.ResponseParserTest do
              )
   end
 
+  test "unmapped authored ledger type fails with venue, source field, and raw value" do
+    mapping = %{"type" => %{"key" => "incomeType", "enum_map" => %{"TRANSFER" => "transfer"}}}
+
+    assert {:error, {:unmapped_ledger_type, %{venue: "binance", field: "incomeType", raw_value: "PROVIDER_ADDED"}}} =
+             ResponseParser.apply_mappings(
+               %{"incomeType" => "PROVIDER_ADDED"},
+               mapping,
+               target: Bourse.LedgerEntry,
+               venue: "binance"
+             )
+
+    assert {:ok, %Bourse.LedgerEntry{type: "PROVIDER_ADDED"}} =
+             ResponseParser.apply_mappings(
+               %{"incomeType" => "PROVIDER_ADDED"},
+               put_in(mapping, ["type", "enum_passthrough"], true),
+               target: Bourse.LedgerEntry,
+               venue: "binance"
+             )
+  end
+
   test "order status preserves missing values and only passes unknown values through explicitly" do
     strict = %{"status" => %{"key" => "state", "enum_map" => %{"open" => "open"}}}
     passthrough = put_in(strict, ["status", "enum_passthrough"], true)

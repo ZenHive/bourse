@@ -594,7 +594,15 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
       assert entry.amount == Bourse.Safe.number(entry.info["balChg"])
       assert entry.after == Bourse.Safe.number(entry.info["bal"])
       assert_in_delta entry.before, entry.after - entry.amount, 1.0e-6
-      assert entry.direction == if(entry.amount < 0, do: "out", else: "in")
+
+      expected_direction =
+        cond do
+          entry.amount < 0 -> "out"
+          entry.amount > 0 -> "in"
+          true -> nil
+        end
+
+      assert entry.direction == expected_direction
       assert entry.status == "ok"
 
       case entry.fee do

@@ -493,3 +493,20 @@ Outcome: CONFIRM provider arithmetic.**
 <!-- carve-evidence-status
 {"carve_id":"C-T594i","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid funding, fees, clearinghouse, mids, and fills contracts linked in C-T594i"},"observed_evidence":{"kind":"recorded_venue","reference":"Registered Hyperliquid funding-rate-history accepted request plus provider cross-field formulas"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Dynamic user fee rates and a populated clearinghouse percentage row are not both covered by manifest-registered responses"}
 -->
+
+## 2026-08-12 — ledger type authority (Task 598)
+
+**C-T598d — non-funding ledger delta types follow the provider's `WsLedgerUpdate` union (task 598).
+Outcome: CONFIRM 14 literal types; preserve additions explicitly.**
+
+- *Provider contract:* the WebSocket subscription schema names 12 union members; expanding
+  `WsVaultDelta`'s `vaultCreate`, `vaultDeposit`, and `vaultDistribution` literals yields 14
+  distinct `delta.type` values.
+- *Our carve:* every literal is explicit. `accountClassTransfer` and `internalTransfer` retain
+  their unified `transfer` aliases; other types preserve the provider literal. The existing
+  `enum_passthrough: true` is the deliberate forward-compatible policy, so a new delta type is
+  observable instead of silently becoming `nil`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T598d","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid WebSocket subscriptions WsUserNonFundingLedgerUpdates / WsLedgerUpdate union"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Provider-owned schema pins the complete 14-type vocabulary; no account can summon every ledger event on demand"}
+-->

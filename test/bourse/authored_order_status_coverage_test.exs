@@ -12,10 +12,20 @@ defmodule Bourse.AuthoredOrderStatusCoverageTest do
   # Governed, exact, and intended only to shrink. Each entry identifies one field
   # whose provider-native vocabulary is deliberately open beyond its mapped aliases.
   @enum_passthrough_exemptions %{
+    {"bybit", ~w(normalization field_maps ledger_entry field_map type)} => %{
+      reason:
+        "The complete provider transaction-log vocabulary is mapped; additional provider-native ledger types retain their identifier.",
+      tracking: "Task 598; docs/authored-spec-carves/bybit.md C-T598b"
+    },
     {"hyperliquid", ~w(normalization field_maps ledger_entry field_map type)} => %{
       reason:
-        "Ledger delta.type carries provider-native event categories; only the two transfer aliases collapse to unified transfer.",
-      tracking: "Task 552; docs/authored-spec-carves/hyperliquid.md C-T302"
+        "All 14 documented delta types are mapped; additional provider-native ledger types retain their identifier.",
+      tracking: "Task 598; docs/authored-spec-carves/hyperliquid.md C-T598d"
+    },
+    {"okx", ~w(normalization field_maps ledger_entry field_map type)} => %{
+      reason:
+        "The live provider bill-type enumeration is mapped; additional provider-native ledger types retain their identifier.",
+      tracking: "Task 598; docs/authored-spec-carves/okx.md C-T598c"
     },
     {"okx", ~w(normalization field_maps order field_map type)} => %{
       reason:

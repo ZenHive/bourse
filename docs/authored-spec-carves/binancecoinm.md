@@ -306,13 +306,14 @@ contract (task 592). Outcome: CONFIRM provider contract.**
   `FUNDING_FEE`, `REALIZED_PNL`, `COMMISSION`, `INSURANCE_CLEAR`, and
   `DELIVERED_SETTELMENT`; `income` is signed.
 - *Our carve:* `INSURANCE_CLEAR` normalizes to `settlement`, while the sign of `income`
-  produces `direction` (`out` when negative, `in` otherwise). Defensive family aliases
-  remain allowed beyond the documented COIN-M set.
-- *Verification:* the documented-set guard pins the complete provider vocabulary, and the
+  produces `direction` (`out` when negative, `in` when positive). Zero has no provider-defined
+  direction and maps to `nil`. Family aliases absent from the seven-value provider enum are
+  removed rather than silently treated as COIN-M vocabulary.
+- *Verification:* the two-way documented-set guard pins the exact official SDK enum, and the
   provider-shaped negative income fixture pins `direction: "out"` offline.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T592a","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binancecoinm/manifest.json artifact developer-docs-full; COIN-M Get Income History contract"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The demo account returned an empty income history; the complete enum and signed direction are pinned from the provider contract and provider-shaped offline parser fixture"}
+{"carve_id":"C-T592a","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance official Java SDK a13868d0 COIN-M IncomeType enum and Get Income History contract"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The demo account returned an empty income history; the exact seven-value enum and signed direction are pinned from the provider contract and provider-shaped offline parser fixture"}
 -->
 
 ## 2026-08-12 — rate-unit confrontation (Task 594)

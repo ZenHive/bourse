@@ -483,14 +483,17 @@ mapping of the two new arms (amended 2026-08-12, ARC pass).**
   `INSURANCE_CLEAR`, and describes `AUTO_EXCHANGE` only as a Multi-Assets-margin
   auto-exchange event — a system-initiated conversion, not an order fill.
 - *Our carve:* `INSURANCE_CLEAR` normalizes to `settlement` and `AUTO_EXCHANGE` to `trade` by
-  **our judgment** (the provider is silent on meaning); `income` sign produces `direction`
-  (`out` when negative, `in` otherwise). A consumer deriving trade activity from the ledger
-  cannot distinguish `AUTO_EXCHANGE` rows from fills without reading `info`.
-- *Verification:* the full-contract documented-set guard pins both sources. The registered
-  populated USD-M income recording and provider-shaped parser test pin negative rows as `out`.
+  **our judgment** (the provider is silent on meaning). The official SDK's 22-value enum adds
+  `STRATEGY_UMFUTURES_TRANSFER`, `FEE_RETURN`, and `BFUSD_REWARD`; the routed options Funding
+  Flow contract independently evidences `FEE`. `CONTRACT` is removed. Futures rows read
+  `incomeType`/`income`; options rows read fallback `type`/`amount`.
+- *Direction:* negative is `out`, positive is `in`, and zero is `nil` because the provider
+  assigns no flow direction to a zero amount.
+- *Verification:* the two-way documented-set guard pins the official SDK sources. The registered
+  populated USD-M income recording pins negative rows as `out`.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T592b","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binanceusdm/manifest.json artifact developer-docs-full; USD-M Get Income History contract plus provider change log"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binanceusdm/fetch_ledger.json"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T592b","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance official Java SDK a13868d0 USD-M IncomeType and options AccountFundingFlowResponseInner contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binanceusdm/fetch_ledger.json"},"compatibility_reference":null,"resolved_tier":1}
 -->
 
 ## 2026-08-12 — rate-unit confrontation (Task 594)

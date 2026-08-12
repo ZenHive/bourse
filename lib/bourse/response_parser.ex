@@ -827,15 +827,24 @@ defmodule Bourse.ResponseParser do
 
   defp map_enum(value, _rule, _context), do: value
 
-  # An unmapped enum value drops to the authored `enum_default` (nil when absent) so a
-  # venue code the carve deliberately does not translate never leaks through as a
-  # unified value. Two authored opt-ins keep the venue's own identifier instead:
+  # Most unmapped enum values drop to the authored `enum_default` (nil when absent).
+  # Ledger types and order statuses are strict because losing a provider addition is
+  # silent data corruption. Two authored opt-ins keep the venue's own identifier:
   # `"enum_fallback": "raw"` (Binance network ids — the real vocabulary is open-ended,
   # nil-ing an identifier the venue DID supply loses more than leaving it unnormalized)
   # and `"enum_passthrough": true` (fall back to the raw enum value when no mapping
-  # exists; Hyperliquid ledger `type` keeps venue-native rows while translating
-  # transfer aliases).
+  # exists).
   defp enum_fallback(value, %{"enum_passthrough" => true}, _context), do: value
+
+  defp enum_fallback(value, rule, %{target: Bourse.LedgerEntry, field: "type"} = context) do
+    {:error,
+     {:unmapped_ledger_type,
+      %{
+        venue: context.venue,
+        field: rule["key"] || "type",
+        raw_value: value
+      }}}
+  end
 
   defp enum_fallback(value, rule, %{target: Bourse.Order, field: "status"} = context) do
     {:error,

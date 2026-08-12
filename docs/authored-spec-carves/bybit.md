@@ -669,3 +669,22 @@ Outcome: CONFIRM provider arithmetic where available; retain one position-histor
 <!-- carve-evidence-status
 {"carve_id":"C-T594e","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Bybit funding-fee, borrow-history, ticker, position, instrument, and fee-rate contracts linked in C-T594e"},"observed_evidence":{"kind":"recorded_venue","reference":"Registered Bybit ticker/funding response plus provider example cross-field arithmetic"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The closed-position cumEntryValue/cumExitValue ratio is not identified by Bybit as an initial-margin percentage"}
 -->
+
+## 2026-08-12 — ledger type authority (Task 598)
+
+**C-T598b — ledger types follow the pinned UTA and contract transaction-log enums (task 598).
+Outcome: CONFIRM provider vocabulary; preserve provider additions explicitly.**
+
+- *Provider contract:* the pinned Bybit V5 enum source contains 100 UTA rows and 15 contract
+  rows, yielding 101 unique type literals. The eight legacy mixed-case names inherited from the
+  frozen compatibility reference do not occur in either provider enum and are removed.
+- *Our carve:* every documented literal has an explicit enum arm. Values without a deliberately
+  authored unified alias preserve the provider literal; `enum_passthrough: true` preserves a new
+  provider value until the pinned registry is refreshed. This is an explicit open-vocabulary
+  decision, not a silent `nil` default.
+- *Direction:* `change = cashFlow + funding - fee` is signed. Positive is `in`, negative is
+  `out`, and zero has no flow direction, so it maps to `nil`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T598b","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Bybit docs commit 5ccd3010 docs/v5/enum.mdx type(uta-translog) and type(contract-translog), plus transaction-log change arithmetic"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The complete provider vocabulary and explicit passthrough policy are pinned; no live account can summon every ledger type"}
+-->
