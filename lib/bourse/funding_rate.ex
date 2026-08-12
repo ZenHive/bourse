@@ -12,13 +12,13 @@ defmodule Bourse.FundingRate do
     * `funding_rate` - Current funding rate as decimal
     * `mark_price` - Current mark price
     * `index_price` - Current index price
-    * `interest_rate` - Interest rate component
+    * `interest_rate` - Interest rate component as a fraction (0.0001 = 0.01%)
     * `estimated_settle_price` - Estimated settlement price
     * `funding_timestamp` - Funding event timestamp
     * `funding_datetime` - Funding event datetime
     * `next_funding_timestamp` - Next funding event timestamp
     * `next_funding_datetime` - Next funding event datetime
-    * `next_funding_rate` - Next estimated funding rate
+    * `next_funding_rate` - Next estimated funding rate as a fraction
     * `previous_funding_timestamp` - Previous funding event timestamp
     * `previous_funding_datetime` - Previous funding event datetime
     * `previous_funding_rate` - Previous funding rate
@@ -99,13 +99,13 @@ defmodule Bourse.FundingRate do
                    funding_rate: "Current funding rate as decimal",
                    mark_price: "Current mark price",
                    index_price: "Current index price",
-                   interest_rate: "Interest rate component",
+                   interest_rate: "Interest rate component as a fraction (0.0001 = 0.01%)",
                    estimated_settle_price: "Estimated settlement price",
                    funding_timestamp: "Funding event timestamp",
                    funding_datetime: "Funding event datetime",
                    next_funding_timestamp: "Next funding event timestamp",
                    next_funding_datetime: "Next funding event datetime",
-                   next_funding_rate: "Next estimated funding rate",
+                   next_funding_rate: "Next estimated funding rate as a fraction",
                    previous_funding_timestamp: "Previous funding event timestamp",
                    previous_funding_datetime: "Previous funding event datetime",
                    previous_funding_rate: "Previous funding rate",

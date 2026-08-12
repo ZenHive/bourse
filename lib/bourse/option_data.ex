@@ -21,7 +21,7 @@ defmodule Bourse.OptionData do
     * `last_price` - Last traded price
     * `underlying_price` - Underlying asset price
     * `change` - Price change
-    * `percentage` - Percentage change
+    * `percentage` - Percentage change in percent points (10 = 10%)
     * `base_volume` - Volume in base currency
     * `quote_volume` - Volume in quote currency
     * `info` - Raw exchange response
@@ -108,7 +108,7 @@ defmodule Bourse.OptionData do
                    last_price: "Last traded price",
                    underlying_price: "Underlying asset price",
                    change: "Price change",
-                   percentage: "Percentage change",
+                   percentage: "Percentage change in percent points (10 = 10%)",
                    base_volume: "Volume in base currency",
                    quote_volume: "Volume in quote currency",
                    info: "Raw exchange response"

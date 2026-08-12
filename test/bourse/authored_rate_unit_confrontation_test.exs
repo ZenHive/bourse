@@ -3,7 +3,12 @@ defmodule Bourse.AuthoredRateUnitConfrontationTest do
   use ExUnit.Case, async: true
 
   @runtime_support_path "priv/specs/json/runtime_support.json"
+  @external_resource @runtime_support_path
   @venues @runtime_support_path |> File.read!() |> Jason.decode!() |> Map.fetch!("venues")
+  for venue <- @venues do
+    @external_resource Path.join("docs/authored-spec-carves", "#{venue}.md")
+  end
+
   @registers Map.new(@venues, fn venue ->
                path = Path.join("docs/authored-spec-carves", "#{venue}.md")
                {venue, File.read!(path)}

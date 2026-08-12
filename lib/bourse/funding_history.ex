@@ -12,7 +12,7 @@ defmodule Bourse.FundingHistory do
     * `timestamp` - Payment time in milliseconds
     * `datetime` - ISO 8601 datetime string
     * `amount` - Funding amount (positive = received, negative = paid)
-    * `rate` - Funding rate applied for the payment (when the venue supplies it)
+    * `rate` - Funding rate applied for the payment as a fraction, when the venue supplies it
     * `info` - Raw exchange response
 
   """
@@ -50,7 +50,7 @@ defmodule Bourse.FundingHistory do
                    timestamp: "Payment time in milliseconds",
                    datetime: "ISO 8601 datetime string",
                    amount: "Funding amount (positive = received, negative = paid)",
-                   rate: "Funding rate applied for the payment (when the venue supplies it)",
+                   rate: "Funding rate applied for the payment as a fraction, when the venue supplies it",
                    info: "Raw exchange response"
                  ]
                )

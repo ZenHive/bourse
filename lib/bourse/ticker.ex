@@ -16,7 +16,7 @@ defmodule Bourse.Ticker do
       supply volume units that form a price — see caveats below)
     * `open`, `close`, `last` - 24h open, close, and last trade prices
     * `previous_close` - Previous 24h close
-    * `change`, `percentage` - 24h absolute change and percentage
+    * `change`, `percentage` - 24h absolute change and percentage in percent points (10 = 10%)
     * `average` - Average of open and close
     * `base_volume`, `quote_volume` - 24h volume in base/quote currency
     * `index_price`, `mark_price` - Derivatives index/mark prices
@@ -130,7 +130,7 @@ defmodule Bourse.Ticker do
                    last: "Last trade price",
                    previous_close: "Previous 24h close",
                    change: "24h absolute price change",
-                   percentage: "24h percentage change",
+                   percentage: "24h percentage change in percent points (10 = 10%)",
                    average: "Average of open and close",
                    base_volume: "24h volume in base currency",
                    quote_volume: "24h volume in quote currency",
