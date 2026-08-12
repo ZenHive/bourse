@@ -75,7 +75,7 @@ roadmap.
 
 **Method:** any signed call whose venue error maps through `"InvalidNonce"` (`lib/bourse/error.ex` name map) · **Exchange:** all (classification layer, not venue-specific) · **Severity:** medium (consumer-side terminal handling of a transient error)
 
-**Status (2026-08-12):** 🆕 reported
+**Status (2026-08-12):** 📋 triaged — workbench task 604 (dedicated retryable type for the InvalidNonce class; credential rejection stays `:auth`). The lossy collapse was a documented deliberate choice (`error.ex` ~169–171: "AuthenticationError(:auth) wins over the InvalidNonce(:network) edge"); this consumer case shows the money path needs the `:network` side.
 
 Observed: `lib/bourse/error.ex` maps `"InvalidNonce" => :authentication_error` (name map, ~line 260),
 and `:authentication_error` carries `retry_class: :auth` (~line 186) — "do not retry without
