@@ -389,7 +389,7 @@ defmodule Bourse.Spec.Promotion.Evidence do
          paths when is_list(paths) and paths != [] <- details["paths"],
          setup when is_map(setup) <- details["credential_setup"] do
       root = Keyword.get(opts, :root, File.cwd!())
-      path_gaps = Enum.flat_map(paths, &integration_path_gaps(&1, root))
+      path_gaps = Enum.flat_map(paths, &integration_path_gaps(&1, root, setup["public_only"] == true))
       path_gaps ++ credential_setup_gaps(setup)
     else
       _other ->
@@ -403,10 +403,16 @@ defmodule Bourse.Spec.Promotion.Evidence do
     end
   end
 
-  defp integration_path_gaps(path, root) do
+  defp integration_path_gaps(path, root, public_only?) do
     with {:ok, expanded_path} <- expand_within_root(path, root),
          {:ok, source} <- read_source(expanded_path) do
-      requirements = ["@moduletag :integration", "@moduletag :network", "require_credentials!"]
+      # A public-only venue has no credential gate to demand; requiring the
+      # hook's literal name there only forces a vacuous `do: :ok` stub.
+      requirements =
+        if public_only?,
+          do: ["@moduletag :integration", "@moduletag :network"],
+          else: ["@moduletag :integration", "@moduletag :network", "require_credentials!"]
+
       missing = Enum.reject(requirements, &String.contains?(source, &1))
       skip? = Regex.match?(~r/@(?:module)?tag\s+:skip/, source)
 

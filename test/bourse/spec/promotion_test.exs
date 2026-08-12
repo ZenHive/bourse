@@ -243,14 +243,50 @@ defmodule Bourse.Spec.PromotionTest do
         })
       end)
 
+    # A public-only venue has no credential gate: promotion must not demand
+    # the require_credentials! hook (that demand forces a vacuous stub).
+    root = promotion_root!(candidate)
+    integration_dest = Path.join(root, @integration_path)
+
+    credless_source =
+      integration_dest
+      |> File.read!()
+      |> String.replace("require_credentials!", "public_only_setup")
+
+    File.write!(integration_dest, credless_source)
+
     assert {:ok, promoted} =
              Promotion.promote(candidate, report,
                command_runner: passing_runner(),
-               root: promotion_root!(candidate)
+               root: root
              )
 
     assert promoted["auth"]["authenticated_sections"] == []
     assert promoted["auth"]["signing_pattern"] == nil
+  end
+
+  test "an authenticated candidate still requires the credential gate hook" do
+    candidate = promotion_candidate()
+    root = promotion_root!(candidate)
+    integration_dest = Path.join(root, @integration_path)
+
+    credless_source =
+      integration_dest
+      |> File.read!()
+      |> String.replace("require_credentials!", "no_gate_here")
+
+    File.write!(integration_dest, credless_source)
+
+    assert {:error, gaps} =
+             Promotion.promote(candidate, complete_report(candidate),
+               command_runner: passing_runner(),
+               root: root
+             )
+
+    assert Enum.any?(gaps, fn gap ->
+             gap.code == :integration_test_contract_invalid and
+               gap.message =~ "require_credentials!"
+           end)
   end
 
   test "an integration test that silently skips cannot promote" do

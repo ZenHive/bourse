@@ -258,6 +258,21 @@ defmodule Bourse.Unified.ReadParseTest do
     end
   end
 
+  defmodule MillisecondRowColumnsOhlcvParser do
+    @moduledoc false
+
+    def __response_envelopes__ do
+      %{
+        "ohlcv" => %{
+          "fetchOHLCV" => %{
+            "row_columns" => ~w(timestamp low high open close volume),
+            "timestamp_unit" => "milliseconds"
+          }
+        }
+      }
+    end
+  end
+
   # Currency fakes: each builds a partial Currency per raw entry; `code`/`info`
   # are filled by ReadParse (Bourse `safeCurrencyCode` + raw `info`), not the parser.
   defmodule ResultEnvelopeCurrencyParser do
@@ -596,6 +611,24 @@ defmodule Bourse.Unified.ReadParseTest do
                  :parse_ohlcv,
                  true
                )
+    end
+
+    test "row_columns without a seconds timestamp_unit raises instead of parsing positionally" do
+      exchange = Exchange.new!("binance")
+      body = [[1_710_327_600_000, "8", "11", "9", "10", "0.5"]]
+
+      assert_raise ArgumentError, ~r/row_columns requires list rows and timestamp_unit "seconds"/, fn ->
+        ReadParse.parse(
+          exchange,
+          MillisecondRowColumnsOhlcvParser,
+          :fetch_ohlcv,
+          "fetchOHLCV",
+          body,
+          %{},
+          :parse_ohlcv,
+          true
+        )
+      end
     end
 
     test "rejects a jsonrpc error envelope before transposing" do

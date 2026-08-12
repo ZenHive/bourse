@@ -1690,6 +1690,14 @@ defmodule Bourse.Unified.ReadParse do
     ]
   end
 
+  # Any row_columns config falling past the clause above would silently be
+  # read positionally as [ts, o, h, l, c, v] — mis-ordered OHLC, no error.
+  defp coerce_ohlcv_row(_row, %{"row_columns" => _columns} = config) do
+    raise ArgumentError,
+          "authored ohlcv row_columns requires list rows and timestamp_unit \"seconds\"; " <>
+            "got timestamp_unit #{inspect(Map.get(config, "timestamp_unit"))}"
+  end
+
   defp coerce_ohlcv_row([ts, o, h, l, c, v | _], _config) do
     [
       ohlcv_timestamp(ts),

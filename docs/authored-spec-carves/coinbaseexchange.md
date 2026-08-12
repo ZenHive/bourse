@@ -51,3 +51,34 @@ Exchange client surface.
 <!-- carve-evidence-status
 {"carve_id":"C-T593c","date":"2026-08-11","semantic_source":{"kind":"provider_owned","reference":"Coinbase Exchange candle response schema and no-tick interval note"},"observed_evidence":{"kind":"live_venue","reference":"Live ETH-USD minute candles observed newest-first with a conditional forming bucket on 2026-08-11"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+**C-T593d — Ticker `volume` maps to `baseVolume` (task 593, confronted post-land). Outcome: CONFIRMED against the recorded wire value.**
+
+- *Exchange semantics:* the product ticker route documents `volume` only as
+  "24h volume" without naming the unit; the provider text alone does not
+  settle base-vs-quote.
+- *Our carve:* `volume` is parsed as `baseVolume`.
+- *Verification:* the registered live recording
+  (`test/fixtures/responses/coinbaseexchange/fetch_ticker.json`) shows
+  `volume: "66031.61658655"` for ETH-USD — a plausible ETH quantity and three
+  orders of magnitude below any plausible 24h USD notional, which
+  disconfirms the quote-unit reading. `quoteVolume` and `vwap` stay null.
+
+**C-T593e — Ticker omits `high`/`low`/`open` (task 593, confronted post-land). Outcome: DIVERGE from the reference enrichment.**
+
+- *Exchange semantics:* `GET /products/{id}/ticker` carries no high/low/open
+  fields; the reference document populates them by additionally calling
+  `/products/{id}/stats`.
+- *Our carve:* the unified ticker maps only what the ticker route itself
+  returns — `price`, `bid`, `ask`, `volume`, `time` — and leaves
+  `high`/`low`/`open` honestly nil instead of fanning out a second request.
+- *Verification:* the registered live recording carries none of the three
+  fields; the divergence is a deliberate single-request carve, not a gap.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T593d","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Coinbase Exchange Get product ticker reference (volume documented without unit)"},"observed_evidence":{"kind":"live_venue","reference":"Registered ETH-USD ticker recording under test/fixtures/responses/coinbaseexchange; base-unit magnitude check"},"compatibility_reference":{"kind":"ccxt","reference":"Frozen reference maps volume to baseVolume; agreement noted, not authority"},"resolved_tier":1}
+-->
+
+<!-- carve-evidence-status
+{"carve_id":"C-T593e","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Coinbase Exchange Get product ticker reference (no high/low/open on the ticker route)"},"observed_evidence":{"kind":"live_venue","reference":"Registered ETH-USD ticker recording carries no high/low/open fields"},"compatibility_reference":{"kind":"ccxt","reference":"Frozen reference enriches ticker via /products/{id}/stats; deliberately not adopted"},"resolved_tier":1}
+-->

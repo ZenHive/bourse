@@ -994,8 +994,8 @@ defmodule Bourse.Unified do
     now_ms = Keyword.get(opts, :timestamp_ms_override, System.system_time(:millisecond))
 
     case CoinbaseCandlePagination.pagination(params, exchange.timeframes, now_ms) do
-      :single ->
-        final_params = build_final_params(exchange, "fetchOHLCV", params, opts, config.path)
+      {:single, completed_params} ->
+        final_params = build_final_params(exchange, "fetchOHLCV", completed_params, opts, config.path)
         dispatch_and_paginate(exchange, "fetchOHLCV", config, final_params, dispatch_opts)
 
       {:paginate, pages, metadata} ->

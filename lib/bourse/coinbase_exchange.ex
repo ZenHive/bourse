@@ -23,19 +23,54 @@ defmodule Bourse.CoinbaseCandlePagination do
   @type page :: %{params: map(), start_ms: non_neg_integer(), end_ms: non_neg_integer()}
   @type metadata :: %{start_ms: non_neg_integer(), end_ms: non_neg_integer(), limit: pos_integer()}
 
-  @doc "Builds inclusive, non-overlapping request pages when `limit` exceeds 300."
-  @spec pagination(map(), map(), non_neg_integer()) :: :single | {:paginate, [page()], metadata()}
+  @doc """
+  Builds inclusive, non-overlapping request pages when `limit` exceeds 300.
+
+  Single-page requests come back as `{:single, params}` with the window pair
+  completed: Coinbase ignores BOTH `start` and `end` whenever either one is
+  missing and silently answers with the most recent page, so a half-open
+  window must never reach the wire.
+  """
+  @spec pagination(map(), map(), non_neg_integer()) :: {:single, map()} | {:paginate, [page()], metadata()}
   def pagination(%{"limit" => limit} = params, timeframes, now_ms)
       when is_integer(limit) and limit > @max_candles_per_request do
     timeframe_ms = timeframe_ms!(params, timeframes)
     {start_ms, end_ms} = requested_window(params, now_ms, limit, timeframe_ms)
-    count = min(limit, max(div(end_ms - start_ms, timeframe_ms) + 1, 1))
 
-    metadata = %{end_ms: end_ms, limit: count, start_ms: start_ms}
-    {:paginate, build_pages(params, start_ms, count, timeframe_ms), metadata}
+    # Ceil, not floor: a start off the granularity grid still has an aligned
+    # bucket inside the trailing partial step. Page tiling gets one extra step
+    # beyond `limit` for that alignment slack; the merge row cap does not.
+    window_steps = max(div(end_ms - start_ms + timeframe_ms - 1, timeframe_ms) + 1, 1)
+    page_steps = min(limit + 1, window_steps)
+
+    metadata = %{end_ms: end_ms, limit: min(limit, window_steps), start_ms: start_ms}
+    {:paginate, build_pages(params, start_ms, page_steps, timeframe_ms), metadata}
   end
 
-  def pagination(_params, _timeframes, _now_ms), do: :single
+  def pagination(params, timeframes, now_ms), do: {:single, complete_window(params, timeframes, now_ms)}
+
+  defp complete_window(params, timeframes, now_ms) do
+    case {Map.get(params, "since"), Map.get(params, "until")} do
+      {since_ms, nil} when is_integer(since_ms) ->
+        timeframe_ms = timeframe_ms!(params, timeframes)
+        until_ms = since_ms + (effective_limit(params) - 1) * timeframe_ms
+        Map.put(params, "until", until_ms |> min(now_ms) |> max(since_ms))
+
+      {nil, until_ms} when is_integer(until_ms) ->
+        timeframe_ms = timeframe_ms!(params, timeframes)
+        Map.put(params, "since", max(until_ms - (effective_limit(params) - 1) * timeframe_ms, 0))
+
+      _both_or_neither ->
+        params
+    end
+  end
+
+  defp effective_limit(params) do
+    case Map.get(params, "limit") do
+      limit when is_integer(limit) and limit > 0 -> min(limit, @max_candles_per_request)
+      _other -> @max_candles_per_request
+    end
+  end
 
   @doc "Merges paged raw responses, deduplicating and retaining the requested chronological range."
   @spec merge_responses!([map()], metadata()) :: map()
