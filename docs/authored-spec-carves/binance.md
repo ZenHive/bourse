@@ -1003,3 +1003,18 @@ names (task 534). Outcome: CONFIRM routing boundary.**
 <!-- carve-evidence-status
 {"carve_id":"C-T534b","date":"2026-08-09","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binance/manifest.json artifact spot-openapi for the Spot order and trade endpoints"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Selector reachability is pinned offline, but the SAPI defaults added by task 534 have no task-specific manifest-registered live response"}
 -->
+
+**C-T592c — the generic Binance ledger map preserves the complete futures-family income
+vocabulary and signed direction (task 592). Outcome: CONFIRM family contracts.**
+
+- *Exchange semantics:* the COIN-M and USD-M Income History operations define the common
+  vocabulary; the USD-M change log adds `AUTO_EXCHANGE`. Both contracts carry signed `income`.
+- *Our carve:* the shared Binance map includes `INSURANCE_CLEAR` as `settlement`,
+  `AUTO_EXCHANGE` as `trade`, and the same sign-derived `in`/`out` direction used by the
+  venue-specific futures modules.
+- *Verification:* the documented-set guard registers the endpoint contracts and change log;
+  venue-specific signed fixtures pin the direction recipe.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T592c","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binance/manifest.json plus binancecoinm/binanceusdm developer-docs-full artifacts; both Income History contracts and the USD-M change log"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binanceusdm/fetch_ledger.json and provider-shaped COIN-M income parser fixture"},"compatibility_reference":null,"resolved_tier":1}
+-->

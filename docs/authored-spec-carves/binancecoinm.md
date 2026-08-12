@@ -298,3 +298,19 @@ Outcome: CONFIRMED provider contract.**
 <!-- carve-evidence-status
 {"carve_id":"C-T540c","date":"2026-08-04","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binancecoinm/manifest.json artifact developer-docs-full; COIN-M funding-rate history parameters"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Provider-owned semantics and offline request shape are pinned; no task-specific live window recording is registered"}
 -->
+
+**C-T592a — COIN-M income types and signed direction come from the complete Income History
+contract (task 592). Outcome: CONFIRM provider contract.**
+
+- *Exchange semantics:* `GET /dapi/v1/income` documents `TRANSFER`, `WELCOME_BONUS`,
+  `FUNDING_FEE`, `REALIZED_PNL`, `COMMISSION`, `INSURANCE_CLEAR`, and
+  `DELIVERED_SETTELMENT`; `income` is signed.
+- *Our carve:* `INSURANCE_CLEAR` normalizes to `settlement`, while the sign of `income`
+  produces `direction` (`out` when negative, `in` otherwise). Defensive family aliases
+  remain allowed beyond the documented COIN-M set.
+- *Verification:* the documented-set guard pins the complete provider vocabulary, and the
+  provider-shaped negative income fixture pins `direction: "out"` offline.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T592a","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binancecoinm/manifest.json artifact developer-docs-full; COIN-M Get Income History contract"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The demo account returned an empty income history; the complete enum and signed direction are pinned from the provider contract and provider-shaped offline parser fixture"}
+-->

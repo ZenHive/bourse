@@ -283,6 +283,7 @@ defmodule Bourse.Unified.ReadParse do
            |> normalize_payload(list_return?, envelope_list?)
            |> annotate_bybit_market_category(body, exchange, parse_type, params)
            |> annotate_binance_family_payload(body, exchange, parse_type, js_name, params)
+           |> annotate_lighter_transaction_type(exchange, parse_type, js_name)
            |> annotate_okx_payload(exchange, parse_type)
            |> annotate_derive_payload(exchange, parse_type)
            |> annotate_hyperliquid_payload(exchange, parse_type, js_name, params),
@@ -3076,6 +3077,18 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   defp annotate_binance_transaction(row, _js_name, _params), do: row
+
+  defp annotate_lighter_transaction_type(rows, %Exchange{id: "lighter"}, "transaction", js_name)
+       when is_list(rows) and js_name in ["fetchDeposits", "fetchWithdrawals"] do
+    type = if js_name == "fetchDeposits", do: "deposit", else: "withdrawal"
+
+    Enum.map(rows, fn
+      %{} = row -> Map.put_new(row, "_bourse_type", type)
+      row -> row
+    end)
+  end
+
+  defp annotate_lighter_transaction_type(payload, _exchange, _parse_type, _js_name), do: payload
 
   defp annotate_binance_order(%{} = row) do
     id = binance_field(row, ["orderId", "algoId"])

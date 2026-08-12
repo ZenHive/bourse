@@ -240,3 +240,20 @@ contract, with a loud client-side requirement.**
 <!-- carve-evidence-status
 {"carve_id":"C-T546h","date":"2026-08-11","semantic_source":{"kind":"provider_owned","reference":"priv/authority/lighter/manifest.json artifact rest-openapi; deposit/history and withdraw/history required parameter lists"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-11 live probes: account_index alone → 20001 invalid param; account_index + l1_address → HTTP 200 with three deposit rows; builder refusal pinned by test/bourse/lighter_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+**C-T592d — Lighter history required fields populate unified currency, transaction type, and
+transfer fee (task 592). Outcome: CONFIRM provider contract.**
+
+- *Exchange semantics:* `DepositHistoryItem.asset_id`, `WithdrawHistoryItem.asset_id`, and
+  `TransferHistoryItem.asset_id`/`fee` are required. The asset operation uses that same numeric
+  id space. `WithdrawHistoryItem.type` (`secure`/`fast`) describes withdrawal mode, not the
+  unified deposit/withdrawal vocabulary.
+- *Our carve:* transaction and transfer currency resolve `asset_id` through the authored venue
+  currency catalog. Transaction type is the calling operation's `deposit`/`withdrawal` literal;
+  transfer fee carries both the required cost and the resolved currency.
+- *Verification:* the live-recorded 10,000 USDC deposit now parses with `currency: "USDC"` and
+  `type: "deposit"`; provider-shaped withdrawal and transfer rows pin the other required slots.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T592d","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"priv/authority/lighter/manifest.json artifact rest-openapi; DepositHistoryItem, WithdrawHistoryItem, TransferHistoryItem and Asset schemas"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/lighter/fetch_deposits.json plus provider-shaped withdrawal and transfer parser fixtures in test/bourse/lighter_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":1}
+-->

@@ -1996,7 +1996,11 @@
             "format": null,
             "key": "amount"
           },
-          "currency": null,
+          "currency": {
+            "coercion": "safeCurrencyCode",
+            "key": "asset_id",
+            "kind": "currency_id"
+          },
           "datetime": {
             "coercion": "iso8601",
             "format": "ms",
@@ -2035,7 +2039,14 @@
             "format": null,
             "key": "l1_tx_hash"
           },
-          "type": null,
+          "type": {
+            "coercion": "safeString",
+            "enum_values": [
+              "deposit",
+              "withdrawal"
+            ],
+            "key": "_bourse_type"
+          },
           "updated": null
         }
       },
@@ -2048,7 +2059,11 @@
             "format": null,
             "key": "amount"
           },
-          "currency": null,
+          "currency": {
+            "coercion": "safeCurrencyCode",
+            "key": "asset_id",
+            "kind": "currency_id"
+          },
           "datetime": {
             "coercion": "iso8601",
             "format": "s",
@@ -2061,6 +2076,20 @@
             ],
             "format": null,
             "key": "from_route"
+          },
+          "fee": {
+            "omit_if_empty": true,
+            "sub_field_map": {
+              "cost": {
+                "coercion": "safeNumber",
+                "key": "fee"
+              },
+              "currency": {
+                "coercion": "safeCurrencyCode",
+                "key": "asset_id",
+                "kind": "currency_id"
+              }
+            }
           },
           "id": {
             "coercion": "safeString",

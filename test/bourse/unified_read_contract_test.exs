@@ -485,6 +485,7 @@ defmodule Bourse.UnifiedReadContractTest do
       assert_mapped_value!(raw_ledger["income"], ledger.amount, "income", :amount)
       assert_mapped_value!(raw_ledger["asset"], ledger.currency, "asset", :currency)
       assert_mapped_value!(raw_ledger["incomeType"], ledger.type, "incomeType", :type)
+      assert ledger.direction == "out"
 
       interval_fixture = recorded_fixture!("binanceusdm", :fetch_funding_intervals)
       raw_interval = hd(interval_fixture["body"])
@@ -532,6 +533,7 @@ defmodule Bourse.UnifiedReadContractTest do
       assert_mapped_value!(raw["incomeType"], entry.type, "incomeType", :type)
       assert entry.amount == -0.03079999
       assert entry.currency == "USDT"
+      assert entry.direction == "out"
       assert entry.type == "trade"
     end
 

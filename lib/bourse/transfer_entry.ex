@@ -12,6 +12,7 @@ defmodule Bourse.TransferEntry do
     * `datetime` - ISO 8601 datetime string
     * `currency` - Currency code
     * `amount` - Transfer amount
+    * `fee` - Transfer fee
     * `from_account` - Source account type (e.g., "spot", "futures")
     * `to_account` - Destination account type
     * `status` - Transfer status
@@ -27,6 +28,7 @@ defmodule Bourse.TransferEntry do
           datetime: String.t() | nil,
           currency: String.t() | nil,
           amount: number() | nil,
+          fee: Bourse.Fee.t() | nil,
           from_account: String.t() | nil,
           to_account: String.t() | nil,
           status: String.t() | nil,
@@ -39,6 +41,7 @@ defmodule Bourse.TransferEntry do
     :datetime,
     :currency,
     :amount,
+    :fee,
     :from_account,
     :to_account,
     :status,
@@ -52,6 +55,7 @@ defmodule Bourse.TransferEntry do
                    datetime: String.t() | nil,
                    currency: String.t() | nil,
                    amount: number() | nil,
+                   fee: map() | nil,
                    from_account: String.t() | nil,
                    to_account: String.t() | nil,
                    status: String.t() | nil,
@@ -63,6 +67,7 @@ defmodule Bourse.TransferEntry do
                    datetime: "ISO 8601 datetime string",
                    currency: "Currency code",
                    amount: "Transfer amount",
+                   fee: "Transfer fee",
                    from_account: "Source account type (e.g., spot, futures)",
                    to_account: "Destination account type",
                    status: "Transfer status",

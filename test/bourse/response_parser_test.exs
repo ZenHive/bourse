@@ -274,6 +274,31 @@ defmodule Bourse.ResponseParserTest do
       assert "BTC" == ResponseParser.network_code_for_row(%{"ccy" => "XBT", "chain" => "XBT-Bitcoin"}, @rule, context)
     end
 
+    test "accepts atom-keyed catalog entries and currency-scoped aliases" do
+      catalog = %{
+        "USDT" => %{networks: %{"RAW" => %{id: "USDT-Raw", network: "RAW"}}}
+      }
+
+      assert "RAW" ==
+               ResponseParser.network_code_for_row(
+                 %{"ccy" => "USDT", "chain" => "USDT-Raw"},
+                 @rule,
+                 %{currencies: catalog}
+               )
+
+      scoped_rule =
+        Map.merge(@rule, %{
+          "network_aliases" => %{"USDT" => %{"USDT-Scoped" => "SCOPED"}},
+          "implied_networks" => %{"USDT" => %{"SCOPED" => "TRC20"}}
+        })
+
+      assert "TRC20" ==
+               ResponseParser.network_code_for_row(
+                 %{"ccy" => "USDT", "chain" => "USDT-Scoped"},
+                 scoped_rule
+               )
+    end
+
     test "returns nil when neither the catalog nor the aliases know the chain" do
       data = %{"ccy" => "USDT", "chain" => "USDT-Unlisted"}
 
@@ -285,6 +310,27 @@ defmodule Bourse.ResponseParserTest do
     test "a non-map rule resolves to nil rather than raising" do
       refute ResponseParser.network_code_for_row(%{"ccy" => "USDT", "chain" => "USDT-NEW"}, nil)
     end
+  end
+
+  test "resolves numeric asset ids through the loaded venue currency catalog" do
+    rule = %{"kind" => "currency_id", "key" => "asset_id", "coercion" => "safeCurrencyCode"}
+    currencies = %{"USDC" => %{"id" => "3", "code" => "USDC"}}
+
+    assert {:ok, %Bourse.Transaction{currency: "USDC"}} =
+             ResponseParser.apply_mappings(
+               %{"asset_id" => 3},
+               %{"currency" => rule},
+               target: Bourse.Transaction,
+               currencies: currencies
+             )
+
+    assert {:ok, %Bourse.Transaction{currency: nil}} =
+             ResponseParser.apply_mappings(
+               %{"asset_id" => 4},
+               %{"currency" => rule},
+               target: Bourse.Transaction,
+               currencies: currencies
+             )
   end
 
   test "coerces values from documented venue response shapes" do
@@ -1810,6 +1856,69 @@ defmodule Bourse.ResponseParserTest do
 
       assert {:ok, %Balance{free: %{}}} =
                ResponseParser.apply_mappings("not-a-collection", %{"free" => rule}, target: Balance)
+    end
+
+    test "malformed authored inputs fail closed instead of inventing unified values" do
+      subtract_rule = %{
+        "kind" => "keyed_collection",
+        "collection_key" => "details",
+        "index_key" => "ccy",
+        "index_coercion" => "safeCurrencyCode",
+        "operand_keys" => ["total", "used"],
+        "value_op" => "subtract",
+        "coercion" => "safeNumber"
+      }
+
+      assert {:ok, %Balance{free: %{}}} =
+               ResponseParser.apply_mappings(
+                 %{"ccy" => "USDT", "used" => "2"},
+                 %{"free" => subtract_rule},
+                 target: Balance
+               )
+
+      assert {:ok, %Order{fee: nil}} =
+               ResponseParser.apply_mappings(
+                 %{"fees" => %{USDT: "1"}},
+                 %{"fee" => %{"kind" => "first_fee_entry", "key" => "fees"}},
+                 target: Order
+               )
+
+      trade_fee_rule = %{
+        "kind" => "trade_fee",
+        "cost_keys" => ["fee"],
+        "symbol_key" => "symbol",
+        "side_key" => "side",
+        "quote_currencies" => ["USDT"]
+      }
+
+      assert {:ok, %Trade{fee: %{"cost" => 1.0}}} =
+               ResponseParser.apply_mappings(
+                 %{"fee" => "1", "symbol" => "BTCUSDT", "side" => "hold"},
+                 %{"fee" => trade_fee_rule},
+                 target: Trade
+               )
+
+      assert {:ok, %Ticker{timestamp: nil, datetime: nil}} =
+               ResponseParser.apply_mappings(
+                 %{"timestamp" => 123, "datetime" => "invalid"},
+                 %{
+                   "timestamp" => %{"key" => "timestamp", "coercion" => "parse8601"},
+                   "datetime" => %{"key" => "datetime", "coercion" => "iso8601", "format" => "unknown"}
+                 },
+                 target: Ticker
+               )
+
+      assert {:ok, %FundingRate{interval: nil}} =
+               ResponseParser.apply_mappings(
+                 %{"interval" => 3_600_001},
+                 %{
+                   "interval" => %{
+                     "key" => "interval",
+                     "format" => "funding_interval_milliseconds"
+                   }
+                 },
+                 target: FundingRate
+               )
     end
   end
 

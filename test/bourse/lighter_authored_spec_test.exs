@@ -11,6 +11,8 @@ defmodule Bourse.LighterAuthoredSpecTest do
   alias Bourse.Unified.RequestShape.Lighter, as: LighterRequestShape
 
   @owned_path "priv/specs/json/output/authored/lighter.json"
+  @deposit_fixture "test/fixtures/responses/lighter/fetch_deposits.json"
+  @external_resource @deposit_fixture
   @mainnet_url "https://mainnet.zklighter.elliot.ai"
   @public_account_index 0
   @private_key "07000000000000000300000000000000000000000000000000000000000000000000000000000000"
@@ -220,13 +222,25 @@ defmodule Bourse.LighterAuthoredSpecTest do
     assert {:ok, [%Bourse.Trade{} = trade]} = Bourse.fetch_my_trades(exchange, call_opts)
     assert %{id: "145", symbol: "BTC/USDC:USDC", amount: 0.1, price: 100.0, cost: 10.0} = trade
 
-    assert {:ok, [%Bourse.Transaction{id: "deposit-1", status: "ok", amount: 5.0, timestamp: 1_800_000_000_000}]} =
+    assert {:ok,
+            [
+              %Bourse.Transaction{
+                id: "deposit-1",
+                type: "deposit",
+                currency: "USDC",
+                status: "ok",
+                amount: 5.0,
+                timestamp: 1_800_000_000_000
+              }
+            ]} =
              Bourse.fetch_deposits(exchange, [{:l1_address, "0xabc"} | call_opts])
 
     assert {:ok,
             [
               %Bourse.Transaction{
                 id: "withdrawal-1",
+                type: "withdrawal",
+                currency: "ETH",
                 status: "pending",
                 amount: 1.0,
                 timestamp: 1_800_000_000_000
@@ -234,7 +248,16 @@ defmodule Bourse.LighterAuthoredSpecTest do
             ]} =
              Bourse.fetch_withdrawals(exchange, call_opts)
 
-    assert {:ok, [%Bourse.TransferEntry{id: "transfer-1", from_account: "perps", to_account: "spot"}]} =
+    assert {:ok,
+            [
+              %Bourse.TransferEntry{
+                id: "transfer-1",
+                currency: "LIT",
+                fee: %{"cost" => 0.01, "currency" => "LIT"},
+                from_account: "perps",
+                to_account: "spot"
+              }
+            ]} =
              Bourse.fetch_transfers(exchange, call_opts)
 
     assert {:ok, [%Bourse.Liquidation{symbol: "BTC/USDC:USDC", price: 80.0, contracts: 0.25}]} =
@@ -264,6 +287,24 @@ defmodule Bourse.LighterAuthoredSpecTest do
              "/api/v1/liquidations",
              "/api/v1/fundings"
            ]
+  end
+
+  test "the recorded populated deposit resolves its required asset id and endpoint type" do
+    fixture = Bourse.JsonDocument.decode_file!(@deposit_fixture)
+
+    assert {:ok, [%Bourse.Transaction{} = deposit | _]} =
+             ReadParse.parse(
+               Exchange.new!("lighter"),
+               Bourse.Lighter,
+               :fetch_deposits,
+               "fetchDeposits",
+               fixture["body"],
+               %{},
+               :parse_transaction,
+               true
+             )
+
+    assert %{amount: 10_000.0, currency: "USDC", type: "deposit"} = deposit
   end
 
   test "provider-shaped markets and object order-book levels parse completely" do
@@ -575,6 +616,7 @@ defmodule Bourse.LighterAuthoredSpecTest do
   defp deposit_body do
     %{
       "amount" => "5",
+      "asset_id" => 3,
       "id" => "deposit-1",
       "l1_tx_hash" => "0xdeposit",
       "status" => "completed",
@@ -585,16 +627,20 @@ defmodule Bourse.LighterAuthoredSpecTest do
   defp withdrawal_body do
     %{
       "amount" => "1",
+      "asset_id" => 1,
       "id" => "withdrawal-1",
       "l1_tx_hash" => "0xwithdrawal",
       "status" => "pending",
-      "timestamp" => 1_800_000_000_000
+      "timestamp" => 1_800_000_000_000,
+      "type" => "secure"
     }
   end
 
   defp transfer_body do
     %{
       "amount" => "2",
+      "asset_id" => 2,
+      "fee" => "0.01",
       "from_route" => "perps",
       "id" => "transfer-1",
       "timestamp" => 1_800_000_000,

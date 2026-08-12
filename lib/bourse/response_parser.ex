@@ -239,6 +239,13 @@ defmodule Bourse.ResponseParser do
     |> Map.new(&currency_network(&1, data, rule))
   end
 
+  defp extract_field(data, %{"kind" => "currency_id"} = rule, context) do
+    data
+    |> Safe.value_any(source_keys(rule), nil)
+    |> currency_code_for_id(context)
+    |> coerce(rule["coercion"])
+  end
+
   # The authored aliases are the fully-resolved projection of the two-step
   # `indexBy(networks, 'id')` -> `networkIdToCode(network)`; the catalog alone only
   # supplies step one. So aliases answer first and the catalog recovers the chains
@@ -592,6 +599,21 @@ defmodule Bourse.ResponseParser do
   defp currency_networks(%{networks: networks}) when is_map(networks), do: networks
   defp currency_networks(%{"networks" => networks}) when is_map(networks), do: networks
   defp currency_networks(_currency), do: %{}
+
+  defp currency_code_for_id(id, %{currencies: currencies}) when is_map(currencies) do
+    case Safe.string(id) do
+      nil -> nil
+      id -> Enum.find_value(currencies, &currency_code_matching_id(&1, id))
+    end
+  end
+
+  defp currency_code_for_id(_id, _context), do: nil
+
+  defp currency_code_matching_id({fallback_code, currency}, id) do
+    if Safe.string(Safe.value(currency, "id", nil)) == id do
+      Safe.string(Safe.value(currency, "code", fallback_code))
+    end
+  end
 
   defp network_id(%{id: id}), do: Safe.string(id)
   defp network_id(%{"id" => id}), do: Safe.string(id)

@@ -472,3 +472,18 @@ provider contracts (task 534). Outcome: CONFIRM provider contract.**
 <!-- carve-evidence-status
 {"carve_id":"C-T534a","date":"2026-08-09","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binanceusdm/manifest.json artifact developer-docs-full; USD-M account information, position risk, and symbol configuration contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binanceusdm/fetch_account_positions.json, test/fixtures/responses/binanceusdm/fetch_positions_risk.json, and test/fixtures/responses/binanceusdm/fetch_leverages.json"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+**C-T592b — USD-M income vocabulary includes change-log additions, and signed income defines
+direction (task 592). Outcome: CONFIRM provider contract.**
+
+- *Exchange semantics:* the Income History operation defines the row vocabulary and signed
+  `income`; the provider change log additionally documents `AUTO_EXCHANGE` rather than leaving
+  the endpoint page as the sole vocabulary source.
+- *Our carve:* `INSURANCE_CLEAR` normalizes to `settlement`, `AUTO_EXCHANGE` to `trade`, and
+  `income` sign produces `direction` (`out` when negative, `in` otherwise).
+- *Verification:* the full-contract documented-set guard pins both sources. The registered
+  populated USD-M income recording and provider-shaped parser test pin negative rows as `out`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T592b","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binanceusdm/manifest.json artifact developer-docs-full; USD-M Get Income History contract plus provider change log"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binanceusdm/fetch_ledger.json"},"compatibility_reference":null,"resolved_tier":1}
+-->

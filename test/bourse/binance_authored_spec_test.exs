@@ -930,6 +930,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
                    type: "transfer",
                    currency: "BTC",
                    amount: -0.00000375,
+                   direction: "out",
                    timestamp: @frozen_timestamp_ms,
                    info: ^income
                  }
