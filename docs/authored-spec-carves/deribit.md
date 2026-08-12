@@ -545,3 +545,20 @@ Outcome: CONFIRM provider units.**
 <!-- carve-evidence-status
 {"carve_id":"C-T600f","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Deribit order implied-volatility, ticker, positions, and funding contracts linked in C-T600f"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-12T08:57:33Z test.deribit.com public/ticker BTC-13AUG26-58000-C mark_iv 59.44 bid_iv 0.0 ask_iv 343.95; parser goldens in deribit_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The live IV row is pinned in parser expectations but is not a manifest-registered response fixture"}
 -->
+
+**C-T603f — Deribit margin ratios are restricted to inverse instruments (task 603).
+Outcome: DIVERGE from the same-currency claim for linear settlement.**
+
+<!-- rate-unit path="normalization.field_maps.greeks.field_map.askImpliedVolatility" unit="fraction" source-unit="percent_points" --> Deribit ticker IV is in percent points and `scale: 0.01` emits a fraction. [Ticker](https://docs.deribit.com/api-reference/market-data/public-ticker)
+<!-- rate-unit path="normalization.field_maps.greeks.field_map.bidImpliedVolatility" unit="fraction" source-unit="percent_points" --> Deribit ticker IV is in percent points and `scale: 0.01` emits a fraction. [Ticker](https://docs.deribit.com/api-reference/market-data/public-ticker)
+<!-- rate-unit path="normalization.field_maps.greeks.field_map.markImpliedVolatility" unit="fraction" source-unit="percent_points" --> Deribit ticker IV is in percent points and `scale: 0.01` emits a fraction. [Ticker](https://docs.deribit.com/api-reference/market-data/public-ticker)
+<!-- rate-unit path="normalization.field_maps.position.field_map.initialMarginPercentage" unit="fraction" --> On inverse rows, `initial_margin / size_currency` divides same-currency BTC amounts. The provider's `BTC-PERPETUAL` example gives `0.000197283 / 0.006687487`. Linear rows settle margin in USDC/USDT while `size_currency` is base size, so that invalid price-scaled quotient is not emitted. [Positions](https://docs.deribit.com/api-reference/account-management/private-get_positions)
+<!-- rate-unit path="normalization.field_maps.position.field_map.maintenanceMarginPercentage" unit="fraction" --> The inverse-only maintenance ratio follows the same unit identity; linear rows emit no unsupported ratio. [Positions](https://docs.deribit.com/api-reference/account-management/private-get_positions)
+
+- *Live reachability (2026-08-12):* authenticated testnet `private/get_positions` calls for
+  `USDC` and `USDT` both returned empty lists. The missing populated linear row is tracked in
+  the production-verification ledger rather than replaced by a synthetic semantic claim.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T603f","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions contract and inverse example linked in C-T603f"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-12 test.deribit.com private/get_positions USDC and USDT both returned empty result lists; inverse provider example is pinned in deribit_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No populated linear testnet position was reachable to establish a provider-owned linear percentage identity"}
+-->

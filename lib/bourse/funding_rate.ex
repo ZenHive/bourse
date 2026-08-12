@@ -108,7 +108,7 @@ defmodule Bourse.FundingRate do
                    next_funding_rate: "Next estimated funding rate as a fraction",
                    previous_funding_timestamp: "Previous funding event timestamp",
                    previous_funding_datetime: "Previous funding event datetime",
-                   previous_funding_rate: "Previous funding rate",
+                   previous_funding_rate: "Previous funding rate as a fraction",
                    interval: "Funding interval (e.g., 8h)",
                    info: "Raw exchange response"
                  ]

@@ -8,6 +8,15 @@ defmodule Bourse.CarveRegisterConsistencyTest do
                   |> Enum.sort()
   @ledger_path Path.expand("../../docs/prod-verification-ledger.md", __DIR__)
   @changelog_path Path.expand("../../CHANGELOG.md", __DIR__)
+  @responses_manifest_path Path.expand("../fixtures/responses/_manifest.json", __DIR__)
+  @registered_response_fixtures @responses_manifest_path
+                                |> File.read!()
+                                |> Jason.decode!()
+                                |> Map.fetch!("fixtures")
+                                |> MapSet.new(&Path.join("test/fixtures/responses", &1))
+  @strict_recording_task 603
+  @observed_evidence_kinds ~w(live_venue provider_shaped recorded_real_exchange recorded_venue)
+  @strict_observed_evidence_kinds ~w(live_venue provider_shaped recorded_venue)
   @reference_paths [@legacy_register_path | @register_paths] ++ [@changelog_path]
   @legacy_ids MapSet.new(~w(
                 B1 B2 B3
@@ -41,6 +50,7 @@ defmodule Bourse.CarveRegisterConsistencyTest do
   @external_resource @legacy_register_path
   @external_resource @ledger_path
   @external_resource @changelog_path
+  @external_resource @responses_manifest_path
 
   test "the carve register has unique ids" do
     assert [] == @register_paths |> read_register() |> register_ids() |> duplicate_ids()
@@ -222,6 +232,42 @@ defmodule Bourse.CarveRegisterConsistencyTest do
     assert Enum.any?(errors, &String.contains?(&1, "demo C-T3: tier 1 requires observed venue evidence"))
   end
 
+  test "recorded venue evidence at every tier names a registered frozen body" do
+    for tier <- [1, 2, 3] do
+      status =
+        "C-T603"
+        |> tier_one_status(provider_source("official docs"), %{
+          "kind" => "recorded_venue",
+          "reference" => "unregistered parser golden",
+          "fixture" => "test/fixtures/responses/demo/missing.json"
+        })
+        |> Map.put("resolved_tier", tier)
+        |> maybe_put_gap(tier)
+        |> Map.merge(%{"_venue" => "demo", "_path" => "demo.md"})
+
+      assert Enum.any?(
+               evidence_status_entry_errors(status),
+               &String.contains?(&1, "recorded_venue requires a registered response fixture")
+             )
+    end
+  end
+
+  test "provider-shaped evidence is explicit and valid only below tier 1" do
+    for tier <- [2, 3] do
+      status =
+        "C-T603"
+        |> tier_one_status(provider_source("official docs"), %{
+          "kind" => "provider_shaped",
+          "reference" => "provider-shaped parser row"
+        })
+        |> Map.put("resolved_tier", tier)
+        |> maybe_put_gap(tier)
+        |> Map.merge(%{"_venue" => "demo", "_path" => "demo.md"})
+
+      assert [] == evidence_status_entry_errors(status)
+    end
+  end
+
   test "a closed-ledger contradiction names venue, carve id, and both tiers" do
     statuses = %{
       "C-T428a" => %{"resolved_tier" => 2, "_venue" => "alpaca"}
@@ -361,7 +407,43 @@ defmodule Bourse.CarveRegisterConsistencyTest do
         []
       end
 
-    missing_fields ++ date_errors ++ tier_errors ++ gap_errors ++ tier_one_errors(status, prefix)
+    missing_fields ++
+      date_errors ++
+      tier_errors ++
+      gap_errors ++ observed_evidence_errors(status, prefix) ++ tier_one_errors(status, prefix)
+  end
+
+  defp observed_evidence_errors(%{"observed_evidence" => nil}, _prefix), do: []
+
+  defp observed_evidence_errors(%{"observed_evidence" => evidence} = status, prefix) when is_map(evidence) do
+    kind = evidence["kind"]
+
+    kind_errors =
+      if kind in @observed_evidence_kinds and nonempty?(evidence["reference"]) and
+           (not strict_recording_status?(status) or kind in @strict_observed_evidence_kinds) do
+        []
+      else
+        ["#{prefix}: observed_evidence must use a supported kind with a non-empty reference"]
+      end
+
+    recording_errors =
+      if strict_recording_status?(status) and kind == "recorded_venue" and
+           not MapSet.member?(@registered_response_fixtures, evidence["fixture"]) do
+        ["#{prefix}: recorded_venue requires a registered response fixture"]
+      else
+        []
+      end
+
+    kind_errors ++ recording_errors
+  end
+
+  defp observed_evidence_errors(_status, prefix), do: ["#{prefix}: observed_evidence must be an object or null"]
+
+  defp strict_recording_status?(%{"carve_id" => carve_id}) do
+    case Regex.run(~r/^C-T(\d+)/, carve_id, capture: :all_but_first) do
+      [task] -> String.to_integer(task) >= @strict_recording_task
+      nil -> false
+    end
   end
 
   defp tier_one_errors(%{"resolved_tier" => 1} = status, prefix) do
@@ -493,6 +575,9 @@ defmodule Bourse.CarveRegisterConsistencyTest do
 
   defp provider_source(reference), do: %{"kind" => "provider_owned", "reference" => reference}
   defp observed_source(reference), do: %{"kind" => "recorded_venue", "reference" => reference}
+
+  defp maybe_put_gap(status, 1), do: status
+  defp maybe_put_gap(status, tier), do: Map.put(status, "known_gap_reason", "tier #{tier} test gap")
 
   defp unresolved_references(sources, registered_ids) do
     sources

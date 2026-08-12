@@ -4955,7 +4955,6 @@ defmodule Bourse.Unified.ReadParse do
         {u, m} = {Decimal.new(unrealized), Decimal.new(margin_used)}
 
         u
-        |> Decimal.abs()
         |> Decimal.div(m)
         |> Decimal.mult(Decimal.new(100))
         |> Decimal.to_string(:normal)

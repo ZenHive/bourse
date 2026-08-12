@@ -414,6 +414,23 @@ evidence beyond the batch review.
   currently recorded/deferred on a shape-only empty-body fixture) are pinned by a populated
   tier-1 fixture — assert the unified option symbol and contracts against the observed amount.
 
+### deribit — populated linear position margin units (task 603, C-T603f, filed 2026-08-12)
+- Authored slices: `deribit:normalization.field_maps.position.field_map.initialMarginPercentage`
+  and `maintenanceMarginPercentage`
+- Blocked by: authenticated testnet `private/get_positions` calls for both `USDC` and `USDT`
+  returned empty lists. Producing a populated row requires opening a linear position.
+- What tier-2 already proved: Deribit's provider example pins the inverse identity
+  `initial_margin / size_currency` because both values are BTC; parser goldens restrict that
+  quotient to `market.inverse` and return nil for a provider-shaped linear row.
+- The open question: which provider fields establish initial- and maintenance-margin fractions
+  for a populated USDC/USDT linear position, where margin is quote-denominated and
+  `size_currency` is base size?
+- Exact call: with a reversible linear testnet position open, run
+  `Bourse.fetch_positions(ex, code: "USDC")` and preserve the raw row plus its loaded market.
+- Expected evidence: register the populated response and assert each emitted margin percentage
+  against a provider-owned same-unit identity. If the response exposes no such identity, both
+  unified percentage fields remain nil for linear instruments.
+
 ### deribit — fetchTradingFees populated schedule (task 380, filed 2026-07-19)
 - Authored slices: `deribit:normalization.field_maps.trading_fees`
 - Blocked by (re-confronted 2026-07-22, task 468): the signed testnet route is reachable, but

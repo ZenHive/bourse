@@ -19,6 +19,34 @@ defmodule Bourse.BinanceAuthoredSpecTest do
   @external_resource @non_usdt_tickers_fixture
   @frozen_timestamp_ms 1_700_000_000_000
   @bad_request_status 400
+  @eapi_percentage_points -20.0
+
+  test "EAPI ticker fractions emit percent points on option and ticker surfaces" do
+    # Live eapi/v1/ticker row observed 2026-08-12: -5 / 25 = -0.2 on the provider wire.
+    option_row = %{
+      "symbol" => "BTC-260925-120000-C",
+      "priceChange" => "-5",
+      "priceChangePercent" => "-0.2",
+      "lastPrice" => "20",
+      "open" => "25"
+    }
+
+    option_market = %Bourse.Market{option: true}
+    non_option_market = %Bourse.Market{option: false}
+
+    for exchange_id <- ~w(binance binancecoinm binanceusdm) do
+      module = Exchange.new!(exchange_id).module
+
+      assert {:ok, %Bourse.OptionData{percentage: @eapi_percentage_points}} =
+               module.parse_option(option_row)
+
+      assert {:ok, %Bourse.Ticker{percentage: @eapi_percentage_points}} =
+               module.parse_ticker(option_row, market: option_market)
+
+      assert {:ok, %Bourse.Ticker{percentage: -0.2}} =
+               module.parse_ticker(option_row, market: non_option_market)
+    end
+  end
 
   test "authored selectors choose spot and USD-M account endpoints" do
     assert Exchange.new!("binance").endpoint_selection["fetchBalance"]["default"] == "private_get_account"

@@ -477,5 +477,5 @@ Outcome: CONFIRM decimal IV and funding fractions; delete the dead income-rate s
   dollar `funding` cashflow to `rate`, duplicating the error already corrected in funding history.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T600g","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Derive ticker, portfolio-margin, asset-parameter, and funding-history contracts linked in C-T600g"},"observed_evidence":{"kind":"recorded_venue","reference":"Registered Derive funding accepted requests and provider-shaped IV/funding parser goldens"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered populated option ticker or private funding-history row is carried"}
+{"carve_id":"C-T600g","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Derive ticker, portfolio-margin, asset-parameter, and funding-history contracts linked in C-T600g"},"observed_evidence":{"kind":"provider_shaped","reference":"IV and funding parser goldens in derive_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered populated option ticker or private funding-history row is carried"}
 -->

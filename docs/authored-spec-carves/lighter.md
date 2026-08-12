@@ -274,3 +274,13 @@ Outcome: DIVERGE from pass-through margin; CONFIRM funding, fee, and ticker unit
 <!-- carve-evidence-status
 {"carve_id":"C-T600i","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Pinned Lighter OpenAPI Funding, AccountPosition, OrderBookDetail and fee schemas"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/lighter/fetch_positions.json raw initial_margin_fraction 5.00; fetch_ticker.json raw daily_price_change 1.3548036637247152; C-T546g live funding arithmetic"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+**C-T603g — Lighter's scaled percentages declare their source units (task 603).
+Outcome: CONFIRM percent-point-to-fraction conversion.**
+
+<!-- rate-unit path="normalization.field_maps.funding_rate_history.field_map.fundingRate" unit="fraction" source-unit="percent_points" --> Lighter's funding row is percentage-valued; `scale: 0.01` emits the unified fraction. [API reference](https://apidocs.lighter.xyz/)
+<!-- rate-unit path="normalization.field_maps.position.field_map.initialMarginPercentage" unit="fraction" source-unit="percent_points" --> `initial_margin_fraction` is percentage-valued; `scale: 0.01` emits the unified fraction. [API reference](https://apidocs.lighter.xyz/)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T603g","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Pinned Lighter Funding and AccountPosition schemas"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/lighter/fetch_positions.json","fixture":"test/fixtures/responses/lighter/fetch_positions.json"},"compatibility_reference":null,"resolved_tier":1}
+-->

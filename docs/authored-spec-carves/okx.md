@@ -1733,9 +1733,9 @@ provider-specific funding-account values (amended by Task 601).**
 **C-T600j — OKX IV and funding fields conform to the cross-venue fraction contract
 (task 600). Outcome: CONFIRM provider decimal volatility.**
 
-<!-- rate-unit path="normalization.field_maps.greeks.field_map.askImpliedVolatility" unit="fraction" --> OKX option volatility uses decimal values; its order contract states `pxVol` uses `1` for 100%. [API v5](https://www.okx.com/docs-v5/en/)
-<!-- rate-unit path="normalization.field_maps.greeks.field_map.bidImpliedVolatility" unit="fraction" --> `bidVol` follows the same option-volatility convention. [API v5](https://www.okx.com/docs-v5/en/)
-<!-- rate-unit path="normalization.field_maps.greeks.field_map.markImpliedVolatility" unit="fraction" --> `markVol` follows the same option-volatility convention. [API v5](https://www.okx.com/docs-v5/en/)
+<!-- rate-unit path="normalization.field_maps.greeks.field_map.askImpliedVolatility" unit="fraction" --> OKX option volatility uses decimal values; its option market-data contract states `1` means 100%. [Option market data](https://www.okx.com/docs-v5/en/#public-data-rest-api-get-option-market-data)
+<!-- rate-unit path="normalization.field_maps.greeks.field_map.bidImpliedVolatility" unit="fraction" --> `bidVol` follows the same option-volatility convention. [Option market data](https://www.okx.com/docs-v5/en/#public-data-rest-api-get-option-market-data)
+<!-- rate-unit path="normalization.field_maps.greeks.field_map.markImpliedVolatility" unit="fraction" --> `markVol` follows the same option-volatility convention. [Option market data](https://www.okx.com/docs-v5/en/#public-data-rest-api-get-option-market-data)
 <!-- rate-unit path="normalization.field_maps.option.field_map.impliedVolatility" unit="absent" --> The generic option row has no authored IV. [API v5](https://www.okx.com/docs-v5/en/)
 <!-- rate-unit path="normalization.field_maps.funding_history.field_map.rate" unit="absent" --> Bills carry cash amount, not an inferred rate. [API v5](https://www.okx.com/docs-v5/en/)
 <!-- rate-unit path="normalization.field_maps.funding_rate.field_map.fundingRate" unit="fraction" --> The decimal funding rate multiplies position value. [Funding FAQ](https://www.okx.com/en-us/help/funding-fees-for-perpetual-contracts-faq)
@@ -1744,5 +1744,15 @@ provider-specific funding-account values (amended by Task 601).**
 <!-- rate-unit path="normalization.field_maps.funding_rate.field_map.previousFundingRate" unit="absent" --> The authored slot is null. [Funding FAQ](https://www.okx.com/en-us/help/funding-fees-for-perpetual-contracts-faq)
 
 <!-- carve-evidence-status
-{"carve_id":"C-T600j","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 option volatility and funding contracts linked in C-T600j"},"observed_evidence":{"kind":"recorded_venue","reference":"Provider-shaped option-volatility parser golden and registered funding history response"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The option-volatility parser golden is provider-shaped rather than a manifest-registered live response"}
+{"carve_id":"C-T600j","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 option volatility and funding contracts linked in C-T600j"},"observed_evidence":{"kind":"provider_shaped","reference":"Option-volatility parser golden in okx_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The option-volatility parser golden is provider-shaped rather than a manifest-registered live response"}
+-->
+
+**C-T603h — OKX fee-sign scales declare their source unit (task 603).
+Outcome: CONFIRM sign inversion without a unit conversion.**
+
+<!-- rate-unit path="normalization.field_maps.trading_fee.field_map.maker" unit="fraction" source-unit="fraction" --> OKX supplies decimal fee rates; `scale: -1` changes rebate/charge sign while preserving the fraction unit. [Trading fee rates](https://www.okx.com/docs-v5/en/#trading-account-rest-api-get-fee-rates)
+<!-- rate-unit path="normalization.field_maps.trading_fee.field_map.taker" unit="fraction" source-unit="fraction" --> OKX supplies decimal fee rates; `scale: -1` changes sign while preserving the fraction unit. [Trading fee rates](https://www.okx.com/docs-v5/en/#trading-account-rest-api-get-fee-rates)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T603h","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"OKX trading fee-rate contract linked in C-T603h"},"observed_evidence":{"kind":"provider_shaped","reference":"Fee-rate parser goldens in okx_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No populated fee-rate response is registered for this sign-only amendment"}
 -->

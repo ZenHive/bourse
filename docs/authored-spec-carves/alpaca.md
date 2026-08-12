@@ -334,3 +334,12 @@ Outcome: CONFIRM provider units; documentation-anchored.**
 <!-- carve-evidence-status
 {"carve_id":"C-T594a","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Alpaca positions contract and trading-fee statement linked in C-T594a"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The zero static fee rates are scale-invariant and no registered charged fill establishes a non-zero rate"}
 -->
+
+**C-T603a — Alpaca's position percentage declares its source unit (task 603).
+Outcome: CONFIRM fraction-to-percent-point conversion.**
+
+<!-- rate-unit path="normalization.field_maps.position.field_map.percentage" unit="percent_points" source-unit="fraction" --> Alpaca's `unrealized_plpc` is a decimal ratio; authored `scale: 100` emits the public percent-point contract. [Positions](https://docs.alpaca.markets/reference/getallopenpositions)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T603a","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Alpaca positions contract linked in C-T603a"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No populated position body is registered for this rate-unit amendment"}
+-->

@@ -4792,13 +4792,17 @@
             "key": "initial_margin"
           },
           "initialMarginPercentage": {
-            "coercion": "safeNumber",
-            "kind": "computed",
-            "op": "div",
-            "operands": [
-              "initial_margin",
-              "size_currency"
-            ]
+            "discriminator": "market.inverse",
+            "kind": "discriminated",
+            "true": {
+              "coercion": "safeNumber",
+              "kind": "computed",
+              "op": "div",
+              "operands": [
+                "initial_margin",
+                "size_currency"
+              ]
+            }
           },
           "lastPrice": null,
           "lastUpdateTimestamp": null,
@@ -4817,13 +4821,17 @@
             "key": "maintenance_margin"
           },
           "maintenanceMarginPercentage": {
-            "coercion": "safeNumber",
-            "kind": "computed",
-            "op": "div",
-            "operands": [
-              "maintenance_margin",
-              "size_currency"
-            ]
+            "discriminator": "market.inverse",
+            "kind": "discriminated",
+            "true": {
+              "coercion": "safeNumber",
+              "kind": "computed",
+              "op": "div",
+              "operands": [
+                "maintenance_margin",
+                "size_currency"
+              ]
+            }
           },
           "marginMode": null,
           "marginRatio": null,

@@ -13,36 +13,44 @@ defmodule Bourse.AuthoredRateUnitConfrontationTest do
                path = Path.join("docs/authored-spec-carves", "#{venue}.md")
                {venue, File.read!(path)}
              end)
-  @confrontation_section ~r/^\*\*C-T(?:594|600)[a-z]*\b.*?(?=^<!-- carve-evidence-status)/ms
+  @confrontation_section ~r/^\*\*(C-T(\d+)[a-z]?)\s+—.*?(?=^<!-- carve-evidence-status)/ms
   @rate_keys ~w(
     fundingRate interestRate nextFundingRate previousFundingRate rate percentage maker taker
     initialMarginPercentage maintenanceMarginPercentage maintenanceMarginRate
     impliedVolatility markImpliedVolatility askImpliedVolatility bidImpliedVolatility
   )
-  @fraction_keys ~w(
-    fundingRate interestRate nextFundingRate previousFundingRate rate maker taker
-    initialMarginPercentage maintenanceMarginPercentage maintenanceMarginRate
-    impliedVolatility markImpliedVolatility askImpliedVolatility bidImpliedVolatility
-  )
+  @unit_multipliers %{fraction: 1, percent_points: 100, basis_points: 10_000}
+  @slot_contracts %{
+    "adl_rank" => Bourse.ADLRank,
+    "borrow_interest" => Bourse.BorrowInterest,
+    "borrow_rate" => Bourse.BorrowRate,
+    "fees" => Bourse.TradingFee,
+    "funding_history" => Bourse.FundingHistory,
+    "funding_rate" => Bourse.FundingRate,
+    "funding_rate_history" => Bourse.FundingRateHistory,
+    "greeks" => Bourse.Greeks,
+    "leverage_tiers" => Bourse.LeverageTier,
+    "market" => Bourse.Market,
+    "option" => Bourse.OptionData,
+    "option_position" => Bourse.Position,
+    "order" => Bourse.Fee,
+    "position" => Bourse.Position,
+    "ticker" => Bourse.Ticker,
+    "trade" => Bourse.Fee,
+    "trading_fee" => Bourse.TradingFee,
+    "trading_fees" => Bourse.TradingFee
+  }
 
-  test "one unit is emitted per unified rate-like field across every runtime venue" do
-    entries =
-      for venue <- @venues,
-          {path, value} <- rate_slots(Bourse.Spec.load!(venue)),
-          not is_nil(value) do
-        unit = declared_unit!(venue, path)
+  test "every emitted declaration agrees with its public unified struct contract" do
+    assert_declarations_match!(emitted_entries())
+  end
 
-        assert unit == expected_unit!(path),
-               "#{venue}: #{path} declares #{unit}, expected #{expected_unit!(path)}"
+  test "a contradictory venue declaration makes the contract guard red" do
+    [entry | _rest] = emitted_entries()
+    contradictory_unit = if entry.contract_unit == :fraction, do: :percent_points, else: :fraction
 
-        {unified_field(path), venue, path, unit}
-      end
-
-    for {field, field_entries} <- Enum.group_by(entries, &elem(&1, 0)) do
-      units = field_entries |> Enum.map(&elem(&1, 3)) |> Enum.uniq()
-
-      assert [_one_unit] = units,
-             "#{field} emits contradictory units: #{inspect(field_entries)}"
+    assert_raise ExUnit.AssertionError, fn ->
+      assert_declarations_match!([%{entry | declared_unit: contradictory_unit}])
     end
   end
 
@@ -58,16 +66,36 @@ defmodule Bourse.AuthoredRateUnitConfrontationTest do
         refute unit == :absent,
                "#{venue}: #{path} emits a value but its confrontation claims absent"
 
-        case value do
-          %{"scale" => scale} when is_number(scale) and scale > 0 and scale < 1 ->
-            assert unit in [:fraction, :percent_points],
-                   "#{venue}: #{path} scales a percent-family source but declares #{unit}"
+        for scale <- authored_scales(value) do
+          source_unit = declared_source_unit!(venue, path)
+          expected_scale = unit_multiplier(unit) / unit_multiplier(source_unit)
 
-          _ ->
-            :ok
+          assert_in_delta abs(scale), expected_scale, 1.0e-12,
+            message:
+              "#{venue}: #{path} scales #{source_unit} by #{scale}, which cannot emit #{unit} (expected magnitude #{expected_scale})"
         end
       end
     end
+  end
+
+  test "confrontation supersession follows date and then task number, not file position" do
+    path = "normalization.field_maps.ticker.field_map.percentage"
+
+    register = """
+    ## 2026-08-13 — amendment
+    **C-T1a — newer rate-unit block (task 1).**
+    <!-- rate-unit path="#{path}" unit="percent_points" -->
+    <!-- carve-evidence-status {} -->
+    ## 2026-08-12 — appended later in the file
+    **C-T999a — older rate-unit block (task 999).**
+    <!-- rate-unit path="#{path}" unit="fraction" -->
+    <!-- carve-evidence-status {} -->
+    """
+
+    assert confrontation_line_from!(register, path) =~ ~s(unit="percent_points")
+
+    same_date = String.replace(register, "2026-08-13", "2026-08-12")
+    assert confrontation_line_from!(same_date, path) =~ ~s(unit="fraction")
   end
 
   test "every venue funding-rate slot cites a provider-owned unit statement or arithmetic" do
@@ -169,27 +197,56 @@ defmodule Bourse.AuthoredRateUnitConfrontationTest do
     end)
   end
 
-  defp expected_unit!(path) do
-    key = rate_key(path)
-
-    cond do
-      key in @fraction_keys -> :fraction
-      key == "percentage" and fee_percentage_path?(path) -> :boolean
-      key == "percentage" -> :percent_points
-      true -> flunk("no unified rate-unit contract for #{path}")
+  defp emitted_entries do
+    for venue <- @venues,
+        {path, value} <- rate_slots(Bourse.Spec.load!(venue)),
+        not is_nil(value) do
+      %{
+        venue: venue,
+        path: path,
+        declared_unit: declared_unit!(venue, path),
+        contract_unit: public_contract_unit!(path)
+      }
     end
   end
 
-  defp unified_field(path) do
-    key = rate_key(path)
+  defp declaration_errors(entries) do
+    Enum.flat_map(entries, fn entry ->
+      if entry.declared_unit == entry.contract_unit do
+        []
+      else
+        [
+          "#{entry.venue}: #{entry.path} declares #{entry.declared_unit}, public contract requires #{entry.contract_unit}"
+        ]
+      end
+    end)
+  end
+
+  defp assert_declarations_match!(entries), do: assert([] == declaration_errors(entries))
+
+  defp public_contract_unit!(path) do
+    module = Map.fetch!(@slot_contracts, parse_slot(path))
+    field = public_contract_field(path)
+    property = module.schema() |> Map.fetch!("properties") |> Map.fetch!(field)
+    description = property |> Map.fetch!("description") |> String.downcase()
 
     cond do
-      key in ~w(maker taker) -> "fee.#{key}"
-      key == "rate" and String.contains?(path, ".fee.sub_field_map.rate") -> "fee.rate"
-      key in ~w(rate percentage) -> "#{parse_slot(path)}.#{key}"
-      true -> key
+      property["type"] == "boolean" -> :boolean
+      String.contains?(description, ["percent points", "percentile"]) -> :percent_points
+      String.contains?(description, ["fraction", "decimal"]) -> :fraction
+      true -> flunk("#{inspect(module)}.#{field} does not document a rate unit")
     end
   end
+
+  defp public_contract_field("fees." <> rest) do
+    cond do
+      String.contains?(rest, ".maker") -> "maker"
+      String.contains?(rest, ".taker") -> "taker"
+      true -> rest |> String.split(".") |> List.last() |> Macro.underscore()
+    end
+  end
+
+  defp public_contract_field(path), do: path |> rate_key() |> Macro.underscore()
 
   defp rate_key(path) do
     path
@@ -201,20 +258,26 @@ defmodule Bourse.AuthoredRateUnitConfrontationTest do
   defp parse_slot("normalization.field_maps." <> rest), do: rest |> String.split(".") |> hd()
   defp parse_slot("fees." <> _rest), do: "fees"
 
-  defp fee_percentage_path?(path) do
-    parse_slot(path) in ~w(market trading_fee trading_fees)
-  end
-
   defp declared_unit!(venue, path) do
     line = confrontation_line!(venue, path)
 
-    case Regex.run(~r/<!-- rate-unit path="[^"]+" unit="([a-z_]+)" -->/, line, capture: :all_but_first) do
-      [unit] ->
-        String.to_existing_atom(unit)
-
-      nil ->
-        table_unit!(venue, path, line)
+    case marker_attributes(line) do
+      %{"unit" => unit} -> String.to_existing_atom(unit)
+      %{} -> table_unit!(venue, path, line)
     end
+  end
+
+  defp declared_source_unit!(venue, path) do
+    case marker_attributes(confrontation_line!(venue, path)) do
+      %{"source-unit" => unit} -> String.to_existing_atom(unit)
+      _attributes -> flunk("#{venue}: #{path} has scale but no source-unit declaration")
+    end
+  end
+
+  defp marker_attributes(line) do
+    ~r/([a-z-]+)="([^"]+)"/
+    |> Regex.scan(line, capture: :all_but_first)
+    |> Map.new(fn [key, value] -> {key, value} end)
   end
 
   defp table_unit!(venue, path, line) do
@@ -242,15 +305,55 @@ defmodule Bourse.AuthoredRateUnitConfrontationTest do
   end
 
   defp confrontation_line!(venue, path) do
-    lines =
-      @registers
-      |> Map.fetch!(venue)
-      |> then(&Regex.scan(@confrontation_section, &1))
-      |> Enum.flat_map(fn [section] -> String.split(section, "\n") end)
-      |> Enum.reverse()
-
-    Enum.find(lines, fn line ->
-      String.contains?(line, "`#{path}`") or String.contains?(line, ~s(path="#{path}"))
-    end) || flunk("#{venue}: Task 594/600 does not confront #{path}")
+    @registers
+    |> Map.fetch!(venue)
+    |> confrontation_line_from!(path)
   end
+
+  defp confrontation_line_from!(register, path) do
+    candidates =
+      @confrontation_section
+      |> Regex.scan(register, return: :index)
+      |> Enum.flat_map(fn [{section_start, section_length}, {id_start, id_length}, {task_start, task_length}] ->
+        section = binary_part(register, section_start, section_length)
+
+        case Enum.find(String.split(section, "\n"), &confronts_path?(&1, path)) do
+          nil ->
+            []
+
+          line ->
+            prefix = binary_part(register, 0, section_start)
+            date = latest_heading_date(prefix)
+            id = binary_part(register, id_start, id_length)
+            task = register |> binary_part(task_start, task_length) |> String.to_integer()
+            [%{date: date, task: task, id: id, line: line}]
+        end
+      end)
+
+    case Enum.max_by(candidates, &{&1.date, &1.task, &1.id}, fn -> nil end) do
+      nil -> flunk("no dated C-T rate-unit block confronts #{path}")
+      candidate -> candidate.line
+    end
+  end
+
+  defp confronts_path?(line, path) do
+    String.contains?(line, "`#{path}`") or String.contains?(line, ~s(path="#{path}"))
+  end
+
+  defp latest_heading_date(prefix) do
+    case Regex.scan(~r/^## (\d{4}-\d{2}-\d{2})\b/m, prefix, capture: :all_but_first) do
+      [] -> flunk("rate-unit confrontation has no dated heading")
+      dates -> dates |> List.last() |> hd()
+    end
+  end
+
+  defp authored_scales(%{} = value) do
+    own = if is_number(value["scale"]), do: [value["scale"]], else: []
+    own ++ Enum.flat_map(value, fn {_key, child} -> authored_scales(child) end)
+  end
+
+  defp authored_scales(value) when is_list(value), do: Enum.flat_map(value, &authored_scales/1)
+  defp authored_scales(_value), do: []
+
+  defp unit_multiplier(unit), do: Map.fetch!(@unit_multipliers, unit)
 end

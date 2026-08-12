@@ -354,3 +354,14 @@ Outcome: CONFIRM emitted funding fractions and record unreachable option mapping
 <!-- carve-evidence-status
 {"carve_id":"C-T600c","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M premium-index and Binance option mark-price contracts linked in C-T600c"},"observed_evidence":{"kind":"recorded_venue","reference":"Registered COIN-M funding response"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The option and borrow mappings are unreachable carried slices rather than COIN-M runtime operations"}
 -->
+
+**C-T603c — the carried Binance option ticker slice preserves the EAPI unit (task 603).
+Outcome: DIVERGE from the prior unscaled EAPI percentage.**
+
+<!-- rate-unit path="normalization.field_maps.option.field_map.percentage" unit="percent_points" source-unit="fraction" --> EAPI `priceChangePercent` is a decimal ratio and `scale: 100` emits public percent points. [Option 24hr ticker](https://developers.binance.com/docs/derivatives/option/market-data/24hr-Ticker-Price-Change-Statistics)
+<!-- rate-unit path="normalization.field_maps.ticker.field_map.percentage" unit="percent_points" source-unit="fraction" --> The option discriminator scales only EAPI rows; COIN-M ticker rows remain provider percent points. [COIN-M 24hr ticker](https://developers.binance.com/docs/derivatives/coin-margined-futures/market-data/rest-api/24hr-Ticker-Price-Change-Statistics)
+<!-- rate-unit path="normalization.field_maps.position.field_map.percentage" unit="percent_points" source-unit="fraction" --> The position quotient is a fraction before `scale: 100`. [Position information](https://developers.binance.com/docs/derivatives/coin-margined-futures/trade/rest-api/Position-Information)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T603c","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance EAPI and COIN-M ticker contracts linked in C-T603c"},"observed_evidence":{"kind":"provider_shaped","reference":"The 2026-08-12 EAPI row pinned in binance_authored_spec_test.exs is parsed through the carried COIN-M module"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The EAPI slice is carried by this complete document but is not a COIN-M runtime operation"}
+-->

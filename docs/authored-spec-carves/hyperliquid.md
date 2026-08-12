@@ -527,3 +527,12 @@ without a live parse slot.
 <!-- carve-evidence-status
 {"carve_id":"C-T600h","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid funding and perpetuals contracts linked in C-T600h"},"observed_evidence":{"kind":"recorded_venue","reference":"Registered Hyperliquid funding-rate-history accepted request"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The deleted income slice was unwired and had no independent response evidence"}
 -->
+
+**C-T603i — Hyperliquid position percentage preserves PnL sign (task 603).
+Outcome: DIVERGE from the absolute-value normalization.**
+
+<!-- rate-unit path="normalization.field_maps.position.field_map.percentage" unit="percent_points" --> Clearinghouse state publishes signed `unrealizedPnl` and signed `returnOnEquity`; a loss therefore remains negative when Bourse computes `unrealizedPnl / marginUsed × 100`. [Perpetuals API](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint/perpetuals)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T603i","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid clearinghouseState contract linked in C-T603i"},"observed_evidence":{"kind":"provider_shaped","reference":"Provider example unrealizedPnl -0.0134 and marginUsed 4.967826 pinned in hyperliquid_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The signed provider example is not a manifest-registered clearinghouse body"}
+-->

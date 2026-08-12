@@ -709,3 +709,12 @@ Outcome: CONFIRM option IV and funding fractions.**
 <!-- carve-evidence-status
 {"carve_id":"C-T600e","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 option ticker, funding-fee, and closed-PnL contracts linked in C-T600e"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-12T08:57:35Z api-testnet.bybit.com option ticker BTC-21AUG26-65000-C-USDT markIv 0.2789 bid1Iv 0.3223 ask1Iv 0.3236"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The closed-position cumEntryValue/cumExitValue ratio remains semantically unverified as initial margin"}
 -->
+
+**C-T603e — Bybit's ticker percentage declares its source unit (task 603).
+Outcome: CONFIRM fraction-to-percent-point conversion.**
+
+<!-- rate-unit path="normalization.field_maps.ticker.field_map.percentage" unit="percent_points" source-unit="fraction" --> Bybit's `price24hPcnt` is a decimal ratio; authored `scale: 100` emits percent points. [Tickers](https://bybit-exchange.github.io/docs/v5/market/tickers)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T603e","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 ticker contract linked in C-T603e"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/bybit/fetch_ticker.json","fixture":"test/fixtures/responses/bybit/fetch_ticker.json"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The registered ticker establishes the wire value but the amendment remains documentation-derived for every market family"}
+-->

@@ -8,6 +8,7 @@ defmodule Bourse.HyperliquidAuthoredSpecTest do
 
   @create_order_fixture "priv/reference_cache/response/hyperliquid.json"
   @external_resource @create_order_fixture
+  @percentage_tolerance 1.0e-12
 
   test "spot balances parse their per-coin totals from balances rows" do
     body = %{
@@ -63,6 +64,34 @@ defmodule Bourse.HyperliquidAuthoredSpecTest do
   test "funding-rate map authors Hyperliquid's hourly interval" do
     assert {:ok, %Bourse.FundingRate{interval: "1h"}} =
              Bourse.Hyperliquid.parse_funding_rate(%{"funding" => "0.0001"})
+  end
+
+  test "a losing clearinghouse position emits a negative PnL percentage" do
+    unrealized_pnl = -0.0134
+    margin_used = 4.967826
+
+    body = %{
+      "assetPositions" => [
+        %{
+          "position" => %{
+            "coin" => "ETH",
+            "leverage" => %{"type" => "cross", "value" => 20},
+            "marginUsed" => to_string(margin_used),
+            "szi" => "0.2259",
+            "unrealizedPnl" => to_string(unrealized_pnl)
+          },
+          "type" => "oneWay"
+        }
+      ]
+    }
+
+    {stub, _requests} = stub(body)
+
+    assert {:ok, [%Bourse.Position{} = position]} =
+             Unified.call(private_exchange(), :fetch_positions, "fetchPositions", %{}, plug: {Req.Test, stub})
+
+    assert position.percentage < 0
+    assert_in_delta position.percentage, unrealized_pnl / margin_used * 100, @percentage_tolerance
   end
 
   # Fill-parse coverage (task 219 fold-in). This pins the userFills ->

@@ -24683,7 +24683,8 @@
           "percentage": {
             "coercion": "safeNumber",
             "format": null,
-            "key": "priceChangePercent"
+            "key": "priceChangePercent",
+            "scale": 100
           },
           "quoteVolume": null,
           "symbol": null,
@@ -25139,9 +25140,19 @@
             "key": "openPrice"
           },
           "percentage": {
-            "coercion": "safeNumber2",
-            "format": null,
-            "key": "priceChangePercent"
+            "discriminator": "market.option",
+            "false": {
+              "coercion": "safeNumber2",
+              "format": null,
+              "key": "priceChangePercent"
+            },
+            "kind": "discriminated",
+            "true": {
+              "coercion": "safeNumber2",
+              "format": null,
+              "key": "priceChangePercent",
+              "scale": 100
+            }
           },
           "previousClose": {
             "coercion": "safeNumber2",

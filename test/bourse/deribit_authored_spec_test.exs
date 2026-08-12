@@ -7,6 +7,8 @@ defmodule Bourse.DeribitAuthoredSpecTest do
   alias Bourse.Test.RequestCollector
   alias Bourse.Unified
 
+  @ratio_tolerance 1.0e-12
+
   test "nested option greeks populate the unified fields" do
     raw = %{
       "ask_iv" => 343.95,
@@ -23,16 +25,34 @@ defmodule Bourse.DeribitAuthoredSpecTest do
     assert greeks.ask_implied_volatility == 3.4395
   end
 
-  test "position margin percentages are normalized as fractions" do
+  test "inverse position margin percentages divide same-currency amounts into fractions" do
     raw = %{
-      "initial_margin" => 10,
-      "maintenance_margin" => 2,
-      "size_currency" => 100
+      "instrument_name" => "BTC-PERPETUAL",
+      "initial_margin" => 0.000197283,
+      "maintenance_margin" => 0.000143783,
+      "size_currency" => 0.006687487
     }
 
-    assert {:ok, %Bourse.Position{} = position} = Bourse.Deribit.parse_position(raw)
-    assert position.initial_margin_percentage == 0.1
-    assert position.maintenance_margin_percentage == 0.02
+    assert {:ok, %Bourse.Position{} = position} =
+             Bourse.Deribit.parse_position(raw, market: %Bourse.Market{inverse: true})
+
+    assert_in_delta position.initial_margin_percentage, 0.000197283 / 0.006687487, @ratio_tolerance
+    assert_in_delta position.maintenance_margin_percentage, 0.000143783 / 0.006687487, @ratio_tolerance
+  end
+
+  test "linear position margins do not divide quote settlement by base size" do
+    raw = %{
+      "instrument_name" => "ETH_USDC-PERPETUAL",
+      "initial_margin" => 300,
+      "maintenance_margin" => 150,
+      "size_currency" => 0.5
+    }
+
+    assert {:ok,
+            %Bourse.Position{
+              initial_margin_percentage: nil,
+              maintenance_margin_percentage: nil
+            }} = Bourse.Deribit.parse_position(raw, market: %Bourse.Market{linear: true})
   end
 
   test "deposit and withdrawal rows share authored transaction fields" do
