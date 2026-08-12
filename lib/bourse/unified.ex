@@ -1805,7 +1805,7 @@ defmodule Bourse.Unified do
       method_atom,
       js_name,
       response_body(response),
-      put_endpoint_market_type(params, config, exchange, method_atom),
+      put_endpoint_parse_context(params, config, exchange, method_atom),
       :parse_order,
       false
     )
@@ -1837,7 +1837,7 @@ defmodule Bourse.Unified do
             method_atom,
             js_name,
             &1,
-            put_endpoint_market_type(params, config, exchange, method_atom),
+            put_endpoint_parse_context(params, config, exchange, method_atom),
             parser,
             list_return?
           )
@@ -1894,6 +1894,15 @@ defmodule Bourse.Unified do
       market_type -> Map.put(params, "_bourse_endpoint_market_type", market_type)
     end
   end
+
+  defp put_endpoint_parse_context(params, config, exchange, method_atom) do
+    params
+    |> put_endpoint_market_type(config, exchange, method_atom)
+    |> put_endpoint_route(config)
+  end
+
+  defp put_endpoint_route(params, nil), do: params
+  defp put_endpoint_route(params, config), do: Map.put(params, "_bourse_endpoint_route", config.path)
 
   # Binance's endpoint family disambiguates compact native ids. The spot rule remains scoped to
   # `binance`; Binance USD-M has distinct fapi (linear) and dapi (inverse) families.

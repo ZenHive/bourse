@@ -129,6 +129,7 @@ defmodule Bourse.RecordedResponseFixturesTest do
     assert {"binancecoinm", :fetch_ledger} in RecordedResponseFixtures.capture_targets()
     assert {"binancecoinm", :fetch_adl_rank} in RecordedResponseFixtures.capture_targets()
     assert {"binancecoinm", :error_position_mode_unchanged} in RecordedResponseFixtures.capture_targets()
+    assert {"okx", :account_subtypes} in RecordedResponseFixtures.capture_targets()
     assert RecordedResponseFixtures.capture_category("deribit", :fetch_balance) == :private
     assert RecordedResponseFixtures.capture_category("binance", :fetch_ticker) == :public
 
@@ -153,6 +154,9 @@ defmodule Bourse.RecordedResponseFixturesTest do
     assert RecordedResponseFixtures.oracle_identity("binancecoinm", :error_position_mode_unchanged)["endpoint"] ==
              "dapi/v1/positionSide/dual"
 
+    assert RecordedResponseFixtures.oracle_identity("okx", :account_subtypes)["endpoint"] ==
+             "api/v5/account/subtypes"
+
     assert RecordedResponseFixtures.fixture_path("binance", :fetch_markets) ==
              Path.join(RecordedResponseFixtures.fixture_root(), "binance/fetch_markets.json")
 
@@ -163,6 +167,22 @@ defmodule Bourse.RecordedResponseFixturesTest do
   test "capture_fixture/2 rejects methods without a capture profile" do
     assert {:error, {:no_capture_profile, "binance", :fetch_account}} =
              RecordedResponseFixtures.capture_fixture("binance", :fetch_account)
+  end
+
+  test "OKX bill subtypes capture dispatches its exact raw endpoint" do
+    stub = unique_stub("okx_account_subtypes")
+    test_process = self()
+
+    Req.Test.stub(stub, fn conn ->
+      send(test_process, {:okx_subtypes_request, conn.request_path})
+      Req.Test.json(conn, %{"code" => "0", "data" => [%{"subType" => "", "type" => "1", "typeDesc" => "Transfer"}]})
+    end)
+
+    with_env(~w(OKX_INTL_API_KEY OKX_INTL_API_SECRET OKX_INTL_PASSPHRASE), "fixture-credential", fn ->
+      assert {:ok, fixture} = Capture.capture_fixture("okx", :account_subtypes, plug: {Req.Test, stub})
+      assert_receive {:okx_subtypes_request, "/api/v5/account/subtypes"}
+      assert fixture["body"]["data"] == [%{"subType" => "", "type" => "1", "typeDesc" => "Transfer"}]
+    end)
   end
 
   test "public trade capture carries the configured symbol into the provider request" do

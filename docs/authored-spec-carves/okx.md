@@ -1708,21 +1708,26 @@ Outcome: CONFIRM provider arithmetic; retain one history-position gap.**
 ## 2026-08-12 — ledger type authority (Task 598)
 
 **C-T598c — bill types come from OKX's authenticated Get bills types enumeration (task 598).
-Outcome: CONFIRM live provider vocabulary; preserve additions explicitly.**
+Outcome: CONFIRM the recorded trading-account vocabulary; DIVERGE for unnamed account types and
+provider-specific funding-account values (amended by Task 601).**
 
 - *Provider contract:* the bills documentation delegates the type vocabulary to authenticated
   `GET /api/v5/account/subtypes` (Get bills types) instead of maintaining an inline enum.
-- *Live confrontation:* international demo returned `code=0` on 2026-08-12 with 32 top-level
+- *Live confrontation:* the manifest-registered international-demo recording returned `code=0`
+  on 2026-08-12 with 32 top-level
   types: `1`–`16`, then `20`, `22`, `24`, `26`–`30`, `32`–`35`, `37`, `38`,
   `250`, and `251`.
-- *Our carve:* all 32 values have explicit arms. Types without an authored unified alias preserve
-  the provider number, and `enum_passthrough: true` preserves later enumeration additions rather
-  than producing `nil` between refreshes.
+- *Our trading-account carve:* all 29 values carrying a current provider name translate to stable
+  snake-case semantics. Current types `22`, `24`, and `26` have blank `typeDesc` values and pass
+  through numerically; later additions do likewise. This is recorded as DIVERGE, not CONFIRM.
+- *Our funding-account carve:* `/api/v5/asset/bills` has a separate 147-value table. Deposit `1`,
+  withdrawal `2`, and documented account-transfer codes normalize on that route; other
+  funding-specific values pass through. The same codes never reuse the trading-account map.
 - *Direction:* OKX defines positive `balChg` as a balance increase and negative as a decrease;
   zero has no flow direction and maps to `nil`.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T598c","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 Get bills types contract at GET /api/v5/account/subtypes"},"observed_evidence":{"kind":"live_venue","reference":"www.okx.com simulated-trading authenticated account/subtypes code=0 response on 2026-08-12 returned the 32 registered top-level type values"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T598c","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 Get bills types and funding-account Asset bills details contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/okx/account_subtypes.json"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Trading-account enumeration is manifest-recorded; the international demo asset-bills call returned an empty success, so its populated-row semantics remain in the production-verification ledger"}
 -->
 
 **C-T600j — OKX IV and funding fields conform to the cross-venue fraction contract

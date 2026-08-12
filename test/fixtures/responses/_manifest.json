@@ -1,5 +1,5 @@
 {
-  "count": 116,
+  "count": 117,
   "fixtures": [
     "alpaca/fetch_balance.json",
     "alpaca/fetch_markets.json",
@@ -104,6 +104,7 @@
     "lighter/fetch_ticker.json",
     "lighter/fetch_transfers.json",
     "lighter/fetch_withdrawals.json",
+    "okx/account_subtypes.json",
     "okx/fetch_balance.json",
     "okx/fetch_funding_rate_history.json",
     "okx/fetch_markets.json",
@@ -118,7 +119,7 @@
     "okx/fetch_ticker.json",
     "okx/fetch_trades.json"
   ],
-  "generated_at": "2026-08-11T05:37:50.255157Z",
+  "generated_at": "2026-08-12T10:36:47.436886Z",
   "recordings": [
     {
       "capture_date": "2026-07-26",
@@ -1105,6 +1106,15 @@
       "method": "fetch_withdrawals",
       "path": "lighter/fetch_withdrawals.json",
       "venue": "lighter"
+    },
+    {
+      "capture_date": "2026-08-12",
+      "captured_at": "2026-08-12T10:36:47.431750Z",
+      "endpoint": "api/v5/account/subtypes",
+      "host": "www.okx.com",
+      "method": "account_subtypes",
+      "path": "okx/account_subtypes.json",
+      "venue": "okx"
     },
     {
       "capture_date": "2026-07-21",

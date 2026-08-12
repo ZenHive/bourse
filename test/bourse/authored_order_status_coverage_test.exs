@@ -12,20 +12,33 @@ defmodule Bourse.AuthoredOrderStatusCoverageTest do
   # Governed, exact, and intended only to shrink. Each entry identifies one field
   # whose provider-native vocabulary is deliberately open beyond its mapped aliases.
   @enum_passthrough_exemptions %{
+    {"binance", ~w(normalization field_maps ledger_entry route_field_maps bill type)} => %{
+      reason: "The options funding-flow contract defines type as a free string, so provider literals remain unchanged.",
+      tracking: "Task 601; docs/authored-spec-carves/binance.md C-T592c"
+    },
+    {"binanceusdm", ~w(normalization field_maps ledger_entry route_field_maps bill type)} => %{
+      reason: "The options funding-flow contract defines type as a free string, so provider literals remain unchanged.",
+      tracking: "Task 601; docs/authored-spec-carves/binanceusdm.md C-T592b"
+    },
     {"bybit", ~w(normalization field_maps ledger_entry field_map type)} => %{
       reason:
-        "The complete provider transaction-log vocabulary is mapped; additional provider-native ledger types retain their identifier.",
+        "Mapped aliases normalize while the documented provider transaction-log vocabulary otherwise retains its identifier.",
       tracking: "Task 598; docs/authored-spec-carves/bybit.md C-T598b"
     },
     {"hyperliquid", ~w(normalization field_maps ledger_entry field_map type)} => %{
       reason:
-        "All 14 documented delta types are mapped; additional provider-native ledger types retain their identifier.",
+        "Mapped transfer aliases normalize while documented provider-native delta types otherwise retain their identifier.",
       tracking: "Task 598; docs/authored-spec-carves/hyperliquid.md C-T598d"
     },
     {"okx", ~w(normalization field_maps ledger_entry field_map type)} => %{
       reason:
-        "The live provider bill-type enumeration is mapped; additional provider-native ledger types retain their identifier.",
+        "All recorded trading-account bill types are translated while future provider types retain their identifier.",
       tracking: "Task 598; docs/authored-spec-carves/okx.md C-T598c"
+    },
+    {"okx", ~w(normalization field_maps ledger_entry route_field_maps asset/bills type)} => %{
+      reason:
+        "Funding-account deposit, withdrawal, and transfer types normalize while provider-specific asset-bill types remain raw.",
+      tracking: "Task 601; docs/authored-spec-carves/okx.md C-T598c"
     },
     {"okx", ~w(normalization field_maps order field_map type)} => %{
       reason:

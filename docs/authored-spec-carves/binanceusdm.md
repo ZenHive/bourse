@@ -473,9 +473,9 @@ provider contracts (task 534). Outcome: CONFIRM provider contract.**
 {"carve_id":"C-T534a","date":"2026-08-09","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binanceusdm/manifest.json artifact developer-docs-full; USD-M account information, position risk, and symbol configuration contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binanceusdm/fetch_account_positions.json, test/fixtures/responses/binanceusdm/fetch_positions_risk.json, and test/fixtures/responses/binanceusdm/fetch_leverages.json"},"compatibility_reference":null,"resolved_tier":1}
 -->
 
-**C-T592b — USD-M income vocabulary includes change-log additions, and signed income defines
-direction (task 592). Outcome: CONFIRMED vocabulary membership; DIVERGE on the unified
-mapping of the two new arms (amended 2026-08-12, ARC pass).**
+**C-T592b — USD-M income and options bills retain separate routed vocabularies
+(task 592; amended by Task 601). Outcome: CONFIRM the enumerated income vocabulary;
+DIVERGE on unified income labels and the open options type string.**
 
 - *Exchange semantics:* the Income History operation defines the row vocabulary and signed
   `income`; the provider change log additionally documents `AUTO_EXCHANGE` rather than leaving
@@ -484,16 +484,16 @@ mapping of the two new arms (amended 2026-08-12, ARC pass).**
   auto-exchange event — a system-initiated conversion, not an order fill.
 - *Our carve:* `INSURANCE_CLEAR` normalizes to `settlement` and `AUTO_EXCHANGE` to `trade` by
   **our judgment** (the provider is silent on meaning). The official SDK's 22-value enum adds
-  `STRATEGY_UMFUTURES_TRANSFER`, `FEE_RETURN`, and `BFUSD_REWARD`; the routed options Funding
-  Flow contract independently evidences `FEE`. `CONTRACT` is removed. Futures rows read
-  `incomeType`/`income`; options rows read fallback `type`/`amount`.
+  `STRATEGY_UMFUTURES_TRANSFER`, `FEE_RETURN`, and `BFUSD_REWARD`. The routed options Funding
+  Flow contract defines `type` only as a free `String`, so it evidences row shape but no literal;
+  options types pass through while income remains strict.
 - *Direction:* negative is `out`, positive is `in`, and zero is `nil` because the provider
   assigns no flow direction to a zero amount.
-- *Verification:* the two-way documented-set guard pins the official SDK sources. The registered
-  populated USD-M income recording pins negative rows as `out`.
+- *Verification:* the exact income-set guard and open options-scope guard pin the official SDK
+  sources separately. The registered populated USD-M income recording pins negative rows as `out`.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T592b","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance official Java SDK a13868d0 USD-M IncomeType and options AccountFundingFlowResponseInner contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binanceusdm/fetch_ledger.json"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T592b","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance official Java SDK a13868d0 USD-M IncomeType and options AccountFundingFlowResponseInner contracts; the latter defines type as a free String"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binanceusdm/fetch_ledger.json"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"USD-M income is recorded; the options bill route has no populated provider-owned recording and deliberately preserves its open type string"}
 -->
 
 ## 2026-08-12 — rate-unit confrontation (Task 594)

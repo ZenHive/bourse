@@ -976,6 +976,53 @@ defmodule Bourse.ResponseParserTest do
              ResponseParser.apply_mappings(%{"id" => "trade-1"}, mapping, target: Trade)
   end
 
+  test "selects a parser branch from the routed endpoint context" do
+    mapping = %{
+      "field_map" => %{"type" => %{"key" => "type", "enum_map" => %{"1" => "transfer"}}},
+      "route_field_maps" => %{
+        "account/bills" => %{},
+        "asset/bills" => %{"type" => %{"key" => "type", "enum_map" => %{"1" => "deposit"}}}
+      }
+    }
+
+    assert {:ok, %Bourse.LedgerEntry{type: "transfer"}} =
+             ResponseParser.apply_mappings(%{"type" => "1"}, mapping,
+               target: Bourse.LedgerEntry,
+               route: "account/bills",
+               venue: "okx"
+             )
+
+    assert {:ok, %Bourse.LedgerEntry{type: "deposit"}} =
+             ResponseParser.apply_mappings(%{"type" => "1"}, mapping,
+               target: Bourse.LedgerEntry,
+               route: "asset/bills",
+               venue: "okx"
+             )
+
+    assert {:error, :no_matching_parser_branch} =
+             ResponseParser.apply_mappings(%{"type" => "1"}, mapping,
+               target: Bourse.LedgerEntry,
+               venue: "okx"
+             )
+  end
+
+  test "rejects malformed routed and guarded parser maps" do
+    assert {:error, :no_matching_parser_branch} =
+             ResponseParser.apply_mappings(
+               %{"type" => "1"},
+               %{"route_field_maps" => %{"asset/bills" => %{}}},
+               target: Bourse.LedgerEntry,
+               route: "asset/bills"
+             )
+
+    assert {:error, :no_matching_parser_branch} =
+             ResponseParser.apply_mappings(
+               %{"id" => "trade-1"},
+               %{"branches" => [%{"field_map" => %{"id" => %{"key" => "id"}}}]},
+               target: Trade
+             )
+  end
+
   test "propagates list record parse errors" do
     mapping = %{
       "branches" => [

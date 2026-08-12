@@ -75,7 +75,7 @@ defmodule Bourse.ResponseParser do
       data == [] ->
         {:ok, []}
 
-      list_of_records?(data, mapping) ->
+      list_of_records?(data, mapping, context) ->
         data
         |> Enum.map(&parse_one(&1, mapping, context))
         |> collect_results()
@@ -87,39 +87,50 @@ defmodule Bourse.ResponseParser do
 
   defp parse_data(data, mapping, context), do: parse_one(data, mapping, context)
 
-  defp list_of_records?([first | _], mapping) when is_map(first) or is_list(first) do
-    match?({:ok, _field_map}, select_field_map(first, mapping))
+  defp list_of_records?([first | _], mapping, context) when is_map(first) or is_list(first) do
+    match?({:ok, _field_map}, select_field_map(first, mapping, context))
   end
 
-  defp list_of_records?(_data, _mapping), do: false
+  defp list_of_records?(_data, _mapping, _context), do: false
 
   defp parse_one(data, mapping, context) do
-    with {:ok, field_map} <- select_field_map(data, mapping) do
+    with {:ok, field_map} <- select_field_map(data, mapping, context) do
       extract_field_map(data, field_map, context)
     end
   end
 
-  defp select_field_map(data, %{"branches" => branches}) when is_list(branches) do
+  defp select_field_map(data, %{"branches" => branches}, context) when is_list(branches) do
     branches
-    |> Enum.find(&branch_matches?(&1, data))
+    |> Enum.find(&branch_matches?(&1, data, context))
     |> case do
       %{"field_map" => field_map} when is_map(field_map) -> {:ok, field_map}
       _ -> {:error, :no_matching_parser_branch}
     end
   end
 
-  defp select_field_map(_data, %{"field_map" => field_map}) when is_map(field_map), do: {:ok, field_map}
-  defp select_field_map(_data, field_map) when is_map(field_map), do: {:ok, field_map}
+  defp select_field_map(_data, %{"field_map" => field_map, "route_field_maps" => route_field_maps}, %{route: route})
+       when is_map(field_map) and is_map(route_field_maps) do
+    case Map.fetch(route_field_maps, route) do
+      {:ok, overrides} when is_map(overrides) -> {:ok, Map.merge(field_map, overrides)}
+      _missing_route -> {:error, :no_matching_parser_branch}
+    end
+  end
 
-  defp branch_matches?(%{"guard" => %{"input_shape" => "array"}}, data), do: is_list(data)
-  defp branch_matches?(%{"guard" => %{"input_shape" => "object"}}, data), do: is_map(data)
+  defp select_field_map(_data, %{"route_field_maps" => route_field_maps}, _context) when is_map(route_field_maps),
+    do: {:error, :no_matching_parser_branch}
 
-  defp branch_matches?(%{"guard" => %{"has_key" => key}}, data) when is_map(data) and is_binary(key),
+  defp select_field_map(_data, %{"field_map" => field_map}, _context) when is_map(field_map), do: {:ok, field_map}
+  defp select_field_map(_data, field_map, _context) when is_map(field_map), do: {:ok, field_map}
+
+  defp branch_matches?(%{"guard" => %{"input_shape" => "array"}}, data, _context), do: is_list(data)
+  defp branch_matches?(%{"guard" => %{"input_shape" => "object"}}, data, _context), do: is_map(data)
+
+  defp branch_matches?(%{"guard" => %{"has_key" => key}}, data, _context) when is_map(data) and is_binary(key),
     do: Map.has_key?(data, key)
 
-  defp branch_matches?(%{"guard" => %{"kind" => "always"}}, _data), do: true
-  defp branch_matches?(%{"guard" => guard}, data) when is_map(guard), do: payload_guard_matches?(guard, data)
-  defp branch_matches?(_branch, _data), do: false
+  defp branch_matches?(%{"guard" => %{"kind" => "always"}}, _data, _context), do: true
+  defp branch_matches?(%{"guard" => guard}, data, _context) when is_map(guard), do: payload_guard_matches?(guard, data)
+  defp branch_matches?(_branch, _data, _context), do: false
 
   defp payload_guard_matches?(%{"field" => field, "in" => values}, data)
        when is_binary(field) and is_list(values) and is_map(data) do
@@ -1248,12 +1259,22 @@ defmodule Bourse.ResponseParser do
       currencies: context_option(context, :currencies) || %{},
       common_currencies: context_option(context, :common_currencies) || %{},
       options: context_option(context, :options) || %{},
+      route: context_option(context, :route),
       venue: context_option(context, :venue)
     }
   end
 
   defp normalize_context(_context),
-    do: %{target: nil, market: %{}, symbol: nil, currencies: %{}, common_currencies: %{}, options: %{}, venue: nil}
+    do: %{
+      target: nil,
+      market: %{},
+      symbol: nil,
+      currencies: %{},
+      common_currencies: %{},
+      options: %{},
+      route: nil,
+      venue: nil
+    }
 
   defp context_option(context, key), do: Map.get(context, key) || Map.get(context, Atom.to_string(key))
 

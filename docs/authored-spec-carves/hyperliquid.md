@@ -497,18 +497,19 @@ Outcome: CONFIRM provider arithmetic.**
 ## 2026-08-12 — ledger type authority (Task 598)
 
 **C-T598d — non-funding ledger delta types follow the provider's `WsLedgerUpdate` union (task 598).
-Outcome: CONFIRM 14 literal types; preserve additions explicitly.**
+Outcome: CONFIRM the 14-literal provider set; DIVERGE because venue-native literals occupy the
+unified `type` field when no deliberate alias exists (amended by Task 601).**
 
 - *Provider contract:* the WebSocket subscription schema names 12 union members; expanding
   `WsVaultDelta`'s `vaultCreate`, `vaultDeposit`, and `vaultDistribution` literals yields 14
   distinct `delta.type` values.
-- *Our carve:* every literal is explicit. `accountClassTransfer` and `internalTransfer` retain
-  their unified `transfer` aliases; other types preserve the provider literal. The existing
-  `enum_passthrough: true` is the deliberate forward-compatible policy, so a new delta type is
-  observable instead of silently becoming `nil`.
+- *Our carve:* only deliberate transfer/withdrawal aliases remain explicit. Other documented
+  types preserve the provider literal through `enum_passthrough: true`; the provider set is a
+  superset guard rather than identity enum padding. This is an explicit unified-vocabulary
+  divergence, so a new delta type remains observable instead of silently becoming `nil`.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T598d","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid WebSocket subscriptions WsUserNonFundingLedgerUpdates / WsLedgerUpdate union"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Provider-owned schema pins the complete 14-type vocabulary; no account can summon every ledger event on demand"}
+{"carve_id":"C-T598d","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid WebSocket subscriptions WsUserNonFundingLedgerUpdates / WsLedgerUpdate union"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Venue-native literals deliberately pass through the unified type field; no account can summon every ledger event on demand"}
 -->
 
 **C-T600h — Hyperliquid funding fields conform to the cross-venue fraction contract

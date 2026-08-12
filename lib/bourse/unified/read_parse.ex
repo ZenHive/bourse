@@ -1899,10 +1899,19 @@ defmodule Bourse.Unified.ReadParse do
   # Must stay a keyword list: generated parsers hand this straight to
   # `Bourse.Parser.parse/4`, which reads it with `Keyword.get/3`.
   defp build_parse_opts(exchange, params, _payload, _list_return?) do
-    case Map.get(params, "symbol") do
-      nil -> network_opts(exchange)
-      symbol -> [symbol: symbol, market: market_context(exchange, symbol)] ++ network_opts(exchange)
-    end
+    route_opts =
+      case Map.get(params, "_bourse_endpoint_route") do
+        route when is_binary(route) -> [route: route]
+        _route -> []
+      end
+
+    symbol_opts =
+      case Map.get(params, "symbol") do
+        nil -> []
+        symbol -> [symbol: symbol, market: market_context(exchange, symbol)]
+      end
+
+    route_opts ++ symbol_opts ++ network_opts(exchange)
   end
 
   defp network_opts(%Exchange{} = exchange) do

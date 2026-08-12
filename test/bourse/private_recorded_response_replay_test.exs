@@ -13,6 +13,7 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
   @external_resource @manifest_path
   @recording_manifest @manifest_path |> File.read!() |> Jason.decode!()
   @private_recording_venues Spec.oracle_venues(:private_real_recordings)
+  @evidence_only_targets MapSet.new([{"okx", :account_subtypes}])
   # Offline byte-replay requires ReplayExchange.build!/3 to construct the venue
   # from a Bourse-parsed markets/currencies cache. A venue's authored
   # `oracles.private_real_recordings` grade is the declared boundary for that
@@ -23,7 +24,8 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
   # slots) are excluded until the re-pointing lands (task 524).
   @private_targets Enum.filter(RecordedResponseFixtures.capture_targets(), fn {venue, method} ->
                      venue in @private_recording_venues and
-                       RecordedResponseFixtures.capture_category(venue, method) == :private
+                       RecordedResponseFixtures.capture_category(venue, method) == :private and
+                       not MapSet.member?(@evidence_only_targets, {venue, method})
                    end)
   @write_targets Enum.filter(RecordedResponseFixtures.capture_targets(), fn {venue, method} ->
                    venue in @private_recording_venues and
@@ -48,6 +50,17 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
   setup do
     Enum.each(@private_recording_venues, &FixtureGateIsolation.isolate!/1)
     :ok
+  end
+
+  test "evidence-only recordings are registered without posing as unified reads" do
+    unified_methods = MapSet.new(Unified.method_defs(), &elem(&1, 0))
+    manifest_paths = MapSet.new(@recording_manifest["recordings"], & &1["path"])
+
+    for {venue, method} <- @evidence_only_targets do
+      assert RecordedResponseFixtures.capture_category(venue, method) == :private
+      assert MapSet.member?(manifest_paths, "#{venue}/#{method}.json")
+      refute MapSet.member?(unified_methods, method)
+    end
   end
 
   for {venue, method} <- @private_targets do

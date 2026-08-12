@@ -57,63 +57,136 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       vaultLeaderCommission vaultWithdraw withdraw
     ))
 
-  @okx_types MapSet.new(~w(
+  @okx_account_types MapSet.new(~w(
       1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 20 22 24 26 27 28 29 30 32 33
       34 35 37 38 250 251
     ))
 
-  # Values are transcribed from the named provider-owned revisions or, for OKX,
-  # from the provider's authenticated enumeration response. They are deliberately
-  # not derived from authored specs: this registry is the independent side of the gate.
-  @documented_ledger_types %{
-    "binance" => %{
+  @okx_asset_types MapSet.new(~w(
+      1 2 13 20 21 22 23 28 47 48 49 68 72 73 74 75 76 77 78 80 82 83 84 89
+      116 117 118 124 130 131 132 133 134 135 137 138 139 146 150 151 152 160
+      161 162 163 172 173 174 175 176 177 178 179 180 181 185 187 189 195 196
+      197 198 199 200 202 203 204 205 207 208 209 210 212 215 217 218 220 221
+      222 223 225 226 227 228 229 232 233 240 241 242 243 249 250 251 252 263
+      265 266 270 271 272 273 284 285 286 287 288 289 299 300 303 311 313 314
+      315 328 329 330 331 332 333 339 340 341 342 343 344 345 346 347 348 349
+      350 351 354 361 372 373 400 408 476 477 509 511 516 518 523
+    ))
+
+  # Values are transcribed from the named provider-owned revisions. They are
+  # deliberately not derived from authored specs: this registry is the
+  # independent side of the gate, scoped to the route where each vocabulary applies.
+  @documented_ledger_types [
+    %{
+      venue: "binance",
+      scope: "income",
+      path: @ledger_type_path,
+      routes: ~w(income cm/income um/income),
+      mode: :exact,
       sources: [
-        "https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-usds-futures/docs/IncomeType.md",
+        "https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-usds-futures/docs/IncomeType.md"
+      ],
+      derivation: "22 enumerated USD-M IncomeType literals",
+      values: @binance_usdm_types
+    },
+    %{
+      venue: "binance",
+      scope: "options bill",
+      path: ~w(normalization field_maps ledger_entry route_field_maps bill type),
+      routes: ["bill"],
+      mode: :passthrough,
+      sources: [
         "https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-options/docs/AccountFundingFlowResponseInner.md"
       ],
-      derivation: "22 USD-M IncomeType literals plus options Account Funding Flow type FEE",
-      values: MapSet.put(@binance_usdm_types, "FEE")
+      derivation: "0 enumerated literals; the provider contract defines type as a free String",
+      values: MapSet.new()
     },
-    "binancecoinm" => %{
+    %{
+      venue: "binancecoinm",
+      scope: "income",
+      path: @ledger_type_path,
+      routes: [],
+      mode: :exact,
       sources: [
         "https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-coin-futures/docs/IncomeType.md"
       ],
-      derivation: "seven COIN-M IncomeType literals",
+      derivation: "7 enumerated COIN-M IncomeType literals",
       values: @binance_coinm_types
     },
-    "binanceusdm" => %{
+    %{
+      venue: "binanceusdm",
+      scope: "income",
+      path: @ledger_type_path,
+      routes: ~w(income cm/income um/income),
+      mode: :exact,
       sources: [
-        "https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-usds-futures/docs/IncomeType.md",
+        "https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-usds-futures/docs/IncomeType.md"
+      ],
+      derivation: "22 enumerated USD-M IncomeType literals",
+      values: @binance_usdm_types
+    },
+    %{
+      venue: "binanceusdm",
+      scope: "options bill",
+      path: ~w(normalization field_maps ledger_entry route_field_maps bill type),
+      routes: ["bill"],
+      mode: :passthrough,
+      sources: [
         "https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-options/docs/AccountFundingFlowResponseInner.md"
       ],
-      derivation: "22 USD-M IncomeType literals plus its routed options Funding Flow type FEE",
-      values: MapSet.put(@binance_usdm_types, "FEE")
+      derivation: "0 enumerated literals; the provider contract defines type as a free String",
+      values: MapSet.new()
     },
-    "bybit" => %{
+    %{
+      venue: "bybit",
+      scope: "transaction log",
+      path: @ledger_type_path,
+      routes: [],
+      mode: :passthrough,
       sources: [
         "https://github.com/bybit-exchange/docs/blob/5ccd30109fe2eb5a39cf4d864365213658530f6c/docs/v5/enum.mdx#typeuta-translog",
         "https://github.com/bybit-exchange/docs/blob/5ccd30109fe2eb5a39cf4d864365213658530f6c/docs/v5/enum.mdx#typecontract-translog"
       ],
-      derivation: "union of 100 uta-translog and 15 contract-translog rows: 101 unique literals",
+      derivation: "101 unique literals from the UTA and contract transaction-log union",
       values: @bybit_types
     },
-    "hyperliquid" => %{
+    %{
+      venue: "hyperliquid",
+      scope: "non-funding ledger updates",
+      path: @ledger_type_path,
+      routes: [],
+      mode: :passthrough,
       sources: [
         "https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/websocket/subscriptions#wsusernonfundingledgerupdates"
       ],
-      derivation: "WsLedgerUpdate union, expanding WsVaultDelta's three type literals: 14 values",
+      derivation: "14 literals in the WsLedgerUpdate union after expanding WsVaultDelta",
       values: @hyperliquid_types
     },
-    "okx" => %{
+    %{
+      venue: "okx",
+      scope: "trading-account bills",
+      path: @ledger_type_path,
+      routes: ["account/bills", "account/bills-archive"],
+      mode: :passthrough,
       sources: [
-        "GET https://www.okx.com/api/v5/account/subtypes (Get bills types), authenticated demo observation 2026-08-12"
+        "https://www.okx.com/api/v5/account/subtypes"
       ],
-      derivation: "all 32 top-level type values returned by code=0 data[]",
-      values: @okx_types
+      derivation: "32 top-level type values returned by the Get bills types operation",
+      values: @okx_account_types
+    },
+    %{
+      venue: "okx",
+      scope: "funding-account asset bills",
+      path: ~w(normalization field_maps ledger_entry route_field_maps asset/bills type),
+      routes: ["asset/bills"],
+      mode: :passthrough,
+      sources: [
+        "https://www.okx.com/docs-v5/en/#funding-account-rest-api-asset-bills-details"
+      ],
+      derivation: "147 unique type values in the funding-account Asset bills details table",
+      values: @okx_asset_types
     }
-  }
-
-  @ledger_passthrough_venues MapSet.new(~w(bybit hyperliquid okx))
+  ]
 
   @required_source_slots [
     %{
@@ -172,38 +245,88 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     }
   }
 
-  test "each authored ledger type enum exactly matches its independently derived provider set" do
-    for {venue, %{sources: sources, derivation: derivation, values: documented}} <- @documented_ledger_types do
-      enum_map = venue |> Bourse.Spec.load!() |> get_in(@ledger_type_path) |> Map.fetch!("enum_map")
-      authored = enum_map |> Map.keys() |> MapSet.new()
-      missing = MapSet.difference(documented, authored)
-      extra = MapSet.difference(authored, documented)
+  @okx_asset_mappings %{
+    "1" => "deposit",
+    "2" => "withdrawal",
+    "20" => "transfer",
+    "21" => "transfer",
+    "22" => "transfer",
+    "23" => "transfer",
+    "130" => "transfer",
+    "131" => "transfer"
+  }
 
-      assert missing == MapSet.new(),
-             "#{venue}: ledger_entry.type is missing #{inspect(MapSet.to_list(missing))} " <>
-               "from provider contracts #{inspect(sources)}"
+  test "each route-scoped ledger registry has the provider coverage its openness permits" do
+    for entry <- @documented_ledger_types do
+      rule = entry.venue |> Bourse.Spec.load!() |> get_in(entry.path)
+      enum_map = Map.get(rule, "enum_map", %{})
+      authored = enum_map |> Map.keys() |> MapSet.new()
+      missing = MapSet.difference(entry.values, authored)
+      extra = MapSet.difference(authored, entry.values)
+
+      if entry.mode == :exact do
+        assert missing == MapSet.new(),
+               "#{entry.venue}/#{entry.scope}: missing provider values #{inspect(MapSet.to_list(missing))}"
+
+        assert rule["enum_passthrough"] != true
+      else
+        assert rule["enum_passthrough"] == true
+      end
 
       assert extra == MapSet.new(),
-             "#{venue}: ledger_entry.type carries unsupported values #{inspect(MapSet.to_list(extra))}; " <>
-               "provider derivation: #{derivation} (#{inspect(sources)})"
+             "#{entry.venue}/#{entry.scope}: unsupported authored values #{inspect(MapSet.to_list(extra))}"
 
-      assert derivation != ""
-      assert Enum.all?(sources, &String.contains?(&1, "https://"))
+      refute Enum.any?(enum_map, fn {raw, normalized} -> raw == normalized end),
+             "#{entry.venue}/#{entry.scope}: passthrough makes identity enum padding redundant"
+
+      assert Enum.all?(entry.sources, &String.starts_with?(&1, "https://"))
+
+      [_, stated_count] = Regex.run(~r/^(\d+)\b/, entry.derivation)
+      assert String.to_integer(stated_count) == MapSet.size(entry.values)
     end
   end
 
-  test "the ledger registry covers every runtime venue with an authored type enum map" do
-    authored =
+  test "the registry scopes every authored ledger type rule and every routed endpoint" do
+    registered_rules = MapSet.new(@documented_ledger_types, &{&1.venue, &1.path})
+
+    authored_rules =
       Bourse.Registry.exchanges()
-      |> Enum.filter(fn venue ->
-        venue
-        |> Bourse.Spec.load!()
-        |> get_in(@ledger_type_path)
-        |> then(&(is_map(&1) and is_map(&1["enum_map"])))
-      end)
+      |> Enum.flat_map(fn venue -> venue |> Bourse.Spec.load!() |> ledger_type_rule_paths() |> Enum.map(&{venue, &1}) end)
       |> MapSet.new()
 
-    assert authored == @documented_ledger_types |> Map.keys() |> MapSet.new()
+    assert registered_rules == authored_rules
+
+    for venue <- ~w(binance binanceusdm okx) do
+      registered_routes =
+        @documented_ledger_types
+        |> Enum.filter(&(&1.venue == venue))
+        |> Enum.flat_map(& &1.routes)
+        |> MapSet.new()
+
+      authored_routes =
+        venue
+        |> Bourse.Spec.load!()
+        |> get_in(~w(normalization field_maps ledger_entry route_field_maps))
+        |> Map.keys()
+        |> MapSet.new()
+
+      assert registered_routes == authored_routes
+    end
+  end
+
+  test "the registered OKX subtype response re-derives its account-bills vocabulary and named translations" do
+    fixture = "test/fixtures/responses/okx/account_subtypes.json" |> File.read!() |> Jason.decode!()
+    rows = fixture["body"]["data"]
+    recorded_types = MapSet.new(rows, & &1["type"])
+    named_types = rows |> Enum.reject(&(&1["typeDesc"] == "")) |> MapSet.new(& &1["type"])
+
+    registry = Enum.find(@documented_ledger_types, &(&1.venue == "okx" and &1.scope == "trading-account bills"))
+    enum_map = "okx" |> Bourse.Spec.load!() |> get_in(@ledger_type_path) |> Map.fetch!("enum_map")
+
+    assert fixture["endpoint"] == "api/v5/account/subtypes"
+    assert recorded_types == registry.values
+    assert MapSet.new(Map.keys(enum_map)) == named_types
+    refute Enum.any?(enum_map, fn {raw, normalized} -> raw == normalized end)
   end
 
   test "the surfaced Binance gaps and signed direction have deliberate authored mappings" do
@@ -222,9 +345,20 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     end
   end
 
+  test "OKX asset bills normalize their documented deposit, withdrawal, and transfer arms" do
+    enum_map =
+      "okx"
+      |> Bourse.Spec.load!()
+      |> get_in(~w(normalization field_maps ledger_entry route_field_maps asset/bills type enum_map))
+
+    assert enum_map == @okx_asset_mappings
+  end
+
   test "generic Binance ledger rules consume every routed income and options bill row shape" do
     spec = Bourse.Spec.load!("binance")
-    field_map = get_in(spec, ~w(normalization field_maps ledger_entry field_map))
+    mapping = get_in(spec, ~w(normalization field_maps ledger_entry))
+    income_field_map = routed_field_map(mapping, "income")
+    options_field_map = routed_field_map(mapping, "bill")
 
     assert spec["endpoints"]["unified"]["fetchLedger"] == [
              "dapiPrivateGetIncome",
@@ -234,10 +368,12 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
              "papiGetUmIncome"
            ]
 
-    assert authored_source_keys(field_map["type"]) == MapSet.new(~w(incomeType type))
-    assert authored_source_keys(field_map["amount"]) == MapSet.new(~w(amount income))
-    assert authored_source_keys(field_map["currency"]) == MapSet.new(~w(asset))
-    assert authored_source_keys(field_map["direction"]) == MapSet.new(~w(amount income))
+    assert authored_source_keys(income_field_map["type"]) == MapSet.new(~w(incomeType type))
+    assert authored_source_keys(income_field_map["amount"]) == MapSet.new(~w(amount income))
+    assert authored_source_keys(income_field_map["currency"]) == MapSet.new(~w(asset))
+    assert authored_source_keys(income_field_map["direction"]) == MapSet.new(~w(amount income))
+    assert authored_source_keys(options_field_map["type"]) == MapSet.new(~w(type))
+    assert options_field_map["type"]["enum_passthrough"] == true
 
     fixture = "test/fixtures/responses/binance/fetch_funding_history.json" |> File.read!() |> Jason.decode!()
 
@@ -245,7 +381,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     assert fixture["environment"] == "testnet-demo"
 
     assert {:ok, [%Bourse.LedgerEntry{} = income | _]} =
-             Bourse.Binance.parse_ledger_entry(fixture["body"])
+             Bourse.Binance.parse_ledger_entry(fixture["body"], route: "income")
 
     assert income.type == "fee"
     assert income.amount == -0.01286054
@@ -257,7 +393,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       "asset" => "USDT",
       "createDate" => 1_676_621_042_489,
       "id" => 1_125_899_906_845_701_870,
-      "type" => "FEE"
+      "type" => "provider-added-option-type"
     }
 
     assert {:ok,
@@ -265,19 +401,21 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
               amount: -0.16518203,
               currency: "USDT",
               direction: "out",
-              type: "fee"
-            }} = Bourse.Binance.parse_ledger_entry(bill)
+              type: "provider-added-option-type"
+            }} = Bourse.Binance.parse_ledger_entry(bill, route: "bill")
 
     assert {:ok, %Bourse.LedgerEntry{direction: nil}} =
-             Bourse.Binance.parse_ledger_entry(%{bill | "amount" => "0"})
+             Bourse.Binance.parse_ledger_entry(%{bill | "amount" => "0"}, route: "bill")
   end
 
-  test "every mapped ledger type is loud unless its venue explicitly preserves new raw values" do
-    for {venue, _entry} <- @documented_ledger_types do
+  test "each scoped ledger type rule is loud or preserving exactly as registered" do
+    for entry <- @documented_ledger_types do
+      venue = entry.venue
+
       rule =
         venue
         |> Bourse.Spec.load!()
-        |> get_in(@ledger_type_path)
+        |> get_in(entry.path)
         |> Map.put("key", "type")
         |> Map.delete("fallback_keys")
 
@@ -289,7 +427,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
           venue: venue
         )
 
-      if MapSet.member?(@ledger_passthrough_venues, venue) do
+      if entry.mode == :passthrough do
         assert {:ok, %Bourse.LedgerEntry{type: "provider-added-type"}} = result
       else
         assert {:error, {:unmapped_ledger_type, %{venue: ^venue, field: "type", raw_value: "provider-added-type"}}} =
@@ -313,6 +451,36 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
                "#{entry.venue}: #{Enum.join(entry.path, ".")} does not consume required source #{source}"
       end
     end
+  end
+
+  defp ledger_type_rule_paths(spec) do
+    mapping = get_in(spec, ~w(normalization field_maps ledger_entry)) || %{}
+
+    base_paths =
+      if ledger_type_rule?(get_in(mapping, ~w(field_map type))), do: [@ledger_type_path], else: []
+
+    route_paths =
+      mapping
+      |> Map.get("route_field_maps", %{})
+      |> Enum.flat_map(fn {route, field_map} ->
+        if ledger_type_rule?(field_map["type"]) do
+          [~w(normalization field_maps ledger_entry route_field_maps) ++ [route, "type"]]
+        else
+          []
+        end
+      end)
+
+    base_paths ++ route_paths
+  end
+
+  defp ledger_type_rule?(rule) when is_map(rule) do
+    is_map(rule["enum_map"]) or rule["enum_passthrough"] == true
+  end
+
+  defp ledger_type_rule?(_rule), do: false
+
+  defp routed_field_map(mapping, route) do
+    Map.merge(mapping["field_map"], get_in(mapping, ["route_field_maps", route]))
   end
 
   defp authored_source_keys(rule) do

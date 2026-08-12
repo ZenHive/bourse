@@ -20025,7 +20025,6 @@
             "CONTEST_REWARD": "cashback",
             "CROSS_COLLATERAL_TRANSFER": "transfer",
             "DELIVERED_SETTELMENT": "settlement",
-            "FEE": "fee",
             "FEE_RETURN": "rebate",
             "FUNDING_FEE": "fee",
               "INTERNAL_TRANSFER": "transfer",
@@ -20045,6 +20044,19 @@
           "format": null,
           "key": "incomeType"
           }
+        },
+        "route_field_maps": {
+          "bill": {
+            "type": {
+              "coercion": "safeString",
+              "enum_passthrough": true,
+              "format": null,
+              "key": "type"
+            }
+          },
+          "cm/income": {},
+          "income": {},
+          "um/income": {}
         }
       },
       "leverage": {

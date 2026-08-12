@@ -1004,28 +1004,28 @@ names (task 534). Outcome: CONFIRM routing boundary.**
 {"carve_id":"C-T534b","date":"2026-08-09","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binance/manifest.json artifact spot-openapi for the Spot order and trade endpoints"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Selector reachability is pinned offline, but the SAPI defaults added by task 534 have no task-specific manifest-registered live response"}
 -->
 
-**C-T592c — the generic Binance ledger map preserves the complete futures-family income
-vocabulary and signed direction (task 592; amended by Task 598). Outcome: CONFIRM provider vocabulary
-and routed row shapes; DIVERGE where unified labels require judgment.**
+**C-T592c — Binance ledger vocabularies are scoped to their routed provider contracts
+(task 592; amended by Tasks 598 and 601). Outcome: CONFIRM the enumerated income vocabulary;
+DIVERGE for the open options type string and unified label judgments.**
 
 - *Exchange semantics:* the official Binance Java SDK's USD-M `IncomeType` enum carries 22
-  literals. The options Account Funding Flow contract independently documents `asset`, signed
-  `amount`, and a `type` described as fees. The four futures/portfolio-margin routes emit
+  literals. The options Account Funding Flow contract documents `asset`, signed `amount`, and
+  `type` as a free `String`; it enumerates no type literals. The futures/portfolio-margin routes emit
   `incomeType`, signed `income`, and `asset`; the options route emits `type`, `amount`, and
   `asset`.
-- *Our carve:* the generic map reads both row shapes through explicit fallback keys. `FEE` is
-  retained only for the provider-owned options contract; the unsupported `CONTRACT` arm is
-  removed. `STRATEGY_UMFUTURES_TRANSFER`, `FEE_RETURN`, and `BFUSD_REWARD` are mapped by our
-  coarse unified judgment, as are `INSURANCE_CLEAR` and `AUTO_EXCHANGE`.
+- *Our carve:* endpoint-scoped field maps keep the 22-value income enum strict while the options
+  bill route preserves its open string. `STRATEGY_UMFUTURES_TRANSFER`, `FEE_RETURN`, and
+  `BFUSD_REWARD` are mapped by our coarse unified judgment, as are `INSURANCE_CLEAR` and
+  `AUTO_EXCHANGE`; no options literal is claimed from the provider contract.
 - *Direction:* provider contracts define positive as inflow and negative as outflow. They do
   not assign a direction to zero, so the zero arm is `nil` rather than inventing an inflow.
 - *Verification:* the registered generic-Binance demo recording from `fapi/v1/income` is parsed
-  through `Bourse.Binance` and pins type, signed amount, asset, and direction. A provider-shaped
-  options row pins the `type`/`amount` fallback. The coverage guard independently transcribes
-  the pinned official SDK enums and asserts equality in both directions.
+  through `Bourse.Binance` and pins type, signed amount, asset, and direction. A shape-only
+  options parser test pins arbitrary-string passthrough without treating its literal as evidence.
+  The coverage guard asserts the income enum exactly and the options open set independently.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T592c","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance official Java SDK a13868d0 IncomeType and AccountFundingFlowResponseInner contracts; USD-M/COIN-M Income History contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binance/fetch_funding_history.json captured from demo-fapi.binance.com fapi/v1/income and parsed through the generic Binance ledger map"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T592c","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance official Java SDK a13868d0 IncomeType and AccountFundingFlowResponseInner contracts; the latter defines type as a free String"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binance/fetch_funding_history.json captured from demo-fapi.binance.com fapi/v1/income"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Income is manifest-recorded; no populated provider-owned options bill recording enumerates literals, so options type deliberately passes through"}
 -->
 
 ## 2026-08-12 — rate-unit confrontation (Task 594)

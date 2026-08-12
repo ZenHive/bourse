@@ -29,8 +29,9 @@ defmodule Bourse.Parser do
       incomplete mapping
     * resolved slot with a non-empty `field_map` or `branches` → parsed
 
-  `opts` may carry `:market` (a market-info map), `:symbol`, and `:currencies`
-  (the loaded currency catalog); all are threaded into the parser context.
+  `opts` may carry `:market` (a market-info map), `:symbol`, `:route` (the
+  selected endpoint path), and `:currencies` (the loaded currency catalog);
+  all are threaded into the parser context.
 
   ## Examples
 
@@ -62,6 +63,7 @@ defmodule Bourse.Parser do
         # extraction resolves catalog chains the same way the dispatcher does.
         common_currencies: Keyword.get(opts, :common_currencies, %{}),
         options: Keyword.get(opts, :options, %{}),
+        route: Keyword.get(opts, :route),
         venue: Keyword.get(opts, :venue)
       )
     else

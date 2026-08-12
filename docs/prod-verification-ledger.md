@@ -449,6 +449,22 @@ evidence beyond the batch review.
   and raw `info`. The parsed map must contain no symbol whose fee cannot be traced to that same
   body.
 
+### okx — populated funding-account asset-bills row (task 601, filed 2026-08-12)
+- Authored slices: `okx:normalization.field_maps.ledger_entry.route_field_maps.asset/bills`
+- Blocked by: the provisioned international demo account returned `code: "0", data: []` from
+  the signed funding-account call. Producing a row requires a real demo deposit, withdrawal, or
+  account transfer not authorized by this task.
+- What tier-2 already proved: OKX's Asset bills details table distinguishes funding-account type
+  `1` (deposit), `2` (withdrawal), and the documented account-transfer codes from the colliding
+  trading-account meanings. The routed parser confrontation pins one row from each schema.
+- The open question: whether a populated international-demo asset bill preserves those documented
+  type meanings and the signed balance change through the unified parser.
+- Exact call: `Bourse.Unified.raw_call(ex, :fetch_ledger, %{"type" => "funding", "limit" => 100})`
+  with an OKX international demo exchange (`sandbox: true`). This exact call returned the empty
+  success on 2026-08-12.
+- Expected evidence: freeze one populated `/api/v5/asset/bills` response and compare its `type`,
+  `billId`, `ccy`, `balChg`, and `ts` directly with the parsed `%Bourse.LedgerEntry{}`.
+
 ### okx — populated trading-account ledger row (task 365, filed 2026-07-19)
 - Authored slices: `okx:normalization.field_maps.ledger_entry`
 - Blocked by: the provisioned EEA demo account may return an empty

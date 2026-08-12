@@ -707,8 +707,9 @@ defmodule Bourse.Spec.Schema do
 
   defp validate_ledger_type_policy!(spec, exchange_id) do
     spec
-    |> get_in(["normalization", "field_maps", "ledger_entry", "field_map", "type"])
-    |> validate_ledger_type_rule!(exchange_id)
+    |> get_in(["normalization", "field_maps", "ledger_entry"])
+    |> ledger_field_maps()
+    |> Enum.each(&validate_ledger_type_rule!(&1["type"], exchange_id))
   end
 
   defp validate_ledger_type_rule!(nil, _exchange_id), do: :ok
@@ -743,6 +744,14 @@ defmodule Bourse.Spec.Schema do
 
   defp order_field_maps(%{"field_map" => field_map}) when is_map(field_map), do: [field_map]
   defp order_field_maps(_order_mapping), do: []
+
+  defp ledger_field_maps(%{"field_map" => field_map, "route_field_maps" => route_field_maps})
+       when is_map(field_map) and is_map(route_field_maps) do
+    [field_map | Enum.map(Map.values(route_field_maps), &Map.merge(field_map, &1))]
+  end
+
+  defp ledger_field_maps(%{"field_map" => field_map}) when is_map(field_map), do: [field_map]
+  defp ledger_field_maps(_ledger_mapping), do: []
 
   defp validate_order_status_rule!(nil, _exchange_id), do: :ok
 

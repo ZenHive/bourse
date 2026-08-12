@@ -359,6 +359,7 @@
         "markets.patterns.spot",
         "markets.patterns.swap",
         "normalization.field_maps.balance",
+        "normalization.field_maps.ledger_entry",
         "normalization.field_maps.market",
         "normalization.field_maps.open_interest",
         "normalization.field_maps.position",

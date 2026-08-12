@@ -27,6 +27,34 @@ defmodule Bourse.BinanceAuthoredSpecTest do
              "fapiPrivateV3_get_account"
   end
 
+  test "options fetch_ledger preserves an unenumerated provider type on the bill route" do
+    stub = unique_stub("binance_options_ledger")
+    test_process = self()
+
+    Req.Test.stub(stub, fn conn ->
+      send(test_process, {:options_ledger_path, conn.request_path})
+
+      Req.Test.json(conn, [
+        %{
+          "amount" => "-0.16518203",
+          "asset" => "USDT",
+          "createDate" => @frozen_timestamp_ms,
+          "id" => "1125899906845701870",
+          "type" => "provider-added-option-type"
+        }
+      ])
+    end)
+
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret")
+
+    assert {:ok, [%Bourse.LedgerEntry{type: "provider-added-option-type", direction: "out"}]} =
+             Unified.call(exchange, :fetch_ledger, "fetchLedger", %{"code" => "USDT", "type" => "option"},
+               plug: {Req.Test, stub}
+             )
+
+    assert_receive {:options_ledger_path, "/eapi/v1/bill"}
+  end
+
   test "funding rates join the provider's per-symbol cadence for every Binance futures surface" do
     for {exchange_id, symbol, native_symbol, premium_path, funding_path} <- [
           {"binance", "BTC/USDT:USDT", "BTCUSDT", "/fapi/v1/premiumIndex", "/fapi/v1/fundingInfo"},

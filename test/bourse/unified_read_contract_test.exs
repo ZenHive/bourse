@@ -523,7 +523,7 @@ defmodule Bourse.UnifiedReadContractTest do
                  :fetch_ledger,
                  "fetchLedger",
                  [raw],
-                 %{},
+                 %{"_bourse_endpoint_route" => "income"},
                  :parse_ledger_entry,
                  true
                )

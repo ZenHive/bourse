@@ -123,6 +123,14 @@ defmodule Bourse.OracleProvenance.DerivationTest do
     assert verified?(reports["lighter"], "request_shape.fetchOpenOrders")
   end
 
+  test "OKX bill subtype recording verifies the ledger type carve", %{reports: reports} do
+    assert %{verified: true, contributing_methods: methods, verification_citations: citations} =
+             slot(reports["okx"], "normalization.field_maps.ledger_entry")
+
+    assert "account_subtypes" in methods
+    assert "test/fixtures/responses/okx/account_subtypes.json" in citations
+  end
+
   test "provider market discriminators verify recorded instrument families", %{reports: reports} do
     for type <- ~w(option spot swap) do
       assert verified?(reports["derive"], "markets.patterns.#{type}")
@@ -382,12 +390,33 @@ defmodule Bourse.OracleProvenance.DerivationTest do
     assert_raise ArgumentError, ~r/bybit:normalization\.field_maps\.ticker/, fn ->
       Derivation.reports!(opts)
     end
+
+    write_manifest!(response_root, "recordings", [recording()])
+    write_json!(Path.join(response_root, "_manifest.json"), %{"count" => 0, "recordings" => [recording()]})
+
+    assert_raise ArgumentError, ~r/count does not match recordings/, fn ->
+      Derivation.reports!(opts)
+    end
+
+    authority_root = Path.join(root, "authority")
+    authority_manifest = Path.join([authority_root, "bybit", "manifest.json"])
+    File.mkdir_p!(Path.dirname(authority_manifest))
+    write_manifest!(response_root, "recordings", [recording()])
+    write_json!(authority_manifest, %{"venue" => "bybit", "artifacts" => []})
+
+    assert_raise ArgumentError, ~r/invalid authority manifest for bybit/, fn ->
+      Derivation.reports!(Keyword.put(opts, :authority_root, authority_root))
+    end
   end
 
   test "host classification is read from manifest host names" do
     assert Derivation.host_class("test.deribit.com") == :testnet_demo
     assert Derivation.host_class("api-demo.bybit.com") == :testnet_demo
     assert Derivation.host_class("www.okx.com") == :production
+  end
+
+  test "recording-only method names remain stable provenance identities" do
+    assert Derivation.js_method!("account_subtypes") == "account_subtypes"
   end
 
   defp verified?(report, path), do: slot(report, path).verified

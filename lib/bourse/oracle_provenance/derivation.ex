@@ -249,7 +249,12 @@ defmodule Bourse.OracleProvenance.Derivation do
   defp recording_slot_paths(%{"method" => "order_lifecycle"}, method) when method in ["create_order", "fetch_order"],
     do: ["normalization.field_maps.order"]
 
+  defp recording_slot_paths(%{"venue" => "okx", "method" => "account_subtypes"}, "account_subtypes"),
+    do: ["normalization.field_maps.ledger_entry"]
+
   defp recording_slot_paths(_row, _method), do: []
+
+  defp recorded_request_paths(%{"method" => "account_subtypes"}, _fixture, "account_subtypes"), do: []
 
   defp recorded_request_paths(row, fixture, method) when is_map(fixture) do
     if is_binary(row["endpoint"]) and is_binary(row["host"]) and is_map(fixture["params"]) do

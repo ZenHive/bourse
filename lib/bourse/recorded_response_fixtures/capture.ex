@@ -206,6 +206,8 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       # credentials. The frozen my.okx.com EEA recordings replay from their own fixture
       # metadata and stay valid provenance; they are not re-capturable from here.
       {"okx", :fetch_balance} => private("api/v5/account/balance", "www.okx.com", :okx, %{}),
+      {"okx", :account_subtypes} =>
+        private("api/v5/account/subtypes", "www.okx.com", :okx, %{}, raw_endpoint: :private_get_account_subtypes),
       {"okx", :fetch_open_orders} =>
         private("api/v5/trade/orders-pending", "www.okx.com", :okx, %{"symbol" => "BTC/USDT"}),
       {"okx", :fetch_positions} =>
@@ -587,6 +589,7 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       load_markets?: Keyword.get(opts, :load_markets?, false),
       param_variants: Keyword.get(opts, :param_variants),
       params: params,
+      raw_endpoint: Keyword.get(opts, :raw_endpoint),
       symbol: Keyword.get(opts, :symbol, Map.get(params, "symbol"))
     }
   end
@@ -900,6 +903,24 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
     end
   end
 
+  defp capture_profile(exchange, exchange_id, method, %{raw_endpoint: raw_endpoint} = profile, credentials)
+       when is_atom(raw_endpoint) and not is_nil(raw_endpoint) do
+    caller_params = build_params(method, profile)
+
+    with {:ok, exchange} <- maybe_load_markets(exchange, profile),
+         {:ok, params} <- live_read_params(exchange, method, profile),
+         {:ok, response} <- dispatch_raw_endpoint(exchange, raw_endpoint, params, profile.call_opts) do
+      fixture =
+        %{profile | params: params}
+        |> metadata(exchange_id, method)
+        |> Map.put("caller_params", caller_params)
+        |> put_captured_responses([response])
+        |> scrub(credentials)
+
+      {:ok, fixture}
+    end
+  end
+
   defp capture_profile(exchange, exchange_id, method, profile, credentials) do
     caller_params = build_params(method, profile)
 
@@ -1026,14 +1047,18 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
         Unified.capture_responses(exchange, profile.call_method, params, profile.call_opts)
 
       raw_endpoint ->
-        module = Registry.module_for(exchange.id)
-        config = Enum.find(module.__endpoints__(), &(&1.name == raw_endpoint))
+        dispatch_raw_endpoint(exchange, raw_endpoint, params, profile.call_opts)
+    end
+  end
 
-        if config do
-          Dispatch.call(exchange, config, params, [])
-        else
-          {:error, {:unknown_raw_endpoint, raw_endpoint}}
-        end
+  defp dispatch_raw_endpoint(exchange, raw_endpoint, params, call_opts) do
+    module = Registry.module_for(exchange.id)
+    config = Enum.find(module.__endpoints__(), &(&1.name == raw_endpoint))
+
+    if config do
+      Dispatch.call(exchange, config, params, call_opts)
+    else
+      {:error, {:unknown_raw_endpoint, raw_endpoint}}
     end
   end
 

@@ -123,6 +123,21 @@ defmodule Bourse.ParserTest do
     # `build_parse_opts/4` output straight here. Handing it a map raised
     # FunctionClauseError inside `Keyword.get/3` and reddened 168 replay
     # fixtures, so both the shape and the network-context forwarding are pinned.
+    test "threads endpoint route context into branch selection" do
+      mapping = %{
+        "field_map" => %{"type" => %{"key" => "type", "enum_map" => %{"1" => "transfer"}}},
+        "route_field_maps" => %{
+          "asset/bills" => %{"type" => %{"key" => "type", "enum_map" => %{"1" => "deposit"}}}
+        }
+      }
+
+      assert {:ok, %Bourse.LedgerEntry{type: "deposit"}} =
+               Parser.parse(%{"type" => "1"}, mapping, Bourse.LedgerEntry,
+                 route: "asset/bills",
+                 venue: "okx"
+               )
+    end
+
     test "forwards the venue network context so catalog chains resolve to unified codes" do
       mapping = %{
         "_unresolved_reason" => nil,

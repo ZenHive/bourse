@@ -959,6 +959,38 @@ defmodule Bourse.OkxAuthoredSpecTest do
       assert entry.fee == %{"cost" => 0.0, "currency" => "USDT"}
     end
 
+    test "fetch_ledger interprets colliding bill types by routed account" do
+      requests = collector()
+
+      account_body = %{
+        "code" => "0",
+        "msg" => "",
+        "data" => [%{"balChg" => "-1", "billId" => "account-2", "ccy" => "USDT", "ts" => "1", "type" => "2"}]
+      }
+
+      assert {:ok, [%Bourse.LedgerEntry{type: "trade"}]} =
+               Unified.call(private_exchange(), :fetch_ledger, "fetchLedger", %{},
+                 plug: {Req.Test, stub_json(requests, account_body)}
+               )
+
+      assert_path!(requests, "/api/v5/account/bills")
+
+      funding_requests = collector()
+
+      funding_body = %{
+        "code" => "0",
+        "msg" => "",
+        "data" => [%{"balChg" => "1", "billId" => "asset-2", "ccy" => "USDT", "ts" => "2", "type" => "2"}]
+      }
+
+      assert {:ok, [%Bourse.LedgerEntry{type: "withdrawal"}]} =
+               Unified.call(private_exchange(), :fetch_ledger, "fetchLedger", %{"type" => "funding"},
+                 plug: {Req.Test, stub_json(funding_requests, funding_body)}
+               )
+
+      assert_path!(funding_requests, "/api/v5/asset/bills")
+    end
+
     test "fetch_transfer translates funding and trading account identifiers" do
       body = %{
         "code" => "0",

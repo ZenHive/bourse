@@ -13,7 +13,7 @@ defmodule Bourse.LedgerEntry do
     * `account` - Account identifier
     * `reference_id` - Related transaction/order ID
     * `reference_account` - Related account
-    * `type` - Entry type: a unified value ("trade", "fee", "deposit", "withdrawal", "transfer") where the venue's vocabulary is mapped; venues authored as enum-passthrough (bybit, hyperliquid, okx) emit their own literals unchanged
+    * `type` - Entry type: a normalized value where the routed vocabulary is mapped; open vocabularies (Bybit, Hyperliquid, OKX, and Binance options bills) preserve provider literals without a mapped alias
     * `currency` - Currency code
     * `amount` - Entry amount
     * `before` - Balance before this entry
@@ -89,7 +89,7 @@ defmodule Bourse.LedgerEntry do
                    reference_id: "Related transaction/order ID",
                    reference_account: "Related account",
                    type:
-                     "Entry type: unified value (trade, fee, deposit, withdrawal, transfer) where mapped; enum-passthrough venues emit their own literals",
+                     "Entry type: normalized where mapped; open routed vocabularies preserve provider literals without an alias",
                    currency: "Currency code",
                    amount: "Entry amount",
                    before: "Balance before this entry",
