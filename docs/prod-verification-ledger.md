@@ -799,6 +799,14 @@ evidence beyond the batch review.
 - Exact call: with a wallet that is a depositor in a testnet vault, `Bourse.withdraw(ex, "USDC", 5, "<vault>", vaultAddress: "<vault>")` (→ `usd: 5_000_000`), then read the vault equity / account balance delta before and after.
 - Expected evidence: balance moves by **$5.00**, not $5,000,000 (rejected as insufficient) and not $0.000005. A $5,000,000-scale rejection or a micro-cent credit falsifies C-T384b and would restore CCXT's bare reading — in which case fixture #1144 comes *out* of the frozen baseline.
 
+### derive — populated private funding-history row (task 594, C-T594h, filed 2026-08-12)
+- Authored slices: `derive:normalization.field_maps.funding_history` (corrected 2026-08-12: venue `funding` is a signed dollar cashflow → unified `amount`; `rate` authored null because the response schema carries no rate field).
+- Blocked by: the demo subaccount holds no perpetual position, so `private/get_funding_history` returns an empty `events` list. Producing a row requires holding a perp position across a funding boundary — outside the standing no-mutation policy.
+- What tier-2 already proved: Derive's own API reference documents `funding` verbatim as "Dollar funding paid (if negative) or received (if positive) by the subaccount", string-typed, with `timestamp` in ms and no rate field. Live 2026-08-12: the signed call with `subaccount_id` succeeds (`{:ok, []}`), proving auth, routing and the empty-envelope parse; the missing-subaccount request reproduces venue error 14025.
+- The open question: does a populated `events` row normalize to the correct signed USDC `amount`, symbol and ms timestamp — i.e. does the documented cashflow meaning hold on real settlement data?
+- Exact call: with a demo subaccount that survived a funding boundary in a perp position, `Bourse.fetch_funding_history(ex, nil, params: %{"subaccount_id" => id}, limit: 10)`.
+- Expected evidence: freeze and register the populated body; assert the parsed `amount` equals the raw `funding` string as a signed number, `rate` is nil, and the timestamp matches the raw ms value; upgrade C-T594h from resolved_tier 2 to 1.
+
 ## Closed
 
 ### deribit — option fill/hedge/unwind attestation (task 403; closed 2026-07-23, task 407 audit)

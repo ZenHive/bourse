@@ -445,7 +445,8 @@ green without importing any new CCXT mechanism.
 ## 2026-08-12 — rate-unit confrontation (Task 594)
 
 **C-T594h — Derive's authored rate-like slots name their venue units, and private funding history
-is corrected from rate to cashflow (task 594). Outcome: DIVERGE from the prior funding-history map.**
+is corrected from rate to cashflow (task 594). Outcome: CONFIRMED against the venue's own contract;
+the prior authoring mis-mapped the documented cashflow to `rate` and is corrected here.**
 
 | Authored slot | Unit | Venue-owned confrontation |
 |---|---|---|
