@@ -199,6 +199,66 @@ defmodule Bourse.DeribitAuthoredSpecTest do
     assert unknown_trade.cost == 0.0002
   end
 
+  # Provider: "For perpetual and inverse futures the amount is in USD units. For
+  # options and linear futures it is the underlying base currency coin."
+  # (private/get_user_trades_by_currency). Option cost is therefore
+  # `amount * price`, and the venue leaves `instrument_type` off option
+  # instruments so a loaded option market reads `inverse: false` — the id
+  # degradation path must agree with it instead of emitting `amount / price`.
+  test "option rows are never inverse, with or without a loaded market" do
+    option = %{"amount" => 10, "instrument_name" => "BTC-31JUL26-65000-C", "price" => 0.02}
+    usdc_option = %{"amount" => 10, "instrument_name" => "ETH_USDC-31JUL26-3000-P", "price" => 0.02}
+
+    for exchange <- [
+          private_exchange(),
+          Exchange.put_markets(private_exchange(), [
+            %Bourse.Market{
+              id: "BTC-31JUL26-65000-C",
+              symbol: "BTC/USD:BTC-260731-65000-C",
+              option: true,
+              inverse: false,
+              linear: false
+            }
+          ])
+        ] do
+      assert {:ok, [btc_trade, usdc_trade]} =
+               ReadParse.parse(
+                 exchange,
+                 Bourse.Deribit,
+                 :fetch_my_trades,
+                 "fetchMyTrades",
+                 rpc_result(%{"has_more" => false, "trades" => [option, usdc_option]}),
+                 %{},
+                 :parse_trade,
+                 true
+               )
+
+      assert_in_delta btc_trade.cost, 0.2, @ratio_tolerance
+      assert_in_delta usdc_trade.cost, 0.2, @ratio_tolerance
+    end
+  end
+
+  test "future spreads and dated inverse futures keep the inverse degradation branch" do
+    rows = [
+      %{"amount" => 10, "instrument_name" => "BTC-26JUN26", "price" => 50_000},
+      %{"amount" => 10, "instrument_name" => "BTC-FS-31JUL26_17JUL26", "price" => 50_000}
+    ]
+
+    assert {:ok, trades} =
+             ReadParse.parse(
+               private_exchange(),
+               Bourse.Deribit,
+               :fetch_my_trades,
+               "fetchMyTrades",
+               rpc_result(%{"has_more" => false, "trades" => rows}),
+               %{},
+               :parse_trade,
+               true
+             )
+
+    assert Enum.map(trades, & &1.cost) == [0.0002, 0.0002]
+  end
+
   test "deposit and withdrawal rows share authored transaction fields" do
     deposit = %{
       "address" => "deposit-address",

@@ -580,3 +580,39 @@ Outcome: DIVERGE from the same-currency claim for linear settlement.**
 <!-- carve-evidence-status
 {"carve_id":"C-T606f","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions instrument naming and same-currency inverse example linked in C-T606f"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-13 test.deribit.com private/get_positions BTC-PERPETUAL open inverse row emitted the same-currency quotient; Unified.call list-read goldens in deribit_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The populated inverse list-read is pinned as a parser golden; no populated linear testnet position is registered"}
 -->
+
+## 2026-08-14 — symbol-less trade cost (Task 608)
+
+**C-T608a — Deribit trade `cost` is gated on the payload instrument, and option
+rows are excluded from the inverse identity (task 608). Outcome: DIVERGE from
+the request-context `market.inverse` gate; CONFIRM `amount / price` for reversed
+contracts only.**
+
+`fetchMyTrades` without a symbol routes to `private/get_user_trades_by_currency`,
+which is currency-scoped and carries no request-context market — so the
+`inverse_op` selection silently took the linear `amount * price` branch on every
+reversed fill. The provider documents the unit split directly: "For perpetual and
+inverse futures the amount is in USD units. For options and linear futures it is
+the underlying base currency coin."
+([get_user_trades_by_currency](https://docs.deribit.com/api-reference/trading/private-get_user_trades_by_currency))
+Reversed contracts therefore settle at `amount / price`; options and linear
+futures at `amount * price`.
+
+The payload gate reads `exchange.markets` first and degrades to the instrument-id
+shape only for a row whose market is not loaded. The degradation path excludes
+the `-C` / `-P` option suffix on purpose: the venue emits `instrument_type` for
+futures only, so a loaded option market reads `inverse: false`, and an id-only
+classifier that called options inverse would emit `amount / price` against the
+documented base-coin amount.
+
+- *Live evidence (2026-08-14):* testnet `private/get_user_trades_by_currency`
+  through the symbol-less unified read pinned `cost == amount / price` on a
+  `BTC-PERPETUAL` fill, with `load_markets` confirming `BTC-PERPETUAL`
+  `inverse: true` and `ETH_USDC-PERPETUAL` `inverse: false`
+  (`deribit_authored_integration_test.exs`). The frozen provider row
+  (10 USD at 50000) and the option / future-spread degradation branches are
+  pinned as parser goldens in `deribit_authored_spec_test.exs`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T608a","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_user_trades_by_currency amount and price unit split linked in C-T608a"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-14 test.deribit.com symbol-less fetch_my_trades pinned cost == amount / price on a BTC-PERPETUAL fill; load_markets pinned BTC-PERPETUAL inverse and ETH_USDC-PERPETUAL linear in deribit_authored_integration_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No populated option fill is reachable on the testnet account; the option base-coin cost branch is pinned as a parser golden against the provider-documented amount unit"}
+-->

@@ -3756,34 +3756,39 @@ defmodule Bourse.Unified.ReadParse do
 
   defp annotate_deribit_payload(payload, %Exchange{id: "deribit"} = exchange, parse_type)
        when parse_type in ["position", "trade"] do
+    index = deribit_market_index(exchange)
+
     case payload do
-      rows when is_list(rows) -> Enum.map(rows, &annotate_deribit_money_row(&1, exchange))
-      %{} = row -> annotate_deribit_money_row(row, exchange)
+      rows when is_list(rows) -> Enum.map(rows, &annotate_deribit_money_row(&1, index))
+      %{} = row -> annotate_deribit_money_row(row, index)
       other -> other
     end
   end
 
   defp annotate_deribit_payload(payload, _exchange, _parse_type), do: payload
 
-  defp annotate_deribit_money_row(row, exchange) when is_map(row) do
-    maybe_put_synthetic(row, "_bourse_inverse", deribit_inverse_instrument?(row, exchange))
+  defp annotate_deribit_money_row(row, index) when is_map(row) do
+    maybe_put_synthetic(row, "_bourse_inverse", deribit_inverse_instrument?(row, index))
   end
 
-  defp annotate_deribit_money_row(other, _exchange), do: other
+  defp annotate_deribit_money_row(other, _index), do: other
 
-  defp deribit_inverse_instrument?(%{"instrument_name" => name}, %Exchange{markets: markets})
-       when is_binary(name) and is_list(markets) do
-    case Enum.find(markets, &(deribit_market_id(&1) == name)) do
-      nil -> deribit_inverse_instrument_id?(name)
-      market -> deribit_market_inverse?(market)
+  # Built once per payload: deribit lists ~5k instruments, so a per-row scan of
+  # `exchange.markets` is quadratic on a multi-row read.
+  defp deribit_market_index(%Exchange{markets: markets}) when is_list(markets) do
+    Map.new(markets, &{deribit_market_id(&1), deribit_market_inverse?(&1)})
+  end
+
+  defp deribit_market_index(_exchange), do: %{}
+
+  defp deribit_inverse_instrument?(%{"instrument_name" => name}, index) when is_binary(name) and is_map(index) do
+    case Map.fetch(index, name) do
+      {:ok, inverse?} -> inverse?
+      :error -> deribit_inverse_instrument_id?(name)
     end
   end
 
-  defp deribit_inverse_instrument?(%{"instrument_name" => name}, _exchange) when is_binary(name) do
-    deribit_inverse_instrument_id?(name)
-  end
-
-  defp deribit_inverse_instrument?(_row, _exchange), do: false
+  defp deribit_inverse_instrument?(_row, _index), do: false
 
   defp deribit_market_id(market) when is_map(market), do: Map.get(market, :id) || Map.get(market, "id")
 
@@ -3791,11 +3796,16 @@ defmodule Bourse.Unified.ReadParse do
     Map.get(market, :inverse) == true or Map.get(market, "inverse") == true
   end
 
-  # Deribit linear ids put settle in the first token (`ETH_USDC-PERPETUAL`).
-  # Inverse ids do not (`BTC-PERPETUAL`, `BTC-31JUL26-65000-C`).
+  # Degradation path when `exchange.markets` does not carry the row's instrument.
+  # Linear ids put settle in the first token (`ETH_USDC-PERPETUAL`); inverse ids
+  # do not (`BTC-PERPETUAL`). Options are excluded on the `-C`/`-P` suffix: the
+  # venue's `instrument_type` is futures-only, so a loaded option market reads
+  # `inverse: false`, and the provider documents option `amount` as the base
+  # coin rather than USD — `amount / price` would be the wrong money identity.
   defp deribit_inverse_instrument_id?(name) when is_binary(name) do
-    case String.split(name, "-", parts: 2) do
-      [head, _rest] -> not String.contains?(head, "_")
+    case String.split(name, "-") do
+      [_base, _expiry, _strike, suffix] when suffix in ["C", "P"] -> false
+      [head, _next | _rest] -> not String.contains?(head, "_")
       _ -> false
     end
   end

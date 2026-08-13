@@ -932,7 +932,7 @@ defmodule Bourse.Unified do
     end
   end
 
-  @doc "Returns final provider request parameter shapes without performing requests."
+  @doc false
   @spec request_param_shapes(Exchange.t(), atom(), map(), keyword()) ::
           {:ok, [map()]} | {:error, Error.t() | term()}
   def request_param_shapes(%Exchange{} = exchange, method_atom, params, opts \\ [])
