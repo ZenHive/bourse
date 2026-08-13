@@ -40,25 +40,44 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     end
   end
 
-  test "fetch_tickers on the eapi route emits the same percent points as fetchOption" do
+  test "fetch_tickers on the eapi route matches singular ticker and option reads" do
     {requests, stub} = ticker_rows_stub([@eapi_ticker_row])
+    exchange = Exchange.new!("binance")
 
     assert {:ok, tickers} =
              Unified.call(
-               Exchange.new!("binance"),
+               exchange,
                :fetch_tickers,
                "fetchTickers",
                %{"type" => "option"},
                plug: {Req.Test, stub}
              )
 
-    assert Enum.any?(RequestCollector.requests(requests), &(&1.conn.request_path == "/eapi/v1/ticker"))
-
     [%Bourse.Ticker{} = ticker] = Map.values(tickers)
     assert ticker.percentage == @eapi_percentage_points
 
+    symbol = "SOL/USDT:USDT-260814-66-P"
+
+    assert {:ok, %Bourse.Ticker{percentage: @eapi_percentage_points}} =
+             Unified.call(
+               exchange,
+               :fetch_ticker,
+               "fetchTicker",
+               %{"symbol" => symbol, "type" => "option"},
+               plug: {Req.Test, stub}
+             )
+
     assert {:ok, %Bourse.OptionData{percentage: @eapi_percentage_points}} =
-             Bourse.Binance.parse_option(@eapi_ticker_row)
+             Unified.call(
+               exchange,
+               :fetch_option,
+               "fetchOption",
+               %{"symbol" => symbol},
+               plug: {Req.Test, stub}
+             )
+
+    eapi_requests = Enum.filter(RequestCollector.requests(requests), &(&1.conn.request_path == "/eapi/v1/ticker"))
+    assert length(eapi_requests) == 3
   end
 
   test "ticker percentage branches on the eapi route, not request-context market" do
