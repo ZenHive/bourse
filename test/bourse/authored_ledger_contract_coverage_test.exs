@@ -84,7 +84,6 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     "accountClassTransfer" => "transfer",
     "deposit" => "deposit",
     "internalTransfer" => "transfer",
-    "rewardsClaim" => "bonus",
     "spotTransfer" => "transfer",
     "subAccountTransfer" => "transfer",
     "vaultDeposit" => "deposit",
@@ -274,12 +273,14 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       routes: [],
       mode: :passthrough,
       sources: [
-        "https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/websocket/subscriptions#wsusernonfundingledgerupdates"
+        "https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/websocket/subscriptions#wsusernonfundingledgerupdates",
+        "https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/nodes/l1-data-schemas"
       ],
       derivation: "14 literals in the WsLedgerUpdate union after expanding WsVaultDelta",
       values: @hyperliquid_types,
       registered_events: @hyperliquid_registered_events,
       venue_specific: %{
+        "rewardsClaim" => "rewards_claim",
         "spotGenesis" => "spot_genesis",
         "vaultCreate" => "vault_create",
         "vaultDistribution" => "vault_distribution"
@@ -694,6 +695,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     refute "transaction" in ledger_enum_values()
     refute "withdraw" in ledger_enum_values()
     refute "ADL" in ledger_enum_values()
+    refute "rewardsClaim" in ledger_enum_values()
     refute "spotTransfer" in ledger_enum_values()
   end
 
@@ -764,7 +766,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     assert {:ok, %Bourse.LedgerEntry{type: "commission"}} =
              Bourse.Hyperliquid.parse_ledger_entry(%{"delta" => %{"type" => "vaultLeaderCommission", "usdc" => 0.5}})
 
-    assert {:ok, %Bourse.LedgerEntry{type: "bonus"}} =
+    assert {:ok, %Bourse.LedgerEntry{type: "rewards_claim"}} =
              Bourse.Hyperliquid.parse_ledger_entry(%{"delta" => %{"amount" => 2, "type" => "rewardsClaim"}})
 
     assert {:ok, %Bourse.LedgerEntry{type: "vault_create"}} =

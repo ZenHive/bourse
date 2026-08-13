@@ -9617,7 +9617,7 @@
           "enum_map": {
             "accountClassTransfer": "transfer",
             "internalTransfer": "transfer",
-            "rewardsClaim": "bonus",
+            "rewardsClaim": "rewards_claim",
             "spotGenesis": "spot_genesis",
             "spotTransfer": "transfer",
             "subAccountTransfer": "transfer",

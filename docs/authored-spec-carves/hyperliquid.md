@@ -18,17 +18,20 @@ names the six leftovers as follows.
 |---|---|---|
 | `spotTransfer` | `transfer` | CONFIRMED by `WsSpotTransfer` (`token`, `amount`, `user`, `destination`, `fee`); a token transfer between addresses. |
 | `vaultLeaderCommission` | `commission` | CONFIRMED by `WsVaultLeaderCommission` (`user`, `usdc`); commission paid to the vault leader. |
-| `rewardsClaim` | `bonus` | CONFIRMED by `WsRewardsClaim` (`amount`); a claimed reward, the same promotional-credit class as bybit `BONUS` and binance `WELCOME_BONUS`. |
+| `rewardsClaim` | `rewards_claim` | CONFIRMED by `WsRewardsClaim` (`amount`) and the official L1 schema's note that it combines builder and referrer fees. Those are different registered classes, so the mixed arm keeps the venue-faithful snake_case label. |
 | `vaultCreate` | `vault_create` | CONFIRMED by the `WsVaultDelta` create variant; no registered class names vault creation, so the venue-faithful snake_case of the provider literal. |
 | `vaultDistribution` | `vault_distribution` | CONFIRMED by the `WsVaultDelta` distribution variant; not a deposit or withdrawal (those are `vaultDeposit` / `vaultWithdraw`). |
 | `spotGenesis` | `spot_genesis` | CONFIRMED by `WsSpotGenesis` (`token`, `amount`); token issuance, not an on-chain `deposit`. |
 
 Funding payments stay off this vocabulary: `userNonFundingLedgerUpdates` excludes them, and
 they live on `userFundings`. That exemption is named in the coverage suite rather than
-silenced.
+silenced. The provider's
+[L1 data schema](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/nodes/l1-data-schemas)
+supplies the builder/referrer-fee semantics for `rewardsClaim`; the WebSocket union itself only
+defines its shape.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T609g","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid WebSocket subscriptions WsUserNonFundingLedgerUpdates / WsLedgerUpdate union members WsSpotTransfer, WsVaultLeaderCommission, WsRewardsClaim, WsVaultDelta, WsSpotGenesis"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Classifications are provider-documentation-anchored; no manifest-registered non-funding ledger rows cover these six variants"}
+{"carve_id":"C-T609g","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid WebSocket subscriptions WsUserNonFundingLedgerUpdates / WsLedgerUpdate union members WsSpotTransfer, WsVaultLeaderCommission, WsRewardsClaim, WsVaultDelta, WsSpotGenesis plus L1 data schemas RewardsClaim builder/referrer-fee note"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Classifications are provider-documentation-anchored; no manifest-registered non-funding ledger rows cover these six variants"}
 -->
 
 ## 2026-08-13 — registered ledger label reconciliation (Task 607)
