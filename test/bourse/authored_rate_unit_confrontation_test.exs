@@ -41,7 +41,10 @@ defmodule Bourse.AuthoredRateUnitConfrontationTest do
     "trading_fees" => Bourse.TradingFee
   }
 
-  test "every emitted declaration agrees with its public unified struct contract" do
+  # Declaration-consistency only: this compares authored spec slots + carve
+  # markers against the struct docstrings. It does NOT parse venue bodies —
+  # emitted-output coverage lives in the per-venue authored-spec tests.
+  test "every authored unit declaration agrees with its public unified struct contract" do
     assert_declarations_match!(emitted_entries())
   end
 

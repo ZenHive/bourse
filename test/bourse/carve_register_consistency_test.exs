@@ -14,6 +14,10 @@ defmodule Bourse.CarveRegisterConsistencyTest do
                                 |> Jason.decode!()
                                 |> Map.fetch!("fixtures")
                                 |> MapSet.new(&Path.join("test/fixtures/responses", &1))
+  # One-way ratchet: carve entries from task 603 onward are held to the strict
+  # evidence-kind vocabulary; the finite set of earlier entries is
+  # grandfathered. Task-anchored deliberately — date anchoring cannot work here
+  # because the grandfathered 592-600 entries share 603's own entry date.
   @strict_recording_task 603
   @observed_evidence_kinds ~w(live_venue provider_shaped recorded_real_exchange recorded_venue)
   @strict_observed_evidence_kinds ~w(live_venue provider_shaped recorded_venue)
@@ -439,12 +443,14 @@ defmodule Bourse.CarveRegisterConsistencyTest do
 
   defp observed_evidence_errors(_status, prefix), do: ["#{prefix}: observed_evidence must be an object or null"]
 
-  defp strict_recording_status?(%{"carve_id" => carve_id}) do
+  defp strict_recording_status?(%{"carve_id" => carve_id}) when is_binary(carve_id) do
     case Regex.run(~r/^C-T(\d+)/, carve_id, capture: :all_but_first) do
       [task] -> String.to_integer(task) >= @strict_recording_task
       nil -> false
     end
   end
+
+  defp strict_recording_status?(_status), do: false
 
   defp tier_one_errors(%{"resolved_tier" => 1} = status, prefix) do
     semantic_errors =

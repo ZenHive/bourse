@@ -1070,14 +1070,17 @@ Outcome: CONFIRM the option-IV fraction and split emitted funding units from abs
 **C-T603b — Binance option ticker fractions normalize to percent points (task 603).
 Outcome: DIVERGE from the spot-ticker unit applied to the EAPI route.**
 
-<!-- rate-unit path="normalization.field_maps.option.field_map.percentage" unit="percent_points" source-unit="fraction" --> EAPI `priceChangePercent` is a decimal ratio: the live row `priceChange=-5`, `open=25`, `priceChangePercent=-0.2` satisfies `-5 / 25 = -0.2`; authored `scale: 100` emits `-20` percent points. [Option 24hr ticker](https://developers.binance.com/docs/derivatives/option/market-data/24hr-Ticker-Price-Change-Statistics)
+<!-- rate-unit path="normalization.field_maps.option.field_map.percentage" unit="percent_points" source-unit="fraction" --> EAPI `priceChangePercent` is a decimal ratio: the live row `SOL-260814-66-P` (`priceChange=1.42`, `open=0.08`, `lastPrice=1.5`) carries `priceChangePercent=17.75`, satisfying `1.42 / 0.08 = 17.75`; authored `scale: 100` emits `1775` percent points, and the unified output was observed emitting exactly that. [Option 24hr ticker](https://developers.binance.com/docs/derivatives/option/market-data/24hr-Ticker-Price-Change-Statistics)
 <!-- rate-unit path="normalization.field_maps.ticker.field_map.percentage" unit="percent_points" source-unit="fraction" --> `fetchTicker` also routes option symbols through EAPI, so the `market.option` branch converts the EAPI fraction while spot and futures branches retain their provider percent points unchanged. [Option 24hr ticker](https://developers.binance.com/docs/derivatives/option/market-data/24hr-Ticker-Price-Change-Statistics) [Spot 24hr ticker](https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints#24hr-ticker-price-change-statistics)
 <!-- rate-unit path="normalization.field_maps.position.field_map.percentage" unit="percent_points" source-unit="fraction" --> The authored position quotient is a fraction before `scale: 100`. [Position information](https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V3)
 
-- *Live evidence (2026-08-12):* production `GET /eapi/v1/ticker` returned
-  `BTC-260925-120000-C` with `priceChange -5`, `open 25`, and
-  `priceChangePercent -0.2`; the provider-shaped row is pinned through both parsers.
+- *Live evidence (2026-08-13):* production `GET /eapi/v1/ticker` returned
+  `SOL-260814-66-P` with `priceChange 1.42`, `open 0.08`, `lastPrice 1.5` and
+  `priceChangePercent 17.75` (= `1.42 / 0.08`, the venue's own arithmetic), and
+  `Bourse.fetch_option/2` emitted `percentage: 1775.0` percent points from that
+  live body. The earlier round-number example row (`-5 / 25 = -0.2`) was
+  illustrative, not observed, and is superseded by this observation.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T603b","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance EAPI and spot 24hr ticker contracts linked in C-T603b"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-12 eapi.binance.com GET /eapi/v1/ticker BTC-260925-120000-C priceChange -5 open 25 priceChangePercent -0.2"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The live EAPI body is pinned as a parser golden but is not registered as a frozen response"}
+{"carve_id":"C-T603b","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"Binance EAPI and spot 24hr ticker contracts linked in C-T603b"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-13 eapi.binance.com GET /eapi/v1/ticker SOL-260814-66-P priceChange 1.42 open 0.08 priceChangePercent 17.75; unified fetch_option emitted percentage 1775.0"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The live EAPI body is pinned as a parser golden but is not registered as a frozen response"}
 -->

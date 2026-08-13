@@ -15,6 +15,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `should_retry?/1` true, instead of being folded into the terminal
   `:authentication_error`/`:auth` bucket. Genuine credential rejection
   (`:authentication_error`, `:permission_denied`) stays non-retryable.
+  `:invalid_nonce` never melts the circuit breaker: clock/nonce drift is a
+  client-side condition, not venue downtime, so it cannot open the
+  exchange-wide circuit.
 
 ### Changed
 

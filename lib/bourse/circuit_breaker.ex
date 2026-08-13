@@ -27,6 +27,7 @@ defmodule Bourse.CircuitBreaker do
   | Body-level `exchange_not_available` (`:server_busy`) | Yes | Exchange down/maintenance |
   | HTTP 429 / `:rate_limit` | **No** | Handled by rate limiter |
   | HTTP 4xx / `:auth` / `:non_retryable` | **No** | Client error, not server issue |
+  | `:invalid_nonce` (`:network` class) | **No** | Client clock/nonce drift — retryable for the caller, never venue downtime |
 
   ## Configuration
 
@@ -230,6 +231,11 @@ defmodule Bourse.CircuitBreaker do
 
   def should_melt?({:error, %{__struct__: Bourse.Error, http_status: status}}) when is_integer(status) and status >= 500,
     do: true
+
+  # Nonce/timestamp drift is a CLIENT-side condition (clock skew, recvWindow):
+  # retryable for the caller, but never evidence the venue is down — melting
+  # here would block the whole exchange, public reads included.
+  def should_melt?({:error, %{__struct__: Bourse.Error, type: :invalid_nonce}}), do: false
 
   def should_melt?({:error, %{__struct__: Bourse.Error, retry_class: class}}) when class in [:network, :server_busy],
     do: true

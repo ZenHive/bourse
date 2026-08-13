@@ -213,6 +213,14 @@ defmodule Bourse.CircuitBreakerTest do
       assert CircuitBreaker.should_melt?({:error, Error.exchange_not_available()})
     end
 
+    test "does not melt on :invalid_nonce despite its retryable :network class" do
+      # Nonce/timestamp drift is client-side (clock skew, recvWindow); melting
+      # would block the whole exchange, public reads included.
+      err = Error.invalid_nonce()
+      assert err.retry_class == :network
+      refute CircuitBreaker.should_melt?({:error, err})
+    end
+
     test "does not melt on rate_limit / auth / non_retryable normalized errors" do
       refute CircuitBreaker.should_melt?({:error, Error.rate_limit_exceeded()})
       refute CircuitBreaker.should_melt?({:error, Error.authentication_error()})

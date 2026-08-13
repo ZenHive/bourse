@@ -75,7 +75,9 @@ roadmap.
 
 **Method:** any signed call whose venue error maps through `"InvalidNonce"` (`lib/bourse/error.ex` name map) · **Exchange:** all (classification layer, not venue-specific) · **Severity:** medium (consumer-side terminal handling of a transient error)
 
-**Status (2026-08-12):** 📋 triaged — workbench task 604 (dedicated retryable type for the InvalidNonce class; credential rejection stays `:auth`). The lossy collapse was a documented deliberate choice (`error.ex` ~169–171: "AuthenticationError(:auth) wins over the InvalidNonce(:network) edge"); this consumer case shows the money path needs the `:network` side.
+**Status (2026-08-13):** ✅ fixed — task 604 shipped `:invalid_nonce` (`retry_class :network`, retryable); live-verified differentially on binance testnet (`recvWindow=1` → `-1021` → `:invalid_nonce`/retryable; bad key → `-2014` → `:authentication_error`/terminal). `:invalid_nonce` also never melts the circuit breaker (client-side drift ≠ venue downtime). **Residual:** the mapped codes are the CEX venues (binance family `-1021`, bybit `10002`, okx `50102`/`60006`); the three DEX venues (lighter, derive, hyperliquid) have no InvalidNonce mapping yet — their nonce/deadline rejections still classify `:authentication_error`. If the consumer trades those venues through this path, report it and the mapping gets confronted per venue.
+
+*(Original triage 2026-08-12: workbench task 604; the lossy collapse was a documented deliberate choice — `error.ex` ~169–171: "AuthenticationError(:auth) wins over the InvalidNonce(:network) edge"; this consumer case showed the money path needs the `:network` side.)*
 
 Observed: `lib/bourse/error.ex` maps `"InvalidNonce" => :authentication_error` (name map, ~line 260),
 and `:authentication_error` carries `retry_class: :auth` (~line 186) — "do not retry without
