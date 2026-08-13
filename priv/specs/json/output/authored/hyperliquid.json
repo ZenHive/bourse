@@ -9617,8 +9617,14 @@
           "enum_map": {
             "accountClassTransfer": "transfer",
             "internalTransfer": "transfer",
+            "rewardsClaim": "bonus",
+            "spotGenesis": "spot_genesis",
+            "spotTransfer": "transfer",
             "subAccountTransfer": "transfer",
+            "vaultCreate": "vault_create",
+            "vaultDistribution": "vault_distribution",
             "vaultDeposit": "deposit",
+            "vaultLeaderCommission": "commission",
             "vaultWithdraw": "withdrawal",
             "withdraw": "withdrawal"
           },

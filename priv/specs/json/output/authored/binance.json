@@ -24114,12 +24114,12 @@
             "enum_map": {
               "API_REBATE": "rebate",
               "AUTO_EXCHANGE": "conversion",
-              "BFUSD_REWARD": "cashback",
+              "BFUSD_REWARD": "bonus",
               "COIN_SWAP_DEPOSIT": "deposit",
               "COIN_SWAP_WITHDRAW": "withdrawal",
               "COMMISSION": "commission",
               "COMMISSION_REBATE": "rebate",
-              "CONTEST_REWARD": "cashback",
+              "CONTEST_REWARD": "bonus",
               "CROSS_COLLATERAL_TRANSFER": "transfer",
               "DELIVERED_SETTELMENT": "settlement",
               "FEE_RETURN": "rebate",
@@ -24133,7 +24133,7 @@
               "REFERRAL_KICKBACK": "referral",
               "STRATEGY_UMFUTURES_TRANSFER": "transfer",
               "TRANSFER": "transfer",
-              "WELCOME_BONUS": "cashback"
+              "WELCOME_BONUS": "bonus"
             },
             "fallback_keys": [
               "type"

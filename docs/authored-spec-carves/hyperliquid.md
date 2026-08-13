@@ -6,6 +6,31 @@ Append-only schema confrontations for Hyperliquid. Follow the allocation and evi
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Hyperliquid carve record.
 
+## 2026-08-14 — remaining WsLedgerUpdate labels (Task 609)
+
+**C-T609g — Every remaining `WsLedgerUpdate` literal with a registered class, or an obvious
+venue-faithful snake_case label, stops emitting camelCase (task 609). Outcome: CONFIRM the
+provider union members.** Hyperliquid's official
+[`WsLedgerUpdate` union](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/websocket/subscriptions#wsusernonfundingledgerupdates)
+names the six leftovers as follows.
+
+| Provider literal | Unified result | Confrontation |
+|---|---|---|
+| `spotTransfer` | `transfer` | CONFIRMED by `WsSpotTransfer` (`token`, `amount`, `user`, `destination`, `fee`); a token transfer between addresses. |
+| `vaultLeaderCommission` | `commission` | CONFIRMED by `WsVaultLeaderCommission` (`user`, `usdc`); commission paid to the vault leader. |
+| `rewardsClaim` | `bonus` | CONFIRMED by `WsRewardsClaim` (`amount`); a claimed reward, the same promotional-credit class as bybit `BONUS` and binance `WELCOME_BONUS`. |
+| `vaultCreate` | `vault_create` | CONFIRMED by the `WsVaultDelta` create variant; no registered class names vault creation, so the venue-faithful snake_case of the provider literal. |
+| `vaultDistribution` | `vault_distribution` | CONFIRMED by the `WsVaultDelta` distribution variant; not a deposit or withdrawal (those are `vaultDeposit` / `vaultWithdraw`). |
+| `spotGenesis` | `spot_genesis` | CONFIRMED by `WsSpotGenesis` (`token`, `amount`); token issuance, not an on-chain `deposit`. |
+
+Funding payments stay off this vocabulary: `userNonFundingLedgerUpdates` excludes them, and
+they live on `userFundings`. That exemption is named in the coverage suite rather than
+silenced.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T609g","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid WebSocket subscriptions WsUserNonFundingLedgerUpdates / WsLedgerUpdate union members WsSpotTransfer, WsVaultLeaderCommission, WsRewardsClaim, WsVaultDelta, WsSpotGenesis"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Classifications are provider-documentation-anchored; no manifest-registered non-funding ledger rows cover these six variants"}
+-->
+
 ## 2026-08-13 — registered ledger label reconciliation (Task 607)
 
 **C-T607b — Hyperliquid deposit and withdrawal deltas use the registered cross-venue classes

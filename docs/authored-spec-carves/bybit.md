@@ -7,6 +7,54 @@ Append-only schema confrontations for Bybit. Follow the allocation and evidence 
 still appear in `docs/authored-specs.md`, but that document points here for the complete
 per-venue record (task 466).
 
+## 2026-08-14 — remaining ledger-taxonomy splits (Task 609)
+
+**C-T609a — `SETTLEMENT` is the funding-payment arm; the USDC session P&L cannot be split
+off (task 609). Outcome: CONFIRM provider event identity; DIVERGE from C-T607a's `settlement`
+collapse.** Bybit's pinned V5
+[UTA transaction-log enum](https://github.com/bybit-exchange/docs/blob/5ccd30109fe2eb5a39cf4d864365213658530f6c/docs/v5/enum.mdx#typeuta-translog)
+defines `SETTLEMENT` as "USDT Perp funding settlement, and USDC Perp funding settlement + USDC
+8-hour session settlement". The
+[contract transaction-log enum](https://github.com/bybit-exchange/docs/blob/5ccd30109fe2eb5a39cf4d864365213658530f6c/docs/v5/enum.mdx#typecontract-translog)
+is narrower: "USDT / Inverse Perp funding settlement". The
+[Get Transaction Log](https://github.com/bybit-exchange/docs/blob/5ccd30109fe2eb5a39cf4d864365213658530f6c/docs/v5/account/transaction-log.mdx)
+response names `feeRate` on `type=SETTLEMENT` as the funding fee rate, and documents that USDC
+perp funding and the 8-hour session P&L arrive as **one record**: `funding` is the funding fee
+and `cashFlow` is the session P&L. `transSubType` is only `movePosition` or empty, so it is not
+a discriminator. There is therefore no provider-documented type-level split that would emit a
+second ledger row. The single class is `funding_fee`, matching binance-family `FUNDING_FEE` and
+OKX bill type `8`. The mixed USDC session P&L remains on the same row and in `info`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T609a","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Bybit docs commit 5ccd3010 docs/v5/enum.mdx type(uta-translog)/type(contract-translog) plus Get Transaction Log funding/cashFlow/feeRate fields"},"observed_evidence":{"kind":"provider_shaped","reference":"Pinned Get Transaction Log SETTLEMENT example row (XRPUSDT funding -0.003676, cashFlow 0)"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Bybit demo transaction-log was empty on 2026-08-13; USDC combined funding+session rows are documentation-anchored"}
+-->
+
+**C-T609b — Promotional credits and ADL casing join the cross-venue vocabulary (task 609).
+Outcome: CONFIRM provider event identities; DIVERGE from treating bonus as a venue-specific
+remainder and from passthrough `ADL`.** The same pinned UTA enum names `BONUS` "Bonus claimed",
+`BONUS_RECOLLECT` "Bonus expired", and lists `BONUS_TRANSFER_IN` / `BONUS_TRANSFER_OUT` in the
+bonus family. Those four literals emit registered `bonus`, the same class as binance-family
+`WELCOME_BONUS` / `CONTEST_REWARD` / `BFUSD_REWARD` (C-T609d). `cashback` stays in the registry
+for money returned; it is not this event. `ADL` is "Auto-Deleveraging" and emits venue-specific
+`adl`, matching OKX bill type `9` rather than the raw `ADL` casing.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T609b","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Bybit docs commit 5ccd3010 docs/v5/enum.mdx type(uta-translog) BONUS/BONUS_RECOLLECT/BONUS_TRANSFER_* and ADL"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Classifications are provider-documentation-anchored; demo transaction-log was empty on 2026-08-13"}
+-->
+
+**C-T609c — `CURRENCY_BUY` / `CURRENCY_SELL` / `CONVERT` are conversion, not trade (task 609).
+Outcome: CONFIRM the provider convert identity; DIVERGE from C-T607a's uncarved `trade`
+hardening.** The pinned UTA enum defines `CURRENCY_BUY` and `CURRENCY_SELL` as "Currency convert,
+and the liquidation for borrowing asset (UTA loan)" and `CONVERT` as "Currency convert
+repayment". The contract transaction-log enum drops the loan-liquidation clause and names both
+buy/sell arms "Currency convert". `transSubType` does not distinguish convert from UTA-loan
+liquidation. The single class is `conversion`, matching OKX convert bills and binance
+`AUTO_EXCHANGE`. The mixed UTA-loan liquidation meaning stays in `info`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T609c","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Bybit docs commit 5ccd3010 docs/v5/enum.mdx type(uta-translog) CURRENCY_BUY/CURRENCY_SELL/CONVERT and type(contract-translog) Currency convert"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No documented row-level discriminator for the UTA-loan liquidation clause; demo transaction-log was empty on 2026-08-13"}
+-->
+
 ## 2026-08-13 — registered ledger label reconciliation (Task 607)
 
 **C-T607a — Bybit transaction-log aliases use cross-venue economic-event classes and a

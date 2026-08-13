@@ -6,7 +6,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
 
   @registered_ledger_types MapSet.new(~w(
       trade fee deposit withdrawal transfer funding_fee realized_pnl liquidation settlement
-      interest rebate commission cashback referral conversion
+      interest rebate commission cashback referral conversion bonus
     ))
 
   @binance_usdm_types MapSet.new(~w(
@@ -63,13 +63,18 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     ))
 
   @bybit_registered_events %{
-    "CURRENCY_BUY" => "trade",
-    "CURRENCY_SELL" => "trade",
+    "BONUS" => "bonus",
+    "BONUS_RECOLLECT" => "bonus",
+    "BONUS_TRANSFER_IN" => "bonus",
+    "BONUS_TRANSFER_OUT" => "bonus",
+    "CONVERT" => "conversion",
+    "CURRENCY_BUY" => "conversion",
+    "CURRENCY_SELL" => "conversion",
     "DELIVERY" => "settlement",
     "FEE_REFUND" => "rebate",
     "INTEREST" => "interest",
     "LIQUIDATION" => "liquidation",
-    "SETTLEMENT" => "settlement",
+    "SETTLEMENT" => "funding_fee",
     "TRADE" => "trade",
     "TRANSFER_IN" => "transfer",
     "TRANSFER_OUT" => "transfer"
@@ -79,8 +84,11 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     "accountClassTransfer" => "transfer",
     "deposit" => "deposit",
     "internalTransfer" => "transfer",
+    "rewardsClaim" => "bonus",
+    "spotTransfer" => "transfer",
     "subAccountTransfer" => "transfer",
     "vaultDeposit" => "deposit",
+    "vaultLeaderCommission" => "commission",
     "vaultWithdraw" => "withdrawal",
     "withdraw" => "withdrawal"
   }
@@ -91,12 +99,12 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
   @binance_income_registered_events %{
     "API_REBATE" => "rebate",
     "AUTO_EXCHANGE" => "conversion",
-    "BFUSD_REWARD" => "cashback",
+    "BFUSD_REWARD" => "bonus",
     "COIN_SWAP_DEPOSIT" => "deposit",
     "COIN_SWAP_WITHDRAW" => "withdrawal",
     "COMMISSION" => "commission",
     "COMMISSION_REBATE" => "rebate",
-    "CONTEST_REWARD" => "cashback",
+    "CONTEST_REWARD" => "bonus",
     "CROSS_COLLATERAL_TRANSFER" => "transfer",
     "DELIVERED_SETTELMENT" => "settlement",
     "FEE_RETURN" => "rebate",
@@ -110,7 +118,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     "REFERRAL_KICKBACK" => "referral",
     "STRATEGY_UMFUTURES_TRANSFER" => "transfer",
     "TRANSFER" => "transfer",
-    "WELCOME_BONUS" => "cashback"
+    "WELCOME_BONUS" => "bonus"
   }
 
   @binance_coinm_registered_events %{
@@ -120,7 +128,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     "INSURANCE_CLEAR" => "settlement",
     "REALIZED_PNL" => "realized_pnl",
     "TRANSFER" => "transfer",
-    "WELCOME_BONUS" => "cashback"
+    "WELCOME_BONUS" => "bonus"
   }
 
   @okx_account_registered_events %{
@@ -255,7 +263,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       derivation: "101 unique literals from the UTA and contract transaction-log union",
       values: @bybit_types,
       registered_events: @bybit_registered_events,
-      venue_specific: %{"BONUS" => "bonus"},
+      venue_specific: %{"ADL" => "adl"},
       venue_specific_format: :snake_case,
       venue_specific_source: :raw_literal
     },
@@ -271,7 +279,12 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       derivation: "14 literals in the WsLedgerUpdate union after expanding WsVaultDelta",
       values: @hyperliquid_types,
       registered_events: @hyperliquid_registered_events,
-      venue_specific: %{}
+      venue_specific: %{
+        "spotGenesis" => "spot_genesis",
+        "vaultCreate" => "vault_create",
+        "vaultDistribution" => "vault_distribution"
+      },
+      venue_specific_format: :snake_case
     },
     %{
       venue: "okx",
@@ -359,7 +372,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
   @surfaced_binance_mappings %{
     "binance" => %{
       "AUTO_EXCHANGE" => "conversion",
-      "BFUSD_REWARD" => "cashback",
+      "BFUSD_REWARD" => "bonus",
       "FEE_RETURN" => "rebate",
       "FUNDING_FEE" => "funding_fee",
       "INSURANCE_CLEAR" => "settlement",
@@ -374,7 +387,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     },
     "binanceusdm" => %{
       "AUTO_EXCHANGE" => "conversion",
-      "BFUSD_REWARD" => "cashback",
+      "BFUSD_REWARD" => "bonus",
       "FEE_RETURN" => "rebate",
       "FUNDING_FEE" => "funding_fee",
       "INSURANCE_CLEAR" => "settlement",
@@ -498,6 +511,32 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     end
   end
 
+  test "passthrough remainders do not emit a casing variant of a declared label" do
+    declared_by_normalized =
+      @documented_ledger_types
+      |> Enum.flat_map(fn entry ->
+        enum_map = entry.venue |> Bourse.Spec.load!() |> get_in(entry.path) |> Map.get("enum_map", %{})
+
+        (Map.values(enum_map) ++ Map.values(entry.venue_specific))
+        |> Enum.uniq()
+        |> Enum.map(&{String.downcase(&1), {entry.venue, entry.scope, &1}})
+      end)
+      |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+
+    for entry <- @documented_ledger_types, entry.mode == :passthrough do
+      enum_map = entry.venue |> Bourse.Spec.load!() |> get_in(entry.path) |> Map.get("enum_map", %{})
+      remainders = MapSet.difference(entry.values, MapSet.new(Map.keys(enum_map)))
+
+      for raw <- remainders, key <- remainder_casing_keys(raw) do
+        for {declared_venue, declared_scope, declared_label} <- Map.get(declared_by_normalized, key, []) do
+          assert raw == declared_label,
+                 "#{entry.venue}/#{entry.scope} passthrough remainder #{inspect(raw)} emits a casing " <>
+                   "variant of #{declared_venue}/#{declared_scope} declared label #{inspect(declared_label)}"
+        end
+      end
+    end
+  end
+
   test "LedgerEntry and Descripex enumerate the two-class ledger type contract" do
     {:docs_v1, _, _, _, %{"en" => moduledoc}, _, _} = Code.fetch_docs(Bourse.LedgerEntry)
     descripex_doc = Bourse.__api__(:fetch_ledger).hints.description
@@ -580,6 +619,38 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     |> String.trim("_")
   end
 
+  defp remainder_casing_keys(raw) do
+    Enum.uniq([String.downcase(raw), camel_to_snake(raw)])
+  end
+
+  defp camel_to_snake(value) do
+    value
+    |> String.replace(~r/([a-z0-9])([A-Z])/, "\\1_\\2")
+    |> String.downcase()
+    |> String.replace(~r/[^a-z0-9]+/, "_")
+    |> String.trim("_")
+  end
+
+  defp perpetual_venues do
+    Enum.filter(Bourse.Registry.exchanges(), fn venue ->
+      has = venue |> Bourse.Spec.load!() |> get_in(["capabilities", "has"]) || %{}
+
+      Enum.any?(
+        ~w(swap fetchFundingRate fetchFundingRates fetchFundingRateHistory fetchFundingHistory),
+        &(has[&1] in [true, "emulated"])
+      )
+    end)
+  end
+
+  defp ledger_vocabulary_emits?(venue, label) do
+    @documented_ledger_types
+    |> Enum.filter(&(&1.venue == venue))
+    |> Enum.any?(fn entry ->
+      enum_map = entry.venue |> Bourse.Spec.load!() |> get_in(entry.path) |> Map.get("enum_map", %{})
+      label in Map.values(enum_map)
+    end)
+  end
+
   test "the surfaced Binance gaps and signed direction have deliberate authored mappings" do
     for {venue, expected} <- @surfaced_binance_mappings do
       spec = Bourse.Spec.load!(venue)
@@ -614,9 +685,6 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
                Bourse.Bybit.parse_ledger_entry(%{"type" => raw})
     end
 
-    assert {:ok, %Bourse.LedgerEntry{type: "bonus"}} =
-             Bourse.Bybit.parse_ledger_entry(%{"type" => "BONUS"})
-
     for {raw, registered} <- @hyperliquid_registered_events do
       assert {:ok, %Bourse.LedgerEntry{type: ^registered}} =
                Bourse.Hyperliquid.parse_ledger_entry(%{"delta" => %{"type" => raw}})
@@ -625,6 +693,117 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     refute "Prize" in ledger_enum_values()
     refute "transaction" in ledger_enum_values()
     refute "withdraw" in ledger_enum_values()
+    refute "ADL" in ledger_enum_values()
+    refute "spotTransfer" in ledger_enum_values()
+  end
+
+  test "newly decided arms emit through parse_ledger_entry on venue-frozen rows" do
+    bybit_settlement = %{
+      "category" => "linear",
+      "cashFlow" => "0",
+      "change" => "-0.003676",
+      "currency" => "USDT",
+      "fee" => "0.00000000",
+      "feeRate" => "0.0001",
+      "funding" => "-0.003676",
+      "id" => "592324_XRPUSDT_161440249321",
+      "side" => "Buy",
+      "symbol" => "XRPUSDT",
+      "transactionTime" => "1672128000000",
+      "type" => "SETTLEMENT"
+    }
+
+    assert {:ok, %Bourse.LedgerEntry{type: "funding_fee", currency: "USDT", direction: "out"}} =
+             Bourse.Bybit.parse_ledger_entry(bybit_settlement)
+
+    assert {:ok, %Bourse.LedgerEntry{type: "bonus"}} =
+             Bourse.Bybit.parse_ledger_entry(%{"change" => "10", "currency" => "USDT", "type" => "BONUS"})
+
+    assert {:ok, %Bourse.LedgerEntry{type: "bonus"}} =
+             Bourse.Bybit.parse_ledger_entry(%{"type" => "BONUS_RECOLLECT"})
+
+    assert {:ok, %Bourse.LedgerEntry{type: "bonus"}} =
+             Bourse.Bybit.parse_ledger_entry(%{"type" => "BONUS_TRANSFER_IN"})
+
+    assert {:ok, %Bourse.LedgerEntry{type: "bonus"}} =
+             Bourse.Bybit.parse_ledger_entry(%{"type" => "BONUS_TRANSFER_OUT"})
+
+    assert {:ok, %Bourse.LedgerEntry{type: "conversion"}} =
+             Bourse.Bybit.parse_ledger_entry(%{"currency" => "USDT", "type" => "CURRENCY_BUY"})
+
+    assert {:ok, %Bourse.LedgerEntry{type: "conversion"}} =
+             Bourse.Bybit.parse_ledger_entry(%{"type" => "CURRENCY_SELL"})
+
+    assert {:ok, %Bourse.LedgerEntry{type: "conversion"}} =
+             Bourse.Bybit.parse_ledger_entry(%{"type" => "CONVERT"})
+
+    assert {:ok, %Bourse.LedgerEntry{type: "adl"}} =
+             Bourse.Bybit.parse_ledger_entry(%{"symbol" => "BTCUSDT", "type" => "ADL"})
+
+    assert {:ok, %Bourse.LedgerEntry{type: "bonus"}} =
+             Bourse.Binance.parse_ledger_entry(%{"asset" => "USDT", "income" => "5", "incomeType" => "WELCOME_BONUS"},
+               route: "income"
+             )
+
+    assert {:ok, %Bourse.LedgerEntry{type: "bonus"}} =
+             Bourse.Binanceusdm.parse_ledger_entry(%{"incomeType" => "CONTEST_REWARD"}, route: "income")
+
+    assert {:ok, %Bourse.LedgerEntry{type: "bonus"}} =
+             Bourse.Binanceusdm.parse_ledger_entry(%{"incomeType" => "BFUSD_REWARD"}, route: "income")
+
+    assert {:ok, %Bourse.LedgerEntry{type: "bonus"}} =
+             Bourse.Binancecoinm.parse_ledger_entry(%{"incomeType" => "WELCOME_BONUS"})
+
+    assert {:ok, %Bourse.LedgerEntry{type: "transfer"}} =
+             Bourse.Hyperliquid.parse_ledger_entry(%{
+               "delta" => %{"amount" => 1, "destination" => "0x1", "token" => "HYPE", "type" => "spotTransfer"},
+               "hash" => "0xabc",
+               "time" => 1_724_762_307_531
+             })
+
+    assert {:ok, %Bourse.LedgerEntry{type: "commission"}} =
+             Bourse.Hyperliquid.parse_ledger_entry(%{"delta" => %{"type" => "vaultLeaderCommission", "usdc" => 0.5}})
+
+    assert {:ok, %Bourse.LedgerEntry{type: "bonus"}} =
+             Bourse.Hyperliquid.parse_ledger_entry(%{"delta" => %{"amount" => 2, "type" => "rewardsClaim"}})
+
+    assert {:ok, %Bourse.LedgerEntry{type: "vault_create"}} =
+             Bourse.Hyperliquid.parse_ledger_entry(%{"delta" => %{"type" => "vaultCreate", "usdc" => 100}})
+
+    assert {:ok, %Bourse.LedgerEntry{type: "vault_distribution"}} =
+             Bourse.Hyperliquid.parse_ledger_entry(%{"delta" => %{"type" => "vaultDistribution", "usdc" => 3}})
+
+    assert {:ok, %Bourse.LedgerEntry{type: "spot_genesis"}} =
+             Bourse.Hyperliquid.parse_ledger_entry(%{
+               "delta" => %{"amount" => 10, "token" => "HYPE", "type" => "spotGenesis"}
+             })
+  end
+
+  @funding_fee_ledger_exemptions %{
+    "deribit" => "no authored ledger type vocabulary",
+    "derive" => "no authored ledger type vocabulary",
+    "hyperliquid" => "userNonFundingLedgerUpdates excludes funding payments; funding lives on userFundings",
+    "lighter" => "fetchLedger is unsupported; no authored ledger type vocabulary"
+  }
+
+  test "every perpetual venue can emit funding_fee from its ledger vocabulary" do
+    perp_venues = perpetual_venues()
+
+    for {venue, reason} <- @funding_fee_ledger_exemptions do
+      assert venue in perp_venues,
+             "exemption #{inspect(venue)} is not a perpetual venue"
+
+      assert String.trim(reason) != "",
+             "#{venue} exemption must name why funding_fee is impossible from its ledger"
+
+      refute ledger_vocabulary_emits?(venue, "funding_fee"),
+             "#{venue} is exempt but its ledger vocabulary already emits funding_fee"
+    end
+
+    for venue <- perp_venues, not Map.has_key?(@funding_fee_ledger_exemptions, venue) do
+      assert ledger_vocabulary_emits?(venue, "funding_fee"),
+             "#{venue} has perpetuals but no ledger vocabulary arm emits funding_fee"
+    end
   end
 
   test "OKX asset bills normalize their documented deposit, withdrawal, and transfer arms" do

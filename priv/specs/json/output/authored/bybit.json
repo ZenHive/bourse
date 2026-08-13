@@ -16748,14 +16748,19 @@
           "type": {
           "coercion": "safeString",
           "enum_map": {
+            "ADL": "adl",
             "BONUS": "bonus",
-            "CURRENCY_BUY": "trade",
-            "CURRENCY_SELL": "trade",
+            "BONUS_RECOLLECT": "bonus",
+            "BONUS_TRANSFER_IN": "bonus",
+            "BONUS_TRANSFER_OUT": "bonus",
+            "CONVERT": "conversion",
+            "CURRENCY_BUY": "conversion",
+            "CURRENCY_SELL": "conversion",
             "DELIVERY": "settlement",
             "FEE_REFUND": "rebate",
             "INTEREST": "interest",
             "LIQUIDATION": "liquidation",
-            "SETTLEMENT": "settlement",
+            "SETTLEMENT": "funding_fee",
             "TRADE": "trade",
             "TRANSFER_IN": "transfer",
             "TRANSFER_OUT": "transfer"

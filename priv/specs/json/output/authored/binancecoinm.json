@@ -11647,7 +11647,7 @@
             "INSURANCE_CLEAR": "settlement",
             "REALIZED_PNL": "realized_pnl",
             "TRANSFER": "transfer",
-            "WELCOME_BONUS": "cashback"
+            "WELCOME_BONUS": "bonus"
             },
             "format": null,
             "key": "incomeType"

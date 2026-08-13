@@ -6,6 +6,18 @@ Append-only schema confrontations for Binance USD-M. Follow the allocation and e
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance USD-M carve record.
 
+## 2026-08-14 — promotional-credit class (Task 609)
+
+**C-T609e — USD-M welcome, contest, and BFUSD rewards emit registered `bonus` (task 609).
+Outcome: CONFIRM C-T609d on the dedicated USD-M client.** The same pinned
+[USD-M `IncomeType` table](https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-usds-futures/docs/IncomeType.md)
+feeds this venue's income rule. `WELCOME_BONUS`, `CONTEST_REWARD`, and `BFUSD_REWARD` emit
+`bonus` rather than C-T605b's `cashback`, matching bybit's bonus family.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T609e","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Binance official Java SDK a13868d0 USD-M IncomeType table WELCOME_BONUS/CONTEST_REWARD/BFUSD_REWARD"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The recording carries COMMISSION and REALIZED_PNL, not a promotional-credit row"}
+-->
+
 ## 2026-08-13 — registered ledger type taxonomy (Task 605)
 
 **C-T605b — USD-M income rows use cross-venue economic-event classes (task 605).

@@ -6,6 +6,23 @@ Append-only schema confrontations for Binance spot. Follow the allocation and ev
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance spot carve record.
 
+## 2026-08-14 — promotional-credit class (Task 609)
+
+**C-T609d — Welcome, contest, and BFUSD rewards are promotional credits, not cashback
+(task 609). Outcome: CONFIRM the provider event names; DIVERGE from C-T605a's `cashback`
+label.** The official Binance Java connector's
+[USD-M `IncomeType` table](https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-usds-futures/docs/IncomeType.md)
+enumerates `WELCOME_BONUS`, `CONTEST_REWARD`, and `BFUSD_REWARD` as named income types without
+further field text. Those names are promotional credits (welcome bonus, contest prize, BFUSD
+reward), not money returned. They emit registered `bonus`, the same class as bybit `BONUS` /
+`BONUS_RECOLLECT` / `BONUS_TRANSFER_IN` / `BONUS_TRANSFER_OUT` (C-T609b). `cashback` remains a
+registered class for money-returned events; these three literals are not that event. The raw
+`incomeType` stays in `LedgerEntry.info`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T609d","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Binance official Java SDK a13868d0 USD-M IncomeType table WELCOME_BONUS/CONTEST_REWARD/BFUSD_REWARD"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The recorded income fixture carries FUNDING_FEE, not a promotional-credit row"}
+-->
+
 ## 2026-08-13 — registered ledger type taxonomy (Task 605)
 
 **C-T605a — Futures income rows use cross-venue economic-event classes (task 605).

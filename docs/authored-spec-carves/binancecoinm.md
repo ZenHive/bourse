@@ -7,6 +7,18 @@ Append-only schema confrontations for Binance COIN-M. Follow the allocation and 
 venue-specific decision in the self-contained runtime document. Provider-owned evidence is
 indexed by `priv/authority/binancecoinm/manifest.json`.
 
+## 2026-08-14 — promotional-credit class (Task 609)
+
+**C-T609f — COIN-M `WELCOME_BONUS` emits registered `bonus` (task 609). Outcome: CONFIRM
+C-T609d on the dedicated COIN-M client.** The pinned
+[COIN-M `IncomeType` table](https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-coin-futures/docs/IncomeType.md)
+includes `WELCOME_BONUS`. It emits `bonus` rather than C-T605c's `cashback`, matching the
+binance-family and bybit promotional-credit decision.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T609f","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Binance official Java SDK a13868d0 COIN-M IncomeType table WELCOME_BONUS"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The demo account returned an empty COIN-M income history"}
+-->
+
 ## 2026-08-13 — registered ledger type taxonomy (Task 605)
 
 **C-T605c — COIN-M income rows use cross-venue economic-event classes (task 605).
