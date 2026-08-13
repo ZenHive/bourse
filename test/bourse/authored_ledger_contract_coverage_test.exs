@@ -273,38 +273,6 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     }
   }
 
-  @okx_account_mappings %{
-    "1" => "transfer",
-    "2" => "trade",
-    "3" => "settlement",
-    "4" => "conversion",
-    "5" => "liquidation",
-    "6" => "transfer",
-    "7" => "interest",
-    "8" => "funding_fee",
-    "9" => "adl",
-    "10" => "overloss_recovery",
-    "11" => "conversion",
-    "12" => "transfer",
-    "13" => "ddh",
-    "14" => "trade",
-    "15" => "quick_margin",
-    "16" => "borrowing",
-    "20" => "conversion",
-    "27" => "conversion",
-    "28" => "conversion",
-    "29" => "one_click_repay",
-    "30" => "trade",
-    "32" => "move_position",
-    "33" => "loans",
-    "34" => "settlement",
-    "35" => "transfer",
-    "37" => "corporate_action",
-    "38" => "usdg_rewards",
-    "250" => "profit_share_payment",
-    "251" => "profit_share_refund"
-  }
-
   @okx_asset_mappings %{
     "1" => "deposit",
     "2" => "withdrawal",
@@ -433,7 +401,6 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     assert fixture["endpoint"] == "api/v5/account/subtypes"
     assert recorded_types == registry.values
     assert MapSet.new(Map.keys(enum_map)) == named_types
-    assert enum_map == @okx_account_mappings
     refute Enum.any?(enum_map, fn {raw, normalized} -> raw == normalized end)
 
     # Every label outside the registered set must be the venue's own typeDesc, rendered

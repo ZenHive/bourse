@@ -29,11 +29,18 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   it passes through). Generated `parse_ledger_entry/2` on routed venues
   requires `opts[:route]` and fails loudly on an unknown route rather than
   parsing with the wrong vocabulary.
-- OKX ledger `type` values follow the venue's own bills vocabulary normalized
-  to snake_case (e.g. `"funding_rate"`, `"margin_transfer"`), verified against
-  a manifest-registered `account/subtypes` recording. Cross-venue
-  reconciliation of these labels into one registered unified set is tracked as
-  follow-up work.
+- Ledger `type` carries one registered cross-venue taxonomy: fifteen unified
+  values (`trade`, `fee`, `deposit`, `withdrawal`, `transfer`, `funding_fee`,
+  `realized_pnl`, `liquidation`, `settlement`, `interest`, `rebate`,
+  `commission`, `cashback`, `referral`, `conversion`) plus venue-faithful
+  snake_case labels for events outside the registry. The same economic event
+  now emits the same value on the remapped venues: OKX bill type `8` and
+  binance-family `FUNDING_FEE` both emit `funding_fee`; `REALIZED_PNL` is
+  `realized_pnl` instead of the flattened `trade`; `AUTO_EXCHANGE` is
+  `conversion`. OKX account-bills labels are derived from the venue's own
+  `account/subtypes` recording (mechanically re-derived in the suite, not
+  asserted in prose). Bybit's and hyperliquid's mapped vocabularies are not
+  yet reconciled onto the registered set and still carry pre-taxonomy labels.
 - Unified rate-like fields carry pinned units end-to-end: implied volatility
   and funding/margin rates are fractions, ticker/option `percentage` is
   percent points, and the unit invariant now grades emitted parser output

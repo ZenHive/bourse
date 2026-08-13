@@ -35,6 +35,15 @@ with options premium or position-limit charges, `REALIZED_PNL` is no longer flat
 `trade`, and `AUTO_EXCHANGE` is a conversion rather than an order fill. The raw `incomeType`
 remains in `LedgerEntry.info`.
 
+**Named gap — `INSURANCE_CLEAR` → `settlement` is our judgment on a bare literal.** The
+provider enumerates the literal but defines no semantics for it (C-T592b), and OKX's bill
+type `5` maps to `liquidation`. The working reading is that Binance surfaces liquidation
+fills as ordinary `REALIZED_PNL` + `COMMISSION` rows and reserves `INSURANCE_CLEAR` for the
+insurance-fund residual — a settlement, not the liquidating trade — but no observed row
+confirms it. The confrontation (capture a real `INSURANCE_CLEAR` income row after a forced
+liquidation) is tracked in `docs/prod-verification-ledger.md`; if the row proves to be the
+liquidation cashflow itself, the label diverges to `liquidation`.
+
 <!-- carve-evidence-status
 {"carve_id":"C-T605a","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"Binance official Java SDK a13868d0 USD-M IncomeType table"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binance/fetch_funding_history.json from demo-fapi.binance.com fapi/v1/income","fixture":"test/fixtures/responses/binance/fetch_funding_history.json"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The recording carries FUNDING_FEE; the remaining provider-enumerated classes are documentation-anchored"}
 -->

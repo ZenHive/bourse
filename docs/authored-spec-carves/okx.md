@@ -34,8 +34,16 @@ choices for every row above;
 the provider's numeric `type`, `typeDesc`, and subtype detail remain recoverable in
 `LedgerEntry.info`.
 
+**Named gap — types `22`, `24`, `26` pass through as bare numerics.** Their `typeDesc` is
+blank in the recording, so they take `enum_passthrough` and a consumer sees `"22"`/`"24"`/`"26"`
+alongside snake_case labels. Their recorded *subtypes* are semantically unambiguous — type `24`
+is entirely spread-trade buy/sell/open rows (trades a `type == "trade"` filter silently misses),
+type `26` is structured-product/flywheel transfers — but classifying from subtype while the
+venue publishes no top-level description would be authored inference, not provider vocabulary.
+The gap closes if OKX ever names these types.
+
 <!-- carve-evidence-status
-{"carve_id":"C-T605d","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 Get bills types table returned by GET /api/v5/account/subtypes"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/okx/account_subtypes.json","fixture":"test/fixtures/responses/okx/account_subtypes.json"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T605d","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 Get bills types table returned by GET /api/v5/account/subtypes"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/okx/account_subtypes.json","fixture":"test/fixtures/responses/okx/account_subtypes.json"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The subtypes recording is both the authoring source and the cited evidence, so it cannot serve as an independent oracle; a populated trading-account bill row confrontation remains open in docs/prod-verification-ledger.md (task 365). Live demo account/bills rows observed 2026-08-13 emit type trade for spot fills, but only the trade class has been observed populated"}
 -->
 
 ## 2026-08-10 — current funding-rate cadence (Task 573)

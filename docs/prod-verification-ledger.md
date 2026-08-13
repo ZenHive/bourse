@@ -297,6 +297,26 @@ evidence beyond the batch review.
   author both maps from Binance's own contracts, assert the observed domain values, and remove
   only the five Binance USD-M task-550 coverage cells.
 
+### binanceusdm — INSURANCE_CLEAR income row: settlement or liquidation (task 605, filed 2026-08-13)
+- Authored slices: `binanceusdm:normalization.field_maps.ledger_entry` (and the shared binance
+  family income vocabulary)
+- Blocked by: the provider enumerates the `INSURANCE_CLEAR` literal but defines no semantics
+  for it, and no such row exists in any account we control. Producing one requires an actual
+  forced liquidation on the USD-M demo account — a deliberate loss event outside the standing
+  mutation policy for routine probes.
+- What tier-2 already proved: C-T605a maps `INSURANCE_CLEAR` to `settlement` by our judgment;
+  OKX's bill type `5` ("Forced liquidation") maps to `liquidation`. The working reading —
+  Binance surfaces liquidation fills as ordinary `REALIZED_PNL` + `COMMISSION` rows and
+  reserves `INSURANCE_CLEAR` for the insurance-fund residual — rests on the literal's name and
+  Binance's insurance-fund mechanics, not on an observed row.
+- The open question: is a real `INSURANCE_CLEAR` row the insurance-fund residual after a
+  liquidation (→ `settlement` stands) or the liquidation cashflow itself (→ the label must
+  diverge to `liquidation`, restoring the cross-venue class with OKX type `5`)?
+- Exact call: open an oversized leveraged position on `demo-fapi.binance.com`, let it liquidate,
+  then `Bourse.fetch_ledger(ex, limit: 100)` and filter `info["incomeType"] == "INSURANCE_CLEAR"`.
+- Expected evidence: one frozen income row plus the surrounding `REALIZED_PNL`/`COMMISSION`
+  rows of the same liquidation, confronted in a dated carve amendment to C-T605a.
+
 ### binance — documented pending and match-expiry order statuses (task 538, C-T538b, filed 2026-08-04)
 - Authored slices: `binance:normalization.field_maps.order.field_map.status`
 - Blocked by: the provisioned Spot Testnet history has no registered row carrying
