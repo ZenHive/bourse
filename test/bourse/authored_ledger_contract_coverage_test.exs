@@ -314,7 +314,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     end
   end
 
-  test "the registered OKX subtype response re-derives its account-bills vocabulary and named translations" do
+  test "the registered OKX subtype response re-derives its account-bills vocabulary (key membership; translations are authored)" do
     fixture = "test/fixtures/responses/okx/account_subtypes.json" |> File.read!() |> Jason.decode!()
     rows = fixture["body"]["data"]
     recorded_types = MapSet.new(rows, & &1["type"])

@@ -123,12 +123,11 @@ defmodule Bourse.OracleProvenance.DerivationTest do
     assert verified?(reports["lighter"], "request_shape.fetchOpenOrders")
   end
 
-  test "OKX bill subtype recording verifies the ledger type carve", %{reports: reports} do
-    assert %{verified: true, contributing_methods: methods, verification_citations: citations} =
-             slot(reports["okx"], "normalization.field_maps.ledger_entry")
-
-    assert "account_subtypes" in methods
-    assert "test/fixtures/responses/okx/account_subtypes.json" in citations
+  test "OKX bill subtype recording does NOT verify the ledger slot — no parsed row exists", %{reports: reports} do
+    # The account_subtypes recording enumerates type-code membership only; the
+    # slot stays unverified until a populated bills row is observed (open
+    # prod-verification-ledger entries, tasks 365/601).
+    refute verified?(reports["okx"], "normalization.field_maps.ledger_entry")
   end
 
   test "provider market discriminators verify recorded instrument families", %{reports: reports} do

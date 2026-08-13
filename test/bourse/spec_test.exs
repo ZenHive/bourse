@@ -696,7 +696,8 @@ defmodule Bourse.SpecTest do
       route_type_path = ["normalization", "field_maps", "ledger_entry", "route_field_maps", "bill", "type"]
       silent_route_default = update_in(binance, route_type_path, &Map.put(&1, "enum_default", nil))
 
-      assert_raise ArgumentError, ~r/ledger_entry\.type\.enum_default.*silently default/, fn ->
+      # The gap must name the ROUTE slot, not the (clean) base type slot.
+      assert_raise ArgumentError, ~r/ledger_entry\.route_field_maps\.bill\.type\.enum_default.*silently default/, fn ->
         Schema.validate!(silent_route_default, "binance")
       end
     end

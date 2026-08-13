@@ -7,6 +7,35 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added
+
+- `Bourse.Error` gained a dedicated `:invalid_nonce` type: venue errors that
+  resolve through the InvalidNonce class (nonce/timestamp drift, e.g. Binance
+  `-1021` outside recvWindow) now carry `retry_class: :network` and
+  `should_retry?/1` true, instead of being folded into the terminal
+  `:authentication_error`/`:auth` bucket. Genuine credential rejection
+  (`:authentication_error`, `:permission_denied`) stays non-retryable.
+
+### Changed
+
+- Ledger parsing is route-scoped: venues whose ledger endpoints carry
+  different type vocabularies per route (OKX `account/bills` vs `asset/bills`,
+  binance-family `income` vs the options `bill` endpoint) parse each response
+  with the vocabulary of the endpoint that produced it. Binance options ledger
+  entries no longer hard-fail (the venue documents `type` as a free string —
+  it passes through). Generated `parse_ledger_entry/2` on routed venues
+  requires `opts[:route]` and fails loudly on an unknown route rather than
+  parsing with the wrong vocabulary.
+- OKX ledger `type` values follow the venue's own bills vocabulary normalized
+  to snake_case (e.g. `"funding_rate"`, `"margin_transfer"`), verified against
+  a manifest-registered `account/subtypes` recording. Cross-venue
+  reconciliation of these labels into one registered unified set is tracked as
+  follow-up work.
+- Unified rate-like fields carry pinned units end-to-end: implied volatility
+  and funding/margin rates are fractions, ticker/option `percentage` is
+  percent points, and the unit invariant now grades emitted parser output
+  against frozen venue bodies rather than authored declarations alone.
+
 ## [0.4.0] - 2026-08-12
 
 ### Added

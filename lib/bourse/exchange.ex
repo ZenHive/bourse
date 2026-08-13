@@ -313,6 +313,10 @@ defmodule Bourse.Exchange do
         normalization field map. Returns `{:error, :no_field_map}` when the slot
         is unmapped and `{:error, {:unresolved, reason}}` when upstream flagged it
         as not safely derivable. `opts` may carry `:market` for discriminated maps.
+        When the slot authors per-route field maps (`route_field_maps`), `opts`
+        MUST carry `:route` (the endpoint path template, e.g. `"account/bills"`);
+        an absent or unknown route returns `{:error, :no_matching_parser_branch}`
+        rather than silently parsing with the wrong vocabulary.
         """
         @spec unquote(fn_name)(term(), keyword()) ::
                 {:ok, struct() | [struct()]} | {:error, term()}

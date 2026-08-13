@@ -709,31 +709,38 @@ defmodule Bourse.Spec.Schema do
     spec
     |> get_in(["normalization", "field_maps", "ledger_entry"])
     |> ledger_field_maps()
-    |> Enum.each(&validate_ledger_type_rule!(&1["type"], exchange_id))
+    |> Enum.each(fn {route, field_map} ->
+      validate_ledger_type_rule!(field_map["type"], exchange_id, route)
+    end)
   end
 
-  defp validate_ledger_type_rule!(nil, _exchange_id), do: :ok
+  defp validate_ledger_type_rule!(nil, _exchange_id, _route), do: :ok
 
-  defp validate_ledger_type_rule!(%{"enum_map" => enum_map} = rule, exchange_id)
+  defp validate_ledger_type_rule!(%{"enum_map" => enum_map} = rule, exchange_id, route)
        when is_map(enum_map) and map_size(enum_map) > 0 do
     if Map.has_key?(rule, "enum_default") do
       gap!(
         exchange_id,
-        ~w(normalization field_maps ledger_entry type enum_default),
+        ledger_type_gap_path(route),
         "ledger type must fail loudly unless enum_passthrough is explicitly true"
       )
     end
   end
 
-  defp validate_ledger_type_rule!(rule, exchange_id) when is_map(rule) do
+  defp validate_ledger_type_rule!(rule, exchange_id, route) when is_map(rule) do
     if Map.has_key?(rule, "enum_default") do
       gap!(
         exchange_id,
-        ~w(normalization field_maps ledger_entry type enum_default),
+        ledger_type_gap_path(route),
         "ledger type must not silently default an unmapped value"
       )
     end
   end
+
+  defp ledger_type_gap_path(nil), do: ~w(normalization field_maps ledger_entry type enum_default)
+
+  defp ledger_type_gap_path(route),
+    do: ~w(normalization field_maps ledger_entry route_field_maps) ++ [route, "type", "enum_default"]
 
   defp order_field_maps(%{"branches" => branches}) when is_list(branches) do
     Enum.flat_map(branches, fn
@@ -747,10 +754,10 @@ defmodule Bourse.Spec.Schema do
 
   defp ledger_field_maps(%{"field_map" => field_map, "route_field_maps" => route_field_maps})
        when is_map(field_map) and is_map(route_field_maps) do
-    [field_map | Enum.map(Map.values(route_field_maps), &Map.merge(field_map, &1))]
+    [{nil, field_map} | Enum.map(route_field_maps, fn {route, override} -> {route, Map.merge(field_map, override)} end)]
   end
 
-  defp ledger_field_maps(%{"field_map" => field_map}) when is_map(field_map), do: [field_map]
+  defp ledger_field_maps(%{"field_map" => field_map}) when is_map(field_map), do: [{nil, field_map}]
   defp ledger_field_maps(_ledger_mapping), do: []
 
   defp validate_order_status_rule!(nil, _exchange_id), do: :ok

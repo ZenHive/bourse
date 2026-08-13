@@ -1,4 +1,4 @@
-DOS.BinToAtom: Unsafe atom interpolation,lib/bourse/exchange.ex:835,568C001
+DOS.BinToAtom: Unsafe atom interpolation,lib/bourse/exchange.ex:839,124F1AF
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/bourse/unified/descriptor.ex:197,4DAD4CE
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/bourse/unified/descriptor.ex:236,560577D
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/bourse/unified_method.ex:113,564942F
