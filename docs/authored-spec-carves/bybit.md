@@ -7,6 +7,33 @@ Append-only schema confrontations for Bybit. Follow the allocation and evidence 
 still appear in `docs/authored-specs.md`, but that document points here for the complete
 per-venue record (task 466).
 
+## 2026-08-13 — registered ledger label reconciliation (Task 607)
+
+**C-T607a — Bybit transaction-log aliases use cross-venue economic-event classes and a
+venue-faithful bonus remainder (task 607). Outcome: CONFIRM provider event identities; DIVERGE
+from the earlier flattened labels.** Bybit's pinned V5
+[UTA transaction-log enum](https://github.com/bybit-exchange/docs/blob/5ccd30109fe2eb5a39cf4d864365213658530f6c/docs/v5/enum.mdx#typeuta-translog)
+and
+[contract transaction-log enum](https://github.com/bybit-exchange/docs/blob/5ccd30109fe2eb5a39cf4d864365213658530f6c/docs/v5/enum.mdx#typecontract-translog)
+define the event meanings used below.
+
+| Provider literal | Unified result | Confrontation |
+|---|---|---|
+| `LIQUIDATION` | `liquidation` | CONFIRMED by the provider event name; DIVERGE from the earlier `trade` alias. |
+| `SETTLEMENT`, `DELIVERY` | `settlement` | CONFIRMED as funding/session settlement and futures/option delivery; DIVERGE from `trade`. |
+| `INTEREST` | `interest` | CONFIRMED as interest caused by borrowing; DIVERGE from the generic `transaction` label. |
+| `TRANSFER_IN`, `TRANSFER_OUT` | `transfer` | CONFIRMED as assets transferred into or out of the wallet; DIVERGE from `transaction`. |
+| `FEE_REFUND` | `rebate` | CONFIRMED as a refunded trading fee; DIVERGE from the earlier `cashback` alias. |
+| `BONUS` | `bonus` | CONFIRMED as a claimed bonus. No registered class names that event, so the venue-specific result is the snake_case rendering of Bybit's own literal; DIVERGE from `Prize`. |
+
+The raw provider literal remains in `LedgerEntry.info`. Passthrough still preserves documented
+types outside the mapped set; the explicit `bonus` remainder is guarded as venue-specific and
+cannot be used to excuse an event that has a registered class.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T607a","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"Bybit docs commit 5ccd3010 docs/v5/enum.mdx type(uta-translog) and type(contract-translog)"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The classifications are provider-documentation-anchored; no manifest-registered transaction-log rows cover every remapped event"}
+-->
+
 **C-T398c — Bybit option Greeks are top-level ticker fields; rho is unsupported (task 398).
 Outcome: CONFIRM venue; reality tier 1.**
 

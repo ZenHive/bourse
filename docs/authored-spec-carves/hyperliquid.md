@@ -6,6 +6,29 @@ Append-only schema confrontations for Hyperliquid. Follow the allocation and evi
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Hyperliquid carve record.
 
+## 2026-08-13 — registered ledger label reconciliation (Task 607)
+
+**C-T607b — Hyperliquid deposit and withdrawal deltas use the registered cross-venue classes
+(task 607). Outcome: CONFIRM provider event identities; DIVERGE from the earlier withdrawal
+label.** Hyperliquid's official
+[`WsLedgerUpdate` union](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/websocket/subscriptions#wsusernonfundingledgerupdates)
+defines direct `deposit` and `withdraw` members, a `WsVaultDelta` member whose variants include
+`vaultDeposit`, and a `WsVaultWithdrawal` member whose type is `vaultWithdraw`.
+
+| Provider literal | Unified result | Confrontation |
+|---|---|---|
+| `deposit` | `deposit` | CONFIRMED by `WsDeposit`; passthrough already emits the registered value. |
+| `vaultDeposit` | `deposit` | CONFIRMED as the deposit variant of `WsVaultDelta`; DIVERGE from the mixed-case raw passthrough. |
+| `withdraw` | `withdrawal` | CONFIRMED by `WsWithdraw`; DIVERGE from the one-character-short raw passthrough. |
+| `vaultWithdraw` | `withdrawal` | CONFIRMED by `WsVaultWithdrawal`; DIVERGE from the earlier `withdraw` alias. |
+
+The provider literals remain in `LedgerEntry.info`; the aliases change only the unified
+cross-venue vocabulary.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T607b","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid WebSocket subscriptions WsUserNonFundingLedgerUpdates / WsLedgerUpdate union"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The classifications are provider-documentation-anchored; no manifest-registered non-funding ledger rows cover all four deposit and withdrawal variants"}
+-->
+
 **C-T538 — Hyperliquid order `status` covers the full provider-documented closed enum
 (task 538). Outcome: CONFIRM venue; reality tier 1.**
 

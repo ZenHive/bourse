@@ -118,7 +118,7 @@ defmodule Bourse.Unified do
     fetch_trading_fee: "Fetch the trading fee for a specific symbol.",
     fetch_trading_fees: "Fetch trading fees for all symbols.",
     fetch_ledger:
-      "Fetch the account ledger. Entry types use registered unified values (trade, fee, deposit, withdrawal, transfer, funding_fee, realized_pnl, liquidation, settlement, interest, rebate, commission, cashback, referral, conversion) or a venue-faithful snake_case label for mapped events outside the registry. Bybit's and hyperliquid's mapped labels predate the registry and are not yet reconciled onto it. Scopes with enum passthrough (base maps and routed maps alike) emit the provider's raw literal for any type outside their mapped set; the venue literal is always retained in info.",
+      "Fetch the account ledger. Entry types use registered unified values (trade, fee, deposit, withdrawal, transfer, funding_fee, realized_pnl, liquidation, settlement, interest, rebate, commission, cashback, referral, conversion) or a venue-faithful snake_case label for mapped events outside the registry. Scopes with enum passthrough (base maps and routed maps alike) emit the provider's raw literal for any type outside their mapped set; the venue literal is always retained in info.",
     close_position: "Close a derivative position for a symbol.",
     fetch_open_interest: "Fetch open interest for a perpetual or futures symbol.",
     fetch_leverage: "Fetch current leverage setting for a symbol.",

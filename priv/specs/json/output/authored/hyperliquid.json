@@ -9618,7 +9618,9 @@
             "accountClassTransfer": "transfer",
             "internalTransfer": "transfer",
             "subAccountTransfer": "transfer",
-            "vaultWithdraw": "withdraw"
+            "vaultDeposit": "deposit",
+            "vaultWithdraw": "withdrawal",
+            "withdraw": "withdrawal"
           },
             "enum_passthrough": true,
             "fallback_keys": [

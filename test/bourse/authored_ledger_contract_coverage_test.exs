@@ -62,6 +62,29 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       vaultLeaderCommission vaultWithdraw withdraw
     ))
 
+  @bybit_registered_events %{
+    "CURRENCY_BUY" => "trade",
+    "CURRENCY_SELL" => "trade",
+    "DELIVERY" => "settlement",
+    "FEE_REFUND" => "rebate",
+    "INTEREST" => "interest",
+    "LIQUIDATION" => "liquidation",
+    "SETTLEMENT" => "settlement",
+    "TRADE" => "trade",
+    "TRANSFER_IN" => "transfer",
+    "TRANSFER_OUT" => "transfer"
+  }
+
+  @hyperliquid_registered_events %{
+    "accountClassTransfer" => "transfer",
+    "deposit" => "deposit",
+    "internalTransfer" => "transfer",
+    "subAccountTransfer" => "transfer",
+    "vaultDeposit" => "deposit",
+    "vaultWithdraw" => "withdrawal",
+    "withdraw" => "withdrawal"
+  }
+
   @okx_account_types MapSet.new(~w(
       1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 20 22 24 26 27 28 29 30 32 33
       34 35 37 38 250 251
@@ -93,7 +116,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       ],
       derivation: "22 enumerated USD-M IncomeType literals",
       values: @binance_usdm_types,
-      venue_specific: MapSet.new()
+      venue_specific: %{}
     },
     %{
       venue: "binance",
@@ -106,7 +129,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       ],
       derivation: "0 enumerated literals; the provider contract defines type as a free String",
       values: MapSet.new(),
-      venue_specific: MapSet.new()
+      venue_specific: %{}
     },
     %{
       venue: "binancecoinm",
@@ -119,7 +142,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       ],
       derivation: "7 enumerated COIN-M IncomeType literals",
       values: @binance_coinm_types,
-      venue_specific: MapSet.new()
+      venue_specific: %{}
     },
     %{
       venue: "binanceusdm",
@@ -132,7 +155,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       ],
       derivation: "22 enumerated USD-M IncomeType literals",
       values: @binance_usdm_types,
-      venue_specific: MapSet.new()
+      venue_specific: %{}
     },
     %{
       venue: "binanceusdm",
@@ -145,7 +168,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       ],
       derivation: "0 enumerated literals; the provider contract defines type as a free String",
       values: MapSet.new(),
-      venue_specific: MapSet.new()
+      venue_specific: %{}
     },
     %{
       venue: "bybit",
@@ -159,7 +182,10 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       ],
       derivation: "101 unique literals from the UTA and contract transaction-log union",
       values: @bybit_types,
-      venue_specific: MapSet.new(~w(Prize transaction))
+      registered_events: @bybit_registered_events,
+      venue_specific: %{"BONUS" => "bonus"},
+      venue_specific_format: :snake_case,
+      venue_specific_source: :raw_literal
     },
     %{
       venue: "hyperliquid",
@@ -172,7 +198,8 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       ],
       derivation: "14 literals in the WsLedgerUpdate union after expanding WsVaultDelta",
       values: @hyperliquid_types,
-      venue_specific: MapSet.new(~w(withdraw))
+      registered_events: @hyperliquid_registered_events,
+      venue_specific: %{}
     },
     %{
       venue: "okx",
@@ -185,10 +212,20 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       ],
       derivation: "32 top-level type values returned by the Get bills types operation",
       values: @okx_account_types,
-      venue_specific: MapSet.new(~w(
-          adl overloss_recovery ddh quick_margin borrowing one_click_repay move_position
-          loans corporate_action usdg_rewards profit_share_payment profit_share_refund
-        )),
+      venue_specific: %{
+        "9" => "adl",
+        "10" => "overloss_recovery",
+        "13" => "ddh",
+        "15" => "quick_margin",
+        "16" => "borrowing",
+        "29" => "one_click_repay",
+        "32" => "move_position",
+        "33" => "loans",
+        "37" => "corporate_action",
+        "38" => "usdg_rewards",
+        "250" => "profit_share_payment",
+        "251" => "profit_share_refund"
+      },
       venue_specific_format: :snake_case
     },
     %{
@@ -202,7 +239,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       ],
       derivation: "147 unique type values in the funding-account Asset bills details table",
       values: @okx_asset_types,
-      venue_specific: MapSet.new()
+      venue_specific: %{}
     }
   ]
 
@@ -316,17 +353,22 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
 
   test "every mapped ledger label is registered or explicitly venue-specific" do
     for entry <- @documented_ledger_types do
+      rule = entry.venue |> Bourse.Spec.load!() |> get_in(entry.path)
+      enum_map = Map.get(rule, "enum_map", %{})
+
       mapped_values =
-        entry.venue
-        |> Bourse.Spec.load!()
-        |> get_in(entry.path)
-        |> Map.get("enum_map", %{})
+        enum_map
         |> Map.values()
         |> MapSet.new()
 
-      permitted_values = MapSet.union(@registered_ledger_types, entry.venue_specific)
+      venue_specific = entry.venue_specific
+      venue_specific_values = venue_specific |> Map.values() |> MapSet.new()
+      registered_events = entry[:registered_events] || %{}
+      registered_raw_values = registered_events |> Map.keys() |> MapSet.new()
+      venue_specific_raw_values = venue_specific |> Map.keys() |> MapSet.new()
+      permitted_values = MapSet.union(@registered_ledger_types, venue_specific_values)
       unregistered = MapSet.difference(mapped_values, permitted_values)
-      unused_declarations = MapSet.difference(entry.venue_specific, mapped_values)
+      unused_declarations = MapSet.difference(venue_specific_values, mapped_values)
 
       assert unregistered == MapSet.new(),
              "#{entry.venue}/#{entry.scope}: unregistered mapped labels #{inspect(MapSet.to_list(unregistered))}"
@@ -335,10 +377,31 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
              "#{entry.venue}/#{entry.scope}: unused venue-specific labels " <>
                inspect(MapSet.to_list(unused_declarations))
 
-      assert MapSet.disjoint?(@registered_ledger_types, entry.venue_specific)
+      assert MapSet.disjoint?(@registered_ledger_types, venue_specific_values)
 
-      if entry[:venue_specific_format] == :snake_case do
-        assert Enum.all?(entry.venue_specific, &Regex.match?(~r/^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/, &1))
+      assert MapSet.disjoint?(registered_raw_values, venue_specific_raw_values),
+             "#{entry.venue}/#{entry.scope}: registered events cannot be declared venue-specific"
+
+      assert Map.take(enum_map, Map.keys(venue_specific)) == venue_specific
+
+      for {raw, registered} <- registered_events do
+        emitted = Map.get(enum_map, raw, if(rule["enum_passthrough"], do: raw))
+
+        assert emitted == registered,
+               "#{entry.venue}/#{entry.scope}: registered event #{inspect(raw)} emits " <>
+                 "#{inspect(emitted)} instead of #{inspect(registered)}"
+      end
+
+      if map_size(venue_specific) > 0 do
+        assert entry[:venue_specific_format] == :snake_case
+
+        assert Enum.all?(venue_specific_values, &Regex.match?(~r/^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/, &1))
+      end
+
+      if entry[:venue_specific_source] == :raw_literal do
+        for {raw, label} <- venue_specific do
+          assert label == snake_case(raw)
+        end
       end
     end
   end
@@ -359,6 +422,8 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     assert moduledoc =~ "always retained in `info`"
     assert descripex_doc =~ "venue-faithful snake_case"
     assert descripex_doc =~ "always retained in info"
+    refute moduledoc =~ "not yet reconciled"
+    refute descripex_doc =~ "not yet reconciled"
   end
 
   test "the registry scopes every authored ledger type rule and every routed endpoint" do
@@ -407,7 +472,9 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     # snake_case — the carve register claims faithfulness, so derive it rather than trust it.
     recorded_descriptions = Map.new(rows, &{&1["type"], &1["typeDesc"]})
 
-    for {type, label} <- enum_map, MapSet.member?(registry.venue_specific, label) do
+    for {type, label} <- registry.venue_specific do
+      assert enum_map[type] == label
+
       assert label == snake_case(Map.fetch!(recorded_descriptions, type)),
              "okx bill type #{type}: venue-specific label #{inspect(label)} is not the snake_case " <>
                "rendering of the recorded typeDesc #{inspect(Map.fetch!(recorded_descriptions, type))}"
@@ -449,6 +516,23 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
 
     assert {:ok, %Bourse.LedgerEntry{type: "fee"}} =
              Bourse.Binanceusdm.parse_ledger_entry(%{"incomeType" => "OPTIONS_PREMIUM_FEE"}, route: "income")
+
+    for {raw, registered} <- @bybit_registered_events do
+      assert {:ok, %Bourse.LedgerEntry{type: ^registered}} =
+               Bourse.Bybit.parse_ledger_entry(%{"type" => raw})
+    end
+
+    assert {:ok, %Bourse.LedgerEntry{type: "bonus"}} =
+             Bourse.Bybit.parse_ledger_entry(%{"type" => "BONUS"})
+
+    for {raw, registered} <- @hyperliquid_registered_events do
+      assert {:ok, %Bourse.LedgerEntry{type: ^registered}} =
+               Bourse.Hyperliquid.parse_ledger_entry(%{"delta" => %{"type" => raw}})
+    end
+
+    refute "Prize" in ledger_enum_values()
+    refute "transaction" in ledger_enum_values()
+    refute "withdraw" in ledger_enum_values()
   end
 
   test "OKX asset bills normalize their documented deposit, withdrawal, and transfer arms" do
@@ -600,6 +684,16 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     end)
     |> Enum.reject(&is_nil/1)
     |> MapSet.new()
+  end
+
+  defp ledger_enum_values do
+    Enum.flat_map(@documented_ledger_types, fn entry ->
+      entry.venue
+      |> Bourse.Spec.load!()
+      |> get_in(entry.path)
+      |> Map.get("enum_map", %{})
+      |> Map.values()
+    end)
   end
 
   defp nested_maps(map) when is_map(map), do: [map | Enum.flat_map(Map.values(map), &nested_maps/1)]

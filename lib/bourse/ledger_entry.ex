@@ -13,7 +13,7 @@ defmodule Bourse.LedgerEntry do
     * `account` - Account identifier
     * `reference_id` - Related transaction/order ID
     * `reference_account` - Related account
-    * `type` - Entry type. Mapped vocabularies use one of two classes: registered unified values (`trade`, `fee`, `deposit`, `withdrawal`, `transfer`, `funding_fee`, `realized_pnl`, `liquidation`, `settlement`, `interest`, `rebate`, `commission`, `cashback`, `referral`, `conversion`), or a venue-faithful snake_case label when the event is outside that registry. Bybit's and hyperliquid's mapped labels predate the registry and are not yet reconciled onto it (e.g. bybit `LIQUIDATION` currently emits `trade`). Scopes with enum passthrough (base maps and routed maps alike) emit the provider's raw literal for any type outside their mapped set. The venue's literal is always retained in `info`.
+    * `type` - Entry type. Mapped vocabularies use one of two classes: registered unified values (`trade`, `fee`, `deposit`, `withdrawal`, `transfer`, `funding_fee`, `realized_pnl`, `liquidation`, `settlement`, `interest`, `rebate`, `commission`, `cashback`, `referral`, `conversion`), or a venue-faithful snake_case label when the event is outside that registry. Scopes with enum passthrough (base maps and routed maps alike) emit the provider's raw literal for any type outside their mapped set. The venue's literal is always retained in `info`.
     * `currency` - Currency code
     * `amount` - Entry amount
     * `before` - Balance before this entry
@@ -89,7 +89,7 @@ defmodule Bourse.LedgerEntry do
                    reference_id: "Related transaction/order ID",
                    reference_account: "Related account",
                    type:
-                     "Entry type. Mapped vocabularies use registered unified values (trade, fee, deposit, withdrawal, transfer, funding_fee, realized_pnl, liquidation, settlement, interest, rebate, commission, cashback, referral, conversion) or a venue-faithful snake_case label for events outside the registry. Bybit's and hyperliquid's mapped labels predate the registry and are not yet reconciled onto it. Scopes with enum passthrough (base maps and routed maps alike) emit the provider's raw literal for any type outside their mapped set; the venue literal is always retained in info.",
+                     "Entry type. Mapped vocabularies use registered unified values (trade, fee, deposit, withdrawal, transfer, funding_fee, realized_pnl, liquidation, settlement, interest, rebate, commission, cashback, referral, conversion) or a venue-faithful snake_case label for events outside the registry. Scopes with enum passthrough (base maps and routed maps alike) emit the provider's raw literal for any type outside their mapped set; the venue literal is always retained in info.",
                    currency: "Currency code",
                    amount: "Entry amount",
                    before: "Balance before this entry",

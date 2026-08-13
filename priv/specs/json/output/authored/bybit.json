@@ -16748,17 +16748,17 @@
           "type": {
           "coercion": "safeString",
           "enum_map": {
-            "BONUS": "Prize",
+            "BONUS": "bonus",
             "CURRENCY_BUY": "trade",
             "CURRENCY_SELL": "trade",
-            "DELIVERY": "trade",
-            "FEE_REFUND": "cashback",
-            "INTEREST": "transaction",
-            "LIQUIDATION": "trade",
-            "SETTLEMENT": "trade",
+            "DELIVERY": "settlement",
+            "FEE_REFUND": "rebate",
+            "INTEREST": "interest",
+            "LIQUIDATION": "liquidation",
+            "SETTLEMENT": "settlement",
             "TRADE": "trade",
-            "TRANSFER_IN": "transaction",
-            "TRANSFER_OUT": "transaction"
+            "TRANSFER_IN": "transfer",
+            "TRANSFER_OUT": "transfer"
           },
           "enum_passthrough": true,
           "format": null,
