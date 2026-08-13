@@ -534,7 +534,25 @@ defmodule Bourse.UnifiedReadContractTest do
       assert entry.amount == -0.03079999
       assert entry.currency == "USDT"
       assert entry.direction == "out"
-      assert entry.type == "trade"
+      assert entry.type == "realized_pnl"
+      assert entry.info["incomeType"] == "REALIZED_PNL"
+
+      funding_raw = %{raw | "incomeType" => "FUNDING_FEE"}
+
+      assert {:ok, [%Bourse.LedgerEntry{} = funding_entry]} =
+               ReadParse.parse(
+                 Exchange.new!("binanceusdm"),
+                 Bourse.Binanceusdm,
+                 :fetch_ledger,
+                 "fetchLedger",
+                 [funding_raw],
+                 %{"_bourse_endpoint_route" => "income"},
+                 :parse_ledger_entry,
+                 true
+               )
+
+      assert funding_entry.type == "funding_fee"
+      assert funding_entry.info["incomeType"] == "FUNDING_FEE"
     end
 
     test "Binance USD-M funding interval preserves fundingIntervalHours" do

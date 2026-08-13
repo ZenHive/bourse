@@ -13,7 +13,7 @@ defmodule Bourse.LedgerEntry do
     * `account` - Account identifier
     * `reference_id` - Related transaction/order ID
     * `reference_account` - Related account
-    * `type` - Entry type: a normalized value where the routed vocabulary is mapped; open vocabularies (Bybit, Hyperliquid, OKX, and Binance options bills) preserve provider literals without a mapped alias
+    * `type` - Entry type. Mapped vocabularies use one of two classes: registered unified values (`trade`, `fee`, `deposit`, `withdrawal`, `transfer`, `funding_fee`, `realized_pnl`, `liquidation`, `settlement`, `interest`, `rebate`, `commission`, `cashback`, `referral`, `conversion`), or a venue-faithful snake_case label when the event is outside that registry. Open routed vocabularies preserve provider literals. The venue's literal is always retained in `info`.
     * `currency` - Currency code
     * `amount` - Entry amount
     * `before` - Balance before this entry
@@ -89,7 +89,7 @@ defmodule Bourse.LedgerEntry do
                    reference_id: "Related transaction/order ID",
                    reference_account: "Related account",
                    type:
-                     "Entry type: normalized where mapped; open routed vocabularies preserve provider literals without an alias",
+                     "Entry type. Mapped vocabularies use registered unified values (trade, fee, deposit, withdrawal, transfer, funding_fee, realized_pnl, liquidation, settlement, interest, rebate, commission, cashback, referral, conversion) or a venue-faithful snake_case label for events outside the registry. Open routed vocabularies preserve provider literals; the venue literal is always retained in info.",
                    currency: "Currency code",
                    amount: "Entry amount",
                    before: "Balance before this entry",

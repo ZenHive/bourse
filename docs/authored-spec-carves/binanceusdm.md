@@ -6,6 +6,25 @@ Append-only schema confrontations for Binance USD-M. Follow the allocation and e
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance USD-M carve record.
 
+## 2026-08-13 — registered ledger type taxonomy (Task 605)
+
+**C-T605b — USD-M income rows use cross-venue economic-event classes (task 605).
+Outcome: CONFIRM provider event identities; DIVERGE from the earlier flattened labels.** The
+official Binance Java connector's
+[USD-M `IncomeType` table](https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-usds-futures/docs/IncomeType.md)
+enumerates the 22 literals accepted by
+the authored income rule. `FUNDING_FEE` maps to registered `funding_fee`, `REALIZED_PNL` to
+`realized_pnl`, and `AUTO_EXCHANGE` to `conversion`. `OPTIONS_PREMIUM_FEE` and
+`POSITION_LIMIT_INCREASE_FEE` remain registered `fee`; the funding cashflow therefore cannot be
+silently selected as a trading fee. The other provider literals retain the registered classes
+documented in C-T605a: deposit, withdrawal, transfer, settlement, rebate, commission, cashback,
+and referral. No enum value is venue-specific. The raw `incomeType` remains in
+`LedgerEntry.info`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T605b","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"Binance official Java SDK a13868d0 USD-M IncomeType table"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binanceusdm/fetch_ledger.json","fixture":"test/fixtures/responses/binanceusdm/fetch_ledger.json"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The recording carries COMMISSION and REALIZED_PNL; the remaining provider-enumerated classes are documentation-anchored"}
+-->
+
 ## 2026-08-10 — flat-symbol configured leverage (Task 586)
 
 **C-T586c — USD-M `symbolConfig` is the configured-leverage read for flat symbols (task 586).

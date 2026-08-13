@@ -4,6 +4,11 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
 
   @ledger_type_path ~w(normalization field_maps ledger_entry field_map type)
 
+  @registered_ledger_types MapSet.new(~w(
+      trade fee deposit withdrawal transfer funding_fee realized_pnl liquidation settlement
+      interest rebate commission cashback referral conversion
+    ))
+
   @binance_usdm_types MapSet.new(~w(
       API_REBATE AUTO_EXCHANGE BFUSD_REWARD COIN_SWAP_DEPOSIT COIN_SWAP_WITHDRAW
       COMMISSION COMMISSION_REBATE CONTEST_REWARD CROSS_COLLATERAL_TRANSFER
@@ -87,7 +92,8 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
         "https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-usds-futures/docs/IncomeType.md"
       ],
       derivation: "22 enumerated USD-M IncomeType literals",
-      values: @binance_usdm_types
+      values: @binance_usdm_types,
+      venue_specific: MapSet.new()
     },
     %{
       venue: "binance",
@@ -99,7 +105,8 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
         "https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-options/docs/AccountFundingFlowResponseInner.md"
       ],
       derivation: "0 enumerated literals; the provider contract defines type as a free String",
-      values: MapSet.new()
+      values: MapSet.new(),
+      venue_specific: MapSet.new()
     },
     %{
       venue: "binancecoinm",
@@ -111,7 +118,8 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
         "https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-coin-futures/docs/IncomeType.md"
       ],
       derivation: "7 enumerated COIN-M IncomeType literals",
-      values: @binance_coinm_types
+      values: @binance_coinm_types,
+      venue_specific: MapSet.new()
     },
     %{
       venue: "binanceusdm",
@@ -123,7 +131,8 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
         "https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-usds-futures/docs/IncomeType.md"
       ],
       derivation: "22 enumerated USD-M IncomeType literals",
-      values: @binance_usdm_types
+      values: @binance_usdm_types,
+      venue_specific: MapSet.new()
     },
     %{
       venue: "binanceusdm",
@@ -135,7 +144,8 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
         "https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-options/docs/AccountFundingFlowResponseInner.md"
       ],
       derivation: "0 enumerated literals; the provider contract defines type as a free String",
-      values: MapSet.new()
+      values: MapSet.new(),
+      venue_specific: MapSet.new()
     },
     %{
       venue: "bybit",
@@ -148,7 +158,8 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
         "https://github.com/bybit-exchange/docs/blob/5ccd30109fe2eb5a39cf4d864365213658530f6c/docs/v5/enum.mdx#typecontract-translog"
       ],
       derivation: "101 unique literals from the UTA and contract transaction-log union",
-      values: @bybit_types
+      values: @bybit_types,
+      venue_specific: MapSet.new(~w(Prize transaction))
     },
     %{
       venue: "hyperliquid",
@@ -160,7 +171,8 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
         "https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/websocket/subscriptions#wsusernonfundingledgerupdates"
       ],
       derivation: "14 literals in the WsLedgerUpdate union after expanding WsVaultDelta",
-      values: @hyperliquid_types
+      values: @hyperliquid_types,
+      venue_specific: MapSet.new(~w(withdraw))
     },
     %{
       venue: "okx",
@@ -172,7 +184,12 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
         "https://www.okx.com/api/v5/account/subtypes"
       ],
       derivation: "32 top-level type values returned by the Get bills types operation",
-      values: @okx_account_types
+      values: @okx_account_types,
+      venue_specific: MapSet.new(~w(
+          adl overloss_recovery ddh quick_margin borrowing one_click_repayment move_position
+          loans corporate_action usdg_rewards profit_share_payment profit_share_refund
+        )),
+      venue_specific_format: :snake_case
     },
     %{
       venue: "okx",
@@ -184,7 +201,8 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
         "https://www.okx.com/docs-v5/en/#funding-account-rest-api-asset-bills-details"
       ],
       derivation: "147 unique type values in the funding-account Asset bills details table",
-      values: @okx_asset_types
+      values: @okx_asset_types,
+      venue_specific: MapSet.new()
     }
   ]
 
@@ -229,20 +247,62 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
 
   @surfaced_binance_mappings %{
     "binance" => %{
-      "AUTO_EXCHANGE" => "trade",
+      "AUTO_EXCHANGE" => "conversion",
       "BFUSD_REWARD" => "cashback",
       "FEE_RETURN" => "rebate",
+      "FUNDING_FEE" => "funding_fee",
       "INSURANCE_CLEAR" => "settlement",
+      "OPTIONS_PREMIUM_FEE" => "fee",
+      "REALIZED_PNL" => "realized_pnl",
       "STRATEGY_UMFUTURES_TRANSFER" => "transfer"
     },
-    "binancecoinm" => %{"INSURANCE_CLEAR" => "settlement"},
+    "binancecoinm" => %{
+      "FUNDING_FEE" => "funding_fee",
+      "INSURANCE_CLEAR" => "settlement",
+      "REALIZED_PNL" => "realized_pnl"
+    },
     "binanceusdm" => %{
-      "AUTO_EXCHANGE" => "trade",
+      "AUTO_EXCHANGE" => "conversion",
       "BFUSD_REWARD" => "cashback",
       "FEE_RETURN" => "rebate",
+      "FUNDING_FEE" => "funding_fee",
       "INSURANCE_CLEAR" => "settlement",
+      "OPTIONS_PREMIUM_FEE" => "fee",
+      "REALIZED_PNL" => "realized_pnl",
       "STRATEGY_UMFUTURES_TRANSFER" => "transfer"
     }
+  }
+
+  @okx_account_mappings %{
+    "1" => "transfer",
+    "2" => "trade",
+    "3" => "settlement",
+    "4" => "conversion",
+    "5" => "liquidation",
+    "6" => "transfer",
+    "7" => "interest",
+    "8" => "funding_fee",
+    "9" => "adl",
+    "10" => "overloss_recovery",
+    "11" => "conversion",
+    "12" => "transfer",
+    "13" => "ddh",
+    "14" => "trade",
+    "15" => "quick_margin",
+    "16" => "borrowing",
+    "20" => "conversion",
+    "27" => "conversion",
+    "28" => "conversion",
+    "29" => "one_click_repayment",
+    "30" => "trade",
+    "32" => "move_position",
+    "33" => "loans",
+    "34" => "settlement",
+    "35" => "transfer",
+    "37" => "corporate_action",
+    "38" => "usdg_rewards",
+    "250" => "profit_share_payment",
+    "251" => "profit_share_refund"
   }
 
   @okx_asset_mappings %{
@@ -286,6 +346,51 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     end
   end
 
+  test "every mapped ledger label is registered or explicitly venue-specific" do
+    for entry <- @documented_ledger_types do
+      mapped_values =
+        entry.venue
+        |> Bourse.Spec.load!()
+        |> get_in(entry.path)
+        |> Map.get("enum_map", %{})
+        |> Map.values()
+        |> MapSet.new()
+
+      permitted_values = MapSet.union(@registered_ledger_types, entry.venue_specific)
+      unregistered = MapSet.difference(mapped_values, permitted_values)
+      unused_declarations = MapSet.difference(entry.venue_specific, mapped_values)
+
+      assert unregistered == MapSet.new(),
+             "#{entry.venue}/#{entry.scope}: unregistered mapped labels #{inspect(MapSet.to_list(unregistered))}"
+
+      assert unused_declarations == MapSet.new(),
+             "#{entry.venue}/#{entry.scope}: unused venue-specific labels " <>
+               inspect(MapSet.to_list(unused_declarations))
+
+      assert MapSet.disjoint?(@registered_ledger_types, entry.venue_specific)
+
+      if entry[:venue_specific_format] == :snake_case do
+        assert Enum.all?(entry.venue_specific, &Regex.match?(~r/^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/, &1))
+      end
+    end
+  end
+
+  test "LedgerEntry and Descripex enumerate the two-class ledger type contract" do
+    {:docs_v1, _, _, _, %{"en" => moduledoc}, _, _} = Code.fetch_docs(Bourse.LedgerEntry)
+    descripex_doc = Bourse.__api__(:fetch_ledger).hints.description
+
+    for type <- @registered_ledger_types do
+      assert moduledoc =~ "`#{type}`"
+      assert descripex_doc =~ type
+    end
+
+    assert moduledoc =~ "one of two classes"
+    assert moduledoc =~ "venue-faithful snake_case"
+    assert moduledoc =~ "always retained in `info`"
+    assert descripex_doc =~ "venue-faithful snake_case"
+    assert descripex_doc =~ "always retained in info"
+  end
+
   test "the registry scopes every authored ledger type rule and every routed endpoint" do
     registered_rules = MapSet.new(@documented_ledger_types, &{&1.venue, &1.path})
 
@@ -326,6 +431,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     assert fixture["endpoint"] == "api/v5/account/subtypes"
     assert recorded_types == registry.values
     assert MapSet.new(Map.keys(enum_map)) == named_types
+    assert enum_map == @okx_account_mappings
     refute Enum.any?(enum_map, fn {raw, normalized} -> raw == normalized end)
   end
 
@@ -343,6 +449,20 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       assert direction_rule["positive"] == "in"
       assert direction_rule["zero"] == nil
     end
+  end
+
+  test "shared economic events emit the registered value" do
+    assert {:ok, %Bourse.LedgerEntry{type: "funding_fee"}} =
+             Bourse.Binanceusdm.parse_ledger_entry(%{"incomeType" => "FUNDING_FEE"}, route: "income")
+
+    assert {:ok, %Bourse.LedgerEntry{type: "funding_fee"}} =
+             Bourse.Okx.parse_ledger_entry(%{"type" => "8"}, route: "account/bills")
+
+    assert {:ok, %Bourse.LedgerEntry{type: "realized_pnl"}} =
+             Bourse.Binancecoinm.parse_ledger_entry(%{"incomeType" => "REALIZED_PNL"})
+
+    assert {:ok, %Bourse.LedgerEntry{type: "fee"}} =
+             Bourse.Binanceusdm.parse_ledger_entry(%{"incomeType" => "OPTIONS_PREMIUM_FEE"}, route: "income")
   end
 
   test "OKX asset bills normalize their documented deposit, withdrawal, and transfer arms" do
@@ -383,7 +503,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     assert {:ok, [%Bourse.LedgerEntry{} = income | _]} =
              Bourse.Binance.parse_ledger_entry(fixture["body"], route: "income")
 
-    assert income.type == "fee"
+    assert income.type == "funding_fee"
     assert income.amount == -0.01286054
     assert income.currency == "USDT"
     assert income.direction == "out"

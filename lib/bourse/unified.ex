@@ -117,7 +117,8 @@ defmodule Bourse.Unified do
     transfer: "Transfer funds between exchange accounts (e.g., spot to futures).",
     fetch_trading_fee: "Fetch the trading fee for a specific symbol.",
     fetch_trading_fees: "Fetch trading fees for all symbols.",
-    fetch_ledger: "Fetch the account ledger (transaction history).",
+    fetch_ledger:
+      "Fetch the account ledger. Entry types use registered unified values (trade, fee, deposit, withdrawal, transfer, funding_fee, realized_pnl, liquidation, settlement, interest, rebate, commission, cashback, referral, conversion) or a venue-faithful snake_case label for mapped events outside the registry. Open routed vocabularies preserve provider literals; the venue literal is always retained in info.",
     close_position: "Close a derivative position for a symbol.",
     fetch_open_interest: "Fetch open interest for a perpetual or futures symbol.",
     fetch_leverage: "Fetch current leverage setting for a symbol.",

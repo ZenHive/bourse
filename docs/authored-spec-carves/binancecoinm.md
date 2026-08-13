@@ -7,6 +7,22 @@ Append-only schema confrontations for Binance COIN-M. Follow the allocation and 
 venue-specific decision in the self-contained runtime document. Provider-owned evidence is
 indexed by `priv/authority/binancecoinm/manifest.json`.
 
+## 2026-08-13 — registered ledger type taxonomy (Task 605)
+
+**C-T605c — COIN-M income rows use cross-venue economic-event classes (task 605).
+Outcome: CONFIRM provider event identities; DIVERGE from the earlier flattened labels.** Binance's
+provider-owned
+[COIN-M `IncomeType` table](https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-coin-futures/docs/IncomeType.md)
+maps `TRANSFER` to `transfer`, `WELCOME_BONUS` to
+`cashback`, `FUNDING_FEE` to `funding_fee`, `REALIZED_PNL` to `realized_pnl`, `COMMISSION` to
+`commission`, and both `INSURANCE_CLEAR` and `DELIVERED_SETTELMENT` to `settlement`. This
+supersedes only C-T592a's funding and realized-PnL labels; no COIN-M value is venue-specific. The
+raw `incomeType` remains in `LedgerEntry.info`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T605c","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"Binance official Java SDK a13868d0 COIN-M IncomeType table and Get Income History contract"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The demo account returned an empty COIN-M income history; classifications are pinned to the provider-owned seven-value table"}
+-->
+
 ## 2026-08-11 — order history and account analytics (Task 545)
 
 **C-T545a — full DAPI order history is the source for direct, filled, and canceled order reads

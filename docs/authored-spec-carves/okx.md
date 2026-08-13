@@ -6,6 +6,36 @@ Append-only schema confrontations for OKX. Follow the allocation and evidence ru
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete OKX carve record.
 
+## 2026-08-13 — registered ledger type taxonomy (Task 605)
+
+**C-T605d — Trading-account bills use cross-venue economic-event classes, with an explicit
+venue-specific remainder (task 605). Outcome: CONFIRM the recorded OKX event table; DIVERGE from
+venue labels where the unified class is coarser.** The
+[manifest-registered `GET /api/v5/account/subtypes` response](../../test/fixtures/responses/okx/account_subtypes.json)
+supplies the provider's current `typeDesc` table. Every
+named type is classified below; blank provider types `22`, `24`, and `26` remain numeric through
+the existing passthrough rule.
+
+| Unified result | OKX types and provider descriptions |
+|---|---|
+| `transfer` | `1` Transfer, `6` Margin transfer, `12` Strategy transfer, `35` Options market (its subtypes are asset transfers) |
+| `trade` | `2` Trade, `14` Block trade, `30` Simple trade |
+| `settlement` | `3` Delivery, `34` Settlement |
+| `conversion` | `4` Auto token conversion, `11` System crypto conversion, `20` Token conversion, `27` Convert, `28` Easy convert |
+| `liquidation` | `5` Forced liquidation |
+| `interest` | `7` Interest |
+| `funding_fee` | `8` Funding rate (subtypes: funding fee expense/income) |
+| venue-specific | `9` `adl`, `10` `overloss_recovery`, `13` `ddh`, `15` `quick_margin`, `16` `borrowing`, `29` `one_click_repayment`, `32` `move_position`, `33` `loans`, `37` `corporate_action`, `38` `usdg_rewards`, `250` `profit_share_payment`, `251` `profit_share_refund` |
+
+The venue-specific labels are faithful snake_case renderings because those events have no
+registered cross-venue class. This supersedes C-T598c's label choices for every row above;
+the provider's numeric `type`, `typeDesc`, and subtype detail remain recoverable in
+`LedgerEntry.info`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T605d","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 Get bills types table returned by GET /api/v5/account/subtypes"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/okx/account_subtypes.json","fixture":"test/fixtures/responses/okx/account_subtypes.json"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-10 — current funding-rate cadence (Task 573)
 
 **C-T573d — Funding cadence is the provider's adjacent funding-time delta (task 573).

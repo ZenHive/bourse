@@ -11643,9 +11643,9 @@
             "enum_map": {
             "COMMISSION": "commission",
             "DELIVERED_SETTELMENT": "settlement",
-            "FUNDING_FEE": "fee",
+            "FUNDING_FEE": "funding_fee",
             "INSURANCE_CLEAR": "settlement",
-            "REALIZED_PNL": "trade",
+            "REALIZED_PNL": "realized_pnl",
             "TRANSFER": "transfer",
             "WELCOME_BONUS": "cashback"
             },

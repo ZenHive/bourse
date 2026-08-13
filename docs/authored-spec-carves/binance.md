@@ -6,6 +6,39 @@ Append-only schema confrontations for Binance spot. Follow the allocation and ev
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance spot carve record.
 
+## 2026-08-13 — registered ledger type taxonomy (Task 605)
+
+**C-T605a — Futures income rows use cross-venue economic-event classes (task 605).
+Outcome: CONFIRM provider event identities; DIVERGE from the earlier flattened labels.** The
+official Binance Java connector's
+[USD-M `IncomeType` table](https://github.com/binance/binance-connector-java/blob/a13868d0e49ee7f3bcc3f3aaed5ca9de8d8e0b35/clients/derivatives-trading-usds-futures/docs/IncomeType.md)
+is the provider-owned enumeration for
+the generic client's `income`, `um/income`, and `cm/income` routes. The registered mapping is:
+
+| Registered type | Provider literals |
+|---|---|
+| `deposit` | `COIN_SWAP_DEPOSIT` |
+| `withdrawal` | `COIN_SWAP_WITHDRAW` |
+| `transfer` | `CROSS_COLLATERAL_TRANSFER`, `INTERNAL_TRANSFER`, `STRATEGY_UMFUTURES_TRANSFER`, `TRANSFER` |
+| `funding_fee` | `FUNDING_FEE` |
+| `realized_pnl` | `REALIZED_PNL` |
+| `settlement` | `DELIVERED_SETTELMENT`, `INSURANCE_CLEAR`, `OPTIONS_SETTLE_PROFIT` |
+| `fee` | `OPTIONS_PREMIUM_FEE`, `POSITION_LIMIT_INCREASE_FEE` |
+| `rebate` | `API_REBATE`, `COMMISSION_REBATE`, `FEE_RETURN` |
+| `commission` | `COMMISSION` |
+| `cashback` | `BFUSD_REWARD`, `CONTEST_REWARD`, `WELCOME_BONUS` |
+| `referral` | `REFERRAL_KICKBACK` |
+| `conversion` | `AUTO_EXCHANGE` |
+
+This supersedes only C-T592c's unified-label judgments: `FUNDING_FEE` no longer shares `fee`
+with options premium or position-limit charges, `REALIZED_PNL` is no longer flattened to
+`trade`, and `AUTO_EXCHANGE` is a conversion rather than an order fill. The raw `incomeType`
+remains in `LedgerEntry.info`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T605a","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"Binance official Java SDK a13868d0 USD-M IncomeType table"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binance/fetch_funding_history.json from demo-fapi.binance.com fapi/v1/income","fixture":"test/fixtures/responses/binance/fetch_funding_history.json"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The recording carries FUNDING_FEE; the remaining provider-enumerated classes are documentation-anchored"}
+-->
+
 ## 2026-08-10 — write-path profile separation and conditional-leg boundary (Task 578)
 
 **C-T578a — Spot order controls pass through unchanged, and one futures Algo order carries one
