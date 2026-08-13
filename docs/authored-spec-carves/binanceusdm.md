@@ -558,9 +558,20 @@ Outcome: CONFIRM funding and option-IV fractions.**
 Outcome: DIVERGE from the prior unscaled EAPI percentage.**
 
 <!-- rate-unit path="normalization.field_maps.option.field_map.percentage" unit="percent_points" source-unit="fraction" --> EAPI `priceChangePercent` is a decimal ratio and `scale: 100` emits public percent points. [Option 24hr ticker](https://developers.binance.com/docs/derivatives/option/market-data/24hr-Ticker-Price-Change-Statistics)
-<!-- rate-unit path="normalization.field_maps.ticker.field_map.percentage" unit="percent_points" source-unit="fraction" --> The option discriminator scales only EAPI rows; USD-M ticker rows remain provider percent points. [USD-M 24hr ticker](https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/24hr-Ticker-Price-Change-Statistics)
+<!-- rate-unit path="normalization.field_maps.ticker.field_map.percentage" unit="percent_points" source-unit="fraction" --> The eapi ticker route (`eapiPublic/ticker`) scales only EAPI rows; USD-M ticker rows remain provider percent points. [USD-M 24hr ticker](https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/24hr-Ticker-Price-Change-Statistics)
 <!-- rate-unit path="normalization.field_maps.position.field_map.percentage" unit="percent_points" source-unit="fraction" --> The position quotient is a fraction before `scale: 100`. [Position information](https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V3)
 
 <!-- carve-evidence-status
 {"carve_id":"C-T603d","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance EAPI and USD-M ticker contracts linked in C-T603d"},"observed_evidence":{"kind":"provider_shaped","reference":"The 2026-08-12 EAPI row pinned in binance_authored_spec_test.exs is parsed through the carried USD-M module"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The EAPI slice is carried by this complete document but is not a USD-M runtime operation"}
+-->
+
+## 2026-08-13 — list-read discriminator (Task 606)
+
+**C-T606d — the carried Binance option ticker slice uses the eapi route
+(task 606). Outcome: DIVERGE from the request-context `market.option` gate.**
+
+<!-- rate-unit path="normalization.field_maps.ticker.field_map.percentage" unit="percent_points" source-unit="fraction" --> The carried ticker map now gates the EAPI scale on `eapiPublic/ticker`, matching the binance runtime document. [Option 24hr ticker](https://developers.binance.com/docs/derivatives/option/market-data/24hr-Ticker-Price-Change-Statistics)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T606d","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"Binance EAPI ticker contract linked in C-T606d"},"observed_evidence":{"kind":"provider_shaped","reference":"The 2026-08-13 EAPI row pinned in binance_authored_spec_test.exs is parsed through the carried USD-M module"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The EAPI slice is carried by this complete document but is not a USD-M runtime operation"}
 -->

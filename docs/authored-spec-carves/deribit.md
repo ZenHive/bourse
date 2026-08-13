@@ -562,3 +562,21 @@ Outcome: DIVERGE from the same-currency claim for linear settlement.**
 <!-- carve-evidence-status
 {"carve_id":"C-T603f","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions contract and inverse example linked in C-T603f"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-12 test.deribit.com private/get_positions USDC and USDT both returned empty result lists; inverse provider example is pinned in deribit_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No populated linear testnet position was reachable to establish a provider-owned linear percentage identity"}
 -->
+
+## 2026-08-13 — list-read discriminator (Task 606)
+
+**C-T606f — Deribit inverse margin ratios are gated on the payload instrument
+(task 606). Outcome: DIVERGE from the request-context `market.inverse` gate.**
+
+<!-- rate-unit path="normalization.field_maps.position.field_map.initialMarginPercentage" unit="fraction" --> Inverse vs linear is read from `instrument_name`: linear ids put settle in the first token (`ETH_USDC-PERPETUAL`); inverse ids do not (`BTC-PERPETUAL`). `fetchPositions` is currency-scoped and never carries a request symbol, so a market-context discriminator is absent on the list path. [Positions](https://docs.deribit.com/api-reference/account-management/private-get_positions)
+<!-- rate-unit path="normalization.field_maps.position.field_map.maintenanceMarginPercentage" unit="fraction" --> The maintenance ratio uses the same payload instrument gate. [Positions](https://docs.deribit.com/api-reference/account-management/private-get_positions)
+
+- *Live evidence (2026-08-13):* testnet `private/get_positions` on an open
+  `BTC-PERPETUAL` row emitted the same-currency quotient (~0.0295). The
+  request-context `market.inverse` gate had dropped that to nil on the list
+  path. The Unified.call list-read golden pins the provider inverse example
+  `0.000197283 / 0.006687487` and a linear `ETH_USDC-PERPETUAL` nil branch.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T606f","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions instrument naming and same-currency inverse example linked in C-T606f"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-13 test.deribit.com private/get_positions BTC-PERPETUAL open inverse row emitted the same-currency quotient; Unified.call list-read goldens in deribit_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The populated inverse list-read is pinned as a parser golden; no populated linear testnet position is registered"}
+-->

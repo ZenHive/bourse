@@ -21049,14 +21049,17 @@
             "key": "openPrice"
           },
           "percentage": {
-            "discriminator": "market.option",
-            "false": {
+            "else": {
               "coercion": "safeNumber2",
               "format": null,
               "key": "priceChangePercent"
             },
-            "kind": "discriminated",
-            "true": {
+            "guard": {
+              "equals": "eapiPublic/ticker",
+              "field": "_bourse_endpoint_id"
+            },
+            "kind": "when",
+            "then": {
               "coercion": "safeNumber2",
               "format": null,
               "key": "priceChangePercent",

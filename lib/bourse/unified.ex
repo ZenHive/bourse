@@ -1903,7 +1903,21 @@ defmodule Bourse.Unified do
   end
 
   defp put_endpoint_route(params, nil), do: params
-  defp put_endpoint_route(params, config), do: Map.put(params, "_bourse_endpoint_route", config.path)
+
+  defp put_endpoint_route(params, config) do
+    params
+    |> Map.put("_bourse_endpoint_route", config.path)
+    |> put_endpoint_id(config)
+  end
+
+  # Short `config.path` is shared across families (`ticker` is both eapi and
+  # spot rolling). Compose section/path so list-read field maps can match the
+  # eapi ticker without a request-context market.
+  defp put_endpoint_id(params, %{sections: [section | _], path: path}) when is_binary(section) and is_binary(path) do
+    Map.put(params, "_bourse_endpoint_id", section <> "/" <> path)
+  end
+
+  defp put_endpoint_id(params, _config), do: params
 
   # Binance's endpoint family disambiguates compact native ids. The spot rule remains scoped to
   # `binance`; Binance USD-M has distinct fapi (linear) and dapi (inverse) families.

@@ -286,7 +286,9 @@ defmodule Bourse.Unified.ReadParse do
            |> annotate_lighter_transaction_type(exchange, parse_type, js_name)
            |> annotate_okx_payload(exchange, parse_type)
            |> annotate_derive_payload(exchange, parse_type)
-           |> annotate_hyperliquid_payload(exchange, parse_type, js_name, params),
+           |> annotate_hyperliquid_payload(exchange, parse_type, js_name, params)
+           |> annotate_deribit_payload(exchange, parse_type)
+           |> annotate_endpoint_route(params),
          parse_opts = build_parse_opts(exchange, params, payload, list_return?),
          {:ok, parsed} <- invoke_parser(module, parser, payload, parse_opts),
          parsed =
@@ -1895,6 +1897,24 @@ defmodule Bourse.Unified.ReadParse do
   defp ensure_expected_shape(payload, false) do
     {:error, {:unexpected_response_shape, payload}}
   end
+
+  # Stamp a route identity onto every row so `kind: when` guards survive
+  # list reads that have no request-context market.
+  defp annotate_endpoint_route(payload, %{"_bourse_endpoint_id" => id}) when is_binary(id) do
+    stamp_endpoint_id(payload, id)
+  end
+
+  defp annotate_endpoint_route(payload, %{"_bourse_endpoint_route" => route}) when is_binary(route) do
+    stamp_endpoint_id(payload, route)
+  end
+
+  defp annotate_endpoint_route(payload, _params), do: payload
+
+  defp stamp_endpoint_id(rows, id) when is_list(rows), do: Enum.map(rows, &stamp_endpoint_id(&1, id))
+
+  defp stamp_endpoint_id(row, id) when is_map(row), do: Map.put_new(row, "_bourse_endpoint_id", id)
+
+  defp stamp_endpoint_id(payload, _id), do: payload
 
   # Must stay a keyword list: generated parsers hand this straight to
   # `Bourse.Parser.parse/4`, which reads it with `Keyword.get/3`.
@@ -3727,6 +3747,33 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   defp merge_bybit_pagination_cursor(payload, _body, _exchange, _parse_type, _js_name), do: payload
+
+  defp annotate_deribit_payload(payload, %Exchange{id: "deribit"}, "position") do
+    case payload do
+      rows when is_list(rows) -> Enum.map(rows, &annotate_deribit_position_row/1)
+      %{} = row -> annotate_deribit_position_row(row)
+      other -> other
+    end
+  end
+
+  defp annotate_deribit_payload(payload, _exchange, _parse_type), do: payload
+
+  defp annotate_deribit_position_row(row) when is_map(row) do
+    maybe_put_synthetic(row, "_bourse_inverse", deribit_inverse_instrument?(row))
+  end
+
+  defp annotate_deribit_position_row(other), do: other
+
+  # Deribit linear ids put settle in the first token (`ETH_USDC-PERPETUAL`).
+  # Inverse ids do not (`BTC-PERPETUAL`, `BTC-31JUL26-65000-C`).
+  defp deribit_inverse_instrument?(%{"instrument_name" => name}) when is_binary(name) do
+    case String.split(name, "-", parts: 2) do
+      [head, _rest] -> not String.contains?(head, "_")
+      _ -> false
+    end
+  end
+
+  defp deribit_inverse_instrument?(_row), do: false
 
   defp deribit_market_type(%{"kind" => "spot"}), do: :spot
   defp deribit_market_type(%{"kind" => "option"}), do: :option

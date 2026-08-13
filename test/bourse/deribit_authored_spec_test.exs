@@ -25,34 +25,64 @@ defmodule Bourse.DeribitAuthoredSpecTest do
     assert greeks.ask_implied_volatility == 3.4395
   end
 
-  test "inverse position margin percentages divide same-currency amounts into fractions" do
-    raw = %{
-      "instrument_name" => "BTC-PERPETUAL",
+  test "fetch_positions list read emits inverse margin fractions and skips the linear branch" do
+    # Provider inverse example from the Positions contract; linear row uses
+    # quote-settled margin against base `size_currency` and must stay nil.
+    inverse = %{
+      "direction" => "buy",
       "initial_margin" => 0.000197283,
+      "instrument_name" => "BTC-PERPETUAL",
+      "kind" => "future",
       "maintenance_margin" => 0.000143783,
+      "size" => 40,
       "size_currency" => 0.006687487
     }
 
-    assert {:ok, %Bourse.Position{} = position} =
-             Bourse.Deribit.parse_position(raw, market: %Bourse.Market{inverse: true})
-
-    assert_in_delta position.initial_margin_percentage, 0.000197283 / 0.006687487, @ratio_tolerance
-    assert_in_delta position.maintenance_margin_percentage, 0.000143783 / 0.006687487, @ratio_tolerance
-  end
-
-  test "linear position margins do not divide quote settlement by base size" do
-    raw = %{
-      "instrument_name" => "ETH_USDC-PERPETUAL",
+    linear = %{
+      "direction" => "buy",
       "initial_margin" => 300,
+      "instrument_name" => "ETH_USDC-PERPETUAL",
+      "kind" => "future",
       "maintenance_margin" => 150,
+      "size" => 0.5,
       "size_currency" => 0.5
     }
 
-    assert {:ok,
-            %Bourse.Position{
-              initial_margin_percentage: nil,
-              maintenance_margin_percentage: nil
-            }} = Bourse.Deribit.parse_position(raw, market: %Bourse.Market{linear: true})
+    {:ok, requests} = RequestCollector.start_link()
+
+    assert {:ok, positions} =
+             Unified.call(
+               private_exchange(),
+               :fetch_positions,
+               "fetchPositions",
+               %{},
+               plug: {Req.Test, stub(requests, rpc_result([inverse, linear]))}
+             )
+
+    assert_request!(requests, "/api/v2/private/get_positions")
+
+    inverse_position = Enum.find(positions, &(&1.info["instrument_name"] == "BTC-PERPETUAL"))
+    linear_position = Enum.find(positions, &(&1.info["instrument_name"] == "ETH_USDC-PERPETUAL"))
+
+    assert %Bourse.Position{} = inverse_position
+    assert %Bourse.Position{} = linear_position
+    assert inverse_position.initial_margin_percentage
+    assert inverse_position.maintenance_margin_percentage
+    assert_in_delta inverse_position.initial_margin_percentage, 0.000197283 / 0.006687487, @ratio_tolerance
+    assert_in_delta inverse_position.maintenance_margin_percentage, 0.000143783 / 0.006687487, @ratio_tolerance
+    assert linear_position.initial_margin_percentage == nil
+    assert linear_position.maintenance_margin_percentage == nil
+  end
+
+  test "position margin percentages branch on the payload instrument, not request-context market" do
+    spec = Bourse.Spec.load!("deribit")
+
+    for field <- ["initialMarginPercentage", "maintenanceMarginPercentage"] do
+      rule = get_in(spec, ["normalization", "field_maps", "position", "field_map", field])
+      assert rule["kind"] == "when"
+      assert rule["guard"] == %{"equals" => true, "field" => "_bourse_inverse"}
+      refute Map.has_key?(rule, "discriminator")
+    end
   end
 
   test "deposit and withdrawal rows share authored transaction fields" do

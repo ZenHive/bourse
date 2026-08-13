@@ -19,32 +19,58 @@ defmodule Bourse.BinanceAuthoredSpecTest do
   @external_resource @non_usdt_tickers_fixture
   @frozen_timestamp_ms 1_700_000_000_000
   @bad_request_status 400
-  @eapi_percentage_points -20.0
+  @eapi_percentage_points 1775.0
 
-  test "EAPI ticker fractions emit percent points on option and ticker surfaces" do
-    # Live eapi/v1/ticker row observed 2026-08-12: -5 / 25 = -0.2 on the provider wire.
-    option_row = %{
-      "symbol" => "BTC-260925-120000-C",
-      "priceChange" => "-5",
-      "priceChangePercent" => "-0.2",
-      "lastPrice" => "20",
-      "open" => "25"
-    }
+  # Live eapi/v1/ticker row observed 2026-08-13: 1.42 / 0.08 = 17.75 on the
+  # provider wire. Unified percentage is percent points (fraction × 100).
+  @eapi_ticker_row %{
+    "lastPrice" => "1.5",
+    "open" => "0.08",
+    "priceChange" => "1.42",
+    "priceChangePercent" => "17.75",
+    "symbol" => "SOL-260814-66-P"
+  }
 
-    option_market = %Bourse.Market{option: true}
-    non_option_market = %Bourse.Market{option: false}
-
+  test "EAPI ticker fractions emit percent points on the option surface" do
     for exchange_id <- ~w(binance binancecoinm binanceusdm) do
       module = Exchange.new!(exchange_id).module
 
       assert {:ok, %Bourse.OptionData{percentage: @eapi_percentage_points}} =
-               module.parse_option(option_row)
+               module.parse_option(@eapi_ticker_row)
+    end
+  end
 
-      assert {:ok, %Bourse.Ticker{percentage: @eapi_percentage_points}} =
-               module.parse_ticker(option_row, market: option_market)
+  test "fetch_tickers on the eapi route emits the same percent points as fetchOption" do
+    {requests, stub} = ticker_rows_stub([@eapi_ticker_row])
 
-      assert {:ok, %Bourse.Ticker{percentage: -0.2}} =
-               module.parse_ticker(option_row, market: non_option_market)
+    assert {:ok, tickers} =
+             Unified.call(
+               Exchange.new!("binance"),
+               :fetch_tickers,
+               "fetchTickers",
+               %{"type" => "option"},
+               plug: {Req.Test, stub}
+             )
+
+    assert Enum.any?(RequestCollector.requests(requests), &(&1.conn.request_path == "/eapi/v1/ticker"))
+
+    [%Bourse.Ticker{} = ticker] = Map.values(tickers)
+    assert ticker.percentage == @eapi_percentage_points
+
+    assert {:ok, %Bourse.OptionData{percentage: @eapi_percentage_points}} =
+             Bourse.Binance.parse_option(@eapi_ticker_row)
+  end
+
+  test "ticker percentage branches on the eapi route, not request-context market" do
+    for venue <- ~w(binance binancecoinm binanceusdm) do
+      rule =
+        venue
+        |> Bourse.Spec.load!()
+        |> get_in(["normalization", "field_maps", "ticker", "field_map", "percentage"])
+
+      assert rule["kind"] == "when"
+      assert rule["guard"] == %{"equals" => "eapiPublic/ticker", "field" => "_bourse_endpoint_id"}
+      refute Map.has_key?(rule, "discriminator")
     end
   end
 

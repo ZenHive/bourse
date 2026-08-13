@@ -4792,9 +4792,12 @@
             "key": "initial_margin"
           },
           "initialMarginPercentage": {
-            "discriminator": "market.inverse",
-            "kind": "discriminated",
-            "true": {
+            "guard": {
+              "equals": true,
+              "field": "_bourse_inverse"
+            },
+            "kind": "when",
+            "then": {
               "coercion": "safeNumber",
               "kind": "computed",
               "op": "div",
@@ -4821,9 +4824,12 @@
             "key": "maintenance_margin"
           },
           "maintenanceMarginPercentage": {
-            "discriminator": "market.inverse",
-            "kind": "discriminated",
-            "true": {
+            "guard": {
+              "equals": true,
+              "field": "_bourse_inverse"
+            },
+            "kind": "when",
+            "then": {
               "coercion": "safeNumber",
               "kind": "computed",
               "op": "div",

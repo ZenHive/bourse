@@ -1113,7 +1113,7 @@ Outcome: CONFIRM the option-IV fraction and split emitted funding units from abs
 Outcome: DIVERGE from the spot-ticker unit applied to the EAPI route.**
 
 <!-- rate-unit path="normalization.field_maps.option.field_map.percentage" unit="percent_points" source-unit="fraction" --> EAPI `priceChangePercent` is a decimal ratio: the live row `SOL-260814-66-P` (`priceChange=1.42`, `open=0.08`, `lastPrice=1.5`) carries `priceChangePercent=17.75`, satisfying `1.42 / 0.08 = 17.75`; authored `scale: 100` emits `1775` percent points, and the unified output was observed emitting exactly that. [Option 24hr ticker](https://developers.binance.com/docs/derivatives/option/market-data/24hr-Ticker-Price-Change-Statistics)
-<!-- rate-unit path="normalization.field_maps.ticker.field_map.percentage" unit="percent_points" source-unit="fraction" --> `fetchTicker` also routes option symbols through EAPI, so the `market.option` branch converts the EAPI fraction while spot and futures branches retain their provider percent points unchanged. [Option 24hr ticker](https://developers.binance.com/docs/derivatives/option/market-data/24hr-Ticker-Price-Change-Statistics) [Spot 24hr ticker](https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints#24hr-ticker-price-change-statistics)
+<!-- rate-unit path="normalization.field_maps.ticker.field_map.percentage" unit="percent_points" source-unit="fraction" --> The eapi ticker route (`eapiPublic/ticker`) converts the EAPI fraction; spot and futures routes retain their provider percent points unchanged. [Option 24hr ticker](https://developers.binance.com/docs/derivatives/option/market-data/24hr-Ticker-Price-Change-Statistics) [Spot 24hr ticker](https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints#24hr-ticker-price-change-statistics)
 <!-- rate-unit path="normalization.field_maps.position.field_map.percentage" unit="percent_points" source-unit="fraction" --> The authored position quotient is a fraction before `scale: 100`. [Position information](https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V3)
 
 - *Live evidence (2026-08-13):* production `GET /eapi/v1/ticker` returned
@@ -1125,4 +1125,19 @@ Outcome: DIVERGE from the spot-ticker unit applied to the EAPI route.**
 
 <!-- carve-evidence-status
 {"carve_id":"C-T603b","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"Binance EAPI and spot 24hr ticker contracts linked in C-T603b"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-13 eapi.binance.com GET /eapi/v1/ticker SOL-260814-66-P priceChange 1.42 open 0.08 priceChangePercent 17.75; unified fetch_option emitted percentage 1775.0"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The live EAPI body is pinned as a parser golden but is not registered as a frozen response"}
+-->
+
+## 2026-08-13 — list-read discriminator (Task 606)
+
+**C-T606b — Binance option ticker fractions are gated on the eapi route
+(task 606). Outcome: DIVERGE from the request-context `market.option` gate.**
+
+<!-- rate-unit path="normalization.field_maps.ticker.field_map.percentage" unit="percent_points" source-unit="fraction" --> `fetchTickers` with `type=option` (or a symbols list) hits `GET /eapi/v1/ticker` with no singular `symbol`, so a market-context discriminator is absent. The eapi route identity `eapiPublic/ticker` scales the wire fraction; other ticker routes keep provider percent points. [Option 24hr ticker](https://developers.binance.com/docs/derivatives/option/market-data/24hr-Ticker-Price-Change-Statistics)
+
+- *Live evidence (2026-08-13):* production `GET /eapi/v1/ticker` returned
+  `SOL-260814-66-P` with `priceChangePercent 17.75`. Plural `fetchTickers` on
+  that eapi body now emits `1775.0`, matching `fetchOption` / `fetchTicker`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T606b","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"Binance EAPI 24hr ticker contract linked in C-T606b"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-13 eapi.binance.com GET /eapi/v1/ticker SOL-260814-66-P priceChangePercent 17.75; Unified.call fetchTickers list-read golden in binance_authored_spec_test.exs emits 1775.0"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The live EAPI body is pinned as a parser golden but is not registered as a frozen response"}
 -->
