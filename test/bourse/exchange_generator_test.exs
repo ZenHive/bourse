@@ -6,6 +6,7 @@ defmodule Bourse.ExchangeGeneratorTest do
   alias Bourse.Exchanges.Loader
   alias Bourse.TestExchange.Binance
   alias Bourse.TestExchange.Bybit
+  alias Bourse.Unified
 
   describe "generated module loading" do
     @generated_module Bourse.TestExchange.Reloadable
@@ -58,6 +59,44 @@ defmodule Bourse.ExchangeGeneratorTest do
                    fn ->
                      Bourse.Bybit.public_get_v5_market_tickers(exchange, params: %{"category" => "spot"})
                    end
+    end
+  end
+
+  describe "endpoint route identity" do
+    test "every authored route has a unique sections/method/path identity per venue" do
+      for venue <- Bourse.Registry.exchanges() do
+        module = Bourse.Registry.module_for(venue)
+        endpoints = module.__endpoints__()
+        identities = Enum.map(endpoints, &Unified.endpoint_id/1)
+
+        assert Enum.all?(identities, &is_binary/1), "#{venue} has an endpoint without a route identity"
+
+        duplicates =
+          identities
+          |> Enum.frequencies()
+          |> Enum.filter(fn {_identity, count} -> count > 1 end)
+
+        assert duplicates == [], "#{venue} has duplicate route identities: #{inspect(duplicates)}"
+
+        for {endpoint, identity} <- Enum.zip(endpoints, identities) do
+          expected = Enum.join(endpoint.sections ++ [Atom.to_string(endpoint.method), endpoint.path], "/")
+          assert identity == expected
+        end
+      end
+    end
+
+    test "HTTP verbs distinguish Binance FAPI order routes" do
+      identities =
+        Bourse.Binance.__endpoints__()
+        |> Enum.filter(&(&1.sections == ["fapiPrivate"] and &1.path == "order"))
+        |> Map.new(&{&1.method, Unified.endpoint_id(&1)})
+
+      assert identities == %{
+               delete: "fapiPrivate/delete/order",
+               get: "fapiPrivate/get/order",
+               post: "fapiPrivate/post/order",
+               put: "fapiPrivate/put/order"
+             }
     end
   end
 

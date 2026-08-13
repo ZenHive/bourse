@@ -21055,7 +21055,7 @@
               "key": "priceChangePercent"
             },
             "guard": {
-              "equals": "eapiPublic/ticker",
+              "equals": "eapiPublic/get/ticker",
               "field": "_bourse_endpoint_id"
             },
             "kind": "when",

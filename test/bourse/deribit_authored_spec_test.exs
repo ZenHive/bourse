@@ -6,6 +6,7 @@ defmodule Bourse.DeribitAuthoredSpecTest do
   alias Bourse.Symbol
   alias Bourse.Test.RequestCollector
   alias Bourse.Unified
+  alias Bourse.Unified.ReadParse
 
   @ratio_tolerance 1.0e-12
 
@@ -115,6 +116,87 @@ defmodule Bourse.DeribitAuthoredSpecTest do
               initial_margin_percentage: nil,
               maintenance_margin_percentage: nil
             }} = Bourse.Deribit.parse_position(linear_raw, market: %Bourse.Market{linear: true})
+  end
+
+  test "symbol-less fetch_my_trades derives inverse cost from each payload row" do
+    raw = %{
+      "amount" => 10,
+      "direction" => "buy",
+      "instrument_name" => "BTC-PERPETUAL",
+      "order_id" => "order-1",
+      "order_type" => "limit",
+      "price" => 50_000,
+      "timestamp" => 1_784_204_793_040,
+      "trade_id" => "trade-1"
+    }
+
+    exchange =
+      Exchange.put_markets(private_exchange(), [
+        %Bourse.Market{id: "BTC-PERPETUAL", symbol: "BTC/USD:BTC", inverse: true, linear: false}
+      ])
+
+    {:ok, requests} = RequestCollector.start_link()
+
+    assert {:ok, [%Bourse.Trade{} = trade]} =
+             Bourse.fetch_my_trades(
+               exchange,
+               plug: {Req.Test, stub(requests, rpc_result(%{"has_more" => false, "trades" => [raw]}))}
+             )
+
+    assert_request!(requests, "/api/v2/private/get_user_trades_by_currency")
+    assert trade.amount == 10.0
+    assert trade.price == 50_000.0
+    assert trade.cost == 0.0002
+  end
+
+  test "direct parse_trade without a payload annotation degrades to market context" do
+    raw = %{"amount" => 10, "price" => 50_000}
+
+    assert {:ok, %Bourse.Trade{cost: 0.0002}} =
+             Bourse.Deribit.parse_trade(raw, market: %Bourse.Market{inverse: true})
+
+    assert {:ok, %Bourse.Trade{cost: 500_000.0}} =
+             Bourse.Deribit.parse_trade(raw, market: %Bourse.Market{inverse: false})
+  end
+
+  test "trade cost branches on payload identity before direct-parser market context" do
+    rule =
+      "deribit"
+      |> Bourse.Spec.load!()
+      |> get_in(["normalization", "field_maps", "trade", "field_map", "cost"])
+
+    assert rule["kind"] == "when"
+    assert rule["guard"] == %{"equals" => true, "field" => "_bourse_inverse"}
+    assert rule["then"]["op"] == "div"
+    assert rule["else"]["kind"] == "discriminated"
+    assert rule["else"]["discriminator"] == "market.inverse"
+    assert rule["else"]["true"]["op"] == "div"
+    assert rule["else"]["false"]["op"] == "mul"
+  end
+
+  test "Deribit money-row classification prefers loaded markets and falls back only for unknown ids" do
+    known = %{"amount" => 10, "instrument_name" => "BTC-PERPETUAL", "price" => 50_000}
+    unknown = %{"amount" => 10, "instrument_name" => "BTC-UNKNOWN", "price" => 50_000}
+
+    exchange =
+      Exchange.put_markets(private_exchange(), [
+        %Bourse.Market{id: "BTC-PERPETUAL", symbol: "BTC/USD:BTC", inverse: false, linear: true}
+      ])
+
+    assert {:ok, [known_trade, unknown_trade]} =
+             ReadParse.parse(
+               exchange,
+               Bourse.Deribit,
+               :fetch_my_trades,
+               "fetchMyTrades",
+               rpc_result(%{"has_more" => false, "trades" => [known, unknown]}),
+               %{},
+               :parse_trade,
+               true
+             )
+
+    assert known_trade.cost == 500_000.0
+    assert unknown_trade.cost == 0.0002
   end
 
   test "deposit and withdrawal rows share authored transaction fields" do

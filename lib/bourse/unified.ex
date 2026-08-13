@@ -932,7 +932,7 @@ defmodule Bourse.Unified do
     end
   end
 
-  @doc false
+  @doc "Returns final provider request parameter shapes without performing requests."
   @spec request_param_shapes(Exchange.t(), atom(), map(), keyword()) ::
           {:ok, [map()]} | {:error, Error.t() | term()}
   def request_param_shapes(%Exchange{} = exchange, method_atom, params, opts \\ [])
@@ -1910,14 +1910,21 @@ defmodule Bourse.Unified do
     |> put_endpoint_id(config)
   end
 
-  # Short `config.path` is shared across families (`ticker` is both eapi and
-  # spot rolling). Compose section/path so list-read field maps can match the
-  # eapi ticker without a request-context market.
-  defp put_endpoint_id(params, %{sections: [section | _], path: path}) when is_binary(section) and is_binary(path) do
-    Map.put(params, "_bourse_endpoint_id", section <> "/" <> path)
+  @doc "Builds a route identity from every section, the HTTP method, and the path."
+  @spec endpoint_id(map()) :: String.t() | nil
+  def endpoint_id(%{sections: sections, method: method, path: path})
+      when is_list(sections) and is_atom(method) and is_binary(path) do
+    Enum.join(sections ++ [Atom.to_string(method), path], "/")
   end
 
-  defp put_endpoint_id(params, _config), do: params
+  def endpoint_id(_config), do: nil
+
+  defp put_endpoint_id(params, config) do
+    case endpoint_id(config) do
+      id when is_binary(id) -> Map.put(params, "_bourse_endpoint_id", id)
+      nil -> params
+    end
+  end
 
   # Binance's endpoint family disambiguates compact native ids. The spot rule remains scoped to
   # `binance`; Binance USD-M has distinct fapi (linear) and dapi (inverse) families.

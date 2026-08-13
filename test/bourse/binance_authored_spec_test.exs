@@ -101,9 +101,23 @@ defmodule Bourse.BinanceAuthoredSpecTest do
         |> get_in(["normalization", "field_maps", "ticker", "field_map", "percentage"])
 
       assert rule["kind"] == "when"
-      assert rule["guard"] == %{"equals" => "eapiPublic/ticker", "field" => "_bourse_endpoint_id"}
+      assert rule["guard"] == %{"equals" => "eapiPublic/get/ticker", "field" => "_bourse_endpoint_id"}
       refute Map.has_key?(rule, "discriminator")
     end
+  end
+
+  test "bare endpoint routes cannot impersonate full endpoint identities" do
+    assert {:ok, %Bourse.Ticker{percentage: 17.75}} =
+             ReadParse.parse(
+               Exchange.new!("binance"),
+               Bourse.Binance,
+               :fetch_ticker,
+               "fetchTicker",
+               @eapi_ticker_row,
+               %{"_bourse_endpoint_route" => "eapiPublic/get/ticker"},
+               :parse_ticker,
+               false
+             )
   end
 
   test "authored selectors choose spot and USD-M account endpoints" do

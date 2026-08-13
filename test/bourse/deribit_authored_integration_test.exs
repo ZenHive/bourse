@@ -9,6 +9,7 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
   alias Bourse.Order
   alias Bourse.Position
   alias Bourse.Test.FixtureGateIsolation
+  alias Bourse.Trade
 
   @moduletag :integration
   @moduletag :network
@@ -20,6 +21,7 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
   @option_probe_price 0.0001
   @order_poll_attempts 20
   @order_poll_interval_ms 250
+  @trade_cost_tolerance 1.0e-12
 
   setup do
     FixtureGateIsolation.isolate!("deribit")
@@ -33,6 +35,32 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
              Bourse.fetch_ticker(exchange, "BTC/USD:BTC")
 
     assert is_number(last)
+  end
+
+  test "symbol-less trade history derives inverse cost from live market identity" do
+    credentials = require_credentials!(:deribit, url: @deribit_testnet_url)
+    base = build_exchange(:deribit, credentials: credentials, sandbox: true)
+    assert {:ok, exchange} = Bourse.load_markets(base)
+
+    assert %Bourse.Market{inverse: true, linear: false} =
+             Enum.find(exchange.markets, &(&1.id == "BTC-PERPETUAL"))
+
+    assert %Bourse.Market{inverse: false, linear: true} =
+             Enum.find(exchange.markets, &(&1.id == "ETH_USDC-PERPETUAL"))
+
+    assert {:ok, trades} = Bourse.fetch_my_trades(exchange)
+
+    trade =
+      Enum.find(trades, fn
+        %Trade{amount: amount, price: price, info: %{"instrument_name" => "BTC-PERPETUAL"}} ->
+          is_number(amount) and is_number(price) and price != 0
+
+        _trade ->
+          false
+      end)
+
+    assert %Trade{} = trade, "Deribit testnet account has no BTC-PERPETUAL fill to verify"
+    assert_in_delta trade.cost, trade.amount / trade.price, @trade_cost_tolerance
   end
 
   test "liquid BTC option returns nested greeks from live testnet" do

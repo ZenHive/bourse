@@ -1905,7 +1905,7 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   defp annotate_endpoint_route(payload, %{"_bourse_endpoint_route" => route}) when is_binary(route) do
-    stamp_endpoint_id(payload, route)
+    stamp_endpoint_route(payload, route)
   end
 
   defp annotate_endpoint_route(payload, _params), do: payload
@@ -1915,6 +1915,12 @@ defmodule Bourse.Unified.ReadParse do
   defp stamp_endpoint_id(row, id) when is_map(row), do: Map.put_new(row, "_bourse_endpoint_id", id)
 
   defp stamp_endpoint_id(payload, _id), do: payload
+
+  defp stamp_endpoint_route(rows, route) when is_list(rows), do: Enum.map(rows, &stamp_endpoint_route(&1, route))
+
+  defp stamp_endpoint_route(row, route) when is_map(row), do: Map.put_new(row, "_bourse_endpoint_route", route)
+
+  defp stamp_endpoint_route(payload, _route), do: payload
 
   # Must stay a keyword list: generated parsers hand this straight to
   # `Bourse.Parser.parse/4`, which reads it with `Keyword.get/3`.
@@ -3748,32 +3754,53 @@ defmodule Bourse.Unified.ReadParse do
 
   defp merge_bybit_pagination_cursor(payload, _body, _exchange, _parse_type, _js_name), do: payload
 
-  defp annotate_deribit_payload(payload, %Exchange{id: "deribit"}, "position") do
+  defp annotate_deribit_payload(payload, %Exchange{id: "deribit"} = exchange, parse_type)
+       when parse_type in ["position", "trade"] do
     case payload do
-      rows when is_list(rows) -> Enum.map(rows, &annotate_deribit_position_row/1)
-      %{} = row -> annotate_deribit_position_row(row)
+      rows when is_list(rows) -> Enum.map(rows, &annotate_deribit_money_row(&1, exchange))
+      %{} = row -> annotate_deribit_money_row(row, exchange)
       other -> other
     end
   end
 
   defp annotate_deribit_payload(payload, _exchange, _parse_type), do: payload
 
-  defp annotate_deribit_position_row(row) when is_map(row) do
-    maybe_put_synthetic(row, "_bourse_inverse", deribit_inverse_instrument?(row))
+  defp annotate_deribit_money_row(row, exchange) when is_map(row) do
+    maybe_put_synthetic(row, "_bourse_inverse", deribit_inverse_instrument?(row, exchange))
   end
 
-  defp annotate_deribit_position_row(other), do: other
+  defp annotate_deribit_money_row(other, _exchange), do: other
+
+  defp deribit_inverse_instrument?(%{"instrument_name" => name}, %Exchange{markets: markets})
+       when is_binary(name) and is_list(markets) do
+    case Enum.find(markets, &(deribit_market_id(&1) == name)) do
+      nil -> deribit_inverse_instrument_id?(name)
+      market -> deribit_market_inverse?(market)
+    end
+  end
+
+  defp deribit_inverse_instrument?(%{"instrument_name" => name}, _exchange) when is_binary(name) do
+    deribit_inverse_instrument_id?(name)
+  end
+
+  defp deribit_inverse_instrument?(_row, _exchange), do: false
+
+  defp deribit_market_id(market) when is_map(market), do: Map.get(market, :id) || Map.get(market, "id")
+
+  defp deribit_market_inverse?(market) when is_map(market) do
+    Map.get(market, :inverse) == true or Map.get(market, "inverse") == true
+  end
 
   # Deribit linear ids put settle in the first token (`ETH_USDC-PERPETUAL`).
   # Inverse ids do not (`BTC-PERPETUAL`, `BTC-31JUL26-65000-C`).
-  defp deribit_inverse_instrument?(%{"instrument_name" => name}) when is_binary(name) do
+  defp deribit_inverse_instrument_id?(name) when is_binary(name) do
     case String.split(name, "-", parts: 2) do
       [head, _rest] -> not String.contains?(head, "_")
       _ -> false
     end
   end
 
-  defp deribit_inverse_instrument?(_row), do: false
+  defp deribit_inverse_instrument_id?(_name), do: false
 
   defp deribit_market_type(%{"kind" => "spot"}), do: :spot
   defp deribit_market_type(%{"kind" => "option"}), do: :option

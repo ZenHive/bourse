@@ -40,7 +40,65 @@ defmodule Bourse.UnifiedReadContractTest do
     {"binanceusdm", :fetch_last_prices, :not_symbol_keyed, 538}
   ]
 
+  @market_context_rule_dispositions %{
+    "binance/ohlcv/branches/0/field_map/volume#market.inverse" => :symbol_required,
+    "binance/ticker/field_map/percentage/else#market.option" => :non_money_exemption,
+    "binancecoinm/ohlcv/branches/0/field_map/volume#market.inverse" => :symbol_required,
+    "binanceusdm/ohlcv/branches/0/field_map/volume#market.inverse" => :symbol_required,
+    "bybit/ohlcv/branches/0/field_map/volume#market.inverse" => :symbol_required,
+    "bybit/open_interest/field_map/openInterestAmount#market.inverse" => :symbol_required,
+    "bybit/open_interest/field_map/openInterestValue#market.inverse" => :symbol_required,
+    "bybit/ticker/field_map/vwap/else#market.inverse" =>
+      {:payload_guard, %{"field" => "category", "in" => ["inverse", "option"]}},
+    "deribit/open_interest/field_map/openInterestAmount#market.linear" => :symbol_required,
+    "deribit/open_interest/field_map/openInterestValue#market.linear" => :symbol_required,
+    "deribit/position/field_map/initialMarginPercentage/else#market.inverse" =>
+      {:payload_guard, %{"equals" => true, "field" => "_bourse_inverse"}},
+    "deribit/position/field_map/maintenanceMarginPercentage/else#market.inverse" =>
+      {:payload_guard, %{"equals" => true, "field" => "_bourse_inverse"}},
+    "deribit/trade/field_map/cost/else#market.inverse" =>
+      {:payload_guard, %{"equals" => true, "field" => "_bourse_inverse"}},
+    "okx/ohlcv/branches/0/field_map/volume#market.spot" => :symbol_required,
+    "okx/open_interest/branches/1/field_map/baseVolume#market.option" => :symbol_required_branch,
+    "okx/open_interest/branches/1/field_map/openInterestAmount#market.option" => :symbol_required_branch,
+    "okx/open_interest/branches/1/field_map/openInterestValue#market.option" => :symbol_required_branch,
+    "okx/open_interest/branches/1/field_map/quoteVolume#market.option" => :symbol_required_branch
+  }
+
   describe "static parse coverage" do
+    test "money-field market discriminators are payload-derived on symbol-less reads" do
+      rules = Enum.flat_map(@venues, &market_context_rules/1)
+      actual_names = rules |> Enum.map(& &1.name) |> Enum.sort()
+      expected_names = @market_context_rule_dispositions |> Map.keys() |> Enum.sort()
+
+      assert actual_names == expected_names,
+             "authored market-context rule inventory changed; classify every added or removed rule explicitly"
+
+      for %{name: name, path: path, venue: venue} <- rules,
+          {:payload_guard, expected_guard} <- [Map.fetch!(@market_context_rule_dispositions, name)] do
+        parent_rule =
+          venue
+          |> authored_spec!()
+          |> get_in(["normalization", "field_maps" | Enum.drop(path, -1)])
+
+        assert parent_rule["kind"] == "when", "#{name} lost its payload-gated outer branch"
+        assert parent_rule["guard"] == expected_guard, "#{name} changed its payload discriminator"
+      end
+
+      symbol_less_parse_types = symbol_less_parse_types()
+
+      violations =
+        for %{name: name, parse_type: parse_type, venue: venue} <- rules,
+            MapSet.member?(symbol_less_parse_types, {venue, parse_type}),
+            disposition = Map.fetch!(@market_context_rule_dispositions, name),
+            not symbol_less_safe_disposition?(disposition),
+            do: {name, disposition}
+
+      assert violations == [],
+             "money-field rules reachable without required symbol still depend on request market context: " <>
+               inspect(violations)
+    end
+
     test "every supported read with a runtime parse gap is explicitly tracked by task 550" do
       actual =
         Map.new(@venues, fn venue ->
@@ -647,6 +705,75 @@ defmodule Bourse.UnifiedReadContractTest do
   defp authored_spec!(venue) do
     JsonDocument.decode_file!("priv/specs/json/output/authored/#{venue}.json")
   end
+
+  defp market_context_rules(venue) do
+    venue
+    |> authored_spec!()
+    |> get_in(["normalization", "field_maps"])
+    |> Enum.flat_map(fn {parse_type, slot} -> market_context_rules(slot, venue, [parse_type]) end)
+  end
+
+  defp market_context_rules(value, venue, path) when is_map(value) do
+    dependencies =
+      []
+      |> maybe_add_dependency(is_binary(value["inverse_op"]), "inverse_op")
+      |> maybe_add_dependency(
+        is_binary(value["discriminator"]) and String.starts_with?(value["discriminator"], "market."),
+        value["discriminator"]
+      )
+
+    current =
+      Enum.map(dependencies, fn dependency ->
+        %{
+          name: "#{venue}/#{Enum.map_join(path, "/", &to_string/1)}##{dependency}",
+          parse_type: hd(path),
+          path: path,
+          venue: venue
+        }
+      end)
+
+    children =
+      Enum.flat_map(value, fn {key, child} ->
+        market_context_rules(child, venue, path ++ [key])
+      end)
+
+    current ++ children
+  end
+
+  defp market_context_rules(value, venue, path) when is_list(value) do
+    value
+    |> Enum.with_index()
+    |> Enum.flat_map(fn {child, index} -> market_context_rules(child, venue, path ++ [index]) end)
+  end
+
+  defp market_context_rules(_value, _venue, _path), do: []
+
+  defp maybe_add_dependency(dependencies, true, dependency), do: [dependency | dependencies]
+  defp maybe_add_dependency(dependencies, false, _dependency), do: dependencies
+
+  defp symbol_less_parse_types do
+    method_defs =
+      Map.new(Unified.method_defs(), fn {method, js_name, params, _description} -> {js_name, {method, params}} end)
+
+    contract = runtime_parse_contract()
+
+    MapSet.new(
+      for venue <- @venues,
+          js_name <- supported_reads(venue, authored_spec!(venue)),
+          {method, required_params} = Map.fetch!(method_defs, js_name),
+          :symbol not in required_params,
+          {:ok, parse_type} <- [runtime_parse_type(method, js_name, contract)],
+          do: {venue, parse_type}
+    )
+  end
+
+  defp symbol_less_safe_disposition?({:payload_guard, _guard}), do: true
+  defp symbol_less_safe_disposition?(:non_money_exemption), do: true
+
+  # OKX's array-shaped open-interest branch is used by the symbol-required
+  # history read; symbol-less fetchOpenInterests selects the object branch.
+  defp symbol_less_safe_disposition?(:symbol_required_branch), do: true
+  defp symbol_less_safe_disposition?(_disposition), do: false
 
   defp declared_reads(spec) do
     spec

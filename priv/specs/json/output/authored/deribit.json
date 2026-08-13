@@ -5013,14 +5013,42 @@
             "key": "amount"
           },
           "cost": {
-            "coercion": "safeNumber",
-            "inverse_op": "div",
-            "kind": "computed",
-            "op": "mul",
-            "operands": [
-              "amount",
-              "price"
-            ]
+            "else": {
+              "discriminator": "market.inverse",
+              "false": {
+                "coercion": "safeNumber",
+                "kind": "computed",
+                "op": "mul",
+                "operands": [
+                  "amount",
+                  "price"
+                ]
+              },
+              "kind": "discriminated",
+              "true": {
+                "coercion": "safeNumber",
+                "kind": "computed",
+                "op": "div",
+                "operands": [
+                  "amount",
+                  "price"
+                ]
+              }
+            },
+            "guard": {
+              "equals": true,
+              "field": "_bourse_inverse"
+            },
+            "kind": "when",
+            "then": {
+              "coercion": "safeNumber",
+              "kind": "computed",
+              "op": "div",
+              "operands": [
+                "amount",
+                "price"
+              ]
+            }
           },
           "datetime": null,
           "fee": {
