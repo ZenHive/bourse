@@ -24059,30 +24059,30 @@
         "field_map": {
           "account": null,
           "after": null,
-        "amount": {
-          "coercion": "safeNumber",
-          "fallback_keys": [
-            "amount"
-          ],
-          "format": null,
-          "key": "income"
-        },
+          "amount": {
+            "coercion": "safeNumber",
+            "fallback_keys": [
+              "amount"
+            ],
+            "format": null,
+            "key": "income"
+          },
           "before": null,
-        "currency": {
-          "coercion": "safeString",
-          "format": null,
-          "key": "asset"
-        },
+          "currency": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "asset"
+          },
           "datetime": null,
-        "direction": {
-          "fallback_keys": [
-            "amount"
-          ],
-          "key": "income",
-          "kind": "sign_direction",
-          "negative": "out",
-          "positive": "in",
-          "zero": null
+          "direction": {
+            "fallback_keys": [
+              "amount"
+            ],
+            "key": "income",
+            "kind": "sign_direction",
+            "negative": "out",
+            "positive": "in",
+            "zero": null
           },
           "fee": null,
           "id": {
@@ -24112,35 +24112,35 @@
           "type": {
             "coercion": "safeString",
             "enum_map": {
-            "API_REBATE": "rebate",
-            "AUTO_EXCHANGE": "conversion",
-            "BFUSD_REWARD": "cashback",
-            "COIN_SWAP_DEPOSIT": "deposit",
-            "COIN_SWAP_WITHDRAW": "withdrawal",
-            "COMMISSION": "commission",
-            "COMMISSION_REBATE": "rebate",
-            "CONTEST_REWARD": "cashback",
-            "CROSS_COLLATERAL_TRANSFER": "transfer",
-            "DELIVERED_SETTELMENT": "settlement",
-            "FEE_RETURN": "rebate",
-            "FUNDING_FEE": "funding_fee",
+              "API_REBATE": "rebate",
+              "AUTO_EXCHANGE": "conversion",
+              "BFUSD_REWARD": "cashback",
+              "COIN_SWAP_DEPOSIT": "deposit",
+              "COIN_SWAP_WITHDRAW": "withdrawal",
+              "COMMISSION": "commission",
+              "COMMISSION_REBATE": "rebate",
+              "CONTEST_REWARD": "cashback",
+              "CROSS_COLLATERAL_TRANSFER": "transfer",
+              "DELIVERED_SETTELMENT": "settlement",
+              "FEE_RETURN": "rebate",
+              "FUNDING_FEE": "funding_fee",
               "INTERNAL_TRANSFER": "transfer",
               "INSURANCE_CLEAR": "settlement",
               "OPTIONS_PREMIUM_FEE": "fee",
               "OPTIONS_SETTLE_PROFIT": "settlement",
               "POSITION_LIMIT_INCREASE_FEE": "fee",
               "REALIZED_PNL": "realized_pnl",
-            "REFERRAL_KICKBACK": "referral",
-            "STRATEGY_UMFUTURES_TRANSFER": "transfer",
-            "TRANSFER": "transfer",
-            "WELCOME_BONUS": "cashback"
-          },
-          "fallback_keys": [
-            "type"
-          ],
-          "format": null,
-          "key": "incomeType"
-        }
+              "REFERRAL_KICKBACK": "referral",
+              "STRATEGY_UMFUTURES_TRANSFER": "transfer",
+              "TRANSFER": "transfer",
+              "WELCOME_BONUS": "cashback"
+            },
+            "fallback_keys": [
+              "type"
+            ],
+            "format": null,
+            "key": "incomeType"
+          }
         },
         "route_field_maps": {
           "bill": {
@@ -25141,9 +25141,19 @@
           },
           "percentage": {
             "else": {
-              "coercion": "safeNumber2",
-              "format": null,
-              "key": "priceChangePercent"
+              "kind": "discriminated",
+              "discriminator": "market.option",
+              "true": {
+                "coercion": "safeNumber2",
+                "format": null,
+                "key": "priceChangePercent",
+                "scale": 100
+              },
+              "false": {
+                "coercion": "safeNumber2",
+                "format": null,
+                "key": "priceChangePercent"
+              }
             },
             "guard": {
               "equals": "eapiPublic/ticker",

@@ -85,6 +85,75 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     "withdraw" => "withdrawal"
   }
 
+  # Independent pins of the carve-confirmed registered-class judgments
+  # (C-T605a for the binance family, C-T605d for okx). Transcribed by hand so a
+  # spec regression flips the gate red instead of silently re-labeling an event.
+  @binance_income_registered_events %{
+    "API_REBATE" => "rebate",
+    "AUTO_EXCHANGE" => "conversion",
+    "BFUSD_REWARD" => "cashback",
+    "COIN_SWAP_DEPOSIT" => "deposit",
+    "COIN_SWAP_WITHDRAW" => "withdrawal",
+    "COMMISSION" => "commission",
+    "COMMISSION_REBATE" => "rebate",
+    "CONTEST_REWARD" => "cashback",
+    "CROSS_COLLATERAL_TRANSFER" => "transfer",
+    "DELIVERED_SETTELMENT" => "settlement",
+    "FEE_RETURN" => "rebate",
+    "FUNDING_FEE" => "funding_fee",
+    "INSURANCE_CLEAR" => "settlement",
+    "INTERNAL_TRANSFER" => "transfer",
+    "OPTIONS_PREMIUM_FEE" => "fee",
+    "OPTIONS_SETTLE_PROFIT" => "settlement",
+    "POSITION_LIMIT_INCREASE_FEE" => "fee",
+    "REALIZED_PNL" => "realized_pnl",
+    "REFERRAL_KICKBACK" => "referral",
+    "STRATEGY_UMFUTURES_TRANSFER" => "transfer",
+    "TRANSFER" => "transfer",
+    "WELCOME_BONUS" => "cashback"
+  }
+
+  @binance_coinm_registered_events %{
+    "COMMISSION" => "commission",
+    "DELIVERED_SETTELMENT" => "settlement",
+    "FUNDING_FEE" => "funding_fee",
+    "INSURANCE_CLEAR" => "settlement",
+    "REALIZED_PNL" => "realized_pnl",
+    "TRANSFER" => "transfer",
+    "WELCOME_BONUS" => "cashback"
+  }
+
+  @okx_account_registered_events %{
+    "1" => "transfer",
+    "2" => "trade",
+    "3" => "settlement",
+    "4" => "conversion",
+    "5" => "liquidation",
+    "6" => "transfer",
+    "7" => "interest",
+    "8" => "funding_fee",
+    "11" => "conversion",
+    "12" => "transfer",
+    "14" => "trade",
+    "20" => "conversion",
+    "27" => "conversion",
+    "28" => "conversion",
+    "30" => "trade",
+    "34" => "settlement",
+    "35" => "transfer"
+  }
+
+  @okx_asset_registered_events %{
+    "1" => "deposit",
+    "2" => "withdrawal",
+    "20" => "transfer",
+    "21" => "transfer",
+    "22" => "transfer",
+    "23" => "transfer",
+    "130" => "transfer",
+    "131" => "transfer"
+  }
+
   @okx_account_types MapSet.new(~w(
       1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 20 22 24 26 27 28 29 30 32 33
       34 35 37 38 250 251
@@ -116,6 +185,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       ],
       derivation: "22 enumerated USD-M IncomeType literals",
       values: @binance_usdm_types,
+      registered_events: @binance_income_registered_events,
       venue_specific: %{}
     },
     %{
@@ -142,6 +212,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       ],
       derivation: "7 enumerated COIN-M IncomeType literals",
       values: @binance_coinm_types,
+      registered_events: @binance_coinm_registered_events,
       venue_specific: %{}
     },
     %{
@@ -155,6 +226,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       ],
       derivation: "22 enumerated USD-M IncomeType literals",
       values: @binance_usdm_types,
+      registered_events: @binance_income_registered_events,
       venue_specific: %{}
     },
     %{
@@ -212,6 +284,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       ],
       derivation: "32 top-level type values returned by the Get bills types operation",
       values: @okx_account_types,
+      registered_events: @okx_account_registered_events,
       venue_specific: %{
         "9" => "adl",
         "10" => "overloss_recovery",
@@ -239,6 +312,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       ],
       derivation: "147 unique type values in the funding-account Asset bills details table",
       values: @okx_asset_types,
+      registered_events: @okx_asset_registered_events,
       venue_specific: %{}
     }
   ]
@@ -383,6 +457,24 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
              "#{entry.venue}/#{entry.scope}: registered events cannot be declared venue-specific"
 
       assert Map.take(enum_map, Map.keys(venue_specific)) == venue_specific
+
+      # A scope cannot opt out of the gate: every mapped literal needs an
+      # independent declaration, either as a registered event or as an
+      # explicitly venue-specific label.
+      if map_size(enum_map) > 0 do
+        assert Map.has_key?(entry, :registered_events),
+               "#{entry.venue}/#{entry.scope}: scopes with a non-empty enum_map must declare registered_events"
+
+        undeclared =
+          enum_map
+          |> Map.keys()
+          |> MapSet.new()
+          |> MapSet.difference(MapSet.union(registered_raw_values, venue_specific_raw_values))
+
+        assert undeclared == MapSet.new(),
+               "#{entry.venue}/#{entry.scope}: mapped literals without an independent declaration " <>
+                 inspect(MapSet.to_list(undeclared))
+      end
 
       for {raw, registered} <- registered_events do
         emitted = Map.get(enum_map, raw, if(rule["enum_passthrough"], do: raw))

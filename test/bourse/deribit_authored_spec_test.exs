@@ -82,7 +82,39 @@ defmodule Bourse.DeribitAuthoredSpecTest do
       assert rule["kind"] == "when"
       assert rule["guard"] == %{"equals" => true, "field" => "_bourse_inverse"}
       refute Map.has_key?(rule, "discriminator")
+      # Direct parse_*/2 callers carry no payload annotation; they degrade to
+      # the request-context market.inverse discriminator instead of nil.
+      assert rule["else"]["kind"] == "discriminated"
+      assert rule["else"]["discriminator"] == "market.inverse"
     end
+  end
+
+  test "direct parse_position without a payload annotation degrades to market context" do
+    raw = %{
+      "instrument_name" => "BTC-PERPETUAL",
+      "initial_margin" => 0.000197283,
+      "maintenance_margin" => 0.000143783,
+      "size_currency" => 0.006687487
+    }
+
+    assert {:ok, %Bourse.Position{} = position} =
+             Bourse.Deribit.parse_position(raw, market: %Bourse.Market{inverse: true})
+
+    assert_in_delta position.initial_margin_percentage, 0.000197283 / 0.006687487, @ratio_tolerance
+    assert_in_delta position.maintenance_margin_percentage, 0.000143783 / 0.006687487, @ratio_tolerance
+
+    linear_raw = %{
+      "instrument_name" => "ETH_USDC-PERPETUAL",
+      "initial_margin" => 300,
+      "maintenance_margin" => 150,
+      "size_currency" => 0.5
+    }
+
+    assert {:ok,
+            %Bourse.Position{
+              initial_margin_percentage: nil,
+              maintenance_margin_percentage: nil
+            }} = Bourse.Deribit.parse_position(linear_raw, market: %Bourse.Market{linear: true})
   end
 
   test "deposit and withdrawal rows share authored transaction fields" do

@@ -40,6 +40,19 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     end
   end
 
+  test "direct parse_ticker without a route stamp still scales option rows from market context" do
+    # Public parse_*/2 callers carry no _bourse_endpoint_id annotation; the
+    # authored rule must fall back to the market.option discriminator instead
+    # of silently emitting the raw fraction 100x off the routed reads.
+    module = Exchange.new!("binance").module
+
+    assert {:ok, %Bourse.Ticker{percentage: @eapi_percentage_points}} =
+             module.parse_ticker(@eapi_ticker_row, market: %Bourse.Market{option: true})
+
+    assert {:ok, %Bourse.Ticker{percentage: 17.75}} =
+             module.parse_ticker(@eapi_ticker_row, market: %Bourse.Market{option: false})
+  end
+
   test "fetch_tickers on the eapi route matches singular ticker and option reads" do
     {requests, stub} = ticker_rows_stub([@eapi_ticker_row])
     exchange = Exchange.new!("binance")

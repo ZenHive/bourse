@@ -4805,6 +4805,19 @@
                 "initial_margin",
                 "size_currency"
               ]
+            },
+            "else": {
+              "kind": "discriminated",
+              "discriminator": "market.inverse",
+              "true": {
+                "coercion": "safeNumber",
+                "kind": "computed",
+                "op": "div",
+                "operands": [
+                  "initial_margin",
+                  "size_currency"
+                ]
+              }
             }
           },
           "lastPrice": null,
@@ -4837,6 +4850,19 @@
                 "maintenance_margin",
                 "size_currency"
               ]
+            },
+            "else": {
+              "kind": "discriminated",
+              "discriminator": "market.inverse",
+              "true": {
+                "coercion": "safeNumber",
+                "kind": "computed",
+                "op": "div",
+                "operands": [
+                  "maintenance_margin",
+                  "size_currency"
+                ]
+              }
             }
           },
           "marginMode": null,
