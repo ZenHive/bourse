@@ -618,7 +618,7 @@ Outcome: DIVERGE from the prior lossy collapse of InvalidNonce into
   `Exchange.error_codes` + `HTTP.Errors.classify_response/5`.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T604","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"https://github.com/binance/binance-spot-api-docs/blob/master/errors.md (-1021 INVALID_TIMESTAMP)"},"observed_evidence":{"kind":"authored_mapping","reference":"binance/binanceusdm/binancecoinm exact -1021 → InvalidNonce; bybit 10002; okx 50102/60006"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered live InvalidNonce recording; classification is pinned against authored codes and provider docs"}
+{"carve_id":"C-T604","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"https://github.com/binance/binance-spot-api-docs/blob/master/errors.md (-1021 INVALID_TIMESTAMP)"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered live InvalidNonce recording; classification is pinned against authored codes (binance/binanceusdm/binancecoinm exact -1021 → InvalidNonce; bybit 10002; okx 50102/60006) and provider docs"}
 -->
 
 ## 2026-08-12 — unified rate-unit contract (Task 600)
