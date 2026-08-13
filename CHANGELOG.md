@@ -39,8 +39,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `realized_pnl` instead of the flattened `trade`; `AUTO_EXCHANGE` is
   `conversion`. OKX account-bills labels are derived from the venue's own
   `account/subtypes` recording (mechanically re-derived in the suite, not
-  asserted in prose). Bybit's and hyperliquid's mapped vocabularies are not
-  yet reconciled onto the registered set and still carry pre-taxonomy labels.
+  asserted in prose). Bybit and hyperliquid are reconciled onto the same set:
+  bybit `LIQUIDATION`/`SETTLEMENT`/`DELIVERY`/`INTEREST` and transfer events
+  emit their registered classes, hyperliquid `withdraw`/`vaultWithdraw` emit
+  `withdrawal` and `vaultDeposit` emits `deposit`, and the coverage suite
+  rejects any venue-specific label whose raw event carries a registered class.
 - Unified rate-like fields carry pinned units end-to-end: implied volatility
   and funding/margin rates are fractions, ticker/option `percentage` is
   percent points, and the unit invariant now grades emitted parser output
