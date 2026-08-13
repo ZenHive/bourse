@@ -381,7 +381,9 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
 
     for type <- @registered_ledger_types do
       assert moduledoc =~ "`#{type}`"
-      assert descripex_doc =~ type
+
+      # Whole-word, so `fee` cannot be satisfied by `funding_fee` alone.
+      assert Regex.match?(~r/\b#{Regex.escape(type)}\b/, descripex_doc)
     end
 
     assert moduledoc =~ "one of two classes"
