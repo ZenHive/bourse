@@ -25,10 +25,12 @@ the existing passthrough rule.
 | `liquidation` | `5` Forced liquidation |
 | `interest` | `7` Interest |
 | `funding_fee` | `8` Funding rate (subtypes: funding fee expense/income) |
-| venue-specific | `9` `adl`, `10` `overloss_recovery`, `13` `ddh`, `15` `quick_margin`, `16` `borrowing`, `29` `one_click_repayment`, `32` `move_position`, `33` `loans`, `37` `corporate_action`, `38` `usdg_rewards`, `250` `profit_share_payment`, `251` `profit_share_refund` |
+| venue-specific | `9` `adl`, `10` `overloss_recovery`, `13` `ddh`, `15` `quick_margin`, `16` `borrowing`, `29` `one_click_repay`, `32` `move_position`, `33` `loans`, `37` `corporate_action`, `38` `usdg_rewards`, `250` `profit_share_payment`, `251` `profit_share_refund` |
 
 The venue-specific labels are faithful snake_case renderings because those events have no
-registered cross-venue class. This supersedes C-T598c's label choices for every row above;
+registered cross-venue class; `authored_ledger_contract_coverage_test.exs` re-derives each one
+from the recording's `typeDesc` rather than trusting the claim. This supersedes C-T598c's label
+choices for every row above;
 the provider's numeric `type`, `typeDesc`, and subtype detail remain recoverable in
 `LedgerEntry.info`.
 

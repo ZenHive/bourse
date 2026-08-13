@@ -186,7 +186,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
       derivation: "32 top-level type values returned by the Get bills types operation",
       values: @okx_account_types,
       venue_specific: MapSet.new(~w(
-          adl overloss_recovery ddh quick_margin borrowing one_click_repayment move_position
+          adl overloss_recovery ddh quick_margin borrowing one_click_repay move_position
           loans corporate_action usdg_rewards profit_share_payment profit_share_refund
         )),
       venue_specific_format: :snake_case
@@ -293,7 +293,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     "20" => "conversion",
     "27" => "conversion",
     "28" => "conversion",
-    "29" => "one_click_repayment",
+    "29" => "one_click_repay",
     "30" => "trade",
     "32" => "move_position",
     "33" => "loans",
@@ -433,6 +433,23 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     assert MapSet.new(Map.keys(enum_map)) == named_types
     assert enum_map == @okx_account_mappings
     refute Enum.any?(enum_map, fn {raw, normalized} -> raw == normalized end)
+
+    # Every label outside the registered set must be the venue's own typeDesc, rendered
+    # snake_case — the carve register claims faithfulness, so derive it rather than trust it.
+    recorded_descriptions = Map.new(rows, &{&1["type"], &1["typeDesc"]})
+
+    for {type, label} <- enum_map, MapSet.member?(registry.venue_specific, label) do
+      assert label == snake_case(Map.fetch!(recorded_descriptions, type)),
+             "okx bill type #{type}: venue-specific label #{inspect(label)} is not the snake_case " <>
+               "rendering of the recorded typeDesc #{inspect(Map.fetch!(recorded_descriptions, type))}"
+    end
+  end
+
+  defp snake_case(description) do
+    description
+    |> String.downcase()
+    |> String.replace(~r/[^a-z0-9]+/, "_")
+    |> String.trim("_")
   end
 
   test "the surfaced Binance gaps and signed direction have deliberate authored mappings" do
