@@ -1223,3 +1223,14 @@ provider-owned `depth20@100ms`-Stream direkt statt über die generierte Channel-
 (`lib/trading_dashboard/market_data/transport/local.ex`); live gegen Binance verifiziert
 (Reviewer-Run run-1786673501096-c9939b07). Der Workaround kann raus, sobald bourse den
 Default-Channel fixt.
+
+**Status:** 🔀 triaged 2026-08-14 — bestätigter Spec-Authoring-Defekt, Klasse statt Einzelfall.
+binance authored kein `watchOrderBook`; der `Channels.build/4`-Fallback greift auf
+`watchOrderBookForSymbols` mit dem Template `orderbook::{symbol}` — ein CCXT-interner
+Message-Hash, kein Binance-Stream-Name (`collapse_separators/1` faltet `::` zu `:`).
+Klassen-Scope: binance und binanceusdm tragen ebenso `trade::{symbol}`,
+`myLiquidations::{symbol}`, `:{symbol}` und bare `miniTicker`/`kline`/`name`; binancecoinm
+authored `channels: null` (fällt wenigstens laut mit `:no_channel_templates`). Weil Binance
+unbekannte Stream-Namen stumm ackt, ist Subscribe-Ack keine Evidenz — der Fix verlangt
+Frame-Delivery-Tests. Als Task 618 gefiled (Audit aller vier watch_*-Defaults gegen die
+provider-owned Stream-Doku, grok/grok-4.6, bundle live_triage).
