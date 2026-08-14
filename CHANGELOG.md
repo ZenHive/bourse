@@ -9,6 +9,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- `Bourse.Position` gained `base_quantity` — the absolute position size in the
+  base currency where the venue reports it natively (currently populated for
+  deribit futures from `size_currency`; `nil` elsewhere).
 - `Bourse.Error` gained a dedicated `:invalid_nonce` type: venue errors that
   resolve through the InvalidNonce class (nonce/timestamp drift, e.g. Binance
   `-1021` outside recvWindow) now carry `retry_class: :network` and
@@ -29,10 +32,10 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   it passes through). Generated `parse_ledger_entry/2` on routed venues
   requires `opts[:route]` and fails loudly on an unknown route rather than
   parsing with the wrong vocabulary.
-- Ledger `type` carries one registered cross-venue taxonomy: fifteen unified
+- Ledger `type` carries one registered cross-venue taxonomy: sixteen unified
   values (`trade`, `fee`, `deposit`, `withdrawal`, `transfer`, `funding_fee`,
   `realized_pnl`, `liquidation`, `settlement`, `interest`, `rebate`,
-  `commission`, `cashback`, `referral`, `conversion`) plus venue-faithful
+  `commission`, `cashback`, `referral`, `conversion`, `bonus`) plus venue-faithful
   snake_case labels for events outside the registry. The same economic event
   now emits the same value on the remapped venues: OKX bill type `8` and
   binance-family `FUNDING_FEE` both emit `funding_fee`; `REALIZED_PNL` is
@@ -44,6 +47,29 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   emit their registered classes, hyperliquid `withdraw`/`vaultWithdraw` emit
   `withdrawal` and `vaultDeposit` emits `deposit`, and the coverage suite
   rejects any venue-specific label whose raw event carries a registered class.
+  Bybit `SETTLEMENT` emits `funding_fee` (the venue's transaction-log enum
+  pins it as perpetual funding settlement), the `BONUS` family emits `bonus`,
+  and `CURRENCY_BUY`/`CURRENCY_SELL`/`CONVERT` emit `conversion`; hyperliquid
+  `rewardsClaim` emits the venue-faithful `rewards_claim` (the L1 schema
+  defines it as builder/referrer fee claims, not a promotional credit).
+- Deribit positions carry one unit contract: future `notional` is the venue's
+  quote-USD `size` (it was previously sourced from the base-denominated
+  `size_currency`), `base_quantity` carries the base size, and `contracts` is
+  derived as `|notional| / contract_size` from loaded market metadata. Without
+  `load_markets`, deribit future `contracts` and `contract_size` are now `nil`
+  (previously `contracts` carried the raw quote `size`) — consumers reading
+  `contracts` must attach markets first. Binance COIN-M `notional` remains
+  coin-settled under a named carve exception.
+
+### Fixed
+
+- Deribit trade `cost` on symbol-less reads (`fetch_my_trades` without a
+  symbol) is payload-derived: inverse fills emit `amount / price` instead of
+  `amount * price` (previously off by ~2.5e9x on BTC-PERPETUAL), options keep
+  the base-coin `amount * price` identity, and the classifier consults loaded
+  markets before degrading to instrument-id parsing. Unified endpoint
+  identities now include every section plus the HTTP method and path, so
+  same-path routes under different methods or sections no longer collide.
 - Unified rate-like fields carry pinned units end-to-end: implied volatility
   and funding/margin rates are fractions, ticker/option `percentage` is
   percent points, and the unit invariant now grades emitted parser output
