@@ -1126,3 +1126,40 @@ Mit gültigen **Futures**-Testnet-Keys => `{:error, 401 "Invalid API-key"}`; mit
 Expected: `type: :swap` trifft fapi (testnet.binancefuture.com), nicht den Spot-Testnet.
 `fetch_swap_balance` ist für binance zugleich `:not_supported` — es gibt also aktuell keinen
 funktionierenden unified Weg zum USD-M-Wallet-Stand im Sandbox-Modus.
+
+---
+
+## 2026-08-14 — deribit: flache Positionen (`direction: "zero"`) degradieren `PortfolioRisk.snapshot` zu `:partial`
+
+**Method:** `Bourse.PortfolioRisk.snapshot/1` (via `Bourse.fetch_positions/1`) · **Exchange:** deribit (sandbox, test.deribit.com) · **Severity:** medium (Konsument kann nie `status: :complete` erreichen, sobald das Konto je eine Position hatte)
+
+Deribit `private/get_positions` liefert für geschlossene/flache Positionen Einträge mit
+`"direction": "zero"` und `"size": 0.0`. `fetch_positions` normalisiert die zu
+`%Bourse.Position{side: nil, contracts: 0.0}`, und `PortfolioRisk` wertet `side: nil` als
+Komponenten-Failure:
+
+```elixir
+{:ok, snap} = Bourse.PortfolioRisk.snapshot([Bourse.PortfolioRisk.scope(ex, "main")])
+# => snap.status == :partial, snap.failures ==
+#    [%{reason: :missing_position_side, symbol: "BTC/USD:BTC", component: :positions, ...},
+#     %{reason: :missing_position_side, symbol: "ETH/USD:ETH-260925-2700-P", ...}]
+# obwohl domain.components.positions status: :ok hat und beide Positionen size 0.0 sind.
+```
+
+Expected: eine `direction: "zero"`-Position ist *flat* — entweder soll `fetch_positions` sie
+gar nicht als offene Position emittieren, oder `PortfolioRisk` soll zero-size-Positionen als
+flat behandeln statt `:missing_position_side` zu melden. Konsument-Repro: trading_dashboard
+`test/integration/risk_portfolio_margin_integration_test.exs` (pinnt `status: :complete`, rot
+seit das Testnet-Konto geschlossene Positionen trägt).
+
+**Status (2026-08-14):** 🔀 **triaged — not a client defect; fix routed to bourse_trading (PortfolioRisk).**
+`side: nil` + `contracts: 0.0` für flache Positionen ist die etablierte Cross-Venue-Carve, kein
+deribit-Sonderfall: derive und lighter authoren `sign_direction` explizit mit `"zero": null`, und
+die binance-Familie leitet `side` aus dem `positionAmt`-Vorzeichen ab (Zero → `nil`,
+`binance_position_side/1` in `Bourse.Unified.ReadParse`). Flache Rows client-seitig zu filtern
+würde provider-emittierte Information löschen und die public Surface ändern — abgelehnt.
+Empfohlener Downstream-Fix: `PortfolioRisk` behandelt `contracts == 0` als *flat*;
+`:missing_position_side` nur bei `contracts != 0` und fehlender `side`. An den
+bourse_trading-Orchestrator gemeldet (Session-Message, 2026-08-14). Hinweis dorthin: seit Task
+610 (heute gelandet, unreleased) sind deribit-Future-`contracts`/`contract_size` ohne
+`load_markets` `nil` — Exposure-Math, das `contracts` liest, braucht geladene Markets.
