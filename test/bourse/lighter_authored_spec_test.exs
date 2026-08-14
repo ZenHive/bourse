@@ -11,13 +11,28 @@ defmodule Bourse.LighterAuthoredSpecTest do
   alias Bourse.Unified.RequestShape.Lighter, as: LighterRequestShape
 
   @owned_path "priv/specs/json/output/authored/lighter.json"
+  @balance_fixture "test/fixtures/responses/lighter/fetch_balance.json"
   @deposit_fixture "test/fixtures/responses/lighter/fetch_deposits.json"
   @positions_fixture "test/fixtures/responses/lighter/fetch_positions.json"
+  @external_resource @balance_fixture
   @external_resource @deposit_fixture
   @external_resource @positions_fixture
   @mainnet_url "https://mainnet.zklighter.elliot.ai"
   @public_account_index 0
   @private_key "07000000000000000300000000000000000000000000000000000000000000000000000000000000"
+  @provider_required_fields %{
+    "AccountPosition" =>
+      ~w(market_id symbol initial_margin_fraction open_order_count pending_order_count position_tied_order_count sign position avg_entry_price position_value unrealized_pnl realized_pnl liquidation_price margin_mode allocated_margin total_discount),
+    "DepositHistoryItem" => ~w(id amount timestamp status l1_tx_hash asset_id),
+    "LiqTrade" => ~w(price size taker_fee maker_fee transaction_time),
+    "Liquidation" => ~w(id market_id type trade info executed_at),
+    "LiquidationInfo" => ~w(positions risk_info_before risk_info_after mark_prices assets asset_index_prices),
+    "Trade" =>
+      ~w(trade_id trade_id_str tx_hash type market_id size price usd_amount ask_id bid_id ask_client_id ask_client_id_str bid_client_id bid_client_id_str ask_account_id bid_account_id is_maker_ask block_height timestamp taker_position_size_before taker_entry_quote_before taker_initial_margin_fraction_before taker_position_sign_changed maker_position_size_before maker_entry_quote_before maker_initial_margin_fraction_before maker_position_sign_changed transaction_time ask_account_pnl bid_account_pnl integrator_taker_fee integrator_taker_fee_collector_index integrator_maker_fee integrator_maker_fee_collector_index taker_allocated_margin_usdc_before taker_allocated_margin_usdc_after maker_allocated_margin_usdc_before maker_allocated_margin_usdc_after),
+    "TransferHistoryItem" =>
+      ~w(id amount timestamp type from_l1_address to_l1_address from_account_index to_account_index tx_hash asset_id fee from_route to_route),
+    "WithdrawHistoryItem" => ~w(id amount timestamp status type l1_tx_hash asset_id)
+  }
 
   defmodule NoopParser do
     @moduledoc false
@@ -213,7 +228,7 @@ defmodule Bourse.LighterAuthoredSpecTest do
 
     assert {:ok, %Bourse.Balance{} = balance} = Bourse.fetch_balance(exchange, call_opts)
     assert Bourse.Balance.get(balance, "ETH") == %{free: 3.0, used: 0.0, total: 3.0}
-    assert Bourse.Balance.get(balance, "USDC") == %{free: 10_000.0, used: 0.0, total: 10_000.0}
+    assert Bourse.Balance.get(balance, "USDC") == %{free: 9964.5, used: 0.0, total: 10_000.0}
 
     assert {:ok, [%Bourse.Position{} = position]} = Bourse.fetch_positions(exchange, call_opts)
     assert position.symbol == market().symbol
@@ -223,7 +238,20 @@ defmodule Bourse.LighterAuthoredSpecTest do
     assert position.liquidation_price == 75.0
 
     assert {:ok, [%Bourse.Trade{} = trade]} = Bourse.fetch_my_trades(exchange, call_opts)
-    assert %{id: "145", symbol: "BTC/USDC:USDC", amount: 0.1, price: 100.0, cost: 10.0} = trade
+
+    assert %{
+             id: "145",
+             symbol: "BTC/USDC:USDC",
+             amount: 0.1,
+             price: 100.0,
+             cost: 10.0,
+             timestamp: 1_800_000_000_000,
+             side: "buy",
+             taker_or_maker: "taker",
+             order_id: "245",
+             fee: %{"cost" => 3.0, "currency" => "USDC"},
+             type: nil
+           } = trade
 
     assert {:ok,
             [
@@ -257,8 +285,9 @@ defmodule Bourse.LighterAuthoredSpecTest do
                 id: "transfer-1",
                 currency: "LIT",
                 fee: %{"cost" => 0.01, "currency" => "LIT"},
-                from_account: "perps",
-                to_account: "spot"
+                from_account: "1",
+                to_account: "2",
+                info: %{"from_route" => "perps", "to_route" => "spot"}
               }
             ]} =
              Bourse.fetch_transfers(exchange, call_opts)
@@ -292,6 +321,38 @@ defmodule Bourse.LighterAuthoredSpecTest do
            ]
   end
 
+  test "provider-shaped history stubs carry every required provider field" do
+    account_position = get_in(account_body(), ["accounts", Access.at(0), "positions", Access.at(0)])
+    liquidation = liquidation_body()
+
+    assert_provider_stub!("AccountPosition", account_position)
+    assert_provider_stub!("Trade", trade_body())
+    assert_provider_stub!("DepositHistoryItem", deposit_body())
+    assert_provider_stub!("WithdrawHistoryItem", withdrawal_body())
+    assert_provider_stub!("TransferHistoryItem", transfer_body())
+    assert_provider_stub!("Liquidation", liquidation)
+    assert_provider_stub!("LiqTrade", liquidation["trade"])
+    assert_provider_stub!("LiquidationInfo", liquidation["info"])
+  end
+
+  test "a required provider symbol cannot suppress market-id resolution or make a flat row long" do
+    body = put_in(account_body(), ["accounts", Access.at(0), "positions", Access.at(0), "position"], "0.00000")
+
+    assert {:ok, [%Bourse.Position{symbol: "BTC/USDC:USDC", side: nil} = position]} =
+             ReadParse.parse(
+               exchange_with_market(),
+               Bourse.Lighter,
+               :fetch_positions,
+               "fetchPositions",
+               body,
+               %{},
+               :parse_position,
+               true
+             )
+
+    assert position.contracts == 0.0
+  end
+
   test "the recorded populated deposit resolves its required asset id and endpoint type" do
     fixture = Bourse.JsonDocument.decode_file!(@deposit_fixture)
 
@@ -310,12 +371,42 @@ defmodule Bourse.LighterAuthoredSpecTest do
     assert %{amount: 10_000.0, currency: "USDC", type: "deposit"} = deposit
   end
 
+  test "the recorded open account uses provider available balance as free collateral" do
+    fixture = Bourse.JsonDocument.decode_file!(@balance_fixture)
+
+    assert {:ok, %Bourse.Balance{} = balance} =
+             ReadParse.parse(
+               Exchange.new!("lighter"),
+               Bourse.Lighter,
+               :fetch_balance,
+               "fetchBalance",
+               fixture["body"],
+               %{},
+               :parse_balance,
+               true
+             )
+
+    assert %{free: free, used: used, total: 10_000.0} = Bourse.Balance.get(balance, "USDC")
+    assert used == 0.0
+    assert_in_delta free, 9_964.54469, 1.0e-8
+    assert free < balance.total["USDC"]
+  end
+
   test "the recorded position margin fraction is normalized from percent points" do
     fixture = Bourse.JsonDocument.decode_file!(@positions_fixture)
 
-    assert {:ok, [%Bourse.Position{initial_margin_percentage: 0.05}]} =
+    exchange = "lighter" |> Exchange.new!() |> Exchange.put_markets([market()])
+
+    assert {:ok,
+            [
+              %Bourse.Position{
+                initial_margin_percentage: 0.05,
+                side: "long",
+                symbol: "BTC/USDC:USDC"
+              }
+            ]} =
              ReadParse.parse(
-               Exchange.new!("lighter"),
+               exchange,
                Bourse.Lighter,
                :fetch_positions,
                "fetchPositions",
@@ -596,7 +687,7 @@ defmodule Bourse.LighterAuthoredSpecTest do
       "code" => 200,
       "accounts" => [
         %{
-          "available_balance" => "10000.000000",
+          "available_balance" => "9964.500000",
           "assets" => [
             %{"symbol" => "ETH", "balance" => "3.0", "locked_balance" => "0", "margin_balance" => "0"},
             %{"symbol" => "USDC", "balance" => "0", "locked_balance" => "0", "margin_balance" => "10000"}
@@ -607,11 +698,17 @@ defmodule Bourse.LighterAuthoredSpecTest do
               "avg_entry_price" => "90",
               "initial_margin_fraction" => "20",
               "liquidation_price" => "75",
+              "margin_mode" => 0,
               "market_id" => 1,
+              "open_order_count" => 0,
+              "pending_order_count" => 0,
               "position" => "0.25",
+              "position_tied_order_count" => 0,
               "position_value" => "25",
               "realized_pnl" => "1",
               "sign" => 1,
+              "symbol" => "BTC",
+              "total_discount" => "0",
               "unrealized_pnl" => "2"
             }
           ]
@@ -622,12 +719,44 @@ defmodule Bourse.LighterAuthoredSpecTest do
 
   defp trade_body do
     %{
+      "ask_account_id" => 2,
+      "ask_account_pnl" => "0",
+      "ask_client_id" => 12,
+      "ask_client_id_str" => "12",
+      "ask_id" => 244,
+      "bid_account_id" => 1,
+      "bid_account_pnl" => "0",
+      "bid_client_id" => 13,
+      "bid_client_id_str" => "13",
+      "bid_id" => 245,
+      "block_height" => 10,
+      "integrator_maker_fee" => "0",
+      "integrator_maker_fee_collector_index" => 0,
+      "integrator_taker_fee" => "0",
+      "integrator_taker_fee_collector_index" => 0,
+      "is_maker_ask" => true,
+      "maker_allocated_margin_usdc_after" => "0",
+      "maker_allocated_margin_usdc_before" => "0",
+      "maker_entry_quote_before" => "0",
+      "maker_fee" => "2",
+      "maker_initial_margin_fraction_before" => 0,
+      "maker_position_sign_changed" => false,
+      "maker_position_size_before" => "0",
       "market_id" => 1,
       "price" => "100",
       "size" => "0.1",
-      "timestamp" => 1_800_000_000,
+      "taker_allocated_margin_usdc_after" => "0",
+      "taker_allocated_margin_usdc_before" => "0",
+      "taker_entry_quote_before" => "0",
+      "taker_fee" => "3",
+      "taker_initial_margin_fraction_before" => 0,
+      "taker_position_sign_changed" => false,
+      "taker_position_size_before" => "0",
+      "timestamp" => 1_800_000_000_000,
       "trade_id" => 145,
       "trade_id_str" => "145",
+      "transaction_time" => 1_800_000_000_000,
+      "tx_hash" => "0xtrade",
       "type" => "trade",
       "usd_amount" => "10"
     }
@@ -661,10 +790,16 @@ defmodule Bourse.LighterAuthoredSpecTest do
       "amount" => "2",
       "asset_id" => 2,
       "fee" => "0.01",
+      "from_account_index" => 1,
+      "from_l1_address" => "0xfrom",
       "from_route" => "perps",
       "id" => "transfer-1",
-      "timestamp" => 1_800_000_000,
-      "to_route" => "spot"
+      "timestamp" => 1_800_000_000_000,
+      "to_account_index" => 2,
+      "to_l1_address" => "0xto",
+      "to_route" => "spot",
+      "tx_hash" => "0xtransfer",
+      "type" => "internal"
     }
   end
 
@@ -672,14 +807,38 @@ defmodule Bourse.LighterAuthoredSpecTest do
     %{
       "executed_at" => 1_800_000_000,
       "id" => 1,
+      "info" => %{
+        "asset_index_prices" => [],
+        "assets" => [],
+        "mark_prices" => [],
+        "positions" => [],
+        "risk_info_after" => %{},
+        "risk_info_before" => %{}
+      },
       "market_id" => 1,
-      "trade" => %{"price" => "80", "size" => "0.25"},
+      "trade" => %{
+        "maker_fee" => "0",
+        "price" => "80",
+        "size" => "0.25",
+        "taker_fee" => "0",
+        "transaction_time" => 1_800_000_000
+      },
       "type" => "partial"
     }
   end
 
   defp funding_body do
     %{"direction" => "long", "rate" => "0.0012", "timestamp" => 1_800_000_000, "value" => "0.03"}
+  end
+
+  defp assert_provider_stub!(schema, row) do
+    missing_fields =
+      @provider_required_fields
+      |> Map.fetch!(schema)
+      |> Enum.reject(&Map.has_key?(row, &1))
+
+    assert missing_fields == [],
+           "#{schema} stub is missing required provider fields: #{Enum.join(missing_fields, ", ")}"
   end
 
   defp unique_stub(name), do: {__MODULE__, name, System.unique_integer([:positive])}

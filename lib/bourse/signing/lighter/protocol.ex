@@ -25,7 +25,8 @@ defmodule Bourse.Signing.Lighter.Protocol do
     cancel_all_orders: 5,
     modify_order: 6,
     update_leverage: 7,
-    update_margin: 8
+    update_margin: 8,
+    transfer: 9
   }
 
   @errors %{
@@ -46,6 +47,7 @@ defmodule Bourse.Signing.Lighter.Protocol do
           | :modify_order
           | :update_leverage
           | :update_margin
+          | :transfer
   @type protocol_error ::
           :protocol_error
           | :not_initialized
@@ -196,6 +198,22 @@ defmodule Bourse.Signing.Lighter.Protocol do
     ])
   end
 
+  defp encode_payload(:transfer, params) do
+    with {:ok, encoded} <-
+           encode_fields(params, [
+             {:to_account_index, :i64},
+             {:asset_index, :u16, @max_i16},
+             {:from_route, :u8, 1},
+             {:to_route, :u8, 1},
+             {:amount, :i64},
+             {:usdc_fee, :i64}
+           ]),
+         {:ok, memo} <- memo(params),
+         {:ok, nonce_fields} <- encode_fields(params, [{:skip_nonce, :bool}, {:nonce, :nonce}]) do
+      {:ok, <<encoded::binary, memo::binary, nonce_fields::binary>>}
+    end
+  end
+
   defp encode_payload(_operation, _params), do: {:error, :invalid_argument}
 
   defp encode_fields(params, fields) do
@@ -248,6 +266,19 @@ defmodule Bourse.Signing.Lighter.Protocol do
     encode_unsigned(params, name, maximum, 32)
   end
 
+  defp memo(params) do
+    case Map.fetch(params, :memo) do
+      {:ok, value} when is_binary(value) and byte_size(value) == 64 ->
+        case Base.decode16(value, case: :mixed) do
+          {:ok, <<_::binary-size(32)>>} -> {:ok, value}
+          _ -> {:error, :invalid_argument}
+        end
+
+      _ ->
+        {:error, :invalid_argument}
+    end
+  end
+
   defp encode_unsigned(params, name, maximum, bits) do
     with {:ok, value} <- integer(params, name),
          :ok <- valid_uint(value, maximum) do
@@ -266,7 +297,8 @@ defmodule Bourse.Signing.Lighter.Protocol do
               :cancel_all_orders,
               :modify_order,
               :update_leverage,
-              :update_margin
+              :update_margin,
+              :transfer
             ] do
     with {:ok, tx_info, rest} <- take_string(payload),
          {:ok, tx_hash, rest} <- take_string(rest),

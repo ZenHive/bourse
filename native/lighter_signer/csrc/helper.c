@@ -25,7 +25,8 @@ enum operation {
   OP_CANCEL_ALL_ORDERS = 5,
   OP_MODIFY_ORDER = 6,
   OP_UPDATE_LEVERAGE = 7,
-  OP_UPDATE_MARGIN = 8
+  OP_UPDATE_MARGIN = 8,
+  OP_TRANSFER = 9
 };
 
 enum error_code {
@@ -498,6 +499,38 @@ static int process_update_margin(reader *input, uint8_t operation, uint32_t requ
   return send_signed_result(operation, request_id, result);
 }
 
+static int process_transfer(reader *input, uint8_t operation, uint32_t request_id) {
+  int64_t to_account_index;
+  uint16_t asset_index;
+  uint8_t from_route;
+  uint8_t to_route;
+  int64_t amount;
+  int64_t usdc_fee;
+  const uint8_t *memo_bytes;
+  char memo[65];
+  uint8_t skip_nonce;
+  int64_t nonce;
+  SignedTxResponse result;
+  if (!take_i64(input, &to_account_index) || !take_u16(input, &asset_index) ||
+      !take_u8(input, &from_route) || !take_u8(input, &to_route) ||
+      !take_i64(input, &amount) || !take_i64(input, &usdc_fee) ||
+      !take_bytes(input, 64U, &memo_bytes) || !take_u8(input, &skip_nonce) ||
+      !take_i64(input, &nonce) || !exhausted(input) || to_account_index <= 0 ||
+      asset_index > INT16_MAX || from_route > 1U || to_route > 1U || amount <= 0 ||
+      usdc_fee < 0 || skip_nonce > 1U || nonce < 0) {
+    return send_error(operation, request_id, ERROR_INVALID_ARGUMENT);
+  }
+  memcpy(memo, memo_bytes, 64U);
+  memo[64] = '\0';
+  result = SignTransfer((long long)to_account_index, (int16_t)asset_index,
+                        from_route, to_route, (long long)amount,
+                        (long long)usdc_fee, memo, skip_nonce,
+                        (long long)nonce, api_key_index,
+                        (long long)account_index);
+  secure_zero(memo, sizeof(memo));
+  return send_signed_result(operation, request_id, result);
+}
+
 static int process_frame(const uint8_t *frame, size_t length) {
   reader input = {frame, length, 0U};
   uint8_t version;
@@ -528,6 +561,8 @@ static int process_frame(const uint8_t *frame, size_t length) {
     return process_update_leverage(&input, operation, request_id);
   case OP_UPDATE_MARGIN:
     return process_update_margin(&input, operation, request_id);
+  case OP_TRANSFER:
+    return process_transfer(&input, operation, request_id);
   default:
     return send_error(operation, request_id, ERROR_PROTOCOL);
   }

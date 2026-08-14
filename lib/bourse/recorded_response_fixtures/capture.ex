@@ -39,6 +39,13 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
   @invalid_okx_secret "0123456789abcdef0123456789abcdef"
   @invalid_okx_passphrase "invalid-passphrase"
   @unknown_symbol "THISISNOTAREALSYMBOLXYZ"
+  @lighter_private_history_methods [
+    :fetch_deposits,
+    :fetch_my_liquidations,
+    :fetch_my_trades,
+    :fetch_transfers,
+    :fetch_withdrawals
+  ]
   @error_mutation_safety %{
     "deliberately_invalid_params" => true,
     "key_mutation" => false,
@@ -49,19 +56,39 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
   }
   @param_injections %{
     {"lighter", :fetch_closed_orders} => %{
-      "exempt_params" => ~w(account_index auth_deadline market_id),
-      "params" => ~w(account_index auth_deadline market_id),
-      "reason" => "capture selects one live account market and supplies its authenticated history scope"
+      "exempt_params" => ~w(auth_deadline),
+      "params" => ~w(auth_deadline),
+      "reason" => "capture supplies a time-varying authenticated history deadline"
     },
     {"lighter", :fetch_deposits} => %{
-      "exempt_params" => ~w(l1_address),
-      "params" => ~w(l1_address),
-      "reason" => "capture resolves the provisioned account's L1 address through public_get_account"
+      "exempt_params" => ~w(auth_deadline),
+      "params" => ~w(auth_deadline),
+      "reason" => "capture supplies a time-varying authenticated history deadline"
+    },
+    {"lighter", :fetch_my_liquidations} => %{
+      "exempt_params" => ~w(auth_deadline),
+      "params" => ~w(auth_deadline),
+      "reason" => "capture supplies a time-varying authenticated history deadline"
+    },
+    {"lighter", :fetch_my_trades} => %{
+      "exempt_params" => ~w(auth_deadline),
+      "params" => ~w(auth_deadline),
+      "reason" => "capture supplies a time-varying authenticated history deadline"
     },
     {"lighter", :fetch_open_orders} => %{
-      "exempt_params" => ~w(account_index auth_deadline market_id),
-      "params" => ~w(account_index auth_deadline market_id),
-      "reason" => "capture selects one live account market and supplies its authenticated history scope"
+      "exempt_params" => ~w(auth_deadline),
+      "params" => ~w(auth_deadline),
+      "reason" => "capture supplies a time-varying authenticated history deadline"
+    },
+    {"lighter", :fetch_transfers} => %{
+      "exempt_params" => ~w(auth_deadline),
+      "params" => ~w(auth_deadline),
+      "reason" => "capture supplies a time-varying authenticated history deadline"
+    },
+    {"lighter", :fetch_withdrawals} => %{
+      "exempt_params" => ~w(auth_deadline),
+      "params" => ~w(auth_deadline),
+      "reason" => "capture supplies a time-varying authenticated history deadline"
     }
   }
 
@@ -905,10 +932,9 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
 
   defp capture_profile(exchange, exchange_id, method, %{raw_endpoint: raw_endpoint} = profile, credentials)
        when is_atom(raw_endpoint) and not is_nil(raw_endpoint) do
-    caller_params = build_params(method, profile)
-
     with {:ok, exchange} <- maybe_load_markets(exchange, profile),
          {:ok, params} <- live_read_params(exchange, method, profile),
+         caller_params = recorded_caller_params(exchange_id, method, params, profile),
          {:ok, response} <- dispatch_raw_endpoint(exchange, raw_endpoint, params, profile.call_opts) do
       fixture =
         %{profile | params: params}
@@ -922,10 +948,9 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
   end
 
   defp capture_profile(exchange, exchange_id, method, profile, credentials) do
-    caller_params = build_params(method, profile)
-
     with {:ok, exchange} <- maybe_load_markets(exchange, profile),
          {:ok, params} <- live_read_params(exchange, method, profile),
+         caller_params = recorded_caller_params(exchange_id, method, params, profile),
          {:ok, response_or_responses} <-
            Unified.capture_responses(exchange, method, params, profile.call_opts) do
       fixture =
@@ -977,14 +1002,37 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
     with {:ok, %{status: 200, body: %{"code" => 200, "accounts" => [account | _]}}} <-
            Bourse.Lighter.public_get_account(exchange, %{"by" => "index", "value" => account_index}),
          l1_address when is_binary(l1_address) <- Map.get(account, "l1_address") do
-      {:ok, :fetch_deposits |> build_params(profile) |> Map.put("l1_address", l1_address)}
+      {:ok,
+       :fetch_deposits
+       |> build_params(profile)
+       |> Map.merge(lighter_private_history_params(exchange))
+       |> Map.put("l1_address", l1_address)}
     else
       nil -> {:error, :lighter_account_missing_l1_address}
       other -> {:error, {:lighter_account_lookup_failed, other}}
     end
   end
 
+  defp live_read_params(%Exchange{id: "lighter"} = exchange, method, profile)
+       when method in @lighter_private_history_methods do
+    {:ok, method |> build_params(profile) |> Map.merge(lighter_private_history_params(exchange))}
+  end
+
   defp live_read_params(_exchange, method, profile), do: {:ok, build_params(method, profile)}
+
+  defp lighter_private_history_params(exchange) do
+    %{
+      "account_index" => LighterMarket.credential_integer!(exchange.credentials.uid),
+      "auth_deadline" => System.system_time(:second) + @lighter_auth_lifetime_seconds
+    }
+  end
+
+  defp recorded_caller_params("lighter", method, params, _profile)
+       when is_map_key(@param_injections, {"lighter", method}) do
+    Map.delete(params, "auth_deadline")
+  end
+
+  defp recorded_caller_params(_exchange_id, method, _params, profile), do: build_params(method, profile)
 
   defp error_params(exchange, %{error_kind: "insufficient_funds"} = profile) do
     params = build_params(Map.fetch!(profile, :call_method), profile)

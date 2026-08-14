@@ -23,7 +23,8 @@ defmodule Bourse.Signing.Lighter do
   @transaction_params_key "__bourse_lighter_transaction_params"
   @transaction_operations %{
     "cancel_order" => :cancel_order,
-    "create_order" => :create_order
+    "create_order" => :create_order,
+    "transfer" => :transfer
   }
   @internal_param_keys [
     :api_key_index,

@@ -178,25 +178,55 @@ artifact `rest-openapi`).
 ## 2026-08-11 — account and history response slices (Task 546)
 
 **C-T546 — Lighter's account response supplies balance and positions, and unified history
-methods use the venue-owned history endpoints (task 546). Outcome: CONFIRM provider contract.**
+methods use the venue-owned history endpoints (task 546; amended by task 595). Outcome: CONFIRM the
+provider contract with three unified-carve DIVERGENCES.**
 
 - *Exchange semantics:* `GET /api/v1/account` returns account `assets` and `positions` in one
   response. The provider OpenAPI defines the account-scoped trade, deposit, withdrawal, transfer,
   and liquidation history responses under their corresponding endpoints.
-- *Our carve:* `fetchBalance` parses `accounts[0].assets`, while `fetchPositions` parses
-  `accounts[0].positions`. The five account histories map to their matching provider operations.
-  All account-scoped reads derive the account index from the exchange credentials. Deposit and
-  withdrawal transaction timestamps are parsed as milliseconds: the live deposit response carried
-  13-digit millisecond values despite the shorter example value in the provider schema.
+- *Our carve — DIVERGE, position symbol:* `AccountPosition.symbol` is the base asset (`BTC`),
+  while the unified contract requires `BTC/USDC:USDC`. The parser resolves `market_id` through
+  the loaded market table and retains the provider symbol in `info`; neither the required provider
+  field nor a raw market-id string can become the unified symbol. The same market-id resolution is
+  applied to trades and liquidations.
+- *Our carve — DIVERGE, free balance:* USDC `free` is the account-level
+  `available_balance`; `total` is collateral. It is not computed as asset balance plus
+  `margin_balance` minus `locked_balance`: with a live 0.011 BTC position the venue reported
+  `available_balance = 9964.544690`, `collateral = 10000.000000`, and
+  `margin_balance = 10000.000000`, proving the subtraction carve overstates spendable funds.
+- *Our carve — DIVERGE, transfer routes:* unified `from` and `to` carry
+  `from_account_index` and `to_account_index`. The provider's independent `spot|perps`
+  `from_route` and `to_route` remain in `info`; substituting routes for account identity loses the
+  counterparty and can make both ends read `perps`. Recordings scrub account indexes, so the tagged
+  live round-trip test proves the identities before scrubbing and the provider-shaped stub pins the
+  offline mapping.
+- *Trade semantics:* the reader compares `ask_account_id` and `bid_account_id` with the credential
+  account index, then derives side, maker/taker role, matching order id, and the corresponding
+  maker/taker fee. The provider `type` enum (`trade`, `liquidation`, `deleverage`,
+  `market-settlement`) classifies the fill and is not a unified order type. The funded testnet
+  account has zero fees, so its live rows omit the optional fee fields; fee selection remains
+  provider-shape verified rather than live-value verified.
+- *Flat positions:* provider `sign = 1` remains present on a zero-size row, so unified side is
+  suppressed whenever signed size is zero rather than inferred from `sign` alone.
+- *Request provenance:* private-history recordings persist the reproducible resolved caller
+  parameters (`account_index`, `market_id`, and deposit `l1_address`). Only the time-varying
+  `auth_deadline` is exempt from congruence replay.
+- *Timestamp units:* deposit, withdrawal, transfer, and trade timestamps are parsed as
+  milliseconds. Populated live deposit, transfer, and trade responses carried 13-digit values
+  despite shorter example values in the provider schema.
 - *Funding distinction:* `fetchFundingRateHistory` maps to `GET /api/v1/fundings`, Lighter's own
   market funding history. `GET /api/v1/funding-rates` is a cross-exchange reference feed and is
   deliberately not a unified funding source.
-- *Verification:* committed recordings under `test/fixtures/responses/lighter/` cover each of the
-  eight newly mapped methods. The tagged integration test repeats all eight unified calls against
-  `testnet.zklighter.elliot.ai` and requires real credentials rather than skipping.
+- *Verification status:* balance and position recordings contain a real open BTC position;
+  deposits, trades, and transfers contain real rows. The transfer rows came from a reversible
+  perps-to-spot-to-perps USDC round trip, and the fill probe closes its BTC position in cleanup.
+  Withdrawal and liquidation recordings are fresh but empty and therefore prove only endpoint and
+  empty-envelope shape; their populated slices remain unverified. Liquidating a funded account and
+  withdrawing funds without an independently authorized redeposit path are not reversible evidence
+  operations. The tagged integration tests require credentials and fail loudly when unavailable.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T546","date":"2026-08-11","semantic_source":{"kind":"provider_owned","reference":"priv/authority/lighter/manifest.json artifact rest-openapi; account, trades, deposit/history, withdraw/history, transfer/history, liquidations, fundings and funding-rates operations"},"observed_evidence":{"kind":"live_venue","reference":"testnet HTTP/code 200 recordings for fetch_balance, fetch_positions, fetch_my_trades, fetch_deposits, fetch_withdrawals, fetch_transfers, fetch_my_liquidations and fetch_funding_rate_history under test/fixtures/responses/lighter; pinned by test/bourse/lighter_promotion_integration_test.exs"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T546","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"priv/authority/lighter/manifest.json artifact rest-openapi revision 6957dd8a; AccountPosition, Trade, DepositHistoryItem, TransferHistoryItem, WithdrawHistoryItem and Liquidation schemas"},"observed_evidence":{"kind":"live_venue","reference":"populated open-position fetch_balance/fetch_positions, fill fetch_my_trades, deposit fetch_deposits and reversible USDC fetch_transfers testnet recordings under test/fixtures/responses/lighter; fresh empty fetch_withdrawals/fetch_my_liquidations recordings are shape-only; live semantics pinned by test/bourse/lighter_promotion_integration_test.exs"},"compatibility_reference":null,"resolved_tier":1}
 -->
 
 **C-T546g — Lighter's funding `rate` is a PERCENT, so the unified fraction is `rate / 100`

@@ -4,6 +4,7 @@ defmodule Bourse.Signing.Lighter.ProtocolTest do
   alias Bourse.Signing.Lighter.Protocol
 
   @request_id 42
+  @empty_memo String.duplicate("00", 32)
 
   test "encodes initialization without placing the key outside its framed field" do
     key = String.duplicate("ab", 40)
@@ -82,12 +83,18 @@ defmodule Bourse.Signing.Lighter.ProtocolTest do
                skip_nonce: false,
                nonce: 10
              })
+
+    assert {:ok, <<1, 9, @request_id::32, _payload::binary>>} =
+             Protocol.encode_request(@request_id, :transfer, transfer())
   end
 
   test "rejects unknown, missing, and out-of-range operation values" do
     assert {:error, :invalid_argument} = Protocol.encode_request(@request_id, :withdraw, %{})
     assert {:error, :invalid_argument} = Protocol.encode_request(@request_id, :auth_token, %{})
     assert {:error, :invalid_argument} = Protocol.encode_request(@request_id, :auth_token, %{deadline: -1})
+
+    assert {:error, :invalid_argument} =
+             Protocol.encode_request(@request_id, :transfer, %{transfer() | memo: "not-a-memo"})
 
     assert {:error, :invalid_argument} =
              Protocol.encode_request(@request_id, :create_order, Map.delete(create_order(), :nonce))
@@ -188,6 +195,20 @@ defmodule Bourse.Signing.Lighter.ProtocolTest do
       self_trade_equality: 0,
       skip_nonce: false,
       nonce: 8
+    }
+  end
+
+  defp transfer do
+    %{
+      to_account_index: 1,
+      asset_index: 2,
+      from_route: 0,
+      to_route: 1,
+      amount: 100_000_000,
+      usdc_fee: 3_000_000,
+      memo: @empty_memo,
+      skip_nonce: false,
+      nonce: 11
     }
   end
 end

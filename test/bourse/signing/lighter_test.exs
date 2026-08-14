@@ -13,6 +13,7 @@ defmodule Bourse.Signing.LighterTest do
 
   @private_key "07000000000000000300000000000000000000000000000000000000000000000000000000000000"
   @other_private_key "08000000000000000300000000000000000000000000000000000000000000000000000000000000"
+  @empty_memo String.duplicate("00", 32)
 
   setup do
     on_exit(fn ->
@@ -148,6 +149,9 @@ defmodule Bourse.Signing.LighterTest do
               message_to_sign: "fake-message"
             }} =
              Lighter.sign_transaction(:cancel_order, cancel_order(), credentials, config)
+
+    assert {:ok, %{tx_info: ~s({"signature":"fake-signature"})}} =
+             Lighter.sign_transaction(:transfer, transfer(), credentials, config)
 
     assert {:error, {:lighter_signing, :invalid_argument}} =
              Lighter.sign_transaction(:withdraw, %{}, credentials, config)
@@ -408,6 +412,20 @@ defmodule Bourse.Signing.LighterTest do
       self_trade_equality: 0,
       skip_nonce: false,
       nonce: 3
+    }
+  end
+
+  defp transfer do
+    %{
+      to_account_index: 1,
+      asset_index: 2,
+      from_route: 0,
+      to_route: 1,
+      amount: 100_000_000,
+      usdc_fee: 3_000_000,
+      memo: @empty_memo,
+      skip_nonce: false,
+      nonce: 11
     }
   end
 

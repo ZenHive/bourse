@@ -11,22 +11,31 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruenceTest do
     assert Capture.param_injections() |> Map.keys() |> Enum.sort() == [
              {"lighter", :fetch_closed_orders},
              {"lighter", :fetch_deposits},
-             {"lighter", :fetch_open_orders}
+             {"lighter", :fetch_my_liquidations},
+             {"lighter", :fetch_my_trades},
+             {"lighter", :fetch_open_orders},
+             {"lighter", :fetch_transfers},
+             {"lighter", :fetch_withdrawals}
            ]
   end
 
-  test "a capture-injected param omitted by the runtime builder is red with its name" do
+  test "a recorded caller param omitted by the runtime builder is red with its name" do
     fixture = %{
-      "caller_params" => %{},
-      "params" => %{"l1_address" => "***REDACTED***"}
+      "caller_params" => %{"account_index" => "***REDACTED***", "l1_address" => "***REDACTED***"},
+      "params" => %{
+        "account_index" => "***REDACTED***",
+        "auth_deadline" => 1_800_000_000,
+        "l1_address" => "***REDACTED***"
+      }
     }
 
     injection = %{
-      "params" => ["l1_address"],
-      "reason" => "capture resolves the provisioned account's L1 address"
+      "exempt_params" => ["auth_deadline"],
+      "params" => ["auth_deadline"],
+      "reason" => "capture supplies a time-varying authenticated history deadline"
     }
 
-    assert_raise ArgumentError, ~r/runtime request builder cannot emit recorded params: l1_address/, fn ->
+    assert_raise ArgumentError, ~r/runtime request builder drops caller params: l1_address/, fn ->
       RequestCongruence.validate_case!(
         "lighter",
         :fetch_deposits,
@@ -37,17 +46,36 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruenceTest do
     end
   end
 
-  test "a reasoned exact exemption permits a capture-only lookup" do
-    fixture = %{"caller_params" => %{}, "params" => %{"l1_address" => "***REDACTED***"}}
-
-    injection = %{
-      "exempt_params" => ["l1_address"],
-      "params" => ["l1_address"],
-      "reason" => "capture resolves the provisioned account's L1 address"
+  test "a reasoned exact exemption permits only the time-varying auth deadline" do
+    fixture = %{
+      "caller_params" => %{"account_index" => "***REDACTED***", "l1_address" => "***REDACTED***"},
+      "params" => %{
+        "account_index" => "***REDACTED***",
+        "auth_deadline" => 1_800_000_000,
+        "l1_address" => "***REDACTED***"
+      }
     }
 
-    assert ["l1_address"] =
-             RequestCongruence.validate_case!("lighter", :fetch_deposits, fixture, [], injection)
+    injection = %{
+      "exempt_params" => ["auth_deadline"],
+      "params" => ["auth_deadline"],
+      "reason" => "capture supplies a time-varying authenticated history deadline"
+    }
+
+    assert ["auth_deadline"] =
+             RequestCongruence.validate_case!(
+               "lighter",
+               :fetch_deposits,
+               fixture,
+               [
+                 %{
+                   "account_index" => "1",
+                   "auth_deadline" => "deadline",
+                   "l1_address" => "0x0000000000000000000000000000000000000000"
+                 }
+               ],
+               injection
+             )
   end
 
   test "an unregistered capture-only param is red before it can become evidence" do

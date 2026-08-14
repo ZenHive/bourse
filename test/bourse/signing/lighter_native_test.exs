@@ -11,6 +11,7 @@ defmodule Bourse.Signing.LighterNativeTest do
   @private_key "07000000000000000300000000000000000000000000000000000000000000000000000000000000"
   @base_url "https://testnet.zklighter.elliot.ai"
   @port_timeout_ms 5_000
+  @empty_memo String.duplicate("00", 32)
 
   setup do
     credentials = Credentials.new!(api_key: "0", secret: @private_key, uid: "1")
@@ -199,7 +200,19 @@ defmodule Bourse.Signing.LighterNativeTest do
          nonce: 8
        }},
       {:update_leverage, %{market_index: 1, initial_margin_fraction: 100, margin_mode: 0, skip_nonce: false, nonce: 9}},
-      {:update_margin, %{market_index: 1, usdc_amount: -10, direction: 1, skip_nonce: false, nonce: 10}}
+      {:update_margin, %{market_index: 1, usdc_amount: -10, direction: 1, skip_nonce: false, nonce: 10}},
+      {:transfer,
+       %{
+         to_account_index: 1,
+         asset_index: 2,
+         from_route: 0,
+         to_route: 1,
+         amount: 100_000_000,
+         usdc_fee: 3_000_000,
+         memo: @empty_memo,
+         skip_nonce: false,
+         nonce: 11
+       }}
     ]
   end
 
@@ -215,8 +228,14 @@ defmodule Bourse.Signing.LighterNativeTest do
        <<0x8000::16, 0::signed-64, 0::signed-64, 0::signed-64, 0::signed-64, 0::signed-64, 0::32, 0::32, 0, 0, 0,
          0::signed-64>>},
       {:update_leverage, 7, <<0::16, 0x10000::32, 0, 0, 0::signed-64>>},
-      {:update_margin, 8, <<0::16, 0::signed-64, 0, 2, 0::signed-64>>}
+      {:update_margin, 8, <<0::16, 0::signed-64, 0, 2, 0::signed-64>>},
+      {:transfer, 9, invalid_transfer_frame()}
     ]
+  end
+
+  defp invalid_transfer_frame do
+    fields = <<1::signed-64, 2::16, 2, 1, 100_000_000::signed-64, 3_000_000::signed-64>>
+    fields <> @empty_memo <> <<0, 11::signed-64>>
   end
 
   defp initialize_port!(port, request_id) do

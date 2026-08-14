@@ -530,6 +530,32 @@ defmodule Bourse.ResponseParserTest do
              ResponseParser.apply_mappings(data, mapping, target: Balance)
   end
 
+  test "uses a parent account value for one keyed balance currency" do
+    mapping = %{
+      "free" => %{
+        "kind" => "keyed_collection",
+        "collection_key" => "assets",
+        "index_key" => "symbol",
+        "index_coercion" => "safeCurrencyCode",
+        "value_key" => "balance",
+        "parent_value_key" => "available_balance",
+        "parent_value_index" => "USDC",
+        "coercion" => "safeNumber"
+      }
+    }
+
+    data = %{
+      "available_balance" => "9964.544690",
+      "assets" => [
+        %{"symbol" => "ETH", "balance" => "3.0"},
+        %{"symbol" => "USDC", "balance" => "0", "margin_balance" => "10000"}
+      ]
+    }
+
+    assert {:ok, %Balance{free: %{"ETH" => 3.0, "USDC" => 9964.54469}}} =
+             ResponseParser.apply_mappings(data, mapping, target: Balance)
+  end
+
   test "subtracts keyed balance operands with decimal precision" do
     mapping = %{
       "free" => %{
@@ -1289,6 +1315,25 @@ defmodule Bourse.ResponseParserTest do
                ResponseParser.apply_mappings(%{"change" => "-0.25", "cashBalance" => "9.75"}, mapping,
                  target: Bourse.LedgerEntry
                )
+    end
+
+    test "suppresses sign direction when its authored size key is zero" do
+      mapping = %{
+        "side" => %{
+          "kind" => "sign_direction",
+          "key" => "sign",
+          "zero_key" => "position",
+          "negative" => "short",
+          "zero" => nil,
+          "positive" => "long"
+        }
+      }
+
+      assert {:ok, %Position{side: nil}} =
+               ResponseParser.apply_mappings(%{"position" => "0.00000", "sign" => 1}, mapping, target: Position)
+
+      assert {:ok, %Position{side: "long"}} =
+               ResponseParser.apply_mappings(%{"position" => "0.01100", "sign" => 1}, mapping, target: Position)
     end
 
     test "builds trade fees only when the venue supplies a fee" do

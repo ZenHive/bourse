@@ -1744,7 +1744,16 @@
         "field_map": {
           "datetime": null,
           "debt": null,
-          "free": null,
+          "free": {
+            "coercion": "safeNumber",
+            "collection_key": "assets",
+            "index_coercion": "safeCurrencyCode",
+            "index_key": "symbol",
+            "kind": "keyed_collection",
+            "parent_value_index": "USDC",
+            "parent_value_key": "available_balance",
+            "value_key": "balance"
+          },
           "info": null,
           "timestamp": null,
           "total": {
@@ -1914,7 +1923,8 @@
             "kind": "sign_direction",
             "negative": "short",
             "positive": "long",
-            "zero": null
+            "zero": null,
+            "zero_key": "position"
           },
           "stopLossPrice": null,
           "symbol": {
@@ -1947,10 +1957,18 @@
           },
           "datetime": {
             "coercion": "iso8601",
-            "format": "s",
+            "format": "ms",
             "key": "timestamp"
           },
-          "fee": null,
+          "fee": {
+            "cost_keys": [
+              "_bourse_fee"
+            ],
+            "currency_keys": [
+              "_bourse_fee_currency"
+            ],
+            "kind": "trade_fee"
+          },
           "id": {
             "coercion": "safeString",
             "fallback_keys": [
@@ -1960,29 +1978,42 @@
             "key": "trade_id_str"
           },
           "info": null,
-          "order": null,
+          "order": {
+            "coercion": "safeString",
+            "key": "_bourse_order"
+          },
           "price": {
             "coercion": "safeNumber",
             "format": null,
             "key": "price"
           },
-          "side": null,
+          "side": {
+            "coercion": "safeString",
+            "enum_values": [
+              "buy",
+              "sell"
+            ],
+            "key": "_bourse_side"
+          },
           "symbol": {
             "coercion": "safeString",
             "format": null,
             "key": "market_id"
           },
-          "takerOrMaker": null,
+          "takerOrMaker": {
+            "coercion": "safeString",
+            "enum_values": [
+              "maker",
+              "taker"
+            ],
+            "key": "_bourse_taker_or_maker"
+          },
           "timestamp": {
             "coercion": "safeTimestamp",
-            "format": "s",
+            "format": "ms",
             "key": "timestamp"
           },
-          "type": {
-            "coercion": "safeString",
-            "format": null,
-            "key": "type"
-          }
+          "type": null
         }
       },
       "transaction": {
@@ -2067,16 +2098,13 @@
           },
           "datetime": {
             "coercion": "iso8601",
-            "format": "s",
+            "format": "ms",
             "key": "timestamp"
           },
           "fromAccount": {
             "coercion": "safeString",
-            "fallback_keys": [
-              "from_account_index"
-            ],
             "format": null,
-            "key": "from_route"
+            "key": "from_account_index"
           },
           "fee": {
             "omit_if_empty": true,
@@ -2101,16 +2129,13 @@
           "status": null,
           "timestamp": {
             "coercion": "safeTimestamp",
-            "format": "s",
+            "format": "ms",
             "key": "timestamp"
           },
           "toAccount": {
             "coercion": "safeString",
-            "fallback_keys": [
-              "to_account_index"
-            ],
             "format": null,
-            "key": "to_route"
+            "key": "to_account_index"
           }
         }
       },

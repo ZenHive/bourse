@@ -14,9 +14,11 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
   alias Bourse.Unified
 
   @default_manifest "test/fixtures/responses/_manifest.json"
+  @mask "***REDACTED***"
   @dummy_evm_address "0x0000000000000000000000000000000000000000"
   @dummy_evm_secret "0123456789012345678901234567890123456789012345678901234567890123"
   @dummy_lighter_secret "01234567890123456789012345678901234567890123456789012345678901230123456789012345"
+  @dummy_lighter_account_index 1
   @derive_subaccount_id 1
 
   @doc "Validates every manifest-registered private recording carrying request params."
@@ -56,6 +58,18 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
       "#{label} has unregistered capture-only params: #{named_difference(observed, expected)}"
     )
 
+    missing_caller =
+      if venue == "lighter" do
+        caller_params |> Map.keys() |> Enum.reject(&emitted?(&1, shapes)) |> Enum.sort()
+      else
+        []
+      end
+
+    ensure!(
+      missing_caller == [],
+      "#{label} runtime request builder drops caller params: #{Enum.join(missing_caller, ", ")}"
+    )
+
     missing = Enum.reject(observed, &(&1 in exempt or emitted?(&1, shapes)))
     ensure!(missing == [], "#{label} runtime request builder cannot emit recorded params: #{Enum.join(missing, ", ")}")
     observed
@@ -71,15 +85,13 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
       caller_params = fixture["caller_params"] || params
       changed = changed_param_names(caller_params, params)
       expected = if injection, do: injection["params"], else: []
-      exempt = if injection, do: injection["exempt_params"] || [], else: []
 
       ensure!(
         changed == expected,
         "#{venue}.#{method} has unregistered capture-only params: #{named_difference(changed, expected)}"
       )
 
-      shapes =
-        if changed != [] and changed == exempt, do: [], else: request_shapes!(venue, method, caller_params, fixture)
+      shapes = request_shapes!(venue, method, caller_params, fixture)
 
       names = validate_case!(venue, method, fixture, shapes, injection)
 
@@ -119,11 +131,24 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
   defp request_shapes!(venue, method, params, fixture) do
     exchange = Exchange.new!(venue, exchange_opts(venue))
     opts = RecordedResponseFixtures.decode_call_opts(fixture)
+    params = runtime_caller_params(venue, params)
 
     case Unified.request_param_shapes(exchange, method, params, opts) do
       {:ok, shapes} -> shapes
       {:error, reason} -> raise ArgumentError, "#{venue}.#{method} request shape failed: #{inspect(reason)}"
     end
+  end
+
+  defp runtime_caller_params("lighter", params) do
+    params
+    |> replace_mask("account_index", @dummy_lighter_account_index)
+    |> replace_mask("l1_address", @dummy_evm_address)
+  end
+
+  defp runtime_caller_params(_venue, params), do: params
+
+  defp replace_mask(params, key, replacement) do
+    if params[key] == @mask, do: Map.put(params, key, replacement), else: params
   end
 
   defp exchange_opts("derive") do

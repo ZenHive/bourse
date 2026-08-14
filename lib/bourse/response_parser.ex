@@ -190,7 +190,7 @@ defmodule Bourse.ResponseParser do
     |> keyed_collection_entries(data)
     |> Enum.reduce(%{}, fn entry, acc ->
       key = entry |> Safe.value(rule["index_key"], nil) |> coerce(rule["index_coercion"])
-      value = keyed_collection_value(entry, value_keys, rule)
+      value = keyed_collection_value(entry, data, key, value_keys, rule)
 
       if is_nil(key) or is_nil(value), do: acc, else: Map.put(acc, key, value)
     end)
@@ -204,11 +204,15 @@ defmodule Bourse.ResponseParser do
   end
 
   defp extract_field(data, %{"kind" => "sign_direction"} = rule, _context) do
-    case data |> Safe.value_any(source_keys(rule), nil) |> decimal_compare_zero() do
-      :lt -> rule["negative"]
-      :eq -> rule["zero"]
-      :gt -> rule["positive"]
-      nil -> nil
+    if zero_key_matches?(data, rule) do
+      rule["zero"]
+    else
+      case data |> Safe.value_any(source_keys(rule), nil) |> decimal_compare_zero() do
+        :lt -> rule["negative"]
+        :eq -> rule["zero"]
+        :gt -> rule["positive"]
+        nil -> nil
+      end
     end
   end
 
@@ -365,20 +369,43 @@ defmodule Bourse.ResponseParser do
     end
   end
 
-  defp keyed_collection_value(entry, value_keys, %{"when_keys_absent" => keys} = rule) when is_list(keys) do
-    if Enum.all?(keys, &is_nil(Safe.value(entry, &1, nil))) do
-      keyed_collection_value(entry, value_keys, Map.delete(rule, "when_keys_absent"))
+  defp keyed_collection_value(
+         entry,
+         data,
+         key,
+         value_keys,
+         %{"parent_value_index" => index, "parent_value_key" => parent_key} = rule
+       )
+       when is_binary(parent_key) do
+    parent_index = coerce(index, rule["index_coercion"])
+
+    if key == parent_index do
+      data |> Safe.value(parent_key, nil) |> coerce(rule["coercion"])
+    else
+      keyed_collection_value(
+        entry,
+        data,
+        key,
+        value_keys,
+        Map.drop(rule, ["parent_value_index", "parent_value_key"])
+      )
     end
   end
 
-  defp keyed_collection_value(entry, value_keys, %{"value_op" => "add"} = rule) do
+  defp keyed_collection_value(entry, data, key, value_keys, %{"when_keys_absent" => keys} = rule) when is_list(keys) do
+    if Enum.all?(keys, &is_nil(Safe.value(entry, &1, nil))) do
+      keyed_collection_value(entry, data, key, value_keys, Map.delete(rule, "when_keys_absent"))
+    end
+  end
+
+  defp keyed_collection_value(entry, _data, _key, value_keys, %{"value_op" => "add"} = rule) do
     case value_keys |> Enum.map(&(entry |> Safe.value(&1, nil) |> Safe.string())) |> Enum.reject(&is_nil/1) do
       [] -> nil
       [value | values] -> values |> Enum.reduce(value, &Precise.string_add(&2, &1)) |> coerce(rule["coercion"])
     end
   end
 
-  defp keyed_collection_value(entry, [left_key | rest_keys], %{"value_op" => "subtract"} = rule) do
+  defp keyed_collection_value(entry, _data, _key, [left_key | rest_keys], %{"value_op" => "subtract"} = rule) do
     case entry |> Safe.value(left_key, nil) |> Safe.string() do
       nil ->
         nil
@@ -390,9 +417,15 @@ defmodule Bourse.ResponseParser do
     end
   end
 
-  defp keyed_collection_value(entry, value_keys, rule) do
+  defp keyed_collection_value(entry, _data, _key, value_keys, rule) do
     entry |> Safe.value_any(value_keys, nil) |> coerce(rule["coercion"])
   end
+
+  defp zero_key_matches?(data, %{"zero_key" => key}) when is_binary(key) do
+    data |> Safe.value(key, nil) |> decimal_compare_zero() == :eq
+  end
+
+  defp zero_key_matches?(_data, _rule), do: false
 
   defp subtract_keyed_operand(entry, key, total) do
     case entry |> Safe.value(key, nil) |> Safe.string() do

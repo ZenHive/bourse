@@ -283,7 +283,7 @@ defmodule Bourse.Unified.ReadParse do
            |> normalize_payload(list_return?, envelope_list?)
            |> annotate_bybit_market_category(body, exchange, parse_type, params)
            |> annotate_binance_family_payload(body, exchange, parse_type, js_name, params)
-           |> annotate_lighter_transaction_type(exchange, parse_type, js_name)
+           |> annotate_lighter_payload(exchange, parse_type, js_name)
            |> annotate_okx_payload(exchange, parse_type)
            |> annotate_derive_payload(exchange, parse_type)
            |> annotate_hyperliquid_payload(exchange, parse_type, js_name, params)
@@ -845,11 +845,17 @@ defmodule Bourse.Unified.ReadParse do
   defp backfill_one_native_symbol(%{symbol: symbol, info: info} = struct, exchange, endpoint_market_type)
        when is_map(info) do
     native =
-      Map.get(info, "symbol") ||
-        Map.get(info, "instrument_name") ||
-        Map.get(info, "instId") ||
-        hyperliquid_native_coin(info, exchange) ||
+      [
+        Map.get(info, "market_id"),
+        Map.get(info, "symbol"),
+        Map.get(info, "instrument_name"),
+        Map.get(info, "instId"),
+        hyperliquid_native_coin(info, exchange),
         symbol
+      ]
+      |> Enum.map(&Bourse.Safe.string/1)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.find(&backfill_symbol?(symbol, &1))
 
     cond do
       unified_symbol?(symbol, exchange) ->
@@ -3114,7 +3120,7 @@ defmodule Bourse.Unified.ReadParse do
 
   defp annotate_binance_transaction(row, _js_name, _params), do: row
 
-  defp annotate_lighter_transaction_type(rows, %Exchange{id: "lighter"}, "transaction", js_name)
+  defp annotate_lighter_payload(rows, %Exchange{id: "lighter"}, "transaction", js_name)
        when is_list(rows) and js_name in ["fetchDeposits", "fetchWithdrawals"] do
     type = if js_name == "fetchDeposits", do: "deposit", else: "withdrawal"
 
@@ -3124,7 +3130,67 @@ defmodule Bourse.Unified.ReadParse do
     end)
   end
 
-  defp annotate_lighter_transaction_type(payload, _exchange, _parse_type, _js_name), do: payload
+  defp annotate_lighter_payload(rows, %Exchange{id: "lighter"} = exchange, "trade", "fetchMyTrades") when is_list(rows) do
+    Enum.map(rows, &annotate_lighter_trade(&1, exchange))
+  end
+
+  defp annotate_lighter_payload(payload, _exchange, _parse_type, _js_name), do: payload
+
+  defp annotate_lighter_trade(%{} = row, exchange) do
+    case lighter_trade_role(row, exchange) do
+      {:ask, maker?} -> put_lighter_trade_fields(row, exchange, "sell", maker?, "ask")
+      {:bid, maker?} -> put_lighter_trade_fields(row, exchange, "buy", maker?, "bid")
+      nil -> row
+    end
+  end
+
+  defp annotate_lighter_trade(row, _exchange), do: row
+
+  defp lighter_trade_role(row, exchange) do
+    account_index = lighter_account_index(exchange)
+    ask? = lighter_account?(Map.get(row, "ask_account_id"), account_index)
+    bid? = lighter_account?(Map.get(row, "bid_account_id"), account_index)
+
+    case {ask?, bid?, Map.get(row, "is_maker_ask")} do
+      {true, false, maker?} when is_boolean(maker?) -> {:ask, maker?}
+      {false, true, maker?} when is_boolean(maker?) -> {:bid, not maker?}
+      _ -> nil
+    end
+  end
+
+  defp put_lighter_trade_fields(row, exchange, side, maker?, order_side) do
+    fee_key = if maker?, do: "maker_fee", else: "taker_fee"
+    order_id = Map.get(row, "#{order_side}_id_str") || Map.get(row, "#{order_side}_id")
+
+    row
+    |> maybe_put_synthetic("_bourse_side", side)
+    |> maybe_put_synthetic("_bourse_taker_or_maker", if(maker?, do: "maker", else: "taker"))
+    |> maybe_put_synthetic("_bourse_order", order_id)
+    |> maybe_put_synthetic("_bourse_fee", Map.get(row, fee_key))
+    |> maybe_put_synthetic("_bourse_fee_currency", lighter_market_settle(exchange, Map.get(row, "market_id")))
+  end
+
+  defp lighter_account?(value, account_index) when is_integer(account_index) do
+    Bourse.Safe.integer(value) == account_index
+  end
+
+  defp lighter_account?(_value, _account_index), do: false
+
+  defp lighter_account_index(%Exchange{credentials: %{uid: uid}}), do: Bourse.Safe.integer(uid)
+  defp lighter_account_index(_exchange), do: nil
+
+  defp lighter_market_settle(%Exchange{markets: markets}, market_id) when is_list(markets) do
+    native_id = Bourse.Safe.string(market_id)
+
+    markets
+    |> Enum.find(&(Bourse.Safe.string(binance_market_id(&1)) == native_id))
+    |> case do
+      nil -> nil
+      market -> Map.get(market, :settle) || Map.get(market, "settle")
+    end
+  end
+
+  defp lighter_market_settle(_exchange, _market_id), do: nil
 
   defp annotate_binance_order(%{} = row) do
     id = binance_field(row, ["orderId", "algoId"])

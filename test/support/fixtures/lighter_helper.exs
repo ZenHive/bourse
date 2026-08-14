@@ -65,7 +65,7 @@ defmodule Bourse.Test.LighterHelper do
     true
   end
 
-  defp handle_operation(_mode, true, operation, request_id, _payload) when operation in 3..8 do
+  defp handle_operation(_mode, true, operation, request_id, _payload) when operation in 3..9 do
     signed_transaction(operation, request_id)
     true
   end
