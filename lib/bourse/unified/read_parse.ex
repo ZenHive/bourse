@@ -3810,8 +3810,6 @@ defmodule Bourse.Unified.ReadParse do
     end
   end
 
-  defp deribit_inverse_instrument_id?(_name), do: false
-
   defp deribit_market_type(%{"kind" => "spot"}), do: :spot
   defp deribit_market_type(%{"kind" => "option"}), do: :option
   defp deribit_market_type(%{"kind" => "option_combo"}), do: :option
