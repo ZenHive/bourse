@@ -205,7 +205,10 @@ provider contract with three unified-carve DIVERGENCES.**
   maker/taker fee. The provider `type` enum (`trade`, `liquidation`, `deleverage`,
   `market-settlement`) classifies the fill and is not a unified order type. The funded testnet
   account has zero fees, so its live rows omit the optional fee fields; fee selection remains
-  provider-shape verified rather than live-value verified.
+  provider-shape verified rather than live-value verified. The committed trade recording masks
+  both account ids, so replaying it offline resolves no role and leaves side, maker/taker, order
+  and fee null: those four slots are proved by the tagged live fill test against the unscrubbed
+  response and pinned offline by the provider-shaped stub, never by the recording itself.
 - *Flat positions:* provider `sign = 1` remains present on a zero-size row, so unified side is
   suppressed whenever signed size is zero rather than inferred from `sign` alone.
 - *Request provenance:* private-history recordings persist the reproducible resolved caller

@@ -860,6 +860,33 @@ evidence beyond the batch review.
 - Exact call: with a demo subaccount that survived a funding boundary in a perp position, `Bourse.fetch_funding_history(ex, nil, params: %{"subaccount_id" => id}, limit: 10)`.
 - Expected evidence: freeze and register the populated body; assert the parsed `amount` equals the raw `funding` string as a signed number, `rate` is nil, and the timestamp matches the raw ms value; upgrade C-T594h from resolved_tier 2 to 1.
 
+### lighter — populated withdrawal and liquidation history rows (task 595, C-T546, filed 2026-08-14)
+- Authored slices: `lighter:normalization.field_maps.transaction` (the withdrawal half only — the
+  deposit half is populated and tier-1) and `lighter:normalization.field_maps.liquidation`
+- Blocked by: neither row can be produced reversibly on the provisioned testnet account. A
+  withdrawal moves funds off L2 with no authorized redeposit path, and a liquidation requires
+  driving a funded account through a real margin call. Task 595's evidence discipline —
+  IOC fill closed in cleanup, USDC transfer round-tripped back — has no counterpart here.
+- What is already proved: the endpoints, auth scope and empty-envelope parse are tier-1. The
+  2026-08-14 recordings are fresh and real (`withdraw_history` → `{"code":200,"withdraws":[]}`,
+  `liquidations` → `{"code":200,"liquidations":[],"next_cursor":""}`), and their caller params
+  replay through the runtime builder under the congruence gate. Field meanings rest on the pinned
+  provider OpenAPI (`priv/authority/lighter/manifest.json` artifact `rest-openapi`, revision
+  `6957dd8a`) — `WithdrawHistoryItem` required `id amount timestamp status type l1_tx_hash
+  asset_id`, `Liquidation` required `id market_id type trade info executed_at` — pinned offline by
+  the provider-shaped stubs in `lighter_authored_spec_test.exs`.
+- The open question: does a real withdrawal row's `status`/`type` pair normalize to the unified
+  transaction status and `"withdrawal"` type, and does a real liquidation row's nested `trade`
+  (`price`/`size`/`taker_fee`/`maker_fee`) plus second-resolution `executed_at` normalize to the
+  unified liquidation slice — including the market-id symbol resolution that only the populated
+  row can exercise?
+- Exact call: with an operator-approved withdrawal window (or an account that has been liquidated),
+  `Bourse.fetch_withdrawals(ex)` and `Bourse.fetch_my_liquidations(ex)` against
+  `testnet.zklighter.elliot.ai` with `sandbox: true`.
+- Expected evidence: re-capture and manifest-register both recordings with `body_populated: true`,
+  assert the parsed symbol is `BTC/USDC:USDC` rather than the raw market id, and amend C-T546's
+  verification status from shape-only to populated for the two methods.
+
 ## Closed
 
 ### deribit — option fill/hedge/unwind attestation (task 403; closed 2026-07-23, task 407 audit)
