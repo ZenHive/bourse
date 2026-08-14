@@ -9,6 +9,13 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- Deribit current-REST mutation adjudication records reviewed safety and
+  reachability decisions for every raw mutating operation. Its capture task
+  executes only an approved, reversible buy/cancel lifecycle on testnet,
+  redacts credential material, verifies cleanup and the final state, and feeds
+  the registered observations into the reality oracle; unsafe, value-moving
+  and persistent operations remain explicitly unverified in the production
+  verification ledger.
 - `Bourse.Position` gained `base_quantity` — the absolute position size in the
   base currency where the venue reports it natively (currently populated for
   deribit futures from `size_currency`; `nil` elsewhere).

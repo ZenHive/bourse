@@ -74,7 +74,7 @@ defmodule Bourse.OracleProvenance.MutationAdjudication.Lifecycle do
   @doc "Returns the deterministic session label a run at `moment` uses to tag its own orders."
   @spec session_label(DateTime.t()) :: String.t()
   def session_label(moment) do
-    "bourse-t558-" <> Integer.to_string(DateTime.to_unix(moment, :millisecond))
+    "bourse-mutation-" <> Integer.to_string(DateTime.to_unix(moment, :millisecond))
   end
 
   # -- lifecycle --------------------------------------------------------------
@@ -118,12 +118,11 @@ defmodule Bourse.OracleProvenance.MutationAdjudication.Lifecycle do
       state
       | captures: [fixture | state.captures],
         responses: Map.put(state.responses, step["step_id"], body),
-        acted?: state.acted? or placed_order?(step, body),
-        cleaned?: state.cleaned? or step["role"] == "cleanup"
+        acted?: state.acted? or placed_order?(step, body)
     }
 
     case observation_errors!(step, status, body, context) do
-      [] -> {:ok, next}
+      [] -> {:ok, %{next | cleaned?: next.cleaned? or step["role"] == "cleanup"}}
       errors -> {:error, next, "step #{step["step_id"]} observed #{Enum.join(errors, "; ")}"}
     end
   end
@@ -135,17 +134,20 @@ defmodule Bourse.OracleProvenance.MutationAdjudication.Lifecycle do
   # exception does, and a handler that only caught exceptions would skip the
   # compensating cancel exactly when the failure was least expected.
   defp run_steps!([step | rest], lifecycle, cleanup, context, state) do
-    next =
+    result =
       try do
-        case run_step(step, lifecycle, context, state) do
-          {:ok, advanced} ->
-            advanced
-
-          {:error, advanced, message} ->
-            compensate!(:error, %ArgumentError{message: message}, [], lifecycle, cleanup, context, advanced)
-        end
+        run_step(step, lifecycle, context, state)
       catch
         kind, reason -> compensate!(kind, reason, __STACKTRACE__, lifecycle, cleanup, context, state)
+      end
+
+    next =
+      case result do
+        {:ok, advanced} ->
+          advanced
+
+        {:error, advanced, message} ->
+          compensate!(:error, %ArgumentError{message: message}, [], lifecycle, cleanup, context, advanced)
       end
 
     run_steps!(rest, lifecycle, cleanup, context, next)

@@ -224,6 +224,10 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
   end
 
   describe "the execution boundary" do
+    test "uses a descriptive session label without a roadmap task identifier" do
+      assert Lifecycle.session_label(@fixed_now) == "bourse-mutation-1786687200000"
+    end
+
     test "refuses an unadjudicated, refused, unsafe, unreachable or value-moving operation" do
       %{register: register, plan: plan} = MutationAdjudication.load_reviewed!()
       [lifecycle] = plan["lifecycles"]
@@ -324,7 +328,7 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
           request_fun: replay_fun(),
           credentials: stub_credentials(),
           now: fn -> @fixed_now end,
-          session_label: "bourse-t558-replay"
+          session_label: "bourse-mutation-replay"
         )
 
       assert [%{"cleanup_outcome" => "completed", "final_state" => "cancelled"}] = manifest["lifecycles"]
@@ -350,7 +354,7 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
             request_fun: failing,
             credentials: stub_credentials(),
             now: fn -> @fixed_now end,
-            session_label: "bourse-t558-cleanup"
+            session_label: "bourse-mutation-cleanup"
           )
         end
 
@@ -401,7 +405,7 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
             request_fun: failing,
             credentials: stub_credentials(),
             now: fn -> @fixed_now end,
-            session_label: "bourse-t558-act-obs"
+            session_label: "bourse-mutation-act-obs"
           )
         end
 
@@ -411,6 +415,43 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
       assert message =~ "cancelled"
       assert [{:cancel, url}] = :ets.lookup(seen, :cancel)
       assert url =~ "order_id=113510807523"
+    end
+
+    test "retries cleanup when the cleanup observation does not match the review" do
+      root = temporary_directory("cleanup-observation-retry")
+      replay = replay_fun()
+      seen = :ets.new(:cleanup_observation_retry, [:set, :public])
+
+      mismatched_cleanup = fn request ->
+        if String.contains?(request["url"], "/private/cancel?") do
+          case :ets.update_counter(seen, :cancel, {2, 1}, {:cancel, 0}) do
+            1 ->
+              {:ok, %{status: 200, body: ~s({"result":{"order_state":"open","filled_amount":0.0}})}}
+
+            2 ->
+              replay.(request)
+          end
+        else
+          replay.(request)
+        end
+      end
+
+      error =
+        assert_raise ArgumentError, fn ->
+          Lifecycle.capture!(root,
+            request_fun: mismatched_cleanup,
+            credentials: stub_credentials(),
+            now: fn -> @fixed_now end,
+            session_label: "bourse-mutation-cleanup-observation"
+          )
+        end
+
+      message = Exception.message(error)
+      assert message =~ ~s(order_state is "open", reviewed as "cancelled")
+      assert message =~ "Reviewed cleanup private/cancel was retried"
+      assert message =~ "cancelled"
+      refute message =~ "No compensating call was needed"
+      assert :ets.lookup(seen, :cancel) == [{:cancel, 2}]
     end
 
     test "shouts when the compensating call cannot even be built" do
@@ -431,14 +472,14 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
             request_fun: failing,
             credentials: stub_credentials(),
             now: fn -> @fixed_now end,
-            session_label: "bourse-t558-uncallable"
+            session_label: "bourse-mutation-uncallable"
           )
         end
 
       message = Exception.message(error)
       assert message =~ "🚨 Reviewed cleanup private/cancel could not even be built"
       assert message =~ "cleanup_threw"
-      assert message =~ "bourse-t558-uncallable"
+      assert message =~ "bourse-mutation-uncallable"
     end
 
     test "shouts when the compensating call itself fails and names what is left behind" do
@@ -459,14 +500,14 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
             request_fun: failing,
             credentials: stub_credentials(),
             now: fn -> @fixed_now end,
-            session_label: "bourse-t558-orphan"
+            session_label: "bourse-mutation-orphan"
           )
         end
 
       message = Exception.message(error)
       assert message =~ "🚨 Reviewed cleanup private/cancel FAILED"
       assert message =~ "simulated_cleanup_loss"
-      assert message =~ "bourse-t558-orphan"
+      assert message =~ "bourse-mutation-orphan"
       assert message =~ "test.deribit.com"
     end
   end
