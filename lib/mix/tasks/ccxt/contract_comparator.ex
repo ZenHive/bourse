@@ -116,6 +116,18 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
     :ok
   end
 
+  @doc "Derives authored REST authentication facts by provider operation key."
+  @spec authored_rest_authentication(map()) :: %{String.t() => [map()]}
+  def authored_rest_authentication(authored) when is_map(authored) do
+    authored
+    |> authored_rest_operations()
+    |> Enum.group_by(& &1["key"])
+    |> Map.new(fn {key, variants} ->
+      authentication = variants |> Enum.map(&Map.take(&1, ["authentication"])) |> Enum.sort()
+      {key, authentication}
+    end)
+  end
+
   @doc "Loads and validates optional registered per-operation axis facts."
   @spec load_facts(Path.t() | nil) :: [map()]
   def load_facts(nil), do: []

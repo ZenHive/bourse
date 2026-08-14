@@ -96,6 +96,8 @@
     "report_type": "provider_contract_comparison",
     "venue": "deribit",
     "provenance": {
+      "authority_manifest": "priv/authority/deribit/manifest.json",
+      "authored_spec_canonical_sha256": "88937a8fdf459bfd83026a888e1fb4040fddd3d03c234bb86c23f7b5294e38df",
       "artifacts": [
         {
           "id": "api-openapi",

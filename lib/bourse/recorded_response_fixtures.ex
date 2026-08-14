@@ -18,7 +18,7 @@ defmodule Bourse.RecordedResponseFixtures do
   alias Bourse.RecordedResponseFixtures.Capture
 
   @doc "Loads and decodes a fixture JSON file."
-  @spec load_fixture!(String.t()) :: map()
+  @spec load_fixture!(String.t()) :: map() | list()
   def load_fixture!(path) do
     JsonDocument.decode_file!(path)
   end

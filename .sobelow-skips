@@ -6,7 +6,7 @@ Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/bourse/oracle_p
 Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/bourse/oracle_provenance/provider_operations/capture.ex:200,54DFFF5
 Traversal.FileModule: Directory Traversal in `File.open`,lib/bourse/spec/promotion/evidence.ex:451,16DA10C
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/bourse/json_document.ex:19,2AB9AE4
-Traversal.FileModule: Directory Traversal in `File.read!`,lib/bourse/oracle_provenance/provider_operations.ex:259,5156CD1
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/bourse/oracle_provenance/provider_operations.ex:291,3C37855
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/bourse/spec/promotion.ex:96,51E7CCD
 Traversal.FileModule: Directory Traversal in `File.read`,lib/bourse/spec/promotion.ex:194,A026C2
 Traversal.FileModule: Directory Traversal in `File.write!`,lib/bourse/oracle_provenance/provider_operations/capture.ex:41,772354C

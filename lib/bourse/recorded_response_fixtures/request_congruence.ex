@@ -4,6 +4,14 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
 
   Capture-only parameter injection is an explicit, exact registry. The recording
   remains valid only while the runtime builder can emit every injected parameter.
+
+  Unlike `Bourse.PublicAcceptedRequests`, this private-side gate does not execute
+  and record the final request. Private dispatch adds credentials, signatures,
+  nonces, and transport encodings that are deliberately absent from scrubbed
+  caller inputs; executing that path with dummy credentials would test signer
+  mechanics rather than caller-param reachability, and some venues require native
+  signing. The gate therefore compares `Unified.request_param_shapes/4` with
+  capture-time caller inputs and pins those inputs in the recording manifest.
   """
 
   alias Bourse.Credentials
@@ -20,6 +28,58 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
   @dummy_lighter_secret "01234567890123456789012345678901234567890123456789012345678901230123456789012345"
   @dummy_lighter_account_index 1
   @derive_subaccount_id 1
+  @legacy_missing_caller_params ~w(
+    alpaca/fetch_markets.json
+    alpaca/fetch_ticker.json
+    alpaca/order_lifecycle.json
+    binance/fetch_funding_history.json
+    binance/fetch_my_trades.json
+    binance/fetch_open_orders.json
+    binance/order_lifecycle.json
+    binancecoinm/fetch_adl_rank.json
+    binancecoinm/fetch_canceled_orders.json
+    binancecoinm/fetch_closed_orders.json
+    binancecoinm/fetch_ledger.json
+    binancecoinm/fetch_leverage_tiers.json
+    binancecoinm/fetch_leverages.json
+    binancecoinm/fetch_my_trades.json
+    binancecoinm/fetch_open_interest.json
+    binancecoinm/fetch_open_orders.json
+    binancecoinm/fetch_orders.json
+    binancecoinm/fetch_positions.json
+    binancecoinm/fetch_ticker.json
+    binancecoinm/fetch_trading_fee.json
+    binancecoinm/order_lifecycle.json
+    binanceusdm/fetch_ledger.json
+    binanceusdm/fetch_leverages.json
+    binanceusdm/fetch_my_trades.json
+    binanceusdm/fetch_open_orders.json
+    binanceusdm/fetch_position_adl_rank.json
+    binanceusdm/fetch_positions.json
+    binanceusdm/order_lifecycle.json
+    bybit/fetch_my_trades.json
+    bybit/fetch_open_orders.json
+    bybit/fetch_positions.json
+    bybit/order_lifecycle.json
+    coinbaseexchange/fetch_ohlcv.json
+    coinbaseexchange/fetch_ticker.json
+    deribit/fetch_deposit_address.json
+    deribit/fetch_funding_rate_history.json
+    deribit/fetch_my_trades.json
+    deribit/fetch_open_orders.json
+    derive/fetch_my_trades.json
+    hyperliquid/fetch_my_trades.json
+    hyperliquid/fetch_open_orders.json
+    lighter/fetch_funding_rate_history.json
+    lighter/fetch_ticker.json
+    okx/fetch_funding_rate_history.json
+    okx/fetch_markets_by_type.json
+    okx/fetch_my_trades.json
+    okx/fetch_open_interest_history.json
+    okx/fetch_open_interest_history_option.json
+    okx/fetch_open_orders.json
+    okx/fetch_positions_for_symbol.json
+  )
 
   @doc "Validates every manifest-registered private recording carrying request params."
   @spec validate!(keyword()) :: :ok
@@ -43,10 +103,24 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
     :ok
   end
 
-  @doc false
+  @doc "Returns the governed legacy recordings that predate caller-param capture."
+  @spec legacy_missing_caller_params() :: [Path.t()]
+  def legacy_missing_caller_params, do: @legacy_missing_caller_params
+
+  @doc "Returns a capture-time request-parameter provenance digest for a decoded fixture."
+  @spec request_params_sha256(term()) :: String.t()
+  def request_params_sha256(fixture) do
+    fixture
+    |> request_params_provenance()
+    |> Jason.encode!()
+    |> then(&:crypto.hash(:sha256, &1))
+    |> Base.encode16(case: :lower)
+  end
+
+  @doc "Validates caller inputs against runtime request shapes and an optional capture injection."
   @spec validate_case!(String.t(), atom(), map(), [map()], map() | nil) :: [String.t()]
   def validate_case!(venue, method, fixture, shapes, injection) do
-    caller_params = fixture["caller_params"] || fixture["params"]
+    caller_params = fixture["caller_params"]
     recorded_params = fixture["params"]
     observed = changed_param_names(caller_params, recorded_params)
     expected = if injection, do: injection["params"], else: []
@@ -77,12 +151,16 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
 
   defp validate_recording!(recording, root, injections, observed) do
     venue = recording["venue"]
+    fixture = load_fixture!(root, recording["path"])
+
+    validate_request_provenance!(recording, fixture)
+    validate_caller_params_ratchet!(recording, fixture)
 
     with {:ok, method} <- private_method(venue, recording["method"]),
-         fixture = load_fixture!(root, recording["path"]),
-         params when is_map(params) and map_size(params) > 0 <- fixture["params"] do
+         params when is_map(params) and map_size(params) > 0 <- fixture["params"],
+         true <- Map.has_key?(fixture, "caller_params") do
       injection = Map.get(injections, {venue, method})
-      caller_params = fixture["caller_params"] || params
+      caller_params = fixture["caller_params"]
       changed = changed_param_names(caller_params, params)
       expected = if injection, do: injection["params"], else: []
 
@@ -99,7 +177,30 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
     else
       :not_private -> observed
       nil -> observed
+      false -> observed
       _empty_or_non_map -> observed
+    end
+  end
+
+  defp validate_request_provenance!(recording, fixture) do
+    expected = recording["request_params_sha256"]
+
+    ensure!(
+      is_binary(expected) and expected == request_params_sha256(fixture),
+      "#{recording["path"]} request-param provenance differs from manifest"
+    )
+  end
+
+  defp validate_caller_params_ratchet!(recording, fixture) do
+    if is_map(fixture) do
+      params = fixture["params"]
+
+      if is_map(params) and map_size(params) > 0 and not Map.has_key?(fixture, "caller_params") do
+        ensure!(
+          recording["path"] in @legacy_missing_caller_params,
+          "#{recording["path"]} is a new param-carrying capture without caller_params"
+        )
+      end
     end
   end
 
@@ -178,6 +279,26 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
 
   defp changed_param_names(caller_params, _recorded_params) do
     raise ArgumentError, "recorded caller inputs must be a map, got: #{inspect(caller_params)}"
+  end
+
+  defp request_params_provenance(fixture) when is_map(fixture) do
+    %{
+      "caller_params" => fixture["caller_params"],
+      "caller_params_present" => Map.has_key?(fixture, "caller_params"),
+      "captured_at" => fixture["captured_at"],
+      "params" => fixture["params"],
+      "params_present" => Map.has_key?(fixture, "params")
+    }
+  end
+
+  defp request_params_provenance(_fixture) do
+    %{
+      "caller_params" => nil,
+      "caller_params_present" => false,
+      "captured_at" => nil,
+      "params" => nil,
+      "params_present" => false
+    }
   end
 
   defp emitted?(name, shapes) do

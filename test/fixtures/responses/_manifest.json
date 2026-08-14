@@ -128,6 +128,7 @@
       "host": "paper-api.alpaca.markets",
       "method": "fetch_balance",
       "path": "alpaca/fetch_balance.json",
+      "request_params_sha256": "77b948bae9fc3cc50fb814e5087cdf91260168fd3ee408f73f0fba80738f0a68",
       "venue": "alpaca"
     },
     {
@@ -137,6 +138,7 @@
       "host": "paper-api.alpaca.markets",
       "method": "fetch_markets",
       "path": "alpaca/fetch_markets.json",
+      "request_params_sha256": "f492e621343ba23ff62bae6ed323fdf57d2af00f84af1afc90c4468d17f459af",
       "venue": "alpaca"
     },
     {
@@ -147,6 +149,7 @@
       "host": "paper-api.alpaca.markets",
       "method": "fetch_open_orders",
       "path": "alpaca/fetch_open_orders.json",
+      "request_params_sha256": "ef0b3f091f6d072579109329c359b22be87dbfec3128fe0fea902a8310068d6b",
       "venue": "alpaca"
     },
     {
@@ -157,6 +160,7 @@
       "host": "paper-api.alpaca.markets",
       "method": "fetch_positions",
       "path": "alpaca/fetch_positions.json",
+      "request_params_sha256": "d7878da6cbcdc2e7593e75320fc361392bb3499a8ccbb970084b6fdf5e710bcb",
       "venue": "alpaca"
     },
     {
@@ -166,6 +170,7 @@
       "host": "data.alpaca.markets",
       "method": "fetch_ticker",
       "path": "alpaca/fetch_ticker.json",
+      "request_params_sha256": "9397ca9f23ad050faae1b4754e3789e420300619d93ba78b9ab3886da053d97f",
       "venue": "alpaca"
     },
     {
@@ -175,6 +180,7 @@
       "host": "paper-api.alpaca.markets",
       "method": "fetch_time",
       "path": "alpaca/fetch_time.json",
+      "request_params_sha256": "de46dad7499512da307139e52c8bafb301d86dbca4a801c0611cf94c5720c886",
       "venue": "alpaca"
     },
     {
@@ -184,6 +190,7 @@
       "host": "paper-api.alpaca.markets",
       "method": "order_lifecycle",
       "path": "alpaca/order_lifecycle.json",
+      "request_params_sha256": "7e87ed49b016efb3f31cc2ef8795c8395856855469bd4f2fb765e591244ef64d",
       "venue": "alpaca"
     },
     {
@@ -193,6 +200,7 @@
       "host": "testnet.binance.vision",
       "method": "fetch_balance",
       "path": "binance/fetch_balance.json",
+      "request_params_sha256": "105bb42aef02c0dbb79e8bad935711d68e04eb23ff080d170ed093490fd72dca",
       "venue": "binance"
     },
     {
@@ -202,6 +210,7 @@
       "host": "api.binance.com",
       "method": "fetch_bids_asks",
       "path": "binance/fetch_bids_asks.json",
+      "request_params_sha256": "6ec2636e5598bb855623e9dbc72162df8cf18f7ed250920dbee1b090ebe81cdd",
       "venue": "binance"
     },
     {
@@ -211,6 +220,7 @@
       "host": "demo-fapi.binance.com",
       "method": "fetch_funding_history",
       "path": "binance/fetch_funding_history.json",
+      "request_params_sha256": "401fb89bc98f64aecf96900b5ce1bbdebaceb52dd58bf0f6a9ce632e98b72db2",
       "venue": "binance"
     },
     {
@@ -220,6 +230,7 @@
       "host": "testnet.binance.vision",
       "method": "fetch_last_prices",
       "path": "binance/fetch_last_prices.json",
+      "request_params_sha256": "421587ca2a482fc5993de7fdd290ea201c59110a710304f3fec60af88b950fa4",
       "venue": "binance"
     },
     {
@@ -229,6 +240,7 @@
       "host": "demo-fapi.binance.com",
       "method": "fetch_leverage_tiers",
       "path": "binance/fetch_leverage_tiers.json",
+      "request_params_sha256": "ec8aa013ff4e39bfc11a32c74d9ac4bdb8caab5f074ad356d749d953143b6033",
       "venue": "binance"
     },
     {
@@ -238,6 +250,7 @@
       "host": "api.binance.com",
       "method": "fetch_markets",
       "path": "binance/fetch_markets.json",
+      "request_params_sha256": "1ad132a95ae1ece076edfa2fc1843f6a20e20d3a99ed15ed11d5b1e2ad9ae24a",
       "venue": "binance"
     },
     {
@@ -248,6 +261,7 @@
       "host": "testnet.binance.vision",
       "method": "fetch_my_trades",
       "path": "binance/fetch_my_trades.json",
+      "request_params_sha256": "de7781063add61b75e3f48c104b65ad1d886fd96af4df1d8856a4eaeb7b4f586",
       "venue": "binance"
     },
     {
@@ -257,6 +271,7 @@
       "host": "api.binance.com",
       "method": "fetch_ohlcv",
       "path": "binance/fetch_ohlcv.json",
+      "request_params_sha256": "d72ece90b93e7ea7d10f040e70843265521afbf0e9e3e3816314367e008c55cd",
       "venue": "binance"
     },
     {
@@ -267,6 +282,7 @@
       "host": "testnet.binance.vision",
       "method": "fetch_open_orders",
       "path": "binance/fetch_open_orders.json",
+      "request_params_sha256": "f32db2e0e96ad491e6a7f513b85212251e5f088839081c0cd73e1831c71d9d86",
       "venue": "binance"
     },
     {
@@ -276,6 +292,7 @@
       "host": "api.binance.com",
       "method": "fetch_ticker",
       "path": "binance/fetch_ticker.json",
+      "request_params_sha256": "e2603b6cbb3d71fbd0d7811e66260e18122d44696b4ae3ae64454aa37061d0a9",
       "venue": "binance"
     },
     {
@@ -285,6 +302,7 @@
       "host": "api.binance.com",
       "method": "fetch_tickers",
       "path": "binance/fetch_tickers_non_usdt_quotes.json",
+      "request_params_sha256": "1a8f5a2a3f4031186b2ba7f147e3e76bf7bec7350877f0c339cde1ac34baec57",
       "venue": "binance"
     },
     {
@@ -294,6 +312,7 @@
       "host": "api.binance.com",
       "method": "fetch_trades",
       "path": "binance/fetch_trades.json",
+      "request_params_sha256": "22aa19ba930600e052e02c5470130001522eb51ff2cade92f6e7b388eee9b72d",
       "venue": "binance"
     },
     {
@@ -303,6 +322,7 @@
       "host": "testnet.binance.vision",
       "method": "order_lifecycle",
       "path": "binance/order_lifecycle.json",
+      "request_params_sha256": "dab35f9aff19c167aaf46f746d9f071f4b33fc66da99814096c3cf546a2f5b78",
       "venue": "binance"
     },
     {
@@ -312,6 +332,7 @@
       "host": "demo-dapi.binance.com",
       "method": "fetch_adl_rank",
       "path": "binancecoinm/fetch_adl_rank.json",
+      "request_params_sha256": "8d60e1a9110983ec1f577366de9eadd3bfd832ddb3072f245a39e8e1c80d39b3",
       "venue": "binancecoinm"
     },
     {
@@ -321,6 +342,7 @@
       "host": "demo-dapi.binance.com",
       "method": "fetch_balance",
       "path": "binancecoinm/fetch_balance.json",
+      "request_params_sha256": "c2944b93dbb28d1692572bfb10e93eb83abe85c935233e6b71874eb6bc061414",
       "venue": "binancecoinm"
     },
     {
@@ -331,6 +353,7 @@
       "host": "demo-dapi.binance.com",
       "method": "fetch_canceled_orders",
       "path": "binancecoinm/fetch_canceled_orders.json",
+      "request_params_sha256": "908bab428f2dad4d7777a38e5a66542e2aba4ac8d986b24b2f5c986d54bc9271",
       "venue": "binancecoinm"
     },
     {
@@ -341,6 +364,7 @@
       "host": "demo-dapi.binance.com",
       "method": "fetch_closed_orders",
       "path": "binancecoinm/fetch_closed_orders.json",
+      "request_params_sha256": "50f101d84f09649f234aa513d5165943a9d244fbfac850788f2295de6a8f1720",
       "venue": "binancecoinm"
     },
     {
@@ -351,6 +375,7 @@
       "host": "demo-dapi.binance.com",
       "method": "fetch_ledger",
       "path": "binancecoinm/fetch_ledger.json",
+      "request_params_sha256": "216d48d0602410c6d06426a144ab376d1bc4bed66b634148fc3b702dc8be8646",
       "venue": "binancecoinm"
     },
     {
@@ -360,6 +385,7 @@
       "host": "demo-dapi.binance.com",
       "method": "fetch_leverage_tiers",
       "path": "binancecoinm/fetch_leverage_tiers.json",
+      "request_params_sha256": "6fc7950a24b2066ca39b3325760006dfc2419ed6fca214788376958b0dd46192",
       "venue": "binancecoinm"
     },
     {
@@ -370,6 +396,7 @@
       "host": "demo-dapi.binance.com",
       "method": "fetch_leverages",
       "path": "binancecoinm/fetch_leverages.json",
+      "request_params_sha256": "faccb5f721e9a216a16ede04015307ea666e0ca47ee613f5c03d25b6617b73aa",
       "venue": "binancecoinm"
     },
     {
@@ -379,6 +406,7 @@
       "host": "dapi.binance.com",
       "method": "fetch_markets",
       "path": "binancecoinm/fetch_markets.json",
+      "request_params_sha256": "aa50161bb5f7e09e1e3996253f5952a05c64527b2d90e29ebed5a43a800a0a1b",
       "venue": "binancecoinm"
     },
     {
@@ -389,6 +417,7 @@
       "host": "demo-dapi.binance.com",
       "method": "fetch_my_trades",
       "path": "binancecoinm/fetch_my_trades.json",
+      "request_params_sha256": "5e5af04c4e15095a22861beae3e236910c0c9bc8ab3d58d8796dec739fe0f126",
       "venue": "binancecoinm"
     },
     {
@@ -398,6 +427,7 @@
       "host": "demo-dapi.binance.com",
       "method": "fetch_open_interest",
       "path": "binancecoinm/fetch_open_interest.json",
+      "request_params_sha256": "be59ff02e008458ae5c3d4abc135edd404dad305ffd4dd2df22beb517c992697",
       "venue": "binancecoinm"
     },
     {
@@ -408,6 +438,7 @@
       "host": "demo-dapi.binance.com",
       "method": "fetch_open_orders",
       "path": "binancecoinm/fetch_open_orders.json",
+      "request_params_sha256": "52511d7e3e22b47991c7d0ee7cfe82db8d6c9f5bf8c3c333ac5d6396a09c21e1",
       "venue": "binancecoinm"
     },
     {
@@ -418,6 +449,7 @@
       "host": "demo-dapi.binance.com",
       "method": "fetch_orders",
       "path": "binancecoinm/fetch_orders.json",
+      "request_params_sha256": "d64c95c108463605745a16b465824b6102faa36554ef1bac6ab981fdc262102f",
       "venue": "binancecoinm"
     },
     {
@@ -428,6 +460,7 @@
       "host": "demo-dapi.binance.com",
       "method": "fetch_positions",
       "path": "binancecoinm/fetch_positions.json",
+      "request_params_sha256": "a5755c36c53b81d5559559432f4a14274bf4c58d582bd40556203d02e450f2ad",
       "venue": "binancecoinm"
     },
     {
@@ -437,6 +470,7 @@
       "host": "dapi.binance.com",
       "method": "fetch_ticker",
       "path": "binancecoinm/fetch_ticker.json",
+      "request_params_sha256": "768a1769fe0039502851af6976a45eac01082e3dec6f7781eceeee166b58f2ae",
       "venue": "binancecoinm"
     },
     {
@@ -446,6 +480,7 @@
       "host": "demo-dapi.binance.com",
       "method": "fetch_trading_fee",
       "path": "binancecoinm/fetch_trading_fee.json",
+      "request_params_sha256": "610d901fa4d6b585c1fd9f7ca0579c9fa2dc4a9da070277cc06dca01d87df58b",
       "venue": "binancecoinm"
     },
     {
@@ -455,6 +490,7 @@
       "host": "demo-dapi.binance.com",
       "method": "order_lifecycle",
       "path": "binancecoinm/order_lifecycle.json",
+      "request_params_sha256": "f2ff967878c08f65bc799234e934fb2acc18b77b9dff19d9421843fb93680591",
       "venue": "binancecoinm"
     },
     {
@@ -465,6 +501,7 @@
       "host": "demo-fapi.binance.com",
       "method": "fetch_account_positions",
       "path": "binanceusdm/fetch_account_positions.json",
+      "request_params_sha256": "a8fe67c95fb1c1ad056496975b4609937b6f7b35428cde5311ecfecce0ecb849",
       "venue": "binanceusdm"
     },
     {
@@ -474,6 +511,7 @@
       "host": "demo-fapi.binance.com",
       "method": "fetch_balance",
       "path": "binanceusdm/fetch_balance.json",
+      "request_params_sha256": "f787ff803741c5598bd24ada4111f080b075f92eb196e7ba2b4b26ef881d33f3",
       "venue": "binanceusdm"
     },
     {
@@ -483,6 +521,7 @@
       "host": "demo-fapi.binance.com",
       "method": "fetch_funding_intervals",
       "path": "binanceusdm/fetch_funding_intervals.json",
+      "request_params_sha256": "2131d725f52b654b76a26e313b1a7df16f600603c057e75994477bac559a854c",
       "venue": "binanceusdm"
     },
     {
@@ -492,6 +531,7 @@
       "host": "demo-fapi.binance.com",
       "method": "fetch_last_prices",
       "path": "binanceusdm/fetch_last_prices.json",
+      "request_params_sha256": "052e164fd749b7fc3c132cc29a227d13e9966129ab4449b0b445945ebdc3dbc4",
       "venue": "binanceusdm"
     },
     {
@@ -502,6 +542,7 @@
       "host": "demo-fapi.binance.com",
       "method": "fetch_ledger",
       "path": "binanceusdm/fetch_ledger.json",
+      "request_params_sha256": "c9402686cf93db45a1ade3cb6ddac7ca554b0475aaab38421e46c56c229c4c2c",
       "venue": "binanceusdm"
     },
     {
@@ -511,6 +552,7 @@
       "host": "demo-fapi.binance.com",
       "method": "fetch_leverage_tiers",
       "path": "binanceusdm/fetch_leverage_tiers.json",
+      "request_params_sha256": "8d743a23faa3db2efa08a24f625d9b769cd414a2e41e87f631dd043cf0b561aa",
       "venue": "binanceusdm"
     },
     {
@@ -521,6 +563,7 @@
       "host": "demo-fapi.binance.com",
       "method": "fetch_leverages",
       "path": "binanceusdm/fetch_leverages.json",
+      "request_params_sha256": "c50c9e8fa3b11c5a095c5498b73057602b3302f9dedc79b1d3a42e8dd8825b59",
       "venue": "binanceusdm"
     },
     {
@@ -530,6 +573,7 @@
       "host": "demo-fapi.binance.com",
       "method": "fetch_margin_modes",
       "path": "binanceusdm/fetch_margin_modes.json",
+      "request_params_sha256": "02570d204d6b2e195d1095142e22fa7a8f244409507463f794edab557b3fc266",
       "venue": "binanceusdm"
     },
     {
@@ -539,6 +583,7 @@
       "host": "fapi.binance.com",
       "method": "fetch_markets",
       "path": "binanceusdm/fetch_markets.json",
+      "request_params_sha256": "1208fb1e8f26197a98e50e06a51177ab19ab58d3e7acd726716cb4206e274a26",
       "venue": "binanceusdm"
     },
     {
@@ -549,6 +594,7 @@
       "host": "testnet.binancefuture.com",
       "method": "fetch_my_trades",
       "path": "binanceusdm/fetch_my_trades.json",
+      "request_params_sha256": "8a04b76a5058a0a0591a541a2393224e948e877c0368150830fecbf47045405a",
       "venue": "binanceusdm"
     },
     {
@@ -558,6 +604,7 @@
       "host": "fapi.binance.com",
       "method": "fetch_ohlcv",
       "path": "binanceusdm/fetch_ohlcv.json",
+      "request_params_sha256": "fc545b885bfb7ed61787d7cf7a86d3c89270fdf9468bc66b79477268eebe04a0",
       "venue": "binanceusdm"
     },
     {
@@ -568,6 +615,7 @@
       "host": "testnet.binancefuture.com",
       "method": "fetch_open_orders",
       "path": "binanceusdm/fetch_open_orders.json",
+      "request_params_sha256": "d6ebdc38b29ba703e3e993ab5c08828520d35b9b6a0ec2bae8e1149a9ef5f27b",
       "venue": "binanceusdm"
     },
     {
@@ -577,6 +625,7 @@
       "host": "demo-fapi.binance.com",
       "method": "fetch_position_adl_rank",
       "path": "binanceusdm/fetch_position_adl_rank.json",
+      "request_params_sha256": "c6ffc26032f31891ad933a4fb152d6b15c7caca73da1511e2379e89c56bec762",
       "venue": "binanceusdm"
     },
     {
@@ -587,6 +636,7 @@
       "host": "testnet.binancefuture.com",
       "method": "fetch_positions",
       "path": "binanceusdm/fetch_positions.json",
+      "request_params_sha256": "6d778775c5819de2e3e9f77a6c87b017f8f470e0ff69788e8323e9e5b589ab8d",
       "venue": "binanceusdm"
     },
     {
@@ -597,6 +647,7 @@
       "host": "demo-fapi.binance.com",
       "method": "fetch_positions_risk",
       "path": "binanceusdm/fetch_positions_risk.json",
+      "request_params_sha256": "140e8f63dceca05f962c4e4c83e311a29e623960d6c4a4326ceb0fcf4643380c",
       "venue": "binanceusdm"
     },
     {
@@ -606,6 +657,7 @@
       "host": "fapi.binance.com",
       "method": "fetch_ticker",
       "path": "binanceusdm/fetch_ticker.json",
+      "request_params_sha256": "62b25fb22cdd291dbcfa949ff8fe4752ce9cd33976f6a9c6e020410b19ce34e9",
       "venue": "binanceusdm"
     },
     {
@@ -615,6 +667,7 @@
       "host": "fapi.binance.com",
       "method": "fetch_trades",
       "path": "binanceusdm/fetch_trades.json",
+      "request_params_sha256": "374390aa6e2a43a5bdebbced5d92e0a9632b2636a5738c495358bb977198c986",
       "venue": "binanceusdm"
     },
     {
@@ -624,6 +677,7 @@
       "host": "testnet.binancefuture.com",
       "method": "order_lifecycle",
       "path": "binanceusdm/order_lifecycle.json",
+      "request_params_sha256": "c888d9fe03d993695af25412c77bda7652c832430530aadea25a7fb91bae0fa2",
       "venue": "binanceusdm"
     },
     {
@@ -633,6 +687,7 @@
       "host": "api-demo.bybit.com",
       "method": "fetch_balance",
       "path": "bybit/fetch_balance.json",
+      "request_params_sha256": "88259e509d0621b51fdbd31f47629bef9bcfa55a76b9237f4ad94bd58887391a",
       "venue": "bybit"
     },
     {
@@ -643,6 +698,7 @@
       "host": "api-testnet.bybit.com",
       "method": "fetch_leverage_tiers",
       "path": "bybit/fetch_leverage_tiers.json",
+      "request_params_sha256": "103675476262690dc1fa9e77963f0dc6b47cb96c039e6813d45b09000ff2100a",
       "venue": "bybit"
     },
     {
@@ -655,6 +711,7 @@
         "tier1_semantic_oracle"
       ],
       "path": "bybit/fetch_markets.json",
+      "request_params_sha256": "912f8453f8abb55d2185a6fec8a53fca282314c38aebed4d47ea33a1ac76e97a",
       "venue": "bybit"
     },
     {
@@ -665,6 +722,7 @@
       "host": "api-demo.bybit.com",
       "method": "fetch_my_trades",
       "path": "bybit/fetch_my_trades.json",
+      "request_params_sha256": "ef0eadfac193da9da1911bc51e6afa76ce784cd77e6de237bf0ef10ad68e8154",
       "venue": "bybit"
     },
     {
@@ -675,6 +733,7 @@
       "host": "api-demo.bybit.com",
       "method": "fetch_open_orders",
       "path": "bybit/fetch_open_orders.json",
+      "request_params_sha256": "027d82f62afa64872ce4ed1d8f31a52a5ad2ceaf640280bd8bbe3ab3cf498674",
       "venue": "bybit"
     },
     {
@@ -685,6 +744,7 @@
       "host": "api-demo.bybit.com",
       "method": "fetch_positions",
       "path": "bybit/fetch_positions.json",
+      "request_params_sha256": "582e5a281a737fd9eccccf5533e09e4a74e45e4d415e75447193658613fcd77b",
       "venue": "bybit"
     },
     {
@@ -697,6 +757,7 @@
         "tier1_semantic_oracle"
       ],
       "path": "bybit/fetch_ticker.json",
+      "request_params_sha256": "b93a0cc15ce023ea29d49f7c6efbcc71c2e559cf640a4f0977981872e4c19b97",
       "venue": "bybit"
     },
     {
@@ -706,6 +767,7 @@
       "host": "api.bybit.com",
       "method": "fetch_trades",
       "path": "bybit/fetch_trades.json",
+      "request_params_sha256": "fa341a6e83b6dd257e173e07bf8f5c04f53f2b4230672abea96ee7951dd0bc85",
       "venue": "bybit"
     },
     {
@@ -715,6 +777,7 @@
       "host": "api-demo.bybit.com",
       "method": "order_lifecycle",
       "path": "bybit/order_lifecycle.json",
+      "request_params_sha256": "8e9394606175968da184e717220cdf61d76e6b96fe769e8b50f583c22f52c6c4",
       "venue": "bybit"
     },
     {
@@ -724,6 +787,7 @@
       "host": "api.exchange.coinbase.com",
       "method": "fetch_ohlcv",
       "path": "coinbaseexchange/fetch_ohlcv.json",
+      "request_params_sha256": "83b73b6d22861d1112b8aab4fc8088f3cb2ad18b888ddda1769bda3423253369",
       "venue": "coinbaseexchange"
     },
     {
@@ -733,6 +797,7 @@
       "host": "api.exchange.coinbase.com",
       "method": "fetch_ticker",
       "path": "coinbaseexchange/fetch_ticker.json",
+      "request_params_sha256": "34a238939f80d14d1f889b5a5af92e63a71b7e5b2130debce3af626356b77388",
       "venue": "coinbaseexchange"
     },
     {
@@ -742,6 +807,7 @@
       "host": "test.deribit.com",
       "method": "fetch_balance",
       "path": "deribit/fetch_balance.json",
+      "request_params_sha256": "773a9b3c8d0ba830b203ff271c6b34a234b6e2ff5a1b32a8bd37db8e895b634a",
       "venue": "deribit"
     },
     {
@@ -751,6 +817,7 @@
       "host": "test.deribit.com",
       "method": "fetch_deposit_address",
       "path": "deribit/fetch_deposit_address.json",
+      "request_params_sha256": "c26aff45ac1bcd99283bb2b99ba1816abf76677e29a2497805453376299ea2f1",
       "venue": "deribit"
     },
     {
@@ -763,6 +830,7 @@
         "tier1_semantic_oracle"
       ],
       "path": "deribit/fetch_funding_rate.json",
+      "request_params_sha256": "bbe50b8f863fdc235e16764d783cc5dc9296fb449e35d73cf0ec1c8ee5db2e22",
       "venue": "deribit"
     },
     {
@@ -772,6 +840,7 @@
       "host": "test.deribit.com",
       "method": "fetch_funding_rate_history",
       "path": "deribit/fetch_funding_rate_history.json",
+      "request_params_sha256": "65b436550d3f0d5259f2d27ee1fd695c861e4de74e4584e7ece5e8e95ee78f78",
       "venue": "deribit"
     },
     {
@@ -784,6 +853,7 @@
         "tier1_semantic_oracle"
       ],
       "path": "deribit/fetch_markets.json",
+      "request_params_sha256": "9b678bc68225e8b0a4a6eea6341324eaee75ad93036c6cc16a9ed14525ca8321",
       "venue": "deribit"
     },
     {
@@ -794,6 +864,7 @@
       "host": "test.deribit.com",
       "method": "fetch_my_trades",
       "path": "deribit/fetch_my_trades.json",
+      "request_params_sha256": "e39703af444e7f6b74078b41d061b408d29ae0551d3a53dfc6ae4a80ff02ff42",
       "venue": "deribit"
     },
     {
@@ -804,6 +875,7 @@
       "host": "test.deribit.com",
       "method": "fetch_open_orders",
       "path": "deribit/fetch_open_orders.json",
+      "request_params_sha256": "5489fbed9cc523730b0efefebbeba765a945bd1728914fe945a4e57b25050a1f",
       "venue": "deribit"
     },
     {
@@ -814,6 +886,7 @@
       "host": "test.deribit.com",
       "method": "fetch_positions",
       "path": "deribit/fetch_positions.json",
+      "request_params_sha256": "9fb0499a7ad6330c84a899a6722ed8bda1a0c1fc36ed9d03095d2537f2c6f579",
       "venue": "deribit"
     },
     {
@@ -823,6 +896,7 @@
       "host": "www.deribit.com",
       "method": "fetch_ticker",
       "path": "deribit/fetch_ticker.json",
+      "request_params_sha256": "084b10a7be7efcd4286eb99e87e40689328777843deb4b8acda9b5e01694d3c6",
       "venue": "deribit"
     },
     {
@@ -835,6 +909,7 @@
         "tier1_semantic_oracle"
       ],
       "path": "deribit/fetch_trades.json",
+      "request_params_sha256": "edcb19177bd02416a49b034d799b0acb59d638f98528b85592c2606df57d1a8b",
       "venue": "deribit"
     },
     {
@@ -844,6 +919,7 @@
       "host": "test.deribit.com",
       "method": "fetch_trading_fees",
       "path": "deribit/fetch_trading_fees.json",
+      "request_params_sha256": "d46752df0388f6df1faa309e718f9037c3f50348d07a39f2048556583815eaf4",
       "venue": "deribit"
     },
     {
@@ -853,6 +929,7 @@
       "host": "api-demo.lyra.finance",
       "method": "fetch_balance",
       "path": "derive/fetch_balance.json",
+      "request_params_sha256": "e2bf44f5e07490e781d2fd21987a55b722a14b23a0e1a3e47beb477036150281",
       "venue": "derive"
     },
     {
@@ -863,6 +940,7 @@
       "host": "api-demo.lyra.finance",
       "method": "fetch_canceled_orders",
       "path": "derive/fetch_canceled_orders.json",
+      "request_params_sha256": "741aa5d5000b2e1fa662f8fbdf89c1e0aad7ef1b4c458a1090c8870169ede3cf",
       "venue": "derive"
     },
     {
@@ -872,6 +950,7 @@
       "host": "api.lyra.finance",
       "method": "fetch_markets",
       "path": "derive/fetch_markets.json",
+      "request_params_sha256": "b2d0bcb5c08d8541b4dde2a1877c094c30e553c967e67d44617ad216292a8567",
       "venue": "derive"
     },
     {
@@ -882,6 +961,7 @@
       "host": "api-demo.lyra.finance",
       "method": "fetch_my_trades",
       "path": "derive/fetch_my_trades.json",
+      "request_params_sha256": "2243a3a5aa638ec93005592c4f4b764c68d95df677c93d926fae89787e678c3c",
       "venue": "derive"
     },
     {
@@ -892,6 +972,7 @@
       "host": "api-demo.lyra.finance",
       "method": "fetch_open_orders",
       "path": "derive/fetch_open_orders.json",
+      "request_params_sha256": "27bd3f60ce2caf16a4dbbeed680991597f9c339c3490bb4ef03f01610d209fea",
       "venue": "derive"
     },
     {
@@ -902,6 +983,7 @@
       "host": "api-demo.lyra.finance",
       "method": "fetch_positions",
       "path": "derive/fetch_positions.json",
+      "request_params_sha256": "3a776627e70064c93c74e11f8eafa47fc5f19e67ccd4e415eec5405c93227848",
       "venue": "derive"
     },
     {
@@ -911,6 +993,7 @@
       "host": "api.lyra.finance",
       "method": "fetch_trades",
       "path": "derive/fetch_trades.json",
+      "request_params_sha256": "85543adbd6fcee06d7b6ca6f3205065c41b63525d6cb86ac1351ef7bda5ab1c1",
       "venue": "derive"
     },
     {
@@ -920,6 +1003,7 @@
       "host": "api.hyperliquid-testnet.xyz",
       "method": "fetch_balance",
       "path": "hyperliquid/fetch_balance.json",
+      "request_params_sha256": "8170e7606eeb82ec0ee324aee780b19160ab9dd3c622206fee54b4f3536adc9b",
       "venue": "hyperliquid"
     },
     {
@@ -932,6 +1016,7 @@
         "tier1_semantic_oracle"
       ],
       "path": "hyperliquid/fetch_markets.json",
+      "request_params_sha256": "967583b1076444721a5231dfcddfc39f5ca1fe5278d92d0631e78ad2eb39c2a9",
       "venue": "hyperliquid"
     },
     {
@@ -942,6 +1027,7 @@
       "host": "api.hyperliquid-testnet.xyz",
       "method": "fetch_my_trades",
       "path": "hyperliquid/fetch_my_trades.json",
+      "request_params_sha256": "aaf2802f3153acc99e38347de7ec0e9494c9103301bfec91cfe02d97552bcaa3",
       "venue": "hyperliquid"
     },
     {
@@ -951,6 +1037,7 @@
       "host": "api.hyperliquid.xyz",
       "method": "fetch_ohlcv",
       "path": "hyperliquid/fetch_ohlcv.json",
+      "request_params_sha256": "9b28dc434e5a0157b41a74a9a0fdc39fd65f49bbbee3b1e49cdd4e0316185009",
       "venue": "hyperliquid"
     },
     {
@@ -960,6 +1047,7 @@
       "host": "api.hyperliquid-testnet.xyz",
       "method": "fetch_open_interests",
       "path": "hyperliquid/fetch_open_interests.json",
+      "request_params_sha256": "d9b6143881b5a61fd6e45e6abf23611ed995882ed07716018604ff585698c96c",
       "venue": "hyperliquid"
     },
     {
@@ -970,6 +1058,7 @@
       "host": "api.hyperliquid-testnet.xyz",
       "method": "fetch_open_orders",
       "path": "hyperliquid/fetch_open_orders.json",
+      "request_params_sha256": "b690b7c8c4052082cd479a5b464710e23238d1e0a8373c7d385477dc65635e39",
       "venue": "hyperliquid"
     },
     {
@@ -979,6 +1068,7 @@
       "host": "api.hyperliquid.xyz",
       "method": "fetch_order_book",
       "path": "hyperliquid/fetch_order_book.json",
+      "request_params_sha256": "1a8f5a2a3f4031186b2ba7f147e3e76bf7bec7350877f0c339cde1ac34baec57",
       "venue": "hyperliquid"
     },
     {
@@ -989,6 +1079,7 @@
       "host": "api.hyperliquid-testnet.xyz",
       "method": "fetch_positions",
       "path": "hyperliquid/fetch_positions.json",
+      "request_params_sha256": "ea99f0f1695c494e4795c24d044a3344ef3d3a1972d3e55ba28a23ef4e3d7a7f",
       "venue": "hyperliquid"
     },
     {
@@ -998,6 +1089,7 @@
       "host": "testnet.zklighter.elliot.ai",
       "method": "fetch_balance",
       "path": "lighter/fetch_balance.json",
+      "request_params_sha256": "759f855824dc527857a1a41dd0350e88ee975c84a5d53b1568addad9a5baf5f5",
       "venue": "lighter"
     },
     {
@@ -1008,6 +1100,7 @@
       "host": "testnet.zklighter.elliot.ai",
       "method": "fetch_closed_orders",
       "path": "lighter/fetch_closed_orders.json",
+      "request_params_sha256": "63211dc5ee68570197c52cdbe35b01d82554861dd72c7593b2f1dd2152ff437f",
       "venue": "lighter"
     },
     {
@@ -1018,6 +1111,7 @@
       "host": "testnet.zklighter.elliot.ai",
       "method": "fetch_deposits",
       "path": "lighter/fetch_deposits.json",
+      "request_params_sha256": "d963e8280ff19c80021bdaf776fd3d4a6dde08b9093402573933f8891bd2eca5",
       "venue": "lighter"
     },
     {
@@ -1027,6 +1121,7 @@
       "host": "testnet.zklighter.elliot.ai",
       "method": "fetch_funding_rate_history",
       "path": "lighter/fetch_funding_rate_history.json",
+      "request_params_sha256": "cae04edb9d09037860ae54c32d7b3441cdbb092df78bf16a8bfaa6dfdd9cb031",
       "venue": "lighter"
     },
     {
@@ -1036,6 +1131,7 @@
       "host": "testnet.zklighter.elliot.ai",
       "method": "fetch_markets",
       "path": "lighter/fetch_markets.json",
+      "request_params_sha256": "b211e2a71b75931321c4fcd9095df3223a30985344fe55442cdd3ea94b32f550",
       "venue": "lighter"
     },
     {
@@ -1046,6 +1142,7 @@
       "host": "testnet.zklighter.elliot.ai",
       "method": "fetch_my_liquidations",
       "path": "lighter/fetch_my_liquidations.json",
+      "request_params_sha256": "8a2e06aa5c1f99bcc1747754067b07e4c0e16421ce5883e2a7c1ab1ddc643688",
       "venue": "lighter"
     },
     {
@@ -1056,6 +1153,7 @@
       "host": "testnet.zklighter.elliot.ai",
       "method": "fetch_my_trades",
       "path": "lighter/fetch_my_trades.json",
+      "request_params_sha256": "211f0b789e034382773f53df6882e193db338296a546d1f11cde40e8ead09e04",
       "venue": "lighter"
     },
     {
@@ -1066,6 +1164,7 @@
       "host": "testnet.zklighter.elliot.ai",
       "method": "fetch_open_orders",
       "path": "lighter/fetch_open_orders.json",
+      "request_params_sha256": "12ec4644ad754775e6eb3506d686d25ad85c737ac8d14232bcbc412b3c26cf4d",
       "venue": "lighter"
     },
     {
@@ -1076,6 +1175,7 @@
       "host": "testnet.zklighter.elliot.ai",
       "method": "fetch_positions",
       "path": "lighter/fetch_positions.json",
+      "request_params_sha256": "9d1956d83580876cdd78c1d28e44ece79e5688197909b860d4ddd24879710fe3",
       "venue": "lighter"
     },
     {
@@ -1085,6 +1185,7 @@
       "host": "testnet.zklighter.elliot.ai",
       "method": "fetch_ticker",
       "path": "lighter/fetch_ticker.json",
+      "request_params_sha256": "88a294a73bb78aa3af7ee784a1cb489d07a4f54029efa1f0bf14e578b7afcf7d",
       "venue": "lighter"
     },
     {
@@ -1095,6 +1196,7 @@
       "host": "testnet.zklighter.elliot.ai",
       "method": "fetch_transfers",
       "path": "lighter/fetch_transfers.json",
+      "request_params_sha256": "e614e78de0b19b565908e1c08abd7664a6a6b1d5fda27aaed850559ab136d2da",
       "venue": "lighter"
     },
     {
@@ -1105,6 +1207,7 @@
       "host": "testnet.zklighter.elliot.ai",
       "method": "fetch_withdrawals",
       "path": "lighter/fetch_withdrawals.json",
+      "request_params_sha256": "756cfe35784ae9186a06ac752fabcc6012de35ba02a1d7421163affcdd949df2",
       "venue": "lighter"
     },
     {
@@ -1114,6 +1217,7 @@
       "host": "www.okx.com",
       "method": "account_subtypes",
       "path": "okx/account_subtypes.json",
+      "request_params_sha256": "76b3fc3f0822b019cebf0f05ffa1fbb28db22b86a5959f750fc337039973baa1",
       "venue": "okx"
     },
     {
@@ -1123,6 +1227,7 @@
       "host": "my.okx.com",
       "method": "fetch_balance",
       "path": "okx/fetch_balance.json",
+      "request_params_sha256": "a26509682711825ef2c6e925df0b7382a80207941e33d6aa1a5629d1f47ec494",
       "venue": "okx"
     },
     {
@@ -1132,6 +1237,7 @@
       "host": "www.okx.com",
       "method": "fetch_funding_rate_history",
       "path": "okx/fetch_funding_rate_history.json",
+      "request_params_sha256": "9942eda6f6513079ee430a25dc700bda2cdb3fa8bcc34c8f6b968f12b7fd90a7",
       "venue": "okx"
     },
     {
@@ -1141,6 +1247,7 @@
       "host": "www.okx.com",
       "method": "fetch_markets",
       "path": "okx/fetch_markets.json",
+      "request_params_sha256": "69af4be96f81e4ad8ffec4aeb8364b8a9945f3a94d988c06d13761df3271f05c",
       "venue": "okx"
     },
     {
@@ -1150,6 +1257,7 @@
       "host": "www.okx.com",
       "method": "fetch_markets_by_type",
       "path": "okx/fetch_markets_by_type.json",
+      "request_params_sha256": "fc1745a45951f3de7de07acb40bf7a836e2146e100d6c907e5482bf556a3b8f1",
       "venue": "okx"
     },
     {
@@ -1160,6 +1268,7 @@
       "host": "my.okx.com",
       "method": "fetch_my_trades",
       "path": "okx/fetch_my_trades.json",
+      "request_params_sha256": "1fbd677ffe1c48e48e90ba7efe5218cb5a3365b7f772726e9a044280b0ba7195",
       "venue": "okx"
     },
     {
@@ -1172,6 +1281,7 @@
         "tier1_semantic_oracle"
       ],
       "path": "okx/fetch_open_interest_history.json",
+      "request_params_sha256": "7bb264df12e60eee12d6fb8a494ee05e247c21163bb7239263ab30d8c0298c18",
       "venue": "okx"
     },
     {
@@ -1184,6 +1294,7 @@
         "tier1_semantic_oracle"
       ],
       "path": "okx/fetch_open_interest_history_option.json",
+      "request_params_sha256": "a390b72fefdb44fa6a6f969d9fa706329582c1d7d06d57ce4113dcf3a3838db6",
       "venue": "okx"
     },
     {
@@ -1194,6 +1305,7 @@
       "host": "www.okx.com",
       "method": "fetch_open_interests",
       "path": "okx/fetch_open_interests.json",
+      "request_params_sha256": "c4db3f3fe5cfce6a3bacdf16d2961fea91879a3c8994f1587b1ab8b10f977a2e",
       "venue": "okx"
     },
     {
@@ -1204,6 +1316,7 @@
       "host": "my.okx.com",
       "method": "fetch_open_orders",
       "path": "okx/fetch_open_orders.json",
+      "request_params_sha256": "845a00a4fbbe067185d5cb78c318559193b92b3a64bed4adde9689ad40a594e9",
       "venue": "okx"
     },
     {
@@ -1214,6 +1327,7 @@
       "host": "www.okx.com",
       "method": "fetch_positions",
       "path": "okx/fetch_positions.json",
+      "request_params_sha256": "cb755da75dab0dd52b5e2d82e679aa33b5b302b8ee4240afb13dc23da93786ed",
       "venue": "okx"
     },
     {
@@ -1223,6 +1337,7 @@
       "host": "www.okx.com",
       "method": "fetch_positions_for_symbol",
       "path": "okx/fetch_positions_for_symbol.json",
+      "request_params_sha256": "2219d7163a8f5919e388c5cc83a72891aa37b04f3ca1cf5b8621c549e2e0fbb1",
       "venue": "okx"
     },
     {
@@ -1232,6 +1347,7 @@
       "host": "www.okx.com",
       "method": "fetch_ticker",
       "path": "okx/fetch_ticker.json",
+      "request_params_sha256": "52361d7e1863a51b98b33a6ce430a7100ac582d3a5f8e59ff27dfec56f507fcb",
       "venue": "okx"
     },
     {
@@ -1241,6 +1357,7 @@
       "host": "www.okx.com",
       "method": "fetch_trades",
       "path": "okx/fetch_trades.json",
+      "request_params_sha256": "b946e086f12f42136f6f33f74aa9592ee6cdaa51e00ec704ac8e486256ffa760",
       "venue": "okx"
     }
   ]

@@ -4,6 +4,7 @@ defmodule Mix.Tasks.Ccxt.RecordFixturesTest do
   import ExUnit.CaptureIO
 
   alias Bourse.RecordedResponseFixtures
+  alias Bourse.RecordedResponseFixtures.RequestCongruence
   alias Mix.Tasks.Ccxt.RecordFixtures
 
   test "--errors writes scrubbed fixtures and merges the error manifest" do
@@ -86,6 +87,9 @@ defmodule Mix.Tasks.Ccxt.RecordFixturesTest do
 
     assert fixture["body"]["result"]["list"] == [%{"lastPrice" => "100000", "symbol" => "BTCUSDT"}]
     assert "bybit/fetch_ticker.json" in manifest["fixtures"]
+
+    row = Enum.find(manifest["recordings"], &(&1["path"] == "bybit/fetch_ticker.json"))
+    assert row["request_params_sha256"] == RequestCongruence.request_params_sha256(fixture)
   end
 
   test "capture failures report missing credentials and unexpected success" do

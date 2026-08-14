@@ -14,7 +14,7 @@ defmodule Bourse.JsonDocument do
   duplicates. Malformed JSON still raises `Jason.DecodeError` with a byte
   position rather than an opaque `:json` ErlangError.
   """
-  @spec decode_file!(String.t()) :: map()
+  @spec decode_file!(String.t()) :: map() | list()
   def decode_file!(path) when is_binary(path) do
     contents = File.read!(path)
     validate_no_duplicate_keys!(contents, path)

@@ -6,6 +6,7 @@ defmodule Bourse.OracleProvenance.ProviderOperationsTest do
   alias Bourse.OracleProvenance.ProviderOperations
   alias Bourse.OracleProvenance.ProviderOperations.Capture
   alias Bourse.RecordedResponseFixtures
+  alias Mix.Tasks.Ccxt.AuthorityCorpus
   alias Mix.Tasks.Ccxt.CaptureProviderOperations
 
   @plan_path "priv/authority/deribit/provider-operation-plan.json"
@@ -97,11 +98,33 @@ defmodule Bourse.OracleProvenance.ProviderOperationsTest do
     proof = hd(operation["proofs"])
     inventory_operation = hd(inventory_for(plan)["surfaces"]["current_rest"]["operations"])
 
-    private = put_in(inventory_operation, ["authored", Access.at(0), "authentication", "value", "required"], true)
-    assert {:error, {:refused, :private}} = Capture.authorize(operation, proof, private)
+    forged_public =
+      put_in(inventory_operation, ["authored", Access.at(0), "authentication", "value", "required"], false)
+
+    assert {:error, {:refused, :private}} =
+             Capture.authorize(operation, proof, forged_public, authentication(true))
 
     mutating = put_in(inventory_operation, ["provider", Access.at(0), "method"], "POST")
-    assert {:error, {:refused, :mutating}} = Capture.authorize(operation, proof, mutating)
+
+    assert {:error, {:refused, :mutating}} =
+             Capture.authorize(operation, proof, mutating, authentication(false))
+  end
+
+  test "source inventory rejects missing and contradictory authorization facts" do
+    plan = JsonDocument.decode_file!(@plan_path)
+    operation = hd(plan["operations"])
+    proof = hd(operation["proofs"])
+    read = %{"provider" => [%{"method" => "GET"}]}
+
+    assert {:error, {:refused, :unclassified}} = Capture.authorize(operation, proof, %{}, [])
+    assert {:error, {:refused, :unclassified}} = Capture.authorize(operation, proof, read, [])
+
+    unclassified = [%{"authentication" => %{"status" => "unknown"}}]
+    assert {:error, {:refused, :unclassified}} = Capture.authorize(operation, proof, read, unclassified)
+
+    private = authentication(true) ++ authentication(false)
+
+    assert {:error, {:refused, :private}} = Capture.authorize(operation, proof, read, private)
   end
 
   test "oracle validation re-applies capture authorization to a post-hoc plan edit" do
@@ -147,8 +170,32 @@ defmodule Bourse.OracleProvenance.ProviderOperationsTest do
 
     File.write!(manifest_path, Jason.encode!(changed, pretty: true))
 
-    assert_raise ArgumentError, ~r/capture proof public_get_time_success refused: private/, fn ->
+    assert_raise ArgumentError, ~r/authored authentication differs from pinned authored spec/, fn ->
       ProviderOperations.validate!(root: root, manifest_path: manifest_path)
+    end
+  end
+
+  test "plan validation re-derives authentication from the pinned authored document" do
+    root = temporary_directory("pinned-authored-authentication")
+    spec_root = Path.join(root, "authored")
+    File.mkdir_p!(spec_root)
+    plan = JsonDocument.decode_file!(@plan_path)
+
+    authored =
+      plan["venue"]
+      |> Bourse.Spec.owned_spec_path()
+      |> JsonDocument.decode_file!()
+      |> put_in(["auth", "authenticated_sections"], ["private", "public"])
+
+    File.write!(Path.join(spec_root, "deribit.json"), Jason.encode!(authored, pretty: true))
+
+    inventory =
+      plan
+      |> inventory_for()
+      |> put_in(["provenance", "authored_spec_canonical_sha256"], canonical_sha256(authored))
+
+    assert_raise ArgumentError, ~r/authored authentication differs from pinned authored spec/, fn ->
+      ProviderOperations.validate_plan!(plan, inventory, spec_root: spec_root)
     end
   end
 
@@ -391,6 +438,8 @@ defmodule Bourse.OracleProvenance.ProviderOperationsTest do
       "report_type" => "provider_contract_comparison",
       "venue" => plan["venue"],
       "provenance" => %{
+        "authority_manifest" => "priv/authority/deribit/manifest.json",
+        "authored_spec_canonical_sha256" => authored_spec_sha256(plan["venue"]),
         "artifacts" => [
           %{
             "id" => source["artifact_id"],
@@ -435,6 +484,19 @@ defmodule Bourse.OracleProvenance.ProviderOperationsTest do
       end
     end
   end
+
+  defp authentication(required) do
+    [%{"authentication" => %{"status" => "known", "value" => %{"required" => required}}}]
+  end
+
+  defp authored_spec_sha256(venue) do
+    venue
+    |> Bourse.Spec.owned_spec_path()
+    |> JsonDocument.decode_file!()
+    |> canonical_sha256()
+  end
+
+  defp canonical_sha256(document), do: document |> Jason.encode!() |> AuthorityCorpus.sha256()
 
   defp temporary_directory(label) do
     path = Path.join(System.tmp_dir!(), "provider-operations-#{label}-#{System.unique_integer([:positive])}")

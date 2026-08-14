@@ -45,6 +45,7 @@ defmodule Mix.Tasks.Ccxt.RecordFixtures do
   alias Bourse.JsonDocument
   alias Bourse.RecordedResponseFixtures
   alias Bourse.RecordedResponseFixtures.ListBody
+  alias Bourse.RecordedResponseFixtures.RequestCongruence
 
   @impl true
   def run(args) do
@@ -196,6 +197,7 @@ defmodule Mix.Tasks.Ccxt.RecordFixtures do
       "host" => Map.get(fixture, "host") || Map.get(oracle, "host"),
       "method" => Atom.to_string(method),
       "path" => relative_path,
+      "request_params_sha256" => RequestCongruence.request_params_sha256(fixture),
       "venue" => exchange_id
     }
     |> maybe_put_error_fields(fixture, oracle, fixture_root)

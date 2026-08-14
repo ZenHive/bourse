@@ -11,10 +11,12 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
   alias Bourse.OracleProvenance.ProviderOperations.Capture
   alias Bourse.RecordedResponseFixtures
   alias Mix.Tasks.Ccxt.AuthorityCorpus
+  alias Mix.Tasks.Ccxt.ContractComparator
 
   @default_root "test/fixtures/provider_operations"
   @default_plan "priv/authority/deribit/provider-operation-plan.json"
   @authority_root "priv/authority"
+  @spec_root "priv/specs/json/output/authored"
 
   @typedoc "A validated provider-operation corpus."
   @type corpus :: %{inventory: map(), manifest: map(), plan: map(), recordings: %{String.t() => map()}}
@@ -30,7 +32,12 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
     inventory = manifest["inventory"]
 
     ensure!(is_map(inventory), "#{manifest_path}: missing capture inventory snapshot")
-    validate_plan!(plan, inventory, authority_root: Keyword.get(opts, :authority_root, @authority_root))
+
+    validate_plan!(plan, inventory,
+      authority_root: Keyword.get(opts, :authority_root, @authority_root),
+      spec_root: Keyword.get(opts, :spec_root, @spec_root)
+    )
+
     validate_manifest!(manifest, plan, inventory, root, manifest_path)
   end
 
@@ -86,11 +93,16 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
 
     operations = Enum.filter(surface["operations"], &MapSet.member?(selected_keys, &1["operation_key"]))
 
+    provenance =
+      inventory["provenance"]
+      |> Map.take(~w(authority_manifest authored_spec_canonical_sha256))
+      |> Map.put("artifacts", [provenance])
+
     %{
       "schema_version" => inventory["schema_version"],
       "report_type" => inventory["report_type"],
       "venue" => inventory["venue"],
-      "provenance" => %{"artifacts" => [provenance]},
+      "provenance" => provenance,
       "surfaces" => %{
         "current_rest" => %{
           "provider_count" => surface["provider_count"],
@@ -116,6 +128,7 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
 
     authority_root = Keyword.get(opts, :authority_root, @authority_root)
     validate_plan_source!(plan, authority_root)
+    authored_authentication = authored_authentication!(plan, inventory, opts)
 
     operations = inventory["surfaces"]["current_rest"]["operations"]
     inventory_by_key = Map.new(operations, &{&1["operation_key"], &1})
@@ -129,7 +142,7 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
           raise ArgumentError,
                 "capture plan operation is absent from exact-revision inventory: #{operation["operation_key"]}"
 
-      validate_operation_inventory!(operation, inventory_operation)
+      validate_operation_inventory!(operation, inventory_operation, authored_authentication)
       ensure_unique!(operation["proofs"], "capture_id", "capture proof")
     end)
 
@@ -158,6 +171,18 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
   defp source_provenance!(inventory, source) do
     Enum.find(inventory["provenance"]["artifacts"], &(&1["id"] == source["artifact_id"])) ||
       raise ArgumentError, "capture inventory omits source artifact #{inspect(source["artifact_id"])}"
+  end
+
+  defp authored_authentication!(plan, inventory, opts) do
+    spec_root = Keyword.get(opts, :spec_root, @spec_root)
+    path = Path.join(spec_root, "#{plan["venue"]}.json")
+    authored = JsonDocument.decode_file!(path)
+    expected = get_in(inventory, ["provenance", "authored_spec_canonical_sha256"])
+    actual = authored |> Jason.encode!() |> AuthorityCorpus.sha256()
+
+    ensure!(is_binary(expected), "capture inventory omits authored-spec SHA-256")
+    ensure!(expected == actual, "capture inventory authored-spec SHA-256 mismatch")
+    ContractComparator.authored_rest_authentication(authored)
   end
 
   defp ensure_source_revision!(source, actual, label) do
@@ -203,7 +228,7 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
     )
   end
 
-  defp validate_operation_inventory!(operation, inventory_operation) do
+  defp validate_operation_inventory!(operation, inventory_operation, authored_authentication) do
     ensure_string!(operation, "operation_id", "capture plan operation")
     ensure!(operation["inventory_axes"] == inventory_operation["axes"], "capture plan operation axes differ")
 
@@ -215,13 +240,20 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
     ensure!(operation["provider"] == expected_provider, "capture plan provider facts differ")
     ensure!(is_list(operation["proofs"]) and operation["proofs"] != [], "capture plan operation has no proofs")
 
+    authored = Map.get(authored_authentication, operation["operation_key"], [])
+
+    ensure!(
+      inventory_operation["authored"] == authored,
+      "capture inventory authored authentication differs from pinned authored spec"
+    )
+
     Enum.each(operation["proofs"], fn proof ->
       ensure_path_component!(proof["capture_id"], "capture proof capture_id")
       ensure!(proof["request_seed"]["policy"] == "seed_only", "provider examples must remain request seeds only")
       ensure!(proof["request"]["method"] == provider["method"], "capture proof HTTP method differs")
       ensure!(URI.parse(proof["request"]["url"]).path == provider["path"], "capture proof path differs")
 
-      case Capture.authorize(operation, proof, inventory_operation) do
+      case Capture.authorize(operation, proof, inventory_operation, authored) do
         :ok -> :ok
         {:error, {:refused, reason}} -> raise ArgumentError, "capture proof #{proof["capture_id"]} refused: #{reason}"
       end

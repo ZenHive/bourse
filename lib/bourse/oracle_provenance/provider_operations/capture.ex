@@ -67,13 +67,13 @@ defmodule Bourse.OracleProvenance.ProviderOperations.Capture do
     end
   end
 
-  @doc "Authorizes a reviewed proof against the source-bound comparison inventory."
-  @spec authorize(map(), map(), map()) :: :ok | {:error, {:refused, atom()}}
-  def authorize(operation, proof, inventory_operation)
-      when is_map(operation) and is_map(proof) and is_map(inventory_operation) do
+  @doc "Authorizes a reviewed proof against source-bound provider and authored facts."
+  @spec authorize(map(), map(), map(), [map()]) :: :ok | {:error, {:refused, atom()}}
+  def authorize(operation, proof, inventory_operation, authored_authentication)
+      when is_map(operation) and is_map(proof) and is_map(inventory_operation) and is_list(authored_authentication) do
     with :ok <- authorize(operation, proof),
          :ok <- require_inventory_read(inventory_operation) do
-      require_inventory_public(inventory_operation)
+      require_inventory_public(authored_authentication)
     end
   end
 
@@ -106,7 +106,7 @@ defmodule Bourse.OracleProvenance.ProviderOperations.Capture do
 
   defp require_inventory_read(_operation), do: refused(:unclassified)
 
-  defp require_inventory_public(%{"authored" => authored}) when is_list(authored) and authored != [] do
+  defp require_inventory_public(authored) when is_list(authored) and authored != [] do
     classification =
       Enum.reduce(authored, :public, fn entry, classification ->
         case {get_in(entry, ["authentication", "value", "required"]), classification} do
@@ -124,7 +124,7 @@ defmodule Bourse.OracleProvenance.ProviderOperations.Capture do
     end
   end
 
-  defp require_inventory_public(_operation), do: refused(:unclassified)
+  defp require_inventory_public(_authored), do: refused(:unclassified)
 
   defp capture!(plan, operation, proof, request_fun, now) do
     raw_request = proof["request"]
