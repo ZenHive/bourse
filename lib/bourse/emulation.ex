@@ -71,7 +71,7 @@ defmodule Bourse.Emulation do
     {:error,
      Error.invalid_parameters(
        message: "Emulation context missing exchange module",
-       exchange: exchange_atom(exchange)
+       exchange: exchange_id(exchange)
      )}
   end
 
@@ -79,7 +79,7 @@ defmodule Bourse.Emulation do
     {:error,
      Error.invalid_parameters(
        message: "Emulation context missing exchange module",
-       exchange: exchange_atom(exchange)
+       exchange: exchange_id(exchange)
      )}
   end
 
@@ -300,7 +300,7 @@ defmodule Bourse.Emulation do
   # Returns a standardized not_supported error for unhandled emulation entries.
   @spec not_supported_entry(Exchange.t(), atom(), map()) :: {:error, Error.t()}
   defp not_supported_entry(exchange, method, entry) do
-    exchange = exchange_atom(exchange)
+    exchange = exchange_id(exchange)
     method_name = Atom.to_string(method)
     reason_suffix = emulation_reason_suffix(entry)
 
@@ -572,7 +572,7 @@ defmodule Bourse.Emulation do
         {:error,
          Error.exchange_error(
            "fetchIsolatedBorrowRate() could not find borrow rate for #{symbol}",
-           exchange: exchange_atom(exchange)
+           exchange: exchange_id(exchange)
          )}
 
       rate ->
@@ -673,7 +673,7 @@ defmodule Bourse.Emulation do
         {:error,
          Error.order_not_found(
            message: "No order found with id #{id}",
-           exchange: exchange_atom(exchange)
+           exchange: exchange_id(exchange)
          )}
 
       order ->
@@ -807,7 +807,7 @@ defmodule Bourse.Emulation do
         {:error,
          Error.not_supported(
            message: "fetchDepositsWithdrawals() is not supported yet",
-           exchange: exchange_atom(exchange)
+           exchange: exchange_id(exchange)
          )}
     end
   end
@@ -851,7 +851,7 @@ defmodule Bourse.Emulation do
         {:error,
          Error.not_supported(
            message: "fetchDepositAddress() is not supported yet",
-           exchange: exchange_atom(exchange)
+           exchange: exchange_id(exchange)
          )}
     end
   end
@@ -881,7 +881,7 @@ defmodule Bourse.Emulation do
     {:error,
      Error.invalid_parameters(
        message: "fetchDepositAddress() could not find a deposit address for #{code}",
-       exchange: exchange_atom(exchange)
+       exchange: exchange_id(exchange)
      )}
   end
 
@@ -893,7 +893,7 @@ defmodule Bourse.Emulation do
     {:error,
      Error.invalid_parameters(
        message: "#{method_name} requires a symbol argument",
-       exchange: exchange_atom(exchange)
+       exchange: exchange_id(exchange)
      )}
   end
 
@@ -901,7 +901,7 @@ defmodule Bourse.Emulation do
     {:error,
      Error.invalid_parameters(
        message: "#{method_name} requires a code argument",
-       exchange: exchange_atom(exchange)
+       exchange: exchange_id(exchange)
      )}
   end
 
@@ -909,14 +909,14 @@ defmodule Bourse.Emulation do
     {:error,
      Error.invalid_parameters(
        message: "#{method_name} requires an id argument",
-       exchange: exchange_atom(exchange)
+       exchange: exchange_id(exchange)
      )}
   end
 
   defp require_symbol_result(entries, symbol, exchange, error_prefix) do
     case pick_symbol_entry(entries, symbol) do
       nil ->
-        {:error, Error.exchange_error("#{error_prefix} #{symbol}", exchange: exchange_atom(exchange))}
+        {:error, Error.exchange_error("#{error_prefix} #{symbol}", exchange: exchange_id(exchange))}
 
       result ->
         {:ok, result}
@@ -1018,7 +1018,7 @@ defmodule Bourse.Emulation do
       {:error,
        Error.invalid_parameters(
          message: "Method supports contract markets only",
-         exchange: exchange_atom(exchange)
+         exchange: exchange_id(exchange)
        )}
     end
   end
@@ -1058,7 +1058,7 @@ defmodule Bourse.Emulation do
           {:error,
            Error.invalid_parameters(
              message: "Unknown market symbol #{symbol}",
-             exchange: exchange_atom(exchange)
+             exchange: exchange_id(exchange)
            )}
 
         market ->
@@ -1096,7 +1096,7 @@ defmodule Bourse.Emulation do
       {:error,
        Error.not_supported(
          message: "#{method} is not supported by this exchange",
-         exchange: exchange_atom(exchange)
+         exchange: exchange_id(exchange)
        )}
     end
   end
@@ -1106,7 +1106,7 @@ defmodule Bourse.Emulation do
       {:error,
        Error.authentication_error(
          message: "Credentials required for #{method}",
-         exchange: exchange_atom(exchange)
+         exchange: exchange_id(exchange)
        )}
     else
       :ok
@@ -1176,7 +1176,7 @@ defmodule Bourse.Emulation do
         {:error,
          Error.not_supported(
            message: "fetchOrder() is not supported yet",
-           exchange: exchange_atom(exchange)
+           exchange: exchange_id(exchange)
          )}
     end
   end
@@ -1690,13 +1690,8 @@ defmodule Bourse.Emulation do
   end
 
   @doc false
-  # Resolves exchange atom for error reporting.
-  # sobelow_skip ["DOS.StringToAtom"]
-  # Safe: exchange.id comes from trusted extraction data, not user input
-  @spec exchange_atom(Exchange.t()) :: atom()
-  defp exchange_atom(%Exchange{id: id}) do
-    String.to_existing_atom(id)
-  rescue
-    ArgumentError -> :unknown
-  end
+  # `%Bourse.Error{}` declares `exchange: String.t() | nil`; every producer passes
+  # the string id, so emulation errors must too.
+  @spec exchange_id(Exchange.t()) :: String.t()
+  defp exchange_id(%Exchange{id: id}), do: id
 end
