@@ -35,7 +35,7 @@
     "binancecoinm/fetch_orders.json",
     "binancecoinm/fetch_positions.json",
     "binancecoinm/fetch_ticker.json",
-    "binancecoinm/fetch_trading_fees.json",
+    "binancecoinm/fetch_trading_fee.json",
     "binancecoinm/order_lifecycle.json",
     "binanceusdm/fetch_account_positions.json",
     "binanceusdm/fetch_balance.json",
@@ -444,8 +444,8 @@
       "captured_at": "2026-08-10T23:34:29.919628Z",
       "endpoint": "dapi/v1/commissionRate",
       "host": "demo-dapi.binance.com",
-      "method": "fetch_trading_fees",
-      "path": "binancecoinm/fetch_trading_fees.json",
+      "method": "fetch_trading_fee",
+      "path": "binancecoinm/fetch_trading_fee.json",
       "venue": "binancecoinm"
     },
     {

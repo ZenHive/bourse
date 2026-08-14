@@ -97,7 +97,6 @@
         "normalization.field_maps.position",
         "normalization.field_maps.ticker",
         "normalization.field_maps.trading_fee",
-        "normalization.field_maps.trading_fees",
         "request_shape.cancelAllOrders",
         "request_shape.createOrder",
         "request_shape.fetchADLRank",
@@ -119,7 +118,7 @@
         "request_shape.fetchTicker",
         "request_shape.fetchTime",
         "request_shape.fetchTrades",
-        "request_shape.fetchTradingFees",
+        "request_shape.fetchTradingFee",
         "request_shape.setLeverage",
         "request_shape.setMarginMode",
         "sign_path.public.dapiPublic"

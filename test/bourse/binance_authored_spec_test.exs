@@ -966,9 +966,18 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     exchange = Exchange.new!("binancecoinm", api_key: "key", secret: "secret", sandbox: true)
     symbol = "BTC/USD:BTC"
 
-    for capability <- ~w(fetchLeverageTiers fetchOpenInterest fetchTradingFees fetchLedger fetchADLRank) do
+    for capability <- ~w(fetchLeverageTiers fetchOpenInterest fetchTradingFee fetchLedger fetchADLRank) do
       assert Exchange.has?(exchange, capability)
     end
+
+    refute Exchange.has?(exchange, "fetchTradingFees")
+    assert Bourse.Binancecoinm.__unified_endpoint__(:fetch_trading_fees) == []
+
+    assert {:error,
+            %Bourse.Error{
+              type: :not_supported,
+              message: "binancecoinm does not support fetchTradingFees"
+            }} = Bourse.fetch_trading_fees(exchange)
 
     leverage_body = [
       %{
@@ -1041,19 +1050,17 @@ defmodule Bourse.BinanceAuthoredSpecTest do
 
     assert_coinm_typed_endpoint(
       exchange,
-      :fetch_trading_fees,
-      "fetchTradingFees",
+      :fetch_trading_fee,
+      "fetchTradingFee",
       %{"symbol" => symbol},
       commission,
       "/dapi/v1/commissionRate",
       fn result ->
-        assert %{
-                 ^symbol => %Bourse.TradingFee{
-                   symbol: ^symbol,
-                   maker: 0.00015,
-                   taker: 0.0004,
-                   info: ^commission
-                 }
+        assert %Bourse.TradingFee{
+                 symbol: ^symbol,
+                 maker: 0.00015,
+                 taker: 0.0004,
+                 info: ^commission
                } = result
       end
     )

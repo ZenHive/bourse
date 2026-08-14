@@ -31,7 +31,7 @@ defmodule Bourse.BinancecoinmPromotionTest do
     fetchTicker
     fetchTime
     fetchTrades
-    fetchTradingFees
+    fetchTradingFee
     setLeverage
     setMarginMode
     setPositionMode

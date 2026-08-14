@@ -676,11 +676,6 @@ defmodule Bourse.Unified.ReadParse do
     end
   end
 
-  defp shape_parsed_result(%Bourse.TradingFee{} = fee, "fetchTradingFees", false, params) do
-    fee = %{fee | symbol: requested_symbol(params, fee.symbol)}
-    {:ok, index_by_symbol([fee])}
-  end
-
   defp shape_parsed_result(parsed, js_name, false, _params) when js_name in @symbol_dict_return_methods do
     case parsed do
       structs when is_list(structs) -> {:ok, index_by_symbol(structs)}

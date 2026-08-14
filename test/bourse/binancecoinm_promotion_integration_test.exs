@@ -172,11 +172,13 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
 
     assert is_number(amount) and amount >= 0
 
-    assert {:ok, %{@symbol => %TradingFee{symbol: @symbol, maker: maker, taker: taker}}} =
-             Bourse.fetch_trading_fees(exchange, symbol: @symbol)
+    assert {:ok, %TradingFee{symbol: @symbol, maker: maker, taker: taker}} =
+             Bourse.fetch_trading_fee(exchange, @symbol)
 
     assert is_number(maker) and maker >= 0
     assert is_number(taker) and taker >= 0
+
+    assert {:error, %Error{type: :not_supported}} = Bourse.fetch_trading_fees(exchange)
 
     assert {:ok, ledger} = Bourse.fetch_ledger(exchange)
     assert Enum.all?(ledger, &match?(%LedgerEntry{}, &1))
@@ -205,7 +207,7 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
              Bourse.fetch_open_interest(exchange, invalid_symbol)
 
     assert {:error, %Error{type: :bad_symbol, code: -1121}} =
-             Bourse.fetch_trading_fees(exchange, symbol: invalid_symbol)
+             Bourse.fetch_trading_fee(exchange, invalid_symbol)
 
     assert {:error, %Error{type: :bad_symbol, code: -1121}} =
              Bourse.fetch_adl_rank(exchange, symbol: invalid_symbol)

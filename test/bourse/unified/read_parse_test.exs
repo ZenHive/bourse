@@ -1676,6 +1676,27 @@ defmodule Bourse.Unified.ReadParseTest do
       assert second.info == Enum.at(body, 1)
     end
 
+    test "plural trading fees reject one all-nil struct instead of inventing a symbol-keyed map" do
+      exchange = Exchange.new!("binance")
+      body = %{"maker" => "0.0002", "taker" => "0.0004"}
+
+      assert {:error,
+              %Error{
+                type: :exchange_error,
+                message: "Unexpected response shape: parsed to an all-nil struct (method: fetch_trading_fees)"
+              }} =
+               ReadParse.parse(
+                 exchange,
+                 NativeSymbolParser,
+                 :fetch_trading_fees,
+                 "fetchTradingFees",
+                 body,
+                 %{"symbol" => "BTC/USDT"},
+                 :parse_trading_fee,
+                 false
+               )
+    end
+
     test "market-fee transform is driven by generic authored vocabulary" do
       exchange =
         "binance"

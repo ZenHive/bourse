@@ -50,16 +50,18 @@ symbol.
 -->
 
 **C-T545b — leverage brackets, open interest, and commission rates remain distinct typed reads
-(task 545). Outcome: CONFIRM provider contract.** The provider's V2 Notional Bracket contract
+(task 545; singular-fee confrontation amended by task 591). Outcome: CONFIRM provider contract.** The provider's V2 Notional Bracket contract
 defines symbol-scoped `brackets` with leverage, quantity floors/caps, and maintenance ratios;
 the Open Interest contract defines contract count and observation time; the Commission Rate
-contract defines maker and taker rates. These map respectively to `LeverageTier`, `OpenInterest`,
-and `TradingFee`. The COIN-M `qtyFloor` / `qtyCap` values remain in `LeverageTier.info` instead
-of being mislabeled as unified notional bounds. Live demo DAPI returned populated success
-responses for all three and `-1121` for invalid symbols.
+contract requires one `symbol` and defines maker and taker rates. These map respectively to
+`LeverageTier`, `OpenInterest`, and singular `TradingFee`; plural `fetchTradingFees` is unsupported
+because the venue contract has no all-symbols read. The COIN-M `qtyFloor` / `qtyCap` values remain
+in `LeverageTier.info` instead of being mislabeled as unified notional bounds. Live demo DAPI
+returned populated success responses for all three and `-1121` for invalid symbols; the singular
+commission-rate read was reverified on 2026-08-14.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T545b","date":"2026-08-11","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binancecoinm/manifest.json artifact developer-docs-full; COIN-M V2 Notional Bracket, Open Interest, and Commission Rate contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/exchange_accepted_requests/binancecoinm/fetch_leverage_tiers.json, test/fixtures/public_accepted_requests/binancecoinm/fetch_open_interest--dapiPublic_get_openinterest.json, test/fixtures/responses/binancecoinm/fetch_trading_fees.json, and tagged live integration success/error assertions"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T545b","date":"2026-08-11","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binancecoinm/manifest.json artifact developer-docs-full; COIN-M V2 Notional Bracket, Open Interest, and Commission Rate contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/exchange_accepted_requests/binancecoinm/fetch_leverage_tiers.json, test/fixtures/public_accepted_requests/binancecoinm/fetch_open_interest--dapiPublic_get_openinterest.json, test/fixtures/responses/binancecoinm/fetch_trading_fee.json, and tagged live integration success/error assertions"},"compatibility_reference":null,"resolved_tier":1}
 -->
 
 **C-T545c — income history is ledger data and an empty ADL object means no ranked position

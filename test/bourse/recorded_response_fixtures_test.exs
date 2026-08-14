@@ -125,7 +125,7 @@ defmodule Bourse.RecordedResponseFixturesTest do
     assert {"binancecoinm", :fetch_orders} in RecordedResponseFixtures.capture_targets()
     assert {"binancecoinm", :fetch_leverage_tiers} in RecordedResponseFixtures.capture_targets()
     assert {"binancecoinm", :fetch_open_interest} in RecordedResponseFixtures.capture_targets()
-    assert {"binancecoinm", :fetch_trading_fees} in RecordedResponseFixtures.capture_targets()
+    assert {"binancecoinm", :fetch_trading_fee} in RecordedResponseFixtures.capture_targets()
     assert {"binancecoinm", :fetch_ledger} in RecordedResponseFixtures.capture_targets()
     assert {"binancecoinm", :fetch_adl_rank} in RecordedResponseFixtures.capture_targets()
     assert {"binancecoinm", :error_position_mode_unchanged} in RecordedResponseFixtures.capture_targets()
@@ -286,7 +286,7 @@ defmodule Bourse.RecordedResponseFixturesTest do
           {"binancecoinm", :fetch_canceled_orders},
           {"binancecoinm", :fetch_leverage_tiers},
           {"binancecoinm", :fetch_open_interest},
-          {"binancecoinm", :fetch_trading_fees},
+          {"binancecoinm", :fetch_trading_fee},
           {"binancecoinm", :fetch_ledger},
           {"binancecoinm", :fetch_adl_rank},
           {"lighter", :fetch_ticker},

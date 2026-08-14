@@ -251,7 +251,7 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       {"binancecoinm", :fetch_canceled_orders} =>
         binance_coinm("dapi/v1/allOrders", %{"symbol" => "BTC/USD:BTC", "limit" => @history_limit}),
       {"binancecoinm", :fetch_leverage_tiers} => binance_coinm("dapi/v2/leverageBracket", %{"symbol" => "BTC/USD:BTC"}),
-      {"binancecoinm", :fetch_trading_fees} => binance_coinm("dapi/v1/commissionRate", %{"symbol" => "BTC/USD:BTC"}),
+      {"binancecoinm", :fetch_trading_fee} => binance_coinm("dapi/v1/commissionRate", %{"symbol" => "BTC/USD:BTC"}),
       {"binancecoinm", :fetch_ledger} => binance_coinm("dapi/v1/income", %{"limit" => @history_limit}),
       {"binancecoinm", :fetch_adl_rank} => binance_coinm("dapi/v1/adlQuantile", %{"symbol" => "BTC/USD:BTC"}),
       {"binancecoinm", :fetch_positions} => binance_coinm("dapi/v1/positionRisk", %{"symbols" => ["BTC/USD:BTC"]}),

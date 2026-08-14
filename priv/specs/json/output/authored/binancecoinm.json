@@ -873,7 +873,7 @@
       }
     },
     "has": {
-      "fetchTradingFee": false,
+      "fetchTradingFee": true,
       "fetchMarginAdjustmentHistory": false,
       "fetchSettlementHistory": false,
       "fetchBorrowRateHistory": false,
@@ -1026,7 +1026,7 @@
       "fetchDepositAddressesByNetwork": false,
       "signIn": false,
       "createMarketSellOrder": false,
-      "fetchTradingFees": true,
+      "fetchTradingFees": false,
       "fetchOrder": true,
       "fetchOpenInterestHistory": false,
       "fetchUnderlyingAssets": false
@@ -9290,7 +9290,9 @@
       }
     },
     "unified": {
-      "fetchTradingFee": [],
+      "fetchTradingFee": [
+        "dapiPrivateGetCommissionRate"
+      ],
       "fetchMarginAdjustmentHistory": [],
       "fetchSettlementHistory": [],
       "fetchBorrowRateHistory": [],
@@ -9505,9 +9507,7 @@
       "fetchDepositAddressesByNetwork": [],
       "signIn": [],
       "createMarketSellOrder": [],
-      "fetchTradingFees": [
-        "dapiPrivateGetCommissionRate"
-      ],
+      "fetchTradingFees": [],
       "fetchOrder": [
         "dapiPrivateGetOrder"
       ],
