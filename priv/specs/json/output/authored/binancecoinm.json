@@ -3865,6 +3865,14 @@
           }
         },
         "fetchTrades": {
+          "endTime": {
+            "source": "until",
+            "source_class": "optional"
+          },
+          "startTime": {
+            "source": "since",
+            "source_class": "optional"
+          },
           "symbol": {
             "kind": "unresolved",
             "reason": "identifier_reference",

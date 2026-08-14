@@ -7,6 +7,17 @@ Append-only schema confrontations for Binance COIN-M. Follow the allocation and 
 venue-specific decision in the self-contained runtime document. Provider-owned evidence is
 indexed by `priv/authority/binancecoinm/manifest.json`.
 
+## 2026-08-14 — aggregate-trade returned window (Task 553)
+
+**C-T553c — COIN-M aggregate trades use native `startTime`/`endTime` bounds (task 553).
+Outcome: CONFIRM provider contract.** The authored request shape consumes unified
+`since`/`until`. A live demo-dapi probe discovered a populated interval and then proved both the
+oldest and newest returned trade timestamps landed at the narrower requested boundaries.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T553c","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M aggregate-trades startTime/endTime parameter contract"},"observed_evidence":{"kind":"live_venue","reference":"Live demo-dapi fetchTrades returned-window assertion on 2026-08-14"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-14 — promotional-credit class (Task 609)
 
 **C-T609f — COIN-M `WELCOME_BONUS` emits registered `bonus` (task 609). Outcome: CONFIRM

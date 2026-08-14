@@ -4283,6 +4283,16 @@
             "value": null
           }
         },
+        "fetchMyTrades": {
+          "endTime": {
+            "source": "until",
+            "source_class": "optional"
+          },
+          "startTime": {
+            "source": "since",
+            "source_class": "optional"
+          }
+        },
         "fetchMarkPrice": {
           "symbol": {
             "kind": "unresolved",
@@ -4291,6 +4301,10 @@
           }
         },
         "fetchOHLCV": {
+          "endTime": {
+            "source": "until",
+            "source_class": "optional"
+          },
           "interval": {
             "kind": "unresolved",
             "reason": "dynamic_construction",
@@ -4300,6 +4314,10 @@
             "kind": "unresolved",
             "reason": "identifier_reference",
             "value": null
+          },
+          "startTime": {
+            "source": "since",
+            "source_class": "optional"
           }
         },
         "fetchOpenInterestHistory": {
@@ -4393,6 +4411,14 @@
           }
         },
         "fetchTrades": {
+          "endTime": {
+            "source": "until",
+            "source_class": "optional"
+          },
+          "startTime": {
+            "source": "since",
+            "source_class": "optional"
+          },
           "symbol": {
             "kind": "unresolved",
             "reason": "identifier_reference",

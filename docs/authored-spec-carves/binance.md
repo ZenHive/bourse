@@ -6,6 +6,26 @@ Append-only schema confrontations for Binance spot. Follow the allocation and ev
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance spot carve record.
 
+## 2026-08-14 — returned-window bounds on spot reads (Task 553)
+
+**C-T553a — Spot candles, aggregate trades, all-orders, and account trades name their
+millisecond bounds `startTime` and `endTime` (task 553). Outcome: CONFIRM provider contract.**
+Binance documents `startTime`/`endTime` on `GET /api/v3/klines`, `GET /api/v3/aggTrades`,
+`GET /api/v3/allOrders`, and `GET /api/v3/myTrades`; its general REST contract says a start-bound
+read begins at the oldest item on or after that boundary, while an end-bound read stops there.
+The authored request shapes map unified `since`/`until` to those native names for all four reads.
+
+Before this carve, live spot testnet calls carrying `since` returned `-1104` for candles (read 3,
+sent 4), aggregate trades (read 2, sent 3), and account trades (read 4, sent 5). After the carve,
+the returned-window probe placed candle and aggregate-trade rows at both requested boundaries;
+all-orders did the same. Account trades accepted the translated window but the reset testnet
+account returned no rows across BTC, ETH, BNB, LTC, and TRX pairs, so its row-boundary evidence
+remains tracked in the time-window exclusion matrix rather than being treated as a vacuous pass.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T553a","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Binance Spot REST API GET /api/v3/klines, /api/v3/aggTrades, /api/v3/allOrders, and /api/v3/myTrades startTime/endTime contracts"},"observed_evidence":{"kind":"live_venue","reference":"Live Binance spot testnet returned-window probes on 2026-08-14; before-state -1104 unread-parameter responses and after-state boundary assertions for fetchOHLCV, fetchTrades, and fetchOrders"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"fetchMyTrades returned zero rows across five active pairs after accepting the translated request; populated-row boundary evidence is tracked by task 526"}
+-->
+
 ## 2026-08-14 — promotional-credit class (Task 609)
 
 **C-T609d — Welcome, contest, and BFUSD rewards are promotional credits, not cashback

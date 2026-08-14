@@ -18,6 +18,8 @@ defmodule Bourse.BinanceAuthoredSpecTest do
   @non_usdt_tickers_fixture "test/fixtures/responses/binance/fetch_tickers_non_usdt_quotes.json"
   @external_resource @non_usdt_tickers_fixture
   @frozen_timestamp_ms 1_700_000_000_000
+  @window_end_ms 1_700_003_600_000
+  @window_limit 5
   @bad_request_status 400
   @eapi_percentage_points 1775.0
 
@@ -1286,6 +1288,97 @@ defmodule Bourse.BinanceAuthoredSpecTest do
       query = request |> RequestCollector.query() |> Map.drop(["timestamp", "signature", "recvWindow"])
       assert query == expected
       refute Enum.any?(query, fn {_key, value} -> value == "" end)
+    end
+  end
+
+  test "spot time-window reads rename both bounds before dispatch" do
+    exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
+
+    {ohlcv_requests, ohlcv_stub} = ohlcv_stub()
+
+    assert {:ok, [_row]} =
+             Bourse.fetch_ohlcv(exchange, "BTC/USDT", "1m",
+               since: @frozen_timestamp_ms,
+               until: @window_end_ms,
+               limit: @window_limit,
+               plug: {Req.Test, ohlcv_stub}
+             )
+
+    assert ohlcv_requests |> RequestCollector.one!() |> RequestCollector.query() == %{
+             "endTime" => Integer.to_string(@window_end_ms),
+             "interval" => "1m",
+             "limit" => Integer.to_string(@window_limit),
+             "startTime" => Integer.to_string(@frozen_timestamp_ms),
+             "symbol" => "BTCUSDT"
+           }
+
+    {trade_requests, trade_stub} = path_body_stub([])
+
+    assert {:ok, []} =
+             Bourse.fetch_trades(exchange, "BTC/USDT",
+               since: @frozen_timestamp_ms,
+               until: @window_end_ms,
+               limit: @window_limit,
+               plug: {Req.Test, trade_stub}
+             )
+
+    assert trade_requests |> RequestCollector.one!() |> RequestCollector.query() == %{
+             "endTime" => Integer.to_string(@window_end_ms),
+             "limit" => Integer.to_string(@window_limit),
+             "startTime" => Integer.to_string(@frozen_timestamp_ms),
+             "symbol" => "BTCUSDT"
+           }
+
+    {my_trade_requests, my_trade_stub} = path_body_stub([])
+
+    assert {:ok, []} =
+             Bourse.fetch_my_trades(exchange,
+               symbol: "BTC/USDT",
+               since: @frozen_timestamp_ms,
+               until: @window_end_ms,
+               limit: @window_limit,
+               plug: {Req.Test, my_trade_stub},
+               timestamp_ms_override: @frozen_timestamp_ms
+             )
+
+    my_trade_query = my_trade_requests |> RequestCollector.one!() |> RequestCollector.query() |> signed_query_params()
+
+    assert my_trade_query == %{
+             "endTime" => Integer.to_string(@window_end_ms),
+             "limit" => Integer.to_string(@window_limit),
+             "startTime" => Integer.to_string(@frozen_timestamp_ms),
+             "symbol" => "BTCUSDT"
+           }
+  end
+
+  test "futures time-window reads rename both bounds before dispatch" do
+    cases = [
+      {"binancecoinm", "fetchTrades", "BTC/USD:BTC"},
+      {"binanceusdm", "fetchOHLCV", "BTC/USDT:USDT"},
+      {"binanceusdm", "fetchTrades", "BTC/USDT:USDT"},
+      {"binanceusdm", "fetchMyTrades", "BTC/USDT:USDT"}
+    ]
+
+    for {exchange_id, js_name, symbol} <- cases do
+      exchange = Exchange.new!(exchange_id)
+
+      params =
+        %{
+          "symbol" => symbol,
+          "timeframe" => "1m",
+          "since" => @frozen_timestamp_ms,
+          "until" => @window_end_ms,
+          "limit" => @window_limit
+        }
+        |> Unified.maybe_denormalize_symbol(exchange)
+        |> Unified.maybe_translate_timeframe(exchange)
+
+      shaped = RequestShape.apply(params, exchange, js_name)
+
+      assert shaped["startTime"] == @frozen_timestamp_ms
+      assert shaped["endTime"] == @window_end_ms
+      refute Map.has_key?(shaped, "since")
+      refute Map.has_key?(shaped, "until")
     end
   end
 

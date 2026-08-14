@@ -6,6 +6,18 @@ Append-only schema confrontations for Deribit. Follow the allocation and evidenc
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Deribit carve record.
 
+## 2026-08-14 — chart-data returned window (Task 553)
+
+**C-T553e — Deribit chart data consumes unified bounds as `start_timestamp` and
+`end_timestamp` (task 553). Outcome: CONFIRM provider contract.** The computed request shape
+already derived the two native fields, but left the raw `until` alias beside them. The authored
+omit list now consumes that alias. A live testnet probe asserts the parsed first and last candle
+timestamps land at the requested bounds rather than accepting a merely successful response.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T553e","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Deribit public/get_tradingview_chart_data start_timestamp/end_timestamp contract"},"observed_evidence":{"kind":"live_venue","reference":"Live test.deribit.com fetchOHLCV returned-window assertion on 2026-08-14"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 **C-T565a — `fetchLiquidations` is not a liquidation surface on Deribit; the wired
 endpoint returns settlement history (task 565). Outcome: DIVERGE; capabilities.has = false.**
 

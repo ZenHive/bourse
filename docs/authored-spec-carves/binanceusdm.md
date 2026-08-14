@@ -6,6 +6,18 @@ Append-only schema confrontations for Binance USD-M. Follow the allocation and e
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance USD-M carve record.
 
+## 2026-08-14 — returned-window bounds on USD-M reads (Task 553)
+
+**C-T553b — USD-M candles, aggregate trades, account trades, and orders use native
+`startTime`/`endTime` bounds (task 553). Outcome: CONFIRM provider contract.** The authored
+request shapes consume unified `since`/`until` for all four reads. Live demo probes discover a
+populated interval, request narrower start and end boundaries, and assert the returned oldest and
+newest timestamps land at those boundaries; a successful response alone is not evidence.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T553b","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M REST kline, aggregate-trades, account-trades, and all-orders startTime/endTime parameter contracts"},"observed_evidence":{"kind":"live_venue","reference":"Live demo-fapi returned-window assertions for fetchOHLCV, fetchTrades, fetchMyTrades, and fetchOrders on 2026-08-14"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-14 — promotional-credit class (Task 609)
 
 **C-T609e — USD-M welcome, contest, and BFUSD rewards emit registered `bonus` (task 609).

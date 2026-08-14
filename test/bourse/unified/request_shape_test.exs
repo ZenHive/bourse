@@ -1731,9 +1731,16 @@ defmodule Bourse.Unified.RequestShapeTest do
     test "builds deribit fetchOHLCV timestamps from since, limit, and timeframe" do
       {:ok, exchange} = Exchange.new("deribit")
       since = 1_689_335_160_000
+      until_ms = since + 5 * 60 * 60 * 1000
 
       params =
-        %{"symbol" => "BTC/USDT:USDT", "timeframe" => "1h", "since" => since, "limit" => 10}
+        %{
+          "symbol" => "BTC/USDT:USDT",
+          "timeframe" => "1h",
+          "since" => since,
+          "until" => until_ms,
+          "limit" => 10
+        }
         |> Bourse.Unified.maybe_denormalize_symbol(exchange)
         |> Bourse.Unified.maybe_translate_timeframe(exchange)
 
@@ -1743,7 +1750,7 @@ defmodule Bourse.Unified.RequestShapeTest do
                "instrument_name" => "BTC_USDT-PERPETUAL",
                "resolution" => "60",
                "start_timestamp" => since,
-               "end_timestamp" => since + 10 * 60 * 60 * 1000
+               "end_timestamp" => until_ms
              }
     end
 
@@ -2294,6 +2301,36 @@ defmodule Bourse.Unified.RequestShapeTest do
       shaped = RequestShape.apply(%{"timeframe" => "1m"}, exchange, "fetchOHLCV")
 
       assert shaped == %{"bar" => "1m", "limit" => 100}
+    end
+
+    test "okx fetchOHLCV maps explicit and until-only windows to exclusive cursors" do
+      {:ok, exchange} = Exchange.new("okx")
+      since = 1_700_000_000_000
+      until_ms = since + 5 * 60_000
+
+      assert %{
+               "after" => ^until_ms,
+               "before" => 1_699_999_999_999,
+               "bar" => "1m",
+               "limit" => 5
+             } =
+               RequestShape.apply(
+                 %{"timeframe" => "1m", "since" => since, "until" => until_ms, "limit" => 5},
+                 exchange,
+                 "fetchOHLCV"
+               )
+
+      assert %{
+               "after" => ^until_ms,
+               "before" => 1_699_999_999_999,
+               "bar" => "1m",
+               "limit" => 5
+             } =
+               RequestShape.apply(
+                 %{"timeframe" => "1m", "until" => until_ms, "limit" => 5},
+                 exchange,
+                 "fetchOHLCV"
+               )
     end
 
     test "dynamic_construction is a no-op when its source param is absent (deepcoin fetchBalance instType)" do

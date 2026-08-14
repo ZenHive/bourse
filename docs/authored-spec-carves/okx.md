@@ -6,6 +6,19 @@ Append-only schema confrontations for OKX. Follow the allocation and evidence ru
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete OKX carve record.
 
+## 2026-08-14 — candlestick returned window (Task 553)
+
+**C-T553d — OKX candlestick bounds use exclusive `before`/`after` cursors (task 553).
+Outcome: CONFIRM provider contract.** OKX documents `before` as returning records newer than its
+timestamp and `after` as returning records earlier than its timestamp. Unified `since` therefore
+becomes `before = since - 1`; unified `until` becomes `after = until`. An until-only call derives
+the lower cursor from the requested limit and timeframe. Live international-demo assertions prove
+the parsed first and last candle timestamps land at the requested boundaries.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T553d","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 GET /api/v5/market/candles before/after parameter contract"},"observed_evidence":{"kind":"live_venue","reference":"Live www.okx.com simulated-trading fetchOHLCV returned-window assertion on 2026-08-14"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-13 — registered ledger type taxonomy (Task 605)
 
 **C-T605d — Trading-account bills use cross-venue economic-event classes, with an explicit

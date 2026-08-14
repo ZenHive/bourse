@@ -1171,12 +1171,13 @@ defmodule Bourse.Unified.RequestShape.OKX do
     bar = params["bar"] || @default_ohlcv_bar
     limit = ohlcv_limit(params)
     since = params["since"]
+    until_ms = params["until"]
 
     params
-    |> Map.drop(~w(since timeframe type price))
+    |> Map.drop(~w(since timeframe type price until))
     |> Map.put("bar", bar)
     |> Map.put("limit", limit)
-    |> put_ohlcv_window(since, bar, limit)
+    |> put_ohlcv_window(since, until_ms, bar, limit)
   end
 
   defp ohlcv_limit(params) do
@@ -1193,13 +1194,26 @@ defmodule Bourse.Unified.RequestShape.OKX do
     |> min(max_limit)
   end
 
-  defp put_ohlcv_window(params, since, bar, limit) when is_integer(since) do
-    params
-    |> Map.put_new("before", max(since - @exclusive_time_offset_ms, 0))
-    |> Map.put_new("after", since + timeframe_ms(bar) * limit)
+  defp put_ohlcv_window(params, since, until_ms, _bar, _limit) when is_integer(since) and is_integer(until_ms) do
+    put_ohlcv_cursors(params, since, until_ms)
   end
 
-  defp put_ohlcv_window(params, _since, _bar, _limit), do: params
+  defp put_ohlcv_window(params, since, _until_ms, bar, limit) when is_integer(since) do
+    put_ohlcv_cursors(params, since, since + timeframe_ms(bar) * limit)
+  end
+
+  defp put_ohlcv_window(params, _since, until_ms, bar, limit) when is_integer(until_ms) do
+    window_start = max(until_ms - timeframe_ms(bar) * limit, 0)
+    put_ohlcv_cursors(params, window_start, until_ms)
+  end
+
+  defp put_ohlcv_window(params, _since, _until_ms, _bar, _limit), do: params
+
+  defp put_ohlcv_cursors(params, since, until_ms) do
+    params
+    |> Map.put_new("before", max(since - @exclusive_time_offset_ms, 0))
+    |> Map.put_new("after", until_ms)
+  end
 
   defp timeframe_ms(bar) when is_binary(bar) do
     case Regex.run(~r/^(\d+)([mHDWM])(?:utc)?$/, bar, capture: :all_but_first) do

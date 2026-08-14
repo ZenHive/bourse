@@ -1776,7 +1776,8 @@
         "fetchOHLCV": {
           "_omit": [
             "since",
-            "limit"
+            "limit",
+            "until"
           ],
           "end_timestamp": {
             "default_limit": 1000,
