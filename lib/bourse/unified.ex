@@ -18,6 +18,7 @@ defmodule Bourse.Unified do
   alias Bourse.Registry
   alias Bourse.Safe
   alias Bourse.Symbol
+  alias Bourse.Unified.DeribitPositionUnits
   alias Bourse.Unified.Descriptor
   alias Bourse.Unified.FieldMaps
   alias Bourse.Unified.FundingInterval
@@ -1843,11 +1844,16 @@ defmodule Bourse.Unified do
             list_return?
           )
         )
+        |> reconcile_position_units(parser, exchange)
 
       :none ->
         {:ok, response_body(response)}
     end
   end
+
+  defp reconcile_position_units(result, :parse_position, exchange), do: DeribitPositionUnits.reconcile(result, exchange)
+
+  defp reconcile_position_units(result, _parser, _exchange), do: result
 
   # OKX reports maintenance as rows in `data`; an empty list is normal operation
   # rather than an empty resource collection. Each row carries the window end

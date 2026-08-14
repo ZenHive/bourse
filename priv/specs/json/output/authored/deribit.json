@@ -4771,12 +4771,27 @@
         "_unresolved_reason": null,
         "extras": [],
         "field_map": {
+          "baseQuantity": {
+            "coercion": "safeNumber",
+            "key": "size_currency",
+            "kind": "absolute"
+          },
           "collateral": null,
           "contractSize": null,
           "contracts": {
-            "coercion": "safeNumber",
-            "format": null,
-            "key": "size"
+            "else": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "size"
+            },
+            "guard": {
+              "field": "kind",
+              "in": [
+                "future"
+              ]
+            },
+            "kind": "when",
+            "then": null
           },
           "datetime": null,
           "entryPrice": {
@@ -4873,8 +4888,19 @@
             "key": "mark_price"
           },
           "notional": {
-            "coercion": "safeNumber",
-            "key": "size_currency"
+            "else": null,
+            "guard": {
+              "field": "kind",
+              "in": [
+                "future"
+              ]
+            },
+            "kind": "when",
+            "then": {
+              "coercion": "safeNumber",
+              "key": "size",
+              "kind": "absolute"
+            }
           },
           "percentage": {
             "coercion": "safeNumber",

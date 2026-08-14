@@ -13,7 +13,8 @@ defmodule Bourse.Position do
     * `side` - "long" or "short"
     * `contracts` - Number of contracts
     * `contract_size` - Size of one contract
-    * `notional` - Position notional value
+    * `notional` - Absolute quote-currency position value
+    * `base_quantity` - Absolute position size in the base currency
     * `leverage` - Current leverage
     * `unrealized_pnl` - Unrealized profit/loss
     * `realized_pnl` - Realized profit/loss
@@ -54,6 +55,7 @@ defmodule Bourse.Position do
           contracts: number() | nil,
           contract_size: number() | nil,
           notional: number() | nil,
+          base_quantity: number() | nil,
           leverage: number() | nil,
           unrealized_pnl: number() | nil,
           realized_pnl: number() | nil,
@@ -91,6 +93,7 @@ defmodule Bourse.Position do
     :contracts,
     :contract_size,
     :notional,
+    :base_quantity,
     :leverage,
     :unrealized_pnl,
     :realized_pnl,
@@ -144,6 +147,7 @@ defmodule Bourse.Position do
                    contracts: number() | nil,
                    contract_size: number() | nil,
                    notional: number() | nil,
+                   base_quantity: number() | nil,
                    leverage: number() | nil,
                    unrealized_pnl: number() | nil,
                    realized_pnl: number() | nil,
@@ -179,7 +183,8 @@ defmodule Bourse.Position do
                    side: "long or short",
                    contracts: "Number of contracts",
                    contract_size: "Size of one contract",
-                   notional: "Position notional value",
+                   notional: "Absolute quote-currency position value",
+                   base_quantity: "Absolute position size in the base currency",
                    leverage: "Current leverage",
                    unrealized_pnl: "Unrealized profit/loss",
                    realized_pnl: "Realized profit/loss",

@@ -35,7 +35,7 @@ defmodule Bourse.DeribitAuthoredSpecTest do
       "instrument_name" => "BTC-PERPETUAL",
       "kind" => "future",
       "maintenance_margin" => 0.000143783,
-      "size" => 40,
+      "size" => 50,
       "size_currency" => 0.006687487
     }
 
@@ -51,9 +51,22 @@ defmodule Bourse.DeribitAuthoredSpecTest do
 
     {:ok, requests} = RequestCollector.start_link()
 
+    exchange =
+      Exchange.put_markets(private_exchange(), [
+        %Bourse.Market{
+          id: "BTC-PERPETUAL",
+          symbol: "BTC/USD:BTC",
+          contract: true,
+          contract_size: 10.0,
+          inverse: true,
+          swap: true,
+          type: "swap"
+        }
+      ])
+
     assert {:ok, positions} =
              Unified.call(
-               private_exchange(),
+               exchange,
                :fetch_positions,
                "fetchPositions",
                %{},
@@ -67,6 +80,10 @@ defmodule Bourse.DeribitAuthoredSpecTest do
 
     assert %Bourse.Position{} = inverse_position
     assert %Bourse.Position{} = linear_position
+    assert inverse_position.notional == 50.0
+    assert inverse_position.base_quantity == 0.006687487
+    assert inverse_position.contract_size == 10.0
+    assert inverse_position.contracts == 5.0
     assert inverse_position.initial_margin_percentage
     assert inverse_position.maintenance_margin_percentage
     assert_in_delta inverse_position.initial_margin_percentage, 0.000197283 / 0.006687487, @ratio_tolerance
@@ -93,8 +110,10 @@ defmodule Bourse.DeribitAuthoredSpecTest do
   test "direct parse_position without a payload annotation degrades to market context" do
     raw = %{
       "instrument_name" => "BTC-PERPETUAL",
+      "kind" => "future",
       "initial_margin" => 0.000197283,
       "maintenance_margin" => 0.000143783,
+      "size" => 50,
       "size_currency" => 0.006687487
     }
 
@@ -103,6 +122,9 @@ defmodule Bourse.DeribitAuthoredSpecTest do
 
     assert_in_delta position.initial_margin_percentage, 0.000197283 / 0.006687487, @ratio_tolerance
     assert_in_delta position.maintenance_margin_percentage, 0.000143783 / 0.006687487, @ratio_tolerance
+    assert position.notional == 50.0
+    assert position.base_quantity == 0.006687487
+    assert position.contracts == nil
 
     linear_raw = %{
       "instrument_name" => "ETH_USDC-PERPETUAL",

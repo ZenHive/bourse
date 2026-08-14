@@ -616,3 +616,33 @@ documented base-coin amount.
 <!-- carve-evidence-status
 {"carve_id":"C-T608a","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_user_trades_by_currency amount and price unit split linked in C-T608a"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-14 test.deribit.com symbol-less fetch_my_trades pinned cost == amount / price on a BTC-PERPETUAL fill; load_markets pinned BTC-PERPETUAL inverse and ETH_USDC-PERPETUAL linear in deribit_authored_integration_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No populated option fill is reachable on the testnet account; the option base-coin cost branch is pinned as a parser golden against the provider-documented amount unit"}
 -->
+
+## 2026-08-14 — future position value axes (Task 610)
+
+**C-T610f — Deribit futures expose quote `size`, base `size_currency`, and a
+market-owned quote contract size. Outcome: CONFIRMED provider semantics and
+DIVERGE from the prior field map (task 610).**
+
+Deribit's [private/get_positions](https://docs.deribit.com/api-reference/account-management/private-get_positions.md)
+contract states that future `size` is in quote currency and future-only
+`size_currency` is in base currency. Its own BTC-PERPETUAL example reports
+`size = 50` USD and `size_currency = 0.006687487` BTC. The unified position now
+maps those values to quote `notional` and `base_quantity`, respectively.
+
+[public/get_instruments](https://docs.deribit.com/api-reference/market-data/public-get_instruments)
+supplies `contract_size`; BTC-PERPETUAL reports 10 USD. Loaded market metadata
+therefore reconciles the example as 5 contracts × 10 USD = 50 USD. No symbol
+constant is embedded in the position parser.
+
+- *Live evidence (2026-08-13):* a small BTC-PERPETUAL testnet position exposed
+  `size = 10` while the old field map emitted its `size_currency = 0.000157394`
+  BTC as notional. The tagged integration test compares all four unified values
+  with the raw position and loaded instrument on every run.
+- *Named gap `G-T610-options`:* the provider documents option `size` in base
+  currency and omits `size_currency`. Option contract-size normalization is
+  outside this future-only carve, so option `notional` remains absent rather
+  than assigning an unsupported quote meaning.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T610f","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions future size and size_currency contract plus public/get_instruments contract_size"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-13 test.deribit.com BTC-PERPETUAL size 10 and size_currency 0.000157394; tagged reconciliation in deribit_authored_integration_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The live position is pinned by a tagged integration assertion but is not yet a manifest-registered populated response fixture"}
+-->

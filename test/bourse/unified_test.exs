@@ -79,6 +79,10 @@ defmodule Bourse.UnifiedTest do
     end
   end
 
+  test "endpoint_id returns nil for an incomplete endpoint config" do
+    assert Unified.endpoint_id(%{}) == nil
+  end
+
   # ---------------------------------------------------------------------------
   # split_opts/1
   # ---------------------------------------------------------------------------
