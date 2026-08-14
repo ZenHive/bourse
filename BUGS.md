@@ -1202,3 +1202,24 @@ Case überschreibt `Map.put` ihn. Klassen-Scope: sieben authored Conditionals ü
 deribit `createOrder.trigger` ist die einzige source-lose und die live-verifizierte Instanz.
 Fix als Task 615 gefiled (caller precedence: Conditional stellt nur den Default), assignee
 grok/grok-4.6, bundle live_triage.
+
+## 2026-08-14 — binance `Bourse.WS.watch_order_book/3`: generierter Channel liefert nie Frames
+
+**Method:** `Bourse.WS.watch_order_book/3` (Channel-Extraktion `Bourse.WS.Channels.build/4`)
+**Exchange:** binance · **Severity:** hoch (Default-Orderbuch-Stream still tot)
+
+`Channels.build/4` produziert für das Binance-Orderbuch den internen Cache-Key
+`orderbook:btcusdt` als Subscription-Channel. Der Socket akzeptiert die Subscription
+kommentarlos — es kommt aber nie ein Frame an: der still tote Stream ist die schlimmste
+Fehlerklasse (kein Error, keine Daten). Eine provider-owned Subscription
+(`btcusdt@depth20@100ms`, Binance partial-depth) liefert sofort komplette 20×20-Book-Frames.
+
+Expected: `watch_order_book/3` emittiert ohne caller-supplied `subscribe_payload` einen
+provider-nativen partial-depth- oder diff-depth-Stream; ein Integrationstest pinnt den
+Default-Pfad (Frame kommt an) und das Provider-Rejection-Verhalten.
+
+Konsument-Workaround (trading_dashboard, Task 68): der Orderflow-Transport subscribed den
+provider-owned `depth20@100ms`-Stream direkt statt über die generierte Channel-Extraktion
+(`lib/trading_dashboard/market_data/transport/local.ex`); live gegen Binance verifiziert
+(Reviewer-Run run-1786673501096-c9939b07). Der Workaround kann raus, sobald bourse den
+Default-Channel fixt.
