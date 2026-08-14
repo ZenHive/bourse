@@ -24,6 +24,23 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+- Emulated configuration reads no longer answer `{:ok, nil}` when the
+  underlying plural has no row for the requested symbol:
+  `fetch_trading_fee`, `fetch_leverage`, `fetch_margin_mode` and
+  `fetch_market_leverage_tiers` now return
+  `{:error, %Bourse.Error{type: :exchange_error}}` naming the symbol. Live
+  blast radius today: `fetch_leverage` (binance, binancecoinm, binanceusdm)
+  and `fetch_market_leverage_tiers` (binance); the other two handlers are
+  defensive uniformity with no venue currently emulating them. `fetch_position`
+  deliberately keeps `{:ok, nil}` — a missing row means the account is flat,
+  which is a valid answer. Emulation errors also now carry the venue id string
+  in `Bourse.Error.exchange` (previously a boot-dependent atom or `:unknown`).
+- binancecoinm trading fees are singular-only: `fetch_trading_fee/2` wires the
+  symbol-mandatory `GET /dapi/v1/commissionRate` (COIN-M has no all-symbols
+  commission read), and `fetch_trading_fees/1` now refuses with
+  `:not_supported` instead of surfacing the venue's raw `-1102` missing-symbol
+  error. The venue-agnostic parse compensation that wrapped a lone
+  `TradingFee` struct into a symbol-keyed map is retired.
 - Ledger parsing is route-scoped: venues whose ledger endpoints carry
   different type vocabularies per route (OKX `account/bills` vs `asset/bills`,
   binance-family `income` vs the options `bill` endpoint) parse each response
