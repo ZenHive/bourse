@@ -12746,32 +12746,6 @@
           "tierBased": null
         }
       },
-      "trading_fees": {
-        "_unresolved_reason": null,
-        "extras": [],
-        "field_map": {
-          "info": null,
-          "maker": {
-            "coercion": "safeNumber2",
-            "fallback_keys": [
-              "makerCommissionRate"
-            ],
-            "format": null,
-            "key": "makerCommission"
-          },
-          "percentage": null,
-          "symbol": null,
-          "taker": {
-            "coercion": "safeNumber2",
-            "fallback_keys": [
-              "takerCommissionRate"
-            ],
-            "format": null,
-            "key": "takerCommission"
-          },
-          "tierBased": null
-        }
-      },
       "transaction": {
         "_unresolved_reason": null,
         "extras": [],

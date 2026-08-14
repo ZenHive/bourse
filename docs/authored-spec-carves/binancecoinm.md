@@ -64,6 +64,10 @@ commission-rate read was reverified on 2026-08-14.
 {"carve_id":"C-T545b","date":"2026-08-11","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binancecoinm/manifest.json artifact developer-docs-full; COIN-M V2 Notional Bracket, Open Interest, and Commission Rate contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/exchange_accepted_requests/binancecoinm/fetch_leverage_tiers.json, test/fixtures/public_accepted_requests/binancecoinm/fetch_open_interest--dapiPublic_get_openinterest.json, test/fixtures/responses/binancecoinm/fetch_trading_fee.json, and tagged live integration success/error assertions"},"compatibility_reference":null,"resolved_tier":1}
 -->
 
+<!-- carve-evidence-status
+{"carve_id":"C-T545b","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binancecoinm/manifest.json artifact developer-docs-full; COIN-M Commission Rate contract requires one symbol — no all-symbols read exists"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binancecoinm/fetch_trading_fee.json (renamed from fetch_trading_fees.json by task 591) plus a fresh live demo-dapi call: singular BTC/USD:BTC maker 0.0002 / taker 0.0004, symbol-less request -1102"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 **C-T545c — income history is ledger data and an empty ADL object means no ranked position
 (task 545). Outcome: CONFIRM provider contract.** The Income History contract defines
 `incomeType`, signed `income`, `asset`, `time`, `tranId`, and `tradeId`, which map directly to a
