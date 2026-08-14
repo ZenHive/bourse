@@ -359,6 +359,88 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
       assert Exception.message(error) =~ "cancelled"
     end
 
+    test "cancels a placed order when the acting step's observation does not match the review" do
+      root = temporary_directory("act-observation-cleanup")
+      replay = replay_fun()
+      seen = :ets.new(:act_observation_cleanup, [:set, :public])
+
+      failing = fn request ->
+        cond do
+          String.contains?(request["url"], "/private/buy?") and on_tick?(request) ->
+            {:ok,
+             %{
+               status: 200,
+               body:
+                 Jason.encode!(%{
+                   "result" => %{
+                     "order" => %{
+                       "order_id" => "113510807523",
+                       "order_state" => "untriggered",
+                       "direction" => "buy",
+                       "order_type" => "limit",
+                       "post_only" => true,
+                       "filled_amount" => 0.0,
+                       "instrument_name" => "BTC-PERPETUAL"
+                     }
+                   }
+                 })
+             }}
+
+          String.contains?(request["url"], "/private/cancel?") ->
+            :ets.insert(seen, {:cancel, request["url"]})
+            replay.(request)
+
+          true ->
+            replay.(request)
+        end
+      end
+
+      error =
+        assert_raise ArgumentError, fn ->
+          Lifecycle.capture!(root,
+            request_fun: failing,
+            credentials: stub_credentials(),
+            now: fn -> @fixed_now end,
+            session_label: "bourse-t558-act-obs"
+          )
+        end
+
+      message = Exception.message(error)
+      assert message =~ ~s(order_state is "untriggered", reviewed as "open")
+      assert message =~ "Reviewed cleanup private/cancel was retried"
+      assert message =~ "cancelled"
+      assert [{:cancel, url}] = :ets.lookup(seen, :cancel)
+      assert url =~ "order_id=113510807523"
+    end
+
+    test "shouts when the compensating call cannot even be built" do
+      root = temporary_directory("cleanup-uncallable")
+      replay = replay_fun()
+
+      failing = fn request ->
+        cond do
+          String.contains?(request["url"], "/private/get_order_state") -> {:error, :simulated_network_loss}
+          String.contains?(request["url"], "/private/cancel?") -> throw(:cleanup_threw)
+          true -> replay.(request)
+        end
+      end
+
+      error =
+        assert_raise ArgumentError, fn ->
+          Lifecycle.capture!(root,
+            request_fun: failing,
+            credentials: stub_credentials(),
+            now: fn -> @fixed_now end,
+            session_label: "bourse-t558-uncallable"
+          )
+        end
+
+      message = Exception.message(error)
+      assert message =~ "🚨 Reviewed cleanup private/cancel could not even be built"
+      assert message =~ "cleanup_threw"
+      assert message =~ "bourse-t558-uncallable"
+    end
+
     test "shouts when the compensating call itself fails and names what is left behind" do
       root = temporary_directory("cleanup-failed")
       replay = replay_fun()

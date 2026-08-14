@@ -97,7 +97,7 @@ defmodule Bourse.OracleProvenance.MutationAdjudication.Lifecycle do
     }
   end
 
-  defp run_step!(step, lifecycle, context, state) do
+  defp run_step(step, lifecycle, context, state) do
     case MutationAdjudication.authorize(context.register, lifecycle, step) do
       :ok ->
         :ok
@@ -111,19 +111,21 @@ defmodule Bourse.OracleProvenance.MutationAdjudication.Lifecycle do
     {body, redacted} = transport_body |> Jason.decode!() |> redact_body!(step, context)
 
     fixture = build_fixture(step, lifecycle, context, request, status, body, redacted)
-    errors = observation_errors!(step, status, body, context)
 
-    if errors != [] do
-      raise ArgumentError, "step #{step["step_id"]} observed #{Enum.join(errors, "; ")}"
-    end
-
-    %{
+    # Record the response before judging it. A 200 act that fails its assertions
+    # has already created venue state; compensation needs the order id.
+    next = %{
       state
       | captures: [fixture | state.captures],
         responses: Map.put(state.responses, step["step_id"], body),
-        acted?: state.acted? or step["role"] == "act",
+        acted?: state.acted? or placed_order?(step, body),
         cleaned?: state.cleaned? or step["role"] == "cleanup"
     }
+
+    case observation_errors!(step, status, body, context) do
+      [] -> {:ok, next}
+      errors -> {:error, next, "step #{step["step_id"]} observed #{Enum.join(errors, "; ")}"}
+    end
   end
 
   defp run_steps!([], _lifecycle, _cleanup, _context, state), do: state
@@ -135,13 +137,22 @@ defmodule Bourse.OracleProvenance.MutationAdjudication.Lifecycle do
   defp run_steps!([step | rest], lifecycle, cleanup, context, state) do
     next =
       try do
-        run_step!(step, lifecycle, context, state)
+        case run_step(step, lifecycle, context, state) do
+          {:ok, advanced} ->
+            advanced
+
+          {:error, advanced, message} ->
+            compensate!(:error, %ArgumentError{message: message}, [], lifecycle, cleanup, context, advanced)
+        end
       catch
         kind, reason -> compensate!(kind, reason, __STACKTRACE__, lifecycle, cleanup, context, state)
       end
 
     run_steps!(rest, lifecycle, cleanup, context, next)
   end
+
+  defp placed_order?(%{"role" => "act"}, body), do: is_binary(get_in(body, ["result", "order", "order_id"]))
+  defp placed_order?(_step, _body), do: false
 
   # A failure between the acting step and its cleanup would otherwise leave a
   # live order on the account, so the reviewed compensating operation is retried
