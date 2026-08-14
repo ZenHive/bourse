@@ -29,6 +29,7 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
   @credentials_url "https://demo.binance.com/en/my/settings/api-management"
   @demo_host "demo-dapi.binance.com"
   @symbol "BTC/USD:BTC"
+  @missing_configuration_symbol "ZZZ/USD:ZZZ"
   @native_symbol "BTCUSD_PERP"
   @order_amount 1
   @oversized_order_amount 100
@@ -139,6 +140,13 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
 
     assert is_list(position_risk)
     assert length(position_risk) > length(account_positions)
+  end
+
+  test "live DAPI configuration read errors when the account has no requested symbol row" do
+    assert {:error, %Error{type: :exchange_error, message: message}} =
+             Bourse.fetch_leverage(signed_exchange!(), @missing_configuration_symbol)
+
+    assert String.contains?(message, @missing_configuration_symbol)
   end
 
   test "live DAPI order history and account analytics return unified values" do

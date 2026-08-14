@@ -358,7 +358,7 @@ defmodule Bourse.Emulation do
     symbol = extract_param(params, :symbol)
 
     with {:ok, fees} <- call_method(exchange, exchange_module, :fetch_trading_fees, %{}, opts) do
-      {:ok, pick_symbol_entry(fees, symbol)}
+      require_symbol_result(fees, symbol, exchange, "fetchTradingFee() returned no data for")
     end
   end
 
@@ -370,6 +370,7 @@ defmodule Bourse.Emulation do
     symbols = normalize_symbols(symbol)
 
     with {:ok, positions} <- call_method(exchange, exchange_module, :fetch_positions, %{"symbols" => symbols}, opts) do
+      # A missing row means the account is flat for this symbol, which is a valid position answer.
       {:ok, pick_symbol_entry(positions, symbol)}
     end
   end
@@ -469,7 +470,7 @@ defmodule Bourse.Emulation do
     else
       with {:ok, leverages} <-
              call_method(exchange, exchange_module, :fetch_leverages, %{"symbol" => symbol}, opts) do
-        {:ok, pick_symbol_entry(leverages, symbol)}
+        require_symbol_result(leverages, symbol, exchange, "fetchLeverage() returned no data for")
       end
     end
   end
@@ -485,7 +486,7 @@ defmodule Bourse.Emulation do
     else
       with {:ok, modes} <-
              call_method(exchange, exchange_module, :fetch_margin_modes, %{"symbol" => symbol}, opts) do
-        {:ok, pick_symbol_entry(modes, symbol)}
+        require_symbol_result(modes, symbol, exchange, "fetchMarginMode() returned no data for")
       end
     end
   end
@@ -503,7 +504,7 @@ defmodule Bourse.Emulation do
       with {:ok, _market} <- ensure_contract_market(exchange, exchange_module, symbol, opts),
            {:ok, tiers} <-
              call_method(exchange, exchange_module, :fetch_leverage_tiers, %{"symbol" => symbol}, opts) do
-        {:ok, pick_symbol_entry(tiers, symbol)}
+        require_symbol_result(tiers, symbol, exchange, "fetchMarketLeverageTiers() returned no data for")
       end
     end
   end

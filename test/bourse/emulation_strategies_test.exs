@@ -275,6 +275,21 @@ defmodule Bourse.EmulationStrategiesTest do
                )
     end
 
+    test "fetch_trading_fee errors when fetch_trading_fees has no symbol row" do
+      exchange_id = exchange_for_method("fetchTradingFee")
+      exchange = build_exchange(exchange_id, [:fetch_trading_fees], auth_methods: [:fetch_trading_fees])
+
+      Process.put(:trading_fees, %{})
+
+      assert_missing_symbol_error(
+        dispatch(exchange, :fetch_trading_fee,
+          params: %{symbol: @symbol},
+          credentials: @credentials
+        ),
+        @symbol
+      )
+    end
+
     test "fetch_trading_fee returns not_supported when endpoint missing" do
       exchange_id = exchange_for_method("fetchTradingFee")
       exchange = build_exchange(exchange_id, [])
@@ -421,6 +436,21 @@ defmodule Bourse.EmulationStrategiesTest do
                )
     end
 
+    test "fetch_leverage errors when fetch_leverages has no symbol row" do
+      exchange_id = exchange_for_method("fetchLeverage")
+      exchange = build_exchange(exchange_id, [:fetch_leverages], auth_methods: [:fetch_leverages])
+
+      Process.put(:leverages, %{})
+
+      assert_missing_symbol_error(
+        dispatch(exchange, :fetch_leverage,
+          params: %{symbol: @symbol},
+          credentials: @credentials
+        ),
+        @symbol
+      )
+    end
+
     test "fetch_deposit_withdraw_fee selects a code entry" do
       exchange_id = exchange_for_method("fetchDepositWithdrawFee")
 
@@ -539,6 +569,24 @@ defmodule Bourse.EmulationStrategiesTest do
                  params: %{symbol: @symbol},
                  credentials: @credentials
                )
+    end
+
+    test "fetch_market_leverage_tiers errors when fetch_leverage_tiers has no symbol row" do
+      exchange_id = exchange_for_method("fetchMarketLeverageTiers")
+
+      exchange =
+        build_exchange(exchange_id, [:fetch_markets, :fetch_leverage_tiers], auth_methods: [:fetch_leverage_tiers])
+
+      Process.put(:markets, [%{symbol: @symbol, contract: true}])
+      Process.put(:leverage_tiers, %{})
+
+      assert_missing_symbol_error(
+        dispatch(exchange, :fetch_market_leverage_tiers,
+          params: %{symbol: @symbol},
+          credentials: @credentials
+        ),
+        @symbol
+      )
     end
 
     test "fetch_isolated_borrow_rate selects a symbol entry" do
@@ -665,6 +713,21 @@ defmodule Bourse.EmulationStrategiesTest do
                  params: %{symbol: @symbol},
                  credentials: @credentials
                )
+    end
+
+    test "fetch_margin_mode errors when fetch_margin_modes has no symbol row" do
+      exchange_id = exchange_for_method("fetchMarginMode")
+      exchange = build_exchange(exchange_id, [:fetch_margin_modes], auth_methods: [:fetch_margin_modes])
+
+      Process.put(:margin_modes, %{})
+
+      assert_missing_symbol_error(
+        dispatch(exchange, :fetch_margin_mode,
+          params: %{symbol: @symbol},
+          credentials: @credentials
+        ),
+        @symbol
+      )
     end
 
     test "fetch_funding_interval success for contract market" do
@@ -1148,7 +1211,7 @@ defmodule Bourse.EmulationStrategiesTest do
                )
     end
 
-    test "fetch_position returns nil when positions list is empty" do
+    test "fetch_position deliberately returns nil when the account is flat for the symbol" do
       exchange_id = exchange_for_method("fetchPosition")
       exchange = build_exchange(exchange_id, [:fetch_positions], auth_methods: [:fetch_positions])
 
@@ -1351,6 +1414,11 @@ defmodule Bourse.EmulationStrategiesTest do
         caller: stub_caller()
       }
     )
+  end
+
+  defp assert_missing_symbol_error(result, symbol) do
+    assert {:error, %Bourse.Error{type: :exchange_error, message: message}} = result
+    assert String.contains?(message, symbol)
   end
 
   setup do

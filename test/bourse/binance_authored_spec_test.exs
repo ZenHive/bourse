@@ -549,6 +549,31 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     end
   end
 
+  test "Binance COIN-M fetch leverage errors when the account payload has no symbol row" do
+    symbol = "ZZZ/USD:ZZZ"
+
+    {requests, stub} =
+      body_capturing_stub(%{
+        "positions" => [%{"symbol" => "BTCUSD_PERP", "leverage" => "3", "positionAmt" => "0"}]
+      })
+
+    exchange =
+      "binancecoinm"
+      |> Exchange.new!(api_key: "key", secret: "secret", sandbox: true)
+      |> Exchange.put_markets([
+        %Bourse.Market{id: "ZZZUSD_PERP", symbol: symbol, type: "swap", swap: true, contract: true}
+      ])
+
+    assert {:error, %Bourse.Error{type: :exchange_error, message: message}} =
+             Bourse.fetch_leverage(exchange, symbol,
+               plug: {Req.Test, stub},
+               timestamp_ms_override: @frozen_timestamp_ms
+             )
+
+    assert String.contains?(message, symbol)
+    assert_order_request(requests, :get, "/dapi/v1/account", &refute(Map.has_key?(&1, "symbol")))
+  end
+
   test "Binance USD-M open orders merge the regular and Algo books" do
     stub = unique_stub("binance_open_order_books")
     {:ok, requests} = RequestCollector.start_link()
