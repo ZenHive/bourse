@@ -347,7 +347,15 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
     |> Enum.sort()
   end
 
-  defp authored_rest_operations(authored) do
+  @doc """
+  Returns the authored REST operations of one complete authored document.
+
+  Each entry carries the `"key"` the provider inventory is compared against plus
+  the authored `"runtime_scope"`, so a caller that already knows an operation key
+  can resolve relation and runtime scope without a provider artifact.
+  """
+  @spec authored_rest_operations(map()) :: [map()]
+  def authored_rest_operations(authored) do
     unified_names =
       authored
       |> get_in(["endpoints", "unified"])

@@ -1,0 +1,43 @@
+{
+  "capture_id": "setup_instrument",
+  "captured_at": "2026-08-14T06:50:52.039278Z",
+  "evidence_semantics": "lifecycle_setup",
+  "host": "test.deribit.com",
+  "lifecycle_id": "order_place_cancel",
+  "operation_id": "public/get_instrument",
+  "operation_key": "GET /api/v2/public/get_instrument",
+  "request": {
+    "body": null,
+    "headers": [
+      {
+        "name": "accept",
+        "value": "application/json"
+      }
+    ],
+    "method": "GET",
+    "redacted_headers": [],
+    "url": "https://test.deribit.com/api/v2/public/get_instrument?instrument_name=BTC-PERPETUAL"
+  },
+  "response": {
+    "http_status": 200,
+    "raw_body": "{\"jsonrpc\":\"2.0\",\"result\":{\"max_non_default_leverage\":5,\"base_currency\":\"BTC\",\"settlement_period\":\"perpetual\",\"instrument_name\":\"BTC-PERPETUAL\",\"counter_currency\":\"USD\",\"base_currency_uuid\":\"5b71fc48-3dd3-540c-809b-f8c94d0e68b5\",\"settlement_currency\":\"BTC\",\"is_active\":true,\"future_type\":\"reversed\",\"price_index\":\"btc_usd\",\"instrument_id\":124972,\"index_id\":1000033,\"maker_commission\":0.0,\"lot_size\":1,\"product_group\":\"BTC\",\"contract_size\":10.0,\"block_trade_min_trade_amount\":200000,\"creation_timestamp\":1534167754000,\"block_trade_commission\":2.5e-4,\"tick_size_steps\":[],\"quote_currency_uuid\":\"dc311642-e9fb-4ba9-a312-c75c1aef4ae1\",\"expiration_timestamp\":32503708800000,\"min_trade_amount\":10.0,\"block_trade_tick_size\":0.01,\"instrument_type\":\"reversed\",\"kind\":\"future\",\"underlying_type\":\"crypto\",\"state\":\"open\",\"max_liquidation_commission\":0.0075,\"quote_currency\":\"USD\",\"taker_commission\":5.001e-4,\"tick_size\":0.5,\"max_leverage\":50},\"testnet\":true,\"usDiff\":364,\"usIn\":1786690252318339,\"usOut\":1786690252318703}",
+    "redacted_body_paths": []
+  },
+  "role": "setup",
+  "row_fields_populated": true,
+  "schema_version": 1,
+  "scrubbed": true,
+  "source_binding": {
+    "artifact_id": "api-openapi",
+    "denominator_enumerated_from": {
+      "operation_key_set_sha256": "f6390f864cb6ea46acba203f98f1920f01ec21d611bcdb146c5ad8e942f5cd0c",
+      "retrieved_at": "2026-08-14",
+      "sha256": "2ac2867b1f25544dd189244b17c230e2dea6bff0fc0e1c8c26e2003af06f9c55"
+    },
+    "drift_record": "priv/authority/deribit/current-rest-drift-2026-08-14.json",
+    "note": "The pinned reference-only bytes are no longer fetchable upstream, so this register enumerates its denominator from the observed revision recorded in the drift record and never claims to have read the pinned bytes.",
+    "pinned_revision_sha256": "430b3f0bc67cc574a05e695d22d1acbbb5348c96858368bba9931c2f05350515"
+  },
+  "step_id": "setup_instrument",
+  "venue": "deribit"
+}

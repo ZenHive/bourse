@@ -1,0 +1,49 @@
+{
+  "capture_id": "cancel_again",
+  "captured_at": "2026-08-14T06:50:53.787806Z",
+  "evidence_semantics": "documented_error",
+  "host": "test.deribit.com",
+  "lifecycle_id": "order_place_cancel",
+  "operation_id": "private/cancel",
+  "operation_key": "GET /api/v2/private/cancel",
+  "request": {
+    "body": null,
+    "headers": [
+      {
+        "name": "accept",
+        "value": "application/json"
+      },
+      {
+        "name": "authorization",
+        "value": "***REDACTED***"
+      }
+    ],
+    "method": "GET",
+    "redacted_headers": [
+      "authorization"
+    ],
+    "url": "https://test.deribit.com/api/v2/private/cancel?order_id=113510807523"
+  },
+  "response": {
+    "http_status": 400,
+    "raw_body": "{\"error\":{\"code\":11044,\"message\":\"not_open_order\"},\"jsonrpc\":\"2.0\",\"testnet\":true,\"usDiff\":662,\"usIn\":1786690254254816,\"usOut\":1786690254255478}",
+    "redacted_body_paths": []
+  },
+  "role": "idempotent_final_state",
+  "row_fields_populated": false,
+  "schema_version": 1,
+  "scrubbed": true,
+  "source_binding": {
+    "artifact_id": "api-openapi",
+    "denominator_enumerated_from": {
+      "operation_key_set_sha256": "f6390f864cb6ea46acba203f98f1920f01ec21d611bcdb146c5ad8e942f5cd0c",
+      "retrieved_at": "2026-08-14",
+      "sha256": "2ac2867b1f25544dd189244b17c230e2dea6bff0fc0e1c8c26e2003af06f9c55"
+    },
+    "drift_record": "priv/authority/deribit/current-rest-drift-2026-08-14.json",
+    "note": "The pinned reference-only bytes are no longer fetchable upstream, so this register enumerates its denominator from the observed revision recorded in the drift record and never claims to have read the pinned bytes.",
+    "pinned_revision_sha256": "430b3f0bc67cc574a05e695d22d1acbbb5348c96858368bba9931c2f05350515"
+  },
+  "step_id": "cancel_again",
+  "venue": "deribit"
+}

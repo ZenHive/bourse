@@ -4,6 +4,7 @@ defmodule Bourse.OracleProvenance do
   """
 
   alias Bourse.OracleProvenance.Derivation
+  alias Bourse.OracleProvenance.MutationAdjudication
   alias Bourse.RecordedResponseFixtures
   alias Bourse.RecordedResponseFixtures.RequestCongruence
 
@@ -112,12 +113,25 @@ defmodule Bourse.OracleProvenance do
         fn {_key, value} -> is_nil(value) end
       )
 
+    mutation_opts =
+      Enum.reject(
+        [
+          root: opts[:mutation_root],
+          manifest_path: opts[:mutation_manifest],
+          register_path: opts[:mutation_register],
+          plan_path: opts[:mutation_plan]
+        ],
+        fn {_key, value} -> is_nil(value) end
+      )
+
     RequestCongruence.validate!(congruence_opts)
     RecordedResponseFixtures.validate_provider_operations!(provider_opts)
+    MutationAdjudication.validate!(mutation_opts)
 
     opts
     |> Keyword.drop(
-      ~w(recording_root recording_manifest provider_operation_root provider_operation_manifest provider_operation_plan)a
+      ~w(recording_root recording_manifest provider_operation_root provider_operation_manifest provider_operation_plan
+         mutation_root mutation_manifest mutation_register mutation_plan)a
     )
     |> Derivation.reports!()
   end

@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "report_type": "provider_contract_drift_observation",
+  "venue": "deribit",
+  "artifact_id": "api-openapi",
+  "observed_at": "2026-08-14",
+  "pin_action": "not_refreshed",
+  "pin_action_reason": "Refreshing the current-REST pin re-binds the task 554 semantic-diff proof, the task 555 contract baselines and the task 556 provider-operation corpus in one move. That refresh is the authority corpus's own controlled operation and is not performed as a side effect of a mutation-safety adjudication.",
+  "pinned": {
+    "retrieved_at": "2026-08-10",
+    "sha256": "430b3f0bc67cc574a05e695d22d1acbbb5348c96858368bba9931c2f05350515",
+    "bytes": 1385649,
+    "upstream_pin": {
+      "type": "document_version_http_etag",
+      "value": "2.1.1; W/\"b96f2b26a14b31dbc4cf064c3d63b14a\""
+    },
+    "openapi_version": "2.1.1",
+    "operation_count": 178,
+    "schema_count": 411,
+    "websocket_only_operation_count": 10,
+    "operation_key_set_sha256": "unavailable_reference_only_bytes_no_longer_fetchable",
+    "retrievable": false
+  },
+  "observed": {
+    "retrieved_at": "2026-08-14",
+    "sha256": "2ac2867b1f25544dd189244b17c230e2dea6bff0fc0e1c8c26e2003af06f9c55",
+    "bytes": 1391568,
+    "http_etag": "W/\"05muB64FICWdauQ2\"",
+    "http_last_modified": "Tue, 11 Aug 2026 10:26:54 GMT",
+    "openapi_version": "2.1.1",
+    "operation_count": 178,
+    "schema_count": 410,
+    "websocket_only_operation_count": 10,
+    "operation_key_set_sha256": "f6390f864cb6ea46acba203f98f1920f01ec21d611bcdb146c5ad8e942f5cd0c",
+    "retrievable": true
+  },
+  "operation_delta": {
+    "count_delta": 0,
+    "schema_count_delta": -1,
+    "websocket_only_count_delta": 0,
+    "current_runtime_denominator_change": "not_detected",
+    "path_set_comparison": "unavailable_without_pinned_reference_only_bytes",
+    "evidence": "The pinned revision recorded 178 operations and 10 WebSocket Only tags; the observed revision reproduces both counts at the same OpenAPI version. Count agreement is not set identity, and the pinned bytes cannot be re-fetched to prove it."
+  },
+  "consequences": [
+    {
+      "surface": "provider_operation_capture",
+      "effect": "blocked",
+      "detail": "mix ccxt.contract_compare refuses the observed bytes against the pinned manifest hash, so no new exact-revision inventory can be produced. test/fixtures/provider_operations/_manifest.json therefore cannot gain operations beyond the ones task 556 registered while the pin stands."
+    },
+    {
+      "surface": "mutation_adjudication",
+      "effect": "denominator_enumerated_from_observed_revision",
+      "detail": "priv/authority/deribit/mutation-adjudication.json enumerates its 178-operation denominator from the observed revision and says so in its own source binding. It never claims to have read the pinned bytes."
+    }
+  ],
+  "unblock_path": "Run the authority corpus's controlled current-REST refresh: re-pin api-openapi in priv/authority/deribit/manifest.json, record a dated semantic diff, re-bind priv/authority/deribit/contract-baselines.json, regenerate the task 556 provider-operation corpus, and re-point the task 554/555 binding tests at the new dated report."
+}

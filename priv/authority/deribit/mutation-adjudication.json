@@ -1,0 +1,2572 @@
+{
+  "schema_version": 1,
+  "report_type": "provider_mutation_adjudication",
+  "venue": "deribit",
+  "contract_scope": "current_rest",
+  "reviewed_at": "2026-08-14",
+  "source_binding": {
+    "artifact_id": "api-openapi",
+    "pinned_revision_sha256": "430b3f0bc67cc574a05e695d22d1acbbb5348c96858368bba9931c2f05350515",
+    "denominator_enumerated_from": {
+      "sha256": "2ac2867b1f25544dd189244b17c230e2dea6bff0fc0e1c8c26e2003af06f9c55",
+      "retrieved_at": "2026-08-14",
+      "operation_key_set_sha256": "f6390f864cb6ea46acba203f98f1920f01ec21d611bcdb146c5ad8e942f5cd0c"
+    },
+    "drift_record": "priv/authority/deribit/current-rest-drift-2026-08-14.json",
+    "note": "The pinned reference-only bytes are no longer fetchable upstream, so this register enumerates its denominator from the observed revision recorded in the drift record and never claims to have read the pinned bytes."
+  },
+  "denominator": {
+    "provider_count": 178,
+    "task_556_operation_keys": [
+      "GET /api/v2/public/get_time",
+      "GET /api/v2/public/ticker"
+    ],
+    "task_557_operation_keys": [
+      "GET /api/v2/private/get_access_log",
+      "GET /api/v2/private/get_account_summaries",
+      "GET /api/v2/private/get_account_summary",
+      "GET /api/v2/private/get_address_beneficiary",
+      "GET /api/v2/private/get_address_book",
+      "GET /api/v2/private/get_affiliate_program_info",
+      "GET /api/v2/private/get_block_rfq_makers",
+      "GET /api/v2/private/get_block_rfq_quotes",
+      "GET /api/v2/private/get_block_rfq_user_info",
+      "GET /api/v2/private/get_block_rfqs",
+      "GET /api/v2/private/get_block_trade",
+      "GET /api/v2/private/get_block_trade_requests",
+      "GET /api/v2/private/get_block_trades",
+      "GET /api/v2/private/get_broker_clients",
+      "GET /api/v2/private/get_broker_trade_requests",
+      "GET /api/v2/private/get_broker_trades",
+      "GET /api/v2/private/get_cancel_on_disconnect",
+      "GET /api/v2/private/get_currencies",
+      "GET /api/v2/private/get_current_deposit_address",
+      "GET /api/v2/private/get_deposits",
+      "GET /api/v2/private/get_email_language",
+      "GET /api/v2/private/get_leg_prices",
+      "GET /api/v2/private/get_margins",
+      "GET /api/v2/private/get_members",
+      "GET /api/v2/private/get_mmp_config",
+      "GET /api/v2/private/get_mmp_status",
+      "GET /api/v2/private/get_new_announcements",
+      "GET /api/v2/private/get_open_orders",
+      "GET /api/v2/private/get_open_orders_by_currency",
+      "GET /api/v2/private/get_open_orders_by_instrument",
+      "GET /api/v2/private/get_open_orders_by_label",
+      "GET /api/v2/private/get_order_history_by_currency",
+      "GET /api/v2/private/get_order_history_by_instrument",
+      "GET /api/v2/private/get_order_margin_by_ids",
+      "GET /api/v2/private/get_order_state",
+      "GET /api/v2/private/get_order_state_by_label",
+      "GET /api/v2/private/get_position",
+      "GET /api/v2/private/get_positions",
+      "GET /api/v2/private/get_reward_eligibility",
+      "GET /api/v2/private/get_settlement_history_by_currency",
+      "GET /api/v2/private/get_settlement_history_by_instrument",
+      "GET /api/v2/private/get_subaccounts",
+      "GET /api/v2/private/get_subaccounts_details",
+      "GET /api/v2/private/get_transaction_log",
+      "GET /api/v2/private/get_transfers",
+      "GET /api/v2/private/get_trigger_order_history",
+      "GET /api/v2/private/get_user_locks",
+      "GET /api/v2/private/get_user_trades_by_currency",
+      "GET /api/v2/private/get_user_trades_by_currency_and_time",
+      "GET /api/v2/private/get_user_trades_by_instrument",
+      "GET /api/v2/private/get_user_trades_by_instrument_and_time",
+      "GET /api/v2/private/get_user_trades_by_order",
+      "GET /api/v2/private/get_withdrawals",
+      "GET /api/v2/private/list_address_beneficiaries",
+      "GET /api/v2/private/list_api_keys",
+      "GET /api/v2/private/list_custody_accounts",
+      "GET /api/v2/private/pme/simulate",
+      "GET /api/v2/private/simulate_block_trade",
+      "GET /api/v2/private/simulate_portfolio",
+      "GET /api/v2/public/get_announcements",
+      "GET /api/v2/public/get_apr_history",
+      "GET /api/v2/public/get_block_rfq_trades",
+      "GET /api/v2/public/get_book_summary_by_currency",
+      "GET /api/v2/public/get_book_summary_by_instrument",
+      "GET /api/v2/public/get_combo_details",
+      "GET /api/v2/public/get_combo_ids",
+      "GET /api/v2/public/get_combos",
+      "GET /api/v2/public/get_contract_size",
+      "GET /api/v2/public/get_currencies",
+      "GET /api/v2/public/get_delivery_prices",
+      "GET /api/v2/public/get_expirations",
+      "GET /api/v2/public/get_funding_chart_data",
+      "GET /api/v2/public/get_funding_rate_history",
+      "GET /api/v2/public/get_funding_rate_value",
+      "GET /api/v2/public/get_historical_volatility",
+      "GET /api/v2/public/get_index_chart_data",
+      "GET /api/v2/public/get_index_price",
+      "GET /api/v2/public/get_index_price_names",
+      "GET /api/v2/public/get_instrument",
+      "GET /api/v2/public/get_instruments",
+      "GET /api/v2/public/get_last_settlements_by_currency",
+      "GET /api/v2/public/get_last_settlements_by_instrument",
+      "GET /api/v2/public/get_last_trades_by_currency",
+      "GET /api/v2/public/get_last_trades_by_currency_and_time",
+      "GET /api/v2/public/get_last_trades_by_instrument",
+      "GET /api/v2/public/get_last_trades_by_instrument_and_time",
+      "GET /api/v2/public/get_mark_price_history",
+      "GET /api/v2/public/get_order_book",
+      "GET /api/v2/public/get_order_book_by_instrument_id",
+      "GET /api/v2/public/get_supported_index_names",
+      "GET /api/v2/public/get_trade_volumes",
+      "GET /api/v2/public/get_tradingview_chart_data",
+      "GET /api/v2/public/get_volatility_index_data",
+      "GET /api/v2/public/status",
+      "GET /api/v2/public/test"
+    ],
+    "adjudicated_operation_keys": [
+      "GET /api/v2/private/accept_block_rfq",
+      "GET /api/v2/private/add_block_rfq_quote",
+      "GET /api/v2/private/add_to_address_book",
+      "GET /api/v2/private/approve_block_trade",
+      "GET /api/v2/private/buy",
+      "GET /api/v2/private/cancel",
+      "GET /api/v2/private/cancel_all",
+      "GET /api/v2/private/cancel_all_block_rfq_quotes",
+      "GET /api/v2/private/cancel_all_by_currency",
+      "GET /api/v2/private/cancel_all_by_currency_pair",
+      "GET /api/v2/private/cancel_all_by_instrument",
+      "GET /api/v2/private/cancel_all_by_kind_or_type",
+      "GET /api/v2/private/cancel_block_rfq",
+      "GET /api/v2/private/cancel_block_rfq_quote",
+      "GET /api/v2/private/cancel_block_rfq_trigger",
+      "GET /api/v2/private/cancel_by_label",
+      "GET /api/v2/private/cancel_quotes",
+      "GET /api/v2/private/cancel_transfer_by_id",
+      "GET /api/v2/private/cancel_withdrawal",
+      "GET /api/v2/private/change_api_key_name",
+      "GET /api/v2/private/change_margin_model",
+      "GET /api/v2/private/change_scope_in_api_key",
+      "GET /api/v2/private/change_subaccount_name",
+      "GET /api/v2/private/close_position",
+      "GET /api/v2/private/create_api_key",
+      "GET /api/v2/private/create_block_rfq",
+      "GET /api/v2/private/create_combo",
+      "GET /api/v2/private/create_deposit_address",
+      "GET /api/v2/private/create_subaccount",
+      "GET /api/v2/private/delete_address_beneficiary",
+      "GET /api/v2/private/delete_member",
+      "GET /api/v2/private/disable_api_key",
+      "GET /api/v2/private/disable_cancel_on_disconnect",
+      "GET /api/v2/private/edit",
+      "GET /api/v2/private/edit_api_key",
+      "GET /api/v2/private/edit_block_rfq_quote",
+      "GET /api/v2/private/edit_by_label",
+      "GET /api/v2/private/enable_affiliate_program",
+      "GET /api/v2/private/enable_api_key",
+      "GET /api/v2/private/enable_cancel_on_disconnect",
+      "GET /api/v2/private/execute_block_trade",
+      "GET /api/v2/private/invalidate_block_trade_signature",
+      "GET /api/v2/private/mass_quote",
+      "GET /api/v2/private/move_positions",
+      "GET /api/v2/private/reject_block_trade",
+      "GET /api/v2/private/remove_api_key",
+      "GET /api/v2/private/remove_from_address_book",
+      "GET /api/v2/private/remove_subaccount",
+      "GET /api/v2/private/reset_api_key",
+      "GET /api/v2/private/reset_mmp",
+      "GET /api/v2/private/save_address_beneficiary",
+      "GET /api/v2/private/sell",
+      "GET /api/v2/private/set_announcement_as_read",
+      "GET /api/v2/private/set_clearance_originator",
+      "GET /api/v2/private/set_disabled_trading_products",
+      "GET /api/v2/private/set_email_for_subaccount",
+      "GET /api/v2/private/set_email_language",
+      "GET /api/v2/private/set_member",
+      "GET /api/v2/private/set_mmp_config",
+      "GET /api/v2/private/set_self_trading_config",
+      "GET /api/v2/private/submit_transfer_between_subaccounts",
+      "GET /api/v2/private/submit_transfer_to_subaccount",
+      "GET /api/v2/private/submit_transfer_to_user",
+      "GET /api/v2/private/toggle_notifications_from_subaccount",
+      "GET /api/v2/private/toggle_subaccount_login",
+      "GET /api/v2/private/update_in_address_book",
+      "GET /api/v2/private/verify_block_trade",
+      "GET /api/v2/private/withdraw",
+      "GET /api/v2/public/auth",
+      "GET /api/v2/public/exchange_token",
+      "GET /api/v2/public/fork_token"
+    ],
+    "websocket_only_operation_keys": [
+      "GET /api/v2/private/logout",
+      "GET /api/v2/private/subscribe",
+      "GET /api/v2/private/unsubscribe",
+      "GET /api/v2/private/unsubscribe_all",
+      "GET /api/v2/public/disable_heartbeat",
+      "GET /api/v2/public/hello",
+      "GET /api/v2/public/set_heartbeat",
+      "GET /api/v2/public/subscribe",
+      "GET /api/v2/public/unsubscribe",
+      "GET /api/v2/public/unsubscribe_all"
+    ]
+  },
+  "operations": [
+    {
+      "operation_key": "GET /api/v2/private/accept_block_rfq",
+      "operation_id": "private/accept_block_rfq",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/accept_block_rfq",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "block_rfq:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "counterparty_visible_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Accepts a counterparty quote at a crossing price, which can fill immediately. The state is visible to counterparties on the shared testnet venue and can be filled or acted on by another party before any cleanup runs.",
+        "ledger_ref": "deribit \u2014 Block RFQ and block-trade counterparty mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/add_block_rfq_quote",
+      "operation_id": "private/add_block_rfq_quote",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/add_block_rfq_quote",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "block_rfq:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "counterparty_visible_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Adds a quote to another party's Block RFQ. The state is visible to counterparties on the shared testnet venue and can be filled or acted on by another party before any cleanup runs.",
+        "ledger_ref": "deribit \u2014 Block RFQ and block-trade counterparty mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/add_to_address_book",
+      "operation_id": "private/add_to_address_book",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/add_to_address_book",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "wallet:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_wallet_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Adds a withdrawal address to the account's address book. Address-book and deposit-address state is withdrawal-adjacent, persists beyond the session, and is never created for coverage.",
+        "ledger_ref": "deribit \u2014 persistent wallet address-book mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/approve_block_trade",
+      "operation_id": "private/approve_block_trade",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/approve_block_trade",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "block_trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "counterparty_visible_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Approves a pending block trade with a counterparty. The state is visible to counterparties on the shared testnet venue and can be filled or acted on by another party before any cleanup runs.",
+        "ledger_ref": "deribit \u2014 Block RFQ and block-trade counterparty mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/buy",
+      "operation_id": "private/buy",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/buy",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "approved",
+        "reviewed_at": "2026-08-14",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "reversible_order_state",
+        "value_movement": "none",
+        "reversal_operation_id": "private/cancel",
+        "reachability": "safe",
+        "safety": "safe",
+        "rationale": "The provider documents this as placing an order on the instrument's book. A limit order priced away from the book with post_only leaves resting order state and no fill, and the provider documents private/cancel as removing that exact order by id, so the effect is reversible inside one session without moving value.",
+        "ledger_ref": null
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/cancel",
+      "operation_id": "private/cancel",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/cancel",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "approved",
+        "reviewed_at": "2026-08-14",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "reversible_order_state",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "safe",
+        "safety": "safe",
+        "rationale": "The provider documents this as removing one open order identified by its order id. It is the reversal step of the order lifecycle, is scoped to an id this session created, and touches no order it did not place.",
+        "ledger_ref": null
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/cancel_all",
+      "operation_id": "private/cancel_all",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/cancel_all",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "account_wide_irreversible_cancellation",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "reversible_order_state",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "The provider documents this as cancelling all open orders and trigger orders across every currency and instrument kind. Cancellation cannot be undone, so a coverage call would destroy resting orders this session did not place \u2014 including another test's. Only per-order and per-label cancellation stay inside one session's own state.",
+        "ledger_ref": "deribit \u2014 account-wide and position-moving mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/cancel_all_block_rfq_quotes",
+      "operation_id": "private/cancel_all_block_rfq_quotes",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/cancel_all_block_rfq_quotes",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "block_rfq:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "account_wide_irreversible_cancellation",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "reversible_order_state",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "The provider documents this as cancelling every quote the account holds across all Block RFQs. Cancellation cannot be undone, so a coverage call would destroy resting orders this session did not place \u2014 including another test's. Only per-order and per-label cancellation stay inside one session's own state.",
+        "ledger_ref": "deribit \u2014 account-wide and position-moving mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/cancel_all_by_currency",
+      "operation_id": "private/cancel_all_by_currency",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/cancel_all_by_currency",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "account_wide_irreversible_cancellation",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "reversible_order_state",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "The provider documents this as cancelling all open orders in one currency. Cancellation cannot be undone, so a coverage call would destroy resting orders this session did not place \u2014 including another test's. Only per-order and per-label cancellation stay inside one session's own state.",
+        "ledger_ref": "deribit \u2014 account-wide and position-moving mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/cancel_all_by_currency_pair",
+      "operation_id": "private/cancel_all_by_currency_pair",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/cancel_all_by_currency_pair",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "account_wide_irreversible_cancellation",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "reversible_order_state",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "The provider documents this as cancelling all open orders in one currency pair. Cancellation cannot be undone, so a coverage call would destroy resting orders this session did not place \u2014 including another test's. Only per-order and per-label cancellation stay inside one session's own state.",
+        "ledger_ref": "deribit \u2014 account-wide and position-moving mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/cancel_all_by_instrument",
+      "operation_id": "private/cancel_all_by_instrument",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/cancel_all_by_instrument",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "account_wide_irreversible_cancellation",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "reversible_order_state",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "The provider documents this as cancelling all open orders on one instrument. Cancellation cannot be undone, so a coverage call would destroy resting orders this session did not place \u2014 including another test's. Only per-order and per-label cancellation stay inside one session's own state.",
+        "ledger_ref": "deribit \u2014 account-wide and position-moving mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/cancel_all_by_kind_or_type",
+      "operation_id": "private/cancel_all_by_kind_or_type",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/cancel_all_by_kind_or_type",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "account_wide_irreversible_cancellation",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "reversible_order_state",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "The provider documents this as cancelling all open orders across one or more currencies filtered by kind or type. Cancellation cannot be undone, so a coverage call would destroy resting orders this session did not place \u2014 including another test's. Only per-order and per-label cancellation stay inside one session's own state.",
+        "ledger_ref": "deribit \u2014 account-wide and position-moving mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/cancel_block_rfq",
+      "operation_id": "private/cancel_block_rfq",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/cancel_block_rfq",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "block_rfq:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "counterparty_visible_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Cancels a Block RFQ; reaching it for coverage requires first creating the RFQ. The state is visible to counterparties on the shared testnet venue and can be filled or acted on by another party before any cleanup runs.",
+        "ledger_ref": "deribit \u2014 Block RFQ and block-trade counterparty mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/cancel_block_rfq_quote",
+      "operation_id": "private/cancel_block_rfq_quote",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/cancel_block_rfq_quote",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "block_rfq:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "counterparty_visible_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Cancels a Block RFQ quote; reaching it for coverage requires first placing the quote. The state is visible to counterparties on the shared testnet venue and can be filled or acted on by another party before any cleanup runs.",
+        "ledger_ref": "deribit \u2014 Block RFQ and block-trade counterparty mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/cancel_block_rfq_trigger",
+      "operation_id": "private/cancel_block_rfq_trigger",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/cancel_block_rfq_trigger",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "block_rfq:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "counterparty_visible_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Cancels an active Block RFQ trade trigger. The state is visible to counterparties on the shared testnet venue and can be filled or acted on by another party before any cleanup runs.",
+        "ledger_ref": "deribit \u2014 Block RFQ and block-trade counterparty mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/cancel_by_label",
+      "operation_id": "private/cancel_by_label",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/cancel_by_label",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "approved",
+        "reviewed_at": "2026-08-14",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "reversible_order_state",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "safe",
+        "safety": "safe",
+        "rationale": "The provider documents cancellation of the orders carrying one caller-supplied label. With a label minted for a single session it reaches only orders that session placed, unlike the currency- or account-scoped bulk cancels.",
+        "ledger_ref": null
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/cancel_quotes",
+      "operation_id": "private/cancel_quotes",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/cancel_quotes",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "account_wide_irreversible_cancellation",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "reversible_order_state",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "The provider documents this as cancelling quotes selected by delta, instrument or currency criteria. Cancellation cannot be undone, so a coverage call would destroy resting orders this session did not place \u2014 including another test's. Only per-order and per-label cancellation stay inside one session's own state.",
+        "ledger_ref": "deribit \u2014 account-wide and position-moving mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/cancel_transfer_by_id",
+      "operation_id": "private/cancel_transfer_by_id",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/cancel_transfer_by_id",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "wallet:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "external_or_internal_value_movement",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Cancels a pending transfer; reaching it for coverage requires first creating the transfer it cancels. Value movement is never sent for coverage, so the operation stays unverified against provider-owned semantics only.",
+        "ledger_ref": "deribit \u2014 value-moving wallet and transfer mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/cancel_withdrawal",
+      "operation_id": "private/cancel_withdrawal",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/cancel_withdrawal",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "wallet:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "external_or_internal_value_movement",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Cancels a pending withdrawal; reaching it for coverage requires first creating the withdrawal it cancels. Value movement is never sent for coverage, so the operation stays unverified against provider-owned semantics only.",
+        "ledger_ref": "deribit \u2014 value-moving wallet and transfer mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/change_api_key_name",
+      "operation_id": "private/change_api_key_name",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/change_api_key_name",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_credential_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Updates an API key's display name. Credential state persists beyond the session and a coverage call risks invalidating the credentials the rest of the suite authenticates with.",
+        "ledger_ref": "deribit \u2014 API-key credential mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/change_margin_model",
+      "operation_id": "private/change_margin_model",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/change_margin_model",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Changes the account's or a subaccount's margin model, which changes how margin requirements are computed. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/change_scope_in_api_key",
+      "operation_id": "private/change_scope_in_api_key",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/change_scope_in_api_key",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_credential_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Updates an API key's permission scope, and the provider states the key's tokens are affected immediately. Credential state persists beyond the session and a coverage call risks invalidating the credentials the rest of the suite authenticates with.",
+        "ledger_ref": "deribit \u2014 API-key credential mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/change_subaccount_name",
+      "operation_id": "private/change_subaccount_name",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/change_subaccount_name",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Renames a subaccount. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/close_position",
+      "operation_id": "private/close_position",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/close_position",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "position_and_value_moving",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Places a reduce-only order that closes an existing position; the provider gives no operation that restores a closed position, and on a funded testnet account it realises profit and loss.",
+        "ledger_ref": "deribit \u2014 account-wide and position-moving mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/create_api_key",
+      "operation_id": "private/create_api_key",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/create_api_key",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_credential_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Creates a new API key and the provider returns its secret in the response. Credential state persists beyond the session and a coverage call risks invalidating the credentials the rest of the suite authenticates with.",
+        "ledger_ref": "deribit \u2014 API-key credential mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/create_block_rfq",
+      "operation_id": "private/create_block_rfq",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/create_block_rfq",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "block_rfq:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "counterparty_visible_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Creates a Block RFQ that is broadcast to maker counterparties. The state is visible to counterparties on the shared testnet venue and can be filled or acted on by another party before any cleanup runs.",
+        "ledger_ref": "deribit \u2014 Block RFQ and block-trade counterparty mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/create_combo",
+      "operation_id": "private/create_combo",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/create_combo",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Verifies and creates a combo book, which the provider exposes as a venue-wide instrument. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/create_deposit_address",
+      "operation_id": "private/create_deposit_address",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/create_deposit_address",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "wallet:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_wallet_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Creates a new deposit address for a currency. Address-book and deposit-address state is withdrawal-adjacent, persists beyond the session, and is never created for coverage.",
+        "ledger_ref": "deribit \u2014 persistent wallet address-book mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/create_subaccount",
+      "operation_id": "private/create_subaccount",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/create_subaccount",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Creates a subaccount under the authenticated account. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/delete_address_beneficiary",
+      "operation_id": "private/delete_address_beneficiary",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/delete_address_beneficiary",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "wallet:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_wallet_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Deletes beneficiary details for an address. Address-book and deposit-address state is withdrawal-adjacent, persists beyond the session, and is never created for coverage.",
+        "ledger_ref": "deribit \u2014 persistent wallet address-book mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/delete_member",
+      "operation_id": "private/delete_member",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/delete_member",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Deletes a Direct Access member from the account. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/disable_api_key",
+      "operation_id": "private/disable_api_key",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/disable_api_key",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_credential_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Disables an API key so it can no longer authenticate. Credential state persists beyond the session and a coverage call risks invalidating the credentials the rest of the suite authenticates with.",
+        "ledger_ref": "deribit \u2014 API-key credential mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/disable_cancel_on_disconnect",
+      "operation_id": "private/disable_cancel_on_disconnect",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/disable_cancel_on_disconnect",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "transport_unreachable_over_rest",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "session",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unreachable",
+        "safety": "not_applicable",
+        "rationale": "The provider's own description states this method is designed exclusively for WebSocket connections and that it disables Cancel On Disconnect for the connection that issues it \u2014 a REST request has no such connection. The OpenAPI document does not carry the WebSocket Only tag on this path even though the prose does, so the tag set alone under-reports REST-unreachable operations.",
+        "ledger_ref": "deribit \u2014 REST-unreachable WebSocket-session mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/edit",
+      "operation_id": "private/edit",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/edit",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "approved",
+        "reviewed_at": "2026-08-14",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "reversible_order_state",
+        "value_movement": "none",
+        "reversal_operation_id": "private/cancel",
+        "reachability": "safe",
+        "safety": "safe",
+        "rationale": "The provider documents this as modifying one order identified by its order id. Scoped to an id created in-session it changes only that order, and private/cancel still removes it.",
+        "ledger_ref": null
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/edit_api_key",
+      "operation_id": "private/edit_api_key",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/edit_api_key",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_credential_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Updates an API key's name, scope, enabled state, features or IP whitelist. Credential state persists beyond the session and a coverage call risks invalidating the credentials the rest of the suite authenticates with.",
+        "ledger_ref": "deribit \u2014 API-key credential mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/edit_block_rfq_quote",
+      "operation_id": "private/edit_block_rfq_quote",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/edit_block_rfq_quote",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "block_rfq:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "counterparty_visible_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Edits a live Block RFQ quote. The state is visible to counterparties on the shared testnet venue and can be filled or acted on by another party before any cleanup runs.",
+        "ledger_ref": "deribit \u2014 Block RFQ and block-trade counterparty mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/edit_by_label",
+      "operation_id": "private/edit_by_label",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/edit_by_label",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "approved",
+        "reviewed_at": "2026-08-14",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "reversible_order_state",
+        "value_movement": "none",
+        "reversal_operation_id": "private/cancel_by_label",
+        "reachability": "safe",
+        "safety": "safe",
+        "rationale": "The provider documents this as modifying the single open order carrying one label and states it works only when exactly one such order exists. With a label minted for a single session it reaches only that session's own order, and private/cancel_by_label still removes it.",
+        "ledger_ref": null
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/enable_affiliate_program",
+      "operation_id": "private/enable_affiliate_program",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/enable_affiliate_program",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Enables the affiliate program for the account. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/enable_api_key",
+      "operation_id": "private/enable_api_key",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/enable_api_key",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_credential_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Changes an API key's enabled state. Credential state persists beyond the session and a coverage call risks invalidating the credentials the rest of the suite authenticates with.",
+        "ledger_ref": "deribit \u2014 API-key credential mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/enable_cancel_on_disconnect",
+      "operation_id": "private/enable_cancel_on_disconnect",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/enable_cancel_on_disconnect",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "transport_unreachable_over_rest",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "session",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unreachable",
+        "safety": "not_applicable",
+        "rationale": "The provider's own description states this method is designed exclusively for WebSocket connections and that it enables Cancel On Disconnect for the connection that issues it \u2014 a REST request has no such connection. The OpenAPI document does not carry the WebSocket Only tag on this path even though the prose does, so the tag set alone under-reports REST-unreachable operations.",
+        "ledger_ref": "deribit \u2014 REST-unreachable WebSocket-session mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/execute_block_trade",
+      "operation_id": "private/execute_block_trade",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/execute_block_trade",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "block_trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "counterparty_visible_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Executes a block trade against a counterparty using a shared signature. The state is visible to counterparties on the shared testnet venue and can be filled or acted on by another party before any cleanup runs.",
+        "ledger_ref": "deribit \u2014 Block RFQ and block-trade counterparty mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/invalidate_block_trade_signature",
+      "operation_id": "private/invalidate_block_trade_signature",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/invalidate_block_trade_signature",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "block_trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "counterparty_visible_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Invalidates a block trade signature, cancelling the pending trade. The state is visible to counterparties on the shared testnet venue and can be filled or acted on by another party before any cleanup runs.",
+        "ledger_ref": "deribit \u2014 Block RFQ and block-trade counterparty mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/logout",
+      "operation_id": "private/logout",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/logout",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [
+          "websocket_only"
+        ],
+        "provider_declared_scope": null
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "transport_unreachable_over_rest",
+        "exposure": "private",
+        "effect": "session",
+        "durability": "session",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unreachable",
+        "safety": "not_applicable",
+        "rationale": "The provider tags this operation WebSocket Only, so the OpenAPI path documents a JSON-RPC method that has no executable REST behaviour. It stays in the current-REST denominator as an unreachable member rather than being dropped from it.",
+        "ledger_ref": "deribit \u2014 REST-unreachable WebSocket-session mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/mass_quote",
+      "operation_id": "private/mass_quote",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/mass_quote",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "position_and_value_moving",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Places buy and sell quotes on many instruments at once; the resulting exposure spans instruments this session did not select individually and can fill before any cleanup runs.",
+        "ledger_ref": "deribit \u2014 account-wide and position-moving mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/move_positions",
+      "operation_id": "private/move_positions",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/move_positions",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "position_and_value_moving",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Transfers open positions between subaccounts; the provider documents no inverse move that restores the original allocation and margin state.",
+        "ledger_ref": "deribit \u2014 account-wide and position-moving mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/reject_block_trade",
+      "operation_id": "private/reject_block_trade",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/reject_block_trade",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "block_trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "counterparty_visible_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Rejects a pending block trade with a counterparty. The state is visible to counterparties on the shared testnet venue and can be filled or acted on by another party before any cleanup runs.",
+        "ledger_ref": "deribit \u2014 Block RFQ and block-trade counterparty mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/remove_api_key",
+      "operation_id": "private/remove_api_key",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/remove_api_key",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_credential_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Permanently deletes an API key; the provider states the operation cannot be undone. Credential state persists beyond the session and a coverage call risks invalidating the credentials the rest of the suite authenticates with.",
+        "ledger_ref": "deribit \u2014 API-key credential mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/remove_from_address_book",
+      "operation_id": "private/remove_from_address_book",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/remove_from_address_book",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "wallet:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_wallet_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Removes an address book entry. Address-book and deposit-address state is withdrawal-adjacent, persists beyond the session, and is never created for coverage.",
+        "ledger_ref": "deribit \u2014 persistent wallet address-book mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/remove_subaccount",
+      "operation_id": "private/remove_subaccount",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/remove_subaccount",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Permanently removes a subaccount; the provider states the operation cannot be undone. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/reset_api_key",
+      "operation_id": "private/reset_api_key",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/reset_api_key",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_credential_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Generates a new secret for an existing key, invalidating the secret in use. Credential state persists beyond the session and a coverage call risks invalidating the credentials the rest of the suite authenticates with.",
+        "ledger_ref": "deribit \u2014 API-key credential mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/reset_mmp",
+      "operation_id": "private/reset_mmp",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/reset_mmp",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Resets Market Maker Protection state and resumes quoting for the account. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/save_address_beneficiary",
+      "operation_id": "private/save_address_beneficiary",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/save_address_beneficiary",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "wallet:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_wallet_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Stores beneficiary compliance details for an address. Address-book and deposit-address state is withdrawal-adjacent, persists beyond the session, and is never created for coverage.",
+        "ledger_ref": "deribit \u2014 persistent wallet address-book mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/sell",
+      "operation_id": "private/sell",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/sell",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "approved",
+        "reviewed_at": "2026-08-14",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "reversible_order_state",
+        "value_movement": "none",
+        "reversal_operation_id": "private/cancel",
+        "reachability": "safe",
+        "safety": "safe",
+        "rationale": "The provider documents the same order-placement semantics as private/buy on the opposite side, with the same private/cancel reversal by order id.",
+        "ledger_ref": null
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/set_announcement_as_read",
+      "operation_id": "private/set_announcement_as_read",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/set_announcement_as_read",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Marks an announcement as read; the provider documents no operation that marks it unread. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/set_clearance_originator",
+      "operation_id": "private/set_clearance_originator",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/set_clearance_originator",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "wallet:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Sets the originator recorded against a deposit for compliance purposes. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/set_disabled_trading_products",
+      "operation_id": "private/set_disabled_trading_products",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/set_disabled_trading_products",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Configures which products a subaccount may not trade. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/set_email_for_subaccount",
+      "operation_id": "private/set_email_for_subaccount",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/set_email_for_subaccount",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Assigns an email address to a subaccount and triggers a confirmation email to its owner. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/set_email_language",
+      "operation_id": "private/set_email_language",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/set_email_language",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Sets the account's email notification language. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/set_member",
+      "operation_id": "private/set_member",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/set_member",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Creates or edits a Direct Access member of the account. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/set_mmp_config",
+      "operation_id": "private/set_mmp_config",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/set_mmp_config",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "trade:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Configures account-level Market Maker Protection limits for an index. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/set_self_trading_config",
+      "operation_id": "private/set_self_trading_config",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/set_self_trading_config",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Configures account-level self-trading prevention. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/submit_transfer_between_subaccounts",
+      "operation_id": "private/submit_transfer_between_subaccounts",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/submit_transfer_between_subaccounts",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "wallets:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "external_or_internal_value_movement",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Transfers funds between subaccounts or between a subaccount and the main account. Value movement is never sent for coverage, so the operation stays unverified against provider-owned semantics only.",
+        "ledger_ref": "deribit \u2014 value-moving wallet and transfer mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/submit_transfer_to_subaccount",
+      "operation_id": "private/submit_transfer_to_subaccount",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/submit_transfer_to_subaccount",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "wallets:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "external_or_internal_value_movement",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Transfers funds from the main account to a subaccount. Value movement is never sent for coverage, so the operation stays unverified against provider-owned semantics only.",
+        "ledger_ref": "deribit \u2014 value-moving wallet and transfer mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/submit_transfer_to_user",
+      "operation_id": "private/submit_transfer_to_user",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/submit_transfer_to_user",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "wallet:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "external_or_internal_value_movement",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "external",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Transfers funds to another Deribit user's account. Value movement is never sent for coverage, so the operation stays unverified against provider-owned semantics only.",
+        "ledger_ref": "deribit \u2014 value-moving wallet and transfer mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/subscribe",
+      "operation_id": "private/subscribe",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/subscribe",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [
+          "websocket_only"
+        ],
+        "provider_declared_scope": null
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "transport_unreachable_over_rest",
+        "exposure": "private",
+        "effect": "session",
+        "durability": "session",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unreachable",
+        "safety": "not_applicable",
+        "rationale": "The provider tags this operation WebSocket Only, so the OpenAPI path documents a JSON-RPC method that has no executable REST behaviour. It stays in the current-REST denominator as an unreachable member rather than being dropped from it.",
+        "ledger_ref": "deribit \u2014 REST-unreachable WebSocket-session mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/toggle_notifications_from_subaccount",
+      "operation_id": "private/toggle_notifications_from_subaccount",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/toggle_notifications_from_subaccount",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Enables or disables notifications for a subaccount. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/toggle_subaccount_login",
+      "operation_id": "private/toggle_subaccount_login",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/toggle_subaccount_login",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "account:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_account_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Enables or disables direct login for a subaccount. The change persists beyond the session and the provider documents no scoped inverse that restores the prior state.",
+        "ledger_ref": "deribit \u2014 persistent account, subaccount and member mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/unsubscribe",
+      "operation_id": "private/unsubscribe",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/unsubscribe",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [
+          "websocket_only"
+        ],
+        "provider_declared_scope": null
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "transport_unreachable_over_rest",
+        "exposure": "private",
+        "effect": "session",
+        "durability": "session",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unreachable",
+        "safety": "not_applicable",
+        "rationale": "The provider tags this operation WebSocket Only, so the OpenAPI path documents a JSON-RPC method that has no executable REST behaviour. It stays in the current-REST denominator as an unreachable member rather than being dropped from it.",
+        "ledger_ref": "deribit \u2014 REST-unreachable WebSocket-session mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/unsubscribe_all",
+      "operation_id": "private/unsubscribe_all",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/unsubscribe_all",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [
+          "websocket_only"
+        ],
+        "provider_declared_scope": null
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "transport_unreachable_over_rest",
+        "exposure": "private",
+        "effect": "session",
+        "durability": "session",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unreachable",
+        "safety": "not_applicable",
+        "rationale": "The provider tags this operation WebSocket Only, so the OpenAPI path documents a JSON-RPC method that has no executable REST behaviour. It stays in the current-REST denominator as an unreachable member rather than being dropped from it.",
+        "ledger_ref": "deribit \u2014 REST-unreachable WebSocket-session mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/update_in_address_book",
+      "operation_id": "private/update_in_address_book",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/update_in_address_book",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "wallet:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "persistent_wallet_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Updates beneficiary information on an address book entry. Address-book and deposit-address state is withdrawal-adjacent, persists beyond the session, and is never created for coverage.",
+        "ledger_ref": "deribit \u2014 persistent wallet address-book mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/verify_block_trade",
+      "operation_id": "private/verify_block_trade",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/verify_block_trade",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "block_trade:read"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "counterparty_visible_state",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "internal",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Creates the signature that authorises a block trade between two parties. The state is visible to counterparties on the shared testnet venue and can be filled or acted on by another party before any cleanup runs.",
+        "ledger_ref": "deribit \u2014 Block RFQ and block-trade counterparty mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/private/withdraw",
+      "operation_id": "private/withdraw",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/private/withdraw",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": "wallet:read_write"
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "external_or_internal_value_movement",
+        "exposure": "private",
+        "effect": "mutate",
+        "durability": "persistent",
+        "value_movement": "external",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Creates a withdrawal request that sends funds to an external address. Value movement is never sent for coverage, so the operation stays unverified against provider-owned semantics only.",
+        "ledger_ref": "deribit \u2014 value-moving wallet and transfer mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/public/auth",
+      "operation_id": "public/auth",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/public/auth",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": null
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "session_credential_issuance",
+        "exposure": "public",
+        "effect": "mutate",
+        "durability": "session",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Issues an OAuth access token used to authenticate private requests. The response body is credential material, so capturing it as committed evidence would commit a bearer token; the operation is adjudicated rather than executed.",
+        "ledger_ref": "deribit \u2014 session credential issuance (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/public/disable_heartbeat",
+      "operation_id": "public/disable_heartbeat",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/public/disable_heartbeat",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [
+          "websocket_only"
+        ],
+        "provider_declared_scope": null
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "transport_unreachable_over_rest",
+        "exposure": "public",
+        "effect": "session",
+        "durability": "session",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unreachable",
+        "safety": "not_applicable",
+        "rationale": "The provider tags this operation WebSocket Only, so the OpenAPI path documents a JSON-RPC method that has no executable REST behaviour. It stays in the current-REST denominator as an unreachable member rather than being dropped from it.",
+        "ledger_ref": "deribit \u2014 REST-unreachable WebSocket-session mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/public/exchange_token",
+      "operation_id": "public/exchange_token",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/public/exchange_token",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": null
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "session_credential_issuance",
+        "exposure": "public",
+        "effect": "mutate",
+        "durability": "session",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Issues a token scoped to a different subject id, switching subaccount identity. The response body is credential material, so capturing it as committed evidence would commit a bearer token; the operation is adjudicated rather than executed.",
+        "ledger_ref": "deribit \u2014 session credential issuance (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/public/fork_token",
+      "operation_id": "public/fork_token",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/public/fork_token",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [],
+        "provider_declared_scope": null
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "session_credential_issuance",
+        "exposure": "public",
+        "effect": "mutate",
+        "durability": "session",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unsafe",
+        "safety": "unsafe",
+        "rationale": "Issues a token for a new named session. The response body is credential material, so capturing it as committed evidence would commit a bearer token; the operation is adjudicated rather than executed.",
+        "ledger_ref": "deribit \u2014 session credential issuance (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/public/hello",
+      "operation_id": "public/hello",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/public/hello",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [
+          "websocket_only"
+        ],
+        "provider_declared_scope": null
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "transport_unreachable_over_rest",
+        "exposure": "public",
+        "effect": "session",
+        "durability": "session",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unreachable",
+        "safety": "not_applicable",
+        "rationale": "The provider tags this operation WebSocket Only, so the OpenAPI path documents a JSON-RPC method that has no executable REST behaviour. It stays in the current-REST denominator as an unreachable member rather than being dropped from it.",
+        "ledger_ref": "deribit \u2014 REST-unreachable WebSocket-session mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/public/set_heartbeat",
+      "operation_id": "public/set_heartbeat",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/public/set_heartbeat",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [
+          "websocket_only"
+        ],
+        "provider_declared_scope": null
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "transport_unreachable_over_rest",
+        "exposure": "public",
+        "effect": "session",
+        "durability": "session",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unreachable",
+        "safety": "not_applicable",
+        "rationale": "The provider tags this operation WebSocket Only, so the OpenAPI path documents a JSON-RPC method that has no executable REST behaviour. It stays in the current-REST denominator as an unreachable member rather than being dropped from it.",
+        "ledger_ref": "deribit \u2014 REST-unreachable WebSocket-session mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/public/subscribe",
+      "operation_id": "public/subscribe",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/public/subscribe",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [
+          "websocket_only"
+        ],
+        "provider_declared_scope": null
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "transport_unreachable_over_rest",
+        "exposure": "public",
+        "effect": "session",
+        "durability": "session",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unreachable",
+        "safety": "not_applicable",
+        "rationale": "The provider tags this operation WebSocket Only, so the OpenAPI path documents a JSON-RPC method that has no executable REST behaviour. It stays in the current-REST denominator as an unreachable member rather than being dropped from it.",
+        "ledger_ref": "deribit \u2014 REST-unreachable WebSocket-session mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/public/unsubscribe",
+      "operation_id": "public/unsubscribe",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/public/unsubscribe",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [
+          "websocket_only"
+        ],
+        "provider_declared_scope": null
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "transport_unreachable_over_rest",
+        "exposure": "public",
+        "effect": "session",
+        "durability": "session",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unreachable",
+        "safety": "not_applicable",
+        "rationale": "The provider tags this operation WebSocket Only, so the OpenAPI path documents a JSON-RPC method that has no executable REST behaviour. It stays in the current-REST denominator as an unreachable member rather than being dropped from it.",
+        "ledger_ref": "deribit \u2014 REST-unreachable WebSocket-session mutations (task 558, filed 2026-08-14)"
+      }
+    },
+    {
+      "operation_key": "GET /api/v2/public/unsubscribe_all",
+      "operation_id": "public/unsubscribe_all",
+      "provider": {
+        "transport": "rest",
+        "method": "GET",
+        "path": "/api/v2/public/unsubscribe_all",
+        "authentication": {
+          "status": "unknown"
+        },
+        "qualifiers": [
+          "websocket_only"
+        ],
+        "provider_declared_scope": null
+      },
+      "execution_review": {
+        "classification": "reviewed",
+        "decision": "refused",
+        "reviewed_at": "2026-08-14",
+        "refusal_reason": "transport_unreachable_over_rest",
+        "exposure": "public",
+        "effect": "session",
+        "durability": "session",
+        "value_movement": "none",
+        "reversal_operation_id": null,
+        "reachability": "unreachable",
+        "safety": "not_applicable",
+        "rationale": "The provider tags this operation WebSocket Only, so the OpenAPI path documents a JSON-RPC method that has no executable REST behaviour. It stays in the current-REST denominator as an unreachable member rather than being dropped from it.",
+        "ledger_ref": "deribit \u2014 REST-unreachable WebSocket-session mutations (task 558, filed 2026-08-14)"
+      }
+    }
+  ]
+}

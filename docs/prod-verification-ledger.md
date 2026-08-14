@@ -29,6 +29,127 @@ Entry template:
 > (`www.okx.com`) and `OKX_INTL_*` credentials. References to `my.okx.com` below are
 > historical negative evidence only, never the target for a new probe.
 
+### deribit — account-wide and position-moving mutations (task 558, filed 2026-08-14)
+
+- Authored slices: none — this entry is about raw provider operations, not an authored field-map slot
+- Operations: `private/cancel_all`, `private/cancel_all_by_currency`, `private/cancel_all_by_currency_pair`,
+  `private/cancel_all_by_instrument`, `private/cancel_all_by_kind_or_type`, `private/cancel_quotes`,
+  `private/cancel_all_block_rfq_quotes`, `private/close_position`, `private/move_positions`, `private/mass_quote`
+- Blocked by: a testnet account nobody else is using. Bulk cancellation reaches resting orders this session did
+  not place, and the provider offers no operation that restores a cancelled order or a closed position.
+- What is already known: `priv/authority/deribit/mutation-adjudication.json` records the provider's own
+  description for each of these, and the per-order lifecycle (`private/buy` → `private/cancel`) is verified live.
+- The open question: the accepted request shape and the response body each bulk form returns, which only a live
+  call on an isolated account can show.
+- Exact call: none — these stay `evidence=unverified`, `reachability=unsafe` until an isolated testnet account
+  exists. They are never sent for coverage on the shared key.
+- Expected evidence: a registered lifecycle capture on an isolated account whose setup created every order the
+  bulk form is allowed to reach.
+
+### deribit — value-moving wallet and transfer mutations (task 558, filed 2026-08-14)
+
+- Authored slices: none — raw provider operations
+- Operations: `private/withdraw`, `private/cancel_withdrawal`, `private/submit_transfer_to_user`,
+  `private/submit_transfer_to_subaccount`, `private/submit_transfer_between_subaccounts`,
+  `private/cancel_transfer_by_id`
+- Blocked by: nothing technical — this is a standing refusal. Value movement is never sent for coverage, on
+  testnet or anywhere else, and the cancel forms only become reachable after creating the transfer they cancel.
+- What is already known: the provider's own descriptions, recorded verbatim in the adjudication register.
+- The open question: unanswerable without moving funds; it stays open by decision, not by blocker.
+- Exact call: none.
+- Expected evidence: none will be produced. These remain `evidence=unverified`, `reachability=unsafe`
+  permanently unless a venue-provided dry-run form appears.
+
+### deribit — API-key credential mutations (task 558, filed 2026-08-14)
+
+- Authored slices: none — raw provider operations
+- Operations: `private/create_api_key`, `private/remove_api_key`, `private/reset_api_key`,
+  `private/enable_api_key`, `private/disable_api_key`, `private/edit_api_key`, `private/change_api_key_name`,
+  `private/change_scope_in_api_key`
+- Blocked by: a disposable testnet account. These mutate the credential the whole suite authenticates with, and
+  `private/create_api_key` returns a live secret in its response body, which must never enter a committed fixture.
+- What is already known: the provider documents the effect of each form; `private/remove_api_key` is documented
+  as not undoable.
+- The open question: the response shape of each form, and whether the secret-bearing fields can be redacted
+  without destroying the semantic evidence.
+- Exact call: none on the shared key.
+- Expected evidence: captures taken on a throwaway testnet account whose key is rotated afterwards, with the
+  secret-bearing members masked before the fixture is written.
+
+### deribit — persistent account, subaccount and member mutations (task 558, filed 2026-08-14)
+
+- Authored slices: none — raw provider operations
+- Operations: `private/create_subaccount`, `private/remove_subaccount`, `private/change_subaccount_name`,
+  `private/set_email_for_subaccount`, `private/toggle_subaccount_login`,
+  `private/toggle_notifications_from_subaccount`, `private/set_disabled_trading_products`,
+  `private/change_margin_model`, `private/enable_affiliate_program`, `private/set_email_language`,
+  `private/set_member`, `private/delete_member`, `private/set_clearance_originator`,
+  `private/set_announcement_as_read`, `private/set_self_trading_config`, `private/set_mmp_config`,
+  `private/reset_mmp`, `private/create_combo`
+- Blocked by: an account whose configuration nothing else depends on. Each change outlives the session, several
+  have no scoped inverse (`set_announcement_as_read` cannot be undone; `create_combo` publishes a venue-wide
+  instrument), and `set_email_for_subaccount` sends mail to a real address.
+- What is already known: the provider's description of each form, recorded in the adjudication register.
+- The open question: the accepted parameter set and response body of each configuration form.
+- Exact call: none on the shared key.
+- Expected evidence: captures on a disposable testnet account, each paired with the read that shows the prior
+  configuration restored.
+
+### deribit — persistent wallet address-book mutations (task 558, filed 2026-08-14)
+
+- Authored slices: none — raw provider operations
+- Operations: `private/add_to_address_book`, `private/remove_from_address_book`,
+  `private/update_in_address_book`, `private/save_address_beneficiary`, `private/delete_address_beneficiary`,
+  `private/create_deposit_address`
+- Blocked by: a disposable account. Address-book state is the allow-list a withdrawal draws from, so writing to
+  it for coverage is withdrawal-adjacent even though no funds move.
+- What is already known: the provider documents these as the compliance surface behind `private/withdraw`.
+- The open question: the accepted address and beneficiary shapes, and what a deposit address response contains.
+- Exact call: none on the shared key.
+- Expected evidence: captures on a disposable account, with address and beneficiary members masked.
+
+### deribit — Block RFQ and block-trade counterparty mutations (task 558, filed 2026-08-14)
+
+- Authored slices: none — raw provider operations
+- Operations: `private/create_block_rfq`, `private/add_block_rfq_quote`, `private/edit_block_rfq_quote`,
+  `private/cancel_block_rfq`, `private/cancel_block_rfq_quote`, `private/cancel_block_rfq_trigger`,
+  `private/accept_block_rfq`, `private/verify_block_trade`, `private/execute_block_trade`,
+  `private/approve_block_trade`, `private/reject_block_trade`, `private/invalidate_block_trade_signature`
+- Blocked by: a second, cooperating testnet account. These operations are visible to counterparties on the shared
+  testnet venue and can be filled or acted on by another party before any cleanup runs.
+- What is already known: the provider documents the two-party workflow and which role each form belongs to.
+- The open question: the accepted request and response of each half of the maker/taker workflow.
+- Exact call: none on a single key.
+- Expected evidence: paired captures from two coordinated testnet accounts covering one full RFQ or block-trade
+  workflow including its cancellation.
+
+### deribit — REST-unreachable WebSocket-session mutations (task 558, filed 2026-08-14)
+
+- Authored slices: none — raw provider operations
+- Operations: the ten operations the OpenAPI tags `WebSocket Only`, plus `private/enable_cancel_on_disconnect`
+  and `private/disable_cancel_on_disconnect`, which the provider's prose declares WebSocket-only *without*
+  carrying the tag
+- Blocked by: transport. These configure or address a WebSocket connection, and a REST request has none.
+- What is already known: the provider states the restriction in its own description; the tag set (10) and the
+  prose set (5) disagree, so the OpenAPI tag alone under-reports which current-REST paths are unreachable.
+- The open question: nothing reachable over REST. They stay in the 178-operation current-REST denominator as
+  `reachability=unreachable` rather than being deleted from it.
+- Exact call: none over REST.
+- Expected evidence: WebSocket-transport evidence, owned by the WebSocket contract surface, not by current REST.
+
+### deribit — session credential issuance (task 558, filed 2026-08-14)
+
+- Authored slices: none — raw provider operations
+- Operations: `public/auth`, `public/exchange_token`, `public/fork_token`
+- Blocked by: nothing technical — this is a redaction refusal. Each response body *is* a bearer token, so a
+  committed capture would commit credential material.
+- What is already known: the provider documents all three as token-issuing forms.
+- The open question: whether a redaction that masks the token members leaves enough for the capture to still be
+  semantic evidence, or whether it degrades to reachability-only.
+- Exact call: none until that redaction question is answered.
+- Expected evidence: a capture whose token members are masked and whose remaining members still carry the
+  scope/expiry semantics the operation is being verified for.
+
 ### all venues — residual oracle critical slots (task 526, filed 2026-08-10)
 
 These markers are explicit hard-gate waivers, not verification. The response recordings cited by

@@ -1,0 +1,49 @@
+{
+  "capture_id": "reject_wrong_tick",
+  "captured_at": "2026-08-14T06:50:53.973291Z",
+  "evidence_semantics": "documented_error",
+  "host": "test.deribit.com",
+  "lifecycle_id": "order_place_cancel",
+  "operation_id": "private/buy",
+  "operation_key": "GET /api/v2/private/buy",
+  "request": {
+    "body": null,
+    "headers": [
+      {
+        "name": "accept",
+        "value": "application/json"
+      },
+      {
+        "name": "authorization",
+        "value": "***REDACTED***"
+      }
+    ],
+    "method": "GET",
+    "redacted_headers": [
+      "authorization"
+    ],
+    "url": "https://test.deribit.com/api/v2/private/buy?amount=10&instrument_name=BTC-PERPETUAL&label=bourse-t558-1786690250950&post_only=true&price=31566.75&time_in_force=good_til_cancelled&type=limit"
+  },
+  "response": {
+    "http_status": 400,
+    "raw_body": "{\"error\":{\"code\":-32602,\"data\":{\"param\":\"price\",\"reason\":\"must conform to tick size\"},\"message\":\"Invalid params\"},\"jsonrpc\":\"2.0\",\"testnet\":true,\"usDiff\":578,\"usIn\":1786690254438098,\"usOut\":1786690254438676}",
+    "redacted_body_paths": []
+  },
+  "role": "failure_probe",
+  "row_fields_populated": false,
+  "schema_version": 1,
+  "scrubbed": true,
+  "source_binding": {
+    "artifact_id": "api-openapi",
+    "denominator_enumerated_from": {
+      "operation_key_set_sha256": "f6390f864cb6ea46acba203f98f1920f01ec21d611bcdb146c5ad8e942f5cd0c",
+      "retrieved_at": "2026-08-14",
+      "sha256": "2ac2867b1f25544dd189244b17c230e2dea6bff0fc0e1c8c26e2003af06f9c55"
+    },
+    "drift_record": "priv/authority/deribit/current-rest-drift-2026-08-14.json",
+    "note": "The pinned reference-only bytes are no longer fetchable upstream, so this register enumerates its denominator from the observed revision recorded in the drift record and never claims to have read the pinned bytes.",
+    "pinned_revision_sha256": "430b3f0bc67cc574a05e695d22d1acbbb5348c96858368bba9931c2f05350515"
+  },
+  "step_id": "reject_wrong_tick",
+  "venue": "deribit"
+}
