@@ -1936,6 +1936,11 @@
           "_omit": [
             "limit"
           ],
+          "end_timestamp": {
+            "kind": "reference",
+            "source": "until",
+            "source_class": "optional"
+          },
           "include_old": {
             "kind": "literal",
             "reason": null,
@@ -2139,6 +2144,12 @@
               "path": "get_last_trades_by_instrument_and_time",
               "when": {
                 "since": "present"
+              }
+            },
+            {
+              "path": "get_last_trades_by_instrument_and_time",
+              "when": {
+                "until": "present"
               }
             }
           ],

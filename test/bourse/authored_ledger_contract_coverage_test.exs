@@ -362,8 +362,10 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     %{
       venue: "lighter",
       path: ~w(normalization field_maps transfer field_map fee),
-      authored_sources: ["asset_id", "fee"],
-      provider_sources: ["TransferHistoryItem.asset_id", "TransferHistoryItem.fee"],
+      # fee.currency is the constant USDC (C-T546j: the signed payload field is
+      # usdc_fee), so the slot consumes only the row's fee value, not asset_id.
+      authored_sources: ["fee"],
+      provider_sources: ["TransferHistoryItem.fee"],
       citations: [
         "https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json"
       ]

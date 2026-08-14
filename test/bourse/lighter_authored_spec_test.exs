@@ -249,7 +249,11 @@ defmodule Bourse.LighterAuthoredSpecTest do
              side: "buy",
              taker_or_maker: "taker",
              order_id: "245",
-             fee: %{"cost" => 3.0, "currency" => "USDC"},
+             # Plumbing pin only: the provider OpenAPI types taker_fee/maker_fee as
+             # int32 and no live row has ever carried the field, so the VALUE scale
+             # is unverified (carve C-T546 amendment + prod-verification-ledger).
+             # This asserts the raw pass-through, not USDC semantics.
+             fee: %{"cost" => 3, "currency" => "USDC"},
              type: nil
            } = trade
 
@@ -284,7 +288,10 @@ defmodule Bourse.LighterAuthoredSpecTest do
               %Bourse.TransferEntry{
                 id: "transfer-1",
                 currency: "LIT",
-                fee: %{"cost" => 0.01, "currency" => "LIT"},
+                # The signed transfer payload names the fee field `usdc_fee`
+                # (Signing.Lighter.Protocol / lighter_signer helper.c), so the fee
+                # is USDC-denominated regardless of the asset moved.
+                fee: %{"cost" => 0.01, "currency" => "USDC"},
                 from_account: "1",
                 to_account: "2",
                 info: %{"from_route" => "perps", "to_route" => "spot"}
@@ -738,7 +745,9 @@ defmodule Bourse.LighterAuthoredSpecTest do
       "maker_allocated_margin_usdc_after" => "0",
       "maker_allocated_margin_usdc_before" => "0",
       "maker_entry_quote_before" => "0",
-      "maker_fee" => "2",
+      # Provider-typed: the pinned OpenAPI declares maker_fee/taker_fee int32
+      # (every other Trade money field is string) — a scaled unit of unknown scale.
+      "maker_fee" => 2,
       "maker_initial_margin_fraction_before" => 0,
       "maker_position_sign_changed" => false,
       "maker_position_size_before" => "0",
@@ -748,7 +757,7 @@ defmodule Bourse.LighterAuthoredSpecTest do
       "taker_allocated_margin_usdc_after" => "0",
       "taker_allocated_margin_usdc_before" => "0",
       "taker_entry_quote_before" => "0",
-      "taker_fee" => "3",
+      "taker_fee" => 3,
       "taker_initial_margin_fraction_before" => 0,
       "taker_position_sign_changed" => false,
       "taker_position_size_before" => "0",

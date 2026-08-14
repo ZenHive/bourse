@@ -92,11 +92,15 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
     }
   }
 
+  # lighter ask/bid_account_id stay unmasked: they carry no credential material
+  # (the testnet account index is already plaintext in caller_params of every
+  # private lighter recording), and masking them kills the only offline evidence
+  # for the trade role/fee derivation in ReadParse.annotate_lighter_trade/2.
   @sensitive_keys MapSet.new(~w(
     address accountnumber apikey apisecret key password passphrase secret sig signature signer uid
     user userid wallet walletaddress accountid accountalias subaccountid withdrawaladdress
     depositaddress l1address froml1address tol1address fromaccountindex toaccountindex
-    askaccountid bidaccountid email username systemname referrerid memberid
+    email username systemname referrerid memberid
   ))
 
   defp public_profiles do

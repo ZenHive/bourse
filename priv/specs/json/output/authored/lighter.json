@@ -2115,8 +2115,7 @@
               },
               "currency": {
                 "coercion": "safeCurrencyCode",
-                "key": "asset_id",
-                "kind": "currency_id"
+                "default": "USDC"
               }
             }
           },

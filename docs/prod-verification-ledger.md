@@ -877,15 +877,38 @@ evidence beyond the batch review.
   the provider-shaped stubs in `lighter_authored_spec_test.exs`.
 - The open question: does a real withdrawal row's `status`/`type` pair normalize to the unified
   transaction status and `"withdrawal"` type, and does a real liquidation row's nested `trade`
-  (`price`/`size`/`taker_fee`/`maker_fee`) plus second-resolution `executed_at` normalize to the
-  unified liquidation slice — including the market-id symbol resolution that only the populated
-  row can exercise?
+  (`price`/`size`/`taker_fee`/`maker_fee`) plus `executed_at` normalize to the unified
+  liquidation slice — including the market-id symbol resolution that only the populated row can
+  exercise? `executed_at`'s unit is itself part of the question: the provider types it bare
+  `int64` with no unit doc, the authored map assumes seconds, and this venue demonstrably mixes
+  units (`Trade.timestamp` ms, `transaction_time` µs; trade and transfer were both corrected
+  s → ms after live 13-digit values), so the authored `format: "s"` must be confirmed or
+  corrected against the first populated row.
 - Exact call: with an operator-approved withdrawal window (or an account that has been liquidated),
   `Bourse.fetch_withdrawals(ex)` and `Bourse.fetch_my_liquidations(ex)` against
   `testnet.zklighter.elliot.ai` with `sandbox: true`.
 - Expected evidence: re-capture and manifest-register both recordings with `body_populated: true`,
   assert the parsed symbol is `BTC/USDC:USDC` rather than the raw market id, and amend C-T546's
   verification status from shape-only to populated for the two methods.
+
+### lighter — trade fee value scale (ARC wave-2, C-T546i, filed 2026-08-14)
+- Unverifiable claim: the unit/scale of `Trade.taker_fee`/`maker_fee`. The pinned OpenAPI types
+  both as optional `int32` while every other Trade money field (`size`, `price`, `usd_amount`)
+  and both `LiqTrade` fee fields are strings — on this venue an integer money field is a scaled
+  unit (our signed write path submits `usdc_fee` at 1e6 per USDC). The authored parse passes the
+  raw value through as `fee.cost`, which is an unconfirmed reading.
+- Blocked by: every observed fill on the provisioned testnet account omits both keys (zero-fee
+  testnet fills — re-confirmed by the 2026-08-14 re-recording of `fetch_my_trades`), so neither a
+  recording nor a live call can currently discriminate raw-decimal from 1e6-scaled.
+- What is already proved: parse plumbing only — the offline stub pins that a present integer
+  passes through untouched, labelled in-line as a plumbing pin, not USDC semantics (C-T546i).
+- Exact call: one fee-bearing fill (a market/account combination with nonzero maker/taker fee —
+  possibly mainnet, or a testnet market with fees enabled), then `Bourse.fetch_my_trades(ex)` and
+  a cross-check of the returned integer against the account's USDC balance delta; alternatively a
+  provider statement of the field's unit.
+- Expected evidence: a populated `maker_fee`/`taker_fee` recording registered in the manifest,
+  the authored map given an explicit confirmed scale (or confirmed raw), and C-T546i amended to
+  tier 1.
 
 ## Closed
 

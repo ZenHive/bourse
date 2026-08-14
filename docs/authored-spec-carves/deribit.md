@@ -658,3 +658,31 @@ constant is embedded in the position parser.
 <!-- carve-evidence-status
 {"carve_id":"C-T610f","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions future size and size_currency contract plus public/get_instruments contract_size"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-13 test.deribit.com BTC-PERPETUAL size 10 and size_currency 0.000157394; tagged reconciliation in deribit_authored_integration_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The live position is pinned by a tagged integration assertion but is not yet a manifest-registered populated response fixture"}
 -->
+
+## 2026-08-14 — trades until mapping (ARC wave-2 pass, task 553)
+
+**C-T553f — Deribit `fetchTrades` now maps `until` to `end_timestamp` and
+routes an until-only call onto the `_and_time` endpoint (task 553). Outcome:
+CONFIRMED provider semantics, closing a silent until-drop the 553 probe
+exposed.**
+
+The authored request mapped only `since → start_timestamp` and switched to
+`get_last_trades_by_instrument_and_time` solely on `since: present`, so a
+caller-supplied `until` never reached the wire and the default endpoint
+returned the latest page — a window leak the newly-promoted live probe caught
+on its first run (last row 53 ms past the requested boundary).
+
+- *Live evidence (2026-08-14, test.deribit.com BTC-PERPETUAL):* the endpoint
+  honors each timestamp independently — `end_timestamp` alone returned rows
+  with max timestamp 1786679700703 against boundary 1786679747646, and
+  start-only / both-bounds calls returned ascending in-window rows. With
+  `end_timestamp` authored from `until` and an until-only selection case, the
+  full time-window live matrix passes for `deribit fetch_trades` on both
+  boundaries.
+- The exclusion that previously parked this pair cited unpopulated account
+  state; the read is public, so the reason could never become true. It is
+  replaced by the live probe.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T553f","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Deribit public/get_last_trades_by_instrument_and_time start_timestamp/end_timestamp parameters, exercised live"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-14 test.deribit.com boundary probes; time_window_integration_test.exs deribit fetch_trades probe green on since and until legs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Window behavior is pinned by the tagged live matrix, not by a manifest-registered recording"}
+-->

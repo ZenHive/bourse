@@ -136,6 +136,15 @@ defmodule Bourse.Test.TimeWindowProbeMatrix do
       tolerance_ms: @one_second_ms
     },
     %{
+      venue: :deribit,
+      method: :fetch_trades,
+      args: ["BTC/USD:BTC"],
+      opts: [],
+      exchange_opts: [sandbox: true],
+      credentials: false,
+      tolerance_ms: @one_second_ms
+    },
+    %{
       venue: :derive,
       method: :fetch_trades,
       args: ["BTC/USD:USDC"],
@@ -272,12 +281,19 @@ defmodule Bourse.Test.TimeWindowProbeMatrix do
         :fetch_order_trades,
         :fetch_orders_classic,
         :fetch_positions_history,
-        :fetch_trades,
         :fetch_transfers,
         :fetch_withdrawals
       ],
       reason: "the read-only testnet key and demo state do not guarantee populated history boundaries",
       tracking: "docs/prod-verification-ledger.md — tasks 526 and 567"
+    },
+    %{
+      venue: :bybit,
+      methods: [:fetch_trades],
+      reason:
+        "public recent-trades read: the authored endpoint (v5/market/recent-trade) carries no time " <>
+          "parameters at all, so window translation is unsupported by the venue surface — not account state",
+      tracking: "roadmap task 617 — offline since/until read guard enumerates unsupported surfaces"
     },
     %{
       venue: :deribit,
@@ -289,7 +305,6 @@ defmodule Bourse.Test.TimeWindowProbeMatrix do
         :fetch_my_trades,
         :fetch_open_orders,
         :fetch_order_trades,
-        :fetch_trades,
         :fetch_transfers,
         :fetch_withdrawals
       ],
@@ -365,12 +380,20 @@ defmodule Bourse.Test.TimeWindowProbeMatrix do
         :fetch_open_orders,
         :fetch_order_trades,
         :fetch_positions_history,
-        :fetch_trades,
         :fetch_transfers,
         :fetch_withdrawals
       ],
       reason: "international demo histories do not guarantee populated rows at both boundaries",
       tracking: "docs/prod-verification-ledger.md — tasks 526, 567, and 568"
+    },
+    %{
+      venue: :okx,
+      methods: [:fetch_trades],
+      reason:
+        "public trades read: the authored fetchTrades request declares only instId " <>
+          "(public_get_market_trades), so since/until never reach the wire — an authored-coverage gap, " <>
+          "not demo account state",
+      tracking: "roadmap task 617 — offline since/until read guard enumerates unmapped reads"
     }
   ]
 
@@ -499,6 +522,7 @@ defmodule Bourse.TimeWindowIntegrationTest do
   defp credential_options(:alpaca), do: [url: "https://app.alpaca.markets/signup"]
   defp credential_options(:binance), do: [url: "https://testnet.binance.vision"]
   defp credential_options(:binanceusdm), do: [url: "https://demo.binance.com/en/my/settings/api-management"]
+  defp credential_options(_venue), do: []
 
   defp probe_call!(probe, exchange, window_opts) do
     opts = Keyword.merge(probe.opts, window_opts)

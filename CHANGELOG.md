@@ -24,6 +24,37 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+- **Breaking (lighter):** transfer history rows changed shape. `TransferEntry`
+  `timestamp`/`datetime` are now read as milliseconds (previously mis-scaled
+  1000× as seconds), `from_account`/`to_account` carry account-index strings
+  (previously the route strings `"perps"`/`"spot"`, which moved into `info` as
+  `from_route`/`to_route`), and `fee.currency` is pinned to `"USDC"` — the
+  venue's signed payload names the field `usdc_fee`, so the fee is
+  USDC-denominated regardless of the asset moved (previously derived from
+  `asset_id`).
+- **Breaking (lighter):** trade history rows changed shape. `Trade`
+  `timestamp`/`datetime` are now milliseconds (previously mis-scaled 1000×),
+  `side`/`taker_or_maker`/`order_id` are populated from the account's role in
+  the fill (ask/bid account matching), `type` dropped to `nil` (the venue's
+  `type: "trade"` is not an order type), and `fee` appears when the venue
+  returns `maker_fee`/`taker_fee`. The fee VALUE is a raw pass-through with an
+  unverified scale — the provider types it `int32` and no observed testnet
+  fill carries the field; see `docs/prod-verification-ledger.md` (C-T546i)
+  before trusting `fee.cost` on lighter.
+- Lighter `Balance.free["USDC"]` is populated from the account-level
+  `available_balance` (previously unmapped); `used` remains the per-asset
+  `locked_balance`, which does not include cross-margin encumbrance — see the
+  C-T546 register note on the two accounting layers.
+- Time-window translation is now asserted against returned rows, not the
+  absence of an error: `until` actually reaches the wire on binance-family,
+  okx and deribit reads, and binance spot no longer drops `since` on its
+  klines/trades reads (task 553's live returned-window matrix pins both
+  boundaries per probed venue/method).
+- Deribit `fetch_trades` honors `until`: the authored request now maps
+  `until → end_timestamp` and an until-only call routes onto
+  `get_last_trades_by_instrument_and_time` (previously `until` silently never
+  reached the wire and the newest page came back; caught live by the promoted
+  time-window probe, C-T553f).
 - Emulated configuration reads no longer answer `{:ok, nil}` when the
   underlying plural has no row for the requested symbol:
   `fetch_trading_fee`, `fetch_leverage`, `fetch_margin_mode` and

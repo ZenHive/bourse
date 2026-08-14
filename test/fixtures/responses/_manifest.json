@@ -119,7 +119,7 @@
     "okx/fetch_ticker.json",
     "okx/fetch_trades.json"
   ],
-  "generated_at": "2026-08-14T03:37:57.474559Z",
+  "generated_at": "2026-08-14T04:57:58.045758Z",
   "recordings": [
     {
       "capture_date": "2026-07-26",
@@ -1051,7 +1051,7 @@
     {
       "body_populated": true,
       "capture_date": "2026-08-14",
-      "captured_at": "2026-08-14T03:37:57.469498Z",
+      "captured_at": "2026-08-14T04:57:58.040809Z",
       "endpoint": "trades",
       "host": "testnet.zklighter.elliot.ai",
       "method": "fetch_my_trades",

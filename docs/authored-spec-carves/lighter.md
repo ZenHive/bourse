@@ -317,3 +317,60 @@ Outcome: CONFIRM percent-point-to-fraction conversion.**
 <!-- carve-evidence-status
 {"carve_id":"C-T603g","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Pinned Lighter Funding and AccountPosition schemas"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/lighter/fetch_positions.json","fixture":"test/fixtures/responses/lighter/fetch_positions.json"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+## 2026-08-14 — ARC wave-2 amendments (trade fee scale, transfer fee currency)
+
+**C-T546i — the trade `fee.cost` slot is re-scoped OUT of C-T546's tier-1 claim:
+the provider types `Trade.taker_fee`/`maker_fee` as `int32` while every other
+Trade money field is a string, and no live row of our account has ever carried
+the field (task 546). Outcome: value scale UNVERIFIED; the parse is a raw
+pass-through.**
+
+The pinned OpenAPI (revision 6957dd8a) declares `taker_fee`/`maker_fee` as
+optional `integer/int32` on `Trade` — the same schema types `size`, `price`,
+`usd_amount` and both `LiqTrade` fee fields as strings. Elsewhere this venue's
+integer money fields are scaled units (our own write path submits `usdc_fee`
+through `scaled_integer!` at 1e6 per USDC), so reading the raw integer as a
+decimal USDC amount is an unconfirmed guess. The 2026-08-14 live re-recording
+confirms the venue omits both keys on every returned fill (zero-fee testnet
+fills), so no recording can currently discriminate. The offline stub pins the
+pass-through as plumbing only and says so in-line; the scale question is
+tracked in `docs/prod-verification-ledger.md` and closes with one fee-bearing
+fill or a provider statement of the unit.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T546i","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"priv/authority/lighter/manifest.json artifact rest-openapi revision 6957dd8a; Trade.taker_fee/maker_fee typed int32 vs string money siblings"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-14 re-recorded test/fixtures/responses/lighter/fetch_my_trades.json — the venue omits maker_fee/taker_fee on every observed fill, so the field has zero populated evidence"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The fee value scale is unverifiable on our zero-fee testnet fills; ledger entry open until a fee-bearing row or provider unit statement exists"}
+-->
+
+**C-T546j — the transfer `fee.currency` is USDC by the venue's own contract,
+not the transferred asset (task 546). Outcome: DIVERGE from the prior
+asset-derived currency.**
+
+The signed transfer payload names its fee field `usdc_fee`
+(`Bourse.Signing.Lighter.Protocol` and `native/lighter_signer/csrc/helper.c`),
+i.e. the transfer fee is USDC-denominated regardless of `asset_id`. The prior
+map derived `fee.currency` from `asset_id`, which mislabels any non-USDC
+transfer's fee; the authored slice now pins the constant `USDC` (same shape as
+hyperliquid's USDC-fee treatment). The only live recording moves USDC
+(`asset_id` 3) and cannot discriminate, so the divergence is authored from the
+provider-owned payload contract.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T546j","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Lighter signed transfer payload field usdc_fee (Signing.Lighter.Protocol, lighter_signer helper.c); fee denominated in USDC independent of asset_id"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/lighter/fetch_transfers.json (USDC transfer, asset_id 3 — consistent but non-discriminating)"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No non-USDC transfer observed; a populated non-USDC row would make the constant discriminating"}
+-->
+
+Two register notes without carve blocks:
+
+- *Balance `free`/`used` layers:* lighter maps `free` from the account-level
+  `available_balance` and `used` from the per-asset `locked_balance` — two
+  accounting layers, diverging from the OKX treatment (`used = total − free`).
+  On the committed recording 35.46 USDC of cross margin
+  (`cross_initial_margin_requirement`) is encumbered while `used` reads 0.0.
+  Known divergence, deliberately kept: the venue exposes no per-asset
+  encumbrance that includes cross margin, and synthesizing `total − free`
+  would mix layers the provider keeps separate. Consumers needing encumbrance
+  read `info`.
+- *`@provider_required_fields` in `lighter_authored_spec_test.exs` is a
+  transcription* of the pinned OpenAPI required lists (verified byte-for-byte
+  2026-08-14), not a derivation — the artifact is `storage: reference_only`,
+  so `mix ccxt.authority_check --online` is the drift guard.
