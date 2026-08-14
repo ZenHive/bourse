@@ -1171,3 +1171,34 @@ Empfohlener Downstream-Fix: `PortfolioRisk` behandelt `contracts == 0` als *flat
 bourse_trading-Orchestrator gemeldet (Session-Message, 2026-08-14). Hinweis dorthin: seit Task
 610 (heute gelandet, unreleased) sind deribit-Future-`contracts`/`contract_size` ohne
 `load_markets` `nil` — Exposure-Math, das `contracts` liest, braucht geladene Markets.
+
+## 2026-08-14 — deribit `createOrder`: caller-supplied `trigger`-Selektor wird beim Request-Shaping verworfen
+
+**Method:** `Bourse.create_order(ex, "BTC-PERPETUAL", "stop_market", "sell", qty, trigger_price: X, trigger: "index_price")` · **Exchange:** deribit · **Severity:** medium (Stop/Take-Order landet mit falschem Trigger-Referenzpreis statt dem angeforderten)
+
+Die authored Deribit-Spec (`priv/specs/json/output/authored/deribit.json`) definiert
+`endpoints.request.defaults.createOrder.trigger` als **Conditional**, das `last_price` nur
+emittiert, wenn `trailingAmount` gesetzt ist. `RequestShape.put_authored_conditional/4`
+**löscht** dadurch einen explizit vom Caller übergebenen `trigger` (z. B. `"index_price"`),
+obwohl Deribit `trigger` auf Stop-/Take-Orders verlangt (docs.deribit.com `private/buy`,
+Param `trigger`: `index_price | mark_price | last_price`).
+
+Expected: ein caller-supplied natives `trigger`-Feld überlebt das Shaping (Passthrough oder
+Conditional-mit-Caller-Präzedenz); das Conditional darf nur den *Default* stellen, nie einen
+expliziten Wert verwerfen.
+
+Konsument-Workaround (trading_dashboard, Task 54): `OrderPlacement.@venue_request_shape_supplements`
+re-authort den Eintrag als `native_passthrough`-Reference vor dem Dispatch
+(`lib/trading_dashboard/exchange/order_placement.ex`); live gegen Deribit-Testnet verifiziert —
+mit Supplement erreicht die Trigger-Order Deribits Business-Logik (echte `10035
+trigger_price_too_low`-Rejection), ohne Supplement kommt der Selektor nie an. Der Workaround
+kann raus, sobald bourse den Fix shippt.
+
+**Status:** 🔀 triaged 2026-08-14 — bestätigter Client-Defekt. Mechanismus verifiziert per
+Code-Read: `RequestShape.put_authored_conditional/4` (lib/bourse/unified/request_shape.ex:379)
+prüft nie, ob der Caller den nativen Key bereits gesetzt hat — ohne matchenden Case und ohne
+`source`/`default` löscht der `is_nil`-Zweig den Caller-Wert (`Map.delete`), mit matchendem
+Case überschreibt `Map.put` ihn. Klassen-Scope: sieben authored Conditionals über fünf Venues;
+deribit `createOrder.trigger` ist die einzige source-lose und die live-verifizierte Instanz.
+Fix als Task 615 gefiled (caller precedence: Conditional stellt nur den Default), assignee
+grok/grok-4.6, bundle live_triage.
