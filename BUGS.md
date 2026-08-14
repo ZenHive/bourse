@@ -1152,6 +1152,14 @@ flat behandeln statt `:missing_position_side` zu melden. Konsument-Repro: tradin
 `test/integration/risk_portfolio_margin_integration_test.exs` (pinnt `status: :complete`, rot
 seit das Testnet-Konto geschlossene Positionen trägt).
 
+**Status (2026-08-14, später):** ✅ **fixed downstream** — bourse_trading main `1b30a24`
+(„fix(portfolio_risk): treat flat positions (contracts == 0) as no exposure, not missing side"):
+`Exposure.position_lot/3` liefert bei `contracts == 0` (int wie float) `{:ok, []}`;
+`:missing_position_side` feuert nur noch bei `contracts != 0` und fehlender `side`. Live gegen
+das Deribit-Testnet verifiziert (vorher `:partial` mit zwei Failures auf den flachen Rows,
+nachher `:complete` mit leeren `failures`, inkl. Mischzustand echte Long + flache Option-Row).
+Client-seitig bleibt alles unverändert — die Carve unten war korrekt.
+
 **Status (2026-08-14):** 🔀 **triaged — not a client defect; fix routed to bourse_trading (PortfolioRisk).**
 `side: nil` + `contracts: 0.0` für flache Positionen ist die etablierte Cross-Venue-Carve, kein
 deribit-Sonderfall: derive und lighter authoren `sign_direction` explizit mit `"zero": null`, und
