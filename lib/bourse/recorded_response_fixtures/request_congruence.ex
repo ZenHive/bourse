@@ -86,14 +86,21 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
   def validate!(opts \\ []) do
     manifest_path = Keyword.get(opts, :manifest_path, @default_manifest)
     root = Keyword.get(opts, :root, Path.dirname(manifest_path))
+    expected_missing = Keyword.get(opts, :legacy_missing_caller_params, @legacy_missing_caller_params)
     manifest = JsonDocument.decode_file!(manifest_path)
     injections = Capture.param_injections()
     validate_injections!(injections)
 
-    observed =
-      Enum.reduce(manifest["recordings"], %{}, fn recording, acc ->
-        validate_recording!(recording, root, injections, acc)
+    {observed, live_missing} =
+      Enum.reduce(manifest["recordings"], {%{}, []}, fn recording, {acc, missing} ->
+        {acc, missing?} = validate_recording!(recording, root, injections, acc, expected_missing)
+        {acc, if(missing?, do: [recording["path"] | missing], else: missing)}
       end)
+
+    ensure!(
+      Enum.sort(live_missing) == Enum.sort(expected_missing),
+      missing_caller_params_ratchet_message(live_missing, expected_missing)
+    )
 
     ensure!(
       observed |> Map.keys() |> Enum.sort() == injections |> Map.keys() |> Enum.sort(),
@@ -149,37 +156,41 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
     observed
   end
 
-  defp validate_recording!(recording, root, injections, observed) do
+  defp validate_recording!(recording, root, injections, observed, expected_missing) do
     venue = recording["venue"]
     fixture = load_fixture!(root, recording["path"])
+    missing? = missing_caller_params?(fixture)
 
     validate_request_provenance!(recording, fixture)
-    validate_caller_params_ratchet!(recording, fixture)
+    validate_caller_params_ratchet!(recording, missing?, expected_missing)
 
-    with {:ok, method} <- private_method(venue, recording["method"]),
-         params when is_map(params) and map_size(params) > 0 <- fixture["params"],
-         true <- Map.has_key?(fixture, "caller_params") do
-      injection = Map.get(injections, {venue, method})
-      caller_params = fixture["caller_params"]
-      changed = changed_param_names(caller_params, params)
-      expected = if injection, do: injection["params"], else: []
+    observed =
+      with {:ok, method} <- private_method(venue, recording["method"]),
+           params when is_map(params) and map_size(params) > 0 <- fixture["params"],
+           true <- Map.has_key?(fixture, "caller_params") do
+        injection = Map.get(injections, {venue, method})
+        caller_params = fixture["caller_params"]
+        changed = changed_param_names(caller_params, params)
+        expected = if injection, do: injection["params"], else: []
 
-      ensure!(
-        changed == expected,
-        "#{venue}.#{method} has unregistered capture-only params: #{named_difference(changed, expected)}"
-      )
+        ensure!(
+          changed == expected,
+          "#{venue}.#{method} has unregistered capture-only params: #{named_difference(changed, expected)}"
+        )
 
-      shapes = request_shapes!(venue, method, caller_params, fixture)
+        shapes = request_shapes!(venue, method, caller_params, fixture)
 
-      names = validate_case!(venue, method, fixture, shapes, injection)
+        names = validate_case!(venue, method, fixture, shapes, injection)
 
-      if names == [], do: observed, else: Map.put(observed, {venue, method}, injection)
-    else
-      :not_private -> observed
-      nil -> observed
-      false -> observed
-      _empty_or_non_map -> observed
-    end
+        if names == [], do: observed, else: Map.put(observed, {venue, method}, injection)
+      else
+        :not_private -> observed
+        nil -> observed
+        false -> observed
+        _empty_or_non_map -> observed
+      end
+
+    {observed, missing?}
   end
 
   defp validate_request_provenance!(recording, fixture) do
@@ -191,18 +202,21 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
     )
   end
 
-  defp validate_caller_params_ratchet!(recording, fixture) do
-    if is_map(fixture) do
-      params = fixture["params"]
-
-      if is_map(params) and map_size(params) > 0 and not Map.has_key?(fixture, "caller_params") do
-        ensure!(
-          recording["path"] in @legacy_missing_caller_params,
-          "#{recording["path"]} is a new param-carrying capture without caller_params"
-        )
-      end
-    end
+  defp validate_caller_params_ratchet!(recording, true, expected_missing) do
+    ensure!(
+      recording["path"] in expected_missing,
+      "#{recording["path"]} is a new param-carrying capture without caller_params"
+    )
   end
+
+  defp validate_caller_params_ratchet!(_recording, false, _expected_missing), do: :ok
+
+  defp missing_caller_params?(fixture) when is_map(fixture) do
+    params = fixture["params"]
+    is_map(params) and map_size(params) > 0 and not Map.has_key?(fixture, "caller_params")
+  end
+
+  defp missing_caller_params?(_fixture), do: false
 
   defp private_method(venue, method_name) do
     Enum.find_value(Capture.targets(), :not_private, fn
@@ -331,6 +345,13 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
   defp stale_registry_message(observed, injections) do
     stale = Map.keys(injections) -- Map.keys(observed)
     "capture param-injection registry differs from recordings: #{inspect(stale)}"
+  end
+
+  defp missing_caller_params_ratchet_message(live, expected) do
+    extra = expected -- live
+    missing = live -- expected
+
+    "legacy missing caller_params ratchet must only shrink; extra pin entries: #{Enum.join(Enum.sort(extra), ", ")}; unpinned missing recordings: #{Enum.join(Enum.sort(missing), ", ")}"
   end
 
   defp ensure!(true, _message), do: :ok

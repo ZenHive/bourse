@@ -51,7 +51,58 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruenceTest do
              }
            }
 
-    assert length(RequestCongruence.legacy_missing_caller_params()) == 50
+    assert RequestCongruence.legacy_missing_caller_params() == [
+             "alpaca/fetch_markets.json",
+             "alpaca/fetch_ticker.json",
+             "alpaca/order_lifecycle.json",
+             "binance/fetch_funding_history.json",
+             "binance/fetch_my_trades.json",
+             "binance/fetch_open_orders.json",
+             "binance/order_lifecycle.json",
+             "binancecoinm/fetch_adl_rank.json",
+             "binancecoinm/fetch_canceled_orders.json",
+             "binancecoinm/fetch_closed_orders.json",
+             "binancecoinm/fetch_ledger.json",
+             "binancecoinm/fetch_leverage_tiers.json",
+             "binancecoinm/fetch_leverages.json",
+             "binancecoinm/fetch_my_trades.json",
+             "binancecoinm/fetch_open_interest.json",
+             "binancecoinm/fetch_open_orders.json",
+             "binancecoinm/fetch_orders.json",
+             "binancecoinm/fetch_positions.json",
+             "binancecoinm/fetch_ticker.json",
+             "binancecoinm/fetch_trading_fee.json",
+             "binancecoinm/order_lifecycle.json",
+             "binanceusdm/fetch_ledger.json",
+             "binanceusdm/fetch_leverages.json",
+             "binanceusdm/fetch_my_trades.json",
+             "binanceusdm/fetch_open_orders.json",
+             "binanceusdm/fetch_position_adl_rank.json",
+             "binanceusdm/fetch_positions.json",
+             "binanceusdm/order_lifecycle.json",
+             "bybit/fetch_my_trades.json",
+             "bybit/fetch_open_orders.json",
+             "bybit/fetch_positions.json",
+             "bybit/order_lifecycle.json",
+             "coinbaseexchange/fetch_ohlcv.json",
+             "coinbaseexchange/fetch_ticker.json",
+             "deribit/fetch_deposit_address.json",
+             "deribit/fetch_funding_rate_history.json",
+             "deribit/fetch_my_trades.json",
+             "deribit/fetch_open_orders.json",
+             "derive/fetch_my_trades.json",
+             "hyperliquid/fetch_my_trades.json",
+             "hyperliquid/fetch_open_orders.json",
+             "lighter/fetch_funding_rate_history.json",
+             "lighter/fetch_ticker.json",
+             "okx/fetch_funding_rate_history.json",
+             "okx/fetch_markets_by_type.json",
+             "okx/fetch_my_trades.json",
+             "okx/fetch_open_interest_history.json",
+             "okx/fetch_open_interest_history_option.json",
+             "okx/fetch_open_orders.json",
+             "okx/fetch_positions_for_symbol.json"
+           ]
   end
 
   test "a recorded caller param omitted by the runtime builder is red with its name" do
@@ -150,7 +201,11 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruenceTest do
     {root, manifest_path} = write_corpus("nil-params", "bybit/fetch_balance.json", fixture, fixture)
 
     assert_raise ArgumentError, ~r/capture param-injection registry differs from recordings/, fn ->
-      RequestCongruence.validate!(root: root, manifest_path: manifest_path)
+      RequestCongruence.validate!(
+        root: root,
+        manifest_path: manifest_path,
+        legacy_missing_caller_params: []
+      )
     end
   end
 
@@ -163,7 +218,29 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruenceTest do
     {root, manifest_path} = write_corpus("new-missing-caller", "bybit/new_capture.json", fixture, fixture)
 
     assert_raise ArgumentError, ~r/new param-carrying capture without caller_params/, fn ->
-      RequestCongruence.validate!(root: root, manifest_path: manifest_path)
+      RequestCongruence.validate!(
+        root: root,
+        manifest_path: manifest_path,
+        legacy_missing_caller_params: []
+      )
+    end
+  end
+
+  test "the missing-caller-params ratchet fails closed when the live set shrinks past the pin" do
+    fixture = %{
+      "caller_params" => %{"symbol" => "BTC/USDT"},
+      "captured_at" => "2026-08-14T00:00:00Z",
+      "params" => %{"symbol" => "BTC/USDT"}
+    }
+
+    {root, manifest_path} = write_corpus("shrunk-ratchet", "bybit/fetch_ticker.json", fixture, fixture)
+
+    assert_raise ArgumentError, ~r/legacy missing caller_params ratchet must only shrink/, fn ->
+      RequestCongruence.validate!(
+        root: root,
+        manifest_path: manifest_path,
+        legacy_missing_caller_params: ["bybit/old_capture.json"]
+      )
     end
   end
 
@@ -180,14 +257,22 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruenceTest do
       write_corpus("substituted-caller", "bybit/fetch_balance.json", fixture, substituted)
 
     assert_raise ArgumentError, ~r/request-param provenance differs from manifest/, fn ->
-      RequestCongruence.validate!(root: substituted_root, manifest_path: substituted_manifest)
+      RequestCongruence.validate!(
+        root: substituted_root,
+        manifest_path: substituted_manifest,
+        legacy_missing_caller_params: []
+      )
     end
 
     deleted = Map.delete(fixture, "params")
     {deleted_root, deleted_manifest} = write_corpus("deleted-params", "bybit/fetch_balance.json", fixture, deleted)
 
     assert_raise ArgumentError, ~r/request-param provenance differs from manifest/, fn ->
-      RequestCongruence.validate!(root: deleted_root, manifest_path: deleted_manifest)
+      RequestCongruence.validate!(
+        root: deleted_root,
+        manifest_path: deleted_manifest,
+        legacy_missing_caller_params: []
+      )
     end
   end
 
