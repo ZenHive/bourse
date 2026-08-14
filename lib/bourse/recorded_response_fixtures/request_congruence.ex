@@ -351,7 +351,7 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
     extra = expected -- live
     missing = live -- expected
 
-    "legacy missing caller_params ratchet must only shrink; extra pin entries: #{Enum.join(Enum.sort(extra), ", ")}; unpinned missing recordings: #{Enum.join(Enum.sort(missing), ", ")}"
+    "legacy missing-caller_params pin must exactly match the live set (recapturing a recording means removing its pin entry): pinned but no longer missing: #{Enum.join(Enum.sort(extra), ", ")}; missing but unpinned (new captures require caller_params): #{Enum.join(Enum.sort(missing), ", ")}"
   end
 
   defp ensure!(true, _message), do: :ok

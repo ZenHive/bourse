@@ -131,7 +131,9 @@ Entry template:
   carrying the tag
 - Blocked by: transport. These configure or address a WebSocket connection, and a REST request has none.
 - What is already known: the provider states the restriction in its own description; the tag set (10) and the
-  prose set (5) disagree, so the OpenAPI tag alone under-reports which current-REST paths are unreachable.
+  prose-declared set disagree — the register substantiates two operations (`private/enable_cancel_on_disconnect`,
+  `private/disable_cancel_on_disconnect`) that the prose declares WebSocket-only without carrying the tag — so the
+  OpenAPI tag alone under-reports which current-REST paths are unreachable.
 - The open question: nothing reachable over REST. They stay in the 178-operation current-REST denominator as
   `reachability=unreachable` rather than being deleted from it.
 - Exact call: none over REST.

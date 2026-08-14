@@ -235,7 +235,7 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruenceTest do
 
     {root, manifest_path} = write_corpus("shrunk-ratchet", "bybit/fetch_ticker.json", fixture, fixture)
 
-    assert_raise ArgumentError, ~r/legacy missing caller_params ratchet must only shrink/, fn ->
+    assert_raise ArgumentError, ~r/legacy missing-caller_params pin must exactly match the live set/, fn ->
       RequestCongruence.validate!(
         root: root,
         manifest_path: manifest_path,

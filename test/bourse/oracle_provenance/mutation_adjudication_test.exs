@@ -6,6 +6,7 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
   alias Bourse.OracleProvenance.MutationAdjudication
   alias Bourse.OracleProvenance.MutationAdjudication.Lifecycle
   alias Bourse.OracleProvenance.MutationAdjudication.Redaction
+  alias Bourse.OracleProvenance.PathGuard
   alias Mix.Tasks.Ccxt.AuthorityCorpus
 
   doctest Redaction
@@ -750,7 +751,11 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
       end
 
       assert_raise ArgumentError, ~r/resolves outside its corpus root/, fn ->
-        MutationAdjudication.resolve_inside_root!(root, "../outside.json")
+        PathGuard.resolve_inside_root!(root, "../outside.json", "registered mutation capture")
+      end
+
+      assert_raise ArgumentError, ~r/path must be a string/, fn ->
+        PathGuard.resolve_inside_root!(root, :not_a_path, "registered mutation capture")
       end
     end
 

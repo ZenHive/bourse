@@ -20,6 +20,7 @@ defmodule Bourse.OracleProvenance.MutationAdjudication do
 
   alias Bourse.JsonDocument
   alias Bourse.OracleProvenance.MutationAdjudication.Redaction
+  alias Bourse.OracleProvenance.PathGuard
   alias Bourse.RecordedResponseFixtures
   alias Mix.Tasks.Ccxt.AuthorityCorpus
   alias Mix.Tasks.Ccxt.ContractComparator
@@ -512,7 +513,7 @@ defmodule Bourse.OracleProvenance.MutationAdjudication do
   end
 
   defp validate_recording!(row, %{lifecycle: lifecycle, step: step}, register, plan, root, documented) do
-    path = resolve_inside_root!(root, row["path"])
+    path = PathGuard.resolve_inside_root!(root, row["path"], "registered mutation capture")
     ensure!(File.regular?(path), "registered mutation capture is missing: #{path}")
     contents = File.read!(path)
     ensure!(byte_size(contents) == row["bytes"], "#{path}: byte count differs from manifest")
@@ -693,31 +694,6 @@ defmodule Bourse.OracleProvenance.MutationAdjudication do
     identities = Enum.map(values, & &1[key])
     ensure!(Enum.all?(identities, &(is_binary(&1) and &1 != "")), "#{path}: #{label} #{key} must be non-empty")
     ensure!(length(identities) == length(Enum.uniq(identities)), "#{path}: duplicate #{label} #{key}")
-  end
-
-  @doc """
-  Expands `relative_path` under `root`, raising if it escapes the corpus root.
-
-  Capture paths are named by a reviewed plan, so a step id like `../../escape`
-  would otherwise write outside the corpus the reviewer inspects.
-  """
-  @spec resolve_inside_root!(Path.t(), Path.t()) :: Path.t()
-  def resolve_inside_root!(root, relative_path) when is_binary(relative_path) do
-    expanded_root = Path.expand(root)
-    expanded = Path.expand(relative_path, expanded_root)
-    relative = Path.relative_to(expanded, expanded_root)
-
-    ensure!(
-      Path.type(relative_path) == :relative and Path.type(relative) == :relative and relative != ".." and
-        not String.starts_with?(relative, "../"),
-      "registered mutation capture resolves outside its corpus root"
-    )
-
-    expanded
-  end
-
-  def resolve_inside_root!(_root, _relative_path) do
-    raise ArgumentError, "registered mutation capture path must be a string"
   end
 
   defp refused(reason), do: {:error, {:refused, reason}}

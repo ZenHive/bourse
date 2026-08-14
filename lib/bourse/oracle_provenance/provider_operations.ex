@@ -8,6 +8,7 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
   """
 
   alias Bourse.JsonDocument
+  alias Bourse.OracleProvenance.PathGuard
   alias Bourse.OracleProvenance.ProviderOperations.Capture
   alias Bourse.RecordedResponseFixtures
   alias Mix.Tasks.Ccxt.AuthorityCorpus
@@ -286,7 +287,7 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
   end
 
   defp validate_recording!(row, %{operation: operation, proof: proof}, plan, root) do
-    path = resolve_inside_root!(root, row["path"], "registered provider-operation capture")
+    path = PathGuard.resolve_inside_root!(root, row["path"], "registered provider-operation capture")
     ensure!(File.regular?(path), "registered provider-operation capture is missing: #{path}")
     contents = File.read!(path)
     ensure!(byte_size(contents) == row["bytes"], "#{path}: byte count differs from manifest")
@@ -371,24 +372,6 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
       is_binary(value) and Regex.match?(~r/\A[a-z0-9][a-z0-9_-]*\z/, value),
       "#{label} must be a safe path component"
     )
-  end
-
-  defp resolve_inside_root!(root, relative_path, label) when is_binary(relative_path) do
-    expanded_root = Path.expand(root)
-    expanded_path = Path.expand(relative_path, expanded_root)
-    relative = Path.relative_to(expanded_path, expanded_root)
-
-    ensure!(
-      Path.type(relative_path) == :relative and Path.type(relative) == :relative and relative != ".." and
-        not String.starts_with?(relative, "../"),
-      "#{label} resolves outside its corpus root"
-    )
-
-    expanded_path
-  end
-
-  defp resolve_inside_root!(_root, _relative_path, label) do
-    raise ArgumentError, "#{label} path must be a string"
   end
 
   defp ensure!(true, _message), do: :ok

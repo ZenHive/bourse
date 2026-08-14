@@ -17,6 +17,7 @@ defmodule Bourse.OracleProvenance.MutationAdjudication.Lifecycle do
   alias Bourse.JsonDocument
   alias Bourse.OracleProvenance.MutationAdjudication
   alias Bourse.OracleProvenance.MutationAdjudication.Redaction
+  alias Bourse.OracleProvenance.PathGuard
   alias Bourse.OracleProvenance.ProviderOperations.Capture
   alias Bourse.RecordedResponseFixtures
   alias Bourse.Signing
@@ -389,7 +390,7 @@ defmodule Bourse.OracleProvenance.MutationAdjudication.Lifecycle do
 
   defp write_capture!(output_root, fixture) do
     relative_path = Path.join(fixture["venue"], "#{fixture["capture_id"]}.json")
-    path = MutationAdjudication.resolve_inside_root!(output_root, relative_path)
+    path = PathGuard.resolve_inside_root!(output_root, relative_path, "registered mutation capture")
     contents = Jason.encode!(fixture, pretty: true) <> "\n"
     File.mkdir_p!(Path.dirname(path))
     File.write!(path, contents)

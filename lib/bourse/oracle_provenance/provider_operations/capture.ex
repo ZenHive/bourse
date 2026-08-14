@@ -8,6 +8,7 @@ defmodule Bourse.OracleProvenance.ProviderOperations.Capture do
   """
 
   alias Bourse.JsonDocument
+  alias Bourse.OracleProvenance.PathGuard
   alias Bourse.OracleProvenance.ProviderOperations
   alias Bourse.RecordedResponseFixtures
   alias Mix.Tasks.Ccxt.AuthorityCorpus
@@ -37,7 +38,7 @@ defmodule Bourse.OracleProvenance.ProviderOperations.Capture do
     File.mkdir_p!(output_root)
     recordings = Enum.map(captures, &write_capture!(output_root, &1))
     manifest = build_manifest(plan, inventory, plan_path, recordings, now.())
-    manifest_path = resolve_inside_root!(output_root, "_manifest.json")
+    manifest_path = PathGuard.resolve_inside_root!(output_root, "_manifest.json", "provider-operation output")
     File.write!(manifest_path, Jason.encode!(manifest, pretty: true) <> "\n")
 
     ProviderOperations.validate!(
@@ -195,7 +196,7 @@ defmodule Bourse.OracleProvenance.ProviderOperations.Capture do
 
   defp write_capture!(output_root, fixture) do
     relative_path = Path.join(fixture["venue"], "#{fixture["capture_id"]}.json")
-    path = resolve_inside_root!(output_root, relative_path)
+    path = PathGuard.resolve_inside_root!(output_root, relative_path, "provider-operation output")
     contents = Jason.encode!(fixture, pretty: true) <> "\n"
     File.mkdir_p!(Path.dirname(path))
     File.write!(path, contents)
@@ -226,18 +227,6 @@ defmodule Bourse.OracleProvenance.ProviderOperations.Capture do
       "operations" => ProviderOperations.manifest_operations(plan),
       "recordings" => recordings
     }
-  end
-
-  defp resolve_inside_root!(root, relative_path) do
-    path = Path.expand(relative_path, root)
-    relative = Path.relative_to(path, root)
-
-    if Path.type(relative_path) == :relative and Path.type(relative) == :relative and relative != ".." and
-         not String.starts_with?(relative, "../") do
-      path
-    else
-      raise ArgumentError, "provider-operation output resolves outside its corpus root"
-    end
   end
 
   defp refused(reason), do: {:error, {:refused, reason}}
