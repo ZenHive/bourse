@@ -43,6 +43,28 @@ defmodule Bourse.PositionUnitInvariantTest do
     end
   end
 
+  test "every authored position slice carries a frozen invariant row" do
+    authored =
+      Bourse.Spec.exchanges()
+      |> Enum.filter(&position_slice?/1)
+      |> MapSet.new()
+
+    frozen = MapSet.new(position_cases(), & &1.venue)
+
+    assert MapSet.to_list(MapSet.difference(authored, frozen)) == [],
+           "a venue authors a position slice with no frozen unit row"
+
+    assert MapSet.to_list(MapSet.difference(frozen, authored)) == [],
+           "a frozen unit row names a venue that authors no position slice"
+  end
+
+  defp position_slice?(venue) do
+    case Bourse.Spec.load!(venue) do
+      %{"normalization" => %{"field_maps" => %{"position" => slice}}} -> is_map(slice)
+      _spec -> false
+    end
+  end
+
   defp assert_contract_size(%Position{contract_size: nil}, %{expected_contract_size: nil}), do: :ok
 
   defp assert_contract_size(position, position_case) do
