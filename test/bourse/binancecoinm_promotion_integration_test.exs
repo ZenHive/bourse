@@ -127,7 +127,7 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
     assert {:ok, my_trades} = Bourse.fetch_my_trades(exchange, symbol: @symbol, limit: @public_limit)
     assert Enum.all?(my_trades, &match?(%Trade{}, &1))
 
-    assert {:ok, %{"dualSidePosition" => true}} = Bourse.fetch_position_mode(exchange)
+    assert {:ok, %{"dualSidePosition" => false}} = Bourse.fetch_position_mode(exchange)
 
     assert {:ok, %{body: %{"positions" => account_positions} = account}} =
              Bourse.Binancecoinm.dapiPrivate_get_account(exchange)
@@ -139,7 +139,11 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
              Bourse.Binancecoinm.dapiPrivate_get_positionrisk(exchange)
 
     assert is_list(position_risk)
-    assert length(position_risk) > length(account_positions)
+    # Both endpoints enumerate the full symbol universe on the demo account
+    # (observed live 2026-08-14: 47 rows each; earlier sweeps saw positionRisk
+    # strictly larger). The stable contract is: positionRisk is never a subset.
+    assert length(position_risk) >= length(account_positions)
+    assert position_risk != []
   end
 
   test "live DAPI configuration read errors when the account has no requested symbol row" do
@@ -238,7 +242,6 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
       assert {:ok, %Order{id: order_id, client_order_id: ^client_order_id} = created} =
                Bourse.create_order(exchange, @symbol, "limit", "buy", @order_amount,
                  price: price,
-                 positionSide: "LONG",
                  timeInForce: "GTC",
                  newClientOrderId: client_order_id
                )
@@ -251,7 +254,7 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
       assert created.price == price
       assert created.status == "open"
       assert created.info["pair"] == "BTCUSD"
-      assert created.info["positionSide"] == "LONG"
+      assert created.info["positionSide"] == "BOTH"
 
       assert {:ok, %Order{id: ^order_id, status: "open"} = fetched} =
                Bourse.fetch_order(exchange, order_id, symbol: @symbol)
@@ -270,18 +273,20 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
   end
 
   @tag :dangerous
-  test "hedge-mode and margin rejections preserve the observed DAPI business errors" do
+  test "position-side and margin rejections preserve the observed DAPI business errors" do
     exchange = signed_exchange!()
     market = market!(exchange, @symbol)
     price = resting_price!(exchange, market)
 
-    assert {:ok, %{"dualSidePosition" => true}} = Bourse.fetch_position_mode(exchange)
+    # The shared demo account runs One-way mode (CLAUDE.md, verified live
+    # 2026-08-10): an explicit hedge-mode positionSide is what -4061 rejects.
+    assert {:ok, %{"dualSidePosition" => false}} = Bourse.fetch_position_mode(exchange)
 
     assert_rejected_order!(
       exchange,
       price,
       @order_amount,
-      [],
+      [positionSide: "LONG"],
       %Error{type: :operation_failed, code: -4061},
       "position side"
     )
@@ -291,7 +296,7 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
         exchange,
         price,
         @oversized_order_amount,
-        [positionSide: "LONG"],
+        [],
         %Error{type: :insufficient_funds, code: -2019},
         "Margin is insufficient"
       )
