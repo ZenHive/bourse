@@ -1234,3 +1234,29 @@ authored `channels: null` (fällt wenigstens laut mit `:no_channel_templates`). 
 unbekannte Stream-Namen stumm ackt, ist Subscribe-Ack keine Evidenz — der Fix verlangt
 Frame-Delivery-Tests. Als Task 618 gefiled (Audit aller vier watch_*-Defaults gegen die
 provider-owned Stream-Doku, grok/grok-4.6, bundle live_triage).
+
+## 2026-08-17 — deribit: `client_order_id` fährt raus als `label`, kommt aber nie zurück (asymmetrische Normalisierung)
+
+**Method:** `Bourse.create_order(ex, "BTC/USD:BTC", "market", "buy", qty, params: %{"label" => id})` bzw. `clientOrderId`; danach `Bourse.fetch_my_trades/2` · **Exchange:** deribit (testnet) · **Severity:** medium (jeder Consumer, der eigene Orders über eine selbstvergebene Id wiedererkennen muss, fällt auf `info`/`raw_call` zurück)
+
+Die **Request**-Seite ist korrekt: `RequestShape.Derive` mappt unified `clientOrderId` auf
+Deribits natives `label` (`lib/bourse/unified/request_shape/derive.ex:166-173`, Kommentar
+sagt es explizit). Die **Response**-Seite mappt nicht zurück: der geparste `%Bourse.Order{}`
+kommt mit `client_order_id: nil`, obwohl `order.info["label"]` den Wert trägt, und die
+Trade-Rows aus `private/get_user_trades_by_instrument` führen `label` ohne jedes
+`client_order_id`-Feld. In `lib/bourse/unified/read_parse.ex` existiert ein synthetisches
+`_bourse_client_order_id` nur für binance (`clientOrderId`/`clientAlgoId`, Zeile 3205) —
+für deribit gibt es kein Gegenstück.
+
+Live beobachtet 2026-08-17 auf test.deribit.com: eine gelabelte Market-Order liefert
+`%Order{client_order_id: nil}` mit `order.info["label"] == label`, und der zugehörige
+private Fill trägt `trade["label"] == label` bei `refute Map.has_key?(trade, "client_order_id")`.
+
+Expected: was bourse als `clientOrderId` rausschickt, kommt auf Order **und** Fill als
+`client_order_id` zurück — sonst ist der unified Roundtrip venue-abhängig gebrochen und die
+Abstraktion trägt genau dort nicht, wo sie gebraucht wird.
+
+Konsument-Workaround (trading_dashboard, Task 126): der MM-Journal korreliert Session-Fills
+auf das rohe `label`-Feld statt auf den normalisierten Struct; die beobachtete Shape ist in
+`test/integration/market_making_hedge_fill_payload_integration_test.exs` gepinnt. Kann raus,
+sobald bourse zurückmappt.
