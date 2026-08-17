@@ -1260,3 +1260,72 @@ Konsument-Workaround (trading_dashboard, Task 126): der MM-Journal korreliert Se
 auf das rohe `label`-Feld statt auf den normalisierten Struct; die beobachtete Shape ist in
 `test/integration/market_making_hedge_fill_payload_integration_test.exs` gepinnt. Kann raus,
 sobald bourse zurückmappt.
+
+## 2026-08-17 — binanceusdm `fetchMarkets`: lineare Kontrakte verlieren die kanonische Contract-Size
+
+**Method:** `Bourse.load_markets/2` / `Bourse.fetch_markets/2` · **Exchange:** binanceusdm ·
+**Severity:** hoch (Money-/Margin-Consumer können lineares Order-Notional nicht aus
+provider-eigenen Contract-Facts ableiten)
+
+Live beobachtet gegen `GET https://fapi.binance.com/fapi/v1/exchangeInfo` mit bourse 0.4.0:
+`BTC/USDT:USDT` wird als `%Bourse.Market{contract: true, linear: true, inverse: false}`
+normalisiert, aber `contract_size` bleibt `nil`. Binance USD-M führt Order-`quantity` in
+Base-Asset-Einheiten und veröffentlicht anders als COIN-M kein `contractSize`-Feld; die
+kanonische lineare Contract-Size ist daher 1. Der Gegencheck über binancecoinm ist korrekt:
+`BTC/USD:BTC` kommt als inverse mit `contract_size: 100`, direkt aus dem provider-owned
+`contractSize`-Feld.
+
+Expected: `fetchMarkets` normalisiert lineare Binance-USD-M-Märkte mit
+`contract_size: 1` (und idealerweise der passenden Quantity-Unit), während COIN-M weiterhin
+die venue-eigene `contractSize` übernimmt. Ein Live-Test sollte beide Oberflächen gemeinsam
+pinnen, damit lineares `quantity * price` und inverses `contracts * contract_size` sichtbar
+verschieden bleiben.
+
+Konsument-Handling (trading_dashboard, Task 131): `ContractNotional.from_market/2` behandelt
+den bestätigten binanceusdm-Nil-Fall innerhalb der bestehenden Contract-Fact-Grenze als
+Größe 1; alle anderen fehlenden/unbrauchbaren Größen bleiben fail-closed. Kann raus, sobald
+bourse die Normalisierung shippt.
+
+## 2026-08-18 — signierte Requests werden bei Retry nicht neu signiert: transienter 408 wird zu `authentication_error`
+
+**Method:** `Bourse.Http.signed_request/4` (jeder private Read über `Bourse.Dispatch`) ·
+**Exchange:** binanceusdm bestätigt, betrifft jede Venue mit Timestamp-Fenster ·
+**Severity:** hoch (Money-Path: ein Bracket-Guard-Reconcile scheitert dauerhaft, und die
+Fehlerklasse zeigt auf die falsche Ursache)
+
+`Bourse.Signing.sign/4` baut `timestamp` und `signature` in die URL, bevor
+`Http.signed_request/4` sie an Req übergibt — und zwar mit
+`retry: Defaults.retry_policy()` (`:safe_transient`). Req wiederholt bei 408/429/5xx
+**dieselbe vorbereitete Anfrage**; Timestamp und Signature sind zu diesem Zeitpunkt
+eingefroren. Mit Reqs exponentiellem Default-Backoff liegt der letzte Versuch rund 7 s
+nach dem Signieren und damit außerhalb von Binance' Default-`recvWindow` von 5000 ms.
+
+Live beobachtet 2026-08-17/18 gegen `fapi.binance.com` (trading_dashboard, BracketGuard,
+22-s-Takt). Logsequenz pro Zyklus, wörtlich:
+
+    [warning] retry: got response with status 408, will retry in 905ms, 3 attempts left
+    [warning] retry: got response with status 408, will retry in 1986ms, 2 attempts left
+    [warning] retry: got response with status 408, will retry in 3753ms, 1 attempt left
+    -> ** (Bourse.Error) [binanceusdm] authentication_error: Timestamp for this request
+       is outside of the recvWindow
+
+Der lokale Clock-Skew war zur selben Zeit 29 ms (`GET /fapi/v1/time` gegen
+`System.system_time(:millisecond)`), das Zeitfenster ist also nicht das Problem — der
+Retry ist es. Reproduzierbar über drei aufeinanderfolgende Reconcile-Zyklen: jeder endet
+identisch, die Ladder erholt sich nie von selbst.
+
+Expected: ein Retry einer signierten Anfrage wird vor jedem Versuch **neu signiert**
+(frischer Timestamp, neue Signature), oder signierte Anfragen mit Timestamp-Fenster werden
+gar nicht von Req retried und bourse macht den Retry selbst über `Signing.sign/4`.
+Ein Live-Test sollte einen 408 auf einem signierten GET injizieren und pinnen, dass der
+zweite Versuch einen anderen `timestamp`-Query-Parameter trägt als der erste.
+
+Zweiter, eigenständiger Teil des Defekts: die Fehlerklasse lügt. Ein transienter
+Netzwerk-Timeout kommt beim Konsumenten als `authentication_error` an, was einen Operator
+zu den API-Keys schickt statt zur Netzwerkstrecke. Selbst mit Re-Signing sollte der
+finale Fehler nach erschöpften Retries den 408 nennen, nicht die Folge-Ablehnung.
+
+Konsument-Handling (trading_dashboard): keines — der Befund ist unverfälscht, der Guard
+schreibt den Venue-Fehler unverändert nach `OrderLadder.last_error`. Die
+Sichtbarkeitslücke auf Konsumentenseite (eine Ladder bleibt auf `protecting`, während
+jeder Reconcile scheitert, ohne dass etwas alarmiert) wird dort getrennt gefilet.
