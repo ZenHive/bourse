@@ -17,11 +17,37 @@ defmodule Bourse.LinearContractSizeSweepTest do
       "perp instrument rows publish no contract-size field; market.contractSize stays null and no venue-level unit is authored yet"
   }
 
+  # Missing fetch_markets recordings must be named. Treating them as an empty
+  # nil list would let a silent-nil venue skip the sweep.
+  @no_fetch_markets_recording %{
+    "coinbaseexchange" => "public-only spot (candles + ticker); no linear markets and no fetch_markets recording"
+  }
+
   test "every venue's linear markets are populated or recorded as a known gap" do
     observed = Map.new(Spec.exchanges(), &{&1, linear_nils(&1)})
 
+    missing_recording =
+      observed
+      |> Enum.filter(fn {venue, result} ->
+        result == :no_recording and not Map.has_key?(@no_fetch_markets_recording, venue)
+      end)
+      |> Enum.map(&elem(&1, 0))
+      |> Enum.sort()
+
+    assert missing_recording == [],
+           "venues with no fetch_markets recording must be listed: #{inspect(missing_recording)}"
+
+    stale_no_recording =
+      @no_fetch_markets_recording
+      |> Map.keys()
+      |> Enum.reject(&(observed[&1] == :no_recording))
+
+    assert stale_no_recording == [],
+           "no-recording allowlist is stale: #{inspect(stale_no_recording)}"
+
     unexpected =
       observed
+      |> Enum.reject(fn {_venue, result} -> result == :no_recording end)
       |> Enum.filter(fn {venue, nils} -> nils != [] and not Map.has_key?(@known_linear_nil_gaps, venue) end)
       |> Map.new(fn {venue, nils} -> {venue, Enum.take(nils, 3)} end)
 
@@ -31,7 +57,7 @@ defmodule Bourse.LinearContractSizeSweepTest do
     stale =
       @known_linear_nil_gaps
       |> Map.keys()
-      |> Enum.reject(&(observed[&1] != []))
+      |> Enum.reject(fn venue -> match?([_ | _], observed[venue]) end)
 
     assert stale == [],
            "known-gap allowlist is stale — these venues now populate linear contract_size: #{inspect(stale)}"
@@ -45,7 +71,7 @@ defmodule Bourse.LinearContractSizeSweepTest do
         |> Enum.map(& &1.symbol)
 
       :no_recording ->
-        []
+        :no_recording
     end
   end
 

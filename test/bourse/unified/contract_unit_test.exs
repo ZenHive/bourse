@@ -41,6 +41,22 @@ defmodule Bourse.Unified.ContractUnitTest do
         Schema.validate!(put_in(spec, ["markets", "contract_unit", "quantity_unit"], "contracts"), "binanceusdm")
       end
     end
+
+    test "accepts a named provider field as the linear recipe" do
+      spec = Spec.load!("binanceusdm")
+
+      updated =
+        put_in(spec, ["markets", "contract_unit", "linear"], %{"kind" => "field", "field" => "contractSize"})
+
+      assert Schema.validate!(updated, "binanceusdm") == updated
+
+      assert_raise ArgumentError, ~r/markets\.contract_unit\.linear/, fn ->
+        Schema.validate!(
+          put_in(spec, ["markets", "contract_unit", "linear"], %{"kind" => "field", "field" => ""}),
+          "binanceusdm"
+        )
+      end
+    end
   end
 
   describe "normalize_market/3" do
