@@ -7,6 +7,14 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Fixed
+
+- binanceusdm linear markets now populate `contract_size` from the authored
+  venue-level contract unit (`1`, `quantity_unit: "base"`) instead of leaving
+  it nil when `exchangeInfo` omits `contractSize`. A provider-published size
+  still wins; a venue that states no unit stays nil rather than defaulting to
+  one. Inverse COIN-M continues to read the venue's `contractSize` field.
+
 ## [0.5.0] - 2026-08-18
 
 ### Added

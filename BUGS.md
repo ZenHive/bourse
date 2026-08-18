@@ -1271,7 +1271,9 @@ sobald bourse zurückmappt.
 **Severity:** hoch (Money-/Margin-Consumer können lineares Order-Notional nicht aus
 provider-eigenen Contract-Facts ableiten)
 
-**Status (2026-08-18):** 🔀 triaged — bestätigt und als workbench **task 623** gefiled (grok/grok-4.6, bundle `live_triage`). Spec-Read 2026-08-18: binanceusdm *und* binancecoinm mappen `market.contractSize` vom Venue-Key `"contractSize"` ohne Fallback — COIN-M veröffentlicht ihn, USD-M nicht, also landet er per Konstruktion `nil`.
+**Status (2026-08-18):** ✅ fixed — task 623 shipped `markets.contract_unit` on binanceusdm (`linear` constant `1`, `quantity_unit: "base"`). Recorded `fetch_markets` and a live fapi/dapi probe pin `BTC/USDT:USDT` at `contract_size: 1` while COIN-M `BTC/USD:BTC` stays at the provider `contractSize` 100. A market whose venue states no unit stays nil; a declared recipe with a missing or non-positive value fails loud. C-T623a records the provider sources. Residual: the sweep still names `binance` (umbrella FAPI fan-out), `bybit`, and `derive` as known nil-gaps — filed as workbench **task 625**.
+
+*Triage (same day, before the land):* bestätigt und als workbench **task 623** gefiled (grok/grok-4.6, bundle `live_triage`). Spec-Read 2026-08-18: binanceusdm *und* binancecoinm mappen `market.contractSize` vom Venue-Key `"contractSize"` ohne Fallback — COIN-M veröffentlicht ihn, USD-M nicht, also landet er per Konstruktion `nil`.
 
 Verschärfend: das Repo widerspricht sich bereits selbst. Carve **C-T334a** (`docs/authored-spec-carves/binanceusdm.md`) hält fest, lineares `contract_size` *sei* die Unit-Size des geladenen Marktes (1 für BTCUSDT) — die USD-M-Positions-Semantik ist also auf ein Market-Fact authored, das `fetchMarkets` nie befüllt. Der Task löst den Widerspruch, statt eine Seite zu patchen.
 
