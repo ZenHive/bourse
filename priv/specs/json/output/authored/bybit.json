@@ -16677,12 +16677,24 @@
             "key": "cashBalance"
           },
           "amount": {
-            "coercion": "safeNumber",
-            "fallback_keys": [
-              "amount"
-            ],
-            "key": "change",
-            "kind": "absolute"
+            "else": {
+              "coercion": "safeNumber",
+              "fallback_keys": [
+                "amount"
+              ],
+              "key": "change",
+              "kind": "absolute"
+            },
+            "guard": {
+              "equals": "SETTLEMENT",
+              "field": "type"
+            },
+            "kind": "when",
+            "then": {
+              "coercion": "safeNumber",
+              "key": "funding",
+              "kind": "absolute"
+            }
           },
           "before": {
             "coercion": "safeNumber",
@@ -16702,14 +16714,28 @@
           },
           "datetime": null,
           "direction": {
-            "fallback_keys": [
-              "amount"
-            ],
-            "key": "change",
-          "kind": "sign_direction",
-          "negative": "out",
-          "positive": "in",
-          "zero": null
+            "else": {
+              "fallback_keys": [
+                "amount"
+              ],
+              "key": "change",
+              "kind": "sign_direction",
+              "negative": "out",
+              "positive": "in",
+              "zero": null
+            },
+            "guard": {
+              "equals": "SETTLEMENT",
+              "field": "type"
+            },
+            "kind": "when",
+            "then": {
+              "key": "funding",
+              "kind": "sign_direction",
+              "negative": "out",
+              "positive": "in",
+              "zero": null
+            }
           },
           "fee": {
             "sub_field_map": {

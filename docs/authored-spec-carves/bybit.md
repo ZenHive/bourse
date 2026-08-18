@@ -9,24 +9,38 @@ per-venue record (task 466).
 
 ## 2026-08-14 — remaining ledger-taxonomy splits (Task 609)
 
-**C-T609a — `SETTLEMENT` is the funding-payment arm; the USDC session P&L cannot be split
-off (task 609). Outcome: CONFIRM provider event identity; DIVERGE from C-T607a's `settlement`
-collapse.** Bybit's pinned V5
+**C-T609a — `SETTLEMENT` is the funding-payment arm; amount sources `funding`, not `change`
+(task 609). Outcome: CONFIRM the field-level funding/cashFlow split; DIVERGE from C-T607a's
+`settlement` collapse and from treating `change` as the funding amount.** Bybit's pinned V5
 [UTA transaction-log enum](https://github.com/bybit-exchange/docs/blob/5ccd30109fe2eb5a39cf4d864365213658530f6c/docs/v5/enum.mdx#typeuta-translog)
 defines `SETTLEMENT` as "USDT Perp funding settlement, and USDC Perp funding settlement + USDC
 8-hour session settlement". The
 [contract transaction-log enum](https://github.com/bybit-exchange/docs/blob/5ccd30109fe2eb5a39cf4d864365213658530f6c/docs/v5/enum.mdx#typecontract-translog)
 is narrower: "USDT / Inverse Perp funding settlement". The
 [Get Transaction Log](https://github.com/bybit-exchange/docs/blob/5ccd30109fe2eb5a39cf4d864365213658530f6c/docs/v5/account/transaction-log.mdx)
-response names `feeRate` on `type=SETTLEMENT` as the funding fee rate, and documents that USDC
-perp funding and the 8-hour session P&L arrive as **one record**: `funding` is the funding fee
-and `cashFlow` is the session P&L. `transSubType` is only `movePosition` or empty, so it is not
-a discriminator. There is therefore no provider-documented type-level split that would emit a
-second ledger row. The single class is `funding_fee`, matching binance-family `FUNDING_FEE` and
-OKX bill type `8`. The mixed USDC session P&L remains on the same row and in `info`.
+response names `feeRate` on `type=SETTLEMENT` as the funding fee rate, documents the identity
+`change = cashFlow + funding - fee`, and states that USDC perp funding and the 8-hour session
+P&L arrive as **one record**: `funding` is the signed funding fee (positive = receive, negative
+= pay; same sign convention as `change`) and `cashFlow` is the session P&L. `transSubType` is
+only `movePosition` or empty, so it is not a discriminator.
+
+The single emitted class stays `funding_fee`, matching binance-family `FUNDING_FEE` and OKX
+bill type `8`. On `type=SETTLEMENT` the unified `amount` and `direction` source `funding`, not
+`change`. Linear-USDT rows where `cashFlow` is `0` keep `funding == change`, so their values
+do not move. Session P&L is **intentionally not a second ledger entry**: the venue publishes
+one `id` and one `cashBalance` after the combined settlement, `cashFlow` is a component of
+`change` rather than an event type (it also carries close-out RPL and transfers on other
+rows), and inventing a sibling `realized_pnl` row would fabricate an id and a wallet-after
+the venue never sent. The residual stays on the raw row in `info.cashFlow`. Wallet
+`before`/`after` still use `change`/`cashBalance` and therefore describe the combined
+settlement, not the funding-only amount.
 
 <!-- carve-evidence-status
 {"carve_id":"C-T609a","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Bybit docs commit 5ccd3010 docs/v5/enum.mdx type(uta-translog)/type(contract-translog) plus Get Transaction Log funding/cashFlow/feeRate fields"},"observed_evidence":{"kind":"provider_shaped","reference":"Pinned Get Transaction Log SETTLEMENT example row (XRPUSDT funding -0.003676, cashFlow 0)"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Bybit demo transaction-log was empty on 2026-08-13; USDC combined funding+session rows are documentation-anchored"}
+-->
+
+<!-- carve-evidence-status
+{"carve_id":"C-T609a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Bybit docs commit 5ccd3010 docs/v5/enum.mdx type(uta-translog) SETTLEMENT plus Get Transaction Log funding/cashFlow/change identity"},"observed_evidence":{"kind":"provider_shaped","reference":"Pinned Get Transaction Log SETTLEMENT example (XRPUSDT funding == change) plus provider-doc-derived BTCPERP row (funding -0.25, cashFlow 2, change 1.75)"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Bybit demo /v5/account/transaction-log on 2026-08-18 returned one TRADE option row over the last 7 days and no SETTLEMENT rows; demo history remains server-side purged as established 2026-08-13. The mixed USDC-perp row is documentation-anchored from the pinned change identity and the documented USDC-perp symbol BTCPERP."}
 -->
 
 **C-T609b — Promotional credits and ADL casing join the cross-venue vocabulary (task 609).

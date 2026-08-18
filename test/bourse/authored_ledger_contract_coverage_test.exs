@@ -701,26 +701,59 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     refute "spotTransfer" in ledger_enum_values()
   end
 
+  # Official Get Transaction Log SETTLEMENT example (docs commit 5ccd3010).
+  # Linear-USDT: cashFlow is 0, so funding == change.
+  @bybit_linear_usdt_settlement %{
+    "category" => "linear",
+    "cashFlow" => "0",
+    "change" => "-0.003676",
+    "currency" => "USDT",
+    "fee" => "0.00000000",
+    "feeRate" => "0.0001",
+    "funding" => "-0.003676",
+    "id" => "592324_XRPUSDT_161440249321",
+    "side" => "Buy",
+    "symbol" => "XRPUSDT",
+    "transactionTime" => "1672128000000",
+    "type" => "SETTLEMENT"
+  }
+
+  # Provider-doc-derived USDC-perp SETTLEMENT: same row shape as the official
+  # example, symbol/currency from the pinned USDC-perp convention (BTCPERP),
+  # and change = cashFlow + funding - fee with cashFlow != 0 so funding != change.
+  @bybit_usdc_perp_settlement %{
+    "category" => "linear",
+    "cashFlow" => "2",
+    "change" => "1.75",
+    "currency" => "USDC",
+    "fee" => "0",
+    "feeRate" => "0.0001",
+    "funding" => "-0.25",
+    "id" => "592324_BTCPERP_161440249322",
+    "side" => "Buy",
+    "symbol" => "BTCPERP",
+    "transactionTime" => "1672128000000",
+    "type" => "SETTLEMENT"
+  }
+
   test "newly decided arms emit through parse_ledger_entry on venue-frozen rows" do
-    bybit_settlement = %{
-      "category" => "linear",
-      "cashFlow" => "0",
-      "change" => "-0.003676",
-      "currency" => "USDT",
-      "fee" => "0.00000000",
-      "feeRate" => "0.0001",
-      "funding" => "-0.003676",
-      "id" => "592324_XRPUSDT_161440249321",
-      "side" => "Buy",
-      "symbol" => "XRPUSDT",
-      "transactionTime" => "1672128000000",
-      "type" => "SETTLEMENT"
-    }
+    assert {:ok, %Bourse.LedgerEntry{type: "funding_fee", currency: "USDT", direction: "out", amount: amount}} =
+             Bourse.Bybit.parse_ledger_entry(@bybit_linear_usdt_settlement)
 
-    assert {:ok, %Bourse.LedgerEntry{type: "funding_fee", currency: "USDT", direction: "out"}} =
-             Bourse.Bybit.parse_ledger_entry(bybit_settlement)
+    assert_in_delta amount, 0.003676, 1.0e-9
 
-    assert {:ok, %Bourse.LedgerEntry{type: "bonus"}} =
+    assert {:ok,
+            %Bourse.LedgerEntry{
+              type: "funding_fee",
+              currency: "USDC",
+              direction: "out",
+              amount: usdc_amount
+            }} = Bourse.Bybit.parse_ledger_entry(@bybit_usdc_perp_settlement)
+
+    assert usdc_amount == 0.25
+    refute usdc_amount == 1.75
+
+    assert {:ok, %Bourse.LedgerEntry{type: "bonus", amount: 10.0, direction: "in"}} =
              Bourse.Bybit.parse_ledger_entry(%{"change" => "10", "currency" => "USDT", "type" => "BONUS"})
 
     assert {:ok, %Bourse.LedgerEntry{type: "bonus"}} =
