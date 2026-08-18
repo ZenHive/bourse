@@ -3,14 +3,14 @@ defmodule Bourse.WS.Handle do
   Subscription handle returned by unified `watch_*` functions.
 
   Carries enough state to send a matching unsubscribe frame via
-  `Bourse.WS.unsubscribe/1`.
+  `Bourse.WS.unsubscribe/1` and release a dedicated routed connection.
   """
 
   alias Bourse.Exchange
   alias Bourse.WS
 
   @enforce_keys [:ws, :exchange, :method, :channels]
-  defstruct [:ws, :exchange, :method, :channels, opts: []]
+  defstruct [:ws, :exchange, :method, :channels, opts: [], owns_connection?: false]
 
   @type method :: :watch_ticker | :watch_order_book | :watch_trades | :watch_orders
 
@@ -19,7 +19,8 @@ defmodule Bourse.WS.Handle do
           exchange: Exchange.t(),
           method: method(),
           channels: [WS.Subscription.channel()],
-          opts: keyword() | map()
+          opts: keyword() | map(),
+          owns_connection?: boolean()
         }
 
   @doc false

@@ -3,6 +3,7 @@ defmodule Bourse.WS.FacadeTest do
 
   alias Bourse.Exchange
   alias Bourse.WS
+  alias Bourse.WS.Handle
   alias ZenWebsocket.Client
 
   defmodule Transport do
@@ -70,6 +71,36 @@ defmodule Bourse.WS.FacadeTest do
     assert :ok = WS.unsubscribe(handle)
     assert_receive {:transport_sent, unsubscribe_payload}
     assert Jason.decode!(unsubscribe_payload) == %{"args" => ["tickers.BTCUSDT"], "op" => "unsubscribe"}
+    assert Process.alive?(client.server_pid)
+  end
+
+  test "unsubscribe closes a connection owned by the watch handle", %{client: client} do
+    ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
+    handle = %{Handle.new(ws, :watch_ticker, "tickers.BTCUSDT") | owns_connection?: true}
+
+    assert :ok = WS.unsubscribe(handle)
+    assert_receive {:transport_sent, payload}
+    assert Jason.decode!(payload) == %{"args" => ["tickers.BTCUSDT"], "op" => "unsubscribe"}
+    refute Process.alive?(client.server_pid)
+  end
+
+  test "watch returns subscription errors without closing the caller connection" do
+    client = %Client{state: :disconnected}
+    ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
+
+    assert {:error, {:not_connected, :disconnected}} =
+             WS.watch_ticker(ws, "BTC/USDT", ack_timeout_ms: 0)
+  end
+
+  test "watch reraises subscription failures without closing the caller connection", %{client: client} do
+    ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
+
+    assert_raise ArithmeticError, fn ->
+      WS.watch_ticker(ws, "BTC/USDT", ack_timeout_ms: :invalid)
+    end
+
+    assert_receive {:transport_sent, _payload}
+    assert Process.alive?(client.server_pid)
   end
 
   test "supports every unified watch wrapper and map subscription options", %{client: client} do

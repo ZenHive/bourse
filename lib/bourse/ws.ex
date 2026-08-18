@@ -407,8 +407,10 @@ defmodule Bourse.WS do
   Subscribes to ticker updates for `symbol`.
 
   Builds the channel from `websocket.subscribe.channels` and returns a handle
-  for `unsubscribe/1`. Pass `channel:` to supply a pre-formatted channel when
-  templates are missing or unresolved.
+  for `unsubscribe/1`. The handle carries the effective socket, which can differ
+  from the supplied socket when a stream uses another authored host. Pass
+  `channel:` to supply a pre-formatted channel when templates are missing or
+  unresolved.
   """
   @spec watch_ticker(t(), String.t(), keyword()) :: {:ok, Handle.t()} | {:error, term()}
   def watch_ticker(%__MODULE__{} = ws, symbol, opts \\ []) when is_binary(symbol) do
@@ -458,15 +460,19 @@ defmodule Bourse.WS do
   Unsubscribes using a handle from `watch_*/3`.
 
   Sends the exchange-native unsubscribe frame built from the stored channels.
+  A dedicated connection opened for host routing is closed after the attempt;
+  the caller's shared connection stays open.
   """
   @spec unsubscribe(Handle.t()) :: :ok | {:ok, map()} | {:error, term()}
-  def unsubscribe(%Handle{ws: ws, channels: channels, opts: sub_opts}) do
+  def unsubscribe(%Handle{ws: ws, channels: channels, opts: sub_opts} = handle) do
     with {:ok, config} <- fetch_config(ws.exchange),
          merged_config = merge_subscription_config(config, sub_opts),
          {:ok, payload} <-
            Subscription.build_unsubscribe(config.subscription_pattern, channels, merged_config) do
       send_payload(ws.zen_client, payload)
     end
+  after
+    close_owned_connection(handle)
   end
 
   # ---------------------------------------------------------------------------
@@ -476,10 +482,25 @@ defmodule Bourse.WS do
   defp watch(%__MODULE__{exchange: exchange, section: section} = ws, method, params, opts) do
     with :ok <- require_section(method, section),
          {:ok, channel} <- Channels.build(exchange, method, params, opts),
-         {:ok, ws} <- ensure_stream_host(ws, channel),
-         :ok <- subscribe(ws, List.wrap(channel), opts) do
-      {:ok, Handle.new(ws, method, channel, opts)}
+         {:ok, ws, owns_connection?} <- ensure_stream_host(ws, channel) do
+      subscribe_watch(ws, method, channel, opts, owns_connection?)
     end
+  end
+
+  defp subscribe_watch(ws, method, channel, opts, owns_connection?) do
+    case subscribe(ws, List.wrap(channel), opts) do
+      :ok ->
+        handle = Handle.new(ws, method, channel, opts)
+        {:ok, %{handle | owns_connection?: owns_connection?}}
+
+      {:error, _reason} = error ->
+        close_owned_connection(ws, owns_connection?)
+        error
+    end
+  catch
+    kind, reason ->
+      close_owned_connection(ws, owns_connection?)
+      :erlang.raise(kind, reason, __STACKTRACE__)
   end
 
   # USD-M `/public` silently acks `/market` stream names. Switch the socket
@@ -489,21 +510,28 @@ defmodule Bourse.WS do
     target = URLRouting.stream_url(ws.exchange, channel)
 
     cond do
-      is_nil(target) or target == url -> {:ok, ws}
+      is_nil(target) or target == url -> {:ok, ws, false}
       URLRouting.authored_usdm_host?(ws.exchange, url) -> reconnect_public(ws, target)
-      true -> {:ok, ws}
+      true -> {:ok, ws, false}
     end
   end
 
-  defp ensure_stream_host(ws, _channel), do: {:ok, ws}
+  defp ensure_stream_host(ws, _channel), do: {:ok, ws, false}
 
   defp reconnect_public(%__MODULE__{exchange: exchange} = ws, url) do
     with {:ok, config} <- fetch_config(exchange),
          zen_opts = build_connect_opts(config, []),
          {:ok, zen_client} <- ZenClient.connect(url, zen_opts) do
-      {:ok, %{ws | zen_client: zen_client, url: url}}
+      {:ok, %{ws | zen_client: zen_client, url: url}, true}
     end
   end
+
+  defp close_owned_connection(%Handle{ws: ws, owns_connection?: owns_connection?}) do
+    close_owned_connection(ws, owns_connection?)
+  end
+
+  defp close_owned_connection(ws, true), do: close(ws)
+  defp close_owned_connection(_ws, false), do: :ok
 
   defp require_section(method, section) do
     if Channels.private?(method) and section != :private do

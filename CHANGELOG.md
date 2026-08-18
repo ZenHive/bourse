@@ -29,7 +29,10 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   silent — on the public host, while `@depth20@100ms`, `@trade` and
   `@bookTicker` live on `/public/ws`. Both hosts are now authored and
   `watch_*` routes each stream to the one that carries it. Raw
-  `Bourse.WS.subscribe/3` does not yet route.
+  `Bourse.WS.subscribe/3` does not yet route. A connection opened for this
+  host switch is owned by the returned watch handle and closes after
+  unsubscribe or a failed subscription; the caller's original public socket
+  stays open.
 - The unified boundary validates parameter value shapes before dispatch. A
   non-encodable value (keyword list, tuple, struct) returns
   `{:error, %Bourse.Error{type: :invalid_parameters}}` naming the parameter
