@@ -1239,6 +1239,10 @@ provider-owned Stream-Doku, grok/grok-4.6, bundle live_triage).
 
 **Method:** `Bourse.create_order(ex, "BTC/USD:BTC", "market", "buy", qty, params: %{"label" => id})` bzw. `clientOrderId`; danach `Bourse.fetch_my_trades/2` · **Exchange:** deribit (testnet) · **Severity:** medium (jeder Consumer, der eigene Orders über eine selbstvergebene Id wiedererkennen muss, fällt auf `info`/`raw_call` zurück)
 
+**Status (2026-08-18):** 🔀 triaged — bestätigter Defekt, als **Klassen-Invariante** gefiled statt als deribit-Patch: workbench **task 622** (cursor/cursor-grok-4.6-high, bundle `live_triage`). Ein Venue darf einen Client-Identifier in **beide** Richtungen oder in **keine** mappen; einseitiges Mapping lässt einen venue-übergreifenden Test rot werden. Precedent: task 473 hat genau diese Defektform 2026-07 auf Derives *Request*-Seite gepatcht, die deribit-Instanz tauchte vier Monate später auf der anderen Seite desselben Round-Trips auf.
+
+*Korrektur einer Prämisse des Reports:* `lib/bourse/unified/request_shape/derive.ex` ist der Shaper der Venue **Derive**, nicht deribits. Deribit hat **auch request-seitig** kein `clientOrderId`→`label`-Mapping (Spec-Read 2026-08-18: `normalization.field_maps.order`/`.trade` tragen keinen `client_order_id`-Eintrag, und die einzige Rückabbildung überhaupt ist binances synthetisches `_bourse_client_order_id`, `read_parse.ex:3205`). Der Live-Call funktionierte nur, weil er natives `params: %{"label" => id}` durchgereicht hat — beide Richtungen sind unauthored und beide sind in 622 in scope.
+
 Die **Request**-Seite ist korrekt: `RequestShape.Derive` mappt unified `clientOrderId` auf
 Deribits natives `label` (`lib/bourse/unified/request_shape/derive.ex:166-173`, Kommentar
 sagt es explizit). Die **Response**-Seite mappt nicht zurück: der geparste `%Bourse.Order{}`
@@ -1267,6 +1271,12 @@ sobald bourse zurückmappt.
 **Severity:** hoch (Money-/Margin-Consumer können lineares Order-Notional nicht aus
 provider-eigenen Contract-Facts ableiten)
 
+**Status (2026-08-18):** 🔀 triaged — bestätigt und als workbench **task 623** gefiled (grok/grok-4.6, bundle `live_triage`). Spec-Read 2026-08-18: binanceusdm *und* binancecoinm mappen `market.contractSize` vom Venue-Key `"contractSize"` ohne Fallback — COIN-M veröffentlicht ihn, USD-M nicht, also landet er per Konstruktion `nil`.
+
+Verschärfend: das Repo widerspricht sich bereits selbst. Carve **C-T334a** (`docs/authored-spec-carves/binanceusdm.md`) hält fest, lineares `contract_size` *sei* die Unit-Size des geladenen Marktes (1 für BTCUSDT) — die USD-M-Positions-Semantik ist also auf ein Market-Fact authored, das `fetchMarkets` nie befüllt. Der Task löst den Widerspruch, statt eine Seite zu patchen.
+
+*Nicht* als Parse-Layer-Default: task 397 hat die Gegenregel gelandet ("unknown or missing multiplier and amount semantics fail loudly instead of defaulting to one"), und ein hartkodiertes 1 ist genau die Domain-Konstanten-Falle, in der ein mit derselben Annahme berechnetes Golden den Bug ratifiziert. Die Unit kommt aus Binances eigener USD-M-Kontraktspezifikation, wird in der authored Spec deklariert und als Carve verbucht.
+
 Live beobachtet gegen `GET https://fapi.binance.com/fapi/v1/exchangeInfo` mit bourse 0.4.0:
 `BTC/USDT:USDT` wird als `%Bourse.Market{contract: true, linear: true, inverse: false}`
 normalisiert, aber `contract_size` bleibt `nil`. Binance USD-M führt Order-`quantity` in
@@ -1292,6 +1302,12 @@ bourse die Normalisierung shippt.
 **Exchange:** binanceusdm bestätigt, betrifft jede Venue mit Timestamp-Fenster ·
 **Severity:** hoch (Money-Path: ein Bracket-Guard-Reconcile scheitert dauerhaft, und die
 Fehlerklasse zeigt auf die falsche Ursache)
+
+**Status (2026-08-18):** 🔀 triaged — bestätigter Defekt, workbench **task 621** (codex/gpt-5.6-sol, bundle `live_triage`, D6/B9/U7). Mechanismus per Code-Read verifiziert: `dispatch.ex:227` signiert **einmal**, `dispatch.ex:246` reicht das eingefrorene `signed`-Struct an `Http.signed_request/4`, und `http.ex:242-258` setzt `retry: Defaults.retry_policy()` — Req wiederholt die *vorbereitete* Anfrage, nichts signiert zwischen den Versuchen neu.
+
+Klassen-Scope statt Binance-Fix: jede Venue, deren Signatur Timestamp, Nonce oder Deadline abdeckt, ist gleich exponiert (Binance-Familie, bybit, okx, deribit, hyperliquid, derive, lighter). Der Fix sitzt an der Signing/Dispatch-Grenze, und die Acceptance Criteria verlangen den Nachweis über **zwei** Signing-Patterns (query-signiert *und* nonce/deadline-basiert), damit er nicht binance-förmig ausfällt.
+
+Zum zweiten Teil (die Fehlerklasse lügt): die Klassifikation von `-1021` ist auf `main` bereits gesplittet — **task 604** (shipped `1a3a386b1418`) gibt InvalidNonce den eigenen Typ `:invalid_nonce` mit `retry_class :network`. Der Report beobachtet das released 0.4.0-Verhalten von vor 604. Was offen bleibt und in 621 steckt: nach erschöpften Retries darf die Folge-Ablehnung gar nicht erst der terminale Fehler sein — der Caller muss den 408 sehen.
 
 `Bourse.Signing.sign/4` baut `timestamp` und `signature` in die URL, bevor
 `Http.signed_request/4` sie an Req übergibt — und zwar mit
