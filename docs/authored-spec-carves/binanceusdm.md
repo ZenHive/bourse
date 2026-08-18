@@ -19,7 +19,7 @@ Spot-only literals (`STOP_LOSS`, `STOP_LOSS_LIMIT`, `TAKE_PROFIT_LIMIT`,
 `LIMIT_MAKER`) are not accepted on a futures parse.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T632b","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M New Order LIMIT/MARKET plus New Algo Order CONDITIONAL types STOP STOP_MARKET TAKE_PROFIT TAKE_PROFIT_MARKET TRAILING_STOP_MARKET"},"observed_evidence":{"kind":"provider_shaped","reference":"Write-type inventory and product-scoped parse goldens in test/bourse/binance_order_type_roundtrip_test.exs plus the TAKE_PROFIT create_order stub in binance_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered USD-M recording carries TAKE_PROFIT / TAKE_PROFIT_MARKET / TRAILING_STOP_MARKET; the mapping is inverted from the authored algo and batch write tables against the documented enum"}
+{"carve_id":"C-T632b","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M New Order LIMIT/MARKET plus New Algo Order CONDITIONAL types STOP STOP_MARKET TAKE_PROFIT TAKE_PROFIT_MARKET TRAILING_STOP_MARKET"},"observed_evidence":{"kind":"provider_shaped","reference":"Write-type inventory and product-scoped parse goldens in test/bourse/binance_order_type_round_trip_test.exs plus the TAKE_PROFIT create_order stub in binance_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered USD-M recording carries TAKE_PROFIT / TAKE_PROFIT_MARKET / TRAILING_STOP_MARKET; the mapping is inverted from the authored algo and batch write tables against the documented enum"}
 -->
 
 ## 2026-08-18 — USD-M ticker and aggTrade live on `/market`, not `/ws` (Task 627)

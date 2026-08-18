@@ -20,7 +20,7 @@ Futures-only literals (`STOP`, `STOP_MARKET`, `TAKE_PROFIT_MARKET`,
 type fails rather than being downcased.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T632a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance Spot New Order type enum: LIMIT MARKET STOP_LOSS STOP_LOSS_LIMIT TAKE_PROFIT TAKE_PROFIT_LIMIT LIMIT_MAKER"},"observed_evidence":{"kind":"provider_shaped","reference":"Product-scoped parse goldens in test/bourse/binance_order_type_roundtrip_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered spot recording carries STOP_LOSS / TAKE_PROFIT / TAKE_PROFIT_LIMIT; the mapping is inverted from the authored uppercase write transform against the documented enum"}
+{"carve_id":"C-T632a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance Spot New Order type enum: LIMIT MARKET STOP_LOSS STOP_LOSS_LIMIT TAKE_PROFIT TAKE_PROFIT_LIMIT LIMIT_MAKER"},"observed_evidence":{"kind":"provider_shaped","reference":"Product-scoped parse goldens in test/bourse/binance_order_type_round_trip_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered spot recording carries STOP_LOSS / TAKE_PROFIT / TAKE_PROFIT_LIMIT; the mapping is inverted from the authored uppercase write transform against the documented enum"}
 -->
 
 ## 2026-08-18 — linear contract unit on the umbrella FAPI family (Task 625)

@@ -18,7 +18,7 @@ write cases, confronted on this product separately from spot so a
 spot-only literal is not downcased here.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T632c","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M New Order / New Algo Order type enum: LIMIT MARKET STOP STOP_MARKET TAKE_PROFIT TAKE_PROFIT_MARKET TRAILING_STOP_MARKET"},"observed_evidence":{"kind":"provider_shaped","reference":"Write-type inventory and product-scoped parse goldens in test/bourse/binance_order_type_roundtrip_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered COIN-M recording carries the conditional algo types; the mapping is inverted from the authored write cases against the documented enum shared with USD-M"}
+{"carve_id":"C-T632c","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M New Order / New Algo Order type enum: LIMIT MARKET STOP STOP_MARKET TAKE_PROFIT TAKE_PROFIT_MARKET TRAILING_STOP_MARKET"},"observed_evidence":{"kind":"provider_shaped","reference":"Write-type inventory and product-scoped parse goldens in test/bourse/binance_order_type_round_trip_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered COIN-M recording carries the conditional algo types; the mapping is inverted from the authored write cases against the documented enum shared with USD-M"}
 -->
 
 ## 2026-08-18 — WS subscribe channels remain unauthored (Task 618)

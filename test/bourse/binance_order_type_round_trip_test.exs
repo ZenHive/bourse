@@ -1,4 +1,4 @@
-defmodule Bourse.BinanceOrderTypeRoundtripTest do
+defmodule Bourse.BinanceOrderTypeRoundTripTest do
   @moduledoc false
   # Suite-level invariant: Binance-family native→unified order-type reads invert
   # the authored write mapping. A newly authored write type without a matching

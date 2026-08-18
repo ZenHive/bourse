@@ -6,9 +6,10 @@ defmodule Bourse.WS.Config do
   urls when emitted) with hand-maintained bases in `Bourse.WS.SpecConfig` for
   subscription patterns, URL fallbacks, and auth pattern detail.
 
-  Seven runtime venues currently have hand bases: `binance`, `binanceusdm`,
-  `bybit`, `deribit`, `derive`, `hyperliquid`, and `okx`. Spec-resolved
-  heartbeat/auth overrides hand values where `unresolved_reason` is nil.
+  Eight runtime venues currently have hand bases: `binance`, `binancecoinm`,
+  `binanceusdm`, `bybit`, `deribit`, `derive`, `hyperliquid`, and `okx`.
+  Spec-resolved heartbeat/auth overrides hand values where
+  `unresolved_reason` is nil.
 
   ## Entry shape
 

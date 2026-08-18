@@ -49,6 +49,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   either reaches the host that does or returns
   `{:stream_host_unavailable, url, reason}`, never an acknowledgement
   followed by silence.
+- Mixed-host WebSocket subscriptions are atomic across authored hosts. If a
+  later host fails, hosts that already accepted the call are unsubscribed
+  before the error returns, so retrying does not stack a hidden subscription.
+  Routed sockets are linked to their connection owner and cannot survive an
+  owner crash as unreachable orphan connections.
 - The unified boundary validates parameter value shapes before dispatch. A
   non-encodable value (keyword list, tuple, struct) returns
   `{:error, %Bourse.Error{type: :invalid_parameters}}` naming the parameter
@@ -62,6 +67,12 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `{algoId, code: 200}` synthesizes unified `status: "canceled"`. Venue
   `STOP` / `STOP_MARKET` types stay `stop` / `stop_market` instead of
   collapsing to `"limit"`.
+- Binance-family order reads preserve every authored conditional type instead
+  of collapsing it to `market` or `limit`: `stop`, `stop_market`,
+  `take_profit`, `take_profit_market`, and `trailing_stop_market` now
+  round-trip through their native literals. Spot, futures, and options use
+  separate provider enums, and an unknown type fails loudly instead of being
+  silently downcased.
 - Unified `clientOrderId` now round-trips on Deribit: it goes out as
   `label` and comes back on both `%Bourse.Order{}` and `%Bourse.Trade{}`.
   A caller-supplied native `label` wins; values longer than 64 characters

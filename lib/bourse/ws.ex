@@ -54,8 +54,8 @@ defmodule Bourse.WS do
 
   ## Scope
 
-  Seven runtime venues have WS config: `binance`, `binanceusdm`, `bybit`,
-  `deribit`, `derive`, `hyperliquid`, `okx`.
+  Eight runtime venues have WS transport config: `binance`, `binancecoinm`,
+  `binanceusdm`, `bybit`, `deribit`, `derive`, `hyperliquid`, and `okx`.
   """
 
   alias Bourse.Exchange
