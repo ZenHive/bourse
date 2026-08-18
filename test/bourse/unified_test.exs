@@ -326,6 +326,137 @@ defmodule Bourse.UnifiedTest do
   end
 
   # ---------------------------------------------------------------------------
+  # Param-value shape (task 587) — task 185's never-raise invariant at the
+  # value layer. A keyword list / tuple / struct must not reach the signer.
+  # ---------------------------------------------------------------------------
+
+  describe "public unified API param-value hardening" do
+    test "set_margin_mode with symbol: keyword returns invalid_parameters without raising" do
+      {:ok, exchange} = Exchange.new("binanceusdm")
+
+      assert {:error, %Error{type: :invalid_parameters} = error} =
+               Bourse.set_margin_mode(exchange, "isolated", symbol: "ETH/USDT:USDT")
+
+      assert error.message =~ ~s(invalid parameter "symbol")
+      assert error.message =~ "positional argument of set_margin_mode/3"
+      refute error.message =~ "Jason"
+    end
+
+    test "a keyword list in a binary positional slot names the positional convention" do
+      {:ok, exchange} = Exchange.new("bybit")
+
+      assert {:error, %Error{type: :invalid_parameters, message: message}} =
+               Bourse.fetch_ticker(exchange, symbol: "BTC/USDT")
+
+      assert message =~ ~s(invalid parameter "symbol")
+      assert message =~ "positional argument of fetch_ticker/2"
+      assert message =~ "not a keyword option"
+      refute message =~ "Jason"
+    end
+
+    test "a keyword list in an extra param is a typed encode refusal, not a positional hint" do
+      {:ok, exchange} = Exchange.new("bybit")
+
+      assert {:error, %Error{type: :invalid_parameters, message: message}} =
+               Bourse.fetch_ticker(exchange, "BTC/USDT", extra: [foo: 1])
+
+      assert message =~ ~s(invalid parameter "extra")
+      assert message =~ "keyword list"
+      refute message =~ "positional argument"
+    end
+
+    test "public unified functions refuse non-encodable param values without raising" do
+      {:ok, exchange} = Exchange.new("bybit")
+
+      bad_values = [
+        keyword_list: [symbol: "ETH/USDT:USDT"],
+        tuple: {:symbol, "ETH/USDT:USDT"},
+        struct: DateTime.utc_now()
+      ]
+
+      for {name, _js, required, _desc} <- Unified.method_defs(),
+          {kind, bad} <- bad_values do
+        args = [exchange | Enum.map(required, &dummy_required_value/1)] ++ [[probe: bad]]
+
+        result =
+          try do
+            apply(Bourse, name, args)
+          rescue
+            exception ->
+              flunk(
+                "#{name} raised #{inspect(exception.__struct__)} for #{kind}: " <>
+                  Exception.message(exception)
+              )
+          end
+
+        assert {:error, %Error{type: :invalid_parameters} = error} = result,
+               "#{name} (#{kind}) expected invalid_parameters, got: #{inspect(result)}"
+
+        assert error.message =~ ~s(invalid parameter "probe")
+        refute error.message =~ "Jason"
+      end
+    end
+  end
+
+  describe "validate_param_values/2" do
+    test "accepts wire-encodable scalars, lists, and maps" do
+      params = %{
+        "symbol" => "BTC/USDT",
+        "limit" => 10,
+        "hedge_mode" => true,
+        "category" => :linear,
+        "ids" => ["a", "b"],
+        "orders" => [%{"symbol" => "BTC/USDT", "amount" => 1}],
+        "filter" => %{"min" => 1, "active" => false},
+        "empty" => [],
+        "none" => nil
+      }
+
+      assert {:ok, ^params} = Unified.validate_param_values(params, :create_order)
+    end
+
+    test "refuses a tuple, struct, or keyword list and names the param" do
+      assert {:error, %Error{type: :invalid_parameters, message: tuple_message}} =
+               Unified.validate_param_values(%{"probe" => {1, 2}}, :fetch_ticker)
+
+      assert tuple_message =~ ~s(invalid parameter "probe")
+      assert tuple_message =~ "tuple"
+
+      assert {:error, %Error{type: :invalid_parameters, message: struct_message}} =
+               Unified.validate_param_values(%{"probe" => DateTime.utc_now()}, :fetch_ticker)
+
+      assert struct_message =~ "DateTime struct"
+
+      assert {:error, %Error{type: :invalid_parameters, message: keyword_message}} =
+               Unified.validate_param_values(%{"probe" => [foo: 1]}, :fetch_ticker)
+
+      assert keyword_message =~ "keyword list"
+      refute keyword_message =~ "positional argument"
+    end
+
+    test "a keyword list in a required binary slot names the positional convention" do
+      assert {:error, %Error{type: :invalid_parameters, message: message}} =
+               Unified.validate_param_values(
+                 %{"margin_mode" => "isolated", "symbol" => [symbol: "ETH/USDT:USDT"]},
+                 :set_margin_mode
+               )
+
+      assert message =~ ~s(invalid parameter "symbol")
+      assert message =~ "positional argument of set_margin_mode/3"
+      refute message =~ "Jason"
+    end
+
+    test "a keyword list in a required list slot is a generic encode refusal" do
+      assert {:error, %Error{type: :invalid_parameters, message: message}} =
+               Unified.validate_param_values(%{"orders" => [symbol: "BTC/USDT"]}, :create_orders)
+
+      assert message =~ ~s(invalid parameter "orders")
+      assert message =~ "keyword list"
+      refute message =~ "positional argument"
+    end
+  end
+
+  # ---------------------------------------------------------------------------
   # build_params/3
   # ---------------------------------------------------------------------------
 
@@ -2617,4 +2748,12 @@ defmodule Bourse.UnifiedTest do
   end
 
   defp unique_stub(prefix), do: "#{prefix}_#{System.unique_integer([:positive])}"
+
+  defp dummy_required_value(:orders), do: [%{"symbol" => "BTC/USDT"}]
+  defp dummy_required_value(:ids), do: ["id"]
+  defp dummy_required_value(:hedge_mode), do: true
+
+  defp dummy_required_value(name) when name in [:amount, :leverage, :timeout, :duration, :cost], do: 1
+
+  defp dummy_required_value(_name), do: "dummy"
 end

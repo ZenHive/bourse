@@ -124,7 +124,7 @@ unified field without reading raw `info`.
 
 **Method:** `Bourse.set_margin_mode(ex, "isolated", symbol: "ETH/USDT:USDT")` (malformed — symbol is positional arg 3) · **Exchange:** binanceusdm (demo-fapi, sandbox) · **Severity:** low (DX)
 
-**Status (2026-08-10):** 📋 triaged — filed as workbench **task 587** (class-scoped): task 185's never-raise invariant extended to the param-VALUE layer — the unified boundary refuses non-encodable values with `:invalid_parameters` naming the argument, instead of a signing-layer crash.
+**Status (2026-08-18):** ✅ **fixed** by task 587 — the unified boundary refuses non-encodable param values (`:invalid_parameters`) before dispatch; a keyword list in a required positional slot names the positional convention instead of crashing in `HmacRecipe.encode_query_pairs`.
 
 `set_margin_mode/3` takes the symbol as positional arg 3. Passing `symbol: "..."` as a keyword
 opt instead crashes deep in `Bourse.Signing.HmacRecipe.encode_query_pairs` with a Jason

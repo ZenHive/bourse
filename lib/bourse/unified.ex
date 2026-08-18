@@ -45,6 +45,7 @@ defmodule Bourse.Unified do
   @selection_opts [:endpoint_index, :market_type]
 
   @sanity_methods [:create_order, :edit_order]
+  @list_required_params [:ids, :orders]
 
   # First endpoint section names preferred per market type when multiple unified
   # routes exist (e.g. Binance spot "public" vs fapi/dapi/eapiPublic).
@@ -677,7 +678,8 @@ defmodule Bourse.Unified do
   @spec call(Exchange.t(), atom(), String.t(), map(), keyword()) ::
           {:ok, term()} | {:error, Error.t() | term()}
   def call(%Exchange{} = exchange, method_atom, capability_name, params, opts) do
-    with {:ok, params} <- validate_venue_params(exchange, method_atom, params),
+    with {:ok, params} <- validate_param_values(params, method_atom),
+         {:ok, params} <- validate_venue_params(exchange, method_atom, params),
          {:ok, params} <- maybe_validate_order(exchange, method_atom, params, opts),
          {:ok, module} <- require_module(exchange) do
       dispatch_opts = Keyword.delete(opts, :sanity)
@@ -1732,6 +1734,87 @@ defmodule Bourse.Unified do
       Map.put_new(acc, to_string(k), v)
     end)
   end
+
+  @doc """
+  Refuses param values that cannot reach the wire.
+
+  Keyword lists, tuples, and structs survive `split_opts/2` (the opts
+  envelope) and otherwise detonate in the signer. A keyword list in a
+  required positional slot names the positional convention.
+  """
+  @spec validate_param_values(map(), atom()) :: {:ok, map()} | {:error, Error.t()}
+  def validate_param_values(params, method) when is_map(params) and is_atom(method) do
+    case Enum.find(params, fn {_key, value} -> not wire_encodable?(value) end) do
+      nil -> {:ok, params}
+      {key, value} -> {:error, non_encodable_param_error(key, value, method)}
+    end
+  end
+
+  defp wire_encodable?(value) when is_binary(value) or is_number(value) or is_atom(value), do: true
+
+  defp wire_encodable?(value) when is_struct(value), do: false
+
+  defp wire_encodable?(value) when is_map(value) do
+    Enum.all?(value, fn
+      {key, nested} when is_atom(key) or is_binary(key) -> wire_encodable?(nested)
+      _other -> false
+    end)
+  end
+
+  defp wire_encodable?(value) when is_list(value) do
+    not keyword_param?(value) and Enum.all?(value, &wire_encodable?/1)
+  end
+
+  defp wire_encodable?(_value), do: false
+
+  defp keyword_param?(value) when is_list(value) and value != [], do: Keyword.keyword?(value)
+  defp keyword_param?(_value), do: false
+
+  defp non_encodable_param_error(key, value, method) do
+    name = param_key_atom(key)
+    required = required_params_for(method)
+    kind = value_kind(value)
+
+    message =
+      if positional_keyword_mistake?(name, value, required) do
+        arity = length(required) + 1
+
+        "invalid parameter #{inspect(to_string(name))}: expected a query/JSON-encodable value, " <>
+          "got a #{kind}; #{name} is a positional argument of #{method}/#{arity}, not a keyword option"
+      else
+        "invalid parameter #{inspect(to_string(key))}: expected a query/JSON-encodable value " <>
+          "(binary, number, boolean, list, or map), got a #{kind}"
+      end
+
+    Error.invalid_parameters(message: message)
+  end
+
+  defp positional_keyword_mistake?(name, value, required) do
+    name in required and name not in @list_required_params and keyword_param?(value)
+  end
+
+  defp param_key_atom(key) when is_atom(key), do: key
+
+  defp param_key_atom(key) when is_binary(key) do
+    String.to_existing_atom(key)
+  rescue
+    ArgumentError -> nil
+  end
+
+  defp param_key_atom(_key), do: nil
+
+  defp value_kind(value) when is_struct(value), do: "#{inspect(value.__struct__)} struct"
+  defp value_kind(value) when is_tuple(value), do: "tuple"
+  defp value_kind(value) when is_pid(value), do: "pid"
+  defp value_kind(value) when is_function(value), do: "function"
+  defp value_kind(value) when is_reference(value), do: "reference"
+  defp value_kind(value) when is_port(value), do: "port"
+
+  defp value_kind(value) when is_list(value) do
+    if keyword_param?(value), do: "keyword list", else: "list"
+  end
+
+  defp value_kind(_value), do: "non-encodable value"
 
   # ---------------------------------------------------------------------------
   # Private helpers
