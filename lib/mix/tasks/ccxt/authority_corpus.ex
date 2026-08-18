@@ -119,6 +119,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
     ensure_scope!(artifact["scope"], label)
     ensure_authority!(artifact["authority"], artifact, label)
     ensure_storage!(artifact, root, venue, label)
+    ensure_surface_digest!(artifact, root, venue, label)
   end
 
   defp ensure_freshness!(freshness, label) do
@@ -261,6 +262,24 @@ defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
   end
 
   defp ensure_storage!(_artifact, _root, _venue, label), do: Mix.raise("#{label}: invalid storage/path pair")
+
+  # A missing digest is valid: reference_only artifacts stay loadable without
+  # one. When a digest is present it must name the same pin the manifest records.
+  defp ensure_surface_digest!(artifact, root, venue, label) do
+    path = Path.join([root, venue, "surface-digests", "#{artifact["id"]}.json"])
+
+    if File.exists?(path) do
+      digest = Bourse.JsonDocument.decode_file!(path)
+      ensure!(digest["schema_version"] == 1, "#{label}: surface digest unsupported schema_version")
+      ensure!(digest["artifact_id"] == artifact["id"], "#{label}: surface digest artifact_id mismatch")
+      ensure!(is_map(digest["source"]), "#{label}: surface digest source must be an object")
+      ensure!(digest["source"]["sha256"] == artifact["sha256"], "#{label}: surface digest source sha256 mismatch")
+      ensure!(digest["source"]["bytes"] == artifact["bytes"], "#{label}: surface digest source bytes mismatch")
+      ensure!(is_map(digest["key_sets"]), "#{label}: surface digest key_sets must be an object")
+    end
+
+    :ok
+  end
 
   defp ensure_string!(map, key, label) do
     value = map[key]

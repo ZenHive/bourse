@@ -14,6 +14,8 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
 
   @authority_root "priv/authority"
   @spec_root "priv/specs/json/output/authored"
+  @digest_dir "surface-digests"
+  @key_set_fields ~w(channel_keys path_keys operation_keys)
   @surfaces ~w(current_rest upcoming_rest current_websocket upcoming_websocket)
   @current_surfaces ~w(current_rest current_websocket)
   @runtime_scopes ~w(unified raw_only carved not_implemented unknown)
@@ -63,6 +65,86 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
   @spec compare_venue!(map(), map(), Path.t(), [map()]) :: report()
   def compare_venue!(manifest, authored, artifact_root, facts \\ []) do
     compare_venue_with_facts!(manifest, authored, artifact_root, facts, [])
+  end
+
+  @doc "Returns the committed surface-digest path for one authority artifact."
+  @spec surface_digest_path(Path.t(), String.t(), String.t()) :: Path.t()
+  def surface_digest_path(authority_root, venue, artifact_id) do
+    Path.join([authority_root, venue, @digest_dir, "#{artifact_id}.json"])
+  end
+
+  @doc "Loads a retained surface digest, or `nil` when the artifact has none."
+  @spec load_surface_digest(Path.t(), String.t(), String.t()) :: map() | nil
+  def load_surface_digest(authority_root, venue, artifact_id) do
+    path = surface_digest_path(authority_root, venue, artifact_id)
+    if File.exists?(path), do: Bourse.JsonDocument.decode_file!(path)
+  end
+
+  @doc "Loads a retained surface digest and raises when it is absent."
+  @spec load_surface_digest!(Path.t(), String.t(), String.t()) :: map()
+  def load_surface_digest!(authority_root, venue, artifact_id) do
+    load_surface_digest(authority_root, venue, artifact_id) ||
+      Mix.raise("missing surface digest for #{venue}/#{artifact_id}")
+  end
+
+  @doc """
+  Names entities that entered, left, or changed identity between two digests.
+
+  Either side may be a full digest or a `prior` slice that carries only
+  `key_sets`. Per-entity change detection runs only when both sides retain
+  entity hashes.
+  """
+  @spec diff_surface_digests(map(), map()) :: map()
+  def diff_surface_digests(prior, current) when is_map(prior) and is_map(current) do
+    added = key_set_delta(current, prior)
+    removed = key_set_delta(prior, current)
+
+    %{
+      "schema_version" => 1,
+      "report_type" => "authority_surface_delta",
+      "named" => true,
+      "prior" => digest_ref(prior),
+      "current" => digest_ref(current),
+      "added" => added,
+      "removed" => removed,
+      "changed" => changed_entities(prior, current),
+      "counts" => %{
+        "added_channel_count" => length(added["channel_keys"]),
+        "added_path_count" => length(added["path_keys"]),
+        "added_operation_count" => length(added["operation_keys"]),
+        "removed_channel_count" => length(removed["channel_keys"]),
+        "removed_path_count" => length(removed["path_keys"]),
+        "removed_operation_count" => length(removed["operation_keys"])
+      }
+    }
+  end
+
+  @doc """
+  Reviews current artifact bytes against the digest retained in the authority tree.
+
+  A missing digest is not an error: `reference_only` artifacts stay valid
+  without one. The review then cannot name entity-level additions or removals.
+  When the supplied bytes still match the retained pin, the last superseded
+  `prior` slice is compared so a completed republish remains nameable.
+  """
+  @spec review_retained_surface(String.t(), map(), binary(), Path.t()) :: map()
+  def review_retained_surface(venue, artifact, current_contents, authority_root \\ @authority_root)
+      when is_binary(venue) and is_map(artifact) and is_binary(current_contents) do
+    retained = load_surface_digest(authority_root, venue, artifact["id"])
+    current = ContractSource.surface_digest(artifact, current_contents)
+
+    cond do
+      is_nil(retained) ->
+        unnamed_surface_delta(
+          "No retained surface digest for #{venue}/#{artifact["id"]}; added and removed entities cannot be named from repo state."
+        )
+
+      current["source"]["sha256"] == retained["source"]["sha256"] and is_map(retained["prior"]) ->
+        diff_surface_digests(retained["prior"], retained)
+
+      true ->
+        diff_surface_digests(retained, current)
+    end
   end
 
   defp compare_venue_with_facts!(manifest, authored, artifact_root, facts, registered_facts) do
@@ -592,6 +674,67 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
       {metric, value} ->
         ensure!(metrics[metric] == value, "#{path}: #{surface} #{metric} differs")
     end)
+  end
+
+  defp key_set_delta(left, right) do
+    Map.new(@key_set_fields, fn field ->
+      left_keys = MapSet.new(get_in(left, ["key_sets", field]) || [])
+      right_keys = MapSet.new(get_in(right, ["key_sets", field]) || [])
+      {field, left_keys |> MapSet.difference(right_keys) |> Enum.sort()}
+    end)
+  end
+
+  defp changed_entities(prior, current) do
+    prior_entities = entity_index(prior)
+    current_entities = entity_index(current)
+
+    cond do
+      prior_entities == %{} -> []
+      current_entities == %{} -> []
+      true -> entity_hash_changes(prior_entities, current_entities)
+    end
+  end
+
+  defp entity_hash_changes(prior_entities, current_entities) do
+    prior_entities
+    |> Map.keys()
+    |> Enum.filter(&Map.has_key?(current_entities, &1))
+    |> Enum.sort()
+    |> Enum.flat_map(&entity_hash_change(&1, prior_entities[&1], current_entities[&1]))
+  end
+
+  defp entity_hash_change(_key, hash, hash), do: []
+
+  defp entity_hash_change({kind, name}, prior_hash, current_hash) do
+    [%{"kind" => kind, "key" => name, "prior_sha256" => prior_hash, "current_sha256" => current_hash}]
+  end
+
+  defp entity_index(%{"entities" => entities}) when is_list(entities) do
+    Map.new(entities, fn entity -> {{entity["kind"], entity["key"]}, entity["sha256"]} end)
+  end
+
+  defp entity_index(_digest), do: %{}
+
+  defp digest_ref(digest) do
+    %{
+      "artifact_id" => digest["artifact_id"],
+      "source" => digest["source"],
+      "key_set_sha256" => digest["key_set_sha256"]
+    }
+  end
+
+  defp unnamed_surface_delta(limitation) do
+    empty = Map.new(@key_set_fields, &{&1, []})
+
+    %{
+      "schema_version" => 1,
+      "report_type" => "authority_surface_delta",
+      "named" => false,
+      "added" => empty,
+      "removed" => empty,
+      "changed" => [],
+      "limitations" => [limitation]
+    }
   end
 
   defp validate_optional_member!(map, key, allowed, path) do

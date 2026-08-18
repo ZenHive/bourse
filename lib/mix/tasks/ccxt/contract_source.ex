@@ -6,7 +6,10 @@ defmodule Mix.Tasks.Ccxt.ContractSource do
   does not infer provider semantics from names, examples, or neighboring fields.
   """
 
+  alias Mix.Tasks.Ccxt.AuthorityCorpus
+
   @http_methods ~w(get post put patch delete head options trace)
+  @inventory_json_kinds ~w(openapi-json asyncapi-json postman-collection)
 
   @typedoc "A source fact whose absence is explicit."
   @type fact :: %{required(String.t()) => term()}
@@ -77,6 +80,55 @@ defmodule Mix.Tasks.Ccxt.ContractSource do
       %{"operation_count" => 0}
     )
   end
+
+  @doc """
+  Builds a structural surface digest from pinned artifact bytes.
+
+  The digest retains named channel, path, and operation keys plus per-entity
+  hashes. It is what a later drift review diffs when the previous full document
+  is no longer fetchable. Untyped and prose artifacts produce empty key sets.
+  """
+  @spec surface_digest(map(), binary()) :: map()
+  def surface_digest(artifact, contents) when is_map(artifact) and is_binary(contents) do
+    parsed = parse!(artifact, contents)
+    document = inventory_document(artifact, contents)
+    channel_keys = map_keys(document["channels"])
+    path_keys = document["paths"] |> map_keys() |> Enum.map(&normalize_path/1)
+    operation_keys = parsed.operations |> Enum.map(& &1["key"]) |> Enum.sort()
+
+    %{
+      "schema_version" => 1,
+      "report_type" => "authority_surface_digest",
+      "artifact_id" => artifact["id"],
+      "kind" => artifact["kind"],
+      "source" => %{
+        "sha256" => AuthorityCorpus.sha256(contents),
+        "bytes" => byte_size(contents)
+      },
+      "key_sets" => %{
+        "channel_keys" => channel_keys,
+        "path_keys" => path_keys,
+        "operation_keys" => operation_keys
+      },
+      "key_set_sha256" => %{
+        "channel_keys" => hash_key_set(channel_keys),
+        "path_keys" => hash_key_set(path_keys),
+        "operation_keys" => hash_key_set(operation_keys)
+      },
+      "entities" =>
+        Enum.sort_by(
+          channel_entities(document) ++ path_entities(document) ++ operation_entities(parsed.operations),
+          &{&1["kind"], &1["key"]}
+        ),
+      "metrics" => parsed.metrics,
+      "limitations" => digest_limitations(artifact, parsed, channel_keys, path_keys, operation_keys)
+    }
+  end
+
+  @doc "Hashes a sorted key set the way committed drift reports hash channel keys."
+  @spec hash_key_set([String.t()]) :: String.t() | nil
+  def hash_key_set([]), do: nil
+  def hash_key_set(keys) when is_list(keys), do: AuthorityCorpus.sha256(Enum.join(keys, "\n"))
 
   @doc "Returns an explicit known source fact."
   @spec known(term()) :: fact()
@@ -748,4 +800,64 @@ defmodule Mix.Tasks.Ccxt.ContractSource do
 
   defp maybe_put_schema(target, []), do: target
   defp maybe_put_schema(target, schemas), do: Map.put(target, "schema", schemas)
+
+  defp inventory_document(%{"kind" => kind}, contents) when kind in @inventory_json_kinds do
+    Jason.decode!(contents)
+  end
+
+  defp inventory_document(%{"kind" => "openapi-yaml"}, contents) do
+    YamlElixir.read_from_string!(contents)
+  end
+
+  defp inventory_document(_artifact, _contents), do: %{}
+
+  defp map_keys(map) when is_map(map), do: map |> Map.keys() |> Enum.sort()
+  defp map_keys(_other), do: []
+
+  defp channel_entities(%{"channels" => channels}) when is_map(channels) do
+    Enum.map(channels, fn {key, item} -> entity("channel", key, item) end)
+  end
+
+  defp channel_entities(_document), do: []
+
+  defp path_entities(%{"paths" => paths}) when is_map(paths) do
+    Enum.map(paths, fn {key, item} -> entity("path", normalize_path(key), item) end)
+  end
+
+  defp path_entities(_document), do: []
+
+  defp operation_entities(operations) do
+    Enum.map(operations, fn operation -> entity("operation", operation["key"], operation) end)
+  end
+
+  defp entity(kind, key, value) do
+    %{"kind" => kind, "key" => key, "sha256" => canonical_sha256(value)}
+  end
+
+  defp canonical_sha256(value) do
+    value
+    |> canonicalize()
+    |> Jason.encode!()
+    |> AuthorityCorpus.sha256()
+  end
+
+  defp canonicalize(map) when is_map(map) do
+    map
+    |> Enum.sort_by(fn {key, _value} -> to_string(key) end)
+    |> Map.new(fn {key, value} -> {key, canonicalize(value)} end)
+  end
+
+  defp canonicalize(values) when is_list(values), do: Enum.map(values, &canonicalize/1)
+  defp canonicalize(value), do: value
+
+  defp digest_limitations(artifact, parsed, channel_keys, path_keys, operation_keys) do
+    if channel_keys == [] and path_keys == [] and operation_keys == [] do
+      parsed.limitations ++
+        [
+          "No named channel, path, or operation keys can be retained from #{artifact["kind"] || "unknown"}; a later drift review cannot name entity-level additions or removals."
+        ]
+    else
+      parsed.limitations
+    end
+  end
 end

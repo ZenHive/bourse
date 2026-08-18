@@ -1,0 +1,958 @@
+{
+  "artifact_id": "current-asyncapi",
+  "entities": [
+    {
+      "key": "announcements",
+      "kind": "channel",
+      "sha256": "b571a8ba3577021ae4fe4e519a31fd956a632f0818d5e05355f69eeadd109a05"
+    },
+    {
+      "key": "block_rfq.maker.(currency)",
+      "kind": "channel",
+      "sha256": "08d8dc0a40758b17666de5ca87de08642b10361df709f1610a196406192bebea"
+    },
+    {
+      "key": "block_rfq.maker.quotes.(currency)",
+      "kind": "channel",
+      "sha256": "1c529ece0f1c441bff92f90f3ad283378898a6867152871f5a03971bd68f75b9"
+    },
+    {
+      "key": "block_rfq.taker.(currency)",
+      "kind": "channel",
+      "sha256": "1de751b4f71d703f5decbdfe0108752967fbbd2daab4643c07bbbeaf9c59d4e8"
+    },
+    {
+      "key": "block_rfq.trades.(currency)",
+      "kind": "channel",
+      "sha256": "5f1bf70eadff7e0a97467538bb4a3a136904ec722e0f40508d8052d5d2755fe8"
+    },
+    {
+      "key": "block_trade_confirmations",
+      "kind": "channel",
+      "sha256": "6c2465aed467e67746a9675c799c5f17315de594509f88540da09248bc857813"
+    },
+    {
+      "key": "block_trade_confirmations.(currency)",
+      "kind": "channel",
+      "sha256": "f0dc72d97f649cf7856c9d9aac979f70ea55d36eb56c5dc85f3162c8dc336499"
+    },
+    {
+      "key": "book.(instrument_name).(group).(depth).(interval)",
+      "kind": "channel",
+      "sha256": "56b2626525a92e5d9cc8601b53124437d72764ee803af79114805a9aadd9185a"
+    },
+    {
+      "key": "book.(instrument_name).(interval)",
+      "kind": "channel",
+      "sha256": "847c53c19ee7af0b15bc1bedeb09a946be2d69016e13b38c387ca2ddae924ea1"
+    },
+    {
+      "key": "chart.trades.(instrument_name).(resolution)",
+      "kind": "channel",
+      "sha256": "d02a892371c07ad9b948ea4a52d0eebb7a6c6f1f411032362363ad1f4b99be5b"
+    },
+    {
+      "key": "deribit_price_index.(index_name)",
+      "kind": "channel",
+      "sha256": "82958781dc1bd25291edfbda310ea4b1b2b1c40854a387e92d8d5d07a6f839da"
+    },
+    {
+      "key": "deribit_price_ranking.(index_name)",
+      "kind": "channel",
+      "sha256": "4fac3f7955690e7e63e171c2ea40286fb48a6597be4b89338467d14b8e913862"
+    },
+    {
+      "key": "deribit_price_statistics.(index_name)",
+      "kind": "channel",
+      "sha256": "e388287582b2933c9ce20bf4a194d3dfd69bc6dea6e7b9d55070f029ba5abf33"
+    },
+    {
+      "key": "deribit_volatility_index.(index_name)",
+      "kind": "channel",
+      "sha256": "6147ff9780f63f6552cd3f361f52d7dfb3f34751e845f5006912ce257a04e606"
+    },
+    {
+      "key": "estimated_expiration_price.(index_name)",
+      "kind": "channel",
+      "sha256": "1db1d49885a719cc6a977a919c152d9df31cc6e871da6f49a1067653de4e28a2"
+    },
+    {
+      "key": "incremental_ticker.(instrument_name)",
+      "kind": "channel",
+      "sha256": "7738209b276744751aa213b5c00a36acac16a8f675c6582cda6b11932cf280a5"
+    },
+    {
+      "key": "instrument.creation.(kind).(currency)",
+      "kind": "channel",
+      "sha256": "9b0110881f7f4674e2883e7af90d8ee84fee2fd282a43f7638408d98ec20b049"
+    },
+    {
+      "key": "instrument.state.(kind).(currency)",
+      "kind": "channel",
+      "sha256": "5bd1f3541e79859c747061e9faf39e7934652009f63886e86c078d656e27b0f9"
+    },
+    {
+      "key": "markprice.options.(index_name)",
+      "kind": "channel",
+      "sha256": "6ca9a5032ace02c59b6814e03eb822280810f2c1e08855635cfd47741bad00f4"
+    },
+    {
+      "key": "perpetual.(instrument_name).(interval)",
+      "kind": "channel",
+      "sha256": "04aff43c1027d385002c910e622e6d78f49abcbc96d3fd0cb3de465d983749e6"
+    },
+    {
+      "key": "platform_state",
+      "kind": "channel",
+      "sha256": "f2f6ac4e3de3b42b915d2e94bc174f37547a850533cbdf7bcda9834c2e196a0d"
+    },
+    {
+      "key": "platform_state.public_methods_state",
+      "kind": "channel",
+      "sha256": "7f84b759d8f5ed45273cf8379e0dbe2b62a92dc72e3a8bc88db3db5ac5f539d8"
+    },
+    {
+      "key": "quote.(instrument_name)",
+      "kind": "channel",
+      "sha256": "43dd39b52fe5076af7b17a2ed95d0fec10fe03d16880735db5c5398c43f73b23"
+    },
+    {
+      "key": "ticker.(instrument_name).(interval)",
+      "kind": "channel",
+      "sha256": "9f827247cc6d8ebd603413e838e9a4457d6000e00d7b92f5aba24b052ba8a2d4"
+    },
+    {
+      "key": "trades.(instrument_name).(interval)",
+      "kind": "channel",
+      "sha256": "7d57acc7f2b80ca0ea71e59c374d57601184eb49d3771afc0802bf4267bee85d"
+    },
+    {
+      "key": "trades.(kind).(currency).(interval)",
+      "kind": "channel",
+      "sha256": "d74f37f7fed2251bd3975c71382a74c8632075c0d991bf6c4f71c114f4c90ca3"
+    },
+    {
+      "key": "user.access_log",
+      "kind": "channel",
+      "sha256": "0ff489d0c9b928ea1c02845548a6bbb00f7973c40af2c20a70175528fa9e619a"
+    },
+    {
+      "key": "user.changes.(instrument_name).(interval)",
+      "kind": "channel",
+      "sha256": "ea89d0ca6be9660aecdfb6471ef62511f1b6e8d4a37bd6f687be16ff06fc6611"
+    },
+    {
+      "key": "user.changes.(kind).(currency).(interval)",
+      "kind": "channel",
+      "sha256": "8be0b2419f5ce8339780de84bb691f975f84c844870076713ec21093e2f7f5c4"
+    },
+    {
+      "key": "user.combo_trades.(instrument_name).(interval)",
+      "kind": "channel",
+      "sha256": "e43eadfff1b161b54aad6dbd146b7146af8d304413758c03ce0aaba8e086caff"
+    },
+    {
+      "key": "user.combo_trades.(kind).(currency).(interval)",
+      "kind": "channel",
+      "sha256": "2711e7395b8c1e868ed8b3732258c370c3961b0be15c829f70881b11a02943af"
+    },
+    {
+      "key": "user.isolated.liquidation",
+      "kind": "channel",
+      "sha256": "e4ad3eeb895972b8d483b07a3950c056c2209efd5ff9aadbf5c3076a0484d744"
+    },
+    {
+      "key": "user.liquidation",
+      "kind": "channel",
+      "sha256": "93ae06a964eb90f8bc32cc9800894ee027a87726f30046099410707d46ee0f83"
+    },
+    {
+      "key": "user.lock",
+      "kind": "channel",
+      "sha256": "1e4536eb7c588221e174672fb27fe61ec8eae61ca2da1a15bdbf3a0c72c1df82"
+    },
+    {
+      "key": "user.lsp",
+      "kind": "channel",
+      "sha256": "000822611ee5c42bdf237af9ab4c417785b21cb564e7961ae15e2e542e9b8ee6"
+    },
+    {
+      "key": "user.mmp_trigger.(index_name)",
+      "kind": "channel",
+      "sha256": "175b53a142484851d41fb53a2b9572399e9235581803296bd765e766d73d698c"
+    },
+    {
+      "key": "user.orders.(instrument_name).(interval)",
+      "kind": "channel",
+      "sha256": "d08df204b7df4c6b3662d4b476b6b5e38fc34a487191dab4a3a18f9f515ad502"
+    },
+    {
+      "key": "user.orders.(instrument_name).raw",
+      "kind": "channel",
+      "sha256": "bc586202e99f1d0cc7fad8405f967c523cb9ed703d1480f67b8fc29d5942b77e"
+    },
+    {
+      "key": "user.orders.(kind).(currency).(interval)",
+      "kind": "channel",
+      "sha256": "20155463fd6401169ed2252db953fe910e55b1498d6d2ade5c87ffb80fc93e15"
+    },
+    {
+      "key": "user.orders.(kind).(currency).raw",
+      "kind": "channel",
+      "sha256": "2935ab6cf2ade6f7748af52f3cdb5f73bfe30e5ccd34a25ba9a24e4c15093012"
+    },
+    {
+      "key": "user.portfolio.(currency)",
+      "kind": "channel",
+      "sha256": "2fabc03788aee69c01899795a2d25ea2de71ed2421b494866d186f3c96947309"
+    },
+    {
+      "key": "user.trades.(instrument_name).(interval)",
+      "kind": "channel",
+      "sha256": "7891c555f0783f8a0059cc1949dce821e0f56869f4ab4e82542a5758b1d8f9b2"
+    },
+    {
+      "key": "user.trades.(kind).(currency).(interval)",
+      "kind": "channel",
+      "sha256": "fca4ed433abc15a9ab98c4c64e4a4e5e06c1a6e13c630e444f519234c4f6cd8a"
+    },
+    {
+      "key": "receive announcements",
+      "kind": "operation",
+      "sha256": "ef188f12ad9db8243739d84edc068c5de9c0d03441cc96bfe51b8f978da939c6"
+    },
+    {
+      "key": "receive block_rfq.maker.(currency)",
+      "kind": "operation",
+      "sha256": "ba303ff56e213df487cb4bdd6d9701a2cc1fc9b5c88ed360953476f36dda0ff9"
+    },
+    {
+      "key": "receive block_rfq.maker.quotes.(currency)",
+      "kind": "operation",
+      "sha256": "5b9aa58a07838f847527926e7ed5a269f8029b5c0132d82f4bbaabdaa8fcd24b"
+    },
+    {
+      "key": "receive block_rfq.taker.(currency)",
+      "kind": "operation",
+      "sha256": "c4a4c995e72598b40536b5fdbd6dcad64755ad5a4f80d8494432f27d2d55e748"
+    },
+    {
+      "key": "receive block_rfq.trades.(currency)",
+      "kind": "operation",
+      "sha256": "e2a82ce7c398f67bec578f265de4e3ac20bc06d3123c5b7a757fd2a20daab180"
+    },
+    {
+      "key": "receive block_trade_confirmations",
+      "kind": "operation",
+      "sha256": "6e371d175f0d48b94d6851680f95fd21526c7db0207dbcdaab9699ccc04b9e17"
+    },
+    {
+      "key": "receive block_trade_confirmations.(currency)",
+      "kind": "operation",
+      "sha256": "fe14cdd9da3bd855e16883c3f1cb300f25361f784884afa172f99911a3788885"
+    },
+    {
+      "key": "receive book.(instrument_name).(group).(depth).(interval)",
+      "kind": "operation",
+      "sha256": "5b9e3d147d32d24aa8b7a89ef86afbb7d1c767018f73a16ff96fafb2cf381a3a"
+    },
+    {
+      "key": "receive book.(instrument_name).(interval)",
+      "kind": "operation",
+      "sha256": "b697492bbf1bc200e9ff29b53f26b32668f39152fbb5f7105c7a9db8a36b4545"
+    },
+    {
+      "key": "receive chart.trades.(instrument_name).(resolution)",
+      "kind": "operation",
+      "sha256": "ba2df1c1da516e7da4b25513d3be68a479788f2f7410a0fa35fe4b448d76cb60"
+    },
+    {
+      "key": "receive deribit_price_index.(index_name)",
+      "kind": "operation",
+      "sha256": "63c0e5b4e40a31fccd84d2f87da312ac96329ccc1a531c14db006000f19b3a53"
+    },
+    {
+      "key": "receive deribit_price_ranking.(index_name)",
+      "kind": "operation",
+      "sha256": "0a905182abfafb3eca0c99b04f15112213e2c56f6d7fa945fb68b41e41d7b093"
+    },
+    {
+      "key": "receive deribit_price_statistics.(index_name)",
+      "kind": "operation",
+      "sha256": "2304b0e11caeb5410ff7b0364c812f1dbc5157d4e17ee16a9820cff8e02a8ae1"
+    },
+    {
+      "key": "receive deribit_volatility_index.(index_name)",
+      "kind": "operation",
+      "sha256": "5748a7d55a83e7e306a098f0f0c7de4416ac79691c87998c01ebd01739cfbc0f"
+    },
+    {
+      "key": "receive estimated_expiration_price.(index_name)",
+      "kind": "operation",
+      "sha256": "d860554a6b0718f87c8142324b04ba88a5aa7b34b36e7deac4e9d53f860a21f3"
+    },
+    {
+      "key": "receive incremental_ticker.(instrument_name)",
+      "kind": "operation",
+      "sha256": "41fec3de86f5480fbcdd64998af83e957ae1d1cbbef6e45d0238adbe3ba04b7e"
+    },
+    {
+      "key": "receive instrument.creation.(kind).(currency)",
+      "kind": "operation",
+      "sha256": "97ee699b7eaed0d8f737870ccc775878c1846b9e131af7b3eee51a024599f817"
+    },
+    {
+      "key": "receive instrument.state.(kind).(currency)",
+      "kind": "operation",
+      "sha256": "747e6e9ad700a7de9778696784e678637559b72d888f0ed725d0c36224786c55"
+    },
+    {
+      "key": "receive markprice.options.(index_name)",
+      "kind": "operation",
+      "sha256": "7a844e0fd423623989ea57bd10639ff44f8f68ea06afbe0ca0cfdd26952f329c"
+    },
+    {
+      "key": "receive perpetual.(instrument_name).(interval)",
+      "kind": "operation",
+      "sha256": "f1e94a50b118289c5e3757143e2056ac363879655547df91e6de54ae1d0e9da4"
+    },
+    {
+      "key": "receive platform_state",
+      "kind": "operation",
+      "sha256": "2b724f898b36e7d28da55532e78c8c607f72d83c8ee2a96720bef9dda2cc2ac7"
+    },
+    {
+      "key": "receive platform_state.public_methods_state",
+      "kind": "operation",
+      "sha256": "3bc1d61793dde6662a5a883d08939378d34107e62603b82f37f8ead70119efd0"
+    },
+    {
+      "key": "receive quote.(instrument_name)",
+      "kind": "operation",
+      "sha256": "4d2a93553db918982b2c33cd2d510875f3cdaabe82abc874eea09029f136b77c"
+    },
+    {
+      "key": "receive ticker.(instrument_name).(interval)",
+      "kind": "operation",
+      "sha256": "1ea27ff2fd06cf533d5c661938a481dad64a35d0d517cec00b703db6c94f3528"
+    },
+    {
+      "key": "receive trades.(instrument_name).(interval)",
+      "kind": "operation",
+      "sha256": "f30b48059188bc8546af930c46bb20b0fb9039ba0c848d6dff5c9988b8605c36"
+    },
+    {
+      "key": "receive trades.(kind).(currency).(interval)",
+      "kind": "operation",
+      "sha256": "44a6e333533eda3777c9d8b34161dc6c7bdd29d99d7798294de640c24b77dc44"
+    },
+    {
+      "key": "receive user.access_log",
+      "kind": "operation",
+      "sha256": "59d649ccb3bec78dd5570ac3565e0a510e1d1c6ae15c30e3d964770159c13a74"
+    },
+    {
+      "key": "receive user.changes.(instrument_name).(interval)",
+      "kind": "operation",
+      "sha256": "e60f91cfeb789f4cad69d4ccd1088ec3a4ac9c886dc3ee271a383e36289fa5fa"
+    },
+    {
+      "key": "receive user.changes.(kind).(currency).(interval)",
+      "kind": "operation",
+      "sha256": "c40c6d3d61e7523a8bb7b73d4620fcd9cd5cc26d7c3b5344ee7e2a1311c94f20"
+    },
+    {
+      "key": "receive user.combo_trades.(instrument_name).(interval)",
+      "kind": "operation",
+      "sha256": "6e1b3e96969789e5eff47c2a3908156a4f0cd1ffa56dceb6dbc78f70a2812dd4"
+    },
+    {
+      "key": "receive user.combo_trades.(kind).(currency).(interval)",
+      "kind": "operation",
+      "sha256": "bbd26606b86bc7354d8b9b148fdaa60fe360e09345b40d573445001c445f6164"
+    },
+    {
+      "key": "receive user.isolated.liquidation",
+      "kind": "operation",
+      "sha256": "9f0be5e656ad4c0c69319cafb97baf1e85945706096b3756d3ff85f603890022"
+    },
+    {
+      "key": "receive user.liquidation",
+      "kind": "operation",
+      "sha256": "047bcd77dbdc26fa4151d92aa4c3fda4034c429e1d74a1e35f08041f6afa5172"
+    },
+    {
+      "key": "receive user.lock",
+      "kind": "operation",
+      "sha256": "9af7a43cd4e48e1e37ff05373f09b981307921ed0d7c5cb7fbcc2a3b7bd74a58"
+    },
+    {
+      "key": "receive user.lsp",
+      "kind": "operation",
+      "sha256": "07ac45f88360f9c76943523f3265b5b3b886fe1cc3274a678183dde4d078c8fc"
+    },
+    {
+      "key": "receive user.mmp_trigger.(index_name)",
+      "kind": "operation",
+      "sha256": "94e38a58a742d7cfc8d41e799126cf564e7575cb506a932d23b7628f2c5e08da"
+    },
+    {
+      "key": "receive user.orders.(instrument_name).(interval)",
+      "kind": "operation",
+      "sha256": "b405db83ed53bed32799d8a1232ecfa17e40ce4409a0b19ff9f0001f0318ad5a"
+    },
+    {
+      "key": "receive user.orders.(instrument_name).raw",
+      "kind": "operation",
+      "sha256": "99eded0c1ebb6682e7a2275b1f09b73927e19a31953cec56b3656ae609e2646f"
+    },
+    {
+      "key": "receive user.orders.(kind).(currency).(interval)",
+      "kind": "operation",
+      "sha256": "a25b88d216eeac81f3fe27d8955cbb18eb19df6f3a664dba94addd065c91846f"
+    },
+    {
+      "key": "receive user.orders.(kind).(currency).raw",
+      "kind": "operation",
+      "sha256": "61161be819eea3248b78f61592c2768c66fecb5c010ed105d33339274cb66337"
+    },
+    {
+      "key": "receive user.portfolio.(currency)",
+      "kind": "operation",
+      "sha256": "4b927a42e6e54f21761698fd8ac8f612bba816a2f53ef53aa09063480f225b78"
+    },
+    {
+      "key": "receive user.trades.(instrument_name).(interval)",
+      "kind": "operation",
+      "sha256": "e15d7c347ff3a2069dc1a3131502f8b79ad84f83fb13cf8a2d4c9ed89081a64a"
+    },
+    {
+      "key": "receive user.trades.(kind).(currency).(interval)",
+      "kind": "operation",
+      "sha256": "776c9d8960c46780612b30072ae6040a7b4a7483984e000ae4563ab80140c583"
+    },
+    {
+      "key": "send announcements",
+      "kind": "operation",
+      "sha256": "666a7186a73c02bf904061bd86e0df3edbe94dba91806f9b3218cdca15b4ddb7"
+    },
+    {
+      "key": "send block_rfq.maker.(currency)",
+      "kind": "operation",
+      "sha256": "ebe0a2aaa957f4cbc4be3ba638d118889cf03647e1123d71c522eda596e38c54"
+    },
+    {
+      "key": "send block_rfq.maker.quotes.(currency)",
+      "kind": "operation",
+      "sha256": "2c849dadce74f9f3d8aca10316689208c326cd43a9fad2184afc1129c2824655"
+    },
+    {
+      "key": "send block_rfq.taker.(currency)",
+      "kind": "operation",
+      "sha256": "0fb2d5aec3c3d46cf2a27172750f75c12614d7a9402d04b1fbbaabf5f071ca17"
+    },
+    {
+      "key": "send block_rfq.trades.(currency)",
+      "kind": "operation",
+      "sha256": "69eca4e19a502d76304751892848a7ad7abcdd0647621a81f1003a9248fa4253"
+    },
+    {
+      "key": "send block_trade_confirmations",
+      "kind": "operation",
+      "sha256": "b18ce1a3e823b1a2d7fb0e2c62c6f47c3150b05fb8b982ae0709c869d397aebd"
+    },
+    {
+      "key": "send block_trade_confirmations.(currency)",
+      "kind": "operation",
+      "sha256": "cba329acfe9fe7fe881d6a6d4624a432acf08b1a2b76575a31aa9b612de82b14"
+    },
+    {
+      "key": "send book.(instrument_name).(group).(depth).(interval)",
+      "kind": "operation",
+      "sha256": "24a2f3d83fab2a094bb9fb707658f7889a1b4e23c951b7bb999b0d8eff8b28e4"
+    },
+    {
+      "key": "send book.(instrument_name).(interval)",
+      "kind": "operation",
+      "sha256": "f8237be8cef742fbe5427f581cd5542c5645dca10f79fb342ac66235f9663577"
+    },
+    {
+      "key": "send chart.trades.(instrument_name).(resolution)",
+      "kind": "operation",
+      "sha256": "396d9dd5bcaf455b534fa00c8c0cc78b65e83da92f17c120b188a610be38e301"
+    },
+    {
+      "key": "send deribit_price_index.(index_name)",
+      "kind": "operation",
+      "sha256": "8438fee0396615861a940136ebbd3784fd47a330a93dd5262ebb5044fa64444a"
+    },
+    {
+      "key": "send deribit_price_ranking.(index_name)",
+      "kind": "operation",
+      "sha256": "3563d2cd5d2066b102af7e5bfe6ae1bc5627fe3def124a9e183e24b4432d33c2"
+    },
+    {
+      "key": "send deribit_price_statistics.(index_name)",
+      "kind": "operation",
+      "sha256": "2e1d42a3852412c96673f6da740c312177ccc6cabca118ede268e3300475c1de"
+    },
+    {
+      "key": "send deribit_volatility_index.(index_name)",
+      "kind": "operation",
+      "sha256": "10ea7ef8ee4d77e57f328a6a73383270e015bc27cde615d9390341d6501f7791"
+    },
+    {
+      "key": "send estimated_expiration_price.(index_name)",
+      "kind": "operation",
+      "sha256": "4b713b4dcdecba21712ebf5e1d5f049592634c2133952212fcbd9a968d959744"
+    },
+    {
+      "key": "send incremental_ticker.(instrument_name)",
+      "kind": "operation",
+      "sha256": "ce7bd99b54bea211e6ba7989c2677065a1a3fac78dca4184edba9ff9a9a91e63"
+    },
+    {
+      "key": "send instrument.creation.(kind).(currency)",
+      "kind": "operation",
+      "sha256": "0bbe10016b57c04270e5e7d610f1ac8a7b9e4497ed5a882d58fdc6f48c4e29aa"
+    },
+    {
+      "key": "send instrument.state.(kind).(currency)",
+      "kind": "operation",
+      "sha256": "f0498ce93ac48702c6fdc490d33c8fbcbdb3d3bf1f386f90f85c512ac5a0bdf7"
+    },
+    {
+      "key": "send markprice.options.(index_name)",
+      "kind": "operation",
+      "sha256": "a88fb50f723ebe0e56f7884364a5b024fb9a99419d8df81049ef24f4774ee908"
+    },
+    {
+      "key": "send perpetual.(instrument_name).(interval)",
+      "kind": "operation",
+      "sha256": "a6207e2bc171cc8d680e3705d633947ebbd72e44dc16d72d2cc3aa1e7e760311"
+    },
+    {
+      "key": "send platform_state",
+      "kind": "operation",
+      "sha256": "061eaa21efcfeadd7f23b0a148aa7bb6afc709138d1746d8b00969960bf3d0e3"
+    },
+    {
+      "key": "send platform_state.public_methods_state",
+      "kind": "operation",
+      "sha256": "0f8e06f7f4cf08e80641606f798648648fad749beaf85c923e63bce839a25ef5"
+    },
+    {
+      "key": "send quote.(instrument_name)",
+      "kind": "operation",
+      "sha256": "45f62ab50459c37cc48d58ae69bbde1599ecb3c754a388b9b243fc05e2783c52"
+    },
+    {
+      "key": "send ticker.(instrument_name).(interval)",
+      "kind": "operation",
+      "sha256": "c3886fec98538a21ead0a7850231ac01641fbf870c3cdde9de0a2390e4ef51cc"
+    },
+    {
+      "key": "send trades.(instrument_name).(interval)",
+      "kind": "operation",
+      "sha256": "aa3c79050d06d63362db3b44746d1481a41bae6c74f4071a7efe97baba27464f"
+    },
+    {
+      "key": "send trades.(kind).(currency).(interval)",
+      "kind": "operation",
+      "sha256": "264e4a4e9dd1b6a9678cb18af74552884ce9b431aeb99ccb6371a8228fa99de3"
+    },
+    {
+      "key": "send user.access_log",
+      "kind": "operation",
+      "sha256": "e497f152f4d279af96f89c6cd3160ed57a404b865e299c88c17c9d8ad67f09d9"
+    },
+    {
+      "key": "send user.changes.(instrument_name).(interval)",
+      "kind": "operation",
+      "sha256": "aaf752c9d3f6f9c03718b299908a8b9cad164f6f9d63cdb9b84c3f5917b2875d"
+    },
+    {
+      "key": "send user.changes.(kind).(currency).(interval)",
+      "kind": "operation",
+      "sha256": "d11e17db166882ca2e3ac5af4ec696fcc746fbbb98eb0ce231c6855efd052d25"
+    },
+    {
+      "key": "send user.combo_trades.(instrument_name).(interval)",
+      "kind": "operation",
+      "sha256": "5e4434ecfd958407f53fd5216feb362aed28c4b8d4a66de009c6c3e102b45f79"
+    },
+    {
+      "key": "send user.combo_trades.(kind).(currency).(interval)",
+      "kind": "operation",
+      "sha256": "56270089075e187cf885d37325bc60281e4c955a75163bce5c0ef7ce7be9f3de"
+    },
+    {
+      "key": "send user.isolated.liquidation",
+      "kind": "operation",
+      "sha256": "2984bcbc1b64ebf0e7e5851dd27ef49de08579acfa709588e8a4ac8407f1bd0b"
+    },
+    {
+      "key": "send user.liquidation",
+      "kind": "operation",
+      "sha256": "b25295faa0eab62c67924dab4fcc5ab1aeecea9fe98694942ab26cd607029d3e"
+    },
+    {
+      "key": "send user.lock",
+      "kind": "operation",
+      "sha256": "9479fbe3e1fb28eec3e950083ee10f9beb768729fff9ba86ed2820b311bb83e9"
+    },
+    {
+      "key": "send user.lsp",
+      "kind": "operation",
+      "sha256": "401da6e6615ba4bc72790e8f535fca6b96cd39672d64e54bf1a4b8605ec852c5"
+    },
+    {
+      "key": "send user.mmp_trigger.(index_name)",
+      "kind": "operation",
+      "sha256": "53d3d6fb0c18f0f4e72a5030c790c2e0d1dbe6a947e3ff97971c28ab481d0ced"
+    },
+    {
+      "key": "send user.orders.(instrument_name).(interval)",
+      "kind": "operation",
+      "sha256": "2875a50d2ebcdd0106c0b8df209e28d29221cdf545f45cf549b781461a2d4ab5"
+    },
+    {
+      "key": "send user.orders.(instrument_name).raw",
+      "kind": "operation",
+      "sha256": "92553b651343a3c461bb93f9a633825f535f733f30310153994ae28b2b77286b"
+    },
+    {
+      "key": "send user.orders.(kind).(currency).(interval)",
+      "kind": "operation",
+      "sha256": "8e63dd4346bcdcee91bd448b8e855f93273f254fa6af16a42c993c788705af10"
+    },
+    {
+      "key": "send user.orders.(kind).(currency).raw",
+      "kind": "operation",
+      "sha256": "61316aa9c66c7d7ad42ad2000f5e994516d86ee591b05c798026fa80ba560f3b"
+    },
+    {
+      "key": "send user.portfolio.(currency)",
+      "kind": "operation",
+      "sha256": "dae024a5061f0f8ecc139d93d7613276c8665aa6d04120f434fc91dfe9086f5e"
+    },
+    {
+      "key": "send user.trades.(instrument_name).(interval)",
+      "kind": "operation",
+      "sha256": "9f565a75337cefce5de828ea376b7b8a6b7a5d90947cc37f076dc0d0fe9bd627"
+    },
+    {
+      "key": "send user.trades.(kind).(currency).(interval)",
+      "kind": "operation",
+      "sha256": "87c89ce72b85c59d27e4d3bc58d3f2d5d70bd49d80e4da5ef89631d5b8a896df"
+    }
+  ],
+  "key_set_sha256": {
+    "channel_keys": "67cd10a40f81ef7db93ee2a2995bfe1e1ef75800de5c651521d23990ab335e0f",
+    "operation_keys": "181cad9af26d43d8759794d7c2288981e8d05d813f3edb42983dee1d82721a5d",
+    "path_keys": null
+  },
+  "key_sets": {
+    "channel_keys": [
+      "announcements",
+      "block_rfq.maker.(currency)",
+      "block_rfq.maker.quotes.(currency)",
+      "block_rfq.taker.(currency)",
+      "block_rfq.trades.(currency)",
+      "block_trade_confirmations",
+      "block_trade_confirmations.(currency)",
+      "book.(instrument_name).(group).(depth).(interval)",
+      "book.(instrument_name).(interval)",
+      "chart.trades.(instrument_name).(resolution)",
+      "deribit_price_index.(index_name)",
+      "deribit_price_ranking.(index_name)",
+      "deribit_price_statistics.(index_name)",
+      "deribit_volatility_index.(index_name)",
+      "estimated_expiration_price.(index_name)",
+      "incremental_ticker.(instrument_name)",
+      "instrument.creation.(kind).(currency)",
+      "instrument.state.(kind).(currency)",
+      "markprice.options.(index_name)",
+      "perpetual.(instrument_name).(interval)",
+      "platform_state",
+      "platform_state.public_methods_state",
+      "quote.(instrument_name)",
+      "ticker.(instrument_name).(interval)",
+      "trades.(instrument_name).(interval)",
+      "trades.(kind).(currency).(interval)",
+      "user.access_log",
+      "user.changes.(instrument_name).(interval)",
+      "user.changes.(kind).(currency).(interval)",
+      "user.combo_trades.(instrument_name).(interval)",
+      "user.combo_trades.(kind).(currency).(interval)",
+      "user.isolated.liquidation",
+      "user.liquidation",
+      "user.lock",
+      "user.lsp",
+      "user.mmp_trigger.(index_name)",
+      "user.orders.(instrument_name).(interval)",
+      "user.orders.(instrument_name).raw",
+      "user.orders.(kind).(currency).(interval)",
+      "user.orders.(kind).(currency).raw",
+      "user.portfolio.(currency)",
+      "user.trades.(instrument_name).(interval)",
+      "user.trades.(kind).(currency).(interval)"
+    ],
+    "operation_keys": [
+      "receive announcements",
+      "receive block_rfq.maker.(currency)",
+      "receive block_rfq.maker.quotes.(currency)",
+      "receive block_rfq.taker.(currency)",
+      "receive block_rfq.trades.(currency)",
+      "receive block_trade_confirmations",
+      "receive block_trade_confirmations.(currency)",
+      "receive book.(instrument_name).(group).(depth).(interval)",
+      "receive book.(instrument_name).(interval)",
+      "receive chart.trades.(instrument_name).(resolution)",
+      "receive deribit_price_index.(index_name)",
+      "receive deribit_price_ranking.(index_name)",
+      "receive deribit_price_statistics.(index_name)",
+      "receive deribit_volatility_index.(index_name)",
+      "receive estimated_expiration_price.(index_name)",
+      "receive incremental_ticker.(instrument_name)",
+      "receive instrument.creation.(kind).(currency)",
+      "receive instrument.state.(kind).(currency)",
+      "receive markprice.options.(index_name)",
+      "receive perpetual.(instrument_name).(interval)",
+      "receive platform_state",
+      "receive platform_state.public_methods_state",
+      "receive quote.(instrument_name)",
+      "receive ticker.(instrument_name).(interval)",
+      "receive trades.(instrument_name).(interval)",
+      "receive trades.(kind).(currency).(interval)",
+      "receive user.access_log",
+      "receive user.changes.(instrument_name).(interval)",
+      "receive user.changes.(kind).(currency).(interval)",
+      "receive user.combo_trades.(instrument_name).(interval)",
+      "receive user.combo_trades.(kind).(currency).(interval)",
+      "receive user.isolated.liquidation",
+      "receive user.liquidation",
+      "receive user.lock",
+      "receive user.lsp",
+      "receive user.mmp_trigger.(index_name)",
+      "receive user.orders.(instrument_name).(interval)",
+      "receive user.orders.(instrument_name).raw",
+      "receive user.orders.(kind).(currency).(interval)",
+      "receive user.orders.(kind).(currency).raw",
+      "receive user.portfolio.(currency)",
+      "receive user.trades.(instrument_name).(interval)",
+      "receive user.trades.(kind).(currency).(interval)",
+      "send announcements",
+      "send block_rfq.maker.(currency)",
+      "send block_rfq.maker.quotes.(currency)",
+      "send block_rfq.taker.(currency)",
+      "send block_rfq.trades.(currency)",
+      "send block_trade_confirmations",
+      "send block_trade_confirmations.(currency)",
+      "send book.(instrument_name).(group).(depth).(interval)",
+      "send book.(instrument_name).(interval)",
+      "send chart.trades.(instrument_name).(resolution)",
+      "send deribit_price_index.(index_name)",
+      "send deribit_price_ranking.(index_name)",
+      "send deribit_price_statistics.(index_name)",
+      "send deribit_volatility_index.(index_name)",
+      "send estimated_expiration_price.(index_name)",
+      "send incremental_ticker.(instrument_name)",
+      "send instrument.creation.(kind).(currency)",
+      "send instrument.state.(kind).(currency)",
+      "send markprice.options.(index_name)",
+      "send perpetual.(instrument_name).(interval)",
+      "send platform_state",
+      "send platform_state.public_methods_state",
+      "send quote.(instrument_name)",
+      "send ticker.(instrument_name).(interval)",
+      "send trades.(instrument_name).(interval)",
+      "send trades.(kind).(currency).(interval)",
+      "send user.access_log",
+      "send user.changes.(instrument_name).(interval)",
+      "send user.changes.(kind).(currency).(interval)",
+      "send user.combo_trades.(instrument_name).(interval)",
+      "send user.combo_trades.(kind).(currency).(interval)",
+      "send user.isolated.liquidation",
+      "send user.liquidation",
+      "send user.lock",
+      "send user.lsp",
+      "send user.mmp_trigger.(index_name)",
+      "send user.orders.(instrument_name).(interval)",
+      "send user.orders.(instrument_name).raw",
+      "send user.orders.(kind).(currency).(interval)",
+      "send user.orders.(kind).(currency).raw",
+      "send user.portfolio.(currency)",
+      "send user.trades.(instrument_name).(interval)",
+      "send user.trades.(kind).(currency).(interval)"
+    ],
+    "path_keys": []
+  },
+  "kind": "asyncapi-json",
+  "limitations": [
+    "86 send/receive operations reference the opposite message direction; references are preserved without correction.",
+    "Provider examples are documentation, not observed-reality evidence."
+  ],
+  "metrics": {
+    "channel_count": 43,
+    "message_reference_inversion_count": 86,
+    "operation_count": 86
+  },
+  "prior": {
+    "entities": "unavailable_prior_bytes_not_retained",
+    "key_set_sha256": {
+      "channel_keys": "d6c4fcac0a502442dd14ecf19e1bd31d02e3c6bda93e0f04abd049ee29fe90f7",
+      "operation_keys": "3e3e5d4c2b5c04c1743dac10410b022d6e68f3d14ed036f55874daea83727724",
+      "path_keys": null
+    },
+    "key_sets": {
+      "channel_keys": [
+        "announcements",
+        "block_rfq.maker.(currency)",
+        "block_rfq.maker.quotes.(currency)",
+        "block_rfq.taker.(currency)",
+        "block_rfq.trades.(currency)",
+        "block_trade_confirmations",
+        "block_trade_confirmations.(currency)",
+        "book.(instrument_name).(group).(depth).(interval)",
+        "book.(instrument_name).(interval)",
+        "chart.trades.(instrument_name).(resolution)",
+        "deribit_price_index.(index_name)",
+        "deribit_price_ranking.(index_name)",
+        "deribit_price_statistics.(index_name)",
+        "deribit_volatility_index.(index_name)",
+        "estimated_expiration_price.(index_name)",
+        "incremental_ticker.(instrument_name)",
+        "instrument.creation.(kind).(currency)",
+        "instrument.state.(kind).(currency)",
+        "markprice.options.(index_name)",
+        "perpetual.(instrument_name).(interval)",
+        "platform_state",
+        "platform_state.public_methods_state",
+        "quote.(instrument_name)",
+        "ticker.(instrument_name).(interval)",
+        "trades.(instrument_name).(interval)",
+        "trades.(kind).(currency).(interval)",
+        "user.access_log",
+        "user.changes.(instrument_name).(interval)",
+        "user.changes.(kind).(currency).(interval)",
+        "user.combo_trades.(instrument_name).(interval)",
+        "user.combo_trades.(kind).(currency).(interval)",
+        "user.lock",
+        "user.mmp_trigger.(index_name)",
+        "user.orders.(instrument_name).(interval)",
+        "user.orders.(instrument_name).raw",
+        "user.orders.(kind).(currency).(interval)",
+        "user.orders.(kind).(currency).raw",
+        "user.portfolio.(currency)",
+        "user.trades.(instrument_name).(interval)",
+        "user.trades.(kind).(currency).(interval)"
+      ],
+      "operation_keys": [
+        "receive announcements",
+        "receive block_rfq.maker.(currency)",
+        "receive block_rfq.maker.quotes.(currency)",
+        "receive block_rfq.taker.(currency)",
+        "receive block_rfq.trades.(currency)",
+        "receive block_trade_confirmations",
+        "receive block_trade_confirmations.(currency)",
+        "receive book.(instrument_name).(group).(depth).(interval)",
+        "receive book.(instrument_name).(interval)",
+        "receive chart.trades.(instrument_name).(resolution)",
+        "receive deribit_price_index.(index_name)",
+        "receive deribit_price_ranking.(index_name)",
+        "receive deribit_price_statistics.(index_name)",
+        "receive deribit_volatility_index.(index_name)",
+        "receive estimated_expiration_price.(index_name)",
+        "receive incremental_ticker.(instrument_name)",
+        "receive instrument.creation.(kind).(currency)",
+        "receive instrument.state.(kind).(currency)",
+        "receive markprice.options.(index_name)",
+        "receive perpetual.(instrument_name).(interval)",
+        "receive platform_state",
+        "receive platform_state.public_methods_state",
+        "receive quote.(instrument_name)",
+        "receive ticker.(instrument_name).(interval)",
+        "receive trades.(instrument_name).(interval)",
+        "receive trades.(kind).(currency).(interval)",
+        "receive user.access_log",
+        "receive user.changes.(instrument_name).(interval)",
+        "receive user.changes.(kind).(currency).(interval)",
+        "receive user.combo_trades.(instrument_name).(interval)",
+        "receive user.combo_trades.(kind).(currency).(interval)",
+        "receive user.lock",
+        "receive user.mmp_trigger.(index_name)",
+        "receive user.orders.(instrument_name).(interval)",
+        "receive user.orders.(instrument_name).raw",
+        "receive user.orders.(kind).(currency).(interval)",
+        "receive user.orders.(kind).(currency).raw",
+        "receive user.portfolio.(currency)",
+        "receive user.trades.(instrument_name).(interval)",
+        "receive user.trades.(kind).(currency).(interval)",
+        "send announcements",
+        "send block_rfq.maker.(currency)",
+        "send block_rfq.maker.quotes.(currency)",
+        "send block_rfq.taker.(currency)",
+        "send block_rfq.trades.(currency)",
+        "send block_trade_confirmations",
+        "send block_trade_confirmations.(currency)",
+        "send book.(instrument_name).(group).(depth).(interval)",
+        "send book.(instrument_name).(interval)",
+        "send chart.trades.(instrument_name).(resolution)",
+        "send deribit_price_index.(index_name)",
+        "send deribit_price_ranking.(index_name)",
+        "send deribit_price_statistics.(index_name)",
+        "send deribit_volatility_index.(index_name)",
+        "send estimated_expiration_price.(index_name)",
+        "send incremental_ticker.(instrument_name)",
+        "send instrument.creation.(kind).(currency)",
+        "send instrument.state.(kind).(currency)",
+        "send markprice.options.(index_name)",
+        "send perpetual.(instrument_name).(interval)",
+        "send platform_state",
+        "send platform_state.public_methods_state",
+        "send quote.(instrument_name)",
+        "send ticker.(instrument_name).(interval)",
+        "send trades.(instrument_name).(interval)",
+        "send trades.(kind).(currency).(interval)",
+        "send user.access_log",
+        "send user.changes.(instrument_name).(interval)",
+        "send user.changes.(kind).(currency).(interval)",
+        "send user.combo_trades.(instrument_name).(interval)",
+        "send user.combo_trades.(kind).(currency).(interval)",
+        "send user.lock",
+        "send user.mmp_trigger.(index_name)",
+        "send user.orders.(instrument_name).(interval)",
+        "send user.orders.(instrument_name).raw",
+        "send user.orders.(kind).(currency).(interval)",
+        "send user.orders.(kind).(currency).raw",
+        "send user.portfolio.(currency)",
+        "send user.trades.(instrument_name).(interval)",
+        "send user.trades.(kind).(currency).(interval)"
+      ],
+      "path_keys": []
+    },
+    "reconstruction": {
+      "added_channel_keys": [
+        "user.isolated.liquidation",
+        "user.liquidation",
+        "user.lsp"
+      ],
+      "evidence": "The 2026-08-18 current pin grew 40 -> 43 channels (80 -> 86 operations) and landed on the already-reviewed upcoming 43-channel set. The May 2026 current document and the rejected stale upcoming alternative both have the same 39-channel set, missing instrument.creation.(kind).(currency), user.isolated.liquidation, user.liquidation, and user.lsp. instrument.creation was announced in Release 06.05.2026 and is the one channel that already sat in the 40-channel pin (70f51ead, 563150 bytes). The remaining three entered current with the same 2.1.1 maintenance deploy that added the four LSP REST reads; their docs describe LSP / isolated-liquidation observer surfaces.",
+      "method": "current_key_set_minus_additions"
+    },
+    "source": {
+      "bytes": 563150,
+      "retrieved_at": "2026-08-18",
+      "sha256": "70f51eadc67793fbf81ecb5cfca8d70b72419a8b81ba7d2d27b4da7b86b074f6"
+    }
+  },
+  "report_type": "authority_surface_digest",
+  "schema_version": 1,
+  "source": {
+    "bytes": 610300,
+    "retrieved_at": "2026-08-18",
+    "sha256": "759902bbd2cf10a605b48b815dc63d7e2edf4a21741f67be48335fdd2fe75ab6"
+  },
+  "venue": "deribit"
+}

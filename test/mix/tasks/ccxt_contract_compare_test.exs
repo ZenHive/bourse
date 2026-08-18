@@ -151,6 +151,179 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
            ]
   end
 
+  test "surface digest retains named channel and operation keys from AsyncAPI bytes" do
+    document = %{
+      "asyncapi" => "3.0.0",
+      "channels" => %{
+        "ticker.(instrument)" => %{},
+        "user.lsp" => %{"description" => "lsp"}
+      },
+      "operations" => %{
+        "receive_ticker" => %{
+          "action" => "receive",
+          "channel" => %{"$ref" => "#/channels/ticker.(instrument)"}
+        },
+        "send_ticker" => %{
+          "action" => "send",
+          "channel" => %{"$ref" => "#/channels/ticker.(instrument)"}
+        },
+        "receive_lsp" => %{
+          "action" => "receive",
+          "channel" => %{"$ref" => "#/channels/user.lsp"}
+        },
+        "send_lsp" => %{
+          "action" => "send",
+          "channel" => %{"$ref" => "#/channels/user.lsp"}
+        }
+      }
+    }
+
+    contents = Jason.encode!(document)
+    digest = ContractSource.surface_digest(artifact("asyncapi-json"), contents)
+
+    assert digest["key_sets"]["channel_keys"] == ["ticker.(instrument)", "user.lsp"]
+
+    assert digest["key_sets"]["operation_keys"] == [
+             "receive ticker.(instrument)",
+             "receive user.lsp",
+             "send ticker.(instrument)",
+             "send user.lsp"
+           ]
+
+    assert digest["key_set_sha256"]["channel_keys"] ==
+             ContractSource.hash_key_set(["ticker.(instrument)", "user.lsp"])
+
+    assert digest["source"]["sha256"] == AuthorityCorpus.sha256(contents)
+    assert Enum.any?(digest["entities"], &(&1["kind"] == "channel" and &1["key"] == "user.lsp"))
+  end
+
+  test "surface digest retains named paths from OpenAPI bytes and stays empty for prose" do
+    openapi = ContractSource.surface_digest(artifact("openapi-json"), Jason.encode!(openapi_document()))
+
+    assert openapi["key_sets"]["path_keys"] == ["/orders/{id}", "/status"]
+    assert "POST /api/v1/orders/{id}" in openapi["key_sets"]["operation_keys"]
+    assert Enum.any?(openapi["entities"], &(&1["kind"] == "path" and &1["key"] == "/status"))
+
+    prose =
+      "official-api-documentation"
+      |> artifact()
+      |> put_in(["expressiveness", "level"], "prose_documentation")
+
+    digest = ContractSource.surface_digest(prose, "provider prose")
+    assert digest["key_sets"] == %{"channel_keys" => [], "path_keys" => [], "operation_keys" => []}
+    assert digest["key_set_sha256"] == %{"channel_keys" => nil, "path_keys" => nil, "operation_keys" => nil}
+    assert Enum.any?(digest["limitations"], &(&1 =~ "cannot name entity-level"))
+  end
+
+  test "digest comparison names added and removed keys and changed entity hashes" do
+    prior = %{
+      "artifact_id" => "fixture",
+      "source" => %{"sha256" => String.duplicate("a", 64), "bytes" => 10},
+      "key_sets" => %{
+        "channel_keys" => ["keep", "gone"],
+        "path_keys" => [],
+        "operation_keys" => ["receive keep", "receive gone"]
+      },
+      "entities" => [
+        %{"kind" => "channel", "key" => "keep", "sha256" => "old-keep"}
+      ]
+    }
+
+    current = %{
+      "artifact_id" => "fixture",
+      "source" => %{"sha256" => String.duplicate("b", 64), "bytes" => 12},
+      "key_sets" => %{
+        "channel_keys" => ["keep", "user.lsp"],
+        "path_keys" => [],
+        "operation_keys" => ["receive keep", "receive user.lsp"]
+      },
+      "entities" => [
+        %{"kind" => "channel", "key" => "keep", "sha256" => "new-keep"}
+      ]
+    }
+
+    delta = ContractComparator.diff_surface_digests(prior, current)
+
+    assert delta["named"]
+    assert delta["added"]["channel_keys"] == ["user.lsp"]
+    assert delta["removed"]["channel_keys"] == ["gone"]
+    assert delta["added"]["operation_keys"] == ["receive user.lsp"]
+    assert delta["removed"]["operation_keys"] == ["receive gone"]
+
+    assert delta["changed"] == [
+             %{
+               "kind" => "channel",
+               "key" => "keep",
+               "prior_sha256" => "old-keep",
+               "current_sha256" => "new-keep"
+             }
+           ]
+  end
+
+  test "2026-08-18 deribit AsyncAPI republish names the three added channels from repo state" do
+    digest = ContractComparator.load_surface_digest!(@authority_root, "deribit", "current-asyncapi")
+    manifest = Bourse.JsonDocument.decode_file!(Path.join([@authority_root, "deribit", "manifest.json"]))
+    artifact = Enum.find(manifest["artifacts"], &(&1["id"] == "current-asyncapi"))
+
+    assert artifact["storage"] == "reference_only"
+    assert digest["source"]["sha256"] == artifact["sha256"]
+    assert digest["source"]["bytes"] == artifact["bytes"]
+    assert length(digest["key_sets"]["channel_keys"]) == 43
+    assert length(digest["prior"]["key_sets"]["channel_keys"]) == 40
+    assert "instrument.creation.(kind).(currency)" in digest["prior"]["key_sets"]["channel_keys"]
+    refute "user.lsp" in digest["prior"]["key_sets"]["channel_keys"]
+
+    assert digest["key_set_sha256"]["channel_keys"] ==
+             "67cd10a40f81ef7db93ee2a2995bfe1e1ef75800de5c651521d23990ab335e0f"
+
+    delta = ContractComparator.diff_surface_digests(digest["prior"], digest)
+
+    assert delta["added"]["channel_keys"] == [
+             "user.isolated.liquidation",
+             "user.liquidation",
+             "user.lsp"
+           ]
+
+    assert delta["removed"]["channel_keys"] == []
+    assert delta["counts"]["added_channel_count"] == 3
+    assert delta["counts"]["added_operation_count"] == 6
+    assert delta["counts"]["removed_channel_count"] == 0
+  end
+
+  test "review_retained_surface names the last republish when current bytes still match the pin" do
+    root = temporary_directory("retained-digest")
+    contents = Jason.encode!(%{"asyncapi" => "3.0.0", "channels" => %{"user.lsp" => %{}}, "operations" => %{}})
+    artifact = "asyncapi-json" |> artifact() |> Map.put("id", "current-asyncapi")
+    current = ContractSource.surface_digest(artifact, contents)
+
+    retained =
+      Map.put(current, "prior", %{
+        "key_sets" => %{
+          "channel_keys" => [],
+          "path_keys" => [],
+          "operation_keys" => []
+        }
+      })
+
+    path = ContractComparator.surface_digest_path(root, "deribit", "current-asyncapi")
+    File.mkdir_p!(Path.dirname(path))
+    File.write!(path, Jason.encode!(retained))
+
+    matching = ContractComparator.review_retained_surface("deribit", artifact, contents, root)
+
+    drifted =
+      ContractComparator.review_retained_surface("deribit", artifact, Jason.encode!(%{"asyncapi" => "3.0.0"}), root)
+
+    unnamed = ContractComparator.review_retained_surface("binance", %{"id" => "spot-openapi"}, "bytes", root)
+
+    assert matching["named"]
+    assert matching["added"]["channel_keys"] == ["user.lsp"]
+    assert drifted["named"]
+    assert drifted["removed"]["channel_keys"] == ["user.lsp"]
+    refute unnamed["named"]
+    assert Enum.any?(unnamed["limitations"], &(&1 =~ "spot-openapi"))
+  end
+
   test "comparison keeps axes independent, reports field differences, and is deterministic" do
     {root, manifest, authored} = comparison_fixture()
 

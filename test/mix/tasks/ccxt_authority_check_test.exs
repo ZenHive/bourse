@@ -308,6 +308,51 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
     end
   end
 
+  test "a present surface digest must name the same pin as the manifest" do
+    root = write_corpus(fn _venue, manifest -> manifest end)
+    digest_dir = Path.join([root, "binance", "surface-digests"])
+    File.mkdir_p!(digest_dir)
+
+    File.write!(
+      Path.join(digest_dir, "fixture.json"),
+      Jason.encode!(%{
+        "schema_version" => 1,
+        "artifact_id" => "fixture",
+        "source" => %{"sha256" => String.duplicate("a", 64), "bytes" => 1},
+        "key_sets" => %{"channel_keys" => [], "path_keys" => [], "operation_keys" => []}
+      })
+    )
+
+    assert_raise Mix.Error, ~r/surface digest source sha256 mismatch/, fn ->
+      AuthorityCorpus.load!(root)
+    end
+  end
+
+  test "reference-only artifacts remain valid when no surface digest is retained" do
+    root = write_corpus(fn _venue, manifest -> manifest end)
+    assert [%{"venue" => "alpaca"} | _] = AuthorityCorpus.load!(root)
+    refute File.exists?(Path.join([root, "binance", "surface-digests", "fixture.json"]))
+  end
+
+  test "a surface digest that names the manifest pin is accepted" do
+    root = write_corpus(fn _venue, manifest -> manifest end)
+    artifact = List.first(fixture_manifest("binance")["artifacts"])
+    digest_dir = Path.join([root, "binance", "surface-digests"])
+    File.mkdir_p!(digest_dir)
+
+    File.write!(
+      Path.join(digest_dir, "fixture.json"),
+      Jason.encode!(%{
+        "schema_version" => 1,
+        "artifact_id" => "fixture",
+        "source" => %{"sha256" => artifact["sha256"], "bytes" => artifact["bytes"]},
+        "key_sets" => %{"channel_keys" => [], "path_keys" => [], "operation_keys" => []}
+      })
+    )
+
+    assert Enum.any?(AuthorityCorpus.load!(root), &(&1["venue"] == "binance"))
+  end
+
   test "vendored artifacts require explicit redistribution permission" do
     root =
       write_corpus(fn
