@@ -310,7 +310,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
           {:trigger_price, "3000", "market", "STOP_MARKET", "stop_market"},
           {:stop_loss_price, "2900", "market", "STOP_MARKET", "stop_market"},
           {:take_profit_price, "3100", "market", "TAKE_PROFIT_MARKET", "take_profit_market"},
-          {:take_profit_price, "3100", "limit", "TAKE_PROFIT", "market"}
+          {:take_profit_price, "3100", "limit", "TAKE_PROFIT", "take_profit"}
         ] do
       {requests, stub} = algo_order_stub()
       exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)

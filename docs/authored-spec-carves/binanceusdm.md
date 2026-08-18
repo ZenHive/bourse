@@ -6,6 +6,22 @@ Append-only schema confrontations for Binance USD-M. Follow the allocation and e
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance USD-M carve record.
 
+## 2026-08-18 — native order-type reads invert the write mapping (Task 632)
+
+**C-T632b — USD-M order `type` is the regular book plus the algo CONDITIONAL
+enum, inverted from the authored write cases (task 632).** Outcome: CONFIRM
+provider contract; DIVERGE from collapsing `TAKE_PROFIT` onto `market`.
+USD-M regular New Order documents `LIMIT`/`MARKET`; New Algo Order under
+`algoType=CONDITIONAL` documents `STOP`, `STOP_MARKET`, `TAKE_PROFIT`,
+`TAKE_PROFIT_MARKET`, and `TRAILING_STOP_MARKET`. Creating with unified
+`take_profit` writes native `TAKE_PROFIT` and must read `take_profit` back.
+Spot-only literals (`STOP_LOSS`, `STOP_LOSS_LIMIT`, `TAKE_PROFIT_LIMIT`,
+`LIMIT_MAKER`) are not accepted on a futures parse.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T632b","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M New Order LIMIT/MARKET plus New Algo Order CONDITIONAL types STOP STOP_MARKET TAKE_PROFIT TAKE_PROFIT_MARKET TRAILING_STOP_MARKET"},"observed_evidence":{"kind":"provider_shaped","reference":"Write-type inventory and product-scoped parse goldens in test/bourse/binance_order_type_roundtrip_test.exs plus the TAKE_PROFIT create_order stub in binance_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered USD-M recording carries TAKE_PROFIT / TAKE_PROFIT_MARKET / TRAILING_STOP_MARKET; the mapping is inverted from the authored algo and batch write tables against the documented enum"}
+-->
+
 ## 2026-08-18 — USD-M ticker and aggTrade live on `/market`, not `/ws` (Task 627)
 
 **C-T627a — USD-M `watch_ticker` delivers on `wss://fstream.binance.com/market/ws` (task 627).

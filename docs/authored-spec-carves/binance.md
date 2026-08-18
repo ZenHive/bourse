@@ -6,6 +6,23 @@ Append-only schema confrontations for Binance spot. Follow the allocation and ev
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance spot carve record.
 
+## 2026-08-18 — native order-type reads invert the write mapping (Task 632)
+
+**C-T632a — Spot order `type` is the documented New Order enum, inverted from the
+uppercase write transform (task 632).** Outcome: CONFIRM provider contract;
+DIVERGE from collapsing conditionals onto `market`/`limit`. Spot New Order
+documents `LIMIT`, `MARKET`, `STOP_LOSS`, `STOP_LOSS_LIMIT`, `TAKE_PROFIT`,
+`TAKE_PROFIT_LIMIT`, and `LIMIT_MAKER`. The write path uppercases the unified
+type, so the read maps each native literal back to that unified name except
+`LIMIT_MAKER` → `limit` (post-only LIMIT; `postOnly` is derived separately).
+Futures-only literals (`STOP`, `STOP_MARKET`, `TAKE_PROFIT_MARKET`,
+`TRAILING_STOP_MARKET`) are not accepted on a spot parse. An unnamed native
+type fails rather than being downcased.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T632a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance Spot New Order type enum: LIMIT MARKET STOP_LOSS STOP_LOSS_LIMIT TAKE_PROFIT TAKE_PROFIT_LIMIT LIMIT_MAKER"},"observed_evidence":{"kind":"provider_shaped","reference":"Product-scoped parse goldens in test/bourse/binance_order_type_roundtrip_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered spot recording carries STOP_LOSS / TAKE_PROFIT / TAKE_PROFIT_LIMIT; the mapping is inverted from the authored uppercase write transform against the documented enum"}
+-->
+
 ## 2026-08-18 — linear contract unit on the umbrella FAPI family (Task 625)
 
 **C-T625a — Umbrella `binance` authors the linear contract unit only for the FAPI family

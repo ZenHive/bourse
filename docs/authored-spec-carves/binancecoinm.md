@@ -7,6 +7,20 @@ Append-only schema confrontations for Binance COIN-M. Follow the allocation and 
 venue-specific decision in the self-contained runtime document. Provider-owned evidence is
 indexed by `priv/authority/binancecoinm/manifest.json`.
 
+## 2026-08-18 — native order-type reads invert the write mapping (Task 632)
+
+**C-T632c — COIN-M order `type` shares the USD-M regular-plus-algo enum
+(task 632).** Outcome: CONFIRM the COIN-M New Order / New Algo Order
+literals (`LIMIT`, `MARKET`, `STOP`, `STOP_MARKET`, `TAKE_PROFIT`,
+`TAKE_PROFIT_MARKET`, `TRAILING_STOP_MARKET`); DIVERGE from collapsing
+`TAKE_PROFIT` onto `market`. Read mapping is the inverse of the authored
+write cases, confronted on this product separately from spot so a
+spot-only literal is not downcased here.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T632c","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M New Order / New Algo Order type enum: LIMIT MARKET STOP STOP_MARKET TAKE_PROFIT TAKE_PROFIT_MARKET TRAILING_STOP_MARKET"},"observed_evidence":{"kind":"provider_shaped","reference":"Write-type inventory and product-scoped parse goldens in test/bourse/binance_order_type_roundtrip_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered COIN-M recording carries the conditional algo types; the mapping is inverted from the authored write cases against the documented enum shared with USD-M"}
+-->
+
 ## 2026-08-18 — WS subscribe channels remain unauthored (Task 618)
 
 **C-T618c — COIN-M `websocket.subscribe` stays `supported: false` (task 618).

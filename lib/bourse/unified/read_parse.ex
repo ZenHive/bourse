@@ -290,6 +290,7 @@ defmodule Bourse.Unified.ReadParse do
            |> annotate_hyperliquid_payload(exchange, parse_type, js_name, params)
            |> annotate_deribit_payload(exchange, parse_type)
            |> annotate_endpoint_route(params),
+         :ok <- reject_unmapped_binance_order_type(payload),
          parse_opts = build_parse_opts(exchange, params, payload, list_return?),
          {:ok, parsed} <- invoke_parser(module, parser, payload, parse_opts),
          parsed =
@@ -1841,10 +1842,16 @@ defmodule Bourse.Unified.ReadParse do
       "raw value #{inspect(raw_value)}"
   end
 
+  defp response_error_message({:unmapped_order_type, details}) do
+    "Unmapped Binance #{details.product} order type for venue #{inspect(details.venue)}, " <>
+      "field #{inspect(details.field)}, raw value #{inspect(details.raw_value)}"
+  end
+
   defp response_error_message(other), do: "Unified response parse failed: #{inspect(other)}"
 
   defp response_error_raw({:unmapped_order_status, details}), do: details
   defp response_error_raw({:unmapped_ledger_type, details}), do: details
+  defp response_error_raw({:unmapped_order_type, details}), do: details
   defp response_error_raw({_tag, raw}), do: raw
   defp response_error_raw(_other), do: nil
 
@@ -3067,7 +3074,7 @@ defmodule Bourse.Unified.ReadParse do
     case_result =
       case parse_type do
         "leverage_tiers" -> flatten_binance_leverage_tiers(payload)
-        "order" -> annotate_binance_orders(payload, js_name)
+        "order" -> annotate_binance_orders(payload, js_name, exchange, params)
         "position" -> annotate_binance_positions(payload, body, params, exchange)
         "margin_mode" -> annotate_binance_margin_mode(payload)
         "adl_rank" -> annotate_binance_adl_ranks(payload)
@@ -3108,10 +3115,15 @@ defmodule Bourse.Unified.ReadParse do
 
   defp flatten_binance_leverage_tiers(payload), do: payload
 
-  defp annotate_binance_orders(rows, js_name) when is_list(rows), do: Enum.map(rows, &annotate_binance_order(&1, js_name))
+  defp annotate_binance_orders(rows, js_name, exchange, params) when is_list(rows) do
+    Enum.map(rows, &annotate_binance_order(&1, js_name, exchange, params))
+  end
 
-  defp annotate_binance_orders(%{} = row, js_name), do: annotate_binance_order(row, js_name)
-  defp annotate_binance_orders(payload, _js_name), do: payload
+  defp annotate_binance_orders(%{} = row, js_name, exchange, params) do
+    annotate_binance_order(row, js_name, exchange, params)
+  end
+
+  defp annotate_binance_orders(payload, _js_name, _exchange, _params), do: payload
 
   defp annotate_binance_transactions(rows, js_name, params) when is_list(rows) do
     Enum.map(rows, &annotate_binance_transaction(&1, js_name, params))
@@ -3203,7 +3215,7 @@ defmodule Bourse.Unified.ReadParse do
 
   defp lighter_market_settle(_exchange, _market_id), do: nil
 
-  defp annotate_binance_order(%{} = row, js_name) do
+  defp annotate_binance_order(%{} = row, js_name, exchange, params) do
     id = binance_field(row, ["orderId", "algoId"])
     amount = non_empty_string(binance_field(row, ["origQty", "quantity"]))
     filled = binance_order_filled(row, id)
@@ -3228,14 +3240,14 @@ defmodule Bourse.Unified.ReadParse do
     )
     |> maybe_put_synthetic("_bourse_last_update", last_update)
     |> maybe_put_synthetic("_bourse_last_trade", binance_last_trade_timestamp(status, last_update))
-    |> maybe_put_synthetic("_bourse_type", binance_order_type(binance_field(row, ["type", "orderType"])))
+    |> put_binance_order_type(exchange, params)
     |> maybe_put_synthetic("_bourse_status", status)
     |> maybe_put_synthetic("_bourse_trigger_price", binance_order_trigger_price(row))
     |> maybe_put_synthetic("_bourse_time_in_force", binance_time_in_force(row))
     |> maybe_put_synthetic("_bourse_post_only", binance_post_only(row))
   end
 
-  defp annotate_binance_order(other, _js_name), do: other
+  defp annotate_binance_order(other, _js_name, _exchange, _params), do: other
 
   defp binance_order_status(%{"algoId" => algo_id, "code" => code}, "cancelOrder")
        when not is_nil(algo_id) and code in [200, "200"], do: "CANCELED"
@@ -3329,13 +3341,105 @@ defmodule Bourse.Unified.ReadParse do
     Decimal.Error -> nil
   end
 
-  defp binance_order_type(type) when type in ["LIMIT", "LIMIT_MAKER"], do: "limit"
-  defp binance_order_type("STOP"), do: "stop"
-  defp binance_order_type("STOP_MARKET"), do: "stop_market"
-  defp binance_order_type(type) when type in ["MARKET", "TAKE_PROFIT", "STOP_LOSS"], do: "market"
-  defp binance_order_type(type) when type in ["TAKE_PROFIT_LIMIT", "STOP_LOSS_LIMIT"], do: "limit"
-  defp binance_order_type(type) when is_binary(type), do: String.downcase(type)
-  defp binance_order_type(_type), do: nil
+  # Spot enum: New Order `type` on developers.binance.com spot REST Trade.
+  # LIMIT_MAKER is a post-only LIMIT (postOnly is derived separately).
+  @binance_spot_order_types %{
+    "LIMIT" => "limit",
+    "LIMIT_MAKER" => "limit",
+    "MARKET" => "market",
+    "STOP_LOSS" => "stop_loss",
+    "STOP_LOSS_LIMIT" => "stop_loss_limit",
+    "TAKE_PROFIT" => "take_profit",
+    "TAKE_PROFIT_LIMIT" => "take_profit_limit"
+  }
+
+  # USD-M / COIN-M: LIMIT/MARKET on the regular book; STOP, STOP_MARKET,
+  # TAKE_PROFIT, TAKE_PROFIT_MARKET, TRAILING_STOP_MARKET on algoType=CONDITIONAL.
+  @binance_futures_order_types %{
+    "LIMIT" => "limit",
+    "MARKET" => "market",
+    "STOP" => "stop",
+    "STOP_MARKET" => "stop_market",
+    "TAKE_PROFIT" => "take_profit",
+    "TAKE_PROFIT_MARKET" => "take_profit_market",
+    "TRAILING_STOP_MARKET" => "trailing_stop_market"
+  }
+
+  # Options EAPI New Order documents LIMIT only.
+  @binance_option_order_types %{"LIMIT" => "limit"}
+
+  defp put_binance_order_type(row, exchange, params) do
+    product = binance_order_product(exchange, params)
+
+    case binance_order_type(binance_field(row, ["type", "orderType"]), product) do
+      {:ok, unified} ->
+        maybe_put_synthetic(row, "_bourse_type", unified)
+
+      {:error, {:unmapped_order_type, details}} ->
+        Map.put(row, "_bourse_unmapped_order_type", Map.put(details, :venue, exchange.id))
+    end
+  end
+
+  defp binance_order_type(type, product) when is_binary(type) do
+    case Map.fetch(binance_order_type_table(product), type) do
+      {:ok, unified} ->
+        {:ok, unified}
+
+      :error ->
+        {:error, {:unmapped_order_type, %{product: product, field: "type", raw_value: type}}}
+    end
+  end
+
+  defp binance_order_type(_type, _product), do: {:ok, nil}
+
+  defp binance_order_type_table(:spot), do: @binance_spot_order_types
+  defp binance_order_type_table(:futures), do: @binance_futures_order_types
+  defp binance_order_type_table(:option), do: @binance_option_order_types
+
+  defp binance_order_product(%Exchange{id: id}, _params) when id in ["binanceusdm", "binancecoinm"], do: :futures
+
+  defp binance_order_product(_exchange, params) do
+    case endpoint_market_type(params) do
+      :spot -> :spot
+      :swap -> :futures
+      :future -> :futures
+      :option -> :option
+      nil -> binance_order_product_from_params(params)
+    end
+  end
+
+  defp binance_order_product_from_params(%{"market_family" => family}) when family in ["linear", "inverse"],
+    do: :futures
+
+  defp binance_order_product_from_params(%{"market_family" => "option"}), do: :option
+  defp binance_order_product_from_params(%{"market_family" => "spot"}), do: :spot
+  defp binance_order_product_from_params(params), do: binance_order_product_from_endpoint(params)
+
+  defp binance_order_product_from_endpoint(params) do
+    id = Map.get(params, "_bourse_endpoint_id") || Map.get(params, "_bourse_endpoint_route") || ""
+
+    cond do
+      String.contains?(id, "eapi") -> :option
+      String.contains?(id, "fapi") or String.contains?(id, "dapi") -> :futures
+      true -> :spot
+    end
+  end
+
+  defp reject_unmapped_binance_order_type(rows) when is_list(rows) do
+    Enum.find_value(rows, :ok, &unmapped_binance_order_type_error/1)
+  end
+
+  defp reject_unmapped_binance_order_type(%{} = row) do
+    unmapped_binance_order_type_error(row) || :ok
+  end
+
+  defp reject_unmapped_binance_order_type(_payload), do: :ok
+
+  defp unmapped_binance_order_type_error(%{"_bourse_unmapped_order_type" => details}) do
+    {:error, {:unmapped_order_type, details}}
+  end
+
+  defp unmapped_binance_order_type_error(_row), do: nil
 
   defp zero_as_nil(value) do
     case non_empty_string(value) do
