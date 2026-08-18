@@ -78,9 +78,26 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   A caller-supplied native `label` wins; values longer than 64 characters
   raise `:invalid_parameters`. A venue may map a client identifier in both
   directions or in neither; one-way mapping fails a catalog invariant.
-- OKX candle `since`/`until` stay inclusive on exclusive `before`/`after`
-  cursors: the request sends `before = since - 1` and `after = until + 1`.
-  A candle sitting on the unified `until` bound was previously dropped.
+- OKX candle, deposit-history, and positions-history `since`/`until` stay
+  inclusive on exclusive `before`/`after` cursors: the request sends
+  `before = since - 1` and `after = until + 1`. A row sitting on the unified
+  `until` bound was previously dropped. Explicit native cursors still win.
+- Bybit `fetch_ticker` now stamps `timestamp` and `datetime` from the response
+  envelope. Authored field rules can select the original envelope without
+  changing which row is parsed, and recorded-response verification rejects an
+  envelope clock that is present but dropped.
+- Binance spot partial-depth snapshots now route through the
+  `watch_order_book` Broadcast instead of falling through as raw frames when
+  their provider payload has no `e` discriminator. Subscription acknowledgments
+  and unmatched frames remain system/raw messages.
+- Derive `fetch_transfers(code: ..., limit: ...)` applies the unsupported
+  provider filters client-side in currency-then-limit order, and Binance COIN-M
+  `fetch_leverages(symbol: ...)` filters the account-wide position map to the
+  requested symbol without sending an unsupported wire parameter.
+- Plural symbol-keyed reads now reject a single parsed record instead of
+  returning the wrong shape inside `{:ok, ...}`. Binance spot
+  `fetch_trading_fees` is pinned to a production SAPI recording and returns the
+  expected symbol-keyed fee map.
 - Binance spot `fetch_closed_orders`, `fetch_canceled_orders`,
   `fetch_canceled_and_closed_orders`, and `fetch_order_trades` now map
   `since`/`until` to `startTime`/`endTime`. `fetch_open_orders` drops

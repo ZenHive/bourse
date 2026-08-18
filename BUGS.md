@@ -250,16 +250,12 @@ endpoint entirely and derives cadence from `fetch_funding_rate_history` timestam
 
 ## 2026-08-05 — `fetch_ticker/2` returns `timestamp: nil` and `datetime: nil` on every bybit ticker — the mapped `time` key lives on the envelope the parser never sees
 
-**Status (2026-08-05):** 📋 triaged — filed as workbench **task 562** ("Per-field maps cannot address
-envelope-level keys, so every bybit ticker is unstamped"), open. Symptom and cause independently
-re-verified live on 2026-08-05 before filing: unified `fetch_ticker` returned `timestamp: nil` /
-`datetime: nil` with `last: 64148.6`, while the same call's raw envelope carried
-`time: 1785918546548` and the extracted list element carried only `deliveryTime` /
-`nextFundingTime`. The fix is scoped as a parse-path mechanism change (per-field access to
-envelope-level keys), not a bybit-specific patch. **Severity:** medium — not a crash and not a
-wrong number, but every bybit ticker is unstampable, so a consumer cannot tell a fresh quote from
-a stale one or order two tickers in time. **Reporter:** orchestrator session, live probes against
-bybit testnet via this repo's Tidewave node (not a path-dep consumer).
+**Status (2026-08-18):** ✅ fixed by task 562 (`1614d01`, reviewer fix
+`1530ff8`). Field rules can now read the original response envelope, so Bybit
+`fetch_ticker` binds `body.time` into `timestamp` / `datetime`; the same
+vocabulary is confronted against Hyperliquid balance clocks. Registered replay
+evidence fails if an envelope-sourced value is present but missing from the
+parsed result. The original live repro remains below.
 
 **Method:** `Bourse.fetch_ticker/2` · **Exchange:** bybit · **Blast radius:** bybit only —
 deribit stamps `timestamp`/`datetime` correctly from the same unified call.
@@ -1245,7 +1241,7 @@ The trading_dashboard `depth20@100ms` workaround can now be retired.
 binancecoinm still authors no channel table and fails loud with
 `:no_channel_templates`.
 
-**Residual (2026-08-18, task 628):** Frame arrival was not Broadcast routing.
+**Residual fixed (2026-08-18, task 628):** Frame arrival was not Broadcast routing.
 Spot `@depth20@100ms` payloads have no `e` field, so Envelope classified them
 as raw and Adapter never broadcast `{:routed, :watch_order_book, ...}`. The
 authored shape channel maps `lastUpdateId`/`bids`/`asks` onto the existing

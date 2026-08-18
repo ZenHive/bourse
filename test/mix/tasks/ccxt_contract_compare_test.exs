@@ -197,7 +197,7 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
     assert Enum.any?(digest["entities"], &(&1["kind"] == "channel" and &1["key"] == "user.lsp"))
   end
 
-  test "surface digest retains named paths from OpenAPI bytes and stays empty for prose" do
+  test "surface digest retains typed paths and stays empty for untyped or prose artifacts" do
     openapi = ContractSource.surface_digest(artifact("openapi-json"), Jason.encode!(openapi_document()))
 
     assert openapi["key_sets"]["path_keys"] == ["/orders/{id}", "/status"]
@@ -214,6 +214,23 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
 
     mixed = ContractSource.surface_digest(artifact("openapi-json"), Jason.encode!(mixed_slash))
     assert mixed["key_sets"]["path_keys"] == ["/orders", "/status"]
+
+    postman =
+      ContractSource.surface_digest(
+        artifact("postman-collection"),
+        Jason.encode!(%{
+          "item" => [
+            %{
+              "name" => "status",
+              "request" => %{"method" => "GET", "url" => %{"path" => ["status"]}}
+            }
+          ]
+        })
+      )
+
+    assert postman["key_sets"] == %{"channel_keys" => [], "path_keys" => [], "operation_keys" => []}
+    assert postman["entities"] == []
+    assert Enum.any?(postman["limitations"], &(&1 =~ "cannot name entity-level"))
 
     prose =
       "official-api-documentation"

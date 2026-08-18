@@ -9,7 +9,8 @@ defmodule Mix.Tasks.Ccxt.ContractSource do
   alias Mix.Tasks.Ccxt.AuthorityCorpus
 
   @http_methods ~w(get post put patch delete head options trace)
-  @inventory_json_kinds ~w(openapi-json asyncapi-json postman-collection)
+  @surface_digest_kinds ~w(openapi-json openapi-yaml asyncapi-json)
+  @inventory_json_kinds ~w(openapi-json asyncapi-json)
 
   @typedoc "A source fact whose absence is explicit."
   @type fact :: %{required(String.t()) => term()}
@@ -92,9 +93,10 @@ defmodule Mix.Tasks.Ccxt.ContractSource do
   def surface_digest(artifact, contents) when is_map(artifact) and is_binary(contents) do
     parsed = parse!(artifact, contents)
     document = inventory_document(artifact, contents)
+    operations = retained_operations(artifact, parsed.operations)
     channel_keys = map_keys(document["channels"])
     path_keys = document["paths"] |> map_keys() |> Enum.map(&normalize_path/1) |> Enum.sort()
-    operation_keys = parsed.operations |> Enum.map(& &1["key"]) |> Enum.sort()
+    operation_keys = operations |> Enum.map(& &1["key"]) |> Enum.sort()
 
     %{
       "schema_version" => 1,
@@ -117,7 +119,7 @@ defmodule Mix.Tasks.Ccxt.ContractSource do
       },
       "entities" =>
         Enum.sort_by(
-          channel_entities(document) ++ path_entities(document) ++ operation_entities(parsed.operations),
+          channel_entities(document) ++ path_entities(document) ++ operation_entities(operations),
           &{&1["kind"], &1["key"]}
         ),
       "metrics" => parsed.metrics,
@@ -813,6 +815,10 @@ defmodule Mix.Tasks.Ccxt.ContractSource do
   end
 
   defp inventory_document(_artifact, _contents), do: %{}
+
+  defp retained_operations(%{"kind" => kind}, operations) when kind in @surface_digest_kinds, do: operations
+
+  defp retained_operations(_artifact, _operations), do: []
 
   defp map_keys(map) when is_map(map), do: map |> Map.keys() |> Enum.sort()
   defp map_keys(_other), do: []
