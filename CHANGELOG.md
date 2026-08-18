@@ -28,11 +28,18 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   and `@aggTrade` are carried on `/market/ws` and merely acknowledged — then
   silent — on the public host, while `@depth20@100ms`, `@trade` and
   `@bookTicker` live on `/public/ws`. Both hosts are now authored and
-  `watch_*` routes each stream to the one that carries it. Raw
-  `Bourse.WS.subscribe/3` does not yet route. A connection opened for this
-  host switch is owned by the returned watch handle and closes after
-  unsubscribe or a failed subscription; the caller's original public socket
-  stays open.
+  `watch_*` routes each stream to the one that carries it.
+- WebSocket connections opened for an authored host switch are owned and
+  reused. Repeated watches for streams on the same host share one socket
+  instead of opening a new one per subscription, the `connect/3` options
+  (message handler, heartbeat, `on_disconnect`, timeout) carry over to every
+  routed connection, and `Bourse.WS.close/1` closes all of them — a caller
+  never reaches into the handle's internals to clean up. Raw
+  `Bourse.WS.subscribe/3` and `WS.Adapter.subscribe/3` route by authored host
+  as well: a stream sent on a connection whose host does not carry it now
+  either reaches the host that does or returns
+  `{:stream_host_unavailable, url, reason}`, never an acknowledgement
+  followed by silence.
 - The unified boundary validates parameter value shapes before dispatch. A
   non-encodable value (keyword list, tuple, struct) returns
   `{:error, %Bourse.Error{type: :invalid_parameters}}` naming the parameter
