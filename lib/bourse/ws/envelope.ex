@@ -4,7 +4,7 @@ defmodule Bourse.WS.Envelope do
 
   Reads `websocket.dispatch.discriminators` from the exchange spec and merges
   authored per-exchange envelope overrides (data field, unwrap_list,
-  match_type).
+  match_type, shape_channels).
   """
 
   alias Bourse.Exchange
@@ -18,7 +18,14 @@ defmodule Bourse.WS.Envelope do
     "binance" => %{
       "discriminator_field" => "e",
       "data_field" => "self",
-      "match_type" => "exact"
+      "match_type" => "exact",
+      # Spot partial-book snapshots publish lastUpdateId/bids/asks and no e.
+      "shape_channels" => [
+        %{
+          "required" => ["lastUpdateId", "bids", "asks"],
+          "channel" => "depthUpdate"
+        }
+      ]
     },
     "binanceusdm" => %{
       "discriminator_field" => "e",
@@ -85,6 +92,11 @@ defmodule Bourse.WS.Envelope do
   @spec prefix_channels(envelope() | nil) :: [String.t()]
   def prefix_channels(nil), do: []
   def prefix_channels(envelope), do: Map.get(envelope, "prefix_channels", [])
+
+  @doc "Returns authored payload-shape → channel fallbacks when `e` (or equivalent) is absent."
+  @spec shape_channels(envelope() | nil) :: [map()]
+  def shape_channels(nil), do: []
+  def shape_channels(envelope), do: Map.get(envelope, "shape_channels", [])
 
   defp maybe_put_discriminator(envelope, dispatch) do
     Map.put_new(envelope, "discriminator_field", pick_discriminator(dispatch["discriminators"]))

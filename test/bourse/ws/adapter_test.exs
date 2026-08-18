@@ -174,6 +174,65 @@ defmodule Bourse.WS.AdapterTest do
     assert :sys.get_state(adapter).subscriptions == []
   end
 
+  test "routes a Binance spot partial-book snapshot onto watch_order_book" do
+    exchange = Exchange.new!("binance")
+    book_topic = Broadcast.topic("binance", :watch_order_book, nil)
+    raw_topic = Broadcast.topic("binance", :raw, nil)
+    Broadcast.subscribe(book_topic)
+    Broadcast.subscribe(raw_topic)
+
+    on_exit(fn ->
+      Broadcast.unsubscribe(book_topic)
+      Broadcast.unsubscribe(raw_topic)
+    end)
+
+    {:ok, adapter} = Adapter.start_link(exchange, :public, connect: false)
+    on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter, :normal) end)
+
+    payload = %{"lastUpdateId" => 160, "bids" => [["1", "2"]], "asks" => [["3", "4"]]}
+    send(adapter, {:ws_frame, payload})
+
+    assert_receive {:bourse_ws, {:routed, :watch_order_book, ^payload, "depthUpdate", _market, _book}}
+    refute_received {:bourse_ws, {:raw, _}}
+  end
+
+  test "routes a USD-M depthUpdate frame onto watch_order_book" do
+    exchange = Exchange.new!("binanceusdm")
+    book_topic = Broadcast.topic("binanceusdm", :watch_order_book, nil)
+    Broadcast.subscribe(book_topic)
+    on_exit(fn -> Broadcast.unsubscribe(book_topic) end)
+
+    {:ok, adapter} = Adapter.start_link(exchange, :public, connect: false)
+    on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter, :normal) end)
+
+    payload = %{"e" => "depthUpdate", "s" => "BTCUSDT", "b" => [["42000", "1"]], "a" => [["42001", "1"]]}
+    send(adapter, {:ws_frame, payload})
+
+    assert_receive {:bourse_ws, {:routed, :watch_order_book, ^payload, "depthUpdate", _market, _book}}
+  end
+
+  test "does not treat a Binance subscribe-ack as a routed book" do
+    exchange = Exchange.new!("binance")
+    book_topic = Broadcast.topic("binance", :watch_order_book, nil)
+    system_topic = Broadcast.topic("binance", :system, nil)
+    Broadcast.subscribe(book_topic)
+    Broadcast.subscribe(system_topic)
+
+    on_exit(fn ->
+      Broadcast.unsubscribe(book_topic)
+      Broadcast.unsubscribe(system_topic)
+    end)
+
+    {:ok, adapter} = Adapter.start_link(exchange, :public, connect: false)
+    on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter, :normal) end)
+
+    ack = %{"id" => 1, "result" => nil}
+    send(adapter, {:ws_frame, ack})
+
+    assert_receive {:bourse_ws, {:system, ^ack}}
+    refute_received {:bourse_ws, {:routed, :watch_order_book, _, _, _, _}}
+  end
+
   test "broadcasts system and unknown frames without changing adapter state" do
     exchange = Exchange.new!("bybit")
     system_topic = Broadcast.topic("bybit", :system, nil)

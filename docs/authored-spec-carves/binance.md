@@ -6,6 +6,27 @@ Append-only schema confrontations for Binance spot. Follow the allocation and ev
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance spot carve record.
 
+## 2026-08-18 — spot partial-book frames have no event type (Task 628)
+
+**C-T628a — Spot partial-book snapshots are `{lastUpdateId, bids, asks}` with no
+`e` field (task 628).** Outcome: CONFIRM provider contract; DIVERGE from
+discriminating every public book frame on `e`. The
+[Spot WebSocket Market Streams](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md)
+Partial Book Depth payload documents `lastUpdateId` / `bids` / `asks` and no
+event-type field. The default `watch_order_book` stream is
+`{symbol}@depth20@100ms` (C-T618a). Live frames on
+`wss://stream.binance.com:9443/ws` (2026-08-18) match that document. Envelope
+therefore authors a shape channel: those three keys, with `bids`/`asks` as
+lists, resolve to the existing `depthUpdate` dispatch entry so Adapter
+broadcasts `{:routed, :watch_order_book, ...}`. A subscribe-ack
+(`id` + `result`) stays system; an unmatched frame stays raw. USD-M
+`@depth20@100ms` on `/ws` still publishes `e=depthUpdate` with `b`/`a`, so
+that path keeps the `e` discriminator (C-T618a did not change that payload).
+
+<!-- carve-evidence-status
+{"carve_id":"C-T628a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance Spot WebSocket Market Streams Partial Book Depth payload: lastUpdateId / bids / asks; no event-type field"},"observed_evidence":{"kind":"live_venue","reference":"Live stream.binance.com:9443/ws SUBSCRIBE of btcusdt@depth20@100ms on 2026-08-18 delivered lastUpdateId/bids/asks with no e; USD-M @depth20@100ms on /ws delivered e=depthUpdate with b/a"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-18 — native order-type reads invert the write mapping (Task 632)
 
 **C-T632a — Spot order `type` is the documented New Order enum, inverted from the

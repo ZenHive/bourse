@@ -62,7 +62,14 @@ defmodule Bourse.WS.MessageRouter do
   @spec extract_channel(map(), map()) :: String.t() | nil
   def extract_channel(raw_msg, envelope) do
     field = Map.get(envelope, "discriminator_field")
-    get_nested(raw_msg, field)
+
+    case get_nested(raw_msg, field) do
+      channel when is_binary(channel) and channel != "" ->
+        channel
+
+      _absent ->
+        match_shape_channel(raw_msg, envelope)
+    end
   end
 
   @doc "Extracts payload data using the envelope's `data_field`."
@@ -97,6 +104,30 @@ defmodule Bourse.WS.MessageRouter do
   end
 
   def get_nested(_, _), do: nil
+
+  @spec match_shape_channel(map(), map()) :: String.t() | nil
+  defp match_shape_channel(raw_msg, envelope) when is_map(raw_msg) do
+    envelope
+    |> Envelope.shape_channels()
+    |> Enum.find_value(fn shape ->
+      channel = Map.get(shape, "channel")
+
+      if is_binary(channel) and channel != "" and shape_match?(raw_msg, shape) do
+        channel
+      end
+    end)
+  end
+
+  defp shape_match?(raw_msg, %{"required" => keys}) when is_list(keys) do
+    Enum.all?(keys, fn key ->
+      Map.has_key?(raw_msg, key) and shape_value_ok?(key, Map.fetch!(raw_msg, key))
+    end)
+  end
+
+  defp shape_match?(_raw_msg, _shape), do: false
+
+  defp shape_value_ok?(key, value) when key in ["bids", "asks"], do: is_list(value)
+  defp shape_value_ok?(_key, value), do: not is_nil(value)
 
   @non_market_segments ~w(raw snapshot update 100ms)
 

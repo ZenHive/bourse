@@ -36,6 +36,20 @@ defmodule Bourse.WS.EnvelopeHandlerMappingsTest do
              Envelope.for_exchange(Exchange.new!("derive"))
   end
 
+  test "authors a Binance partial-book shape channel and none for a missing envelope" do
+    envelope = Envelope.for_exchange(Exchange.new!("binance"))
+
+    assert [
+             %{
+               "required" => ["lastUpdateId", "bids", "asks"],
+               "channel" => "depthUpdate"
+             }
+           ] = Envelope.shape_channels(envelope)
+
+    assert Envelope.shape_channels(nil) == []
+    assert Envelope.shape_channels(Envelope.for_exchange(Exchange.new!("binanceusdm"))) == []
+  end
+
   test "resolves handlers, composite families, and non-family messages" do
     assert HandlerMappings.resolve_handler(nil) == :not_found
     assert HandlerMappings.resolve_handler("handleTicker") == {:family, :watch_ticker}

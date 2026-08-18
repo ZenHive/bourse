@@ -2,6 +2,7 @@ defmodule Bourse.WS.MessageRouterTest do
   use ExUnit.Case, async: true
 
   alias Bourse.Exchange
+  alias Bourse.WS.Envelope
   alias Bourse.WS.MessageRouter
 
   describe "get_nested/2" do
@@ -77,6 +78,54 @@ defmodule Bourse.WS.MessageRouterTest do
 
       assert {:routed, :watch_order_book, ^msg, "depthUpdate"} =
                MessageRouter.route(msg, envelope, exchange)
+    end
+
+    test "routes Binance spot partial-book snapshots that have no e field" do
+      exchange = Exchange.new!("binance")
+      envelope = Envelope.for_exchange(exchange)
+
+      msg = %{
+        "lastUpdateId" => 160,
+        "bids" => [["0.0024", "10"]],
+        "asks" => [["0.0026", "100"]]
+      }
+
+      assert {:routed, :watch_order_book, ^msg, "depthUpdate"} =
+               MessageRouter.route(msg, envelope, exchange)
+
+      assert {:routed, :watch_order_book, ^msg, "depthUpdate"} =
+               MessageRouter.route(msg, exchange)
+
+      assert MessageRouter.extract_channel(msg, envelope) == "depthUpdate"
+    end
+
+    test "routes USD-M depthUpdate payloads that carry e" do
+      exchange = Exchange.new!("binanceusdm")
+      envelope = Envelope.for_exchange(exchange)
+      msg = %{"e" => "depthUpdate", "s" => "BTCUSDT", "b" => [["42000", "1.5"]], "a" => [["42001", "0.5"]]}
+
+      assert {:routed, :watch_order_book, ^msg, "depthUpdate"} =
+               MessageRouter.route(msg, envelope, exchange)
+    end
+
+    test "does not infer a book from lastUpdateId unless the envelope authors a shape" do
+      exchange = Exchange.new!("binance")
+      envelope = %{"discriminator_field" => "e", "data_field" => "self"}
+      msg = %{"lastUpdateId" => 160, "bids" => [["1", "1"]], "asks" => [["2", "1"]]}
+
+      assert {:unknown, ^msg} = MessageRouter.route(msg, envelope, exchange)
+    end
+
+    test "does not treat a Binance subscribe-ack or an unknown frame as a book" do
+      exchange = Exchange.new!("binance")
+      envelope = Envelope.for_exchange(exchange)
+      ack = %{"result" => nil, "id" => 1}
+      unknown = %{"foo" => "bar"}
+      incomplete = %{"lastUpdateId" => 1, "bids" => "not-a-list", "asks" => []}
+
+      assert {:system, ^ack} = MessageRouter.route(ack, envelope, exchange)
+      assert {:unknown, ^unknown} = MessageRouter.route(unknown, envelope, exchange)
+      assert {:unknown, ^incomplete} = MessageRouter.route(incomplete, envelope, exchange)
     end
 
     test "routes OKX tickers with unwrap_list", %{envelope: _envelope} do

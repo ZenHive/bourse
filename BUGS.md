@@ -1245,6 +1245,13 @@ The trading_dashboard `depth20@100ms` workaround can now be retired.
 binancecoinm still authors no channel table and fails loud with
 `:no_channel_templates`.
 
+**Residual (2026-08-18, task 628):** Frame arrival was not Broadcast routing.
+Spot `@depth20@100ms` payloads have no `e` field, so Envelope classified them
+as raw and Adapter never broadcast `{:routed, :watch_order_book, ...}`. The
+authored shape channel maps `lastUpdateId`/`bids`/`asks` onto the existing
+`depthUpdate` dispatch entry. Subscribe-ack and unmatched frames stay
+system/raw.
+
 **Original triage (2026-08-14):** bestätigter Spec-Authoring-Defekt, Klasse statt Einzelfall.
 binance authored kein `watchOrderBook`; der `Channels.build/4`-Fallback greift auf
 `watchOrderBookForSymbols` mit dem Template `orderbook::{symbol}` — ein CCXT-interner
