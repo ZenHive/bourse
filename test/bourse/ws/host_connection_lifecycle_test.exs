@@ -93,7 +93,7 @@ defmodule Bourse.WS.HostConnectionLifecycleTest do
 
     assert_receive {:transport_sent, ^public_url, %{"params" => ["btcusdt@bookTicker"]}}, @assert_timeout_ms
     assert_receive {:transport_sent, ^market_url, %{"params" => ["btcusdt@aggTrade"]}}, @assert_timeout_ms
-    assert map_size(Agent.get(ws.connection_owner, & &1.connections)) == 2
+    assert map_size(:sys.get_state(ws.connection_owner).connections) == 2
 
     public_frame = %{"e" => "depthUpdate"}
     market_frame = %{"e" => "aggTrade"}
@@ -175,7 +175,98 @@ defmodule Bourse.WS.HostConnectionLifecycleTest do
              WS.subscribe(ws, ["btcusdt@ticker"], ack_timeout_ms: @ack_timeout_ms)
   end
 
-  test "a stopped owner produces a named routing error and close still stops the root" do
+  test "a mixed subscribe rolls back the first host when the second host fails" do
+    test_pid = self()
+    handler = fn message -> send(test_pid, {:configured_handler, message}) end
+    exchange = Exchange.new!("binanceusdm")
+    public_url = URLRouting.public_url(exchange)
+    market_url = URLRouting.market_url(exchange)
+    mixed = ["btcusdt@bookTicker", "btcusdt@ticker"]
+
+    connect_fun = fn
+      ^public_url, opts ->
+        with {:ok, transport} <- Transport.start(test_pid, public_url, opts) do
+          {:ok, %Client{server_pid: transport, state: :connected, url: public_url}}
+        end
+
+      ^market_url, _opts ->
+        {:error, :connection_refused}
+    end
+
+    assert {:ok, ws} =
+             WS.connect(exchange, :public,
+               handler: handler,
+               connect_fun: connect_fun,
+               timeout: @connection_timeout_ms
+             )
+
+    on_exit(fn -> WS.close(ws) end)
+    assert_receive {:transport_connected, ^public_url, _public_pid, _opts}, @assert_timeout_ms
+
+    assert {:error, {:stream_host_unavailable, ^market_url, :connection_refused}} =
+             WS.subscribe(ws, mixed, ack_timeout_ms: @ack_timeout_ms)
+
+    assert_receive {:transport_sent, ^public_url, %{"method" => "SUBSCRIBE", "params" => ["btcusdt@bookTicker"]}},
+                   @assert_timeout_ms
+
+    assert_receive {:transport_sent, ^public_url, %{"method" => "UNSUBSCRIBE", "params" => ["btcusdt@bookTicker"]}},
+                   @assert_timeout_ms
+
+    refute_receive {:transport_connected, ^market_url, _, _}, @refute_timeout_ms
+    refute_receive {:transport_sent, ^public_url, _}, @refute_timeout_ms
+
+    assert {:error, {:stream_host_unavailable, ^market_url, :connection_refused}} =
+             WS.subscribe(ws, mixed, ack_timeout_ms: @ack_timeout_ms)
+
+    assert_receive {:transport_sent, ^public_url, %{"method" => "SUBSCRIBE", "params" => ["btcusdt@bookTicker"]}},
+                   @assert_timeout_ms
+
+    assert_receive {:transport_sent, ^public_url, %{"method" => "UNSUBSCRIBE", "params" => ["btcusdt@bookTicker"]}},
+                   @assert_timeout_ms
+
+    refute_receive {:transport_sent, ^public_url, %{"method" => "SUBSCRIBE", "params" => ["btcusdt@bookTicker"]}},
+                   @refute_timeout_ms
+  end
+
+  test "adapter does not record a mixed list when any host fails" do
+    test_pid = self()
+    handler = fn message -> send(test_pid, {:configured_handler, message}) end
+    exchange = Exchange.new!("binanceusdm")
+    public_url = URLRouting.public_url(exchange)
+    market_url = URLRouting.market_url(exchange)
+
+    connect_fun = fn
+      ^public_url, opts ->
+        with {:ok, transport} <- Transport.start(test_pid, public_url, opts) do
+          {:ok, %Client{server_pid: transport, state: :connected, url: public_url}}
+        end
+
+      ^market_url, _opts ->
+        {:error, :connection_refused}
+    end
+
+    assert {:ok, ws} =
+             WS.connect(exchange, :public,
+               handler: handler,
+               connect_fun: connect_fun,
+               timeout: @connection_timeout_ms
+             )
+
+    on_exit(fn -> WS.close(ws) end)
+    {:ok, adapter} = Adapter.start_link(ws.exchange, :public, connect: false, ws: ws)
+    on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter) end)
+
+    assert {:error, {:stream_host_unavailable, ^market_url, :connection_refused}} =
+             Adapter.subscribe(
+               adapter,
+               ["btcusdt@bookTicker", "btcusdt@ticker"],
+               ack_timeout_ms: @ack_timeout_ms
+             )
+
+    assert :sys.get_state(adapter).subscriptions == []
+  end
+
+  test "a stopped owner closes every routed socket so none are orphaned" do
     handler = fn _message -> :ok end
     {ws, public_pid} = owned_ws(handler: handler, timeout: @connection_timeout_ms)
     on_exit(fn -> WS.close(ws) end)
@@ -183,14 +274,54 @@ defmodule Bourse.WS.HostConnectionLifecycleTest do
     market_url = URLRouting.market_url(ws.exchange)
     assert_receive {:transport_connected, ^public_url, ^public_pid, _opts}, @assert_timeout_ms
 
-    Agent.stop(ws.connection_owner)
+    assert :ok =
+             WS.subscribe(
+               ws,
+               ["btcusdt@bookTicker", "btcusdt@ticker"],
+               ack_timeout_ms: @ack_timeout_ms
+             )
+
+    assert_receive {:transport_connected, ^market_url, market_pid, _opts}, @assert_timeout_ms
+
+    public_ref = Process.monitor(public_pid)
+    market_ref = Process.monitor(market_pid)
+    owner_ref = Process.monitor(ws.connection_owner)
+    assert :ok = GenServer.stop(ws.connection_owner)
+
+    assert_receive {:DOWN, ^public_ref, :process, ^public_pid, :normal}, @assert_timeout_ms
+    assert_receive {:DOWN, ^market_ref, :process, ^market_pid, :normal}, @assert_timeout_ms
+    assert_receive {:DOWN, ^owner_ref, :process, _, :normal}, @assert_timeout_ms
 
     assert {:error, {:stream_host_unavailable, ^market_url, {:connection_owner_down, _reason}}} =
              WS.subscribe(ws, ["btcusdt@aggTrade"], ack_timeout_ms: @ack_timeout_ms)
 
-    public_ref = Process.monitor(public_pid)
     assert :ok = WS.close(ws)
-    assert_receive {:DOWN, ^public_ref, :process, ^public_pid, :normal}, @assert_timeout_ms
+  end
+
+  test "a killed owner takes routed sockets with it" do
+    handler = fn _message -> :ok end
+    {ws, public_pid} = owned_ws(handler: handler, timeout: @connection_timeout_ms)
+    on_exit(fn -> WS.close(ws) end)
+    public_url = URLRouting.public_url(ws.exchange)
+    market_url = URLRouting.market_url(ws.exchange)
+    assert_receive {:transport_connected, ^public_url, ^public_pid, _opts}, @assert_timeout_ms
+
+    assert :ok =
+             WS.subscribe(
+               ws,
+               ["btcusdt@bookTicker", "btcusdt@ticker"],
+               ack_timeout_ms: @ack_timeout_ms
+             )
+
+    assert_receive {:transport_connected, ^market_url, market_pid, _opts}, @assert_timeout_ms
+
+    public_ref = Process.monitor(public_pid)
+    market_ref = Process.monitor(market_pid)
+    Process.exit(ws.connection_owner, :kill)
+
+    assert_receive {:DOWN, ^public_ref, :process, ^public_pid, :killed}, @assert_timeout_ms
+    assert_receive {:DOWN, ^market_ref, :process, ^market_pid, :killed}, @assert_timeout_ms
+    assert :ok = WS.close(ws)
   end
 
   test "an authored split host without an owner fails with the target host named" do

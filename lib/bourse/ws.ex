@@ -41,6 +41,11 @@ defmodule Bourse.WS do
   - `{:error, reason}` — build/send failures (`:unsupported_exchange`, channel
     shape errors, transport errors, …)
 
+  Channels that span more than one authored host are one call: every host is
+  accepted, or hosts that already succeeded are unsubscribed and the failing
+  host's error is returned. A retry of the same list does not stack a leftover
+  subscription on the host that worked.
+
   Correlated JSON-RPC replies (deribit) and asynchronous acks (bybit, okx,
   hyperliquid, derive, binance) are classified by `Bourse.WS.SubscribeAck`.
   Rejection frames that arrive asynchronously are still consumed and returned
@@ -58,6 +63,7 @@ defmodule Bourse.WS do
   alias Bourse.WS.AuthAck
   alias Bourse.WS.Channels
   alias Bourse.WS.Config
+  alias Bourse.WS.ConnectionOwner
   alias Bourse.WS.Handle
   alias Bourse.WS.ListenKey
   alias Bourse.WS.SubscribeAck
@@ -394,19 +400,33 @@ defmodule Bourse.WS do
   @spec subscribe(t(), [String.t() | map()], keyword() | map()) :: :ok | {:error, term()}
   def subscribe(%__MODULE__{} = ws, channels, opts \\ []) when is_list(channels) do
     with {:ok, groups} <- route_subscription_groups(ws, channels) do
-      subscribe_groups(groups, opts)
+      subscribe_groups(ws, groups, opts)
     end
   end
 
-  defp subscribe_on(%__MODULE__{exchange: exchange, zen_client: zen_client, section: section}, channels, opts) do
-    emit_ws_send(exchange, section)
-    ack_timeout_ms = ack_timeout_ms(opts)
+  defp subscribe_on(ws, channels, opts) do
+    emit_ws_send(ws.exchange, ws.section)
 
-    with {:ok, config} <- fetch_config(exchange),
-         merged_config = merge_subscription_config(config, strip_ack_opts(opts)),
-         {:ok, payload} <-
-           Subscription.build_subscribe(config.subscription_pattern, channels, merged_config) do
-      confirm_subscribe(zen_client, payload, exchange.id, ack_timeout_ms)
+    with {:ok, payload} <- subscription_payload(ws.exchange, channels, opts, &Subscription.build_subscribe/3) do
+      confirm_subscribe(ws.zen_client, payload, ws.exchange.id, ack_timeout_ms(opts))
+    end
+  end
+
+  defp unsubscribe_on(ws, channels, opts) do
+    emit_ws_send(ws.exchange, ws.section)
+
+    with {:ok, payload} <- subscription_payload(ws.exchange, channels, opts, &Subscription.build_unsubscribe/3) do
+      send_payload(ws.zen_client, payload)
+    end
+  end
+
+  defp subscription_payload(exchange, channels, opts, builder) do
+    with {:ok, config} <- fetch_config(exchange) do
+      builder.(
+        config.subscription_pattern,
+        channels,
+        merge_subscription_config(config, strip_ack_opts(opts))
+      )
     end
   end
 
@@ -511,12 +531,7 @@ defmodule Bourse.WS do
   """
   @spec unsubscribe(Handle.t()) :: :ok | {:ok, map()} | {:error, term()}
   def unsubscribe(%Handle{ws: ws, channels: channels, opts: sub_opts} = handle) do
-    with {:ok, config} <- fetch_config(ws.exchange),
-         merged_config = merge_subscription_config(config, sub_opts),
-         {:ok, payload} <-
-           Subscription.build_unsubscribe(config.subscription_pattern, channels, merged_config) do
-      send_payload(ws.zen_client, payload)
-    end
+    unsubscribe_on(ws, channels, sub_opts)
   after
     close_owned_connection(handle)
   end
@@ -573,34 +588,46 @@ defmodule Bourse.WS do
 
   defp route_subscription_groups(%__MODULE__{section: :public, url: url} = ws, channels) do
     if URLRouting.authored_usdm_host?(ws.exchange, url) do
-      ws.exchange
-      |> URLRouting.group_channels_by_url(channels)
-      |> Enum.reduce_while({:ok, []}, &prepend_routed_group(ws, url, &1, &2))
-      |> then(fn
-        {:ok, groups} -> {:ok, Enum.reverse(groups)}
-        {:error, _} = error -> error
-      end)
+      groups =
+        ws.exchange
+        |> URLRouting.group_channels_by_url(channels)
+        |> Enum.map(fn {target, grouped} -> {target || url, grouped} end)
+
+      {:ok, groups}
     else
-      {:ok, [{ws, channels}]}
+      {:ok, [{url, channels}]}
     end
   end
 
-  defp route_subscription_groups(ws, channels), do: {:ok, [{ws, channels}]}
+  defp route_subscription_groups(%__MODULE__{url: url}, channels), do: {:ok, [{url, channels}]}
 
-  defp prepend_routed_group(ws, source_url, {target, channels}, {:ok, groups}) do
-    case routed_connection(ws, target || source_url) do
-      {:ok, target_ws} -> {:cont, {:ok, [{target_ws, channels} | groups]}}
-      {:error, _} = error -> {:halt, error}
-    end
-  end
+  defp subscribe_groups(ws, groups, opts) do
+    groups
+    |> Enum.reduce_while([], fn {url, channels}, succeeded ->
+      case subscribe_host(ws, url, channels, opts) do
+        {:ok, host_ws} ->
+          {:cont, [{host_ws, channels} | succeeded]}
 
-  defp subscribe_groups(groups, opts) do
-    Enum.reduce_while(groups, :ok, fn {ws, channels}, :ok ->
-      case subscribe_on(ws, channels, opts) do
-        :ok -> {:cont, :ok}
-        {:error, _} = error -> {:halt, error}
+        {:error, _} = error ->
+          rollback_subscriptions(succeeded, opts)
+          {:halt, error}
       end
     end)
+    |> finish_subscribe_groups()
+  end
+
+  defp subscribe_host(ws, url, channels, opts) do
+    with {:ok, host_ws} <- routed_connection(ws, url),
+         :ok <- subscribe_on(host_ws, channels, opts) do
+      {:ok, host_ws}
+    end
+  end
+
+  defp finish_subscribe_groups(succeeded) when is_list(succeeded), do: :ok
+  defp finish_subscribe_groups({:error, _} = error), do: error
+
+  defp rollback_subscriptions(succeeded, opts) do
+    Enum.each(succeeded, fn {ws, channels} -> _ = unsubscribe_on(ws, channels, opts) end)
   end
 
   defp routed_connection(%__MODULE__{url: url} = ws, url), do: {:ok, ws}
@@ -612,9 +639,11 @@ defmodule Bourse.WS do
   defp routed_connection(%__MODULE__{} = ws, url) do
     owner_result =
       try do
-        Agent.get_and_update(
+        ConnectionOwner.checkout(
           ws.connection_owner,
-          &checkout_or_connect(&1, ws.connect_fun, url, ws.connect_opts),
+          ws.connect_fun,
+          url,
+          ws.connect_opts,
           connection_owner_timeout(ws)
         )
       catch
@@ -627,32 +656,8 @@ defmodule Bourse.WS do
     end
   end
 
-  defp checkout_or_connect(%{closed?: true} = state, _connect_fun, _url, _opts) do
-    {{:error, :connection_closed}, state}
-  end
-
-  defp checkout_or_connect(%{connections: connections} = state, connect_fun, url, opts) do
-    case Map.fetch(connections, url) do
-      {:ok, zen_client} ->
-        {{:ok, zen_client}, state}
-
-      :error ->
-        case connect_fun.(url, opts) do
-          {:ok, zen_client} ->
-            {{:ok, zen_client}, %{state | connections: Map.put(connections, url, zen_client)}}
-
-          {:error, reason} ->
-            {{:error, reason}, state}
-        end
-    end
-  end
-
-  defp start_connection_owner(url, zen_client) do
-    Agent.start(fn -> %{closed?: false, connections: %{url => zen_client}} end)
-  end
-
   defp own_connection(url, zen_client) do
-    case start_connection_owner(url, zen_client) do
+    case ConnectionOwner.start(url, zen_client) do
       {:ok, owner} ->
         {:ok, owner}
 
@@ -663,23 +668,12 @@ defmodule Bourse.WS do
   end
 
   defp take_owned_connections(ws) do
-    Agent.get_and_update(
-      ws.connection_owner,
-      fn state ->
-        clients = state.connections |> Map.values() |> Enum.uniq()
-        {{:ok, clients}, %{state | closed?: true, connections: %{}}}
-      end,
-      connection_owner_timeout(ws)
-    )
+    ConnectionOwner.take(ws.connection_owner, connection_owner_timeout(ws))
   catch
     :exit, reason -> {:error, reason}
   end
 
-  defp stop_connection_owner(owner, timeout) do
-    Agent.stop(owner, :normal, timeout)
-  catch
-    :exit, _reason -> :ok
-  end
+  defp stop_connection_owner(owner, timeout), do: ConnectionOwner.stop(owner, timeout)
 
   defp connection_owner_timeout(%__MODULE__{connect_opts: opts}) do
     Keyword.get(opts, :timeout, @default_connection_timeout_ms) + @connection_owner_timeout_buffer_ms
