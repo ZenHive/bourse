@@ -21,6 +21,7 @@ defmodule Bourse.Unified.DeribitPositionUnitsTest do
         contracts: nil,
         contract_size: nil,
         notional: 50.0,
+        symbol: "BTC/USD:BTC",
         info: %{"_bourse_inverse" => true, "instrument_name" => "BTC-PERPETUAL", "kind" => "future"}
       }
 
@@ -30,16 +31,17 @@ defmodule Bourse.Unified.DeribitPositionUnitsTest do
         contracts: nil,
         contract_size: nil,
         notional: 1500.0,
+        symbol: "ETH/USDC:USDC",
         info: %{"_bourse_inverse" => false, "instrument_name" => "ETH_USDC-PERPETUAL", "kind" => "future"}
       }
 
     assert {:ok,
             [
-              %Position{contracts: 5.0, contract_size: 10.0},
-              %Position{contracts: 500.0, contract_size: 0.001}
+              %Position{contracts: 5.0, contract_size: 10.0, notional_currency: "USD"},
+              %Position{contracts: 500.0, contract_size: 0.001, notional_currency: "USDC"}
             ]} = DeribitPositionUnits.reconcile({:ok, [inverse, linear]}, exchange)
 
-    assert {:ok, %Position{contracts: 5.0, contract_size: 10.0}} =
+    assert {:ok, %Position{contracts: 5.0, contract_size: 10.0, notional_currency: "USD"}} =
              DeribitPositionUnits.reconcile({:ok, inverse}, exchange)
   end
 
@@ -52,28 +54,52 @@ defmodule Bourse.Unified.DeribitPositionUnitsTest do
     position = %Position{
       base_quantity: 0.5,
       notional: 1500.0,
+      symbol: "ETH/USDC:USDC",
       info: %{"instrument_name" => "ETH_USDC-PERPETUAL", "kind" => "future"}
     }
 
-    assert {:ok, %Position{contracts: 500.0, contract_size: 0.001}} =
+    assert {:ok, %Position{contracts: 500.0, contract_size: 0.001, notional_currency: "USDC"}} =
              DeribitPositionUnits.reconcile({:ok, position}, exchange)
   end
 
-  test "leaves positions unchanged without applicable market metadata" do
+  test "leaves contract fields unchanged without applicable market metadata while adding the notional currency" do
     exchange = Exchange.new!("deribit")
-    future = %Position{notional: 50.0, info: %{"instrument_name" => "BTC-PERPETUAL", "kind" => "future"}}
+
+    future = %Position{
+      notional: 50.0,
+      symbol: "BTC/USD:BTC",
+      info: %{"instrument_name" => "BTC-PERPETUAL", "kind" => "future"}
+    }
+
     option = %Position{contracts: 0.1, info: %{"instrument_name" => "BTC-OPTION", "kind" => "option"}}
 
-    assert {:ok, [^future, ^option, :raw]} =
+    assert {:ok, [%Position{contracts: nil, contract_size: nil, notional_currency: "USD"}, ^option, :raw]} =
              DeribitPositionUnits.reconcile({:ok, [future, option, :raw]}, exchange)
   end
 
-  test "passes through non-Deribit and error results" do
+  test "adds a quote currency to non-Deribit positions and passes through errors" do
     exchange = Exchange.new!("binance")
-    result = {:ok, [%Position{notional: 50.0}]}
+    result = {:ok, [%Position{notional: 50.0, symbol: "BTC/USDT:USDT"}]}
     error = {:error, :request_failed}
 
-    assert DeribitPositionUnits.reconcile(result, exchange) == result
+    assert {:ok, [%Position{notional_currency: "USDT"}]} =
+             DeribitPositionUnits.reconcile(result, exchange)
+
     assert DeribitPositionUnits.reconcile(error, exchange) == error
+  end
+
+  test "fails loudly when a populated notional has no resolvable currency" do
+    exchange = Exchange.new!("binance")
+
+    positions = [
+      %Position{notional: 10.0, symbol: "BTC/USDT:USDT"},
+      %Position{notional: 50.0}
+    ]
+
+    assert {:error, {:missing_position_notional_currency, %{exchange: "binance", symbol: nil}}} =
+             DeribitPositionUnits.reconcile({:ok, %Position{notional: 50.0}}, exchange)
+
+    assert {:error, {:missing_position_notional_currency, %{exchange: "binance", symbol: nil}}} =
+             DeribitPositionUnits.reconcile({:ok, positions}, exchange)
   end
 end

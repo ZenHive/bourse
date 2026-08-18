@@ -5,13 +5,11 @@ defmodule Bourse.PositionUnitInvariantTest do
   alias Bourse.Market
   alias Bourse.Position
   alias Bourse.Unified.DeribitPositionUnits
+  alias Bourse.Unified.ReadParse
 
-  @unit_tolerance 1.0e-12
-  @carve_register "docs/authored-spec-carves/global.md"
+  @unit_tolerance 1.0e-6
 
-  test "every authored position slice preserves its frozen notional unit and reconciles or names its carve" do
-    carve_register = File.read!(@carve_register)
-
+  test "every authored position slice emits a frozen notional with a machine-readable currency" do
     for position_case <- position_cases() do
       position = parse_position!(position_case)
 
@@ -20,6 +18,9 @@ defmodule Bourse.PositionUnitInvariantTest do
                       @unit_tolerance,
                       "#{position_case.venue} changed its frozen position notional unit"
 
+      assert position.notional_currency == position_case.expected_notional_currency,
+             "#{position_case.venue} changed its frozen position notional currency"
+
       assert_in_delta position.contracts,
                       position_case.expected_contracts,
                       @unit_tolerance,
@@ -27,21 +28,36 @@ defmodule Bourse.PositionUnitInvariantTest do
 
       assert_contract_size(position, position_case)
       assert_base_quantity(position, position_case)
-
-      assert position_case.quote_notional? or is_binary(position_case.exception)
-
-      case position_case.exception do
-        nil ->
-          assert_in_delta position.contracts * position.contract_size,
-                          position.notional,
-                          @unit_tolerance,
-                          "#{position_case.venue} contracts no longer reconcile with quote notional"
-
-        exception ->
-          assert carve_register =~ "`#{exception}`",
-                 "#{position_case.venue} unit exception #{exception} is not documented"
-      end
+      assert_quantity_arithmetic(position, position_case)
     end
+  end
+
+  test "frozen rows are venue payloads without parser annotations" do
+    for %{venue: venue, row: row} <- position_cases() do
+      refute synthetic_key?(row), "#{venue} invariant row pre-seeds a _bourse_* annotation"
+    end
+  end
+
+  test "base_quantity is scoped to Deribit futures rather than all position rows" do
+    exchange = Exchange.new!("deribit")
+
+    assert {:ok, %Position{base_quantity: nil, contracts: 0.25, notional: nil}} =
+             ReadParse.parse(
+               exchange,
+               Bourse.Deribit,
+               :fetch_position,
+               "fetchPosition",
+               %{
+                 "direction" => "buy",
+                 "instrument_name" => "ETH-25SEP26-2700-P",
+                 "kind" => "option",
+                 "mark_price" => 0.4,
+                 "size" => 0.25
+               },
+               %{"symbol" => "ETH/USD:ETH-260925-2700-P"},
+               :parse_position,
+               false
+             )
   end
 
   test "every authored position slice carries a frozen invariant row" do
@@ -75,27 +91,86 @@ defmodule Bourse.PositionUnitInvariantTest do
                     "#{position_case.venue} changed its frozen contract-size unit"
   end
 
-  defp assert_base_quantity(position, %{expected_base_quantity: expected}) do
+  defp assert_base_quantity(position, %{expected_emitted_base_quantity: expected}) do
     assert_in_delta position.base_quantity,
                     expected,
                     @unit_tolerance,
                     "position base quantity changed its frozen unit"
   end
 
-  defp assert_base_quantity(_position, _position_case), do: :ok
+  defp assert_base_quantity(%Position{base_quantity: nil}, _position_case), do: :ok
+
+  defp assert_quantity_arithmetic(position, %{quantity_basis: :shares} = position_case) do
+    assert_in_delta position.contracts * position.mark_price,
+                    position.notional,
+                    @unit_tolerance,
+                    "#{position_case.venue} shares and price no longer reconcile with notional"
+  end
+
+  defp assert_quantity_arithmetic(position, %{quantity_basis: :quote_contract} = position_case) do
+    quote_quantity = position.contracts * position.contract_size
+
+    if position_case.expected_notional_currency == quote_currency(position.symbol) do
+      assert_in_delta quote_quantity,
+                      position.notional,
+                      @unit_tolerance,
+                      "#{position_case.venue} quote contracts no longer reconcile with notional"
+    else
+      assert_in_delta quote_quantity,
+                      position.notional * position.mark_price,
+                      @unit_tolerance,
+                      "#{position_case.venue} quote contracts no longer reconcile with settlement notional"
+    end
+  end
+
+  defp assert_quantity_arithmetic(position, %{quantity_basis: :base_contract} = position_case) do
+    base_quantity = position.contracts * position.contract_size
+
+    assert_in_delta base_quantity,
+                    position_case.expected_base_quantity,
+                    @unit_tolerance,
+                    "#{position_case.venue} contracts no longer reconcile with base quantity"
+
+    if is_number(position.mark_price) do
+      assert_in_delta base_quantity * position.mark_price,
+                      position.notional,
+                      @unit_tolerance,
+                      "#{position_case.venue} base quantity and mark no longer reconcile with quote notional"
+    end
+  end
+
+  defp quote_currency(symbol) do
+    assert {:ok, %{quote: quote}} = Bourse.Symbol.parse_extended(symbol)
+    quote
+  end
+
+  defp synthetic_key?(%{} = map) do
+    Enum.any?(map, fn
+      {"_bourse_" <> _rest, _value} -> true
+      {_key, value} -> synthetic_key?(value)
+    end)
+  end
+
+  defp synthetic_key?(list) when is_list(list), do: Enum.any?(list, &synthetic_key?/1)
+  defp synthetic_key?(_value), do: false
 
   defp parse_position!(position_case) do
-    module = position_case.module
-
-    assert {:ok, %Position{} = position} =
-             module.parse_position(position_case.row, [])
-
-    position = %{position | info: position_case.row}
-
     exchange =
       position_case.venue
       |> Exchange.new!()
       |> Exchange.put_markets(position_case.markets)
+
+    assert {:ok, %Position{} = position} =
+             ReadParse.parse(
+               exchange,
+               position_case.module,
+               :fetch_position,
+               "fetchPosition",
+               position_case.row,
+               %{"symbol" => position_case.symbol},
+               :parse_position,
+               false
+             )
 
     assert {:ok, %Position{} = reconciled} =
              DeribitPositionUnits.reconcile({:ok, position}, exchange)
@@ -108,79 +183,107 @@ defmodule Bourse.PositionUnitInvariantTest do
       %{
         venue: "alpaca",
         module: Bourse.Alpaca,
-        row: %{"qty" => "-1.5", "market_value" => "-450"},
+        symbol: "AAPL",
+        row: %{"current_price" => "300", "market_value" => "-450", "qty" => "-1.5", "symbol" => "AAPL"},
         markets: [],
+        expected_base_quantity: 1.5,
         expected_contracts: 1.5,
         expected_contract_size: nil,
         expected_notional: 450.0,
-        quote_notional?: true,
-        exception: "C-T610/alpaca-equity-share-quantity"
+        expected_notional_currency: "USD",
+        quantity_basis: :shares
       },
-      binance_position_case("binance", Bourse.Binance, "C-T610/binance-linear-base-contract"),
+      binance_position_case("binance", Bourse.Binance),
       %{
         venue: "binancecoinm",
         module: Bourse.Binancecoinm,
+        symbol: "ETH/USD:ETH",
         row: %{
-          "_bourse_contract_size" => 10,
-          "_bourse_contracts" => 2,
-          "_bourse_notional" => "0.01",
+          "markPrice" => "2000",
           "notionalValue" => "0.01",
           "positionAmt" => "2",
           "symbol" => "ETHUSD_PERP"
         },
-        markets: [],
+        markets: [
+          %Market{
+            id: "ETHUSD_PERP",
+            symbol: "ETH/USD:ETH",
+            contract: true,
+            swap: true,
+            inverse: true,
+            contract_size: 10.0
+          }
+        ],
         expected_contracts: 2.0,
         expected_contract_size: 10.0,
         expected_notional: 0.01,
-        quote_notional?: false,
-        exception: "C-T610/binancecoinm-inverse-settlement-notional"
+        expected_notional_currency: "ETH",
+        quantity_basis: :quote_contract
       },
-      binance_position_case(
-        "binanceusdm",
-        Bourse.Binanceusdm,
-        "C-T610/binanceusdm-linear-base-contract"
-      ),
+      binance_position_case("binanceusdm", Bourse.Binanceusdm),
       %{
         venue: "bybit",
         module: Bourse.Bybit,
+        symbol: "BTC/USDT:USDT",
         row: %{
-          "_bourse_contract_size" => 1,
-          "_bourse_notional" => "5000",
+          "markPrice" => "50000",
           "positionValue" => "5000",
+          "side" => "Buy",
           "size" => "0.1",
           "symbol" => "BTCUSDT"
         },
         markets: [],
+        expected_base_quantity: 0.1,
         expected_contracts: 0.1,
         expected_contract_size: 1.0,
         expected_notional: 5000.0,
-        quote_notional?: true,
-        exception: "C-T610/bybit-linear-base-contract"
+        expected_notional_currency: "USDT",
+        quantity_basis: :base_contract
+      },
+      %{
+        venue: "bybit",
+        module: Bourse.Bybit,
+        symbol: "BTC/USD:BTC",
+        row: %{
+          "contractSize" => "1",
+          "markPrice" => "50000",
+          "side" => "Buy",
+          "size" => "100",
+          "symbol" => "BTCUSD"
+        },
+        markets: [],
+        expected_contracts: 100.0,
+        expected_contract_size: 1.0,
+        expected_notional: 0.002,
+        expected_notional_currency: "BTC",
+        quantity_basis: :quote_contract
       },
       %{
         venue: "deribit",
         module: Bourse.Deribit,
+        symbol: "BTC/USD:BTC",
         row: %{
-          "_bourse_inverse" => true,
+          "direction" => "buy",
           "instrument_name" => "BTC-PERPETUAL",
           "kind" => "future",
           "mark_price" => 7476.65,
           "size" => 50,
           "size_currency" => 0.006687487
         },
-        markets: [%Market{id: "BTC-PERPETUAL", contract_size: 10.0, inverse: true}],
+        markets: [%Market{id: "BTC-PERPETUAL", symbol: "BTC/USD:BTC", contract_size: 10.0, inverse: true}],
         expected_base_quantity: 0.006687487,
+        expected_emitted_base_quantity: 0.006687487,
         expected_contracts: 5.0,
         expected_contract_size: 10.0,
         expected_notional: 50.0,
-        quote_notional?: true,
-        exception: nil
+        expected_notional_currency: "USD",
+        quantity_basis: :quote_contract
       },
       %{
         venue: "deribit",
         module: Bourse.Deribit,
+        symbol: "ETH/USDC:USDC",
         row: %{
-          "_bourse_inverse" => false,
           "direction" => "buy",
           "instrument_name" => "ETH_USDC-PERPETUAL",
           "kind" => "future",
@@ -189,91 +292,158 @@ defmodule Bourse.PositionUnitInvariantTest do
           "size_currency" => 0.5
         },
         markets: [
-          %Market{id: "ETH_USDC-PERPETUAL", contract_size: 0.001, inverse: false, linear: true}
+          %Market{
+            id: "ETH_USDC-PERPETUAL",
+            symbol: "ETH/USDC:USDC",
+            contract_size: 0.001,
+            inverse: false,
+            linear: true
+          }
         ],
         expected_base_quantity: 0.5,
+        expected_emitted_base_quantity: 0.5,
         expected_contracts: 500.0,
         expected_contract_size: 0.001,
         expected_notional: 1500.125,
-        quote_notional?: true,
-        exception: "C-T611/deribit-linear-base-contract"
+        expected_notional_currency: "USDC",
+        quantity_basis: :base_contract
       },
       %{
         venue: "derive",
         module: Bourse.Derive,
-        row: %{"_bourse_notional" => "50", "amount" => "0.5", "mark_price" => "100"},
+        symbol: "ETH/USDC:USDC",
+        row: %{"amount" => "-0.5", "instrument_name" => "ETH-PERP", "mark_price" => "100"},
         markets: [],
+        expected_base_quantity: 0.5,
         expected_contracts: 0.5,
         expected_contract_size: 1.0,
         expected_notional: 50.0,
-        quote_notional?: true,
-        exception: "C-T610/derive-base-amount"
+        expected_notional_currency: "USDC",
+        quantity_basis: :base_contract
       },
       %{
         venue: "hyperliquid",
         module: Bourse.Hyperliquid,
+        symbol: "ETH/USDC:USDC",
         row: %{
-          "_bourse_contract_size" => 1,
-          "_bourse_contracts" => "0.5",
-          "positionValue" => "50",
-          "szi" => "0.5"
+          "position" => %{
+            "coin" => "ETH",
+            "entryPx" => "100",
+            "leverage" => %{"type" => "cross", "value" => "5"},
+            "positionValue" => "50",
+            "szi" => "0.5"
+          },
+          "type" => "oneWay"
         },
         markets: [],
+        expected_base_quantity: 0.5,
         expected_contracts: 0.5,
         expected_contract_size: 1.0,
         expected_notional: 50.0,
-        quote_notional?: true,
-        exception: "C-T610/hyperliquid-base-size"
+        expected_notional_currency: "USDC",
+        quantity_basis: :base_contract
       },
       %{
         venue: "lighter",
         module: Bourse.Lighter,
-        row: %{"position" => "0.25", "position_value" => "25"},
-        markets: [],
+        symbol: "BTC/USDC:USDC",
+        row: %{"avg_entry_price" => "100", "market_id" => 1, "position" => "0.25", "position_value" => "25"},
+        markets: [%Market{id: "1", symbol: "BTC/USDC:USDC", contract_size: 1.0, linear: true, swap: true}],
+        expected_base_quantity: 0.25,
         expected_contracts: 0.25,
         expected_contract_size: 1.0,
         expected_notional: 25.0,
-        quote_notional?: true,
-        exception: "C-T610/lighter-base-position"
+        expected_notional_currency: "USDC",
+        quantity_basis: :base_contract
       },
       %{
         venue: "okx",
         module: Bourse.Okx,
+        symbol: "BTC/USDT:USDT",
         row: %{
-          "_bourse_contract_size" => 1,
-          "_bourse_notional" => "50",
           "instId" => "BTC-USDT-SWAP",
           "instType" => "SWAP",
-          "pos" => "0.5"
+          "markPx" => "100",
+          "mgnMode" => "cross",
+          "notionalUsd" => "50",
+          "pos" => "0.5",
+          "posSide" => "net"
         },
-        markets: [],
+        markets: [
+          %Market{
+            id: "BTC-USDT-SWAP",
+            symbol: "BTC/USDT:USDT",
+            contract_size: 1.0,
+            contract: true,
+            linear: true,
+            swap: true
+          }
+        ],
+        expected_base_quantity: 0.5,
         expected_contracts: 0.5,
         expected_contract_size: 1.0,
         expected_notional: 50.0,
-        quote_notional?: true,
-        exception: "C-T610/okx-linear-base-contract"
+        expected_notional_currency: "USD",
+        quantity_basis: :base_contract
+      },
+      %{
+        venue: "okx",
+        module: Bourse.Okx,
+        symbol: "BTC/USD:BTC",
+        row: %{
+          "instId" => "BTC-USD-SWAP",
+          "instType" => "SWAP",
+          "markPx" => "2000",
+          "mgnMode" => "cross",
+          "pos" => "2",
+          "posSide" => "net"
+        },
+        markets: [
+          %Market{
+            id: "BTC-USD-SWAP",
+            symbol: "BTC/USD:BTC",
+            contract_size: 10.0,
+            contract: true,
+            inverse: true,
+            swap: true
+          }
+        ],
+        expected_contracts: 2.0,
+        expected_contract_size: 10.0,
+        expected_notional: 0.01,
+        expected_notional_currency: "BTC",
+        quantity_basis: :quote_contract
       }
     ]
   end
 
-  defp binance_position_case(venue, module, exception) do
+  defp binance_position_case(venue, module) do
     %{
       venue: venue,
       module: module,
+      symbol: "BTC/USDT:USDT",
       row: %{
-        "_bourse_contract_size" => 1,
-        "_bourse_contracts" => "0.009",
-        "_bourse_notional" => "607.52416678",
-        "notional" => "607.52416678",
+        "markPrice" => "60000",
+        "notional" => "540",
         "positionAmt" => "0.009",
         "symbol" => "BTCUSDT"
       },
-      markets: [],
+      markets: [
+        %Market{
+          id: "BTCUSDT",
+          symbol: "BTC/USDT:USDT",
+          contract: true,
+          swap: true,
+          linear: true,
+          contract_size: 1.0
+        }
+      ],
+      expected_base_quantity: 0.009,
       expected_contracts: 0.009,
       expected_contract_size: 1.0,
-      expected_notional: 607.52416678,
-      quote_notional?: true,
-      exception: exception
+      expected_notional: 540.0,
+      expected_notional_currency: "USDT",
+      quantity_basis: :base_contract
     }
   end
 end

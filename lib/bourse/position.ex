@@ -13,17 +13,13 @@ defmodule Bourse.Position do
     * `side` - "long" or "short"
     * `contracts` - Number of contracts
     * `contract_size` - Size of one contract
-    * `notional` - Absolute position value in the venue's own settlement unit.
-      Quote currency on every venue except binancecoinm, whose COIN-M
-      `notionalValue` is coin-settled (carve
-      `C-T610/binancecoinm-inverse-settlement-notional` in
-      `docs/authored-spec-carves/global.md`). Do not sum `notional` across
-      venues without checking that exception, and do not derive base exposure as
-      `notional / mark_price` on an inverse market — use `base_quantity`, or
-      `contracts * contract_size / mark_price`.
+    * `notional` - Absolute position value denominated by `notional_currency`.
+      The numeric value preserves the venue's published unit.
+    * `notional_currency` - Unified currency code that denominates `notional`.
+      Populated whenever `notional` is populated on the unified read path.
     * `base_quantity` - Absolute position size in the base currency. Populated
-      for deribit futures, where the venue publishes it directly; `nil` on every
-      other venue, which state no base-denominated position field.
+      only for Deribit future rows from `size_currency`. It is `nil` for Deribit
+      options and other venues; their `contracts` may already be base-denominated.
     * `leverage` - Current leverage
     * `unrealized_pnl` - Unrealized profit/loss
     * `realized_pnl` - Realized profit/loss
@@ -64,6 +60,7 @@ defmodule Bourse.Position do
           contracts: number() | nil,
           contract_size: number() | nil,
           notional: number() | nil,
+          notional_currency: String.t() | nil,
           base_quantity: number() | nil,
           leverage: number() | nil,
           unrealized_pnl: number() | nil,
@@ -102,6 +99,7 @@ defmodule Bourse.Position do
     :contracts,
     :contract_size,
     :notional,
+    :notional_currency,
     :base_quantity,
     :leverage,
     :unrealized_pnl,
@@ -156,6 +154,7 @@ defmodule Bourse.Position do
                    contracts: number() | nil,
                    contract_size: number() | nil,
                    notional: number() | nil,
+                   notional_currency: String.t() | nil,
                    base_quantity: number() | nil,
                    leverage: number() | nil,
                    unrealized_pnl: number() | nil,
@@ -192,10 +191,11 @@ defmodule Bourse.Position do
                    side: "long or short",
                    contracts: "Number of contracts",
                    contract_size: "Size of one contract",
-                   notional:
-                     "Absolute position value in the venue's own settlement unit — quote currency except binancecoinm, whose COIN-M notionalValue is coin-settled (carve C-T610/binancecoinm-inverse-settlement-notional). On an inverse market derive base exposure from base_quantity or contracts * contract_size / mark_price, never notional / mark_price.",
+                   notional: "Absolute position value denominated by notional_currency",
+                   notional_currency:
+                     "Unified currency code that denominates notional; populated whenever notional is populated on the unified read path",
                    base_quantity:
-                     "Absolute position size in the base currency. Populated for deribit futures; nil on venues that publish no base-denominated position field.",
+                     "Absolute base-currency size populated only for Deribit futures from size_currency; nil for Deribit options and other venues",
                    leverage: "Current leverage",
                    unrealized_pnl: "Unrealized profit/loss",
                    realized_pnl: "Realized profit/loss",

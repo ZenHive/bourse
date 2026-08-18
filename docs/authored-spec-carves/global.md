@@ -640,34 +640,31 @@ contradict itself.**
 
 ## 2026-08-14 — unified position value axes (Task 610)
 
-**C-T610 — Position `notional` is an absolute quote-currency value unless a named
-venue carve states a different settlement unit. Outcome: DIVERGE from a single
+**C-T610 — Position `notional` preserves the provider value and carries its
+currency in `notional_currency`. Outcome: DIVERGE from a single
 contract-multiplication identity (task 610).**
 
-`contracts × contractSize` reconciles directly with quote notional only when the
-venue defines `contractSize` in quote currency. Linear venues commonly define the
-contract quantity in base currency, so price is also required. Equity positions
-have shares rather than derivative contracts. The frozen cross-venue invariant
-keeps each provider source explicit and permits only these named exceptions:
+`notional_currency` is populated whenever `notional` is populated. Consumers can
+therefore reject or convert mixed currencies mechanically instead of consulting a
+prose exception. Task 613 made that currency contract explicit and executable.
+The frozen cross-venue invariant starts from raw venue payloads,
+runs the read-parse annotation path, and grades each applicable arithmetic branch:
 
-| Exception | Provider unit boundary |
-|---|---|
-| `C-T610/alpaca-equity-share-quantity` | `qty` is shares and `market_value` is quote value; there is no derivative contract size. |
-| `C-T610/binance-linear-base-contract` | Linear `positionAmt × contractSize` is base exposure; venue `notional` is quote value. |
-| `C-T610/binancecoinm-inverse-settlement-notional` | COIN-M `notionalValue` is coin-settlement value while contract size is quote USD. |
-| `C-T610/binanceusdm-linear-base-contract` | USD-M `positionAmt × contractSize` is base exposure; venue `notional` is quote value. |
-| `C-T610/bybit-linear-base-contract` | Linear `size × contractSize` is base exposure; `positionValue` is quote value. |
-| `C-T611/deribit-linear-base-contract` | Linear `size` is quote value, while `size_currency` and `contract_size` are base-denominated. |
-| `C-T610/derive-base-amount` | `amount × contractSize` is base exposure; mark price produces quote notional. |
-| `C-T610/hyperliquid-base-size` | `szi × contractSize` is base exposure; `positionValue` is quote value. |
-| `C-T610/lighter-base-position` | `position × contractSize` is base exposure; `position_value` is quote value. |
-| `C-T610/okx-linear-base-contract` | Linear `pos × contractSize` is base exposure; `notionalUsd` is quote value. |
+| Provider quantity basis | Arithmetic invariant | Venues/branches |
+|---|---|---|
+| Shares | `shares × current_price = notional` | Alpaca |
+| Base-denominated contracts | `contracts × contract_size = base quantity`; where the payload carries mark, `base quantity × mark = notional` | Binance linear, Binance USD-M, Bybit linear, Deribit linear, Derive, Hyperliquid, Lighter, OKX linear |
+| Quote-denominated contracts and quote notional | `contracts × contract_size = notional` | Deribit inverse futures |
+| Quote-denominated contracts and settlement notional | `contracts × contract_size = notional × mark` | Binance COIN-M and inverse Bybit/OKX rows |
 
-Deribit inverse future `size` and `contract_size` are quote-denominated. Linear
-future `size` remains quote value, while `size_currency` and `contract_size` are
-base-denominated. Venue-specific source citations and live evidence are recorded
-in Deribit C-T610f.
+The emitted currencies follow the value source: Alpaca market value and OKX
+`notionalUsd` are USD; ordinary linear values use the unified quote currency;
+COIN-M and inverse Bybit/OKX values use the unified settlement currency. Deribit
+future `size` is quote notional on both settlement branches. `base_quantity` is a
+separate, deliberately narrow field populated only from Deribit future
+`size_currency`; Deribit options and other venues leave it nil even when their
+`contracts` quantity is base-denominated.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T610","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Venue position and instrument contracts cited by the venue-specific position carves"},"observed_evidence":{"kind":"provider_shaped","reference":"Frozen provider-shaped rows in test/bourse/position_unit_invariant_test.exs and venue position recordings"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The named exceptions have provider-contract or recorded evidence at their venue-specific tiers; no single live run can populate every venue position simultaneously"}
+{"carve_id":"C-T610","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Venue position and instrument contracts cited by the venue-specific position carves"},"observed_evidence":{"kind":"provider_shaped","reference":"Raw provider-shaped rows passed through Bourse.Unified.ReadParse in test/bourse/position_unit_invariant_test.exs plus venue position recordings"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The arithmetic matrix has provider-contract or recorded evidence at its venue-specific tiers; no single live run can populate every venue position simultaneously"}
 -->
