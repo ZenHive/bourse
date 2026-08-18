@@ -23,6 +23,23 @@ type fails rather than being downcased.
 {"carve_id":"C-T632a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance Spot New Order type enum: LIMIT MARKET STOP_LOSS STOP_LOSS_LIMIT TAKE_PROFIT TAKE_PROFIT_LIMIT LIMIT_MAKER"},"observed_evidence":{"kind":"provider_shaped","reference":"Product-scoped parse goldens in test/bourse/binance_order_type_round_trip_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered spot recording carries STOP_LOSS / TAKE_PROFIT / TAKE_PROFIT_LIMIT; the mapping is inverted from the authored uppercase write transform against the documented enum"}
 -->
 
+## 2026-08-18 — spot order-history window residual (Task 617)
+
+**C-T617b — Spot all-orders and account-trades histories keep `startTime`/`endTime`;
+open orders drop unified bounds (task 617). Outcome: CONFIRM provider contract.**
+Binance documents `startTime`/`endTime` on `GET /api/v3/allOrders` and
+`GET /api/v3/myTrades`, and documents no time bounds on `GET /api/v3/openOrders`.
+`fetchClosedOrders`, `fetchCanceledOrders`, and `fetchCanceledAndClosedOrders` are
+emulated through `fetchOrders` at runtime (C-T540b) and now carry the same authored
+rename so the offline request-shape guard can see those method names.
+`fetchOrderTrades` hits `privateGetMyTrades` directly, so it maps the same native
+bounds. `fetchOpenOrders` omits `since`/`until` rather than renaming them — a
+`-1104` unread-parameter class if they reach the wire.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T617b","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance Spot REST API GET /api/v3/allOrders and /api/v3/myTrades startTime/endTime; GET /api/v3/openOrders has no time-bound parameters"},"observed_evidence":{"kind":"provider_shaped","reference":"Dispatch goldens in test/bourse/binance_authored_spec_test.exs pin startTime/endTime on fetchOrderTrades and omit since/until/startTime/endTime on fetchOpenOrders"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Open-orders omit and order-trades rename are pinned request-side; populated-row boundary evidence for those private histories remains on the time-window exclusion matrix"}
+-->
+
 ## 2026-08-18 — linear contract unit on the umbrella FAPI family (Task 625)
 
 **C-T625a — Umbrella `binance` authors the linear contract unit only for the FAPI family

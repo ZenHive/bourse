@@ -1435,6 +1435,46 @@ defmodule Bourse.BinanceAuthoredSpecTest do
              "startTime" => Integer.to_string(@frozen_timestamp_ms),
              "symbol" => "BTCUSDT"
            }
+
+    {order_trade_requests, order_trade_stub} = path_body_stub([])
+
+    assert {:ok, []} =
+             Bourse.fetch_order_trades(exchange, "1",
+               symbol: "BTC/USDT",
+               since: @frozen_timestamp_ms,
+               until: @window_end_ms,
+               plug: {Req.Test, order_trade_stub},
+               timestamp_ms_override: @frozen_timestamp_ms
+             )
+
+    order_trade_query =
+      order_trade_requests |> RequestCollector.one!() |> RequestCollector.query() |> signed_query_params()
+
+    assert order_trade_query["startTime"] == Integer.to_string(@frozen_timestamp_ms)
+    assert order_trade_query["endTime"] == Integer.to_string(@window_end_ms)
+    assert order_trade_query["symbol"] == "BTCUSDT"
+    refute Map.has_key?(order_trade_query, "since")
+    refute Map.has_key?(order_trade_query, "until")
+
+    {open_order_requests, open_order_stub} = path_body_stub([])
+
+    assert {:ok, []} =
+             Bourse.fetch_open_orders(exchange,
+               symbol: "BTC/USDT",
+               since: @frozen_timestamp_ms,
+               until: @window_end_ms,
+               plug: {Req.Test, open_order_stub},
+               timestamp_ms_override: @frozen_timestamp_ms
+             )
+
+    open_order_query =
+      open_order_requests |> RequestCollector.one!() |> RequestCollector.query() |> signed_query_params()
+
+    assert open_order_query["symbol"] == "BTCUSDT"
+    refute Map.has_key?(open_order_query, "since")
+    refute Map.has_key?(open_order_query, "until")
+    refute Map.has_key?(open_order_query, "startTime")
+    refute Map.has_key?(open_order_query, "endTime")
   end
 
   test "futures time-window reads rename both bounds before dispatch" do

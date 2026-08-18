@@ -500,7 +500,7 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
       ],
       raw_keys: ["since", "until"],
       contract:
-        "priv/authority/binance/manifest.json — Spot/SAPI and umbrella derivatives history contracts have no single authored bound mapping; raw pass-through is pinned as a drop-or-reject carve"
+        "priv/authority/binance/manifest.json — Spot/SAPI and umbrella derivatives history contracts have no authored bound mapping; raw since/until pass through until a method-specific rename or omit is authored"
     },
     %{
       venue: :binancecoinm,
@@ -514,7 +514,7 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
       ],
       raw_keys: ["since", "until"],
       contract:
-        "priv/authority/binancecoinm/manifest.json — COIN-M allOrders/userTrades/income/openOrders contracts are pinned as an explicit drop-or-reject carve"
+        "priv/authority/binancecoinm/manifest.json — COIN-M allOrders/userTrades/income/openOrders contracts have no authored bound mapping; raw since/until pass through"
     },
     %{
       venue: :binanceusdm,
@@ -539,14 +539,14 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
       ],
       raw_keys: ["since", "until"],
       contract:
-        "priv/authority/binanceusdm/manifest.json — USD-M account/data history contracts are pinned as an explicit drop-or-reject carve"
+        "priv/authority/binanceusdm/manifest.json — USD-M account/data history contracts have no authored bound mapping; raw since/until pass through"
     },
     %{
       venue: :bybit,
       methods: [:fetch_deposits, :fetch_orders_classic, :fetch_trades, :fetch_withdrawals],
       raw_keys: ["since", "until"],
       contract:
-        "priv/authority/bybit/manifest.json — V5 recent-trade and legacy asset/order history contracts are pinned as an explicit no-bound or drop-or-reject carve"
+        "priv/authority/bybit/manifest.json — V5 recent-trade and legacy asset/order history contracts have no authored bound mapping; raw since/until pass through"
     },
     %{
       venue: :deribit,
@@ -561,14 +561,14 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
       ],
       raw_keys: ["until"],
       contract:
-        "priv/authority/deribit/manifest.json — private order/account histories and public funding history do not share an authored upper-bound contract; raw until is a drop-or-reject carve"
+        "priv/authority/deribit/manifest.json — private order/account histories and public funding history have no authored upper-bound mapping; raw until passes through"
     },
     %{
       venue: :deribit,
       methods: [:fetch_my_liquidations, :fetch_order_trades],
       raw_keys: ["since", "until"],
       contract:
-        "priv/authority/deribit/manifest.json — private settlement/user-trade contracts are pinned as an explicit drop-or-reject carve"
+        "priv/authority/deribit/manifest.json — private settlement/user-trade contracts have no authored bound mapping; raw since/until pass through"
     },
     %{
       venue: :derive,
@@ -586,7 +586,7 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
       ],
       raw_keys: ["since", "until"],
       contract:
-        "priv/authority/derive/manifest.json — JSON-RPC order/trade/funding/ERC20 history contracts are pinned as an explicit drop-or-reject carve"
+        "priv/authority/derive/manifest.json — JSON-RPC order/trade/funding/ERC20 history contracts have no authored bound mapping; raw since/until pass through"
     },
     %{
       venue: :hyperliquid,
@@ -603,14 +603,14 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
       ],
       raw_keys: ["since", "until"],
       contract:
-        "priv/authority/hyperliquid/manifest.json — POST /info order/funding/ledger history request types are pinned as an explicit no-bound or drop-or-reject carve"
+        "priv/authority/hyperliquid/manifest.json — POST /info order/funding/ledger history request types have no authored bound mapping; raw since/until pass through"
     },
     %{
       venue: :hyperliquid,
       methods: [:fetch_my_trades],
       raw_keys: ["until"],
       contract:
-        "priv/authority/hyperliquid/manifest.json — POST /info userFillsByTime accepts startTime but no upper bound; raw until is a drop carve"
+        "priv/authority/hyperliquid/manifest.json — POST /info userFillsByTime accepts startTime but has no authored upper-bound mapping; raw until passes through"
     },
     %{
       venue: :lighter,
@@ -625,14 +625,14 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
       ],
       raw_keys: ["since", "until"],
       contract:
-        "priv/authority/lighter/manifest.json — account/order/trade/transfer history contracts are pinned as an explicit no-bound or drop-or-reject carve"
+        "priv/authority/lighter/manifest.json — account/order/trade/transfer history contracts have no authored bound mapping; raw since/until pass through"
     },
     %{
       venue: :lighter,
       methods: [:fetch_ohlcv],
       raw_keys: ["until"],
       contract:
-        "priv/authority/lighter/manifest.json — candle history accepts start_timestamp but has no authored upper-bound parameter; raw until is a drop carve"
+        "priv/authority/lighter/manifest.json — candle history accepts start_timestamp but has no authored upper-bound mapping; raw until passes through"
     },
     %{
       venue: :okx,
@@ -655,14 +655,14 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
       ],
       raw_keys: ["since", "until"],
       contract:
-        "priv/authority/okx/manifest.json — V5 market/trade/account/funding history contracts are pinned as an explicit no-bound or drop-or-reject carve"
+        "priv/authority/okx/manifest.json — V5 market/trade/account/funding history contracts have no authored bound mapping; raw since/until pass through"
     },
     %{
       venue: :okx,
       methods: [:fetch_my_trades],
       raw_keys: ["until"],
       contract:
-        "priv/authority/okx/manifest.json — GET /api/v5/trade/fills maps begin but has no authored upper-bound mapping; raw until is a drop-or-reject carve"
+        "priv/authority/okx/manifest.json — GET /api/v5/trade/fills maps begin but has no authored upper-bound mapping; raw until passes through"
     }
   ]
 
