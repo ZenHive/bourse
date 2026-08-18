@@ -36,16 +36,17 @@
     },
     "current_websocket": {
       "artifact_id": "current-asyncapi",
-      "sha256": "70f51eadc67793fbf81ecb5cfca8d70b72419a8b81ba7d2d27b4da7b86b074f6",
+      "sha256": "759902bbd2cf10a605b48b815dc63d7e2edf4a21741f67be48335fdd2fe75ab6",
       "upstream_pin": {
         "type": "document_version_http_etag",
-        "value": "1.0.0; W/\"06f469af56a14772c8def9090ee88aa2\""
+        "value": "1.0.0; W/\"DXTaA468CADkchO3\""
       },
       "expected": {
-        "channel_count": 40,
-        "provider_count": 80,
-        "message_reference_inversion_count": 80
-      }
+        "channel_count": 43,
+        "provider_count": 86,
+        "message_reference_inversion_count": 86
+      },
+      "review_evidence": "priv/authority/deribit/current-websocket-drift-2026-08-18.json"
     },
     "upcoming_websocket": {
       "artifact_id": "upcoming-asyncapi",

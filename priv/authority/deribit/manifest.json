@@ -173,10 +173,10 @@
       "retrieved_at": "2026-08-18",
       "upstream_pin": {
         "type": "document_version_http_etag",
-        "value": "1.0.0; W/\"06f469af56a14772c8def9090ee88aa2\""
+        "value": "1.0.0; W/\"DXTaA468CADkchO3\""
       },
-      "sha256": "70f51eadc67793fbf81ecb5cfca8d70b72419a8b81ba7d2d27b4da7b86b074f6",
-      "bytes": 563150,
+      "sha256": "759902bbd2cf10a605b48b815dc63d7e2edf4a21741f67be48335fdd2fe75ab6",
+      "bytes": 610300,
       "storage": "reference_only",
       "path": null,
       "license": {
@@ -194,7 +194,7 @@
         "status": "reviewed_current",
         "checked_at": "2026-08-18",
         "mutable": true,
-        "notes": "Re-pinned 2026-08-18 after the provider re-published. Confronted against the authored WebSocket dispatch: AsyncAPI 3.0.0 with 40 channels, and every authored channel family still carries an upstream definition — trades.(instrument_name), ticker.(instrument_name), quote.(instrument_name), book.(instrument_name), chart.trades.(instrument_name), user.orders.(instrument_name) and user.portfolio.(currency). No authored channel lost its upstream contract."
+        "notes": "Re-pinned 2026-08-18 (second move that day) after the 2.1.1 maintenance deploy re-published the WebSocket contract; ETag W/\"DXTaA468CADkchO3\" and Last-Modified 2026-08-18T10:26:03Z match the republished REST OpenAPI, so both surfaces moved in one deploy. Inventory grew 40 -> 43 channels and 80 -> 86 provider messages, landing on exactly the upcoming-WebSocket surface (identical channel sets; upcoming's own pin did not move) — the same current-catches-up-to-upcoming convergence the REST documents showed at 182 paths. Confronted against the authored WebSocket dispatch: every authored channel family still carries an upstream definition (trades, user.trades, user.portfolio, user.orders, ticker/incremental_ticker, quote, book, chart.trades). No authored channel lost its contract. The three added channels cannot be named from retained bytes: storage is reference_only, so the superseded document is gone. Declared AsyncAPI 3.0.0 / info.version 1.0.0 did not move while bytes and ETag did — SHA-256 stays the integrity key."
       },
       "expressiveness": {
         "level": "typed_asyncapi",

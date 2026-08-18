@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "report_type": "provider_contract_semantic_diff",
+  "venue": "deribit",
+  "artifact_id": "current-asyncapi",
+  "reviewed_at": "2026-08-18",
+  "prior": {
+    "retrieved_at": "2026-08-18",
+    "sha256": "70f51eadc67793fbf81ecb5cfca8d70b72419a8b81ba7d2d27b4da7b86b074f6",
+    "bytes": 563150,
+    "http_etag": "W/\"06f469af56a14772c8def9090ee88aa2\"",
+    "asyncapi_version": "3.0.0",
+    "document_version": "1.0.0",
+    "channel_count": 40,
+    "operation_count": 80,
+    "message_reference_inversion_count": 80,
+    "channel_key_set_sha256": "unavailable_reference_only_bytes_no_longer_fetchable"
+  },
+  "current": {
+    "retrieved_at": "2026-08-18",
+    "sha256": "759902bbd2cf10a605b48b815dc63d7e2edf4a21741f67be48335fdd2fe75ab6",
+    "bytes": 610300,
+    "http_etag": "W/\"DXTaA468CADkchO3\"",
+    "http_last_modified": "Tue, 18 Aug 2026 10:26:03 GMT",
+    "asyncapi_version": "3.0.0",
+    "document_version": "1.0.0",
+    "channel_count": 43,
+    "operation_count": 86,
+    "message_reference_inversion_count": 86,
+    "channel_key_set_sha256": "67cd10a40f81ef7db93ee2a2995bfe1e1ef75800de5c651521d23990ab335e0f"
+  },
+  "channel_delta": {
+    "baseline": "prior",
+    "count": 3,
+    "added": "unnameable_prior_bytes_not_retained",
+    "removed": "none_detectable_authored_families_all_present",
+    "operation_count_delta": 6,
+    "evidence": "The three added channels cannot be named. Two independent routes were attempted and both failed: the prior document was pinned under storage reference_only, so its bytes were never retained and are no longer fetchable; and the provider's own JSON-RPC changelog, which explicitly covers subscription updates, carries no entry for the 2026-08-18 deploy at all (its most recent entry is Release 21.07.2026). Removal is excluded positively rather than by absence of evidence: every authored channel family was confronted individually against the current channel key set and all are present.",
+    "removal_confrontation": {
+      "method": "each authored WebSocket channel family resolved against the current channel key set by exact name or dotted prefix",
+      "families_checked": 9,
+      "families_missing": 0,
+      "detail": {
+        "trades": ["trades.(instrument_name).(interval)", "trades.(kind).(currency).(interval)"],
+        "user.trades": ["user.trades.(instrument_name).(interval)", "user.trades.(kind).(currency).(interval)"],
+        "user.orders": ["user.orders.(instrument_name).(interval)", "user.orders.(instrument_name).raw", "user.orders.(kind).(currency).(interval)", "user.orders.(kind).(currency).raw"],
+        "user.portfolio": ["user.portfolio.(currency)"],
+        "ticker": ["ticker.(instrument_name).(interval)"],
+        "incremental_ticker": ["incremental_ticker.(instrument_name)"],
+        "quote": ["quote.(instrument_name)"],
+        "book": ["book.(instrument_name).(group).(depth).(interval)", "book.(instrument_name).(interval)"],
+        "chart.trades": ["chart.trades.(instrument_name).(resolution)"]
+      }
+    }
+  },
+  "upcoming_surface_comparison": {
+    "artifact_id": "upcoming-asyncapi",
+    "sha256": "8fb075b8cd42f35a2a0c473144824050e3ee30dcfa55f131c59a70f14abc69d1",
+    "bytes": 609774,
+    "channel_count": 43,
+    "operation_count": 86,
+    "channel_key_set_sha256": "67cd10a40f81ef7db93ee2a2995bfe1e1ef75800de5c651521d23990ab335e0f",
+    "result": "exact_match_43_channels",
+    "evidence": "The current and upcoming channel key sets hash identically and their set difference is empty in both directions, so the current WebSocket surface has caught up to the already-reviewed upcoming inventory. The documents still differ by 526 bytes with an identical channel and operation inventory, so the residual difference is descriptive text rather than contract shape; the two documents are not interchangeable and the upcoming artifact keeps its own pin."
+  },
+  "pin_key_decision": {
+    "decision": "retain_content_sha256_with_version_and_etag_upstream_pin",
+    "reason": "The provider rewrote the current document twice on 2026-08-18 while info.version remained 1.0.0, matching the REST surface, so the declared version cannot identify the reviewed bytes.",
+    "etag_disqualified_as_pin_key": {
+      "observation": "On this same refetch both upcoming artifacts served byte-identical documents under new ETags: upcoming-openapi kept sha256 788ae5db... and 1438672 bytes while its ETag moved from W/\"5e8b26e0df446ae0b6b213d91184f49b\" to W/\"QCggKABm3LEi7g4f\", and upcoming-asyncapi kept sha256 8fb075b8... and 609774 bytes while its ETag moved from W/\"2863755d34671127f41d92e5de11f775\" to W/\"BC1C2b7GgspzdS5u\".",
+      "consequence": "The ETag changed for documents whose content did not, and the ETag format itself changed from a 32-character hexadecimal form to a 16-character opaque form, which indicates a provider-side serving change rather than a contract change. An ETag-keyed gate would therefore have raised two false drift alarms on this refetch. The ETag remains recorded as descriptive provenance and is not the integrity key.",
+      "gate_behaviour_confirmed": "mix ccxt.authority_check --online exited 0 with all four Deribit specification artifacts reported as upstream unchanged, confirming the gate compares sha256 and not the ETag half of the composite pin."
+    }
+  },
+  "continuity": {
+    "rest_surface_report": "priv/authority/deribit/current-rest-drift-2026-08-18.json",
+    "relation": "The same maintenance deploy republished both documents, evidenced by an identical ETag W/\"DXTaA468CADkchO3\" and an identical Last-Modified of Tue, 18 Aug 2026 10:26:03 GMT on the current REST and current WebSocket artifacts."
+  },
+  "limitations": [
+    "storage reference_only means drift on this artifact is detectable but never diffable: a hash mismatch proves the document changed and cannot show what changed.",
+    "The added channels are counted but unnamed, so this report establishes that the authored surface survived the change and does not establish what the provider gained."
+  ],
+  "decision": "refresh_pin_and_rebind_corpus",
+  "decision_reason": "The republished document is the shipped current WebSocket surface: it matches the already-reviewed upcoming 43-channel inventory exactly, adds channels without removing any authored family's upstream definition, and leaves every authored dispatch and subscription target reachable."
+}
