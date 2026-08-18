@@ -2496,6 +2496,19 @@ defmodule Bourse.Unified.RequestShapeTest do
                )
     end
 
+    test "okx fetchOHLCV preserves a caller-supplied native after cursor" do
+      {:ok, exchange} = Exchange.new("okx")
+      until_ms = 1_700_003_600_000
+      caller_after = until_ms + @exclusive_time_offset_ms
+
+      assert %{"after" => ^caller_after} =
+               RequestShape.apply(
+                 %{"timeframe" => "1m", "until" => until_ms, "after" => caller_after},
+                 exchange,
+                 "fetchOHLCV"
+               )
+    end
+
     test "dynamic_construction is a no-op when its source param is absent (deepcoin fetchBalance instType)" do
       reference_shape =
         "deepcoin"

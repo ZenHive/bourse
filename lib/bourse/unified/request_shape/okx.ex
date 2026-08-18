@@ -1251,7 +1251,7 @@ defmodule Bourse.Unified.RequestShape.OKX do
   defp put_exclusive_before(params, _since), do: params
 
   defp put_exclusive_after(params, until_ms) when is_integer(until_ms),
-    do: Map.put(params, "after", until_ms + @exclusive_time_offset_ms)
+    do: Map.put_new(params, "after", until_ms + @exclusive_time_offset_ms)
 
   defp put_exclusive_after(params, _until_ms), do: params
 
