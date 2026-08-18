@@ -10,7 +10,7 @@ per-venue record (task 466).
 ## 2026-08-14 — remaining ledger-taxonomy splits (Task 609)
 
 **C-T609a — `SETTLEMENT` is the funding-payment arm; amount sources `funding`, not `change`
-(task 609). Outcome: CONFIRM the field-level funding/cashFlow split; DIVERGE from C-T607a's
+(task 609, 614). Outcome: CONFIRM the field-level funding/cashFlow split; DIVERGE from C-T607a's
 `settlement` collapse and from treating `change` as the funding amount.** Bybit's pinned V5
 [UTA transaction-log enum](https://github.com/bybit-exchange/docs/blob/5ccd30109fe2eb5a39cf4d864365213658530f6c/docs/v5/enum.mdx#typeuta-translog)
 defines `SETTLEMENT` as "USDT Perp funding settlement, and USDC Perp funding settlement + USDC

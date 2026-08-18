@@ -736,9 +736,62 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
     "type" => "SETTLEMENT"
   }
 
+  # Official Get Transaction Log TRADE example (docs commit 5ccd3010): funding is
+  # empty, change is the fee. Pins the SETTLEMENT `when` else-branch still reads
+  # `change` even when a `funding` key is present.
+  @bybit_linear_usdt_trade %{
+    "category" => "linear",
+    "cashFlow" => "0",
+    "change" => "-0.0190872",
+    "currency" => "USDT",
+    "fee" => "0.01908720",
+    "funding" => "",
+    "id" => "592324_XRPUSDT_161440249321",
+    "symbol" => "XRPUSDT",
+    "transactionTime" => "1672121182224",
+    "type" => "TRADE"
+  }
+
+  test "Bybit SETTLEMENT amount and direction source funding, not change" do
+    spec = Bourse.Spec.load!("bybit")
+    amount_rule = get_in(spec, ~w(normalization field_maps ledger_entry field_map amount))
+    direction_rule = get_in(spec, ~w(normalization field_maps ledger_entry field_map direction))
+
+    assert amount_rule["kind"] == "when"
+    assert amount_rule["guard"] == %{"equals" => "SETTLEMENT", "field" => "type"}
+    assert amount_rule["then"]["key"] == "funding"
+    assert amount_rule["then"]["kind"] == "absolute"
+    assert amount_rule["else"]["key"] == "change"
+
+    assert direction_rule["kind"] == "when"
+    assert direction_rule["guard"] == %{"equals" => "SETTLEMENT", "field" => "type"}
+    assert direction_rule["then"]["key"] == "funding"
+    assert direction_rule["else"]["key"] == "change"
+
+    assert {:ok, %Bourse.LedgerEntry{type: "funding_fee", direction: "in", amount: received}} =
+             Bourse.Bybit.parse_ledger_entry(%{
+               @bybit_usdc_perp_settlement
+               | "funding" => "0.25",
+                 "change" => "2.25"
+             })
+
+    assert_in_delta received, 0.25, 1.0e-9
+    refute received == 2.25
+
+    assert {:ok, %Bourse.LedgerEntry{type: "trade", direction: "out", amount: trade_amount}} =
+             Bourse.Bybit.parse_ledger_entry(@bybit_linear_usdt_trade)
+
+    assert_in_delta trade_amount, 0.0190872, 1.0e-9
+  end
+
   test "newly decided arms emit through parse_ledger_entry on venue-frozen rows" do
-    assert {:ok, %Bourse.LedgerEntry{type: "funding_fee", currency: "USDT", direction: "out", amount: amount}} =
-             Bourse.Bybit.parse_ledger_entry(@bybit_linear_usdt_settlement)
+    assert {:ok,
+            %Bourse.LedgerEntry{
+              type: "funding_fee",
+              currency: "USDT",
+              direction: "out",
+              amount: amount
+            }} = Bourse.Bybit.parse_ledger_entry(@bybit_linear_usdt_settlement)
 
     assert_in_delta amount, 0.003676, 1.0e-9
 
@@ -750,7 +803,7 @@ defmodule Bourse.AuthoredLedgerContractCoverageTest do
               amount: usdc_amount
             }} = Bourse.Bybit.parse_ledger_entry(@bybit_usdc_perp_settlement)
 
-    assert usdc_amount == 0.25
+    assert_in_delta usdc_amount, 0.25, 1.0e-9
     refute usdc_amount == 1.75
 
     assert {:ok, %Bourse.LedgerEntry{type: "bonus", amount: 10.0, direction: "in"}} =
