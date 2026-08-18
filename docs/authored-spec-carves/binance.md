@@ -6,6 +6,31 @@ Append-only schema confrontations for Binance spot. Follow the allocation and ev
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance spot carve record.
 
+## 2026-08-18 — linear contract unit on the umbrella FAPI family (Task 625)
+
+**C-T625a — Umbrella `binance` authors the linear contract unit only for the FAPI family
+(task 625).** Outcome: CONFIRM provider contract; DIVERGE from copying dedicated
+`binanceusdm`'s slot without confronting this client's fan-out. The umbrella
+`fetch_markets` recording fans out spot `/api/v3/exchangeInfo`, FAPI
+`/fapi/v1/exchangeInfo`, DAPI `/dapi/v1/exchangeInfo`, and EAPI option
+exchangeInfo. Spot rows have no `contractSize` and are not linear contracts.
+FAPI's
+[common definition](https://developers.binance.com/en/docs/products/derivatives-trading-usds-futures/common-definition)
+names the base asset as the quantity of a symbol; the
+[USDⓈ-Margined vs COIN-Margined FAQ](https://www.binance.com/en/support/faq/detail/85eac2bba0b342819122dc9bd4745e9b)
+states that BTC/USDT, ETH/USDT, and BCH/USDT represent one unit of their
+respective base asset. Live `GET /fapi/v1/exchangeInfo` on 2026-08-18 published
+871 symbols and no `contractSize` field (recorded umbrella FAPI wave: 832
+symbols, same absence). Inverse DAPI continues to publish `contractSize`
+(100 for `BTCUSD_PERP`), so that family is not the linear recipe. The authored
+`markets.contract_unit` slot is therefore the linear constant `1` with
+`quantity_unit: "base"`; `ContractUnit` applies it only to `linear && contract`
+markets, leaving spot nil and inverse on the provider field.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T625a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M FAQ 85eac2bba0b342819122dc9bd4745e9b contract unit plus USD-M common-definition base-asset quantity; COIN-M exchangeInfo contractSize remains the inverse source"},"observed_evidence":{"kind":"live_venue","reference":"Live fapi.binance.com /fapi/v1/exchangeInfo 871 symbols with no contractSize; dapi.binance.com /dapi/v1/exchangeInfo BTCUSD_PERP contractSize 100; spot /api/v3/exchangeInfo BTCUSDT has no contractSize. Recorded umbrella fan-out test/fixtures/responses/binance/fetch_markets.json","fixture":"test/fixtures/responses/binance/fetch_markets.json"},"compatibility_reference":{"kind":"ccxt","reference":"CCXT contractSize 1 for linear USDM is compatibility reference only"},"resolved_tier":1}
+-->
+
 ## 2026-08-18 — WS subscribe templates are provider stream names (Task 618)
 
 **C-T618a — Spot `watch_*` defaults are documented market-stream names (task 618).

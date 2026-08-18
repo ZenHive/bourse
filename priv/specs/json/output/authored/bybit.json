@@ -7894,6 +7894,13 @@
   "frozen": true,
   "hand_owned": true,
   "markets": {
+    "contract_unit": {
+      "linear": {
+        "kind": "constant",
+        "value": 1
+      },
+      "quantity_unit": "base"
+    },
     "symbol_patterns": {
       "future": {
         "case": "upper",

@@ -7,6 +7,29 @@ Append-only schema confrontations for Bybit. Follow the allocation and evidence 
 still appear in `docs/authored-specs.md`, but that document points here for the complete
 per-venue record (task 466).
 
+## 2026-08-18 — linear contract unit (Task 625)
+
+**C-T625b — V5 linear `contract_size` is the authored venue-level contract unit
+(task 625).** Outcome: CONFIRM provider contract; DIVERGE from treating a missing
+instrument-info `contractSize` key as unknown. Bybit's
+[batch place-order](https://bybit-exchange.github.io/docs/v5/order/batch-place)
+contract states that Perps, Futures, and Option `qty` always use the base coin
+as the unit. The
+[Get Instruments Info](https://bybit-exchange.github.io/docs/v5/market/instrument)
+linear example publishes `lotSizeFilter.minOrderQty` / `qtyStep` and no
+`contractSize` field. Live `GET /v5/market/instruments-info?category=linear&symbol=BTCUSDT`
+on 2026-08-18 returned `contractType=LinearPerpetual`, `settleCoin=USDT`,
+`minOrderQty=0.001`, `qtyStep=0.001`, and no contract-size key — quantity is
+already one base-coin unit. Inverse rows are not this recipe: live `BTCUSD`
+publishes integer `minOrderQty=1` with `settleCoin=BTC` and also omits
+`contractSize`, so inverse `Market.contract_size` stays nil. The authored
+`markets.contract_unit` slot declares the linear unit as the constant `1`
+with `quantity_unit: "base"`. Position-path stamping (C34) is unchanged.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T625b","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 batch place-order qty unit is base coin for perps/futures/option; Get Instruments Info linear lotSizeFilter has no contractSize"},"observed_evidence":{"kind":"live_venue","reference":"Live api.bybit.com /v5/market/instruments-info linear BTCUSDT minOrderQty 0.001 with no contractSize; inverse BTCUSD minOrderQty 1 settleCoin BTC with no contractSize on 2026-08-18. Recorded fetch_markets test/fixtures/responses/bybit/fetch_markets.json","fixture":"test/fixtures/responses/bybit/fetch_markets.json"},"compatibility_reference":{"kind":"ccxt","reference":"CCXT linear contractSize 1 is compatibility reference only"},"resolved_tier":1}
+-->
+
 ## 2026-08-14 — remaining ledger-taxonomy splits (Task 609)
 
 **C-T609a — `SETTLEMENT` is the funding-payment arm; amount sources `funding`, not `change`

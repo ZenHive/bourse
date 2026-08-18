@@ -5,17 +5,12 @@ defmodule Bourse.LinearContractSizeSweepTest do
   alias Bourse.Spec
   alias Bourse.Unified.ReadParse
 
-  # Venues whose recorded linear (or perp) markets still land `contract_size`
+  # Venues whose recorded linear (non-option) markets still land `contract_size`
   # nil after parse. The allowlist may only shrink: a newly-nil venue fails
   # the first assertion, and an entry that now populates fails as stale.
-  @known_linear_nil_gaps %{
-    "binance" =>
-      "umbrella sandbox/mainnet fan-out still maps only exchangeInfo.contractSize, which FAPI does not publish; the venue-level unit is authored on dedicated binanceusdm",
-    "bybit" =>
-      "V5 linear instrument-info rows do not publish contractSize; quantity is already coin-denominated and no venue-level unit is authored yet",
-    "derive" =>
-      "perp instrument rows publish no contract-size field; market.contractSize stays null and no venue-level unit is authored yet"
-  }
+  # Empty after the remaining first-class linear recipes were authored; option
+  # multipliers stay on OptionQuantity (task 397) and are not this ratchet.
+  @known_linear_nil_gaps %{}
 
   # Missing fetch_markets recordings must be named. Treating them as an empty
   # nil list would let a silent-nil venue skip the sweep.
@@ -67,7 +62,7 @@ defmodule Bourse.LinearContractSizeSweepTest do
     case parse_linear_markets(exchange_id) do
       {:ok, markets} ->
         markets
-        |> Enum.filter(&(&1.linear == true and &1.contract == true and is_nil(&1.contract_size)))
+        |> Enum.filter(&(&1.linear == true and &1.contract == true and &1.option != true and is_nil(&1.contract_size)))
         |> Enum.map(& &1.symbol)
 
       :no_recording ->

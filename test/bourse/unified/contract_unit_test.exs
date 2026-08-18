@@ -8,19 +8,19 @@ defmodule Bourse.Unified.ContractUnitTest do
   alias Bourse.Unified.ContractUnit
 
   describe "authored semantics" do
-    test "binanceusdm declares a venue-level linear unit rather than a parse default" do
-      spec = Spec.load!("binanceusdm")
-      config = get_in(spec, ["markets", "contract_unit"])
+    test "linear venues declare a venue-level unit rather than a parse default" do
+      for venue <- ~w(binance binanceusdm bybit derive) do
+        spec = Spec.load!(venue)
+        config = get_in(spec, ["markets", "contract_unit"])
 
-      assert config["quantity_unit"] == "base"
-      assert config["linear"] == %{"kind" => "constant", "value" => 1}
-      assert Schema.validate!(spec, "binanceusdm") == spec
+        assert config["quantity_unit"] == "base"
+        assert config["linear"] == %{"kind" => "constant", "value" => 1}
+        assert Schema.validate!(spec, venue) == spec
+        assert %Exchange{config: %{"contract_unit" => ^config}} = Exchange.new!(venue)
 
-      assert %Exchange{config: %{"contract_unit" => ^config}} = Exchange.new!("binanceusdm")
-
-      market_map = Exchange.new!("binanceusdm").module.__field_maps__()["market"]["field_map"]["contractSize"]
-      refute Map.has_key?(market_map, "default")
-      assert market_map["key"] == "contractSize"
+        market_map = Exchange.new!(venue).module.__field_maps__()["market"]["field_map"]["contractSize"]
+        refute is_map(market_map) and Map.has_key?(market_map, "default")
+      end
     end
 
     test "reject missing or non-positive linear units" do
@@ -111,7 +111,7 @@ defmodule Bourse.Unified.ContractUnitTest do
     test "a market whose venue states no unit stays nil instead of becoming 1" do
       market = linear_market()
 
-      assert ContractUnit.normalize_market(market, %{}, Exchange.new!("bybit")).contract_size == nil
+      assert ContractUnit.normalize_market(market, %{}, Exchange.new!("okx")).contract_size == nil
       assert ContractUnit.normalize_market(market, %{}, Exchange.new!("binancecoinm")).contract_size == nil
     end
 

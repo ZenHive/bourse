@@ -5,6 +5,27 @@ Append-only schema confrontations for Derive. Follow the allocation and evidence
 
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`; this file is the complete carve record (task 466).
 
+## 2026-08-18 — linear contract unit (Task 625)
+
+**C-T625c — Derive perp `contract_size` is the authored venue-level contract unit
+(task 625).** Outcome: CONFIRM provider contract; DIVERGE from treating a missing
+instrument `contractSize` key as unknown. Derive's
+[`private/order`](https://docs.derive.xyz/reference/private-order)
+contract names `amount` as "Order amount in units of the base". The
+[`public/get_instruments`](https://docs.derive.xyz/reference/public-get_instruments)
+perp schema publishes `amount_step`, `minimum_amount`, `maximum_amount`, and
+`perp_details` funding fields — no contract-size multiplier. Live
+`public/get_instruments` for BTC perp on 2026-08-18 returned `BTC-PERP` with
+`base_currency=BTC`, `amount_step=0.0001`, `minimum_amount=0.01`, and no
+contract-size field. Quantity is already one base-asset unit. Option rows are
+not this recipe (`ContractUnit` skips `option: true`; option multipliers remain
+task 397). The authored `markets.contract_unit` slot declares the linear unit as
+the constant `1` with `quantity_unit: "base"`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T625c","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Derive private/order amount is units of the base; public/get_instruments perp schema has amount_step/min/max and no contract-size field"},"observed_evidence":{"kind":"live_venue","reference":"Live api.lyra.finance public/get_instruments BTC-PERP amount_step 0.0001 minimum_amount 0.01 with no contract-size field on 2026-08-18. Recorded fetch_markets test/fixtures/responses/derive/fetch_markets.json","fixture":"test/fixtures/responses/derive/fetch_markets.json"},"compatibility_reference":{"kind":"ccxt","reference":"CCXT contractSize 1 for Derive perps is compatibility reference only"},"resolved_tier":1}
+-->
+
 ## 2026-08-10 — capability endpoint confrontation (Task 549)
 
 **C-T549a — `fetchLiquidations` remains false despite the public and private liquidation-history
