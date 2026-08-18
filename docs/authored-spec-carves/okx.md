@@ -6,6 +6,19 @@ Append-only schema confrontations for OKX. Follow the allocation and evidence ru
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete OKX carve record.
 
+## 2026-08-18 — inclusive unified candle window (Task 617)
+
+**C-T617a — Unified candle `since` and `until` bounds are inclusive (task 617).
+Outcome: CONFIRM provider contract and supersede C-T553d's `until` translation.** OKX documents
+`before` as returning records newer than its timestamp and `after` as returning records older
+than its timestamp. The request therefore sends `before = since - 1` and `after = until + 1`,
+so candles exactly on either unified boundary remain eligible. The accepted-request recording
+pins both cursor offsets, and the compensated request returned code `0` from the provider.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T617a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 GET /api/v5/market/history-candles before/after parameter contract"},"observed_evidence":{"kind":"live_venue","reference":"Live www.okx.com GET /api/v5/market/history-candles accepted before=since-1 and after=until+1 with code 0 on 2026-08-18"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-14 — candlestick returned window (Task 553)
 
 **C-T553d — OKX candlestick bounds use exclusive `before`/`after` cursors (task 553).

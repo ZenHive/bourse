@@ -10,6 +10,7 @@ defmodule Bourse.Unified.RequestShapeTest do
   alias Bourse.Unified.RequestShape.Bybit
 
   @receive_timeout_ms 1_000
+  @exclusive_time_offset_ms 1
 
   describe "apply/3" do
     test "returns params unchanged for non-exchange inputs" do
@@ -2462,13 +2463,14 @@ defmodule Bourse.Unified.RequestShapeTest do
       assert shaped == %{"bar" => "1m", "limit" => 100}
     end
 
-    test "okx fetchOHLCV maps explicit and until-only windows to exclusive cursors" do
+    test "okx fetchOHLCV makes inclusive unified windows with exclusive cursors" do
       {:ok, exchange} = Exchange.new("okx")
       since = 1_700_000_000_000
       until_ms = since + 5 * 60_000
+      exclusive_after = until_ms + @exclusive_time_offset_ms
 
       assert %{
-               "after" => ^until_ms,
+               "after" => ^exclusive_after,
                "before" => 1_699_999_999_999,
                "bar" => "1m",
                "limit" => 5
@@ -2480,7 +2482,7 @@ defmodule Bourse.Unified.RequestShapeTest do
                )
 
       assert %{
-               "after" => ^until_ms,
+               "after" => ^exclusive_after,
                "before" => 1_699_999_999_999,
                "bar" => "1m",
                "limit" => 5

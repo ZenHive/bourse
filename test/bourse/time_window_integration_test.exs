@@ -4,6 +4,16 @@ defmodule Bourse.Test.TimeWindowProbeMatrix do
 
   A probe must assert returned timestamps at both requested boundaries. A
   successful response without that timestamp assertion is not coverage.
+
+  Unified `since` and `until` are inclusive. Venues with exclusive cursors
+  compensate on the request: OKX candles send `before = since - 1` and
+  `after = until + 1`.
+
+  The live `until` direction mutation-killed OKX's translation. The live
+  `since` direction does not prove request translation: `ReadParse`'s
+  `filter_ohlcv_by_since/2` and `filter_by_since/2` can rebuild the requested
+  lower boundary from a venue's default page. The offline request-shape guard
+  below proves that direction and catches a deleted translation before parse.
   """
 
   @type probe :: %{
@@ -425,9 +435,236 @@ end
 defmodule Bourse.TimeWindowProbeInventoryTest do
   use ExUnit.Case, async: true
 
+  alias Bourse.Exchange
+  alias Bourse.Registry
   alias Bourse.Test.TimeWindowProbeMatrix
   alias Bourse.Unified
   alias Bourse.Unified.Descriptor
+  alias Bourse.Unified.RequestShape
+
+  @since_ms 1_700_000_000_000
+  @until_ms 1_700_003_600_000
+  @request_limit 2
+  @exclusive_cursor_offset_ms 1
+
+  @pinned_live_probes MapSet.new([
+                        {:alpaca, :fetch_ohlcv},
+                        {:alpaca, :fetch_trades},
+                        {:binance, :fetch_ohlcv},
+                        {:binance, :fetch_orders},
+                        {:binance, :fetch_trades},
+                        {:binancecoinm, :fetch_trades},
+                        {:binanceusdm, :fetch_my_trades},
+                        {:binanceusdm, :fetch_ohlcv},
+                        {:binanceusdm, :fetch_orders},
+                        {:binanceusdm, :fetch_trades},
+                        {:bybit, :fetch_ohlcv},
+                        {:coinbaseexchange, :fetch_ohlcv},
+                        {:deribit, :fetch_ohlcv},
+                        {:deribit, :fetch_trades},
+                        {:derive, :fetch_trades},
+                        {:hyperliquid, :fetch_ohlcv},
+                        {:lighter, :fetch_ohlcv},
+                        {:okx, :fetch_ohlcv}
+                      ])
+
+  @raw_window_allowlist [
+    %{
+      venue: :alpaca,
+      methods: [:fetch_my_trades],
+      raw_keys: ["until"],
+      contract:
+        "priv/authority/alpaca/manifest.json — Trading API GET /v2/account/activities/{activity_type} names the native upper bound until"
+    },
+    %{
+      venue: :alpaca,
+      methods: [:fetch_closed_orders, :fetch_open_orders, :fetch_orders],
+      raw_keys: ["since", "until"],
+      contract:
+        "priv/authority/alpaca/manifest.json — Trading API GET /v2/orders exposes after/until; untranslated unified bounds are an explicit request-side carve"
+    },
+    %{
+      venue: :binance,
+      methods: [
+        :fetch_borrow_rate_history,
+        :fetch_convert_trade_history,
+        :fetch_deposits,
+        :fetch_funding_history,
+        :fetch_funding_rate_history,
+        :fetch_ledger,
+        :fetch_long_short_ratio_history,
+        :fetch_margin_adjustment_history,
+        :fetch_my_liquidations,
+        :fetch_transfers,
+        :fetch_withdrawals
+      ],
+      raw_keys: ["since", "until"],
+      contract:
+        "priv/authority/binance/manifest.json — Spot/SAPI and umbrella derivatives history contracts have no single authored bound mapping; raw pass-through is pinned as a drop-or-reject carve"
+    },
+    %{
+      venue: :binancecoinm,
+      methods: [
+        :fetch_canceled_orders,
+        :fetch_closed_orders,
+        :fetch_ledger,
+        :fetch_my_trades,
+        :fetch_open_orders,
+        :fetch_orders
+      ],
+      raw_keys: ["since", "until"],
+      contract:
+        "priv/authority/binancecoinm/manifest.json — COIN-M allOrders/userTrades/income/openOrders contracts are pinned as an explicit drop-or-reject carve"
+    },
+    %{
+      venue: :binanceusdm,
+      methods: [
+        :fetch_borrow_interest,
+        :fetch_borrow_rate_history,
+        :fetch_canceled_and_closed_orders,
+        :fetch_canceled_orders,
+        :fetch_closed_orders,
+        :fetch_convert_trade_history,
+        :fetch_deposits,
+        :fetch_funding_history,
+        :fetch_funding_rate_history,
+        :fetch_ledger,
+        :fetch_long_short_ratio_history,
+        :fetch_margin_adjustment_history,
+        :fetch_my_liquidations,
+        :fetch_open_orders,
+        :fetch_order_trades,
+        :fetch_transfers,
+        :fetch_withdrawals
+      ],
+      raw_keys: ["since", "until"],
+      contract:
+        "priv/authority/binanceusdm/manifest.json — USD-M account/data history contracts are pinned as an explicit drop-or-reject carve"
+    },
+    %{
+      venue: :bybit,
+      methods: [:fetch_deposits, :fetch_orders_classic, :fetch_trades, :fetch_withdrawals],
+      raw_keys: ["since", "until"],
+      contract:
+        "priv/authority/bybit/manifest.json — V5 recent-trade and legacy asset/order history contracts are pinned as an explicit no-bound or drop-or-reject carve"
+    },
+    %{
+      venue: :deribit,
+      methods: [
+        :fetch_closed_orders,
+        :fetch_deposits,
+        :fetch_funding_rate_history,
+        :fetch_my_trades,
+        :fetch_open_orders,
+        :fetch_transfers,
+        :fetch_withdrawals
+      ],
+      raw_keys: ["until"],
+      contract:
+        "priv/authority/deribit/manifest.json — private order/account histories and public funding history do not share an authored upper-bound contract; raw until is a drop-or-reject carve"
+    },
+    %{
+      venue: :deribit,
+      methods: [:fetch_my_liquidations, :fetch_order_trades],
+      raw_keys: ["since", "until"],
+      contract:
+        "priv/authority/deribit/manifest.json — private settlement/user-trade contracts are pinned as an explicit drop-or-reject carve"
+    },
+    %{
+      venue: :derive,
+      methods: [
+        :fetch_canceled_orders,
+        :fetch_closed_orders,
+        :fetch_deposits,
+        :fetch_funding_history,
+        :fetch_funding_rate_history,
+        :fetch_my_trades,
+        :fetch_open_orders,
+        :fetch_order_trades,
+        :fetch_orders,
+        :fetch_withdrawals
+      ],
+      raw_keys: ["since", "until"],
+      contract:
+        "priv/authority/derive/manifest.json — JSON-RPC order/trade/funding/ERC20 history contracts are pinned as an explicit drop-or-reject carve"
+    },
+    %{
+      venue: :hyperliquid,
+      methods: [
+        :fetch_canceled_and_closed_orders,
+        :fetch_canceled_orders,
+        :fetch_closed_orders,
+        :fetch_deposits,
+        :fetch_funding_history,
+        :fetch_ledger,
+        :fetch_open_orders,
+        :fetch_orders,
+        :fetch_withdrawals
+      ],
+      raw_keys: ["since", "until"],
+      contract:
+        "priv/authority/hyperliquid/manifest.json — POST /info order/funding/ledger history request types are pinned as an explicit no-bound or drop-or-reject carve"
+    },
+    %{
+      venue: :hyperliquid,
+      methods: [:fetch_my_trades],
+      raw_keys: ["until"],
+      contract:
+        "priv/authority/hyperliquid/manifest.json — POST /info userFillsByTime accepts startTime but no upper bound; raw until is a drop carve"
+    },
+    %{
+      venue: :lighter,
+      methods: [
+        :fetch_closed_orders,
+        :fetch_deposits,
+        :fetch_my_liquidations,
+        :fetch_my_trades,
+        :fetch_open_orders,
+        :fetch_transfers,
+        :fetch_withdrawals
+      ],
+      raw_keys: ["since", "until"],
+      contract:
+        "priv/authority/lighter/manifest.json — account/order/trade/transfer history contracts are pinned as an explicit no-bound or drop-or-reject carve"
+    },
+    %{
+      venue: :lighter,
+      methods: [:fetch_ohlcv],
+      raw_keys: ["until"],
+      contract:
+        "priv/authority/lighter/manifest.json — candle history accepts start_timestamp but has no authored upper-bound parameter; raw until is a drop carve"
+    },
+    %{
+      venue: :okx,
+      methods: [
+        :fetch_borrow_interest,
+        :fetch_borrow_rate_history,
+        :fetch_canceled_orders,
+        :fetch_closed_orders,
+        :fetch_convert_trade_history,
+        :fetch_funding_history,
+        :fetch_funding_rate_history,
+        :fetch_ledger,
+        :fetch_long_short_ratio_history,
+        :fetch_margin_adjustment_history,
+        :fetch_open_orders,
+        :fetch_order_trades,
+        :fetch_trades,
+        :fetch_transfers,
+        :fetch_withdrawals
+      ],
+      raw_keys: ["since", "until"],
+      contract:
+        "priv/authority/okx/manifest.json — V5 market/trade/account/funding history contracts are pinned as an explicit no-bound or drop-or-reject carve"
+    },
+    %{
+      venue: :okx,
+      methods: [:fetch_my_trades],
+      raw_keys: ["until"],
+      contract:
+        "priv/authority/okx/manifest.json — GET /api/v5/trade/fills maps begin but has no authored upper-bound mapping; raw until is a drop-or-reject carve"
+    }
+  ]
 
   test "every supported unified time-window read is probed or explicitly tracked" do
     expected = supported_time_window_reads()
@@ -439,6 +676,9 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
     assert length(probe_pairs) == MapSet.size(MapSet.new(probe_pairs)), "duplicate live time-window probe"
     assert length(exclusion_pairs) == MapSet.size(MapSet.new(exclusion_pairs)), "duplicate time-window exclusion"
     assert MapSet.disjoint?(MapSet.new(probe_pairs), MapSet.new(exclusion_pairs))
+
+    assert MapSet.new(probe_pairs) == @pinned_live_probes,
+           "live time-window probe set drifted; explicitly re-pin additions or demotions"
 
     assert expected == MapSet.new(probe_pairs ++ exclusion_pairs),
            "time-window inventory drift: #{inspect(MapSet.symmetric_difference(expected, MapSet.new(probe_pairs ++ exclusion_pairs)))}"
@@ -452,6 +692,56 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
     end
   end
 
+  test "every time-window read translates or has an exact provider-contract allowlist entry" do
+    allowlist = raw_window_allowlist()
+
+    actual =
+      supported_time_window_reads()
+      |> Enum.map(fn {venue, method} ->
+        shaped = shape_window(venue, method)
+        raw_keys = Enum.filter(["since", "until"], &Map.has_key?(shaped, &1))
+        {{venue, method}, raw_keys}
+      end)
+      |> Enum.reject(fn {_pair, raw_keys} -> raw_keys == [] end)
+      |> Map.new()
+
+    assert actual == Map.new(allowlist, fn {pair, %{raw_keys: raw_keys}} -> {pair, raw_keys} end),
+           "raw time-window request-shape allowlist drift: #{inspect(raw_window_drift(actual, allowlist))}"
+  end
+
+  test "Binance spot order histories map bounds and open orders drops unsupported bounds" do
+    methods = [
+      :fetch_closed_orders,
+      :fetch_canceled_orders,
+      :fetch_canceled_and_closed_orders,
+      :fetch_order_trades
+    ]
+
+    for method <- methods do
+      shaped = shape_window(:binance, method)
+
+      assert shaped["startTime"] == @since_ms
+      assert shaped["endTime"] == @until_ms
+      refute Map.has_key?(shaped, "since")
+      refute Map.has_key?(shaped, "until")
+    end
+
+    open_orders = shape_window(:binance, :fetch_open_orders)
+    refute Map.has_key?(open_orders, "since")
+    refute Map.has_key?(open_orders, "until")
+    refute Map.has_key?(open_orders, "startTime")
+    refute Map.has_key?(open_orders, "endTime")
+  end
+
+  test "OKX compensates both exclusive candle cursors for inclusive unified bounds" do
+    shaped = shape_window(:okx, :fetch_ohlcv)
+
+    assert shaped["before"] == @since_ms - @exclusive_cursor_offset_ms
+    assert shaped["after"] == @until_ms + @exclusive_cursor_offset_ms
+    refute Map.has_key?(shaped, "since")
+    refute Map.has_key?(shaped, "until")
+  end
+
   defp supported_time_window_reads do
     window_methods =
       for {method, js_name, required, _description} <- Unified.method_defs(),
@@ -460,12 +750,94 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
           into: MapSet.new(),
           do: method
 
-    for venue <- Bourse.Registry.exchanges(),
-        method <- Map.keys(Bourse.Registry.module_for(venue).__unified_endpoints__()),
+    for venue <- Registry.exchanges(),
+        method <- Map.keys(Registry.module_for(venue).__unified_endpoints__()),
         MapSet.member?(window_methods, method),
         into: MapSet.new(),
         do: {String.to_atom(venue), method}
   end
+
+  defp raw_window_allowlist do
+    pairs =
+      for %{venue: venue, methods: methods, raw_keys: raw_keys, contract: contract} <- @raw_window_allowlist,
+          method <- methods do
+        assert contract =~ "priv/authority/#{venue}/manifest.json",
+               "#{venue}.#{method} raw-window carve does not name its provider authority manifest"
+
+        {{venue, method}, %{raw_keys: raw_keys, contract: contract}}
+      end
+
+    assert length(pairs) == map_size(Map.new(pairs)), "duplicate raw time-window allowlist pair"
+    Map.new(pairs)
+  end
+
+  defp raw_window_drift(actual, allowlist) do
+    expected = Map.new(allowlist, fn {pair, %{raw_keys: raw_keys}} -> {pair, raw_keys} end)
+
+    %{
+      unexpected: Map.drop(actual, Map.keys(expected)),
+      stale: Map.drop(expected, Map.keys(actual)),
+      changed: for({pair, keys} <- actual, expected[pair] not in [nil, keys], do: {pair, expected[pair], keys})
+    }
+  end
+
+  defp shape_window(venue, method) do
+    exchange = window_exchange(venue)
+    js_name = Unified.js_name_for!(method)
+
+    params =
+      method
+      |> Unified.required_params_for()
+      |> Map.new(fn param -> {Atom.to_string(param), sample_param(param, venue)} end)
+      |> Map.merge(%{
+        "l1_address" => "0xabc",
+        "limit" => @request_limit,
+        "market_id" => 0,
+        "since" => @since_ms,
+        "until" => @until_ms
+      })
+
+    shape_opts = [
+      endpoint_path: endpoint_path(venue, method),
+      timestamp_ms_override: @since_ms
+    ]
+
+    params
+    |> RequestShape.apply_premarket(exchange, js_name)
+    |> Unified.maybe_denormalize_symbol(exchange)
+    |> Unified.maybe_translate_timeframe(exchange)
+    |> Unified.maybe_merge_request_defaults(exchange, js_name)
+    |> RequestShape.apply(exchange, js_name, shape_opts)
+  end
+
+  defp window_exchange(venue) do
+    Exchange.new!(Atom.to_string(venue),
+      api_key: "key",
+      secret: String.duplicate("0", 80),
+      password: "password",
+      uid: "1",
+      options: %{"subaccount_id" => 1}
+    )
+  end
+
+  defp sample_param(:code, _venue), do: "USDT"
+  defp sample_param(:id, _venue), do: "order-1"
+  defp sample_param(:timeframe, _venue), do: "1h"
+  defp sample_param(:symbol, :alpaca), do: "GLD"
+  defp sample_param(:symbol, :binance), do: "BTC/USDT"
+  defp sample_param(:symbol, :binancecoinm), do: "BTC/USD:BTC"
+  defp sample_param(:symbol, :binanceusdm), do: "BTC/USDT:USDT"
+  defp sample_param(:symbol, :bybit), do: "BTC/USDT:USDT"
+  defp sample_param(:symbol, :coinbaseexchange), do: "ETH/USD"
+  defp sample_param(:symbol, :deribit), do: "BTC/USD:BTC"
+  defp sample_param(:symbol, :derive), do: "ETH/USD:USDC"
+  defp sample_param(:symbol, :hyperliquid), do: "BTC/USDC:USDC"
+  defp sample_param(:symbol, :lighter), do: "ETH/USDC:USDC"
+  defp sample_param(:symbol, :okx), do: "BTC/USDT"
+
+  defp endpoint_path(:alpaca, :fetch_ohlcv), do: "v2/stocks/{symbol}/bars"
+  defp endpoint_path(:alpaca, :fetch_trades), do: "v2/stocks/{symbol}/trades"
+  defp endpoint_path(_venue, _method), do: nil
 end
 
 defmodule Bourse.TimeWindowIntegrationTest do

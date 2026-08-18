@@ -3249,8 +3249,8 @@
     },
     {
       "branch": "public_get_market_history_candles",
-      "capture_date": "2026-07-26",
-      "captured_at": "2026-07-26T05:57:16.475Z",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T09:11:07.000Z",
       "endpoint": "market/history-candles",
       "host": "www.okx.com",
       "http_status": 200,
@@ -3263,8 +3263,8 @@
     },
     {
       "branch": "public_get_market_history_index_candles",
-      "capture_date": "2026-07-26",
-      "captured_at": "2026-07-26T05:57:17.138Z",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T09:18:44.000Z",
       "endpoint": "market/history-index-candles",
       "host": "www.okx.com",
       "http_status": 200,
@@ -3277,8 +3277,8 @@
     },
     {
       "branch": "public_get_market_history_mark_price_candles",
-      "capture_date": "2026-07-26",
-      "captured_at": "2026-07-26T05:57:17.800Z",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T09:18:44.000Z",
       "endpoint": "market/history-mark-price-candles",
       "host": "www.okx.com",
       "http_status": 200,

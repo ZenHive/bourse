@@ -4243,6 +4243,36 @@
             "value": null
           }
         },
+        "fetchCanceledAndClosedOrders": {
+          "endTime": {
+            "source": "until",
+            "source_class": "optional"
+          },
+          "startTime": {
+            "source": "since",
+            "source_class": "optional"
+          }
+        },
+        "fetchCanceledOrders": {
+          "endTime": {
+            "source": "until",
+            "source_class": "optional"
+          },
+          "startTime": {
+            "source": "since",
+            "source_class": "optional"
+          }
+        },
+        "fetchClosedOrders": {
+          "endTime": {
+            "source": "until",
+            "source_class": "optional"
+          },
+          "startTime": {
+            "source": "since",
+            "source_class": "optional"
+          }
+        },
         "fetchDepositAddress": {
           "coin": {
             "kind": "unresolved",
@@ -4349,6 +4379,12 @@
             "value": null
           }
         },
+        "fetchOpenOrders": {
+          "_omit": [
+            "since",
+            "until"
+          ]
+        },
         "fetchOpenOrder": {
           "orderId": {
             "source": "id",
@@ -4389,6 +4425,16 @@
           }
         },
         "fetchOrderLists": {
+          "endTime": {
+            "source": "until",
+            "source_class": "optional"
+          },
+          "startTime": {
+            "source": "since",
+            "source_class": "optional"
+          }
+        },
+        "fetchOrderTrades": {
           "endTime": {
             "source": "until",
             "source_class": "optional"

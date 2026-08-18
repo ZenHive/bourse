@@ -11,6 +11,7 @@ defmodule Bourse.OkxAuthoredSpecTest do
 
   @positions_history_since_ms 1_700_000_000_500
   @positions_history_until_ms 1_700_000_002_000
+  @exclusive_time_offset_ms 1
 
   test "trading balance branches used per currency row" do
     body = %{
@@ -1216,7 +1217,7 @@ defmodule Bourse.OkxAuthoredSpecTest do
                "bar" => "1H",
                "limit" => 300,
                "before" => 1_699_931_781_032,
-               "after" => 1_701_011_781_033
+               "after" => 1_701_011_781_034
              }
 
       assert RequestShape.apply(%{"symbol" => "BTC-USDT"}, exchange, "fetchOHLCV") == %{
@@ -4016,7 +4017,7 @@ defmodule Bourse.OkxAuthoredSpecTest do
         assert %{"after" => after_ms, "before" => 999, "limit" => 1} =
                  OKX.build(%{"bar" => bar, "since" => 1_000, "limit" => 1}, "fetchOHLCV", exchange)
 
-        assert after_ms == 1_000 + duration_ms
+        assert after_ms == 1_000 + duration_ms + @exclusive_time_offset_ms
       end
 
       assert %{"limit" => 100} = OKX.build(%{"limit" => 0}, "fetchOHLCV", exchange)

@@ -1212,7 +1212,7 @@ defmodule Bourse.Unified.RequestShape.OKX do
   defp put_ohlcv_cursors(params, since, until_ms) do
     params
     |> Map.put_new("before", max(since - @exclusive_time_offset_ms, 0))
-    |> Map.put_new("after", until_ms)
+    |> Map.put_new("after", until_ms + @exclusive_time_offset_ms)
   end
 
   defp timeframe_ms(bar) when is_binary(bar) do
