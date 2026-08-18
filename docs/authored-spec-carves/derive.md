@@ -26,6 +26,26 @@ the constant `1` with `quantity_unit: "base"`.
 {"carve_id":"C-T625c","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Derive private/order amount is units of the base; public/get_instruments perp schema has amount_step/min/max and no contract-size field"},"observed_evidence":{"kind":"live_venue","reference":"Live api.lyra.finance public/get_instruments BTC-PERP amount_step 0.0001 minimum_amount 0.01 with no contract-size field on 2026-08-18. Recorded fetch_markets test/fixtures/responses/derive/fetch_markets.json","fixture":"test/fixtures/responses/derive/fetch_markets.json"},"compatibility_reference":{"kind":"ccxt","reference":"CCXT contractSize 1 for Derive perps is compatibility reference only"},"resolved_tier":1}
 -->
 
+## 2026-08-18 — transfer currency and limit filters (Task 585)
+
+**C-T585a — Derive transfer currency and row limits are client-side unified filters
+(task 585). Outcome: DIVERGE from forwarding unsupported parameters.** Derive's
+[`private/get_erc20_transfer_history`](https://docs.derive.xyz/reference/post_private-get-erc20-transfer-history.md)
+request schema permits only `subaccount_id`, `wallet`, `start_timestamp`, and
+`end_timestamp`, with `additionalProperties: false`; it has no asset filter or
+pagination parameter. The client keeps `code` and `limit` off the wire, filters
+parsed `%Bourse.TransferEntry{currency: ...}` rows by `code`, then truncates the
+filtered collection to `limit`. Before task 585, request shaping silently removed
+both options; the generic read parser happened to apply `limit`, but did not apply
+`code`, so a currency-scoped call could return transfers for every asset. The
+mixed-asset, over-limit parser test pins both client-side operations and the exact
+provider-shaped request body. A signed demo call reached the endpoint successfully
+on 2026-08-18; populated transfer evidence remains absent.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T585a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Derive private/get_erc20_transfer_history request schema permits only subaccount_id, wallet, start_timestamp and end_timestamp with additionalProperties false"},"observed_evidence":{"kind":"live_venue","reference":"Signed api-demo.lyra.finance private/get_erc20_transfer_history call succeeded on 2026-08-18; mixed-asset and over-limit provider-shaped rows are pinned in test/bourse/derive_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The demo account supplied no populated transfer row; client-side filter semantics are pinned against the provider operation schema and provider-shaped rows"}
+-->
+
 ## 2026-08-10 — capability endpoint confrontation (Task 549)
 
 **C-T549a — `fetchLiquidations` remains false despite the public and private liquidation-history

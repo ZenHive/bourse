@@ -316,7 +316,7 @@ defmodule Bourse.Unified.ReadParse do
          :ok <- validate_parsed(parsed, list_return?),
          {:ok, parsed} <- backfill_request_symbols(parsed, params, parse_type, list_return?),
          {:ok, parsed} <- backfill_native_symbols(parsed, exchange, parse_type, params) do
-      # Client-side symbol/limit filtering runs
+      # Client-side request filtering runs
       # LAST — after request-symbol backfill — so list reads whose per-struct
       # symbol is only populated from the request (e.g. trades) are not emptied
       # before their symbols exist.
@@ -1095,6 +1095,7 @@ defmodule Bourse.Unified.ReadParse do
   defp apply_request_filters(parsed, params, parse_type) when is_list(parsed) do
     parsed
     |> filter_requested_symbols(params)
+    |> filter_requested_currency(params, parse_type)
     |> filter_by_since(params)
     |> maybe_sort_chronologically(parse_type)
     |> maybe_take_limit(params["limit"] || params["count"], params)
@@ -1113,8 +1114,8 @@ defmodule Bourse.Unified.ReadParse do
   #
   # Guarded to NON-struct maps: a singular parse (`%Ticker{}` from fetchTicker)
   # is also a map, and routing it here raises `Enumerable not implemented`.
-  defp apply_request_filters(parsed, params, _parse_type) when is_non_struct_map(parsed) do
-    filter_indexed_symbols(parsed, params)
+  defp apply_request_filters(parsed, params, parse_type) when is_non_struct_map(parsed) do
+    filter_indexed_symbols(parsed, params, parse_type)
   end
 
   defp apply_request_filters(parsed, _params, _parse_type), do: parsed
@@ -1156,20 +1157,36 @@ defmodule Bourse.Unified.ReadParse do
 
   defp filter_requested_symbols(parsed, _params), do: parsed
 
+  defp filter_requested_currency(parsed, %{"code" => code}, "transfer") when is_binary(code) do
+    Enum.filter(parsed, fn
+      %{currency: currency} -> currency == code
+      _row -> true
+    end)
+  end
+
+  defp filter_requested_currency(parsed, _params, _parse_type), do: parsed
+
   # Symbol-keyed results (fetchTickers) filter by value while preserving the map
   # shape — the list-oriented clauses above would flatten them into k/v tuples.
   # Rows without a `:symbol` key are kept, matching the list behaviour.
-  defp filter_indexed_symbols(parsed, %{"symbols" => symbols}) when is_list(symbols) do
+  defp filter_indexed_symbols(parsed, %{"symbols" => symbols}, _parse_type) when is_list(symbols) do
     Map.filter(parsed, fn
       {_key, %{symbol: symbol}} -> symbol in symbols
       _entry -> true
     end)
   end
 
-  defp filter_indexed_symbols(parsed, _params), do: parsed
+  defp filter_indexed_symbols(parsed, %{"symbol" => symbol}, "leverage") when is_binary(symbol) do
+    Map.filter(parsed, fn
+      {_key, %{symbol: row_symbol}} -> row_symbol == symbol
+      _entry -> true
+    end)
+  end
 
-  # Currency/since/limit filtering drops rows older than
-  # `since` before limit. Used by fetchBorrowRateHistory fixtures.
+  defp filter_indexed_symbols(parsed, _params, _parse_type), do: parsed
+
+  # Since/limit filtering drops rows older than `since` before limit.
+  # Used by fetchBorrowRateHistory fixtures.
   defp filter_by_since(parsed, %{"since" => since}) when is_integer(since) do
     Enum.filter(parsed, fn
       %{timestamp: ts} when is_integer(ts) -> ts >= since

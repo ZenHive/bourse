@@ -21,6 +21,23 @@ spot-only literal is not downcased here.
 {"carve_id":"C-T632c","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M New Order / New Algo Order type enum: LIMIT MARKET STOP STOP_MARKET TAKE_PROFIT TAKE_PROFIT_MARKET TRAILING_STOP_MARKET"},"observed_evidence":{"kind":"provider_shaped","reference":"Write-type inventory and product-scoped parse goldens in test/bourse/binance_order_type_round_trip_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No manifest-registered COIN-M recording carries the conditional algo types; the mapping is inverted from the authored write cases against the documented enum shared with USD-M"}
 -->
 
+## 2026-08-18 — leverage symbol filter (Task 585 / Task 586 fold)
+
+**C-T585b — COIN-M `fetchLeverages(symbol: ...)` filters the DAPI account positions
+client-side (task 585, folding task 586). Outcome: CONFIRM provider contract.**
+Binance's COIN-M Account Information contract accepts no symbol parameter and
+returns all `positions`, each carrying its own `symbol` and `leverage`. The client
+therefore keeps unified `symbol` off the signed request and filters the parsed,
+symbol-keyed leverage map after the response. Before this fold, request shaping
+correctly omitted `symbol`, but the map-result filter only recognized plural
+`symbols`; a singular `symbol` request silently returned every position. The
+populated demo recording establishes the multi-position account envelope, and the
+regression test pins both the one-symbol result and the absent wire parameter.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T585b","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M Account Information REST contract has no symbol request parameter and returns symbol/leverage in every position row"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binancecoinm/fetch_leverages.json and the multi-position filter regression in test/bourse/binance_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-18 — WS subscribe channels remain unauthored (Task 618)
 
 **C-T618c — COIN-M `websocket.subscribe` stays `supported: false` (task 618).

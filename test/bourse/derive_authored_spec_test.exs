@@ -129,12 +129,30 @@ defmodule Bourse.DeriveAuthoredSpecTest do
             },
             %{
               "amount" => "3.25",
-              "asset" => "USDC",
+              "asset" => "WETH",
               "counterparty_subaccount_id" => 90_002,
               "is_outgoing" => false,
               "subaccount_id" => @derive_testnet_subaccount_id,
               "timestamp" => @observed_next_timestamp_ms,
               "tx_hash" => "0xincoming"
+            },
+            %{
+              "amount" => "4.5",
+              "asset" => "USDC",
+              "counterparty_subaccount_id" => 90_003,
+              "is_outgoing" => false,
+              "subaccount_id" => @derive_testnet_subaccount_id,
+              "timestamp" => @observed_next_timestamp_ms,
+              "tx_hash" => "0xsecond-usdc"
+            },
+            %{
+              "amount" => "5.75",
+              "asset" => "USDC",
+              "counterparty_subaccount_id" => 90_004,
+              "is_outgoing" => true,
+              "subaccount_id" => @derive_testnet_subaccount_id,
+              "timestamp" => @observed_next_timestamp_ms,
+              "tx_hash" => "0xover-limit"
             }
           ]
         }
@@ -164,10 +182,10 @@ defmodule Bourse.DeriveAuthoredSpecTest do
                 to_account: "90001"
               },
               %TransferEntry{
-                amount: 3.25,
+                amount: 4.5,
                 currency: "USDC",
-                from_account: "90002",
-                id: "0xincoming",
+                from_account: "90003",
+                id: "0xsecond-usdc",
                 timestamp: @observed_next_timestamp_ms,
                 to_account: "144422"
               }
