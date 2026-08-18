@@ -1387,7 +1387,7 @@ defmodule Bourse.OkxAuthoredSpecTest do
              ) == %{
                "ccy" => "USDT",
                "before" => 1_699_999_999_999,
-               "after" => 1_700_000_100_000
+               "after" => 1_700_000_100_001
              }
     end
 
@@ -1410,7 +1410,7 @@ defmodule Bourse.OkxAuthoredSpecTest do
                exchange,
                "fetchPositionsHistory"
              ) == %{
-               "after" => 1_708_735_950_000,
+               "after" => 1_708_735_950_001,
                "instId" => "XRP-USDT-SWAP",
                "limit" => 1
              }
@@ -1422,7 +1422,7 @@ defmodule Bourse.OkxAuthoredSpecTest do
              ) == %{"instId" => "BTC-USDT-SWAP", "instType" => "SWAP"}
     end
 
-    test "positions history keeps since local and sends exclusive until as after" do
+    test "positions history keeps since local and compensates exclusive after for inclusive until" do
       rows =
         [
           %{
@@ -1496,15 +1496,15 @@ defmodule Bourse.OkxAuthoredSpecTest do
                  plug: {Req.Test, stub_positions_history(requests, rows)}
                )
 
-      assert Enum.map(history, & &1.id) == ["before-until", "after-since"]
-      assert Enum.all?(history, &(&1.timestamp < @positions_history_until_ms))
+      assert Enum.map(history, & &1.id) == ["at-until", "before-until", "after-since"]
+      assert Enum.all?(history, &(&1.timestamp <= @positions_history_until_ms))
 
       conn = RequestCollector.one!(requests)
       assert conn.method == "GET"
       assert conn.request_path == "/api/v5/account/positions-history"
 
       assert RequestCollector.query(conn) == %{
-               "after" => Integer.to_string(@positions_history_until_ms),
+               "after" => Integer.to_string(@positions_history_until_ms + @exclusive_time_offset_ms),
                "limit" => "100"
              }
     end
@@ -4041,8 +4041,8 @@ defmodule Bourse.OkxAuthoredSpecTest do
       assert %{"instType" => "SWAP"} =
                OKX.build(%{"symbols" => [], "instType" => "swap"}, "fetchPositionsHistory", exchange)
 
-      assert %{"before" => 999, "ccy" => "USDT"} =
-               OKX.build(%{"code" => "USDT", "since" => 1_000}, "fetchDeposits", exchange)
+      assert %{"before" => 999, "after" => 2_001, "ccy" => "USDT"} =
+               OKX.build(%{"code" => "USDT", "since" => 1_000, "until" => 2_000}, "fetchDeposits", exchange)
     end
 
     test "close-position maps unified sides without inventing a net-mode side" do

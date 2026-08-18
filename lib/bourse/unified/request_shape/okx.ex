@@ -1211,8 +1211,8 @@ defmodule Bourse.Unified.RequestShape.OKX do
 
   defp put_ohlcv_cursors(params, since, until_ms) do
     params
-    |> Map.put_new("before", max(since - @exclusive_time_offset_ms, 0))
-    |> Map.put_new("after", until_ms + @exclusive_time_offset_ms)
+    |> put_exclusive_before(since)
+    |> put_exclusive_after(until_ms)
   end
 
   defp timeframe_ms(bar) when is_binary(bar) do
@@ -1235,17 +1235,25 @@ defmodule Bourse.Unified.RequestShape.OKX do
 
   defp build_deposits(params) do
     {since, params} = Map.pop(params, "since")
+    {until_ms, params} = Map.pop(params, "until")
 
     params
     |> rename("code", "ccy")
-    |> put_deposit_since(since)
-    |> rename("until", "after")
+    |> put_exclusive_before(since)
+    |> put_exclusive_after(until_ms)
   end
 
-  defp put_deposit_since(params, since) when is_integer(since),
+  # OKX pagination `before`/`after` exclude the cursor. Unified since/until are
+  # inclusive, so the request sends since-1 / until+1.
+  defp put_exclusive_before(params, since) when is_integer(since),
     do: Map.put_new(params, "before", max(since - @exclusive_time_offset_ms, 0))
 
-  defp put_deposit_since(params, _since), do: params
+  defp put_exclusive_before(params, _since), do: params
+
+  defp put_exclusive_after(params, until_ms) when is_integer(until_ms),
+    do: Map.put(params, "after", until_ms + @exclusive_time_offset_ms)
+
+  defp put_exclusive_after(params, _until_ms), do: params
 
   # OKX documents amt/fee as String; unified amount/fee arrive as numbers. Network
   # is a unified code (TRC20) that must become the composite chain (USDT-TRC20) —
@@ -1489,9 +1497,11 @@ defmodule Bourse.Unified.RequestShape.OKX do
         _ -> nil
       end
 
+    {until_ms, params} = Map.pop(params, "until")
+
     params
     |> Map.drop(~w(symbols since))
-    |> rename("until", "after")
+    |> put_exclusive_after(until_ms)
     |> Map.put_new("limit", @default_positions_history_limit)
     |> rename("marginMode", "mgnMode")
     |> put_unless_nil("instId", inst_id)

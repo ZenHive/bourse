@@ -1821,6 +1821,7 @@ defmodule Bourse.Unified.RequestShapeTest do
             "discard" => %{"kind" => "omit"},
             "kept" => %{"kind" => "reference", "source" => "source", "retain_source" => true},
             "previous" => %{"kind" => "reference", "source" => "count", "transform" => "decrement"},
+            "next" => %{"kind" => "reference", "source" => "count", "transform" => "increment"},
             "mode" => %{
               "kind" => "conditional",
               "cases" => [
@@ -1849,6 +1850,7 @@ defmodule Bourse.Unified.RequestShapeTest do
       assert shaped["kept"] == "value"
       assert shaped["source"] == "value"
       assert shaped["previous"] == 2
+      assert shaped["next"] == 4
       assert shaped["mode"] == "matched"
       refute Map.has_key?(shaped, "discard")
       refute Map.has_key?(shaped, "suppressed")

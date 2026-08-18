@@ -6,8 +6,9 @@ defmodule Bourse.Test.TimeWindowProbeMatrix do
   successful response without that timestamp assertion is not coverage.
 
   Unified `since` and `until` are inclusive. Venues with exclusive cursors
-  compensate on the request: OKX candles send `before = since - 1` and
-  `after = until + 1`.
+  compensate on the request: OKX pagination `before`/`after` send
+  `before = since - 1` and `after = until + 1` (candles, deposits, and
+  positions-history).
 
   The live `until` direction mutation-killed OKX's translation. The live
   `since` direction does not prove request translation: `ReadParse`'s
@@ -447,6 +448,23 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
   @request_limit 2
   @exclusive_cursor_offset_ms 1
 
+  # Exclusive pagination cursors: the provider documents that the cursor value
+  # itself is excluded from the page. Inclusive native time filters are listed
+  # with an empty cursor set so a new runtime venue cannot skip confrontation.
+  # Authority for each row is that venue's pagination/history contract, indexed
+  # from priv/authority/<venue>/manifest.json.
+  @exclusive_cursors %{
+    "okx" => %{
+      "before" => %{unified: "since", offset: -1, transform: "decrement"},
+      "after" => %{unified: "until", offset: 1, transform: "increment"}
+    }
+  }
+
+  @inclusive_bound_venues ~w(
+    alpaca binance binancecoinm binanceusdm bybit coinbaseexchange
+    deribit derive hyperliquid lighter
+  )
+
   @pinned_live_probes MapSet.new([
                         {:alpaca, :fetch_ohlcv},
                         {:alpaca, :fetch_trades},
@@ -733,14 +751,166 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
     refute Map.has_key?(open_orders, "endTime")
   end
 
-  test "OKX compensates both exclusive candle cursors for inclusive unified bounds" do
-    shaped = shape_window(:okx, :fetch_ohlcv)
+  test "OKX compensates exclusive pagination cursors for inclusive unified bounds" do
+    ohlcv = shape_window(:okx, :fetch_ohlcv)
+    deposits = shape_window(:okx, :fetch_deposits)
+    history = shape_window(:okx, :fetch_positions_history)
 
-    assert shaped["before"] == @since_ms - @exclusive_cursor_offset_ms
-    assert shaped["after"] == @until_ms + @exclusive_cursor_offset_ms
-    refute Map.has_key?(shaped, "since")
-    refute Map.has_key?(shaped, "until")
+    assert ohlcv["before"] == @since_ms - @exclusive_cursor_offset_ms
+    assert ohlcv["after"] == @until_ms + @exclusive_cursor_offset_ms
+    refute Map.has_key?(ohlcv, "since")
+    refute Map.has_key?(ohlcv, "until")
+
+    assert deposits["before"] == @since_ms - @exclusive_cursor_offset_ms
+    assert deposits["after"] == @until_ms + @exclusive_cursor_offset_ms
+    refute Map.has_key?(deposits, "since")
+    refute Map.has_key?(deposits, "until")
+
+    assert history["after"] == @until_ms + @exclusive_cursor_offset_ms
+    refute Map.has_key?(history, "before")
+    refute Map.has_key?(history, "since")
+    refute Map.has_key?(history, "until")
   end
+
+  test "every exclusive-cursor request-shape site compensates inclusive unified bounds" do
+    assert exclusive_cursor_venues() == MapSet.new(Registry.exchanges()),
+           "confront this venue's pagination contract before adding runtime support: " <>
+             inspect(MapSet.difference(MapSet.new(Registry.exchanges()), exclusive_cursor_venues()))
+
+    sites = exclusive_cursor_sites()
+
+    assert sites != [],
+           "exclusive-cursor sweep found no sites; OKX still documents exclusive before/after pagination"
+
+    uncompensated =
+      Enum.reject(sites, fn %{actual: actual, expected: expected} -> actual == expected end)
+
+    assert uncompensated == [],
+           "exclusive cursor missing compensation: #{inspect(uncompensated)}"
+  end
+
+  test "authored exclusive-cursor remaps carry the compensating transform" do
+    uncompensated = uncompensated_exclusive_spec_remaps()
+
+    assert uncompensated == [],
+           "exclusive-cursor spec remap missing compensation: #{inspect(uncompensated)}"
+  end
+
+  test "request-shape Elixir does not bare-rename unified bounds onto exclusive cursors" do
+    assert uncompensated_exclusive_renames() == [],
+           "bare rename onto an exclusive cursor copies the unified bound; compensate instead: " <>
+             inspect(uncompensated_exclusive_renames())
+  end
+
+  defp exclusive_cursor_venues do
+    MapSet.new(Map.keys(@exclusive_cursors) ++ @inclusive_bound_venues)
+  end
+
+  defp exclusive_natives do
+    @exclusive_cursors
+    |> Map.values()
+    |> Enum.flat_map(&Map.keys/1)
+    |> MapSet.new()
+  end
+
+  defp exclusive_cursor_sites do
+    for {venue, method} <- supported_time_window_reads(),
+        cursors = Map.get(@exclusive_cursors, Atom.to_string(venue), %{}),
+        {native, %{unified: unified, offset: offset}} <- cursors,
+        shaped = shape_window(venue, method),
+        is_map(shaped),
+        Map.has_key?(shaped, native) do
+      bound = if unified == "since", do: @since_ms, else: @until_ms
+
+      %{
+        venue: venue,
+        method: method,
+        native: native,
+        actual: shaped[native],
+        expected: bound + offset
+      }
+    end
+  end
+
+  defp uncompensated_exclusive_spec_remaps do
+    for venue <- Registry.exchanges(),
+        cursors = Map.get(@exclusive_cursors, venue, %{}),
+        {js_name, entries} <- request_shape_methods(venue),
+        {native, %{transform: expected_transform}} <- cursors,
+        match?(%{"source" => source} when source in ["since", "until"], entries[native]),
+        entries[native]["transform"] != expected_transform do
+      %{
+        venue: venue,
+        method: js_name,
+        native: native,
+        source: entries[native]["source"],
+        transform: entries[native]["transform"],
+        expected_transform: expected_transform
+      }
+    end
+  end
+
+  defp request_shape_methods(venue) do
+    shape = Exchange.new!(venue).request_param_shape
+
+    Enum.flat_map(shape, fn
+      {"endpoint_overrides", overrides} ->
+        for {js_name, paths} <- overrides,
+            {_path, entries} when is_map(entries) <- paths,
+            do: {js_name, entries}
+
+      {js_name, entries} when is_map(entries) ->
+        [{js_name, entries}]
+
+      _entry ->
+        []
+    end)
+  end
+
+  defp uncompensated_exclusive_renames do
+    natives = exclusive_natives()
+
+    for path <- request_shape_paths(),
+        ast = path |> File.read!() |> Code.string_to_quoted!(file: path),
+        site <- exclusive_rename_sites(ast, path, natives) do
+      site
+    end
+  end
+
+  defp request_shape_paths do
+    ["lib/bourse/unified/request_shape.ex" | Path.wildcard("lib/bourse/unified/request_shape/*.ex")]
+  end
+
+  defp exclusive_rename_sites(ast, path, natives) do
+    {_ast, sites} =
+      Macro.prewalk(ast, [], fn
+        {:rename, meta, args} = node, acc ->
+          case exclusive_rename_args(args, natives) do
+            {source, target} ->
+              {node, [%{path: path, line: meta[:line], source: source, target: target} | acc]}
+
+            nil ->
+              {node, acc}
+          end
+
+        node, acc ->
+          {node, acc}
+      end)
+
+    Enum.reverse(sites)
+  end
+
+  defp exclusive_rename_args([source, target], natives)
+       when is_binary(source) and is_binary(target) and source in ["since", "until"] do
+    if MapSet.member?(natives, target), do: {source, target}
+  end
+
+  defp exclusive_rename_args([_params, source, target], natives)
+       when is_binary(source) and is_binary(target) and source in ["since", "until"] do
+    if MapSet.member?(natives, target), do: {source, target}
+  end
+
+  defp exclusive_rename_args(_args, _natives), do: nil
 
   defp supported_time_window_reads do
     window_methods =

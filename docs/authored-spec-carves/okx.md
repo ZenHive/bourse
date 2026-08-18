@@ -6,6 +6,26 @@ Append-only schema confrontations for OKX. Follow the allocation and evidence ru
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete OKX carve record.
 
+## 2026-08-18 — inclusive unified until on exclusive after cursors (Task 635)
+
+**C-T635a — Unified `since`/`until` are inclusive on every OKX exclusive `before`/`after`
+cursor (task 635). Outcome: CONFIRM the pagination contract; supersede C-T434d's 1:1
+`until=T` → `after=T` mapping and close the uncompensated `until` half of C-T434c
+deposits.** OKX's official
+[pagination guide](https://www.okx.com/docs-v5/trick_en/#pagination) documents that
+`before` and `after` are not included in the returned set. C-T617a already compensated
+both candle cursors. Deposits and positions-history used the same exclusive `after`
+cursor but copied unified `until=T` onto `after=T`, so a row sitting on the unified
+upper bound was dropped (`uTime < until`). The request now sends `after = until + 1`
+(and deposits still send `before = since - 1`) so returned rows satisfy
+`since ≤ ts ≤ until`. Task 456's EEA-demo acceptance of native `after` remains valid
+evidence that the cursor is a timestamp; the 1:1 mapping was the losing side of the
+contradiction with the inclusive unified invariant.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T635a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 pagination guide: before/after are exclusive (https://www.okx.com/docs-v5/trick_en/#pagination), indexed from priv/authority/okx/manifest.json"},"observed_evidence":{"kind":"live_venue","reference":"Live www.okx.com GET /api/v5/market/history-candles accepted before=since-1 and after=until+1 with code 0 on 2026-08-18 (C-T617a); the same exclusive after cursor is the positions-history and deposit-history pagination parameter; EEA-demo signed after requests were accepted with code 0 on 2026-07-22 (C-T434c/d)"},"compatibility_reference":{"kind":"ccxt","reference":"CCXT omits unified until on positions-history and only filters since locally; that is compatibility behavior, not the exchange-owned pagination contract"},"resolved_tier":1}
+-->
+
 ## 2026-08-18 — inclusive unified candle window (Task 617)
 
 **C-T617a — Unified candle `since` and `until` bounds are inclusive (task 617).
@@ -1075,7 +1095,7 @@ docs (task 434).**
   request-shape validation rather than authentication failure.
 
 **C-T434d — Position list, history, and singular filters. Outcome: CONFIRMED-against-OKX docs
-(task 434; extended by task 456).**
+(task 434; extended by task 456; until mapping superseded by task 635).**
 
 - *Exchange semantics:* open positions accept comma-separated `instId`. OKX's official
   [positions-history endpoint](https://www.okx.com/docs-v5/en/#rest-api-account-get-positions-history)
@@ -1083,9 +1103,11 @@ docs (task 434).**
   defines `after=T` as rows earlier than `T`. The official
   [pagination guide](https://www.okx.com/docs-v5/trick_en/#pagination) makes `after` exclusive and
   caps a page at 100 rows.
-- *Our carve:* join requested native ids, emit a singular history id, default history limit to
-  100, keep unified `since` as the existing local result filter, and map unified `until=T`
-  directly to native `after=T`. Neither `since` nor `until` is a wire key. Native `after` is
+- *Our carve (until mapping superseded by C-T635a):* join requested native ids, emit a singular
+  history id, default history limit to 100, and keep unified `since` as the existing local result
+  filter. Task 456 mapped unified `until=T` directly to native `after=T` (exclusive
+  `uTime < until`); C-T635a superseded that half — unified `until` is inclusive, so the request
+  sends `after = until + 1`. Neither `since` nor `until` is a wire key. Native `after` is
   required so older qualifying rows remain reachable beyond the newest 100-row page. Derive the
   singular position `instType` from its native id.
 - *Compatibility reference:* CCXT omits unified `until` and only filters `since` locally. That is

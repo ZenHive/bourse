@@ -393,7 +393,7 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
              )
 
     assert is_list(history)
-    assert Enum.all?(history, &(&1.timestamp < until_ms))
+    assert Enum.all?(history, &(&1.timestamp <= until_ms))
 
     assert {:error, %Error{type: :bad_request, code: "51000"}} =
              Bourse.fetch_positions_history(exchange, instType: "NOPE", until: until_ms, limit: 1)

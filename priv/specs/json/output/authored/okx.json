@@ -3081,7 +3081,8 @@
           "after": {
             "kind": "reference",
             "source": "until",
-            "source_class": "optional"
+            "source_class": "optional",
+            "transform": "increment"
           },
           "before": {
             "kind": "reference",

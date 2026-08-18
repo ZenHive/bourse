@@ -456,6 +456,7 @@ defmodule Bourse.Unified.RequestShape do
   end
 
   defp transform_authored_value(value, "decrement") when is_integer(value), do: value - 1
+  defp transform_authored_value(value, "increment") when is_integer(value), do: value + 1
   defp transform_authored_value(value, "uppercase") when is_binary(value), do: String.upcase(value)
   # OKX funding/convert bodies document numeric sizes as JSON strings (amt/sz).
   defp transform_authored_value(value, "string"), do: to_string(value)
