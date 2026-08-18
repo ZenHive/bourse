@@ -342,31 +342,45 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
     assert ticker["axes"]["evidence"] == "verified"
   end
 
-  test "Deribit current and historical REST baselines bind the task-554 semantic diff" do
+  test "Deribit current and historical REST baselines preserve semantic-diff continuity" do
     manifest = Bourse.JsonDocument.decode_file!(Path.join([@authority_root, "deribit", "manifest.json"]))
     baseline = Bourse.JsonDocument.decode_file!(Path.join([@authority_root, "deribit", "contract-baselines.json"]))
 
-    semantic_diff =
+    prior_diff =
       Bourse.JsonDocument.decode_file!(Path.join([@authority_root, "deribit", "current-rest-drift-2026-08-10.json"]))
+
+    current_diff =
+      Bourse.JsonDocument.decode_file!(Path.join([@authority_root, "deribit", "current-rest-drift-2026-08-18.json"]))
 
     current_artifact = Enum.find(manifest["artifacts"], &(&1["id"] == "api-openapi"))
     current = baseline["surfaces"]["current_rest"]
     historical = baseline["historical_current_rest"]
-    prior_counts = semantic_diff["operation_delta"]["authored_relation_counts"]
+    current_counts = current_diff["operation_delta"]["authored_relation_counts"]
 
     assert current["sha256"] == current_artifact["sha256"]
     assert current["upstream_pin"] == current_artifact["upstream_pin"]
-    assert current["expected"]["provider_count"] == semantic_diff["current"]["operation_count"]
-    assert current["expected"]["authored_count"] == prior_counts["authored"]
-    assert current["expected"]["shared_count"] == prior_counts["overlap"]
-    assert current["expected"]["provider_only_count"] == prior_counts["provider_only"]
-    assert current["expected"]["authored_only_count"] == prior_counts["authored_only"]
-    assert historical["sha256"] == semantic_diff["prior"]["sha256"]
+    assert current["review_evidence"] == "priv/authority/deribit/current-rest-drift-2026-08-18.json"
+    assert current["expected"]["provider_count"] == current_diff["current"]["operation_count"]
+    assert current["expected"]["authored_count"] == current_counts["authored"]
+    assert current["expected"]["shared_count"] == current_counts["overlap"]
+    assert current["expected"]["provider_only_count"] == current_counts["provider_only"]
+    assert current["expected"]["authored_only_count"] == current_counts["authored_only"]
+    assert current_diff["prior"]["sha256"] == prior_diff["current"]["sha256"]
+    assert historical["sha256"] == prior_diff["prior"]["sha256"]
     assert historical["expected"] == Map.take(current["expected"], Map.keys(historical["expected"]))
 
     assert baseline["surfaces"]["upcoming_rest"]["sha256"] != current["sha256"]
     assert baseline["surfaces"]["current_websocket"]["artifact_id"] == "current-asyncapi"
     assert baseline["surfaces"]["upcoming_websocket"]["artifact_id"] == "upcoming-asyncapi"
+  end
+
+  test "Deribit mutation adjudication reaches the regenerated comparison inventory" do
+    manifest = Bourse.JsonDocument.decode_file!("test/fixtures/provider_operations/_manifest.json")
+    operations = manifest["inventory"]["surfaces"]["current_rest"]["operations"]
+    logout = Enum.find(operations, &(&1["operation_key"] == "GET /api/v2/private/logout"))
+
+    assert logout["axes"]["reachability"] == "unreachable"
+    assert logout["axes"]["evidence"] == "unverified"
   end
 
   test "Mix task writes a limitation report without network access" do
@@ -383,7 +397,8 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
                "--output",
                output_root,
                "--venue",
-               "derive"
+               "derive",
+               "--rebind-provider-corpus"
              ])
 
     report = Bourse.JsonDocument.decode_file!(Path.join(output_root, "derive.json"))

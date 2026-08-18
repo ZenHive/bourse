@@ -31,12 +31,12 @@
     "artifact_id": "api-openapi",
     "denominator_enumerated_from": {
       "operation_key_set_sha256": "f6390f864cb6ea46acba203f98f1920f01ec21d611bcdb146c5ad8e942f5cd0c",
-      "retrieved_at": "2026-08-14",
-      "sha256": "2ac2867b1f25544dd189244b17c230e2dea6bff0fc0e1c8c26e2003af06f9c55"
+      "retrieved_at": "2026-08-18",
+      "sha256": "e85c22f50ddf3d002aa789128c04597d3a7ea25c696bccdb1bb05749d9dfffef"
     },
-    "drift_record": "priv/authority/deribit/current-rest-drift-2026-08-14.json",
-    "note": "The pinned reference-only bytes are no longer fetchable upstream, so this register enumerates its denominator from the observed revision recorded in the drift record and never claims to have read the pinned bytes.",
-    "pinned_revision_sha256": "430b3f0bc67cc574a05e695d22d1acbbb5348c96858368bba9931c2f05350515"
+    "drift_record": "priv/authority/deribit/current-rest-drift-2026-08-18.json",
+    "note": "The refreshed provider document is both the pinned revision and the denominator source. mix ccxt.contract_compare verifies its complete operation-key set against this binding before applying the reviewed facts.",
+    "pinned_revision_sha256": "e85c22f50ddf3d002aa789128c04597d3a7ea25c696bccdb1bb05749d9dfffef"
   },
   "step_id": "setup_ticker",
   "venue": "deribit"

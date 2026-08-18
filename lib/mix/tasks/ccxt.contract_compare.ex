@@ -16,13 +16,24 @@ defmodule Mix.Tasks.Ccxt.ContractCompare do
   registered reachability or runtime judgments. Manifest-registered provider
   captures are loaded automatically and are the only facts that can advance an
   operation's evidence axis to `verified`.
+
+  When an authored-spec or source-revision change invalidates the provider-
+  operation corpus binding, `--rebind-provider-corpus` omits that stale corpus
+  while producing the exact-revision inventory used to recapture it. Reviewed
+  mutation-adjudication facts remain registered against the materialized source.
   """
 
   use Mix.Task
 
   alias Mix.Tasks.Ccxt.ContractComparator
 
-  @switches [artifacts: :string, output: :string, venue: :string, facts: :string]
+  @switches [
+    artifacts: :string,
+    output: :string,
+    venue: :string,
+    facts: :string,
+    rebind_provider_corpus: :boolean
+  ]
 
   @impl Mix.Task
   @spec run([String.t()]) :: :ok
@@ -36,7 +47,8 @@ defmodule Mix.Tasks.Ccxt.ContractCompare do
     reports =
       ContractComparator.compare_all!(artifact_root,
         venue: opts[:venue],
-        facts_path: opts[:facts]
+        facts_path: opts[:facts],
+        provider_operation_opts: provider_operation_opts(opts)
       )
 
     ensure_reports!(reports, opts[:venue])
@@ -71,6 +83,10 @@ defmodule Mix.Tasks.Ccxt.ContractCompare do
 
   defp ensure_reports!([], venue), do: Mix.raise("unsupported or unmatched venue #{inspect(venue)}")
   defp ensure_reports!(_reports, _venue), do: :ok
+
+  defp provider_operation_opts(opts) do
+    if opts[:rebind_provider_corpus], do: false, else: []
+  end
 
   defp ensure_no_positional!([]), do: :ok
   defp ensure_no_positional!(args), do: Mix.raise("unexpected arguments: #{Enum.join(args, " ")}")

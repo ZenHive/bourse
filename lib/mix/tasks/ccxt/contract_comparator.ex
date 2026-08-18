@@ -7,6 +7,7 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
   edits specs, or turns a syntactic difference into a semantic decision.
   """
 
+  alias Bourse.OracleProvenance.MutationAdjudication
   alias Bourse.RecordedResponseFixtures
   alias Mix.Tasks.Ccxt.AuthorityCorpus
   alias Mix.Tasks.Ccxt.ContractSource
@@ -18,6 +19,7 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
   @runtime_scopes ~w(unified raw_only carved not_implemented unknown)
   @evidence_values ~w(verified unverified)
   @reachability_values ~w(safe unsafe unreachable unknown)
+  @registered_evidence_sources ~w(registered_live_capture registered_mutation_lifecycle_capture)
   @rest_methods %{
     "GET" => :get,
     "POST" => :post,
@@ -49,8 +51,9 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
     |> Enum.map(fn manifest ->
       authored = Bourse.JsonDocument.decode_file!(Path.join(spec_root, "#{manifest["venue"]}.json"))
       venue_facts = Enum.filter(facts, &(&1["venue"] == manifest["venue"]))
-      venue_provider_facts = Enum.filter(provider_facts, &(&1["venue"] == manifest["venue"]))
-      report = compare_venue_with_facts!(manifest, authored, artifact_root, venue_facts, venue_provider_facts)
+      registered_facts = provider_facts ++ mutation_adjudication_facts(manifest, artifact_root)
+      venue_registered_facts = Enum.filter(registered_facts, &(&1["venue"] == manifest["venue"]))
+      report = compare_venue_with_facts!(manifest, authored, artifact_root, venue_facts, venue_registered_facts)
       validate_committed_baseline!(report, authority_root)
       report
     end)
@@ -62,10 +65,10 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
     compare_venue_with_facts!(manifest, authored, artifact_root, facts, [])
   end
 
-  defp compare_venue_with_facts!(manifest, authored, artifact_root, facts, provider_facts) do
+  defp compare_venue_with_facts!(manifest, authored, artifact_root, facts, registered_facts) do
     facts = Enum.map(facts, &validate_fact!(&1, "registered facts", false))
-    provider_facts = Enum.map(provider_facts, &validate_fact!(&1, "provider-operation captures", true))
-    facts = facts ++ provider_facts
+    registered_facts = Enum.map(registered_facts, &validate_fact!(&1, "registered capture facts", true))
+    facts = facts ++ registered_facts
 
     Enum.each(facts, fn fact ->
       ensure!(fact["venue"] == manifest["venue"], "registered facts: venue mismatch")
@@ -82,6 +85,8 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
 
         {surface, compare_surface(surface, sources, authored_operations, facts)}
       end)
+
+    validate_mutation_source_inventory!(manifest, sources, surfaces)
 
     %{
       "schema_version" => 1,
@@ -506,10 +511,39 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
   defp provider_operation_facts(false), do: []
   defp provider_operation_facts(opts) when is_list(opts), do: RecordedResponseFixtures.provider_operation_facts!(opts)
 
+  defp mutation_adjudication_facts(%{"venue" => "deribit"} = manifest, artifact_root) do
+    artifact = Enum.find(manifest["artifacts"], &(&1["id"] == "api-openapi"))
+
+    if artifact && File.regular?(Path.join([artifact_root, "deribit", artifact["filename"]])) do
+      MutationAdjudication.facts!()
+    else
+      []
+    end
+  end
+
+  defp mutation_adjudication_facts(_manifest, _artifact_root), do: []
+
+  defp validate_mutation_source_inventory!(%{"venue" => "deribit"}, sources, surfaces) do
+    source = Enum.find(sources, &(&1.artifact["id"] == "api-openapi"))
+
+    if source && source.available do
+      operation_keys =
+        surfaces["current_rest"]["operations"]
+        |> Enum.filter(&(&1["provider"] != []))
+        |> Enum.map(& &1["operation_key"])
+
+      MutationAdjudication.validate_source_inventory!(source.artifact["sha256"], operation_keys)
+    end
+
+    :ok
+  end
+
+  defp validate_mutation_source_inventory!(_manifest, _sources, _surfaces), do: :ok
+
   defp validate_evidence_source!(%{"evidence" => "verified"} = fact, path, true) do
     ensure!(
-      fact["evidence_source"] == "registered_live_capture",
-      "#{path}: evidence verified requires a registered live capture"
+      fact["evidence_source"] in @registered_evidence_sources,
+      "#{path}: evidence verified requires a registered capture source"
     )
   end
 

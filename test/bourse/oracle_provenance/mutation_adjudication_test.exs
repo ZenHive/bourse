@@ -102,16 +102,34 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
       assert untagged["execution_review"]["safety"] == "not_applicable"
     end
 
-    test "binds its denominator to the recorded upstream drift rather than an unread pin" do
+    test "binds its denominator to the refreshed provider revision" do
       %{register: register} = MutationAdjudication.load_reviewed!()
       binding = register["source_binding"]
       drift = JsonDocument.decode_file!(binding["drift_record"])
 
-      assert drift["pin_action"] == "not_refreshed"
-      refute drift["pinned"]["retrievable"]
-      assert drift["observed"]["sha256"] == binding["denominator_enumerated_from"]["sha256"]
-      assert drift["pinned"]["sha256"] == binding["pinned_revision_sha256"]
-      assert drift["pinned"]["sha256"] != drift["observed"]["sha256"]
+      assert drift["decision"] == "refresh_pin"
+      assert drift["current"]["sha256"] == binding["denominator_enumerated_from"]["sha256"]
+      assert drift["current"]["sha256"] == binding["pinned_revision_sha256"]
+
+      assert drift["current"]["operation_key_set_sha256"] ==
+               binding["denominator_enumerated_from"]["operation_key_set_sha256"]
+    end
+
+    test "checks the exact reviewed operation-key set against materialized source facts" do
+      %{register: register} = MutationAdjudication.load_reviewed!()
+      binding = register["source_binding"]
+
+      operation_keys =
+        Enum.flat_map(
+          ~w(task_556_operation_keys task_557_operation_keys adjudicated_operation_keys websocket_only_operation_keys),
+          &register["denominator"][&1]
+        )
+
+      assert :ok = MutationAdjudication.validate_source_inventory!(binding["pinned_revision_sha256"], operation_keys)
+
+      assert_raise ArgumentError, ~r/materialized mutation denominator count differs/, fn ->
+        MutationAdjudication.validate_source_inventory!(binding["pinned_revision_sha256"], tl(operation_keys))
+      end
     end
   end
 

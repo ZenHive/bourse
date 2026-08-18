@@ -244,7 +244,7 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
     authored = Map.get(authored_authentication, operation["operation_key"], [])
 
     ensure!(
-      inventory_operation["authored"] == authored,
+      inventory_authentication(inventory_operation) == authored,
       "capture inventory authored authentication differs from pinned authored spec"
     )
 
@@ -353,6 +353,10 @@ defmodule Bourse.OracleProvenance.ProviderOperations do
     for operation <- plan["operations"], proof <- operation["proofs"] do
       %{operation: operation, proof: proof}
     end
+  end
+
+  defp inventory_authentication(operation) do
+    Enum.map(operation["authored"], &Map.take(&1, ["authentication"]))
   end
 
   defp ensure_unique!(values, key, label) when is_list(values) do

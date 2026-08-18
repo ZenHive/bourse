@@ -11,13 +11,13 @@
       "source_url": "https://docs.deribit.com/specifications/deribit_openapi.json",
       "fetch_url": "https://docs.deribit.com/specifications/deribit_openapi.json",
       "filename": "deribit_openapi.json",
-      "retrieved_at": "2026-08-10",
+      "retrieved_at": "2026-08-18",
       "upstream_pin": {
         "type": "document_version_http_etag",
-        "value": "2.1.1; W/\"b96f2b26a14b31dbc4cf064c3d63b14a\""
+        "value": "2.1.1; W/\"QCggKABm3LEi7g4f\""
       },
-      "sha256": "430b3f0bc67cc574a05e695d22d1acbbb5348c96858368bba9931c2f05350515",
-      "bytes": 1385649,
+      "sha256": "e85c22f50ddf3d002aa789128c04597d3a7ea25c696bccdb1bb05749d9dfffef",
+      "bytes": 1392651,
       "storage": "reference_only",
       "path": null,
       "license": {
@@ -33,9 +33,9 @@
       },
       "freshness": {
         "status": "reviewed_current",
-        "checked_at": "2026-08-10",
+        "checked_at": "2026-08-18",
         "mutable": true,
-        "notes": "The moved artifact was reviewed against the prior pin and the provider release notes before refresh."
+        "notes": "The moved artifact was reviewed against the 2026-08-10 semantic diff and the 2026-08-14 drift observation. The operation-key set is unchanged from the observed revision; the schema-count change and newly modeled Starbase order field are recorded in the 2026-08-18 semantic diff."
       },
       "expressiveness": {
         "level": "typed_openapi",

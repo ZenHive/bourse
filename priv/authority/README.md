@@ -42,6 +42,21 @@ mix ccxt.contract_compare --artifacts /tmp/ccxt-authority --output /tmp/contract
 mix ccxt.capture_provider_operations --inventory /tmp/contract-reports/deribit.json --plan priv/authority/deribit/provider-operation-plan.json --output test/fixtures/provider_operations
 ```
 
+An authored-spec or provider-revision change invalidates the capture corpus's
+embedded congruence digest by design. Regenerate that inventory without reading
+the stale corpus, then recapture the reviewed public proofs and run the ordinary
+comparison again with the refreshed facts:
+
+```sh
+mix ccxt.contract_compare --artifacts /tmp/ccxt-authority --output /tmp/contract-reports --venue deribit --rebind-provider-corpus
+mix ccxt.capture_provider_operations --inventory /tmp/contract-reports/deribit.json --plan priv/authority/deribit/provider-operation-plan.json --output test/fixtures/provider_operations
+mix ccxt.contract_compare --artifacts /tmp/ccxt-authority --output /tmp/contract-reports --venue deribit
+```
+
+`--rebind-provider-corpus` only omits facts from the corpus being regenerated.
+It still verifies the pinned provider bytes and Deribit's complete mutation-
+adjudication operation-key binding.
+
 The offline command validates manifest structure and any locally vendored bytes; it
 cannot detect remote drift for reference-only artifacts. `--online` verifies each
 pinned fetch and then compares the mutable upstream hash (or Bybit repository HEAD)

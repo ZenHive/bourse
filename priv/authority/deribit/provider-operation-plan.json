@@ -5,11 +5,11 @@
     "artifact_id": "api-openapi",
     "contract_scope": "current_rest",
     "source_url": "https://docs.deribit.com/specifications/deribit_openapi.json",
-    "retrieved_at": "2026-08-10",
-    "sha256": "430b3f0bc67cc574a05e695d22d1acbbb5348c96858368bba9931c2f05350515",
+    "retrieved_at": "2026-08-18",
+    "sha256": "e85c22f50ddf3d002aa789128c04597d3a7ea25c696bccdb1bb05749d9dfffef",
     "upstream_pin": {
       "type": "document_version_http_etag",
-      "value": "2.1.1; W/\"b96f2b26a14b31dbc4cf064c3d63b14a\""
+      "value": "2.1.1; W/\"QCggKABm3LEi7g4f\""
     }
   },
   "source_inventory_facts": {

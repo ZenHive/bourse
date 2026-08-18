@@ -70,6 +70,21 @@ defmodule Bourse.OracleProvenance.ProviderOperationsTest do
     end
   end
 
+  test "plan validation projects authentication from full comparison rows" do
+    plan = JsonDocument.decode_file!(@plan_path)
+
+    inventory =
+      update_in(inventory_for(plan), ["surfaces", "current_rest", "operations"], fn operations ->
+        Enum.map(operations, fn operation ->
+          update_in(operation["authored"], fn authored ->
+            Enum.map(authored, &Map.put(&1, "runtime_scope", "unified"))
+          end)
+        end)
+      end)
+
+    assert :ok = ProviderOperations.validate_plan!(plan, inventory)
+  end
+
   test "private, mutating, unclassified, upcoming, unsafe, WebSocket-only, and unreviewed seeds refuse" do
     plan = JsonDocument.decode_file!(@plan_path)
     operation = hd(plan["operations"])
@@ -150,6 +165,12 @@ defmodule Bourse.OracleProvenance.ProviderOperationsTest do
     manifest_path = Path.join(root, "_manifest.json")
     manifest = JsonDocument.decode_file!(manifest_path)
 
+    operation_index =
+      Enum.find_index(
+        manifest["inventory"]["surfaces"]["current_rest"]["operations"],
+        &(&1["operation_key"] == "GET /api/v2/public/get_time")
+      )
+
     changed =
       put_in(
         manifest,
@@ -158,7 +179,7 @@ defmodule Bourse.OracleProvenance.ProviderOperationsTest do
           "surfaces",
           "current_rest",
           "operations",
-          Access.at(0),
+          Access.at(operation_index),
           "authored",
           Access.at(0),
           "authentication",

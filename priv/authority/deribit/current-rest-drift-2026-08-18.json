@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "report_type": "provider_contract_semantic_diff",
+  "venue": "deribit",
+  "artifact_id": "api-openapi",
+  "reviewed_at": "2026-08-18",
+  "prior": {
+    "retrieved_at": "2026-08-10",
+    "sha256": "430b3f0bc67cc574a05e695d22d1acbbb5348c96858368bba9931c2f05350515",
+    "bytes": 1385649,
+    "http_etag": "W/\"b96f2b26a14b31dbc4cf064c3d63b14a\"",
+    "openapi_version": "2.1.1",
+    "operation_count": 178,
+    "schema_count": 411,
+    "websocket_only_operation_count": 10,
+    "operation_key_set_sha256": "unavailable_reference_only_bytes_no_longer_fetchable"
+  },
+  "intermediate_observation": {
+    "record": "priv/authority/deribit/current-rest-drift-2026-08-14.json",
+    "retrieved_at": "2026-08-14",
+    "sha256": "2ac2867b1f25544dd189244b17c230e2dea6bff0fc0e1c8c26e2003af06f9c55",
+    "bytes": 1391568,
+    "http_etag": "W/\"05muB64FICWdauQ2\"",
+    "operation_count": 178,
+    "schema_count": 410,
+    "websocket_only_operation_count": 10,
+    "operation_key_set_sha256": "f6390f864cb6ea46acba203f98f1920f01ec21d611bcdb146c5ad8e942f5cd0c"
+  },
+  "current": {
+    "retrieved_at": "2026-08-18",
+    "sha256": "e85c22f50ddf3d002aa789128c04597d3a7ea25c696bccdb1bb05749d9dfffef",
+    "bytes": 1392651,
+    "http_etag": "W/\"QCggKABm3LEi7g4f\"",
+    "http_last_modified": "Mon, 17 Aug 2026 07:13:23 GMT",
+    "openapi_version": "2.1.1",
+    "operation_count": 178,
+    "schema_count": 410,
+    "websocket_only_operation_count": 10,
+    "operation_key_set_sha256": "f6390f864cb6ea46acba203f98f1920f01ec21d611bcdb146c5ad8e942f5cd0c"
+  },
+  "operation_delta": {
+    "count": 0,
+    "schema_count_delta": -1,
+    "websocket_only_count_delta": 0,
+    "current_runtime_denominator_change": "not_detected",
+    "operation_key_set_comparison": "exact_match_to_2026_08_14_observation",
+    "prior_to_current_path_set_comparison": "unavailable_without_2026_08_10_reference_only_bytes",
+    "authored_relation_counts": {
+      "authored": 123,
+      "overlap": 116,
+      "provider_only": 62,
+      "authored_only": 7,
+      "change_from_2026_08_04_measurement": 0,
+      "change_from_2026_08_10_refresh": 0
+    },
+    "evidence": "The refreshed document reproduces the 2026-08-14 observation's complete sorted operation-key digest, operation count and WebSocket-only count. The 2026-08-10 bytes are unavailable, so continuity to that revision is count-based and explicitly limited."
+  },
+  "structural_deltas": [
+    {
+      "surface": "components.schemas",
+      "prior_count": 411,
+      "current_count": 410,
+      "delta": -1,
+      "identity_limit": "The removed schema cannot be identified because the 2026-08-10 reference-only bytes are no longer fetchable."
+    },
+    {
+      "schema": "instrument",
+      "current_properties": [
+        "index_id",
+        "product_group"
+      ],
+      "semantic_source": "https://support.deribit.com/hc/en-us/articles/38092498934045-11-August-2026",
+      "meaning": "The refreshed document retains the reviewed price-index and Starbase product-group metadata."
+    },
+    {
+      "schemas": [
+        "order",
+        "user_trade"
+      ],
+      "added_property": "starbase_client_order_id",
+      "semantic_source": "https://support.deribit.com/hc/en-us/articles/38092498934045-11-August-2026",
+      "meaning": "The provider-announced Starbase client order identifier that was absent from the 2026-08-10 document is modeled by the refreshed contract."
+    }
+  ],
+  "continuity": {
+    "prior_refresh_report": "priv/authority/deribit/current-rest-drift-2026-08-10.json",
+    "drift_observation": "priv/authority/deribit/current-rest-drift-2026-08-14.json",
+    "historical_regression_sha256": "70ba4617642d18aaff2bbcb7127bec499c4ef3ba34b6f5b12cb9cbdadbcffd2d"
+  },
+  "review_limit": "The old bytes were reference-only and were not retained. Exact operation-set continuity is proven from the 2026-08-14 observation forward; the 2026-08-10 bridge remains limited to its committed counts and semantic report.",
+  "decision": "refresh_pin",
+  "decision_reason": "The complete operation-key set is unchanged from the reviewed drift observation, all runtime-denominator counts remain stable, and the schema and response-field changes are recorded without changing any runtime or safety judgment."
+}

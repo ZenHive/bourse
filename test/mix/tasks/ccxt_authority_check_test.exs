@@ -83,12 +83,16 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
     manifest = Enum.find(AuthorityCorpus.load!(@root), &(&1["venue"] == "deribit"))
     artifact = Enum.find(manifest["artifacts"], &(&1["id"] == "api-openapi"))
 
-    report =
+    prior_report =
       Bourse.JsonDocument.decode_file!("priv/authority/deribit/current-rest-drift-2026-08-10.json")
 
-    assert report["prior"]["sha256"] ==
+    report =
+      Bourse.JsonDocument.decode_file!("priv/authority/deribit/current-rest-drift-2026-08-18.json")
+
+    assert prior_report["prior"]["sha256"] ==
              "70ba4617642d18aaff2bbcb7127bec499c4ef3ba34b6f5b12cb9cbdadbcffd2d"
 
+    assert report["prior"]["sha256"] == prior_report["current"]["sha256"]
     assert report["current"]["sha256"] == artifact["sha256"]
     assert report["current"]["bytes"] == artifact["bytes"]
     assert report["operation_delta"]["count"] == 0

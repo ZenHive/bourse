@@ -203,20 +203,20 @@ defmodule Bourse.OracleProvenance.MutationAdjudication do
 
     drift_path = binding["drift_record"]
     ensure!(is_binary(drift_path) and File.regular?(drift_path), "#{path}: drift record is missing")
-    drift = JsonDocument.decode_file!(drift_path)
+    current = current_revision(JsonDocument.decode_file!(drift_path), path, drift_path)
 
     ensure!(
-      drift["observed"]["sha256"] == enumerated["sha256"],
+      current["sha256"] == enumerated["sha256"],
       "#{path}: denominator revision differs from #{drift_path}"
     )
 
     ensure!(
-      drift["observed"]["operation_key_set_sha256"] == enumerated["operation_key_set_sha256"],
+      current["operation_key_set_sha256"] == enumerated["operation_key_set_sha256"],
       "#{path}: denominator operation-key set differs from #{drift_path}"
     )
 
     ensure!(
-      drift["pinned"]["sha256"] == binding["pinned_revision_sha256"],
+      current["sha256"] == binding["pinned_revision_sha256"],
       "#{path}: pinned revision differs from #{drift_path}"
     )
   end
@@ -615,6 +615,35 @@ defmodule Bourse.OracleProvenance.MutationAdjudication do
   end
 
   # -- shared helpers ---------------------------------------------------------
+
+  @doc "Validates materialized provider operation keys against the reviewed source binding."
+  @spec validate_source_inventory!(String.t(), [String.t()], keyword()) :: :ok
+  def validate_source_inventory!(revision_sha256, operation_keys, opts \\ [])
+      when is_binary(revision_sha256) and is_list(operation_keys) do
+    %{register: register} = load_reviewed!(opts)
+    binding = register["source_binding"]
+    source = binding["denominator_enumerated_from"]
+    expected_count = register["denominator"]["provider_count"]
+    serialized_keys = operation_keys |> Enum.sort() |> Enum.join("\n") |> Kernel.<>("\n")
+    operation_key_set_sha256 = AuthorityCorpus.sha256(serialized_keys)
+
+    ensure!(revision_sha256 == binding["pinned_revision_sha256"], "materialized mutation revision differs from pin")
+    ensure!(revision_sha256 == source["sha256"], "materialized mutation revision differs from denominator")
+    ensure!(length(operation_keys) == expected_count, "materialized mutation denominator count differs")
+
+    ensure!(
+      operation_key_set_sha256 == source["operation_key_set_sha256"],
+      "materialized mutation operation-key set differs from reviewed denominator"
+    )
+
+    :ok
+  end
+
+  defp current_revision(drift, path, drift_path) do
+    current = drift["current"] || drift["observed"]
+    ensure!(is_map(current), "#{path}: #{drift_path} has no current revision")
+    current
+  end
 
   @doc "Flattens a lifecycle plan into one entry per reviewed step, keyed by its capture id."
   @spec plan_steps(map()) :: [%{capture_id: String.t(), lifecycle: map(), step: map()}]

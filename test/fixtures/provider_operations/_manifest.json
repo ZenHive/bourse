@@ -1,6 +1,2611 @@
 {
   "corpus": "provider_operation_reality",
-  "generated_at": "2026-08-11T04:40:51.103006Z",
+  "generated_at": "2026-08-18T00:37:55.709973Z",
+  "inventory": {
+    "provenance": {
+      "artifacts": [
+        {
+          "bytes": 1392651,
+          "expressiveness": {
+            "level": "typed_openapi",
+            "limitations": [
+              "The document models JSON-RPC over HTTP and does not define WebSocket subscription channels."
+            ]
+          },
+          "freshness": {
+            "checked_at": "2026-08-18",
+            "mutable": true,
+            "notes": "The moved artifact was reviewed against the 2026-08-10 semantic diff and the 2026-08-14 drift observation. The operation-key set is unchanged from the observed revision; the schema-count change and newly modeled Starbase order field are recorded in the 2026-08-18 semantic diff.",
+            "status": "reviewed_current"
+          },
+          "id": "api-openapi",
+          "kind": "openapi-json",
+          "materialized_path": "/tmp/bourse-task-619-artifacts/deribit/deribit_openapi.json",
+          "metrics": {
+            "operation_count": 178,
+            "path_count": 178,
+            "unknown_authentication_count": 178,
+            "websocket_only_operation_count": 10
+          },
+          "retrieved_at": "2026-08-18",
+          "scope": [
+            {
+              "coverage": "complete",
+              "limitations": [
+                "Completeness applies to the provider's current HTTP operation inventory."
+              ],
+              "surface": "current_rest"
+            }
+          ],
+          "sha256": "e85c22f50ddf3d002aa789128c04597d3a7ea25c696bccdb1bb05749d9dfffef",
+          "source_url": "https://docs.deribit.com/specifications/deribit_openapi.json",
+          "status": "parsed",
+          "upstream_pin": {
+            "type": "document_version_http_etag",
+            "value": "2.1.1; W/\"QCggKABm3LEi7g4f\""
+          }
+        }
+      ],
+      "authored_spec_canonical_sha256": "88937a8fdf459bfd83026a888e1fb4040fddd3d03c234bb86c23f7b5294e38df",
+      "authority_manifest": "priv/authority/deribit/manifest.json"
+    },
+    "report_type": "provider_contract_comparison",
+    "schema_version": 1,
+    "surfaces": {
+      "current_rest": {
+        "operations": [
+          {
+            "authored": [
+              {
+                "authentication": {
+                  "status": "known",
+                  "value": {
+                    "required": true
+                  }
+                },
+                "channel": null,
+                "examples": {
+                  "status": "unknown"
+                },
+                "key": "GET /api/v2/private/logout",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": []
+                },
+                "path": "/api/v2/private/logout",
+                "qualifiers": [],
+                "response_schemas": {
+                  "status": "unknown"
+                },
+                "runtime_scope": "raw_only",
+                "transport": "rest"
+              }
+            ],
+            "axes": {
+              "contract_scope": "current_rest",
+              "evidence": "unverified",
+              "reachability": "unreachable",
+              "relation": "shared",
+              "runtime_scope": "raw_only"
+            },
+            "field_differences": [
+              {
+                "authored": [
+                  []
+                ],
+                "field": "parameters",
+                "provider": [
+                  [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "query",
+                      "name": "invalidate_token",
+                      "required": {
+                        "status": "known",
+                        "value": false
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "type": "boolean"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "boolean"
+                      }
+                    }
+                  ]
+                ]
+              }
+            ],
+            "operation_key": "GET /api/v2/private/logout",
+            "provider": [
+              {
+                "artifact_id": "api-openapi",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "channel": null,
+                "examples": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "location": "request",
+                      "name": "request",
+                      "status": null,
+                      "value": {
+                        "id": 42,
+                        "jsonrpc": "2.0",
+                        "method": "private/logout",
+                        "params": {
+                          "access_token": "1529453804065.h2QrBgvn.oS36pCOmuK9EX7954lzCSkUioEtTMg7F5ShToM0ZfYlqU05OquXkQIe2_DDEkPhzmoPp1fBp0ycXShR_0jf-SMSXEdVqxLRWuOw-_StG5BMjToiAl27CbHY4P92MPhlMblTOtTImE81-5dFdyDVydpBwmlfKM3OSQ39kulP9bbfw-2jhyegOL0AgqJTY_tj554oHCQFTbq0A0ZWukukmxL2yu6iy34XdzaJB26Igy-3UxGBMwFu53EhjKBweh7xyP2nDm57-wybndJMtSyTGDXH3vjBVclo1iup5yRP",
+                          "invalidate_token": true
+                        }
+                      }
+                    }
+                  ]
+                },
+                "key": "GET /api/v2/private/logout",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "query",
+                      "name": "invalidate_token",
+                      "required": {
+                        "status": "known",
+                        "value": false
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "type": "boolean"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "boolean"
+                      }
+                    }
+                  ]
+                },
+                "path": "/api/v2/private/logout",
+                "qualifiers": [
+                  "websocket_only"
+                ],
+                "response_schemas": {
+                  "status": "unknown"
+                },
+                "transport": "rest"
+              }
+            ]
+          },
+          {
+            "authored": [
+              {
+                "authentication": {
+                  "status": "known",
+                  "value": {
+                    "required": true
+                  }
+                },
+                "channel": null,
+                "examples": {
+                  "status": "unknown"
+                },
+                "key": "GET /api/v2/private/subscribe",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": []
+                },
+                "path": "/api/v2/private/subscribe",
+                "qualifiers": [],
+                "response_schemas": {
+                  "status": "unknown"
+                },
+                "runtime_scope": "raw_only",
+                "transport": "rest"
+              }
+            ],
+            "axes": {
+              "contract_scope": "current_rest",
+              "evidence": "unverified",
+              "reachability": "unreachable",
+              "relation": "shared",
+              "runtime_scope": "raw_only"
+            },
+            "field_differences": [
+              {
+                "authored": [
+                  []
+                ],
+                "field": "parameters",
+                "provider": [
+                  [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "known",
+                        "value": [
+                          "deribit_price_index.btc_usd"
+                        ]
+                      },
+                      "location": "query",
+                      "name": "channels",
+                      "required": {
+                        "status": "known",
+                        "value": true
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "example": [
+                            "deribit_price_index.btc_usd"
+                          ],
+                          "items": {
+                            "example": "deribit_price_index.btc_usd",
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "array"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "known",
+                        "value": "TestLabel1"
+                      },
+                      "location": "query",
+                      "name": "label",
+                      "required": {
+                        "status": "known",
+                        "value": false
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "example": "TestLabel1",
+                          "type": "string"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "string"
+                      }
+                    }
+                  ]
+                ]
+              }
+            ],
+            "operation_key": "GET /api/v2/private/subscribe",
+            "provider": [
+              {
+                "artifact_id": "api-openapi",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "channel": null,
+                "examples": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "location": "parameter",
+                      "name": "channels",
+                      "value": [
+                        "deribit_price_index.btc_usd"
+                      ]
+                    },
+                    {
+                      "location": "parameter",
+                      "name": "label",
+                      "value": "TestLabel1"
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "request",
+                      "name": "request",
+                      "status": null,
+                      "value": {
+                        "id": 4235,
+                        "jsonrpc": "2.0",
+                        "method": "private/subscribe",
+                        "params": {
+                          "channels": [
+                            "deribit_price_index.btc_usd"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "response",
+                      "name": "response",
+                      "status": "200",
+                      "value": {
+                        "id": 4235,
+                        "jsonrpc": "2.0",
+                        "result": [
+                          "deribit_price_index.btc_usd"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                "key": "GET /api/v2/private/subscribe",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "known",
+                        "value": [
+                          "deribit_price_index.btc_usd"
+                        ]
+                      },
+                      "location": "query",
+                      "name": "channels",
+                      "required": {
+                        "status": "known",
+                        "value": true
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "example": [
+                            "deribit_price_index.btc_usd"
+                          ],
+                          "items": {
+                            "example": "deribit_price_index.btc_usd",
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "array"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "known",
+                        "value": "TestLabel1"
+                      },
+                      "location": "query",
+                      "name": "label",
+                      "required": {
+                        "status": "known",
+                        "value": false
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "example": "TestLabel1",
+                          "type": "string"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "string"
+                      }
+                    }
+                  ]
+                },
+                "path": "/api/v2/private/subscribe",
+                "qualifiers": [
+                  "websocket_only"
+                ],
+                "response_schemas": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "schema": {
+                        "$ref": "#/components/schemas/PrivateSubscribeResponse"
+                      },
+                      "status": "200"
+                    },
+                    {
+                      "content_type": "application/json",
+                      "schema": {
+                        "$ref": "#/components/schemas/ErrorMessageResponse"
+                      },
+                      "status": "401"
+                    }
+                  ]
+                },
+                "transport": "rest"
+              }
+            ]
+          },
+          {
+            "authored": [
+              {
+                "authentication": {
+                  "status": "known",
+                  "value": {
+                    "required": true
+                  }
+                },
+                "channel": null,
+                "examples": {
+                  "status": "unknown"
+                },
+                "key": "GET /api/v2/private/unsubscribe",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": []
+                },
+                "path": "/api/v2/private/unsubscribe",
+                "qualifiers": [],
+                "response_schemas": {
+                  "status": "unknown"
+                },
+                "runtime_scope": "raw_only",
+                "transport": "rest"
+              }
+            ],
+            "axes": {
+              "contract_scope": "current_rest",
+              "evidence": "unverified",
+              "reachability": "unreachable",
+              "relation": "shared",
+              "runtime_scope": "raw_only"
+            },
+            "field_differences": [
+              {
+                "authored": [
+                  []
+                ],
+                "field": "parameters",
+                "provider": [
+                  [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "known",
+                        "value": [
+                          "deribit_price_index.btc_usd"
+                        ]
+                      },
+                      "location": "query",
+                      "name": "channels",
+                      "required": {
+                        "status": "known",
+                        "value": true
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "example": [
+                            "deribit_price_index.btc_usd"
+                          ],
+                          "items": {
+                            "example": "deribit_price_index.btc_usd",
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "array"
+                      }
+                    }
+                  ]
+                ]
+              }
+            ],
+            "operation_key": "GET /api/v2/private/unsubscribe",
+            "provider": [
+              {
+                "artifact_id": "api-openapi",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "channel": null,
+                "examples": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "location": "parameter",
+                      "name": "channels",
+                      "value": [
+                        "deribit_price_index.btc_usd"
+                      ]
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "request",
+                      "name": "request",
+                      "status": null,
+                      "value": {
+                        "id": 3370,
+                        "jsonrpc": "2.0",
+                        "method": "private/unsubscribe",
+                        "params": {
+                          "channels": [
+                            "deribit_price_index.btc_usd"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "response",
+                      "name": "jsonObject",
+                      "status": "200",
+                      "value": {
+                        "id": 3370,
+                        "jsonrpc": "2.0",
+                        "result": [
+                          "deribit_price_index.btc_usd"
+                        ]
+                      }
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "response",
+                      "name": "response",
+                      "status": "200",
+                      "value": {
+                        "id": 3370,
+                        "jsonrpc": "2.0",
+                        "result": [
+                          "deribit_price_index.btc_usd"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                "key": "GET /api/v2/private/unsubscribe",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "known",
+                        "value": [
+                          "deribit_price_index.btc_usd"
+                        ]
+                      },
+                      "location": "query",
+                      "name": "channels",
+                      "required": {
+                        "status": "known",
+                        "value": true
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "example": [
+                            "deribit_price_index.btc_usd"
+                          ],
+                          "items": {
+                            "example": "deribit_price_index.btc_usd",
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "array"
+                      }
+                    }
+                  ]
+                },
+                "path": "/api/v2/private/unsubscribe",
+                "qualifiers": [
+                  "websocket_only"
+                ],
+                "response_schemas": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "schema": {
+                        "$ref": "#/components/schemas/Getunsubscribe200response"
+                      },
+                      "status": "200"
+                    },
+                    {
+                      "content_type": "application/json",
+                      "schema": {
+                        "$ref": "#/components/schemas/ErrorMessageResponse"
+                      },
+                      "status": "401"
+                    }
+                  ]
+                },
+                "transport": "rest"
+              }
+            ]
+          },
+          {
+            "authored": [
+              {
+                "authentication": {
+                  "status": "known",
+                  "value": {
+                    "required": true
+                  }
+                },
+                "channel": null,
+                "examples": {
+                  "status": "unknown"
+                },
+                "key": "GET /api/v2/private/unsubscribe_all",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": []
+                },
+                "path": "/api/v2/private/unsubscribe_all",
+                "qualifiers": [],
+                "response_schemas": {
+                  "status": "unknown"
+                },
+                "runtime_scope": "raw_only",
+                "transport": "rest"
+              }
+            ],
+            "axes": {
+              "contract_scope": "current_rest",
+              "evidence": "unverified",
+              "reachability": "unreachable",
+              "relation": "shared",
+              "runtime_scope": "raw_only"
+            },
+            "field_differences": [
+              {
+                "authored": [
+                  []
+                ],
+                "field": "parameters",
+                "provider": [
+                  [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    }
+                  ]
+                ]
+              }
+            ],
+            "operation_key": "GET /api/v2/private/unsubscribe_all",
+            "provider": [
+              {
+                "artifact_id": "api-openapi",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "channel": null,
+                "examples": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "location": "request",
+                      "name": "request",
+                      "status": null,
+                      "value": {
+                        "id": 154,
+                        "jsonrpc": "2.0",
+                        "method": "private/unsubscribe_all",
+                        "params": {}
+                      }
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "response",
+                      "name": "response",
+                      "status": "200",
+                      "value": {
+                        "id": 1569,
+                        "jsonrpc": "2.0",
+                        "result": "ok"
+                      }
+                    }
+                  ]
+                },
+                "key": "GET /api/v2/private/unsubscribe_all",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    }
+                  ]
+                },
+                "path": "/api/v2/private/unsubscribe_all",
+                "qualifiers": [
+                  "websocket_only"
+                ],
+                "response_schemas": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "schema": {
+                        "$ref": "#/components/schemas/OkResponse"
+                      },
+                      "status": "200"
+                    }
+                  ]
+                },
+                "transport": "rest"
+              }
+            ]
+          },
+          {
+            "authored": [
+              {
+                "authentication": {
+                  "status": "known",
+                  "value": {
+                    "required": false
+                  }
+                },
+                "channel": null,
+                "examples": {
+                  "status": "unknown"
+                },
+                "key": "GET /api/v2/public/disable_heartbeat",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": []
+                },
+                "path": "/api/v2/public/disable_heartbeat",
+                "qualifiers": [],
+                "response_schemas": {
+                  "status": "unknown"
+                },
+                "runtime_scope": "raw_only",
+                "transport": "rest"
+              }
+            ],
+            "axes": {
+              "contract_scope": "current_rest",
+              "evidence": "unverified",
+              "reachability": "unreachable",
+              "relation": "shared",
+              "runtime_scope": "raw_only"
+            },
+            "field_differences": [
+              {
+                "authored": [
+                  []
+                ],
+                "field": "parameters",
+                "provider": [
+                  [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    }
+                  ]
+                ]
+              }
+            ],
+            "operation_key": "GET /api/v2/public/disable_heartbeat",
+            "provider": [
+              {
+                "artifact_id": "api-openapi",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "channel": null,
+                "examples": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "location": "request",
+                      "name": "request",
+                      "status": null,
+                      "value": {
+                        "id": 3562,
+                        "jsonrpc": "2.0",
+                        "method": "public/disable_heartbeat",
+                        "params": {}
+                      }
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "response",
+                      "name": "response",
+                      "status": "200",
+                      "value": {
+                        "id": 1569,
+                        "jsonrpc": "2.0",
+                        "result": "ok"
+                      }
+                    }
+                  ]
+                },
+                "key": "GET /api/v2/public/disable_heartbeat",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    }
+                  ]
+                },
+                "path": "/api/v2/public/disable_heartbeat",
+                "qualifiers": [
+                  "websocket_only"
+                ],
+                "response_schemas": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "schema": {
+                        "$ref": "#/components/schemas/OkResponse"
+                      },
+                      "status": "200"
+                    }
+                  ]
+                },
+                "transport": "rest"
+              }
+            ]
+          },
+          {
+            "authored": [
+              {
+                "authentication": {
+                  "status": "known",
+                  "value": {
+                    "required": false
+                  }
+                },
+                "channel": null,
+                "examples": {
+                  "status": "unknown"
+                },
+                "key": "GET /api/v2/public/get_time",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": []
+                },
+                "path": "/api/v2/public/get_time",
+                "qualifiers": [],
+                "response_schemas": {
+                  "status": "unknown"
+                },
+                "runtime_scope": "unified",
+                "transport": "rest"
+              }
+            ],
+            "axes": {
+              "contract_scope": "current_rest",
+              "evidence": "unverified",
+              "reachability": "unknown",
+              "relation": "shared",
+              "runtime_scope": "unified"
+            },
+            "field_differences": [
+              {
+                "authored": [
+                  []
+                ],
+                "field": "parameters",
+                "provider": [
+                  [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    }
+                  ]
+                ]
+              }
+            ],
+            "operation_key": "GET /api/v2/public/get_time",
+            "provider": [
+              {
+                "artifact_id": "api-openapi",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "channel": null,
+                "examples": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "location": "request",
+                      "name": "request",
+                      "status": null,
+                      "value": {
+                        "id": 7365,
+                        "jsonrpc": "2.0",
+                        "method": "public/get_time",
+                        "params": {}
+                      }
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "response",
+                      "name": "response",
+                      "status": "200",
+                      "value": {
+                        "id": 7365,
+                        "jsonrpc": "2.0",
+                        "result": 1550147385946
+                      }
+                    }
+                  ]
+                },
+                "key": "GET /api/v2/public/get_time",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    }
+                  ]
+                },
+                "path": "/api/v2/public/get_time",
+                "qualifiers": [],
+                "response_schemas": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "schema": {
+                        "$ref": "#/components/schemas/PublicGetTimeResponse"
+                      },
+                      "status": "200"
+                    }
+                  ]
+                },
+                "transport": "rest"
+              }
+            ]
+          },
+          {
+            "authored": [
+              {
+                "authentication": {
+                  "status": "known",
+                  "value": {
+                    "required": false
+                  }
+                },
+                "channel": null,
+                "examples": {
+                  "status": "unknown"
+                },
+                "key": "GET /api/v2/public/hello",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": []
+                },
+                "path": "/api/v2/public/hello",
+                "qualifiers": [],
+                "response_schemas": {
+                  "status": "unknown"
+                },
+                "runtime_scope": "raw_only",
+                "transport": "rest"
+              }
+            ],
+            "axes": {
+              "contract_scope": "current_rest",
+              "evidence": "unverified",
+              "reachability": "unreachable",
+              "relation": "shared",
+              "runtime_scope": "raw_only"
+            },
+            "field_differences": [
+              {
+                "authored": [
+                  []
+                ],
+                "field": "parameters",
+                "provider": [
+                  [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "known",
+                        "value": "My Trading Software"
+                      },
+                      "location": "query",
+                      "name": "client_name",
+                      "required": {
+                        "status": "known",
+                        "value": true
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "example": "My Trading Software",
+                          "type": "string"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "string"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "known",
+                        "value": "1.0.2"
+                      },
+                      "location": "query",
+                      "name": "client_version",
+                      "required": {
+                        "status": "known",
+                        "value": true
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "example": "1.0.2",
+                          "type": "string"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "string"
+                      }
+                    }
+                  ]
+                ]
+              }
+            ],
+            "operation_key": "GET /api/v2/public/hello",
+            "provider": [
+              {
+                "artifact_id": "api-openapi",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "channel": null,
+                "examples": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "location": "parameter",
+                      "name": "client_name",
+                      "value": "My Trading Software"
+                    },
+                    {
+                      "location": "parameter",
+                      "name": "client_version",
+                      "value": "1.0.2"
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "request",
+                      "name": "request",
+                      "status": null,
+                      "value": {
+                        "id": 2841,
+                        "jsonrpc": "2.0",
+                        "method": "public/hello",
+                        "params": {
+                          "client_name": "My Trading Software",
+                          "client_version": "1.0.2"
+                        }
+                      }
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "response",
+                      "name": "response",
+                      "status": "200",
+                      "value": {
+                        "id": 8212,
+                        "jsonrpc": "2.0",
+                        "result": {
+                          "version": "1.2.26"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "key": "GET /api/v2/public/hello",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "known",
+                        "value": "My Trading Software"
+                      },
+                      "location": "query",
+                      "name": "client_name",
+                      "required": {
+                        "status": "known",
+                        "value": true
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "example": "My Trading Software",
+                          "type": "string"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "string"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "known",
+                        "value": "1.0.2"
+                      },
+                      "location": "query",
+                      "name": "client_version",
+                      "required": {
+                        "status": "known",
+                        "value": true
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "example": "1.0.2",
+                          "type": "string"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "string"
+                      }
+                    }
+                  ]
+                },
+                "path": "/api/v2/public/hello",
+                "qualifiers": [
+                  "websocket_only"
+                ],
+                "response_schemas": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "schema": {
+                        "$ref": "#/components/schemas/PublicTestResponse"
+                      },
+                      "status": "200"
+                    }
+                  ]
+                },
+                "transport": "rest"
+              }
+            ]
+          },
+          {
+            "authored": [
+              {
+                "authentication": {
+                  "status": "known",
+                  "value": {
+                    "required": false
+                  }
+                },
+                "channel": null,
+                "examples": {
+                  "status": "unknown"
+                },
+                "key": "GET /api/v2/public/set_heartbeat",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": []
+                },
+                "path": "/api/v2/public/set_heartbeat",
+                "qualifiers": [],
+                "response_schemas": {
+                  "status": "unknown"
+                },
+                "runtime_scope": "raw_only",
+                "transport": "rest"
+              }
+            ],
+            "axes": {
+              "contract_scope": "current_rest",
+              "evidence": "unverified",
+              "reachability": "unreachable",
+              "relation": "shared",
+              "runtime_scope": "raw_only"
+            },
+            "field_differences": [
+              {
+                "authored": [
+                  []
+                ],
+                "field": "parameters",
+                "provider": [
+                  [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "known",
+                        "value": 30
+                      },
+                      "location": "query",
+                      "name": "interval",
+                      "required": {
+                        "status": "known",
+                        "value": true
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "example": 30,
+                          "type": "number"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "number"
+                      }
+                    }
+                  ]
+                ]
+              }
+            ],
+            "operation_key": "GET /api/v2/public/set_heartbeat",
+            "provider": [
+              {
+                "artifact_id": "api-openapi",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "channel": null,
+                "examples": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "location": "parameter",
+                      "name": "interval",
+                      "value": 30
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "request",
+                      "name": "request",
+                      "status": null,
+                      "value": {
+                        "id": 9098,
+                        "jsonrpc": "2.0",
+                        "method": "public/set_heartbeat",
+                        "params": {
+                          "interval": 30
+                        }
+                      }
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "response",
+                      "name": "response",
+                      "status": "200",
+                      "value": {
+                        "id": 1569,
+                        "jsonrpc": "2.0",
+                        "result": "ok"
+                      }
+                    }
+                  ]
+                },
+                "key": "GET /api/v2/public/set_heartbeat",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "known",
+                        "value": 30
+                      },
+                      "location": "query",
+                      "name": "interval",
+                      "required": {
+                        "status": "known",
+                        "value": true
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "example": 30,
+                          "type": "number"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "number"
+                      }
+                    }
+                  ]
+                },
+                "path": "/api/v2/public/set_heartbeat",
+                "qualifiers": [
+                  "websocket_only"
+                ],
+                "response_schemas": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "schema": {
+                        "$ref": "#/components/schemas/OkResponse"
+                      },
+                      "status": "200"
+                    }
+                  ]
+                },
+                "transport": "rest"
+              }
+            ]
+          },
+          {
+            "authored": [
+              {
+                "authentication": {
+                  "status": "known",
+                  "value": {
+                    "required": false
+                  }
+                },
+                "channel": null,
+                "examples": {
+                  "status": "unknown"
+                },
+                "key": "GET /api/v2/public/subscribe",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": []
+                },
+                "path": "/api/v2/public/subscribe",
+                "qualifiers": [],
+                "response_schemas": {
+                  "status": "unknown"
+                },
+                "runtime_scope": "raw_only",
+                "transport": "rest"
+              }
+            ],
+            "axes": {
+              "contract_scope": "current_rest",
+              "evidence": "unverified",
+              "reachability": "unreachable",
+              "relation": "shared",
+              "runtime_scope": "raw_only"
+            },
+            "field_differences": [
+              {
+                "authored": [
+                  []
+                ],
+                "field": "parameters",
+                "provider": [
+                  [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "known",
+                        "value": [
+                          "deribit_price_index.btc_usd"
+                        ]
+                      },
+                      "location": "query",
+                      "name": "channels",
+                      "required": {
+                        "status": "known",
+                        "value": true
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "example": [
+                            "deribit_price_index.btc_usd"
+                          ],
+                          "items": {
+                            "example": "deribit_price_index.btc_usd",
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "array"
+                      }
+                    }
+                  ]
+                ]
+              }
+            ],
+            "operation_key": "GET /api/v2/public/subscribe",
+            "provider": [
+              {
+                "artifact_id": "api-openapi",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "channel": null,
+                "examples": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "location": "parameter",
+                      "name": "channels",
+                      "value": [
+                        "deribit_price_index.btc_usd"
+                      ]
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "request",
+                      "name": "request",
+                      "status": null,
+                      "value": {
+                        "id": 3600,
+                        "jsonrpc": "2.0",
+                        "method": "public/subscribe",
+                        "params": {
+                          "channels": [
+                            "deribit_price_index.btc_usd"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "response",
+                      "name": "response",
+                      "status": "200",
+                      "value": {
+                        "id": 4235,
+                        "jsonrpc": "2.0",
+                        "result": [
+                          "deribit_price_index.btc_usd"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                "key": "GET /api/v2/public/subscribe",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "known",
+                        "value": [
+                          "deribit_price_index.btc_usd"
+                        ]
+                      },
+                      "location": "query",
+                      "name": "channels",
+                      "required": {
+                        "status": "known",
+                        "value": true
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "example": [
+                            "deribit_price_index.btc_usd"
+                          ],
+                          "items": {
+                            "example": "deribit_price_index.btc_usd",
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "array"
+                      }
+                    }
+                  ]
+                },
+                "path": "/api/v2/public/subscribe",
+                "qualifiers": [
+                  "websocket_only"
+                ],
+                "response_schemas": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "schema": {
+                        "$ref": "#/components/schemas/PrivateSubscribeResponse"
+                      },
+                      "status": "200"
+                    },
+                    {
+                      "content_type": "application/json",
+                      "schema": {
+                        "$ref": "#/components/schemas/ErrorMessageResponse"
+                      },
+                      "status": "401"
+                    }
+                  ]
+                },
+                "transport": "rest"
+              }
+            ]
+          },
+          {
+            "authored": [
+              {
+                "authentication": {
+                  "status": "known",
+                  "value": {
+                    "required": false
+                  }
+                },
+                "channel": null,
+                "examples": {
+                  "status": "unknown"
+                },
+                "key": "GET /api/v2/public/ticker",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": []
+                },
+                "path": "/api/v2/public/ticker",
+                "qualifiers": [],
+                "response_schemas": {
+                  "status": "unknown"
+                },
+                "runtime_scope": "unified",
+                "transport": "rest"
+              }
+            ],
+            "axes": {
+              "contract_scope": "current_rest",
+              "evidence": "unverified",
+              "reachability": "unknown",
+              "relation": "shared",
+              "runtime_scope": "unified"
+            },
+            "field_differences": [
+              {
+                "authored": [
+                  []
+                ],
+                "field": "parameters",
+                "provider": [
+                  [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "query",
+                      "name": "instrument_name",
+                      "required": {
+                        "status": "known",
+                        "value": true
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "$ref": "#/components/schemas/instrument_name"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    }
+                  ]
+                ]
+              }
+            ],
+            "operation_key": "GET /api/v2/public/ticker",
+            "provider": [
+              {
+                "artifact_id": "api-openapi",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "channel": null,
+                "examples": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "location": "request",
+                      "name": "request",
+                      "status": null,
+                      "value": {
+                        "id": 8106,
+                        "jsonrpc": "2.0",
+                        "method": "public/ticker",
+                        "params": {
+                          "instrument_name": "BTC-PERPETUAL"
+                        }
+                      }
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "response",
+                      "name": "response",
+                      "status": "200",
+                      "value": {
+                        "id": 8106,
+                        "jsonrpc": "2.0",
+                        "result": {
+                          "best_ask_amount": 53040,
+                          "best_ask_price": 36290,
+                          "best_bid_amount": 4600,
+                          "best_bid_price": 36289.5,
+                          "current_funding": 0,
+                          "estimated_delivery_price": 36297.02,
+                          "funding_8h": 2.203e-5,
+                          "index_price": 36297.02,
+                          "instrument_name": "BTC-PERPETUAL",
+                          "interest_value": 1.7362511643080387,
+                          "last_price": 36289.5,
+                          "mark_price": 36288.31,
+                          "max_price": 36833.4,
+                          "min_price": 35744.73,
+                          "open_interest": 502231260,
+                          "settlement_price": 36169.49,
+                          "state": "open",
+                          "stats": {
+                            "high": 36824.5,
+                            "low": 35213.5,
+                            "price_change": 0.2362,
+                            "volume": 7831.26548117,
+                            "volume_usd": 282615600
+                          },
+                          "timestamp": 1623059681955
+                        }
+                      }
+                    }
+                  ]
+                },
+                "key": "GET /api/v2/public/ticker",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "query",
+                      "name": "instrument_name",
+                      "required": {
+                        "status": "known",
+                        "value": true
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "$ref": "#/components/schemas/instrument_name"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    }
+                  ]
+                },
+                "path": "/api/v2/public/ticker",
+                "qualifiers": [],
+                "response_schemas": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "schema": {
+                        "$ref": "#/components/schemas/PublicTickerResponse"
+                      },
+                      "status": "200"
+                    }
+                  ]
+                },
+                "transport": "rest"
+              }
+            ]
+          },
+          {
+            "authored": [
+              {
+                "authentication": {
+                  "status": "known",
+                  "value": {
+                    "required": false
+                  }
+                },
+                "channel": null,
+                "examples": {
+                  "status": "unknown"
+                },
+                "key": "GET /api/v2/public/unsubscribe",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": []
+                },
+                "path": "/api/v2/public/unsubscribe",
+                "qualifiers": [],
+                "response_schemas": {
+                  "status": "unknown"
+                },
+                "runtime_scope": "raw_only",
+                "transport": "rest"
+              }
+            ],
+            "axes": {
+              "contract_scope": "current_rest",
+              "evidence": "unverified",
+              "reachability": "unreachable",
+              "relation": "shared",
+              "runtime_scope": "raw_only"
+            },
+            "field_differences": [
+              {
+                "authored": [
+                  []
+                ],
+                "field": "parameters",
+                "provider": [
+                  [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "known",
+                        "value": [
+                          "deribit_price_index.btc_usd"
+                        ]
+                      },
+                      "location": "query",
+                      "name": "channels",
+                      "required": {
+                        "status": "known",
+                        "value": true
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "example": [
+                            "deribit_price_index.btc_usd"
+                          ],
+                          "items": {
+                            "example": "deribit_price_index.btc_usd",
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "array"
+                      }
+                    }
+                  ]
+                ]
+              }
+            ],
+            "operation_key": "GET /api/v2/public/unsubscribe",
+            "provider": [
+              {
+                "artifact_id": "api-openapi",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "channel": null,
+                "examples": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "location": "parameter",
+                      "name": "channels",
+                      "value": [
+                        "deribit_price_index.btc_usd"
+                      ]
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "request",
+                      "name": "request",
+                      "status": null,
+                      "value": {
+                        "id": 8691,
+                        "jsonrpc": "2.0",
+                        "method": "public/unsubscribe",
+                        "params": {
+                          "channels": [
+                            "deribit_price_index.btc_usd"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "response",
+                      "name": "jsonObject",
+                      "status": "200",
+                      "value": {
+                        "id": 3370,
+                        "jsonrpc": "2.0",
+                        "result": [
+                          "deribit_price_index.btc_usd"
+                        ]
+                      }
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "response",
+                      "name": "response",
+                      "status": "200",
+                      "value": {
+                        "id": 3370,
+                        "jsonrpc": "2.0",
+                        "result": [
+                          "deribit_price_index.btc_usd"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                "key": "GET /api/v2/public/unsubscribe",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    },
+                    {
+                      "example": {
+                        "status": "known",
+                        "value": [
+                          "deribit_price_index.btc_usd"
+                        ]
+                      },
+                      "location": "query",
+                      "name": "channels",
+                      "required": {
+                        "status": "known",
+                        "value": true
+                      },
+                      "schema": {
+                        "status": "known",
+                        "value": {
+                          "example": [
+                            "deribit_price_index.btc_usd"
+                          ],
+                          "items": {
+                            "example": "deribit_price_index.btc_usd",
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "known",
+                        "value": "array"
+                      }
+                    }
+                  ]
+                },
+                "path": "/api/v2/public/unsubscribe",
+                "qualifiers": [
+                  "websocket_only"
+                ],
+                "response_schemas": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "schema": {
+                        "$ref": "#/components/schemas/Getunsubscribe200response"
+                      },
+                      "status": "200"
+                    },
+                    {
+                      "content_type": "application/json",
+                      "schema": {
+                        "$ref": "#/components/schemas/ErrorMessageResponse"
+                      },
+                      "status": "401"
+                    }
+                  ]
+                },
+                "transport": "rest"
+              }
+            ]
+          },
+          {
+            "authored": [
+              {
+                "authentication": {
+                  "status": "known",
+                  "value": {
+                    "required": false
+                  }
+                },
+                "channel": null,
+                "examples": {
+                  "status": "unknown"
+                },
+                "key": "GET /api/v2/public/unsubscribe_all",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": []
+                },
+                "path": "/api/v2/public/unsubscribe_all",
+                "qualifiers": [],
+                "response_schemas": {
+                  "status": "unknown"
+                },
+                "runtime_scope": "raw_only",
+                "transport": "rest"
+              }
+            ],
+            "axes": {
+              "contract_scope": "current_rest",
+              "evidence": "unverified",
+              "reachability": "unreachable",
+              "relation": "shared",
+              "runtime_scope": "raw_only"
+            },
+            "field_differences": [
+              {
+                "authored": [
+                  []
+                ],
+                "field": "parameters",
+                "provider": [
+                  [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    }
+                  ]
+                ]
+              }
+            ],
+            "operation_key": "GET /api/v2/public/unsubscribe_all",
+            "provider": [
+              {
+                "artifact_id": "api-openapi",
+                "authentication": {
+                  "status": "unknown"
+                },
+                "channel": null,
+                "examples": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "location": "request",
+                      "name": "request",
+                      "status": null,
+                      "value": {
+                        "id": 153,
+                        "jsonrpc": "2.0",
+                        "method": "public/unsubscribe_all",
+                        "params": {}
+                      }
+                    },
+                    {
+                      "content_type": "application/json",
+                      "location": "response",
+                      "name": "response",
+                      "status": "200",
+                      "value": {
+                        "id": 1569,
+                        "jsonrpc": "2.0",
+                        "result": "ok"
+                      }
+                    }
+                  ]
+                },
+                "key": "GET /api/v2/public/unsubscribe_all",
+                "message_references": {
+                  "status": "unknown"
+                },
+                "message_schemas": {
+                  "status": "unknown"
+                },
+                "method": "GET",
+                "parameters": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "example": {
+                        "status": "unknown"
+                      },
+                      "location": "body",
+                      "name": "requestBody",
+                      "required": {
+                        "status": "unknown"
+                      },
+                      "schema": {
+                        "status": "unknown"
+                      },
+                      "source_ref": null,
+                      "type": {
+                        "status": "unknown"
+                      }
+                    }
+                  ]
+                },
+                "path": "/api/v2/public/unsubscribe_all",
+                "qualifiers": [
+                  "websocket_only"
+                ],
+                "response_schemas": {
+                  "status": "known",
+                  "value": [
+                    {
+                      "content_type": "application/json",
+                      "schema": {
+                        "$ref": "#/components/schemas/OkResponse"
+                      },
+                      "status": "200"
+                    }
+                  ]
+                },
+                "transport": "rest"
+              }
+            ]
+          }
+        ],
+        "provider_count": 178
+      }
+    },
+    "venue": "deribit"
+  },
   "operations": [
     {
       "capture_ids": [
@@ -40,9 +2645,9 @@
   "plan": "priv/authority/deribit/provider-operation-plan.json",
   "recordings": [
     {
-      "bytes": 1205,
+      "bytes": 1190,
       "capture_id": "public_get_time_success",
-      "captured_at": "2026-08-11T04:40:50.598050Z",
+      "captured_at": "2026-08-18T00:37:55.217485Z",
       "evidence_semantics": "reachability_only",
       "host": "test.deribit.com",
       "http_status": 200,
@@ -50,12 +2655,12 @@
       "operation_key": "GET /api/v2/public/get_time",
       "path": "deribit/public_get_time_success.json",
       "row_fields_populated": false,
-      "sha256": "7ee64c0156f16123377b83eda7ca2bc9998351390f5a3a65f9e16d7eb38c65ae"
+      "sha256": "1c336c0e3a151eb54098308b05468492ddfa9060e5afff44d48fad320c7e5169"
     },
     {
-      "bytes": 1866,
+      "bytes": 1845,
       "capture_id": "public_ticker_populated_success",
-      "captured_at": "2026-08-11T04:40:50.925505Z",
+      "captured_at": "2026-08-18T00:37:55.427490Z",
       "evidence_semantics": "row_fields",
       "host": "test.deribit.com",
       "http_status": 200,
@@ -63,12 +2668,12 @@
       "operation_key": "GET /api/v2/public/ticker",
       "path": "deribit/public_ticker_populated_success.json",
       "row_fields_populated": true,
-      "sha256": "02f3ac4bc818eb2a95995d55d83b4b754ab8d13687a9ebe0821d7a366e5a72b0"
+      "sha256": "2100ee8f9aafd9cf446db16237896d516d4a5091a641bcfacf64a86e453fc98e"
     },
     {
-      "bytes": 1346,
+      "bytes": 1330,
       "capture_id": "public_ticker_invalid_parameter",
-      "captured_at": "2026-08-11T04:40:51.098621Z",
+      "captured_at": "2026-08-18T00:37:55.607895Z",
       "evidence_semantics": "invalid_parameter_error",
       "host": "test.deribit.com",
       "http_status": 400,
@@ -76,351 +2681,19 @@
       "operation_key": "GET /api/v2/public/ticker",
       "path": "deribit/public_ticker_invalid_parameter.json",
       "row_fields_populated": false,
-      "sha256": "fa49ad950573ae216456f498fb1fc0a8a4ffaee0ad42b58999b2b70eff000bc9"
+      "sha256": "7ca70904b19060e6af9bcd8ae791c7b611444aedc79d646010f2f4661e1ed8e3"
     }
   ],
   "schema_version": 1,
   "source_revision": {
     "artifact_id": "api-openapi",
     "contract_scope": "current_rest",
-    "retrieved_at": "2026-08-10",
-    "sha256": "430b3f0bc67cc574a05e695d22d1acbbb5348c96858368bba9931c2f05350515",
+    "retrieved_at": "2026-08-18",
+    "sha256": "e85c22f50ddf3d002aa789128c04597d3a7ea25c696bccdb1bb05749d9dfffef",
     "source_url": "https://docs.deribit.com/specifications/deribit_openapi.json",
     "upstream_pin": {
       "type": "document_version_http_etag",
-      "value": "2.1.1; W/\"b96f2b26a14b31dbc4cf064c3d63b14a\""
-    }
-  },
-  "inventory": {
-    "schema_version": 1,
-    "report_type": "provider_contract_comparison",
-    "venue": "deribit",
-    "provenance": {
-      "authority_manifest": "priv/authority/deribit/manifest.json",
-      "authored_spec_canonical_sha256": "88937a8fdf459bfd83026a888e1fb4040fddd3d03c234bb86c23f7b5294e38df",
-      "artifacts": [
-        {
-          "id": "api-openapi",
-          "sha256": "430b3f0bc67cc574a05e695d22d1acbbb5348c96858368bba9931c2f05350515",
-          "upstream_pin": {
-            "type": "document_version_http_etag",
-            "value": "2.1.1; W/\"b96f2b26a14b31dbc4cf064c3d63b14a\""
-          },
-          "metrics": {
-            "path_count": 178,
-            "unknown_authentication_count": 178
-          }
-        }
-      ]
-    },
-    "surfaces": {
-      "current_rest": {
-        "provider_count": 178,
-        "operations": [
-          {
-            "operation_key": "GET /api/v2/public/get_time",
-            "axes": {
-              "relation": "shared",
-              "runtime_scope": "unified",
-              "evidence": "unverified",
-              "reachability": "unknown",
-              "contract_scope": "current_rest"
-            },
-            "provider": [
-              {
-                "transport": "rest",
-                "method": "GET",
-                "path": "/api/v2/public/get_time",
-                "authentication": {
-                  "status": "unknown"
-                },
-                "qualifiers": []
-              }
-            ],
-            "authored": [
-              {
-                "authentication": {
-                  "status": "known",
-                  "value": {
-                    "required": false
-                  }
-                }
-              }
-            ]
-          },
-          {
-            "operation_key": "GET /api/v2/public/ticker",
-            "axes": {
-              "relation": "shared",
-              "runtime_scope": "unified",
-              "evidence": "unverified",
-              "reachability": "unknown",
-              "contract_scope": "current_rest"
-            },
-            "provider": [
-              {
-                "transport": "rest",
-                "method": "GET",
-                "path": "/api/v2/public/ticker",
-                "authentication": {
-                  "status": "unknown"
-                },
-                "qualifiers": []
-              }
-            ],
-            "authored": [
-              {
-                "authentication": {
-                  "status": "known",
-                  "value": {
-                    "required": false
-                  }
-                }
-              }
-            ]
-          },
-          {
-            "operation_key": "GET /api/v2/private/logout",
-            "axes": {
-              "relation": "shared",
-              "runtime_scope": "raw_only",
-              "evidence": "unverified",
-              "reachability": "unknown",
-              "contract_scope": "current_rest"
-            },
-            "provider": [
-              {
-                "transport": "rest",
-                "method": "GET",
-                "path": "/api/v2/private/logout",
-                "authentication": {
-                  "status": "unknown"
-                },
-                "qualifiers": [
-                  "websocket_only"
-                ]
-              }
-            ],
-            "authored": []
-          },
-          {
-            "operation_key": "GET /api/v2/private/subscribe",
-            "axes": {
-              "relation": "shared",
-              "runtime_scope": "raw_only",
-              "evidence": "unverified",
-              "reachability": "unknown",
-              "contract_scope": "current_rest"
-            },
-            "provider": [
-              {
-                "transport": "rest",
-                "method": "GET",
-                "path": "/api/v2/private/subscribe",
-                "authentication": {
-                  "status": "unknown"
-                },
-                "qualifiers": [
-                  "websocket_only"
-                ]
-              }
-            ],
-            "authored": []
-          },
-          {
-            "operation_key": "GET /api/v2/private/unsubscribe",
-            "axes": {
-              "relation": "shared",
-              "runtime_scope": "raw_only",
-              "evidence": "unverified",
-              "reachability": "unknown",
-              "contract_scope": "current_rest"
-            },
-            "provider": [
-              {
-                "transport": "rest",
-                "method": "GET",
-                "path": "/api/v2/private/unsubscribe",
-                "authentication": {
-                  "status": "unknown"
-                },
-                "qualifiers": [
-                  "websocket_only"
-                ]
-              }
-            ],
-            "authored": []
-          },
-          {
-            "operation_key": "GET /api/v2/private/unsubscribe_all",
-            "axes": {
-              "relation": "shared",
-              "runtime_scope": "raw_only",
-              "evidence": "unverified",
-              "reachability": "unknown",
-              "contract_scope": "current_rest"
-            },
-            "provider": [
-              {
-                "transport": "rest",
-                "method": "GET",
-                "path": "/api/v2/private/unsubscribe_all",
-                "authentication": {
-                  "status": "unknown"
-                },
-                "qualifiers": [
-                  "websocket_only"
-                ]
-              }
-            ],
-            "authored": []
-          },
-          {
-            "operation_key": "GET /api/v2/public/disable_heartbeat",
-            "axes": {
-              "relation": "shared",
-              "runtime_scope": "raw_only",
-              "evidence": "unverified",
-              "reachability": "unknown",
-              "contract_scope": "current_rest"
-            },
-            "provider": [
-              {
-                "transport": "rest",
-                "method": "GET",
-                "path": "/api/v2/public/disable_heartbeat",
-                "authentication": {
-                  "status": "unknown"
-                },
-                "qualifiers": [
-                  "websocket_only"
-                ]
-              }
-            ],
-            "authored": []
-          },
-          {
-            "operation_key": "GET /api/v2/public/hello",
-            "axes": {
-              "relation": "shared",
-              "runtime_scope": "raw_only",
-              "evidence": "unverified",
-              "reachability": "unknown",
-              "contract_scope": "current_rest"
-            },
-            "provider": [
-              {
-                "transport": "rest",
-                "method": "GET",
-                "path": "/api/v2/public/hello",
-                "authentication": {
-                  "status": "unknown"
-                },
-                "qualifiers": [
-                  "websocket_only"
-                ]
-              }
-            ],
-            "authored": []
-          },
-          {
-            "operation_key": "GET /api/v2/public/set_heartbeat",
-            "axes": {
-              "relation": "shared",
-              "runtime_scope": "raw_only",
-              "evidence": "unverified",
-              "reachability": "unknown",
-              "contract_scope": "current_rest"
-            },
-            "provider": [
-              {
-                "transport": "rest",
-                "method": "GET",
-                "path": "/api/v2/public/set_heartbeat",
-                "authentication": {
-                  "status": "unknown"
-                },
-                "qualifiers": [
-                  "websocket_only"
-                ]
-              }
-            ],
-            "authored": []
-          },
-          {
-            "operation_key": "GET /api/v2/public/subscribe",
-            "axes": {
-              "relation": "shared",
-              "runtime_scope": "raw_only",
-              "evidence": "unverified",
-              "reachability": "unknown",
-              "contract_scope": "current_rest"
-            },
-            "provider": [
-              {
-                "transport": "rest",
-                "method": "GET",
-                "path": "/api/v2/public/subscribe",
-                "authentication": {
-                  "status": "unknown"
-                },
-                "qualifiers": [
-                  "websocket_only"
-                ]
-              }
-            ],
-            "authored": []
-          },
-          {
-            "operation_key": "GET /api/v2/public/unsubscribe",
-            "axes": {
-              "relation": "shared",
-              "runtime_scope": "raw_only",
-              "evidence": "unverified",
-              "reachability": "unknown",
-              "contract_scope": "current_rest"
-            },
-            "provider": [
-              {
-                "transport": "rest",
-                "method": "GET",
-                "path": "/api/v2/public/unsubscribe",
-                "authentication": {
-                  "status": "unknown"
-                },
-                "qualifiers": [
-                  "websocket_only"
-                ]
-              }
-            ],
-            "authored": []
-          },
-          {
-            "operation_key": "GET /api/v2/public/unsubscribe_all",
-            "axes": {
-              "relation": "shared",
-              "runtime_scope": "raw_only",
-              "evidence": "unverified",
-              "reachability": "unknown",
-              "contract_scope": "current_rest"
-            },
-            "provider": [
-              {
-                "transport": "rest",
-                "method": "GET",
-                "path": "/api/v2/public/unsubscribe_all",
-                "authentication": {
-                  "status": "unknown"
-                },
-                "qualifiers": [
-                  "websocket_only"
-                ]
-              }
-            ],
-            "authored": []
-          }
-        ]
-      }
+      "value": "2.1.1; W/\"QCggKABm3LEi7g4f\""
     }
   }
 }
