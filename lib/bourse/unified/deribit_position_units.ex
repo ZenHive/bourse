@@ -2,8 +2,9 @@ defmodule Bourse.Unified.DeribitPositionUnits do
   @moduledoc """
   Reconciles Deribit future position contracts with loaded market metadata.
 
-  Deribit reports future `size` in quote currency. The market's `contract_size`
-  converts that value into the venue contract count.
+  Deribit future positions report quote `size` and base `size_currency`.
+  Inverse market `contract_size` is quote-denominated, while linear market
+  `contract_size` is base-denominated, so the divisor follows settlement.
   """
 
   alias Bourse.Exchange
@@ -15,18 +16,18 @@ defmodule Bourse.Unified.DeribitPositionUnits do
   @doc "Populates Deribit future contract fields from loaded market metadata."
   @spec reconcile(parse_result(), Exchange.t()) :: parse_result()
   def reconcile({:ok, positions}, %Exchange{id: "deribit"} = exchange) when is_list(positions) do
-    contract_sizes = contract_sizes(exchange.markets)
-    {:ok, Enum.map(positions, &reconcile_position(&1, contract_sizes))}
+    market_units = market_units(exchange.markets)
+    {:ok, Enum.map(positions, &reconcile_position(&1, market_units))}
   end
 
   def reconcile({:ok, %Position{} = position}, %Exchange{id: "deribit"} = exchange) do
-    {:ok, reconcile_position(position, contract_sizes(exchange.markets))}
+    {:ok, reconcile_position(position, market_units(exchange.markets))}
   end
 
   def reconcile(result, %Exchange{}), do: result
 
-  defp contract_sizes(markets) when is_list(markets) do
-    Enum.reduce(markets, %{}, fn market, contract_sizes ->
+  defp market_units(markets) when is_list(markets) do
+    Enum.reduce(markets, %{}, fn market, market_units ->
       id = Map.get(market, :id) || Map.get(market, "id")
 
       contract_size =
@@ -35,28 +36,39 @@ defmodule Bourse.Unified.DeribitPositionUnits do
         |> Safe.number()
 
       if is_binary(id) and is_number(contract_size) and contract_size > 0 do
-        Map.put(contract_sizes, id, contract_size)
+        inverse? = Map.get(market, :inverse) == true or Map.get(market, "inverse") == true
+        Map.put(market_units, id, %{contract_size: contract_size, inverse?: inverse?})
       else
-        contract_sizes
+        market_units
       end
     end)
   end
 
-  defp contract_sizes(_markets), do: %{}
+  defp market_units(_markets), do: %{}
 
   defp reconcile_position(
-         %Position{info: %{"instrument_name" => instrument_name, "kind" => "future"}, notional: notional} = position,
-         contract_sizes
-       )
-       when is_number(notional) do
-    case Map.get(contract_sizes, instrument_name) do
-      contract_size when is_number(contract_size) and contract_size > 0 ->
-        %{position | contract_size: contract_size, contracts: notional / contract_size}
+         %Position{info: %{"instrument_name" => instrument_name, "kind" => "future"} = info} = position,
+         market_units
+       ) do
+    case Map.get(market_units, instrument_name) do
+      %{contract_size: contract_size, inverse?: market_inverse?} ->
+        inverse? = Map.get(info, "_bourse_inverse", market_inverse?)
 
-      _missing_contract_size ->
+        case contract_quantity(position, inverse?) do
+          quantity when is_number(quantity) ->
+            %{position | contract_size: contract_size, contracts: quantity / contract_size}
+
+          _missing_quantity ->
+            position
+        end
+
+      _missing_market_units ->
         position
     end
   end
 
-  defp reconcile_position(position, _contract_sizes), do: position
+  defp reconcile_position(position, _market_units), do: position
+
+  defp contract_quantity(%Position{notional: notional}, true), do: notional
+  defp contract_quantity(%Position{base_quantity: base_quantity}, false), do: base_quantity
 end

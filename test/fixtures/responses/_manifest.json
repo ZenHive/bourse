@@ -119,7 +119,7 @@
     "okx/fetch_ticker.json",
     "okx/fetch_trades.json"
   ],
-  "generated_at": "2026-08-14T04:57:58.045758Z",
+  "generated_at": "2026-08-18T01:39:22.497720Z",
   "recordings": [
     {
       "capture_date": "2026-07-26",
@@ -880,13 +880,17 @@
     },
     {
       "body_populated": true,
-      "capture_date": "2026-07-23",
-      "captured_at": "2026-07-23T13:38:22Z",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T01:39:22.434323Z",
       "endpoint": "private/get_positions",
       "host": "test.deribit.com",
       "method": "fetch_positions",
+      "oracle_membership": [
+        "tier1_semantic_oracle",
+        "deribit_position_units"
+      ],
       "path": "deribit/fetch_positions.json",
-      "request_params_sha256": "9fb0499a7ad6330c84a899a6722ed8bda1a0c1fc36ed9d03095d2537f2c6f579",
+      "request_params_sha256": "f9d8c46b45fd5e7deee3c589c340dd7e22800dec712f85cbdb6c270a5982091a",
       "venue": "deribit"
     },
     {

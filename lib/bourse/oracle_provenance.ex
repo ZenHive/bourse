@@ -3,6 +3,7 @@ defmodule Bourse.OracleProvenance do
   Derives and compares binary oracle provenance from committed reality evidence.
   """
 
+  alias Bourse.OracleProvenance.DeribitPositionUnits, as: DeribitPositionUnitsOracle
   alias Bourse.OracleProvenance.Derivation
   alias Bourse.OracleProvenance.MutationAdjudication
   alias Bourse.RecordedResponseFixtures
@@ -127,6 +128,11 @@ defmodule Bourse.OracleProvenance do
     RequestCongruence.validate!(congruence_opts)
     RecordedResponseFixtures.validate_provider_operations!(provider_opts)
     MutationAdjudication.validate!(mutation_opts)
+
+    DeribitPositionUnitsOracle.validate!(
+      root: opts[:recording_root],
+      manifest_path: opts[:recording_manifest]
+    )
 
     opts
     |> Keyword.drop(

@@ -657,14 +657,16 @@ keeps each provider source explicit and permits only these named exceptions:
 | `C-T610/binancecoinm-inverse-settlement-notional` | COIN-M `notionalValue` is coin-settlement value while contract size is quote USD. |
 | `C-T610/binanceusdm-linear-base-contract` | USD-M `positionAmt × contractSize` is base exposure; venue `notional` is quote value. |
 | `C-T610/bybit-linear-base-contract` | Linear `size × contractSize` is base exposure; `positionValue` is quote value. |
+| `C-T611/deribit-linear-base-contract` | Linear `size` is quote value, while `size_currency` and `contract_size` are base-denominated. |
 | `C-T610/derive-base-amount` | `amount × contractSize` is base exposure; mark price produces quote notional. |
 | `C-T610/hyperliquid-base-size` | `szi × contractSize` is base exposure; `positionValue` is quote value. |
 | `C-T610/lighter-base-position` | `position × contractSize` is base exposure; `position_value` is quote value. |
 | `C-T610/okx-linear-base-contract` | Linear `pos × contractSize` is base exposure; `notionalUsd` is quote value. |
 
-Deribit future `size` and market `contract_size` are both quote-denominated and
-therefore need no exception. Venue-specific source citations and live evidence are
-recorded in the corresponding position carves, including Deribit C-T610f.
+Deribit inverse future `size` and `contract_size` are quote-denominated. Linear
+future `size` remains quote value, while `size_currency` and `contract_size` are
+base-denominated. Venue-specific source citations and live evidence are recorded
+in Deribit C-T610f.
 
 <!-- carve-evidence-status
 {"carve_id":"C-T610","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Venue position and instrument contracts cited by the venue-specific position carves"},"observed_evidence":{"kind":"provider_shaped","reference":"Frozen provider-shaped rows in test/bourse/position_unit_invariant_test.exs and venue position recordings"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The named exceptions have provider-contract or recorded evidence at their venue-specific tiers; no single live run can populate every venue position simultaneously"}

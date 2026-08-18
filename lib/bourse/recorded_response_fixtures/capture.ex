@@ -224,7 +224,11 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
           "symbol" => "BTC/USD:BTC"
         }),
       {"deribit", :fetch_positions} =>
-        private("private/get_positions", "test.deribit.com", :deribit, %{"symbols" => ["BTC/USD:BTC"]}),
+        private("private/get_positions", "test.deribit.com", :deribit, %{},
+          load_markets?: true,
+          market_context_ids: ["BTC-PERPETUAL", "ETH_USDC-PERPETUAL"],
+          oracle_membership: ["tier1_semantic_oracle", "deribit_position_units"]
+        ),
       {"deribit", :fetch_my_trades} =>
         private("private/get_user_trades_by_instrument", "test.deribit.com", :deribit, %{
           "symbol" => "BTC/USD:BTC",
@@ -633,6 +637,8 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       exchange_opts: exchange_opts(credential_profile),
       host: host,
       load_markets?: Keyword.get(opts, :load_markets?, false),
+      market_context_ids: Keyword.get(opts, :market_context_ids),
+      oracle_membership: Keyword.get(opts, :oracle_membership),
       param_variants: Keyword.get(opts, :param_variants),
       params: params,
       raw_endpoint: Keyword.get(opts, :raw_endpoint),
@@ -977,6 +983,7 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
         |> metadata(exchange_id, method)
         |> Map.put("caller_params", caller_params)
         |> put_captured_responses(List.wrap(response_or_responses))
+        |> put_market_contexts(exchange, profile)
         |> scrub(credentials)
 
       {:ok, fixture}
@@ -1319,19 +1326,50 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
   end
 
   defp metadata(profile, exchange_id, method) do
-    %{
-      "authenticated" => profile.authenticated,
-      "call_opts" => Map.new(profile.call_opts, fn {key, value} -> {Atom.to_string(key), value} end),
-      "captured_at" => DateTime.to_iso8601(DateTime.utc_now()),
-      "endpoint" => profile.endpoint,
-      "environment" => profile.environment,
-      "exchange" => exchange_id,
-      "host" => profile.host,
-      "method" => Atom.to_string(method),
-      "params" => profile.params,
-      "symbol" => profile.symbol,
-      "timeframe" => if(method == :fetch_ohlcv, do: @ohlcv_timeframe)
-    }
+    maybe_put(
+      %{
+        "authenticated" => profile.authenticated,
+        "call_opts" => Map.new(profile.call_opts, fn {key, value} -> {Atom.to_string(key), value} end),
+        "captured_at" => DateTime.to_iso8601(DateTime.utc_now()),
+        "endpoint" => profile.endpoint,
+        "environment" => profile.environment,
+        "exchange" => exchange_id,
+        "host" => profile.host,
+        "method" => Atom.to_string(method),
+        "params" => profile.params,
+        "symbol" => profile.symbol,
+        "timeframe" => if(method == :fetch_ohlcv, do: @ohlcv_timeframe)
+      },
+      "oracle_membership",
+      Map.get(profile, :oracle_membership)
+    )
+  end
+
+  defp put_market_contexts(fixture, %Exchange{markets: markets}, %{market_context_ids: [_ | _] = ids})
+       when is_list(markets) do
+    contexts = Enum.map(ids, &market_context!(markets, &1))
+    Map.put(fixture, "market_contexts", contexts)
+  end
+
+  defp put_market_contexts(fixture, _exchange, _profile), do: fixture
+
+  defp market_context!(markets, id) do
+    market = Enum.find(markets, &((Map.get(&1, :id) || Map.get(&1, "id")) == id))
+
+    if is_map(market) do
+      %{
+        "normalized" => %{
+          "contract_size" => Map.get(market, :contract_size) || Map.get(market, "contractSize"),
+          "id" => id,
+          "inverse" => Map.get(market, :inverse) == true or Map.get(market, "inverse") == true,
+          "linear" => Map.get(market, :linear) == true or Map.get(market, "linear") == true,
+          "symbol" => Map.get(market, :symbol) || Map.get(market, "symbol")
+        },
+        "raw" => Map.get(market, :info) || Map.get(market, "info") || %{}
+      }
+    else
+      raise "loaded Deribit markets omitted required recording context #{id}"
+    end
   end
 
   defp put_captured_responses(fixture, [%{"api" => _api} | _] = responses), do: Map.put(fixture, "responses", responses)

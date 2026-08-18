@@ -6,27 +6,56 @@ defmodule Bourse.Unified.DeribitPositionUnitsTest do
   alias Bourse.Position
   alias Bourse.Unified.DeribitPositionUnits
 
-  test "reconciles Deribit future quote notional into market-derived contracts" do
+  test "reconciles inverse quote notional and linear base size into market-derived contracts" do
     exchange =
       "deribit"
       |> Exchange.new!()
       |> Exchange.put_markets([
-        %{"id" => "BTC-PERPETUAL", "contractSize" => "10"},
+        %{"id" => "BTC-PERPETUAL", "contractSize" => "10", "inverse" => true},
+        %Market{id: "ETH_USDC-PERPETUAL", contract_size: 0.001, inverse: false, linear: true},
         %Market{id: nil, contract_size: nil}
       ])
 
-    position =
+    inverse =
       %Position{
         contracts: nil,
         contract_size: nil,
         notional: 50.0,
-        info: %{"instrument_name" => "BTC-PERPETUAL", "kind" => "future"}
+        info: %{"_bourse_inverse" => true, "instrument_name" => "BTC-PERPETUAL", "kind" => "future"}
       }
 
-    assert {:ok, [%Position{contracts: 5.0, contract_size: 10.0}]} =
-             DeribitPositionUnits.reconcile({:ok, [position]}, exchange)
+    linear =
+      %Position{
+        base_quantity: 0.5,
+        contracts: nil,
+        contract_size: nil,
+        notional: 1500.0,
+        info: %{"_bourse_inverse" => false, "instrument_name" => "ETH_USDC-PERPETUAL", "kind" => "future"}
+      }
+
+    assert {:ok,
+            [
+              %Position{contracts: 5.0, contract_size: 10.0},
+              %Position{contracts: 500.0, contract_size: 0.001}
+            ]} = DeribitPositionUnits.reconcile({:ok, [inverse, linear]}, exchange)
 
     assert {:ok, %Position{contracts: 5.0, contract_size: 10.0}} =
+             DeribitPositionUnits.reconcile({:ok, inverse}, exchange)
+  end
+
+  test "falls back to loaded market settlement when direct parser info has no annotation" do
+    exchange =
+      "deribit"
+      |> Exchange.new!()
+      |> Exchange.put_markets([%Market{id: "ETH_USDC-PERPETUAL", contract_size: 0.001, linear: true}])
+
+    position = %Position{
+      base_quantity: 0.5,
+      notional: 1500.0,
+      info: %{"instrument_name" => "ETH_USDC-PERPETUAL", "kind" => "future"}
+    }
+
+    assert {:ok, %Position{contracts: 500.0, contract_size: 0.001}} =
              DeribitPositionUnits.reconcile({:ok, position}, exchange)
   end
 

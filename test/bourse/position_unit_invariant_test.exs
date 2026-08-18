@@ -26,6 +26,7 @@ defmodule Bourse.PositionUnitInvariantTest do
                       "#{position_case.venue} changed its frozen position contract unit"
 
       assert_contract_size(position, position_case)
+      assert_base_quantity(position, position_case)
 
       assert position_case.quote_notional? or is_binary(position_case.exception)
 
@@ -73,6 +74,15 @@ defmodule Bourse.PositionUnitInvariantTest do
                     @unit_tolerance,
                     "#{position_case.venue} changed its frozen contract-size unit"
   end
+
+  defp assert_base_quantity(position, %{expected_base_quantity: expected}) do
+    assert_in_delta position.base_quantity,
+                    expected,
+                    @unit_tolerance,
+                    "position base quantity changed its frozen unit"
+  end
+
+  defp assert_base_quantity(_position, _position_case), do: :ok
 
   defp parse_position!(position_case) do
     module = position_case.module
@@ -151,17 +161,42 @@ defmodule Bourse.PositionUnitInvariantTest do
         venue: "deribit",
         module: Bourse.Deribit,
         row: %{
+          "_bourse_inverse" => true,
           "instrument_name" => "BTC-PERPETUAL",
           "kind" => "future",
+          "mark_price" => 7476.65,
           "size" => 50,
           "size_currency" => 0.006687487
         },
-        markets: [%Market{id: "BTC-PERPETUAL", contract_size: 10.0}],
+        markets: [%Market{id: "BTC-PERPETUAL", contract_size: 10.0, inverse: true}],
+        expected_base_quantity: 0.006687487,
         expected_contracts: 5.0,
         expected_contract_size: 10.0,
         expected_notional: 50.0,
         quote_notional?: true,
         exception: nil
+      },
+      %{
+        venue: "deribit",
+        module: Bourse.Deribit,
+        row: %{
+          "_bourse_inverse" => false,
+          "direction" => "buy",
+          "instrument_name" => "ETH_USDC-PERPETUAL",
+          "kind" => "future",
+          "mark_price" => 3000.25,
+          "size" => 1500.125,
+          "size_currency" => 0.5
+        },
+        markets: [
+          %Market{id: "ETH_USDC-PERPETUAL", contract_size: 0.001, inverse: false, linear: true}
+        ],
+        expected_base_quantity: 0.5,
+        expected_contracts: 500.0,
+        expected_contract_size: 0.001,
+        expected_notional: 1500.125,
+        quote_notional?: true,
+        exception: "C-T611/deribit-linear-base-contract"
       },
       %{
         venue: "derive",

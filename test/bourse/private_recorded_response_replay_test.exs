@@ -289,8 +289,8 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
     [
       {"bybit", ["result", "list", Access.at(0)],
        %{contracts: 0.01, id_key: "symbol", symbol: "BTC/USDT:USDT-270625-150000-C"}},
-      {"deribit", ["result", Access.at(0)],
-       %{contracts: 0.1, id_key: "instrument_name", symbol: "BTC/USD:BTC-260731-65000-C"}},
+      {"deribit", ["result", Access.at(0)], %{contracts: 1.0, id_key: "instrument_name", symbol: "BTC/USD:BTC"}},
+      {"deribit", ["result", Access.at(2)], %{contracts: 1.0, id_key: "instrument_name", symbol: "ETH/USDC:USDC"}},
       {"okx", ["data", Access.at(0)], %{contracts: 0.01, id_key: "posId", symbol: "BTC/USD:BTC-260724-67000-C"}}
     ]
   end
@@ -350,6 +350,14 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
     end
   end
 
+  defp replay_exchange(%{"exchange" => venue, "market_contexts" => contexts}) do
+    markets = Enum.map(contexts, fn %{"normalized" => market} -> market_from_context(market) end)
+
+    venue
+    |> replay_exchange()
+    |> Bourse.Exchange.put_markets(markets)
+  end
+
   defp replay_exchange(%{"exchange" => venue, "market_context" => %{"normalized" => market}}) do
     venue
     |> replay_exchange()
@@ -371,6 +379,8 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
       symbol: market["symbol"],
       option: market["option"],
       contract_size: market["contract_size"],
+      inverse: market["inverse"],
+      linear: market["linear"],
       quantity_unit: market["quantity_unit"],
       native_quantity_unit: market["native_quantity_unit"],
       native_quantity_field: market["native_quantity_field"],

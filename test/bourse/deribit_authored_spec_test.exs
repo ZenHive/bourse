@@ -44,8 +44,9 @@ defmodule Bourse.DeribitAuthoredSpecTest do
       "initial_margin" => 300,
       "instrument_name" => "ETH_USDC-PERPETUAL",
       "kind" => "future",
+      "mark_price" => 3000.25,
       "maintenance_margin" => 150,
-      "size" => 0.5,
+      "size" => 1500.125,
       "size_currency" => 0.5
     }
 
@@ -59,6 +60,16 @@ defmodule Bourse.DeribitAuthoredSpecTest do
           contract: true,
           contract_size: 10.0,
           inverse: true,
+          swap: true,
+          type: "swap"
+        },
+        %Bourse.Market{
+          id: "ETH_USDC-PERPETUAL",
+          symbol: "ETH/USDC:USDC",
+          contract: true,
+          contract_size: 0.001,
+          inverse: false,
+          linear: true,
           swap: true,
           type: "swap"
         }
@@ -88,15 +99,35 @@ defmodule Bourse.DeribitAuthoredSpecTest do
     assert inverse_position.maintenance_margin_percentage
     assert_in_delta inverse_position.initial_margin_percentage, 0.000197283 / 0.006687487, @ratio_tolerance
     assert_in_delta inverse_position.maintenance_margin_percentage, 0.000143783 / 0.006687487, @ratio_tolerance
+    assert linear_position.notional == 1500.125
+    assert linear_position.base_quantity == 0.5
+    assert linear_position.contract_size == 0.001
+    assert linear_position.contracts == 500.0
+    assert linear_position.side == "long"
     assert linear_position.initial_margin_percentage == nil
     assert linear_position.maintenance_margin_percentage == nil
   end
 
-  test "position margin percentages branch on the payload instrument, not request-context market" do
+  test "position fields preserve provider quote and base units while inverse margins branch by market" do
     spec = Bourse.Spec.load!("deribit")
+    field_map = get_in(spec, ["normalization", "field_maps", "position", "field_map"])
+
+    assert field_map["baseQuantity"] == %{
+             "coercion" => "safeNumber",
+             "key" => "size_currency",
+             "kind" => "absolute"
+           }
+
+    assert field_map["notional"]["guard"] == %{"field" => "kind", "in" => ["future"]}
+
+    assert field_map["notional"]["then"] == %{
+             "coercion" => "safeNumber",
+             "key" => "size",
+             "kind" => "absolute"
+           }
 
     for field <- ["initialMarginPercentage", "maintenanceMarginPercentage"] do
-      rule = get_in(spec, ["normalization", "field_maps", "position", "field_map", field])
+      rule = field_map[field]
       assert rule["kind"] == "when"
       assert rule["guard"] == %{"equals" => true, "field" => "_bourse_inverse"}
       refute Map.has_key?(rule, "discriminator")
@@ -127,14 +158,21 @@ defmodule Bourse.DeribitAuthoredSpecTest do
     assert position.contracts == nil
 
     linear_raw = %{
+      "direction" => "sell",
       "instrument_name" => "ETH_USDC-PERPETUAL",
+      "kind" => "future",
       "initial_margin" => 300,
+      "mark_price" => 3000.25,
       "maintenance_margin" => 150,
+      "size" => 1500.125,
       "size_currency" => 0.5
     }
 
     assert {:ok,
             %Bourse.Position{
+              base_quantity: 0.5,
+              notional: 1500.125,
+              side: "short",
               initial_margin_percentage: nil,
               maintenance_margin_percentage: nil
             }} = Bourse.Deribit.parse_position(linear_raw, market: %Bourse.Market{linear: true})

@@ -102,7 +102,7 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
     assert %Bourse.Market{contract_size: 10.0} = market
     amount = Bourse.Safe.number(market.info["min_trade_amount"])
     assert amount == market.contract_size
-    assert future_position(exchange) == nil
+    assert future_position(exchange, market.id, "BTC") == nil
 
     assert {:ok, %{body: %{"result" => %{"order" => %{"order_id" => order_id}}}}} =
              Bourse.Deribit.private_get_buy(exchange, %{
@@ -114,10 +114,11 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
 
     try do
       assert is_binary(order_id)
-      position = poll_future_position!(exchange, amount)
+      position = poll_future_position!(exchange, market.id, "BTC", :notional, amount)
       venue_notional = position.info["size"] |> Bourse.Safe.number() |> abs()
       venue_base_quantity = position.info["size_currency"] |> Bourse.Safe.number() |> abs()
 
+      assert position.side == "long"
       assert_in_delta position.notional, venue_notional, @position_unit_tolerance
       assert_in_delta position.base_quantity, venue_base_quantity, @position_unit_tolerance
       assert_in_delta position.contract_size, market.contract_size, @position_unit_tolerance
@@ -136,7 +137,62 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
         })
       )
 
-      assert_future_position_closed!(exchange)
+      assert_future_position_closed!(exchange, market.id, "BTC")
+    end
+  end
+
+  @tag :dangerous
+  test "linear future position units preserve base size and quote notional" do
+    credentials = require_credentials!(:deribit, url: @deribit_testnet_url)
+    base = build_exchange(:deribit, credentials: credentials, sandbox: true)
+    assert {:ok, exchange} = Bourse.load_markets(base)
+    market = Enum.find(exchange.markets, &(&1.id == "ETH_USDC-PERPETUAL"))
+
+    assert %Bourse.Market{contract_size: 0.001, inverse: false, linear: true} = market
+    amount = Bourse.Safe.number(market.info["min_trade_amount"])
+    tick_size = Bourse.Safe.number(market.info["tick_size"])
+    assert amount == market.contract_size
+    assert is_number(tick_size) and tick_size > 0
+    assert future_position(exchange, market.id, "USDC") == nil
+
+    assert {:ok, %{body: %{"result" => %{"order" => %{"order_id" => order_id}}}}} =
+             Bourse.Deribit.private_get_buy(exchange, %{
+               "instrument_name" => market.id,
+               "amount" => amount,
+               "type" => "market",
+               "label" => "task611-linear-open-#{System.unique_integer([:positive])}"
+             })
+
+    try do
+      assert is_binary(order_id)
+      position = poll_future_position!(exchange, market.id, "USDC", :base_quantity, amount)
+      venue_notional = position.info["size"] |> Bourse.Safe.number() |> abs()
+      venue_base_quantity = position.info["size_currency"] |> Bourse.Safe.number() |> abs()
+      venue_mark_price = Bourse.Safe.number(position.info["mark_price"])
+      quote_notional = venue_base_quantity * venue_mark_price
+      quote_tolerance = max(venue_base_quantity * tick_size, @position_unit_tolerance)
+
+      assert position.side == "long"
+      assert_in_delta venue_notional, quote_notional, quote_tolerance
+      assert_in_delta position.notional, venue_notional, quote_tolerance
+      assert_in_delta position.base_quantity, venue_base_quantity, @position_unit_tolerance
+      assert_in_delta position.contract_size, market.contract_size, @position_unit_tolerance
+
+      assert_in_delta position.contracts,
+                      venue_base_quantity / market.contract_size,
+                      @position_unit_tolerance
+    after
+      assert_cleanup_order!(
+        Bourse.Deribit.private_get_sell(exchange, %{
+          "instrument_name" => market.id,
+          "amount" => amount,
+          "type" => "market",
+          "reduce_only" => true,
+          "label" => "task611-linear-close-#{System.unique_integer([:positive])}"
+        })
+      )
+
+      assert_future_position_closed!(exchange, market.id, "USDC")
     end
   end
 
@@ -614,47 +670,52 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
     end
   end
 
-  defp poll_future_position!(exchange, expected_notional, attempts \\ @order_poll_attempts)
+  defp poll_future_position!(exchange, instrument_name, code, field, expected, attempts \\ @order_poll_attempts)
 
-  defp poll_future_position!(_exchange, expected_notional, 0) do
-    flunk("Deribit BTC-PERPETUAL did not reach #{expected_notional} quote notional")
+  defp poll_future_position!(_exchange, instrument_name, _code, field, expected, 0) do
+    flunk("Deribit #{instrument_name} did not reach #{expected} #{field}")
   end
 
-  defp poll_future_position!(exchange, expected_notional, attempts) do
-    case future_position(exchange) do
-      %Position{notional: notional} = position
-      when is_number(notional) and abs(notional - expected_notional) <= @position_unit_tolerance ->
-        position
+  defp poll_future_position!(exchange, instrument_name, code, field, expected, attempts) do
+    case future_position(exchange, instrument_name, code) do
+      %Position{} = position ->
+        value = Map.get(position, field)
+
+        if is_number(value) and abs(value - expected) <= @position_unit_tolerance do
+          position
+        else
+          retry_future_position(exchange, instrument_name, code, field, expected, attempts)
+        end
 
       _position ->
-        retry_future_position(exchange, expected_notional, attempts)
+        retry_future_position(exchange, instrument_name, code, field, expected, attempts)
     end
   end
 
-  defp retry_future_position(exchange, expected_notional, attempts) do
-    wait_then(fn -> poll_future_position!(exchange, expected_notional, attempts - 1) end)
+  defp retry_future_position(exchange, instrument_name, code, field, expected, attempts) do
+    wait_then(fn -> poll_future_position!(exchange, instrument_name, code, field, expected, attempts - 1) end)
   end
 
-  defp assert_future_position_closed!(exchange, attempts \\ @order_poll_attempts)
+  defp assert_future_position_closed!(exchange, instrument_name, code, attempts \\ @order_poll_attempts)
 
-  defp assert_future_position_closed!(_exchange, 0) do
-    flunk("Deribit BTC-PERPETUAL did not return to its zero baseline")
+  defp assert_future_position_closed!(_exchange, instrument_name, _code, 0) do
+    flunk("Deribit #{instrument_name} did not return to its zero baseline")
   end
 
-  defp assert_future_position_closed!(exchange, attempts) do
-    if future_position(exchange) do
-      wait_then(fn -> assert_future_position_closed!(exchange, attempts - 1) end)
+  defp assert_future_position_closed!(exchange, instrument_name, code, attempts) do
+    if future_position(exchange, instrument_name, code) do
+      wait_then(fn -> assert_future_position_closed!(exchange, instrument_name, code, attempts - 1) end)
     else
       :ok
     end
   end
 
-  defp future_position(exchange) do
-    assert {:ok, positions} = Bourse.fetch_positions(exchange, code: "BTC")
+  defp future_position(exchange, instrument_name, code) do
+    assert {:ok, positions} = Bourse.fetch_positions(exchange, code: code)
 
     Enum.find(positions, fn
-      %Position{info: %{"instrument_name" => "BTC-PERPETUAL"}, notional: notional} ->
-        is_number(notional) and notional != 0
+      %Position{info: %{"instrument_name" => ^instrument_name, "size" => size}} ->
+        is_number(size) and size != 0
 
       _position ->
         false

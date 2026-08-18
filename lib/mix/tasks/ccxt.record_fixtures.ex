@@ -200,6 +200,7 @@ defmodule Mix.Tasks.Ccxt.RecordFixtures do
       "request_params_sha256" => RequestCongruence.request_params_sha256(fixture),
       "venue" => exchange_id
     }
+    |> maybe_put_oracle_membership(fixture)
     |> maybe_put_error_fields(fixture, oracle, fixture_root)
     |> maybe_put_list_body(fixture, method)
   end
@@ -228,6 +229,12 @@ defmodule Mix.Tasks.Ccxt.RecordFixtures do
       recording
     end
   end
+
+  defp maybe_put_oracle_membership(recording, %{"oracle_membership" => [_ | _] = membership}) do
+    Map.put(recording, "oracle_membership", membership)
+  end
+
+  defp maybe_put_oracle_membership(recording, _fixture), do: recording
 
   defp maybe_annotate_list_body(fixture, path, method) do
     if ListBody.list_method?(method) do

@@ -567,12 +567,13 @@ Outcome: DIVERGE from the same-currency claim for linear settlement.**
 <!-- rate-unit path="normalization.field_maps.position.field_map.initialMarginPercentage" unit="fraction" --> On inverse rows, `initial_margin / size_currency` divides same-currency BTC amounts. The provider's `BTC-PERPETUAL` example gives `0.000197283 / 0.006687487`. Linear rows settle margin in USDC/USDT while `size_currency` is base size, so that invalid price-scaled quotient is not emitted. [Positions](https://docs.deribit.com/api-reference/account-management/private-get_positions)
 <!-- rate-unit path="normalization.field_maps.position.field_map.maintenanceMarginPercentage" unit="fraction" --> The inverse-only maintenance ratio follows the same unit identity; linear rows emit no unsupported ratio. [Positions](https://docs.deribit.com/api-reference/account-management/private-get_positions)
 
-- *Live reachability (2026-08-12):* authenticated testnet `private/get_positions` calls for
-  `USDC` and `USDT` both returned empty lists. The missing populated linear row is tracked in
-  the production-verification ledger rather than replaced by a synthetic semantic claim.
+- *Live evidence (2026-08-18):* the registered testnet `private/get_positions`
+  recording contains `ETH_USDC-PERPETUAL` with `initial_margin = 0.0381122`
+  USDC and `size_currency = 0.001` ETH. The parser leaves both percentage
+  fields nil instead of dividing unlike currencies.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T603f","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions contract and inverse example linked in C-T603f"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-12 test.deribit.com private/get_positions USDC and USDT both returned empty result lists; inverse provider example is pinned in deribit_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No populated linear testnet position was reachable to establish a provider-owned linear percentage identity"}
+{"carve_id":"C-T603f","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions contract and inverse example linked in C-T603f"},"observed_evidence":{"kind":"recorded_venue","fixture":"test/fixtures/responses/deribit/fetch_positions.json","reference":"Populated inverse and linear future rows captured from test.deribit.com"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Deribit does not expose a same-unit percentage identity for the linear row; the recording pins the intentional nil output"}
 -->
 
 ## 2026-08-13 — list-read discriminator (Task 606)
@@ -590,7 +591,7 @@ Outcome: DIVERGE from the same-currency claim for linear settlement.**
   `0.000197283 / 0.006687487` and a linear `ETH_USDC-PERPETUAL` nil branch.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T606f","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions instrument naming and same-currency inverse example linked in C-T606f"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-13 test.deribit.com private/get_positions BTC-PERPETUAL open inverse row emitted the same-currency quotient; Unified.call list-read goldens in deribit_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The populated inverse list-read is pinned as a parser golden; no populated linear testnet position is registered"}
+{"carve_id":"C-T606f","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions instrument naming and same-currency inverse example linked in C-T606f"},"observed_evidence":{"kind":"recorded_venue","fixture":"test/fixtures/responses/deribit/fetch_positions.json","reference":"Populated BTC-PERPETUAL and ETH_USDC-PERPETUAL rows captured from test.deribit.com"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The populated recording closes the inverse/linear reachability gap; option position units remain outside this future-only carve"}
 -->
 
 ## 2026-08-14 — symbol-less trade cost (Task 608)
@@ -629,34 +630,60 @@ documented base-coin amount.
 {"carve_id":"C-T608a","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_user_trades_by_currency amount and price unit split linked in C-T608a"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-14 test.deribit.com symbol-less fetch_my_trades pinned cost == amount / price on a BTC-PERPETUAL fill; load_markets pinned BTC-PERPETUAL inverse and ETH_USDC-PERPETUAL linear in deribit_authored_integration_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No populated option fill is reachable on the testnet account; the option base-coin cost branch is pinned as a parser golden against the provider-documented amount unit"}
 -->
 
-## 2026-08-14 — future position value axes (Task 610)
+## 2026-08-18 — future position value and contract axes (Tasks 610 and 611)
 
-**C-T610f — Deribit futures expose quote `size`, base `size_currency`, and a
-market-owned quote contract size. Outcome: CONFIRMED provider semantics and
-DIVERGE from the prior field map (task 610).**
+**C-T610f — Deribit future positions expose quote `size` and base
+`size_currency`, while `contract_size` follows the inverse/linear settlement
+axis. Outcome: CONFIRMED provider semantics and DIVERGE from one future-wide
+contract conversion (task 610; extended by task 611).**
 
-Deribit's [private/get_positions](https://docs.deribit.com/api-reference/account-management/private-get_positions.md)
-contract states that future `size` is in quote currency and future-only
-`size_currency` is in base currency. Its own BTC-PERPETUAL example reports
-`size = 50` USD and `size_currency = 0.006687487` BTC. The unified position now
-maps those values to quote `notional` and `base_quantity`, respectively.
+Deribit's [private/get_positions](https://docs.deribit.com/api-reference/account-management/private-get_positions)
+contract defines future `size` in quote currency and future-only
+`size_currency` in base currency. Its BTC-PERPETUAL example reports
+`size = 50` USD and `size_currency = 0.006687487` BTC. The unified position maps
+those values to quote `notional` and `base_quantity`, respectively, for both
+inverse and linear futures.
 
+The amount contract for
+[private/get_user_trades_by_currency](https://docs.deribit.com/api-reference/trading/private-get_user_trades_by_currency)
+uses a different axis: linear trade amount is base currency. It does not change
+the position endpoint's explicit quote `size`. Deribit's
+[Linear Perpetual](https://support.deribit.com/hc/en-us/articles/31424969384605-Linear-Perpetual)
+contract defines linear position and contract quantities in the underlying;
 [public/get_instruments](https://docs.deribit.com/api-reference/market-data/public-get_instruments)
-supplies `contract_size`; BTC-PERPETUAL reports 10 USD. Loaded market metadata
-therefore reconciles the example as 5 contracts × 10 USD = 50 USD. No symbol
-constant is embedded in the position parser.
+supplies that `contract_size`. Consequently, inverse contracts divide quote
+notional by quote contract size, while linear contracts divide base quantity by
+base contract size.
 
-- *Live evidence (2026-08-13):* a small BTC-PERPETUAL testnet position exposed
-  `size = 10` while the old field map emitted its `size_currency = 0.000157394`
-  BTC as notional. The tagged integration test compares all four unified values
-  with the raw position and loaded instrument on every run.
+- *Registered live evidence (2026-08-18):*
+  `test/fixtures/responses/deribit/fetch_positions.json` captured both populated
+  branches from `test.deribit.com`. BTC-PERPETUAL reports `size = 10` USD,
+  `size_currency = 0.000155597` BTC, and loaded `contract_size = 10` USD, yielding
+  one contract. ETH_USDC-PERPETUAL reports `size = 1.90561` USDC,
+  `size_currency = 0.001` ETH, `mark_price = 1905.61`, and loaded
+  `contract_size = 0.001` ETH, also yielding one contract. The oracle replays
+  both rows and rejects a base/quote source swap.
 - *Named gap `G-T610-options`:* the provider documents option `size` in base
   currency and omits `size_currency`. Option contract-size normalization is
   outside this future-only carve, so option `notional` remains absent rather
   than assigning an unsupported quote meaning.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T610f","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions future size and size_currency contract plus public/get_instruments contract_size"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-13 test.deribit.com BTC-PERPETUAL size 10 and size_currency 0.000157394; tagged reconciliation in deribit_authored_integration_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The live position is pinned by a tagged integration assertion but is not yet a manifest-registered populated response fixture"}
+{"carve_id":"C-T610f","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions value fields, public/get_instruments contract_size, and Linear Perpetual contract linked in C-T610f"},"observed_evidence":{"kind":"recorded_venue","fixture":"test/fixtures/responses/deribit/fetch_positions.json","reference":"Populated BTC-PERPETUAL and ETH_USDC-PERPETUAL rows plus their loaded market contexts from test.deribit.com"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Option position units remain named gap G-T610-options outside this future-only carve"}
+-->
+
+**C-T611 — Deribit linear contracts divide base `size_currency` by base
+`contract_size` while inverse contracts retain quote division (task 611).
+Outcome: DIVERGE from the future-wide quote divisor.**
+
+The provider contracts and registered live values are detailed in C-T610f.
+The runtime chooses the divisor from the payload's markets-first inverse
+annotation, with loaded market settlement as the direct-parser fallback. The
+frozen inverse and linear rows assert `notional`, `base_quantity`,
+`contract_size`, `contracts`, and side so swapping either source fails offline.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T611","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions, public/get_instruments, and Linear Perpetual contracts linked in C-T610f"},"observed_evidence":{"kind":"recorded_venue","fixture":"test/fixtures/responses/deribit/fetch_positions.json","reference":"Populated BTC-PERPETUAL and ETH_USDC-PERPETUAL rows plus their loaded market contexts from test.deribit.com"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Option position units remain named gap G-T610-options outside this future-only carve"}
 -->
 
 ## 2026-08-14 — trades until mapping (ARC wave-2 pass, task 553)
