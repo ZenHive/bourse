@@ -467,8 +467,8 @@ defmodule Bourse.OracleProvenance.ProviderOperationsTest do
             "sha256" => source["sha256"],
             "upstream_pin" => source["upstream_pin"],
             "metrics" => %{
-              "path_count" => 178,
-              "unknown_authentication_count" => 178,
+              "path_count" => 182,
+              "unknown_authentication_count" => 182,
               "websocket_only_operation_count" => 10
             }
           }
@@ -476,7 +476,7 @@ defmodule Bourse.OracleProvenance.ProviderOperationsTest do
       },
       "surfaces" => %{
         "current_rest" => %{
-          "provider_count" => 178,
+          "provider_count" => 182,
           "operations" => selected ++ websocket_only
         }
       }

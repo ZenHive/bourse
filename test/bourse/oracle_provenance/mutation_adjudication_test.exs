@@ -28,13 +28,13 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
 
       assert counts == %{
                "task_556_operation_keys" => 2,
-               "task_557_operation_keys" => 95,
+               "task_557_operation_keys" => 99,
                "adjudicated_operation_keys" => 71,
                "websocket_only_operation_keys" => 10
              }
 
       assert Enum.sum(Map.values(counts)) == denominator["provider_count"]
-      assert denominator["provider_count"] == 178
+      assert denominator["provider_count"] == 182
 
       all = Enum.flat_map(parts, &denominator[&1])
       assert length(Enum.uniq(all)) == length(all)
@@ -107,7 +107,21 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
       binding = register["source_binding"]
       drift = JsonDocument.decode_file!(binding["drift_record"])
 
-      assert drift["decision"] == "refresh_pin"
+      assert drift["decision"] == "refresh_pin_and_rebind_corpus"
+
+      assert drift["operation_delta"]["added"] == [
+               "GET /api/v2/private/get_lsp_participant_config",
+               "GET /api/v2/private/get_lsp_participants",
+               "GET /api/v2/private/get_lsp_participants_usage",
+               "GET /api/v2/private/get_lsp_usage"
+             ]
+
+      assert drift["operation_delta"]["removed"] == []
+      assert drift["operation_delta"]["upcoming_path_set_comparison"] == "exact_match_182_paths"
+
+      assert drift["pin_key_decision"]["decision"] ==
+               "retain_content_sha256_with_version_and_etag_upstream_pin"
+
       assert drift["current"]["sha256"] == binding["denominator_enumerated_from"]["sha256"]
       assert drift["current"]["sha256"] == binding["pinned_revision_sha256"]
 
@@ -1007,7 +1021,7 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
       register_path = Path.join(root, "register.json")
       File.write!(register_path, Jason.encode!(shrunk, pretty: true))
 
-      assert_raise ArgumentError, ~r/denominator partitions cover 177 of 178/, fn ->
+      assert_raise ArgumentError, ~r/denominator partitions cover 181 of 182/, fn ->
         MutationAdjudication.load_reviewed!(register_path: register_path)
       end
     end

@@ -356,6 +356,7 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
     current = baseline["surfaces"]["current_rest"]
     historical = baseline["historical_current_rest"]
     current_counts = current_diff["operation_delta"]["authored_relation_counts"]
+    historical_counts = prior_diff["operation_delta"]["authored_relation_counts"]
 
     assert current["sha256"] == current_artifact["sha256"]
     assert current["upstream_pin"] == current_artifact["upstream_pin"]
@@ -367,7 +368,14 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
     assert current["expected"]["authored_only_count"] == current_counts["authored_only"]
     assert current_diff["prior"]["sha256"] == prior_diff["current"]["sha256"]
     assert historical["sha256"] == prior_diff["prior"]["sha256"]
-    assert historical["expected"] == Map.take(current["expected"], Map.keys(historical["expected"]))
+
+    assert historical["expected"] == %{
+             "provider_count" => prior_diff["current"]["operation_count"],
+             "authored_count" => historical_counts["authored"],
+             "shared_count" => historical_counts["overlap"],
+             "provider_only_count" => historical_counts["provider_only"],
+             "authored_only_count" => historical_counts["authored_only"]
+           }
 
     assert baseline["surfaces"]["upcoming_rest"]["sha256"] != current["sha256"]
     assert baseline["surfaces"]["current_websocket"]["artifact_id"] == "current-asyncapi"

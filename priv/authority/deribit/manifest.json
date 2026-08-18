@@ -14,10 +14,10 @@
       "retrieved_at": "2026-08-18",
       "upstream_pin": {
         "type": "document_version_http_etag",
-        "value": "2.1.1; W/\"QCggKABm3LEi7g4f\""
+        "value": "2.1.1; W/\"DXTaA468CADkchO3\""
       },
-      "sha256": "e85c22f50ddf3d002aa789128c04597d3a7ea25c696bccdb1bb05749d9dfffef",
-      "bytes": 1392651,
+      "sha256": "8dfbbe9fdddfbf52e87973204cea5da59dc442812745752e99b615b3940c50ca",
+      "bytes": 1438107,
       "storage": "reference_only",
       "path": null,
       "license": {
@@ -35,7 +35,7 @@
         "status": "reviewed_current",
         "checked_at": "2026-08-18",
         "mutable": true,
-        "notes": "The moved artifact was reviewed against the 2026-08-10 semantic diff and the 2026-08-14 drift observation. The operation-key set is unchanged from the observed revision; the schema-count change and newly modeled Starbase order field are recorded in the 2026-08-18 semantic diff."
+        "notes": "The post-maintenance document remains OpenAPI 3.0.0 / version 2.1.1 and now has the same 182 paths as upcoming REST. Four account:read LSP operations entered current REST: private/get_lsp_participant_config, private/get_lsp_participants, private/get_lsp_participants_usage, and private/get_lsp_usage; no path was removed. Keep SHA-256 as the integrity pin: the provider rewrote the document twice inside declared version 2.1.1 on 2026-08-18, so the declared version cannot identify reviewed bytes; the composite upstream pin records version plus HTTP ETag."
       },
       "expressiveness": {
         "level": "typed_openapi",

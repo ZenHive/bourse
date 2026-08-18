@@ -4,21 +4,21 @@
   "surfaces": {
     "current_rest": {
       "artifact_id": "api-openapi",
-      "sha256": "e85c22f50ddf3d002aa789128c04597d3a7ea25c696bccdb1bb05749d9dfffef",
+      "sha256": "8dfbbe9fdddfbf52e87973204cea5da59dc442812745752e99b615b3940c50ca",
       "upstream_pin": {
         "type": "document_version_http_etag",
-        "value": "2.1.1; W/\"QCggKABm3LEi7g4f\""
+        "value": "2.1.1; W/\"DXTaA468CADkchO3\""
       },
       "review_evidence": "priv/authority/deribit/current-rest-drift-2026-08-18.json",
       "expected": {
-        "path_count": 178,
-        "provider_count": 178,
+        "path_count": 182,
+        "provider_count": 182,
         "authored_count": 123,
         "shared_count": 116,
-        "provider_only_count": 62,
+        "provider_only_count": 66,
         "authored_only_count": 7,
         "websocket_only_operation_count": 10,
-        "unknown_authentication_count": 178
+        "unknown_authentication_count": 182
       }
     },
     "upcoming_rest": {

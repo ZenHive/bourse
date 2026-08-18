@@ -6,17 +6,17 @@
   "reviewed_at": "2026-08-18",
   "source_binding": {
     "artifact_id": "api-openapi",
-    "pinned_revision_sha256": "e85c22f50ddf3d002aa789128c04597d3a7ea25c696bccdb1bb05749d9dfffef",
+    "pinned_revision_sha256": "8dfbbe9fdddfbf52e87973204cea5da59dc442812745752e99b615b3940c50ca",
     "denominator_enumerated_from": {
-      "sha256": "e85c22f50ddf3d002aa789128c04597d3a7ea25c696bccdb1bb05749d9dfffef",
+      "sha256": "8dfbbe9fdddfbf52e87973204cea5da59dc442812745752e99b615b3940c50ca",
       "retrieved_at": "2026-08-18",
-      "operation_key_set_sha256": "f6390f864cb6ea46acba203f98f1920f01ec21d611bcdb146c5ad8e942f5cd0c"
+      "operation_key_set_sha256": "65f45fa9045a930b66c841d3f2775f7103a37435387fa2ce5597807631db35b3"
     },
     "drift_record": "priv/authority/deribit/current-rest-drift-2026-08-18.json",
     "note": "The refreshed provider document is both the pinned revision and the denominator source. mix ccxt.contract_compare verifies its complete operation-key set against this binding before applying the reviewed facts."
   },
   "denominator": {
-    "provider_count": 178,
+    "provider_count": 182,
     "task_556_operation_keys": [
       "GET /api/v2/public/get_time",
       "GET /api/v2/public/ticker"
@@ -44,6 +44,10 @@
       "GET /api/v2/private/get_deposits",
       "GET /api/v2/private/get_email_language",
       "GET /api/v2/private/get_leg_prices",
+      "GET /api/v2/private/get_lsp_participant_config",
+      "GET /api/v2/private/get_lsp_participants",
+      "GET /api/v2/private/get_lsp_participants_usage",
+      "GET /api/v2/private/get_lsp_usage",
       "GET /api/v2/private/get_margins",
       "GET /api/v2/private/get_members",
       "GET /api/v2/private/get_mmp_config",

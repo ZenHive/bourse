@@ -6,16 +6,16 @@
     "contract_scope": "current_rest",
     "source_url": "https://docs.deribit.com/specifications/deribit_openapi.json",
     "retrieved_at": "2026-08-18",
-    "sha256": "e85c22f50ddf3d002aa789128c04597d3a7ea25c696bccdb1bb05749d9dfffef",
+    "sha256": "8dfbbe9fdddfbf52e87973204cea5da59dc442812745752e99b615b3940c50ca",
     "upstream_pin": {
       "type": "document_version_http_etag",
-      "value": "2.1.1; W/\"QCggKABm3LEi7g4f\""
+      "value": "2.1.1; W/\"DXTaA468CADkchO3\""
     }
   },
   "source_inventory_facts": {
-    "path_count": 178,
-    "operation_count": 178,
-    "unknown_authentication_count": 178,
+    "path_count": 182,
+    "operation_count": 182,
+    "unknown_authentication_count": 182,
     "security_metadata": {
       "document_security": "absent",
       "security_schemes": "absent",

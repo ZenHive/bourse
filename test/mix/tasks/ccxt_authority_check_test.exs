@@ -95,10 +95,18 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
     assert report["prior"]["sha256"] == prior_report["current"]["sha256"]
     assert report["current"]["sha256"] == artifact["sha256"]
     assert report["current"]["bytes"] == artifact["bytes"]
-    assert report["operation_delta"]["count"] == 0
-    assert report["operation_delta"]["current_runtime_denominator_change"] == "not_detected"
-    assert report["operation_delta"]["authored_relation_counts"]["change_from_2026_08_04_measurement"] == 0
-    assert report["structural_deltas"] != []
+    assert report["operation_delta"]["count"] == 4
+
+    assert report["operation_delta"]["added"] == [
+             "GET /api/v2/private/get_lsp_participant_config",
+             "GET /api/v2/private/get_lsp_participants",
+             "GET /api/v2/private/get_lsp_participants_usage",
+             "GET /api/v2/private/get_lsp_usage"
+           ]
+
+    assert report["operation_delta"]["removed"] == []
+    assert report["operation_delta"]["upcoming_path_set_comparison"] == "exact_match_182_paths"
+    assert report["pin_key_decision"]["decision"] == "retain_content_sha256_with_version_and_etag_upstream_pin"
   end
 
   test "partial or untyped sources cannot declare themselves completeness gates" do

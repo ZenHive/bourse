@@ -1167,7 +1167,7 @@
       "path": "deribit/setup_instrument.json",
       "role": "setup",
       "row_fields_populated": true,
-      "sha256": "8fbabcd34dd3f3f4607c38177a835c1023f711b5ee53df1626f5f8c0d53d21e5",
+      "sha256": "f94d593c405c7105c435ead1009e75513ee19397f921211880e1af19ddd9ba65",
       "step_id": "setup_instrument"
     },
     {
@@ -1182,7 +1182,7 @@
       "path": "deribit/setup_ticker.json",
       "role": "setup",
       "row_fields_populated": true,
-      "sha256": "27690997609af9fdf670d7fae2a24025ad3a13386739cd00cd1ed45b5b0556b9",
+      "sha256": "22287f58ce35f2ded7e8e17ded53b8c42eda564e96a3ba5bb0948b73aa79615a",
       "step_id": "setup_ticker"
     },
     {
@@ -1197,7 +1197,7 @@
       "path": "deribit/place_order.json",
       "role": "act",
       "row_fields_populated": true,
-      "sha256": "84647296d5eb8b2d3ceb25751c77b5a7a39f6e659e88216f22f63b85137d28a9",
+      "sha256": "9e1ff78811ba3da2506794d8c2b2af01ec040c0f51968cc92aa912ac0b68e39c",
       "step_id": "place_order"
     },
     {
@@ -1212,7 +1212,7 @@
       "path": "deribit/observe_open.json",
       "role": "observe",
       "row_fields_populated": true,
-      "sha256": "4abbf91dffab0821a0846d58c519bced7ee0814b34a432a293717dbae65e904a",
+      "sha256": "c801adb056851c8c2452fab9f69110c18a4f72e85f09df55d248fc5687a503df",
       "step_id": "observe_open"
     },
     {
@@ -1227,7 +1227,7 @@
       "path": "deribit/cancel_order.json",
       "role": "cleanup",
       "row_fields_populated": true,
-      "sha256": "bacd8a1393a0a44e45cc2a9be25ad2e787c76dc3c7865c69ec245cfcb0485daf",
+      "sha256": "1d26d145527b50de0940ccd55f7d6f311e72a1a6d82100d9adf94af49b3dec34",
       "step_id": "cancel_order"
     },
     {
@@ -1242,7 +1242,7 @@
       "path": "deribit/final_state.json",
       "role": "final_state",
       "row_fields_populated": true,
-      "sha256": "b7f8660d245e1d6e7a2afff6c375b323ab193219e52ace3b0d143fc6404dce1b",
+      "sha256": "78e164cf6d7c5acb9b1235db8a77b4020a5da18cfc6db04ebcf1d9e2cf1a6cbe",
       "step_id": "final_state"
     },
     {
@@ -1257,7 +1257,7 @@
       "path": "deribit/cancel_again.json",
       "role": "idempotent_final_state",
       "row_fields_populated": false,
-      "sha256": "02a82b179607f12df4883d0603d162cd4a9af4b920cf2bce12b3dd702656f67c",
+      "sha256": "80178a0eb9a5a4e472bf009d982b04c866981ef99eadd11173ca136f9ac996e5",
       "step_id": "cancel_again"
     },
     {
@@ -1272,7 +1272,7 @@
       "path": "deribit/reject_wrong_tick.json",
       "role": "failure_probe",
       "row_fields_populated": false,
-      "sha256": "14d0e6a9fde63e574829693dc9ded8dd8231e9cbdb983f80dd711aafc7bf237c",
+      "sha256": "f7d1eeb2a0b7d6b0d64a08ae51216a6225b13a8950d96607b3572888eb3eba3a",
       "step_id": "reject_wrong_tick"
     }
   ],
@@ -1280,13 +1280,13 @@
   "source_binding": {
     "artifact_id": "api-openapi",
     "denominator_enumerated_from": {
-      "operation_key_set_sha256": "f6390f864cb6ea46acba203f98f1920f01ec21d611bcdb146c5ad8e942f5cd0c",
+      "operation_key_set_sha256": "65f45fa9045a930b66c841d3f2775f7103a37435387fa2ce5597807631db35b3",
       "retrieved_at": "2026-08-18",
-      "sha256": "e85c22f50ddf3d002aa789128c04597d3a7ea25c696bccdb1bb05749d9dfffef"
+      "sha256": "8dfbbe9fdddfbf52e87973204cea5da59dc442812745752e99b615b3940c50ca"
     },
     "drift_record": "priv/authority/deribit/current-rest-drift-2026-08-18.json",
     "note": "The refreshed provider document is both the pinned revision and the denominator source. mix ccxt.contract_compare verifies its complete operation-key set against this binding before applying the reviewed facts.",
-    "pinned_revision_sha256": "e85c22f50ddf3d002aa789128c04597d3a7ea25c696bccdb1bb05749d9dfffef"
+    "pinned_revision_sha256": "8dfbbe9fdddfbf52e87973204cea5da59dc442812745752e99b615b3940c50ca"
   },
   "venue": "deribit"
 }
