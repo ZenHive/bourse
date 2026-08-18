@@ -109,14 +109,26 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   and `CURRENCY_BUY`/`CURRENCY_SELL`/`CONVERT` emit `conversion`; hyperliquid
   `rewardsClaim` emits the venue-faithful `rewards_claim` (the L1 schema
   defines it as builder/referrer fee claims, not a promotional credit).
-- Deribit positions carry one unit contract: future `notional` is the venue's
-  quote-USD `size` (it was previously sourced from the base-denominated
-  `size_currency`), `base_quantity` carries the base size, and `contracts` is
-  derived as `|notional| / contract_size` from loaded market metadata. Without
-  `load_markets`, deribit future `contracts` and `contract_size` are now `nil`
-  (previously `contracts` carried the raw quote `size`) — consumers reading
-  `contracts` must attach markets first. Binance COIN-M `notional` remains
-  coin-settled under a named carve exception.
+- **Breaking (deribit):** positions carry one unit contract. Future `notional`
+  is the venue's quote-USD `size` (it was previously sourced from the
+  base-denominated `size_currency`), `base_quantity` carries the base size, and
+  `contracts` is derived as `|notional| / contract_size` from loaded market
+  metadata. Without `load_markets`, deribit future `contracts` and
+  `contract_size` are now `nil` (previously `contracts` carried the raw quote
+  `size`). Binance COIN-M `notional` remains coin-settled under a named carve
+  exception.
+
+  **Upgrade note — this one changes a number, not a shape.** A denomination
+  change does not fail at a match site the way a row-shape change does: a
+  consumer that reads `position.notional` for deribit futures keeps compiling
+  and keeps running, and silently computes exposure in the other currency at
+  the other magnitude. Re-check every `notional` consumer on a money path
+  (exposure, risk, hedging, sizing), not just the ones that pattern-match the
+  struct. If you build the exchange **without** calling `load_markets` — a
+  common shape for a long-lived connection process that constructs once and
+  reads positions on demand — then `contracts` and `contract_size` are `nil`
+  on every position read on that path; attach markets at construction, or read
+  `notional`/`base_quantity`, which do not depend on market metadata.
 
 ### Fixed
 
