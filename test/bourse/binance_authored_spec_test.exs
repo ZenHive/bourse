@@ -595,7 +595,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
         %Bourse.Market{id: "ETHUSD_PERP", symbol: "ETH/USD:ETH", type: "swap", swap: true, contract: true}
       ])
 
-    assert {:ok, %{^symbol => %Bourse.Leverage{symbol: ^symbol}} = leverages} =
+    assert {:ok, %{^symbol => %Bourse.Leverage{symbol: ^symbol, long_leverage: 3}} = leverages} =
              Bourse.fetch_leverages(exchange,
                symbol: symbol,
                plug: {Req.Test, stub},
@@ -603,6 +603,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
              )
 
     assert map_size(leverages) == 1
+    refute Map.has_key?(leverages, "ETH/USD:ETH")
     assert_order_request(requests, :get, "/dapi/v1/account", &refute(Map.has_key?(&1, "symbol")))
   end
 

@@ -35,7 +35,7 @@ populated demo recording establishes the multi-position account envelope, and th
 regression test pins both the one-symbol result and the absent wire parameter.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T585b","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M Account Information REST contract has no symbol request parameter and returns symbol/leverage in every position row"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binancecoinm/fetch_leverages.json and the multi-position filter regression in test/bourse/binance_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T585b","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M Account Information REST contract has no symbol request parameter and returns symbol/leverage in every position row"},"observed_evidence":{"kind":"recorded_venue","reference":"Demo recording captured with caller params.symbol=BTC/USD:BTC yet returning the full DAPI positions list; multi-position filter regression in test/bourse/binance_authored_spec_test.exs","fixture":"test/fixtures/responses/binancecoinm/fetch_leverages.json"},"compatibility_reference":null,"resolved_tier":1}
 -->
 
 ## 2026-08-18 — WS subscribe channels remain unauthored (Task 618)
