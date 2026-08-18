@@ -13,6 +13,7 @@ defmodule Bourse.Unified.ReadParse do
   alias Bourse.Symbol
   alias Bourse.Ticker
   alias Bourse.Timestamp
+  alias Bourse.Unified.ContractUnit
   alias Bourse.Unified.Envelope
   alias Bourse.Unified.FieldMaps
   alias Bourse.Unified.OptionQuantity
@@ -2481,6 +2482,7 @@ defmodule Bourse.Unified.ReadParse do
       # field-map left them nil so venue-authored enum maps (bybit/okx/deribit) win.
       |> derive_market_type_flags()
       |> OptionQuantity.normalize_market(raw, exchange)
+      |> ContractUnit.normalize_market(raw, exchange)
       # Public maker/taker come from the venue's published fee schedule once market
       # family is known; Binance exchangeInfo has no fee fields.
       |> apply_static_trading_fees(exchange)

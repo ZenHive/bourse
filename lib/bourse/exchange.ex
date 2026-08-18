@@ -911,6 +911,7 @@ defmodule Bourse.Exchange do
             spec
             |> build_config()
             |> Map.put("option_quantity", get_in(spec, ["markets", "option_quantity"]))
+            |> Map.put("contract_unit", get_in(spec, ["markets", "contract_unit"]))
             |> Map.put("greeks_conventions", get_in(spec, ["markets", "greeks_conventions"])),
           doc_urls: build_doc_urls(spec),
           required_credentials: build_required_credentials(spec, describe),

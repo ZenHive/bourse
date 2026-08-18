@@ -2831,6 +2831,8 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     assert linear.inverse == false
     assert linear.active == true
     assert linear.settle == "USDT"
+    assert linear.contract_size == 1
+    assert linear.quantity_unit == "base"
 
     assert {:ok, [%Bourse.Market{} = inverse]} =
              Unified.call(usdm, :fetch_markets, "fetchMarkets", %{},

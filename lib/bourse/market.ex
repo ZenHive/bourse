@@ -16,8 +16,14 @@ defmodule Bourse.Market do
     * `spot`, `margin`, `swap`, `future`, `option`, `contract` - Type flags
     * `active` - Whether the market is currently trading
     * `settle`, `settle_id` - Settlement currency
-    * `contract_size` - Contract size for derivatives
-    * `quantity_unit` - Canonical option quantity unit (`"base"`)
+    * `contract_size` - Base-asset units represented by one contract. Linear
+      quantity is already base-denominated, so this is the venue's contract
+      unit (1 for Binance USD-M BTCUSDT). Inverse venues publish a multiplier
+      (100 USD for Binance COIN-M BTCUSD). Linear notional is
+      `quantity * price * contract_size`; inverse notional is
+      `contracts * contract_size`. Nil when the venue states no unit.
+    * `quantity_unit` - Denomination of order quantity. `"base"` for
+      base-asset linear contracts and for the canonical option unit.
     * `native_quantity_unit` - Venue option quantity unit (`"base"` or `"contracts"`)
     * `native_quantity_field` - Venue option order field carrying the quantity
     * `native_amount_step` - Venue-native quantity increment before conversion
@@ -182,8 +188,9 @@ defmodule Bourse.Market do
                    active: "Whether the market is currently trading",
                    settle: "Settlement currency code",
                    settle_id: "Exchange-native settlement currency ID",
-                   contract_size: "Contract size for derivatives",
-                   quantity_unit: "Canonical option quantity unit (base currency)",
+                   contract_size:
+                     "Base-asset units per contract. Linear notional is quantity * price * contract_size; inverse notional is contracts * contract_size. Nil when the venue states no unit.",
+                   quantity_unit: "Order quantity denomination: base for linear contracts and canonical option quantity",
                    native_quantity_unit: "Venue option quantity unit: base or contracts",
                    native_quantity_field: "Venue order field carrying the option quantity",
                    native_amount_step: "Venue-native option quantity increment",

@@ -6,6 +6,32 @@ Append-only schema confrontations for Binance USD-M. Follow the allocation and e
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance USD-M carve record.
 
+## 2026-08-18 — linear contract unit (Task 623)
+
+**C-T623a — USD-M linear `contract_size` is the authored venue-level contract unit
+(task 623).** Outcome: CONFIRM provider contract; DIVERGE from treating a missing
+`exchangeInfo.contractSize` key as unknown. Binance's
+[USDⓈ-Margined vs COIN-Margined FAQ](https://www.binance.com/en/support/faq/detail/85eac2bba0b342819122dc9bd4745e9b)
+states that each futures contract specifies the base asset's quantity delivered
+for a single contract (the "contract unit"), and that BTC/USDT, ETH/USDT, and
+BCH/USDT represent one unit of their respective base asset, similar to the spot
+market. The USD-M
+[common definition](https://developers.binance.com/en/docs/products/derivatives-trading-usds-futures/common-definition)
+names the base asset as the quantity of a symbol. Live `GET /fapi/v1/exchangeInfo`
+on 2026-08-18 published 871 symbols and no `contractSize` field; order `quantity`
+is therefore already one base-asset unit. The inverse COIN-M
+[Exchange Information](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/rest-api/market-data)
+contract publishes `contractSize` (100 for `BTCUSD_PERP`), so that family keeps
+reading the provider field. The authored `markets.contract_unit` slot declares
+the linear unit as the constant `1` with `quantity_unit: "base"`; a market whose
+venue states no unit still fails loud rather than becoming 1. C-T334a's claim
+that linear `contract_size` is the loaded market's unit size now resolves
+against this populated market.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T623a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M FAQ 85eac2bba0b342819122dc9bd4745e9b contract unit plus USD-M common-definition base-asset quantity and COIN-M exchangeInfo contractSize"},"observed_evidence":{"kind":"live_venue","reference":"Live fapi.binance.com /fapi/v1/exchangeInfo 871 symbols with no contractSize and dapi.binance.com /dapi/v1/exchangeInfo BTCUSD_PERP contractSize 100 on 2026-08-18"},"compatibility_reference":{"kind":"ccxt","reference":"CCXT contractSize 1 for linear USDM is compatibility reference only"},"resolved_tier":1}
+-->
+
 ## 2026-08-14 — returned-window bounds on USD-M reads (Task 553)
 
 **C-T553b — USD-M candles, aggregate trades, account trades, and orders use native
@@ -176,7 +202,8 @@ values are compatibility outputs, not the position-row contract.
 authority and a live testnet position lifecycle. The row's `positionAmt`, `notional`,
 `leverage`, `initialMargin`, `maintMargin`, and `marginType` describe the position; they do not
 carry a cross-account collateral balance. Therefore linear `contract_size` is the loaded market's
-unit size (1 for BTCUSDT), `notional` is the absolute venue `notional`, and initial/maintenance
+unit size (1 for BTCUSDT; populated by C-T623a from the authored venue-level unit, not a
+parse-layer default), `notional` is the absolute venue `notional`, and initial/maintenance
 margin stay separate from collateral. A direct cross-margin position-risk row sets
 `collateral: nil`; `isolatedMargin` is used only for an isolated row. The static CCXT fixtures
 that populate cross collateral from a different account read are tier-2 compatibility residuals,

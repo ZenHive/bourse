@@ -149,6 +149,7 @@ defmodule Bourse.Spec.Schema do
     validate_support!(spec, exchange_id)
     validate_oracles!(spec, exchange_id)
     validate_option_quantity!(spec, exchange_id)
+    validate_contract_unit!(spec, exchange_id)
     validate_greeks_conventions!(spec, exchange_id)
     validate_ledger_type_policy!(spec, exchange_id)
     validate_order_status_policy!(spec, exchange_id)
@@ -629,6 +630,37 @@ defmodule Bourse.Spec.Schema do
       exchange_id,
       ~w(markets option_quantity contract_size),
       "#{unit} quantities require null, one field, or a two-field product; got #{inspect(recipe)}"
+    )
+  end
+
+  defp validate_contract_unit!(spec, exchange_id) do
+    case get_in(spec, ["markets", "contract_unit"]) do
+      nil ->
+        :ok
+
+      %{"quantity_unit" => "base", "linear" => recipe} ->
+        validate_linear_contract_unit_recipe!(recipe, exchange_id)
+
+      config ->
+        gap!(
+          exchange_id,
+          ~w(markets contract_unit),
+          "expected base quantity_unit and a linear recipe; got #{inspect(config)}"
+        )
+    end
+  end
+
+  defp validate_linear_contract_unit_recipe!(%{"kind" => "constant", "value" => value}, _exchange_id)
+       when is_number(value) and value > 0, do: :ok
+
+  defp validate_linear_contract_unit_recipe!(%{"kind" => "field", "field" => field}, _exchange_id)
+       when is_binary(field) and field != "", do: :ok
+
+  defp validate_linear_contract_unit_recipe!(recipe, exchange_id) do
+    gap!(
+      exchange_id,
+      ~w(markets contract_unit linear),
+      "expected a positive constant or a named field; got #{inspect(recipe)}"
     )
   end
 
