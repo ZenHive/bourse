@@ -7,6 +7,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-18
+
 ### Added
 
 - Deribit current-REST mutation adjudication records reviewed safety and
@@ -650,6 +652,8 @@ Published before this repository existed, from the tree that is now the private
   ccxt.build_lighter_signer`, the prerequisite for private Lighter calls, is the
   one task consumers receive.
 
+[0.5.0]: https://hex.pm/packages/bourse/0.5.0
+[0.4.0]: https://hex.pm/packages/bourse/0.4.0
 [0.3.0]: https://hex.pm/packages/bourse/0.3.0
 [0.2.0]: https://hex.pm/packages/bourse/0.2.0
 [0.1.0]: https://hex.pm/packages/bourse/0.1.0
