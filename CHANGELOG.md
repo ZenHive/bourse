@@ -13,6 +13,15 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   denominated in, populated on the unified read path whenever `notional` is
   present. An unresolved currency fails loud rather than emitting an
   unlabelled number.
+- `Bourse.Trade` gained `client_order_id` — the client-assigned order ID
+  echoed on a fill when the venue returns one.
+- alpaca `fetch_trades` and `fetch_my_trades` now dispatch. Public stock
+  prints come from `GET /v2/stocks/{symbol}/trades` on `data.alpaca.markets`
+  (IEX feed, 60-day lookback; a present-null `trades` key is an empty
+  window). Paper fills come from `GET /v2/account/activities/FILL`. Wallet
+  deposits, withdrawals, and transfers stay unsupported: the paper host
+  404s those endpoints, and paper `JNLC` funding is not a customer
+  transfer.
 
 ### Fixed
 
@@ -45,6 +54,19 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `{:error, %Bourse.Error{type: :invalid_parameters}}` naming the parameter
   instead of raising inside the signing layer. Nothing is coerced and no
   positional signature changed.
+- Binance-family unified order reads now see the Algo book. `fetch_order`,
+  `fetch_open_order`, `fetch_orders`, `fetch_closed_orders`, and
+  `fetch_canceled_orders` fan out to the algo endpoints, so an identifier
+  `cancel_order` accepts no longer makes `fetch_order` answer
+  `:order_not_found`. A successful algo-cancel acknowledgement
+  `{algoId, code: 200}` synthesizes unified `status: "canceled"`. Venue
+  `STOP` / `STOP_MARKET` types stay `stop` / `stop_market` instead of
+  collapsing to `"limit"`.
+- Unified `clientOrderId` now round-trips on Deribit: it goes out as
+  `label` and comes back on both `%Bourse.Order{}` and `%Bourse.Trade{}`.
+  A caller-supplied native `label` wins; values longer than 64 characters
+  raise `:invalid_parameters`. A venue may map a client identifier in both
+  directions or in neither; one-way mapping fails a catalog invariant.
 
 ## [0.6.0] - 2026-08-18
 

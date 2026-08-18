@@ -107,7 +107,7 @@ drift" so consumers can distinguish intervention-required from retry-after-resyn
 
 **Method:** `Bourse.cancel_order(ex, algo_id, symbol: "ETH/USDT:USDT")` · **Exchange:** binanceusdm (demo-fapi, sandbox) · **Severity:** low/medium
 
-**Status (2026-08-10):** 📋 triaged — folded into workbench **task 580** (algo-book read/ack parity): the thin `{algoId, code: 200, msg: success}` ack must synthesize at minimum `status: "canceled"`; live-pinned AC added.
+**Status (2026-08-18):** ✅ **fixed** by task 580 (`429a8e9`) — a thin `{algoId, code: 200}` cancel ack now synthesizes `_bourse_status: "CANCELED"`, which the authored map emits as unified `status: "canceled"`. `fetch_order` / `fetch_orders` (and the open/closed/canceled variants) fan out to the algo book so the same identifier is readable after the write.
 
 Cancelling an Algo (conditional) order succeeds on the wire — raw response
 `{"algoId": ..., "code": "200", "msg": "success"}`, and the order is confirmed gone afterwards —
@@ -138,7 +138,7 @@ crash whose stack trace points nowhere near the actual mistake.
 
 **Method:** `Bourse.create_order(ex, "ETH/USDT:USDT", "market", "sell", 0.05, trigger_price: 1000)` · **Exchange:** binanceusdm (demo-fapi, sandbox) · **Severity:** low
 
-**Status (2026-08-10):** 📋 triaged — folded into workbench **task 580**: unified `type` on a conditional order must reflect the request that created it (stop/stop_market family), never `"limit"`; AC added alongside the algo-book read parity work.
+**Status (2026-08-18):** ✅ **fixed** by task 580 (`429a8e9`) — `STOP` maps to `"stop"` and `STOP_MARKET` to `"stop_market"` instead of collapsing both to `"limit"`.
 
 The order was correctly routed to the Algo API (`algoId` returned, resting conditional, no
 market fire) and the unified struct carries `trigger_price: 1000` / `stop_price: 1000` —
@@ -1260,7 +1260,7 @@ provider-owned Stream-Doku, grok/grok-4.6, bundle live_triage).
 
 **Method:** `Bourse.create_order(ex, "BTC/USD:BTC", "market", "buy", qty, params: %{"label" => id})` bzw. `clientOrderId`; danach `Bourse.fetch_my_trades/2` · **Exchange:** deribit (testnet) · **Severity:** medium (jeder Consumer, der eigene Orders über eine selbstvergebene Id wiedererkennen muss, fällt auf `info`/`raw_call` zurück)
 
-**Status (2026-08-18):** 🔀 triaged — bestätigter Defekt, als **Klassen-Invariante** gefiled statt als deribit-Patch: workbench **task 622** (cursor/cursor-grok-4.6-high, bundle `live_triage`). Ein Venue darf einen Client-Identifier in **beide** Richtungen oder in **keine** mappen; einseitiges Mapping lässt einen venue-übergreifenden Test rot werden. Precedent: task 473 hat genau diese Defektform 2026-07 auf Derives *Request*-Seite gepatcht, die deribit-Instanz tauchte vier Monate später auf der anderen Seite desselben Round-Trips auf.
+**Status (2026-08-18):** ✅ **fixed** by task 622 (`2fde2c8`) — Deribit request-shapes unified `clientOrderId` onto `label` and the order/trade field maps echo it back as `client_order_id`. The catalog invariant in `test/bourse/client_order_id_round_trip_invariant_test.exs` fails a one-way mapping.
 
 *Korrektur einer Prämisse des Reports:* `lib/bourse/unified/request_shape/derive.ex` ist der Shaper der Venue **Derive**, nicht deribits. Deribit hat **auch request-seitig** kein `clientOrderId`→`label`-Mapping (Spec-Read 2026-08-18: `normalization.field_maps.order`/`.trade` tragen keinen `client_order_id`-Eintrag, und die einzige Rückabbildung überhaupt ist binances synthetisches `_bourse_client_order_id`, `read_parse.ex:3205`). Der Live-Call funktionierte nur, weil er natives `params: %{"label" => id}` durchgereicht hat — beide Richtungen sind unauthored und beide sind in 622 in scope.
 

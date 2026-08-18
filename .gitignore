@@ -50,3 +50,4 @@ bourse-*.tar
 
 # harness dispatch runtime scaffolding — excluded from delivery commits by contract
 .harness/
+.cursor/rules/harness-operational.mdc
