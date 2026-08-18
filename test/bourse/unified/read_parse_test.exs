@@ -1680,11 +1680,7 @@ defmodule Bourse.Unified.ReadParseTest do
       exchange = Exchange.new!("binance")
       body = %{"maker" => "0.0002", "taker" => "0.0004"}
 
-      assert {:error,
-              %Error{
-                type: :exchange_error,
-                message: "Unexpected response shape: parsed to an all-nil struct (method: fetch_trading_fees)"
-              }} =
+      assert {:error, %Error{type: :exchange_error, message: message}} =
                ReadParse.parse(
                  exchange,
                  NativeSymbolParser,
@@ -1695,6 +1691,32 @@ defmodule Bourse.Unified.ReadParseTest do
                  :parse_trading_fee,
                  false
                )
+
+      assert message =~ "fetchTradingFees"
+      assert message =~ "fetch_trading_fees"
+      assert message =~ "%Bourse.TradingFee{}"
+    end
+
+    test "plural trading fees reject a populated single struct instead of returning it as success" do
+      exchange = Exchange.new!("binance")
+      body = %{"symbol" => "BTC/USDT", "makerCommission" => "0.0002", "takerCommission" => "0.0004"}
+
+      assert {:error, %Error{type: :exchange_error, message: message, raw: %Bourse.TradingFee{symbol: "BTC/USDT"}}} =
+               ReadParse.parse(
+                 exchange,
+                 NativeSymbolParser,
+                 :fetch_trading_fees,
+                 "fetchTradingFees",
+                 body,
+                 %{"symbol" => "BTC/USDT"},
+                 :parse_trading_fee,
+                 false
+               )
+
+      assert message =~ "fetchTradingFees"
+      assert message =~ "fetch_trading_fees"
+      assert message =~ "expected a list of rows to index by symbol"
+      assert message =~ "%Bourse.TradingFee{}"
     end
 
     test "market-fee transform is driven by generic authored vocabulary" do

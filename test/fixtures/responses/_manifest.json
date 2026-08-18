@@ -1,5 +1,5 @@
 {
-  "count": 119,
+  "count": 120,
   "fixtures": [
     "alpaca/fetch_balance.json",
     "alpaca/fetch_markets.json",
@@ -22,6 +22,7 @@
     "binance/fetch_ticker.json",
     "binance/fetch_tickers_non_usdt_quotes.json",
     "binance/fetch_trades.json",
+    "binance/fetch_trading_fees.json",
     "binance/order_lifecycle.json",
     "binancecoinm/fetch_adl_rank.json",
     "binancecoinm/fetch_balance.json",
@@ -121,7 +122,7 @@
     "okx/fetch_ticker.json",
     "okx/fetch_trades.json"
   ],
-  "generated_at": "2026-08-18T06:53:38.655249Z",
+  "generated_at": "2026-08-18T14:28:33.923044Z",
   "recordings": [
     {
       "capture_date": "2026-07-26",
@@ -336,6 +337,16 @@
       "method": "fetch_trades",
       "path": "binance/fetch_trades.json",
       "request_params_sha256": "22aa19ba930600e052e02c5470130001522eb51ff2cade92f6e7b388eee9b72d",
+      "venue": "binance"
+    },
+    {
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T14:28:33.917837Z",
+      "endpoint": "sapi/v1/asset/tradeFee",
+      "host": "api.binance.com",
+      "method": "fetch_trading_fees",
+      "path": "binance/fetch_trading_fees.json",
+      "request_params_sha256": "8f793e65e2eac8642fe82983a2060e09e166dbfe0cc19535d158e6cb23a6c703",
       "venue": "binance"
     },
     {

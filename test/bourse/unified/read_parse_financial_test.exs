@@ -914,11 +914,11 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
       assert %Bourse.Ticker{symbol: "BTC/USDT:USDT", last: 50_000.0} = Map.fetch!(tickers, "BTC/USDT:USDT")
     end
 
-    test "fetchTickers shape keeps a non-list parse as-is" do
+    test "fetchTickers rejects a non-list parse instead of returning it as success" do
       exchange = Exchange.new!("bybit")
       body = %{"symbol" => "BTCUSDT", "lastPrice" => "1"}
 
-      assert {:ok, ^body} =
+      assert {:error, %Error{type: :exchange_error, message: message, raw: ^body}} =
                ReadParse.parse(
                  exchange,
                  SingleDictTickerParser,
@@ -929,6 +929,11 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
                  :parse_ticker,
                  false
                )
+
+      assert message =~ "fetchTickers"
+      assert message =~ "fetch_tickers"
+      assert message =~ "expected a list of rows to index by symbol"
+      assert message =~ "got map"
     end
 
     test "bybit balance flattens coin rows and reconciles used = total - free" do

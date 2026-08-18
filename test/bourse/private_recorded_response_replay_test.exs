@@ -128,6 +128,30 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
     assert %{} = replay!(fixture, :fetch_trading_fees)
   end
 
+  test "Binance spot trading-fee replay indexes the recorded sapi list by unified symbol" do
+    fixture = private_fixture("binance", :fetch_trading_fees)
+    [row | _rest] = fixture["body"]
+
+    assert fixture["host"] == "api.binance.com"
+    assert fixture["endpoint"] == "sapi/v1/asset/tradeFee"
+    assert is_list(fixture["body"])
+    assert row["symbol"] == "BTCUSDT"
+    assert is_binary(row["makerCommission"])
+    assert is_binary(row["takerCommission"])
+
+    fees = replay!(fixture, :fetch_trading_fees)
+
+    assert %Bourse.TradingFee{
+             symbol: "BTC/USDT",
+             maker: maker,
+             taker: taker
+           } = fees["BTC/USDT"]
+
+    assert maker == Bourse.Safe.number(row["makerCommission"])
+    assert taker == Bourse.Safe.number(row["takerCommission"])
+    assert map_size(fees) == 1
+  end
+
   test "USD-M multi-assets balance replay preserves wallet, margin, and withdrawal axes" do
     fixture = private_fixture("binanceusdm", :fetch_balance)
     assets = fixture["body"]["assets"]

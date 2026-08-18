@@ -681,7 +681,7 @@ defmodule Bourse.Unified.ReadParse do
   defp shape_parsed_result(parsed, js_name, false, _params) when js_name in @symbol_dict_return_methods do
     case parsed do
       structs when is_list(structs) -> {:ok, index_by_symbol(structs)}
-      other -> {:ok, other}
+      other -> {:error, {:unexpected_symbol_dict_shape, js_name, other}}
     end
   end
 
@@ -1805,6 +1805,10 @@ defmodule Bourse.Unified.ReadParse do
 
   defp response_error_message({:empty_parse, _}), do: "Unexpected response shape: parsed to an all-nil struct"
 
+  defp response_error_message({:unexpected_symbol_dict_shape, js_name, other}) do
+    "Unexpected #{js_name} response shape: expected a list of rows to index by symbol, got #{parsed_shape_name(other)}"
+  end
+
   defp response_error_message({:unexpected_response_shape, _}), do: "Unexpected response shape for unified parse"
   defp response_error_message({:no_field_map, _raw}), do: "No field map available for unified parse"
 
@@ -1854,8 +1858,13 @@ defmodule Bourse.Unified.ReadParse do
   defp response_error_raw({:unmapped_order_status, details}), do: details
   defp response_error_raw({:unmapped_ledger_type, details}), do: details
   defp response_error_raw({:unmapped_order_type, details}), do: details
+  defp response_error_raw({:unexpected_symbol_dict_shape, _js_name, parsed}), do: parsed
   defp response_error_raw({_tag, raw}), do: raw
   defp response_error_raw(_other), do: nil
+
+  defp parsed_shape_name(%{__struct__: module}), do: "%#{inspect(module)}{}"
+  defp parsed_shape_name(other) when is_map(other), do: "map"
+  defp parsed_shape_name(other), do: inspect(other)
 
   defp reject_error_envelope(body, %Exchange{} = exchange) when is_map(body) do
     if exchange_error?(body, exchange) do

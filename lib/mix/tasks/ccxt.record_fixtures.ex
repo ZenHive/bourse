@@ -16,8 +16,10 @@ defmodule Mix.Tasks.Ccxt.RecordFixtures do
   ## Scope
 
   Capture pairs come from `Bourse.RecordedResponseFixtures.capture_targets/0`.
-  Account-scoped targets use their authored testnet/demo credential environment;
-  every body is scrubbed before it is written. Partial re-records merge into
+  Account-scoped targets use their authored testnet/demo credential environment,
+  except binance `fetch_trading_fees`, which records production `sapi` because
+  the Spot Test Network has no `/sapi` host. Every body is scrubbed before it
+  is written. Partial re-records merge into
   `_manifest.json` rather than replacing it.
 
   ## Usage

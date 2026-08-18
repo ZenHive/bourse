@@ -130,8 +130,10 @@ defmodule Bourse.RecordedResponseFixturesTest do
     assert {"binancecoinm", :fetch_adl_rank} in RecordedResponseFixtures.capture_targets()
     assert {"binancecoinm", :error_position_mode_unchanged} in RecordedResponseFixtures.capture_targets()
     assert {"okx", :account_subtypes} in RecordedResponseFixtures.capture_targets()
+    assert {"binance", :fetch_trading_fees} in RecordedResponseFixtures.capture_targets()
     assert RecordedResponseFixtures.capture_category("deribit", :fetch_balance) == :private
     assert RecordedResponseFixtures.capture_category("binance", :fetch_ticker) == :public
+    assert RecordedResponseFixtures.capture_category("binance", :fetch_trading_fees) == :private
 
     assert RecordedResponseFixtures.oracle_identity("binanceusdm", :fetch_account_positions)["endpoint"] ==
              "fapi/v3/account"
@@ -156,6 +158,16 @@ defmodule Bourse.RecordedResponseFixturesTest do
 
     assert RecordedResponseFixtures.oracle_identity("okx", :account_subtypes)["endpoint"] ==
              "api/v5/account/subtypes"
+
+    assert RecordedResponseFixtures.oracle_identity("binance", :fetch_trading_fees) == %{
+             "authenticated" => true,
+             "endpoint" => "sapi/v1/asset/tradeFee",
+             "environment" => "production",
+             "host" => "api.binance.com"
+           }
+
+    assert RecordedResponseFixtures.required_credentials("binance", :fetch_trading_fees) ==
+             ~w(BINANCE_API_KEY BINANCE_API_SECRET)
 
     assert RecordedResponseFixtures.fixture_path("binance", :fetch_markets) ==
              Path.join(RecordedResponseFixtures.fixture_root(), "binance/fetch_markets.json")
@@ -182,6 +194,31 @@ defmodule Bourse.RecordedResponseFixturesTest do
       assert {:ok, fixture} = Capture.capture_fixture("okx", :account_subtypes, plug: {Req.Test, stub})
       assert_receive {:okx_subtypes_request, "/api/v5/account/subtypes"}
       assert fixture["body"]["data"] == [%{"subType" => "", "type" => "1", "typeDesc" => "Transfer"}]
+    end)
+  end
+
+  test "binance trading-fee capture records production sapi as a symbol-filtered list" do
+    stub = unique_stub("binance_trading_fees")
+    test_process = self()
+
+    body = [
+      %{"symbol" => "BTCUSDT", "makerCommission" => "0.001", "takerCommission" => "0.001"}
+    ]
+
+    Req.Test.stub(stub, fn conn ->
+      send(test_process, {:binance_tradefee_request, conn.host, conn.request_path, conn.query_params})
+      Req.Test.json(conn, body)
+    end)
+
+    with_env(~w(BINANCE_API_KEY BINANCE_API_SECRET), "fixture-credential", fn ->
+      assert {:ok, fixture} = Capture.capture_fixture("binance", :fetch_trading_fees, plug: {Req.Test, stub})
+      assert_receive {:binance_tradefee_request, "api.binance.com", "/sapi/v1/asset/tradeFee", query}
+      assert query["symbol"] == "BTCUSDT"
+      assert fixture["host"] == "api.binance.com"
+      assert fixture["environment"] == "production"
+      assert fixture["endpoint"] == "sapi/v1/asset/tradeFee"
+      assert fixture["caller_params"] == %{"symbol" => "BTC/USDT"}
+      assert fixture["body"] == body
     end)
   end
 

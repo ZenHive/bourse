@@ -2,12 +2,14 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
   @moduledoc """
   Live capture profiles for the committed real-response corpus.
 
-  Public reads use venue production hosts. Account-scoped reads use only the
-  provisioned testnet or demo environments named by each profile. Error probes
-  deliberately trigger safely-recordable business rejections (unknown symbol,
-  invalid credentials/signature, order-not-found, insufficient funds where no
-  fill is possible) and freeze the scrubbed raw error body. Every body is
-  scrubbed before it leaves this module.
+  Public reads use venue production hosts. Account-scoped reads use the
+  credential environment named by each profile — testnet or demo hosts, except
+  binance `fetch_trading_fees`, which records production `sapi` because the Spot
+  Test Network has no `/sapi` host. Error probes deliberately trigger
+  safely-recordable business rejections (unknown symbol, invalid
+  credentials/signature, order-not-found, insufficient funds where no fill is
+  possible) and freeze the scrubbed raw error body. Every body is scrubbed
+  before it leaves this module.
   """
 
   alias Bourse.Credentials
@@ -272,6 +274,7 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       {"binance", :fetch_open_orders} => binance_spot("api/v3/openOrders", %{"symbol" => "BTC/USDT"}),
       {"binance", :fetch_my_trades} =>
         binance_spot("api/v3/myTrades", %{"symbol" => "BTC/USDT", "limit" => @history_limit}),
+      {"binance", :fetch_trading_fees} => binance_spot_production("sapi/v1/asset/tradeFee", %{"symbol" => "BTC/USDT"}),
       {"binanceusdm", :fetch_balance} => binance_usdm("fapi/v3/account", %{}),
       {"binanceusdm", :fetch_account_positions} => binance_usdm("fapi/v3/account", %{}),
       {"binanceusdm", :fetch_leverages} =>
@@ -642,7 +645,7 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       category: :private,
       credential_env: credential_env(credential_profile),
       endpoint: endpoint,
-      environment: "testnet-demo",
+      environment: Keyword.get(opts, :environment, "testnet-demo"),
       exchange_opts: exchange_opts(credential_profile),
       host: host,
       load_markets?: Keyword.get(opts, :load_markets?, false),
@@ -662,6 +665,17 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
   end
 
   defp binance_spot(endpoint, params), do: private(endpoint, "testnet.binance.vision", :binance, params)
+
+  # Spot Test Network has no `/sapi` host (carve C-T530c). Bulk tradeFee is
+  # production-only; keep the recorded slice to one symbol so the fixture stays small.
+  defp binance_spot_production(endpoint, params) do
+    endpoint
+    |> private("api.binance.com", :binance, params, environment: "production")
+    |> Map.merge(%{
+      credential_env: [api_key: "BINANCE_API_KEY", secret: "BINANCE_API_SECRET"],
+      exchange_opts: []
+    })
+  end
 
   defp binance_usdm(endpoint, params, opts \\ []),
     do: private(endpoint, "demo-fapi.binance.com", :binanceusdm, params, opts)
