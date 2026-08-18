@@ -18,6 +18,17 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- An authored conditional request entry no longer overwrites a
+  caller-supplied native parameter. The conditional supplies the key only when
+  the caller did not pass it, so an explicit native value reaches the wire
+  instead of being replaced by the authored default.
+- Bybit `SETTLEMENT` ledger rows report the funding component as the
+  `funding_fee` amount instead of `change`. USDC-perp records fold funding and
+  the 8-hour session P&L into one row (`change = cashFlow + funding - fee`), so
+  reading `change` overstated the funding amount and could invert its
+  direction. Linear-USDT rows, where `funding == change`, are unaffected; the
+  session-P&L remainder is documented as intentionally not a second ledger
+  entry (one venue id and one `cashBalance`).
 - binanceusdm linear markets now populate `contract_size` from the authored
   venue-level contract unit (`1`, `quantity_unit: "base"`) instead of leaving
   it nil when `exchangeInfo` omits `contractSize`. A provider-published size
