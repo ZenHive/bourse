@@ -1,12 +1,14 @@
 {
-  "count": 117,
+  "count": 119,
   "fixtures": [
     "alpaca/fetch_balance.json",
     "alpaca/fetch_markets.json",
+    "alpaca/fetch_my_trades.json",
     "alpaca/fetch_open_orders.json",
     "alpaca/fetch_positions.json",
     "alpaca/fetch_ticker.json",
     "alpaca/fetch_time.json",
+    "alpaca/fetch_trades.json",
     "alpaca/order_lifecycle.json",
     "binance/fetch_balance.json",
     "binance/fetch_bids_asks.json",
@@ -119,7 +121,7 @@
     "okx/fetch_ticker.json",
     "okx/fetch_trades.json"
   ],
-  "generated_at": "2026-08-18T01:39:22.497720Z",
+  "generated_at": "2026-08-18T06:53:38.655249Z",
   "recordings": [
     {
       "capture_date": "2026-07-26",
@@ -139,6 +141,17 @@
       "method": "fetch_markets",
       "path": "alpaca/fetch_markets.json",
       "request_params_sha256": "f492e621343ba23ff62bae6ed323fdf57d2af00f84af1afc90c4468d17f459af",
+      "venue": "alpaca"
+    },
+    {
+      "body_populated": false,
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T06:53:38.649954Z",
+      "endpoint": "v2/account/activities/{activity_type}",
+      "host": "paper-api.alpaca.markets",
+      "method": "fetch_my_trades",
+      "path": "alpaca/fetch_my_trades.json",
+      "request_params_sha256": "c56f6f6e5393e77f0d3cdc9311501fc32b621f56696f622187672f5e5679aa54",
       "venue": "alpaca"
     },
     {
@@ -181,6 +194,16 @@
       "method": "fetch_time",
       "path": "alpaca/fetch_time.json",
       "request_params_sha256": "de46dad7499512da307139e52c8bafb301d86dbca4a801c0611cf94c5720c886",
+      "venue": "alpaca"
+    },
+    {
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T06:53:36.088038Z",
+      "endpoint": "v2/stocks/{symbol}/trades",
+      "host": "data.alpaca.markets",
+      "method": "fetch_trades",
+      "path": "alpaca/fetch_trades.json",
+      "request_params_sha256": "b3307e56e0b6ad8ff3474cf0274e7d8e90d35143c978cccc08afe2eef0da4e84",
       "venue": "alpaca"
     },
     {

@@ -10,13 +10,16 @@
         "normalization.field_maps.market",
         "normalization.field_maps.order",
         "normalization.field_maps.ticker",
+        "normalization.field_maps.trade",
         "request_shape.fetchBalance",
         "request_shape.fetchMarkets",
+        "request_shape.fetchMyTrades",
         "request_shape.fetchOHLCV",
         "request_shape.fetchOpenOrders",
         "request_shape.fetchPositions",
         "request_shape.fetchTicker",
         "request_shape.fetchTime",
+        "request_shape.fetchTrades",
         "sign_path.public.market.public"
       ]
     },

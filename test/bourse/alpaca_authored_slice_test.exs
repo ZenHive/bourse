@@ -117,6 +117,80 @@ defmodule Bourse.AlpacaAuthoredSliceTest do
   # the authenticated stocks endpoint for a slashless symbol; the resolver must
   # fail loud rather than silently reroute to the public crypto endpoint (live
   # 2026-07-20 the reroute produced Alpaca's "Invalid location: GLD").
+  test "stock trades select the authored prints endpoint and parse price, size, and time" do
+    stub = "alpaca-stock-trades"
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+      Req.Test.json(conn, stock_trades_body())
+    end)
+
+    assert {:ok, [%Bourse.Trade{} = trade | _rest]} =
+             Bourse.fetch_trades(exchange(), "AAPL",
+               since: @explicit_since_ms,
+               limit: 3,
+               plug: {Req.Test, stub}
+             )
+
+    assert trade.id == "1"
+    assert trade.symbol == "AAPL"
+    assert trade.price == 308.52
+    assert trade.amount == 25
+    assert trade.cost == 7713.0
+    assert trade.timestamp == 1_786_450_890_611
+    assert trade.datetime == "2026-08-11T12:21:30.611178341Z"
+    assert is_nil(trade.side)
+    assert is_nil(trade.order_id)
+    assert trade.info["x"] == "V"
+
+    conn = RequestCollector.one!(requests)
+    assert conn.request_path == "/v2/stocks/AAPL/trades"
+    assert Plug.Conn.get_req_header(conn, "apca-api-key-id") == ["key"]
+
+    assert RequestCollector.query(conn) == %{
+             "feed" => "iex",
+             "limit" => "3",
+             "start" => "2026-07-13T00:00:00.000Z"
+           }
+  end
+
+  test "stock trades author a 60-day default lookback when since is omitted" do
+    stub = "alpaca-stock-trades-default-window"
+    {:ok, requests} = RequestCollector.start_link()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+      Req.Test.json(conn, stock_trades_body())
+    end)
+
+    assert {:ok, [_first | _rest]} =
+             Bourse.fetch_trades(exchange(), "AAPL",
+               timestamp_ms_override: @frozen_now_ms,
+               plug: {Req.Test, stub}
+             )
+
+    assert RequestCollector.query(requests) == %{
+             "feed" => "iex",
+             "start" => "2026-06-04T12:00:00.000Z"
+           }
+  end
+
+  test "stock trades with a null trades payload parse as an empty list" do
+    stub = "alpaca-stock-trades-empty"
+
+    Req.Test.stub(stub, fn conn ->
+      Req.Test.json(conn, %{"next_page_token" => nil, "symbol" => "AAPL", "trades" => nil})
+    end)
+
+    assert {:ok, []} =
+             Bourse.fetch_trades(exchange(), "AAPL",
+               since: @explicit_since_ms,
+               limit: 1,
+               plug: {Req.Test, stub}
+             )
+  end
+
   test "credless stock OHLCV fails loud instead of rerouting to the crypto endpoint" do
     credless = Exchange.new!(:alpaca)
 
@@ -210,6 +284,35 @@ defmodule Bourse.AlpacaAuthoredSliceTest do
 
   # Real recorded 200 from `GET /v2/stocks/GLD/bars?timeframe=1D&limit=2&
   # start=2026-07-13&feed=iex`, captured live 2026-07-20 with paper keys.
+  # Real recorded 200 from `GET /v2/stocks/AAPL/trades?feed=iex&limit=3&start=...`,
+  # captured live 2026-08-18 against data.alpaca.markets with paper keys.
+  defp stock_trades_body do
+    %{
+      "next_page_token" => "QUFQTHwxNzg2NDUxNTc5MzM0MjQ4ODk3fFZ8NA==",
+      "symbol" => "AAPL",
+      "trades" => [
+        %{
+          "c" => ["@", "T", "I"],
+          "i" => 1,
+          "p" => 308.52,
+          "s" => 25,
+          "t" => "2026-08-11T12:21:30.611178341Z",
+          "x" => "V",
+          "z" => "C"
+        },
+        %{
+          "c" => ["@", "T", "I"],
+          "i" => 2,
+          "p" => 308.74,
+          "s" => 30,
+          "t" => "2026-08-11T12:32:59.33419301Z",
+          "x" => "V",
+          "z" => "C"
+        }
+      ]
+    }
+  end
+
   defp stock_bars_body do
     %{
       "bars" => [

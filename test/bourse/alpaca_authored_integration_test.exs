@@ -110,6 +110,32 @@ defmodule Bourse.AlpacaAuthoredIntegrationTest do
              Bourse.fetch_ohlcv(exchange, @equity_symbol, @one_day_timeframe, limit: 1)
   end
 
+  test "live stock trades return parsed public prints from the data host" do
+    exchange = market_data_exchange!()
+
+    assert {:ok, [%Bourse.Trade{} = trade | _rest]} = Bourse.fetch_trades(exchange, @equity_symbol, limit: 3)
+
+    assert trade.symbol == @equity_symbol
+    assert is_number(trade.price) and trade.price > 0
+    assert is_number(trade.amount) and trade.amount > 0
+    assert is_integer(trade.timestamp)
+    assert is_binary(trade.datetime) and trade.datetime != ""
+    assert is_binary(trade.id) and trade.id != ""
+    assert is_nil(trade.side)
+    assert is_map(trade.info)
+    assert is_binary(trade.info["x"])
+  end
+
+  test "paper fill history returns a unified list from the paper host" do
+    exchange = paper_exchange!()
+
+    assert {:ok, trades} = Bourse.fetch_my_trades(exchange, limit: 5)
+    assert is_list(trades)
+    assert Enum.all?(trades, &match?(%Bourse.Trade{}, &1))
+    assert Enum.all?(trades, &(is_binary(&1.id) and &1.id != ""))
+    assert Enum.all?(trades, &(is_number(&1.price) and is_number(&1.amount)))
+  end
+
   test "paper account, balance, positions, market clock, settlement, and equity asset semantics are live" do
     exchange = paper_exchange!()
 

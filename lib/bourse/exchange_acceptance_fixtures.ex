@@ -165,7 +165,14 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     end
   end
 
-  defp profiles_for("alpaca"), do: [alpaca_market_profile(), alpaca_trader_profile()]
+  defp profiles_for("alpaca") do
+    [
+      alpaca_market_profile(),
+      alpaca_trades_profile(),
+      alpaca_trader_profile(),
+      alpaca_my_trades_profile()
+    ]
+  end
 
   defp profiles_for("binance") do
     [
@@ -221,12 +228,37 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     )
   end
 
+  defp alpaca_trades_profile do
+    build_profile("alpaca", :fetch_trades, "v2/stocks/{symbol}/trades", "data.alpaca.markets", :alpaca,
+      sandbox: false,
+      fixture_seed: :empty,
+      params: %{"symbol" => "GLD", "limit" => 3},
+      sensitive_headers: ["apca-api-key-id", "apca-api-secret-key"],
+      business_success: "HTTP 2xx stock trades payload"
+    )
+  end
+
   defp alpaca_trader_profile do
     build_profile("alpaca", :fetch_balance, "v2/account", "paper-api.alpaca.markets", :alpaca,
       sandbox: true,
       fixture_seed: :empty,
       sensitive_headers: ["apca-api-key-id", "apca-api-secret-key"],
       business_success: "HTTP 2xx paper-account payload"
+    )
+  end
+
+  defp alpaca_my_trades_profile do
+    build_profile(
+      "alpaca",
+      :fetch_my_trades,
+      "v2/account/activities/{activity_type}",
+      "paper-api.alpaca.markets",
+      :alpaca,
+      sandbox: true,
+      fixture_seed: :empty,
+      params: %{"activity_type" => "FILL", "limit" => 5},
+      sensitive_headers: ["apca-api-key-id", "apca-api-secret-key"],
+      business_success: "HTTP 2xx paper FILL activity list"
     )
   end
 
@@ -1058,6 +1090,8 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
   defp accepted_business_response(%{venue: "alpaca"}, body) when is_map(body) do
     if Map.has_key?(body, "message"), do: {:error, :venue_business_failure}, else: {:ok, nil}
   end
+
+  defp accepted_business_response(%{venue: "alpaca"}, body) when is_list(body), do: {:ok, nil}
 
   defp accepted_business_response(%{venue: "deribit"}, %{"result" => result} = body) when is_map(result) do
     if Map.has_key?(body, "error"), do: {:error, :venue_business_failure}, else: {:ok, nil}

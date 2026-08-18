@@ -343,3 +343,35 @@ Outcome: CONFIRM fraction-to-percent-point conversion.**
 <!-- carve-evidence-status
 {"carve_id":"C-T603a","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Alpaca positions contract linked in C-T603a"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"No populated position body is registered for this rate-unit amendment"}
 -->
+
+## 2026-08-18 — trade history and transfers (Task 547)
+
+**C-T547a — `fetchMyTrades` reads paper fills from `GET /v2/account/activities/FILL` (task 547). Outcome: CONFIRM venue.**
+
+- *Exchange semantics:* the Trading API documents `FILL` as order fills (partial and full). Each row carries `id`, `order_id`, `symbol`, `side`, `price`, `qty`, `transaction_time`, and `type` of `fill` / `partial_fill`. The path parameter is `activity_type`; pagination is `page_size` / `page_token`; the time window is `after` / `until` in RFC-3339 or `YYYY-MM-DD`. There is no symbol query — a caller-supplied unified symbol is filtered after parse.
+- *Our carve:* pin `activity_type=FILL`, map `limit` → `page_size` and `since` → `after`, convert millisecond `until` in place, and omit unified `symbol` / `since` / `limit` from the wire. Unified `type` stays nil: the venue's `type` is fill vs partial fill, not the order type. Cost is `price * qty`.
+- *Live evidence:* paper-api.alpaca.markets returned HTTP 200 and `[]` on 2026-08-18. The paper account's only activity is a `JNLC` funding journal, so no fill row is registered. Field mapping is pinned offline against the provider's published FILL example.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T547a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"https://docs.alpaca.markets/reference/getaccountactivitiesbyactivitytype-1 — Trading API FILL activity schema"},"observed_evidence":{"kind":"live_venue","reference":"paper-api.alpaca.markets GET /v2/account/activities/FILL HTTP 200 empty list 2026-08-18"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
+**C-T547b — `fetchTrades` reads public stock prints from `GET /v2/stocks/{symbol}/trades` (task 547). Outcome: DIVERGE from a 24/7 tape; CONFIRM venue fields.**
+
+- *Exchange semantics:* Market Data historical trades return `{trades: [...], symbol, next_page_token}` with `t/i/x/p/s/c/z`. There is no buy/sell side. A missing `start` defaults to the beginning of the current day; outside regular hours that answers `trades: null`. Free paper keys take `feed=iex` (C-T428b).
+- *Our carve:* slash-less symbols select the single-stock path on `data.alpaca.markets`, default `feed=iex`, map `since`/`until` to RFC-3339 `start`/`end`, and supply a 60-day lookback when `since` is omitted (same empty-window problem as C-T532). Present-but-null `trades` is an empty list. Side and order id stay nil. Cost is `p * s`. Crypto pairs stay out of scope.
+- *Live evidence:* data.alpaca.markets returned populated AAPL and GLD IEX prints on 2026-08-18 (`p`, `s`, `t`, `x`). The same endpoint with no window returned `trades: null`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T547b","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"https://docs.alpaca.markets/reference/stocktrades-1 — Market Data historical trades schema"},"observed_evidence":{"kind":"live_venue","reference":"data.alpaca.markets GET /v2/stocks/{symbol}/trades feed=iex populated AAPL/GLD prints and null current-day window 2026-08-18"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
+**C-T547c — `fetchDeposits`, `fetchWithdrawals`, and `fetchTransfers` stay unsupported (task 547). Outcome: DIVERGE from mapping the wallet endpoints.**
+
+- *Exchange semantics:* Alpaca documents crypto funding wallets at `GET /v2/wallets` and `GET /v2/wallets/transfers` on the paper Trading host. Those are on-chain crypto funding transfers, not equity cash journals. Cash deposits/withdrawals are activity types `CSD`/`CSW`; paper funding on this account is `JNLC`.
+- *Live observation:* on 2026-08-18, `GET /v2/wallets` against paper-api.alpaca.markets returned HTTP 404 `{"code": 40410000, "message": "endpoint not found"}`. `GET /v2/wallets/transfers` returned HTTP 404 `Not Found`. `CSD`/`CSW`/`OCT` activity lists were empty; the only activity was a `JNLC` $100000 paper-funding journal.
+- *Our carve:* leave the three unified methods `false`. Mapping wallets would claim a surface this paper host does not serve. Mapping `JNLC` as a deposit would relabel paper funding as a customer transfer. The 404s are the provider evidence for the absence.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T547c","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"https://docs.alpaca.markets/us/reference/getfundingwallettransfers and Trading API activity types CSD/CSW/OCT/JNLC"},"observed_evidence":{"kind":"live_venue","reference":"paper-api.alpaca.markets GET /v2/wallets 40410000 and GET /v2/wallets/transfers HTTP 404 Not Found 2026-08-18"},"compatibility_reference":null,"resolved_tier":1}
+-->

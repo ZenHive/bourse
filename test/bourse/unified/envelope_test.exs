@@ -38,6 +38,12 @@ defmodule Bourse.Unified.EnvelopeTest do
                Envelope.unwrap(body, Bourse.Bybit, "bybit", "ticker", "fetchTicker", false)
     end
 
+    test "treats a present-null Alpaca trades key as an empty list" do
+      body = %{"next_page_token" => nil, "symbol" => "AAPL", "trades" => nil}
+
+      assert {:ok, []} = Envelope.unwrap(body, Bourse.Alpaca, "alpaca", "trade", "fetchTrades", true)
+    end
+
     test "unwraps okx data envelope via dot-delimited key" do
       body = %{"code" => "0", "data" => [%{"last" => "1"}]}
 

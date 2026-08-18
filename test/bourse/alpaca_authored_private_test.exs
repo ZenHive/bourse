@@ -29,8 +29,13 @@ defmodule Bourse.AlpacaAuthoredPrivateTest do
     assert supported ==
              MapSet.new(~w(
                cancelOrder createOrder fetchBalance fetchClosedOrders fetchMarkets
-               fetchOHLCV fetchOpenOrders fetchOrder fetchOrders fetchPositions fetchTicker fetchTime
+               fetchMyTrades fetchOHLCV fetchOpenOrders fetchOrder fetchOrders
+               fetchPositions fetchTicker fetchTime fetchTrades
              ))
+
+    assert support["fetchDeposits"] == false
+    assert support["fetchWithdrawals"] == false
+    assert support["fetchTransfers"] == false
 
     reference =
       "alpaca"
@@ -193,6 +198,36 @@ defmodule Bourse.AlpacaAuthoredPrivateTest do
              )
   end
 
+  test "FILL activities become unified trades and omit the unused symbol query" do
+    {stub, requests} = stub_with_response(:fills, [fill_payload()])
+
+    assert {:ok, [%Bourse.Trade{} = trade]} =
+             Bourse.fetch_my_trades(exchange(), symbol: "AAPL", limit: 5, plug: {Req.Test, stub})
+
+    assert trade.id == "20220202135509981::2d7be4ff-d1f3-43e9-856a-0f5cf5c5088e"
+    assert trade.order_id == @order_id
+    assert trade.symbol == "AAPL"
+    assert trade.side == "buy"
+    assert trade.price == 174.78
+    assert trade.amount == 2.0
+    assert trade.cost == 349.56
+    assert trade.timestamp == 1_643_828_109_981
+    assert trade.datetime == "2022-02-02T18:55:09.981482Z"
+    assert is_nil(trade.type)
+    assert trade.info["activity_type"] == "FILL"
+
+    request = RequestCollector.one!(requests)
+    assert request.request_path == "/v2/account/activities/FILL"
+    assert RequestCollector.query(request) == %{"page_size" => "5"}
+  end
+
+  test "an empty FILL list is a successful empty history" do
+    {stub, requests} = stub_with_response(:empty_fills, [])
+
+    assert {:ok, []} = Bourse.fetch_my_trades(exchange(), plug: {Req.Test, stub})
+    assert RequestCollector.one!(requests).request_path == "/v2/account/activities/FILL"
+  end
+
   defp exchange do
     Exchange.new!(:alpaca,
       sandbox: true,
@@ -259,6 +294,23 @@ defmodule Bourse.AlpacaAuthoredPrivateTest do
       "current_price" => "300",
       "unrealized_pl" => "15",
       "unrealized_plpc" => "0.032258"
+    }
+  end
+
+  defp fill_payload do
+    %{
+      "activity_type" => "FILL",
+      "cum_qty" => "2",
+      "id" => "20220202135509981::2d7be4ff-d1f3-43e9-856a-0f5cf5c5088e",
+      "leaves_qty" => "0",
+      "order_id" => @order_id,
+      "order_status" => "filled",
+      "price" => "174.78",
+      "qty" => "2",
+      "side" => "buy",
+      "symbol" => "AAPL",
+      "transaction_time" => "2022-02-02T18:55:09.981482Z",
+      "type" => "fill"
     }
   end
 

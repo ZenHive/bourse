@@ -229,12 +229,12 @@
       "fetchCurrencies": false,
       "fetchOption": false,
       "transfer": false,
-      "fetchMyTrades": false,
+      "fetchMyTrades": true,
       "fetchOpenOrder": false,
       "fetchPremiumIndexOHLCV": false,
       "createOrder": true,
       "fetchTransactionFees": false,
-      "fetchTrades": false,
+      "fetchTrades": true,
       "fetchBorrowRate": false,
       "fetchBorrowRatesPerSymbol": false,
       "fetchIsolatedPositions": false,
@@ -412,6 +412,43 @@
           "return_type": "Promise<Order[]>"
         }
       },
+      "fetchMyTrades": {
+        "description": "Fetch paper-account fills from Alpaca account activities.",
+        "name": "fetchMyTrades",
+        "returns": {
+          "description": "Unified fills from GET /v2/account/activities/FILL.",
+          "type": "Trade[]"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": "undefined",
+              "name": "symbol",
+              "optional": true,
+              "type": "Str"
+            },
+            {
+              "default": "undefined",
+              "name": "since",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "undefined",
+              "name": "limit",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Trade[]>"
+        }
+      },
       "fetchMarkets": {
         "description": "Fetch active US-equity assets and their equity-specific metadata.",
         "name": "fetchMarkets",
@@ -568,6 +605,43 @@
           "return_type": "Promise<Position[]>"
         }
       },
+      "fetchTrades": {
+        "description": "Fetch public US-equity trade prints from Alpaca market data.",
+        "name": "fetchTrades",
+        "returns": {
+          "description": "Unified public stock prints from GET /v2/stocks/{symbol}/trades.",
+          "type": "Trade[]"
+        },
+        "signature": {
+          "params": [
+            {
+              "default": null,
+              "name": "symbol",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "default": "undefined",
+              "name": "since",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "undefined",
+              "name": "limit",
+              "optional": true,
+              "type": "Int"
+            },
+            {
+              "default": "{}",
+              "name": "params",
+              "optional": true,
+              "type": null
+            }
+          ],
+          "return_type": "Promise<Trade[]>"
+        }
+      },
       "fetchTicker": {
         "name": "fetchTicker",
         "signature": {
@@ -632,6 +706,9 @@
         "fetchMarkets": [
           "parseMarkets"
         ],
+        "fetchMyTrades": [
+          "parseTrades"
+        ],
         "fetchOHLCV": [
           "parseOHLCVs"
         ],
@@ -652,6 +729,9 @@
         ],
         "fetchTime": [
           "parse8601"
+        ],
+        "fetchTrades": [
+          "parseTrades"
         ]
       },
       "signing": {
@@ -763,6 +843,43 @@
               }
             }
           },
+          "fetchTrades": {
+            "v2/stocks/{symbol}/trades": {
+              "_omit": [
+                "since"
+              ],
+              "end": {
+                "kind": "reference",
+                "source": "until",
+                "source_class": "optional",
+                "transform": "milliseconds_to_rfc3339"
+              },
+              "feed": {
+                "kind": "literal",
+                "value": "iex"
+              },
+              "limit": {
+                "kind": "reference",
+                "source": "limit",
+                "source_class": "optional"
+              },
+              "start": {
+                "default_limit": 1000,
+                "default_lookback_ms": 5184000000,
+                "default_timeframe_ms": 60000,
+                "kind": "computed",
+                "operation": "time_window_start",
+                "since_source": "since",
+                "timeframe_source": "timeframe",
+                "transform": "milliseconds_to_rfc3339"
+              },
+              "symbol": {
+                "retain_source": true,
+                "source": "symbol",
+                "source_class": "unified_param"
+              }
+            }
+          },
           "fetchTicker": {
             "v1beta3/crypto/{loc}/snapshots": {
               "loc": {
@@ -801,6 +918,34 @@
           "status": {
             "kind": "literal",
             "value": "active"
+          }
+        },
+        "fetchMyTrades": {
+          "_omit": [
+            "limit",
+            "since",
+            "symbol"
+          ],
+          "activity_type": {
+            "kind": "literal",
+            "value": "FILL"
+          },
+          "after": {
+            "kind": "reference",
+            "source": "since",
+            "source_class": "optional",
+            "transform": "milliseconds_to_rfc3339"
+          },
+          "page_size": {
+            "kind": "reference",
+            "source": "limit",
+            "source_class": "optional"
+          },
+          "until": {
+            "kind": "reference",
+            "source": "until",
+            "source_class": "optional",
+            "transform": "milliseconds_to_rfc3339"
           }
         },
         "fetchOpenOrders": {
@@ -1621,6 +1766,14 @@
       "fetchTime": {
         "on_chain": false,
         "transactional": false
+      },
+      "fetchMyTrades": {
+        "on_chain": false,
+        "transactional": false
+      },
+      "fetchTrades": {
+        "on_chain": false,
+        "transactional": false
       }
     },
     "unified": {
@@ -1721,14 +1874,18 @@
       "fetchCurrencies": [],
       "fetchOption": [],
       "transfer": [],
-      "fetchMyTrades": [],
+      "fetchMyTrades": [
+        "traderPrivateGetV2AccountActivitiesActivityType"
+      ],
       "fetchOpenOrder": [],
       "fetchPremiumIndexOHLCV": [],
       "createOrder": [
         "traderPrivatePostV2Orders"
       ],
       "fetchTransactionFees": [],
-      "fetchTrades": [],
+      "fetchTrades": [
+        "marketPrivateGetV2StocksSymbolTrades"
+      ],
       "fetchBorrowRate": [],
       "fetchBorrowRatesPerSymbol": [],
       "fetchIsolatedPositions": [],
@@ -2317,6 +2474,83 @@
             "key": "vwap"
           }
         }
+      },
+      "trade": {
+        "_unresolved_reason": null,
+        "extras": [],
+        "field_map": {
+          "amount": {
+            "coercion": "safeNumber",
+            "fallback_keys": [
+              "s"
+            ],
+            "key": "qty"
+          },
+          "cost": {
+            "coercion": "safeNumber",
+            "kind": "computed",
+            "op": "mul",
+            "operands": [
+              {
+                "fallback_keys": [
+                  "p"
+                ],
+                "key": "price"
+              },
+              {
+                "fallback_keys": [
+                  "s"
+                ],
+                "key": "qty"
+              }
+            ]
+          },
+          "datetime": {
+            "coercion": "safeString",
+            "fallback_keys": [
+              "t"
+            ],
+            "key": "transaction_time"
+          },
+          "fee": null,
+          "id": {
+            "coercion": "safeString",
+            "fallback_keys": [
+              "i"
+            ],
+            "key": "id"
+          },
+          "info": null,
+          "order": {
+            "coercion": "safeString",
+            "key": "order_id"
+          },
+          "price": {
+            "coercion": "safeNumber",
+            "fallback_keys": [
+              "p"
+            ],
+            "key": "price"
+          },
+          "side": {
+            "coercion": "safeStringLower",
+            "key": "side"
+          },
+          "symbol": {
+            "coercion": "safeString",
+            "key": "symbol",
+            "kind": "native_symbol"
+          },
+          "takerOrMaker": null,
+          "timestamp": {
+            "coercion": "parse8601",
+            "fallback_keys": [
+              "t"
+            ],
+            "key": "transaction_time"
+          },
+          "type": null
+        }
       }
     },
     "response_envelopes": {
@@ -2450,6 +2684,18 @@
           "default": {},
           "fallback_keys": [],
           "key": null
+        }
+      },
+      "trade": {
+        "fetchMyTrades": {
+          "default": [],
+          "fallback_keys": [],
+          "key": null
+        },
+        "fetchTrades": {
+          "default": [],
+          "fallback_keys": [],
+          "key": "trades"
         }
       }
     }

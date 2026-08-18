@@ -1,0 +1,50 @@
+{
+  "acceptance": {
+    "business_success": "HTTP 2xx paper FILL activity list",
+    "capture_date": "2026-08-18",
+    "captured_at": "2026-08-18T06:53:58.314Z",
+    "endpoint": "v2/account/activities/{activity_type}",
+    "host": "paper-api.alpaca.markets",
+    "http_status": 200,
+    "method": "fetch_my_trades",
+    "profile": "fetch_my_trades",
+    "venue": "alpaca"
+  },
+  "label": "Oracle: exchange-acceptance tier 1 vs alpaca fetch_my_trades accepted 2026-08-18 (v2/account/activities/{activity_type} @ paper-api.alpaca.markets, HTTP 200, HTTP 2xx paper FILL activity list).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "fetch_my_trades",
+    "nonce_override": 1787036038072,
+    "params": {
+      "activity_type": "FILL",
+      "limit": 5
+    },
+    "profile": "fetch_my_trades",
+    "timestamp_ms_override": 1787036038071
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "apca-api-key-id",
+        "key"
+      ],
+      [
+        "apca-api-secret-key",
+        "secretsecret"
+      ],
+      [
+        "content-type",
+        "application/json"
+      ]
+    ],
+    "method": "GET",
+    "url": "https://paper-api.alpaca.markets/v2/account/activities/FILL?page_size=5"
+  },
+  "schema_version": 1
+}

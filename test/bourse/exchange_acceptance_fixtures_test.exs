@@ -250,7 +250,9 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
 
       assert Enum.map(goldens, &get_in(&1, ["acceptance", "method"])) == [
                "fetch_ticker",
-               "fetch_balance"
+               "fetch_trades",
+               "fetch_balance",
+               "fetch_my_trades"
              ]
 
       assert Enum.all?(goldens, &(ExchangeAcceptanceFixtures.replay(&1) == :ok))
@@ -381,6 +383,12 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
   defp success_body("test.deribit.com", _path), do: %{"jsonrpc" => "2.0", "result" => %{}}
   defp success_body("api-demo.lyra.finance", _path), do: %{"id" => "offline", "result" => []}
   defp success_body("www.okx.com", _path), do: %{"code" => "0", "data" => [], "msg" => ""}
+
+  defp success_body("paper-api.alpaca.markets", "/v2/account/activities/FILL"), do: []
+
+  defp success_body("data.alpaca.markets", "/v2/stocks/GLD/trades") do
+    %{"next_page_token" => nil, "symbol" => "GLD", "trades" => []}
+  end
 
   defp success_body(host, _path) when host in ["data.alpaca.markets", "paper-api.alpaca.markets"] do
     %{"currency" => "USD", "equity" => "1"}

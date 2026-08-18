@@ -1,0 +1,50 @@
+{
+  "acceptance": {
+    "business_success": "HTTP 2xx stock trades payload",
+    "capture_date": "2026-08-18",
+    "captured_at": "2026-08-18T06:53:56.804Z",
+    "endpoint": "v2/stocks/{symbol}/trades",
+    "host": "data.alpaca.markets",
+    "http_status": 200,
+    "method": "fetch_trades",
+    "profile": "fetch_trades",
+    "venue": "alpaca"
+  },
+  "label": "Oracle: exchange-acceptance tier 1 vs alpaca fetch_trades accepted 2026-08-18 (v2/stocks/{symbol}/trades @ data.alpaca.markets, HTTP 200, HTTP 2xx stock trades payload).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "fetch_trades",
+    "nonce_override": 1787036036437,
+    "params": {
+      "limit": 3,
+      "symbol": "GLD"
+    },
+    "profile": "fetch_trades",
+    "timestamp_ms_override": 1787036036436
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "apca-api-key-id",
+        "key"
+      ],
+      [
+        "apca-api-secret-key",
+        "secretsecret"
+      ],
+      [
+        "content-type",
+        "application/json"
+      ]
+    ],
+    "method": "GET",
+    "url": "https://data.alpaca.markets/v2/stocks/GLD/trades?feed=iex&limit=3&start=2026-06-19T06:53:56.436Z"
+  },
+  "schema_version": 1
+}

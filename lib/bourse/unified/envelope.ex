@@ -94,6 +94,12 @@ defmodule Bourse.Unified.Envelope do
       extracted == body and path != [] and not Map.has_key?(body, hd(path)) ->
         :miss
 
+      # extract_path/2 returns the parent map for both a missing key and a
+      # present-null value. A present-but-null list key is an empty window
+      # (Alpaca stock trades: `{"trades": null, ...}`), not a missing envelope.
+      default == [] and present_null_at_path?(body, path) ->
+        {:ok, []}
+
       is_nil(extracted) ->
         :miss
 
@@ -104,6 +110,10 @@ defmodule Bourse.Unified.Envelope do
         {:ok, extracted}
     end
   end
+
+  defp present_null_at_path?(%{} = map, [key]), do: Map.has_key?(map, key) and is_nil(map[key])
+  defp present_null_at_path?(%{} = map, [key | rest]), do: present_null_at_path?(Map.get(map, key), rest)
+  defp present_null_at_path?(_value, _path), do: false
 
   # Empty list under a key whose default is not already `[]` means "no rows
   # here — try fallbacks" (lighter fetchTicker: primary key may be [] while

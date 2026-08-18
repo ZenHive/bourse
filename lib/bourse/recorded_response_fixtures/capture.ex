@@ -107,6 +107,11 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
     %{
       {"alpaca", :fetch_ticker} =>
         public("v2/stocks/{symbol}/snapshot", "data.alpaca.markets", "GLD", credential_profile: :alpaca),
+      {"alpaca", :fetch_trades} =>
+        public("v2/stocks/{symbol}/trades", "data.alpaca.markets", "GLD",
+          credential_profile: :alpaca,
+          params: %{"limit" => @history_limit}
+        ),
       {"binance", :fetch_markets} => public("api/v3|fapi/v1|dapi/v1|eapi/v1/exchangeInfo", "api.binance.com", "BTC/USDT"),
       {"binance", :fetch_ticker} => public("api/v3/ticker/24hr", "api.binance.com", "BTC/USDT"),
       {"binance", :fetch_trades} => public("api/v3/trades", "api.binance.com", "BTC/USDT"),
@@ -218,6 +223,10 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       {"alpaca", :fetch_time} => private("v2/clock", "paper-api.alpaca.markets", :alpaca, %{}),
       {"alpaca", :fetch_open_orders} => private("v2/orders", "paper-api.alpaca.markets", :alpaca, %{}),
       {"alpaca", :fetch_positions} => private("v2/positions", "paper-api.alpaca.markets", :alpaca, %{}),
+      {"alpaca", :fetch_my_trades} =>
+        private("v2/account/activities/{activity_type}", "paper-api.alpaca.markets", :alpaca, %{
+          "limit" => @history_limit
+        }),
       {"deribit", :fetch_balance} => private("private/get_account_summaries", "test.deribit.com", :deribit, %{}),
       {"deribit", :fetch_open_orders} =>
         private("private/get_open_orders_by_instrument", "test.deribit.com", :deribit, %{

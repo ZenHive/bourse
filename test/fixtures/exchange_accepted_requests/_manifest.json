@@ -1,5 +1,5 @@
 {
-  "count": 38,
+  "count": 40,
   "generated_at": "2026-08-18T07:03:43Z",
   "goldens": [
     {
@@ -15,6 +15,19 @@
       "venue": "alpaca"
     },
     {
+      "business_success": "HTTP 2xx paper FILL activity list",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T06:53:58.314Z",
+      "endpoint": "v2/account/activities/{activity_type}",
+      "host": "paper-api.alpaca.markets",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs alpaca fetch_my_trades accepted 2026-08-18 (v2/account/activities/{activity_type} @ paper-api.alpaca.markets, HTTP 200, HTTP 2xx paper FILL activity list).",
+      "method": "fetch_my_trades",
+      "path": "alpaca/fetch_my_trades.json",
+      "profile": "fetch_my_trades",
+      "venue": "alpaca"
+    },
+    {
       "business_success": "HTTP 2xx stock snapshot payload",
       "capture_date": "2026-07-26",
       "captured_at": "2026-07-26T05:32:57.516Z",
@@ -24,6 +37,19 @@
       "label": "Oracle: exchange-acceptance tier 1 vs alpaca fetch_ticker accepted 2026-07-26 (v2/stocks/{symbol}/snapshot @ data.alpaca.markets, HTTP 200, HTTP 2xx stock snapshot payload).",
       "method": "fetch_ticker",
       "path": "alpaca/fetch_ticker.json",
+      "venue": "alpaca"
+    },
+    {
+      "business_success": "HTTP 2xx stock trades payload",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T06:53:56.804Z",
+      "endpoint": "v2/stocks/{symbol}/trades",
+      "host": "data.alpaca.markets",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs alpaca fetch_trades accepted 2026-08-18 (v2/stocks/{symbol}/trades @ data.alpaca.markets, HTTP 200, HTTP 2xx stock trades payload).",
+      "method": "fetch_trades",
+      "path": "alpaca/fetch_trades.json",
+      "profile": "fetch_trades",
       "venue": "alpaca"
     },
     {
