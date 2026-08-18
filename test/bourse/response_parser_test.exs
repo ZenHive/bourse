@@ -124,6 +124,38 @@ defmodule Bourse.ResponseParserTest do
              )
   end
 
+  test "explicit row source does not read the envelope" do
+    mapping = %{"timestamp" => %{"key" => "time", "coercion" => "safeInteger", "source" => "row"}}
+
+    assert {:ok, %Ticker{timestamp: 1}} =
+             ResponseParser.apply_mappings(%{"time" => 1}, mapping, target: Ticker, envelope: %{"time" => 2})
+
+    assert {:ok, %Ticker{timestamp: nil}} =
+             ResponseParser.apply_mappings(%{}, mapping, target: Ticker, envelope: %{"time" => 2})
+  end
+
+  test "Hyperliquid balance field map stamps from the recorded envelope when the row omits time" do
+    fixture =
+      "hyperliquid"
+      |> Bourse.RecordedResponseFixtures.fixture_path(:fetch_balance)
+      |> Bourse.RecordedResponseFixtures.load_fixture!()
+
+    envelope = fixture["body"]
+    timestamp = envelope["time"]
+    row = Map.delete(envelope, "time")
+
+    mapping =
+      "hyperliquid"
+      |> Bourse.Spec.load!()
+      |> get_in(["normalization", "field_maps", "balance"])
+
+    assert {:ok, %Balance{timestamp: ^timestamp}} =
+             ResponseParser.apply_mappings(row, mapping, target: Balance, envelope: envelope)
+
+    assert {:ok, %Balance{timestamp: nil}} =
+             ResponseParser.apply_mappings(row, mapping, target: Balance)
+  end
+
   test "market parsing does not attribute static fees to a response" do
     field_map =
       "binancecoinm"

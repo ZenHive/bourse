@@ -105,17 +105,40 @@ defmodule Bourse.OracleProvenance.DerivationTest do
       |> RecordedResponseFixtures.load_fixture!()
 
     identity = "test/fixtures/responses/bybit/fetch_ticker.json"
+    envelope = fixture["body"]
+    row = hd(envelope["result"]["list"])
+    mapping = get_in(spec, ["normalization", "field_maps", "ticker"])
+
+    assert {:ok, %Bourse.Ticker{timestamp: nil} = dropped} =
+             Bourse.ResponseParser.apply_mappings(row, mapping, target: Bourse.Ticker)
 
     assert_raise ArgumentError, ~r/carries envelope field "timestamp".*drops it/, fn ->
-      Derivation.assert_envelope_bindings!(spec, "fetch_ticker", fixture["body"], %Bourse.Ticker{}, identity)
+      Derivation.assert_envelope_bindings!(spec, "fetch_ticker", envelope, dropped, identity)
+    end
+
+    assert {:ok, %Bourse.Ticker{timestamp: timestamp} = bound} =
+             Bourse.ResponseParser.apply_mappings(row, mapping, target: Bourse.Ticker, envelope: envelope)
+
+    assert timestamp == envelope["time"]
+
+    assert :ok = Derivation.assert_envelope_bindings!(spec, "fetch_ticker", envelope, bound, identity)
+
+    assert_raise ArgumentError, ~r/drops it/, fn ->
+      Derivation.assert_envelope_bindings!(
+        spec,
+        "fetch_ticker",
+        envelope,
+        %{"BTC/USDT:USDT" => bound, "ETH/USDT:USDT" => %Bourse.Ticker{}},
+        identity
+      )
     end
 
     assert :ok =
              Derivation.assert_envelope_bindings!(
                spec,
                "fetch_ticker",
-               fixture["body"],
-               %Bourse.Ticker{timestamp: fixture["body"]["time"]},
+               envelope,
+               [bound, bound],
                identity
              )
   end

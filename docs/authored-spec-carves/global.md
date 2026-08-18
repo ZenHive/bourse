@@ -137,8 +137,10 @@ These entries define a shared unified contract. Venue-local evidence for a named
   outside `body.result.list`; the ticker row carries no `time`. The authored
   ticker timestamp therefore reads from the response envelope.
 - Hyperliquid's recorded `fetchBalance` response carries its clock at the
-  response root. Its balance timestamp uses the same envelope-source vocabulary,
-  confirming the mechanism across a second venue and a second unified type.
+  response root. Its balance timestamp uses the same envelope-source vocabulary.
+  The confrontation reads that mapping against the recorded envelope with `time`
+  removed from the row, so a post-parse `body.time` backfill cannot mask a
+  field-map miss.
 - A recording verifies an envelope-sourced field only when replay binds the
   carried value into the unified result. Merely preserving the key in fixture
   bytes does not establish parser coverage.
