@@ -7,6 +7,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-18
+
 ### Changed
 
 - **Breaking (deribit):** linear future `contracts` now divide base
@@ -39,6 +41,23 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   default; a matching case (for example deribit `trailingAmount` →
   `trailing_stop`) still applies. Deribit `trigger: "index_price"` now
   reaches the venue instead of being stripped.
+- Binance and binanceusdm unified `watch_*` channels author the provider's own
+  stream names (`{symbol}@depth20@100ms`, `{symbol}@trade`,
+  `{symbol}@miniTicker`) instead of CCXT message hashes such as
+  `orderbook::{symbol}`. The venue acknowledged those hashes and then delivered
+  nothing, so a subscription looked healthy and stayed silent; live tests now
+  pin frame arrival, not the subscribe acknowledgement. binancecoinm authors no
+  market-stream templates and fails loud with `:no_channel_templates` rather
+  than subscribing to a name that cannot deliver. One residual is recorded in
+  the venue carve register: on the authored USD-M `/ws` host,
+  `watch_ticker`'s `@miniTicker` still acks without delivering.
+- Deribit mutation-lifecycle compensation holds when a mutating call fails
+  *after* the request left the process — a transport raise, a non-JSON 200, or
+  a redaction failure. The attempted act is tracked from the moment the request
+  is built, so compensation never reports that no call was needed; when the
+  order id is unrecoverable it sweeps the run's session label via
+  `private/cancel_by_label`. Lifecycle plans are rejected up front when a
+  mutating step follows cleanup without its own authorized compensator.
 
 ## [0.5.0] - 2026-08-18
 
@@ -697,6 +716,7 @@ Published before this repository existed, from the tree that is now the private
   ccxt.build_lighter_signer`, the prerequisite for private Lighter calls, is the
   one task consumers receive.
 
+[0.6.0]: https://hex.pm/packages/bourse/0.6.0
 [0.5.0]: https://hex.pm/packages/bourse/0.5.0
 [0.4.0]: https://hex.pm/packages/bourse/0.4.0
 [0.3.0]: https://hex.pm/packages/bourse/0.3.0
