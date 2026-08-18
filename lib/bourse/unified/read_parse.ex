@@ -117,7 +117,7 @@ defmodule Bourse.Unified.ReadParse do
   defp do_parse("balance", exchange, module, js_name, body, params, parser, _list_return?) do
     with :ok <- reject_error_envelope(body, exchange),
          payload = balance_parse_payload(body, module, js_name, params),
-         {:ok, parsed} <- invoke_parser(module, parser, payload, []) do
+         {:ok, parsed} <- invoke_parser(module, parser, payload, envelope: body) do
       {:ok, put_balance_info(parsed, body)}
     end
   end
@@ -206,7 +206,7 @@ defmodule Bourse.Unified.ReadParse do
          :ok <- ensure_currency_field_map(module, exchange),
          entries when is_list(entries) <-
            extract_envelope_payload(body, module, "currency", js_name) || [],
-         {:ok, structs} when is_list(structs) <- parse_currency_entries(module, parser, entries) do
+         {:ok, structs} when is_list(structs) <- parse_currency_entries(module, parser, entries, body) do
       {:ok, build_currency_map(structs, exchange)}
     else
       {:error, _} = error -> error
@@ -223,7 +223,7 @@ defmodule Bourse.Unified.ReadParse do
          {:ok, payload} <-
            Envelope.unwrap(body, module, exchange.id, "leverage", js_name, true),
          rows when rows != [] <- leverage_rows(payload),
-         {:ok, parsed} <- parse_leverage_payload(exchange, module, parser, rows, params) do
+         {:ok, parsed} <- parse_leverage_payload(exchange, module, parser, rows, params, body) do
       {:ok, parsed}
     else
       {:error, _} = error -> error
@@ -291,7 +291,7 @@ defmodule Bourse.Unified.ReadParse do
            |> annotate_deribit_payload(exchange, parse_type)
            |> annotate_endpoint_route(params),
          :ok <- reject_unmapped_binance_order_type(payload),
-         parse_opts = build_parse_opts(exchange, params, payload, list_return?),
+         parse_opts = [{:envelope, body} | build_parse_opts(exchange, params, payload, list_return?)],
          {:ok, parsed} <- invoke_parser(module, parser, payload, parse_opts),
          parsed =
            parsed
@@ -1209,12 +1209,12 @@ defmodule Bourse.Unified.ReadParse do
   defp maybe_take_limit(parsed, _limit, _params), do: parsed
 
   # Currency parse helpers convert a list to a code-keyed map.
-  defp parse_currency_entries(_module, _parser, []), do: {:ok, []}
+  defp parse_currency_entries(_module, _parser, [], _envelope), do: {:ok, []}
 
-  defp parse_currency_entries(module, parser, entries) do
+  defp parse_currency_entries(module, parser, entries, envelope) do
     groups = group_currency_entries(module, entries)
 
-    with {:ok, structs} <- invoke_parser(module, parser, Enum.map(groups, & &1.parse), []) do
+    with {:ok, structs} <- invoke_parser(module, parser, Enum.map(groups, & &1.parse), envelope: envelope) do
       {:ok, Enum.zip(structs, Enum.map(groups, & &1.info))}
     end
   end
@@ -1247,7 +1247,7 @@ defmodule Bourse.Unified.ReadParse do
   # OKX hedge-mode rows carry posSide long/short with the same lever; merge into
   # one Leverage. Net-mode, single-row, and Bybit-style maps
   # go through the authored field map when present.
-  defp parse_leverage_payload(exchange, module, parser, rows, params) do
+  defp parse_leverage_payload(exchange, module, parser, rows, params, envelope) do
     if Enum.any?(rows, &leverage_side_row?/1) do
       merged = merge_sided_leverage_rows(rows)
 
@@ -1258,7 +1258,7 @@ defmodule Bourse.Unified.ReadParse do
         backfill_request_symbols(merged, params, "leverage", false)
       end
     else
-      parse_opts = build_parse_opts(exchange, params, hd(rows), false)
+      parse_opts = [{:envelope, envelope} | build_parse_opts(exchange, params, hd(rows), false)]
 
       with {:ok, parsed} <- invoke_parser(module, parser, hd(rows), parse_opts),
            parsed = enrich(parsed, hd(rows), false),

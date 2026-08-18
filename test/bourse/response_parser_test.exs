@@ -109,6 +109,21 @@ defmodule Bourse.ResponseParserTest do
     assert ticker.timestamp == 123
   end
 
+  test "field rules can read the original response envelope instead of the extracted row" do
+    mapping = %{
+      "last" => %{"key" => "lastPrice", "coercion" => "safeNumber"},
+      "timestamp" => %{"key" => "time", "coercion" => "safeInteger", "source" => "envelope"}
+    }
+
+    assert {:ok, %Ticker{last: 64_078.1, timestamp: 1_781_993_749_592}} =
+             ResponseParser.apply_mappings(
+               %{"lastPrice" => "64078.10"},
+               mapping,
+               target: Ticker,
+               envelope: %{"time" => 1_781_993_749_592}
+             )
+  end
+
   test "market parsing does not attribute static fees to a response" do
     field_map =
       "binancecoinm"

@@ -30,8 +30,9 @@ defmodule Bourse.Parser do
     * resolved slot with a non-empty `field_map` or `branches` → parsed
 
   `opts` may carry `:market` (a market-info map), `:symbol`, `:route` (the
-  selected endpoint path), and `:currencies` (the loaded currency catalog);
-  all are threaded into the parser context.
+  selected endpoint path), `:currencies` (the loaded currency catalog), and
+  `:envelope` (the original decoded response); all are threaded into the parser
+  context.
 
   ## Examples
 
@@ -64,7 +65,8 @@ defmodule Bourse.Parser do
         common_currencies: Keyword.get(opts, :common_currencies, %{}),
         options: Keyword.get(opts, :options, %{}),
         route: Keyword.get(opts, :route),
-        venue: Keyword.get(opts, :venue)
+        venue: Keyword.get(opts, :venue),
+        envelope: Keyword.get(opts, :envelope)
       )
     else
       {:error, :no_field_map}

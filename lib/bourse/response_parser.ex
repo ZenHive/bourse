@@ -159,6 +159,14 @@ defmodule Bourse.ResponseParser do
 
   defp extract_field(_data, nil, _context), do: nil
 
+  defp extract_field(data, %{"source" => "row"} = rule, context) do
+    extract_field(data, Map.delete(rule, "source"), context)
+  end
+
+  defp extract_field(_data, %{"source" => "envelope"} = rule, context) do
+    extract_field(context.envelope, Map.delete(rule, "source"), context)
+  end
+
   defp extract_field(data, %{"kind" => "discriminated"} = rule, context) do
     branch_key = if truthy?(context_value(context, rule["discriminator"])), do: "true", else: "false"
 
@@ -1293,7 +1301,8 @@ defmodule Bourse.ResponseParser do
       common_currencies: context_option(context, :common_currencies) || %{},
       options: context_option(context, :options) || %{},
       route: context_option(context, :route),
-      venue: context_option(context, :venue)
+      venue: context_option(context, :venue),
+      envelope: context_option(context, :envelope)
     }
   end
 
@@ -1306,7 +1315,8 @@ defmodule Bourse.ResponseParser do
       common_currencies: %{},
       options: %{},
       route: nil,
-      venue: nil
+      venue: nil,
+      envelope: nil
     }
 
   defp context_option(context, key), do: Map.get(context, key) || Map.get(context, Atom.to_string(key))

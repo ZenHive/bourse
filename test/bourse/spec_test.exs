@@ -656,6 +656,17 @@ defmodule Bourse.SpecTest do
       end
     end
 
+    test "field-rule sources use the closed row-or-envelope vocabulary" do
+      bybit = owned_spec("bybit")
+      source_path = ["normalization", "field_maps", "ticker", "field_map", "timestamp", "source"]
+
+      assert Schema.validate!(put_in(bybit, source_path, "row"), "bybit")
+
+      assert_raise ArgumentError, ~r/ticker\.field_map\.timestamp\.source: expected envelope or row/, fn ->
+        Schema.validate!(put_in(bybit, source_path, "payload"), "bybit")
+      end
+    end
+
     test "order status requires a closed enum map or an explicit passthrough" do
       deribit = owned_spec("deribit")
       status_path = ["normalization", "field_maps", "order", "field_map", "status"]

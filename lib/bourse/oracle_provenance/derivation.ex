@@ -13,6 +13,8 @@ defmodule Bourse.OracleProvenance.Derivation do
   alias Bourse.RecordedResponseFixtures
   alias Bourse.RecordedResponseFixtures.ListBody
   alias Bourse.Registry
+  alias Bourse.ReplayExchange
+  alias Bourse.Safe
   alias Bourse.Spec
   alias Bourse.Unified
   alias Bourse.Unified.FieldMaps
@@ -229,6 +231,8 @@ defmodule Bourse.OracleProvenance.Derivation do
 
   defp populated_response_paths(spec, row, method, fixture) do
     if fixture_populated?(fixture) do
+      verify_recorded_envelope_bindings!(spec, row, method, fixture)
+
       spec
       |> method_slot_paths(method)
       |> Kernel.++(recording_slot_paths(row, method))
@@ -236,6 +240,125 @@ defmodule Bourse.OracleProvenance.Derivation do
     else
       []
     end
+  end
+
+  defp verify_recorded_envelope_bindings!(spec, row, method, %{"body" => envelope} = fixture) do
+    if envelope_binding_present?(spec, method, envelope) do
+      venue = Map.fetch!(row, "venue")
+      parsed = replay_recorded_response!(venue, method, fixture)
+      assert_envelope_bindings!(spec, method, envelope, parsed, Map.fetch!(row, "path"))
+    end
+
+    :ok
+  end
+
+  defp verify_recorded_envelope_bindings!(_spec, _row, _method, _fixture), do: :ok
+
+  defp replay_recorded_response!(venue, method, fixture) do
+    method_atom = method_atom!(method)
+    params = fixture |> Map.get("params") |> response_params(fixture)
+    stub = {__MODULE__, venue, method, System.unique_integer([:positive])}
+
+    Req.Test.stub(stub, fn conn -> Req.Test.json(conn, Map.fetch!(fixture, "body")) end)
+
+    opts =
+      fixture
+      |> RecordedResponseFixtures.decode_call_opts()
+      |> Keyword.put(:plug, {Req.Test, stub})
+
+    case Unified.call(ReplayExchange.build!(venue, %{}), method_atom, js_method!(method), params, opts) do
+      {:ok, parsed} ->
+        parsed
+
+      {:error, reason} ->
+        raise ArgumentError, "recorded response replay failed for #{venue}:#{method}: #{inspect(reason)}"
+    end
+  end
+
+  defp response_params(params, fixture) when is_map(params) do
+    case fixture["symbol"] do
+      symbol when is_binary(symbol) -> Map.put_new(params, "symbol", symbol)
+      _symbol -> params
+    end
+  end
+
+  defp response_params(_params, fixture), do: response_params(%{}, fixture)
+
+  @doc false
+  @spec assert_envelope_bindings!(map(), String.t(), term(), term(), String.t()) :: :ok
+  def assert_envelope_bindings!(spec, method, envelope, parsed, identity) do
+    rows = parsed_rows(parsed)
+
+    for {field, rule} <- envelope_field_rules(spec, method), envelope_rule_present?(rule, envelope) do
+      if rows == [] or Enum.any?(rows, &(not parsed_field_present?(&1, field))) do
+        raise ArgumentError,
+              "#{identity} carries envelope field #{inspect(field)} but #{method} drops it from the parsed result"
+      end
+    end
+
+    :ok
+  end
+
+  defp envelope_binding_present?(spec, method, envelope) do
+    Enum.any?(envelope_field_rules(spec, method), fn {_field, rule} ->
+      envelope_rule_present?(rule, envelope)
+    end)
+  end
+
+  defp envelope_field_rules(spec, method) do
+    case parse_type_for_method(spec, js_method!(method)) do
+      nil ->
+        []
+
+      parse_type ->
+        spec
+        |> get_in(["normalization", "field_maps", parse_type])
+        |> mapping_field_maps()
+        |> Enum.flat_map(&Enum.to_list/1)
+        |> Enum.filter(fn {_field, rule} -> is_map(rule) and rule["source"] == "envelope" end)
+        |> Enum.uniq_by(&elem(&1, 0))
+    end
+  end
+
+  defp mapping_field_maps(mapping) when is_map(mapping) do
+    base = List.wrap(mapping["field_map"])
+
+    branches =
+      mapping
+      |> Map.get("branches", [])
+      |> Enum.flat_map(fn branch -> List.wrap(branch["field_map"]) end)
+
+    routes = mapping |> Map.get("route_field_maps", %{}) |> Map.values()
+
+    Enum.filter(base ++ branches ++ routes, &is_map/1)
+  end
+
+  defp mapping_field_maps(_mapping), do: []
+
+  defp envelope_rule_present?(rule, envelope) do
+    rule
+    |> envelope_rule_keys()
+    |> Enum.any?(&(Safe.value(envelope, &1, nil) != nil))
+  end
+
+  defp envelope_rule_keys(rule) do
+    Enum.filter([rule["key"], rule["key2"] | List.wrap(rule["fallback_keys"])], &(is_binary(&1) and &1 != ""))
+  end
+
+  defp parsed_rows(%_{} = struct), do: [struct]
+  defp parsed_rows(rows) when is_list(rows), do: Enum.flat_map(rows, &parsed_rows/1)
+
+  defp parsed_rows(rows) when is_map(rows) do
+    rows |> Map.values() |> Enum.flat_map(&parsed_rows/1)
+  end
+
+  defp parsed_rows(_parsed), do: []
+
+  defp parsed_field_present?(row, field) when is_map(row) do
+    normalized = Macro.underscore(field)
+    fields = if is_struct(row), do: Map.from_struct(row), else: row
+
+    Enum.any?(fields, fn {key, value} -> to_string(key) == normalized and not is_nil(value) end)
   end
 
   defp response_methods(%{"method" => "order_lifecycle"}, %{"responses" => responses}) when is_list(responses) do

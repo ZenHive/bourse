@@ -18017,7 +18017,8 @@
           "timestamp": {
             "coercion": "safeInteger",
             "format": "ms",
-            "key": "time"
+            "key": "time",
+            "source": "envelope"
           },
           "vwap": {
             "else": {

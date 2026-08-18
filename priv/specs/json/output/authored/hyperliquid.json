@@ -9402,7 +9402,8 @@
               "timestamp": {
                 "coercion": "safeInteger",
                 "format": "ms",
-                "key": "time"
+                "key": "time",
+                "source": "envelope"
               },
               "total": {
                 "sub_field_map": {

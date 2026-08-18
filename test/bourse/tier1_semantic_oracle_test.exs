@@ -205,6 +205,21 @@ defmodule Bourse.Tier1SemanticOracleTest do
     assert %{linear: false, inverse: false, active: true, settle: "USDC"} = option
   end
 
+  test "bybit fetchTicker: response-envelope clock stamps the extracted ticker row" do
+    fixture = load_fixture!("bybit", :fetch_ticker)
+    timestamp = fixture["body"]["time"]
+
+    assert {:ok, ticker} =
+             Bourse.fetch_ticker(
+               Exchange.new!("bybit"),
+               fixture["symbol"],
+               plug: {Req.Test, bybit_stub!()}
+             )
+
+    assert ticker.timestamp == timestamp
+    assert ticker.datetime == Bourse.Timestamp.iso8601_from_ms(timestamp)
+  end
+
   # --- bybit fetchFundingRate: interval ----------------------------------------
   #
   # Reality (test/fixtures/responses/bybit/fetch_ticker.json — funding rides the

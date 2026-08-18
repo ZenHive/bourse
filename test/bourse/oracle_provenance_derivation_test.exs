@@ -3,6 +3,7 @@ defmodule Bourse.OracleProvenance.DerivationTest do
 
   alias Bourse.OracleProvenance
   alias Bourse.OracleProvenance.Derivation
+  alias Bourse.RecordedResponseFixtures
 
   @accepted_root "test/fixtures/exchange_accepted_requests"
   @ledger_path "docs/prod-verification-ledger.md"
@@ -93,6 +94,30 @@ defmodule Bourse.OracleProvenance.DerivationTest do
     assert Derivation.body_populated?(%{"data" => [%{"symbol" => "BTCUSDT"}]})
     assert Derivation.body_populated?(%{"data" => [[1_784_649_600_000, "2830404860.7702"]]})
     assert Derivation.body_populated?([%{"symbol" => "BTCUSDT"}])
+  end
+
+  test "recorded envelope fields cannot verify a parser that drops them" do
+    spec = Bourse.Spec.load!("bybit")
+
+    fixture =
+      "bybit"
+      |> RecordedResponseFixtures.fixture_path(:fetch_ticker)
+      |> RecordedResponseFixtures.load_fixture!()
+
+    identity = "test/fixtures/responses/bybit/fetch_ticker.json"
+
+    assert_raise ArgumentError, ~r/carries envelope field "timestamp".*drops it/, fn ->
+      Derivation.assert_envelope_bindings!(spec, "fetch_ticker", fixture["body"], %Bourse.Ticker{}, identity)
+    end
+
+    assert :ok =
+             Derivation.assert_envelope_bindings!(
+               spec,
+               "fetch_ticker",
+               fixture["body"],
+               %Bourse.Ticker{timestamp: fixture["body"]["time"]},
+               identity
+             )
   end
 
   test "critical slots report contributing and still-unverified methods separately", %{reports: reports} do

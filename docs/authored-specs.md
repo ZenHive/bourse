@@ -351,6 +351,19 @@ Evidence-first, reversible, REST before WS. Deps in brackets.
 
 ## Authoring nuance — not all normalization is field_map-shaped
 
+### Field-rule data source
+
+A field rule reads from the extracted row by default; authors may state
+`"source": "row"` explicitly. Use `"source": "envelope"` when the provider
+places that field on the original decoded response outside the row selected by
+`normalization.response_envelopes`. The rule's `key`, fallbacks, coercion, and
+format are then applied to the envelope without changing how the row itself is
+selected. `Bourse.Spec.Schema` rejects any other source value.
+
+Envelope-sourced fields need a committed response recording that carries the
+envelope key. The oracle gate replays that recording and rejects coverage when
+the parsed result drops the value; fixture presence alone is not verification.
+
 When T-C/T-D author a venue's interpretive slices, `parse*()` → field_maps covers the
 **flat-scalar** shapes (ticker, market, trade, balance fields). But some normalizations are
 **transformer-shaped**, not field_map-shaped, and have no `@struct_for` entry / no spec slice:

@@ -122,6 +122,7 @@ defmodule Bourse.Spec.Schema do
   @symbol_cases ~w(lower mixed upper)
   @date_formats ~w(ddmmmyy yymmdd yyyymmdd)
   @oracle_names ~w(live_tier1 private_real_recordings)
+  @field_rule_sources ~w(envelope row)
 
   @doc "Returns the current owned runtime-schema version."
   @spec version() :: pos_integer()
@@ -144,6 +145,7 @@ defmodule Bourse.Spec.Schema do
     validate_identity!(spec, exchange_id)
     validate_signing_contract!(spec, exchange_id)
     validate_symbol_patterns!(spec, exchange_id)
+    validate_field_rule_sources!(spec, exchange_id)
     validate_emulated_methods!(spec, exchange_id)
     validate_runtime_error_contract!(spec, exchange_id)
     validate_support!(spec, exchange_id)
@@ -285,6 +287,53 @@ defmodule Bourse.Spec.Schema do
         gap!(exchange_id, ["markets", "symbol_patterns", market_type], "invalid quote_settled_suffix #{inspect(value)}")
     end
   end
+
+  defp validate_field_rule_sources!(spec, exchange_id) do
+    spec
+    |> get_in(["normalization", "field_maps"])
+    |> Enum.each(fn {slot, mapping} ->
+      validate_mapping_sources!(mapping, exchange_id, ["normalization", "field_maps", slot])
+    end)
+  end
+
+  defp validate_mapping_sources!(mapping, exchange_id, path) when is_map(mapping) do
+    validate_field_map_sources!(mapping["field_map"], exchange_id, path ++ ["field_map"])
+
+    mapping
+    |> Map.get("branches", [])
+    |> Enum.with_index()
+    |> Enum.each(fn {branch, index} ->
+      validate_field_map_sources!(
+        branch["field_map"],
+        exchange_id,
+        path ++ ["branches", Integer.to_string(index), "field_map"]
+      )
+    end)
+
+    mapping
+    |> Map.get("route_field_maps", %{})
+    |> Enum.each(fn {route, field_map} ->
+      validate_field_map_sources!(field_map, exchange_id, path ++ ["route_field_maps", route])
+    end)
+  end
+
+  defp validate_mapping_sources!(_mapping, _exchange_id, _path), do: :ok
+
+  defp validate_field_map_sources!(field_map, exchange_id, path) when is_map(field_map) do
+    Enum.each(field_map, fn {field, rule} ->
+      validate_field_rule_source!(rule, exchange_id, path ++ [field])
+    end)
+  end
+
+  defp validate_field_map_sources!(_field_map, _exchange_id, _path), do: :ok
+
+  defp validate_field_rule_source!(%{"source" => source}, _exchange_id, _path) when source in @field_rule_sources, do: :ok
+
+  defp validate_field_rule_source!(%{"source" => source}, exchange_id, path) do
+    gap!(exchange_id, path ++ ["source"], "expected envelope or row, got #{inspect(source)}")
+  end
+
+  defp validate_field_rule_source!(_rule, _exchange_id, _path), do: :ok
 
   defp validate_emulated_methods!(spec, exchange_id) do
     spec

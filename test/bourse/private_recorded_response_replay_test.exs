@@ -174,6 +174,15 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
     assert Enum.all?(balance.used, fn {_asset, used} -> used >= 0 end)
   end
 
+  test "Hyperliquid balance uses the shared response-envelope clock source" do
+    fixture = private_fixture("hyperliquid", :fetch_balance)
+    timestamp = fixture["body"]["time"]
+    balance = replay!(fixture, :fetch_balance)
+
+    assert balance.timestamp == timestamp
+    assert balance.datetime == Bourse.Timestamp.iso8601_from_ms(timestamp)
+  end
+
   test "populated private trade recordings preserve venue identifiers, sizes, prices, and clocks" do
     for {venue, raw_path, expected} <- populated_trade_cases() do
       fixture = private_fixture(venue, :fetch_my_trades)

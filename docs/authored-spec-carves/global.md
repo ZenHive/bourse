@@ -131,6 +131,22 @@ without a parsed CCXT return retain their venue body.
 
 These entries define a shared unified contract. Venue-local evidence for a named party may also be mirrored under that venue's register without a second heading.
 
+**C-T562 — Response-envelope clocks remain available to row field maps (task 562). Outcome: CONFIRMED.**
+
+- Bybit's recorded `fetchTicker` response carries `body.time = 1781993749592`
+  outside `body.result.list`; the ticker row carries no `time`. The authored
+  ticker timestamp therefore reads from the response envelope.
+- Hyperliquid's recorded `fetchBalance` response carries its clock at the
+  response root. Its balance timestamp uses the same envelope-source vocabulary,
+  confirming the mechanism across a second venue and a second unified type.
+- A recording verifies an envelope-sourced field only when replay binds the
+  carried value into the unified result. Merely preserving the key in fixture
+  bytes does not establish parser coverage.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T562","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Bybit official V5 Get Tickers and Hyperliquid clearinghouseState response contracts, indexed by priv/authority/bybit/manifest.json and priv/authority/hyperliquid/manifest.json"},"observed_evidence":{"kind":"live_venue","reference":"Live Bybit testnet fetchTicker returned timestamp 1787062804933 on 2026-08-18; registered Bybit fetch_ticker and Hyperliquid fetch_balance recordings pin both envelope placements","fixture":"test/fixtures/responses/bybit/fetch_ticker.json"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 **C36 — Ticker `vwap` is a price, never contract size. Outcome: DIVERGE from CCXT's blind `quoteVolume/baseVolume`.**
 
 - *Exchange semantics (non-CCXT, OKX V5 market ticker docs + live mainnet 2026-07-17):*
