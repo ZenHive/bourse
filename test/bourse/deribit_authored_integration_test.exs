@@ -38,6 +38,35 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
     assert is_number(last)
   end
 
+  @tag :dangerous
+  test "stop_market create_order with trigger index_price reaches Deribit trigger-price validation" do
+    credentials = require_credentials!(:deribit, url: @deribit_testnet_url)
+    exchange = build_exchange(:deribit, credentials: credentials, sandbox: true)
+
+    params = %{
+      "amount" => 10,
+      "side" => "buy",
+      "symbol" => "BTC/USD:BTC",
+      "trigger" => "index_price",
+      "trigger_price" => 1,
+      "type" => "stop_market"
+    }
+
+    assert {:ok, [shaped]} = Bourse.Unified.request_param_shapes(exchange, :create_order, params)
+    assert shaped["trigger"] == "index_price"
+    assert shaped["trigger_price"] == 1
+    assert shaped["type"] == "stop_market"
+    assert shaped["instrument_name"] == "BTC-PERPETUAL"
+
+    assert {:error, %Error{type: :invalid_order, code: 10_035, message: message}} =
+             Bourse.create_order(exchange, "BTC/USD:BTC", "stop_market", "buy", 10,
+               trigger_price: 1,
+               trigger: "index_price"
+             )
+
+    assert message =~ "trigger_price_too_low"
+  end
+
   test "symbol-less trade history derives inverse cost from live market identity" do
     credentials = require_credentials!(:deribit, url: @deribit_testnet_url)
     base = build_exchange(:deribit, credentials: credentials, sandbox: true)

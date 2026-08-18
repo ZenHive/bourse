@@ -379,6 +379,7 @@ defmodule Bourse.RecordedResponseFixturesTest do
     assert {"binance", :error_invalid_signature} in error_targets
     assert {"binance", :error_insufficient_funds} in error_targets
     assert {"hyperliquid", :error_order_not_found} in error_targets
+    assert {"deribit", :error_trigger_price_too_low} in error_targets
 
     for venue <- ~w(binancecoinm binanceusdm) do
       identity = RecordedResponseFixtures.oracle_identity(venue, :error_bad_symbol)

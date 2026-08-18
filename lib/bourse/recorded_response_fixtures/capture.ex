@@ -459,6 +459,21 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
         error_public("public/ticker", "www.deribit.com", :fetch_ticker, %{"symbol" => "BTC-NOTAREAL"}),
       {"deribit", :error_invalid_signature} =>
         error_invalid_creds("private/get_account_summaries", "test.deribit.com", :deribit, :fetch_balance, %{}),
+      {"deribit", :error_trigger_price_too_low} =>
+        "private/buy"
+        |> error_probe("test.deribit.com", :deribit, :create_order, %{
+          "amount" => 10,
+          "side" => "buy",
+          "symbol" => "BTC/USD:BTC",
+          "trigger" => "index_price",
+          "trigger_price" => 1,
+          "type" => "stop_market"
+        })
+        |> Map.merge(%{
+          error_kind: "trigger_price_too_low",
+          expected_types: [:invalid_order],
+          mutation_safety: Map.put(@error_mutation_safety, "error_kind", "trigger_price_too_low")
+        }),
       {"derive", :error_invalid_signature} =>
         error_invalid_creds("private/get_all_portfolios", "api-demo.lyra.finance", :derive, :fetch_balance, %{},
           invalid_credentials: derive_invalid_credentials()

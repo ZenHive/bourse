@@ -1194,6 +1194,14 @@ mit Supplement erreicht die Trigger-Order Deribits Business-Logik (echte `10035
 trigger_price_too_low`-Rejection), ohne Supplement kommt der Selektor nie an. Der Workaround
 kann raus, sobald bourse den Fix shippt.
 
+**Status (2026-08-18):** 🔧 **fixed in worktree** — `put_authored_conditional/4` keeps a
+caller-supplied native key when no authored case matches. Live testnet: the same
+`stop_market` + `trigger: "index_price"` call that used to die as `-32602 trigger is
+required` now reaches Deribit business logic (`10035 trigger_price_too_low` on a
+buy-stop at 1; a sell-stop at 1 was accepted with `info["trigger"] == "index_price"`
+and cancelled). Matching cases still rewrite (trailingAmount → `last_price` /
+`trailing_stop`). Task 615.
+
 **Status:** 🔀 triaged 2026-08-14 — bestätigter Client-Defekt. Mechanismus verifiziert per
 Code-Read: `RequestShape.put_authored_conditional/4` (lib/bourse/unified/request_shape.ex:379)
 prüft nie, ob der Caller den nativen Key bereits gesetzt hat — ohne matchenden Case und ohne

@@ -376,16 +376,30 @@ defmodule Bourse.Unified.RequestShape do
 
   defp reject_multiple_binance_conditional_legs!(params, _exchange, _js_name), do: params
 
+  # Caller-supplied native keys win. A matching case still applies (deribit
+  # trailingAmount rewrites type → trailing_stop); the nil fallback must not
+  # delete a value the caller already set (deribit createOrder.trigger).
   defp put_authored_conditional(params, native_key, cases, entry) do
-    value =
-      Enum.find_value(cases, Map.get(params, Map.get(entry, "source"), Map.get(entry, "default")), fn authored_case ->
-        if conditions_match?(params, Map.get(authored_case, "when", %{})), do: Map.get(authored_case, "value")
+    fallback = Map.get(params, Map.get(entry, "source"), Map.get(entry, "default"))
+
+    {matched?, value} =
+      Enum.reduce_while(cases, {false, fallback}, fn authored_case, acc ->
+        if conditions_match?(params, Map.get(authored_case, "when", %{})) do
+          {:halt, {true, Map.get(authored_case, "value")}}
+        else
+          {:cont, acc}
+        end
       end)
 
-    if is_nil(value) do
-      Map.delete(params, native_key)
-    else
-      Map.put(params, native_key, transform_authored_value(value, Map.get(entry, "transform")))
+    cond do
+      Map.has_key?(params, native_key) and not matched? ->
+        params
+
+      is_nil(value) ->
+        Map.delete(params, native_key)
+
+      true ->
+        Map.put(params, native_key, transform_authored_value(value, Map.get(entry, "transform")))
     end
   end
 

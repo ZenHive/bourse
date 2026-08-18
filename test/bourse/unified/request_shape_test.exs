@@ -1853,6 +1853,57 @@ defmodule Bourse.Unified.RequestShapeTest do
       refute Map.has_key?(shaped, "suppressed")
     end
 
+    # Task 615 — caller-supplied native keys survive authored conditionals.
+    # Distinctive values are ones no matching case would emit, so a clobber
+    # cannot hide behind a coincidentally-equal default.
+    test "caller-supplied native values survive every authored conditional entry" do
+      for {venue, js_name, native_key, caller_value, extra} <- [
+            {"binance", "setMarginMode", "marginType", "CROSSED", %{"symbol" => "BTCUSDT"}},
+            {"binancecoinm", "setMarginMode", "marginType", "CROSSED", %{"symbol" => "BTCUSD_PERP"}},
+            {"binanceusdm", "setMarginMode", "marginType", "CROSSED", %{"symbol" => "BTCUSDT"}},
+            {"deribit", "createOrder", "trigger", "index_price",
+             %{
+               "amount" => 10,
+               "side" => "sell",
+               "symbol" => "BTC-PERPETUAL",
+               "trigger_price" => 1,
+               "type" => "stop_market"
+             }},
+            {"deribit", "createOrder", "type", "stop_market",
+             %{
+               "amount" => 10,
+               "side" => "sell",
+               "symbol" => "BTC-PERPETUAL",
+               "trigger" => "index_price",
+               "trigger_price" => 1
+             }},
+            {"okx", "fetchMarginAdjustmentHistory", "subType", "999", %{}},
+            {"okx", "setPositionMode", "posMode", "net_mode", %{}}
+          ] do
+        {:ok, exchange} = Exchange.new(venue)
+        params = Map.put(extra, native_key, caller_value)
+        shaped = RequestShape.apply(params, exchange, js_name)
+
+        assert shaped[native_key] == caller_value,
+               "#{venue} #{js_name}.#{native_key} dropped caller #{inspect(caller_value)} → #{inspect(shaped)}"
+      end
+    end
+
+    test "deribit trailingAmount still emits trigger=last_price and type=trailing_stop" do
+      {:ok, exchange} = Exchange.new("deribit")
+
+      shaped =
+        RequestShape.apply(
+          %{"amount" => 10, "side" => "sell", "symbol" => "BTC-PERPETUAL", "trailingAmount" => 1000},
+          exchange,
+          "createOrder"
+        )
+
+      assert shaped["trigger"] == "last_price"
+      assert shaped["type"] == "trailing_stop"
+      assert shaped["trigger_offset"] == 1000
+    end
+
     test "covers authored time windows with until and non-string timeframe fallbacks" do
       exchange = %Exchange{
         id: "shape_test",

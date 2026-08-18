@@ -1,6 +1,6 @@
 {
-  "count": 20,
-  "generated_at": "2026-08-11T05:37:51.404398Z",
+  "count": 21,
+  "generated_at": "2026-08-18T00:40:22.831365Z",
   "recordings": [
     {
       "capture_date": "2026-07-26",
@@ -180,6 +180,19 @@
       "http_status": 400,
       "method": "error_invalid_signature",
       "path": "deribit/error_invalid_signature.json",
+      "venue": "deribit"
+    },
+    {
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T00:40:22.827319Z",
+      "code": "10035",
+      "endpoint": "private/buy",
+      "error_kind": "trigger_price_too_low",
+      "host": "test.deribit.com",
+      "http_status": 400,
+      "method": "error_trigger_price_too_low",
+      "path": "deribit/error_trigger_price_too_low.json",
+      "request_params_sha256": "10ab8ccb51c532a9f960695f9ed7e010a0a097e9de7653184112a467fff055ee",
       "venue": "deribit"
     },
     {
