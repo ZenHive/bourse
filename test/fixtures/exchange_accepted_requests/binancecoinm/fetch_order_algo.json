@@ -1,0 +1,63 @@
+{
+  "acceptance": {
+    "business_success": "HTTP 2xx Algo order payload for an identifier absent from the regular order book",
+    "capture_date": "2026-08-18",
+    "captured_at": "2026-08-18T07:03:34.980Z",
+    "endpoint": "dapi/v1/algoOrder",
+    "host": "demo-dapi.binance.com",
+    "http_status": 200,
+    "method": "fetch_order",
+    "profile": "fetch_order_algo",
+    "venue": "binancecoinm"
+  },
+  "additional_requests": [
+    {
+      "body": null,
+      "headers": [
+        [
+          "content-type",
+          "application/x-www-form-urlencoded"
+        ],
+        [
+          "x-mbx-apikey",
+          "key"
+        ]
+      ],
+      "method": "GET",
+      "url": "https://demo-dapi.binance.com/dapi/v1/order?orderId=1000000171199888&symbol=BTCUSD_PERP&timestamp=1787036611908&signature=d80b4a515c69c2f49412755123c48b25c99848e37acb2db9fd6d82625266d57a"
+    }
+  ],
+  "label": "Oracle: exchange-acceptance tier 1 vs binancecoinm fetch_order accepted 2026-08-18 (dapi/v1/algoOrder @ demo-dapi.binance.com, HTTP 200, HTTP 2xx Algo order payload for an identifier absent from the regular order book).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "fetch_order",
+    "nonce_override": 1787036611909,
+    "params": {
+      "id": "1000000171199888",
+      "symbol": "BTC/USD:BTC"
+    },
+    "profile": "fetch_order_algo",
+    "timestamp_ms_override": 1787036611908
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "content-type",
+        "application/x-www-form-urlencoded"
+      ],
+      [
+        "x-mbx-apikey",
+        "key"
+      ]
+    ],
+    "method": "GET",
+    "url": "https://demo-dapi.binance.com/dapi/v1/algoOrder?algoId=1000000171199888&symbol=BTCUSD_PERP&timestamp=1787036611908&signature=5f82f87d0db903816c2bd6948d4b9fa38c2f3cc6ca50a2d20ec2fa414e60ca62"
+  },
+  "schema_version": 1
+}

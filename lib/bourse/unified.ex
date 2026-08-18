@@ -954,10 +954,9 @@ defmodule Bourse.Unified do
     end
   end
 
-  defp build_request_param_shapes(exchange, js_name, {mode, _configs}, params, opts)
-       when mode in [:fan_out, :broadcast] do
+  defp build_request_param_shapes(exchange, js_name, {mode, configs}, params, opts) when mode in [:fan_out, :broadcast] do
     with {:ok, params} <- maybe_resolve_market_id(exchange, js_name, params, opts) do
-      {:ok, [build_final_params(exchange, js_name, params, opts, nil)]}
+      {:ok, Enum.map(configs, &build_final_params(exchange, js_name, params, opts, &1.path))}
     end
   end
 
@@ -1272,18 +1271,20 @@ defmodule Bourse.Unified do
     dispatch_opts = Keyword.drop(opts, @selection_opts)
 
     with {:ok, params} <- maybe_resolve_market_id(exchange, capability_name, params, opts) do
-      final_params = build_final_params(exchange, capability_name, params, opts, nil)
-      dispatch_fan_out_with_params(exchange, capability_name, configs, final_params, dispatch_opts, opts)
+      dispatch_fan_out_with_params(exchange, capability_name, configs, params, dispatch_opts, opts)
     end
   end
 
-  defp dispatch_fan_out_with_params(%Exchange{} = exchange, _capability_name, configs, final_params, dispatch_opts, opts) do
+  defp dispatch_fan_out_with_params(%Exchange{} = exchange, capability_name, configs, params, dispatch_opts, opts) do
     timeout = Keyword.get(opts, :timeout, Bourse.Defaults.request_timeout_ms())
 
     results =
       configs
       |> Task.async_stream(
-        fn config -> Dispatch.call(exchange, config, final_params, dispatch_opts) end,
+        fn config ->
+          final_params = build_final_params(exchange, capability_name, params, opts, config.path)
+          Dispatch.call(exchange, config, final_params, dispatch_opts)
+        end,
         timeout: timeout,
         on_timeout: :kill_task,
         ordered: true

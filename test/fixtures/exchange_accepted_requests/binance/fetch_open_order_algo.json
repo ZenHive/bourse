@@ -1,0 +1,63 @@
+{
+  "acceptance": {
+    "business_success": "HTTP 2xx Algo order payload for an identifier absent from the regular order book",
+    "capture_date": "2026-08-18",
+    "captured_at": "2026-08-18T07:02:51.856Z",
+    "endpoint": "fapi/v1/algoOrder",
+    "host": "demo-fapi.binance.com",
+    "http_status": 200,
+    "method": "fetch_open_order",
+    "profile": "fetch_open_order_algo",
+    "venue": "binance"
+  },
+  "additional_requests": [
+    {
+      "body": null,
+      "headers": [
+        [
+          "content-type",
+          "application/x-www-form-urlencoded"
+        ],
+        [
+          "x-mbx-apikey",
+          "key"
+        ]
+      ],
+      "method": "GET",
+      "url": "https://demo-fapi.binance.com/fapi/v1/openOrder?orderId=1000000171192502&symbol=ETHUSDT&timestamp=1787036568488&signature=e8012d0a94293fc5270ffc9eb04afca58d9f2072971e82b56e1becea93c3a7b5"
+    }
+  ],
+  "label": "Oracle: exchange-acceptance tier 1 vs binance fetch_open_order accepted 2026-08-18 (fapi/v1/algoOrder @ demo-fapi.binance.com, HTTP 200, HTTP 2xx Algo order payload for an identifier absent from the regular order book).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "fetch_open_order",
+    "nonce_override": 1787036568489,
+    "params": {
+      "id": "1000000171192502",
+      "symbol": "ETH/USDT:USDT"
+    },
+    "profile": "fetch_open_order_algo",
+    "timestamp_ms_override": 1787036568488
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "content-type",
+        "application/x-www-form-urlencoded"
+      ],
+      [
+        "x-mbx-apikey",
+        "key"
+      ]
+    ],
+    "method": "GET",
+    "url": "https://demo-fapi.binance.com/fapi/v1/algoOrder?algoId=1000000171192502&symbol=ETHUSDT&timestamp=1787036568488&signature=255a59c498827cb79f71c6f48eee4153fd8a94ea1fe759c5960c5f98b5393334"
+  },
+  "schema_version": 1
+}

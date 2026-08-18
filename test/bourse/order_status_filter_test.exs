@@ -164,7 +164,16 @@ defmodule Bourse.OrderStatusFilterTest do
                  plug: {Req.Test, stub}
                )
 
-      assert RequestCollector.one!(requests).request_path == @expected_path
+      paths = requests |> RequestCollector.requests() |> Enum.map(& &1.conn.request_path) |> Enum.sort()
+
+      expected_paths =
+        if @exchange_id == "binanceusdm" do
+          ["/fapi/v1/allAlgoOrders", @expected_path]
+        else
+          [@expected_path]
+        end
+
+      assert paths == expected_paths
     end
   end
 
@@ -219,7 +228,8 @@ defmodule Bourse.OrderStatusFilterTest do
 
     Req.Test.stub(stub, fn conn ->
       conn = RequestCollector.capture(requests, conn)
-      Req.Test.json(conn, @mixed_all_orders)
+      body = if String.ends_with?(conn.request_path, "/allAlgoOrders"), do: [], else: @mixed_all_orders
+      Req.Test.json(conn, body)
     end)
 
     {requests, stub}

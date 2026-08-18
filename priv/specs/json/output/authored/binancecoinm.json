@@ -978,7 +978,7 @@
       "fetchOption": false,
       "transfer": false,
       "fetchMyTrades": true,
-      "fetchOpenOrder": false,
+      "fetchOpenOrder": true,
       "fetchPremiumIndexOHLCV": false,
       "createOrder": true,
       "fetchTransactionFees": false,
@@ -3837,6 +3837,19 @@
             "source_class": "optional"
           }
         },
+        "fetchOpenOrder": {
+          "orderId": {
+            "source": "id",
+            "source_class": "unified_param"
+          },
+          "symbol": {
+            "kind": "unresolved",
+            "reason": "identifier_reference",
+            "source": "symbol",
+            "source_class": "optional",
+            "value": null
+          }
+        },
         "fetchOrder": {
           "orderId": {
             "source": "id",
@@ -3928,6 +3941,28 @@
         },
         "endpoint_overrides": {
           "cancelOrder": {
+            "algoOrder": {
+              "_omit": [
+                "orderId"
+              ],
+              "algoId": {
+                "source": "id",
+                "source_class": "unified_param"
+              }
+            }
+          },
+          "fetchOpenOrder": {
+            "algoOrder": {
+              "_omit": [
+                "orderId"
+              ],
+              "algoId": {
+                "source": "id",
+                "source_class": "unified_param"
+              }
+            }
+          },
+          "fetchOrder": {
             "algoOrder": {
               "_omit": [
                 "orderId"
@@ -4458,6 +4493,27 @@
             }
           ]
         },
+        "fetchOpenOrder": {
+          "book_routes": [
+            {
+              "endpoints": [
+                "dapiPrivate_get_openorder",
+                "dapiPrivate_get_algoorder"
+              ],
+              "mode": "first_success",
+              "when": {
+                "market_family": "inverse"
+              }
+            }
+          ],
+          "consume": [
+            "type",
+            "subType",
+            "sub_type"
+          ],
+          "default": "dapiPrivate_get_openorder",
+          "rules": []
+        },
         "fetchOpenOrders": {
           "book_routes": [
             {
@@ -4511,6 +4567,18 @@
           ]
         },
         "fetchOrder": {
+          "book_routes": [
+            {
+              "endpoints": [
+                "dapiPrivate_get_order",
+                "dapiPrivate_get_algoorder"
+              ],
+              "mode": "first_success",
+              "when": {
+                "market_family": "inverse"
+              }
+            }
+          ],
           "consume": [
             "subType",
             "sub_type"
@@ -9450,7 +9518,10 @@
       "fetchMyTrades": [
         "dapiPrivateGetUserTrades"
       ],
-      "fetchOpenOrder": [],
+      "fetchOpenOrder": [
+        "dapiPrivateGetAlgoOrder",
+        "dapiPrivateGetOpenOrder"
+      ],
       "fetchPremiumIndexOHLCV": [],
       "createOrder": [
         "dapiPrivatePostAlgoOrder",
@@ -9517,6 +9588,7 @@
       "createMarketSellOrder": [],
       "fetchTradingFees": [],
       "fetchOrder": [
+        "dapiPrivateGetAlgoOrder",
         "dapiPrivateGetOrder"
       ],
       "fetchOpenInterestHistory": [],

@@ -22,6 +22,7 @@ defmodule Bourse.BinancecoinmPromotionTest do
     fetchMarkets
     fetchMyTrades
     fetchOpenInterest
+    fetchOpenOrder
     fetchOpenOrders
     fetchOrder
     fetchOrderBook

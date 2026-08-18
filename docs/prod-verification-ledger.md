@@ -233,7 +233,6 @@ evidence beyond the batch review.
   - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.private`
   - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.sapi`
   - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:markets.patterns.currency_aliases`
-  - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:request_shape.fetchOrders`
   - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:request_shape.fetchTicker`
   - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:request_shape.fetchTickers`
 

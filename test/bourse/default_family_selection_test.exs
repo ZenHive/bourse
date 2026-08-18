@@ -15,19 +15,31 @@ defmodule Bourse.DefaultFamilySelectionTest do
       "cancelAllOrders" => "fapiPrivate_delete_algoopenorders",
       "cancelOrder" => "fapiPrivate_delete_algoorder",
       "createOrder" => "fapiPrivate_post_algoorder",
-      "fetchOpenOrders" => "fapiPrivate_get_openalgoorders"
+      "fetchCanceledOrders" => "fapiPrivate_get_allalgoorders",
+      "fetchClosedOrders" => "fapiPrivate_get_allalgoorders",
+      "fetchOpenOrder" => "fapiPrivate_get_algoorder",
+      "fetchOpenOrders" => "fapiPrivate_get_openalgoorders",
+      "fetchOrder" => "fapiPrivate_get_algoorder",
+      "fetchOrders" => "fapiPrivate_get_allalgoorders"
     },
     "binancecoinm" => %{
       "cancelAllOrders" => "dapiPrivate_delete_algoopenorders",
       "cancelOrder" => "dapiPrivate_delete_algoorder",
       "createOrder" => "dapiPrivate_post_algoorder",
-      "fetchOpenOrders" => "dapiPrivate_get_openalgoorders"
+      "fetchOpenOrder" => "dapiPrivate_get_algoorder",
+      "fetchOpenOrders" => "dapiPrivate_get_openalgoorders",
+      "fetchOrder" => "dapiPrivate_get_algoorder"
     },
     "binanceusdm" => %{
       "cancelAllOrders" => "fapiPrivate_delete_algoopenorders",
       "cancelOrder" => "fapiPrivate_delete_algoorder",
       "createOrder" => "fapiPrivate_post_algoorder",
-      "fetchOpenOrders" => "fapiPrivate_get_openalgoorders"
+      "fetchCanceledOrders" => "fapiPrivate_get_allalgoorders",
+      "fetchClosedOrders" => "fapiPrivate_get_allalgoorders",
+      "fetchOpenOrder" => "fapiPrivate_get_algoorder",
+      "fetchOpenOrders" => "fapiPrivate_get_openalgoorders",
+      "fetchOrder" => "fapiPrivate_get_algoorder",
+      "fetchOrders" => "fapiPrivate_get_allalgoorders"
     },
     "okx" => %{
       "cancelOrder" => "trade/cancel-algos",
@@ -40,6 +52,16 @@ defmodule Bourse.DefaultFamilySelectionTest do
     "bybit" => "position/trading-stop manages position-level TP/SL controls rather than independently cancellable orders",
     "deribit" => "buy and sell are side-specific RPC methods writing to the same order book",
     "derive" => "the debug endpoint changes response detail while writing to the same order book"
+  }
+
+  @binance_order_read_methods ~w(fetchOrder fetchOpenOrder fetchOrders fetchOpenOrders fetchClosedOrders fetchCanceledOrders)
+  @binance_order_read_exclusions %{
+    {"binancecoinm", "fetchOrders"} =>
+      "COIN-M REST index https://developers.binance.com/en/docs/products/derivatives-trading-coin-futures publishes no allAlgoOrders history read",
+    {"binancecoinm", "fetchClosedOrders"} =>
+      "COIN-M REST index https://developers.binance.com/en/docs/products/derivatives-trading-coin-futures publishes no allAlgoOrders history read",
+    {"binancecoinm", "fetchCanceledOrders"} =>
+      "COIN-M REST index https://developers.binance.com/en/docs/products/derivatives-trading-coin-futures publishes no allAlgoOrders history read"
   }
 
   describe "config.default_family slot" do
@@ -111,6 +133,20 @@ defmodule Bourse.DefaultFamilySelectionTest do
       end
 
       assert Enum.all?(@alternate_create_route_exclusions, fn {_venue, rationale} -> rationale != "" end)
+    end
+
+    test "every Binance Algo write book is reachable from each lifecycle read or explicitly excluded" do
+      for venue <- ~w(binance binancecoinm binanceusdm), method <- @binance_order_read_methods do
+        route = get_in(@distinct_order_book_contracts, [venue, method])
+        exclusion = Map.get(@binance_order_read_exclusions, {venue, method})
+
+        assert is_binary(route) or is_binary(exclusion),
+               "#{venue} #{method} is blind to the Algo order book without a provider-cited exclusion"
+      end
+
+      assert Enum.all?(@binance_order_read_exclusions, fn {_key, citation} ->
+               String.contains?(citation, "https://developers.binance.com/")
+             end)
     end
   end
 

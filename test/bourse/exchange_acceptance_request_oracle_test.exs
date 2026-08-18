@@ -176,6 +176,32 @@ defmodule Bourse.ExchangeAcceptanceRequestOracleTest do
     })
   end
 
+  test "Binance-family Algo read goldens pin identifier overrides and history fan-out" do
+    for {venue, host, prefix, symbol} <- [
+          {"binance", "demo-fapi.binance.com", "fapi", "ETHUSDT"},
+          {"binanceusdm", "demo-fapi.binance.com", "fapi", "ETHUSDT"},
+          {"binancecoinm", "demo-dapi.binance.com", "dapi", "BTCUSD_PERP"}
+        ] do
+      for profile <- ~w(fetch_order_algo fetch_open_order_algo) do
+        golden = venue_golden!(venue, profile)
+        assert_request(golden, host, "/#{prefix}/v1/algoOrder", "GET", %{"symbol" => symbol})
+        assert is_binary(request_query(golden)["algoId"])
+        refute Map.has_key?(request_query(golden), "orderId")
+        assert [regular] = golden["additional_requests"]
+        assert URI.parse(regular["url"]).path in ["/#{prefix}/v1/order", "/#{prefix}/v1/openOrder"]
+      end
+
+      if venue != "binancecoinm" do
+        for profile <- ~w(fetch_orders_algo fetch_closed_orders_algo fetch_canceled_orders_algo) do
+          golden = venue_golden!(venue, profile)
+          assert_request(golden, host, "/fapi/v1/allAlgoOrders", "GET", %{"symbol" => symbol})
+          assert [regular] = golden["additional_requests"]
+          assert URI.parse(regular["url"]).path == "/fapi/v1/allOrders"
+        end
+      end
+    end
+  end
+
   test "Binance spot order golden pins pass-through controls" do
     spot = binance_golden!("create_order_spot")
 

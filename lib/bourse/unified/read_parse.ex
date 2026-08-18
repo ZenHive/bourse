@@ -3059,7 +3059,7 @@ defmodule Bourse.Unified.ReadParse do
     case_result =
       case parse_type do
         "leverage_tiers" -> flatten_binance_leverage_tiers(payload)
-        "order" -> annotate_binance_orders(payload)
+        "order" -> annotate_binance_orders(payload, js_name)
         "position" -> annotate_binance_positions(payload, body, params, exchange)
         "margin_mode" -> annotate_binance_margin_mode(payload)
         "adl_rank" -> annotate_binance_adl_ranks(payload)
@@ -3100,9 +3100,10 @@ defmodule Bourse.Unified.ReadParse do
 
   defp flatten_binance_leverage_tiers(payload), do: payload
 
-  defp annotate_binance_orders(rows) when is_list(rows), do: Enum.map(rows, &annotate_binance_order/1)
-  defp annotate_binance_orders(%{} = row), do: annotate_binance_order(row)
-  defp annotate_binance_orders(payload), do: payload
+  defp annotate_binance_orders(rows, js_name) when is_list(rows), do: Enum.map(rows, &annotate_binance_order(&1, js_name))
+
+  defp annotate_binance_orders(%{} = row, js_name), do: annotate_binance_order(row, js_name)
+  defp annotate_binance_orders(payload, _js_name), do: payload
 
   defp annotate_binance_transactions(rows, js_name, params) when is_list(rows) do
     Enum.map(rows, &annotate_binance_transaction(&1, js_name, params))
@@ -3194,12 +3195,12 @@ defmodule Bourse.Unified.ReadParse do
 
   defp lighter_market_settle(_exchange, _market_id), do: nil
 
-  defp annotate_binance_order(%{} = row) do
+  defp annotate_binance_order(%{} = row, js_name) do
     id = binance_field(row, ["orderId", "algoId"])
     amount = non_empty_string(binance_field(row, ["origQty", "quantity"]))
     filled = binance_order_filled(row, id)
     cost = binance_order_cost(row, amount, filled)
-    status = binance_field(row, ["status", "algoStatus"])
+    status = binance_order_status(row, js_name)
     last_update = binance_field(row, ["updateTime", "transactTime"])
 
     row
@@ -3226,7 +3227,12 @@ defmodule Bourse.Unified.ReadParse do
     |> maybe_put_synthetic("_bourse_post_only", binance_post_only(row))
   end
 
-  defp annotate_binance_order(other), do: other
+  defp annotate_binance_order(other, _js_name), do: other
+
+  defp binance_order_status(%{"algoId" => algo_id, "code" => code}, "cancelOrder")
+       when not is_nil(algo_id) and code in [200, "200"], do: "CANCELED"
+
+  defp binance_order_status(row, _js_name), do: binance_field(row, ["status", "algoStatus"])
 
   # Binance USD-M documents GTX as "Good Till Crossing (Post Only)". Normalize
   # GTX to unified timeInForce "PO" and postOnly true (see carve C-T321a).
@@ -3315,7 +3321,9 @@ defmodule Bourse.Unified.ReadParse do
     Decimal.Error -> nil
   end
 
-  defp binance_order_type(type) when type in ["LIMIT", "LIMIT_MAKER", "STOP", "STOP_MARKET"], do: "limit"
+  defp binance_order_type(type) when type in ["LIMIT", "LIMIT_MAKER"], do: "limit"
+  defp binance_order_type("STOP"), do: "stop"
+  defp binance_order_type("STOP_MARKET"), do: "stop_market"
   defp binance_order_type(type) when type in ["MARKET", "TAKE_PROFIT", "STOP_LOSS"], do: "market"
   defp binance_order_type(type) when type in ["TAKE_PROFIT_LIMIT", "STOP_LOSS_LIMIT"], do: "limit"
   defp binance_order_type(type) when is_binary(type), do: String.downcase(type)

@@ -1,6 +1,6 @@
 {
-  "count": 26,
-  "generated_at": "2026-08-10T23:42:38Z",
+  "count": 38,
+  "generated_at": "2026-08-18T07:03:43Z",
   "goldens": [
     {
       "business_success": "HTTP 2xx paper-account payload",
@@ -92,6 +92,58 @@
       "venue": "binance"
     },
     {
+      "business_success": "HTTP 2xx Algo order-history list without an error code",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T07:03:09.108Z",
+      "endpoint": "fapi/v1/allAlgoOrders",
+      "host": "demo-fapi.binance.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binance fetch_canceled_orders accepted 2026-08-18 (fapi/v1/allAlgoOrders @ demo-fapi.binance.com, HTTP 200, HTTP 2xx Algo order-history list without an error code).",
+      "method": "fetch_canceled_orders",
+      "path": "binance/fetch_canceled_orders_algo.json",
+      "profile": "fetch_canceled_orders_algo",
+      "venue": "binance"
+    },
+    {
+      "business_success": "HTTP 2xx Algo order-history list without an error code",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T07:02:58.176Z",
+      "endpoint": "fapi/v1/allAlgoOrders",
+      "host": "demo-fapi.binance.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binance fetch_closed_orders accepted 2026-08-18 (fapi/v1/allAlgoOrders @ demo-fapi.binance.com, HTTP 200, HTTP 2xx Algo order-history list without an error code).",
+      "method": "fetch_closed_orders",
+      "path": "binance/fetch_closed_orders_algo.json",
+      "profile": "fetch_closed_orders_algo",
+      "venue": "binance"
+    },
+    {
+      "business_success": "HTTP 2xx Algo order payload for an identifier absent from the regular order book",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T07:02:51.856Z",
+      "endpoint": "fapi/v1/algoOrder",
+      "host": "demo-fapi.binance.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binance fetch_open_order accepted 2026-08-18 (fapi/v1/algoOrder @ demo-fapi.binance.com, HTTP 200, HTTP 2xx Algo order payload for an identifier absent from the regular order book).",
+      "method": "fetch_open_order",
+      "path": "binance/fetch_open_order_algo.json",
+      "profile": "fetch_open_order_algo",
+      "venue": "binance"
+    },
+    {
+      "business_success": "HTTP 2xx Algo order payload for an identifier absent from the regular order book",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T07:02:39.013Z",
+      "endpoint": "fapi/v1/algoOrder",
+      "host": "demo-fapi.binance.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binance fetch_order accepted 2026-08-18 (fapi/v1/algoOrder @ demo-fapi.binance.com, HTTP 200, HTTP 2xx Algo order payload for an identifier absent from the regular order book).",
+      "method": "fetch_order",
+      "path": "binance/fetch_order_algo.json",
+      "profile": "fetch_order_algo",
+      "venue": "binance"
+    },
+    {
       "business_success": "HTTP 2xx filtered order-history list without an error code",
       "capture_date": "2026-08-10",
       "captured_at": "2026-08-10T08:40:53.079Z",
@@ -102,6 +154,19 @@
       "method": "fetch_orders",
       "path": "binance/fetch_orders.json",
       "profile": "fetch_orders",
+      "venue": "binance"
+    },
+    {
+      "business_success": "HTTP 2xx Algo order-history list without an error code",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T07:02:55.080Z",
+      "endpoint": "fapi/v1/allAlgoOrders",
+      "host": "demo-fapi.binance.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binance fetch_orders accepted 2026-08-18 (fapi/v1/allAlgoOrders @ demo-fapi.binance.com, HTTP 200, HTTP 2xx Algo order-history list without an error code).",
+      "method": "fetch_orders",
+      "path": "binance/fetch_orders_algo.json",
+      "profile": "fetch_orders_algo",
       "venue": "binance"
     },
     {
@@ -170,6 +235,32 @@
       "venue": "binancecoinm"
     },
     {
+      "business_success": "HTTP 2xx Algo order payload for an identifier absent from the regular order book",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T07:03:43.062Z",
+      "endpoint": "dapi/v1/algoOrder",
+      "host": "demo-dapi.binance.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binancecoinm fetch_open_order accepted 2026-08-18 (dapi/v1/algoOrder @ demo-dapi.binance.com, HTTP 200, HTTP 2xx Algo order payload for an identifier absent from the regular order book).",
+      "method": "fetch_open_order",
+      "path": "binancecoinm/fetch_open_order_algo.json",
+      "profile": "fetch_open_order_algo",
+      "venue": "binancecoinm"
+    },
+    {
+      "business_success": "HTTP 2xx Algo order payload for an identifier absent from the regular order book",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T07:03:34.980Z",
+      "endpoint": "dapi/v1/algoOrder",
+      "host": "demo-dapi.binance.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binancecoinm fetch_order accepted 2026-08-18 (dapi/v1/algoOrder @ demo-dapi.binance.com, HTTP 200, HTTP 2xx Algo order payload for an identifier absent from the regular order book).",
+      "method": "fetch_order",
+      "path": "binancecoinm/fetch_order_algo.json",
+      "profile": "fetch_order_algo",
+      "venue": "binancecoinm"
+    },
+    {
       "business_success": "HTTP 200 COIN-M leverage 3 acknowledgement for flat BTCUSD_PERP",
       "capture_date": "2026-08-10",
       "captured_at": "2026-08-10T12:04:10.566Z",
@@ -232,6 +323,71 @@
       "method": "fetch_balance",
       "path": "binanceusdm/fetch_balance.json",
       "profile": "fetch_balance",
+      "venue": "binanceusdm"
+    },
+    {
+      "business_success": "HTTP 2xx Algo order-history list without an error code",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T07:03:27.381Z",
+      "endpoint": "fapi/v1/allAlgoOrders",
+      "host": "demo-fapi.binance.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binanceusdm fetch_canceled_orders accepted 2026-08-18 (fapi/v1/allAlgoOrders @ demo-fapi.binance.com, HTTP 200, HTTP 2xx Algo order-history list without an error code).",
+      "method": "fetch_canceled_orders",
+      "path": "binanceusdm/fetch_canceled_orders_algo.json",
+      "profile": "fetch_canceled_orders_algo",
+      "venue": "binanceusdm"
+    },
+    {
+      "business_success": "HTTP 2xx Algo order-history list without an error code",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T07:03:24.308Z",
+      "endpoint": "fapi/v1/allAlgoOrders",
+      "host": "demo-fapi.binance.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binanceusdm fetch_closed_orders accepted 2026-08-18 (fapi/v1/allAlgoOrders @ demo-fapi.binance.com, HTTP 200, HTTP 2xx Algo order-history list without an error code).",
+      "method": "fetch_closed_orders",
+      "path": "binanceusdm/fetch_closed_orders_algo.json",
+      "profile": "fetch_closed_orders_algo",
+      "venue": "binanceusdm"
+    },
+    {
+      "business_success": "HTTP 2xx Algo order payload for an identifier absent from the regular order book",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T07:03:16.275Z",
+      "endpoint": "fapi/v1/algoOrder",
+      "host": "demo-fapi.binance.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binanceusdm fetch_open_order accepted 2026-08-18 (fapi/v1/algoOrder @ demo-fapi.binance.com, HTTP 200, HTTP 2xx Algo order payload for an identifier absent from the regular order book).",
+      "method": "fetch_open_order",
+      "path": "binanceusdm/fetch_open_order_algo.json",
+      "profile": "fetch_open_order_algo",
+      "venue": "binanceusdm"
+    },
+    {
+      "business_success": "HTTP 2xx Algo order payload for an identifier absent from the regular order book",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T07:03:12.622Z",
+      "endpoint": "fapi/v1/algoOrder",
+      "host": "demo-fapi.binance.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binanceusdm fetch_order accepted 2026-08-18 (fapi/v1/algoOrder @ demo-fapi.binance.com, HTTP 200, HTTP 2xx Algo order payload for an identifier absent from the regular order book).",
+      "method": "fetch_order",
+      "path": "binanceusdm/fetch_order_algo.json",
+      "profile": "fetch_order_algo",
+      "venue": "binanceusdm"
+    },
+    {
+      "business_success": "HTTP 2xx Algo order-history list without an error code",
+      "capture_date": "2026-08-18",
+      "captured_at": "2026-08-18T07:03:19.191Z",
+      "endpoint": "fapi/v1/allAlgoOrders",
+      "host": "demo-fapi.binance.com",
+      "http_status": 200,
+      "label": "Oracle: exchange-acceptance tier 1 vs binanceusdm fetch_orders accepted 2026-08-18 (fapi/v1/allAlgoOrders @ demo-fapi.binance.com, HTTP 200, HTTP 2xx Algo order-history list without an error code).",
+      "method": "fetch_orders",
+      "path": "binanceusdm/fetch_orders_algo.json",
+      "profile": "fetch_orders_algo",
       "venue": "binanceusdm"
     },
     {

@@ -19,6 +19,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
   @fixture_root Path.expand("../../test/fixtures/exchange_accepted_requests", __DIR__)
   @accepted_http_statuses 200..299
   @fixture_http_status 200
+  @bad_request_http_status 400
   @auth_marker "__FIXTURE_AUTH_SLOT__"
   @capture_receive_timeout_ms 1_000
   @no_extra_request_wait_ms 0
@@ -175,6 +176,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
       binance_spot_order_profile(),
       binance_margin_mode_profile(),
       binance_cancel_all_orders_profile()
+      | binance_algo_read_profiles("binance", "fapi", "ETH/USDT:USDT", "1000000171192502")
     ]
   end
 
@@ -185,6 +187,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
       binanceusdm_margin_mode_profile(),
       binanceusdm_cancel_all_orders_profile(),
       binanceusdm_position_mode_profile()
+      | binance_algo_read_profiles("binanceusdm", "fapi", "ETH/USDT:USDT", "1000000171192502")
     ]
   end
 
@@ -196,6 +199,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
       binancecoinm_cancel_all_orders_profile(),
       binancecoinm_leverage_profile(),
       binancecoinm_leverage_tiers_profile()
+      | binance_algo_single_read_profiles("binancecoinm", "dapi", "BTC/USD:BTC", "1000000171199888")
     ]
   end
 
@@ -259,6 +263,66 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
       stub_body: [],
       business_success: "HTTP 2xx filtered order-history list without an error code"
     )
+  end
+
+  defp binance_algo_read_profiles(venue, prefix, symbol, algo_id) do
+    binance_algo_single_read_profiles(venue, prefix, symbol, algo_id) ++
+      Enum.map(
+        [
+          {:fetch_orders_algo, :fetch_orders},
+          {:fetch_closed_orders_algo, :fetch_closed_orders},
+          {:fetch_canceled_orders_algo, :fetch_canceled_orders}
+        ],
+        fn {profile_id, method} ->
+          build_profile(venue, method, "#{prefix}/v1/allAlgoOrders", "demo-#{prefix}.binance.com", :binanceusdm,
+            profile: profile_id,
+            sandbox: true,
+            fixture_seed: :empty,
+            params: %{"limit" => @binance_order_history_limit, "symbol" => symbol},
+            sensitive_headers: ["x-mbx-apikey"],
+            sensitive_query: ["signature"],
+            stub_body: [],
+            business_success: "HTTP 2xx Algo order-history list without an error code"
+          )
+        end
+      )
+  end
+
+  defp binance_algo_single_read_profiles(venue, prefix, symbol, algo_id) do
+    Enum.map(
+      [
+        {:fetch_order_algo, :fetch_order, "order"},
+        {:fetch_open_order_algo, :fetch_open_order, "openOrder"}
+      ],
+      fn {profile_id, method, regular_endpoint} ->
+        algo_path = "/#{prefix}/v1/algoOrder"
+        regular_path = "/#{prefix}/v1/#{regular_endpoint}"
+
+        build_profile(venue, method, "#{prefix}/v1/algoOrder", "demo-#{prefix}.binance.com", :binanceusdm,
+          profile: profile_id,
+          sandbox: true,
+          fixture_seed: :empty,
+          params: %{"id" => algo_id, "symbol" => symbol},
+          sensitive_headers: ["x-mbx-apikey"],
+          sensitive_query: ["signature"],
+          stub_responses: %{
+            regular_path => {@bad_request_http_status, %{"code" => -2013, "msg" => "Order does not exist."}},
+            algo_path => {@fixture_http_status, binance_algo_order_stub(algo_id, symbol)}
+          },
+          business_success: "HTTP 2xx Algo order payload for an identifier absent from the regular order book"
+        )
+      end
+    )
+  end
+
+  defp binance_algo_order_stub(algo_id, symbol) do
+    %{
+      "algoId" => algo_id,
+      "algoStatus" => "CANCELED",
+      "orderType" => "STOP_MARKET",
+      "quantity" => "1",
+      "symbol" => symbol
+    }
   end
 
   defp binance_take_profit_order_profile do
@@ -605,6 +669,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
       sensitive_headers: Keyword.get(opts, :sensitive_headers, []),
       sensitive_query: Keyword.get(opts, :sensitive_query, []),
       stub_body: Keyword.get_lazy(opts, :stub_body, fn -> success_stub(venue) end),
+      stub_responses: Keyword.get(opts, :stub_responses, %{}),
       symbol: Keyword.get(opts, :symbol),
       venue: venue
     }
@@ -854,10 +919,11 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     end
   end
 
-  defp fixture_capture_adapter(parent, reference, body) do
+  defp fixture_capture_adapter(parent, reference, profile) do
     fn request ->
       send(parent, {:accepted_request_capture, reference, request_map(request)})
-      {request, Req.Response.new(status: @fixture_http_status, body: body)}
+      {status, body} = Map.get(profile.stub_responses, request.url.path, {@fixture_http_status, profile.stub_body})
+      {request, Req.Response.new(status: status, body: body)}
     end
   end
 
@@ -938,6 +1004,11 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     accepted_business_response(profile, body)
   end
 
+  defp accepted_response(profile, responses) when is_list(responses) do
+    bodies = Enum.map(responses, &Map.fetch!(&1, "body"))
+    accepted_business_response(profile, bodies)
+  end
+
   defp accepted_response(_profile, _response), do: {:error, :exchange_did_not_accept_request}
 
   defp accepted_business_response(%{venue: venue, method: :create_order}, %{"algoId" => id})
@@ -982,6 +1053,8 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     if Map.has_key?(body, "code"), do: {:error, :venue_business_failure}, else: {:ok, nil}
   end
 
+  defp accepted_business_response(%{venue: "binanceusdm"}, body) when is_list(body), do: {:ok, nil}
+
   defp accepted_business_response(%{venue: "alpaca"}, body) when is_map(body) do
     if Map.has_key?(body, "message"), do: {:error, :venue_business_failure}, else: {:ok, nil}
   end
@@ -1019,7 +1092,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     with {:ok, fixture_exchange} <- build_fixture_exchange(profile, replay),
          {:ok, fixture_requests} <- capture_fixture_request(fixture_exchange, profile, replay),
          :ok <- compare_accepted_shapes(live_requests, fixture_requests, profile) do
-      golden = golden(profile, replay, response.status, fixture_requests)
+      golden = golden(profile, replay, response_status(response), fixture_requests)
 
       golden
       |> validate_no_material(live_material(live_requests, credentials, profile))
@@ -1060,6 +1133,9 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
     |> Map.put("label", OracleLabel.exchange_acceptance_label(golden))
   end
 
+  defp response_status(%{status: status}), do: status
+  defp response_status(responses) when is_list(responses), do: @fixture_http_status
+
   defp maybe_put_additional_requests(golden, []), do: golden
   defp maybe_put_additional_requests(golden, requests), do: Map.put(golden, "additional_requests", requests)
 
@@ -1091,7 +1167,7 @@ defmodule Bourse.ExchangeAcceptanceFixtures do
 
   defp capture_fixture_request(exchange, profile, replay) do
     reference = make_ref()
-    adapter = fixture_capture_adapter(self(), reference, profile.stub_body)
+    adapter = fixture_capture_adapter(self(), reference, profile)
     clock = %{"nonce" => replay["nonce_override"], "timestamp_ms" => replay["timestamp_ms_override"]}
 
     case dispatch_capture(exchange, profile, replay["params"], clock, adapter) do

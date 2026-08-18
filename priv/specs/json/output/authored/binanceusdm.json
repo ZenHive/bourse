@@ -4123,6 +4123,10 @@
           }
         },
         "fetchOpenOrder": {
+          "orderId": {
+            "source": "id",
+            "source_class": "unified_param"
+          },
           "symbol": {
             "kind": "unresolved",
             "reason": "identifier_reference",
@@ -4397,6 +4401,28 @@
         },
         "endpoint_overrides": {
           "cancelOrder": {
+            "algoOrder": {
+              "_omit": [
+                "orderId"
+              ],
+              "algoId": {
+                "source": "id",
+                "source_class": "unified_param"
+              }
+            }
+          },
+          "fetchOpenOrder": {
+            "algoOrder": {
+              "_omit": [
+                "orderId"
+              ],
+              "algoId": {
+                "source": "id",
+                "source_class": "unified_param"
+              }
+            }
+          },
+          "fetchOrder": {
             "algoOrder": {
               "_omit": [
                 "orderId"
@@ -4694,6 +4720,18 @@
           ]
         },
         "fetchCanceledOrders": {
+          "book_routes": [
+            {
+              "endpoints": [
+                "fapiPrivate_get_allorders",
+                "fapiPrivate_get_allalgoorders"
+              ],
+              "mode": "merge",
+              "when": {
+                "market_family": "linear"
+              }
+            }
+          ],
           "consume": [
             "type",
             "subType",
@@ -4722,6 +4760,18 @@
           ]
         },
         "fetchClosedOrders": {
+          "book_routes": [
+            {
+              "endpoints": [
+                "fapiPrivate_get_allorders",
+                "fapiPrivate_get_allalgoorders"
+              ],
+              "mode": "merge",
+              "when": {
+                "market_family": "linear"
+              }
+            }
+          ],
           "consume": [
             "type",
             "subType",
@@ -5029,6 +5079,40 @@
             }
           ]
         },
+        "fetchOpenOrder": {
+          "book_routes": [
+            {
+              "endpoints": [
+                "fapiPrivate_get_openorder",
+                "fapiPrivate_get_algoorder"
+              ],
+              "mode": "first_success",
+              "when": {
+                "market_family": "linear"
+              }
+            }
+          ],
+          "consume": [
+            "type",
+            "subType",
+            "sub_type"
+          ],
+          "default": "fapiPrivate_get_openorder",
+          "rules": [
+            {
+              "endpoint": "dapiPrivate_get_openorder",
+              "when": {
+                "market_family": "inverse"
+              }
+            },
+            {
+              "endpoint": "private_get_order",
+              "when": {
+                "market_family": "spot"
+              }
+            }
+          ]
+        },
         "fetchOpenOrders": {
           "book_routes": [
             {
@@ -5082,6 +5166,18 @@
           ]
         },
         "fetchOrder": {
+          "book_routes": [
+            {
+              "endpoints": [
+                "fapiPrivate_get_order",
+                "fapiPrivate_get_algoorder"
+              ],
+              "mode": "first_success",
+              "when": {
+                "market_family": "linear"
+              }
+            }
+          ],
           "consume": [
             "subType",
             "sub_type"
@@ -5109,6 +5205,18 @@
           ]
         },
         "fetchOrders": {
+          "book_routes": [
+            {
+              "endpoints": [
+                "fapiPrivate_get_allorders",
+                "fapiPrivate_get_allalgoorders"
+              ],
+              "mode": "merge",
+              "when": {
+                "market_family": "linear"
+              }
+            }
+          ],
           "consume": [
             "type",
             "subType",
@@ -10226,6 +10334,7 @@
       ],
       "fetchOpenOrder": [
         "dapiPrivateGetOpenOrder",
+        "fapiPrivateGetAlgoOrder",
         "fapiPrivateGetOpenOrder",
         "papiGetCmConditionalOpenOrder",
         "papiGetCmOpenOrder",

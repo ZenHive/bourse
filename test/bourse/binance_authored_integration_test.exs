@@ -25,6 +25,10 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
   @usdm_conditional_trigger_ratio 0.85
   @usdm_conditional_limit_ratio 0.84
   @usdm_conditional_price_decimal_places 2
+  @usdm_algo_read_amount 0.25
+  @coinm_conditional_amount 1
+  @coinm_conditional_trigger_ratio 0.85
+  @coinm_conditional_price_decimal_places 1
   @usdm_flat_leverage_symbol "ETH/USDT:USDT"
   @coinm_flat_leverage_symbol "BTC/USD:BTC"
   @configured_leverage 3
@@ -753,6 +757,44 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
     end
   end
 
+  @tag :dangerous
+  test "Binance-family Algo identifiers round-trip through single reads and return branchable cancel state" do
+    credentials =
+      require_credentials!(:binance, sandbox_key: :futures, url: "https://demo.binance.com/en/my/settings/api-management")
+
+    for {exchange_id, symbol, amount, ratio, decimal_places} <- [
+          {:binance, @usdm_conditional_symbol, @usdm_algo_read_amount, @usdm_conditional_trigger_ratio,
+           @usdm_conditional_price_decimal_places},
+          {:binanceusdm, @usdm_conditional_symbol, @usdm_algo_read_amount, @usdm_conditional_trigger_ratio,
+           @usdm_conditional_price_decimal_places},
+          {:binancecoinm, @coinm_flat_leverage_symbol, @coinm_conditional_amount, @coinm_conditional_trigger_ratio,
+           @coinm_conditional_price_decimal_places}
+        ] do
+      exchange = build_exchange(exchange_id, credentials: credentials, sandbox: true)
+      assert {:ok, %Bourse.Ticker{} = ticker} = Bourse.fetch_ticker(exchange, symbol)
+      trigger_price = conditional_price(ticker.mark_price || ticker.last, ratio, decimal_places)
+
+      assert {:ok, %Order{id: id, status: "open", type: "stop_market"}} =
+               Bourse.create_order(exchange, symbol, "market", "sell", amount,
+                 time_in_force: "GTC",
+                 trigger_price: trigger_price
+               )
+
+      try do
+        assert {:ok, %Order{id: ^id, status: "open", type: "stop_market"}} =
+                 Bourse.fetch_order(exchange, id, symbol: symbol)
+
+        assert {:ok, %Order{id: ^id, status: "open", type: "stop_market"}} =
+                 Bourse.fetch_open_order(exchange, id, symbol: symbol)
+
+        assert {:ok, %Order{id: ^id, status: "canceled"}} =
+                 Bourse.cancel_order(exchange, id, symbol: symbol)
+      after
+        cleanup_algo_order!(exchange, id, symbol)
+      end
+    end
+  end
+
   test "every live EAPI option id round-trips through the authored option carve" do
     exchange = Bourse.Exchange.new!("binance")
     rows = live_eapi_option_rows!()
@@ -841,11 +883,20 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
     {trigger_price, limit_price}
   end
 
-  defp conditional_price(mark_price, ratio) do
+  defp conditional_price(mark_price, ratio, decimal_places \\ @usdm_conditional_price_decimal_places) do
     mark_price
     |> Kernel.*(ratio)
-    |> Float.floor(@usdm_conditional_price_decimal_places)
-    |> :erlang.float_to_binary(decimals: @usdm_conditional_price_decimal_places)
+    |> Float.floor(decimal_places)
+    |> :erlang.float_to_binary(decimals: decimal_places)
+  end
+
+  defp cleanup_algo_order!(exchange, id, symbol) do
+    case Bourse.cancel_order(exchange, id, symbol: symbol) do
+      {:ok, %Order{status: "canceled"}} -> :ok
+      {:error, %Error{type: :order_not_found}} -> :ok
+      {:error, %Error{type: :invalid_order}} -> :ok
+      other -> flunk("Binance Algo cleanup failed for #{id}: #{inspect(other)}")
+    end
   end
 
   defp create_regular_resting_orders!(exchange, price) do

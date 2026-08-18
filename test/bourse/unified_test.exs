@@ -660,6 +660,29 @@ defmodule Bourse.UnifiedTest do
                })
     end
 
+    test "applies endpoint overrides independently to every merge leg" do
+      credentials = Bourse.Credentials.new!(api_key: "test-key", secret: "test-secret")
+      exchange = Exchange.new!("binance", credentials: credentials)
+
+      request_param_shape =
+        put_in(
+          exchange.request_param_shape,
+          ["endpoint_overrides", "fetchOrders"],
+          %{"allAlgoOrders" => %{"_omit" => ["endTime"]}}
+        )
+
+      exchange = %{exchange | request_param_shape: request_param_shape}
+
+      assert {:ok, [regular, algo]} =
+               Unified.request_param_shapes(exchange, :fetch_orders, %{
+                 "symbol" => "ETH/USDT:USDT",
+                 "until" => 1_700_000_000_000
+               })
+
+      assert regular["endTime"] == 1_700_000_000_000
+      refute Map.has_key?(algo, "endTime")
+    end
+
     test "rebuilds every parameter fan-out variant" do
       assert {:ok, shapes} = Unified.request_param_shapes(Exchange.new!("bybit"), :fetch_markets, %{})
 

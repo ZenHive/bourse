@@ -1,0 +1,63 @@
+{
+  "acceptance": {
+    "business_success": "HTTP 2xx Algo order payload for an identifier absent from the regular order book",
+    "capture_date": "2026-08-18",
+    "captured_at": "2026-08-18T07:03:12.622Z",
+    "endpoint": "fapi/v1/algoOrder",
+    "host": "demo-fapi.binance.com",
+    "http_status": 200,
+    "method": "fetch_order",
+    "profile": "fetch_order_algo",
+    "venue": "binanceusdm"
+  },
+  "additional_requests": [
+    {
+      "body": null,
+      "headers": [
+        [
+          "content-type",
+          "application/x-www-form-urlencoded"
+        ],
+        [
+          "x-mbx-apikey",
+          "key"
+        ]
+      ],
+      "method": "GET",
+      "url": "https://demo-fapi.binance.com/fapi/v1/order?orderId=1000000171192502&symbol=ETHUSDT&timestamp=1787036589818&signature=2c53029994004f69100854775e6792ad7ac2f16603a693fae7232d9273aa1721"
+    }
+  ],
+  "label": "Oracle: exchange-acceptance tier 1 vs binanceusdm fetch_order accepted 2026-08-18 (fapi/v1/algoOrder @ demo-fapi.binance.com, HTTP 200, HTTP 2xx Algo order payload for an identifier absent from the regular order book).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "fetch_order",
+    "nonce_override": 1787036589819,
+    "params": {
+      "id": "1000000171192502",
+      "symbol": "ETH/USDT:USDT"
+    },
+    "profile": "fetch_order_algo",
+    "timestamp_ms_override": 1787036589818
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "content-type",
+        "application/x-www-form-urlencoded"
+      ],
+      [
+        "x-mbx-apikey",
+        "key"
+      ]
+    ],
+    "method": "GET",
+    "url": "https://demo-fapi.binance.com/fapi/v1/algoOrder?algoId=1000000171192502&symbol=ETHUSDT&timestamp=1787036589818&signature=f584d30df0bdc075fd1c1819a52fbe1c7cc983c12eb52d7df868b8d5f30a47ed"
+  },
+  "schema_version": 1
+}

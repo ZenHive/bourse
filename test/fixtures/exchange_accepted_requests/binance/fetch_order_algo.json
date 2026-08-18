@@ -1,0 +1,63 @@
+{
+  "acceptance": {
+    "business_success": "HTTP 2xx Algo order payload for an identifier absent from the regular order book",
+    "capture_date": "2026-08-18",
+    "captured_at": "2026-08-18T07:02:39.013Z",
+    "endpoint": "fapi/v1/algoOrder",
+    "host": "demo-fapi.binance.com",
+    "http_status": 200,
+    "method": "fetch_order",
+    "profile": "fetch_order_algo",
+    "venue": "binance"
+  },
+  "additional_requests": [
+    {
+      "body": null,
+      "headers": [
+        [
+          "content-type",
+          "application/x-www-form-urlencoded"
+        ],
+        [
+          "x-mbx-apikey",
+          "key"
+        ]
+      ],
+      "method": "GET",
+      "url": "https://demo-fapi.binance.com/fapi/v1/order?orderId=1000000171192502&symbol=ETHUSDT&timestamp=1787036555720&signature=e59504932d5068eb54c33b13a4041b96e6ee0be34aecf97a6aa4a535e0681690"
+    }
+  ],
+  "label": "Oracle: exchange-acceptance tier 1 vs binance fetch_order accepted 2026-08-18 (fapi/v1/algoOrder @ demo-fapi.binance.com, HTTP 200, HTTP 2xx Algo order payload for an identifier absent from the regular order book).",
+  "oracle": "exchange_acceptance",
+  "provenance": {
+    "credentials": "committed fixture credentials",
+    "signature": "derived from fixture credentials during deterministic replay"
+  },
+  "replay": {
+    "call_opts": {},
+    "method": "fetch_order",
+    "nonce_override": 1787036555721,
+    "params": {
+      "id": "1000000171192502",
+      "symbol": "ETH/USDT:USDT"
+    },
+    "profile": "fetch_order_algo",
+    "timestamp_ms_override": 1787036555720
+  },
+  "request": {
+    "body": null,
+    "headers": [
+      [
+        "content-type",
+        "application/x-www-form-urlencoded"
+      ],
+      [
+        "x-mbx-apikey",
+        "key"
+      ]
+    ],
+    "method": "GET",
+    "url": "https://demo-fapi.binance.com/fapi/v1/algoOrder?algoId=1000000171192502&symbol=ETHUSDT&timestamp=1787036555720&signature=7f2565e0ecf0aa7b49a906f8f740a60cf6c84efcca98fd271efa0710681f9fbd"
+  },
+  "schema_version": 1
+}

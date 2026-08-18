@@ -306,13 +306,13 @@ defmodule Bourse.BinanceAuthoredSpecTest do
   end
 
   test "Binance USD-M conditional order opts reach the Algo Order request" do
-    for {trigger_opt, trigger_value, order_type, native_type} <- [
-          {:trigger_price, "3000", "market", "STOP_MARKET"},
-          {:stop_loss_price, "2900", "market", "STOP_MARKET"},
-          {:take_profit_price, "3100", "market", "TAKE_PROFIT_MARKET"},
-          {:take_profit_price, "3100", "limit", "TAKE_PROFIT"}
+    for {trigger_opt, trigger_value, order_type, native_type, unified_type} <- [
+          {:trigger_price, "3000", "market", "STOP_MARKET", "stop_market"},
+          {:stop_loss_price, "2900", "market", "STOP_MARKET", "stop_market"},
+          {:take_profit_price, "3100", "market", "TAKE_PROFIT_MARKET", "take_profit_market"},
+          {:take_profit_price, "3100", "limit", "TAKE_PROFIT", "market"}
         ] do
-      {requests, stub} = order_stub()
+      {requests, stub} = algo_order_stub()
       exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
 
       opts =
@@ -325,7 +325,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
           timestamp_ms_override: 1_700_000_000_000
         ]
 
-      assert {:ok, %Bourse.Order{}} =
+      assert {:ok, %Bourse.Order{type: ^unified_type}} =
                Bourse.create_order(exchange, "ETH/USDT:USDT", order_type, "sell", 1, opts)
 
       assert_order_request(requests, :post, "/fapi/v1/algoOrder", fn params ->
@@ -347,10 +347,10 @@ defmodule Bourse.BinanceAuthoredSpecTest do
           {"binanceusdm", "ETH/USDT:USDT", "/fapi/v1/algoOrder"},
           {"binancecoinm", "BTC/USD:BTC", "/dapi/v1/algoOrder"}
         ],
-        {trigger_opt, trigger_value, native_type} <- [
-          {:trigger_price, "3000", "STOP_MARKET"},
-          {:stop_loss_price, "2900", "STOP_MARKET"},
-          {:take_profit_price, "3100", "TAKE_PROFIT_MARKET"}
+        {trigger_opt, trigger_value, native_type, unified_type} <- [
+          {:trigger_price, "3000", "STOP_MARKET", "stop_market"},
+          {:stop_loss_price, "2900", "STOP_MARKET", "stop_market"},
+          {:take_profit_price, "3100", "TAKE_PROFIT_MARKET", "take_profit_market"}
         ] do
       {requests, stub} = algo_order_stub()
       exchange = Exchange.new!(exchange_id, api_key: "key", secret: "secret", sandbox: true)
@@ -363,7 +363,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
         timestamp_ms_override: @frozen_timestamp_ms
       ]
 
-      assert {:ok, %Bourse.Order{}} =
+      assert {:ok, %Bourse.Order{type: ^unified_type}} =
                Bourse.create_order(exchange, symbol, "market", "sell", 1, opts)
 
       assert_order_request(requests, :post, expected_path, fn params ->
@@ -606,6 +606,92 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     assert recorded_paths(requests) == ["/fapi/v1/openAlgoOrders", "/fapi/v1/openOrders"]
   end
 
+  test "Binance-family single-order reads fall through to the Algo book with the same identifier" do
+    for {exchange_id, symbol, prefix} <- [
+          {"binance", "ETH/USDT:USDT", "fapi"},
+          {"binanceusdm", "ETH/USDT:USDT", "fapi"},
+          {"binancecoinm", "BTC/USD:BTC", "dapi"}
+        ],
+        {method, regular_path} <- [
+          {:fetch_order, "/#{prefix}/v1/order"},
+          {:fetch_open_order, "/#{prefix}/v1/openOrder"}
+        ] do
+      stub = unique_stub("binance_algo_single_read")
+      {:ok, requests} = RequestCollector.start_link()
+
+      Req.Test.stub(stub, fn conn ->
+        {conn, _body} = RequestCollector.capture_with_body(requests, conn)
+
+        if conn.request_path == regular_path do
+          conn
+          |> Plug.Conn.put_status(@bad_request_status)
+          |> Req.Test.json(%{"code" => -2013, "msg" => "Order does not exist."})
+        else
+          Req.Test.json(conn, algo_open_order())
+        end
+      end)
+
+      exchange = Exchange.new!(exchange_id, api_key: "key", secret: "secret", sandbox: true)
+
+      assert {:ok, %Bourse.Order{id: "9001", status: "open", type: "stop_market"}} =
+               apply(Bourse, method, [
+                 exchange,
+                 "9001",
+                 [
+                   symbol: symbol,
+                   plug: {Req.Test, stub},
+                   timestamp_ms_override: @frozen_timestamp_ms
+                 ]
+               ])
+
+      [regular, algo] = RequestCollector.requests(requests)
+      assert regular.conn.request_path == regular_path
+      assert request_params(regular.conn, regular.body)["orderId"] == "9001"
+      assert algo.conn.request_path == "/#{prefix}/v1/algoOrder"
+      assert request_params(algo.conn, algo.body)["algoId"] == "9001"
+      refute Map.has_key?(request_params(algo.conn, algo.body), "orderId")
+    end
+  end
+
+  test "USD-M order history reads merge regular and Algo books" do
+    for exchange_id <- ~w(binance binanceusdm),
+        {method, algo_status, status} <- [
+          {:fetch_orders, "NEW", "open"},
+          {:fetch_closed_orders, "FILLED", "closed"},
+          {:fetch_canceled_orders, "CANCELED", "canceled"}
+        ] do
+      stub = unique_stub("binance_algo_history_read")
+      {:ok, requests} = RequestCollector.start_link()
+
+      Req.Test.stub(stub, fn conn ->
+        conn = RequestCollector.capture(requests, conn)
+
+        body =
+          if conn.request_path == "/fapi/v1/allAlgoOrders" do
+            [Map.put(algo_open_order(), "algoStatus", algo_status)]
+          else
+            []
+          end
+
+        Req.Test.json(conn, body)
+      end)
+
+      exchange = Exchange.new!(exchange_id, api_key: "key", secret: "secret", sandbox: true)
+
+      assert {:ok, [%Bourse.Order{id: "9001", status: ^status, type: "stop_market"}]} =
+               apply(Bourse, method, [
+                 exchange,
+                 [
+                   symbol: "ETH/USDT:USDT",
+                   plug: {Req.Test, stub},
+                   timestamp_ms_override: @frozen_timestamp_ms
+                 ]
+               ])
+
+      assert recorded_paths(requests) == ["/fapi/v1/allAlgoOrders", "/fapi/v1/allOrders"]
+    end
+  end
+
   test "Binance USD-M cancel_order falls through order-not-found to the Algo book" do
     stub = unique_stub("binance_cancel_order_books")
     {:ok, requests} = RequestCollector.start_link()
@@ -626,7 +712,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
 
     exchange = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
 
-    assert {:ok, %Bourse.Order{id: "9001"}} =
+    assert {:ok, %Bourse.Order{id: "9001", status: "canceled"}} =
              Bourse.cancel_order(exchange, "9001",
                symbol: "ETH/USDT:USDT",
                plug: {Req.Test, stub},
@@ -3377,7 +3463,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     # not manufacture a zero fill.
     algo_ack = %{"algoId" => "3386", "clientAlgoId" => "SQPifLIBAzZf0o4YAOGIwm", "code" => "200", "msg" => "success"}
 
-    assert {:ok, %Bourse.Order{id: "3386", filled: nil, amount: nil, cost: nil, status: nil}} =
+    assert {:ok, %Bourse.Order{id: "3386", filled: nil, amount: nil, cost: nil, status: "canceled"}} =
              ReadParse.parse(
                exchange,
                Bourse.Binance,
@@ -3876,7 +3962,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
       "algoStatus" => "NEW",
       "clientAlgoId" => "algo-client",
       "createTime" => @frozen_timestamp_ms,
-      "orderType" => "STOP",
+      "orderType" => "STOP_MARKET",
       "quantity" => "0.02",
       "side" => "SELL",
       "symbol" => "ETHUSDT",

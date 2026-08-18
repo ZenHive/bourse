@@ -170,8 +170,20 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
 
           expected_profiles =
             case venue do
-              "binanceusdm" -> expected_profiles ++ ["set_position_mode"]
-              "binancecoinm" -> expected_profiles ++ ["set_leverage", "fetch_leverage_tiers"]
+              "binanceusdm" ->
+                expected_profiles ++
+                  [
+                    "set_position_mode",
+                    "fetch_order_algo",
+                    "fetch_open_order_algo",
+                    "fetch_orders_algo",
+                    "fetch_closed_orders_algo",
+                    "fetch_canceled_orders_algo"
+                  ]
+
+              "binancecoinm" ->
+                expected_profiles ++
+                  ["set_leverage", "fetch_leverage_tiers", "fetch_order_algo", "fetch_open_order_algo"]
             end
 
           assert Enum.map(goldens, &get_in(&1, ["acceptance", "profile"])) == expected_profiles
@@ -218,7 +230,12 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
                  "create_order",
                  "create_order_spot",
                  "set_margin_mode",
-                 "cancel_all_orders"
+                 "cancel_all_orders",
+                 "fetch_order_algo",
+                 "fetch_open_order_algo",
+                 "fetch_orders_algo",
+                 "fetch_closed_orders_algo",
+                 "fetch_canceled_orders_algo"
                ]
 
         assert Enum.all?(goldens, &(ExchangeAcceptanceFixtures.replay(&1) == :ok))
@@ -296,6 +313,11 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
 
   defp success_transport(request) do
     case {request.method, request.url.host, request.url.path} do
+      {:get, host, path}
+      when host in ["demo-fapi.binance.com", "demo-dapi.binance.com"] and
+             path in ["/fapi/v1/order", "/fapi/v1/openOrder", "/dapi/v1/order", "/dapi/v1/openOrder"] ->
+        {request, Req.Response.new(status: 400, body: %{"code" => -2013, "msg" => "Order does not exist."})}
+
       {:delete, "demo-fapi.binance.com", "/fapi/v1/order"} ->
         {request, Req.Response.new(status: 400, body: %{"code" => -2011, "msg" => "Unknown order sent."})}
 
@@ -329,6 +351,8 @@ defmodule Bourse.ExchangeAcceptanceFixturesTest do
   defp success_body("demo-dapi.binance.com", "/dapi/v1/algoOrder") do
     %{"algoId" => 1, "algoStatus" => "NEW", "symbol" => "BTCUSD_PERP"}
   end
+
+  defp success_body("demo-fapi.binance.com", path) when path in ["/fapi/v1/allOrders", "/fapi/v1/allAlgoOrders"], do: []
 
   defp success_body("demo-dapi.binance.com", "/dapi/v1/leverage") do
     %{"leverage" => 3, "maxQty" => "1000", "symbol" => "BTCUSD_PERP"}
