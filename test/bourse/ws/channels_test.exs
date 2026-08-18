@@ -6,6 +6,7 @@ defmodule Bourse.WS.ChannelsTest do
 
   describe "build/4 per-exchange formatters" do
     @cases [
+      {"alpaca", :watch_trades, %{symbol: "FAKEPACA"}, "trades:FAKEPACA"},
       {"bybit", :watch_ticker, %{symbol: "BTC/USDT"}, "tickers.BTCUSDT"},
       {"bybit", :watch_order_book, %{symbol: "BTC/USDT"}, "orderbook:BTCUSDT"},
       {"bybit", :watch_trades, %{symbol: "BTC/USDT"}, "publicTrade.BTCUSDT"},
@@ -80,6 +81,21 @@ defmodule Bourse.WS.ChannelsTest do
 
       assert {:error, {:unresolved, "computed_channel_key"}} =
                Channels.build(exchange, :watch_ticker, %{symbol: "BTC/USDT"}, [])
+    end
+
+    test "lighter requires an explicit numeric-index channel" do
+      exchange = Exchange.new!("lighter")
+
+      assert {:error, {:unresolved, "provider_requires_numeric_market_index"}} =
+               Channels.build(exchange, :watch_ticker, %{symbol: "ETH/USDC:USDC"}, [])
+
+      assert {:ok, "market_stats/0"} =
+               Channels.build(
+                 exchange,
+                 :watch_ticker,
+                 %{symbol: "ETH/USDC:USDC"},
+                 channel: "market_stats/0"
+               )
     end
   end
 

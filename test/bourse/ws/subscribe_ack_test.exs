@@ -4,6 +4,20 @@ defmodule Bourse.WS.SubscribeAckTest do
   alias Bourse.WS.SubscribeAck
 
   describe "classify/2" do
+    test "alpaca batched success, rejection, and market data" do
+      assert :success = SubscribeAck.classify("alpaca", [%{"T" => "subscription", "trades" => ["FAKEPACA"]}])
+
+      assert {:rejected, %{"T" => "error", "code" => 400}} =
+               SubscribeAck.classify("alpaca", [
+                 %{"T" => "error", "code" => 400, "msg" => "invalid syntax"}
+               ])
+
+      assert :not_ack =
+               SubscribeAck.classify("alpaca", [
+                 %{"T" => "t", "S" => "FAKEPACA", "p" => 134.56}
+               ])
+    end
+
     test "bybit success and rejection" do
       assert :success =
                SubscribeAck.classify("bybit", %{"op" => "subscribe", "success" => true})
@@ -107,6 +121,25 @@ defmodule Bourse.WS.SubscribeAckTest do
                SubscribeAck.classify("binance", %{"id" => 1, "error" => %{"code" => 2, "msg" => "bad"}})
 
       assert :not_ack = SubscribeAck.classify("binance", %{"stream" => "btcusdt@ticker"})
+    end
+
+    test "lighter snapshot acknowledgement, updates, and rejection" do
+      assert :success =
+               SubscribeAck.classify("lighter", %{
+                 "type" => "subscribed/market_stats",
+                 "channel" => "market_stats:0"
+               })
+
+      assert :not_ack =
+               SubscribeAck.classify("lighter", %{
+                 "type" => "update/market_stats",
+                 "channel" => "market_stats:0"
+               })
+
+      assert {:rejected, %{"error" => %{"code" => 30_005}}} =
+               SubscribeAck.classify("lighter", %{
+                 "error" => %{"code" => 30_005, "message" => "Invalid Channel"}
+               })
     end
 
     test "generic fallback recognizes common ack shapes without classifying data" do

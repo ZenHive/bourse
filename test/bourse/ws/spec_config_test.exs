@@ -5,18 +5,29 @@ defmodule Bourse.WS.SpecConfigTest do
   alias Bourse.WS.Config
   alias Bourse.WS.Subscription
 
-  @ws_venues ~w(binance binancecoinm binanceusdm bybit deribit derive hyperliquid okx)
+  @ws_venues ~w(alpaca binance binancecoinm binanceusdm bybit deribit derive hyperliquid lighter okx)
 
   describe "build/1" do
-    test "configured venues are a closed subset of runtime support" do
+    test "configured venues and registered divergences partition runtime support" do
       assert Config.supported_exchanges() == @ws_venues
-      assert MapSet.subset?(MapSet.new(@ws_venues), MapSet.new(Bourse.Spec.exchanges()))
+
+      assert Enum.sort(@ws_venues ++ Map.keys(Config.registered_divergences())) ==
+               Bourse.Spec.exchanges()
 
       for id <- @ws_venues do
         assert %{} = config = Config.for_exchange(id)
         assert is_atom(config.subscription_pattern)
         assert is_map(config.heartbeat)
       end
+    end
+
+    test "alpaca selects public auth while lighter needs none" do
+      alpaca = Config.for_exchange("alpaca")
+      lighter = Config.for_exchange("lighter")
+
+      assert alpaca.auth_pattern == :action_key_secret
+      assert alpaca.auth_sections == [:public]
+      assert lighter.auth_pattern == nil
     end
 
     test "bybit heartbeat interval comes from spec (18000ms)" do

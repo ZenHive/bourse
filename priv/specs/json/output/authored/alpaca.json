@@ -3374,9 +3374,9 @@
     "api": {
       "ws": {
         "private": null,
-        "public": null,
+        "public": "wss://stream.data.alpaca.markets/v2/iex",
         "sandbox_private": null,
-        "sandbox_public": null
+        "sandbox_public": "wss://stream.data.alpaca.markets/v2/test"
       }
     },
     "api_management": "__undefined",
@@ -3387,15 +3387,31 @@
   },
   "websocket": {
     "auth": {
-      "reason": "REST-only authored contract",
-      "supported": false
+      "authenticate_defined": true,
+      "credentials": [
+        "apiKey",
+        "secret"
+      ],
+      "mechanism": "sign_in_message",
+      "message": {
+        "keys": [
+          "action",
+          "key",
+          "secret"
+        ],
+        "method": null,
+        "op": "auth"
+      },
+      "resolved_from": "self",
+      "source": "provider_websocket_contract",
+      "unresolved_reason": null
     },
     "dispatch": {
-      "reason": "REST-only authored contract",
+      "reason": "Unified WebSocket event normalization is not authored",
       "supported": false
     },
     "heartbeat": {
-      "reason": "REST-only authored contract",
+      "reason": "No venue-specific heartbeat semantics are authored",
       "supported": false
     },
     "ohlcv_semantics": {
@@ -3407,8 +3423,23 @@
       "supported": false
     },
     "subscribe": {
-      "reason": "REST-only authored contract",
-      "supported": false
+      "args_key": null,
+      "channels": {
+        "watchTrades": [
+          "trades:{symbol}"
+        ]
+      },
+      "discriminant": "action",
+      "envelope_keys": [
+        "action",
+        "<channel>"
+      ],
+      "mechanism": "json_message",
+      "resolved_from": "self",
+      "source": "provider_websocket_contract",
+      "subscribe_op": "subscribe",
+      "unresolved_reason": null,
+      "unsubscribe_op": "unsubscribe"
     },
     "trades_semantics": {
       "reason": "REST-only authored contract",
@@ -3416,9 +3447,10 @@
     },
     "urls": {
       "private": null,
-      "public": null,
+      "public": "wss://stream.data.alpaca.markets/v2/iex",
       "sandbox_private": null,
-      "sandbox_public": null
+      "sandbox_public": "wss://stream.data.alpaca.markets/v2/test",
+      "unresolved_reason": null
     }
   },
   "emulated_methods": []

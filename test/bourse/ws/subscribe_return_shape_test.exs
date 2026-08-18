@@ -66,6 +66,25 @@ defmodule Bourse.WS.SubscribeReturnShapeTest do
     assert_receive {:transport_sent, _}
   end
 
+  test "Alpaca's batched acknowledgement is consumed and earlier data is preserved" do
+    transport = start_supervised!({Transport, owner: self(), reply: :ok})
+    client = %Client{server_pid: transport, state: :connected}
+    ws = %WS{exchange: Exchange.new!("alpaca"), zen_client: client, url: "wss://offline.test", section: :public}
+    connected = [%{"T" => "success", "msg" => "connected"}]
+
+    send(self(), {:websocket_message, connected})
+    send(self(), {:websocket_message, [%{"T" => "subscription", "trades" => ["FAKEPACA"]}]})
+
+    assert :ok = WS.subscribe(ws, ["trades:FAKEPACA"], ack_timeout_ms: 200)
+    assert_receive {:websocket_message, ^connected}
+    assert_receive {:transport_sent, payload}
+
+    assert Jason.decode!(payload) == %{
+             "action" => "subscribe",
+             "trades" => ["FAKEPACA"]
+           }
+  end
+
   test "async hyperliquid rejection surfaces as subscription_rejected" do
     transport = start_supervised!({Transport, owner: self(), reply: :ok})
     client = %Client{server_pid: transport, state: :connected}

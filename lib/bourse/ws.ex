@@ -38,24 +38,25 @@ defmodule Bourse.WS do
     is the raw exchange envelope
   - `{:error, :subscription_ack_timeout}` — no accept/reject outcome arrived
     within the acknowledgement window
-  - `{:error, reason}` — build/send failures (`:unsupported_exchange`, channel
-    shape errors, transport errors, …)
+  - `{:error, reason}` — build/send failures (`:websocket_not_configured`,
+    `:unsupported_exchange`, channel shape errors, transport errors, …)
 
   Channels that span more than one authored host are one call: every host is
   accepted, or hosts that already succeeded are unsubscribed and the failing
   host's error is returned. A retry of the same list does not stack a leftover
   subscription on the host that worked.
 
-  Correlated JSON-RPC replies (deribit) and asynchronous acks (bybit, okx,
-  hyperliquid, derive, binance) are classified by `Bourse.WS.SubscribeAck`.
+  Correlated JSON-RPC replies (deribit) and asynchronous acks (alpaca, bybit,
+  okx, hyperliquid, derive, binance, lighter) are classified by
+  `Bourse.WS.SubscribeAck`.
   Rejection frames that arrive asynchronously are still consumed and returned
   as errors; non-ack data frames that arrive during the wait are re-queued to
   the caller mailbox.
 
   ## Scope
 
-  Eight runtime venues have WS transport config: `binance`, `binancecoinm`,
-  `binanceusdm`, `bybit`, `deribit`, `derive`, `hyperliquid`, and `okx`.
+  Ten runtime venues have WS transport config. Coinbase Exchange remains the
+  registered runtime venue without one.
   """
 
   alias Bourse.Exchange
@@ -135,8 +136,10 @@ defmodule Bourse.WS do
   `heartbeat_config` in opts. `connect_fun:` replaces `ZenWebsocket.Client.connect/2`
   for instrumented transports and is reused for authored secondary hosts.
 
-  Returns `{:error, :unsupported_exchange}` if the exchange has no WS config,
-  or `{:error, :no_url_configured}` if the requested section is absent.
+  Returns `{:error, :websocket_not_configured}` if a runtime-supported exchange
+  has no WS config, `{:error, :unsupported_exchange}` if the exchange itself is
+  unsupported, or `{:error, :no_url_configured}` if the requested section is
+  absent.
 
   ## Private connections authenticate
 
@@ -152,6 +155,10 @@ defmodule Bourse.WS do
 
   Pass `authenticate: false` to skip the handshake and drive it yourself with
   `authenticate/2`; the connection is then unauthenticated until you do.
+
+  Alpaca's public market-data socket also requires its key/secret handshake;
+  its config declares `:public` in `auth_sections`, so the same guarantee
+  applies there without enabling the private trading stream.
 
   ## Credentials that live in the URL
 
@@ -184,7 +191,7 @@ defmodule Bourse.WS do
         connect_fun: connect_fun
       }
 
-      maybe_authenticate(ws, section, auth?, connect_opts)
+      maybe_authenticate(ws, config, section, auth?, connect_opts)
     end
   end
 
@@ -213,23 +220,27 @@ defmodule Bourse.WS do
     Keyword.take(opts, [:market_type]) ++ Keyword.get(opts, :pre_auth_opts, [])
   end
 
-  defp maybe_authenticate(%__MODULE__{auth: %{}} = ws, :private, true, _opts), do: {:ok, ws}
+  defp maybe_authenticate(%__MODULE__{auth: %{}} = ws, _config, :private, true, _opts), do: {:ok, ws}
 
-  defp maybe_authenticate(ws, :private, true, opts) do
-    case authenticate(ws, opts) do
-      {:ok, meta} ->
-        {:ok, %{ws | auth: %{pattern: pattern_of(ws), meta: meta}}}
+  defp maybe_authenticate(ws, config, section, true, opts) do
+    if section == :private or section in Map.get(config, :auth_sections, []) do
+      case authenticate(ws, opts) do
+        {:ok, meta} ->
+          {:ok, %{ws | auth: %{pattern: pattern_of(ws), meta: meta}}}
 
-      {:error, :no_auth_pattern} ->
-        {:ok, ws}
+        {:error, :no_auth_pattern} ->
+          {:ok, ws}
 
-      {:error, reason} ->
-        close(ws)
-        {:error, reason}
+        {:error, reason} ->
+          close(ws)
+          {:error, reason}
+      end
+    else
+      {:ok, ws}
     end
   end
 
-  defp maybe_authenticate(ws, _section, _auth?, _opts), do: {:ok, ws}
+  defp maybe_authenticate(ws, _config, _section, _auth?, _opts), do: {:ok, ws}
 
   defp pattern_of(%__MODULE__{exchange: exchange}) do
     case fetch_config(exchange) do
@@ -311,13 +322,13 @@ defmodule Bourse.WS do
       {:error, :auth_ack_timeout}
     else
       receive do
-        {:websocket_message, frame} = msg when is_map(frame) ->
+        {:websocket_message, frame} = msg when is_map(frame) or is_list(frame) ->
           handle_auth_frame(pattern, deadline, requeue, msg, frame)
 
-        {:websocket_unmatched_response, frame} = msg when is_map(frame) ->
+        {:websocket_unmatched_response, frame} = msg when is_map(frame) or is_list(frame) ->
           handle_auth_frame(pattern, deadline, requeue, msg, frame)
 
-        {:ws_frame, frame} = msg when is_map(frame) ->
+        {:ws_frame, frame} = msg when is_map(frame) or is_list(frame) ->
           handle_auth_frame(pattern, deadline, requeue, msg, frame)
 
         other ->
@@ -696,9 +707,15 @@ defmodule Bourse.WS do
 
   defp fetch_config(%Exchange{} = exchange) do
     case Config.for_exchange(exchange) do
-      nil -> {:error, :unsupported_exchange}
+      nil -> missing_config_error(exchange.id)
       config -> {:ok, config}
     end
+  end
+
+  defp missing_config_error(exchange_id) do
+    if exchange_id in Bourse.Spec.exchanges(),
+      do: {:error, :websocket_not_configured},
+      else: {:error, :unsupported_exchange}
   end
 
   defp fetch_url(%Exchange{} = exchange, :public) do
@@ -794,14 +811,14 @@ defmodule Bourse.WS do
       {:error, :subscription_ack_timeout}
     else
       receive do
-        {:websocket_message, frame} = msg when is_map(frame) ->
+        {:websocket_message, frame} = msg when is_map(frame) or is_list(frame) ->
           handle_ack_frame(exchange_id, deadline, requeue, msg, frame)
 
-        {:websocket_unmatched_response, frame} = msg when is_map(frame) ->
+        {:websocket_unmatched_response, frame} = msg when is_map(frame) or is_list(frame) ->
           handle_ack_frame(exchange_id, deadline, requeue, msg, frame)
 
         # Adapter injects a custom handler that tags frames as {:ws_frame, _}.
-        {:ws_frame, frame} = msg when is_map(frame) ->
+        {:ws_frame, frame} = msg when is_map(frame) or is_list(frame) ->
           handle_ack_frame(exchange_id, deadline, requeue, msg, frame)
 
         other ->

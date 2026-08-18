@@ -9,6 +9,8 @@ defmodule Bourse.WS.SpecConfig do
   alias Bourse.Exchange
   alias Bourse.Spec
 
+  @public_heartbeat_interval_ms 30_000
+
   @doc """
   Builds the effective WS config map for an exchange, or nil when unsupported.
 
@@ -40,6 +42,18 @@ defmodule Bourse.WS.SpecConfig do
   # ---------------------------------------------------------------------------
 
   @hand_bases %{
+    "alpaca" => %{
+      public_url: "wss://stream.data.alpaca.markets/v2/iex",
+      public_url_sandbox: "wss://stream.data.alpaca.markets/v2/test",
+      private_url: nil,
+      private_url_sandbox: nil,
+      heartbeat: %{type: :ping, interval: @public_heartbeat_interval_ms},
+      subscription_pattern: :action_channels,
+      subscription_config: %{},
+      auth_pattern: :action_key_secret,
+      auth_config: %{},
+      auth_sections: [:public]
+    },
     "binance" => %{
       public_url: "wss://stream.binance.com:9443/ws",
       public_url_sandbox: "wss://stream.testnet.binance.vision/ws",
@@ -164,6 +178,17 @@ defmodule Bourse.WS.SpecConfig do
       subscription_config: %{},
       auth_pattern: nil,
       auth_config: %{}
+    },
+    "lighter" => %{
+      public_url: "wss://mainnet.zklighter.elliot.ai/stream",
+      public_url_sandbox: "wss://testnet.zklighter.elliot.ai/stream",
+      private_url: nil,
+      private_url_sandbox: nil,
+      heartbeat: %{type: :ping, interval: @public_heartbeat_interval_ms},
+      subscription_pattern: :type_subscribe,
+      subscription_config: %{args_field: "channel", args_format: :string},
+      auth_pattern: nil,
+      auth_config: %{}
     }
   }
 
@@ -271,6 +296,12 @@ defmodule Bourse.WS.SpecConfig do
 
   defp auth_pattern_from_spec(%{"mechanism" => "url_param"}, config) do
     {:listen_key, Map.get(config, :auth_config, %{})}
+  end
+
+  defp auth_pattern_from_spec(%{"mechanism" => "sign_in_message", "message" => %{"op" => "auth", "keys" => keys}}, config)
+       when is_list(keys) do
+    pattern = if Enum.sort(keys) == ~w(action key secret), do: :action_key_secret, else: :direct_hmac_expiry
+    {pattern, Map.get(config, :auth_config, %{})}
   end
 
   defp auth_pattern_from_spec(%{"mechanism" => "sign_in_message", "message" => message}, config) when is_map(message) do

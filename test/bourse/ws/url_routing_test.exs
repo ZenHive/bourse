@@ -5,6 +5,14 @@ defmodule Bourse.WS.URLRoutingTest do
   alias Bourse.WS.URLRouting
 
   describe "public_url/1" do
+    test "alpaca and lighter sandbox URLs resolve to their public test streams" do
+      assert "wss://stream.data.alpaca.markets/v2/test" ==
+               URLRouting.public_url(Exchange.new!("alpaca", sandbox: true))
+
+      assert "wss://testnet.zklighter.elliot.ai/stream" ==
+               URLRouting.public_url(Exchange.new!("lighter", sandbox: true))
+    end
+
     test "bybit production URL interpolates {hostname}" do
       exchange = Exchange.new!("bybit")
       assert URLRouting.public_url(exchange) == "wss://stream.bybit.com/v5/public/linear"

@@ -3,6 +3,7 @@ defmodule Bourse.WS.AuthTest do
 
   alias Bourse.Credentials
   alias Bourse.WS.Auth
+  alias Bourse.WS.Auth.ActionKeySecret
   alias Bourse.WS.Auth.DirectHmacExpiry
   alias Bourse.WS.Auth.InlineSubscribe
   alias Bourse.WS.Auth.IsoPassphrase
@@ -16,9 +17,10 @@ defmodule Bourse.WS.AuthTest do
   @creds %Credentials{api_key: "test_key", secret: "test_secret"}
 
   describe "patterns/0" do
-    test "lists exactly the nine behaviour-implementing atoms (excludes :expiry)" do
+    test "lists exactly the ten behaviour-implementing atoms (excludes :expiry)" do
       assert Enum.sort(Auth.patterns()) ==
                Enum.sort([
+                 :action_key_secret,
                  :direct_hmac_expiry,
                  :inline_subscribe,
                  :iso_passphrase,
@@ -34,6 +36,7 @@ defmodule Bourse.WS.AuthTest do
 
   describe "module_for_pattern/1" do
     test "maps each pattern atom to its module" do
+      assert Auth.module_for_pattern(:action_key_secret) == ActionKeySecret
       assert Auth.module_for_pattern(:direct_hmac_expiry) == DirectHmacExpiry
       assert Auth.module_for_pattern(:inline_subscribe) == InlineSubscribe
       assert Auth.module_for_pattern(:iso_passphrase) == IsoPassphrase
@@ -91,6 +94,7 @@ defmodule Bourse.WS.AuthTest do
   describe "pre_auth/4 dispatch" do
     test "returns {:ok, %{}} for patterns without REST round-trip" do
       for pattern <- [
+            :action_key_secret,
             :direct_hmac_expiry,
             :iso_passphrase,
             :jsonrpc_linebreak,
@@ -112,6 +116,7 @@ defmodule Bourse.WS.AuthTest do
   describe "build_subscribe_auth/5 dispatch" do
     test "returns nil for most patterns" do
       for pattern <- [
+            :action_key_secret,
             :direct_hmac_expiry,
             :iso_passphrase,
             :jsonrpc_linebreak,
@@ -150,6 +155,13 @@ defmodule Bourse.WS.AuthTest do
 
   describe "handle_auth_response/3 dispatch" do
     test "success responses by pattern" do
+      assert :ok =
+               Auth.handle_auth_response(
+                 :action_key_secret,
+                 [%{"T" => "success", "msg" => "authenticated"}],
+                 %{}
+               )
+
       assert :ok = Auth.handle_auth_response(:direct_hmac_expiry, %{"success" => true}, %{})
 
       assert :ok =

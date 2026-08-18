@@ -375,3 +375,22 @@ Outcome: CONFIRM fraction-to-percent-point conversion.**
 <!-- carve-evidence-status
 {"carve_id":"C-T547c","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"https://docs.alpaca.markets/us/reference/getfundingwallettransfers and Trading API activity types CSD/CSW/OCT/JNLC"},"observed_evidence":{"kind":"live_venue","reference":"paper-api.alpaca.markets GET /v2/wallets 40410000 and GET /v2/wallets/transfers HTTP 404 Not Found 2026-08-18"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+## 2026-08-18 — public WebSocket market-data transport (Task 544)
+
+**C-T544a — Alpaca's public market-data stream authenticates with an `action: auth`
+key/secret frame before channel subscription (task 544). Outcome: CONFIRM venue.**
+
+- *Exchange semantics:* the provider's streaming-market-data contract publishes the
+  `wss://stream.data.alpaca.markets/v2/test` test feed, `FAKEPACA` test symbol,
+  key/secret auth frame, and top-level channel subscription shape.
+- *Our carve:* `:public` is an authenticated WS section. `watchTrades` builds
+  `{"action":"subscribe","trades":[symbol]}`; private trade-update auth and unified
+  event normalization are not part of this transport carve.
+- *Live evidence:* the provider test feed returned connected, authenticated, and
+  subscription envelopes followed by `FAKEPACA` trade frames. A bogus channel returned
+  provider error 400 `invalid syntax`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T544a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"https://docs.alpaca.markets/us/docs/streaming-market-data"},"observed_evidence":{"kind":"live_venue","reference":"test/bourse/ws/canary_test.exs Alpaca test-stream success and invalid-channel probes"},"compatibility_reference":null,"resolved_tier":1}
+-->

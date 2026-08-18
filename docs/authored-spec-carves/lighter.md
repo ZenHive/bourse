@@ -374,3 +374,21 @@ Two register notes without carve blocks:
   transcription* of the pinned OpenAPI required lists (verified byte-for-byte
   2026-08-14), not a derivation — the artifact is `storage: reference_only`,
   so `mix ccxt.authority_check --online` is the drift guard.
+
+## 2026-08-18 — public WebSocket transport (Task 544)
+
+**C-T544b — Lighter's public stream uses a type/channel subscription envelope with
+numeric market indexes (task 544). Outcome: CONFIRM venue.**
+
+- *Exchange semantics:* the provider WebSocket reference publishes mainnet and testnet
+  `/stream` URLs and `{"type":"subscribe","channel":"market_stats/{MARKET_INDEX}"}`.
+- *Our carve:* raw public subscriptions use the registered `:type_subscribe` pattern.
+  Unified watch templates stay explicitly unresolved because the provider requires a
+  numeric market index rather than a unified symbol.
+- *Live evidence:* testnet returned `connected`, a `subscribed/market_stats` snapshot,
+  and continuing `update/market_stats` frames for market 0. An unknown channel returned
+  provider error 30005 `Invalid Channel`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T544b","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"https://apidocs.lighter.xyz/docs/websocket-reference"},"observed_evidence":{"kind":"live_venue","reference":"test/bourse/ws/canary_test.exs Lighter testnet success and invalid-channel probes"},"compatibility_reference":null,"resolved_tier":1}
+-->

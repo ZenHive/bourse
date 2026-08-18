@@ -4,6 +4,7 @@ defmodule Bourse.WS.SubscriptionTest do
   alias Bourse.WS.Subscription
 
   @all_patterns [
+    :action_channels,
     :op_subscribe,
     :op_subscribe_objects,
     :method_subscribe,
@@ -17,7 +18,7 @@ defmodule Bourse.WS.SubscriptionTest do
   ]
 
   describe "patterns/0" do
-    test "lists exactly the 10 supported atoms" do
+    test "lists exactly the 11 supported atoms" do
       assert Enum.sort(Subscription.patterns()) == Enum.sort(@all_patterns)
     end
   end
@@ -129,9 +130,8 @@ defmodule Bourse.WS.SubscriptionTest do
 
   describe "every pattern module builds subscribe/unsubscribe without raising" do
     test "with a representative channel list" do
-      channels = ["tickers.BTCUSDT"]
-
       for pattern <- Subscription.patterns() do
+        channels = channels_for(pattern)
         config = config_for(pattern)
         assert {:ok, sub} = Subscription.build_subscribe(pattern, channels, config)
         assert {:ok, unsub} = Subscription.build_unsubscribe(pattern, channels, config)
@@ -142,6 +142,9 @@ defmodule Bourse.WS.SubscriptionTest do
   end
 
   # Some patterns require minimal config to be well-formed.
+  defp channels_for(:action_channels), do: ["trades:BTCUSDT"]
+  defp channels_for(_pattern), do: ["tickers.BTCUSDT"]
+
   defp config_for(:op_subscribe_objects), do: %{}
   defp config_for(:custom), do: %{custom_type: "sendTopicAction"}
   defp config_for(_), do: %{}

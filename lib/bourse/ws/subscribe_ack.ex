@@ -6,7 +6,8 @@ defmodule Bourse.WS.SubscribeAck do
 
   1. **Correlated** (deribit JSON-RPC) — `ZenWebsocket.Client.send_message/2`
      returns `{:ok, envelope}` because the outbound frame carries an `id`.
-  2. **Asynchronous** (bybit, okx, hyperliquid, derive, binance) — send
+  2. **Asynchronous** (alpaca, bybit, okx, hyperliquid, derive, binance,
+     lighter) — send
      returns `:ok` and the venue reply arrives as
      `{:websocket_message, frame}` or `{:websocket_unmatched_response, frame}`
      (derive replies with a JSON-RPC envelope even when the request had no id).
@@ -26,7 +27,8 @@ defmodule Bourse.WS.SubscribeAck do
   - `{:rejected, frame}` — venue rejected it (frame is the raw envelope)
   - `:not_ack` — not a subscribe outcome (data/heartbeat/other); leave in mailbox
   """
-  @spec classify(String.t(), map()) :: classification()
+  @spec classify(String.t(), map() | [map()]) :: classification()
+  def classify("alpaca", frames) when is_list(frames), do: classify_alpaca(frames)
   def classify("bybit", frame) when is_map(frame), do: classify_bybit(frame)
   def classify("okx", frame) when is_map(frame), do: classify_okx(frame)
   def classify("hyperliquid", frame) when is_map(frame), do: classify_hyperliquid(frame)
@@ -34,6 +36,7 @@ defmodule Bourse.WS.SubscribeAck do
   def classify("deribit", frame) when is_map(frame), do: classify_jsonrpc(frame)
   def classify("binance", frame) when is_map(frame), do: classify_binance(frame)
   def classify("binanceusdm", frame) when is_map(frame), do: classify_binance(frame)
+  def classify("lighter", frame) when is_map(frame), do: classify_lighter(frame)
   def classify(exchange_id, frame) when is_binary(exchange_id) and is_map(frame), do: classify_generic(frame)
 
   @doc """
@@ -51,6 +54,15 @@ defmodule Bourse.WS.SubscribeAck do
   # ---------------------------------------------------------------------------
   # Per-venue
   # ---------------------------------------------------------------------------
+
+  # Alpaca batches every market-data event in a JSON array.
+  defp classify_alpaca(frames) do
+    case Enum.find(frames, &(&1["T"] in ["subscription", "error"])) do
+      %{"T" => "subscription"} -> :success
+      %{"T" => "error"} = frame -> {:rejected, frame}
+      nil -> :not_ack
+    end
+  end
 
   # Bybit: %{"op" => "subscribe", "success" => true|false, "ret_msg" => ...}
   defp classify_bybit(%{"op" => "subscribe", "success" => false} = frame), do: {:rejected, frame}
@@ -87,6 +99,11 @@ defmodule Bourse.WS.SubscribeAck do
   defp classify_binance(%{"error" => error} = frame) when not is_nil(error), do: {:rejected, frame}
   defp classify_binance(%{"result" => _}), do: :success
   defp classify_binance(_), do: :not_ack
+
+  # Lighter's initial subscribed/* frame is both the acknowledgement and the
+  # first public snapshot. Subsequent update/* frames are data, not acks.
+  defp classify_lighter(%{"type" => "subscribed/" <> _}), do: :success
+  defp classify_lighter(frame), do: classify_generic(frame)
 
   defp classify_generic(%{"success" => false} = frame), do: {:rejected, frame}
   defp classify_generic(%{"success" => true}), do: :success

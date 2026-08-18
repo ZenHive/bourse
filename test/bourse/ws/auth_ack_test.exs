@@ -15,6 +15,15 @@ defmodule Bourse.WS.AuthAckTest do
   alias Bourse.WS.AuthAck
 
   test "recognises each frame-based pattern's verdict frame" do
+    assert :auth_response =
+             AuthAck.classify(
+               :action_key_secret,
+               [%{"T" => "success", "msg" => "authenticated"}]
+             )
+
+    assert :auth_response =
+             AuthAck.classify(:action_key_secret, [%{"T" => "error", "code" => 402}])
+
     assert :auth_response = AuthAck.classify(:direct_hmac_expiry, %{"op" => "auth", "success" => true})
     assert :auth_response = AuthAck.classify(:iso_passphrase, %{"event" => "login", "code" => "0"})
     assert :auth_response = AuthAck.classify(:iso_passphrase, %{"event" => "error", "code" => "60009"})
@@ -39,6 +48,10 @@ defmodule Bourse.WS.AuthAckTest do
     tick = %{"topic" => "tickers.BTCUSDT", "data" => %{"lastPrice" => "1"}}
 
     assert :not_auth = AuthAck.classify(:direct_hmac_expiry, tick)
+
+    assert :not_auth =
+             AuthAck.classify(:action_key_secret, [%{"T" => "success", "msg" => "connected"}])
+
     assert :not_auth = AuthAck.classify(:direct_hmac_expiry, %{"op" => "subscribe", "success" => true})
     assert :not_auth = AuthAck.classify(:iso_passphrase, %{"event" => "subscribe"})
     assert :not_auth = AuthAck.classify(:jsonrpc_linebreak, %{"result" => ["a.channel"]})
@@ -59,6 +72,7 @@ defmodule Bourse.WS.AuthAckTest do
     # there and forgotten here degrades to a timeout, so the omission is worth
     # catching at the seam rather than at a venue.
     frame_based = [
+      :action_key_secret,
       :direct_hmac_expiry,
       :iso_passphrase,
       :jsonrpc_linebreak,

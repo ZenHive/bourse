@@ -107,6 +107,38 @@ defmodule Bourse.WS.AuthWiringTest do
     end
   end
 
+  describe "connect/3 on Alpaca's authenticated public stream" do
+    test "authenticates before returning the public connection" do
+      transport = start_supervised!({Transport, owner: self(), reply: :ok})
+      client = %Client{server_pid: transport, state: :connected}
+      connect_fun = fn _url, _opts -> {:ok, client} end
+
+      connected = [%{"T" => "success", "msg" => "connected"}]
+      authenticated = [%{"T" => "success", "msg" => "authenticated"}]
+      send(self(), {:websocket_message, connected})
+      send(self(), {:websocket_message, authenticated})
+
+      exchange =
+        Exchange.new!("alpaca",
+          credentials: Credentials.new!(api_key: "test-key", secret: "test-secret"),
+          sandbox: true
+        )
+
+      assert {:ok, ws} = WS.connect(exchange, :public, connect_fun: connect_fun)
+      assert %{pattern: :action_key_secret, meta: %{}} = ws.auth
+      assert_received {:transport_sent, payload}
+
+      assert Jason.decode!(payload) == %{
+               "action" => "auth",
+               "key" => "test-key",
+               "secret" => "test-secret"
+             }
+
+      assert_received {:websocket_message, ^connected}
+      assert :ok = WS.close(ws)
+    end
+  end
+
   describe "authenticate/2 on a correlated venue (deribit :jsonrpc_linebreak)" do
     test "reads the session TTL out of the correlated reply" do
       reply = {:ok, %{"result" => %{"access_token" => "tok", "expires_in" => 900}}}

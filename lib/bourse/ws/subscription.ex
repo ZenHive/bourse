@@ -10,6 +10,7 @@ defmodule Bourse.WS.Subscription do
 
   | Pattern atom                  | Exchanges                                 | Frame shape                                      |
   |-------------------------------|-------------------------------------------|--------------------------------------------------|
+  | `:action_channels`            | alpaca                                   | `%{"action"=>"subscribe","trades"=>[symbol]}` |
   | `:op_subscribe`               | bybit, bitmex                             | `%{"op"=>"subscribe","args"=>[strings]}`         |
   | `:op_subscribe_objects`       | okx                                       | `%{"op"=>"subscribe","args"=>[objects]}`         |
   | `:method_subscribe`           | binance, xt, aster                        | `%{"method"=>"SUBSCRIBE","params"=>[strings]}`   |
@@ -42,6 +43,7 @@ defmodule Bourse.WS.Subscription do
   `Bourse.WS.Auth`'s dispatcher-head behavior.
   """
 
+  alias Bourse.WS.Subscription.ActionChannels
   alias Bourse.WS.Subscription.Custom
   alias Bourse.WS.Subscription.EventSubscribe
   alias Bourse.WS.Subscription.JsonRpc
@@ -54,7 +56,8 @@ defmodule Bourse.WS.Subscription do
   alias Bourse.WS.Subscription.TypeSubscribe
 
   @type pattern ::
-          :op_subscribe
+          :action_channels
+          | :op_subscribe
           | :op_subscribe_objects
           | :method_subscribe
           | :method_params_subscribe
@@ -71,6 +74,7 @@ defmodule Bourse.WS.Subscription do
   @type build_result :: {:ok, frame() | [frame()]} | {:error, term()}
 
   @patterns [
+    :action_channels,
     :op_subscribe,
     :op_subscribe_objects,
     :method_subscribe,
@@ -89,6 +93,7 @@ defmodule Bourse.WS.Subscription do
 
   @doc "Returns the implementing module for a pattern, or `nil` if unknown."
   @spec module_for_pattern(pattern()) :: module() | nil
+  def module_for_pattern(:action_channels), do: ActionChannels
   def module_for_pattern(:op_subscribe), do: OpSubscribe
   def module_for_pattern(:op_subscribe_objects), do: OpSubscribeObjects
   def module_for_pattern(:method_subscribe), do: MethodSubscribe

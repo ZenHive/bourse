@@ -10,6 +10,7 @@ defmodule Bourse.WS.Auth do
 
   | Pattern | Exchanges | Notes |
   |---------|-----------|-------|
+  | `:action_key_secret` | alpaca market data | Plain `action: auth` key/secret frame |
   | `:direct_hmac_expiry` | bybit, bitmex, htx family | `GET/realtime{expires}` HMAC-SHA256 |
   | `:iso_passphrase` | okx family, kucoin family | Requires `credentials.password` |
   | `:jsonrpc_linebreak` | deribit | JSON-RPC `public/auth`, returns `{:ok, %{ttl_ms: _}}` |
@@ -46,6 +47,7 @@ defmodule Bourse.WS.Auth do
   """
 
   alias Bourse.Credentials
+  alias Bourse.WS.Auth.ActionKeySecret
   alias Bourse.WS.Auth.DirectHmacExpiry
   alias Bourse.WS.Auth.InlineSubscribe
   alias Bourse.WS.Auth.IsoPassphrase
@@ -57,7 +59,8 @@ defmodule Bourse.WS.Auth do
   alias Bourse.WS.Auth.WsApiSignature
 
   @type pattern ::
-          :direct_hmac_expiry
+          :action_key_secret
+          | :direct_hmac_expiry
           | :iso_passphrase
           | :jsonrpc_linebreak
           | :sha384_nonce
@@ -73,6 +76,7 @@ defmodule Bourse.WS.Auth do
   @type build_result :: {:ok, auth_message()} | :no_message | {:error, term()}
 
   @patterns [
+    :action_key_secret,
     :direct_hmac_expiry,
     :iso_passphrase,
     :jsonrpc_linebreak,
@@ -93,6 +97,8 @@ defmodule Bourse.WS.Auth do
   round-trip return `{:ok, %{}}`.
   """
   @spec pre_auth(pattern(), Credentials.t(), config(), keyword()) :: pre_auth_result()
+  def pre_auth(:action_key_secret, credentials, config, opts), do: ActionKeySecret.pre_auth(credentials, config, opts)
+
   def pre_auth(:listen_key, credentials, config, opts), do: ListenKey.pre_auth(credentials, config, opts)
 
   def pre_auth(:rest_token, credentials, config, opts), do: RestToken.pre_auth(credentials, config, opts)
@@ -118,6 +124,9 @@ defmodule Bourse.WS.Auth do
   frame return `:no_message` — the caller should skip the send step.
   """
   @spec build_auth_message(pattern(), Credentials.t(), config(), keyword()) :: build_result()
+  def build_auth_message(:action_key_secret, credentials, config, opts),
+    do: ActionKeySecret.build_auth_message(credentials, config, opts)
+
   def build_auth_message(:direct_hmac_expiry, credentials, config, opts),
     do: DirectHmacExpiry.build_auth_message(credentials, config, opts)
 
@@ -177,8 +186,10 @@ defmodule Bourse.WS.Auth do
   def build_subscribe_auth(_pattern, _credentials, _config, _channel, _symbols), do: nil
 
   @doc "Dispatches an auth response to the pattern's classifier."
-  @spec handle_auth_response(pattern(), map(), map()) ::
+  @spec handle_auth_response(pattern(), map() | [map()], map()) ::
           :ok | {:ok, map()} | {:error, term()}
+  def handle_auth_response(:action_key_secret, response, state), do: ActionKeySecret.handle_auth_response(response, state)
+
   def handle_auth_response(:direct_hmac_expiry, response, state),
     do: DirectHmacExpiry.handle_auth_response(response, state)
 
@@ -215,6 +226,7 @@ defmodule Bourse.WS.Auth do
 
   @doc "Returns the implementing module for a pattern, or `nil` if unknown."
   @spec module_for_pattern(pattern()) :: module() | nil
+  def module_for_pattern(:action_key_secret), do: ActionKeySecret
   def module_for_pattern(:direct_hmac_expiry), do: DirectHmacExpiry
   def module_for_pattern(:iso_passphrase), do: IsoPassphrase
   def module_for_pattern(:jsonrpc_linebreak), do: JsonrpcLinebreak

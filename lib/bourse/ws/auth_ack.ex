@@ -25,7 +25,11 @@ defmodule Bourse.WS.AuthAck do
   Returns `:auth_response` for a frame the pattern's classifier should judge,
   and `:not_auth` for anything else — leave those in the mailbox.
   """
-  @spec classify(Auth.pattern(), map()) :: classification()
+  @spec classify(Auth.pattern(), map() | [map()]) :: classification()
+  def classify(:action_key_secret, frames) when is_list(frames) do
+    if Enum.any?(frames, &alpaca_auth_response?/1), do: :auth_response, else: :not_auth
+  end
+
   def classify(:direct_hmac_expiry, %{"op" => "auth"}), do: :auth_response
   def classify(:iso_passphrase, %{"event" => "login"}), do: :auth_response
   def classify(:iso_passphrase, %{"event" => "error"}), do: :auth_response
@@ -42,5 +46,9 @@ defmodule Bourse.WS.AuthAck do
   # normally correlated by request id; this is the unmatched path.
   def classify(:ws_api_signature, %{"status" => _}), do: :auth_response
 
-  def classify(_pattern, frame) when is_map(frame), do: :not_auth
+  def classify(_pattern, frame) when is_map(frame) or is_list(frame), do: :not_auth
+
+  defp alpaca_auth_response?(%{"T" => "success", "msg" => "authenticated"}), do: true
+  defp alpaca_auth_response?(%{"T" => "error"}), do: true
+  defp alpaca_auth_response?(_frame), do: false
 end

@@ -39,7 +39,7 @@ defmodule Bourse.LighterAuthoredSpecTest do
     def __response_envelopes__, do: %{}
   end
 
-  test "owned spec exposes only the live-adjudicated REST contract" do
+  test "owned spec exposes the live-adjudicated REST and public WebSocket contracts" do
     spec = Spec.decode_file!(@owned_path)
 
     assert spec["authored"] == true
@@ -70,11 +70,12 @@ defmodule Bourse.LighterAuthoredSpecTest do
       end
     end)
 
-    assert Enum.all?(Map.values(spec["websocket"]), fn
-             %{"supported" => false} -> true
-             %{"public" => nil, "private" => nil, "sandbox_public" => nil, "sandbox_private" => nil} -> true
-             _ -> false
-           end)
+    assert get_in(spec, ["websocket", "urls", "sandbox_public"]) ==
+             "wss://testnet.zklighter.elliot.ai/stream"
+
+    assert get_in(spec, ["websocket", "subscribe", "subscribe_op"]) == "subscribe"
+    assert get_in(spec, ["websocket", "auth", "mechanism"]) == "none"
+    assert spec["websocket"]["dispatch"]["supported"] == false
   end
 
   test "create and cancel builders scale typed params and overwrite injected transaction internals" do

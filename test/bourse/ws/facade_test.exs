@@ -31,7 +31,11 @@ defmodule Bourse.WS.FacadeTest do
   end
 
   test "returns connection setup errors without opening a socket" do
-    assert {:error, :unsupported_exchange} = WS.connect(Exchange.new!("alpaca"), :public)
+    assert {:error, :websocket_not_configured} =
+             WS.connect(Exchange.new!("coinbaseexchange"), :public)
+
+    unsupported = %Exchange{id: "kraken", name: "Kraken", spec: %{}}
+    assert {:error, :unsupported_exchange} = WS.connect(unsupported, :public)
     assert {:error, :no_url_configured} = WS.connect(Exchange.new!("hyperliquid"), :private)
   end
 

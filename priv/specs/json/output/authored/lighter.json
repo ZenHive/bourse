@@ -3059,15 +3059,20 @@
   },
   "websocket": {
     "auth": {
-      "reason": "not_live_verified",
-      "supported": false
+      "authenticate_defined": false,
+      "credentials": [],
+      "mechanism": "none",
+      "message": null,
+      "resolved_from": "self",
+      "source": "provider_websocket_contract",
+      "unresolved_reason": "no_ws_auth"
     },
     "dispatch": {
-      "reason": "not_live_verified",
+      "reason": "Unified WebSocket event normalization is not authored",
       "supported": false
     },
     "heartbeat": {
-      "reason": "not_live_verified",
+      "reason": "No venue-specific heartbeat semantics are authored",
       "supported": false
     },
     "ohlcv_semantics": {
@@ -3079,8 +3084,29 @@
       "supported": false
     },
     "subscribe": {
-      "reason": "not_live_verified",
-      "supported": false
+      "args_key": "channel",
+      "channels": {
+        "watchOrderBook": {
+          "_unresolved_reason": "provider_requires_numeric_market_index"
+        },
+        "watchTicker": {
+          "_unresolved_reason": "provider_requires_numeric_market_index"
+        },
+        "watchTrades": {
+          "_unresolved_reason": "provider_requires_numeric_market_index"
+        }
+      },
+      "discriminant": "type",
+      "envelope_keys": [
+        "type",
+        "channel"
+      ],
+      "mechanism": "json_message",
+      "resolved_from": "self",
+      "source": "provider_websocket_contract",
+      "subscribe_op": "subscribe",
+      "unresolved_reason": null,
+      "unsubscribe_op": "unsubscribe"
     },
     "trades_semantics": {
       "reason": "not_live_verified",
@@ -3088,9 +3114,10 @@
     },
     "urls": {
       "private": null,
-      "public": null,
+      "public": "wss://mainnet.zklighter.elliot.ai/stream",
       "sandbox_private": null,
-      "sandbox_public": null
+      "sandbox_public": "wss://testnet.zklighter.elliot.ai/stream",
+      "unresolved_reason": null
     }
   },
   "emulated_methods": []

@@ -6,8 +6,8 @@ defmodule Bourse.WS.Config do
   urls when emitted) with hand-maintained bases in `Bourse.WS.SpecConfig` for
   subscription patterns, URL fallbacks, and auth pattern detail.
 
-  Eight runtime venues currently have hand bases: `binance`, `binancecoinm`,
-  `binanceusdm`, `bybit`, `deribit`, `derive`, `hyperliquid`, and `okx`.
+  Ten runtime venues have hand bases. Coinbase Exchange is the sole registered
+  runtime/config divergence because its WebSocket transport is not configured.
   Spec-resolved heartbeat/auth overrides hand values where
   `unresolved_reason` is nil.
 
@@ -24,7 +24,8 @@ defmodule Bourse.WS.Config do
         subscription_pattern: atom(),
         subscription_config: map(),
         auth_pattern: atom() | nil,
-        auth_config: map()
+        auth_config: map(),
+        optional(:auth_sections) => [:public | :private]
       }
 
   See `Bourse.WS.SpecConfig` for hand-base details and known URL limitations.
@@ -33,8 +34,11 @@ defmodule Bourse.WS.Config do
   alias Bourse.Exchange
   alias Bourse.WS.SpecConfig
 
+  @registered_divergences %{"coinbaseexchange" => :websocket_not_configured}
+
   @doc """
-  Returns the WS config map for the given exchange id or struct, or nil if unsupported.
+  Returns the WS config map for the given exchange id or struct, or nil if it
+  has no configured WebSocket transport.
 
   When passed a `%Bourse.Exchange{}`, merges using the lean `exchange.spec`.
   """
@@ -49,4 +53,8 @@ defmodule Bourse.WS.Config do
   @doc "Returns all supported exchange ids."
   @spec supported_exchanges() :: [String.t()]
   def supported_exchanges, do: SpecConfig.hand_bases() |> Map.keys() |> Enum.sort()
+
+  @doc "Returns runtime exchanges intentionally lacking a WS config and the reason for each gap."
+  @spec registered_divergences() :: %{String.t() => :websocket_not_configured}
+  def registered_divergences, do: @registered_divergences
 end

@@ -45,7 +45,7 @@ defmodule Bourse.WS.Auth.Behaviour do
 
   @type auth_config :: map()
   @type auth_message :: map()
-  @type auth_response :: map()
+  @type auth_response :: map() | [map()]
   @type auth_state :: map()
   @type opts :: keyword()
 
