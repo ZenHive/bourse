@@ -95,6 +95,7 @@ defmodule Bourse.WS.ChannelsTest do
       "orderbook::{symbol}",
       "trade::{symbol}",
       "myLiquidations::{symbol}",
+      ":{symbol}",
       "miniTicker",
       "kline",
       "name"

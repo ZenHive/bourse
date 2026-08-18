@@ -1232,8 +1232,8 @@ provider-owned `depth20@100ms`-Stream direkt statt über die generierte Channel-
 (Reviewer-Run run-1786673501096-c9939b07). Der Workaround kann raus, sobald bourse den
 Default-Channel fixt.
 
-**Status (2026-08-18):** ✅ **fixed** by task 618 (harness run
-`run-1787019715121-97bb4904`). Default `watch_order_book/3` now builds the
+**Status (2026-08-18):** ✅ **fixed** by task 618 (delivery commit
+`8dc570a`, harness run `run-1787019715121-97bb4904`). Default `watch_order_book/3` now builds the
 provider partial-depth stream `{symbol}@depth20@100ms` (`btcusdt@depth20@100ms`
 for `BTC/USDT`) on binance and binanceusdm. The four `watch_*` defaults were
 audited against the venue stream docs; leftover hashes

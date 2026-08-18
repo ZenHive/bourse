@@ -8,17 +8,19 @@ this file is the complete Binance USD-M carve record.
 
 ## 2026-08-18 — WS subscribe templates are provider stream names (Task 618)
 
-**C-T618b — USD-M `watch_*` defaults are documented market-stream names (task 618).
-Outcome: CONFIRM provider contract; DIVERGE from the leaked message-hash templates.**
-The USD-M market-stream catalog documents the same `<symbol>@depth<levels>@<speed>`
-partial book, `<symbol>@trade`, and `<symbol>@miniTicker` names used on spot.
-Authored defaults:
+**C-T618b — USD-M `watch_*` defaults are provider stream names on the authored `/ws` host (task 618).
+Outcome: CONFIRM partial-depth and mini-ticker names; DIVERGE from the catalog's `@aggTrade` for `watch_trades` because live `/ws` delivers `<symbol>@trade` and not `@aggTrade`.**
+The official USD-M connector
+([`um_futures/websocket_client.py`](https://github.com/binance/binance-futures-connector-python/blob/master/binance/websocket/um_futures/websocket_client.py))
+names partial book `<symbol>@depth<levels>@<speed>ms`, trades `<symbol>@aggTrade`,
+and mini ticker `<symbol>@miniTicker`. Authored defaults on
+`wss://fstream.binance.com/ws`:
 
-| Unified method | Authored template | Live on `wss://fstream.binance.com/ws` 2026-08-18 |
+| Unified method | Authored template | Live on `/ws` 2026-08-18 |
 |---|---|---|
 | `watch_order_book` | `{symbol}@depth20@100ms` | `e=depthUpdate` with 20 `b`/`a` levels |
-| `watch_trades` | `{symbol}@trade` | `e=trade` frames |
-| `watch_ticker` | `{symbol}@miniTicker` | documented; 8s on `/ws` delivered 0 frames |
+| `watch_trades` | `{symbol}@trade` | `e=trade` frames; documented `@aggTrade` acked with 0 frames |
+| `watch_ticker` | `{symbol}@miniTicker` | documented; 8s delivered 0 frames |
 | `watch_orders` | none | listen-key user-data connection; no market-stream `SUBSCRIBE` |
 
 `watch_orders` dropped `:{symbol}` for the same reason as spot: USD-M private
@@ -34,10 +36,11 @@ The `/ws` host acked `@miniTicker`, `@ticker`, and `@aggTrade` and delivered
 nothing in 8s, while `@bookTicker` streamed immediately. The current public URL
 stays `/ws` because that is the host that carries the order-book and trade
 defaults. The ticker template stays the documented `@miniTicker` name rather
-than being swapped to `@bookTicker` (different payload).
+than being swapped to `@bookTicker` (different payload). `watch_trades` keeps
+the live-working `@trade` name rather than the silent-dead documented `@aggTrade`.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T618b","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M WebSocket Market Streams: <symbol>@depth20@100ms, <symbol>@trade, <symbol>@miniTicker"},"observed_evidence":{"kind":"live_venue","reference":"Live fstream.binance.com/ws 2026-08-18: btcusdt@depth20@100ms delivered depthUpdate 20-level books; btcusdt@trade delivered e=trade; orderbook:btcusdt acked with zero frames"},"compatibility_reference":{"kind":"ccxt","reference":"CCXT message-hash templates orderbook::{symbol}, trade::{symbol}, myLiquidations::{symbol}, :{symbol}, bare miniTicker/kline/name are leftovers only"},"resolved_tier":1}
+{"carve_id":"C-T618b","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance official USD-M Python connector um_futures/websocket_client.py: <symbol>@depth<levels>@<speed>ms, <symbol>@aggTrade, <symbol>@miniTicker"},"observed_evidence":{"kind":"live_venue","reference":"Live fstream.binance.com/ws 2026-08-18: btcusdt@depth20@100ms delivered depthUpdate; btcusdt@trade delivered e=trade; btcusdt@aggTrade/@miniTicker/@ticker acked with zero frames; orderbook:btcusdt acked with zero frames"},"compatibility_reference":{"kind":"ccxt","reference":"CCXT message-hash templates orderbook::{symbol}, trade::{symbol}, myLiquidations::{symbol}, :{symbol}, bare miniTicker/kline/name are leftovers only"},"resolved_tier":1}
 -->
 
 ## 2026-08-18 — linear contract unit (Task 623)
