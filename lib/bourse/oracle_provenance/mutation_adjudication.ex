@@ -13,7 +13,7 @@ defmodule Bourse.OracleProvenance.MutationAdjudication do
   venue answered.
 
   Relation, runtime scope, evidence, reachability, safety and contract scope stay
-  six independent facts. A refused operation keeps its place in the 178-operation
+  six independent facts. A refused operation keeps its place in the 182-operation
   denominator as `evidence: "unverified"` with a ledger entry — refused never
   means absent, unsupported or deleted.
   """

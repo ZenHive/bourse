@@ -134,7 +134,7 @@ Entry template:
   prose-declared set disagree — the register substantiates two operations (`private/enable_cancel_on_disconnect`,
   `private/disable_cancel_on_disconnect`) that the prose declares WebSocket-only without carrying the tag — so the
   OpenAPI tag alone under-reports which current-REST paths are unreachable.
-- The open question: nothing reachable over REST. They stay in the 178-operation current-REST denominator as
+- The open question: nothing reachable over REST. They stay in the 182-operation current-REST denominator as
   `reachability=unreachable` rather than being deleted from it.
 - Exact call: none over REST.
 - Expected evidence: WebSocket-transport evidence, owned by the WebSocket contract surface, not by current REST.
