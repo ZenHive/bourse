@@ -1345,3 +1345,22 @@ Konsument-Handling (trading_dashboard): keines — der Befund ist unverfälscht,
 schreibt den Venue-Fehler unverändert nach `OrderLadder.last_error`. Die
 Sichtbarkeitslücke auf Konsumentenseite (eine Ladder bleibt auf `protecting`, während
 jeder Reconcile scheitert, ohne dass etwas alarmiert) wird dort getrennt gefilet.
+
+> **Update 2026-08-18 — Kausalität eingeschränkt, Defekt bleibt.** Die oben zitierte
+> Logsequenz ist echt, taugt aber **nicht** als Beweis dafür, dass der Retry diesen
+> Vorfall verursacht hat. Eine Parallelmessung mit abgeschaltetem Retry
+> (`Application.put_env(:bourse, :retry_policy, false)`, sofort zurückgesetzt) zeigt: die
+> Binance-Futures-**Testnet**-Account-Plane antwortet schon beim ersten Versuch fehlerhaft
+> — `fetch_open_orders` → HTTP 400 / `-1000 unknown error`, `fetch_positions` und
+> `fetch_balance` → `-1021`. Clock-Skew zur selben Zeit: Testnet −8 ms, Mainnet −9 ms bei
+> 380 ms RTT; beide Public-Endpoints 200. Ein `-1021` ohne Retry und ohne Uhr-Abweichung
+> ist venue-seitig, nicht client-seitig — die Venue war während der Beobachtung selbst
+> gestört. Der Retry hat diesen Ausfall folglich nicht erzeugt, sondern **verdeckt**: er
+> ersetzt die Ursache des ersten Versuchs durch die Ablehnung des letzten.
+>
+> Der eigentliche Defekt steht unverändert, weil er aus dem Quelltext folgt und keine
+> Venue-Beobachtung braucht: `signed_request/4` reicht eine fertig signierte URL an Req
+> mit `retry: :safe_transient`, und Req wiederholt dieselbe Anfrage mit eingefrorenem
+> Timestamp. Belastbarer Regressionstest deshalb ohne echte Venue: einen 408 auf einem
+> signierten GET injizieren und pinnen, dass der zweite Versuch einen anderen
+> `timestamp`-Query-Parameter trägt als der erste.
