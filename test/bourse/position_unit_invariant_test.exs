@@ -98,10 +98,13 @@ defmodule Bourse.PositionUnitInvariantTest do
                     "position base quantity changed its frozen unit"
   end
 
-  defp assert_base_quantity(%Position{base_quantity: nil}, _position_case), do: :ok
+  defp assert_base_quantity(%Position{base_quantity: base_quantity}, position_case) do
+    assert is_nil(base_quantity),
+           "#{position_case.venue} emitted base_quantity outside the Deribit-future scope"
+  end
 
   defp assert_quantity_arithmetic(position, %{quantity_basis: :shares} = position_case) do
-    assert_in_delta position.contracts * position.mark_price,
+    assert_in_delta position.contracts * unit_price!(position, position_case),
                     position.notional,
                     @unit_tolerance,
                     "#{position_case.venue} shares and price no longer reconcile with notional"
@@ -117,7 +120,7 @@ defmodule Bourse.PositionUnitInvariantTest do
                       "#{position_case.venue} quote contracts no longer reconcile with notional"
     else
       assert_in_delta quote_quantity,
-                      position.notional * position.mark_price,
+                      position.notional * unit_price!(position, position_case),
                       @unit_tolerance,
                       "#{position_case.venue} quote contracts no longer reconcile with settlement notional"
     end
@@ -131,12 +134,19 @@ defmodule Bourse.PositionUnitInvariantTest do
                     @unit_tolerance,
                     "#{position_case.venue} contracts no longer reconcile with base quantity"
 
-    if is_number(position.mark_price) do
-      assert_in_delta base_quantity * position.mark_price,
-                      position.notional,
-                      @unit_tolerance,
-                      "#{position_case.venue} base quantity and mark no longer reconcile with quote notional"
-    end
+    assert_in_delta base_quantity * unit_price!(position, position_case),
+                    position.notional,
+                    @unit_tolerance,
+                    "#{position_case.venue} base quantity and price no longer reconcile with quote notional"
+  end
+
+  defp unit_price!(position, position_case) do
+    price = position.mark_price || position.entry_price || position.last_price
+
+    assert is_number(price),
+           "#{position_case.venue} frozen row has no mark, entry, or last price for unit arithmetic"
+
+    price
   end
 
   defp quote_currency(symbol) do

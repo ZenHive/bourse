@@ -102,4 +102,49 @@ defmodule Bourse.Unified.DeribitPositionUnitsTest do
     assert {:error, {:missing_position_notional_currency, %{exchange: "binance", symbol: nil}}} =
              DeribitPositionUnits.reconcile({:ok, positions}, exchange)
   end
+
+  test "leaves deribit future contracts unchanged when the settlement quantity is missing" do
+    exchange =
+      "deribit"
+      |> Exchange.new!()
+      |> Exchange.put_markets([%Market{id: "BTC-PERPETUAL", contract_size: 10.0, inverse: true}])
+
+    position = %Position{
+      symbol: "BTC/USD:BTC",
+      info: %{"instrument_name" => "BTC-PERPETUAL", "kind" => "future"}
+    }
+
+    assert {:ok, %Position{contracts: nil, contract_size: nil, notional: nil, notional_currency: nil}} =
+             DeribitPositionUnits.reconcile({:ok, position}, exchange)
+  end
+
+  test "labels inverse settlement notionals with the settle currency" do
+    coinm = Exchange.new!("binancecoinm")
+    bybit = Exchange.new!("bybit")
+    okx = Exchange.new!("okx")
+
+    assert {:ok, %Position{notional_currency: "ETH"}} =
+             DeribitPositionUnits.reconcile(
+               {:ok, %Position{notional: 0.01, symbol: "ETH/USD:ETH"}},
+               coinm
+             )
+
+    assert {:ok, %Position{notional_currency: "BTC"}} =
+             DeribitPositionUnits.reconcile(
+               {:ok, %Position{notional: 0.002, symbol: "BTC/USD:BTC"}},
+               bybit
+             )
+
+    assert {:ok, %Position{notional_currency: "BTC"}} =
+             DeribitPositionUnits.reconcile(
+               {:ok, %Position{notional: 0.01, symbol: "BTC/USD:BTC"}},
+               okx
+             )
+
+    assert {:ok, %Position{notional_currency: "USD"}} =
+             DeribitPositionUnits.reconcile(
+               {:ok, %Position{notional: 50.0, symbol: "BTC/USDT:USDT"}},
+               okx
+             )
+  end
 end
