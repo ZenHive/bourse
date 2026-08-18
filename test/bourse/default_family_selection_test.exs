@@ -177,7 +177,12 @@ defmodule Bourse.DefaultFamilySelectionTest do
             _other -> [expected_path]
           end
 
-        assert requests |> RequestCollector.requests() |> Enum.map(& &1.conn.request_path) == expected_paths
+        # Sorted: the pin is the authored endpoint set, not the order two
+        # concurrent family requests happen to land in.
+        assert requests
+               |> RequestCollector.requests()
+               |> Enum.map(& &1.conn.request_path)
+               |> Enum.sort() == Enum.sort(expected_paths)
       end
     end
 
