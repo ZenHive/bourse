@@ -41,7 +41,8 @@ defmodule Bourse.WS.SpecConfigTest do
 
     test "binanceusdm uses futures stream URLs from hand base" do
       config = Config.for_exchange("binanceusdm")
-      assert config.public_url == "wss://fstream.binance.com/ws"
+      assert config.public_url == "wss://fstream.binance.com/public/ws"
+      assert config.market_url == "wss://fstream.binance.com/market/ws"
       assert config.auth_pattern == :listen_key
     end
 

@@ -50,6 +50,16 @@ defmodule Bourse.WS.FacadeTest do
     assert WS.get_url(ws) == "wss://offline.test"
   end
 
+  test "binanceusdm watch_ticker stays on a non-authored test-double URL", %{client: client} do
+    ws = %WS{exchange: Exchange.new!("binanceusdm"), zen_client: client, url: "wss://offline.test", section: :public}
+
+    assert {:ok, handle} = WS.watch_ticker(ws, "BTC/USDT", ack_timeout_ms: 0)
+    assert handle.ws.url == "wss://offline.test"
+    assert handle.channels == ["btcusdt@miniTicker"]
+    assert_receive {:transport_sent, payload}
+    assert Jason.decode!(payload)["params"] == ["btcusdt@miniTicker"]
+  end
+
   test "builds handles and matching unsubscribe frames", %{client: client} do
     ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
 

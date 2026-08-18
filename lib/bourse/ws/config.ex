@@ -15,6 +15,8 @@ defmodule Bourse.WS.Config do
       %{
         public_url: String.t() | nil,
         public_url_sandbox: String.t() | nil,
+        market_url: String.t() | nil,
+        market_url_sandbox: String.t() | nil,
         private_url: String.t() | nil,
         private_url_sandbox: String.t() | nil,
         heartbeat: %{type: :ping | :deribit | :custom, interval: pos_integer() | nil, optional(:payload) => term()},

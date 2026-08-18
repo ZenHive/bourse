@@ -6,6 +6,39 @@ Append-only schema confrontations for Binance USD-M. Follow the allocation and e
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance USD-M carve record.
 
+## 2026-08-18 — USD-M ticker and aggTrade live on `/market`, not `/ws` (Task 627)
+
+**C-T627a — USD-M `watch_ticker` delivers on `wss://fstream.binance.com/market/ws` (task 627).
+Outcome: CONFIRM the documented `/market` host for `{symbol}@miniTicker`; DIVERGE from treating
+unrouted `/ws` or `/public` as the ticker host.** Binance's
+[USD-M WebSocket Market Streams Connect](https://developers.binance.com/docs/derivatives/usds-margined-futures/websocket-market-streams)
+page and the
+[Important WebSocket Change Notice](https://developers.binance.com/docs/derivatives/usds-margined-futures/websocket-market-streams/Important-WebSocket-Change-Notice)
+route regular market data through `wss://fstream.binance.com/market` and high-frequency books
+through `/public`. Unrouted `wss://fstream.binance.com/ws` only receives `/public` data, so a
+`SUBSCRIBE` of a `/market` stream acks (`result: null`) and then stays silent. Live production
+on 2026-08-18:
+
+| Stream | `/ws` and `/public/ws` | `/market/ws` |
+|---|---|---|
+| `btcusdt@miniTicker` | ack, 0 frames | `e=24hrMiniTicker` |
+| `btcusdt@ticker` | ack, 0 frames | `e=24hrTicker` |
+| `btcusdt@aggTrade` | ack, 0 frames | `e=aggTrade` |
+| `btcusdt@trade` | `e=trade` | ack, 0 frames |
+| `btcusdt@depth20@100ms` | `e=depthUpdate` | ack, 0 frames |
+| `btcusdt@bookTicker` | `e=bookTicker` | ack, 0 frames |
+
+Authored `websocket.urls.public` is therefore `wss://fstream.binance.com/public/ws` (the
+documented successor of `/ws` for the task-618 depth and `@trade` defaults). Authored
+`websocket.urls.market` is `wss://fstream.binance.com/market/ws`. Default `watch_ticker`
+(`{symbol}@miniTicker`, unchanged from C-T618b) opens that market host rather than swapping
+the template to `@bookTicker` (different payload). Demo-fstream does not enforce the split
+and is not used as evidence.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T627a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binanceusdm/manifest.json; Binance USD-M WebSocket Market Streams Connect and Important WebSocket Change Notice: /market for @miniTicker/@ticker/@aggTrade, /public for depth/bookTicker"},"observed_evidence":{"kind":"live_venue","reference":"Live fstream.binance.com 2026-08-18: /market/ws delivered 24hrMiniTicker/24hrTicker/aggTrade; /public/ws and /ws delivered depthUpdate/@trade/@bookTicker and acked miniTicker/ticker/aggTrade with zero frames"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-18 — WS subscribe templates are provider stream names (Task 618)
 
 **C-T618b — USD-M `watch_*` defaults are provider stream names on the authored `/ws` host (task 618).

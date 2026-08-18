@@ -56,8 +56,10 @@ defmodule Bourse.WS.SpecConfig do
       auth_config: %{method: "userDataStream.subscribe.signature"}
     },
     "binanceusdm" => %{
-      public_url: "wss://fstream.binance.com/ws",
-      public_url_sandbox: "wss://demo-fstream.binance.com/ws",
+      public_url: "wss://fstream.binance.com/public/ws",
+      public_url_sandbox: "wss://demo-fstream.binance.com/public/ws",
+      market_url: "wss://fstream.binance.com/market/ws",
+      market_url_sandbox: "wss://demo-fstream.binance.com/market/ws",
       private_url: "wss://fstream.binance.com/ws",
       private_url_sandbox: "wss://demo-fstream.binance.com/ws",
       heartbeat: %{type: :ping, interval: 180_000},
@@ -187,6 +189,8 @@ defmodule Bourse.WS.SpecConfig do
         |> Map.put(:private_url, urls.private)
         |> Map.put(:public_url_sandbox, urls.sandbox_public)
         |> Map.put(:private_url_sandbox, urls.sandbox_private)
+        |> Map.put(:market_url, urls.market)
+        |> Map.put(:market_url_sandbox, urls.sandbox_market)
     end
   end
 
@@ -197,7 +201,9 @@ defmodule Bourse.WS.SpecConfig do
           public: Map.get(urls, "public"),
           private: Map.get(urls, "private"),
           sandbox_public: Map.get(urls, "sandbox_public"),
-          sandbox_private: Map.get(urls, "sandbox_private")
+          sandbox_private: Map.get(urls, "sandbox_private"),
+          market: Map.get(urls, "market"),
+          sandbox_market: Map.get(urls, "sandbox_market")
         }
 
       _ ->

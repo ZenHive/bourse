@@ -476,8 +476,32 @@ defmodule Bourse.WS do
   defp watch(%__MODULE__{exchange: exchange, section: section} = ws, method, params, opts) do
     with :ok <- require_section(method, section),
          {:ok, channel} <- Channels.build(exchange, method, params, opts),
+         {:ok, ws} <- ensure_stream_host(ws, channel),
          :ok <- subscribe(ws, List.wrap(channel), opts) do
       {:ok, Handle.new(ws, method, channel, opts)}
+    end
+  end
+
+  # USD-M `/public` silently acks `/market` stream names. Switch the socket
+  # only when the caller is already on an authored venue host — test doubles
+  # and caller-supplied URLs stay put.
+  defp ensure_stream_host(%__MODULE__{section: :public, url: url} = ws, channel) when is_binary(channel) do
+    target = URLRouting.stream_url(ws.exchange, channel)
+
+    cond do
+      is_nil(target) or target == url -> {:ok, ws}
+      URLRouting.authored_usdm_host?(ws.exchange, url) -> reconnect_public(ws, target)
+      true -> {:ok, ws}
+    end
+  end
+
+  defp ensure_stream_host(ws, _channel), do: {:ok, ws}
+
+  defp reconnect_public(%__MODULE__{exchange: exchange} = ws, url) do
+    with {:ok, config} <- fetch_config(exchange),
+         zen_opts = build_connect_opts(config, []),
+         {:ok, zen_client} <- ZenClient.connect(url, zen_opts) do
+      {:ok, %{ws | zen_client: zen_client, url: url}}
     end
   end
 

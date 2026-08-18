@@ -49,6 +49,50 @@ defmodule Bourse.WS.URLRoutingTest do
       exchange = Exchange.new!("hyperliquid", sandbox: true)
       assert URLRouting.public_url(exchange) == "wss://api.hyperliquid-testnet.xyz/ws"
     end
+
+    test "binanceusdm public URL is the high-frequency /public host" do
+      exchange = Exchange.new!("binanceusdm")
+      assert URLRouting.public_url(exchange) == "wss://fstream.binance.com/public/ws"
+      assert URLRouting.market_url(exchange) == "wss://fstream.binance.com/market/ws"
+    end
+
+    test "binanceusdm sandbox public URL follows the same /public vs /market split" do
+      exchange = Exchange.new!("binanceusdm", sandbox: true)
+      assert URLRouting.public_url(exchange) == "wss://demo-fstream.binance.com/public/ws"
+      assert URLRouting.market_url(exchange) == "wss://demo-fstream.binance.com/market/ws"
+    end
+  end
+
+  describe "stream_url/2" do
+    test "binanceusdm ticker and aggTrade resolve to /market/ws" do
+      exchange = Exchange.new!("binanceusdm")
+      market = "wss://fstream.binance.com/market/ws"
+
+      assert URLRouting.stream_url(exchange, "btcusdt@miniTicker") == market
+      assert URLRouting.stream_url(exchange, "btcusdt@ticker") == market
+      assert URLRouting.stream_url(exchange, "btcusdt@aggTrade") == market
+    end
+
+    test "binanceusdm depth, trade, and bookTicker stay on /public/ws" do
+      exchange = Exchange.new!("binanceusdm")
+      public = "wss://fstream.binance.com/public/ws"
+
+      assert URLRouting.stream_url(exchange, "btcusdt@depth20@100ms") == public
+      assert URLRouting.stream_url(exchange, "btcusdt@trade") == public
+      assert URLRouting.stream_url(exchange, "btcusdt@bookTicker") == public
+    end
+
+    test "other venues ignore USD-M host split" do
+      exchange = Exchange.new!("binance")
+      assert URLRouting.stream_url(exchange, "btcusdt@miniTicker") == URLRouting.public_url(exchange)
+      assert URLRouting.market_url(exchange) == nil
+    end
+
+    test "legacy unrouted /ws is still an authored USD-M host" do
+      exchange = Exchange.new!("binanceusdm")
+      assert URLRouting.authored_usdm_host?(exchange, "wss://fstream.binance.com/ws")
+      refute URLRouting.authored_usdm_host?(exchange, "wss://offline.test")
+    end
   end
 
   describe "private_url/1" do

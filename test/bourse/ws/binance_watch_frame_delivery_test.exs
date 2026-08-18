@@ -1,7 +1,7 @@
 defmodule Bourse.WS.BinanceWatchFrameDeliveryTest do
   @moduledoc """
   Live frame-delivery evidence for the default binance-family public watch
-  path (task 618).
+  path (tasks 618 and 627).
 
   Binance acks unknown stream names, so a subscribe-ack is not evidence.
   These tests go through `watch_*` with no caller-supplied channel and wait
@@ -73,9 +73,11 @@ defmodule Bourse.WS.BinanceWatchFrameDeliveryTest do
     test "watch_order_book delivers a depthUpdate book frame" do
       exchange = Exchange.new!("binanceusdm")
       assert {:ok, ws} = WS.connect(exchange, :public)
+      assert ws.url == "wss://fstream.binance.com/public/ws"
 
       assert {:ok, handle} = WS.watch_order_book(ws, "BTC/USDT")
       assert handle.channels == ["btcusdt@depth20@100ms"]
+      assert handle.ws.url == "wss://fstream.binance.com/public/ws"
 
       frame = await_data_frame(&book_frame?/1, @receive_timeout)
       assert book_frame?(frame)
@@ -86,14 +88,33 @@ defmodule Bourse.WS.BinanceWatchFrameDeliveryTest do
     test "watch_trades delivers a trade frame" do
       exchange = Exchange.new!("binanceusdm")
       assert {:ok, ws} = WS.connect(exchange, :public)
+      assert ws.url == "wss://fstream.binance.com/public/ws"
 
       assert {:ok, handle} = WS.watch_trades(ws, "BTC/USDT")
       assert handle.channels == ["btcusdt@trade"]
+      assert handle.ws.url == "wss://fstream.binance.com/public/ws"
 
       frame = await_data_frame(&trade_frame?/1, @receive_timeout)
       assert frame["e"] == "trade"
       assert frame["s"] == "BTCUSDT"
 
+      assert :ok = WS.close(ws)
+    end
+
+    test "watch_ticker delivers a mini-ticker frame on /market/ws" do
+      exchange = Exchange.new!("binanceusdm")
+      assert {:ok, ws} = WS.connect(exchange, :public)
+      assert ws.url == "wss://fstream.binance.com/public/ws"
+
+      assert {:ok, handle} = WS.watch_ticker(ws, "BTC/USDT")
+      assert handle.channels == ["btcusdt@miniTicker"]
+      assert handle.ws.url == "wss://fstream.binance.com/market/ws"
+
+      frame = await_data_frame(&mini_ticker_frame?/1, @receive_timeout)
+      assert frame["e"] == "24hrMiniTicker"
+      assert frame["s"] == "BTCUSDT"
+
+      assert :ok = WS.close(handle.ws)
       assert :ok = WS.close(ws)
     end
   end
