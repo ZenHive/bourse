@@ -7,6 +7,15 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking (deribit):** linear future `contracts` now divide base
+  `size_currency` by the base `contract_size`. The 0.5.0 formula
+  `|notional| / contract_size` is inverse-only: on a USDC-perp it mixed
+  quote `size` with a base contract size and reported ~mark_price
+  contracts. Inverse futures are unchanged. Quote `notional` still comes
+  from `size` on both books.
+
 ### Fixed
 
 - binanceusdm linear markets now populate `contract_size` from the authored
@@ -14,6 +23,22 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   it nil when `exchangeInfo` omits `contractSize`. A provider-published size
   still wins; a venue that states no unit stays nil rather than defaulting to
   one. Inverse COIN-M continues to read the venue's `contractSize` field.
+- Signed private requests are re-signed before every Req retry. A
+  transient 408 no longer replays a frozen timestamp, nonce, or deadline
+  that the venue then rejects as a recv-window or nonce error. After
+  retries are exhausted the caller sees the original 408, not a follow-on
+  rejection. The already-signed `HTTP.signed_request/4` path is now
+  single-attempt; Dispatch uses `signed_request/5`.
+- Bybit `SETTLEMENT` ledger `amount` and `direction` source the venue's
+  `funding` component instead of `change`. USDC-perp rows were mixing
+  8-hour session P&L (`cashFlow`) into `funding_fee`; linear-USDT rows
+  where `cashFlow` is 0 are unchanged. Wallet `before`/`after` still
+  describe the combined settlement.
+- Authored conditional request entries no longer overwrite or delete a
+  caller-supplied native parameter. The conditional only supplies the
+  default; a matching case (for example deribit `trailingAmount` →
+  `trailing_stop`) still applies. Deribit `trigger: "index_price"` now
+  reaches the venue instead of being stripped.
 
 ## [0.5.0] - 2026-08-18
 

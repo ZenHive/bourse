@@ -1194,13 +1194,13 @@ mit Supplement erreicht die Trigger-Order Deribits Business-Logik (echte `10035
 trigger_price_too_low`-Rejection), ohne Supplement kommt der Selektor nie an. Der Workaround
 kann raus, sobald bourse den Fix shippt.
 
-**Status (2026-08-18):** 🔧 **fixed in worktree** — `put_authored_conditional/4` keeps a
-caller-supplied native key when no authored case matches. Live testnet: the same
-`stop_market` + `trigger: "index_price"` call that used to die as `-32602 trigger is
-required` now reaches Deribit business logic (`10035 trigger_price_too_low` on a
-buy-stop at 1; a sell-stop at 1 was accepted with `info["trigger"] == "index_price"`
-and cancelled). Matching cases still rewrite (trailingAmount → `last_price` /
-`trailing_stop`). Task 615.
+**Status (2026-08-18):** ✅ fixed — task 615 shipped caller-wins conditionals.
+`put_authored_conditional/4` keeps a caller-supplied native key when no authored
+case matches. Live testnet: the same `stop_market` + `trigger: "index_price"` call
+that used to die as `-32602 trigger is required` now reaches Deribit business
+logic (`10035 trigger_price_too_low` on a buy-stop at 1; a sell-stop at 1 was
+accepted with `info["trigger"] == "index_price"` and cancelled). Matching cases
+still rewrite (trailingAmount → `last_price` / `trailing_stop`).
 
 **Status:** 🔀 triaged 2026-08-14 — bestätigter Client-Defekt. Mechanismus verifiziert per
 Code-Read: `RequestShape.put_authored_conditional/4` (lib/bourse/unified/request_shape.ex:379)
@@ -1313,7 +1313,19 @@ bourse die Normalisierung shippt.
 **Severity:** hoch (Money-Path: ein Bracket-Guard-Reconcile scheitert dauerhaft, und die
 Fehlerklasse zeigt auf die falsche Ursache)
 
-**Status (2026-08-18):** 🔀 triaged — bestätigter Defekt, workbench **task 621** (codex/gpt-5.6-sol, bundle `live_triage`, D6/B9/U7). Mechanismus per Code-Read verifiziert: `dispatch.ex:227` signiert **einmal**, `dispatch.ex:246` reicht das eingefrorene `signed`-Struct an `Http.signed_request/4`, und `http.ex:242-258` setzt `retry: Defaults.retry_policy()` — Req wiederholt die *vorbereitete* Anfrage, nichts signiert zwischen den Versuchen neu.
+**Status (2026-08-18):** ✅ fixed — task 621 shipped re-sign-on-retry. Dispatch
+passes a resigner into `HTTP.signed_request/5`; a request step refreshes
+timestamp, nonce, and deadline before every repeated attempt. Injected-408 tests
+pin a fresh Binance query `timestamp` and a fresh Deribit nonce on the second
+try, and pin that exhausted retries return the original 408 (`:network_error`)
+rather than a follow-on recv-window rejection. The already-signed
+`HTTP.signed_request/4` path is single-attempt.
+
+*Triage (same day, before the land):* bestätigt und als workbench **task 621**
+gefiled (codex/gpt-5.6-sol, bundle `live_triage`, D6/B9/U7). Mechanismus per
+Code-Read: `dispatch.ex` signierte einmal und reichte das eingefrorene
+`signed`-Struct an `Http.signed_request/4` mit `retry: Defaults.retry_policy()` —
+Req wiederholte die vorbereitete Anfrage ohne neue Signatur.
 
 Klassen-Scope statt Binance-Fix: jede Venue, deren Signatur Timestamp, Nonce oder Deadline abdeckt, ist gleich exponiert (Binance-Familie, bybit, okx, deribit, hyperliquid, derive, lighter). Der Fix sitzt an der Signing/Dispatch-Grenze, und die Acceptance Criteria verlangen den Nachweis über **zwei** Signing-Patterns (query-signiert *und* nonce/deadline-basiert), damit er nicht binance-förmig ausfällt.
 
