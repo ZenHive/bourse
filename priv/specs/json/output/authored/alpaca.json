@@ -2538,8 +2538,7 @@
           },
           "symbol": {
             "coercion": "safeString",
-            "key": "symbol",
-            "kind": "native_symbol"
+            "key": "symbol"
           },
           "takerOrMaker": null,
           "timestamp": {

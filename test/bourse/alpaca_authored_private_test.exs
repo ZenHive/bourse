@@ -228,6 +228,24 @@ defmodule Bourse.AlpacaAuthoredPrivateTest do
     assert RequestCollector.one!(requests).request_path == "/v2/account/activities/FILL"
   end
 
+  test "FILL history filters a caller-supplied symbol after parse" do
+    gld_fill =
+      fill_payload()
+      |> Map.put("id", "gld-fill")
+      |> Map.put("symbol", "GLD")
+      |> Map.put("order_id", "gld-order")
+
+    {stub, requests} = stub_with_response(:mixed_fills, [fill_payload(), gld_fill])
+
+    assert {:ok, [%Bourse.Trade{symbol: "AAPL", id: id}]} =
+             Bourse.fetch_my_trades(exchange(), symbol: "AAPL", plug: {Req.Test, stub})
+
+    assert id == "20220202135509981::2d7be4ff-d1f3-43e9-856a-0f5cf5c5088e"
+    request = RequestCollector.one!(requests)
+    assert request.request_path == "/v2/account/activities/FILL"
+    refute Map.has_key?(RequestCollector.query(request), "symbol")
+  end
+
   defp exchange do
     Exchange.new!(:alpaca,
       sandbox: true,

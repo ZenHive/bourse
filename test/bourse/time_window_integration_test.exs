@@ -37,6 +37,15 @@ defmodule Bourse.Test.TimeWindowProbeMatrix do
       tolerance_ms: @one_second_ms
     },
     %{
+      venue: :alpaca,
+      method: :fetch_trades,
+      args: ["GLD"],
+      opts: [],
+      exchange_opts: [],
+      credentials: true,
+      tolerance_ms: @one_second_ms
+    },
+    %{
       venue: :binance,
       method: :fetch_ohlcv,
       args: ["BTC/USDT", "1m"],
@@ -188,6 +197,13 @@ defmodule Bourse.Test.TimeWindowProbeMatrix do
       methods: [:fetch_closed_orders, :fetch_open_orders, :fetch_orders],
       reason: "paper order-history rows depend on account activity and are not guaranteed to populate",
       tracking: "docs/prod-verification-ledger.md — task 526 residual oracle critical slots"
+    },
+    %{
+      venue: :alpaca,
+      methods: [:fetch_my_trades],
+      reason:
+        "paper GET /v2/account/activities/FILL returns an empty list; the account's only activity is a JNLC funding journal, so both window boundaries cannot be asserted",
+      tracking: "docs/authored-spec-carves/alpaca.md C-T547a — task 547"
     },
     %{
       venue: :binance,

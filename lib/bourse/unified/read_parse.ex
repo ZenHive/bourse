@@ -2461,6 +2461,14 @@ defmodule Bourse.Unified.ReadParse do
        )
        when is_binary(existing) and existing != "", do: trade
 
+  # Alpaca FILL rows already carry the unified ticker. Stamping the request
+  # symbol would relabel every fill and defeat the post-parse filter (C-T547a).
+  defp backfill_trade_symbol_for_list(
+         %{__struct__: Bourse.Trade, symbol: existing, info: %{"activity_type" => _}} = trade,
+         _params
+       )
+       when is_binary(existing) and existing != "", do: trade
+
   defp backfill_trade_symbol_for_list(trade, params), do: backfill_trade_symbol(trade, params)
 
   defp backfill_market_symbol(%{__struct__: Bourse.Market} = market, exchange, raw) when is_map(raw) do
