@@ -353,6 +353,32 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
     assert Enum.any?(AuthorityCorpus.load!(root), &(&1["venue"] == "binance"))
   end
 
+  test "a present surface digest must hash its key sets consistently" do
+    root = write_corpus(fn _venue, manifest -> manifest end)
+    artifact = List.first(fixture_manifest("binance")["artifacts"])
+    digest_dir = Path.join([root, "binance", "surface-digests"])
+    File.mkdir_p!(digest_dir)
+
+    File.write!(
+      Path.join(digest_dir, "fixture.json"),
+      Jason.encode!(%{
+        "schema_version" => 1,
+        "artifact_id" => "fixture",
+        "source" => %{"sha256" => artifact["sha256"], "bytes" => artifact["bytes"]},
+        "key_sets" => %{"channel_keys" => ["user.lsp"], "path_keys" => [], "operation_keys" => []},
+        "key_set_sha256" => %{
+          "channel_keys" => String.duplicate("0", 64),
+          "path_keys" => nil,
+          "operation_keys" => nil
+        }
+      })
+    )
+
+    assert_raise Mix.Error, ~r/surface digest channel_keys sha256 mismatch/, fn ->
+      AuthorityCorpus.load!(root)
+    end
+  end
+
   test "vendored artifacts require explicit redistribution permission" do
     root =
       write_corpus(fn

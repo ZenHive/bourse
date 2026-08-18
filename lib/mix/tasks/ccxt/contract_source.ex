@@ -93,7 +93,7 @@ defmodule Mix.Tasks.Ccxt.ContractSource do
     parsed = parse!(artifact, contents)
     document = inventory_document(artifact, contents)
     channel_keys = map_keys(document["channels"])
-    path_keys = document["paths"] |> map_keys() |> Enum.map(&normalize_path/1)
+    path_keys = document["paths"] |> map_keys() |> Enum.map(&normalize_path/1) |> Enum.sort()
     operation_keys = parsed.operations |> Enum.map(& &1["key"]) |> Enum.sort()
 
     %{
@@ -125,10 +125,13 @@ defmodule Mix.Tasks.Ccxt.ContractSource do
     }
   end
 
-  @doc "Hashes a sorted key set the way committed drift reports hash channel keys."
+  @doc "Hashes a key set the way committed drift reports hash channel keys."
   @spec hash_key_set([String.t()]) :: String.t() | nil
   def hash_key_set([]), do: nil
-  def hash_key_set(keys) when is_list(keys), do: AuthorityCorpus.sha256(Enum.join(keys, "\n"))
+
+  def hash_key_set(keys) when is_list(keys) do
+    keys |> Enum.sort() |> Enum.join("\n") |> AuthorityCorpus.sha256()
+  end
 
   @doc "Returns an explicit known source fact."
   @spec known(term()) :: fact()

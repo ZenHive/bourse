@@ -204,6 +204,17 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
     assert "POST /api/v1/orders/{id}" in openapi["key_sets"]["operation_keys"]
     assert Enum.any?(openapi["entities"], &(&1["kind"] == "path" and &1["key"] == "/status"))
 
+    mixed_slash = %{
+      "openapi" => "3.0.0",
+      "paths" => %{
+        "orders" => %{"get" => %{"responses" => %{"200" => %{}}}},
+        "/status" => %{"get" => %{"responses" => %{"200" => %{}}}}
+      }
+    }
+
+    mixed = ContractSource.surface_digest(artifact("openapi-json"), Jason.encode!(mixed_slash))
+    assert mixed["key_sets"]["path_keys"] == ["/orders", "/status"]
+
     prose =
       "official-api-documentation"
       |> artifact()
@@ -275,6 +286,12 @@ defmodule Mix.Tasks.Ccxt.ContractCompareTest do
 
     assert digest["key_set_sha256"]["channel_keys"] ==
              "67cd10a40f81ef7db93ee2a2995bfe1e1ef75800de5c651521d23990ab335e0f"
+
+    assert digest["prior"]["key_set_sha256"]["channel_keys"] ==
+             ContractSource.hash_key_set(digest["prior"]["key_sets"]["channel_keys"])
+
+    assert digest["key_set_sha256"]["operation_keys"] ==
+             ContractSource.hash_key_set(digest["key_sets"]["operation_keys"])
 
     delta = ContractComparator.diff_surface_digests(digest["prior"], digest)
 

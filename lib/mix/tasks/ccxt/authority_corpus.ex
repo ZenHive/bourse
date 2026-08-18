@@ -275,11 +275,26 @@ defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
       ensure!(is_map(digest["source"]), "#{label}: surface digest source must be an object")
       ensure!(digest["source"]["sha256"] == artifact["sha256"], "#{label}: surface digest source sha256 mismatch")
       ensure!(digest["source"]["bytes"] == artifact["bytes"], "#{label}: surface digest source bytes mismatch")
-      ensure!(is_map(digest["key_sets"]), "#{label}: surface digest key_sets must be an object")
+      ensure_digest_key_sets!(digest, label)
     end
 
     :ok
   end
+
+  defp ensure_digest_key_sets!(digest, label) do
+    ensure!(is_map(digest["key_sets"]), "#{label}: surface digest key_sets must be an object")
+
+    Enum.each(~w(channel_keys path_keys operation_keys), fn field ->
+      keys = digest["key_sets"][field] || []
+      ensure!(is_list(keys), "#{label}: surface digest #{field} must be a list")
+      expected = digest_key_set_sha256(keys)
+      actual = get_in(digest, ["key_set_sha256", field])
+      ensure!(actual == expected, "#{label}: surface digest #{field} sha256 mismatch")
+    end)
+  end
+
+  defp digest_key_set_sha256([]), do: nil
+  defp digest_key_set_sha256(keys), do: keys |> Enum.sort() |> Enum.join("\n") |> sha256()
 
   defp ensure_string!(map, key, label) do
     value = map[key]
