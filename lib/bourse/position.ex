@@ -13,8 +13,17 @@ defmodule Bourse.Position do
     * `side` - "long" or "short"
     * `contracts` - Number of contracts
     * `contract_size` - Size of one contract
-    * `notional` - Absolute quote-currency position value
-    * `base_quantity` - Absolute position size in the base currency
+    * `notional` - Absolute position value in the venue's own settlement unit.
+      Quote currency on every venue except binancecoinm, whose COIN-M
+      `notionalValue` is coin-settled (carve
+      `C-T610/binancecoinm-inverse-settlement-notional` in
+      `docs/authored-spec-carves/global.md`). Do not sum `notional` across
+      venues without checking that exception, and do not derive base exposure as
+      `notional / mark_price` on an inverse market — use `base_quantity`, or
+      `contracts * contract_size / mark_price`.
+    * `base_quantity` - Absolute position size in the base currency. Populated
+      for deribit futures, where the venue publishes it directly; `nil` on every
+      other venue, which state no base-denominated position field.
     * `leverage` - Current leverage
     * `unrealized_pnl` - Unrealized profit/loss
     * `realized_pnl` - Realized profit/loss
@@ -183,8 +192,10 @@ defmodule Bourse.Position do
                    side: "long or short",
                    contracts: "Number of contracts",
                    contract_size: "Size of one contract",
-                   notional: "Absolute quote-currency position value",
-                   base_quantity: "Absolute position size in the base currency",
+                   notional:
+                     "Absolute position value in the venue's own settlement unit — quote currency except binancecoinm, whose COIN-M notionalValue is coin-settled (carve C-T610/binancecoinm-inverse-settlement-notional). On an inverse market derive base exposure from base_quantity or contracts * contract_size / mark_price, never notional / mark_price.",
+                   base_quantity:
+                     "Absolute position size in the base currency. Populated for deribit futures; nil on venues that publish no base-denominated position field.",
                    leverage: "Current leverage",
                    unrealized_pnl: "Unrealized profit/loss",
                    realized_pnl: "Realized profit/loss",
