@@ -206,6 +206,49 @@
           "evidence_semantics": "lifecycle_observation"
         },
         {
+          "step_id": "reject_wrong_tick",
+          "role": "failure_probe",
+          "operation_id": "private/buy",
+          "authenticated": true,
+          "params": {
+            "instrument_name": "BTC-PERPETUAL",
+            "amount": "10",
+            "type": "limit",
+            "time_in_force": "good_til_cancelled",
+            "post_only": "true",
+            "label": {
+              "bind": "session_label"
+            },
+            "price": {
+              "bind": "off_tick_bid",
+              "from_step": "setup_ticker",
+              "path": [
+                "result",
+                "best_bid_price"
+              ],
+              "tick_from_step": "setup_instrument",
+              "tick_path": [
+                "result",
+                "tick_size"
+              ]
+            }
+          },
+          "expected": {
+            "outcome": "documented_error",
+            "http_status": 400,
+            "error_code": -32602,
+            "error_message": "Invalid params",
+            "error_data": {
+              "param": "price",
+              "reason": "must conform to tick size"
+            },
+            "documented_meaning": "Invalid params \u2014 See JSON-RPC spec.",
+            "authority": "priv/authority/deribit/errors.json"
+          },
+          "evidence_semantics": "documented_error",
+          "durable_state_effect": "none"
+        },
+        {
           "step_id": "cancel_order",
           "role": "cleanup",
           "operation_id": "private/cancel",
@@ -286,6 +329,15 @@
           "role": "idempotent_final_state",
           "operation_id": "private/cancel",
           "authenticated": true,
+          "compensator": {
+            "operation_id": "private/cancel_by_label",
+            "authenticated": true,
+            "params": {
+              "label": {
+                "bind": "session_label"
+              }
+            }
+          },
           "params": {
             "order_id": {
               "bind": "order_id",
@@ -303,49 +355,6 @@
             "error_code": 11044,
             "error_message": "not_open_order",
             "documented_meaning": "Attempt to do open order operations with the not open order.",
-            "authority": "priv/authority/deribit/errors.json"
-          },
-          "evidence_semantics": "documented_error",
-          "durable_state_effect": "none"
-        },
-        {
-          "step_id": "reject_wrong_tick",
-          "role": "failure_probe",
-          "operation_id": "private/buy",
-          "authenticated": true,
-          "params": {
-            "instrument_name": "BTC-PERPETUAL",
-            "amount": "10",
-            "type": "limit",
-            "time_in_force": "good_til_cancelled",
-            "post_only": "true",
-            "label": {
-              "bind": "session_label"
-            },
-            "price": {
-              "bind": "off_tick_bid",
-              "from_step": "setup_ticker",
-              "path": [
-                "result",
-                "best_bid_price"
-              ],
-              "tick_from_step": "setup_instrument",
-              "tick_path": [
-                "result",
-                "tick_size"
-              ]
-            }
-          },
-          "expected": {
-            "outcome": "documented_error",
-            "http_status": 400,
-            "error_code": -32602,
-            "error_message": "Invalid params",
-            "error_data": {
-              "param": "price",
-              "reason": "must conform to tick size"
-            },
-            "documented_meaning": "Invalid params \u2014 See JSON-RPC spec.",
             "authority": "priv/authority/deribit/errors.json"
           },
           "evidence_semantics": "documented_error",

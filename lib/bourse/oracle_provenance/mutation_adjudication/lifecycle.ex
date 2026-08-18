@@ -24,6 +24,8 @@ defmodule Bourse.OracleProvenance.MutationAdjudication.Lifecycle do
   alias Mix.Tasks.Ccxt.AuthorityCorpus
 
   @credential_env ~w(DERIBIT_TESTNET_API_KEY DERIBIT_TESTNET_API_SECRET)
+  @mutating_roles ~w(act cleanup idempotent_final_state failure_probe)
+  @session_cleanup_operation_id "private/cancel_by_label"
 
   @typedoc "A raw request function used by the live boundary or a deterministic test adapter."
   @type request_fun :: (map() -> {:ok, %{status: integer(), body: binary()}} | {:error, term()})
@@ -51,6 +53,7 @@ defmodule Bourse.OracleProvenance.MutationAdjudication.Lifecycle do
       now: now,
       plan: plan,
       register: register,
+      redact_body_fun: Keyword.get(opts, :redact_body_fun, &redact_body!/3),
       request_fun: request_fun,
       session_label: session_label
     }
@@ -83,7 +86,14 @@ defmodule Bourse.OracleProvenance.MutationAdjudication.Lifecycle do
   defp run_lifecycle!(lifecycle, context) do
     steps = lifecycle["steps"]
     cleanup = Enum.find(steps, &(&1["role"] == "cleanup"))
-    initial = %{captures: [], responses: %{}, acted?: false, cleaned?: false}
+
+    initial = %{
+      attempted_act?: false,
+      attempted_steps: MapSet.new(),
+      captures: [],
+      responses: %{},
+      cleaned?: false
+    }
 
     state = run_steps!(steps, lifecycle, cleanup, context, initial)
     ensure!(state.cleaned?, "lifecycle #{lifecycle["lifecycle_id"]} never ran its reviewed cleanup")
@@ -98,31 +108,47 @@ defmodule Bourse.OracleProvenance.MutationAdjudication.Lifecycle do
     }
   end
 
-  defp run_step(step, lifecycle, context, state) do
-    case MutationAdjudication.authorize(context.register, lifecycle, step) do
-      :ok ->
-        :ok
+  defp run_step(step, lifecycle, cleanup, context, state) do
+    request =
+      protect!(step, lifecycle, cleanup, context, state, fn ->
+        authorize!(step, lifecycle, context)
+        build_request!(step, lifecycle, context, state)
+      end)
 
-      {:error, {:refused, reason}} ->
-        raise ArgumentError, "step #{step["step_id"]} refused before dispatch: #{reason}"
-    end
+    attempted = mark_attempted(step, state)
 
-    request = build_request!(step, lifecycle, context, state)
-    {status, transport_body} = send!(request, step, context)
-    {body, redacted} = transport_body |> Jason.decode!() |> redact_body!(step, context)
+    {status, transport_body} =
+      protect!(step, lifecycle, cleanup, context, attempted, fn -> send!(request, step, context) end)
 
-    fixture = build_fixture(step, lifecycle, context, request, status, body, redacted)
+    body =
+      protect!(step, lifecycle, cleanup, context, attempted, fn -> Jason.decode!(transport_body) end)
 
-    # Record the response before judging it. A 200 act that fails its assertions
-    # has already created venue state; compensation needs the order id.
+    # Retain a parsed response before redaction and capture construction. If
+    # either fails, the exact order id remains available to compensation.
+    responded = %{attempted | responses: Map.put(attempted.responses, step["step_id"], body)}
+
+    {scrubbed_body, redacted} =
+      protect!(step, lifecycle, cleanup, context, responded, fn ->
+        context.redact_body_fun.(body, step, context)
+      end)
+
+    fixture =
+      protect!(step, lifecycle, cleanup, context, responded, fn ->
+        build_fixture(step, lifecycle, context, request, status, scrubbed_body, redacted)
+      end)
+
     next = %{
-      state
-      | captures: [fixture | state.captures],
-        responses: Map.put(state.responses, step["step_id"], body),
-        acted?: state.acted? or placed_order?(step, body)
+      responded
+      | captures: [fixture | responded.captures],
+        responses: Map.put(responded.responses, step["step_id"], scrubbed_body)
     }
 
-    case observation_errors!(step, status, body, context) do
+    errors =
+      protect!(step, lifecycle, cleanup, context, next, fn ->
+        observation_errors!(step, status, scrubbed_body, context)
+      end)
+
+    case errors do
       [] -> {:ok, %{next | cleaned?: next.cleaned? or step["role"] == "cleanup"}}
       errors -> {:error, next, "step #{step["step_id"]} observed #{Enum.join(errors, "; ")}"}
     end
@@ -130,17 +156,8 @@ defmodule Bourse.OracleProvenance.MutationAdjudication.Lifecycle do
 
   defp run_steps!([], _lifecycle, _cleanup, _context, state), do: state
 
-  # `catch` rather than `rescue`: compensation must be total. A transport that
-  # exits on timeout, or a throw, leaves the same live order behind as a raised
-  # exception does, and a handler that only caught exceptions would skip the
-  # compensating cancel exactly when the failure was least expected.
   defp run_steps!([step | rest], lifecycle, cleanup, context, state) do
-    result =
-      try do
-        run_step(step, lifecycle, context, state)
-      catch
-        kind, reason -> compensate!(kind, reason, __STACKTRACE__, lifecycle, cleanup, context, state)
-      end
+    result = run_step(step, lifecycle, cleanup, context, state)
 
     next =
       case result do
@@ -148,24 +165,56 @@ defmodule Bourse.OracleProvenance.MutationAdjudication.Lifecycle do
           advanced
 
         {:error, advanced, message} ->
-          compensate!(:error, %ArgumentError{message: message}, [], lifecycle, cleanup, context, advanced)
+          compensate!(:error, %ArgumentError{message: message}, [], step, lifecycle, cleanup, context, advanced)
       end
 
     run_steps!(rest, lifecycle, cleanup, context, next)
   end
 
-  defp placed_order?(%{"role" => "act"}, body), do: is_binary(get_in(body, ["result", "order", "order_id"]))
-  defp placed_order?(_step, _body), do: false
+  defp authorize!(step, lifecycle, context) do
+    case MutationAdjudication.authorize(context.register, lifecycle, step) do
+      :ok -> :ok
+      {:error, {:refused, reason}} -> raise ArgumentError, "step #{step["step_id"]} refused before dispatch: #{reason}"
+    end
+  end
+
+  defp mark_attempted(%{"role" => role, "step_id" => step_id}, state) when role in @mutating_roles do
+    %{
+      state
+      | attempted_act?: state.attempted_act? or role == "act",
+        attempted_steps: MapSet.put(state.attempted_steps, step_id)
+    }
+  end
+
+  defp mark_attempted(_step, state), do: state
+
+  # `catch` rather than `rescue`: compensation must be total. A transport that
+  # exits on timeout, or a throw, leaves the same live order behind as a raised
+  # exception does, and a handler that only caught exceptions would skip the
+  # compensating cancel exactly when the failure was least expected.
+  defp protect!(step, lifecycle, cleanup, context, state, fun) do
+    fun.()
+  catch
+    kind, reason -> compensate!(kind, reason, __STACKTRACE__, step, lifecycle, cleanup, context, state)
+  end
 
   # A failure between the acting step and its cleanup would otherwise leave a
   # live order on the account, so the reviewed compensating operation is retried
   # here and the raised error states whether that retry succeeded.
-  defp compensate!(kind, reason, stacktrace, lifecycle, cleanup, context, state) do
+  defp compensate!(kind, reason, stacktrace, step, lifecycle, cleanup, context, state) do
     note =
-      if state.acted? and not state.cleaned? do
-        compensate_now(lifecycle, cleanup, context, state)
-      else
-        "No compensating call was needed: the acting step had not placed state."
+      cond do
+        own_compensator_attempted?(step, state) ->
+          compensate_now(lifecycle, own_compensator(step), context, state)
+
+        state.attempted_act? and not state.cleaned? ->
+          compensate_now(lifecycle, cleanup, context, state)
+
+        state.cleaned? ->
+          "No compensating call was needed: the reviewed cleanup had already completed."
+
+        true ->
+          "No compensating call was needed: the acting request had not been sent."
       end
 
     reraise ArgumentError,
@@ -181,15 +230,53 @@ defmodule Bourse.OracleProvenance.MutationAdjudication.Lifecycle do
   end
 
   defp compensate_now(lifecycle, cleanup, context, state) do
+    compensation = compensation_step(cleanup, state)
+
     outcome =
       try do
-        request = build_request!(cleanup, lifecycle, context, state)
+        authorize!(compensation, lifecycle, context)
+        request = build_request!(compensation, lifecycle, context, state)
         context.request_fun.(request)
       catch
         kind, reason -> {:uncallable, Exception.format_banner(kind, reason, __STACKTRACE__)}
       end
 
-    cleanup_note(outcome, lifecycle, cleanup, context)
+    cleanup_note(outcome, lifecycle, compensation, context)
+  end
+
+  defp compensation_step(cleanup, state) do
+    if unresolved_order_id?(cleanup, state) do
+      %{
+        "step_id" => "#{cleanup["step_id"]}_by_label",
+        "role" => "cleanup",
+        "operation_id" => @session_cleanup_operation_id,
+        "authenticated" => true,
+        "params" => %{"label" => %{"bind" => "session_label"}}
+      }
+    else
+      cleanup
+    end
+  end
+
+  defp unresolved_order_id?(cleanup, state) do
+    Enum.any?(cleanup["params"], fn
+      {_key, %{"bind" => "order_id", "from_step" => from, "path" => path}} ->
+        body = Map.get(state.responses, from)
+        not is_map(body) or is_nil(get_in(body, path))
+
+      _param ->
+        false
+    end)
+  end
+
+  defp own_compensator_attempted?(step, state) do
+    is_map(step["compensator"]) and MapSet.member?(state.attempted_steps, step["step_id"])
+  end
+
+  defp own_compensator(step) do
+    step["compensator"]
+    |> Map.put("step_id", "#{step["step_id"]}_compensator")
+    |> Map.put("role", "cleanup")
   end
 
   defp cleanup_note({:ok, %{status: 200, body: body}}, _lifecycle, cleanup, _context) do
@@ -232,7 +319,10 @@ defmodule Bourse.OracleProvenance.MutationAdjudication.Lifecycle do
 
   defp cleanup_state(body) do
     case Jason.decode(body) do
-      {:ok, decoded} -> get_in(decoded, ["result", "order_state"]) || decoded["error"]
+      {:ok, %{"result" => %{"order_state" => state}}} -> state
+      {:ok, %{"result" => result}} -> result
+      {:ok, %{"error" => error}} -> error
+      {:ok, decoded} -> decoded
       {:error, _reason} -> body
     end
   end

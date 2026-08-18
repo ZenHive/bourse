@@ -382,6 +382,43 @@ defmodule Bourse.OracleProvenance.MutationAdjudication do
     )
 
     Enum.each(steps, &validate_step!(&1, lifecycle, register, documented, path))
+    validate_mutating_step_order!(steps, lifecycle, register, path)
+  end
+
+  defp validate_mutating_step_order!(steps, lifecycle, register, path) do
+    cleanup_index = Enum.find_index(steps, &(&1["role"] == "cleanup"))
+
+    steps
+    |> Enum.with_index()
+    |> Enum.each(fn {step, index} ->
+      if step["role"] in @mutating_roles and index > cleanup_index do
+        validate_own_compensator!(step, lifecycle, register, path)
+      end
+    end)
+  end
+
+  defp validate_own_compensator!(step, lifecycle, register, path) do
+    id = "#{lifecycle["lifecycle_id"]}/#{step["step_id"]}"
+    compensator = step["compensator"]
+
+    ensure!(
+      is_map(compensator),
+      "#{path}: mutating step #{id} runs after cleanup without its own compensator"
+    )
+
+    ensure!(is_binary(compensator["operation_id"]), "#{path}: step #{id} compensator names no operation")
+    ensure!(compensator["authenticated"] == true, "#{path}: step #{id} compensator is not authenticated")
+    ensure!(is_map(compensator["params"]), "#{path}: step #{id} compensator has no reviewed params")
+
+    compensation_step =
+      compensator
+      |> Map.put("step_id", "#{step["step_id"]}_compensator")
+      |> Map.put("role", "cleanup")
+
+    case authorize(register, lifecycle, compensation_step) do
+      :ok -> :ok
+      {:error, {:refused, reason}} -> raise ArgumentError, "#{path}: step #{id} compensator refused: #{reason}"
+    end
   end
 
   defp validate_step!(step, lifecycle, register, documented, path) do

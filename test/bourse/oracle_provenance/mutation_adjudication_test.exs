@@ -436,6 +436,121 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
       assert url =~ "order_id=113510807523"
     end
 
+    test "sweeps the session label when the acting transport raises after dispatch" do
+      root = temporary_directory("act-transport-raise")
+      replay = replay_fun()
+      test_pid = self()
+
+      request_fun = fn request ->
+        cond do
+          String.contains?(request["url"], "/private/buy?") and on_tick?(request) ->
+            send(test_pid, {:act_request, request["url"]})
+            raise "simulated act transport raise"
+
+          String.contains?(request["url"], "/private/cancel_by_label?") ->
+            send(test_pid, {:compensation_request, request["url"]})
+            {:ok, %{status: 200, body: ~s({"result":{"cancelled":1}})}}
+
+          true ->
+            replay.(request)
+        end
+      end
+
+      error =
+        assert_raise ArgumentError, fn ->
+          Lifecycle.capture!(root,
+            request_fun: request_fun,
+            credentials: stub_credentials(),
+            now: fn -> @fixed_now end,
+            session_label: "bourse-mutation-transport-raise"
+          )
+        end
+
+      message = Exception.message(error)
+      assert message =~ "simulated act transport raise"
+      assert message =~ "Reviewed cleanup private/cancel_by_label was retried"
+      assert message =~ ~s(%{"cancelled" => 1})
+      refute message =~ "No compensating call was needed"
+      assert_receive {:act_request, _url}
+      assert_receive {:compensation_request, url}
+      assert URI.decode_query(URI.parse(url).query)["label"] == "bourse-mutation-transport-raise"
+    end
+
+    test "sweeps the session label when the acting response is not JSON" do
+      root = temporary_directory("act-invalid-json")
+      replay = replay_fun()
+      test_pid = self()
+
+      request_fun = fn request ->
+        cond do
+          String.contains?(request["url"], "/private/buy?") and on_tick?(request) ->
+            {:ok, %{status: 200, body: "accepted upstream, invalid gateway body"}}
+
+          String.contains?(request["url"], "/private/cancel_by_label?") ->
+            send(test_pid, {:compensation_request, request["url"]})
+            {:ok, %{status: 200, body: ~s({"result":{"order_state":"cancelled"}})}}
+
+          true ->
+            replay.(request)
+        end
+      end
+
+      error =
+        assert_raise ArgumentError, fn ->
+          Lifecycle.capture!(root,
+            request_fun: request_fun,
+            credentials: stub_credentials(),
+            now: fn -> @fixed_now end,
+            session_label: "bourse-mutation-invalid-json"
+          )
+        end
+
+      message = Exception.message(error)
+      assert message =~ "Jason.DecodeError"
+      assert message =~ "Reviewed cleanup private/cancel_by_label was retried"
+      assert message =~ "cancelled"
+      refute message =~ "No compensating call was needed"
+      assert_receive {:compensation_request, url}
+      assert URI.decode_query(URI.parse(url).query)["label"] == "bourse-mutation-invalid-json"
+    end
+
+    test "uses the parsed order id when act-response redaction raises" do
+      root = temporary_directory("act-redaction-raise")
+      replay = replay_fun()
+      test_pid = self()
+
+      request_fun = fn request ->
+        if String.contains?(request["url"], "/private/cancel?") do
+          send(test_pid, {:compensation_request, request["url"]})
+        end
+
+        replay.(request)
+      end
+
+      redact_body_fun = fn body, step, _context ->
+        if step["role"] == "act", do: raise("simulated act redaction raise"), else: {body, []}
+      end
+
+      error =
+        assert_raise ArgumentError, fn ->
+          Lifecycle.capture!(root,
+            request_fun: request_fun,
+            redact_body_fun: redact_body_fun,
+            credentials: stub_credentials(),
+            now: fn -> @fixed_now end,
+            session_label: "bourse-mutation-redaction-raise"
+          )
+        end
+
+      message = Exception.message(error)
+      assert message =~ "simulated act redaction raise"
+      assert message =~ "Reviewed cleanup private/cancel was retried"
+      assert message =~ "cancelled"
+      refute message =~ "No compensating call was needed"
+      assert_receive {:compensation_request, url}
+      assert URI.decode_query(URI.parse(url).query)["order_id"] == "113510807523"
+    end
+
     test "retries cleanup when the cleanup observation does not match the review" do
       root = temporary_directory("cleanup-observation-retry")
       replay = replay_fun()
@@ -471,6 +586,84 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
       assert message =~ "cancelled"
       refute message =~ "No compensating call was needed"
       assert :ets.lookup(seen, :cancel) == [{:cancel, 2}]
+    end
+
+    test "runs a post-cleanup mutation's declared compensator when its transport fails" do
+      root = temporary_directory("tail-mutation-compensation")
+      replay = replay_fun()
+      seen = :ets.new(:tail_mutation_compensation, [:set, :public])
+
+      request_fun = fn request ->
+        cond do
+          String.contains?(request["url"], "/private/cancel?") ->
+            case :ets.update_counter(seen, :cancel, {2, 1}, {:cancel, 0}) do
+              1 -> replay.(request)
+              2 -> {:error, :simulated_tail_transport_loss}
+            end
+
+          String.contains?(request["url"], "/private/cancel_by_label?") ->
+            :ets.insert(seen, {:label_cleanup, request["url"]})
+            {:ok, %{status: 200, body: ~s({"result":{"order_state":"cancelled"}})}}
+
+          true ->
+            replay.(request)
+        end
+      end
+
+      error =
+        assert_raise ArgumentError, fn ->
+          Lifecycle.capture!(root,
+            request_fun: request_fun,
+            credentials: stub_credentials(),
+            now: fn -> @fixed_now end,
+            session_label: "bourse-mutation-tail-failure"
+          )
+        end
+
+      message = Exception.message(error)
+      assert message =~ "simulated_tail_transport_loss"
+      assert message =~ "Reviewed cleanup private/cancel_by_label was retried"
+      refute message =~ "reviewed cleanup had already completed"
+      assert [{:label_cleanup, url}] = :ets.lookup(seen, :label_cleanup)
+      assert URI.decode_query(URI.parse(url).query)["label"] == "bourse-mutation-tail-failure"
+    end
+
+    test "reports completed cleanup without compensating again when a later read fails" do
+      root = temporary_directory("failure-after-cleanup")
+      replay = replay_fun()
+      seen = :ets.new(:failure_after_cleanup, [:set, :public])
+
+      request_fun = fn request ->
+        cond do
+          String.contains?(request["url"], "/private/get_order_state?") ->
+            case :ets.update_counter(seen, :order_state, {2, 1}, {:order_state, 0}) do
+              1 -> replay.(request)
+              2 -> {:error, :simulated_final_state_loss}
+            end
+
+          String.contains?(request["url"], "/private/cancel?") ->
+            :ets.update_counter(seen, :cancel, {2, 1}, {:cancel, 0})
+            replay.(request)
+
+          true ->
+            replay.(request)
+        end
+      end
+
+      error =
+        assert_raise ArgumentError, fn ->
+          Lifecycle.capture!(root,
+            request_fun: request_fun,
+            credentials: stub_credentials(),
+            now: fn -> @fixed_now end
+          )
+        end
+
+      message = Exception.message(error)
+      assert message =~ "simulated_final_state_loss"
+      assert message =~ "No compensating call was needed: the reviewed cleanup had already completed"
+      refute message =~ "acting request had not been sent"
+      assert :ets.lookup(seen, :cancel) == [{:cancel, 1}]
     end
 
     test "shouts when the compensating call cannot even be built" do
@@ -729,7 +922,13 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
       plan = JsonDocument.decode_file!(@plan_path)
 
       changed =
-        put_in(plan, ["lifecycles", Access.at(0), "steps", Access.at(6), "expected", "error_code"], 987_654)
+        update_in(plan, ["lifecycles", Access.at(0), "steps"], fn steps ->
+          Enum.map(steps, fn step ->
+            if step["step_id"] == "cancel_again",
+              do: put_in(step, ["expected", "error_code"], 987_654),
+              else: step
+          end)
+        end)
 
       plan_path = Path.join(root, "plan.json")
       File.write!(plan_path, Jason.encode!(changed, pretty: true))
@@ -752,6 +951,25 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
       File.write!(plan_path, Jason.encode!(changed, pretty: true))
 
       assert_raise ArgumentError, ~r/lifecycle order_place_cancel has no cleanup step/, fn ->
+        MutationAdjudication.load_reviewed!(plan_path: plan_path)
+      end
+    end
+
+    test "a post-cleanup mutation without its own compensator is rejected" do
+      root = temporary_directory("uncompensated-tail-mutation")
+      plan = JsonDocument.decode_file!(@plan_path)
+
+      changed =
+        update_in(plan, ["lifecycles", Access.at(0), "steps"], fn steps ->
+          Enum.map(steps, fn step ->
+            if step["step_id"] == "cancel_again", do: Map.delete(step, "compensator"), else: step
+          end)
+        end)
+
+      plan_path = Path.join(root, "plan.json")
+      File.write!(plan_path, Jason.encode!(changed, pretty: true))
+
+      assert_raise ArgumentError, ~r/mutating step order_place_cancel\/cancel_again runs after cleanup/, fn ->
         MutationAdjudication.load_reviewed!(plan_path: plan_path)
       end
     end
