@@ -12,6 +12,10 @@ defmodule Bourse.DispatchTest do
 
   @moduletag capture_log: true
 
+  @request_timeout_status 408
+  @first_retry_timestamp_ms 1_700_000_000_000
+  @second_retry_timestamp_ms 1_700_000_000_001
+
   # ---------------------------------------------------------------------------
   # Test Helpers
   # ---------------------------------------------------------------------------
@@ -44,6 +48,39 @@ defmodule Bourse.DispatchTest do
   end
 
   defp zero_retry_delay(_retry_count), do: 0
+
+  defp value_sequence(values) do
+    {:ok, sequence} = Agent.start_link(fn -> values end)
+
+    fn ->
+      Agent.get_and_update(sequence, fn [value | rest] -> {value, rest} end)
+    end
+  end
+
+  defp deribit_auth(conn) do
+    [authorization] = Plug.Conn.get_req_header(conn, "authorization")
+
+    captures =
+      Regex.named_captures(
+        ~r/ts=(?<timestamp>\d+),sig=(?<signature>[0-9a-f]+),nonce=(?<nonce>\d+)/,
+        authorization
+      )
+
+    %{
+      timestamp: Map.fetch!(captures, "timestamp"),
+      signature: Map.fetch!(captures, "signature"),
+      nonce: Map.fetch!(captures, "nonce")
+    }
+  end
+
+  defp expected_deribit_signature(conn, auth, secret) do
+    query = if conn.query_string == "", do: "", else: "?" <> conn.query_string
+    request_data = "GET\n#{conn.request_path}#{query}\n\n"
+
+    "#{auth.timestamp}\n#{auth.nonce}\n#{request_data}"
+    |> Signing.hmac_sha256(secret)
+    |> Signing.encode_hex()
+  end
 
   defp stub_json(stub, response_body) do
     Req.Test.stub(stub, fn conn ->
@@ -896,6 +933,121 @@ defmodule Bourse.DispatchTest do
       assert String.contains?(unsigned_query, "asset=BTC%2CUSDT")
       assert URI.decode_query(unsigned_query)["asset"] == "BTC,USDT"
       assert signature == unsigned_query |> Signing.hmac_sha256(credentials.secret) |> Signing.encode_hex()
+    end
+
+    test "re-signs a Binance query request after an injected 408" do
+      credentials = %Bourse.Credentials{api_key: "test_api_key", secret: "test_secret_key"}
+      exchange = Exchange.new!("binance", credentials: credentials)
+      endpoint = Enum.find(Bourse.Binance.__endpoints__(), &(&1.name == :private_get_account))
+      timestamp = value_sequence([@first_retry_timestamp_ms, @second_retry_timestamp_ms])
+      stub = unique_stub()
+      {:ok, requests} = RequestCollector.start_link()
+
+      Req.Test.stub(stub, fn conn ->
+        conn = RequestCollector.capture(requests, conn)
+
+        if length(RequestCollector.requests(requests)) == 1 do
+          conn
+          |> Plug.Conn.put_status(@request_timeout_status)
+          |> Req.Test.json(%{"msg" => "upstream request timed out"})
+        else
+          Req.Test.json(conn, %{})
+        end
+      end)
+
+      assert {:ok, _response} =
+               Dispatch.call(exchange, endpoint, %{},
+                 plug: {Req.Test, stub},
+                 max_retries: 1,
+                 retry_delay: &zero_retry_delay/1,
+                 timestamp_ms_override: timestamp
+               )
+
+      [first, second] = RequestCollector.requests(requests)
+      [first_payload, first_signature] = String.split(first.conn.query_string, "&signature=", parts: 2)
+      [second_payload, second_signature] = String.split(second.conn.query_string, "&signature=", parts: 2)
+
+      assert URI.decode_query(first_payload)["timestamp"] == Integer.to_string(@first_retry_timestamp_ms)
+      assert URI.decode_query(second_payload)["timestamp"] == Integer.to_string(@second_retry_timestamp_ms)
+      refute first_signature == second_signature
+
+      assert first_signature ==
+               first_payload |> Signing.hmac_sha256(credentials.secret) |> Signing.encode_hex()
+
+      assert second_signature ==
+               second_payload |> Signing.hmac_sha256(credentials.secret) |> Signing.encode_hex()
+    end
+
+    test "re-signs a Deribit nonce request after an injected 408" do
+      credentials = %Bourse.Credentials{api_key: "test_api_key", secret: "test_secret_key"}
+      exchange = Exchange.new!("deribit", credentials: credentials)
+
+      endpoint =
+        Enum.find(Bourse.Deribit.__endpoints__(), &(&1.name == :private_get_get_account_summaries))
+
+      stub = unique_stub()
+      {:ok, requests} = RequestCollector.start_link()
+
+      Req.Test.stub(stub, fn conn ->
+        conn = RequestCollector.capture(requests, conn)
+
+        if length(RequestCollector.requests(requests)) == 1 do
+          conn
+          |> Plug.Conn.put_status(@request_timeout_status)
+          |> Req.Test.json(%{"error" => %{"code" => 10_000, "message" => "upstream request timed out"}})
+        else
+          Req.Test.json(conn, %{"jsonrpc" => "2.0", "result" => %{}})
+        end
+      end)
+
+      assert {:ok, _response} =
+               Dispatch.call(exchange, endpoint, %{},
+                 plug: {Req.Test, stub},
+                 max_retries: 1,
+                 retry_delay: &zero_retry_delay/1,
+                 timestamp_ms_override: @first_retry_timestamp_ms
+               )
+
+      [first, second] = RequestCollector.requests(requests)
+      first_auth = deribit_auth(first.conn)
+      second_auth = deribit_auth(second.conn)
+
+      refute first_auth.nonce == second_auth.nonce
+      refute first_auth.signature == second_auth.signature
+      assert first_auth.signature == expected_deribit_signature(first.conn, first_auth, credentials.secret)
+      assert second_auth.signature == expected_deribit_signature(second.conn, second_auth, credentials.secret)
+    end
+
+    test "returns the injected 408 after signed retries are exhausted" do
+      credentials = %Bourse.Credentials{api_key: "test_api_key", secret: "test_secret_key"}
+      exchange = Exchange.new!("binance", credentials: credentials)
+      endpoint = Enum.find(Bourse.Binance.__endpoints__(), &(&1.name == :private_get_account))
+      timestamp = value_sequence([@first_retry_timestamp_ms, @second_retry_timestamp_ms])
+      stub = unique_stub()
+      {:ok, requests} = RequestCollector.start_link()
+
+      Req.Test.stub(stub, fn conn ->
+        conn = RequestCollector.capture(requests, conn)
+
+        conn
+        |> Plug.Conn.put_status(@request_timeout_status)
+        |> Req.Test.json(%{"msg" => "upstream request timed out"})
+      end)
+
+      assert {:error,
+              %Bourse.Error{
+                type: :network_error,
+                http_status: @request_timeout_status,
+                message: "upstream request timed out"
+              }} =
+               Dispatch.call(exchange, endpoint, %{},
+                 plug: {Req.Test, stub},
+                 max_retries: 1,
+                 retry_delay: &zero_retry_delay/1,
+                 timestamp_ms_override: timestamp
+               )
+
+      assert length(RequestCollector.requests(requests)) == 2
     end
 
     defp host_signing_config(hostname) do

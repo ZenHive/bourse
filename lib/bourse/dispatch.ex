@@ -8,7 +8,7 @@ defmodule Bourse.Dispatch do
   2. **Base URL resolution** — a caller-supplied `:base_url` opt wins; otherwise
      navigates `exchange.base_urls` using endpoint sections
   3. **Signing** — authenticates private endpoint requests via `Bourse.Signing.sign/4`
-  4. **HTTP delegation** — calls `Bourse.HTTP.request/4` or `Bourse.HTTP.signed_request/4`
+  4. **HTTP delegation** — calls `Bourse.HTTP.request/4` or `Bourse.HTTP.signed_request/5`
 
   ## Future phases
 
@@ -210,9 +210,8 @@ defmodule Bourse.Dispatch do
          {:ok, {pattern, config}} <- require_signing_pattern(exchange) do
       {signing_params, body} = prepare_signed_payload(method, params, endpoint_config)
 
-      config =
+      base_signing_config =
         config
-        |> Map.merge(signing_overrides(endpoint_config, original_opts))
         |> effective_signing_config(base_url, exchange.sandbox)
         |> Map.put(:exchange_options, exchange.options)
         |> Map.put_new(:exchange, exchange.id)
@@ -224,27 +223,40 @@ defmodule Bourse.Dispatch do
         params: signing_params
       }
 
-      case Signing.sign(pattern, signing_request, credentials, config) do
-        {:error, {:unsupported_signing, exchange_id}} ->
-          unsupported_signing_error(exchange_id || exchange.id)
+      signer = fn ->
+        config = Map.merge(base_signing_config, signing_overrides(endpoint_config, original_opts))
+        sign_request(pattern, signing_request, credentials, config, endpoint_config, exchange.id)
+      end
 
-        {:error, reason} ->
-          {:error,
-           Error.authentication_error(
-             exchange: exchange.id,
-             message: "Request signing failed: #{signing_failure_reason(reason)}"
-           )}
+      case signer.() do
+        {:error, %Error{}} = error ->
+          error
 
         signed ->
-          signed = apply_content_type_contract(signed, endpoint_config)
-
           opts =
             opts
             |> Keyword.put(:endpoint_weight, weight)
             |> Keyword.put(:endpoint_rate_limit, rate_limit)
 
-          HTTP.signed_request(exchange, signed, base_url, opts)
+          HTTP.signed_request(exchange, signed, base_url, signer, opts)
       end
+    end
+  end
+
+  defp sign_request(pattern, request, credentials, config, endpoint_config, exchange_id) do
+    case Signing.sign(pattern, request, credentials, config) do
+      {:error, {:unsupported_signing, signer_exchange_id}} ->
+        unsupported_signing_error(signer_exchange_id || exchange_id)
+
+      {:error, reason} ->
+        {:error,
+         Error.authentication_error(
+           exchange: exchange_id,
+           message: "Request signing failed: #{signing_failure_reason(reason)}"
+         )}
+
+      signed ->
+        apply_content_type_contract(signed, endpoint_config)
     end
   end
 
@@ -547,19 +559,25 @@ defmodule Bourse.Dispatch do
   end
 
   defp signing_overrides(endpoint_config, opts) do
+    timestamp_ms_override = resolve_override(Keyword.get(opts, :timestamp_ms_override))
+    nonce_override = resolve_override(Keyword.get(opts, :nonce_override))
+
     endpoint_config
-    |> timestamp_config(opts)
+    |> timestamp_config(timestamp_ms_override)
     |> maybe_put_override(:sign_recipe_section, sign_recipe_section(endpoint_config))
-    |> maybe_put_override(:timestamp_ms_override, Keyword.get(opts, :timestamp_ms_override))
-    |> maybe_put_override(:nonce_override, Keyword.get(opts, :nonce_override))
+    |> maybe_put_override(:timestamp_ms_override, timestamp_ms_override)
+    |> maybe_put_override(:nonce_override, nonce_override)
   end
 
-  defp timestamp_config(%{timestamp_recipe: %{} = recipe}, opts) do
-    timestamp_ms = Keyword.get(opts, :timestamp_ms_override, Signing.timestamp_ms())
+  defp timestamp_config(%{timestamp_recipe: %{} = recipe}, timestamp_ms_override) do
+    timestamp_ms = timestamp_ms_override || Signing.timestamp_ms()
     %{timestamp: format_timestamp(timestamp_ms, recipe)}
   end
 
-  defp timestamp_config(_endpoint_config, _opts), do: %{}
+  defp timestamp_config(_endpoint_config, _timestamp_ms_override), do: %{}
+
+  defp resolve_override(fun) when is_function(fun, 0), do: fun.()
+  defp resolve_override(value), do: value
 
   defp sign_recipe_section(endpoint_config) do
     case Map.get(endpoint_config, :sections, []) do

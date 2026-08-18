@@ -1172,6 +1172,76 @@ defmodule Bourse.HTTPTest do
       assert RequestCollector.one_request!(requests).body == ~s({"symbol":"BTCUSDT","side":"Buy"})
     end
 
+    test "does not let retry opts replay an already-signed request", %{exchange: exchange} do
+      stub = unique_stub()
+      exchange = %{exchange | status_map: %{"408" => :network_error}}
+      {:ok, requests} = RequestCollector.start_link()
+
+      Req.Test.stub(stub, fn conn ->
+        conn = RequestCollector.capture(requests, conn)
+
+        conn
+        |> Plug.Conn.put_status(408)
+        |> Req.Test.json(%{"message" => "upstream request timed out"})
+      end)
+
+      signed = %{
+        url: "/v5/account/wallet-balance?timestamp=1700000000000&signature=frozen",
+        method: :get,
+        headers: [{"X-BAPI-API-KEY", "my_key"}],
+        body: nil
+      }
+
+      assert {:error, %Error{type: :network_error, http_status: 408, message: "upstream request timed out"}} =
+               HTTP.signed_request(exchange, signed, "https://api.test.com",
+                 plug: {Req.Test, stub},
+                 retry: :safe_transient,
+                 max_retries: 1,
+                 retry_delay: &zero_retry_delay/1
+               )
+
+      assert [_single_attempt] = RequestCollector.requests(requests)
+    end
+
+    test "preserves a signing error raised while preparing a retry", %{exchange: exchange} do
+      stub = unique_stub()
+      {:ok, requests} = RequestCollector.start_link()
+
+      Req.Test.stub(stub, fn conn ->
+        conn = RequestCollector.capture(requests, conn)
+
+        conn
+        |> Plug.Conn.put_status(408)
+        |> Req.Test.json(%{"message" => "upstream request timed out"})
+      end)
+
+      signed = %{
+        url: "/v5/account/wallet-balance?timestamp=1700000000000&signature=first",
+        method: :get,
+        headers: [{"X-BAPI-API-KEY", "my_key"}],
+        body: nil
+      }
+
+      signing_error =
+        Error.authentication_error(
+          exchange: exchange.id,
+          message: "retry signing failed"
+        )
+
+      assert {:error, ^signing_error} =
+               HTTP.signed_request(
+                 exchange,
+                 signed,
+                 "https://api.test.com",
+                 fn -> {:error, signing_error} end,
+                 plug: {Req.Test, stub},
+                 max_retries: 1,
+                 retry_delay: &zero_retry_delay/1
+               )
+
+      assert [_first_attempt] = RequestCollector.requests(requests)
+    end
+
     test "respects circuit breaker" do
       exchange_id = "okx"
       isolate_fuse(exchange_id)

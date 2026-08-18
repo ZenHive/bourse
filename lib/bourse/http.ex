@@ -25,6 +25,16 @@ defmodule Bourse.HTTP do
   - **Safe retry** — only GET/HEAD, never POST/PUT/DELETE
   - **Telemetry** — emits `[:bourse, :request, :start | :stop | :exception]`
 
+  ## Signed Retry Boundary
+
+  `signed_request/5` keeps Req's retry policy and backoff, but attaches a
+  request step that obtains a fresh signature before every repeated attempt.
+  Req therefore never replays frozen timestamp, nonce, or deadline material.
+
+  `signed_request/4` accepts an already-signed request for compatibility and
+  is always single-attempt. A caller-supplied `:retry` option cannot re-enable
+  retries for that frozen request.
+
   ## Usage
 
       {:ok, exchange} = Bourse.Exchange.new("bybit")
@@ -151,7 +161,7 @@ defmodule Bourse.HTTP do
 
   # Shared execution pipeline: telemetry, Req call, circuit breaker, response handling.
   # Used by both unsigned (do_request) and signed (signed_request) code paths.
-  defp execute_request(exchange, method, path, req_opts, error_scope) do
+  defp execute_request(exchange, method, path, req_opts, error_scope, request_step \\ nil) do
     exchange_id = exchange.id
     start_time = System.monotonic_time()
 
@@ -162,7 +172,7 @@ defmodule Bourse.HTTP do
     transport =
       try do
         base_client = get_base_client()
-        run_request(base_client, req_opts)
+        run_request(base_client, req_opts, request_step)
       rescue
         # reach:disable-next-line bare_rescue — transport boundary only
         e ->
@@ -193,6 +203,12 @@ defmodule Bourse.HTTP do
         CircuitBreaker.record_result(exchange_id, outcome)
         outcome
 
+      {:error, %Error{} = error} ->
+        emit_exception(exchange_id, method, path, :request, error, start_time)
+        outcome = {:error, error}
+        CircuitBreaker.record_result(exchange_id, outcome)
+        outcome
+
       {:error, reason} ->
         emit_exception(exchange_id, method, path, :request, reason, start_time)
         outcome = {:error, Error.network_error(message: "Request failed: #{inspect(reason)}", exchange: exchange_id)}
@@ -206,18 +222,28 @@ defmodule Bourse.HTTP do
   # private map and dispatches through the Bourse.HTTP.FnAdapter module adapter.
   # The adapter is set after merging the remaining options so the fun keeps
   # winning over a `:plug` option (which sets the adapter slot itself in 0.7).
-  defp run_request(base_client, req_opts) do
-    case Keyword.pop(req_opts, :adapter) do
-      {fun, remaining_opts} when is_function(fun, 1) ->
-        base_client
-        |> Req.merge(remaining_opts)
-        |> Req.Request.put_private(:bourse_adapter_fun, fun)
-        |> Map.put(:adapter, Bourse.HTTP.FnAdapter)
-        |> Req.request()
+  defp run_request(base_client, req_opts, request_step) do
+    request =
+      case Keyword.pop(req_opts, :adapter) do
+        {fun, remaining_opts} when is_function(fun, 1) ->
+          base_client
+          |> Req.merge(remaining_opts)
+          |> Req.Request.put_private(:bourse_adapter_fun, fun)
+          |> Map.put(:adapter, Bourse.HTTP.FnAdapter)
 
-      _ ->
-        Req.request(base_client, req_opts)
-    end
+        _ ->
+          Req.merge(base_client, req_opts)
+      end
+
+    request
+    |> maybe_append_request_step(request_step)
+    |> Req.request()
+  end
+
+  defp maybe_append_request_step(request, nil), do: request
+
+  defp maybe_append_request_step(request, step) when is_function(step, 1) do
+    Req.Request.append_request_steps(request, bourse_signed_retry: step)
   end
 
   # ===========================================================================
@@ -225,21 +251,40 @@ defmodule Bourse.HTTP do
   # ===========================================================================
 
   @doc """
-  Executes a pre-signed request.
+  Executes an already-signed request exactly once.
 
-  Used by `Bourse.Dispatch` for private endpoints after `Bourse.Signing.sign/4`
-  has built the signed URL, headers, and body.
-
-  ## Parameters
-
-  - `exchange` - Exchange configuration struct
-  - `signed` - Signed request from `Bourse.Signing.sign/4` with `:url`, `:method`, `:headers`, `:body`
-  - `base_url` - Base URL to prepend to the signed path
-  - `opts` - Options passed through to Req (`:timeout`, `:plug` for tests, etc.)
+  This compatibility entry point forces `retry: false`, including when `opts`
+  contains another retry policy, because it cannot refresh time-bound signing
+  material. Dispatch uses `signed_request/5` instead.
   """
   @spec signed_request(Exchange.t(), Signing.signed_request(), String.t(), keyword()) ::
           {:ok, response()} | {:error, Error.t()}
   def signed_request(%Exchange{} = exchange, signed, base_url, opts \\ []) do
+    opts = opts |> Keyword.delete(:retry) |> Keyword.put(:retry, false)
+    do_signed_request(exchange, signed, base_url, nil, opts)
+  end
+
+  @doc """
+  Executes a signed request and refreshes its signature before every retry.
+
+  `resigner` reproduces the complete signed URL, headers, and body from the
+  original unsigned request. Req still controls whether and when to retry; the
+  Bourse request step replaces the time-bound signing material before the
+  repeated attempt reaches the adapter.
+  """
+  @spec signed_request(
+          Exchange.t(),
+          Signing.signed_request(),
+          String.t(),
+          (-> Signing.signed_request() | {:error, Error.t()}),
+          keyword()
+        ) :: {:ok, response()} | {:error, Error.t()}
+  def signed_request(%Exchange{} = exchange, signed, base_url, resigner, opts) when is_function(resigner, 0) do
+    request_step = &refresh_signed_request(&1, base_url, resigner)
+    do_signed_request(exchange, signed, base_url, request_step, opts)
+  end
+
+  defp do_signed_request(exchange, signed, base_url, request_step, opts) do
     timeout = Keyword.get(opts, :timeout, Defaults.request_timeout_ms())
     endpoint_weight = Keyword.get(opts, :endpoint_weight, 1)
     endpoint_rate_limit = Keyword.get(opts, :endpoint_rate_limit, endpoint_weight)
@@ -257,11 +302,30 @@ defmodule Bourse.HTTP do
           retry_delay_opt() ++
           extra_opts
 
-      # Clean path for telemetry (strip query string from signed URL)
       [telemetry_path | _] = String.split(signed.url, "?", parts: 2)
       error_scope = Exchange.error_scope(exchange, base_url)
-      execute_request(exchange, signed.method, telemetry_path, req_opts, error_scope)
+      execute_request(exchange, signed.method, telemetry_path, req_opts, error_scope, request_step)
     end
+  end
+
+  defp refresh_signed_request(request, base_url, resigner) do
+    if Req.Request.get_private(request, :bourse_signed_attempt_started, false) do
+      case resigner.() do
+        {:error, %Error{} = error} -> {request, error}
+        signed -> merge_signed_request(request, signed, base_url)
+      end
+    else
+      Req.Request.put_private(request, :bourse_signed_attempt_started, true)
+    end
+  end
+
+  defp merge_signed_request(request, signed, base_url) do
+    Req.merge(request,
+      method: signed.method,
+      url: base_url <> signed.url,
+      headers: signed.headers,
+      body: signed.body
+    )
   end
 
   # ===========================================================================
