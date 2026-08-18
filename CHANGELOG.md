@@ -78,6 +78,14 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   A caller-supplied native `label` wins; values longer than 64 characters
   raise `:invalid_parameters`. A venue may map a client identifier in both
   directions or in neither; one-way mapping fails a catalog invariant.
+- OKX candle `since`/`until` stay inclusive on exclusive `before`/`after`
+  cursors: the request sends `before = since - 1` and `after = until + 1`.
+  A candle sitting on the unified `until` bound was previously dropped.
+- Binance spot `fetch_closed_orders`, `fetch_canceled_orders`,
+  `fetch_canceled_and_closed_orders`, and `fetch_order_trades` now map
+  `since`/`until` to `startTime`/`endTime`. `fetch_open_orders` drops
+  those bounds rather than sending unread parameters the venue rejects
+  with `-1104`.
 
 ## [0.6.0] - 2026-08-18
 
