@@ -336,13 +336,43 @@ defmodule Bourse.Unified.RequestShape do
       present?(params, Map.get(entry, "unless_present")) ->
         Map.delete(params, native_key)
 
+      preserve_native?(entry) and Map.has_key?(params, native_key) and native_key != source ->
+        enforce_max_length!(params, native_key, Map.fetch!(params, native_key), entry, js_name, context)
+
       is_nil(value) ->
         Map.delete(params, native_key)
 
       true ->
-        Map.put(params, native_key, transform_authored_value(value, Map.get(entry, "transform")))
+        transformed = transform_authored_value(value, Map.get(entry, "transform"))
+
+        params
+        |> Map.put(native_key, transformed)
+        |> enforce_max_length!(native_key, transformed, entry, js_name, context)
     end
   end
+
+  defp preserve_native?(%{"preserve_native" => true}), do: true
+  defp preserve_native?(_entry), do: false
+
+  defp enforce_max_length!(params, native_key, value, %{"max_length" => max_length}, js_name, context)
+       when is_integer(max_length) and max_length > 0 and is_binary(value) do
+    if String.length(value) > max_length do
+      raise Error.invalid_parameters(
+              message: "#{js_name} `#{native_key}` exceeds the venue maximum of #{max_length} characters",
+              exchange: context[:exchange_id],
+              raw: %{
+                "method" => js_name,
+                "parameter" => native_key,
+                "reason" => "max_length_exceeded",
+                "max_length" => max_length
+              }
+            )
+    else
+      params
+    end
+  end
+
+  defp enforce_max_length!(params, _native_key, _value, _entry, _js_name, _context), do: params
 
   defp validate_unified_source!(%{"source_class" => "unified_param"}, source, required, js_name, context) do
     if source not in unified_param_names(required) do

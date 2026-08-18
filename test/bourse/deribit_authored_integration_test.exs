@@ -67,6 +67,38 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
     assert message =~ "trigger_price_too_low"
   end
 
+  @tag :dangerous
+  test "unified client_order_id round-trips on the live order and its private fill" do
+    credentials = require_credentials!(:deribit, url: @deribit_testnet_url)
+    base = build_exchange(:deribit, credentials: credentials, sandbox: true)
+    assert {:ok, exchange} = Bourse.load_markets(base)
+    market = Enum.find(exchange.markets, &(&1.id == "BTC-PERPETUAL"))
+    assert %Bourse.Market{contract_size: 10.0} = market
+    amount = Bourse.Safe.number(market.info["min_trade_amount"])
+    client_order_id = "t622#{System.unique_integer([:positive])}"
+    assert String.length(client_order_id) <= 64
+
+    assert {:ok, %Order{id: order_id, client_order_id: ^client_order_id}} =
+             Bourse.create_order(exchange, market.symbol, "market", "buy", amount, clientOrderId: client_order_id)
+
+    try do
+      assert is_binary(order_id)
+      trade = poll_labelled_fill!(exchange, market.symbol, order_id, client_order_id)
+      assert %Trade{client_order_id: ^client_order_id, order_id: ^order_id} = trade
+      assert trade.info["label"] == client_order_id
+    after
+      assert_cleanup_order!(
+        Bourse.Deribit.private_get_sell(exchange, %{
+          "instrument_name" => market.id,
+          "amount" => amount,
+          "type" => "market",
+          "reduce_only" => true,
+          "label" => "t622-close-#{System.unique_integer([:positive])}"
+        })
+      )
+    end
+  end
+
   test "symbol-less trade history derives inverse cost from live market identity" do
     credentials = require_credentials!(:deribit, url: @deribit_testnet_url)
     base = build_exchange(:deribit, credentials: credentials, sandbox: true)
@@ -821,6 +853,35 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
        when is_binary(order_id), do: :ok
 
   defp assert_cleanup_order!(other), do: flunk("Deribit task 511 position cleanup failed: #{inspect(other)}")
+
+  defp poll_labelled_fill!(exchange, symbol, order_id, client_order_id, attempts \\ @order_poll_attempts)
+
+  defp poll_labelled_fill!(_exchange, _symbol, order_id, _client_order_id, 0) do
+    flunk("Deribit fill for order #{order_id} did not echo client_order_id after #{@order_poll_attempts} attempts")
+  end
+
+  defp poll_labelled_fill!(exchange, symbol, order_id, client_order_id, attempts) do
+    case labelled_fill(exchange, symbol, order_id, client_order_id) do
+      %Trade{} = trade ->
+        trade
+
+      :pending ->
+        wait_then(fn -> poll_labelled_fill!(exchange, symbol, order_id, client_order_id, attempts - 1) end)
+    end
+  end
+
+  defp labelled_fill(exchange, symbol, order_id, client_order_id) do
+    case Bourse.fetch_my_trades(exchange, symbol: symbol) do
+      {:ok, trades} ->
+        Enum.find(trades, :pending, fn
+          %Trade{order_id: ^order_id, client_order_id: ^client_order_id} -> true
+          _trade -> false
+        end)
+
+      {:error, _reason} ->
+        :pending
+    end
+  end
 
   defp wait_then(fun) do
     receive do

@@ -6,6 +6,33 @@ Append-only schema confrontations for Deribit. Follow the allocation and evidenc
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Deribit carve record.
 
+## 2026-08-18 — unified client_order_id round-trip (Task 622)
+
+**C-T622 — Deribit `label` is the client identifier on both the request and the
+private order/fill echo (task 622). Outcome: CONFIRM provider contract.**
+
+- *Exchange semantics:* Deribit's
+  [`private/buy`](https://docs.deribit.com/#private-buy) and
+  [`private/sell`](https://docs.deribit.com/#private-sell) accept optional `label`
+  (user-defined, maximum 64 characters) and present it on the order when previously
+  set. [`private/get_user_trades_by_instrument`](https://docs.deribit.com/#private-get_user_trades_by_instrument)
+  echoes the same `label` on each user-trade row.
+- *Request:* unified `clientOrderId` / `client_order_id` maps onto native `label`.
+  A caller-supplied native `label` wins. Values longer than 64 characters raise
+  `invalid_parameters` rather than being silently dropped.
+- *Response:* `normalization.field_maps.order` and `.trade` both map `label` onto
+  unified `clientOrderId`. The Binance `_bourse_client_order_id` synthetic stays
+  the same field-map mechanism — there is no Deribit branch in the parse layer.
+- *Live evidence (2026-08-18, testnet):* a market buy on `test.deribit.com` created
+  with unified `clientOrderId` returns `%Bourse.Order{client_order_id: id}` and the
+  matching `private/get_user_trades_by_instrument` fill carries the same
+  `client_order_id`. Durable pin:
+  `test/bourse/deribit_authored_integration_test.exs`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T622","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Deribit private/buy, private/sell, and private/get_user_trades_by_instrument label contract (maximum 64 characters)"},"observed_evidence":{"kind":"live_venue","reference":"Live test.deribit.com labelled market order plus matching private/get_user_trades_by_instrument fill on 2026-08-18"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-14 — chart-data returned window (Task 553)
 
 **C-T553e — Deribit chart data consumes unified bounds as `start_timestamp` and

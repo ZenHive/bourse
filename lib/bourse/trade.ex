@@ -8,6 +8,7 @@ defmodule Bourse.Trade do
 
     * `id` - Exchange trade ID
     * `order_id` - Associated order ID
+    * `client_order_id` - Client-assigned order ID echoed on the fill, when the venue returns one
     * `symbol` - Unified symbol (e.g., "BTC/USDT")
     * `timestamp` - Execution time in milliseconds
     * `datetime` - ISO 8601 datetime string
@@ -27,6 +28,7 @@ defmodule Bourse.Trade do
   @type t :: %__MODULE__{
           id: String.t() | nil,
           order_id: String.t() | nil,
+          client_order_id: String.t() | nil,
           symbol: String.t() | nil,
           timestamp: integer() | nil,
           datetime: String.t() | nil,
@@ -44,6 +46,7 @@ defmodule Bourse.Trade do
   defstruct [
     :id,
     :order_id,
+    :client_order_id,
     :symbol,
     :timestamp,
     :datetime,
@@ -62,6 +65,7 @@ defmodule Bourse.Trade do
                  %{
                    id: String.t() | nil,
                    order_id: String.t() | nil,
+                   client_order_id: String.t() | nil,
                    symbol: String.t() | nil,
                    timestamp: integer() | nil,
                    datetime: String.t() | nil,
@@ -78,6 +82,7 @@ defmodule Bourse.Trade do
                  doc: [
                    id: "Exchange trade ID",
                    order_id: "Associated order ID",
+                   client_order_id: "Client-assigned order ID echoed on the fill, when the venue returns one",
                    symbol: "Unified symbol (e.g., BTC/USDT)",
                    timestamp: "Execution time in milliseconds",
                    datetime: "ISO 8601 datetime string",

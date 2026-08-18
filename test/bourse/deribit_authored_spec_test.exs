@@ -775,6 +775,33 @@ defmodule Bourse.DeribitAuthoredSpecTest do
     refute Map.has_key?(parsed.info, "trades")
   end
 
+  test "order and trade field maps round-trip Deribit's label as client_order_id" do
+    order = Map.put(deribit_order_row("107869080813", "open", 10_000.0), "label", "t622-order")
+    trade = Map.put(deribit_trade_row(), "label", "t622-order")
+
+    assert {:ok, %Bourse.Order{client_order_id: "t622-order"}} = Bourse.Deribit.parse_order(order)
+
+    assert {:ok, %Bourse.Trade{client_order_id: "t622-order", order_id: "order-1"}} =
+             Bourse.Deribit.parse_trade(trade)
+  end
+
+  test "createOrder request shape maps unified clientOrderId onto native label" do
+    exchange = private_exchange()
+
+    assert {:ok, [shaped]} =
+             Unified.request_param_shapes(exchange, :create_order, %{
+               "amount" => 10,
+               "clientOrderId" => "t622-shape",
+               "side" => "buy",
+               "symbol" => "BTC/USD:BTC",
+               "type" => "market"
+             })
+
+    assert shaped["label"] == "t622-shape"
+    assert shaped["instrument_name"] == "BTC-PERPETUAL"
+    refute Map.has_key?(shaped, "clientOrderId")
+  end
+
   test "editOrder unwraps result.order id/status/price/amount" do
     order = deribit_order_row("107869080813", "open", 11_000.0)
     {:ok, requests} = RequestCollector.start_link()
@@ -864,6 +891,19 @@ defmodule Bourse.DeribitAuthoredSpecTest do
       "post_only" => false,
       "price" => price,
       "time_in_force" => "good_til_cancelled"
+    }
+  end
+
+  defp deribit_trade_row do
+    %{
+      "amount" => 10,
+      "direction" => "buy",
+      "instrument_name" => "BTC-PERPETUAL",
+      "order_id" => "order-1",
+      "order_type" => "limit",
+      "price" => 50_000,
+      "timestamp" => 1_784_204_793_040,
+      "trade_id" => "trade-1"
     }
   end
 

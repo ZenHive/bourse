@@ -1523,6 +1523,16 @@
           "_omit": [
             "side"
           ],
+          "label": {
+            "fallback_sources": [
+              "client_order_id"
+            ],
+            "kind": "reference",
+            "max_length": 64,
+            "preserve_native": true,
+            "source": "clientOrderId",
+            "source_class": "optional"
+          },
           "amount": {
             "kind": "reference",
             "reason": "dynamic_construction",
@@ -4686,7 +4696,11 @@
             "format": null,
             "key": "average_price"
           },
-          "clientOrderId": null,
+          "clientOrderId": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "label"
+          },
           "cost": {
             "coercion": "safeNumber",
             "kind": "computed",
@@ -5087,6 +5101,11 @@
                 "price"
               ]
             }
+          },
+          "clientOrderId": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "label"
           },
           "datetime": null,
           "fee": {

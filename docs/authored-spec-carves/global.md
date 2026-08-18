@@ -7,6 +7,22 @@ venue register.
 **Canonical for cross-venue carves.** This file is the complete record for confrontations whose
 scope spans venues; venue-specific decisions remain canonical in their owning registers.
 
+## 2026-08-18 — client identifier round-trip (Task 622)
+
+**C-T622a — A venue maps a client identifier in both directions or in neither
+(task 622). Outcome: CONFIRM class invariant.** One-way mapping — unified
+`clientOrderId` renamed onto a native request key without a matching order and
+trade field-map return — fails
+`test/bourse/client_order_id_round_trip_invariant_test.exs`. A surface whose
+provider contract has no returnable client identifier carries a named exemption
+citing that contract. Deribit's round-trip is C-T622; Binance family, Derive,
+Hyperliquid, and Lighter trade rows are exempted from the fill echo because those
+providers do not return the client identifier on fills.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T622a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Per-venue provider contracts for client identifiers: Deribit label; Binance Account Trade List orderId-only fills; Hyperliquid userFills oid; Lighter ask_client_id/bid_client_id; Derive get_trade_history trade_id/order_id"},"observed_evidence":{"kind":"live_venue","reference":"Live test.deribit.com labelled market order plus matching private/get_user_trades_by_instrument fill on 2026-08-18; catalog invariant test/bourse/client_order_id_round_trip_invariant_test.exs"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-07-23 — Four-venue option identity and instrument-Greeks surface (Task 398)
 
 **C-T398 — Coherent option discovery + instrument Greeks by canonical symbol (task 398).

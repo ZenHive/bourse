@@ -14999,6 +14999,11 @@
               }
             ]
           },
+          "clientOrderId": {
+            "coercion": "safeString",
+            "format": null,
+            "key": "clOrdId"
+          },
           "datetime": null,
           "fee": {
             "omit_if_empty": true,

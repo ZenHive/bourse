@@ -18063,6 +18063,10 @@
                 "coercion": "safeNumber",
                 "key": "execValue"
               },
+              "clientOrderId": {
+                "coercion": "safeString",
+                "key": "orderLinkId"
+              },
               "datetime": null,
               "fee": {
                 "contract_keys": [
@@ -18181,6 +18185,10 @@
                   "size",
                   "price"
                 ]
+              },
+              "clientOrderId": {
+                "coercion": "safeString",
+                "key": "orderLinkId"
               },
               "datetime": null,
               "fee": null,

@@ -1889,6 +1889,114 @@ defmodule Bourse.Unified.RequestShapeTest do
       end
     end
 
+    test "deribit createOrder maps unified clientOrderId onto label and drops the unified key" do
+      {:ok, exchange} = Exchange.new("deribit")
+
+      shaped =
+        RequestShape.apply(
+          %{
+            "amount" => 10,
+            "clientOrderId" => "t622-unified",
+            "side" => "buy",
+            "symbol" => "BTC-PERPETUAL",
+            "type" => "market"
+          },
+          exchange,
+          "createOrder"
+        )
+
+      assert shaped["label"] == "t622-unified"
+      refute Map.has_key?(shaped, "clientOrderId")
+      refute Map.has_key?(shaped, "client_order_id")
+    end
+
+    test "deribit createOrder maps snake_case client_order_id onto label" do
+      {:ok, exchange} = Exchange.new("deribit")
+
+      shaped =
+        RequestShape.apply(
+          %{
+            "amount" => 10,
+            "client_order_id" => "t622-snake",
+            "side" => "buy",
+            "symbol" => "BTC-PERPETUAL",
+            "type" => "market"
+          },
+          exchange,
+          "createOrder"
+        )
+
+      assert shaped["label"] == "t622-snake"
+      refute Map.has_key?(shaped, "client_order_id")
+    end
+
+    test "deribit createOrder keeps a caller-supplied native label" do
+      {:ok, exchange} = Exchange.new("deribit")
+
+      shaped =
+        RequestShape.apply(
+          %{
+            "amount" => 10,
+            "clientOrderId" => "t622-unified",
+            "label" => "t622-native",
+            "side" => "buy",
+            "symbol" => "BTC-PERPETUAL",
+            "type" => "market"
+          },
+          exchange,
+          "createOrder"
+        )
+
+      assert shaped["label"] == "t622-native"
+      refute Map.has_key?(shaped, "clientOrderId")
+    end
+
+    test "deribit createOrder refuses a client id longer than 64 characters" do
+      {:ok, exchange} = Exchange.new("deribit")
+      too_long = String.duplicate("a", 65)
+
+      error =
+        assert_raise Error, fn ->
+          RequestShape.apply(
+            %{
+              "amount" => 10,
+              "clientOrderId" => too_long,
+              "side" => "buy",
+              "symbol" => "BTC-PERPETUAL",
+              "type" => "market"
+            },
+            exchange,
+            "createOrder"
+          )
+        end
+
+      assert error.type == :invalid_parameters
+      assert error.message =~ "64"
+      assert error.raw["reason"] == "max_length_exceeded"
+    end
+
+    test "deribit createOrder refuses an over-length native label" do
+      {:ok, exchange} = Exchange.new("deribit")
+
+      error =
+        assert_raise Error, fn ->
+          RequestShape.apply(
+            %{
+              "amount" => 10,
+              "label" => String.duplicate("b", 65),
+              "side" => "buy",
+              "symbol" => "BTC-PERPETUAL",
+              "type" => "market"
+            },
+            exchange,
+            "createOrder"
+          )
+        end
+
+      assert error.type == :invalid_parameters
+      assert error.raw["reason"] == "max_length_exceeded"
+    end
+
     test "deribit trailingAmount still emits trigger=last_price and type=trailing_stop" do
       {:ok, exchange} = Exchange.new("deribit")
 
