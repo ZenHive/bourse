@@ -20,7 +20,7 @@ defmodule Bourse.WS do
       {:ok, ws} = Bourse.WS.connect(exchange, :public)
       {:ok, sub} = Bourse.WS.watch_ticker(ws, "BTC/USDT")
       :ok = Bourse.WS.unsubscribe(sub)
-      Bourse.WS.close(ws)
+      :ok = Bourse.WS.close(ws)
 
   Lower-level subscribe with pre-formatted channels still works:
 
@@ -72,6 +72,9 @@ defmodule Bourse.WS do
   # signature check on the venue side, so they get their own, longer window.
   @default_auth_timeout_ms 10_000
 
+  @default_connection_timeout_ms 5_000
+  @connection_owner_timeout_buffer_ms 5_000
+
   # Telemetry helpers (outbound WS messages)
   defp emit_ws_send(%Exchange{id: id}, section) do
     :telemetry.execute(
@@ -84,7 +87,16 @@ defmodule Bourse.WS do
   @type section :: :public | :private
 
   @enforce_keys [:exchange, :zen_client, :url, :section]
-  defstruct [:exchange, :zen_client, :url, :section, auth: nil]
+  defstruct [
+    :exchange,
+    :zen_client,
+    :url,
+    :section,
+    :connection_owner,
+    auth: nil,
+    connect_opts: [],
+    connect_fun: &ZenClient.connect/2
+  ]
 
   @typedoc """
   What the venue disclosed about the accepted handshake.
@@ -102,7 +114,10 @@ defmodule Bourse.WS do
           zen_client: ZenClient.t(),
           url: String.t(),
           section: section(),
-          auth: auth_info() | nil
+          auth: auth_info() | nil,
+          connection_owner: pid() | nil,
+          connect_opts: keyword(),
+          connect_fun: (String.t(), keyword() -> {:ok, ZenClient.t()} | {:error, term()})
         }
 
   @doc """
@@ -111,7 +126,8 @@ defmodule Bourse.WS do
 
   Extra opts are forwarded to `ZenWebsocket.Client.connect/2`. The connection's
   heartbeat config is resolved from `Bourse.WS.Config` unless the caller overrides
-  `heartbeat_config` in opts.
+  `heartbeat_config` in opts. `connect_fun:` replaces `ZenWebsocket.Client.connect/2`
+  for instrumented transports and is reused for authored secondary hosts.
 
   Returns `{:error, :unsupported_exchange}` if the exchange has no WS config,
   or `{:error, :no_url_configured}` if the requested section is absent.
@@ -143,13 +159,24 @@ defmodule Bourse.WS do
   @spec connect(Exchange.t(), section(), keyword()) :: {:ok, t()} | {:error, term()}
   def connect(%Exchange{} = exchange, section, opts \\ []) when section in [:public, :private] do
     {auth?, connect_opts} = Keyword.pop(opts, :authenticate, true)
+    {connect_fun, connect_opts} = Keyword.pop(connect_opts, :connect_fun, &ZenClient.connect/2)
 
     with {:ok, config} <- fetch_config(exchange),
          {:ok, url} <- fetch_url(exchange, section),
          {:ok, url, auth} <- maybe_embed_credential(exchange, config, section, auth?, url, connect_opts),
          zen_opts = build_connect_opts(config, connect_opts),
-         {:ok, zen_client} <- ZenClient.connect(url, zen_opts) do
-      ws = %__MODULE__{exchange: exchange, zen_client: zen_client, url: url, section: section, auth: auth}
+         {:ok, zen_client} <- connect_fun.(url, zen_opts),
+         {:ok, connection_owner} <- own_connection(url, zen_client) do
+      ws = %__MODULE__{
+        exchange: exchange,
+        zen_client: zen_client,
+        url: url,
+        section: section,
+        auth: auth,
+        connection_owner: connection_owner,
+        connect_opts: zen_opts,
+        connect_fun: connect_fun
+      }
 
       maybe_authenticate(ws, section, auth?, connect_opts)
     end
@@ -365,8 +392,13 @@ defmodule Bourse.WS do
   — so this is a gap only for a venue promoted with one of them.
   """
   @spec subscribe(t(), [String.t() | map()], keyword() | map()) :: :ok | {:error, term()}
-  def subscribe(%__MODULE__{exchange: exchange, zen_client: zen_client, section: section}, channels, opts \\ [])
-      when is_list(channels) do
+  def subscribe(%__MODULE__{} = ws, channels, opts \\ []) when is_list(channels) do
+    with {:ok, groups} <- route_subscription_groups(ws, channels) do
+      subscribe_groups(groups, opts)
+    end
+  end
+
+  defp subscribe_on(%__MODULE__{exchange: exchange, zen_client: zen_client, section: section}, channels, opts) do
     emit_ws_send(exchange, section)
     ack_timeout_ms = ack_timeout_ms(opts)
 
@@ -391,8 +423,21 @@ defmodule Bourse.WS do
     ZenClient.send_message(zen_client, Jason.encode!(payload))
   end
 
-  @doc "Closes the WebSocket connection."
+  @doc "Closes the WebSocket connection and every routed public-host connection it owns."
   @spec close(t()) :: :ok
+  def close(%__MODULE__{connection_owner: owner} = ws) when is_pid(owner) do
+    case take_owned_connections(ws) do
+      {:ok, clients} ->
+        Enum.each(clients, &ZenClient.close/1)
+        stop_connection_owner(owner, connection_owner_timeout(ws))
+
+      {:error, _reason} ->
+        ZenClient.close(ws.zen_client)
+    end
+
+    :ok
+  end
+
   def close(%__MODULE__{zen_client: zen_client}), do: ZenClient.close(zen_client)
 
   @doc "Returns the current connection state (`:connecting`, `:connected`, or `:disconnected`)."
@@ -460,8 +505,9 @@ defmodule Bourse.WS do
   Unsubscribes using a handle from `watch_*/3`.
 
   Sends the exchange-native unsubscribe frame built from the stored channels.
-  A dedicated connection opened for host routing is closed after the attempt;
-  the caller's shared connection stays open.
+  A handle that owns its connection (`owns_connection?: true`) is closed after
+  the attempt; pooled routed hosts stay with the originating `Bourse.WS` until
+  `close/1`.
   """
   @spec unsubscribe(Handle.t()) :: :ok | {:ok, map()} | {:error, term()}
   def unsubscribe(%Handle{ws: ws, channels: channels, opts: sub_opts} = handle) do
@@ -503,27 +549,140 @@ defmodule Bourse.WS do
       :erlang.raise(kind, reason, __STACKTRACE__)
   end
 
-  # USD-M `/public` silently acks `/market` stream names. Switch the socket
-  # only when the caller is already on an authored venue host — test doubles
-  # and caller-supplied URLs stay put.
+  # USD-M `/public` silently acks `/market` stream names. Route only when the
+  # caller is already on an authored venue host — test doubles and
+  # caller-supplied URLs stay put.
   defp ensure_stream_host(%__MODULE__{section: :public, url: url} = ws, channel) when is_binary(channel) do
     target = URLRouting.stream_url(ws.exchange, channel)
 
     cond do
       is_nil(target) or target == url -> {:ok, ws, false}
-      URLRouting.authored_usdm_host?(ws.exchange, url) -> reconnect_public(ws, target)
+      URLRouting.authored_usdm_host?(ws.exchange, url) -> route_stream_host(ws, target)
       true -> {:ok, ws, false}
     end
   end
 
   defp ensure_stream_host(ws, _channel), do: {:ok, ws, false}
 
-  defp reconnect_public(%__MODULE__{exchange: exchange} = ws, url) do
-    with {:ok, config} <- fetch_config(exchange),
-         zen_opts = build_connect_opts(config, []),
-         {:ok, zen_client} <- ZenClient.connect(url, zen_opts) do
-      {:ok, %{ws | zen_client: zen_client, url: url}, true}
+  defp route_stream_host(ws, target) do
+    case routed_connection(ws, target) do
+      {:ok, routed} -> {:ok, routed, false}
+      {:error, _} = error -> error
     end
+  end
+
+  defp route_subscription_groups(%__MODULE__{section: :public, url: url} = ws, channels) do
+    if URLRouting.authored_usdm_host?(ws.exchange, url) do
+      ws.exchange
+      |> URLRouting.group_channels_by_url(channels)
+      |> Enum.reduce_while({:ok, []}, &prepend_routed_group(ws, url, &1, &2))
+      |> then(fn
+        {:ok, groups} -> {:ok, Enum.reverse(groups)}
+        {:error, _} = error -> error
+      end)
+    else
+      {:ok, [{ws, channels}]}
+    end
+  end
+
+  defp route_subscription_groups(ws, channels), do: {:ok, [{ws, channels}]}
+
+  defp prepend_routed_group(ws, source_url, {target, channels}, {:ok, groups}) do
+    case routed_connection(ws, target || source_url) do
+      {:ok, target_ws} -> {:cont, {:ok, [{target_ws, channels} | groups]}}
+      {:error, _} = error -> {:halt, error}
+    end
+  end
+
+  defp subscribe_groups(groups, opts) do
+    Enum.reduce_while(groups, :ok, fn {ws, channels}, :ok ->
+      case subscribe_on(ws, channels, opts) do
+        :ok -> {:cont, :ok}
+        {:error, _} = error -> {:halt, error}
+      end
+    end)
+  end
+
+  defp routed_connection(%__MODULE__{url: url} = ws, url), do: {:ok, ws}
+
+  defp routed_connection(%__MODULE__{connection_owner: nil}, url) do
+    {:error, {:stream_host_unavailable, url, :connection_not_owned}}
+  end
+
+  defp routed_connection(%__MODULE__{} = ws, url) do
+    owner_result =
+      try do
+        Agent.get_and_update(
+          ws.connection_owner,
+          &checkout_or_connect(&1, ws.connect_fun, url, ws.connect_opts),
+          connection_owner_timeout(ws)
+        )
+      catch
+        :exit, reason -> {:error, {:connection_owner_down, reason}}
+      end
+
+    case owner_result do
+      {:ok, zen_client} -> {:ok, %{ws | zen_client: zen_client, url: url}}
+      {:error, reason} -> {:error, {:stream_host_unavailable, url, reason}}
+    end
+  end
+
+  defp checkout_or_connect(%{closed?: true} = state, _connect_fun, _url, _opts) do
+    {{:error, :connection_closed}, state}
+  end
+
+  defp checkout_or_connect(%{connections: connections} = state, connect_fun, url, opts) do
+    case Map.fetch(connections, url) do
+      {:ok, zen_client} ->
+        {{:ok, zen_client}, state}
+
+      :error ->
+        case connect_fun.(url, opts) do
+          {:ok, zen_client} ->
+            {{:ok, zen_client}, %{state | connections: Map.put(connections, url, zen_client)}}
+
+          {:error, reason} ->
+            {{:error, reason}, state}
+        end
+    end
+  end
+
+  defp start_connection_owner(url, zen_client) do
+    Agent.start(fn -> %{closed?: false, connections: %{url => zen_client}} end)
+  end
+
+  defp own_connection(url, zen_client) do
+    case start_connection_owner(url, zen_client) do
+      {:ok, owner} ->
+        {:ok, owner}
+
+      {:error, reason} ->
+        ZenClient.close(zen_client)
+        {:error, reason}
+    end
+  end
+
+  defp take_owned_connections(ws) do
+    Agent.get_and_update(
+      ws.connection_owner,
+      fn state ->
+        clients = state.connections |> Map.values() |> Enum.uniq()
+        {{:ok, clients}, %{state | closed?: true, connections: %{}}}
+      end,
+      connection_owner_timeout(ws)
+    )
+  catch
+    :exit, reason -> {:error, reason}
+  end
+
+  defp stop_connection_owner(owner, timeout) do
+    Agent.stop(owner, :normal, timeout)
+  catch
+    :exit, _reason -> :ok
+  end
+
+  defp connection_owner_timeout(%__MODULE__{connect_opts: opts}) do
+    Keyword.get(opts, :timeout, @default_connection_timeout_ms) + @connection_owner_timeout_buffer_ms
   end
 
   defp close_owned_connection(%Handle{ws: ws, owns_connection?: owns_connection?}) do
@@ -568,6 +727,21 @@ defmodule Bourse.WS do
     opts
     |> Keyword.delete(:pre_auth_opts)
     |> Keyword.put(:heartbeat_config, heartbeat)
+    |> put_default_handler()
+  end
+
+  defp put_default_handler(opts) do
+    parent = self()
+
+    Keyword.put_new_lazy(opts, :handler, fn ->
+      fn
+        {:message, data} -> send(parent, {:websocket_message, data})
+        {:binary, data} -> send(parent, {:websocket_message, data})
+        {:unmatched_response, response} -> send(parent, {:websocket_unmatched_response, response})
+        {:protocol_error, reason} -> send(parent, {:websocket_protocol_error, reason})
+        _other -> :ok
+      end
+    end)
   end
 
   defp merge_subscription_config(%{subscription_config: base}, opts) when is_list(opts) do

@@ -103,6 +103,13 @@ defmodule Bourse.WS.FacadeTest do
     assert Process.alive?(client.server_pid)
   end
 
+  test "builds a handle with default subscription options", %{client: client} do
+    ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
+
+    assert %Handle{opts: [], channels: ["tickers.BTCUSDT"]} =
+             Handle.new(ws, :watch_ticker, "tickers.BTCUSDT")
+  end
+
   test "supports every unified watch wrapper and map subscription options", %{client: client} do
     public_ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
     private_ws = %{public_ws | section: :private}

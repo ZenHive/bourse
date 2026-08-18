@@ -93,6 +93,22 @@ defmodule Bourse.WS.URLRoutingTest do
       assert URLRouting.authored_usdm_host?(exchange, "wss://fstream.binance.com/ws")
       refute URLRouting.authored_usdm_host?(exchange, "wss://offline.test")
     end
+
+    test "groups mixed USD-M channels by host without dropping either family" do
+      exchange = Exchange.new!("binanceusdm")
+      public = URLRouting.public_url(exchange)
+      market = URLRouting.market_url(exchange)
+
+      assert URLRouting.group_channels_by_url(exchange, [
+               "btcusdt@bookTicker",
+               "btcusdt@miniTicker",
+               "btcusdt@aggTrade",
+               %{"stream" => "opaque"}
+             ]) == [
+               {public, ["btcusdt@bookTicker", %{"stream" => "opaque"}]},
+               {market, ["btcusdt@miniTicker", "btcusdt@aggTrade"]}
+             ]
+    end
   end
 
   describe "private_url/1" do

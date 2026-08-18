@@ -217,6 +217,11 @@ defmodule Bourse.WS.Adapter do
 
   def handle_info(_msg, state), do: {:noreply, state}
 
+  @impl true
+  def terminate(_reason, %{ws: nil}), do: :ok
+
+  def terminate(_reason, %{ws: ws}), do: WS.close(ws)
+
   defp route_and_broadcast(decoded, state) do
     envelope = Envelope.for_exchange(state.exchange)
 

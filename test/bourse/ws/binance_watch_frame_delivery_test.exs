@@ -114,7 +114,6 @@ defmodule Bourse.WS.BinanceWatchFrameDeliveryTest do
       assert frame["e"] == "24hrMiniTicker"
       assert frame["s"] == "BTCUSDT"
 
-      assert :ok = WS.close(handle.ws)
       assert :ok = WS.close(ws)
     end
   end

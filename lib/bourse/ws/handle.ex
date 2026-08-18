@@ -3,7 +3,10 @@ defmodule Bourse.WS.Handle do
   Subscription handle returned by unified `watch_*` functions.
 
   Carries enough state to send a matching unsubscribe frame via
-  `Bourse.WS.unsubscribe/1` and release a dedicated routed connection.
+  `Bourse.WS.unsubscribe/1`. Connection cleanup belongs to the originating
+  `Bourse.WS` value: `Bourse.WS.close/1` closes its authored-host connections,
+  so callers do not inspect this handle to find routed sockets. A handle with
+  `owns_connection?: true` still releases that dedicated socket on unsubscribe.
   """
 
   alias Bourse.Exchange

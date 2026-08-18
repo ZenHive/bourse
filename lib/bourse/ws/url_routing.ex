@@ -86,6 +86,28 @@ defmodule Bourse.WS.URLRouting do
   end
 
   @doc """
+  Groups channels by the authored public host that carries them.
+
+  The groups retain first-host and channel order so callers can subscribe
+  deterministically while using one connection per host.
+  """
+  @spec group_channels_by_url(Exchange.t(), [String.t() | map()]) ::
+          [{String.t() | nil, [String.t() | map()]}]
+  def group_channels_by_url(%Exchange{} = exchange, channels) when is_list(channels) do
+    {urls, groups} =
+      Enum.reduce(channels, {[], %{}}, fn channel, {urls, groups} ->
+        url = channel_url(exchange, channel)
+        urls = if Map.has_key?(groups, url), do: urls, else: [url | urls]
+        groups = Map.update(groups, url, [channel], &[channel | &1])
+        {urls, groups}
+      end)
+
+    urls
+    |> Enum.reverse()
+    |> Enum.map(fn url -> {url, groups |> Map.fetch!(url) |> Enum.reverse()} end)
+  end
+
+  @doc """
   True when `url` is an authored USD-M public or market host, including the
   legacy unrouted `/ws` alias that still behaves like `/public`.
   """
@@ -93,6 +115,9 @@ defmodule Bourse.WS.URLRouting do
   def authored_usdm_host?(%Exchange{} = exchange, url) when is_binary(url) do
     url in authored_usdm_hosts(exchange)
   end
+
+  defp channel_url(exchange, channel) when is_binary(channel), do: stream_url(exchange, channel)
+  defp channel_url(exchange, channel) when is_map(channel), do: public_url(exchange)
 
   defp authored_usdm_hosts(%Exchange{} = exchange) do
     Enum.reject(
