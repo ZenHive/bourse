@@ -40,10 +40,10 @@
         "url": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-candles"
       },
       "freshness": {
-        "status": "reviewed_current",
-        "checked_at": "2026-08-11",
+        "status": "drift_detected",
+        "checked_at": "2026-08-18",
         "mutable": true,
-        "notes": "Reviewed against the live public endpoint on the retrieval date."
+        "notes": "The rendered docs page hash moved; the drift mode is sha256 over HTML, so cosmetic edits flip it. Re-confronted against the live public endpoint on 2026-08-18 instead of re-reading the page: GET /products/BTC-USD/candles?granularity=60 returns array rows ordered [time, low, high, open, close, volume] with second-precision timestamps, matching the authored ohlcv index map 0-5, and granularity=61 returns the exact string 'Unsupported granularity' that the spec maps to BadRequest. Every fact the authored spec cites this page for still holds."
       },
       "expressiveness": {
         "level": "prose_documentation",
@@ -93,10 +93,10 @@
         "url": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-ticker"
       },
       "freshness": {
-        "status": "reviewed_current",
-        "checked_at": "2026-08-11",
+        "status": "drift_detected",
+        "checked_at": "2026-08-18",
         "mutable": true,
-        "notes": "Reviewed against the live public endpoint on the retrieval date."
+        "notes": "The rendered docs page hash moved; drift mode is sha256 over HTML, so cosmetic edits flip it. Re-confronted against the live public endpoint on 2026-08-18 instead of re-reading the page: GET /products/BTC-USD/ticker returns ask, bid, price, size, volume, trade_id and an RFC3339 time, which is the route and field set this page is cited for."
       },
       "expressiveness": {
         "level": "prose_documentation",

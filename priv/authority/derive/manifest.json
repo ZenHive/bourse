@@ -32,10 +32,10 @@
         "url": "https://docs.derive.xyz/llms.txt"
       },
       "freshness": {
-        "status": "reviewed_current",
-        "checked_at": "2026-08-10",
+        "status": "drift_detected",
+        "checked_at": "2026-08-18",
         "mutable": true,
-        "notes": "The mutable index matched the retained bytes during the audit."
+        "notes": "Upstream re-published. The artifact is a discovery index (llms.txt), explicitly not a contract completeness source, so drift changes what is discoverable, not what is contracted. Re-baselined 2026-08-18."
       },
       "expressiveness": {
         "level": "documentation_index",

@@ -138,10 +138,10 @@
         "repository_url": "https://github.com/binance/binance-spot-api-docs.git"
       },
       "freshness": {
-        "status": "initial_baseline",
-        "checked_at": "2026-08-10",
+        "status": "drift_detected",
+        "checked_at": "2026-08-18",
         "mutable": true,
-        "notes": "This repository archive entered the corpus as an implementation-time baseline."
+        "notes": "Upstream HEAD moved to 976cc580 (single commit 2026-08-14, 'Updated broken links and added error description for PERCENT_PRICE_BY_SIDE filter'). Reviewed: errors.md reworded the PERCENT_PRICE description and documented a new 'Filter failure: PERCENT_PRICE_BY_SIDE' message; the remaining files are developers.binance.com link repairs. Both filter-failure messages are prose for error code -1013, which errors.json already maps, and no authored binance surface consumes the message strings — the pinned archive stays valid for what it is cited for."
       },
       "expressiveness": {
         "level": "source_archive",

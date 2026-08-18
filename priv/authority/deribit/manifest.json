@@ -117,13 +117,13 @@
       "source_url": "https://docs.deribit.com/specifications/deribit_upcoming_openapi.json",
       "fetch_url": "https://docs.deribit.com/specifications/deribit_upcoming_openapi.json",
       "filename": "deribit_upcoming_openapi.json",
-      "retrieved_at": "2026-08-10",
+      "retrieved_at": "2026-08-18",
       "upstream_pin": {
         "type": "document_version_http_etag",
         "value": "2.1.1; W/\"5e8b26e0df446ae0b6b213d91184f49b\""
       },
-      "sha256": "b3010bcb1e2b95d64e5b83b0c633b9fd61faedf664a9ed026015e1089a982d0f",
-      "bytes": 1420823,
+      "sha256": "788ae5dbe60db73c07513961dd5e3e340603d59b2e2ab3140c4237246e328eb3",
+      "bytes": 1438672,
       "storage": "reference_only",
       "path": null,
       "license": {
@@ -138,10 +138,10 @@
         "url": "https://docs.deribit.com/specifications/deribit_upcoming_openapi.json"
       },
       "freshness": {
-        "status": "initial_baseline",
-        "checked_at": "2026-08-10",
+        "status": "reviewed_current",
+        "checked_at": "2026-08-18",
         "mutable": true,
-        "notes": "This distinct provider surface entered the corpus as an implementation-time baseline."
+        "notes": "Re-pinned 2026-08-18 after the provider re-published. Verified the refetched document is the same artifact type and surface: OpenAPI 3.0.0, info.version 2.1.1, 182 paths, and additive against the prior pin (1420823 -> 1438672 bytes). The prior bytes were not retained (storage reference_only), so this is a baseline refresh rather than an operation-level diff; the surface is upcoming REST and never enters the current-runtime denominator."
       },
       "expressiveness": {
         "level": "typed_openapi",
@@ -170,13 +170,13 @@
       "source_url": "https://docs.deribit.com/specifications/deribit_asyncapi.json",
       "fetch_url": "https://docs.deribit.com/specifications/deribit_asyncapi.json",
       "filename": "deribit_asyncapi.json",
-      "retrieved_at": "2026-08-10",
+      "retrieved_at": "2026-08-18",
       "upstream_pin": {
         "type": "document_version_http_etag",
         "value": "1.0.0; W/\"06f469af56a14772c8def9090ee88aa2\""
       },
-      "sha256": "03a857e43690a171b6416bff8b910ee00b93f44dc978d2ffdef0710af5d73cb2",
-      "bytes": 562969,
+      "sha256": "70f51eadc67793fbf81ecb5cfca8d70b72419a8b81ba7d2d27b4da7b86b074f6",
+      "bytes": 563150,
       "storage": "reference_only",
       "path": null,
       "license": {
@@ -191,10 +191,10 @@
         "url": "https://docs.deribit.com/specifications/deribit_asyncapi.json"
       },
       "freshness": {
-        "status": "initial_baseline",
-        "checked_at": "2026-08-10",
+        "status": "reviewed_current",
+        "checked_at": "2026-08-18",
         "mutable": true,
-        "notes": "This distinct provider surface entered the corpus as an implementation-time baseline."
+        "notes": "Re-pinned 2026-08-18 after the provider re-published. Confronted against the authored WebSocket dispatch: AsyncAPI 3.0.0 with 40 channels, and every authored channel family still carries an upstream definition — trades.(instrument_name), ticker.(instrument_name), quote.(instrument_name), book.(instrument_name), chart.trades.(instrument_name), user.orders.(instrument_name) and user.portfolio.(currency). No authored channel lost its upstream contract."
       },
       "expressiveness": {
         "level": "typed_asyncapi",
@@ -223,13 +223,13 @@
       "source_url": "https://docs.deribit.com/specifications/deribit_upcoming_asyncapi.json",
       "fetch_url": "https://docs.deribit.com/specifications/deribit_upcoming_asyncapi.json",
       "filename": "deribit_upcoming_asyncapi.json",
-      "retrieved_at": "2026-08-10",
+      "retrieved_at": "2026-08-18",
       "upstream_pin": {
         "type": "document_version_http_etag",
         "value": "1.0.0; W/\"2863755d34671127f41d92e5de11f775\""
       },
-      "sha256": "5a83c3a4d36840e1e77bcb63290447ae287754a04969e588eb96ded953c70a96",
-      "bytes": 603858,
+      "sha256": "8fb075b8cd42f35a2a0c473144824050e3ee30dcfa55f131c59a70f14abc69d1",
+      "bytes": 609774,
       "storage": "reference_only",
       "path": null,
       "license": {
@@ -244,10 +244,10 @@
         "url": "https://docs.deribit.com/specifications/deribit_upcoming_asyncapi.json"
       },
       "freshness": {
-        "status": "initial_baseline",
-        "checked_at": "2026-08-10",
+        "status": "reviewed_current",
+        "checked_at": "2026-08-18",
         "mutable": true,
-        "notes": "This distinct provider surface entered the corpus as an implementation-time baseline."
+        "notes": "Re-pinned 2026-08-18 after the provider re-published. Verified the refetched document is the same artifact type and surface: AsyncAPI 3.0.0, 43 channels, additive against the prior pin (603858 -> 609774 bytes). The prior bytes were not retained (storage reference_only), so this is a baseline refresh rather than a channel-level diff; the surface is upcoming WebSocket and never enters the current-runtime denominator."
       },
       "expressiveness": {
         "level": "typed_asyncapi",
@@ -297,10 +297,10 @@
         "url": "https://docs.deribit.com/llms.txt"
       },
       "freshness": {
-        "status": "initial_baseline",
-        "checked_at": "2026-08-10",
+        "status": "drift_detected",
+        "checked_at": "2026-08-18",
         "mutable": true,
-        "notes": "This distinct provider surface entered the corpus as an implementation-time baseline."
+        "notes": "Upstream re-published. The artifact is a documentation discovery index (llms.txt) whose declared coverage is index_only and which defines no operation schema, so drift changes what is discoverable, not what is contracted. Re-baselined 2026-08-18."
       },
       "expressiveness": {
         "level": "documentation_index",
