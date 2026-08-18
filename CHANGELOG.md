@@ -7,6 +7,35 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added
+
+- `Bourse.Position` gained `notional_currency` — the currency `notional` is
+  denominated in, populated on the unified read path whenever `notional` is
+  present. An unresolved currency fails loud rather than emitting an
+  unlabelled number.
+
+### Fixed
+
+- binance (USD-M umbrella), bybit linear and derive perpetual markets now
+  populate `contract_size` from the venue's own contract unit (`1`,
+  `quantity_unit: "base"`), closing the last known linear gaps. Each recipe was
+  confronted against the provider's contract, not copied from binanceusdm: a
+  provider-published `contractSize` still wins, inverse COIN-M and bybit
+  inverse keep reading the venue's field, and venues that state no unit
+  (okx, binancecoinm) stay nil.
+- binanceusdm unified `watch_ticker` delivers ticker frames. Binance's
+  USD-M socket splits its streams across two hosts: `@miniTicker`, `@ticker`
+  and `@aggTrade` are carried on `/market/ws` and merely acknowledged — then
+  silent — on the public host, while `@depth20@100ms`, `@trade` and
+  `@bookTicker` live on `/public/ws`. Both hosts are now authored and
+  `watch_*` routes each stream to the one that carries it. Raw
+  `Bourse.WS.subscribe/3` does not yet route.
+- The unified boundary validates parameter value shapes before dispatch. A
+  non-encodable value (keyword list, tuple, struct) returns
+  `{:error, %Bourse.Error{type: :invalid_parameters}}` naming the parameter
+  instead of raising inside the signing layer. Nothing is coerced and no
+  positional signature changed.
+
 ## [0.6.0] - 2026-08-18
 
 ### Changed
