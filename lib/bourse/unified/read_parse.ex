@@ -1842,9 +1842,11 @@ defmodule Bourse.Unified.ReadParse do
       "raw value #{inspect(raw_value)}"
   end
 
-  defp response_error_message({:unmapped_order_type, details}) do
-    "Unmapped Binance #{details.product} order type for venue #{inspect(details.venue)}, " <>
-      "field #{inspect(details.field)}, raw value #{inspect(details.raw_value)}"
+  defp response_error_message(
+         {:unmapped_order_type, %{venue: venue, product: product, field: field, raw_value: raw_value}}
+       ) do
+    "Unmapped Binance #{product} order type for venue #{inspect(venue)}, " <>
+      "field #{inspect(field)}, raw value #{inspect(raw_value)}"
   end
 
   defp response_error_message(other), do: "Unified response parse failed: #{inspect(other)}"
@@ -3408,8 +3410,7 @@ defmodule Bourse.Unified.ReadParse do
     end
   end
 
-  defp binance_order_product_from_params(%{"market_family" => family}) when family in ["linear", "inverse"],
-    do: :futures
+  defp binance_order_product_from_params(%{"market_family" => family}) when family in ["linear", "inverse"], do: :futures
 
   defp binance_order_product_from_params(%{"market_family" => "option"}), do: :option
   defp binance_order_product_from_params(%{"market_family" => "spot"}), do: :spot

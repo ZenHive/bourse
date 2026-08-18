@@ -150,6 +150,80 @@ defmodule Bourse.BinanceOrderTypeRoundtripTest do
     assert "LIMIT" in documented.option
   end
 
+  test "an unmapped type in a list fails the whole parse rather than downcasing one row" do
+    assert {:error, %Error{type: :exchange_error} = error} =
+             ReadParse.parse(
+               Exchange.new!("binanceusdm"),
+               Bourse.Binanceusdm,
+               :fetch_orders,
+               "fetchOrders",
+               [
+                 %{"orderId" => "1", "type" => "LIMIT", "status" => "NEW", "symbol" => "ETHUSDT"},
+                 %{"orderId" => "2", "type" => "PROVIDER_ADDED_TYPE", "status" => "NEW", "symbol" => "ETHUSDT"}
+               ],
+               %{"symbol" => "ETH/USDT:USDT"},
+               :parse_order,
+               true
+             )
+
+    assert error.raw == %{
+             venue: "binanceusdm",
+             product: :futures,
+             field: "type",
+             raw_value: "PROVIDER_ADDED_TYPE"
+           }
+  end
+
+  test "umbrella product falls back to market family, dated futures, and endpoint identity" do
+    assert {:ok, %Bourse.Order{type: "stop_market"}} =
+             parse_order("binance", Bourse.Binance, "STOP_MARKET", %{"market_family" => "linear"})
+
+    assert {:ok, %Bourse.Order{type: "stop"}} =
+             parse_order("binance", Bourse.Binance, "STOP", %{"market_family" => "inverse"})
+
+    assert {:ok, %Bourse.Order{type: "stop_loss"}} =
+             parse_order("binance", Bourse.Binance, "STOP_LOSS", %{"market_family" => "spot"})
+
+    assert {:ok, %Bourse.Order{type: "limit"}} =
+             parse_order("binance", Bourse.Binance, "LIMIT", %{"market_family" => "option"})
+
+    assert {:ok, %Bourse.Order{type: "stop"}} =
+             parse_order("binance", Bourse.Binance, "STOP", %{
+               "_bourse_endpoint_market_type" => :future
+             })
+
+    assert {:ok, %Bourse.Order{type: "take_profit_market"}} =
+             parse_order("binance", Bourse.Binance, "TAKE_PROFIT_MARKET", %{
+               "_bourse_endpoint_id" => "fapiPrivate/post/fapi/v1/algoOrder"
+             })
+
+    assert {:ok, %Bourse.Order{type: "trailing_stop_market"}} =
+             parse_order("binance", Bourse.Binance, "TRAILING_STOP_MARKET", %{
+               "_bourse_endpoint_route" => "/dapi/v1/algoOrder"
+             })
+
+    assert {:error, %Error{type: :exchange_error} = error} =
+             parse_order("binance", Bourse.Binance, "STOP_MARKET", %{
+               "_bourse_endpoint_id" => "eapiPrivate/post/eapi/v1/order"
+             })
+
+    assert error.raw.product == :option
+  end
+
+  test "a missing native type is left unset rather than rejected" do
+    assert {:ok, %Bourse.Order{type: nil}} =
+             ReadParse.parse(
+               Exchange.new!("binance"),
+               Bourse.Binance,
+               :fetch_order,
+               "fetchOrder",
+               %{"orderId" => "1", "status" => "NEW", "symbol" => "ETHUSDT"},
+               %{"symbol" => "ETH/USDT"},
+               :parse_order,
+               false
+             )
+  end
+
   defp authored_write_types do
     spec_pairs =
       @binance_family
