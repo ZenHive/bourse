@@ -105,6 +105,10 @@ func TestCreateOrderVector(t *testing.T) {
 // github.com/elliottech/lighter-go@v0.0.0-20260608173247-c26ac340ce5d directly with
 // fixedSigner and Bourse's pre-bump dependency graph from commit f72dd288bdfee611cdfa7acca634323ccadef231
 // (go-ethereum v1.15.6 and gnark-crypto v0.14.0). The assertions do not generate their goldens.
+// Re-running the same vectors against the later bump (go-ethereum v1.17.0,
+// gnark-crypto v0.18.1) produced identical signature and tx_info bytes — the bump
+// is signature-neutral for cancel_order, cancel_all_orders, modify_order,
+// update_leverage, and update_margin.
 
 func TestCancelOrderVector(t *testing.T) {
 	nonce := int64(3)

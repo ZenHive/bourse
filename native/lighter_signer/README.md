@@ -15,9 +15,10 @@ directory. Prebuilt binaries are not distributed.
 ## Verification boundary
 
 `golden_test.go` tests the pinned Go cryptography directly. Its vectors cover
-the primitive public key and signature, auth-token construction, and one
-create-order signature. It does not compile `csrc/helper.c`, send Port frames,
-or exercise the other transaction parsers.
+the primitive public key and signature, auth-token construction, create-order,
+and the five remaining C-exposed transaction constructors (cancel-order,
+cancel-all-orders, modify-order, update-leverage, and update-margin with a
+negative USDCAmount). It does not compile `csrc/helper.c` or send Port frames.
 
 `test/bourse/signing/lighter_native_test.exs` runs the built executable through
 the BEAM Port boundary. It covers initialization, every supported operation,
