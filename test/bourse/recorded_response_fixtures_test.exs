@@ -235,6 +235,22 @@ defmodule Bourse.RecordedResponseFixturesTest do
     assert fixture["params"]["symbol"] == "BTC/USDC"
   end
 
+  test "market capture keeps its context symbol out of caller parameters" do
+    stub = unique_stub("market_context_symbol")
+    test_process = self()
+
+    Req.Test.stub(stub, fn conn ->
+      send(test_process, {:markets_request, conn.request_path})
+      Req.Test.json(conn, %{"retCode" => 0, "result" => %{"list" => []}})
+    end)
+
+    assert {:ok, fixture} = Capture.capture_fixture("bybit", :fetch_markets, plug: {Req.Test, stub})
+    assert_receive {:markets_request, "/v5/market/instruments-info"}
+    assert fixture["params"] == %{}
+    assert fixture["caller_params"] == %{}
+    assert fixture["symbol"] == "BTC/USDT:USDT"
+  end
+
   test "capture preserves every configured parameter variant" do
     stub = unique_stub("parameter_variants")
     test_process = self()
