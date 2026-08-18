@@ -84,9 +84,11 @@ defmodule Bourse.ClientOrderIdRoundTripInvariantTest do
 
   defp check_venue(venue, spec, used_exemptions) do
     if request_maps_unified_client_id?(venue, spec) do
+      native_keys = spec_request_native_keys(spec)
+
       used_exemptions
-      |> then(&assert_return_map(venue, spec, :order, &1))
-      |> then(&assert_return_map(venue, spec, :trade, &1))
+      |> then(&assert_return_map(venue, spec, :order, native_keys, &1))
+      |> then(&assert_return_map(venue, spec, :trade, native_keys, &1))
     else
       used_exemptions
     end
@@ -118,7 +120,28 @@ defmodule Bourse.ClientOrderIdRoundTripInvariantTest do
 
   defp maps_unified_client_id?(_entry), do: false
 
-  defp assert_return_map(venue, spec, surface, used_exemptions) do
+  # The native request keys an authored spec renames the unified client id onto.
+  # A venue whose request mapping lives in an Elixir RequestShape.* module yields
+  # an empty set: the native key is not readable from the spec, and a synthetic
+  # return key (Binance _bourse_client_order_id) is not the key that was written.
+  defp spec_request_native_keys(spec) do
+    for method <- @order_write_methods,
+        entries = spec_request_entry_pairs(spec, method),
+        {native_key, entry} <- entries,
+        maps_unified_client_id?(entry),
+        into: MapSet.new() do
+      native_key
+    end
+  end
+
+  defp spec_request_entry_pairs(spec, method) do
+    case get_in(spec, ["endpoints", "request", "defaults", method]) do
+      entries when is_map(entries) -> Map.to_list(entries)
+      _missing -> []
+    end
+  end
+
+  defp assert_return_map(venue, spec, surface, native_keys, used_exemptions) do
     case Map.fetch(@return_exemptions, {venue, surface}) do
       {:ok, _exemption} ->
         MapSet.put(used_exemptions, {venue, surface})
@@ -138,7 +161,25 @@ defmodule Bourse.ClientOrderIdRoundTripInvariantTest do
         assert missing == [],
                "#{venue} maps a unified client id on the request but #{surface} field map(s) do not map it back"
 
+        assert_reads_request_key(venue, surface, maps, native_keys)
+
         used_exemptions
+    end
+  end
+
+  # Presence of a clientOrderId rule is not enough: an authored spec that maps the
+  # request onto `label` and reads `order_id` back would satisfy presence while
+  # returning a different identifier than the caller supplied.
+  defp assert_reads_request_key(venue, surface, maps, native_keys) do
+    if MapSet.size(native_keys) > 0 do
+      for field_map <- maps do
+        %{"clientOrderId" => rule} = field_map
+        read_keys = MapSet.new([rule["key"] | List.wrap(rule["fallback_keys"])])
+
+        assert not MapSet.disjoint?(read_keys, native_keys),
+               "#{venue} writes the unified client id onto #{inspect(MapSet.to_list(native_keys))} " <>
+                 "but its #{surface} field map reads #{inspect(MapSet.to_list(read_keys))} back"
+      end
     end
   end
 
