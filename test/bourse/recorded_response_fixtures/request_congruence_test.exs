@@ -311,6 +311,28 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruenceTest do
     end
   end
 
+  test "an authored omitted caller key fails the walk even when a renamed key is consumed" do
+    recaptured = %{
+      "caller_params" => %{"limit" => 50, "symbol" => "BTC/USD:BTC"},
+      "captured_at" => "2026-08-14T00:00:00Z",
+      "params" => %{"limit" => 50, "symbol" => "BTC/USD:BTC"}
+    }
+
+    {root, manifest_path} =
+      write_corpus("recapture-omitted", "deribit/fetch_open_orders.json", recaptured, recaptured,
+        method: "fetch_open_orders",
+        venue: "deribit"
+      )
+
+    assert_raise ArgumentError, ~r/runtime request builder drops caller params: limit/, fn ->
+      RequestCongruence.validate!(
+        root: root,
+        manifest_path: manifest_path,
+        legacy_missing_caller_params: []
+      )
+    end
+  end
+
   test "the missing-caller-params ratchet fails closed when the live set shrinks past the pin" do
     fixture = %{
       "caller_params" => %{"symbol" => "BTC/USDT:USDT"},

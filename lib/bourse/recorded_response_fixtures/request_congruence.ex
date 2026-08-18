@@ -333,9 +333,18 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
 
   defp shape_depends_on_caller_key?(venue, method, caller_params, fixture, full_shapes, name) do
     case request_shapes_result(venue, method, Map.delete(caller_params, name), fixture) do
-      {:ok, reduced} -> reduced != full_shapes
+      {:ok, reduced} -> shape_keys(reduced) != shape_keys(full_shapes)
       {:error, _reason} -> true
     end
+  end
+
+  # Compare keys, not values: rebuilt shapes can carry clocks (auth_deadline, nonce)
+  # that change between calls without the deleted caller key having been consumed.
+  defp shape_keys(shapes) do
+    Enum.map(shapes, fn
+      shape when is_map(shape) -> shape |> Map.keys() |> Enum.sort()
+      _shape -> :not_a_shape
+    end)
   end
 
   defp request_shapes_result(venue, method, params, fixture) do
