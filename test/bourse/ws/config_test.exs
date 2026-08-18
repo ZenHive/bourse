@@ -28,4 +28,9 @@ defmodule Bourse.WS.ConfigTest do
     assert lighter.subscription_config == %{args_field: "channel", args_format: :string}
     assert lighter.auth_pattern == nil
   end
+
+  test "missing config distinguishes a runtime venue from an unknown id" do
+    assert Config.missing_config_error("coinbaseexchange") == {:error, :websocket_not_configured}
+    assert Config.missing_config_error("kraken") == {:error, :unsupported_exchange}
+  end
 end

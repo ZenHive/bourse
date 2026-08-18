@@ -57,4 +57,20 @@ defmodule Bourse.WS.Config do
   @doc "Returns runtime exchanges intentionally lacking a WS config and the reason for each gap."
   @spec registered_divergences() :: %{String.t() => :websocket_not_configured}
   def registered_divergences, do: @registered_divergences
+
+  @doc """
+  Error for a missing WS config.
+
+  A runtime-supported venue without a hand base is `:websocket_not_configured`.
+  A venue outside runtime support is `:unsupported_exchange`.
+  """
+  @spec missing_config_error(String.t()) ::
+          {:error, :websocket_not_configured | :unsupported_exchange}
+  def missing_config_error(exchange_id) when is_binary(exchange_id) do
+    if exchange_id in Bourse.Spec.exchanges() do
+      {:error, :websocket_not_configured}
+    else
+      {:error, :unsupported_exchange}
+    end
+  end
 end

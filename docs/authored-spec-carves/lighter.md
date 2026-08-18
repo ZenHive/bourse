@@ -51,12 +51,15 @@ artifact `rest-openapi`).
   `sendTxBatch`, withdrawals, transfers, account/API-key changes, margin changes, and all public
   broadcast calls remain unsupported and are never invoked with valid mutation parameters.
 
-**C-T451d — WebSocket support is explicitly absent (task 451). Outcome: DIVERGE from reference subscription shapes.**
+**C-T451d — WebSocket support is explicitly absent (task 451). Outcome: DIVERGE from reference subscription shapes. Superseded by C-T544b (task 544).**
 
 - *Exchange semantics (non-CCXT):* Lighter publishes WebSocket channels, but no channel was live
   subscribed and adjudicated by this task.
 - *Our carve + rationale:* every owned WebSocket slot is marked `supported=false`; no WebSocket
   capability is advertised from generated/reference plumbing.
+- *History:* C-T544b supersedes the absence claim. Public transport is now authored and
+  live-verified; unified watch templates stay unresolved because the provider requires a
+  numeric market index.
 
 **C-T451e — Every remaining unified method is explicitly unsupported (task 451). Outcome: DIVERGE from generated and CCXT claims.**
 

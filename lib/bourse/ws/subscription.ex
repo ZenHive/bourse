@@ -18,7 +18,7 @@ defmodule Bourse.WS.Subscription do
   | `:method_subscription`        | hyperliquid                               | `%{"method"=>"subscribe","subscription"=>%{"type"=>…}}` |
   | `:jsonrpc_subscribe`          | deribit                                   | JSON-RPC 2.0 envelope with correlation id        |
   | `:event_subscribe`            | gate, bitfinex, woo, bitrue               | `%{"event"=>"subscribe","channel"=>…}` variants  |
-  | `:type_subscribe`             | kucoin, coinbaseexchange                  | `%{"type"=>"subscribe","topic"=>…}` variants     |
+  | `:type_subscribe`             | lighter, kucoin, coinbaseexchange         | `%{"type"=>"subscribe","topic"=>…}` variants     |
   | `:sub_subscribe`              | htx, huobi                                | `%{"sub"=>…}` — **one frame per channel**, no `id` (see `SubBased` moduledoc) |
   | `:custom`                     | bithumb, upbit, deepcoin, … (escape hatch)| dispatches on `config[:custom_type]`             |
 

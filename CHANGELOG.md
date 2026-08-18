@@ -22,6 +22,15 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   deposits, withdrawals, and transfers stay unsupported: the paper host
   404s those endpoints, and paper `JNLC` funding is not a customer
   transfer.
+- `alpaca` and `lighter` now have public WebSocket transport. Alpaca's
+  market-data socket authenticates with an `action: auth` key/secret frame
+  before `trades`/`quotes` subscriptions on the IEX (prod) or test feed.
+  Lighter uses `{"type":"subscribe","channel":"..."}` with numeric market
+  indexes; unified `watch_*` templates stay unresolved because the venue
+  does not accept a unified symbol. Coinbase Exchange is the remaining
+  runtime venue without a WS config, and `Bourse.WS.connect/3` answers
+  `{:error, :websocket_not_configured}` for it, distinct from
+  `:unsupported_exchange` for a venue outside runtime support.
 
 ### Fixed
 
