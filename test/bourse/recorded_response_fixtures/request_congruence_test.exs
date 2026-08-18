@@ -105,6 +105,51 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruenceTest do
            ]
   end
 
+  @private_venue_classes [
+    {"hmac-query", "binance"},
+    {"hmac-headers", "bybit"},
+    {"hmac-iso-passphrase", "okx"},
+    {"api-key-headers", "alpaca"},
+    {"deribit", "deribit"},
+    {"hyperliquid", "hyperliquid"},
+    {"derive", "derive"},
+    {"lighter", "lighter"}
+  ]
+
+  for {venue_class, venue} <- @private_venue_classes do
+    test "#{venue_class} (#{venue}) fails when the runtime drops a recorded caller key" do
+      fixture = %{
+        "caller_params" => %{"symbol" => "BTC/USDT"},
+        "params" => %{"symbol" => "BTC/USDT"}
+      }
+
+      assert_raise ArgumentError,
+                   ~r/#{unquote(venue)}\.fetch_open_orders runtime request builder drops caller params: symbol/,
+                   fn ->
+                     RequestCongruence.validate_case!(unquote(venue), :fetch_open_orders, fixture, [%{}], nil)
+                   end
+    end
+
+    test "#{venue_class} (#{venue}) fails when caller_params omit a runtime-emitted required name" do
+      fixture = %{
+        "caller_params" => %{},
+        "params" => %{"symbol" => "BTC/USDT"}
+      }
+
+      assert_raise ArgumentError,
+                   ~r/#{unquote(venue)}\.fetch_open_orders has unregistered capture-only params: symbol/,
+                   fn ->
+                     RequestCongruence.validate_case!(
+                       unquote(venue),
+                       :fetch_open_orders,
+                       fixture,
+                       [%{"symbol" => "BTCUSDT"}],
+                       nil
+                     )
+                   end
+    end
+  end
+
   test "a recorded caller param omitted by the runtime builder is red with its name" do
     fixture = %{
       "caller_params" => %{"account_index" => "***REDACTED***", "l1_address" => "***REDACTED***"},
@@ -226,14 +271,55 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruenceTest do
     end
   end
 
-  test "the missing-caller-params ratchet fails closed when the live set shrinks past the pin" do
-    fixture = %{
+  test "recapturing a pinned recording shrinks the pin and shape-checks equal caller keys" do
+    recaptured = %{
+      "caller_params" => %{"dropped_by_builder" => true},
+      "captured_at" => "2026-08-14T00:00:00Z",
+      "params" => %{"dropped_by_builder" => true}
+    }
+
+    {root, manifest_path} = write_corpus("recapture-shape-checked", "bybit/fetch_balance.json", recaptured, recaptured)
+
+    assert_raise ArgumentError, ~r/runtime request builder drops caller params: dropped_by_builder/, fn ->
+      RequestCongruence.validate!(
+        root: root,
+        manifest_path: manifest_path,
+        legacy_missing_caller_params: []
+      )
+    end
+  end
+
+  test "a recaptured renamed caller key is consumed rather than treated as dropped" do
+    recaptured = %{
       "caller_params" => %{"symbol" => "BTC/USDT"},
       "captured_at" => "2026-08-14T00:00:00Z",
       "params" => %{"symbol" => "BTC/USDT"}
     }
 
-    {root, manifest_path} = write_corpus("shrunk-ratchet", "bybit/fetch_ticker.json", fixture, fixture)
+    {root, manifest_path} =
+      write_corpus("recapture-renamed", "okx/fetch_open_orders.json", recaptured, recaptured,
+        method: "fetch_open_orders",
+        venue: "okx"
+      )
+
+    assert_raise ArgumentError, ~r/capture param-injection registry differs from recordings/, fn ->
+      RequestCongruence.validate!(
+        root: root,
+        manifest_path: manifest_path,
+        legacy_missing_caller_params: []
+      )
+    end
+  end
+
+  test "the missing-caller-params ratchet fails closed when the live set shrinks past the pin" do
+    fixture = %{
+      "caller_params" => %{"symbol" => "BTC/USDT:USDT"},
+      "captured_at" => "2026-08-14T00:00:00Z",
+      "params" => %{"symbol" => "BTC/USDT:USDT"}
+    }
+
+    {root, manifest_path} =
+      write_corpus("shrunk-ratchet", "bybit/fetch_open_orders.json", fixture, fixture, method: "fetch_open_orders")
 
     assert_raise ArgumentError, ~r/legacy missing-caller_params pin must exactly match the live set/, fn ->
       RequestCongruence.validate!(
@@ -305,7 +391,7 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruenceTest do
     end
   end
 
-  defp write_corpus(label, relative_path, provenance_fixture, written_fixture) do
+  defp write_corpus(label, relative_path, provenance_fixture, written_fixture, opts \\ []) do
     root = temporary_directory(label)
     fixture_path = Path.join(root, relative_path)
     File.mkdir_p!(Path.dirname(fixture_path))
@@ -317,10 +403,10 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruenceTest do
       Jason.encode!(%{
         "recordings" => [
           %{
-            "method" => "fetch_balance",
+            "method" => Keyword.get(opts, :method, "fetch_balance"),
             "path" => relative_path,
             "request_params_sha256" => RequestCongruence.request_params_sha256(provenance_fixture),
-            "venue" => "bybit"
+            "venue" => Keyword.get(opts, :venue, "bybit")
           }
         ]
       })

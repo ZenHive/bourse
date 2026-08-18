@@ -12,6 +12,8 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
   mechanics rather than caller-param reachability, and some venues require native
   signing. The gate therefore compares `Unified.request_param_shapes/4` with
   capture-time caller inputs and pins those inputs in the recording manifest.
+  Every private venue is checked: a caller key must appear in a rebuilt
+  shape or change that shape when removed (renames count as emitted).
   """
 
   alias Bourse.Credentials
@@ -139,12 +141,7 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
       "#{label} has unregistered capture-only params: #{named_difference(observed, expected)}"
     )
 
-    missing_caller =
-      if venue == "lighter" do
-        caller_params |> Map.keys() |> Enum.reject(&emitted?(&1, shapes)) |> Enum.sort()
-      else
-        []
-      end
+    missing_caller = dropped_caller_keys(caller_params, shapes)
 
     ensure!(
       missing_caller == [],
@@ -179,8 +176,8 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
         )
 
         shapes = request_shapes!(venue, method, caller_params, fixture)
-
-        names = validate_case!(venue, method, fixture, shapes, injection)
+        consumed = consumed_caller_params(venue, method, caller_params, fixture, shapes)
+        names = validate_case!(venue, method, fixture, reachable_shapes(shapes, consumed), injection)
 
         if names == [], do: observed, else: Map.put(observed, {venue, method}, injection)
       else
@@ -244,11 +241,7 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
   end
 
   defp request_shapes!(venue, method, params, fixture) do
-    exchange = Exchange.new!(venue, exchange_opts(venue))
-    opts = RecordedResponseFixtures.decode_call_opts(fixture)
-    params = runtime_caller_params(venue, params)
-
-    case Unified.request_param_shapes(exchange, method, params, opts) do
+    case request_shapes_result(venue, method, params, fixture) do
       {:ok, shapes} -> shapes
       {:error, reason} -> raise ArgumentError, "#{venue}.#{method} request shape failed: #{inspect(reason)}"
     end
@@ -320,6 +313,37 @@ defmodule Bourse.RecordedResponseFixtures.RequestCongruence do
       shape when is_map(shape) -> Map.has_key?(shape, name)
       _shape -> false
     end)
+  end
+
+  defp dropped_caller_keys(caller_params, shapes) when is_map(caller_params) do
+    caller_params |> Map.keys() |> Enum.reject(&emitted?(&1, shapes)) |> Enum.sort()
+  end
+
+  defp reachable_shapes(shapes, []), do: shapes
+  defp reachable_shapes(shapes, consumed), do: [Map.new(consumed, &{&1, true}) | shapes]
+
+  defp consumed_caller_params(venue, method, caller_params, fixture, full_shapes) do
+    caller_params
+    |> Map.keys()
+    |> Enum.filter(fn name ->
+      not emitted?(name, full_shapes) and
+        shape_depends_on_caller_key?(venue, method, caller_params, fixture, full_shapes, name)
+    end)
+  end
+
+  defp shape_depends_on_caller_key?(venue, method, caller_params, fixture, full_shapes, name) do
+    case request_shapes_result(venue, method, Map.delete(caller_params, name), fixture) do
+      {:ok, reduced} -> reduced != full_shapes
+      {:error, _reason} -> true
+    end
+  end
+
+  defp request_shapes_result(venue, method, params, fixture) do
+    exchange = Exchange.new!(venue, exchange_opts(venue))
+    opts = RecordedResponseFixtures.decode_call_opts(fixture)
+    params = runtime_caller_params(venue, params)
+
+    Unified.request_param_shapes(exchange, method, params, opts)
   end
 
   defp validate_injections!(injections) do
