@@ -7,6 +7,19 @@ Append-only schema confrontations for Binance COIN-M. Follow the allocation and 
 venue-specific decision in the self-contained runtime document. Provider-owned evidence is
 indexed by `priv/authority/binancecoinm/manifest.json`.
 
+## 2026-08-18 — WS subscribe channels remain unauthored (Task 618)
+
+**C-T618c — COIN-M `websocket.subscribe` stays `supported: false` (task 618).
+Outcome: CONFIRM the loud failure; no channel table is authored here.**
+`Channels.build/4` returns `:no_channel_templates` for every unified `watch_*`.
+That is acceptable: unlike the spot/USD-M hash leftovers, a missing table cannot
+silently subscribe a dead stream. Authoring COIN-M stream names is out of scope
+for this task.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T618c","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Authored binancecoinm websocket.subscribe.supported=false / reason not_live_verified"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"COIN-M channel authoring is out of scope for task 618; the null/unsupported table already fails loud"}
+-->
+
 ## 2026-08-14 — aggregate-trade returned window (Task 553)
 
 **C-T553c — COIN-M aggregate trades use native `startTime`/`endTime` bounds (task 553).

@@ -6,6 +6,40 @@ Append-only schema confrontations for Binance USD-M. Follow the allocation and e
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance USD-M carve record.
 
+## 2026-08-18 — WS subscribe templates are provider stream names (Task 618)
+
+**C-T618b — USD-M `watch_*` defaults are documented market-stream names (task 618).
+Outcome: CONFIRM provider contract; DIVERGE from the leaked message-hash templates.**
+The USD-M market-stream catalog documents the same `<symbol>@depth<levels>@<speed>`
+partial book, `<symbol>@trade`, and `<symbol>@miniTicker` names used on spot.
+Authored defaults:
+
+| Unified method | Authored template | Live on `wss://fstream.binance.com/ws` 2026-08-18 |
+|---|---|---|
+| `watch_order_book` | `{symbol}@depth20@100ms` | `e=depthUpdate` with 20 `b`/`a` levels |
+| `watch_trades` | `{symbol}@trade` | `e=trade` frames |
+| `watch_ticker` | `{symbol}@miniTicker` | documented; 8s on `/ws` delivered 0 frames |
+| `watch_orders` | none | listen-key user-data connection; no market-stream `SUBSCRIBE` |
+
+`watch_orders` dropped `:{symbol}` for the same reason as spot: USD-M private
+events arrive on the listen-key socket, not a public stream name.
+
+Leftover hashes removed: `orderbook::{symbol}`, `trade::{symbol}`,
+`myLiquidations::{symbol}`, `:{symbol}`, bare `miniTicker`/`kline`/`name`.
+Public helper templates kept only when the venue documents them:
+`{symbol}@forceOrder` / `!forceOrder@arr`, `{symbol}@markPrice`,
+`{symbol}@ticker`, `{symbol}@kline_1m`.
+
+The `/ws` host acked `@miniTicker`, `@ticker`, and `@aggTrade` and delivered
+nothing in 8s, while `@bookTicker` streamed immediately. The current public URL
+stays `/ws` because that is the host that carries the order-book and trade
+defaults. The ticker template stays the documented `@miniTicker` name rather
+than being swapped to `@bookTicker` (different payload).
+
+<!-- carve-evidence-status
+{"carve_id":"C-T618b","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M WebSocket Market Streams: <symbol>@depth20@100ms, <symbol>@trade, <symbol>@miniTicker"},"observed_evidence":{"kind":"live_venue","reference":"Live fstream.binance.com/ws 2026-08-18: btcusdt@depth20@100ms delivered depthUpdate 20-level books; btcusdt@trade delivered e=trade; orderbook:btcusdt acked with zero frames"},"compatibility_reference":{"kind":"ccxt","reference":"CCXT message-hash templates orderbook::{symbol}, trade::{symbol}, myLiquidations::{symbol}, :{symbol}, bare miniTicker/kline/name are leftovers only"},"resolved_tier":1}
+-->
+
 ## 2026-08-18 — linear contract unit (Task 623)
 
 **C-T623a — USD-M linear `contract_size` is the authored venue-level contract unit

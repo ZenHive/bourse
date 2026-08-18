@@ -6,6 +6,41 @@ Append-only schema confrontations for Binance spot. Follow the allocation and ev
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance spot carve record.
 
+## 2026-08-18 — WS subscribe templates are provider stream names (Task 618)
+
+**C-T618a — Spot `watch_*` defaults are documented market-stream names (task 618).
+Outcome: CONFIRM provider contract; DIVERGE from the leaked message-hash templates.**
+The [Spot WebSocket Market Streams](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md)
+document names the public streams this client actually subscribes:
+
+| Unified method | Authored template | Provider stream |
+|---|---|---|
+| `watch_ticker` | `{symbol}@miniTicker` | Individual Symbol Mini Ticker |
+| `watch_order_book` | `{symbol}@depth20@100ms` | Partial Book Depth (20 levels, 100ms) |
+| `watch_trades` | `{symbol}@trade` | Trade Streams |
+
+`watch_orders` has no market-stream template: spot user-data events ride the
+authenticated WebSocket API `userDataStream.subscribe.signature` connection, so
+a `SUBSCRIBE` of `:{symbol}` (folded to `btcusdt`) is not a documented stream
+and would be silently acked. Callers pass `channel:` if they need an explicit
+payload; otherwise `Channels.build/4` returns `:no_channel_templates`.
+
+Leftover hashes removed from `websocket.subscribe.channels`:
+`orderbook::{symbol}`, `trade::{symbol}`, `myLiquidations::{symbol}`,
+`:{symbol}`, and the bare `miniTicker` / `kline` / `name` fragments. Remaining
+helper templates are the documented `{symbol}@ticker` and `{symbol}@kline_1m`.
+Spot does not document `@forceOrder` or `@markPrice`; those keys were dropped
+rather than kept as silent-dead names.
+
+Live on `wss://stream.binance.com:9443/ws` (2026-08-18): `btcusdt@depth20@100ms`
+delivered 20×20 `lastUpdateId`/`bids`/`asks` frames (no `e` field);
+`btcusdt@trade` delivered `e=trade`; `btcusdt@miniTicker` delivered
+`e=24hrMiniTicker`; `orderbook:btcusdt` acked and delivered nothing.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T618a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Binance spot WebSocket Market Streams: <symbol>@miniTicker, <symbol>@trade, <symbol>@depth20@100ms"},"observed_evidence":{"kind":"live_venue","reference":"Live stream.binance.com SUBSCRIBE of btcusdt@depth20@100ms / @trade / @miniTicker delivered matching payloads; orderbook:btcusdt acked with zero frames on 2026-08-18"},"compatibility_reference":{"kind":"ccxt","reference":"CCXT message-hash templates orderbook::{symbol}, trade::{symbol}, myLiquidations::{symbol}, :{symbol}, bare miniTicker/kline/name are leftovers only"},"resolved_tier":1}
+-->
+
 ## 2026-08-14 — returned-window bounds on spot reads (Task 553)
 
 **C-T553a — Spot candles, aggregate trades, all-orders, and account trades name their

@@ -32722,38 +32722,29 @@
     "subscribe": {
       "args_key": "params",
       "channels": {
-        "watchLiquidationsForSymbols": [
-          "!forceOrder@arr",
-          "{symbol}@forceOrder"
-        ],
-        "watchMarkPrices": [
-          "markPrice"
-        ],
         "watchMultiTickerHelper": [
-          "ticker"
-        ],
-        "watchMyLiquidationsForSymbols": [
-          "myLiquidations::{symbol}"
-        ],
-        "watchMyTrades": [
-          ":{symbol}"
+          "{symbol}@ticker"
         ],
         "watchOHLCVForSymbols": [
-          "kline",
-          "name"
+          "{symbol}@kline_1m"
+        ],
+        "watchOrderBook": [
+          "{symbol}@depth20@100ms"
         ],
         "watchOrderBookForSymbols": [
-          "orderbook::{symbol}"
+          "{symbol}@depth20@100ms"
         ],
-        "watchOrders": [
-          ":{symbol}"
+        "watchTicker": [
+          "{symbol}@miniTicker"
         ],
         "watchTickers": [
-          "miniTicker"
+          "{symbol}@miniTicker"
+        ],
+        "watchTrades": [
+          "{symbol}@trade"
         ],
         "watchTradesForSymbols": [
-          "trade",
-          "trade::{symbol}"
+          "{symbol}@trade"
         ]
       },
       "discriminant": "method",

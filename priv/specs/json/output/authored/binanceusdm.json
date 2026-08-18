@@ -28498,33 +28498,31 @@
           "{symbol}@forceOrder"
         ],
         "watchMarkPrices": [
-          "markPrice"
+          "{symbol}@markPrice"
         ],
         "watchMultiTickerHelper": [
-          "ticker"
-        ],
-        "watchMyLiquidationsForSymbols": [
-          "myLiquidations::{symbol}"
-        ],
-        "watchMyTrades": [
-          ":{symbol}"
+          "{symbol}@ticker"
         ],
         "watchOHLCVForSymbols": [
-          "kline",
-          "name"
+          "{symbol}@kline_1m"
+        ],
+        "watchOrderBook": [
+          "{symbol}@depth20@100ms"
         ],
         "watchOrderBookForSymbols": [
-          "orderbook::{symbol}"
+          "{symbol}@depth20@100ms"
         ],
-        "watchOrders": [
-          ":{symbol}"
+        "watchTicker": [
+          "{symbol}@miniTicker"
         ],
         "watchTickers": [
-          "miniTicker"
+          "{symbol}@miniTicker"
+        ],
+        "watchTrades": [
+          "{symbol}@trade"
         ],
         "watchTradesForSymbols": [
-          "trade",
-          "trade::{symbol}"
+          "{symbol}@trade"
         ]
       },
       "discriminant": "method",

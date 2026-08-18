@@ -1232,6 +1232,19 @@ provider-owned `depth20@100ms`-Stream direkt statt über die generierte Channel-
 (Reviewer-Run run-1786673501096-c9939b07). Der Workaround kann raus, sobald bourse den
 Default-Channel fixt.
 
+**Status (2026-08-18):** ✅ **fixed** by task 618 (harness run
+`run-1787019715121-97bb4904`). Default `watch_order_book/3` now builds the
+provider partial-depth stream `{symbol}@depth20@100ms` (`btcusdt@depth20@100ms`
+for `BTC/USDT`) on binance and binanceusdm. The four `watch_*` defaults were
+audited against the venue stream docs; leftover hashes
+(`orderbook::{symbol}`, `trade::{symbol}`, `myLiquidations::{symbol}`,
+`:{symbol}`, bare `miniTicker`/`kline`/`name`) are gone. Live
+frame-delivery tests in `test/bourse/ws/binance_watch_frame_delivery_test.exs`
+pin a book frame on both venues — subscribe-ack is not treated as evidence.
+The trading_dashboard `depth20@100ms` workaround can be retired after this
+lands. binancecoinm still authors no channel table and fails loud with
+`:no_channel_templates`.
+
 **Status:** 🔀 triaged 2026-08-14 — bestätigter Spec-Authoring-Defekt, Klasse statt Einzelfall.
 binance authored kein `watchOrderBook`; der `Channels.build/4`-Fallback greift auf
 `watchOrderBookForSymbols` mit dem Template `orderbook::{symbol}` — ein CCXT-interner
