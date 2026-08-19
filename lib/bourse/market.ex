@@ -11,7 +11,10 @@ defmodule Bourse.Market do
     * `symbol` - Unified symbol (e.g., "BTC/USDT")
     * `base`, `quote` - Base and quote currency codes
     * `base_id`, `quote_id` - Exchange-native currency IDs
-    * `type` - Market type: "spot", "swap", "future", "option"
+    * `type` - Market type: "spot", "swap", "future", "option". Multi-leg
+      books that do not satisfy a single-leg type keep the venue kind
+      (`"option_combo"`, `"future_combo"`) instead of borrowing `option` /
+      `future`.
     * `sub_type` - "linear" or "inverse" for derivatives
     * `spot`, `margin`, `swap`, `future`, `option`, `contract` - Type flags
     * `active` - Whether the market is currently trading
@@ -21,7 +24,9 @@ defmodule Bourse.Market do
       unit (1 for Binance USD-M BTCUSDT). Inverse venues publish a multiplier
       (100 USD for Binance COIN-M BTCUSD). Linear notional is
       `quantity * price * contract_size`; inverse notional is
-      `contracts * contract_size`. Nil when the venue states no unit.
+      `contracts * contract_size`. Nil when the venue states no unit. On a
+      multi-leg book (`combo?/1`) the mark is a spread or premium
+      difference, not an underlying — do not form a notional against it.
     * `quantity_unit` - Denomination of order quantity. `"base"` for
       base-asset linear contracts and for the canonical option unit.
     * `native_quantity_unit` - Venue option quantity unit (`"base"` or `"contracts"`)
@@ -177,7 +182,8 @@ defmodule Bourse.Market do
                    quote: "Quote currency code",
                    base_id: "Exchange-native base currency ID",
                    quote_id: "Exchange-native quote currency ID",
-                   type: "Market type: spot, swap, future, option",
+                   type:
+                     "Market type: spot, swap, future, option. Multi-leg books that do not satisfy a single-leg type keep the venue kind (option_combo, future_combo).",
                    sub_type: "linear or inverse for derivatives",
                    spot: "Whether this is a spot market",
                    margin: "Whether margin trading is available",
@@ -189,7 +195,7 @@ defmodule Bourse.Market do
                    settle: "Settlement currency code",
                    settle_id: "Exchange-native settlement currency ID",
                    contract_size:
-                     "Base-asset units per contract. Linear notional is quantity * price * contract_size; inverse notional is contracts * contract_size. Nil when the venue states no unit.",
+                     "Base-asset units per contract. Linear notional is quantity * price * contract_size; inverse notional is contracts * contract_size. Nil when the venue states no unit. Combo mark is a spread/premium difference — not an underlying — so notional-style arithmetic against it is invalid.",
                    quantity_unit: "Order quantity denomination: base for linear contracts and canonical option quantity",
                    native_quantity_unit: "Venue option quantity unit: base or contracts",
                    native_quantity_field: "Venue order field carrying the option quantity",
@@ -216,4 +222,45 @@ defmodule Bourse.Market do
   @doc "JSON Schema for the Market unified type."
   @spec schema() :: map()
   def schema, do: @json_schema
+
+  @doc """
+  True when this market is a multi-leg combo/strategy book.
+
+  Deribit `option_combo` / `future_combo` are the current cases. The mark
+  of a combo is a spread or premium difference between legs, not an
+  underlying price — `contracts * contract_size / mark` is not a notional.
+  """
+  @spec combo?(t()) :: boolean()
+  def combo?(%__MODULE__{type: type}) when type in ["option_combo", "future_combo"], do: true
+
+  def combo?(%__MODULE__{info: %{"kind" => kind}}) when kind in ["option_combo", "future_combo"], do: true
+
+  def combo?(_market), do: false
+
+  @doc """
+  True when `contract_size` has a resolvable unit for exposure math.
+
+  False when this is a multi-leg combo, and false when both
+  `native_quantity_unit` and `quantity_unit` are unset on a market that is
+  not a single-leg inverse or linear contract with a published size.
+  Block exposure on `false` rather than multiplying by a unit-less
+  `contract_size`.
+  """
+  @spec quantity_resolvable?(t()) :: boolean()
+  def quantity_resolvable?(%__MODULE__{} = market) do
+    cond do
+      combo?(market) -> false
+      is_binary(market.native_quantity_unit) and market.native_quantity_unit != "" -> true
+      is_binary(market.quantity_unit) and market.quantity_unit != "" -> true
+      single_leg_contract_unit?(market) -> true
+      true -> false
+    end
+  end
+
+  defp single_leg_contract_unit?(%__MODULE__{contract: true, contract_size: size} = market)
+       when is_number(size) and size > 0 do
+    market.inverse == true or market.linear == true
+  end
+
+  defp single_leg_contract_unit?(_market), do: false
 end

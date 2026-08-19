@@ -234,7 +234,7 @@ defmodule Bourse.DeribitAuthoredSpecTest do
     assert rule["else"]["false"]["op"] == "mul"
   end
 
-  test "Deribit money-row classification prefers loaded markets and falls back only for unknown ids" do
+  test "Deribit money-row classification prefers loaded markets; unknown ids stay on the mul identity" do
     known = %{"amount" => 10, "instrument_name" => "BTC-PERPETUAL", "price" => 50_000}
     unknown = %{"amount" => 10, "instrument_name" => "BTC-UNKNOWN", "price" => 50_000}
 
@@ -256,7 +256,9 @@ defmodule Bourse.DeribitAuthoredSpecTest do
              )
 
     assert known_trade.cost == 500_000.0
-    assert unknown_trade.cost == 0.0002
+    # Guessing inverse on an unidentifiable id is the only direction that
+    # produces a squared money error (carve C-T626).
+    assert unknown_trade.cost == 500_000.0
   end
 
   # Provider: "For perpetual and inverse futures the amount is in USD units. For
@@ -268,6 +270,8 @@ defmodule Bourse.DeribitAuthoredSpecTest do
   test "option rows are never inverse, with or without a loaded market" do
     option = %{"amount" => 10, "instrument_name" => "BTC-31JUL26-65000-C", "price" => 0.02}
     usdc_option = %{"amount" => 10, "instrument_name" => "ETH_USDC-31JUL26-3000-P", "price" => 0.02}
+    combo = %{"amount" => 10, "instrument_name" => "BTC-CS-18AUG26-64000_64500", "price" => 0.02}
+    straddle = %{"amount" => 10, "instrument_name" => "ETH-STRD-18AUG26-1925", "price" => 0.02}
 
     for exchange <- [
           private_exchange(),
@@ -281,20 +285,21 @@ defmodule Bourse.DeribitAuthoredSpecTest do
             }
           ])
         ] do
-      assert {:ok, [btc_trade, usdc_trade]} =
+      assert {:ok, trades} =
                ReadParse.parse(
                  exchange,
                  Bourse.Deribit,
                  :fetch_my_trades,
                  "fetchMyTrades",
-                 rpc_result(%{"has_more" => false, "trades" => [option, usdc_option]}),
+                 rpc_result(%{"has_more" => false, "trades" => [option, usdc_option, combo, straddle]}),
                  %{},
                  :parse_trade,
                  true
                )
 
-      assert_in_delta btc_trade.cost, 0.2, @ratio_tolerance
-      assert_in_delta usdc_trade.cost, 0.2, @ratio_tolerance
+      for trade <- trades do
+        assert_in_delta trade.cost, 0.2, @ratio_tolerance
+      end
     end
   end
 
@@ -525,20 +530,25 @@ defmodule Bourse.DeribitAuthoredSpecTest do
     assert %Bourse.Market{} = linear_option
     assert linear_option.symbol == "AVAX/USDC:USDC-260622-5.5-C"
 
-    # Combo instruments keep their native ids (carve C27). The read path retains the
-    # id *before* the symbol executor sees it; the public Symbol API also identity-
-    # passthroughs under the task 305 contract (never the uppercased d-strike rewrite).
-    for {id, unified_type} <- [
-          {"BTC-FS-17JUL26_PERP", "future"},
-          {"BTC-FS-31JUL26_17JUL26", "future"},
-          {"BTC-REV-18JUL26-65000", "option"},
-          {"DOGE_USDC-CS-28AUG26-0d1184_0d12", "option"}
+    # Combo instruments keep their native ids (carve C27) and do not borrow a
+    # single-leg type they do not satisfy (carve C-T626). The read path retains
+    # the id *before* the symbol executor sees it; the public Symbol API also
+    # identity-passthroughs under the task 305 contract (never the uppercased
+    # d-strike rewrite).
+    for {id, unified_type, symbol_type} <- [
+          {"BTC-FS-17JUL26_PERP", "future_combo", :future},
+          {"BTC-FS-31JUL26_17JUL26", "future_combo", :future},
+          {"BTC-REV-18JUL26-65000", "option_combo", :option},
+          {"DOGE_USDC-CS-28AUG26-0d1184_0d12", "option_combo", :option}
         ] do
       market = Enum.find(markets, &(&1.id == id))
       assert %Bourse.Market{symbol: ^id, type: ^unified_type} = market
+      assert market.option == false
+      assert market.future == false
+      assert Bourse.Market.combo?(market)
+      refute Bourse.Market.quantity_resolvable?(market)
       assert Symbol.to_exchange_id(market.symbol, exchange) == id
-      type = String.to_existing_atom(unified_type)
-      assert Symbol.from_exchange_id(id, exchange, type) == id
+      assert Symbol.from_exchange_id(id, exchange, symbol_type) == id
     end
   end
 

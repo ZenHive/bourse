@@ -133,7 +133,7 @@ defmodule Bourse.Unified.OptionSurface do
 
     selected =
       Enum.filter(markets, fn market ->
-        option_market?(market) and not option_combo?(market) and market.active != false and
+        option_market?(market) and not Market.combo?(market) and market.active != false and
           (is_nil(base) or market.base == base)
       end)
 
@@ -149,12 +149,6 @@ defmodule Bourse.Unified.OptionSurface do
   defp option_market?(%Market{option: true}), do: true
   defp option_market?(%Market{type: "option"}), do: true
   defp option_market?(_), do: false
-
-  defp option_combo?(%Market{info: info}) when is_map(info) do
-    Map.get(info, "kind") == "option_combo"
-  end
-
-  defp option_combo?(_market), do: false
 
   defp load_quotes(%Exchange{} = exchange, markets, opts, request_opts) do
     quotes? = Map.get(opts, :quotes, true)

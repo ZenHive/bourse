@@ -1092,7 +1092,7 @@ defmodule Bourse.SymbolTest do
           # Pattern conversion only — loading markets would short-circuit
           # `to_exchange_id/2` via id lookup and miss a `convert_date/3` miss.
           markets
-          |> Enum.filter(&is_binary(&1.type))
+          |> Enum.filter(&(&1.type in ["spot", "swap", "future", "option"]))
           |> Enum.group_by(& &1.type)
           |> Enum.each(fn {market_type, [market | _same_type]} ->
             market_type_atom = String.to_existing_atom(market_type)

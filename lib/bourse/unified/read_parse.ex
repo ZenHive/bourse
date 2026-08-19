@@ -2642,6 +2642,7 @@ defmodule Bourse.Unified.ReadParse do
       # (and settle/base/quote for linear/inverse) are known. Fill only when the
       # field-map left them nil so venue-authored enum maps (bybit/okx/deribit) win.
       |> derive_market_type_flags()
+      |> reconcile_deribit_inverse_flag(exchange, raw)
       |> OptionQuantity.normalize_market(raw, exchange)
       |> ContractUnit.normalize_market(raw, exchange)
       # Public maker/taker come from the venue's published fee schedule once market
@@ -2791,6 +2792,18 @@ defmodule Bourse.Unified.ReadParse do
 
   defp reconcile_deribit_future_flag(market, _exchange, _type), do: market
 
+  # Inverse is one source of truth: the id classifier. Authored
+  # `instrument_type: reversed` would otherwise mark BTC options and option
+  # combos inverse, and `amount / price` on those rows is a squared money error
+  # (carve C-T626). A name the classifier cannot positively identify as the
+  # inverse book stays false — the mul identity.
+  defp reconcile_deribit_inverse_flag(market, %Exchange{id: "deribit"}, %{"instrument_name" => name})
+       when is_binary(name) do
+    %{market | inverse: deribit_inverse_instrument_id?(name)}
+  end
+
+  defp reconcile_deribit_inverse_flag(market, _exchange, _raw), do: market
+
   defp backfill_expiry_datetime(%{expiry: expiry, expiry_datetime: nil} = market) when is_integer(expiry) do
     %{market | expiry_datetime: Timestamp.iso8601_from_ms(expiry)}
   end
@@ -2909,7 +2922,8 @@ defmodule Bourse.Unified.ReadParse do
   defp market_type_from_raw(%{"contractType" => "CRYPTO_OPTIONS"}), do: "option"
   defp market_type_from_raw(%{"kind" => "spot"}), do: "spot"
   defp market_type_from_raw(%{"kind" => "option"}), do: "option"
-  defp market_type_from_raw(%{"kind" => "option_combo"}), do: "option"
+  defp market_type_from_raw(%{"kind" => "option_combo"}), do: "option_combo"
+  defp market_type_from_raw(%{"kind" => "future_combo"}), do: "future_combo"
   defp market_type_from_raw(%{"settlement_period" => "perpetual"}), do: "swap"
 
   defp market_type_from_raw(%{"kind" => kind}) when is_binary(kind) do
@@ -4120,22 +4134,49 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   # Degradation path when `exchange.markets` does not carry the row's instrument.
-  # Linear ids put settle in the first token (`ETH_USDC-PERPETUAL`); inverse ids
-  # do not (`BTC-PERPETUAL`). Options are excluded on the `-C`/`-P` suffix: the
-  # venue's `instrument_type` is futures-only, so a loaded option market reads
-  # `inverse: false`, and the provider documents option `amount` as the base
-  # coin rather than USD — `amount / price` would be the wrong money identity.
-  defp deribit_inverse_instrument_id?(name) when is_binary(name) do
-    case String.split(name, "-") do
-      [_base, _expiry, _strike, suffix] when suffix in ["C", "P"] -> false
-      [head, _next | _rest] -> not String.contains?(head, "_")
-      _ -> false
+  # Positive identification of the inverse (USD-amount) book only; any other
+  # shape answers false (the mul identity) because guessing inverse is the
+  # direction that produces a squared money error. Linear ids put settle in
+  # the first token (`ETH_USDC-PERPETUAL`). Single-leg options (`-C`/`-P`) and
+  # option combos are base-coin amount. Future spreads (`-FS-`) on an inverse
+  # book stay inverse.
+  @doc "Deribit degradation-path inverse classifier for an instrument id."
+  @spec deribit_inverse_instrument_id?(String.t()) :: boolean()
+  def deribit_inverse_instrument_id?(name) when is_binary(name) do
+    tokens = String.split(name, "-")
+
+    cond do
+      deribit_linear_id_prefix?(tokens) -> false
+      deribit_option_id?(tokens) -> false
+      deribit_future_spread_id?(tokens) -> true
+      deribit_perpetual_id?(tokens) -> true
+      deribit_dated_future_id?(tokens) -> true
+      true -> false
     end
   end
+
+  defp deribit_linear_id_prefix?([head | _rest]) when is_binary(head), do: String.contains?(head, "_")
+  defp deribit_linear_id_prefix?(_tokens), do: false
+
+  defp deribit_option_id?([_base, _expiry, _strike, suffix]) when suffix in ["C", "P"], do: true
+  defp deribit_option_id?(_tokens), do: false
+
+  defp deribit_future_spread_id?([_base, "FS" | _rest]), do: true
+  defp deribit_future_spread_id?(_tokens), do: false
+
+  defp deribit_perpetual_id?([_base, "PERPETUAL"]), do: true
+  defp deribit_perpetual_id?(_tokens), do: false
+
+  defp deribit_dated_future_id?([_base, expiry]) when is_binary(expiry) do
+    String.match?(expiry, ~r/\A\d{1,2}[A-Z]{3}\d{2}\z/)
+  end
+
+  defp deribit_dated_future_id?(_tokens), do: false
 
   defp deribit_market_type(%{"kind" => "spot"}), do: :spot
   defp deribit_market_type(%{"kind" => "option"}), do: :option
   defp deribit_market_type(%{"kind" => "option_combo"}), do: :option
+  defp deribit_market_type(%{"kind" => "future_combo"}), do: :future
   defp deribit_market_type(%{"settlement_period" => "perpetual"}), do: :swap
 
   defp deribit_market_type(%{"kind" => kind}) when is_binary(kind) do

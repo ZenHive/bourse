@@ -6,6 +6,48 @@ Append-only schema confrontations for Deribit. Follow the allocation and evidenc
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Deribit carve record.
 
+## 2026-08-19 — multi-leg type, quantity, and inverse (Task 626)
+
+**C-T626 — Deribit combo books are not a single-leg type, have no resolvable
+quantity unit, and do not follow `instrument_type` for inverse (task 626).
+Outcome: DIVERGE from mapping `option_combo`/`future_combo` onto `option`/`future`.**
+
+- *Exchange semantics (non-CCXT — [Combo Books](https://support.deribit.com/hc/en-us/articles/31424954956061-Combo-Books)
+  + [`public/get_instruments`](https://docs.deribit.com/) `kind` enum):* Deribit
+  publishes `option_combo` and `future_combo` as first-class kinds, distinct from
+  `option` and `future`. A combo is several legs traded as one book. The mark of
+  a future spread is the difference of the two futures' marks (example in Combo
+  Books: legs at $100,000 and $105,000 → spread mark $5,000). Option-combo tick
+  size is 0.0001 BTC — a premium increment, not an underlying. Provider trade
+  amount: "For perpetual and inverse futures the amount is in USD units. For
+  options and linear futures it is the underlying base currency coin."
+- *Live + recorded catalog:* testnet `public/get_instruments` on 2026-08-19 and
+  `test/fixtures/responses/deribit/fetch_markets.json` (4813 rows, 66
+  `option_combo`, 132 `future_combo`). Live ticker `BTC-CS-25SEP26-135000_160000`
+  had `mark_price: -0.0683` against `index_price: 64903.52`. Live ticker
+  `BTC-FS-20AUG26_PERP` had `mark_price: -1.71`. Both marks are signed
+  spread/premium differences.
+- *Our carve:* stop declaring a single-leg type the book does not satisfy.
+  `type` keeps the venue kind (`option_combo` / `future_combo`); `option` and
+  `future` stay false. `Bourse.Market.combo?/1` and
+  `Bourse.Market.quantity_resolvable?/1` are the consumer gates — an exposure
+  calculation must block rather than multiply `contract_size` by a combo mark.
+  Inverse has one source of truth: `ReadParse.deribit_inverse_instrument_id?/1`.
+  A shape it cannot positively identify as the inverse book answers false (the
+  mul identity). Loaded-market `inverse` is overwritten from that classifier so
+  the two cannot diverge. Future spreads on the inverse book (`BTC-FS-…`) stay
+  inverse; single-leg options, option combos, and linear (`BASE_SETTLE-…`) are
+  not. This supersedes C27's type-mapping sentence only (`future_combo -> future`,
+  `option_combo -> option`); C27's native-id symbol identity is unchanged.
+- *Where the carve is enforced:* `market_type_from_raw/1`,
+  `reconcile_deribit_inverse_flag/3`, `deribit_inverse_instrument_id?/1`,
+  `Market.combo?/1`, `Market.quantity_resolvable?/1`. Offline pin:
+  `test/bourse/market_type_flag_contract_test.exs`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T626","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"Deribit Combo Books (mark of a future spread is the difference of the two futures' marks; option-combo tick 0.0001 BTC) plus public/get_instruments kind enum option_combo/future_combo and private/get_user_trades_by_currency amount units"},"observed_evidence":{"kind":"live_venue","reference":"Live test.deribit.com public/get_instruments + public/ticker on 2026-08-19 (BTC-CS-25SEP26-135000_160000 mark_price -0.0683 vs index 64903.52; BTC-FS-20AUG26_PERP mark_price -1.71) together with recorded test/fixtures/responses/deribit/fetch_markets.json"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-18 — unified client_order_id round-trip (Task 622)
 
 **C-T622 — Deribit `label` is the client identifier on both the request and the

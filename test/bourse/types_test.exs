@@ -319,6 +319,40 @@ defmodule Bourse.TypesTest do
       assert market.strike == 30_000.0
       assert market.option_type == "call"
     end
+
+    test "combo?/1 and quantity_resolvable?/1 distinguish multi-leg books" do
+      combo = %Bourse.Market{
+        type: "option_combo",
+        option: false,
+        contract: true,
+        inverse: true,
+        contract_size: 1.0,
+        info: %{"kind" => "option_combo"}
+      }
+
+      option = %Bourse.Market{
+        type: "option",
+        option: true,
+        contract: true,
+        native_quantity_unit: "base",
+        quantity_unit: "base",
+        contract_size: 1.0
+      }
+
+      inverse = %Bourse.Market{
+        type: "swap",
+        contract: true,
+        inverse: true,
+        contract_size: 10.0
+      }
+
+      assert Bourse.Market.combo?(combo)
+      refute Bourse.Market.quantity_resolvable?(combo)
+      refute Bourse.Market.combo?(option)
+      assert Bourse.Market.quantity_resolvable?(option)
+      refute Bourse.Market.combo?(inverse)
+      assert Bourse.Market.quantity_resolvable?(inverse)
+    end
   end
 
   # --- Task 43: Missing Unified Type Structs ---
