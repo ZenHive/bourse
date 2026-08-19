@@ -4,6 +4,7 @@ defmodule Bourse.ExchangeTest do
   alias Bourse.Error
   alias Bourse.Exchange
   alias Bourse.HTTP.Errors
+  alias Bourse.Order.Sanity
   alias Bourse.Spec
   alias Mix.Tasks.Ccxt.Helpers
 
@@ -660,6 +661,24 @@ defmodule Bourse.ExchangeTest do
       refute Exchange.mapping_complete?(deribit, "fetchLiquidations")
       assert Exchange.has?(deribit, "fetchLiquidations")
       refute Exchange.has?(deribit, "fetchCurrenciesWs")
+    end
+
+    test "keeps order-type flags on venue_support, not the callable has map" do
+      {:ok, exchange} = Exchange.new("bybit")
+      provider_has = get_in(exchange.spec, ["capabilities", "has"])
+
+      assert Exchange.venue_support(exchange, "createMarketOrder") == true
+      assert Exchange.venue_support(exchange, "createLimitOrder") == true
+      assert Exchange.venue_support(exchange, "spot") == true
+      refute Exchange.has?(exchange, "createMarketOrder")
+      refute Exchange.has?(exchange, "createLimitOrder")
+      refute Exchange.has?(exchange, "spot")
+
+      assert :ok = Sanity.check_order_type("market", has: provider_has)
+      assert :ok = Sanity.check_order_type("limit", has: provider_has)
+
+      assert {:error, "Exchange does not support \"market\" orders (has.createMarketOrder == false)"} =
+               Sanity.check_order_type("market", has: exchange.has)
     end
   end
 

@@ -22,6 +22,8 @@ defmodule Bourse.Parser do
   Rule** to the upstream Phase 12 field maps before delegating to
   `apply_mappings/3`:
 
+    * `operation_supported: false` → `{:error, {:unsupported_operation, slot}}`
+      (the venue does not offer this parse slot)
     * `nil` slot (upstream never derived a field map) → `{:error, :no_field_map}`
     * non-`nil` `_unresolved_reason` (upstream flagged the slot as not safely
       derivable) → `{:error, {:unresolved, reason}}` — the partial field map is

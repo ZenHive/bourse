@@ -1681,8 +1681,7 @@ defmodule Bourse.Exchange do
 
   defp callable_capabilities(support, unified) do
     Map.new(support, fn {method, declaration} ->
-      callable? = callable_capability?(method, declaration, unified)
-      {method, callable?}
+      {method, callable_capability?(method, declaration, unified)}
     end)
   end
 
@@ -1695,10 +1694,7 @@ defmodule Bourse.Exchange do
   defp callable_capability?(_method, _declaration, _unified), do: false
 
   defp implemented_emulation?(method) do
-    case Bourse.Emulation.method_atom(method) do
-      method_atom when is_atom(method_atom) -> MapSet.member?(Bourse.Emulation.implemented_methods(), method_atom)
-      nil -> false
-    end
+    MapSet.member?(Bourse.Emulation.implemented_methods(), Bourse.Emulation.method_atom(method))
   end
 
   @fee_market_type_keys %{

@@ -157,8 +157,11 @@ defmodule Bourse.UnifiedReadContractTest do
         assert Enum.sort(Map.keys(mapping_complete)) == Enum.sort(Map.keys(unified))
         assert Enum.sort(Map.keys(verification)) == Enum.sort(Map.keys(unified))
         refute Map.has_key?(spec["capabilities"], "support_reasons")
+        refute Map.has_key?(spec["capabilities"], "reasons")
 
         for {method, false} <- support do
+          assert is_boolean(support[method])
+
           assert Map.get(unified, method, []) == [],
                  "#{venue}.#{method} is provider-unsupported but retains a unified route"
         end
@@ -189,6 +192,42 @@ defmodule Bourse.UnifiedReadContractTest do
                  )
 
         assert parse_coverage_gaps(venue, spec) == parse_coverage_gaps(venue, mutated)
+      end
+    end
+
+    test "task-570 restored cells stay offered, incomplete, unverified, and callable" do
+      restored = [
+        {"binance", "fetchMyDustTrades", true},
+        {"binance", "fetchIsolatedBorrowRates", true},
+        {"binance", "fetchOptionPositions", true},
+        {"binance", "fetchAccountPositions", true},
+        {"binance", "fetchPositionsRisk", true},
+        {"binance", "fetchMarginModes", true},
+        {"binanceusdm", "fetchMyDustTrades", true},
+        {"binanceusdm", "fetchIsolatedBorrowRates", true},
+        {"binanceusdm", "fetchOptionPositions", true},
+        {"binanceusdm", "fetchAccountPositions", true},
+        {"binanceusdm", "fetchPositionsRisk", true},
+        {"binancecoinm", "fetchFundingHistory", true},
+        {"binancecoinm", "fetchMarginAdjustmentHistory", true},
+        {"bybit", "fetchDerivativesOpenInterestHistory", true},
+        {"deribit", "fetchLiquidations", "emulated"},
+        {"okx", "fetchDeposit", true},
+        {"okx", "fetchWithdrawal", true}
+      ]
+
+      assert length(restored) == 17
+
+      for {venue, method, support} <- restored do
+        spec = authored_spec!(venue)
+        exchange = Exchange.new!(venue)
+
+        assert get_in(spec, ["capabilities", "has", method]) == support
+        assert get_in(spec, ["capabilities", "mapping_complete", method]) == false
+        assert get_in(spec, ["capabilities", "verification", method]) == "unverified"
+        assert Exchange.has?(exchange, method)
+        refute Exchange.mapping_complete?(exchange, method)
+        assert Exchange.verification_state(exchange, method) == :unverified
       end
     end
 
@@ -289,6 +328,7 @@ defmodule Bourse.UnifiedReadContractTest do
     test "return-type resolution is total over declared reads except enumerated net-new residue" do
       pending_by_method = resolution_disposition()["pending_net_new_type_venues"] || %{}
       pending_methods = resolution_disposition()["pending_net_new_type"] || []
+      refute Map.has_key?(resolution_disposition(), "has_false")
       contract = runtime_parse_contract()
       method_by_js = Map.new(Unified.method_defs(), fn {method, js, _, _} -> {js, method} end)
 

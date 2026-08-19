@@ -70,7 +70,11 @@ defmodule Bourse.Order.Builder do
 
   defp validate_sanity(builder, exchange, sanity_opts) when is_list(sanity_opts) do
     market = Keyword.get(sanity_opts, :market)
-    opts = sanity_opts |> Keyword.delete(:market) |> Keyword.put(:has, exchange.has)
+
+    opts =
+      sanity_opts
+      |> Keyword.delete(:market)
+      |> Keyword.put(:has, get_in(exchange.spec, ["capabilities", "has"]) || %{})
 
     case Sanity.validate(builder, market, opts) do
       {:ok, _params} -> {:ok, []}
