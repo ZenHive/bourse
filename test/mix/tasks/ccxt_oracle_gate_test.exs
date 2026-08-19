@@ -22,7 +22,22 @@ defmodule Mix.Tasks.Ccxt.OracleGateTest do
 
     assert Enum.any?(messages, &String.contains?(&1, "verification=recorded_error"))
     assert Enum.any?(messages, &String.contains?(&1, "verification=provider_doc"))
+    assert "capability surface ratchet passed" in messages
     assert "binary oracle exact-set ratchet passed" in messages
+  end
+
+  test "task rejects a capability flip and names its venue and direction" do
+    flipped = put_in(Bourse.Exchange.capability_surface(), ["binanceusdm", "createStopMarketOrder"], false)
+
+    error =
+      assert_raise Mix.Error, fn ->
+        OracleGate.run([], capability_surface: flipped)
+      end
+
+    assert error.message =~
+             "binanceusdm:createStopMarketOrder changed true -> false"
+
+    assert error.message =~ "mix ccxt.oracle_gate --update"
   end
 
   test "task rejects unsupported arguments" do

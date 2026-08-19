@@ -4,6 +4,7 @@ defmodule Bourse.MixProject do
   @version "0.6.0"
   @source_url "https://github.com/ZenHive/bourse"
   @runtime_manifest "priv/specs/json/runtime_support.json"
+  @capability_surface "priv/specs/json/capability_surface.json"
   @runtime_venues @runtime_manifest |> File.read!() |> :json.decode() |> Map.fetch!("venues")
 
   def project do
@@ -129,7 +130,7 @@ defmodule Bourse.MixProject do
         client_lib_files() ++
           ~w(lib/bourse.ex lib/mix/tasks/ccxt.build_lighter_signer.ex) ++
           ~w(native/lighter_signer mix.exs README.md LICENSE NOTICE) ++
-          [@runtime_manifest | runtime_specs]
+          [@runtime_manifest, @capability_surface | runtime_specs]
     ]
   end
 

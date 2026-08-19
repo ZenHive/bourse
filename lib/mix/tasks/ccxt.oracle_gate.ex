@@ -14,10 +14,14 @@ defmodule Mix.Tasks.Ccxt.OracleGate do
 
   use Mix.Task
 
+  alias Bourse.Exchange
   alias Bourse.JsonDocument
   alias Bourse.OracleProvenance
+  alias Bourse.Spec
 
   @baseline_path "test/fixtures/oracle_gate_baseline.json"
+  @capability_surface_path "priv/specs/json/capability_surface.json"
+  @capability_surface_version 1
   @ledger_path "docs/prod-verification-ledger.md"
 
   @impl Mix.Task
@@ -36,6 +40,11 @@ defmodule Mix.Tasks.Ccxt.OracleGate do
       Mix.raise("usage: mix ccxt.oracle_gate [--update]")
     end
 
+    capability_surface =
+      Keyword.get_lazy(runtime_opts, :capability_surface, &authored_capability_surface/0)
+
+    if !parsed_opts[:update], do: check_capability_surface!(capability_surface)
+
     reports = OracleProvenance.binary_reports!()
     check_open_ledger!(reports)
     check_critical_slots!(reports, Keyword.get(runtime_opts, :today, Date.utc_today()))
@@ -47,10 +56,52 @@ defmodule Mix.Tasks.Ccxt.OracleGate do
       |> Jason.encode!(pretty: true)
       |> then(&Mix.Generator.create_file(@baseline_path, &1 <> "\n", force: true))
 
+      capability_surface
+      |> capability_surface_document()
+      |> Jason.encode!(pretty: true)
+      |> then(&Mix.Generator.create_file(@capability_surface_path, &1 <> "\n", force: true))
+
       Mix.shell().info("updated #{@baseline_path}")
+      Mix.shell().info("updated #{@capability_surface_path}")
     else
       check_baseline!(reports)
     end
+  end
+
+  defp check_capability_surface!(current) do
+    case Exchange.capability_surface_differences(Exchange.capability_surface(), current) do
+      [] ->
+        Mix.shell().info("capability surface ratchet passed")
+
+      differences ->
+        Mix.raise(
+          "capability surface ratchet failed:\n" <>
+            bullets(differences) <>
+            "\n  Run mix ccxt.oracle_gate --update to explicitly re-pin reviewed changes."
+        )
+    end
+  end
+
+  defp authored_capability_surface do
+    Map.new(Spec.exchanges(), fn venue ->
+      {venue, venue |> Spec.load!() |> get_in(["capabilities", "has"])}
+    end)
+  end
+
+  defp capability_surface_document(surface) do
+    venues =
+      surface
+      |> Enum.sort()
+      |> Enum.map(fn {venue, capabilities} -> {venue, ordered_object(capabilities)} end)
+      |> Jason.OrderedObject.new()
+
+    Jason.OrderedObject.new([{"version", @capability_surface_version}, {"venues", venues}])
+  end
+
+  defp ordered_object(map) do
+    map
+    |> Enum.sort()
+    |> Jason.OrderedObject.new()
   end
 
   defp check_open_ledger!(reports) do

@@ -34,6 +34,18 @@ defmodule Bourse.Exchange do
 
   """
 
+  @capability_surface_version 1
+  @capability_surface_path Path.expand("../../priv/specs/json/capability_surface.json", __DIR__)
+  @external_resource @capability_surface_path
+  @capability_surface_document @capability_surface_path |> File.read!() |> :json.decode()
+
+  if !(Map.get(@capability_surface_document, "version") == @capability_surface_version and
+         is_map(Map.get(@capability_surface_document, "venues"))) do
+    raise "invalid capability surface: #{inspect(@capability_surface_document)}"
+  end
+
+  @capability_surface Map.fetch!(@capability_surface_document, "venues")
+
   @enforce_keys [:id, :name]
   defstruct [
     :id,
@@ -108,6 +120,10 @@ defmodule Bourse.Exchange do
           info: map()
         }
   @type fees :: map() | nil
+  @type capability_declaration :: boolean() | String.t()
+  @type capability_surface :: %{
+          String.t() => %{String.t() => capability_declaration()}
+        }
   @type config :: %{optional(String.t()) => term()}
   @type doc_urls :: %{optional(String.t()) => String.t() | [String.t()]}
   @type raw_market :: %{optional(String.t()) => term()}
@@ -675,6 +691,57 @@ defmodule Bourse.Exchange do
   end
 
   defp supported_unified_methods(unified, _support), do: unified
+
+  @doc """
+  Returns the release-pinned capability surface for every runtime venue.
+
+  The complete per-capability values are embedded from
+  `priv/specs/json/capability_surface.json`, which the offline oracle gate keeps
+  equal to the authored runtime specs.
+  """
+  @spec capability_surface() :: capability_surface()
+  def capability_surface, do: @capability_surface
+
+  @doc "Returns named capability changes between two release surfaces."
+  @spec capability_surface_differences(capability_surface(), capability_surface()) :: [String.t()]
+  def capability_surface_differences(pinned, current) when is_map(pinned) and is_map(current) do
+    pinned
+    |> merged_sorted_keys(current)
+    |> Enum.flat_map(&venue_capability_differences(&1, pinned, current))
+  end
+
+  defp venue_capability_differences(venue, pinned, current) do
+    pinned_capabilities = Map.get(pinned, venue, %{})
+    current_capabilities = Map.get(current, venue, %{})
+
+    pinned_capabilities
+    |> merged_sorted_keys(current_capabilities)
+    |> Enum.flat_map(&capability_difference(venue, &1, pinned_capabilities, current_capabilities))
+  end
+
+  defp capability_difference(venue, capability, pinned, current) do
+    case {Map.fetch(pinned, capability), Map.fetch(current, capability)} do
+      {{:ok, value}, {:ok, value}} ->
+        []
+
+      {{:ok, previous}, {:ok, current_value}} ->
+        ["#{venue}:#{capability} changed #{inspect(previous)} -> #{inspect(current_value)}"]
+
+      {{:ok, previous}, :error} ->
+        ["#{venue}:#{capability} removed (was #{inspect(previous)})"]
+
+      {:error, {:ok, current_value}} ->
+        ["#{venue}:#{capability} added as #{inspect(current_value)}"]
+    end
+  end
+
+  defp merged_sorted_keys(left, right) do
+    left
+    |> Map.keys()
+    |> Kernel.++(Map.keys(right))
+    |> Enum.uniq()
+    |> Enum.sort()
+  end
 
   @doc """
   Builds quoted endpoint wrapper functions from a list of endpoint configs.

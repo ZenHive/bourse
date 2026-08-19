@@ -29,7 +29,10 @@ defmodule Bourse.MixProjectTest do
   @gated_modules ~w(Plug Req.Plug Req.Test)
   @expected_non_lib ~w(lib/bourse.ex lib/mix/tasks/ccxt.build_lighter_signer.ex) ++
                       ~w(native/lighter_signer mix.exs README.md LICENSE NOTICE) ++
-                      ["priv/specs/json/runtime_support.json"] ++
+                      [
+                        "priv/specs/json/runtime_support.json",
+                        "priv/specs/json/capability_surface.json"
+                      ] ++
                       Enum.map(@runtime_venues, &"priv/specs/json/output/authored/#{&1}.json")
 
   describe "hex package metadata" do
@@ -204,6 +207,7 @@ defmodule Bourse.MixProjectTest do
 
       assert "lib/bourse.ex" in shipped
       assert "NOTICE" in shipped
+      assert "priv/specs/json/capability_surface.json" in shipped
 
       # Asserting on the real artifact is the point: `package[:files]` looked
       # correct while Hex's directory expansion shipped `spec/promotion/**`
