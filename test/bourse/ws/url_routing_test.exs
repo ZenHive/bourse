@@ -99,6 +99,7 @@ defmodule Bourse.WS.URLRoutingTest do
     test "legacy unrouted /ws is still an authored USD-M host" do
       exchange = Exchange.new!("binanceusdm")
       assert URLRouting.authored_usdm_host?(exchange, "wss://fstream.binance.com/ws")
+      refute URLRouting.authored_usdm_host?(Exchange.new!("binance"), "wss://fstream.binance.com/ws")
       refute URLRouting.authored_usdm_host?(exchange, "wss://offline.test")
     end
 
@@ -120,6 +121,14 @@ defmodule Bourse.WS.URLRoutingTest do
   end
 
   describe "private_url/1" do
+    test "binanceusdm uses the routed private URL in production and sandbox" do
+      assert URLRouting.private_url(Exchange.new!("binanceusdm")) ==
+               "wss://fstream.binance.com/private/ws"
+
+      assert URLRouting.private_url(Exchange.new!("binanceusdm", sandbox: true)) ==
+               "wss://demo-fstream.binance.com/private/ws"
+    end
+
     test "bybit production private URL" do
       exchange = Exchange.new!("bybit")
       assert URLRouting.private_url(exchange) == "wss://stream.bybit.com/v5/private"

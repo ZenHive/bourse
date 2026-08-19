@@ -128,6 +128,24 @@ defmodule Bourse.WS.FacadeTest do
     assert_receive {:transport_sent, _}
   end
 
+  test "default order-book options wait for an acceptance frame", %{client: client} do
+    ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
+    send(self(), {:websocket_message, %{"op" => "subscribe", "success" => true}})
+
+    assert {:ok, %Handle{channels: ["orderbook:BTCUSDT"]}} = WS.watch_order_book(ws, "BTC/USDT")
+    assert_receive {:transport_sent, _}
+  end
+
+  test "an elapsed acknowledgement deadline requeues unrelated messages", %{client: client} do
+    ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
+    send(self(), :unrelated)
+
+    assert {:error, :subscription_ack_timeout} =
+             WS.subscribe(ws, ["tickers.BTCUSDT"], ack_timeout_ms: -1)
+
+    assert_received :unrelated
+  end
+
   test "default watch options wait for and consume acceptance frames", %{client: client} do
     ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
     accepted = {:websocket_message, %{"op" => "subscribe", "success" => true}}

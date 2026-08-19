@@ -54,7 +54,14 @@ defmodule Bourse.WS.SpecConfigTest do
       config = Config.for_exchange("binanceusdm")
       assert config.public_url == "wss://fstream.binance.com/public/ws"
       assert config.market_url == "wss://fstream.binance.com/market/ws"
+      assert config.private_url == "wss://fstream.binance.com/private/ws"
+      assert config.private_url_sandbox == "wss://demo-fstream.binance.com/private/ws"
       assert config.auth_pattern == :listen_key
+
+      assert config.auth_config.listen_key_url == %{
+               placement: :query,
+               events: ["ORDER_TRADE_UPDATE", "ACCOUNT_UPDATE"]
+             }
     end
 
     test "binancecoinm resolves the delivery stream and its own listen key endpoints" do

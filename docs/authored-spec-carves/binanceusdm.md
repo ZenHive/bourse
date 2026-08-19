@@ -6,6 +6,37 @@ Append-only schema confrontations for Binance USD-M. Follow the allocation and e
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance USD-M carve record.
 
+## 2026-08-19 — private user data uses the routed query URL (Task 643)
+
+**C-T643a — USD-M private user data connects through
+`wss://fstream.binance.com/private/ws?listenKey=...&events=...` (task 643).
+Outcome: CONFIRM the provider's routed private contract; DIVERGE from the
+decommissioned `/ws/<listenKey>` form.** Binance's
+[Important WebSocket Change Notice](https://developers.binance.com/docs/derivatives/usds-margined-futures/websocket-market-streams/Important-WebSocket-Change-Notice)
+names `/private` as the user-data route, gives the `ws` form with `listenKey`
+and `events` query parameters, and states that the legacy route stopped
+pushing private data after 2026-04-23.
+
+`connect/3` opens the socket before a caller can invoke `watch_orders`, so the
+event set cannot be inferred from a later subscription. The authored default is
+the provider notice's explicit example pair:
+`ORDER_TRADE_UPDATE/ACCOUNT_UPDATE`. This keeps order lifecycle and account
+state events selected deliberately rather than relying on an omitted parameter.
+COIN-M is a separate contract and retains its documented path embedding.
+
+The sandbox route is authored as
+`wss://demo-fstream.binance.com/private/ws`. A live demo probe on 2026-08-19
+opened that URL with an issued key, placed and canceled a resting order, and
+received both `NEW` and `CANCELED` `ORDER_TRADE_UPDATE` frames. This proves the
+assembled query and selected event delivery. Demo-fstream does not enforce the
+production route split, as C-T627a records, so the demo observation is not used
+to prove the production decommissioning; the provider notice is the authority
+for that routing fact.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T643a","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M Important WebSocket Change Notice: /private/ws with listenKey/events query parameters and 2026-04-23 legacy cutoff"},"observed_evidence":{"kind":"live_venue","reference":"Live demo-fstream.binance.com 2026-08-19: /private/ws?listenKey=...&events=ORDER_TRADE_UPDATE/ACCOUNT_UPDATE delivered NEW and CANCELED ORDER_TRADE_UPDATE frames for a demo-fapi resting order lifecycle"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-18 — native order-type reads invert the write mapping (Task 632)
 
 **C-T632b — USD-M order `type` is the regular book plus the algo CONDITIONAL

@@ -224,9 +224,63 @@ defmodule Bourse.WS.AuthWiringTest do
   end
 
   describe "binance futures (:listen_key)" do
+    test "binanceusdm embeds its key and explicit event set in the private query" do
+      stub = {__MODULE__, :usdm_listen_key, System.unique_integer([:positive])}
+
+      Req.Test.stub(stub, fn conn -> Req.Test.json(conn, %{"listenKey" => "issued-key"}) end)
+
+      transport = start_supervised!({Transport, owner: self(), reply: :ok})
+      client = %Client{server_pid: transport, state: :connected}
+
+      connect_fun = fn url, _opts ->
+        send(self(), {:connected_to, url})
+        {:ok, client}
+      end
+
+      exchange = Exchange.new!("binanceusdm", credentials: Credentials.new!(api_key: "k", secret: "s"))
+
+      assert {:ok, ws} =
+               WS.connect(exchange, :private,
+                 connect_fun: connect_fun,
+                 pre_auth_opts: [plug: {Req.Test, stub}]
+               )
+
+      assert_received {:connected_to,
+                       "wss://fstream.binance.com/private/ws?listenKey=issued-key&events=ORDER_TRADE_UPDATE/ACCOUNT_UPDATE"}
+
+      assert %{pattern: :listen_key, meta: %{listen_key: "issued-key", market_type: :linear}} = ws.auth
+      assert :ok = WS.close(ws)
+    end
+
+    test "binancecoinm embeds its issued listen key as a path segment" do
+      stub = {__MODULE__, :coinm_listen_key, System.unique_integer([:positive])}
+
+      Req.Test.stub(stub, fn conn -> Req.Test.json(conn, %{"listenKey" => "issued-key"}) end)
+
+      transport = start_supervised!({Transport, owner: self(), reply: :ok})
+      client = %Client{server_pid: transport, state: :connected}
+
+      connect_fun = fn url, opts ->
+        send(self(), {:connected_to, url, opts})
+        {:ok, client}
+      end
+
+      exchange = Exchange.new!("binancecoinm", credentials: Credentials.new!(api_key: "k", secret: "s"))
+
+      assert {:ok, ws} =
+               WS.connect(exchange, :private,
+                 connect_fun: connect_fun,
+                 pre_auth_opts: [plug: {Req.Test, stub}]
+               )
+
+      assert_received {:connected_to, "wss://dstream.binance.com/ws/issued-key", _opts}
+      assert %{pattern: :listen_key, meta: %{listen_key: "issued-key", market_type: :inverse}} = ws.auth
+      assert :ok = WS.close(ws)
+    end
+
     test "refuses to open a private connection with the handshake opted out" do
-      # The key is a path segment of the URL, so there is no later handshake to
-      # run — honouring `authenticate: false` would hand back a socket that is
+      # The key is part of the URL, so there is no later handshake to run —
+      # honouring `authenticate: false` would hand back a socket that is
       # accepted by the venue and then never delivers.
       exchange = Exchange.new!("binanceusdm", credentials: Credentials.new!(api_key: "k", secret: "s"))
 
@@ -280,6 +334,48 @@ defmodule Bourse.WS.AuthWiringTest do
 
       assert {:ok, ^session} = WS.authenticate(ws)
       refute_received {:transport_sent, _}
+    end
+  end
+
+  describe "connect/3 transport setup" do
+    test "keeps a private connection when the venue authors no auth pattern" do
+      transport = start_supervised!({Transport, owner: self(), reply: :ok})
+      client = %Client{server_pid: transport, state: :connected}
+      connect_fun = fn _url, _opts -> {:ok, client} end
+
+      assert {:ok, ws} = WS.connect(Exchange.new!("derive"), :private, connect_fun: connect_fun)
+      assert ws.auth == nil
+      assert :ok = WS.close(ws)
+    end
+
+    test "installs a default handler that forwards every public message shape" do
+      transport = start_supervised!({Transport, owner: self(), reply: :ok})
+      client = %Client{server_pid: transport, state: :connected}
+      test_pid = self()
+
+      connect_fun = fn _url, opts ->
+        handler = Keyword.fetch!(opts, :handler)
+        handler.({:message, %{"kind" => "text"}})
+        handler.({:binary, <<1, 2>>})
+        handler.({:unmatched_response, %{"id" => 1}})
+        handler.({:protocol_error, :bad_frame})
+        handler.(:ignored)
+        send(test_pid, :handler_exercised)
+        {:ok, client}
+      end
+
+      assert {:ok, ws} =
+               WS.connect(Exchange.new!("alpaca"), :public,
+                 authenticate: false,
+                 connect_fun: connect_fun
+               )
+
+      assert_received {:websocket_message, %{"kind" => "text"}}
+      assert_received {:websocket_message, <<1, 2>>}
+      assert_received {:websocket_unmatched_response, %{"id" => 1}}
+      assert_received {:websocket_protocol_error, :bad_frame}
+      assert_received :handler_exercised
+      assert :ok = WS.close(ws)
     end
   end
 

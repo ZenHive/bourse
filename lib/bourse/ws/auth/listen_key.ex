@@ -3,8 +3,9 @@ defmodule Bourse.WS.Auth.ListenKey do
   Listen key auth pattern — binance USD-M and COIN-M futures.
 
   The credential is not a frame: the venue issues a listen key over REST and
-  the key travels in the WebSocket URL's path. `pre_auth/3` resolves which
-  endpoint issues and which refreshes it for the requested market type;
+  the key travels in the WebSocket URL. USD-M uses query parameters while
+  COIN-M uses a path segment. `pre_auth/3` resolves which endpoint issues and
+  which refreshes it for the requested market type;
   `Bourse.WS.ListenKey` performs the calls and `Bourse.WS.connect/3` embeds the
   result. This module stays network-free so endpoint resolution can be tested
   without a venue.

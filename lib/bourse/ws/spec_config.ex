@@ -74,13 +74,17 @@ defmodule Bourse.WS.SpecConfig do
       public_url_sandbox: "wss://demo-fstream.binance.com/public/ws",
       market_url: "wss://fstream.binance.com/market/ws",
       market_url_sandbox: "wss://demo-fstream.binance.com/market/ws",
-      private_url: "wss://fstream.binance.com/ws",
-      private_url_sandbox: "wss://demo-fstream.binance.com/ws",
+      private_url: "wss://fstream.binance.com/private/ws",
+      private_url_sandbox: "wss://demo-fstream.binance.com/private/ws",
       heartbeat: %{type: :ping, interval: 180_000},
       subscription_pattern: :method_subscribe,
       subscription_config: %{separator: "@", market_id_format: :lowercase},
       auth_pattern: :listen_key,
       auth_config: %{
+        listen_key_url: %{
+          placement: :query,
+          events: ["ORDER_TRADE_UPDATE", "ACCOUNT_UPDATE"]
+        },
         pre_auth: %{
           type: :listen_key,
           # binanceusdm trades linear markets only, so a caller that names no
@@ -105,6 +109,7 @@ defmodule Bourse.WS.SpecConfig do
       subscription_config: %{separator: "@", market_id_format: :lowercase},
       auth_pattern: :listen_key,
       auth_config: %{
+        listen_key_url: %{placement: :path},
         pre_auth: %{
           type: :listen_key,
           # COIN-M is the inverse half of the one demo futures account; its

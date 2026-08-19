@@ -8,10 +8,10 @@ defmodule Bourse.WS.ListenKey do
 
   ## Why this runs before the socket opens
 
-  A listen key is not sent as a frame — it is a path segment of the WebSocket
-  URL (`wss://fstream.binance.com/ws/<listenKey>`). There is no post-connect
-  handshake to fall back on, so `Bourse.WS.connect/3` calls `open/3` first and
-  connects to the URL the key produces.
+  A listen key is not sent as a frame — it is embedded in the WebSocket URL.
+  USD-M uses `?listenKey=...&events=...`; COIN-M keeps its path segment. There
+  is no post-connect handshake to fall back on, so `Bourse.WS.connect/3` calls
+  `open/3` first and connects to the URL the key produces.
 
   The failure this prevents is silent. A connection opened with a wrong,
   expired or absent key is *accepted* by the venue and then simply never

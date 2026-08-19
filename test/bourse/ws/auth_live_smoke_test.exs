@@ -22,14 +22,13 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
 
   The binance family is covered too, and no part of it is a subscribe-ack
   venue. The two futures halves (`:listen_key`) authenticate before the socket
-  exists — the key is a path segment — so the evidence is the issued key
+  exists — the key is embedded in the URL — so the evidence is the issued key
   appearing in the URL, its refresh succeeding, and a key that is not the
-  account's failing before any socket opens. binancecoinm additionally drives a
-  real account event past both a socket keyed by its own listen key and one
-  keyed by a decoy, because a wrong key connects and reports `:connected` while
-  delivering nothing. binance spot (`:ws_api_signature`) opens its user data
-  stream with a signed WS-API request, and is checked against a bad secret,
-  which the venue rejects outright.
+  account's failing before any socket opens. Both futures halves drive a real
+  account event through the keyed socket because a wrong route or key connects
+  and reports `:connected` while delivering nothing. binance spot
+  (`:ws_api_signature`) opens its user data stream with a signed WS-API request,
+  and is checked against a bad secret, which the venue rejects outright.
 
   Credentials: bybit + deribit testnet and okx demo keys must be registered via
   `Bourse.Testnet.register_all_from_env/1` in `test_helper.exs`. Tests flunk
@@ -54,6 +53,10 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
   # cheapest COIN-M instrument the demo account can margin is the one to write
   # the account-event probe against.
   @coinm_symbol "BCHUSD_PERP"
+  @usdm_symbol "BTCUSDT"
+  @usdm_order_amount "0.002"
+  @usdm_resting_price_ratio 0.97
+  @usdm_price_decimals 1
 
   # =============================================================================
   # bybit — :direct_hmac_expiry
@@ -231,12 +234,36 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
 
       try do
         assert %{pattern: :listen_key, meta: session} = ws.auth
-        assert ws.url =~ session.listen_key
+        assert ws.url =~ "/private/ws?listenKey=#{session.listen_key}"
+        assert ws.url =~ "&events=ORDER_TRADE_UPDATE/ACCOUNT_UPDATE"
         assert session.market_type == :linear
 
         # The refresh has to work on the key the socket was built from — a
         # connection whose key silently expires stops delivering without error.
         assert :ok = ListenKey.keepalive(exchange, session)
+      after
+        WS.close(ws)
+      end
+    end
+
+    @tag :dangerous
+    test "binanceusdm routed private stream pushes order updates" do
+      creds = require_credentials!(:binanceusdm, url: "https://demo-fapi.binance.com")
+      exchange = Exchange.new!(:binanceusdm, credentials: creds, sandbox: true)
+      {:ok, ws} = WS.connect(exchange, :private)
+
+      try do
+        order_id = place_resting_usdm_order(exchange)
+
+        try do
+          assert_receive {:websocket_message, %{"e" => "ORDER_TRADE_UPDATE", "o" => %{"X" => "NEW"}}}, 15_000
+          assert {:ok, _} = cancel_usdm_order(exchange, order_id)
+
+          assert_receive {:websocket_message, %{"e" => "ORDER_TRADE_UPDATE", "o" => %{"X" => "CANCELED"}}},
+                         15_000
+        after
+          cleanup_usdm_order!(exchange, order_id)
+        end
       after
         WS.close(ws)
       end
@@ -335,6 +362,57 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
 
   defp cancel_coinm_order(exchange, order_id) do
     Bourse.Binancecoinm.dapiPrivate_delete_order(exchange, %{"symbol" => @coinm_symbol, "orderId" => order_id})
+  end
+
+  defp place_resting_usdm_order(exchange) do
+    {:ok, %{body: %{"price" => mark}}} =
+      Bourse.Binanceusdm.fapiPublic_get_ticker_price(exchange, %{"symbol" => @usdm_symbol})
+
+    {mark, ""} = Float.parse(mark)
+
+    price =
+      mark
+      |> Kernel.*(@usdm_resting_price_ratio)
+      |> Float.round(@usdm_price_decimals)
+      |> :erlang.float_to_binary(decimals: @usdm_price_decimals)
+
+    params =
+      maybe_put_usdm_position_side(
+        %{
+          "symbol" => @usdm_symbol,
+          "side" => "BUY",
+          "type" => "LIMIT",
+          "timeInForce" => "GTC",
+          "quantity" => @usdm_order_amount,
+          "price" => price
+        },
+        exchange
+      )
+
+    assert {:ok, %{body: %{"orderId" => order_id}}} =
+             Bourse.Binanceusdm.fapiPrivate_post_order(exchange, params)
+
+    order_id
+  end
+
+  defp maybe_put_usdm_position_side(params, exchange) do
+    case Bourse.fetch_position_mode(exchange) do
+      {:ok, %{"dualSidePosition" => true}} -> Map.put(params, "positionSide", "LONG")
+      {:ok, %{"dualSidePosition" => false}} -> params
+      other -> flunk("Binance USD-M position-mode read failed: #{inspect(other)}")
+    end
+  end
+
+  defp cancel_usdm_order(exchange, order_id) do
+    Bourse.Binanceusdm.fapiPrivate_delete_order(exchange, %{"symbol" => @usdm_symbol, "orderId" => order_id})
+  end
+
+  defp cleanup_usdm_order!(exchange, order_id) do
+    case cancel_usdm_order(exchange, order_id) do
+      {:ok, _} -> :ok
+      {:error, %Bourse.Error{code: -2011}} -> :ok
+      other -> flunk("Binance USD-M cleanup failed for #{order_id}: #{inspect(other)}")
+    end
   end
 
   defp collect_decoy_frames(listen_key, timeout_ms) do

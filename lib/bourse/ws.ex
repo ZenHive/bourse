@@ -163,9 +163,10 @@ defmodule Bourse.WS do
   ## Credentials that live in the URL
 
   The `:listen_key` venues (binance USD-M and COIN-M) authenticate before the
-  socket exists: the venue issues a key over REST and it travels as a path
-  segment. `connect/3` performs that round-trip and connects to the resulting
-  URL, so there is nothing left to authenticate afterwards and
+  socket exists: the venue issues a key over REST and it travels in the URL.
+  USD-M uses the provider's `listenKey` and `events` query parameters; COIN-M
+  keeps its path segment. `connect/3` performs that round-trip and connects to
+  the resulting URL, so there is nothing left to authenticate afterwards and
   `authenticate: false` is refused with `{:error, {:auth_not_optional,
   :listen_key}}` rather than silently returning a stream that delivers nothing.
   """
@@ -195,13 +196,17 @@ defmodule Bourse.WS do
     end
   end
 
-  # A listen key is a path segment, so it has to be resolved before the socket
+  # A listen key lives in the URL, so it has to be resolved before the socket
   # opens; every other pattern leaves the URL alone and authenticates over the
   # open connection.
   defp maybe_embed_credential(exchange, %{auth_pattern: :listen_key} = config, :private, true, url, opts) do
     case ListenKey.open(exchange, Map.get(config, :auth_config, %{}), listen_key_opts(opts)) do
-      {:ok, session} -> {:ok, join_path(url, session.listen_key), %{pattern: :listen_key, meta: session}}
-      {:error, _} = error -> error
+      {:ok, session} ->
+        {:ok, embed_listen_key(url, session.listen_key, config.auth_config.listen_key_url),
+         %{pattern: :listen_key, meta: session}}
+
+      {:error, _} = error ->
+        error
     end
   end
 
@@ -210,6 +215,16 @@ defmodule Bourse.WS do
   end
 
   defp maybe_embed_credential(_exchange, _config, _section, _auth?, url, _opts), do: {:ok, url, nil}
+
+  defp embed_listen_key(url, listen_key, %{placement: :query, events: [_ | _] = events}) do
+    query =
+      "listenKey=#{URI.encode_www_form(listen_key)}&events=#{Enum.map_join(events, "/", &URI.encode_www_form/1)}"
+
+    separator = if String.contains?(url, "?"), do: "&", else: "?"
+    url <> separator <> query
+  end
+
+  defp embed_listen_key(url, listen_key, %{placement: :path}), do: join_path(url, listen_key)
 
   defp join_path(url, segment), do: String.trim_trailing(url, "/") <> "/" <> segment
 

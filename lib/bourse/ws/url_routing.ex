@@ -112,9 +112,11 @@ defmodule Bourse.WS.URLRouting do
   legacy unrouted `/ws` alias that still behaves like `/public`.
   """
   @spec authored_usdm_host?(Exchange.t(), String.t()) :: boolean()
-  def authored_usdm_host?(%Exchange{} = exchange, url) when is_binary(url) do
+  def authored_usdm_host?(%Exchange{id: "binanceusdm"} = exchange, url) when is_binary(url) do
     url in authored_usdm_hosts(exchange)
   end
+
+  def authored_usdm_host?(%Exchange{}, url) when is_binary(url), do: false
 
   defp channel_url(exchange, channel) when is_binary(channel), do: stream_url(exchange, channel)
   defp channel_url(exchange, channel) when is_map(channel), do: public_url(exchange)

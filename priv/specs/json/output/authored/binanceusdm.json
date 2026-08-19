@@ -28672,10 +28672,10 @@
     },
     "urls": {
       "market": "wss://fstream.binance.com/market/ws",
-      "private": "wss://fstream.binance.com/ws",
+      "private": "wss://fstream.binance.com/private/ws",
       "public": "wss://fstream.binance.com/public/ws",
       "sandbox_market": "wss://demo-fstream.binance.com/market/ws",
-      "sandbox_private": "wss://demo-fstream.binance.com/ws",
+      "sandbox_private": "wss://demo-fstream.binance.com/private/ws",
       "sandbox_public": "wss://demo-fstream.binance.com/public/ws",
       "unresolved_reason": null
     }
