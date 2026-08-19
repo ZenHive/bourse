@@ -824,8 +824,16 @@ defmodule Bourse.SymbolTest do
     test "the authored future_ddmmmyy pattern accepts the provider's DDMMMYY date", %{exchange: exchange} do
       assert %{pattern: :future_ddmmmyy, date_format: :ddmmmyy} = exchange.symbol_patterns.future
 
-      # Bybit's provider-owned V5 symbol enum documents the same shape with
-      # `BTCUSDT-21FEB25`; both live-measured dates therefore stay DDMMMYY.
+      # Bybit V5 linear instrument ids are `{base}{quote}-DDMMMYY` (docs enum
+      # example `BTCUSDT-21FEB25`). fetch_markets stamps the same expiry via
+      # Calendar `%d%b%y` into the unified symbol, so the live-measured ids
+      # `04SEP26` / `21AUG26` are already DDMMMYY — not inferred from the crash.
+      futures = Enum.filter(recorded_markets!(exchange), &(&1.type == "future"))
+      refute Enum.empty?(futures), "bybit recorded markets must include a dated future"
+
+      recorded_expiry = futures |> hd() |> Map.fetch!(:symbol) |> String.split("-") |> List.last()
+      assert recorded_expiry =~ ~r/^\d{2}[A-Z]{3}\d{2}$/, "expected DDMMMYY expiry, got: #{recorded_expiry}"
+
       for {unified_symbol, native_symbol} <- [
             {"BTC/USDT:USDT-04SEP26", "BTCUSDT-04SEP26"},
             {"BTC/USDT:USDT-21AUG26", "BTCUSDT-21AUG26"}
@@ -1056,19 +1064,20 @@ defmodule Bourse.SymbolTest do
 
         if exchange.has["fetchMarkets"] == true do
           markets = recorded_markets!(exchange)
-          loaded_exchange = Bourse.Exchange.put_markets(exchange, markets)
 
           refute Enum.empty?(markets), "#{exchange_id}: recorded market list is empty"
 
+          # Pattern conversion only — loading markets would short-circuit
+          # `to_exchange_id/2` via id lookup and miss a `convert_date/3` miss.
           markets
           |> Enum.filter(&is_binary(&1.type))
           |> Enum.group_by(& &1.type)
           |> Enum.each(fn {market_type, [market | _same_type]} ->
             market_type_atom = String.to_existing_atom(market_type)
-            native_symbol = Symbol.to_exchange_id(market.symbol, loaded_exchange)
-            unified_symbol = Symbol.from_exchange_id(native_symbol, loaded_exchange, market_type_atom)
-            stable_native_symbol = Symbol.to_exchange_id(unified_symbol, loaded_exchange)
-            stable_unified_symbol = Symbol.from_exchange_id(stable_native_symbol, loaded_exchange, market_type_atom)
+            native_symbol = Symbol.to_exchange_id(market.symbol, exchange)
+            unified_symbol = Symbol.from_exchange_id(native_symbol, exchange, market_type_atom)
+            stable_native_symbol = Symbol.to_exchange_id(unified_symbol, exchange)
+            stable_unified_symbol = Symbol.from_exchange_id(stable_native_symbol, exchange, market_type_atom)
 
             assert stable_native_symbol == native_symbol,
                    "#{exchange_id} #{market_type}: native symbol changed after round-trip"
