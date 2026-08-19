@@ -38,7 +38,7 @@
   "source_binding": {
     "artifact_id": "api-openapi",
     "denominator_enumerated_from": {
-      "operation_key_set_sha256": "65f45fa9045a930b66c841d3f2775f7103a37435387fa2ce5597807631db35b3",
+      "operation_key_set_sha256": "d8437e591d341d80c605056b09f753565879682cafeb70b32d90c959d89ec836",
       "retrieved_at": "2026-08-18",
       "sha256": "8dfbbe9fdddfbf52e87973204cea5da59dc442812745752e99b615b3940c50ca"
     },

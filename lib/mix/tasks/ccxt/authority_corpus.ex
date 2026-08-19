@@ -62,6 +62,19 @@ defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
     |> Base.encode16(case: :lower)
   end
 
+  @doc """
+  Computes the canonical digest of a key set.
+
+  The canonical serialization sorts keys lexicographically and joins them with
+  LF bytes (`"\n"`) without a trailing LF. An empty key set has no digest.
+  """
+  @spec digest_key_set_sha256([String.t()]) :: String.t() | nil
+  def digest_key_set_sha256([]), do: nil
+
+  def digest_key_set_sha256(keys) when is_list(keys) do
+    keys |> Enum.sort() |> Enum.join("\n") |> sha256()
+  end
+
   @doc "Checks fetched or vendored bytes against an artifact manifest."
   @spec verify_content!(map(), binary(), String.t()) :: :ok
   def verify_content!(artifact, contents, label) do
@@ -292,9 +305,6 @@ defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
       ensure!(actual == expected, "#{label}: surface digest #{field} sha256 mismatch")
     end)
   end
-
-  defp digest_key_set_sha256([]), do: nil
-  defp digest_key_set_sha256(keys), do: keys |> Enum.sort() |> Enum.join("\n") |> sha256()
 
   defp ensure_string!(map, key, label) do
     value = map[key]

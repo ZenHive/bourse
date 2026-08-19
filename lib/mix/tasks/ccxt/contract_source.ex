@@ -127,12 +127,10 @@ defmodule Mix.Tasks.Ccxt.ContractSource do
     }
   end
 
-  @doc "Hashes a key set the way committed drift reports hash channel keys."
+  @doc "Hashes a key set using the authority corpus canonical digest."
   @spec hash_key_set([String.t()]) :: String.t() | nil
-  def hash_key_set([]), do: nil
-
   def hash_key_set(keys) when is_list(keys) do
-    keys |> Enum.sort() |> Enum.join("\n") |> AuthorityCorpus.sha256()
+    AuthorityCorpus.digest_key_set_sha256(keys)
   end
 
   @doc "Returns an explicit known source fact."

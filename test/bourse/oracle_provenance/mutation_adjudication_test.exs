@@ -8,6 +8,7 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
   alias Bourse.OracleProvenance.MutationAdjudication.Redaction
   alias Bourse.OracleProvenance.PathGuard
   alias Mix.Tasks.Ccxt.AuthorityCorpus
+  alias Mix.Tasks.Ccxt.ContractSource
 
   doctest Redaction
 
@@ -129,7 +130,7 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
                binding["denominator_enumerated_from"]["operation_key_set_sha256"]
     end
 
-    test "checks the exact reviewed operation-key set against materialized source facts" do
+    test "all three digest consumers agree on the reviewed operation-key fixture" do
       %{register: register} = MutationAdjudication.load_reviewed!()
       binding = register["source_binding"]
 
@@ -139,7 +140,17 @@ defmodule Bourse.OracleProvenance.MutationAdjudicationTest do
           &register["denominator"][&1]
         )
 
-      assert :ok = MutationAdjudication.validate_source_inventory!(binding["pinned_revision_sha256"], operation_keys)
+      expected_digest = binding["denominator_enumerated_from"]["operation_key_set_sha256"]
+
+      assert AuthorityCorpus.digest_key_set_sha256(operation_keys) == expected_digest,
+             "AuthorityCorpus.digest_key_set_sha256/1 disagrees with the reviewed fixture"
+
+      assert ContractSource.hash_key_set(operation_keys) == expected_digest,
+             "ContractSource.hash_key_set/1 disagrees with the reviewed fixture"
+
+      assert :ok =
+               MutationAdjudication.validate_source_inventory!(binding["pinned_revision_sha256"], operation_keys),
+             "MutationAdjudication.validate_source_inventory!/3 disagrees with the reviewed fixture"
 
       assert_raise ArgumentError, ~r/materialized mutation denominator count differs/, fn ->
         MutationAdjudication.validate_source_inventory!(binding["pinned_revision_sha256"], tl(operation_keys))

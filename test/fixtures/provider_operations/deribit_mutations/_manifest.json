@@ -1167,7 +1167,7 @@
       "path": "deribit/setup_instrument.json",
       "role": "setup",
       "row_fields_populated": true,
-      "sha256": "f94d593c405c7105c435ead1009e75513ee19397f921211880e1af19ddd9ba65",
+      "sha256": "7904275b684181213d94b5b527b6cb56b3ddb6db8f97382cdb7731a1fbc9bada",
       "step_id": "setup_instrument"
     },
     {
@@ -1182,7 +1182,7 @@
       "path": "deribit/setup_ticker.json",
       "role": "setup",
       "row_fields_populated": true,
-      "sha256": "22287f58ce35f2ded7e8e17ded53b8c42eda564e96a3ba5bb0948b73aa79615a",
+      "sha256": "d0d933014013d9f2e0c363794da43e0dc5e252c2887904ba474190753a655720",
       "step_id": "setup_ticker"
     },
     {
@@ -1197,7 +1197,7 @@
       "path": "deribit/place_order.json",
       "role": "act",
       "row_fields_populated": true,
-      "sha256": "9e1ff78811ba3da2506794d8c2b2af01ec040c0f51968cc92aa912ac0b68e39c",
+      "sha256": "7b3f640ee61cc7c849975a97b23c69c176e968263e4f1c9caa47bf50cee57cee",
       "step_id": "place_order"
     },
     {
@@ -1212,7 +1212,7 @@
       "path": "deribit/observe_open.json",
       "role": "observe",
       "row_fields_populated": true,
-      "sha256": "c801adb056851c8c2452fab9f69110c18a4f72e85f09df55d248fc5687a503df",
+      "sha256": "b4daba097ccb74bb5cca84e69c8a161d7b464c9647d8ced0c87069627f17961a",
       "step_id": "observe_open"
     },
     {
@@ -1227,7 +1227,7 @@
       "path": "deribit/cancel_order.json",
       "role": "cleanup",
       "row_fields_populated": true,
-      "sha256": "1d26d145527b50de0940ccd55f7d6f311e72a1a6d82100d9adf94af49b3dec34",
+      "sha256": "f9961ab0f5177e51f0aa24b67d3f6ed7d6c41f17d499fc906d0a49eca69fb3e6",
       "step_id": "cancel_order"
     },
     {
@@ -1242,7 +1242,7 @@
       "path": "deribit/final_state.json",
       "role": "final_state",
       "row_fields_populated": true,
-      "sha256": "78e164cf6d7c5acb9b1235db8a77b4020a5da18cfc6db04ebcf1d9e2cf1a6cbe",
+      "sha256": "099224356246d43ac853d3fa8735ff6c10b7c59d847ec3d08f4a8600dd3d0ad9",
       "step_id": "final_state"
     },
     {
@@ -1257,7 +1257,7 @@
       "path": "deribit/cancel_again.json",
       "role": "idempotent_final_state",
       "row_fields_populated": false,
-      "sha256": "80178a0eb9a5a4e472bf009d982b04c866981ef99eadd11173ca136f9ac996e5",
+      "sha256": "24235ff2b3404a91966ce37f98792163c35046514841e768dcce22eb33d4e67e",
       "step_id": "cancel_again"
     },
     {
@@ -1272,7 +1272,7 @@
       "path": "deribit/reject_wrong_tick.json",
       "role": "failure_probe",
       "row_fields_populated": false,
-      "sha256": "f7d1eeb2a0b7d6b0d64a08ae51216a6225b13a8950d96607b3572888eb3eba3a",
+      "sha256": "46549516f015a084fa7b9927eee2b9ac072e90040ec7d463fe5a5815d4df7e05",
       "step_id": "reject_wrong_tick"
     }
   ],
@@ -1280,7 +1280,7 @@
   "source_binding": {
     "artifact_id": "api-openapi",
     "denominator_enumerated_from": {
-      "operation_key_set_sha256": "65f45fa9045a930b66c841d3f2775f7103a37435387fa2ce5597807631db35b3",
+      "operation_key_set_sha256": "d8437e591d341d80c605056b09f753565879682cafeb70b32d90c959d89ec836",
       "retrieved_at": "2026-08-18",
       "sha256": "8dfbbe9fdddfbf52e87973204cea5da59dc442812745752e99b615b3940c50ca"
     },

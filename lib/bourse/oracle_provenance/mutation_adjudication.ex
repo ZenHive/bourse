@@ -661,8 +661,7 @@ defmodule Bourse.OracleProvenance.MutationAdjudication do
     binding = register["source_binding"]
     source = binding["denominator_enumerated_from"]
     expected_count = register["denominator"]["provider_count"]
-    serialized_keys = operation_keys |> Enum.sort() |> Enum.join("\n") |> Kernel.<>("\n")
-    operation_key_set_sha256 = AuthorityCorpus.sha256(serialized_keys)
+    operation_key_set_sha256 = AuthorityCorpus.digest_key_set_sha256(operation_keys)
 
     ensure!(revision_sha256 == binding["pinned_revision_sha256"], "materialized mutation revision differs from pin")
     ensure!(revision_sha256 == source["sha256"], "materialized mutation revision differs from denominator")

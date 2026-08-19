@@ -5,6 +5,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
   alias Mix.Tasks.Ccxt.AuthorityCorpus
 
   @root "priv/authority"
+  @canonical_key_set_digest_source "lib/mix/tasks/ccxt/authority_corpus.ex"
 
   test "committed corpus covers every first-class venue with reference-only licensing" do
     manifests = AuthorityCorpus.load!(@root)
@@ -24,6 +25,18 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
 
   test "offline task validates manifests without fetching upstream" do
     assert :ok = AuthorityCheck.run([])
+  end
+
+  test "key-set serialization has one canonical implementation" do
+    sites = "lib/**/*.ex" |> Path.wildcard() |> Enum.flat_map(&sorted_lf_join_sites/1)
+
+    assert Enum.map(sites, & &1.path) == [@canonical_key_set_digest_source],
+           """
+           sorted LF key-set serialization must only be implemented by
+           AuthorityCorpus.digest_key_set_sha256/1; found:
+
+           #{Enum.map_join(sites, "\n", &"#{&1.path}:#{&1.line}")}
+           """
   end
 
   test "offline success is explicitly not a remote freshness result" do
@@ -503,6 +516,35 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
 
   defp check_artifact!(artifact, opts) do
     AuthorityCheck.check_upstream!([%{"venue" => "binance", "artifacts" => [artifact]}], opts)
+  end
+
+  defp sorted_lf_join_sites(path) do
+    path
+    |> File.read!()
+    |> Code.string_to_quoted!(file: path)
+    |> Macro.prewalk([], fn
+      {:|>, meta, [input, {{:., _, [{:__aliases__, _, [:Enum]}, :join]}, _, ["\n"]}]} = node, sites ->
+        if enum_sort_call?(input) do
+          {node, [%{path: path, line: meta[:line]} | sites]}
+        else
+          {node, sites}
+        end
+
+      node, sites ->
+        {node, sites}
+    end)
+    |> elem(1)
+    |> Enum.reverse()
+  end
+
+  defp enum_sort_call?(ast) do
+    {_ast, found?} =
+      Macro.prewalk(ast, false, fn
+        {{:., _, [{:__aliases__, _, [:Enum]}, :sort]}, _, _} = node, _found? -> {node, true}
+        node, found? -> {node, found?}
+      end)
+
+    found?
   end
 
   defp fixture_artifact do
