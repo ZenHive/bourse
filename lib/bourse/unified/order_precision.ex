@@ -189,7 +189,14 @@ defmodule Bourse.Unified.OrderPrecision do
   end
 
   defp snap_value(original, step, rounding_mode, venue) do
-    {:ok, value} = Decimal.cast(original)
+    original
+    |> Decimal.cast()
+    |> snap_casted(original, step, rounding_mode, venue)
+  end
+
+  defp snap_casted({:ok, value}, _original, step, rounding_mode, venue) do
+    # Market precision already passed usable_precision?/1. A failed step cast
+    # is a spec bug, not caller input — classified keep-raise MatchError.
     {:ok, step} = Decimal.cast(step)
 
     rounded = value |> Decimal.div(step) |> Decimal.round(0, rounding_mode) |> Decimal.mult(step)
@@ -197,6 +204,16 @@ defmodule Bourse.Unified.OrderPrecision do
     if venue == "okx" and Decimal.equal?(rounded, 0) and not Decimal.equal?(value, 0),
       do: decimal_string(value),
       else: decimal_string(rounded)
+  end
+
+  defp snap_casted(:error, original, _step, _rounding_mode, venue) do
+    # Caller input, not an internal invariant. Unified.call/5 converts this
+    # reason to {:error, %Error{}} at the public non-bang boundary.
+    raise Error.invalid_parameters(
+            exchange: venue,
+            message: "Cannot snap order value #{inspect(original)} to market precision: expected a number",
+            raw: %{"reason" => "invalid_numeric", "value" => original}
+          )
   end
 
   defp rounding_mode("bybit", _field), do: :down

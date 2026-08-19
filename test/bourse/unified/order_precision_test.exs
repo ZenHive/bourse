@@ -350,6 +350,222 @@ defmodule Bourse.Unified.OrderPrecisionTest do
            } = RequestCollector.json_body!(requests)
   end
 
+  test "dispatch infers a same-id market from market_type when the unified symbol is absent" do
+    spot = %Market{id: "BTCUSDT", symbol: "BTC/USDT", spot: true, precision: grid()}
+    linear = %Market{id: "BTCUSDT", symbol: "BTC/USDT:USDT", linear: true, precision: grid()}
+    exchange = "bybit" |> exchange() |> Exchange.put_markets([spot, linear])
+
+    {prepared, %Exchange{markets: [chosen]}} =
+      OrderPrecision.guard_dispatch!(
+        order("BTCUSDT", 0.55, 150),
+        exchange,
+        "createOrder",
+        @dispatch_opts ++ [market_type: :spot]
+      )
+
+    assert chosen.spot == true
+    assert prepared["amount"] == "0.5"
+    assert prepared["price"] == "100"
+
+    {_prepared, %Exchange{markets: [linear_chosen]}} =
+      OrderPrecision.guard_dispatch!(
+        order("BTCUSDT", 0.55, 150),
+        exchange,
+        "createOrder",
+        @dispatch_opts ++ [market_type: "linear"]
+      )
+
+    assert linear_chosen.linear == true
+  end
+
+  test "a lone same-id market is used when the inferred category does not match" do
+    linear = %Market{id: "BTCUSDT", symbol: "BTC/USDT:USDT", linear: true, precision: grid()}
+    exchange = "bybit" |> exchange() |> Exchange.put_markets([linear])
+
+    {_prepared, %Exchange{markets: [chosen]}} =
+      OrderPrecision.guard_dispatch!(
+        order("BTCUSDT", 0.55, 150),
+        exchange,
+        "createOrder",
+        @dispatch_opts ++ [market_type: :spot]
+      )
+
+    assert chosen.linear == true
+  end
+
+  test "ambiguous same-id markets with no inferred category match fail as market_not_found" do
+    spot = %Market{id: "BTCUSDT", symbol: "BTC/USDT", spot: true, precision: grid()}
+    linear = %Market{id: "BTCUSDT", symbol: "BTC/USDT:USDT", linear: true, precision: grid()}
+    exchange = "bybit" |> exchange() |> Exchange.put_markets([spot, linear])
+
+    error =
+      assert_raise Error, fn ->
+        OrderPrecision.guard_dispatch!(
+          order("BTCUSDT"),
+          exchange,
+          "createOrder",
+          @dispatch_opts ++ [market_type: :option]
+        )
+      end
+
+    assert get_in(error.raw, ["order_precision", "reason"]) == "market_not_found"
+  end
+
+  test "swap and future market types do not infer a category" do
+    linear = %Market{id: "BTCUSDT", symbol: "BTC/USDT:USDT", linear: true, precision: grid()}
+    exchange = "bybit" |> exchange() |> Exchange.put_markets([linear])
+
+    for market_type <- [:swap, :future] do
+      {_prepared, %Exchange{markets: [chosen]}} =
+        OrderPrecision.guard_dispatch!(
+          order("BTCUSDT", 0.55, 150),
+          exchange,
+          "createOrder",
+          @dispatch_opts ++ [market_type: market_type]
+        )
+
+      assert chosen.linear == true
+    end
+  end
+
+  test "OKX keeps a positive size that would round to zero on the amount grid" do
+    exchange =
+      "okx"
+      |> exchange()
+      |> Exchange.put_markets([
+        %Market{id: "BTC-USDT", symbol: "BTC/USDT", precision: %{"amount" => 0.1, "price" => 0.1}}
+      ])
+
+    assert %{"sz" => "0.04", "px" => "60.4"} =
+             RequestShape.apply(order("BTC-USDT", 0.04, 60.42), exchange, "createOrder", @dispatch_opts)
+  end
+
+  test "an amount-free edit leaves the exchange market cache unchanged" do
+    market = %Market{id: "BTC-USDT", symbol: "BTC/USDT", precision: grid()}
+    exchange = "okx" |> exchange() |> Exchange.put_markets([market])
+
+    {prepared, scoped} =
+      OrderPrecision.guard_dispatch!(
+        %{"symbol" => "BTC-USDT", "id" => "123"},
+        exchange,
+        "editOrder",
+        @dispatch_opts
+      )
+
+    assert prepared == %{"symbol" => "BTC-USDT", "id" => "123"}
+    assert scoped.markets == exchange.markets
+  end
+
+  @rounding_venues ~w(bybit derive hyperliquid okx)
+
+  # Joined `{bound, Decimal.cast(arg)}` fingerprints of every remaining
+  # MatchError bind. A new caller-input `{:ok, _} = Decimal.cast(...)` is a
+  # different pair and reddens here the same way an unconverted RequestShape
+  # raise reddens the 651/653 class sweep.
+  @keep_raising_decimal_cast_binds [{"step", "step"}]
+
+  test "guard_dispatch! raises converted Error for a non-numeric amount on rounding venues" do
+    for venue <- @rounding_venues do
+      market = precision_market(venue)
+      exchange = venue |> exchange() |> Exchange.put_markets([market])
+
+      error =
+        assert_raise Error, fn ->
+          OrderPrecision.guard_dispatch!(
+            order(market.symbol, true, 9000),
+            exchange,
+            "createOrder",
+            @dispatch_opts ++ [market_family: "linear"]
+          )
+        end
+
+      assert error.type == :invalid_parameters
+      assert error.exchange == venue
+      assert error.raw["reason"] == "invalid_numeric"
+      assert error.raw["value"] == true
+    end
+  end
+
+  test "guard_dispatch! raises converted Error for a non-numeric price on a rounding venue" do
+    market = precision_market("okx")
+    exchange = "okx" |> exchange() |> Exchange.put_markets([market])
+
+    error =
+      assert_raise Error, fn ->
+        OrderPrecision.guard_dispatch!(
+          order(market.symbol, 0.5, true),
+          exchange,
+          "createOrder",
+          @dispatch_opts ++ [market_family: "linear"]
+        )
+      end
+
+    assert error.type == :invalid_parameters
+    assert error.raw["reason"] == "invalid_numeric"
+  end
+
+  test "public create_order returns Error for a wire-encodable non-numeric amount" do
+    market = precision_market("hyperliquid")
+    exchange = "hyperliquid" |> exchange() |> Exchange.put_markets([market])
+
+    assert {:error, %Error{type: :invalid_parameters} = error} =
+             Bourse.create_order(exchange, market.symbol, "limit", "buy", true, price: 9000)
+
+    assert error.raw["reason"] == "invalid_numeric"
+  end
+
+  test "public create_orders returns Error for a non-numeric amount on a rounding venue" do
+    market = precision_market("bybit")
+    exchange = "bybit" |> exchange() |> Exchange.put_markets([market])
+
+    orders = [
+      %{"symbol" => market.symbol, "type" => "limit", "side" => "buy", "amount" => true, "price" => 9000}
+    ]
+
+    assert {:error, %Error{type: :invalid_parameters} = error} = Bourse.create_orders(exchange, orders)
+    assert error.raw["reason"] == "invalid_numeric"
+  end
+
+  test "create_order! raises Error for a non-numeric amount on a rounding venue" do
+    market = precision_market("okx")
+    exchange = "okx" |> exchange() |> Exchange.put_markets([market])
+
+    error =
+      assert_raise Error, fn ->
+        Bourse.create_order!(exchange, market.symbol, "limit", "buy", true, price: 9000)
+      end
+
+    assert error.type == :invalid_parameters
+    assert error.raw["reason"] == "invalid_numeric"
+  end
+
+  test "a new OrderPrecision Decimal.cast MatchError bind reddens until converted or classified" do
+    scanned = order_precision_decimal_cast_binds()
+    allowed = @keep_raising_decimal_cast_binds
+
+    assert scanned == allowed,
+           "OrderPrecision Decimal.cast MatchError class drifted; scanned=#{inspect(scanned)} allowed=#{inspect(allowed)}"
+  end
+
+  defp order_precision_decimal_cast_binds do
+    {_ast, binds} =
+      "lib/bourse/unified/order_precision.ex"
+      |> File.read!()
+      |> Code.string_to_quoted!()
+      |> Macro.prewalk([], fn
+        {:=, _, [{:ok, bound}, {{:., _, [{:__aliases__, _, [:Decimal]}, :cast]}, _, [arg]}]} = node, acc ->
+          {node, [{ast_bind_name(bound), ast_bind_name(arg)} | acc]}
+
+        node, acc ->
+          {node, acc}
+      end)
+
+    Enum.reverse(binds)
+  end
+
+  defp ast_bind_name({name, _, _}) when is_atom(name), do: Atom.to_string(name)
+  defp ast_bind_name(other), do: Macro.to_string(other)
+
   defp exchange("derive") do
     Exchange.new!("derive", @credentials ++ [options: %{"subaccount_id" => 144_422}])
   end
