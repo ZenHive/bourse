@@ -3720,27 +3720,22 @@ defmodule Bourse.Unified.ReadParse do
       notional = bybit_position_notional(row, inverse?)
       mm = bybit_position_maintenance_margin(row, inverse?)
 
+      # Authored V5 unit 1: linear qty is one base-coin (C-T625b); inverse is 1 USD (C-T641).
       row
       |> maybe_put_synthetic("_bourse_im", im)
       |> maybe_put_synthetic("_bourse_notional", notional)
       |> maybe_put_synthetic("_bourse_mm", mm)
-      |> maybe_put_synthetic("_bourse_contract_size", bybit_position_contract_size(inverse?))
+      |> maybe_put_synthetic("_bourse_contract_size", "1")
     end
   end
 
   defp annotate_bybit_position_row(other, _inverse?), do: other
 
-  # Linear V5 positions are unit contract size 1 (venue constant, not market-loaded;
-  # bybit.ts parseMarket: `inverse ? minTradingQty/minOrderQty : parseNumber('1')`).
-  # Inverse stays nil at parse — its size is market-derived (C7).
-  defp bybit_position_contract_size(true), do: nil
-  defp bybit_position_contract_size(false), do: "1"
-
   defp bybit_position_notional(row, true) do
     size = non_empty_string(Map.get(row, "size")) || non_empty_string(Map.get(row, "qty"))
     mark = non_empty_string(Map.get(row, "markPrice"))
 
-    # Inverse notional is size * contractSize / markPrice; Bybit contractSize is 1 for V5.
+    # Inverse notional is size / markPrice because the authored unit is 1 USD (C-T641).
     case {size, mark} do
       {size, mark} when is_binary(size) and is_binary(mark) -> Bourse.Precise.string_div(size, mark)
       _ -> nil

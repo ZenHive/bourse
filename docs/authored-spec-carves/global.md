@@ -396,6 +396,9 @@ superseded by C-T535a (DIVERGE from CCXT).**
 - *Compatibility cost:* CCXT (with markets loaded) reports a number where we report nil on
   deribit/inverse; linear bybit now matches CCXT's `1`.
 - *Implementation:* 170 (this task); 306 (bybit linear stamp).
+- *History:* C-T641 supersedes the inverse-Bybit Position nil clause. Inverse
+  `Position.contract_size` is the authored 1 USD unit; inverse `Market.contract_size`
+  remains nil (C-T625b).
 
 **C21 — Canonical query space encoding: `%20`, not www-form `+`. Outcome: DIVERGE from Elixir
 `URI.encode_query/1`; CONFIRM Huobi/HTX venue docs (and match CCXT `qs` as cross-check only).**
@@ -691,7 +694,9 @@ runs the read-parse annotation path, and grades each applicable arithmetic branc
 | Quote-denominated contracts and quote notional | `contracts × contract_size = notional` | Deribit inverse futures |
 | Quote-denominated contracts and settlement notional | `contracts × contract_size = notional × mark` | Binance COIN-M and inverse Bybit/OKX rows |
 
-The emitted currencies follow the value source: Alpaca market value and OKX
+Inverse Bybit `contract_size` is the authored 1 USD unit (C-T641); `/v5/position/list`
+does not send `contractSize`. Inverse OKX and COIN-M still read the unit from the
+loaded market. The emitted currencies follow the value source: Alpaca market value and OKX
 `notionalUsd` are USD; ordinary linear values use the unified quote currency;
 COIN-M and inverse Bybit/OKX values use the unified settlement currency. Deribit
 future `size` is quote notional on both settlement branches. `base_quantity` is a

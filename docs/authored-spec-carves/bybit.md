@@ -7,6 +7,28 @@ Append-only schema confrontations for Bybit. Follow the allocation and evidence 
 still appear in `docs/authored-specs.md`, but that document points here for the complete
 per-venue record (task 466).
 
+## 2026-08-19 — inverse position contract unit (Task 641)
+
+**C-T641 — V5 inverse `Position.contract_size` is the authored 1 USD contract
+unit (task 641).** Outcome: CONFIRM provider contract; DIVERGE from leaving
+inverse `Position.contract_size` nil and deferring to `Market.contract_size`.
+Bybit's
+[Order Cost](https://www.bybit.com/en/help-center/article/Order-Cost-USDT-Contract)
+contract states that inverse quantity is in USD (`1 contract = 1 USD`). The
+[Introduction to Inverse Contract](https://www.bybit.com/en/help-center/article/Introduction-to-Inverse-Contract)
+example is the same identity: 70,000 BTCUSD contracts at $35,000 equal 2 BTC.
+`GET /v5/position/list` does not send `contractSize` — the registered
+`fetch_positions` row has 41 keys and that field is not one of them — so the
+unit is authored, not payload-copied. Inverse `Market.contract_size` stays nil
+(C-T625b): instruments-info also omits `contractSize`, and this carve does not
+reopen the market recipe. C-T610's inverse-Bybit row (`contracts ×
+contract_size = notional × mark`) holds because parse now stamps the unit the
+provider documents.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T641","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"Bybit Order Cost help center: inverse quantity is in USD (1 contract = 1 USD); Introduction to Inverse Contract: 70000 BTCUSD at $35000 = 2 BTC"},"observed_evidence":{"kind":"recorded_venue","reference":"Registered fetch_positions /v5/position/list row omits contractSize (41 keys). Inverse notional identity size/markPrice is the same 1 USD unit already used at parse.","fixture":"test/fixtures/responses/bybit/fetch_positions.json"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The registered recording is an option row that proves field absence on /v5/position/list; no populated inverse position row is registered, and re-recording is out of scope"}
+-->
+
 ## 2026-08-18 — linear contract unit (Task 625)
 
 **C-T625b — V5 linear `contract_size` is the authored venue-level contract unit
@@ -24,7 +46,9 @@ already one base-coin unit. Inverse rows are not this recipe: live `BTCUSD`
 publishes integer `minOrderQty=1` with `settleCoin=BTC` and also omits
 `contractSize`, so inverse `Market.contract_size` stays nil. The authored
 `markets.contract_unit` slot declares the linear unit as the constant `1`
-with `quantity_unit: "base"`. Position-path stamping (C34) is unchanged.
+with `quantity_unit: "base"`. Linear Position-path stamping (C34) is
+unchanged; inverse `Position.contract_size` is the authored 1 USD unit in
+C-T641.
 
 <!-- carve-evidence-status
 {"carve_id":"C-T625b","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 batch place-order qty unit is base coin for perps/futures/option; Get Instruments Info linear lotSizeFilter has no contractSize"},"observed_evidence":{"kind":"live_venue","reference":"Live api.bybit.com /v5/market/instruments-info linear BTCUSDT minOrderQty 0.001 with no contractSize; inverse BTCUSD minOrderQty 1 settleCoin BTC with no contractSize on 2026-08-18. Recorded fetch_markets test/fixtures/responses/bybit/fetch_markets.json","fixture":"test/fixtures/responses/bybit/fetch_markets.json"},"compatibility_reference":{"kind":"ccxt","reference":"CCXT linear contractSize 1 is compatibility reference only"},"resolved_tier":1}
@@ -183,7 +207,7 @@ the full multi-venue rationale — do not re-adjudicate here.
 | C36 | `global.md` | Linear: `turnover/volume` is a price (CONFIRMED, task 315). Inverse + option: nil (CONFIRMED, tasks 315/329). Evidence mirrored under [C36 Bybit application](#c36-bybit-application) below. |
 | C1 | `docs/authored-specs.md` (historical) | Spot `basePrecision` member; tick-size precision mode (task 171). |
 | C5 | `docs/authored-specs.md` (historical) | Per-symbol `fundingIntervalHour` → `"Nh"` (CONFIRM; task 171). Offline fixture nil when field omitted → B3. |
-| C7 | `docs/authored-specs.md` (historical) | Linear stamps `contractSize: 1` at annotate (C34 / task 306); inverse stays nil. |
+| C7 | `docs/authored-specs.md` (historical) | Linear stamps `contractSize: 1` at annotate (C34 / C-T625b); inverse Position unit is authored 1 USD (C-T641); inverse Market stays nil (C-T625b). |
 | C28 | `docs/authored-specs.md` (historical) | UNIFIED wallet: empty `availableToWithdraw` → used = locked+IM sum (task 265/307). |
 | C29 / C30 / C-T309 / C31 | `docs/authored-specs.md` (historical) | Unified positional API alignments that Bybit sweeps exposed. |
 

@@ -4,10 +4,15 @@ defmodule Bourse.PositionUnitInvariantTest do
   alias Bourse.Exchange
   alias Bourse.Market
   alias Bourse.Position
+  alias Bourse.RecordedResponseFixtures
   alias Bourse.Unified.DeribitPositionUnits
   alias Bourse.Unified.ReadParse
 
   @unit_tolerance 1.0e-6
+
+  # Recordings whose position list is empty cannot certify payload keys.
+  # Drop a venue from this list when its fetch_positions recording gains rows.
+  @unpopulated_position_recordings ~w(alpaca derive hyperliquid)
 
   test "every authored position slice emits a frozen notional with a machine-readable currency" do
     for position_case <- position_cases() do
@@ -73,6 +78,28 @@ defmodule Bourse.PositionUnitInvariantTest do
 
     assert MapSet.to_list(MapSet.difference(frozen, authored)) == [],
            "a frozen unit row names a venue that authors no position slice"
+  end
+
+  test "unit-matrix payloads carry only keys present on the recorded venue row" do
+    for position_case <- position_cases() do
+      assert_recorded_payload_keys!(position_case)
+    end
+  end
+
+  test "an injected recording-absent key is rejected" do
+    inverse_bybit = Enum.find(position_cases(), &(&1.venue == "bybit" and &1.symbol == "BTC/USD:BTC"))
+    injected = %{inverse_bybit | row: Map.put(inverse_bybit.row, "contractSize", "1")}
+
+    assert_raise ExUnit.AssertionError, ~r/contractSize/, fn ->
+      assert_recorded_payload_keys!(injected)
+    end
+  end
+
+  test "unpopulated position recordings stay empty so the payload-key guard remains honest" do
+    for venue <- @unpopulated_position_recordings do
+      assert recorded_position_rows(venue) == [],
+             "#{venue} fetch_positions now has rows; drop it from @unpopulated_position_recordings"
+    end
   end
 
   defp position_slice?(venue) do
@@ -255,7 +282,6 @@ defmodule Bourse.PositionUnitInvariantTest do
         module: Bourse.Bybit,
         symbol: "BTC/USD:BTC",
         row: %{
-          "contractSize" => "1",
           "markPrice" => "50000",
           "side" => "Buy",
           "size" => "100",
@@ -426,6 +452,73 @@ defmodule Bourse.PositionUnitInvariantTest do
       }
     ]
   end
+
+  defp assert_recorded_payload_keys!(%{venue: venue, row: row} = position_case) do
+    if venue in @unpopulated_position_recordings do
+      :ok
+    else
+      recorded_keys = recorded_position_keys(venue)
+      payload_keys = map_keys(row)
+      extra = MapSet.difference(payload_keys, recorded_keys)
+
+      assert MapSet.size(extra) == 0,
+             "#{fixture_label(position_case)} payload keys absent from the recorded row: #{inspect(MapSet.to_list(extra))}"
+    end
+  end
+
+  defp recorded_position_keys(venue) do
+    venue
+    |> recorded_position_rows()
+    |> map_keys()
+  end
+
+  defp recorded_position_rows(venue) do
+    fixture_venue = recorded_fixture_venue(venue)
+
+    fixture_venue
+    |> RecordedResponseFixtures.fixture_path(:fetch_positions)
+    |> RecordedResponseFixtures.load_fixture!()
+    |> position_rows(fixture_venue)
+  end
+
+  defp recorded_fixture_venue("binance"), do: "binanceusdm"
+  defp recorded_fixture_venue(venue), do: venue
+
+  defp position_rows(%{"body" => %{"result" => %{"list" => list}}}, "bybit") when is_list(list), do: list
+  defp position_rows(%{"body" => %{"data" => list}}, "okx") when is_list(list), do: list
+  defp position_rows(%{"body" => %{"result" => list}}, "deribit") when is_list(list), do: list
+  defp position_rows(%{"body" => %{"result" => %{"positions" => list}}}, "derive") when is_list(list), do: list
+  defp position_rows(%{"body" => %{"assetPositions" => list}}, "hyperliquid") when is_list(list), do: list
+
+  defp position_rows(%{"body" => %{"accounts" => accounts}}, "lighter") when is_list(accounts) do
+    Enum.flat_map(accounts, fn
+      %{"positions" => list} when is_list(list) -> list
+      _account -> []
+    end)
+  end
+
+  defp position_rows(%{"body" => list}, venue) when is_list(list) and venue in ["alpaca", "binanceusdm", "binancecoinm"],
+    do: list
+
+  defp position_rows(_fixture, venue) do
+    flunk("#{venue} fetch_positions recording has no recognized position-row envelope")
+  end
+
+  defp map_keys(%{} = map) do
+    Enum.reduce(map, MapSet.new(), fn {key, value}, acc ->
+      acc
+      |> MapSet.put(key)
+      |> MapSet.union(map_keys(value))
+    end)
+  end
+
+  defp map_keys(list) when is_list(list) do
+    Enum.reduce(list, MapSet.new(), fn item, acc -> MapSet.union(acc, map_keys(item)) end)
+  end
+
+  defp map_keys(_value), do: MapSet.new()
+
+  defp fixture_label(%{venue: venue, symbol: symbol}), do: "#{venue} #{symbol}"
 
   defp binance_position_case(venue, module) do
     %{
