@@ -438,6 +438,7 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
 
   alias Bourse.Exchange
   alias Bourse.Registry
+  alias Bourse.Test.RequestCollector
   alias Bourse.Test.TimeWindowProbeMatrix
   alias Bourse.Unified
   alias Bourse.Unified.Descriptor
@@ -781,6 +782,31 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
     refute Map.has_key?(open_orders, "endTime")
   end
 
+  test "emulated futures order histories carry until through to the HTTP request" do
+    venues = [
+      {:binancecoinm, "BTC/USD:BTC", ["/dapi/v1/allOrders"], [:fetch_closed_orders, :fetch_canceled_orders]},
+      {:binanceusdm, "BTC/USDT:USDT", ["/fapi/v1/allAlgoOrders", "/fapi/v1/allOrders"],
+       [:fetch_closed_orders, :fetch_canceled_orders, :fetch_canceled_and_closed_orders]}
+    ]
+
+    for {venue, symbol, expected_paths, methods} <- venues,
+        method <- methods do
+      observed = emulated_order_history_requests(venue, method, symbol)
+
+      assert Enum.map(observed, & &1.path) == expected_paths
+
+      assert Enum.all?(observed, fn request ->
+               request.query["endTime"] == Integer.to_string(@until_ms)
+             end),
+             "#{venue}.#{method} did not put endTime on every delegated HTTP request: " <>
+               inspect(observed)
+
+      assert Enum.all?(observed, fn request ->
+               not Map.has_key?(request.query, "until")
+             end)
+    end
+  end
+
   test "OKX compensates exclusive pagination cursors for inclusive unified bounds" do
     ohlcv = shape_window(:okx, :fetch_ohlcv)
     deposits = shape_window(:okx, :fetch_deposits)
@@ -1046,6 +1072,47 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
       stale: Map.drop(expected, Map.keys(actual)),
       changed: for({pair, keys} <- actual, expected[pair] not in [nil, keys], do: {pair, expected[pair], keys})
     }
+  end
+
+  defp emulated_order_history_requests(venue, method, symbol) do
+    {:ok, requests} = RequestCollector.start_link()
+    stub = make_ref()
+
+    Req.Test.stub(stub, fn conn ->
+      conn = RequestCollector.capture(requests, conn)
+      Req.Test.json(conn, [])
+    end)
+
+    exchange =
+      Exchange.new!(Atom.to_string(venue),
+        api_key: "key",
+        secret: "secret",
+        sandbox: true
+      )
+
+    assert {:ok, []} =
+             apply(Bourse, method, [
+               exchange,
+               [
+                 symbol: symbol,
+                 until: @until_ms,
+                 plug: {Req.Test, stub},
+                 timestamp_ms_override: @since_ms
+               ]
+             ])
+
+    requests
+    |> RequestCollector.requests()
+    |> Enum.map(fn %{conn: conn} ->
+      %{
+        path: conn.request_path,
+        query:
+          conn
+          |> RequestCollector.query()
+          |> Map.drop(["recvWindow", "signature", "timestamp"])
+      }
+    end)
+    |> Enum.sort_by(& &1.path)
   end
 
   defp shape_window(venue, method) do

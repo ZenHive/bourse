@@ -25,6 +25,65 @@ defmodule Bourse.Emulation do
   @default_currency_precision 1.0e-8
   @zero 0
 
+  @consumed_delegated_params %{
+    {:handle_fetch_bids_asks, :fetch_tickers} => %{
+      symbol: "translated to the delegated plural symbols selector"
+    },
+    {:handle_fetch_deposit_address, :fetch_deposit_addresses} => %{
+      network: "used locally to select one address from the delegated result"
+    },
+    {:handle_fetch_deposit_address, :fetch_deposit_addresses_by_network} => %{
+      network: "used locally to select one address from the delegated result"
+    },
+    {:handle_fetch_funding_interval, :fetch_markets} => %{
+      symbol: "used locally to validate the requested contract market"
+    },
+    {:handle_fetch_funding_rate, :fetch_markets} => %{
+      symbol: "used locally to validate the requested contract market"
+    },
+    {:handle_fetch_isolated_borrow_rate, :fetch_isolated_borrow_rates} => %{
+      symbol: "used locally to select one rate from the delegated result"
+    },
+    {:handle_fetch_market_leverage_tiers, :fetch_markets} => %{
+      symbol: "used locally to validate the requested contract market"
+    },
+    {:handle_fetch_order, :fetch_canceled_orders} => %{
+      id: "used locally to select one order from the delegated result"
+    },
+    {:handle_fetch_order, :fetch_closed_orders} => %{
+      id: "used locally to select one order from the delegated result"
+    },
+    {:handle_fetch_order, :fetch_open_orders} => %{
+      id: "used locally to select one order from the delegated result"
+    },
+    {:handle_fetch_order, :fetch_orders} => %{
+      id: "used locally to select one order from the delegated result"
+    },
+    {:handle_fetch_order_trades, :fetch_my_trades} => %{
+      id: "used locally to select trades for one order",
+      order: "used locally as an optional embedded trade source",
+      trades: "used locally as optional trade rows or identifiers"
+    },
+    {:handle_fetch_position, :fetch_positions} => %{
+      symbol: "translated to the delegated plural symbols selector"
+    },
+    {:handle_fetch_position_history, :fetch_positions_history} => %{
+      symbol: "translated to the delegated plural symbols selector"
+    },
+    {:handle_fetch_ticker, :fetch_markets} => %{
+      symbol: "used locally to index the delegated ticker payload"
+    },
+    {:handle_fetch_ticker, :fetch_tickers} => %{
+      symbol: "translated to the delegated plural symbols selector"
+    },
+    {:handle_fetch_trading_fee, :fetch_trading_fees} => %{
+      symbol: "used locally to select one fee from the delegated result"
+    },
+    {:handle_fetch_trading_limits, :fetch_markets} => %{
+      symbols: "used locally to select requested limits from the delegated markets"
+    }
+  }
+
   # Extractor camelCase names that are not in Unified.method_defs (WS-only today).
   # Atom literals intern at compile time — no String.to_atom.
   @extra_method_name_atoms %{
@@ -320,13 +379,26 @@ defmodule Bourse.Emulation do
     symbols =
       normalize_symbols(extract_param(params, :symbols) || extract_param(params, :symbol))
 
-    call_method(exchange, exchange_module, :fetch_tickers, %{"symbols" => symbols}, opts)
+    call_method(
+      exchange,
+      exchange_module,
+      :fetch_tickers,
+      delegated_params(params, :handle_fetch_bids_asks, :fetch_tickers, %{"symbols" => symbols}),
+      opts
+    )
   end
 
   @doc "Derives unified currencies from fetchMarkets output (emulation strategy)."
   @spec handle_fetch_currencies(Exchange.t(), module(), map(), keyword()) :: dispatch_result()
-  def handle_fetch_currencies(exchange, exchange_module, _params, opts) do
-    with {:ok, markets} <- call_method(exchange, exchange_module, :fetch_markets, %{}, opts) do
+  def handle_fetch_currencies(exchange, exchange_module, params, opts) do
+    with {:ok, markets} <-
+           call_method(
+             exchange,
+             exchange_module,
+             :fetch_markets,
+             delegated_params(params, :handle_fetch_currencies, :fetch_markets),
+             opts
+           ) do
       {:ok, derive_currencies_from_markets(markets)}
     end
   end
@@ -338,7 +410,14 @@ defmodule Bourse.Emulation do
   defp handle_fetch_trading_limits(exchange, exchange_module, params, opts) do
     symbols = normalize_symbols(extract_param(params, :symbols))
 
-    with {:ok, markets} <- call_method(exchange, exchange_module, :fetch_markets, %{}, opts) do
+    with {:ok, markets} <-
+           call_method(
+             exchange,
+             exchange_module,
+             :fetch_markets,
+             delegated_params(params, :handle_fetch_trading_limits, :fetch_markets),
+             opts
+           ) do
       {:ok, derive_trading_limits(markets, symbols)}
     end
   end
@@ -357,7 +436,14 @@ defmodule Bourse.Emulation do
   defp handle_fetch_trading_fee(exchange, exchange_module, params, opts) do
     symbol = extract_param(params, :symbol)
 
-    with {:ok, fees} <- call_method(exchange, exchange_module, :fetch_trading_fees, %{}, opts) do
+    with {:ok, fees} <-
+           call_method(
+             exchange,
+             exchange_module,
+             :fetch_trading_fees,
+             delegated_params(params, :handle_fetch_trading_fee, :fetch_trading_fees),
+             opts
+           ) do
       require_symbol_result(fees, symbol, exchange, "fetchTradingFee() returned no data for")
     end
   end
@@ -369,7 +455,14 @@ defmodule Bourse.Emulation do
     symbol = extract_param(params, :symbol)
     symbols = normalize_symbols(symbol)
 
-    with {:ok, positions} <- call_method(exchange, exchange_module, :fetch_positions, %{"symbols" => symbols}, opts) do
+    with {:ok, positions} <-
+           call_method(
+             exchange,
+             exchange_module,
+             :fetch_positions,
+             delegated_params(params, :handle_fetch_position, :fetch_positions, %{"symbols" => symbols}),
+             opts
+           ) do
       # A missing row means the account is flat for this symbol, which is a valid position answer.
       {:ok, pick_symbol_entry(positions, symbol)}
     end
@@ -381,15 +474,15 @@ defmodule Bourse.Emulation do
           dispatch_result()
   defp handle_fetch_position_history(exchange, exchange_module, params, opts) do
     symbol = extract_param(params, :symbol)
-    since = extract_param(params, :since)
-    limit = extract_param(params, :limit)
     symbols = normalize_symbols(symbol)
 
     call_method(
       exchange,
       exchange_module,
       :fetch_positions_history,
-      %{"symbols" => symbols, "since" => since, "limit" => limit},
+      delegated_params(params, :handle_fetch_position_history, :fetch_positions_history, %{
+        "symbols" => symbols
+      }),
       opts
     )
   end
@@ -407,8 +500,15 @@ defmodule Bourse.Emulation do
     if is_nil(symbol) do
       require_symbol_error(exchange, "fetch_ticker")
     else
-      with {:ok, tickers} <- call_method(exchange, exchange_module, :fetch_tickers, %{"symbols" => [symbol]}, opts),
-           {:ok, indexed} <- index_tickers_for_lookup(exchange, exchange_module, tickers, opts) do
+      with {:ok, tickers} <-
+             call_method(
+               exchange,
+               exchange_module,
+               :fetch_tickers,
+               delegated_params(params, :handle_fetch_ticker, :fetch_tickers, %{"symbols" => [symbol]}),
+               opts
+             ),
+           {:ok, indexed} <- index_tickers_for_lookup(exchange, exchange_module, tickers, params, opts) do
         require_symbol_result(indexed, symbol, exchange, "fetchTickers() could not find a ticker for")
       end
     end
@@ -424,7 +524,13 @@ defmodule Bourse.Emulation do
     if is_nil(code) do
       require_code_error(exchange, "fetch_transaction_fee")
     else
-      call_method(exchange, exchange_module, :fetch_transaction_fees, %{"code" => code}, opts)
+      call_method(
+        exchange,
+        exchange_module,
+        :fetch_transaction_fees,
+        delegated_params(params, :handle_fetch_transaction_fee, :fetch_transaction_fees),
+        opts
+      )
     end
   end
 
@@ -439,7 +545,13 @@ defmodule Bourse.Emulation do
       require_code_error(exchange, "fetch_deposit_withdraw_fee")
     else
       with {:ok, fees} <-
-             call_method(exchange, exchange_module, :fetch_deposit_withdraw_fees, %{"code" => code}, opts) do
+             call_method(
+               exchange,
+               exchange_module,
+               :fetch_deposit_withdraw_fees,
+               delegated_params(params, :handle_fetch_deposit_withdraw_fee, :fetch_deposit_withdraw_fees),
+               opts
+             ) do
         {:ok, pick_code_entry(fees, code)}
       end
     end
@@ -469,7 +581,13 @@ defmodule Bourse.Emulation do
       require_symbol_error(exchange, "fetch_leverage")
     else
       with {:ok, leverages} <-
-             call_method(exchange, exchange_module, :fetch_leverages, %{"symbol" => symbol}, opts) do
+             call_method(
+               exchange,
+               exchange_module,
+               :fetch_leverages,
+               delegated_params(params, :handle_fetch_leverage, :fetch_leverages),
+               opts
+             ) do
         require_symbol_result(leverages, symbol, exchange, "fetchLeverage() returned no data for")
       end
     end
@@ -485,7 +603,13 @@ defmodule Bourse.Emulation do
       require_symbol_error(exchange, "fetch_margin_mode")
     else
       with {:ok, modes} <-
-             call_method(exchange, exchange_module, :fetch_margin_modes, %{"symbol" => symbol}, opts) do
+             call_method(
+               exchange,
+               exchange_module,
+               :fetch_margin_modes,
+               delegated_params(params, :handle_fetch_margin_mode, :fetch_margin_modes),
+               opts
+             ) do
         require_symbol_result(modes, symbol, exchange, "fetchMarginMode() returned no data for")
       end
     end
@@ -501,9 +625,23 @@ defmodule Bourse.Emulation do
     if is_nil(symbol) do
       require_symbol_error(exchange, "fetch_market_leverage_tiers")
     else
-      with {:ok, _market} <- ensure_contract_market(exchange, exchange_module, symbol, opts),
+      with {:ok, _market} <-
+             ensure_contract_market(
+               exchange,
+               exchange_module,
+               symbol,
+               params,
+               :handle_fetch_market_leverage_tiers,
+               opts
+             ),
            {:ok, tiers} <-
-             call_method(exchange, exchange_module, :fetch_leverage_tiers, %{"symbol" => symbol}, opts) do
+             call_method(
+               exchange,
+               exchange_module,
+               :fetch_leverage_tiers,
+               delegated_params(params, :handle_fetch_market_leverage_tiers, :fetch_leverage_tiers),
+               opts
+             ) do
         require_symbol_result(tiers, symbol, exchange, "fetchMarketLeverageTiers() returned no data for")
       end
     end
@@ -519,9 +657,23 @@ defmodule Bourse.Emulation do
     if is_nil(symbol) do
       require_symbol_error(exchange, "fetch_funding_rate")
     else
-      with {:ok, _market} <- ensure_contract_market(exchange, exchange_module, symbol, opts),
+      with {:ok, _market} <-
+             ensure_contract_market(
+               exchange,
+               exchange_module,
+               symbol,
+               params,
+               :handle_fetch_funding_rate,
+               opts
+             ),
            {:ok, rates} <-
-             call_method(exchange, exchange_module, :fetch_funding_rates, %{"symbol" => symbol}, opts) do
+             call_method(
+               exchange,
+               exchange_module,
+               :fetch_funding_rates,
+               delegated_params(params, :handle_fetch_funding_rate, :fetch_funding_rates),
+               opts
+             ) do
         require_symbol_result(rates, symbol, exchange, "fetchFundingRate() returned no data for")
       end
     end
@@ -537,9 +689,23 @@ defmodule Bourse.Emulation do
     if is_nil(symbol) do
       require_symbol_error(exchange, "fetch_funding_interval")
     else
-      with {:ok, _market} <- ensure_contract_market(exchange, exchange_module, symbol, opts),
+      with {:ok, _market} <-
+             ensure_contract_market(
+               exchange,
+               exchange_module,
+               symbol,
+               params,
+               :handle_fetch_funding_interval,
+               opts
+             ),
            {:ok, rates} <-
-             call_method(exchange, exchange_module, :fetch_funding_intervals, %{"symbol" => symbol}, opts) do
+             call_method(
+               exchange,
+               exchange_module,
+               :fetch_funding_intervals,
+               delegated_params(params, :handle_fetch_funding_interval, :fetch_funding_intervals),
+               opts
+             ) do
         require_symbol_result(rates, symbol, exchange, "fetchFundingInterval() returned no data for")
       end
     end
@@ -555,13 +721,23 @@ defmodule Bourse.Emulation do
     if is_nil(symbol) do
       require_symbol_error(exchange, "fetch_isolated_borrow_rate")
     else
-      do_fetch_isolated_borrow_rate(exchange, exchange_module, symbol, opts)
+      do_fetch_isolated_borrow_rate(exchange, exchange_module, symbol, params, opts)
     end
   end
 
-  defp do_fetch_isolated_borrow_rate(exchange, exchange_module, symbol, opts) do
+  defp do_fetch_isolated_borrow_rate(exchange, exchange_module, symbol, params, opts) do
     with {:ok, rates} <-
-           call_method(exchange, exchange_module, :fetch_isolated_borrow_rates, %{}, opts) do
+           call_method(
+             exchange,
+             exchange_module,
+             :fetch_isolated_borrow_rates,
+             delegated_params(
+               params,
+               :handle_fetch_isolated_borrow_rate,
+               :fetch_isolated_borrow_rates
+             ),
+             opts
+           ) do
       require_borrow_rate_result(rates, symbol, exchange)
     end
   end
@@ -612,12 +788,17 @@ defmodule Bourse.Emulation do
   @spec handle_fetch_filtered_orders(Exchange.t(), module(), map(), keyword(), atom()) ::
           dispatch_result()
   defp handle_fetch_filtered_orders(exchange, exchange_module, params, opts, status) do
-    symbol = extract_param(params, :symbol)
     since = extract_param(params, :since)
     limit = extract_param(params, :limit)
-    params = %{"symbol" => symbol, "since" => since, "limit" => limit}
 
-    with {:ok, orders} <- call_method(exchange, exchange_module, :fetch_orders, params, opts) do
+    with {:ok, orders} <-
+           call_method(
+             exchange,
+             exchange_module,
+             :fetch_orders,
+             delegated_params(params, :handle_fetch_filtered_orders, :fetch_orders),
+             opts
+           ) do
       filtered =
         orders
         |> filter_by_status(status)
@@ -632,12 +813,17 @@ defmodule Bourse.Emulation do
   @spec handle_fetch_canceled_and_closed_orders(Exchange.t(), module(), map(), keyword()) ::
           dispatch_result()
   defp handle_fetch_canceled_and_closed_orders(exchange, exchange_module, params, opts) do
-    symbol = extract_param(params, :symbol)
     since = extract_param(params, :since)
     limit = extract_param(params, :limit)
-    params = %{"symbol" => symbol, "since" => since, "limit" => limit}
 
-    with {:ok, orders} <- call_method(exchange, exchange_module, :fetch_orders, params, opts) do
+    with {:ok, orders} <-
+           call_method(
+             exchange,
+             exchange_module,
+             :fetch_orders,
+             delegated_params(params, :handle_fetch_canceled_and_closed_orders, :fetch_orders),
+             opts
+           ) do
       merged = filter_by_statuses(orders, [:canceled, :closed, :rejected])
       sorted = sort_by(merged, :timestamp, false)
       {:ok, filter_by_since_limit(sorted, since, limit, :timestamp)}
@@ -653,16 +839,13 @@ defmodule Bourse.Emulation do
     if is_nil(id) do
       require_id_error(exchange, "fetch_order")
     else
-      symbol = extract_param(params, :symbol)
-      since = extract_param(params, :since)
-      limit = extract_param(params, :limit)
-      do_fetch_order(exchange, exchange_module, id, symbol, since, limit, opts)
+      do_fetch_order(exchange, exchange_module, id, params, opts)
     end
   end
 
-  defp do_fetch_order(exchange, exchange_module, id, symbol, since, limit, opts) do
+  defp do_fetch_order(exchange, exchange_module, id, params, opts) do
     with {:ok, orders} <-
-           fetch_orders_for_lookup(exchange, exchange_module, symbol, since, limit, opts) do
+           fetch_orders_for_lookup(exchange, exchange_module, params, opts) do
       require_order_result(orders, id, exchange)
     end
   end
@@ -696,7 +879,6 @@ defmodule Bourse.Emulation do
   end
 
   defp do_fetch_order_trades(exchange, exchange_module, params, opts, id) do
-    symbol = extract_param(params, :symbol)
     since = extract_param(params, :since)
     limit = extract_param(params, :limit)
 
@@ -708,7 +890,7 @@ defmodule Bourse.Emulation do
         fetch_and_filter_by_trade_ids(
           exchange,
           exchange_module,
-          symbol,
+          params,
           since,
           limit,
           opts,
@@ -719,7 +901,7 @@ defmodule Bourse.Emulation do
         fetch_and_filter_by_order_id(
           exchange,
           exchange_module,
-          symbol,
+          params,
           since,
           limit,
           opts,
@@ -737,10 +919,15 @@ defmodule Bourse.Emulation do
     {:ok, filtered}
   end
 
-  defp fetch_and_filter_by_trade_ids(exchange, module, symbol, since, limit, opts, trade_ids) do
-    params = %{"symbol" => symbol, "since" => since, "limit" => limit}
-
-    with {:ok, trades} <- call_method(exchange, module, :fetch_my_trades, params, opts) do
+  defp fetch_and_filter_by_trade_ids(exchange, module, params, since, limit, opts, trade_ids) do
+    with {:ok, trades} <-
+           call_method(
+             exchange,
+             module,
+             :fetch_my_trades,
+             delegated_params(params, :handle_fetch_order_trades, :fetch_my_trades),
+             opts
+           ) do
       filtered =
         trades
         |> filter_by_trade_ids(trade_ids)
@@ -750,10 +937,15 @@ defmodule Bourse.Emulation do
     end
   end
 
-  defp fetch_and_filter_by_order_id(exchange, module, symbol, since, limit, opts, id) do
-    params = %{"symbol" => symbol, "since" => since, "limit" => limit}
-
-    with {:ok, trades} <- call_method(exchange, module, :fetch_my_trades, params, opts) do
+  defp fetch_and_filter_by_order_id(exchange, module, params, since, limit, opts, id) do
+    with {:ok, trades} <-
+           call_method(
+             exchange,
+             module,
+             :fetch_my_trades,
+             delegated_params(params, :handle_fetch_order_trades, :fetch_my_trades),
+             opts
+           ) do
       filtered =
         trades
         |> filter_by_order_id(id)
@@ -770,9 +962,15 @@ defmodule Bourse.Emulation do
     symbol = extract_param(params, :symbol)
     since = extract_param(params, :since)
     limit = extract_param(params, :limit)
-    params = %{"symbol" => symbol, "since" => since, "limit" => limit}
 
-    with {:ok, orders} <- call_method(exchange, exchange_module, :fetch_orders, params, opts) do
+    with {:ok, orders} <-
+           call_method(
+             exchange,
+             exchange_module,
+             :fetch_orders,
+             delegated_params(params, :handle_fetch_my_trades, :fetch_orders),
+             opts
+           ) do
       trades =
         orders
         |> orders_to_trades()
@@ -792,16 +990,15 @@ defmodule Bourse.Emulation do
   @spec handle_fetch_deposits_withdrawals(Exchange.t(), module(), map(), keyword()) ::
           dispatch_result()
   defp handle_fetch_deposits_withdrawals(exchange, exchange_module, params, opts) do
-    code = extract_param(params, :code)
     since = extract_param(params, :since)
     limit = extract_param(params, :limit)
 
     cond do
       deposits_or_withdrawals_available?(exchange_module) ->
-        fetch_deposits_and_withdrawals(exchange, exchange_module, code, since, limit, opts)
+        fetch_deposits_and_withdrawals(exchange, exchange_module, params, since, limit, opts)
 
       endpoint_available?(exchange_module, :fetch_ledger) ->
-        fetch_transactions_from_ledger(exchange, exchange_module, code, since, limit, opts)
+        fetch_transactions_from_ledger(exchange, exchange_module, params, since, limit, opts)
 
       true ->
         {:error,
@@ -812,18 +1009,39 @@ defmodule Bourse.Emulation do
     end
   end
 
-  defp fetch_deposits_and_withdrawals(exchange, module, code, since, limit, opts) do
-    with {:ok, deposits} <- call_optional_method(exchange, module, :fetch_deposits, [code, since, limit], opts),
-         {:ok, withdrawals} <- call_optional_method(exchange, module, :fetch_withdrawals, [code, since, limit], opts) do
+  defp fetch_deposits_and_withdrawals(exchange, module, params, since, limit, opts) do
+    with {:ok, deposits} <-
+           call_optional_method(
+             exchange,
+             module,
+             :fetch_deposits,
+             params,
+             :handle_fetch_deposits_withdrawals,
+             opts
+           ),
+         {:ok, withdrawals} <-
+           call_optional_method(
+             exchange,
+             module,
+             :fetch_withdrawals,
+             params,
+             :handle_fetch_deposits_withdrawals,
+             opts
+           ) do
       combined = ensure_list(deposits) ++ ensure_list(withdrawals)
       {:ok, filter_by_since_limit(combined, since, limit, :timestamp)}
     end
   end
 
-  defp fetch_transactions_from_ledger(exchange, module, code, since, limit, opts) do
-    params = %{"code" => code, "since" => since, "limit" => limit}
-
-    with {:ok, ledger} <- call_method(exchange, module, :fetch_ledger, params, opts) do
+  defp fetch_transactions_from_ledger(exchange, module, params, since, limit, opts) do
+    with {:ok, ledger} <-
+           call_method(
+             exchange,
+             module,
+             :fetch_ledger,
+             delegated_params(params, :handle_fetch_deposits_withdrawals, :fetch_ledger),
+             opts
+           ) do
       filtered =
         ledger
         |> ensure_list()
@@ -841,11 +1059,11 @@ defmodule Bourse.Emulation do
   defp do_fetch_deposit_address(exchange, exchange_module, code, params, opts) do
     cond do
       endpoint_available?(exchange_module, :fetch_deposit_addresses) ->
-        fetch_deposit_address_from_addresses(exchange, exchange_module, code, opts)
+        fetch_deposit_address_from_addresses(exchange, exchange_module, code, params, opts)
 
       endpoint_available?(exchange_module, :fetch_deposit_addresses_by_network) ->
         network = extract_param(params, :network)
-        fetch_deposit_address_by_network(exchange, exchange_module, code, network, opts)
+        fetch_deposit_address_by_network(exchange, exchange_module, code, network, params, opts)
 
       true ->
         {:error,
@@ -856,8 +1074,15 @@ defmodule Bourse.Emulation do
     end
   end
 
-  defp fetch_deposit_address_from_addresses(exchange, module, code, opts) do
-    with {:ok, addresses} <- call_method(exchange, module, :fetch_deposit_addresses, %{"code" => code}, opts) do
+  defp fetch_deposit_address_from_addresses(exchange, module, code, params, opts) do
+    with {:ok, addresses} <-
+           call_method(
+             exchange,
+             module,
+             :fetch_deposit_addresses,
+             delegated_params(params, :handle_fetch_deposit_address, :fetch_deposit_addresses),
+             opts
+           ) do
       case pick_code_entry(addresses, code) do
         nil -> deposit_address_not_found_error(exchange, code)
         address -> {:ok, address}
@@ -865,11 +1090,19 @@ defmodule Bourse.Emulation do
     end
   end
 
-  defp fetch_deposit_address_by_network(exchange, module, code, network, opts) do
-    cleaned_opts = drop_params(opts, [:network])
-
+  defp fetch_deposit_address_by_network(exchange, module, code, network, params, opts) do
     with {:ok, address_map} <-
-           call_method(exchange, module, :fetch_deposit_addresses_by_network, %{"code" => code}, cleaned_opts) do
+           call_method(
+             exchange,
+             module,
+             :fetch_deposit_addresses_by_network,
+             delegated_params(
+               params,
+               :handle_fetch_deposit_address,
+               :fetch_deposit_addresses_by_network
+             ),
+             opts
+           ) do
       case resolve_network_address(address_map, network) do
         nil -> deposit_address_not_found_error(exchange, code)
         address -> {:ok, address}
@@ -925,11 +1158,11 @@ defmodule Bourse.Emulation do
 
   @doc false
   # Normalizes fetchTickers output into a symbol-keyed lookup using carved markets.
-  @spec index_tickers_for_lookup(Exchange.t(), module(), term(), keyword()) ::
+  @spec index_tickers_for_lookup(Exchange.t(), module(), term(), map(), keyword()) ::
           {:ok, map()} | {:error, Error.t()}
-  defp index_tickers_for_lookup(exchange, exchange_module, tickers, opts) do
+  defp index_tickers_for_lookup(exchange, exchange_module, tickers, params, opts) do
     with {:ok, normalized} <- normalize_tickers_payload(exchange, exchange_module, tickers) do
-      resolve_tickers_via_markets_index(exchange, exchange_module, normalized, opts)
+      resolve_tickers_via_markets_index(exchange, exchange_module, normalized, params, opts)
     end
   end
 
@@ -958,7 +1191,7 @@ defmodule Bourse.Emulation do
     {:ok, tickers}
   end
 
-  defp resolve_tickers_via_markets_index(exchange, exchange_module, tickers, opts) when is_map(tickers) do
+  defp resolve_tickers_via_markets_index(exchange, exchange_module, tickers, params, opts) when is_map(tickers) do
     cond do
       map_size(tickers) == 0 ->
         {:ok, tickers}
@@ -967,23 +1200,37 @@ defmodule Bourse.Emulation do
         {:ok, tickers}
 
       true ->
-        with {:ok, markets} <- call_method(exchange, exchange_module, :fetch_markets, %{}, opts) do
+        with {:ok, markets} <-
+               call_method(
+                 exchange,
+                 exchange_module,
+                 :fetch_markets,
+                 delegated_params(params, :handle_fetch_ticker, :fetch_markets),
+                 opts
+               ) do
           {:ok, ReadParse.index_tickers_by_markets(Map.values(tickers), markets)}
         end
     end
   end
 
-  defp resolve_tickers_via_markets_index(exchange, exchange_module, tickers, opts) when is_list(tickers) do
+  defp resolve_tickers_via_markets_index(exchange, exchange_module, tickers, params, opts) when is_list(tickers) do
     if tickers == [] do
       {:ok, tickers}
     else
-      with {:ok, markets} <- call_method(exchange, exchange_module, :fetch_markets, %{}, opts) do
+      with {:ok, markets} <-
+             call_method(
+               exchange,
+               exchange_module,
+               :fetch_markets,
+               delegated_params(params, :handle_fetch_ticker, :fetch_markets),
+               opts
+             ) do
         {:ok, ReadParse.index_tickers_by_markets(tickers, markets)}
       end
     end
   end
 
-  defp resolve_tickers_via_markets_index(_exchange, _exchange_module, tickers, _opts) do
+  defp resolve_tickers_via_markets_index(_exchange, _exchange_module, tickers, _params, _opts) do
     {:ok, tickers}
   end
 
@@ -999,10 +1246,10 @@ defmodule Bourse.Emulation do
 
   @doc false
   # Ensures a market is a contract market before returning it.
-  @spec ensure_contract_market(Exchange.t(), module(), String.t(), keyword()) ::
+  @spec ensure_contract_market(Exchange.t(), module(), String.t(), map(), atom(), keyword()) ::
           {:ok, map()} | {:error, Error.t()}
-  defp ensure_contract_market(exchange, exchange_module, symbol, opts) do
-    with {:ok, market} <- fetch_market(exchange, exchange_module, symbol, opts),
+  defp ensure_contract_market(exchange, exchange_module, symbol, params, handler, opts) do
+    with {:ok, market} <- fetch_market(exchange, exchange_module, symbol, params, handler, opts),
          :ok <- validate_contract_market(market, exchange) do
       {:ok, market}
     end
@@ -1049,10 +1296,17 @@ defmodule Bourse.Emulation do
 
   @doc false
   # Fetches a single market by symbol using fetchMarkets.
-  @spec fetch_market(Exchange.t(), module(), String.t(), keyword()) ::
+  @spec fetch_market(Exchange.t(), module(), String.t(), map(), atom(), keyword()) ::
           {:ok, map()} | {:error, Error.t()}
-  defp fetch_market(exchange, exchange_module, symbol, opts) do
-    with {:ok, markets} <- call_method(exchange, exchange_module, :fetch_markets, %{}, opts) do
+  defp fetch_market(exchange, exchange_module, symbol, params, handler, opts) do
+    with {:ok, markets} <-
+           call_method(
+             exchange,
+             exchange_module,
+             :fetch_markets,
+             delegated_params(params, handler, :fetch_markets),
+             opts
+           ) do
       case pick_symbol_entry(markets, symbol) do
         nil ->
           {:error,
@@ -1114,28 +1368,22 @@ defmodule Bourse.Emulation do
   end
 
   @doc false
-  @spec call_optional_method(Exchange.t(), module(), atom(), list(), keyword()) ::
+  @spec call_optional_method(Exchange.t(), module(), atom(), map(), atom(), keyword()) ::
           {:ok, list()} | {:error, Error.t()}
-  defp call_optional_method(exchange, exchange_module, method, args, opts) do
-    params = list_args_to_params(args)
-
+  defp call_optional_method(exchange, exchange_module, method, params, handler, opts) do
     if endpoint_available?(exchange_module, method) do
-      case call_method(exchange, exchange_module, method, params, opts) do
+      case call_method(
+             exchange,
+             exchange_module,
+             method,
+             delegated_params(params, handler, method),
+             opts
+           ) do
         {:ok, result} -> {:ok, ensure_list(result)}
         {:error, _} = error -> error
       end
     else
       {:ok, []}
-    end
-  end
-
-  defp list_args_to_params(args) do
-    case args do
-      [symbol, since, limit] -> %{"symbol" => symbol, "since" => since, "limit" => limit}
-      [symbols] when is_list(symbols) -> %{"symbols" => symbols}
-      [symbol] when is_binary(symbol) -> %{"symbol" => symbol}
-      [code] when is_binary(code) -> %{"code" => code}
-      _ -> %{}
     end
   end
 
@@ -1160,17 +1408,21 @@ defmodule Bourse.Emulation do
 
   @doc false
   # Fetches orders for lookup, preferring fetchOrders if available.
-  @spec fetch_orders_for_lookup(Exchange.t(), module(), String.t() | nil, term(), term(), keyword()) ::
+  @spec fetch_orders_for_lookup(Exchange.t(), module(), map(), keyword()) ::
           {:ok, list()} | {:error, Error.t()}
-  defp fetch_orders_for_lookup(exchange, module, symbol, since, limit, opts) do
-    params = %{"symbol" => symbol, "since" => since, "limit" => limit}
-
+  defp fetch_orders_for_lookup(exchange, module, params, opts) do
     cond do
       endpoint_available?(module, :fetch_orders) ->
-        call_method(exchange, module, :fetch_orders, params, opts)
+        call_method(
+          exchange,
+          module,
+          :fetch_orders,
+          delegated_params(params, :handle_fetch_order, :fetch_orders),
+          opts
+        )
 
       has_any_order_endpoint?(module) ->
-        combine_order_endpoints(exchange, module, [symbol, since, limit], opts)
+        combine_order_endpoints(exchange, module, params, opts)
 
       true ->
         {:error,
@@ -1187,10 +1439,34 @@ defmodule Bourse.Emulation do
       endpoint_available?(module, :fetch_canceled_orders)
   end
 
-  defp combine_order_endpoints(exchange, module, args, opts) do
-    with {:ok, open} <- call_optional_method(exchange, module, :fetch_open_orders, args, opts),
-         {:ok, closed} <- call_optional_method(exchange, module, :fetch_closed_orders, args, opts),
-         {:ok, canceled} <- call_optional_method(exchange, module, :fetch_canceled_orders, args, opts) do
+  defp combine_order_endpoints(exchange, module, params, opts) do
+    with {:ok, open} <-
+           call_optional_method(
+             exchange,
+             module,
+             :fetch_open_orders,
+             params,
+             :handle_fetch_order,
+             opts
+           ),
+         {:ok, closed} <-
+           call_optional_method(
+             exchange,
+             module,
+             :fetch_closed_orders,
+             params,
+             :handle_fetch_order,
+             opts
+           ),
+         {:ok, canceled} <-
+           call_optional_method(
+             exchange,
+             module,
+             :fetch_canceled_orders,
+             params,
+             :handle_fetch_order,
+             opts
+           ) do
       {:ok, open ++ closed ++ canceled}
     end
   end
@@ -1499,19 +1775,19 @@ defmodule Bourse.Emulation do
   end
 
   @doc false
-  # Drops param keys from opts[:params] if present.
-  @spec drop_params(keyword(), [atom()]) :: keyword()
-  defp drop_params(opts, keys) do
-    params = opts |> Keyword.get(:params, %{}) |> Map.new()
+  # Carries caller params into a nested read, removing only documented local selectors.
+  @spec delegated_params(map(), atom(), atom(), map()) :: map()
+  defp delegated_params(params, handler, method, additions \\ %{}) do
+    consumed = Map.get(@consumed_delegated_params, {handler, method}, %{})
 
-    pruned =
-      Enum.reduce(keys, params, fn key, acc ->
-        acc
-        |> Map.delete(key)
-        |> Map.delete(Atom.to_string(key))
-      end)
-
-    Keyword.put(opts, :params, pruned)
+    consumed
+    |> Map.keys()
+    |> Enum.reduce(params, fn key, acc ->
+      acc
+      |> Map.delete(key)
+      |> Map.delete(Atom.to_string(key))
+    end)
+    |> Map.merge(additions)
   end
 
   @doc false
