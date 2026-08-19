@@ -504,14 +504,16 @@ defmodule Bourse.Unified.OrderPrecisionTest do
     assert error.raw["reason"] == "invalid_numeric"
   end
 
-  test "public create_order returns Error for a wire-encodable non-numeric amount" do
+  test "public create_order returns Error for a wire-encodable non-numeric amount or price" do
     market = precision_market("hyperliquid")
     exchange = "hyperliquid" |> exchange() |> Exchange.put_markets([market])
 
-    assert {:error, %Error{type: :invalid_parameters} = error} =
-             Bourse.create_order(exchange, market.symbol, "limit", "buy", true, price: 9000)
+    for {amount, opts} <- [{true, [price: 9000]}, {0.5, [price: true]}] do
+      assert {:error, %Error{type: :invalid_parameters} = error} =
+               Bourse.create_order(exchange, market.symbol, "limit", "buy", amount, opts)
 
-    assert error.raw["reason"] == "invalid_numeric"
+      assert error.raw["reason"] == "invalid_numeric"
+    end
   end
 
   test "public create_orders returns Error for a non-numeric amount on a rounding venue" do
@@ -526,17 +528,19 @@ defmodule Bourse.Unified.OrderPrecisionTest do
     assert error.raw["reason"] == "invalid_numeric"
   end
 
-  test "create_order! raises Error for a non-numeric amount on a rounding venue" do
+  test "create_order! raises Error for a non-numeric amount or price on a rounding venue" do
     market = precision_market("okx")
     exchange = "okx" |> exchange() |> Exchange.put_markets([market])
 
-    error =
-      assert_raise Error, fn ->
-        Bourse.create_order!(exchange, market.symbol, "limit", "buy", true, price: 9000)
-      end
+    for {amount, opts} <- [{true, [price: 9000]}, {0.5, [price: true]}] do
+      error =
+        assert_raise Error, fn ->
+          Bourse.create_order!(exchange, market.symbol, "limit", "buy", amount, opts)
+        end
 
-    assert error.type == :invalid_parameters
-    assert error.raw["reason"] == "invalid_numeric"
+      assert error.type == :invalid_parameters
+      assert error.raw["reason"] == "invalid_numeric"
+    end
   end
 
   test "a new OrderPrecision Decimal.cast MatchError bind reddens until converted or classified" do
