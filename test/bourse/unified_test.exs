@@ -457,6 +457,62 @@ defmodule Bourse.UnifiedTest do
   end
 
   # ---------------------------------------------------------------------------
+  # Caller-input error contract (task 642) — max_length and a rejected
+  # parameter value must share one public shape so a third validator cannot
+  # pick a third contract.
+  # ---------------------------------------------------------------------------
+
+  describe "public unified API caller-input error contract" do
+    @too_long_client_order_id String.duplicate("a", 65)
+
+    test "a too-long client_order_id and a keyword-list price share the same create_order error shape" do
+      exchange = deribit_create_order_exchange()
+
+      length_result =
+        Bourse.create_order(exchange, "BTC/USD:BTC", "market", "buy", 10, client_order_id: @too_long_client_order_id)
+
+      value_result =
+        Bourse.create_order(exchange, "BTC/USD:BTC", "limit", "buy", 10, price: [foo: 1])
+
+      assert {:error, %Error{type: :invalid_parameters} = length_error} = length_result
+      assert {:error, %Error{type: :invalid_parameters}} = value_result
+      assert length_error.raw["reason"] == "max_length_exceeded"
+      assert public_caller_input_shape(length_result) == public_caller_input_shape(value_result)
+    end
+
+    test "create_order! still raises on a too-long client_order_id" do
+      exchange = deribit_create_order_exchange()
+
+      error =
+        assert_raise Error, fn ->
+          Bourse.create_order!(exchange, "BTC/USD:BTC", "market", "buy", 10, client_order_id: @too_long_client_order_id)
+        end
+
+      assert error.type == :invalid_parameters
+      assert error.raw["reason"] == "max_length_exceeded"
+    end
+
+    test "OrderPrecision's load_markets/1 guard still raises through create_order" do
+      exchange =
+        Exchange.new!("bybit",
+          credentials: Bourse.Credentials.new!(api_key: "test-key", secret: "test-secret")
+        )
+
+      error =
+        assert_raise Error, fn ->
+          Bourse.create_order(exchange, "BTC/USDT:USDT", "limit", "buy", 0.123,
+            price: 60.4,
+            category: "linear"
+          )
+        end
+
+      assert error.type == :invalid_order
+      assert error.message =~ "load_markets/1"
+      assert get_in(error.raw, ["order_precision", "reason"]) == "markets_not_loaded"
+    end
+  end
+
+  # ---------------------------------------------------------------------------
   # build_params/3
   # ---------------------------------------------------------------------------
 
@@ -2771,6 +2827,14 @@ defmodule Bourse.UnifiedTest do
   end
 
   defp unique_stub(prefix), do: "#{prefix}_#{System.unique_integer([:positive])}"
+
+  defp deribit_create_order_exchange do
+    Exchange.new!("deribit",
+      credentials: Bourse.Credentials.new!(api_key: "test-key", secret: "test-secret")
+    )
+  end
+
+  defp public_caller_input_shape({:error, %Error{type: type}}), do: {:error, Error, type}
 
   defp dummy_required_value(:orders), do: [%{"symbol" => "BTC/USDT"}]
   defp dummy_required_value(:ids), do: ["id"]

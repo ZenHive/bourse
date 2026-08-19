@@ -354,6 +354,9 @@ defmodule Bourse.Unified.RequestShape do
   defp preserve_native?(%{"preserve_native" => true}), do: true
   defp preserve_native?(_entry), do: false
 
+  # Caller input, not an internal invariant. RequestShape.apply/4 still
+  # raises so fixture/shaping tests stay raise-based; Unified.call/5 converts
+  # this reason to {:error, %Error{}} at the non-bang public boundary.
   defp enforce_max_length!(params, native_key, value, %{"max_length" => max_length}, js_name, context)
        when is_integer(max_length) and max_length > 0 and is_binary(value) do
     if String.length(value) > max_length do

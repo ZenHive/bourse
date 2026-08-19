@@ -702,14 +702,17 @@ defmodule Bourse.Unified do
       end
     end
   rescue
-    # Only an unresolved authored identifier_reference (e.g. derive's missing
-    # subaccount_id) is normalized to a tuple at the public boundary. Other
-    # Bourse.Error raises in the pipeline — notably OrderPrecision's fail-loud
+    # Caller-input raises from request shaping become tuples at the public
+    # boundary. Other Bourse.Error raises — notably OrderPrecision's fail-loud
     # "call load_markets/1" guard — are deliberate and must stay raises.
     error in Error ->
       case error do
-        %Error{raw: %{"reason" => "unresolved_identifier_reference"}} -> {:error, error}
-        _ -> reraise(error, __STACKTRACE__)
+        %Error{raw: %{"reason" => reason}}
+        when reason in ["unresolved_identifier_reference", "max_length_exceeded"] ->
+          {:error, error}
+
+        _ ->
+          reraise(error, __STACKTRACE__)
       end
   end
 
