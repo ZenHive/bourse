@@ -758,6 +758,8 @@ mix test.json --quiet --include network              # integration probes (testn
 mix test.json --quiet --only unified_integration     # unified integration probes
 mix ccxt.classify_signing                            # signing classification report
 mix ccxt.verify_live_drift                           # recordings vs live venue drift
+mix ccxt.verify_ws_first_frame                       # classified public WS first data frame per venue
+mix ccxt.aggregate_live_lane                         # merge live-lane surface reports into one artifact
 ```
 
 > **⚠️ `mix test.json` silently excludes most integration tests by default.** A green run with no `--include` tags covers offline unit + signing tests only. Tags: `integration`, `network` (testnet REST probes), `dangerous` (raw POST/PUT/DELETE), `invalid_creds`, `capability_live`, `option_readiness`, `known_defect`, `native`.

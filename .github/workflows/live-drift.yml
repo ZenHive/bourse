@@ -1,10 +1,10 @@
 name: Live provider drift
 
 # The scheduled weekly lane runs from the always-on operator host (workbench
-# task 527): full ten-venue live drift with unrestricted provider reachability
-# plus the mutable contract-artifact check (mix ccxt.authority_check --online).
-# This GitHub-hosted job is a manual-only fallback — its egress allowlist
-# tolerates the venues that geo-block GitHub runner IPs.
+# task 527): authority drift, REST live-drift, the `:network` /
+# `:capability_live` corpus (including WebSocket auth smoke), and classified
+# first-frame probes. This GitHub-hosted job is a manual-only fallback — its
+# egress allowlist tolerates the venues that geo-block GitHub runner IPs.
 on:
   workflow_dispatch:
 
@@ -18,7 +18,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 90
 
     steps:
       - uses: actions/checkout@v4
@@ -62,14 +62,22 @@ jobs:
       - name: Publish durable run identity
         if: always()
         run: |
-          echo "Live drift run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Live lane run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Aggregated evidence: live-lane-report.json" >> "${GITHUB_STEP_SUMMARY}"
           echo "Contract artifact evidence: authority-drift-report.txt" >> "${GITHUB_STEP_SUMMARY}"
-          echo "Runtime evidence: live-drift-report.json" >> "${GITHUB_STEP_SUMMARY}"
-      - name: Upload scrubbed drift report
+          echo "REST drift evidence: live-drift-report.json" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Live corpus evidence: live-corpus-report.json" >> "${GITHUB_STEP_SUMMARY}"
+          echo "WS auth smoke evidence: ws-auth-smoke-dangerous-report.json" >> "${GITHUB_STEP_SUMMARY}"
+          echo "WS first-frame evidence: ws-first-frame-report.json" >> "${GITHUB_STEP_SUMMARY}"
+      - name: Upload scrubbed live-lane reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: live-drift-${{ github.run_id }}
           path: |
+            artifacts/live-lane-report.json
             artifacts/live-drift-report.json
             artifacts/authority-drift-report.txt
+            artifacts/live-corpus-report.json
+            artifacts/ws-auth-smoke-dangerous-report.json
+            artifacts/ws-first-frame-report.json

@@ -218,17 +218,25 @@ defmodule Bourse.LiveDriftTest do
     refute workflow =~ "push:"
     assert workflow =~ "if: always()"
     assert workflow =~ "artifacts/live-drift-report.json"
+    assert workflow =~ "artifacts/live-lane-report.json"
     assert workflow =~ "bash ops/live-drift.sh artifacts"
     assert workflow =~ "artifacts/authority-drift-report.txt"
     assert workflow =~ "GITHUB_STEP_SUMMARY"
     assert lane =~ "mix ccxt.authority_check --online"
     assert lane =~ "mix ccxt.verify_live_drift --report"
+    assert lane =~ "mix test.json --quiet"
+    assert lane =~ "test/bourse/ws/auth_live_smoke_test.exs"
+    assert lane =~ "mix ccxt.verify_ws_first_frame --report"
+    assert lane =~ "mix ccxt.aggregate_live_lane"
     assert lane =~ "authority_rc"
     assert lane =~ "live_drift_rc"
+    assert lane =~ "corpus_rc"
+    assert lane =~ "ws_rc"
     refute mix_project =~ ~s("ccxt.verify_live_drift")
+    refute mix_project =~ ~s("ccxt.verify_ws_first_frame")
   end
 
-  test "the shared lane fails when either authority or live drift fails and always runs both" do
+  test "the shared lane fails when any surface fails and always runs every surface" do
     directory = Path.join(System.tmp_dir!(), "live-drift-lane-#{System.unique_integer([:positive])}")
     bin_directory = Path.join(directory, "bin")
     call_log = Path.join(directory, "calls.log")
@@ -238,11 +246,33 @@ defmodule Bourse.LiveDriftTest do
 
     File.write!(fake_mix, """
     #!/usr/bin/env bash
-    printf '%s\n' "$*" >> "$LANE_CALL_LOG"
-    if [[ "$1" == "ccxt.authority_check" ]]; then
-      exit "${AUTHORITY_RC}"
+    printf '%s\\n' "$*" >> "$LANE_CALL_LOG"
+    path=""
+    prev=""
+    for arg in "$@"; do
+      if [[ "$prev" == "--report" || "$prev" == "--output" ]]; then
+        path="$arg"
+      fi
+      prev="$arg"
+    done
+    if [[ -n "$path" ]]; then
+      mkdir -p "$(dirname "$path")"
+      json='{"status":"passed","summary":{"result":"passed","failed":0},"venues":[],"failures":[]}'
+      printf '%s\\n' "$json" > "$path"
     fi
-    exit "${LIVE_DRIFT_RC}"
+    case "$1" in
+      ccxt.authority_check) exit "${AUTHORITY_RC:-0}" ;;
+      ccxt.verify_live_drift) exit "${LIVE_DRIFT_RC:-0}" ;;
+      test.json)
+        if [[ "$*" == *auth_live_smoke* ]]; then
+          exit "${AUTH_SMOKE_RC:-0}"
+        fi
+        exit "${CORPUS_RC:-0}"
+        ;;
+      ccxt.verify_ws_first_frame) exit "${WS_RC:-0}" ;;
+      ccxt.aggregate_live_lane) exit "${AGGREGATE_RC:-0}" ;;
+      *) exit 0 ;;
+    esac
     """)
 
     File.chmod!(fake_mix, 0o755)
@@ -263,8 +293,13 @@ defmodule Bourse.LiveDriftTest do
         )
 
       assert status == expected_status
-      assert File.read!(call_log) =~ "ccxt.authority_check --online"
-      assert File.read!(call_log) =~ "ccxt.verify_live_drift --report"
+      log = File.read!(call_log)
+      assert log =~ "ccxt.authority_check --online"
+      assert log =~ "ccxt.verify_live_drift --report"
+      assert log =~ "test.json --quiet"
+      assert log =~ "auth_live_smoke_test.exs"
+      assert log =~ "ccxt.verify_ws_first_frame --report"
+      assert log =~ "ccxt.aggregate_live_lane"
     end
   end
 

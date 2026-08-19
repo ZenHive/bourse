@@ -135,11 +135,20 @@ cannot establish current provider semantics.
 `ops/live-drift.sh` is the canonical lane entry point for both the always-on operator
 host and the manual GitHub fallback. The host syncs the target branch before each
 run, invokes `bash ops/live-drift.sh artifacts`, and sends a successful healthcheck
-ping only when that command exits zero. The script always runs both authority drift
-and live provider checks, then exits nonzero if either return code is nonzero; the
-authority return code is therefore part of the alarm again. GitHub calls the same
-script and uploads both reports, so its manual fallback has identical gating
-semantics.
+ping only when that command exits zero. The script always runs every surface —
+online authority drift, REST live-drift, the `:network` / `:capability_live`
+corpus (including `test/bourse/ws/auth_live_smoke_test.exs`), the listen-key
+auth-smoke file on `:dangerous`, and the classified WebSocket first-frame
+matrix — then exits nonzero if any return code is nonzero. Silence after a
+successful WebSocket connect is a failure, not a pass: the first-frame matrix
+fails the named venue and channel when no data frame arrives within the bounded
+wait, and classifies an acknowledgement that also carries payload as
+`acknowledgement_with_payload` rather than connectivity. Each run writes one
+durable `live-lane-report.json` listing per-venue / per-surface outcomes;
+venues or surfaces deliberately not probed carry a registered reason and
+tracking reference. GitHub calls the same script and uploads the aggregated
+artifact plus the per-surface reports, so its manual fallback has identical
+gating semantics.
 
 `ccxt.contract_compare` performs no network access. It verifies each available
 artifact against this corpus, writes one deterministic report per venue, and

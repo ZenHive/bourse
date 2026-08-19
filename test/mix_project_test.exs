@@ -19,6 +19,7 @@ defmodule Bourse.MixProjectTest do
     replay_exchange
     recorded_response_fixtures
     live_drift
+    live_lane
   )
   # Modules a consumer is not guaranteed to have. `:plug` is `only: [:dev, :test]`
   # here, and req declares it `optional: true` — so `Req.Plug` and `Req.Test` exist

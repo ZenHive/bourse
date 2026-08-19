@@ -82,6 +82,7 @@ defmodule Bourse.MixProject do
     replay_exchange
     recorded_response_fixtures
     live_drift
+    live_lane
   )
 
   @doc """
