@@ -11,6 +11,8 @@ defmodule Bourse.EmulationTest do
   @sample_ticker_last 42_000
   @higher_precision_digits 8
   @lower_precision_digits 2
+  @passthrough_until 1_700_003_600_000
+  @passthrough_native "venue-native-passthrough"
 
   defmodule ExchangeStub do
     @moduledoc false
@@ -233,6 +235,9 @@ defmodule Bourse.EmulationTest do
       dispatch_handlers = module_attribute!(ast, :dispatch_handlers)
       delegated_handlers = delegated_handlers(definitions)
 
+      assert delegated_params_reads_register?(definitions),
+             "delegated_params/4 no longer reads @consumed_delegated_params; the drop register is documentation-only"
+
       for handler <- delegated_handlers,
           site <- call_method_sites(definitions, handler) do
         assert derived_from_incoming_params?(site.params),
@@ -276,6 +281,47 @@ defmodule Bourse.EmulationTest do
                  "stale consumed-param entry: #{handler} no longer consumes #{param}"
         end
       end
+    end
+
+    test "unknown caller params survive filtered-order delegation" do
+      ExchangeStub.configure_endpoints!(MapSet.new([:fetch_orders]))
+
+      assert {:ok, []} =
+               dispatch_declared(
+                 :fetch_closed_orders,
+                 %{
+                   "until" => @passthrough_until,
+                   "venueNative" => @passthrough_native,
+                   "limit" => 5
+                 },
+                 fn :fetch_orders, params ->
+                   assert params["until"] == @passthrough_until
+                   assert params["venueNative"] == @passthrough_native
+                   assert params["limit"] == 5
+                   {:ok, []}
+                 end
+               )
+    end
+
+    test "consumed selectors are stripped before the nested read" do
+      ExchangeStub.configure_endpoints!(MapSet.new([:fetch_orders]))
+
+      assert {:error, %Bourse.Error{type: :order_not_found}} =
+               dispatch_declared(
+                 :fetch_order,
+                 %{
+                   "id" => "missing-order",
+                   "until" => @passthrough_until,
+                   "venueNative" => @passthrough_native
+                 },
+                 fn :fetch_orders, params ->
+                   refute Map.has_key?(params, "id")
+                   refute Map.has_key?(params, :id)
+                   assert params["until"] == @passthrough_until
+                   assert params["venueNative"] == @passthrough_native
+                   {:ok, []}
+                 end
+               )
     end
   end
 
