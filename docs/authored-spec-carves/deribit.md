@@ -787,3 +787,16 @@ on its first run (last row 53 ms past the requested boundary).
 <!-- carve-evidence-status
 {"carve_id":"C-T553f","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Deribit public/get_last_trades_by_instrument_and_time start_timestamp/end_timestamp parameters, exercised live"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-14 test.deribit.com boundary probes; time_window_integration_test.exs deribit fetch_trades probe green on since and until legs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Window behavior is pinned by the tagged live matrix, not by a manifest-registered recording"}
 -->
+
+## 2026-08-19 — unified account facts (Task 648)
+
+**C-T648d — Deribit portfolio enablement and margin model remain per-currency account facts (task 648). Outcome: CONFIRM venue.**
+
+`private/get_account_summaries` returns `portfolio_margining_enabled` and
+`margin_model` on each currency summary. They map independently to product access
+and account margin, retaining `currency` as row identity. The retired
+`private/get_portfolio_margins` method is not used.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T648d","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_account_summaries summaries[].portfolio_margining_enabled and summaries[].margin_model"},"observed_evidence":{"kind":"live_venue","reference":"test/bourse/account_facts_integration_test.exs Deribit testnet get_account_summaries field pins 2026-08-19"},"compatibility_reference":null,"resolved_tier":1}
+-->

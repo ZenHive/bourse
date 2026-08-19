@@ -857,3 +857,15 @@ Outcome: CONFIRM fraction-to-percent-point conversion.**
 <!-- carve-evidence-status
 {"carve_id":"C-T603e","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 ticker contract linked in C-T603e"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/bybit/fetch_ticker.json","fixture":"test/fixtures/responses/bybit/fetch_ticker.json"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The registered ticker establishes the wire value but the amendment remains documentation-derived for every market family"}
 -->
+
+## 2026-08-19 — unified account facts (Task 648)
+
+**C-T648c — Bybit UTA status and margin mode remain distinct account facts (task 648). Outcome: CONFIRM venue.**
+
+V5 `GET /v5/account/info` owns `unifiedMarginStatus` and `marginMode`. The
+account-facts read preserves them as product access and account margin without
+manufacturing a position margin mode. Its `info` is the full V5 response envelope.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T648c","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"https://bybit-exchange.github.io/docs/v5/account/account-info"},"observed_evidence":{"kind":"live_venue","reference":"test/bourse/account_facts_integration_test.exs Bybit demo /v5/account/info unifiedMarginStatus/marginMode pin 2026-08-19"},"compatibility_reference":null,"resolved_tier":1}
+-->

@@ -1322,3 +1322,17 @@ Outcome: DIVERGE from the spot-ticker unit applied to the EAPI route.**
 <!-- carve-evidence-status
 {"carve_id":"C-T606b","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"Binance EAPI 24hr ticker contract linked in C-T606b"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-13 eapi.binance.com GET /eapi/v1/ticker SOL-260814-66-P priceChangePercent 17.75; Unified.call fetchTickers list-read golden in binance_authored_spec_test.exs emits 1775.0"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The live EAPI body is pinned as a parser golden but is not registered as a frozen response"}
 -->
+
+## 2026-08-19 — unified account facts (Task 648)
+
+**C-T648b — Binance spot access and futures position margin are separate provider facts (task 648). Outcome: CONFIRM venue.**
+
+Spot `GET /api/v3/account` reports `accountType` and `permissions`; USD-M
+`GET /fapi/v2/account` reports per-position `isolated`. Endpoint selection chooses
+which provider account surface to observe but is never returned as an account fact.
+Consequently, a futures response without `accountType`/`permissions` leaves product
+access unavailable instead of deriving it from the caller's `type` option.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T648b","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"Binance Spot Account Information and USD-M Futures Account Information V2 contracts"},"observed_evidence":{"kind":"live_venue","reference":"test/bourse/account_facts_integration_test.exs Binance spot testnet accountType/permissions and USD-M demo positions[].isolated pins 2026-08-19"},"compatibility_reference":null,"resolved_tier":1}
+-->

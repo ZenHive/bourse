@@ -62,6 +62,21 @@ defmodule Bourse.Unified.ReadParse do
   @success_codes [0, "0", "00000", 200, "200", nil]
   @milliseconds_per_second 1_000
 
+  @typedoc "A venue-observed account fact and the provider fields that define it."
+  @type account_fact :: %{
+          status: :observed | :unavailable,
+          provider_fields: [String.t()],
+          value: term()
+        }
+
+  @typedoc "Independent account product, account-margin, and position-margin facts."
+  @type account_facts :: %{
+          product_access: account_fact(),
+          account_margin_model: account_fact(),
+          position_margin_modes: account_fact(),
+          info: term()
+        }
+
   @doc """
   Parses a unified read response body into the mapped struct(s).
 
@@ -96,6 +111,146 @@ defmodule Bourse.Unified.ReadParse do
       {:ok, RawResponse.new(body, exchange.id, js_name, Exchange.verification_state(exchange, js_name))}
     end
   end
+
+  @doc "Maps provider-owned account classifications without deriving missing facts."
+  @spec account_facts(Exchange.t(), term()) :: {:ok, account_facts()} | {:error, term()}
+  def account_facts(%Exchange{} = exchange, body) do
+    result =
+      with :ok <- reject_error_envelope(body, exchange) do
+        map_account_facts(exchange.id, body)
+      end
+
+    normalize_error(result, exchange, :fetch_account_facts)
+  end
+
+  defp map_account_facts("alpaca", body) when is_map(body) do
+    {:ok,
+     facts(
+       fact(body, ["shorting_enabled"]),
+       fact(body, ["multiplier"]),
+       unavailable([]),
+       body
+     )}
+  end
+
+  defp map_account_facts("bybit", %{"result" => result} = body) when is_map(result) do
+    {:ok,
+     facts(
+       fact(result, ["unifiedMarginStatus"]),
+       fact(result, ["marginMode"]),
+       unavailable([]),
+       body
+     )}
+  end
+
+  defp map_account_facts("deribit", %{"result" => %{"summaries" => summaries}} = body) when is_list(summaries) do
+    {:ok,
+     facts(
+       row_fact(summaries, ["currency"], ["portfolio_margining_enabled"]),
+       row_fact(summaries, ["currency"], ["margin_model"]),
+       unavailable([]),
+       body
+     )}
+  end
+
+  defp map_account_facts("binance", body) when is_map(body) do
+    {:ok,
+     facts(
+       fact(body, ["accountType", "permissions"]),
+       unavailable([]),
+       row_fact(List.wrap(Map.get(body, "positions")), ["symbol"], ["isolated"]),
+       body
+     )}
+  end
+
+  defp map_account_facts("hyperliquid", body) when is_map(body) do
+    {:ok,
+     facts(
+       unavailable([]),
+       fact(body, ["crossMarginSummary"]),
+       hyperliquid_position_fact(List.wrap(Map.get(body, "assetPositions"))),
+       body
+     )}
+  end
+
+  defp map_account_facts("lighter", %{"accounts" => accounts} = body) when is_list(accounts) do
+    {:ok,
+     facts(
+       row_fact(accounts, ["account_index"], ["account_type"]),
+       row_fact(accounts, ["account_index"], ["account_trading_mode"]),
+       lighter_position_fact(accounts),
+       body
+     )}
+  end
+
+  defp map_account_facts(exchange_id, body)
+       when exchange_id in ["alpaca", "binance", "bybit", "deribit", "hyperliquid", "lighter"] do
+    {:error, {:unexpected_response_shape, body}}
+  end
+
+  defp map_account_facts(exchange_id, _body),
+    do: {:error, Error.not_supported(exchange: exchange_id, message: "Account facts are not mapped for #{exchange_id}")}
+
+  defp facts(product_access, account_margin_model, position_margin_modes, body) do
+    %{
+      product_access: product_access,
+      account_margin_model: account_margin_model,
+      position_margin_modes: position_margin_modes,
+      info: body
+    }
+  end
+
+  defp fact(value, provider_fields) when is_map(value) do
+    observed = Map.take(value, provider_fields)
+
+    if Enum.any?(observed, fn {_field, field_value} -> not is_nil(field_value) end) do
+      observed(provider_fields, observed)
+    else
+      unavailable(provider_fields)
+    end
+  end
+
+  defp row_fact(rows, identity_fields, provider_fields) when is_list(rows) do
+    values =
+      rows
+      |> Enum.filter(&observes_any?(&1, provider_fields))
+      |> Enum.map(&Map.take(&1, identity_fields ++ provider_fields))
+
+    if values == [], do: unavailable(provider_fields), else: observed(provider_fields, values)
+  end
+
+  defp hyperliquid_position_fact(rows) when is_list(rows) do
+    values =
+      for %{"position" => %{"leverage" => %{"type" => type}} = position} <- rows,
+          not is_nil(type) do
+        Map.take(position, ["coin", "leverage"])
+      end
+
+    if values == [], do: unavailable(["leverage.type"]), else: observed(["leverage.type"], values)
+  end
+
+  defp lighter_position_fact(accounts) do
+    values =
+      for account when is_map(account) <- accounts,
+          position when is_map(position) <- List.wrap(Map.get(account, "positions")),
+          not is_nil(Map.get(position, "margin_mode")) do
+        position
+        |> Map.take(["symbol", "margin_mode"])
+        |> Map.put("account_index", Map.get(account, "account_index"))
+      end
+
+    if values == [], do: unavailable(["margin_mode"]), else: observed(["margin_mode"], values)
+  end
+
+  defp observes_any?(value, provider_fields) when is_map(value) do
+    Enum.any?(provider_fields, &(Map.has_key?(value, &1) and not is_nil(Map.get(value, &1))))
+  end
+
+  defp observes_any?(_value, _provider_fields), do: false
+
+  defp observed(provider_fields, value), do: %{status: :observed, provider_fields: provider_fields, value: value}
+
+  defp unavailable(provider_fields), do: %{status: :unavailable, provider_fields: provider_fields, value: nil}
 
   # `fetchTime` returns an integer millisecond timestamp (not a struct). OKX/Bybit
   # wrap it as `data: [%{ts: ...}]` / `result.timeSecond`; unwrap then coerce.

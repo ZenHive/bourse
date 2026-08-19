@@ -417,3 +417,16 @@ ack (task 638). Outcome: CONFIRMED venue.**
 <!-- carve-evidence-status
 {"carve_id":"C-T638","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"https://apidocs.lighter.xyz/docs/websocket-reference"},"observed_evidence":{"kind":"live_venue","reference":"test/bourse/ws/canary_test.exs Lighter testnet default-subscribe snapshot and invalid-channel probes"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+## 2026-08-19 — unified account facts (Task 648)
+
+**C-T648f — Lighter account class, account trading mode, and position margin mode remain independent facts (task 648). Outcome: CONFIRM venue.**
+
+The account response owns `account_type`, `account_trading_mode`, and each position's
+`margin_mode`. The unified read keeps the three provider classifications separate,
+retains account/symbol identity on repeated rows, and preserves the full body in
+`info`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T648f","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"Lighter GET /api/v1/account response schema: account_type, account_trading_mode, positions[].margin_mode"},"observed_evidence":{"kind":"live_venue","reference":"test/bourse/account_facts_integration_test.exs Lighter testnet account classification field pins 2026-08-19"},"compatibility_reference":null,"resolved_tier":1}
+-->

@@ -394,3 +394,16 @@ key/secret frame before channel subscription (task 544). Outcome: CONFIRM venue.
 <!-- carve-evidence-status
 {"carve_id":"C-T544a","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"https://docs.alpaca.markets/us/docs/streaming-market-data"},"observed_evidence":{"kind":"live_venue","reference":"test/bourse/ws/canary_test.exs Alpaca test-stream success and invalid-channel probes"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+## 2026-08-19 — unified account facts (Task 648)
+
+**C-T648a — Alpaca product access and account margin remain independent provider facts (task 648). Outcome: CONFIRM venue.**
+
+The Trading Account response owns `shorting_enabled` and `multiplier`. The unified
+account-facts read preserves those fields as product access and account margin,
+respectively; it leaves position margin unavailable because this response reports no
+position-level margin mode. The raw account body remains in `info`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T648a","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"Alpaca Trading API GET /v2/account account model (shorting_enabled, multiplier)"},"observed_evidence":{"kind":"live_venue","reference":"test/bourse/account_facts_integration_test.exs Alpaca paper GET /v2/account field pin 2026-08-19"},"compatibility_reference":null,"resolved_tier":1}
+-->

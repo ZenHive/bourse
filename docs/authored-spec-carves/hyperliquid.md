@@ -587,3 +587,16 @@ Outcome: DIVERGE from the absolute-value normalization.**
 <!-- carve-evidence-status
 {"carve_id":"C-T603i","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid clearinghouseState contract linked in C-T603i"},"observed_evidence":{"kind":"provider_shaped","reference":"Provider example unrealizedPnl -0.0134 and marginUsed 4.967826 pinned in hyperliquid_authored_spec_test.exs"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The signed provider example is not a manifest-registered clearinghouse body"}
 -->
+
+## 2026-08-19 — unified account facts (Task 648)
+
+**C-T648e — Hyperliquid account margin and position margin use their native clearinghouse fields (task 648). Outcome: CONFIRM venue.**
+
+`clearinghouseState` owns account-level `crossMarginSummary`; populated
+`assetPositions` own position-level `position.leverage.type`. The live testnet account
+returned an empty `assetPositions` list, so position margin is explicitly unavailable
+for that observation rather than inferred from `crossMarginSummary` or the caller.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T648e","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid clearinghouseState schema: crossMarginSummary and assetPositions[].position.leverage.type"},"observed_evidence":{"kind":"live_venue","reference":"test/bourse/account_facts_integration_test.exs Hyperliquid testnet clearinghouseState crossMarginSummary and empty-position unavailable pin 2026-08-19"},"compatibility_reference":null,"resolved_tier":1}
+-->

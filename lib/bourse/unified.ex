@@ -44,6 +44,9 @@ defmodule Bourse.Unified do
   # the call reaches `Bourse.HTTP` (Req raises `unknown option` otherwise).
   @selection_opts [:endpoint_index, :market_type]
 
+  @account_fact_venues ~w(alpaca binance bybit deribit hyperliquid lighter)
+  @account_fact_selector_fields ~w(type subType sub_type)
+
   @sanity_methods [:create_order, :edit_order]
   @list_required_params [:ids, :orders]
   @caller_input_reasons ~w(
@@ -135,6 +138,7 @@ defmodule Bourse.Unified do
     fetch_open_orders: "Fetch all currently open orders.",
     fetch_closed_orders: "Fetch completed (filled) orders.",
     fetch_balance: "Fetch account balance across all currencies.",
+    fetch_account_facts: "Fetch provider-observed product access, account margin model, and position margin modes.",
     fetch_my_trades: "Fetch the authenticated user's trade history.",
     fetch_positions: "Fetch all open derivative positions.",
     fetch_position: "Fetch a specific derivative position for a symbol.",
@@ -338,6 +342,7 @@ defmodule Bourse.Unified do
     {:fetch_uta_balance, "fetchUtaBalance", []},
     {:fetch_account, "fetchAccount", []},
     {:fetch_accounts, "fetchAccounts", []},
+    {:fetch_account_facts, "fetchAccountFacts", []},
     {:fetch_account_positions, "fetchAccountPositions", []},
     {:create_account, "createAccount", []},
     {:create_sub_account, "createSubAccount", []},
@@ -707,6 +712,15 @@ defmodule Bourse.Unified do
   @doc "Dispatches a unified method call through module resolution and endpoint selection."
   @spec call(Exchange.t(), atom(), String.t(), map(), keyword()) ::
           {:ok, term()} | {:error, Error.t() | term()}
+  def call(%Exchange{} = exchange, :fetch_account_facts, "fetchAccountFacts", params, opts) do
+    with {:ok, params} <- validate_param_values(params, :fetch_account_facts),
+         {:ok, params} <- validate_venue_params(exchange, :fetch_account_facts, params),
+         {:ok, module} <- require_module(exchange),
+         {:ok, response} <- account_facts_response(exchange, module, params, opts) do
+      ReadParse.account_facts(exchange, response_body(response))
+    end
+  end
+
   def call(%Exchange{} = exchange, method_atom, capability_name, params, opts) do
     with {:ok, params} <- validate_param_values(params, method_atom),
          {:ok, params} <- validate_venue_params(exchange, method_atom, params),
@@ -744,6 +758,74 @@ defmodule Bourse.Unified do
         _ ->
           reraise(error, __STACKTRACE__)
       end
+  end
+
+  defp account_facts_response(%Exchange{id: id} = exchange, _module, params, opts)
+       when id in ["alpaca", "deribit", "hyperliquid", "lighter"] do
+    raw_call(exchange, :fetch_balance, params, opts)
+  end
+
+  defp account_facts_response(%Exchange{id: "bybit"} = exchange, module, params, opts) do
+    call_account_facts_endpoint(exchange, module, :private_get_v5_account_info, params, opts)
+  end
+
+  defp account_facts_response(%Exchange{id: "binance"} = exchange, module, params, opts) do
+    case binance_account_facts_endpoint(exchange, params, opts) do
+      {:ok, endpoint} -> call_account_facts_endpoint(exchange, module, endpoint, params, opts)
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp account_facts_response(%Exchange{id: id}, _module, _params, _opts) when id not in @account_fact_venues do
+    {:error, Error.not_supported(exchange: id, message: "Account facts are not mapped for #{id}")}
+  end
+
+  defp call_account_facts_endpoint(exchange, module, endpoint_name, params, opts) do
+    case Enum.find(module.__endpoints__(), &(&1.name == endpoint_name)) do
+      nil ->
+        {:error,
+         Error.not_supported(
+           exchange: exchange.id,
+           message: "#{exchange.id} does not expose the account classification endpoint"
+         )}
+
+      config ->
+        request_params = Map.drop(params, @account_fact_selector_fields)
+        Dispatch.call(exchange, config, request_params, Keyword.drop(opts, @selection_opts))
+    end
+  end
+
+  defp binance_account_facts_endpoint(exchange, params, opts) do
+    market_family =
+      Map.get(params, "subType") ||
+        Map.get(params, "sub_type") ||
+        Map.get(params, "type") ||
+        Keyword.get(opts, :market_type) ||
+        exchange.default_family
+
+    case normalize_account_fact_family(market_family) do
+      :spot -> {:ok, :private_get_account}
+      :linear -> {:ok, :fapiPrivateV2_get_account}
+      :inverse -> {:ok, :dapiPrivate_get_account}
+      :unsupported -> unsupported_binance_account_family(exchange, market_family)
+    end
+  end
+
+  defp normalize_account_fact_family(nil), do: :spot
+  defp normalize_account_fact_family(family) when family in [:spot, "spot"], do: :spot
+  defp normalize_account_fact_family(family) when family in [:linear, :swap, "linear", "swap"], do: :linear
+
+  defp normalize_account_fact_family(family)
+       when family in [:inverse, :future, :delivery, "inverse", "future", "delivery"], do: :inverse
+
+  defp normalize_account_fact_family(_family), do: :unsupported
+
+  defp unsupported_binance_account_family(exchange, family) do
+    {:error,
+     Error.not_supported(
+       exchange: exchange.id,
+       message: "Binance account facts are not mapped for market family #{inspect(family)}"
+     )}
   end
 
   defp maybe_validate_order(%Exchange{markets: markets} = exchange, method, params, opts)
