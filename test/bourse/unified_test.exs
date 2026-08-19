@@ -464,6 +464,16 @@ defmodule Bourse.UnifiedTest do
   describe "public unified API caller-input error contract" do
     @too_long_client_order_id String.duplicate("a", 65)
 
+    # Public invocations below must cover every RequestShape Error raise reason.
+    # A fourth validator that raises Error without joining this set reddens the
+    # class sweep — that is the point of task 651 versus another allowlist row.
+    @invoked_request_shape_reasons ~w(
+      unresolved_identifier_reference
+      max_length_exceeded
+      multiple_conditional_legs
+      non_empty_orders_required
+    )
+
     test "a too-long client_order_id and a keyword-list price share the same create_order error shape" do
       exchange = deribit_create_order_exchange()
 
@@ -477,6 +487,25 @@ defmodule Bourse.UnifiedTest do
       assert {:error, %Error{type: :invalid_parameters}} = value_result
       assert length_error.raw["reason"] == "max_length_exceeded"
       assert public_caller_input_shape(length_result) == public_caller_input_shape(value_result)
+    end
+
+    test "every RequestShape Error raise is a converted caller-input reason" do
+      {reasons, missing_reason} = request_shape_error_raises()
+      allowlist = MapSet.new(caller_input_reason_allowlist())
+      invoked = MapSet.new(@invoked_request_shape_reasons)
+      scanned = MapSet.new(reasons)
+
+      assert missing_reason == [],
+             "RequestShape Error raises without raw[\"reason\"] escape the non-bang API as exceptions: #{inspect(missing_reason)}"
+
+      assert MapSet.subset?(scanned, allowlist),
+             "RequestShape reasons missing from Unified.call/5 allowlist: #{inspect(MapSet.to_list(MapSet.difference(scanned, allowlist)))}"
+
+      assert scanned == invoked,
+             "public invocation table drifted from RequestShape Error raises; scanned=#{inspect(MapSet.to_list(scanned))} invoked=#{inspect(MapSet.to_list(invoked))}"
+
+      refute "markets_not_loaded" in allowlist
+      assert unified_call_converts_allowlisted_reasons?()
     end
 
     test "known request-shape caller-input rejections return tuples from public non-bang functions" do
@@ -502,6 +531,8 @@ defmodule Bourse.UnifiedTest do
         {:edit_orders, [bybit, []], :bad_request, "non_empty_orders_required"},
         {:edit_orders, [bybit, nil], :bad_request, "non_empty_orders_required"}
       ]
+
+      assert MapSet.new(Enum.map(cases, &elem(&1, 3))) == MapSet.new(@invoked_request_shape_reasons)
 
       for {function, args, type, reason} <- cases do
         assert {:error, %Error{type: ^type, raw: %{"reason" => ^reason}}} = apply(Bourse, function, args),
@@ -2887,6 +2918,92 @@ defmodule Bourse.UnifiedTest do
     Exchange.new!("bybit",
       credentials: Bourse.Credentials.new!(api_key: "test-key", secret: "test-secret")
     )
+  end
+
+  defp request_shape_error_raises do
+    files = ["lib/bourse/unified/request_shape.ex" | Path.wildcard("lib/bourse/unified/request_shape/*.ex")]
+
+    raises = Enum.flat_map(files, &error_raises_in/1)
+    {with_reason, missing} = Enum.split_with(raises, fn {_file, _line, reason} -> is_binary(reason) end)
+
+    {Enum.map(with_reason, &elem(&1, 2)), Enum.map(missing, fn {file, line, _} -> "#{file}:#{line}" end)}
+  end
+
+  defp error_raises_in(file) do
+    {_, acc} =
+      file
+      |> File.read!()
+      |> Code.string_to_quoted!(file: file)
+      |> Macro.prewalk([], fn node, acc -> {node, collect_error_raise(file, node, acc)} end)
+
+    acc
+  end
+
+  defp collect_error_raise(file, {:raise, meta, [{{:., _, [{:__aliases__, _, segments}, _fun]}, _, args}]}, acc) do
+    if error_alias?(segments) do
+      [{file, meta[:line], reason_from_error_raise_args(args)} | acc]
+    else
+      acc
+    end
+  end
+
+  defp collect_error_raise(_file, _node, acc), do: acc
+
+  defp error_alias?([_ | _] = segments), do: List.last(segments) == :Error
+  defp error_alias?(_segments), do: false
+
+  defp reason_from_error_raise_args(args) do
+    Enum.find_value(args, fn
+      list when is_list(list) -> reason_from_error_raise_args(list)
+      {:raw, {:%{}, _, pairs}} when is_list(pairs) -> reason_from_raw_pairs(pairs)
+      _other -> nil
+    end)
+  end
+
+  defp reason_from_raw_pairs(pairs) do
+    Enum.find_value(pairs, fn
+      {"reason", reason} when is_binary(reason) -> reason
+      _other -> nil
+    end)
+  end
+
+  defp caller_input_reason_allowlist do
+    {_, reasons} =
+      "lib/bourse/unified.ex"
+      |> File.read!()
+      |> Code.string_to_quoted!()
+      |> Macro.prewalk(nil, fn
+        {:@, _, [{:caller_input_reasons, _, [sigil]}]} = node, _acc ->
+          {node, sigil_w_words(sigil)}
+
+        node, acc ->
+          {node, acc}
+      end)
+
+    reasons || []
+  end
+
+  defp sigil_w_words({:sigil_w, _, [{:<<>>, _, [body]}, []]}) when is_binary(body) do
+    String.split(body)
+  end
+
+  defp unified_call_converts_allowlisted_reasons? do
+    {_, found} =
+      "lib/bourse/unified.ex"
+      |> File.read!()
+      |> Code.string_to_quoted!()
+      |> Macro.prewalk(%{when_allowlist: false, reraise: false}, fn
+        {:when, _, [_, {:in, _, [{:reason, _, _}, {:@, _, [{:caller_input_reasons, _, _}]}]}]} = node, acc ->
+          {node, Map.put(acc, :when_allowlist, true)}
+
+        {:reraise, _, [{:error, _, _}, {:__STACKTRACE__, _, _}]} = node, acc ->
+          {node, Map.put(acc, :reraise, true)}
+
+        node, acc ->
+          {node, acc}
+      end)
+
+    found.when_allowlist and found.reraise
   end
 
   defp public_caller_input_shape({:error, %Error{type: type}}), do: {:error, Error, type}
