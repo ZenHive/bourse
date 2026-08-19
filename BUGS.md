@@ -1402,3 +1402,37 @@ jeder Reconcile scheitert, ohne dass etwas alarmiert) wird dort getrennt gefilet
 > Timestamp. Belastbarer Regressionstest deshalb ohne echte Venue: einen 408 auf einem
 > signierten GET injizieren und pinnen, dass der zweite Versuch einen anderen
 > `timestamp`-Query-Parameter trägt als der erste.
+
+## 2026-08-18 — Account-Klasse und Margin-Modi fehlen als provider-treue Unified Facts
+
+**Methods:** private Account-Reads (`/v5/account/info`,
+`private/get_account_summaries`, `/v2/account`, Binance Account/Positions sowie
+Hyperliquid/Lighter Account-State) · **Exchanges:** alpaca, binance, bybit,
+deribit, hyperliquid, lighter · **Severity:** hoch (ein Consumer kann sonst
+Derivate anhand eines konfigurierten Spot-Labels behandeln)
+
+Bourse 0.6.0 stellt die raw Endpoint-Funktionen bereit, aber kein gemeinsames
+Account-Fact-Resultat, das die provider-eigenen Klassifikationsfelder erhält.
+`fetch_balance`/`fetch_positions` beweisen Erreichbarkeit und liefern teilweise
+normalisierte Positionsmodi, verlieren aber die eigenständigen Account-Fakten:
+Bybit `unifiedMarginStatus` + `marginMode`, Deribit
+`portfolio_margining_enabled` + `margin_model`, Alpaca `multiplier` +
+`shorting_enabled`, Binance `accountType`/`permissions` + positionsbezogenes
+`isolated`, Hyperliquid `crossMarginSummary` + `leverage.type` und Lighter
+`account_type`/`account_trading_mode` + positionsbezogenes `margin_mode`.
+
+Expected: ein provider-treuer Unified Read trennt Product Access, Account-Margin-
+Modell und positionsbezogenen Margin-Modus. Nicht gelieferte Felder bleiben
+`unknown`/`unavailable`; Venue-Capabilities oder Caller-Optionen dürfen nicht als
+Account-Beobachtung eingesetzt werden. Das Raw-Provider-Payload sollte in `info`
+erhalten bleiben, damit Integrations-Tests die dokumentierten Feldnamen pinnen.
+
+Konsument-Handling (trading_dashboard, Task 166): nutzt die vorhandenen raw
+Endpoint-Funktionen an einer zentralen Account-Fact-Grenze und persistiert nur
+explizit beobachtete Werte. Kann auf den Unified Read wechseln, sobald Bourse ihn
+provider-treu shippt.
+
+> **2026-08-19 — triagiert:** gefiled als Workbench-Task **648** ("Account class and
+> margin model are not readable as unified facts"), gegen den allgemeinen Defekt
+> geschnitten; die sechs genannten Venues stehen als Evidenz in den Acceptance
+> Criteria, nicht als Scope-Grenze.
