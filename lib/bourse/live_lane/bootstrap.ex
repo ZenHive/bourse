@@ -25,12 +25,7 @@ defmodule Bourse.LiveLane.Bootstrap do
     ensure_started = Keyword.get(opts, :ensure_started, &Application.ensure_all_started/1)
     start_supervisor = Keyword.get(opts, :start_supervisor, &start_supervisor/1)
 
-    Enum.each(@ws_applications, fn application ->
-      case ensure_started.(application) do
-        {:ok, _applications} -> :ok
-        {:error, reason} -> raise "failed to start #{application}: #{inspect(reason)}"
-      end
-    end)
+    ensure_applications!(@ws_applications, ensure_started)
 
     case Process.whereis(__MODULE__) do
       pid when is_pid(pid) ->
@@ -47,5 +42,14 @@ defmodule Bourse.LiveLane.Bootstrap do
 
   defp start_supervisor(children) do
     Supervisor.start_link(children, strategy: :one_for_one, name: __MODULE__)
+  end
+
+  defp ensure_applications!([], _ensure_started), do: :ok
+
+  defp ensure_applications!([application | rest], ensure_started) do
+    case ensure_started.(application) do
+      {:ok, _applications} -> ensure_applications!(rest, ensure_started)
+      {:error, reason} -> raise "failed to start #{application}: #{inspect(reason)}"
+    end
   end
 end

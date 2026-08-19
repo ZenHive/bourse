@@ -1,0 +1,51 @@
+Compiling 13 files (.ex)
+WARNING: alpaca/trading-api-create-order prose/docs upstream drift remains acknowledged
+AUTHORITY_DRIFT venue=alpaca artifact=trading-api-create-order class=prose_docs status=acknowledged checked_at=2026-08-10 target=https://docs.alpaca.markets/us/reference/postorder expected=a96386b92df2b8951c285aff1d9ffca4a19a52c5a4eb7bf5c9e7e94c34942ad4 actual=12fab321a61f69a53abe45e26e9439a1c5b690bf39713f7c984cb4819e4ae5b8
+WARNING: alpaca/stock-bars-single prose/docs upstream drift remains acknowledged
+AUTHORITY_DRIFT venue=alpaca artifact=stock-bars-single class=prose_docs status=acknowledged checked_at=2026-08-10 target=https://docs.alpaca.markets/us/v1.1/reference/stockbarsingle-1 expected=e92adfe68d76ab5628aedbdb50cd6c2bceca0f03c6b5398b0d6d2b1c28621b3c actual=b4df9f0e96cfdd98e185dc6892e48e2507671e81c6dd4354179f2a3af6782958
+WARNING: alpaca/crypto-snapshots prose/docs upstream drift remains acknowledged
+AUTHORITY_DRIFT venue=alpaca artifact=crypto-snapshots class=prose_docs status=acknowledged checked_at=2026-08-10 target=https://docs.alpaca.markets/us/reference/cryptosnapshots-1 expected=fdb5984cc0def5f8e1063b7e8973296f91a938afc334b8703ede0f0e066e0769 actual=b78278f29758f2b8a65dc73696cd0d5eeb84d2c69a5b548fbec6d6cbcafeeb6d
+WARNING: alpaca/crypto-bars prose/docs upstream drift remains acknowledged
+AUTHORITY_DRIFT venue=alpaca artifact=crypto-bars class=prose_docs status=acknowledged checked_at=2026-08-10 target=https://docs.alpaca.markets/us/reference/cryptobars-1 expected=2625774d48ab976cebf3b8c51584c1b58ae1c42e1159fb7c9b421183c8c00472 actual=552c22829c9629d7230b17d20756aa31e36330b8c59fe5ac4e11d4cb8a56ac72
+alpaca/trading-openapi-repository: upstream unchanged
+alpaca/market-data-openapi-repository: upstream unchanged
+binance/spot-openapi: upstream unchanged
+WARNING: binance/spot-errors prose/docs upstream drift remains acknowledged
+AUTHORITY_DRIFT venue=binance artifact=spot-errors class=prose_docs status=acknowledged checked_at=2026-08-10 target=https://github.com/binance/binance-spot-api-docs.git expected=a5e0bc3ddc0fd7e6bb696849323b74423fa3a54d actual=976cc580553890e92031b77306147c0ed1de5a46
+WARNING: binance/spot-docs-source prose/docs upstream drift remains acknowledged
+AUTHORITY_DRIFT venue=binance artifact=spot-docs-source class=prose_docs status=acknowledged checked_at=2026-08-18 target=https://github.com/binance/binance-spot-api-docs.git expected=b483413fcdf4da783cd3fcaad6fab7200a93297f actual=976cc580553890e92031b77306147c0ed1de5a46
+binance/spot-postman: upstream unchanged
+WARNING: binancecoinm/developer-docs-full prose/docs upstream drift remains acknowledged
+AUTHORITY_DRIFT venue=binancecoinm artifact=developer-docs-full class=prose_docs status=acknowledged checked_at=2026-08-10 target=https://developers.binance.com/en/docs/llms-full.txt expected=f8ce668a6248a81e6df9ec6ba7ba7cf22172a3bc97497c76415296601cfd9ec2 actual=353f73497ae8356be60c649551cfbcb2d9ab6313c5a60162dd641888d1756004
+binancecoinm/coin-futures-postman: upstream unchanged
+WARNING: binanceusdm/developer-docs-full prose/docs upstream drift remains acknowledged
+AUTHORITY_DRIFT venue=binanceusdm artifact=developer-docs-full class=prose_docs status=acknowledged checked_at=2026-08-10 target=https://developers.binance.com/en/docs/llms-full.txt expected=a2b6e0dd14a58198d35cfeb9212dd7ff362008f1455ff04181952ae8545d811e actual=353f73497ae8356be60c649551cfbcb2d9ab6313c5a60162dd641888d1756004
+binanceusdm/usds-futures-postman: upstream unchanged
+WARNING: bybit/v5-docs-source prose/docs upstream drift remains acknowledged
+AUTHORITY_DRIFT venue=bybit artifact=v5-docs-source class=prose_docs status=acknowledged checked_at=2026-08-10 target=https://github.com/bybit-exchange/docs.git expected=5ccd30109fe2eb5a39cf4d864365213658530f6c actual=051d68bbad9d54884e1ff4e8583ca4090736ccef
+bybit/v5-postman: upstream unchanged
+WARNING: coinbaseexchange/product-candles prose/docs upstream drift remains acknowledged
+AUTHORITY_DRIFT venue=coinbaseexchange artifact=product-candles class=prose_docs status=acknowledged checked_at=2026-08-18 target=https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-candles expected=821bc49d0f68b5a308f0b99ce1748d4049392568610d9d566b4595da094d28c6 actual=81f27e125520c1373e815c76a41c97ba5f2d1955cd4f866673a9a859db588cbc
+WARNING: coinbaseexchange/product-ticker prose/docs upstream drift remains acknowledged
+AUTHORITY_DRIFT venue=coinbaseexchange artifact=product-ticker class=prose_docs status=acknowledged checked_at=2026-08-18 target=https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-ticker expected=102581cae9cd1c909fde0d4c04a17b7ae905344bc17cf6d874079a926bfd8acf actual=23524244d408d212a2a5237af12884832797e204d21c2743a88726ce55478f50
+deribit/api-openapi: upstream unchanged
+WARNING: deribit/error-codes prose/docs upstream drift remains acknowledged
+AUTHORITY_DRIFT venue=deribit artifact=error-codes class=prose_docs status=acknowledged checked_at=2026-08-10 target=https://docs.deribit.com/articles/errors expected=09c5c24292623784c57f0715cf6806248dd0ab7956655719b26d7955ba8e1008 actual=0b3855c91e3712eea251c5ca591884148a4670b36503bdfe00998a838c7e4cc5
+deribit/upcoming-openapi: upstream unchanged
+deribit/current-asyncapi: upstream unchanged
+deribit/upcoming-asyncapi: upstream unchanged
+WARNING: deribit/docs-index prose/docs upstream drift remains acknowledged
+AUTHORITY_DRIFT venue=deribit artifact=docs-index class=prose_docs status=acknowledged checked_at=2026-08-18 target=https://docs.deribit.com/llms.txt expected=a85f66ea9357a9eb5b63158509252e81d9d4e92368ab123df20809bec5af6d94 actual=eea94a7a1af13d54f7277a2a7bf86e05813c4de566d51dbc74543be87a9dc113
+WARNING: derive/docs-index prose/docs upstream drift remains acknowledged
+AUTHORITY_DRIFT venue=derive artifact=docs-index class=prose_docs status=acknowledged checked_at=2026-08-18 target=https://docs.derive.xyz/llms.txt expected=943424e372a0fa7a6a05835ad20438d742763fd05b8c806b054a899023002ded actual=f3ba45158979c84025b4597badd8e3254b8f5a5ad6f85aba1b3fe2c1087e61a2
+derive/liquidation-history: upstream unchanged
+derive/erc20-transfer-history: upstream unchanged
+derive/interest-history: upstream unchanged
+derive/option-settlement-history: upstream unchanged
+WARNING: derive/error-codes prose/docs upstream drift remains acknowledged
+AUTHORITY_DRIFT venue=derive artifact=error-codes class=prose_docs status=acknowledged checked_at=2026-08-10 target=https://docs.derive.xyz/reference/error-codes.md expected=6bf4d73b421038b1e9d76ddda31d9401a3251516f0afebbfe4b311233b5d041d actual=423f9bb8c6bf27b9baa256fe5f60446d8fe2b0ed63947b66c7860efef7b341de
+WARNING: hyperliquid/docs-full prose/docs upstream drift remains acknowledged
+AUTHORITY_DRIFT venue=hyperliquid artifact=docs-full class=prose_docs status=acknowledged checked_at=2026-08-10 target=https://hyperliquid.gitbook.io/hyperliquid-docs/llms-full.txt expected=7bd65f92fe573e36fac6e62ec5547b3b0d264792796a3e3c5a94ed65d0364439 actual=4a8f3c8b0f9df5875c6712c883de9a472d1455910a35cff5b5f2b62bc8426660
+hyperliquid/python-sdk-info-subspecifications: upstream unchanged
+AUTHORITY_DRIFT venue=lighter artifact=rest-openapi class=typed_contract status=blocking checked_at=2026-08-10 target=https://raw.githubusercontent.com/elliottech/lighter-python/main/openapi.json expected=3a53c619ef3eb537217c889d1d6bd322015548a31c045538eb547c7195c9953f actual=f2e1b6e97d3481fd00ce3a32165b425299bf4ab6ff34910611edab8099e9c4cf
+** (Mix) rest-openapi: typed contract upstream drift — https://raw.githubusercontent.com/elliottech/lighter-python/main/openapi.json moved from pinned 3a53c619ef3eb537217c889d1d6bd322015548a31c045538eb547c7195c9953f to f2e1b6e97d3481fd00ce3a32165b425299bf4ab6ff34910611edab8099e9c4cf

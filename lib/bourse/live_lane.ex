@@ -27,37 +27,8 @@ defmodule Bourse.LiveLane do
           required(:venues) => [map()]
         }
 
-  @corpus_include ~w(network capability_live integration)
+  @corpus_include ~w(network capability_live)
   @corpus_exclude ~w(dangerous raw public_probe unified_integration invalid_creds symbol_public_probe)
-
-  @corpus_files [
-    "test/bourse/alpaca_authored_integration_test.exs",
-    "test/bourse/binance_authored_integration_test.exs",
-    "test/bourse/binance_contract_unit_integration_test.exs",
-    "test/bourse/binance_query_array_integration_test.exs",
-    "test/bourse/binancecoinm_promotion_integration_test.exs",
-    "test/bourse/bybit_account_analytics_integration_test.exs",
-    "test/bourse/bybit_authored_integration_test.exs",
-    "test/bourse/coinbaseexchange_promotion_integration_test.exs",
-    "test/bourse/deribit_authored_integration_test.exs",
-    "test/bourse/derive_authored_integration_test.exs",
-    "test/bourse/hyperliquid_authored_integration_test.exs",
-    "test/bourse/lighter_promotion_integration_test.exs",
-    "test/bourse/lighter_signing_integration_test.exs",
-    "test/bourse/linear_contract_unit_integration_test.exs",
-    "test/bourse/okx_authored_integration_test.exs",
-    "test/bourse/okx_demo_integration_test.exs",
-    "test/bourse/option_surface_integration_test.exs",
-    "test/bourse/public_api_live_test.exs",
-    "test/bourse/public_read_round_trip_integration_test.exs",
-    "test/bourse/time_window_integration_test.exs",
-    "test/bourse/unified/read_parse_slots_test.exs",
-    "test/bourse/ws/auth_live_smoke_test.exs",
-    "test/bourse/ws/binance_watch_frame_delivery_test.exs",
-    "test/bourse/ws/binance_watch_order_book_broadcast_test.exs",
-    "test/bourse/ws/canary_test.exs",
-    "test/bourse/ws/subscribe_rejection_live_test.exs"
-  ]
 
   @doc "ExUnit include tags the scheduled live corpus runs with."
   @spec corpus_include() :: [String.t()]
@@ -66,10 +37,6 @@ defmodule Bourse.LiveLane do
   @doc "ExUnit exclude tags that keep generated probes and mutations out of the corpus."
   @spec corpus_exclude() :: [String.t()]
   def corpus_exclude, do: @corpus_exclude
-
-  @doc "Authored `:network` / `:capability_live` files the corpus is expected to execute."
-  @spec corpus_files() :: [String.t()]
-  def corpus_files, do: @corpus_files
 
   @doc "Registered reasons for venues or surfaces the first-frame matrix does not probe."
   @spec exclusions() :: [exclusion()]
@@ -94,7 +61,7 @@ defmodule Bourse.LiveLane do
       authority: authority_surface(authority_rc, Keyword.get(opts, :authority)),
       rest_drift: json_surface(drift, "live-drift-report.json"),
       live_corpus: corpus_surface(corpus),
-      ws_auth_smoke_dangerous: json_surface(auth_smoke, "ws-auth-smoke-dangerous-report.json"),
+      ws_auth_smoke_dangerous: auth_smoke_surface(auth_smoke),
       ws_first_frame: ws_surface(ws)
     }
 
@@ -103,7 +70,7 @@ defmodule Bourse.LiveLane do
         List.wrap(json_ok_get(ws, "failures", [])) ++
         List.wrap(json_ok_get(drift, "failures", []))
 
-    venues = venue_rows(drift, ws)
+    venues = venue_rows(drift, ws, corpus, auth_smoke)
 
     status =
       if failures == [] and Enum.all?(surfaces, fn {_name, surface} -> surface.status == "passed" end),
@@ -155,30 +122,75 @@ defmodule Bourse.LiveLane do
   end
 
   defp corpus_surface({:ok, json}) do
-    summary = json["summary"] || %{}
-    failures = corpus_failures(json)
-
-    %{
+    test_surface(json, "live-corpus-report.json", %{
       exclude: @corpus_exclude,
-      failures: failures,
-      files: @corpus_files,
-      include: @corpus_include,
-      report: "live-corpus-report.json",
-      status: json_summary_status(json),
-      summary: Map.take(summary, ["total", "passed", "failed", "excluded", "skipped", "result"])
-    }
+      include: @corpus_include
+    })
   end
 
   defp corpus_surface({:error, reason}) do
     %{
       exclude: @corpus_exclude,
-      files: @corpus_files,
       include: @corpus_include,
       report: "live-corpus-report.json",
       status: "failed",
       reason: reason
     }
   end
+
+  defp auth_smoke_surface({:ok, json}) do
+    test_surface(json, "ws-auth-smoke-dangerous-report.json", %{
+      include: ~w(network dangerous),
+      targets: ["test/bourse/ws/auth_live_smoke_test.exs"]
+    })
+  end
+
+  defp auth_smoke_surface({:error, reason}) do
+    %{
+      include: ~w(network dangerous),
+      targets: ["test/bourse/ws/auth_live_smoke_test.exs"],
+      report: "ws-auth-smoke-dangerous-report.json",
+      status: "failed",
+      reason: reason
+    }
+  end
+
+  defp test_surface(json, report_name, filters) do
+    summary = json["summary"] || %{}
+    tests = executed_test_rows(json)
+    status = if tests == [], do: "failed", else: json_summary_status(json)
+
+    filters
+    |> Map.merge(%{
+      failures: corpus_failures(json),
+      files: file_outcomes(tests),
+      report: report_name,
+      status: status,
+      summary: Map.take(summary, ["total", "passed", "failed", "excluded", "skipped", "result"]),
+      tests: tests
+    })
+    |> maybe_put_empty_test_reason(tests)
+  end
+
+  defp executed_test_rows(json) do
+    json
+    |> Map.get("tests", [])
+    |> Enum.reject(&(&1["state"] == "excluded"))
+    |> Enum.map(&Map.take(&1, ["file", "name", "state", "tags"]))
+  end
+
+  defp file_outcomes(tests) do
+    tests
+    |> Enum.group_by(& &1["file"])
+    |> Enum.sort()
+    |> Enum.map(fn {file, rows} ->
+      states = Enum.frequencies_by(rows, & &1["state"])
+      %{file: file, states: states, status: test_rows_status(rows)}
+    end)
+  end
+
+  defp maybe_put_empty_test_reason(surface, []), do: Map.put(surface, :reason, "report contained no executed tests")
+  defp maybe_put_empty_test_reason(surface, _tests), do: surface
 
   defp json_summary_status(%{"status" => status}) when is_binary(status), do: status
 
@@ -211,7 +223,7 @@ defmodule Bourse.LiveLane do
     end
   end
 
-  defp venue_rows(drift, ws) do
+  defp venue_rows(drift, ws, corpus, auth_smoke) do
     drift_venues = json_ok_get(drift, "venues", [])
     ws_venues = json_ok_get(ws, "venues", [])
     exclusions = exclusions()
@@ -220,6 +232,10 @@ defmodule Bourse.LiveLane do
     |> Enum.sort()
     |> Enum.map(fn venue ->
       %{
+        live_tests: %{
+          live_corpus: venue_test_outcome(venue, corpus),
+          ws_auth_smoke_dangerous: venue_test_outcome(venue, auth_smoke)
+        },
         rest: drift_row(venue, drift_venues),
         venue: venue,
         ws_private: ws_row(venue, "private", ws_venues, exclusions),
@@ -227,6 +243,36 @@ defmodule Bourse.LiveLane do
       }
     end)
   end
+
+  defp venue_test_outcome(venue, report) do
+    tests =
+      report
+      |> json_ok_get("tests", [])
+      |> Enum.filter(&(executed_for_venue?(&1, venue) and &1["state"] != "excluded"))
+      |> Enum.map(&Map.take(&1, ["file", "name", "state", "tags"]))
+
+    case tests do
+      [] ->
+        %{status: "not_attributed", reason: "no executed test carried the venue tag"}
+
+      rows ->
+        %{status: test_rows_status(rows), tests: rows}
+    end
+  end
+
+  defp test_rows_status(rows) do
+    cond do
+      Enum.any?(rows, &(&1["state"] in ["failed", "invalid"])) -> "failed"
+      Enum.any?(rows, &(&1["state"] == "passed")) -> "passed"
+      true -> "skipped"
+    end
+  end
+
+  defp executed_for_venue?(%{"tags" => tags}, venue) when is_map(tags) do
+    tags["venue"] == venue or tags["exchange_#{venue}"] == true
+  end
+
+  defp executed_for_venue?(_test, _venue), do: false
 
   defp drift_row(venue, venues) do
     case Enum.find(venues, &(venue_id(&1) == venue)) do

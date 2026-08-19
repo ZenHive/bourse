@@ -49,7 +49,7 @@ defmodule Bourse.WS.SubscribeAckTest do
       assert :success =
                SubscribeAck.classify("hyperliquid", %{
                  "channel" => "subscriptionResponse",
-                 "data" => %{}
+                 "data" => %{"method" => "subscribe", "subscription" => %{"type" => "allMids"}}
                })
 
       assert {:rejected, %{"channel" => "error"}} =

@@ -23,9 +23,9 @@ mix ccxt.verify_live_drift --report "${live_drift_report}" || live_drift_rc=$?
 # does not place orders except the listen-key file targeted below.
 corpus_rc=0
 mix test.json --quiet \
+  --all \
   --include network \
   --include capability_live \
-  --include integration \
   --exclude dangerous \
   --exclude raw \
   --exclude public_probe \
@@ -38,6 +38,7 @@ mix test.json --quiet \
 # event. The existing auth smoke drives that event on testnet/demo only.
 auth_smoke_rc=0
 mix test.json --quiet \
+  --all \
   --include network \
   --include dangerous \
   --output "${auth_smoke_report}" \

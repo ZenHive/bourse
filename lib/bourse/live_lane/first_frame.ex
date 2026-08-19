@@ -15,7 +15,6 @@ defmodule Bourse.LiveLane.FirstFrame do
   alias Bourse.WS.SubscribeAck
 
   @timeout_ms 15_000
-  @ack_keys MapSet.new(~w(arg connId conn_id event id jsonrpc op reqId req_id result retCode retMsg ret_msg success T))
 
   @type probe :: %{
           required(:sandbox) => boolean(),
@@ -173,6 +172,7 @@ defmodule Bourse.LiveLane.FirstFrame do
           | {:subscribe, (term(), probe() -> {:ok, String.t()} | {:error, term()})}
           | {:timeout_ms, pos_integer()}
           | {:unreachable_ok, [String.t()]}
+          | {:ws_client, module()}
 
   @doc "Public first-frame probes, one per WebSocket-configured venue."
   @spec probes() :: [probe()]
@@ -240,28 +240,15 @@ defmodule Bourse.LiveLane.FirstFrame do
   def frame_kind({:success, :data}, _frame), do: "acknowledgement_with_payload"
   def frame_kind(:not_ack, _frame), do: "data"
   def frame_kind({:rejected, _rejected}, _frame), do: "rejected"
-
-  def frame_kind(:success, frame) do
-    if acknowledgement_with_payload?(frame), do: "acknowledgement_with_payload", else: "acknowledgement"
-  end
-
-  @doc "Returns true when an acknowledgement frame also carries snapshot payload."
-  @spec acknowledgement_with_payload?(map() | [map()] | term()) :: boolean()
-  def acknowledgement_with_payload?(frames) when is_list(frames) do
-    Enum.any?(frames, fn
-      %{"T" => tag} when tag not in ["subscription", "success", "error"] -> true
-      frame -> acknowledgement_with_payload?(frame)
-    end)
-  end
-
-  def acknowledgement_with_payload?(frame) when is_map(frame) do
-    Enum.any?(frame, fn {key, value} -> key not in @ack_keys and payload_value?(value) end)
-  end
-
-  def acknowledgement_with_payload?(_frame), do: false
+  def frame_kind(:success, _frame), do: "acknowledgement"
 
   defp record_probe(spec, {venues, failures}, probe, unreachable_ok) do
-    case probe.(spec) do
+    result =
+      fn -> probe.(spec) end
+      |> Task.async()
+      |> Task.await(:infinity)
+
+    case result do
       {:ok, row} ->
         {[row | venues], failures}
 
@@ -305,9 +292,10 @@ defmodule Bourse.LiveLane.FirstFrame do
   defp live_probe(spec, opts) do
     timeout_ms = Keyword.get(opts, :timeout_ms, @timeout_ms)
     get_env = Keyword.get(opts, :get_env, &System.get_env/1)
-    connect = Keyword.get(opts, :connect, &default_connect(&1, get_env))
-    subscribe = Keyword.get(opts, :subscribe, &default_subscribe/2)
-    close = Keyword.get(opts, :close, &default_close/1)
+    ws_client = Keyword.get(opts, :ws_client, WS)
+    connect = Keyword.get(opts, :connect, &default_connect(&1, get_env, ws_client))
+    subscribe = Keyword.get(opts, :subscribe, &default_subscribe(&1, &2, ws_client))
+    close = Keyword.get(opts, :close, &default_close(&1, ws_client))
 
     case connect.(spec) do
       {:ok, ws} -> probe_open_socket(ws, spec, timeout_ms, subscribe, close)
@@ -324,13 +312,13 @@ defmodule Bourse.LiveLane.FirstFrame do
     close.(ws)
   end
 
-  defp default_connect(spec, get_env) do
+  defp default_connect(spec, get_env, ws_client) do
     with {:ok, exchange} <- build_exchange(spec, get_env) do
-      WS.connect(exchange, :public)
+      ws_client.connect(exchange, :public)
     end
   end
 
-  defp default_close(ws), do: WS.close(ws)
+  defp default_close(ws, ws_client), do: ws_client.close(ws)
 
   defp build_exchange(%{credentials: true} = spec, get_env) do
     case alpaca_credentials(get_env) do
@@ -357,16 +345,16 @@ defmodule Bourse.LiveLane.FirstFrame do
   defp present?(value) when is_binary(value), do: String.trim(value) != ""
   defp present?(_value), do: false
 
-  defp default_subscribe(ws, %{watch: :watch_ticker, symbol: symbol}) do
-    watch_result(WS.watch_ticker(ws, symbol, ack_timeout_ms: 0))
+  defp default_subscribe(ws, %{watch: :watch_ticker, symbol: symbol}, ws_client) do
+    watch_result(ws_client.watch_ticker(ws, symbol, ack_timeout_ms: 0))
   end
 
-  defp default_subscribe(ws, %{watch: :watch_trades, symbol: symbol}) do
-    watch_result(WS.watch_trades(ws, symbol, ack_timeout_ms: 0))
+  defp default_subscribe(ws, %{watch: :watch_trades, symbol: symbol}, ws_client) do
+    watch_result(ws_client.watch_trades(ws, symbol, ack_timeout_ms: 0))
   end
 
-  defp default_subscribe(ws, %{channels: channels}) do
-    case WS.subscribe(ws, channels, ack_timeout_ms: 0) do
+  defp default_subscribe(ws, %{channels: channels}, ws_client) do
+    case ws_client.subscribe(ws, channels, ack_timeout_ms: 0) do
       :ok -> {:ok, channel_label(%{channels: channels})}
       {:error, _} = error -> error
     end
@@ -441,11 +429,6 @@ defmodule Bourse.LiveLane.FirstFrame do
 
   defp first_kind_or(:none, kind), do: kind
   defp first_kind_or(existing, _kind), do: existing
-
-  defp payload_value?(value) when is_map(value), do: value != %{}
-  defp payload_value?(value) when is_list(value), do: value != []
-  defp payload_value?(value) when is_binary(value), do: value not in ["", "subscribe", "subscriptionResponse"]
-  defp payload_value?(_value), do: true
 
   defp heartbeat?(frame) when is_binary(frame), do: String.downcase(frame) in ["ping", "pong"]
   defp heartbeat?(%{"op" => op}) when op in ["ping", "pong"], do: true

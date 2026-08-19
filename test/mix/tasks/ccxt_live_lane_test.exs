@@ -17,8 +17,9 @@ defmodule Mix.Tasks.Ccxt.AggregateLiveLaneTest do
 
     File.write!(authority, "ok\n")
     File.write!(drift, Jason.encode!(%{status: "passed", venues: [], failures: []}))
-    File.write!(corpus, Jason.encode!(%{summary: %{result: "passed", failed: 0}}))
-    File.write!(auth_smoke, Jason.encode!(%{status: "passed"}))
+    test_row = %{file: "test/live_test.exs", name: "live probe", state: "passed", tags: %{exchange_bybit: true}}
+    File.write!(corpus, Jason.encode!(%{summary: %{result: "passed", failed: 0}, tests: [test_row]}))
+    File.write!(auth_smoke, Jason.encode!(%{status: "passed", tests: [test_row]}))
     File.write!(ws, Jason.encode!(%{status: "passed", venues: [], failures: []}))
 
     previous_shell = Mix.shell()
@@ -71,7 +72,7 @@ defmodule Mix.Tasks.Ccxt.AggregateLiveLaneTest do
 end
 
 defmodule Mix.Tasks.Ccxt.VerifyWsFirstFrameTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Mix.Tasks.Ccxt.VerifyWsFirstFrame
 
@@ -79,6 +80,43 @@ defmodule Mix.Tasks.Ccxt.VerifyWsFirstFrameTest do
     assert_raise Mix.Error, ~r/usage: mix ccxt.verify_ws_first_frame/, fn ->
       VerifyWsFirstFrame.run(["--nope"])
     end
+  end
+
+  test "writes a passing classified report" do
+    directory = Path.join(System.tmp_dir!(), "ws-first-frame-#{System.unique_integer([:positive])}")
+    report_path = Path.join(directory, "report.json")
+    on_exit(fn -> File.rm_rf(directory) end)
+
+    report = %{status: "passed", venues: [], failures: []}
+
+    assert :ok =
+             VerifyWsFirstFrame.run(["--report", report_path],
+               bootstrap: fn -> self() end,
+               verify: fn -> {:ok, report} end
+             )
+
+    assert ^report = report_path |> File.read!() |> Jason.decode!(keys: :atoms)
+  end
+
+  test "writes a failing classified report before raising" do
+    directory = Path.join(System.tmp_dir!(), "ws-first-frame-#{System.unique_integer([:positive])}")
+    report_path = Path.join(directory, "report.json")
+    on_exit(fn -> File.rm_rf(directory) end)
+
+    report = %{
+      status: "failed",
+      venues: [],
+      failures: [%{venue: "bybit", channel: "tickers", reason: "bybit tickers: silence"}]
+    }
+
+    assert_raise Mix.Error, ~r/WebSocket first-frame lane failed/, fn ->
+      VerifyWsFirstFrame.run(["--report", report_path],
+        bootstrap: fn -> self() end,
+        verify: fn -> {:error, report} end
+      )
+    end
+
+    assert ^report = report_path |> File.read!() |> Jason.decode!(keys: :atoms)
   end
 end
 

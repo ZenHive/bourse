@@ -63,6 +63,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
   # =============================================================================
 
   describe "bybit :direct_hmac_expiry against testnet WS" do
+    @tag venue: "bybit"
     test "authenticates against wss://stream-testnet.bybit.com/v5/private" do
       creds = require_credentials!(:bybit, url: "https://testnet.bybit.com")
       exchange = Exchange.new!(:bybit, credentials: creds, sandbox: true)
@@ -113,6 +114,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
   # =============================================================================
 
   describe "deribit :jsonrpc_linebreak against testnet WS" do
+    @tag venue: "deribit"
     test "authenticates against wss://test.deribit.com/ws/api/v2" do
       creds = require_credentials!(:deribit, url: "https://test.deribit.com")
       exchange = Exchange.new!(:deribit, credentials: creds, sandbox: true)
@@ -150,6 +152,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
   # =============================================================================
 
   describe "connect/3 authenticates a :private section" do
+    @tag venue: "bybit"
     test "bybit private subscribe is accepted only on the authenticated connection" do
       creds = require_credentials!(:bybit, url: "https://testnet.bybit.com")
       exchange = Exchange.new!(:bybit, credentials: creds, sandbox: true)
@@ -162,6 +165,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
       assert ret_msg =~ "not authorized"
     end
 
+    @tag venue: "deribit"
     test "deribit echoes the subscribed channel back only when authenticated" do
       creds = require_credentials!(:deribit, url: "https://test.deribit.com")
       exchange = Exchange.new!(:deribit, credentials: creds, sandbox: true)
@@ -174,6 +178,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
                private_subscribe(exchange, ["user.portfolio.btc"], authenticate: false)
     end
 
+    @tag venue: "okx"
     test "okx private subscribe is accepted only on the authenticated connection" do
       creds = require_credentials!(:okx, url: "https://www.okx.com", passphrase: true)
       exchange = Exchange.new!(:okx, credentials: creds, sandbox: true)
@@ -185,6 +190,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
                private_subscribe(exchange, channels, authenticate: false)
     end
 
+    @tag venue: "bybit"
     test "a bad secret fails the connection with the venue's reason" do
       creds = require_credentials!(:bybit, url: "https://testnet.bybit.com")
       wrong = %{creds | secret: "not-the-real-secret"}
@@ -198,6 +204,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
       assert frame["ret_msg"] =~ "sign"
     end
 
+    @tag venue: "binance"
     test "binance spot opens the user data stream with a signed WS-API request" do
       creds = require_credentials!(:binance, url: "https://testnet.binance.vision")
       exchange = Exchange.new!(:binance, credentials: creds, sandbox: true)
@@ -218,6 +225,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
       WS.close(unauthenticated)
     end
 
+    @tag venue: "binance"
     test "binance spot rejects a bad secret rather than returning a silent socket" do
       creds = require_credentials!(:binance, url: "https://testnet.binance.vision")
       exchange = Exchange.new!(:binance, credentials: %{creds | secret: "not-the-real-secret"}, sandbox: true)
@@ -226,6 +234,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
       assert message =~ "Signature"
     end
 
+    @tag venue: "binanceusdm"
     test "binanceusdm carries an issued listen key in the connect URL" do
       creds = require_credentials!(:binanceusdm, url: "https://demo-fapi.binance.com")
       exchange = Exchange.new!(:binanceusdm, credentials: creds, sandbox: true)
@@ -247,6 +256,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
     end
 
     @tag :dangerous
+    @tag venue: "binanceusdm"
     test "binanceusdm routed private stream pushes order updates" do
       creds = require_credentials!(:binanceusdm, url: "https://demo-fapi.binance.com")
       exchange = Exchange.new!(:binanceusdm, credentials: creds, sandbox: true)
@@ -269,6 +279,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
       end
     end
 
+    @tag venue: "binanceusdm"
     test "binanceusdm fails before the socket when the key is not the account's" do
       creds = require_credentials!(:binanceusdm, url: "https://demo-fapi.binance.com")
       exchange = Exchange.new!(:binanceusdm, credentials: %{creds | api_key: "not-a-real-api-key"}, sandbox: true)
@@ -279,6 +290,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
       assert {:error, %Bourse.Error{type: :authentication_error}} = WS.connect(exchange, :private)
     end
 
+    @tag venue: "binancecoinm"
     test "binancecoinm carries a delivery listen key issued from its own wallet" do
       creds = require_credentials!(:binancecoinm, url: "https://demo-dapi.binance.com")
       exchange = Exchange.new!(:binancecoinm, credentials: creds, sandbox: true)
@@ -300,6 +312,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
     end
 
     @tag :dangerous
+    @tag venue: "binancecoinm"
     test "binancecoinm account events reach the keyed socket and no other" do
       creds = require_credentials!(:binancecoinm, url: "https://demo-dapi.binance.com")
       exchange = Exchange.new!(:binancecoinm, credentials: creds, sandbox: true)
@@ -327,6 +340,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
       end
     end
 
+    @tag venue: "binanceusdm"
     test "binanceusdm refuses to hand back a private connection with auth opted out" do
       creds = require_credentials!(:binanceusdm, url: "https://demo-fapi.binance.com")
       exchange = Exchange.new!(:binanceusdm, credentials: creds, sandbox: true)

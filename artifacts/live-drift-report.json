@@ -1,0 +1,133 @@
+{
+  "status": "passed",
+  "run": {
+    "id": "local",
+    "url": null
+  },
+  "unreachable": [],
+  "venues": [
+    {
+      "private": {
+        "status": "passed",
+        "method": "fetch_balance"
+      },
+      "public": {
+        "status": "passed",
+        "method": "fetch_ticker"
+      },
+      "venue": "alpaca"
+    },
+    {
+      "private": {
+        "status": "passed",
+        "method": "fetch_balance"
+      },
+      "public": {
+        "status": "passed",
+        "method": "fetch_ohlcv"
+      },
+      "venue": "binance"
+    },
+    {
+      "private": {
+        "status": "passed",
+        "method": "fetch_balance"
+      },
+      "public": {
+        "status": "passed",
+        "method": "fetch_ticker"
+      },
+      "venue": "binancecoinm"
+    },
+    {
+      "private": {
+        "status": "passed",
+        "method": "fetch_balance"
+      },
+      "public": {
+        "status": "passed",
+        "method": "fetch_ohlcv"
+      },
+      "venue": "binanceusdm"
+    },
+    {
+      "private": {
+        "status": "passed",
+        "method": "fetch_balance"
+      },
+      "public": {
+        "status": "passed",
+        "method": "fetch_ticker"
+      },
+      "venue": "bybit"
+    },
+    {
+      "private": {
+        "status": "not_applicable",
+        "method": null
+      },
+      "public": {
+        "status": "passed",
+        "method": "fetch_ohlcv"
+      },
+      "venue": "coinbaseexchange"
+    },
+    {
+      "private": {
+        "status": "passed",
+        "method": "fetch_balance"
+      },
+      "public": {
+        "status": "passed",
+        "method": "fetch_ticker"
+      },
+      "venue": "deribit"
+    },
+    {
+      "private": {
+        "status": "passed",
+        "method": "fetch_balance"
+      },
+      "public": {
+        "status": "passed",
+        "method": "fetch_trades"
+      },
+      "venue": "derive"
+    },
+    {
+      "private": {
+        "status": "passed",
+        "method": "fetch_balance"
+      },
+      "public": {
+        "status": "passed",
+        "method": "fetch_ohlcv"
+      },
+      "venue": "hyperliquid"
+    },
+    {
+      "private": {
+        "status": "passed",
+        "method": "fetch_closed_orders"
+      },
+      "public": {
+        "status": "passed",
+        "method": "fetch_ticker"
+      },
+      "venue": "lighter"
+    },
+    {
+      "private": {
+        "status": "passed",
+        "method": "fetch_balance"
+      },
+      "public": {
+        "status": "passed",
+        "method": "fetch_ticker"
+      },
+      "venue": "okx"
+    }
+  ],
+  "failures": [],
+  "observations": []
+}

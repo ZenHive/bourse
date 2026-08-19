@@ -19,11 +19,20 @@ defmodule Mix.Tasks.Ccxt.VerifyWsFirstFrame do
   @default_report_path "artifacts/ws-first-frame-report.json"
 
   @impl true
+  @spec run([String.t()]) :: :ok
   def run(args) do
+    run(args, [])
+  end
+
+  @doc false
+  @spec run([String.t()], keyword()) :: :ok
+  def run(args, opts) do
     Mix.Task.run("app.config")
     report_path = report_path!(args)
-    Bootstrap.start!()
-    result = FirstFrame.run()
+    bootstrap = Keyword.get(opts, :bootstrap, &Bootstrap.start!/0)
+    verify = Keyword.get(opts, :verify, &FirstFrame.run/0)
+    bootstrap.()
+    result = verify.()
     report = elem(result, 1)
     write_report!(report_path, report)
     print_report(report)
