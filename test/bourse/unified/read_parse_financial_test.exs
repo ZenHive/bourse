@@ -2005,9 +2005,7 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
                  true
                )
 
-      assert is_binary(symbol)
-      assert String.contains?(symbol, "BTC")
-      assert String.contains?(symbol, "USDT")
+      assert symbol == "BTC/USDT:USDT-260626"
     end
 
     test "funding-history rows without timestamp sort as epoch 0" do

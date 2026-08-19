@@ -111,7 +111,7 @@ defmodule Bourse.PublicApiLiveTest do
 
     assert String.ends_with?(
              dated_future.symbol,
-             dated_future.expiry |> DateTime.from_unix!(:millisecond) |> Calendar.strftime("-%d%b%y") |> String.upcase()
+             dated_future.expiry |> DateTime.from_unix!(:millisecond) |> Calendar.strftime("-%y%m%d")
            )
 
     assert dated_future.expiry_datetime == Bourse.Timestamp.iso8601_from_ms(dated_future.expiry)

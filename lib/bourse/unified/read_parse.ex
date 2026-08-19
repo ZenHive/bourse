@@ -4212,8 +4212,7 @@ defmodule Bourse.Unified.ReadParse do
   defp bybit_yymmdd(ms) do
     ms
     |> DateTime.from_unix!(:millisecond)
-    |> Calendar.strftime("%d%b%y")
-    |> String.upcase()
+    |> Calendar.strftime("%y%m%d")
   end
 
   defp lighter_market_symbol(sym, raw, exchange) do

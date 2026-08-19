@@ -187,7 +187,7 @@ defmodule Bourse.Tier1SemanticOracleTest do
     assert %{linear: false, inverse: true, settle: "BTC", expiry: nil} = inverse_perpetual
 
     dated_future = Enum.find(markets, &(&1.id == "BTCUSDT-17JUL26"))
-    assert %{symbol: "BTC/USDT:USDT-17JUL26", swap: false, future: true, contract: true, active: true} = dated_future
+    assert %{symbol: "BTC/USDT:USDT-260717", swap: false, future: true, contract: true, active: true} = dated_future
     assert %{linear: true, inverse: false, settle: "USDT", expiry: 1_784_275_200_000} = dated_future
     assert dated_future.expiry_datetime == Bourse.Timestamp.iso8601_from_ms(dated_future.expiry)
 

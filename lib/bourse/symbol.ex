@@ -383,8 +383,8 @@ defmodule Bourse.Symbol do
   Converts dates between derivative symbol formats.
 
   Supported formats: `:yymmdd`, `:ddmmmyy`, `:yyyymmdd`.
-  Returns the input unchanged when the format pair is unsupported or the input
-  does not match the declared source format.
+  Raises `ArgumentError` naming both formats and the input when the pair is
+  unsupported or the input does not match the declared source format.
 
       Bourse.Symbol.convert_date("260327", :yymmdd, :ddmmmyy)
       #=> "27MAR26"
@@ -429,7 +429,10 @@ defmodule Bourse.Symbol do
     date_str |> convert_date(:ddmmmyy, :yymmdd) |> convert_date(:yymmdd, :yyyymmdd)
   end
 
-  def convert_date(date_str, _source_format, _target_format), do: date_str
+  def convert_date(date_str, source_format, target_format) do
+    raise ArgumentError,
+          "cannot convert #{inspect(date_str)} from #{inspect(source_format)} to #{inspect(target_format)}"
+  end
 
   # ===========================================================================
   # Market Type Detection
@@ -952,7 +955,8 @@ defmodule Bourse.Symbol do
   defp future_separators(sep), do: {sep, sep}
 
   # DDMMMYY future: Deribit inverse (BTC-16JAN26), Deribit linear
-  # (BTC_USDC-16JAN26), and Bybit style (BTCUSDT-16JAN26).
+  # (BTC_USDC-16JAN26), and Bybit linear (BTCUSDT-04SEP26). Bybit pads the
+  # day; Deribit live ids keep the unpadded convert_date/3 width.
   defp apply_future_ddmmmyy(parsed, config) do
     expiry_converted = convert_date(parsed.expiry, :yymmdd, :ddmmmyy)
 
@@ -965,7 +969,7 @@ defmodule Bourse.Symbol do
           "#{parsed.base}_#{parsed.quote}-#{expiry_converted}"
 
         true ->
-          "#{parsed.base}#{parsed.quote}-#{expiry_converted}"
+          "#{parsed.base}#{parsed.quote}-#{pad_ddmmmyy_day(expiry_converted)}"
       end
 
     apply_case(result, config.case)
@@ -1468,4 +1472,12 @@ defmodule Bourse.Symbol do
 
   defp pad_two(n) when n < 10, do: "0#{n}"
   defp pad_two(n), do: "#{n}"
+
+  # Bybit linear future ids pad the day (`04SEP26`). Do not use this on
+  # Deribit — its live ids keep convert_date/3's unpadded width (`4SEP26`).
+  defp pad_ddmmmyy_day(<<day::utf8, month::binary-3, year::binary-2>>) when day in ?1..?9 do
+    <<?0, day, month::binary, year::binary>>
+  end
+
+  defp pad_ddmmmyy_day(date), do: date
 end

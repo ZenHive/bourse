@@ -422,12 +422,16 @@ defmodule Bourse.SymbolTest do
       assert original == Symbol.convert_date(converted, :ddmmmyy, :yymmdd)
     end
 
-    test "passes through a value that does not match the declared source format" do
-      assert "04SEP26" = Symbol.convert_date("04SEP26", :yymmdd, :ddmmmyy)
+    test "raises when the input does not match the declared source format" do
+      assert_raise ArgumentError, ~r/cannot convert "04SEP26" from :yymmdd to :ddmmmyy/, fn ->
+        Symbol.convert_date("04SEP26", :yymmdd, :ddmmmyy)
+      end
     end
 
-    test "passes through unsupported format pairs" do
-      assert "260904" = Symbol.convert_date("260904", :unknown, :ddmmmyy)
+    test "raises on an unsupported format pair" do
+      assert_raise ArgumentError, ~r/cannot convert "260904" from :unknown to :ddmmmyy/, fn ->
+        Symbol.convert_date("260904", :unknown, :ddmmmyy)
+      end
     end
   end
 
@@ -807,6 +811,10 @@ defmodule Bourse.SymbolTest do
       assert "BTCUSDT-27MAR26" = Symbol.to_exchange_id("BTC/USDT:USDT-260327", ex)
     end
 
+    test "future: BTC/USDT:USDT-260904 → BTCUSDT-04SEP26 (venue-padded day)", %{exchange: ex} do
+      assert "BTCUSDT-04SEP26" = Symbol.to_exchange_id("BTC/USDT:USDT-260904", ex)
+    end
+
     test "option: BTC/USDT:USDT-261225-105000-P → BTC-25DEC26-105000-P-USDT", %{exchange: ex} do
       assert "BTC-25DEC26-105000-P-USDT" = Symbol.to_exchange_id("BTC/USDT:USDT-261225-105000-P", ex)
     end
@@ -821,29 +829,38 @@ defmodule Bourse.SymbolTest do
       {:ok, exchange: Bourse.Exchange.new!("bybit")}
     end
 
-    test "the authored future_ddmmmyy pattern accepts the provider's DDMMMYY date", %{exchange: exchange} do
+    test "the authored future_ddmmmyy pattern keeps native DDMMMYY and stamps yymmdd", %{
+      exchange: exchange
+    } do
       assert %{pattern: :future_ddmmmyy, date_format: :ddmmmyy} = exchange.symbol_patterns.future
 
       # Bybit V5 linear instrument ids are `{base}{quote}-DDMMMYY` (docs enum
-      # example `BTCUSDT-21FEB25`). fetch_markets stamps the same expiry via
-      # Calendar `%d%b%y` into the unified symbol, so the live-measured ids
-      # `04SEP26` / `21AUG26` are already DDMMMYY — not inferred from the crash.
+      # example `BTCUSDT-21FEB25`; live 2026-08-19 pads the day as `04SEP26`).
+      # fetch_markets must stamp canonical yymmdd — a venue-native unified
+      # expiry is the 658 miss this test exists to redden.
       futures = Enum.filter(recorded_markets!(exchange), &(&1.type == "future"))
       refute Enum.empty?(futures), "bybit recorded markets must include a dated future"
 
-      recorded_expiry = futures |> hd() |> Map.fetch!(:symbol) |> String.split("-") |> List.last()
-      assert recorded_expiry =~ ~r/^\d{2}[A-Z]{3}\d{2}$/, "expected DDMMMYY expiry, got: #{recorded_expiry}"
+      for market <- futures do
+        assert {:ok, parsed} = Symbol.parse_extended(market.symbol)
+
+        if is_binary(parsed.expiry) do
+          assert parsed.expiry =~ ~r/^\d{6}$/,
+                 "expected yymmdd unified expiry, got: #{parsed.expiry} in #{market.symbol}"
+        end
+      end
 
       for {unified_symbol, native_symbol} <- [
-            {"BTC/USDT:USDT-04SEP26", "BTCUSDT-04SEP26"},
-            {"BTC/USDT:USDT-21AUG26", "BTCUSDT-21AUG26"}
+            {"BTC/USDT:USDT-260904", "BTCUSDT-04SEP26"},
+            {"BTC/USDT:USDT-260821", "BTCUSDT-21AUG26"}
           ] do
         assert Symbol.to_exchange_id(unified_symbol, exchange) == native_symbol
+        assert Symbol.from_exchange_id(native_symbol, exchange, :future) == unified_symbol
       end
     end
 
     test "dated-future non-bang reads reach HTTP and return a typed provider error", %{exchange: exchange} do
-      symbol = "BTC/USDT:USDT-04SEP26"
+      symbol = "BTC/USDT:USDT-260904"
       native_symbol = "BTCUSDT-04SEP26"
       test_pid = self()
       stub = {__MODULE__, System.unique_integer([:positive])}
@@ -868,9 +885,14 @@ defmodule Bourse.SymbolTest do
       assert {:error, %Bourse.Error{type: :bad_request}} =
                Bourse.fetch_order_book(exchange, symbol, plug: {Req.Test, stub})
 
+      assert {:error, %Bourse.Error{type: :bad_request}} =
+               Bourse.fetch_trades(exchange, symbol, plug: {Req.Test, stub})
+
       for path <- ["/v5/market/tickers", "/v5/market/kline", "/v5/market/orderbook"] do
         assert_receive {:dated_future_request, ^path, %{"category" => "linear", "symbol" => ^native_symbol}}
       end
+
+      assert_receive {:dated_future_request, "/v5/market/recent-trade", %{"symbol" => ^native_symbol}}
     end
   end
 
@@ -1074,6 +1096,17 @@ defmodule Bourse.SymbolTest do
           |> Enum.group_by(& &1.type)
           |> Enum.each(fn {market_type, [market | _same_type]} ->
             market_type_atom = String.to_existing_atom(market_type)
+            date_format = get_in(exchange.symbol_patterns, [market_type_atom, :date_format])
+
+            case Symbol.parse_extended(market.symbol) do
+              {:ok, parsed} when is_binary(parsed.expiry) and not is_nil(date_format) ->
+                assert parsed.expiry =~ ~r/^\d{6}$/,
+                       "#{exchange_id} #{market_type}: unified expiry must be yymmdd, got #{inspect(parsed.expiry)} in #{market.symbol}"
+
+              _other ->
+                :ok
+            end
+
             native_symbol = Symbol.to_exchange_id(market.symbol, exchange)
             unified_symbol = Symbol.from_exchange_id(native_symbol, exchange, market_type_atom)
             stable_native_symbol = Symbol.to_exchange_id(unified_symbol, exchange)
@@ -1265,7 +1298,24 @@ defmodule Bourse.SymbolTest do
 
       symbol = "BTC/USD:BTC-260116"
       exchange_id = Symbol.to_exchange_id(symbol, ex)
+      assert exchange_id == "BTC-16JAN26"
       assert symbol == Symbol.from_exchange_id(exchange_id, ex, :future)
+    end
+
+    test "Deribit inverse future keeps the unpadded live day width" do
+      ex =
+        make_exchange("deribit", %{
+          future: %{
+            pattern: :future_ddmmmyy,
+            separator: "-",
+            case: :upper,
+            date_format: :ddmmmyy,
+            suffix: nil,
+            prefix: nil
+          }
+        })
+
+      assert "BTC-4SEP26" = Symbol.to_exchange_id("BTC/USD:BTC-260904", ex)
     end
 
     test "Deribit linear USDC future roundtrip" do
