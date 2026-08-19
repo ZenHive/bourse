@@ -47,10 +47,34 @@ defmodule Bourse.Unified do
   @sanity_methods [:create_order, :edit_order]
   @list_required_params [:ids, :orders]
   @caller_input_reasons ~w(
+    amount_with_close_position
+    cost_based_market_on_derivative
+    good_till_date_requires_gtd
+    inapplicable_batch_order_field
+    invalid_amount
+    invalid_boolean
+    invalid_duration
+    invalid_integer
+    invalid_numeric
+    invalid_side
     max_length_exceeded
+    missing_l1_address
+    missing_price
     multiple_conditional_legs
     non_empty_orders_required
+    non_negative_timeout
+    non_numeric
+    precision_misalignment
+    price_and_price_match_exclusive
+    reduce_only_with_close_position
     unresolved_identifier_reference
+    unknown_symbol
+    unsupported_batch_order_field
+    unsupported_batch_order_type
+    unsupported_open_interest_period
+    unsupported_option_underlying
+    unsupported_order_type
+    unsupported_time_in_force
   )
 
   # First endpoint section names preferred per market type when multiple unified

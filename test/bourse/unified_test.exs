@@ -469,11 +469,52 @@ defmodule Bourse.UnifiedTest do
     # reddens the class sweep — that is the point of task 651 versus another
     # allowlist row.
     @invoked_request_shape_reasons ~w(
-      unresolved_identifier_reference
+      amount_with_close_position
+      cost_based_market_on_derivative
+      good_till_date_requires_gtd
+      inapplicable_batch_order_field
+      invalid_amount
+      invalid_boolean
+      invalid_duration
+      invalid_integer
+      invalid_numeric
+      invalid_side
       max_length_exceeded
+      missing_l1_address
+      missing_price
       multiple_conditional_legs
       non_empty_orders_required
+      non_negative_timeout
+      non_numeric
+      precision_misalignment
+      price_and_price_match_exclusive
+      reduce_only_with_close_position
+      unresolved_identifier_reference
+      unknown_symbol
+      unsupported_batch_order_field
+      unsupported_batch_order_type
+      unsupported_open_interest_period
+      unsupported_option_underlying
+      unsupported_order_type
+      unsupported_time_in_force
     )
+
+    # Joined static fragments of every keep-raising RequestShape ArgumentError.
+    # A new caller-input ArgumentError is a different message and reddens here
+    # the same way an unconverted Error raise reddens the reason sweep.
+    @keep_raising_argument_error_fingerprints [
+      "unresolved unified source for exchange  method  source ",
+      "Derive order build requires a loaded market for ",
+      "Derive order build requires loaded markets for ",
+      "Derive order build needs the venue `info` (base_asset_address/base_asset_sub_id) for  to build the trade-module hash; the loaded market carries none. Reload markets with Bourse.load_markets/1.",
+      "Lighter order build requires a loaded market for ",
+      "Lighter order build requires loaded markets for ",
+      "Lighter order build requires  precision",
+      "Lighter  must be an integer",
+      "unsupported OKX open-interest endpoint ; supported: , ",
+      "hyperliquid action build: markets are not loaded for ",
+      "hyperliquid action build: loaded market has no asset_index for "
+    ]
 
     test "a too-long client_order_id and a keyword-list price share the same create_order error shape" do
       exchange = deribit_create_order_exchange()
@@ -509,10 +550,23 @@ defmodule Bourse.UnifiedTest do
       assert unified_call_converts_allowlisted_reasons?()
     end
 
+    test "every RequestShape ArgumentError is a classified setup or spec guard" do
+      fingerprints = request_shape_argument_error_fingerprints()
+      allowed = MapSet.new(@keep_raising_argument_error_fingerprints)
+      scanned = MapSet.new(fingerprints)
+
+      assert scanned == allowed,
+             "RequestShape ArgumentError class drifted; scanned=#{inspect(MapSet.to_list(scanned))} allowed=#{inspect(MapSet.to_list(allowed))}"
+    end
+
     test "known request-shape caller-input rejections return tuples from public non-bang functions" do
       bybit = authenticated_bybit_exchange()
       binance = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
+      binanceusdm = Exchange.new!("binanceusdm", api_key: "key", secret: "secret", sandbox: true)
       deribit = deribit_create_order_exchange()
+      hyperliquid = Bourse.ReplayExchange.build!("hyperliquid", %{})
+      lighter = lighter_trading_exchange()
+      okx = okx_private_exchange()
 
       unresolved_identifier_exchange = %{
         deribit
@@ -520,6 +574,8 @@ defmodule Bourse.UnifiedTest do
             "fetchBalance" => %{"mystery_param" => %{"reason" => "identifier_reference"}}
           }
       }
+
+      lighter_opts = [price: "100.25", nonce: 7, client_order_index: 42]
 
       cases = [
         {:fetch_balance, [unresolved_identifier_exchange], :invalid_parameters, "unresolved_identifier_reference"},
@@ -530,7 +586,69 @@ defmodule Bourse.UnifiedTest do
         {:create_orders, [bybit, []], :bad_request, "non_empty_orders_required"},
         {:create_orders, [bybit, nil], :bad_request, "non_empty_orders_required"},
         {:edit_orders, [bybit, []], :bad_request, "non_empty_orders_required"},
-        {:edit_orders, [bybit, nil], :bad_request, "non_empty_orders_required"}
+        {:edit_orders, [bybit, nil], :bad_request, "non_empty_orders_required"},
+        {:cancel_all_orders_after, [hyperliquid, -1], :invalid_parameters, "non_negative_timeout"},
+        {:cancel_all_orders_after, [hyperliquid, "soon"], :invalid_parameters, "invalid_integer"},
+        {:create_twap_order, [hyperliquid, "SOL/USDC:USDC", "buy", 1, "soon"], :invalid_parameters, "invalid_duration"},
+        {:add_margin, [hyperliquid, "SOL/USDC:USDC", true], :invalid_parameters, "invalid_amount"},
+        {:transfer, [hyperliquid, "USDC", "not-a-number", "spot", "perp"], :invalid_parameters, "invalid_numeric"},
+        {:cancel_order, [hyperliquid, 1, [symbol: "NOPE/USDC:USDC"]], :bad_symbol, "unknown_symbol"},
+        {:fetch_deposits, [lighter], :invalid_parameters, "missing_l1_address"},
+        {:create_order, [lighter, "BTC/USDC:USDC", "market", "buy", "0.0100", lighter_opts], :invalid_parameters,
+         "unsupported_order_type"},
+        {:create_order, [lighter, "BTC/USDC:USDC", "limit", "buy", "0.01001", lighter_opts], :invalid_parameters,
+         "precision_misalignment"},
+        {:create_order, [lighter, "BTC/USDC:USDC", "limit", "buy", "abc", lighter_opts], :invalid_parameters,
+         "non_numeric"},
+        {:create_order, [lighter, "BTC/USDC:USDC", "limit", "hold", "0.0100", lighter_opts], :invalid_parameters,
+         "invalid_side"},
+        {:create_order,
+         [lighter, "BTC/USDC:USDC", "limit", "buy", "0.0100", Keyword.put(lighter_opts, :time_in_force, "FOK")],
+         :invalid_parameters, "unsupported_time_in_force"},
+        {:create_order,
+         [lighter, "BTC/USDC:USDC", "limit", "buy", "0.0100", Keyword.put(lighter_opts, :reduce_only, "yes")],
+         :invalid_parameters, "invalid_boolean"},
+        {:create_orders, [binanceusdm, [binance_batch_order(%{"type" => "FOO"})]], :invalid_parameters,
+         "unsupported_batch_order_type"},
+        {:create_orders, [binanceusdm, [binance_batch_order(%{"goodTillDate" => 1_800_000_000_000})]],
+         :invalid_parameters, "good_till_date_requires_gtd"},
+        {:create_orders, [binanceusdm, [binance_batch_order(%{"priceMatch" => "OPPONENT"})]], :invalid_parameters,
+         "price_and_price_match_exclusive"},
+        {:create_orders, [binanceusdm, [%{} |> binance_batch_order() |> Map.delete("price")]], :invalid_parameters,
+         "missing_price"},
+        {:create_orders,
+         [
+           binanceusdm,
+           [
+             %{
+               "type" => "stop_market",
+               "stopPrice" => 59,
+               "closePosition" => true,
+               "reduceOnly" => true
+             }
+             |> binance_batch_order()
+             |> Map.delete("amount")
+             |> Map.delete("price")
+           ]
+         ], :invalid_parameters, "reduce_only_with_close_position"},
+        {:create_orders,
+         [
+           binanceusdm,
+           [
+             %{"type" => "stop_market", "stopPrice" => 59, "closePosition" => true}
+             |> binance_batch_order()
+             |> Map.delete("price")
+           ]
+         ], :invalid_parameters, "amount_with_close_position"},
+        {:create_orders, [binanceusdm, [binance_batch_order(%{"activationPrice" => 59})]], :invalid_parameters,
+         "inapplicable_batch_order_field"},
+        {:create_orders, [binanceusdm, [binance_batch_order(%{"mystery" => true})]], :invalid_parameters,
+         "unsupported_batch_order_field"},
+        {:create_market_buy_order_with_cost, [okx, "BTC/USDT:USDT", 10], :invalid_parameters,
+         "cost_based_market_on_derivative"},
+        {:fetch_option_chain, [okx, "BTC-USDT"], :invalid_parameters, "unsupported_option_underlying"},
+        {:fetch_open_interest_history, [okx, "BTC/USDT:USDT", [timeframe: "15m"]], :invalid_parameters,
+         "unsupported_open_interest_period"}
       ]
 
       assert MapSet.new(Enum.map(cases, &elem(&1, 3))) == MapSet.new(@invoked_request_shape_reasons)
@@ -538,6 +656,30 @@ defmodule Bourse.UnifiedTest do
       for {function, args, type, reason} <- cases do
         assert {:error, %Error{type: ^type, raw: %{"reason" => ^reason}}} = apply(Bourse, function, args),
                "#{function} with #{reason} must return the public error tuple"
+      end
+    end
+
+    test "hyperliquid cancel_order still raises when markets are not loaded" do
+      exchange =
+        Exchange.new!("hyperliquid", api_key: "0xwallet", secret: "privkey", sandbox: true)
+
+      assert is_nil(exchange.markets)
+
+      assert_raise ArgumentError, ~r/markets are not loaded for BTCUSDC/, fn ->
+        Bourse.cancel_order(exchange, 1, symbol: "BTC/USDC:USDC")
+      end
+    end
+
+    test "hyperliquid cancel_order still raises when the loaded market has no asset_index" do
+      exchange =
+        "hyperliquid"
+        |> Exchange.new!(api_key: "0xwallet", secret: "privkey", sandbox: true)
+        |> Exchange.put_markets([
+          %Bourse.Market{symbol: "BTC/USDC:USDC", base: "BTC", quote: "USDC", settle: "USDC", asset_index: nil}
+        ])
+
+      assert_raise ArgumentError, ~r/loaded market has no asset_index for BTCUSDC/, fn ->
+        Bourse.cancel_order(exchange, 1, symbol: "BTC/USDC:USDC")
       end
     end
 
@@ -571,6 +713,17 @@ defmodule Bourse.UnifiedTest do
       assert conditional_error.raw["reason"] == "multiple_conditional_legs"
       assert batch_error.type == :bad_request
       assert batch_error.raw["reason"] == "non_empty_orders_required"
+
+      hyperliquid = Bourse.ReplayExchange.build!("hyperliquid", %{})
+      lighter = lighter_trading_exchange()
+
+      timeout_error = assert_raise Error, fn -> Bourse.cancel_all_orders_after!(hyperliquid, -1) end
+      deposits_error = assert_raise Error, fn -> Bourse.fetch_deposits!(lighter) end
+
+      assert timeout_error.type == :invalid_parameters
+      assert timeout_error.raw["reason"] == "non_negative_timeout"
+      assert deposits_error.type == :invalid_parameters
+      assert deposits_error.raw["reason"] == "missing_l1_address"
     end
 
     test "OrderPrecision's load_markets/1 guard still raises through create_order" do
@@ -2921,6 +3074,53 @@ defmodule Bourse.UnifiedTest do
     )
   end
 
+  defp lighter_trading_exchange do
+    "lighter"
+    |> Exchange.new!(
+      credentials: Bourse.Credentials.new!(api_key: "0", secret: "0" <> String.duplicate("00", 39), uid: "1")
+    )
+    |> Exchange.put_markets([
+      %Bourse.Market{
+        id: "1",
+        symbol: "BTC/USDC:USDC",
+        base: "BTC",
+        quote: "USDC",
+        settle: "USDC",
+        type: "swap",
+        swap: true,
+        contract: true,
+        linear: true,
+        precision: %{amount: 0.0001, price: 0.01}
+      }
+    ])
+  end
+
+  defp okx_private_exchange do
+    "okx"
+    |> Exchange.new!(api_key: "test-key", secret: "test-secret", password: "test-pass")
+    |> Exchange.put_markets([
+      %Bourse.Market{
+        id: "BTC-USDT",
+        symbol: "BTC/USDT",
+        spot: true,
+        precision: %{"amount" => 0.00001, "price" => 0.1}
+      },
+      %Bourse.Market{
+        id: "BTC-USDT-SWAP",
+        symbol: "BTC/USDT:USDT",
+        linear: true,
+        precision: %{"amount" => 0.1, "price" => 0.1}
+      }
+    ])
+  end
+
+  defp binance_batch_order(overrides) do
+    Map.merge(
+      %{"symbol" => "LTC/USDT:USDT", "type" => "limit", "side" => "buy", "amount" => 0.1, "price" => 60},
+      overrides
+    )
+  end
+
   defp request_shape_error_raises do
     files = ["lib/bourse/unified/request_shape.ex" | Path.wildcard("lib/bourse/unified/request_shape/*.ex")]
 
@@ -2929,6 +3129,58 @@ defmodule Bourse.UnifiedTest do
 
     {Enum.map(with_reason, &elem(&1, 2)), Enum.map(missing, fn {file, line, _} -> "#{file}:#{line}" end)}
   end
+
+  defp request_shape_argument_error_fingerprints do
+    files = ["lib/bourse/unified/request_shape.ex" | Path.wildcard("lib/bourse/unified/request_shape/*.ex")]
+
+    files
+    |> Enum.flat_map(&argument_errors_in/1)
+    |> Enum.map(&elem(&1, 2))
+  end
+
+  defp argument_errors_in(file) do
+    {_, acc} =
+      file
+      |> File.read!()
+      |> Code.string_to_quoted!(file: file)
+      |> Macro.prewalk([], fn node, acc -> {node, collect_argument_error(file, node, acc)} end)
+
+    acc
+  end
+
+  defp collect_argument_error(file, {:raise, meta, [exception, message]}, acc) do
+    if argument_error_exception?(exception) do
+      [{file, meta[:line], joined_static_message(message)} | acc]
+    else
+      acc
+    end
+  end
+
+  defp collect_argument_error(_file, _node, acc), do: acc
+
+  defp argument_error_exception?({:__aliases__, _, segments}), do: List.last(segments) == :ArgumentError
+  defp argument_error_exception?(:ArgumentError), do: true
+  defp argument_error_exception?(_exception), do: false
+
+  defp joined_static_message(ast) do
+    ast
+    |> static_message_fragments()
+    |> IO.iodata_to_binary()
+  end
+
+  defp static_message_fragments(binary) when is_binary(binary), do: [binary]
+
+  defp static_message_fragments({:<<>>, _, parts}) when is_list(parts) do
+    Enum.flat_map(parts, &static_message_fragments/1)
+  end
+
+  defp static_message_fragments({:<>, _, [left, right]}) do
+    static_message_fragments(left) ++ static_message_fragments(right)
+  end
+
+  defp static_message_fragments({:"::", _, [{{:., _, [Kernel, :to_string]}, _, _}, _]}), do: []
+  defp static_message_fragments({:"::", _, [value, _]}), do: static_message_fragments(value)
+  defp static_message_fragments(_other), do: []
 
   defp error_raises_in(file) do
     {_, acc} =

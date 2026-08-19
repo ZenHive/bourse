@@ -151,7 +151,21 @@ defmodule Bourse.HyperliquidAssetIndexTest do
            }
   end
 
-  test "RequestShape cancel raises when asset_index is missing (nil id no longer soft-succeeds)" do
+  test "RequestShape cancel raises when markets were never loaded" do
+    exchange = Exchange.new!("hyperliquid")
+    assert is_nil(exchange.markets)
+
+    assert_raise ArgumentError, ~r/markets are not loaded for BTC\/USDC:USDC/, fn ->
+      RequestShape.apply(
+        %{"id" => 1, "symbol" => "BTC/USDC:USDC"},
+        exchange,
+        "cancelOrder",
+        timestamp_ms_override: 42
+      )
+    end
+  end
+
+  test "RequestShape cancel raises when the loaded market has no asset_index" do
     markets = [
       %Bourse.Market{
         symbol: "BTC/USDC:USDC",
@@ -164,7 +178,7 @@ defmodule Bourse.HyperliquidAssetIndexTest do
 
     exchange = "hyperliquid" |> Exchange.new!() |> Map.put(:markets, markets)
 
-    assert_raise ArgumentError, ~r/no market asset index for BTC\/USDC:USDC/, fn ->
+    assert_raise ArgumentError, ~r/loaded market has no asset_index for BTC\/USDC:USDC/, fn ->
       RequestShape.apply(
         %{"id" => 1, "symbol" => "BTC/USDC:USDC"},
         exchange,
@@ -172,6 +186,34 @@ defmodule Bourse.HyperliquidAssetIndexTest do
         timestamp_ms_override: 42
       )
     end
+  end
+
+  test "RequestShape cancel names an unknown symbol as caller input" do
+    markets = [
+      %Bourse.Market{
+        symbol: "BTC/USDC:USDC",
+        base: "BTC",
+        quote: "USDC",
+        settle: "USDC",
+        asset_index: 0
+      }
+    ]
+
+    exchange = "hyperliquid" |> Exchange.new!() |> Map.put(:markets, markets)
+
+    error =
+      assert_raise Bourse.Error, fn ->
+        RequestShape.apply(
+          %{"id" => 1, "symbol" => "NOPE/USDC:USDC"},
+          exchange,
+          "cancelOrder",
+          timestamp_ms_override: 42
+        )
+      end
+
+    assert error.type == :bad_symbol
+    assert error.raw["reason"] == "unknown_symbol"
+    assert error.raw["symbol"] == "NOPE/USDC:USDC"
   end
 
   test "fixture markets cache injects asset_index from Bourse baseId for L1 replay" do

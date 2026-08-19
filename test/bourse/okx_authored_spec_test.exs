@@ -1288,15 +1288,15 @@ defmodule Bourse.OkxAuthoredSpecTest do
                "uly" => "BTC-USD"
              }
 
-      assert_raise ArgumentError, ~r/unsupported OKX option underlying "BTC-USDT".*BASE-USD/, fn ->
+      assert_raise Bourse.Error, ~r/unsupported OKX option underlying "BTC-USDT".*BASE-USD/, fn ->
         RequestShape.apply(%{"symbol" => "BTC-USDT"}, exchange, "fetchOptionChain")
       end
 
-      assert_raise ArgumentError, ~r/unsupported OKX option underlying "BTC\/USD"/, fn ->
+      assert_raise Bourse.Error, ~r/unsupported OKX option underlying "BTC\/USD"/, fn ->
         RequestShape.apply(%{"symbol" => "BTC/USD"}, exchange, "fetchOptionChain")
       end
 
-      assert_raise ArgumentError, ~r/unsupported OKX option underlying "-USD"/, fn ->
+      assert_raise Bourse.Error, ~r/unsupported OKX option underlying "-USD"/, fn ->
         RequestShape.apply(%{"symbol" => "-USD"}, exchange, "fetchOptionChain")
       end
     end
@@ -1331,19 +1331,16 @@ defmodule Bourse.OkxAuthoredSpecTest do
                option_opts
              ) == %{"ccy" => "BTC", "period" => "8H"}
 
-      assert_raise ArgumentError,
-                   ~r/unsupported OKX open-interest period "15m".*contracts.*supported: .*1D/,
-                   fn ->
-                     Unified.call(
-                       exchange,
-                       :fetch_open_interest_history,
-                       "fetchOpenInterestHistory",
-                       %{"symbol" => "BTC/USDT:USDT", "timeframe" => "15m"},
-                       plug: plug
-                     )
-                   end
+      assert {:error, %Bourse.Error{type: :invalid_parameters, raw: %{"reason" => "unsupported_open_interest_period"}}} =
+               Unified.call(
+                 exchange,
+                 :fetch_open_interest_history,
+                 "fetchOpenInterestHistory",
+                 %{"symbol" => "BTC/USDT:USDT", "timeframe" => "15m"},
+                 plug: plug
+               )
 
-      assert_raise ArgumentError, ~r/unsupported OKX open-interest period "8H".*contracts/, fn ->
+      assert_raise Bourse.Error, ~r/unsupported OKX open-interest period "8H".*contracts/, fn ->
         RequestShape.apply(
           %{"symbol" => "BTC-USDT-SWAP", "timeframe" => "8H"},
           exchange,
@@ -1352,15 +1349,14 @@ defmodule Bourse.OkxAuthoredSpecTest do
         )
       end
 
-      assert_raise ArgumentError, ~r/unsupported OKX open-interest period "5m".*option/, fn ->
-        Unified.call(
-          exchange,
-          :fetch_open_interest_history,
-          "fetchOpenInterestHistory",
-          %{"symbol" => "BTC/USD:BTC-260622-60000-C", "timeframe" => "5m"},
-          plug: plug
-        )
-      end
+      assert {:error, %Bourse.Error{type: :invalid_parameters, raw: %{"reason" => "unsupported_open_interest_period"}}} =
+               Unified.call(
+                 exchange,
+                 :fetch_open_interest_history,
+                 "fetchOpenInterestHistory",
+                 %{"symbol" => "BTC/USD:BTC-260622-60000-C", "timeframe" => "5m"},
+                 plug: plug
+               )
 
       assert_raise ArgumentError, ~r/unsupported OKX open-interest endpoint "rubik\/stat\/other"/, fn ->
         RequestShape.apply(
@@ -2320,7 +2316,7 @@ defmodule Bourse.OkxAuthoredSpecTest do
       exchange = private_exchange()
 
       for js_name <- ["createMarketBuyOrderWithCost", "createMarketSellOrderWithCost"] do
-        assert_raise ArgumentError, ~r/SPOT-only/, fn ->
+        assert_raise Bourse.Error, ~r/SPOT-only/, fn ->
           RequestShape.apply(%{"symbol" => "BTC/USDT:USDT", "cost" => 10}, exchange, js_name)
         end
       end

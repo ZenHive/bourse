@@ -843,13 +843,12 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
 
   # Task 494 precision guard runs before the SPOT-only cost guard when markets are
   # unloaded; load markets so the deliberate derivatives refusal is the SPOT-only
-  # ArgumentError (not "missing instrument precision").
+  # caller-input error (not "missing instrument precision").
   test "market order with cost refuses derivatives before any request reaches the venue" do
     assert {:ok, exchange} = Bourse.load_markets(demo_exchange())
 
-    assert_raise ArgumentError, ~r/SPOT-only/, fn ->
-      Bourse.create_market_buy_order_with_cost(exchange, "BTC/USDT:USDT", 1)
-    end
+    assert {:error, %Error{type: :invalid_parameters, raw: %{"reason" => "cost_based_market_on_derivative"}}} =
+             Bourse.create_market_buy_order_with_cost(exchange, "BTC/USDT:USDT", 1)
   end
 
   test "demo order acknowledgement exposes the venue's populated per-operation error row" do

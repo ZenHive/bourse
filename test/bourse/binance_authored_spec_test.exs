@@ -2570,14 +2570,14 @@ defmodule Bourse.BinanceAuthoredSpecTest do
 
     # Neither `price` nor `priceMatch`: the venue would answer -1102; name the
     # missing key client-side instead of shipping an unpriced LIMIT.
-    assert_raise ArgumentError, ~r/requires "price" or "priceMatch"/, fn -> build.(limit) end
+    assert_raise Bourse.Error, ~r/requires "price" or "priceMatch"/, fn -> build.(limit) end
 
-    assert_raise ArgumentError, ~r/"priceMatch" cannot be used with "price"/, fn ->
+    assert_raise Bourse.Error, ~r/"priceMatch" cannot be used with "price"/, fn ->
       build.(Map.merge(limit, %{"price" => 60, "priceMatch" => "OPPONENT"}))
     end
 
     # `closePosition: true` sizes itself from the open position.
-    assert_raise ArgumentError, ~r/"amount" cannot be used with "closePosition"/, fn ->
+    assert_raise Bourse.Error, ~r/"amount" cannot be used with "closePosition"/, fn ->
       build.(%{
         "symbol" => "LTC/USDT:USDT",
         "type" => "stop_market",
@@ -2604,7 +2604,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
   test "Binance batch orders fail loudly for unknown and inapplicable element fields" do
     exchange = Exchange.new!("binanceusdm")
 
-    assert_raise ArgumentError, ~r/"mystery".*LIMIT/, fn ->
+    assert_raise Bourse.Error, ~r/"mystery".*LIMIT/, fn ->
       RequestShape.Binance.build(
         %{
           "orders" => [
@@ -2623,7 +2623,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
       )
     end
 
-    assert_raise ArgumentError, ~r/"activationPrice".*LIMIT/, fn ->
+    assert_raise Bourse.Error, ~r/"activationPrice".*LIMIT/, fn ->
       RequestShape.Binance.build(
         %{
           "orders" => [

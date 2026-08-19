@@ -5,6 +5,7 @@ defmodule Bourse.Unified.RequestShape.OKX do
   # order-book depth. Pure renames/defaults live in the authored spec's
   # `endpoints.request.defaults` instead (see `priv/specs/json/output/okx.json`).
 
+  alias Bourse.Error
   alias Bourse.Exchange
   alias Bourse.Symbol
 
@@ -267,10 +268,14 @@ defmodule Bourse.Unified.RequestShape.OKX do
     if spot_inst?(inst_id) do
       Map.put(params, "tgtCcy", "quote_ccy")
     else
-      raise ArgumentError,
-            "OKX cost-based market orders are SPOT-only (tgtCcy is a spot market-order field); " <>
-              "#{inst_id} is a derivative, whose sz is a contract count. " <>
-              "Use createOrder with an explicit contract amount instead."
+      raise Error.invalid_parameters(
+              message:
+                "OKX cost-based market orders are SPOT-only (tgtCcy is a spot market-order field); " <>
+                  "#{inst_id} is a derivative, whose sz is a contract count. " <>
+                  "Use createOrder with an explicit contract amount instead.",
+              exchange: "okx",
+              raw: %{"reason" => "cost_based_market_on_derivative", "instId" => inst_id}
+            )
     end
   end
 
@@ -1388,10 +1393,14 @@ defmodule Bourse.Unified.RequestShape.OKX do
         value
 
       true ->
-        raise ArgumentError,
-              "unsupported OKX option underlying #{inspect(value)}; " <>
-                "expected a bare base or BASE-#{@option_underlying_settle} family " <>
-                "(registered settle is #{@option_underlying_settle})"
+        raise Error.invalid_parameters(
+                message:
+                  "unsupported OKX option underlying #{inspect(value)}; " <>
+                    "expected a bare base or BASE-#{@option_underlying_settle} family " <>
+                    "(registered settle is #{@option_underlying_settle})",
+                exchange: "okx",
+                raw: %{"reason" => "unsupported_option_underlying", "value" => value}
+              )
     end
   end
 
@@ -1475,9 +1484,13 @@ defmodule Bourse.Unified.RequestShape.OKX do
           |> Enum.sort()
           |> Enum.join(", ")
 
-        raise ArgumentError,
-              "unsupported OKX open-interest period #{inspect(period)} for #{endpoint_path}; " <>
-                "supported: #{supported}"
+        raise Error.invalid_parameters(
+                message:
+                  "unsupported OKX open-interest period #{inspect(period)} for #{endpoint_path}; " <>
+                    "supported: #{supported}",
+                exchange: "okx",
+                raw: %{"reason" => "unsupported_open_interest_period", "period" => period, "path" => endpoint_path}
+              )
     end
   end
 

@@ -1,6 +1,7 @@
 defmodule Bourse.Unified.RequestShape.Lighter do
   @moduledoc false
 
+  alias Bourse.Error
   alias Bourse.Exchange
   alias Bourse.Symbol
 
@@ -51,9 +52,13 @@ defmodule Bourse.Unified.RequestShape.Lighter do
   # so require it loudly here instead of shipping that raw error.
   def build(params, "fetchDeposits", %Exchange{} = exchange, _opts) when is_map(params) do
     if not is_binary(first_value(params, ["l1_address", "l1Address"], nil)) do
-      raise ArgumentError,
-            "lighter deposit/history requires l1_address (the account's L1 wallet address, " <>
-              "published on public_get_account) — pass l1_address: \"0x…\""
+      raise Error.invalid_parameters(
+              message:
+                "lighter deposit/history requires l1_address (the account's L1 wallet address, " <>
+                  "published on public_get_account) — pass l1_address: \"0x…\"",
+              exchange: "lighter",
+              raw: %{"reason" => "missing_l1_address"}
+            )
     end
 
     params
@@ -132,38 +137,96 @@ defmodule Bourse.Unified.RequestShape.Lighter do
       if Decimal.equal?(units, integer) do
         Decimal.to_integer(integer)
       else
-        raise ArgumentError, "Lighter #{name} does not align with market precision"
+        raise Error.invalid_parameters(
+                message: "Lighter #{name} does not align with market precision",
+                exchange: "lighter",
+                raw: %{"reason" => "precision_misalignment", "parameter" => name}
+              )
       end
     else
-      _ -> raise ArgumentError, "Lighter #{name} must be numeric"
+      _ ->
+        raise Error.invalid_parameters(
+                message: "Lighter #{name} must be numeric",
+                exchange: "lighter",
+                raw: %{"reason" => "non_numeric", "parameter" => name}
+              )
     end
   end
 
   defp order_type!(type) when type in ["limit", :limit], do: @order_type_limit
-  defp order_type!(_type), do: raise(ArgumentError, "Lighter authored trading supports limit orders only")
+
+  defp order_type!(type) do
+    raise Error.invalid_parameters(
+            message: "Lighter authored trading supports limit orders only",
+            exchange: "lighter",
+            raw: %{"reason" => "unsupported_order_type", "value" => type}
+          )
+  end
 
   defp side_is_ask!(side) when side in ["sell", :sell], do: true
   defp side_is_ask!(side) when side in ["buy", :buy], do: false
-  defp side_is_ask!(_side), do: raise(ArgumentError, "Lighter order side must be buy or sell")
+
+  defp side_is_ask!(side) do
+    raise Error.invalid_parameters(
+            message: "Lighter order side must be buy or sell",
+            exchange: "lighter",
+            raw: %{"reason" => "invalid_side", "value" => side}
+          )
+  end
 
   defp time_in_force!(params) do
     value = first_value(params, ["timeInForce", "time_in_force"], "GTC")
 
     case Map.fetch(@time_in_force, value) do
-      {:ok, time_in_force} -> time_in_force
-      :error -> raise ArgumentError, "unsupported Lighter time in force #{inspect(value)}"
+      {:ok, time_in_force} ->
+        time_in_force
+
+      :error ->
+        raise Error.invalid_parameters(
+                message: "unsupported Lighter time in force #{inspect(value)}",
+                exchange: "lighter",
+                raw: %{"reason" => "unsupported_time_in_force", "value" => value}
+              )
     end
   end
 
   defp boolean_param(params, names, default) do
     case first_value(params, names, default) do
-      value when is_boolean(value) -> value
-      value -> raise ArgumentError, "expected boolean Lighter parameter, got: #{inspect(value)}"
+      value when is_boolean(value) ->
+        value
+
+      value ->
+        raise Error.invalid_parameters(
+                message: "expected boolean Lighter parameter, got: #{inspect(value)}",
+                exchange: "lighter",
+                raw: %{"reason" => "invalid_boolean", "value" => value}
+              )
     end
   end
 
-  defp integer_param!(params, names), do: params |> first_value(names, nil) |> integer!(List.first(names))
-  defp integer_param(params, names, default), do: params |> first_value(names, default) |> integer!(List.first(names))
+  defp integer_param!(params, names), do: params |> first_value(names, nil) |> integer_param_value!(List.first(names))
+
+  defp integer_param(params, names, default),
+    do: params |> first_value(names, default) |> integer_param_value!(List.first(names))
+
+  defp integer_param_value!(value, _name) when is_integer(value), do: value
+
+  defp integer_param_value!(value, name) when is_binary(value) do
+    case Integer.parse(value) do
+      {integer, ""} -> integer
+      _ -> reject_invalid_integer_param!(name, value)
+    end
+  end
+
+  defp integer_param_value!(value, name), do: reject_invalid_integer_param!(name, value)
+
+  defp reject_invalid_integer_param!(name, value) do
+    raise Error.invalid_parameters(
+            message: "Lighter #{name} must be an integer",
+            exchange: "lighter",
+            raw: %{"reason" => "invalid_integer", "parameter" => name, "value" => value}
+          )
+  end
 
   defp account_index!(%Exchange{credentials: %{uid: uid}}) when not is_nil(uid), do: integer!(uid, "account index")
 

@@ -1,6 +1,7 @@
 defmodule Bourse.Unified.RequestShape.Binance do
   @moduledoc false
 
+  alias Bourse.Error
   alias Bourse.Exchange
   alias Bourse.Symbol
 
@@ -154,7 +155,10 @@ defmodule Bourse.Unified.RequestShape.Binance do
 
   defp validate_create_order_fields!(order, type) do
     if type not in @all_order_types do
-      raise ArgumentError, "unsupported Binance batch order type #{inspect(type)}"
+      raise Error.invalid_parameters(
+              message: "unsupported Binance batch order type #{inspect(type)}",
+              raw: %{"reason" => "unsupported_batch_order_type", "type" => type}
+            )
     end
 
     allowed_fields = Map.fetch!(@create_order_fields_by_type, type)
@@ -166,7 +170,10 @@ defmodule Bourse.Unified.RequestShape.Binance do
     validate_price!(order, type)
 
     if Map.has_key?(order, "goodTillDate") and String.upcase(Map.get(order, "timeInForce", "GTC")) != "GTD" do
-      raise ArgumentError, ~s(Binance batch order field "goodTillDate" requires "timeInForce" "GTD")
+      raise Error.invalid_parameters(
+              message: ~s(Binance batch order field "goodTillDate" requires "timeInForce" "GTD"),
+              raw: %{"reason" => "good_till_date_requires_gtd"}
+            )
     end
 
     if truthy?(Map.get(order, "closePosition")) do
@@ -181,10 +188,16 @@ defmodule Bourse.Unified.RequestShape.Binance do
   defp validate_price!(order, type) when type in @priced_order_types do
     case {Map.has_key?(order, "price"), Map.has_key?(order, "priceMatch")} do
       {true, true} ->
-        raise ArgumentError, ~s(Binance batch order field "priceMatch" cannot be used with "price")
+        raise Error.invalid_parameters(
+                message: ~s(Binance batch order field "priceMatch" cannot be used with "price"),
+                raw: %{"reason" => "price_and_price_match_exclusive"}
+              )
 
       {false, false} ->
-        raise ArgumentError, ~s(Binance batch order type #{type} requires "price" or "priceMatch")
+        raise Error.invalid_parameters(
+                message: ~s(Binance batch order type #{type} requires "price" or "priceMatch"),
+                raw: %{"reason" => "missing_price", "type" => type}
+              )
 
       _ ->
         :ok
@@ -197,11 +210,17 @@ defmodule Bourse.Unified.RequestShape.Binance do
   # caller-supplied size and `reduceOnly` conflict with it.
   defp validate_close_position_exclusions!(order) do
     if Map.has_key?(order, "reduceOnly") do
-      raise ArgumentError, ~s(Binance batch order field "reduceOnly" cannot be used with "closePosition")
+      raise Error.invalid_parameters(
+              message: ~s(Binance batch order field "reduceOnly" cannot be used with "closePosition"),
+              raw: %{"reason" => "reduce_only_with_close_position"}
+            )
     end
 
     if Map.has_key?(order, "amount") do
-      raise ArgumentError, ~s(Binance batch order field "amount" cannot be used with "closePosition")
+      raise Error.invalid_parameters(
+              message: ~s(Binance batch order field "amount" cannot be used with "closePosition"),
+              raw: %{"reason" => "amount_with_close_position"}
+            )
     end
   end
 
@@ -218,11 +237,17 @@ defmodule Bourse.Unified.RequestShape.Binance do
   end
 
   defp reject_create_order_field!(key, type) when key in @all_create_order_fields do
-    raise ArgumentError, "Binance batch order field #{inspect(key)} is inapplicable to #{type}"
+    raise Error.invalid_parameters(
+            message: "Binance batch order field #{inspect(key)} is inapplicable to #{type}",
+            raw: %{"reason" => "inapplicable_batch_order_field", "field" => key, "type" => type}
+          )
   end
 
   defp reject_create_order_field!(key, type) do
-    raise ArgumentError, "unsupported Binance batch order field #{inspect(key)} for #{type}"
+    raise Error.invalid_parameters(
+            message: "unsupported Binance batch order field #{inspect(key)} for #{type}",
+            raw: %{"reason" => "unsupported_batch_order_field", "field" => key, "type" => type}
+          )
   end
 
   defp encode_edit_order(order, exchange) do

@@ -2874,12 +2874,12 @@ defmodule Bourse.Unified.RequestShapeTest do
       # guard that used to catch this, so the builder must fail loudly rather
       # than shape an action-less body onto the wire.
       for bad <- [nil, 60_000.0, "soon"] do
-        assert_raise ArgumentError, ~r/hyperliquid action build/, fn ->
+        assert_raise Error, ~r/hyperliquid action build/, fn ->
           RequestShape.apply(%{"timeout" => bad}, exchange, "cancelAllOrdersAfter")
         end
       end
 
-      assert_raise ArgumentError, ~r/non-negative timeout/, fn ->
+      assert_raise Error, ~r/non-negative timeout/, fn ->
         RequestShape.apply(%{"timeout" => -1}, exchange, "cancelAllOrdersAfter")
       end
     end
@@ -3047,7 +3047,7 @@ defmodule Bourse.Unified.RequestShapeTest do
     test "hyperliquid createOrders rejects non-numeric size strings before signing (task 353)" do
       exchange = Bourse.ReplayExchange.build!("hyperliquid", %{})
 
-      assert_raise ArgumentError, ~r/expected numeric string/, fn ->
+      assert_raise Error, ~r/expected numeric string/, fn ->
         RequestShape.apply(
           %{
             "orders" => [

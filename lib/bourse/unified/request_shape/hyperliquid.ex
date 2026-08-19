@@ -15,6 +15,7 @@ defmodule Bourse.Unified.RequestShape.Hyperliquid do
   # the keys we own. (An atom-keyed `:action` from a raw caller is still honoured —
   # `Bourse.Signing.Hyperliquid` reads both spellings.)
 
+  alias Bourse.Error
   alias Bourse.Exchange
   alias Bourse.Symbol
 
@@ -106,10 +107,14 @@ defmodule Bourse.Unified.RequestShape.Hyperliquid do
   # the signer-owned `action`/`nonce` slots no longer carry an identifier guard
   # to catch it downstream (task 417).
   defp do_build(params, "cancelAllOrdersAfter", _exchange, opts) do
-    timeout = parse_int!(params["timeout"])
+    timeout = parse_int_param!(params["timeout"])
 
     if timeout < 0 do
-      raise ArgumentError, "hyperliquid action build: expected non-negative timeout, got #{inspect(timeout)}"
+      raise Error.invalid_parameters(
+              message: "hyperliquid action build: expected non-negative timeout, got #{inspect(timeout)}",
+              exchange: "hyperliquid",
+              raw: %{"reason" => "non_negative_timeout", "value" => timeout}
+            )
     end
 
     nonce = nonce(params, opts)
@@ -154,7 +159,7 @@ defmodule Bourse.Unified.RequestShape.Hyperliquid do
 
     cancels =
       Enum.map(ids, fn id ->
-        %{"a" => asset, "o" => parse_int!(id)}
+        %{"a" => asset, "o" => parse_int_param!(id)}
       end)
 
     action = %{"type" => "cancel", "cancels" => cancels}
@@ -277,12 +282,19 @@ defmodule Bourse.Unified.RequestShape.Hyperliquid do
   defp duration_minutes!(duration) when is_binary(duration) do
     case Float.parse(duration) do
       {value, ""} -> duration_minutes!(value)
-      _ -> raise ArgumentError, "hyperliquid action build: expected duration in milliseconds, got #{inspect(duration)}"
+      _ -> reject_invalid_duration!(duration)
     end
   end
 
-  defp duration_minutes!(duration),
-    do: raise(ArgumentError, "hyperliquid action build: expected duration in milliseconds, got #{inspect(duration)}")
+  defp duration_minutes!(duration), do: reject_invalid_duration!(duration)
+
+  defp reject_invalid_duration!(duration) do
+    raise Error.invalid_parameters(
+            message: "hyperliquid action build: expected duration in milliseconds, got #{inspect(duration)}",
+            exchange: "hyperliquid",
+            raw: %{"reason" => "invalid_duration", "value" => duration}
+          )
+  end
 
   # --- withdrawal ----------------------------------------------------------
   #
@@ -494,8 +506,13 @@ defmodule Bourse.Unified.RequestShape.Hyperliquid do
     |> Decimal.to_integer()
   end
 
-  defp amount_to_micro_usd(amount),
-    do: raise(ArgumentError, "hyperliquid action build: expected numeric amount, got #{inspect(amount)}")
+  defp amount_to_micro_usd(amount) do
+    raise Error.invalid_parameters(
+            message: "hyperliquid action build: expected numeric amount, got #{inspect(amount)}",
+            exchange: "hyperliquid",
+            raw: %{"reason" => "invalid_amount", "value" => amount}
+          )
+  end
 
   defp hyperliquid_chain(%Exchange{sandbox: true}), do: "Testnet"
   defp hyperliquid_chain(%Exchange{}), do: "Mainnet"
@@ -566,15 +583,41 @@ defmodule Bourse.Unified.RequestShape.Hyperliquid do
   # back to id/base_id — those keep market-identity semantics and are often nil
   # on live loadMarkets. Fixture-replay markets inject asset_index from the
   # static cache (see RecordedResponseFixtures.markets_cache!/1).
-  defp asset_index(exchange, symbol) when is_binary(symbol) do
+  #
+  # Three answers, not one: markets never loaded (setup, keep raising),
+  # no matching symbol (caller input), and a matched market with no usable
+  # asset_index (incomplete market data, keep raising). The nil guard is
+  # `is_nil/1` because asset_index is 0-based — truthiness would treat the
+  # first universe row as missing.
+  defp asset_index(%Exchange{markets: nil}, symbol) when is_binary(symbol) do
+    raise ArgumentError, "hyperliquid action build: markets are not loaded for #{symbol}"
+  end
+
+  defp asset_index(%Exchange{} = exchange, symbol) when is_binary(symbol) do
     case find_market(exchange, symbol) do
-      %{asset_index: idx} when not is_nil(idx) -> parse_int!(idx)
-      %{"asset_index" => idx} when not is_nil(idx) -> parse_int!(idx)
-      %{"assetIndex" => idx} when not is_nil(idx) -> parse_int!(idx)
-      nil -> raise ArgumentError, "hyperliquid action build: no market asset index for #{symbol}"
-      _market -> raise ArgumentError, "hyperliquid action build: no market asset index for #{symbol}"
+      nil ->
+        raise Error.bad_symbol(
+                message: "hyperliquid action build: no market for #{symbol}",
+                exchange: "hyperliquid",
+                raw: %{"reason" => "unknown_symbol", "symbol" => symbol}
+              )
+
+      market ->
+        asset_index_from_market(market, symbol)
     end
   end
+
+  defp asset_index_from_market(market, symbol) do
+    case market_asset_index(market) do
+      idx when not is_nil(idx) -> parse_market_asset_index!(idx, symbol)
+      nil -> raise ArgumentError, "hyperliquid action build: loaded market has no asset_index for #{symbol}"
+    end
+  end
+
+  defp market_asset_index(%{asset_index: idx}) when not is_nil(idx), do: idx
+  defp market_asset_index(%{"asset_index" => idx}) when not is_nil(idx), do: idx
+  defp market_asset_index(%{"assetIndex" => idx}) when not is_nil(idx), do: idx
+  defp market_asset_index(_market), do: nil
 
   # Unified `RequestShape.apply` may receive either the Bourse unified symbol
   # (`SOL/USDC:USDC`) or the already-denormalized exchange id (`SOLUSDC`) —
@@ -608,16 +651,41 @@ defmodule Bourse.Unified.RequestShape.Hyperliquid do
   defp market_field(market, key) when is_map(market), do: Map.get(market, key)
   defp market_field(_market, _key), do: nil
 
-  defp parse_int!(value) when is_integer(value), do: value
-
-  defp parse_int!(value) when is_binary(value) do
-    case Integer.parse(value) do
-      {int, ""} -> int
-      _ -> raise ArgumentError, "hyperliquid action build: expected integer, got #{inspect(value)}"
+  defp parse_int_param!(value) do
+    case parse_int(value) do
+      {:ok, int} -> int
+      :error -> reject_invalid_integer!(value)
     end
   end
 
-  defp parse_int!(value), do: raise(ArgumentError, "hyperliquid action build: expected integer, got #{inspect(value)}")
+  defp parse_market_asset_index!(value, symbol) do
+    case parse_int(value) do
+      {:ok, int} ->
+        int
+
+      :error ->
+        raise ArgumentError, "hyperliquid action build: loaded market has no asset_index for #{symbol}"
+    end
+  end
+
+  defp parse_int(value) when is_integer(value), do: {:ok, value}
+
+  defp parse_int(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, ""} -> {:ok, int}
+      _ -> :error
+    end
+  end
+
+  defp parse_int(_value), do: :error
+
+  defp reject_invalid_integer!(value) do
+    raise Error.invalid_parameters(
+            message: "hyperliquid action build: expected integer, got #{inspect(value)}",
+            exchange: "hyperliquid",
+            raw: %{"reason" => "invalid_integer", "value" => value}
+          )
+  end
 
   # Hyperliquid L1 wire form for p/s (and transfer amounts): no trailing zeros.
   # Authority: official SDK `float_to_wire` — Decimal.normalize after parse —
@@ -640,11 +708,21 @@ defmodule Bourse.Unified.RequestShape.Hyperliquid do
         decimal |> Decimal.normalize() |> Decimal.to_string(:normal)
 
       _ ->
-        raise ArgumentError, "hyperliquid action build: expected numeric string, got #{inspect(value)}"
+        raise Error.invalid_parameters(
+                message: "hyperliquid action build: expected numeric string, got #{inspect(value)}",
+                exchange: "hyperliquid",
+                raw: %{"reason" => "invalid_numeric", "value" => value}
+              )
     end
   end
 
-  defp number_string(value), do: raise(ArgumentError, "hyperliquid action build: expected number, got #{inspect(value)}")
+  defp number_string(value) do
+    raise Error.invalid_parameters(
+            message: "hyperliquid action build: expected number, got #{inspect(value)}",
+            exchange: "hyperliquid",
+            raw: %{"reason" => "invalid_numeric", "value" => value}
+          )
+  end
 
   defp present?(params, key), do: not is_nil(Map.get(params, key))
 

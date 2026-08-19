@@ -152,11 +152,11 @@ defmodule Bourse.LighterAuthoredSpecTest do
       "nonce" => 7
     }
 
-    assert_raise ArgumentError, "Lighter authored trading supports limit orders only", fn ->
+    assert_raise Bourse.Error, ~r/limit orders only/, fn ->
       LighterRequestShape.build(Map.put(base, "type", "market"), "createOrder", exchange, [])
     end
 
-    assert_raise ArgumentError, "Lighter amount does not align with market precision", fn ->
+    assert_raise Bourse.Error, ~r/amount does not align with market precision/, fn ->
       base
       |> Map.merge(%{"type" => "limit", "amount" => "0.01001"})
       |> LighterRequestShape.build("createOrder", exchange, [])
@@ -198,7 +198,7 @@ defmodule Bourse.LighterAuthoredSpecTest do
     assert deposits["l1_address"] == "0xabc"
     assert deposits["account_index"] == 1
 
-    assert_raise ArgumentError, ~r/l1_address/, fn ->
+    assert_raise Bourse.Error, ~r/l1_address/, fn ->
       LighterRequestShape.build(%{}, "fetchDeposits", exchange, [])
     end
   end
