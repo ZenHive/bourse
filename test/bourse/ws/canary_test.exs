@@ -54,9 +54,10 @@ defmodule Bourse.WS.CanaryTest do
 
       try do
         assert WS.get_state(ws) == :connected
-        assert :ok = WS.subscribe(ws, ["market_stats/0"], ack_timeout_ms: 0)
+        assert :ok = WS.subscribe(ws, ["market_stats/0"])
 
-        assert_receive {:websocket_message, %{"channel" => "market_stats:0", "market_stats" => %{}}},
+        assert_receive {:websocket_message,
+                        %{"type" => "subscribed/market_stats", "channel" => "market_stats:0", "market_stats" => %{}}},
                        @receive_timeout
       after
         WS.close(ws)

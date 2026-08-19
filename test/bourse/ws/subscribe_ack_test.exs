@@ -124,7 +124,7 @@ defmodule Bourse.WS.SubscribeAckTest do
     end
 
     test "lighter snapshot acknowledgement, updates, and rejection" do
-      assert :success =
+      assert {:success, :data} =
                SubscribeAck.classify("lighter", %{
                  "type" => "subscribed/market_stats",
                  "channel" => "market_stats:0"
@@ -164,6 +164,7 @@ defmodule Bourse.WS.SubscribeAckTest do
   describe "to_result/1" do
     test "maps classifications to the public subscribe return shape" do
       assert :ok = SubscribeAck.to_result(:success)
+      assert :ok = SubscribeAck.to_result({:success, :data})
       assert {:error, :unexpected_subscription_response} = SubscribeAck.to_result(:not_ack)
 
       frame = %{"success" => false}

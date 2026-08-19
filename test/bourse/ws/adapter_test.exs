@@ -380,4 +380,58 @@ defmodule Bourse.WS.AdapterTest do
     assert {:ok, %Adapter{ws: nil}} = Adapter.init({exchange, :public, []})
     assert_receive :connect
   end
+
+  test "repeated reconnects close the previous owner so the process count stays at one" do
+    exchange = Exchange.new!("bybit")
+
+    zen_connect = fn url, _opts ->
+      {:ok, pid} = Agent.start(fn -> :ok end)
+      {:ok, %Client{server_pid: pid, state: :connected, url: url}}
+    end
+
+    connect_fun = fn ex, section, opts ->
+      WS.connect(ex, section, Keyword.put(opts, :connect_fun, zen_connect))
+    end
+
+    state = %Adapter{exchange: exchange, section: :public, subscriptions: [], connect_fun: connect_fun}
+    assert {:noreply, connected} = Adapter.handle_info(:connect, state)
+    assert_receive :restore_subscriptions
+    first_owner = connected.ws.connection_owner
+    assert Process.alive?(first_owner)
+
+    final =
+      Enum.reduce(1..5, connected, fn _n, previous ->
+        assert {:noreply, next} = Adapter.handle_info(:connect, previous)
+        assert_receive :restore_subscriptions
+        refute Process.alive?(previous.ws.connection_owner)
+        assert Process.alive?(next.ws.connection_owner)
+        next
+      end)
+
+    assert Process.alive?(final.ws.connection_owner)
+    refute Process.alive?(first_owner)
+    assert Enum.count([first_owner, final.ws.connection_owner], &Process.alive?/1) == 1
+  end
+
+  test "an owner crash is visible to the adapter" do
+    exchange = Exchange.new!("bybit")
+
+    zen_connect = fn url, _opts ->
+      {:ok, pid} = Agent.start(fn -> :ok end)
+      {:ok, %Client{server_pid: pid, state: :connected, url: url}}
+    end
+
+    connect_fun = fn ex, section, opts ->
+      WS.connect(ex, section, Keyword.put(opts, :connect_fun, zen_connect))
+    end
+
+    Process.flag(:trap_exit, true)
+    {:ok, adapter} = Adapter.start_link(exchange, :public, connect: false, connect_fun: connect_fun)
+
+    send(adapter, :connect)
+    owner = :sys.get_state(adapter).ws.connection_owner
+    Process.exit(owner, :kill)
+    assert_receive {:EXIT, ^adapter, :killed}
+    refute Process.alive?(owner)
+  end
 end

@@ -41,7 +41,6 @@ defmodule Bourse.WS.UnifiedWatchTest do
       assert handle.method == :watch_ticker
       assert handle.channels == ["tickers.BTCUSDT"]
       assert handle.opts == []
-      refute handle.owns_connection?
 
       assert {:ok, %{"op" => "unsubscribe", "args" => ["tickers.BTCUSDT"]}} =
                Subscription.build_unsubscribe(:op_subscribe, handle.channels, %{})

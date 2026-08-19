@@ -315,6 +315,7 @@ defmodule Bourse.WS.HostConnectionLifecycleTest do
 
     assert_receive {:transport_connected, ^market_url, market_pid, _opts}, @assert_timeout_ms
 
+    Process.flag(:trap_exit, true)
     public_ref = Process.monitor(public_pid)
     market_ref = Process.monitor(market_pid)
     Process.exit(ws.connection_owner, :kill)

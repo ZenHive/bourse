@@ -2,8 +2,8 @@ defmodule Bourse.Application do
   @moduledoc """
   OTP Application for Bourse.
 
-  Starts the rate limiter, rate limit state store, native signer supervisor and
-  WS broadcast registry under supervision.
+  Starts the rate limiter, rate limit state store, native signer supervisor,
+  WS broadcast registry, and WS connection-owner supervisor.
 
   `Bourse.Testnet` is deliberately NOT a child here. It is a sandbox credential
   registry that only test and recording harnesses use, so a consumer application
@@ -20,7 +20,8 @@ defmodule Bourse.Application do
       Bourse.RateLimiter,
       Bourse.RateLimiter.State,
       Bourse.Signing.Lighter.Supervisor,
-      Broadcast.child_spec()
+      Broadcast.child_spec(),
+      Bourse.WS.ConnectionOwner.Supervisor
     ]
 
     opts = [strategy: :one_for_one, name: Bourse.Supervisor]

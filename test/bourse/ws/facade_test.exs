@@ -78,16 +78,6 @@ defmodule Bourse.WS.FacadeTest do
     assert Process.alive?(client.server_pid)
   end
 
-  test "unsubscribe closes a connection owned by the watch handle", %{client: client} do
-    ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
-    handle = %{Handle.new(ws, :watch_ticker, "tickers.BTCUSDT") | owns_connection?: true}
-
-    assert :ok = WS.unsubscribe(handle)
-    assert_receive {:transport_sent, payload}
-    assert Jason.decode!(payload) == %{"args" => ["tickers.BTCUSDT"], "op" => "unsubscribe"}
-    refute Process.alive?(client.server_pid)
-  end
-
   test "watch returns subscription errors without closing the caller connection" do
     client = %Client{state: :disconnected}
     ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
@@ -163,5 +153,39 @@ defmodule Bourse.WS.FacadeTest do
     ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
 
     assert :ok = WS.close(ws)
+  end
+
+  test "lighter default subscribe keeps the subscribed snapshot and surfaces invalid-channel rejection", %{
+    client: client
+  } do
+    ws = %WS{exchange: Exchange.new!("lighter"), zen_client: client, url: "wss://offline.test", section: :public}
+
+    snapshot = %{
+      "type" => "subscribed/market_stats",
+      "channel" => "market_stats:0",
+      "market_stats" => %{"market_id" => 0, "symbol" => "ETH"}
+    }
+
+    update = %{
+      "type" => "update/market_stats",
+      "channel" => "market_stats:0",
+      "market_stats" => %{"market_id" => 0, "symbol" => "ETH"}
+    }
+
+    send(self(), {:websocket_message, snapshot})
+    send(self(), {:websocket_message, update})
+    assert :ok = WS.subscribe(ws, ["market_stats/0"])
+    assert_receive {:transport_sent, payload}
+    assert Jason.decode!(payload) == %{"channel" => "market_stats/0", "type" => "subscribe"}
+    assert_received {:websocket_message, ^snapshot}
+    assert_received {:websocket_message, ^update}
+
+    rejection = %{"error" => %{"code" => 30_005, "message" => "Invalid Channel"}}
+    send(self(), {:websocket_message, rejection})
+
+    assert {:error, {:subscription_rejected, ^rejection}} =
+             WS.subscribe(ws, ["not_a_real_channel/0"])
+
+    refute_received {:websocket_message, ^rejection}
   end
 end

@@ -55,4 +55,13 @@ defmodule Bourse.WS.ConnectionOwnerTest do
     assert {:ok, ^client} =
              ConnectionOwner.checkout(owner, fn _, _ -> flunk("already stored") end, "wss://a.test", [], 1_000)
   end
+
+  test "start places the owner under the application supervisor" do
+    client = %Client{state: :disconnected}
+    {:ok, owner} = ConnectionOwner.start("wss://a.test", client)
+    on_exit(fn -> if Process.alive?(owner), do: GenServer.stop(owner) end)
+
+    children = DynamicSupervisor.which_children(Bourse.WS.ConnectionOwner.Supervisor)
+    assert Enum.any?(children, fn {_id, pid, :worker, _modules} -> pid == owner end)
+  end
 end

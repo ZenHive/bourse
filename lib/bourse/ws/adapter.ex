@@ -97,15 +97,16 @@ defmodule Bourse.WS.Adapter do
 
   @impl true
   def init({exchange, section, opts}) do
-    state = %__MODULE__{
-      exchange: exchange,
-      section: section,
-      ws: Keyword.get(opts, :ws),
-      connect_fun: Keyword.get(opts, :connect_fun, &WS.connect/3),
-      orderbook: Orderbook.new(exchange),
-      trades: Trades.new(exchange),
-      ohlcv: Ohlcv.new(exchange)
-    }
+    state =
+      attach_owner(%__MODULE__{
+        exchange: exchange,
+        section: section,
+        ws: Keyword.get(opts, :ws),
+        connect_fun: Keyword.get(opts, :connect_fun, &WS.connect/3),
+        orderbook: Orderbook.new(exchange),
+        trades: Trades.new(exchange),
+        ohlcv: Ohlcv.new(exchange)
+      })
 
     if Keyword.get(opts, :connect, true) do
       send(self(), :connect)
@@ -175,9 +176,7 @@ defmodule Bourse.WS.Adapter do
     # key is part of the URL, so there is no connection to authenticate later.
     case state.connect_fun.(state.exchange, state.section, handler: handler) do
       {:ok, ws} ->
-        new_state = adopt_connection(%{state | ws: ws, auth_state: :unauthenticated})
-        send(self(), :restore_subscriptions)
-        {:noreply, new_state}
+        {:noreply, replace_connection(state, ws)}
 
       {:error, _} ->
         Process.send_after(self(), :connect, 5_000)
@@ -220,7 +219,10 @@ defmodule Bourse.WS.Adapter do
   @impl true
   def terminate(_reason, %{ws: nil}), do: :ok
 
-  def terminate(_reason, %{ws: ws}), do: WS.close(ws)
+  def terminate(_reason, %{ws: ws}) do
+    unlink_owner(ws)
+    WS.close(ws)
+  end
 
   defp route_and_broadcast(decoded, state) do
     envelope = Envelope.for_exchange(state.exchange)
@@ -299,6 +301,38 @@ defmodule Bourse.WS.Adapter do
   # `connect/3` refuses to hand back a private connection the venue rejected, so
   # reaching here with `ws.auth` set means the handshake already succeeded — all
   # that is left is to arm renewal from what the venue disclosed.
+  defp replace_connection(state, ws) do
+    previous = state.ws
+
+    if state.auth_timer_ref, do: Process.cancel_timer(state.auth_timer_ref)
+
+    new_state =
+      %{state | ws: ws, auth_state: :unauthenticated, auth_context: nil, auth_timer_ref: nil}
+      |> adopt_connection()
+      |> attach_owner()
+
+    close_previous(previous)
+    send(self(), :restore_subscriptions)
+    new_state
+  end
+
+  defp close_previous(nil), do: :ok
+
+  defp close_previous(%WS{} = ws) do
+    unlink_owner(ws)
+    WS.close(ws)
+  end
+
+  defp attach_owner(%{ws: %WS{connection_owner: pid}} = state) when is_pid(pid) do
+    Process.link(pid)
+    state
+  end
+
+  defp attach_owner(state), do: state
+
+  defp unlink_owner(%WS{connection_owner: pid}) when is_pid(pid), do: Process.unlink(pid)
+  defp unlink_owner(_ws), do: :ok
+
   defp adopt_connection(%{ws: %WS{auth: %{pattern: pattern, meta: meta}}} = state) do
     mark_auth_success(state, %{pattern: pattern}, auth_config_or_empty(state), meta)
   end

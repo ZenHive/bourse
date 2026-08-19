@@ -228,7 +228,7 @@ Bourse.fetch_ticker(exchange, "BTC/USDT")     # Unified API
 | `Bourse.RateLimiter` | Per-credential weighted GenServer, sliding window. Key `{exchange, api_key \| :public}`. |
 | `Bourse.ReplayExchange` | **Repo-internal.** Offline replay exchange from `priv/reference_cache/`. The **only** module reading the vendored slice. |
 | `Bourse.RecordedResponseFixtures` | **Repo-internal.** Capture support and path resolution for the committed reality evidence. |
-| `Bourse.Application` | Supervises `Bourse.RateLimiter` + `Bourse.RateLimiter.State` + `Bourse.Signing.Lighter.Supervisor` + `Bourse.WS.Broadcast`. |
+| `Bourse.Application` | Supervises `Bourse.RateLimiter` + `Bourse.RateLimiter.State` + `Bourse.Signing.Lighter.Supervisor` + `Bourse.WS.Broadcast` + `Bourse.WS.ConnectionOwner.Supervisor`. |
 
 **Unified response types:** 7 original (`Ticker`, `Trade`, `Order`, `Balance`, `Market`, `OHLCV`, `Fee`), 9 tier-1 core (`OrderBook`, `Position`, `Currency`, `Transaction`, `LedgerEntry`, `FundingRate`, `DepositAddress`, `TransferEntry`, `TradingFee`), 9 tier-2 derivatives, 9 tier-3 analytics.
 

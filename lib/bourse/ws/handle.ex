@@ -5,15 +5,14 @@ defmodule Bourse.WS.Handle do
   Carries enough state to send a matching unsubscribe frame via
   `Bourse.WS.unsubscribe/1`. Connection cleanup belongs to the originating
   `Bourse.WS` value: `Bourse.WS.close/1` closes its authored-host connections,
-  so callers do not inspect this handle to find routed sockets. A handle with
-  `owns_connection?: true` still releases that dedicated socket on unsubscribe.
+  so callers do not inspect this handle to find routed sockets.
   """
 
   alias Bourse.Exchange
   alias Bourse.WS
 
   @enforce_keys [:ws, :exchange, :method, :channels]
-  defstruct [:ws, :exchange, :method, :channels, opts: [], owns_connection?: false]
+  defstruct [:ws, :exchange, :method, :channels, opts: []]
 
   @type method :: :watch_ticker | :watch_order_book | :watch_trades | :watch_orders
 
@@ -22,8 +21,7 @@ defmodule Bourse.WS.Handle do
           exchange: Exchange.t(),
           method: method(),
           channels: [WS.Subscription.channel()],
-          opts: keyword() | map(),
-          owns_connection?: boolean()
+          opts: keyword() | map()
         }
 
   @doc false

@@ -395,3 +395,25 @@ numeric market indexes (task 544). Outcome: CONFIRM venue.**
 <!-- carve-evidence-status
 {"carve_id":"C-T544b","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"https://apidocs.lighter.xyz/docs/websocket-reference"},"observed_evidence":{"kind":"live_venue","reference":"test/bourse/ws/canary_test.exs Lighter testnet success and invalid-channel probes"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+## 2026-08-19 — subscribe snapshot is caller-visible (Task 638)
+
+**C-T638 — Lighter's first `subscribed/*` frame is the snapshot, not a disposable
+ack (task 638). Outcome: CONFIRMED venue.**
+
+- *Exchange semantics:* the [provider WebSocket reference](https://apidocs.lighter.xyz/docs/websocket-reference)
+  publishes `subscribed/{channel}` as the subscribe response carrying the current
+  snapshot (candles document this explicitly: **Response Structure (Subscribe)** vs
+  **Response Structure (Updates)**). Later frames are `update/{channel}`. An unknown
+  channel is a provider error object (`code` 30005, `Invalid Channel`).
+- *Our carve:* default `Bourse.WS.subscribe/3` (ack wait enabled) returns `:ok` and
+  re-queues the `subscribed/*` snapshot so the caller mailbox still receives it.
+  `update/*` stays data (`:not_ack`). An invalid channel stays
+  `{:error, {:subscription_rejected, frame}}`.
+- *Live evidence:* testnet `market_stats/0` on `wss://testnet.zklighter.elliot.ai/stream`
+  accepts with a `subscribed/market_stats` snapshot after default subscribe; an
+  unknown channel still returns 30005.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T638","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"https://apidocs.lighter.xyz/docs/websocket-reference"},"observed_evidence":{"kind":"live_venue","reference":"test/bourse/ws/canary_test.exs Lighter testnet default-subscribe snapshot and invalid-channel probes"},"compatibility_reference":null,"resolved_tier":1}
+-->

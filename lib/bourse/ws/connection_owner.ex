@@ -2,19 +2,37 @@ defmodule Bourse.WS.ConnectionOwner do
   @moduledoc """
   Holds the routed-host WebSocket clients for one `Bourse.WS` connection.
 
-  This process links each client it records. Stopping or crashing it closes
-  every socket it still holds, so a dead owner cannot leave an unreachable
-  routed host.
+  Owners start under `Bourse.WS.ConnectionOwner.Supervisor` (`:temporary`) and
+  are linked to the process that opened the `Bourse.WS` connection. Stopping or
+  crashing an owner closes every socket it still holds, so a dead owner cannot
+  leave an unreachable routed host, and an owner whose process dies is visible
+  to its dependents.
   """
 
   use GenServer
 
+  alias Bourse.WS.ConnectionOwner.Supervisor, as: OwnerSupervisor
   alias ZenWebsocket.Client, as: ZenClient
 
-  @doc "Starts an unlinked owner holding `zen_client` at `url`."
+  @spec child_spec({String.t(), ZenClient.t()}) :: Supervisor.child_spec()
+  def child_spec({url, zen_client}) do
+    %{
+      id: make_ref(),
+      start: {__MODULE__, :start_link, [url, zen_client]},
+      restart: :temporary,
+      shutdown: 5_000,
+      type: :worker
+    }
+  end
+
+  @doc "Starts a supervised owner holding `zen_client` at `url`."
   @spec start(String.t(), ZenClient.t()) :: {:ok, pid()} | {:error, term()}
-  def start(url, zen_client) do
-    GenServer.start(__MODULE__, {url, zen_client})
+  def start(url, zen_client), do: OwnerSupervisor.start_owner(url, zen_client)
+
+  @doc false
+  @spec start_link(String.t(), ZenClient.t()) :: {:ok, pid()} | {:error, term()}
+  def start_link(url, zen_client) do
+    GenServer.start_link(__MODULE__, {url, zen_client})
   end
 
   @doc "Returns the client for `url`, connecting through `connect_fun` when it is new."

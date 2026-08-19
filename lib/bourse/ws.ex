@@ -51,7 +51,8 @@ defmodule Bourse.WS do
   `Bourse.WS.SubscribeAck`.
   Rejection frames that arrive asynchronously are still consumed and returned
   as errors; non-ack data frames that arrive during the wait are re-queued to
-  the caller mailbox.
+  the caller mailbox. Lighter's `subscribed/*` reply is both the acknowledgement
+  and the first snapshot, so it is re-queued after `subscribe/3` returns `:ok`.
 
   ## Scope
 
@@ -551,15 +552,11 @@ defmodule Bourse.WS do
   Unsubscribes using a handle from `watch_*/3`.
 
   Sends the exchange-native unsubscribe frame built from the stored channels.
-  A handle that owns its connection (`owns_connection?: true`) is closed after
-  the attempt; pooled routed hosts stay with the originating `Bourse.WS` until
-  `close/1`.
+  Routed hosts stay with the originating `Bourse.WS` until `close/1`.
   """
   @spec unsubscribe(Handle.t()) :: :ok | {:ok, map()} | {:error, term()}
-  def unsubscribe(%Handle{ws: ws, channels: channels, opts: sub_opts} = handle) do
+  def unsubscribe(%Handle{ws: ws, channels: channels, opts: sub_opts}) do
     unsubscribe_on(ws, channels, sub_opts)
-  after
-    close_owned_connection(handle)
   end
 
   # ---------------------------------------------------------------------------
@@ -569,25 +566,10 @@ defmodule Bourse.WS do
   defp watch(%__MODULE__{exchange: exchange, section: section} = ws, method, params, opts) do
     with :ok <- require_section(method, section),
          {:ok, channel} <- Channels.build(exchange, method, params, opts),
-         {:ok, ws, owns_connection?} <- ensure_stream_host(ws, channel) do
-      subscribe_watch(ws, method, channel, opts, owns_connection?)
+         {:ok, ws} <- ensure_stream_host(ws, channel),
+         :ok <- subscribe(ws, List.wrap(channel), opts) do
+      {:ok, Handle.new(ws, method, channel, opts)}
     end
-  end
-
-  defp subscribe_watch(ws, method, channel, opts, owns_connection?) do
-    case subscribe(ws, List.wrap(channel), opts) do
-      :ok ->
-        handle = Handle.new(ws, method, channel, opts)
-        {:ok, %{handle | owns_connection?: owns_connection?}}
-
-      {:error, _reason} = error ->
-        close_owned_connection(ws, owns_connection?)
-        error
-    end
-  catch
-    kind, reason ->
-      close_owned_connection(ws, owns_connection?)
-      :erlang.raise(kind, reason, __STACKTRACE__)
   end
 
   # USD-M `/public` silently acks `/market` stream names. Route only when the
@@ -597,20 +579,13 @@ defmodule Bourse.WS do
     target = URLRouting.stream_url(ws.exchange, channel)
 
     cond do
-      is_nil(target) or target == url -> {:ok, ws, false}
-      URLRouting.authored_usdm_host?(ws.exchange, url) -> route_stream_host(ws, target)
-      true -> {:ok, ws, false}
+      is_nil(target) or target == url -> {:ok, ws}
+      URLRouting.authored_usdm_host?(ws.exchange, url) -> routed_connection(ws, target)
+      true -> {:ok, ws}
     end
   end
 
-  defp ensure_stream_host(ws, _channel), do: {:ok, ws, false}
-
-  defp route_stream_host(ws, target) do
-    case routed_connection(ws, target) do
-      {:ok, routed} -> {:ok, routed, false}
-      {:error, _} = error -> error
-    end
-  end
+  defp ensure_stream_host(ws, _channel), do: {:ok, ws}
 
   defp route_subscription_groups(%__MODULE__{section: :public, url: url} = ws, channels) do
     if URLRouting.authored_usdm_host?(ws.exchange, url) do
@@ -685,6 +660,7 @@ defmodule Bourse.WS do
   defp own_connection(url, zen_client) do
     case ConnectionOwner.start(url, zen_client) do
       {:ok, owner} ->
+        Process.link(owner)
         {:ok, owner}
 
       {:error, reason} ->
@@ -704,13 +680,6 @@ defmodule Bourse.WS do
   defp connection_owner_timeout(%__MODULE__{connect_opts: opts}) do
     Keyword.get(opts, :timeout, @default_connection_timeout_ms) + @connection_owner_timeout_buffer_ms
   end
-
-  defp close_owned_connection(%Handle{ws: ws, owns_connection?: owns_connection?}) do
-    close_owned_connection(ws, owns_connection?)
-  end
-
-  defp close_owned_connection(ws, true), do: close(ws)
-  defp close_owned_connection(_ws, false), do: :ok
 
   defp require_section(method, section) do
     if Channels.private?(method) and section != :private do
@@ -844,6 +813,10 @@ defmodule Bourse.WS do
     case SubscribeAck.classify(exchange_id, frame) do
       :success ->
         requeue_messages(requeue)
+        :ok
+
+      {:success, :data} ->
+        requeue_messages([msg | requeue])
         :ok
 
       {:rejected, rejected} ->

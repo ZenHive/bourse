@@ -17,13 +17,15 @@ defmodule Bourse.WS.SubscribeAck do
   on reject.
   """
 
-  @type classification :: :success | :not_ack | {:rejected, map()}
+  @type classification :: :success | {:success, :data} | :not_ack | {:rejected, map()}
 
   @doc """
   Classifies a subscribe outcome frame for `exchange_id`.
 
   Returns:
   - `:success` — venue accepted the subscription
+  - `{:success, :data}` — venue accepted, and the frame is also the first snapshot
+    (re-queue after treating it as the acknowledgement)
   - `{:rejected, frame}` — venue rejected it (frame is the raw envelope)
   - `:not_ack` — not a subscribe outcome (data/heartbeat/other); leave in mailbox
   """
@@ -48,6 +50,7 @@ defmodule Bourse.WS.SubscribeAck do
   @spec to_result(classification()) ::
           :ok | {:error, :unexpected_subscription_response | {:subscription_rejected, map()}}
   def to_result(:success), do: :ok
+  def to_result({:success, :data}), do: :ok
   def to_result(:not_ack), do: {:error, :unexpected_subscription_response}
   def to_result({:rejected, frame}), do: {:error, {:subscription_rejected, frame}}
 
@@ -102,7 +105,8 @@ defmodule Bourse.WS.SubscribeAck do
 
   # Lighter's initial subscribed/* frame is both the acknowledgement and the
   # first public snapshot. Subsequent update/* frames are data, not acks.
-  defp classify_lighter(%{"type" => "subscribed/" <> _}), do: :success
+  defp classify_lighter(%{"type" => "subscribed/" <> _}), do: {:success, :data}
+  defp classify_lighter(%{"type" => "update/" <> _}), do: :not_ack
   defp classify_lighter(frame), do: classify_generic(frame)
 
   defp classify_generic(%{"success" => false} = frame), do: {:rejected, frame}
