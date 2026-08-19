@@ -1437,7 +1437,7 @@ provider-treu shippt.
 > geschnitten; die sechs genannten Venues stehen als Evidenz in den Acceptance
 > Criteria, nicht als Scope-Grenze.
 
-## 2026-08-19 — binanceusdm: `has.createStopMarketOrder` = false, Regression gegen 0.4.0 (Venue kann STOP_MARKET nachweislich)
+## 2026-08-19 — ZURÜCKGEZOGEN (kein bourse-Bug): binanceusdm `has.createStopMarketOrder` angeblich false — Fehlattribution des Reporters
 
 Call: `Bourse.Exchange.has?(exchange, "createStopMarketOrder")` auf einem
 gebauten `binanceusdm`-Exchange (bourse 0.6.0, hex).
@@ -1470,6 +1470,29 @@ sobald bourse das Flag wieder korrekt shippt.
 > `capabilities.has.createStopMarketOrder = true`, und diese Datei liegt im
 > Hex-Paket. `Exchange.build_capabilities/1` liest die Map wörtlich, `has?/2`
 > ist ein reiner Lookup. Der beobachtete `false` entsteht also woanders; die
-> Task verlangt Reproduktion vor Fix und pinnt danach die gesamte
-> Capability-Fläche im Offline-Gate.
+> Task 649 ist daraufhin auf den Klassen-Teil umgeschnitten worden (gepinnte
+> Capability-Fläche im Offline-Gate); ein bourse-Regressionsfix ist NICHT
+> gefiled, weil bourse das Flag in beiden Releases korrekt liefert.
+>
+> Nachgeprüft und widerlegt ist die Kipp-Behauptung selbst: `true` im getaggten
+> v0.6.0-Tree, in HEAD, im Hex-Tarball 0.6.0 **und** 0.4.0, und im deps-Baum des
+> Consumers; die binanceusdm-Capability-Map ist zwischen 0.4.0 und 0.6.0 mit 157
+> Keys byte-identisch. Die Ursache liegt daher mit hoher Wahrscheinlichkeit im
+> Consumer-Gate (Mapping `:stop_market` → String, gecachter Snapshot, oder eine
+> eigene Kopie der Prüfung statt `has?/2`) — dort weitersuchen, nicht in bourse.
+
+> **2026-08-19 — RETRACT (Reporter, trading_dashboard):** Die QA-Analyse oben
+> stimmt; der Report war fehlattribuiert. Live-Verifikation auf bourse 0.6.0
+> im laufenden trading_dashboard-BEAM: `Bourse.exchange(:binanceusdm)` →
+> `has?("createStopMarketOrder") = true` (korrekt), `Bourse.exchange(:binance)`
+> → `false` (korrekt — Spot hat kein STOP_MARKET). Der blockierte Pfad lief
+> über den `ConnectionWorker` von trading_dashboard, der die Exchange aus
+> `credential.exchange` (`:binance`) baut — ein USD-M-Credential wird dort
+> gegen die **Spot**-Spec gegated. Der Defekt ist app-seitig
+> (exchange-id-statisches statt produkt-bewusstes Capability-Gating), nicht in
+> bourse. Offene historische Frage an bourse-QA: hatte die **Spot**-Spec
+> (`binance`, nicht binanceusdm) in 0.4.0 `createStopMarketOrder = true`? Das
+> würde erklären, warum derselbe App-Pfad am 2026-08-12 durchging — dann war
+> 0.6.0 die Korrektur. Task 649 kann auf diese eine Diff-Frage reduziert oder
+> geschlossen werden.
 
