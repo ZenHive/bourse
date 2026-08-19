@@ -411,6 +411,10 @@ defmodule Bourse.WS.AdapterTest do
     assert Process.alive?(final.ws.connection_owner)
     refute Process.alive?(first_owner)
     assert Enum.count([first_owner, final.ws.connection_owner], &Process.alive?/1) == 1
+
+    final_owner = final.ws.connection_owner
+    assert :ok = WS.close(final.ws)
+    refute Process.alive?(final_owner)
   end
 
   test "an owner crash is visible to the adapter" do
