@@ -199,7 +199,7 @@ defmodule Bourse.MixProject do
       {:doctor, "~> 0.23.0", only: [:dev, :test], runtime: false},
 
       # Tidewave for Claude Code MCP integration (non-Phoenix needs bandit)
-      {:tidewave, "~> 0.8.0", only: :dev},
+      {:tidewave, "~> 0.9.0", only: :dev},
       {:bandit, "~> 1.12.0", only: :dev},
 
       # Code analysis tools
