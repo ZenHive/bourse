@@ -1439,6 +1439,11 @@ provider-treu shippt.
 
 ## 2026-08-19 — ZURÜCKGEZOGEN (kein bourse-Bug): binanceusdm `has.createStopMarketOrder` angeblich false — Fehlattribution des Reporters
 
+**Status (2026-08-19):** ↩️ withdrawn — live re-verification found that bourse
+returns `true` for binanceusdm; the consumer built a `binance` (Spot) exchange
+for the USD-M credential. The original report remains below as the evidence
+trail.
+
 Call: `Bourse.Exchange.has?(exchange, "createStopMarketOrder")` auf einem
 gebauten `binanceusdm`-Exchange (bourse 0.6.0, hex).
 
@@ -1495,4 +1500,3 @@ sobald bourse das Flag wieder korrekt shippt.
 > würde erklären, warum derselbe App-Pfad am 2026-08-12 durchging — dann war
 > 0.6.0 die Korrektur. Task 649 kann auf diese eine Diff-Frage reduziert oder
 > geschlossen werden.
-

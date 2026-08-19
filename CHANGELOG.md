@@ -41,6 +41,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   provider-published `contractSize` still wins, inverse COIN-M and bybit
   inverse keep reading the venue's field, and venues that state no unit
   (okx, binancecoinm) stay nil.
+- Bybit inverse positions now populate `contract_size` with the authored 1 USD
+  contract unit even though `/v5/position/list` omits `contractSize`. Inverse
+  markets remain nil because their instruments-info rows omit that field.
 - binanceusdm unified `watch_ticker` delivers ticker frames. Binance's
   USD-M socket splits its streams across two hosts: `@miniTicker`, `@ticker`
   and `@aggTrade` are carried on `/market/ws` and merely acknowledged — then
@@ -85,7 +88,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Unified `clientOrderId` now round-trips on Deribit: it goes out as
   `label` and comes back on both `%Bourse.Order{}` and `%Bourse.Trade{}`.
   A caller-supplied native `label` wins; values longer than 64 characters
-  raise `:invalid_parameters`. A venue may map a client identifier in both
+  return `{:error, %Bourse.Error{type: :invalid_parameters}}` from the non-bang
+  API and raise from the bang API. A venue may map a client identifier in both
   directions or in neither; one-way mapping fails a catalog invariant.
 - OKX candle, deposit-history, and positions-history `since`/`until` stay
   inclusive on exclusive `before`/`after` cursors: the request sends
