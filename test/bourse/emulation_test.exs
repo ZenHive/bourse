@@ -253,6 +253,22 @@ defmodule Bourse.EmulationTest do
         )
       end
 
+      param_indexes = params_arg_indexes(ast)
+
+      for handler <- delegated_handlers,
+          site <- params_carrying_call_sites(definitions, param_indexes, handler) do
+        assert allowed_params_arg?(site.callee, site.arg),
+               "#{handler} passes a rebuilt params map into #{site.callee}/#{site.arity} " <>
+                 "at line #{site.line}: #{Macro.to_string(site.arg)}"
+      end
+
+      for rebuild <- literal_param_rebuilds(definitions, delegated_handlers) do
+        flunk(
+          "emulated handler rebuilds delegated params from literal keys at line #{rebuild.line}: " <>
+            Macro.to_string(rebuild.ast)
+        )
+      end
+
       for {venue, js_name} <- emulated_capability_pairs() do
         method = capability_method!(js_name)
         handler = Map.fetch!(dispatch_handlers, method)
@@ -262,10 +278,13 @@ defmodule Bourse.EmulationTest do
       end
     end
 
-    test "every deliberately consumed param is documented and the register has no stale entries" do
+    test "every deliberately consumed param is compensated or refused, and the register has no stale entries" do
       ast = emulation_ast()
       definitions = function_definitions(ast)
       consumed = module_attribute!(ast, :consumed_delegated_params)
+
+      refute since_filter_mentions_until?(definitions),
+             "filter_by_since/filter_by_since_limit now mentions until; update the compensation check"
 
       for {{handler, method}, params} <- consumed do
         assert method in delegation_methods(definitions, handler),
@@ -279,6 +298,14 @@ defmodule Bourse.EmulationTest do
 
           assert param in extracted,
                  "stale consumed-param entry: #{handler} no longer consumes #{param}"
+
+          if param == :until do
+            assert until_locally_filtered?(definitions),
+                   "#{handler} -> #{method} consumes until without a local upper-bound filter or typed refuse"
+          else
+            assert translated_or_locally_used?(definitions, handler, method, param),
+                   "#{handler} -> #{method} drops #{param} without translating it or using it locally"
+          end
         end
       end
     end
@@ -320,6 +347,59 @@ defmodule Bourse.EmulationTest do
                    assert params["until"] == @passthrough_until
                    assert params["venueNative"] == @passthrough_native
                    {:ok, []}
+                 end
+               )
+    end
+
+    test "every emulated capability forwards until on nested reads" do
+      ast = emulation_ast()
+      definitions = function_definitions(ast)
+      consumed = module_attribute!(ast, :consumed_delegated_params)
+      dispatch_handlers = module_attribute!(ast, :dispatch_handlers)
+      nested_methods = nested_method_atoms(definitions)
+
+      passthrough_params = %{
+        "until" => @passthrough_until,
+        "symbol" => "BTC/USDT:USDT",
+        "symbols" => ["BTC/USDT:USDT"],
+        "id" => "order-1",
+        "code" => "BTC",
+        "network" => "ERC20",
+        "limit" => 5
+      }
+
+      for method <- emulated_capability_methods() do
+        handler = Map.fetch!(dispatch_handlers, method)
+        recorded = record_nested_calls(method, nested_methods, passthrough_params)
+
+        assert recorded != [],
+               "#{method} made no nested call, so until forwarding is untested"
+
+        for {nested_method, params} <- recorded do
+          dropped = consumed |> Map.get({handler, nested_method}, %{}) |> Map.keys()
+
+          if :until in dropped do
+            refute Map.has_key?(params, "until") or Map.has_key?(params, :until),
+                   "#{method} -> #{nested_method} still forwards consumed until"
+          else
+            assert params["until"] == @passthrough_until,
+                   "#{method} -> #{nested_method} dropped until: #{inspect(params)}"
+          end
+        end
+      end
+    end
+
+    test "network reaches fetch_deposit_addresses when that is the nested source" do
+      ExchangeStub.configure_endpoints!(MapSet.new([:fetch_deposit_addresses]))
+
+      assert {:error, %Bourse.Error{type: :invalid_parameters}} =
+               dispatch_declared(
+                 :fetch_deposit_address,
+                 %{"code" => "BTC", "network" => "ERC20", "until" => @passthrough_until},
+                 fn :fetch_deposit_addresses, params ->
+                   assert params["network"] == "ERC20"
+                   assert params["until"] == @passthrough_until
+                   {:ok, %{}}
                  end
                )
     end
@@ -545,6 +625,257 @@ defmodule Bourse.EmulationTest do
     do: true
 
   defp derived_from_incoming_params?(_params), do: false
+
+  defp delegated_params_reads_register?(definitions) do
+    Enum.any?(Map.get(definitions, :delegated_params, []), fn body ->
+      {_ast, found?} =
+        Macro.prewalk(body, false, fn
+          {:@, _, [{:consumed_delegated_params, _, _}]} = node, _found? -> {node, true}
+          node, found? -> {node, found?}
+        end)
+
+      found?
+    end)
+  end
+
+  defp params_arg_indexes(ast) do
+    {_ast, clauses} =
+      Macro.prewalk(ast, [], fn
+        {kind, _, [head, [do: _body]]} = node, clauses when kind in [:def, :defp] ->
+          args = function_args(head)
+          name = function_name(head)
+
+          case Enum.find_index(args, &(&1 == :params)) do
+            nil -> {node, clauses}
+            index -> {node, [{name, index, length(args)} | clauses]}
+          end
+
+        node, clauses ->
+          {node, clauses}
+      end)
+
+    Map.new(clauses, fn {name, index, arity} -> {name, {index, arity}} end)
+  end
+
+  defp function_args({:when, _, [head | _guards]}), do: function_args(head)
+  defp function_args({_name, _, args}) when is_list(args), do: Enum.map(args, &arg_name/1)
+  defp function_args({_name, _, nil}), do: []
+
+  defp arg_name({:\\, _, [arg, _default]}), do: arg_name(arg)
+  defp arg_name({name, _, _context}) when is_atom(name), do: name
+  defp arg_name(_arg), do: nil
+
+  defp params_carrying_call_sites(definitions, param_indexes, handler) do
+    for function <- reachable_functions(definitions, handler),
+        body <- Map.fetch!(definitions, function),
+        {name, meta, args} <- call_nodes(body),
+        Map.has_key?(param_indexes, name),
+        {index, arity} = Map.fetch!(param_indexes, name),
+        is_list(args),
+        length(args) > index do
+      %{callee: name, arity: arity, line: meta[:line], arg: Enum.at(args, index)}
+    end
+  end
+
+  defp call_nodes(ast) do
+    {_ast, calls} =
+      Macro.prewalk(ast, [], fn
+        {name, meta, args} = node, calls when is_atom(name) and is_list(args) ->
+          {node, [{name, meta, args} | calls]}
+
+        node, calls ->
+          {node, calls}
+      end)
+
+    calls
+  end
+
+  defp allowed_params_arg?(:call_method, arg), do: derived_from_incoming_params?(arg)
+  defp allowed_params_arg?(_callee, {:params, _, _context}), do: true
+  defp allowed_params_arg?(_callee, _arg), do: false
+
+  @rebuild_param_keys MapSet.new(~w(symbol since limit code until id network))
+
+  defp literal_param_rebuilds(definitions, handlers) do
+    for handler <- handlers,
+        function <- reachable_functions(definitions, handler),
+        function != :delegated_params,
+        body <- Map.fetch!(definitions, function),
+        rebuild <- param_rebuild_maps(body),
+        do: rebuild
+  end
+
+  defp param_rebuild_maps(ast) do
+    {_ast, rebuilds} =
+      ast
+      |> strip_delegated_additions()
+      |> Macro.prewalk([], fn
+        {:%{}, meta, pairs} = node, rebuilds when is_list(pairs) ->
+          keys = for {key, _value} <- pairs, do: key
+
+          if Enum.any?(keys, &MapSet.member?(@rebuild_param_keys, &1)) do
+            {node, [%{line: meta[:line], ast: node} | rebuilds]}
+          else
+            {node, rebuilds}
+          end
+
+        node, rebuilds ->
+          {node, rebuilds}
+      end)
+
+    rebuilds
+  end
+
+  defp strip_delegated_additions(ast) do
+    Macro.prewalk(ast, fn
+      {:delegated_params, meta, [params, handler, method, _additions]} ->
+        {:delegated_params, meta, [params, handler, method, :__additions__]}
+
+      node ->
+        node
+    end)
+  end
+
+  defp since_filter_mentions_until?(definitions) do
+    Enum.any?([:filter_by_since, :filter_by_since_limit], fn name ->
+      Enum.any?(Map.get(definitions, name, []), &ast_mentions_until?/1)
+    end)
+  end
+
+  defp until_locally_filtered?(definitions) do
+    Enum.any?(Map.get(definitions, :filter_by_until, []), &ast_mentions_until?/1) or
+      Enum.any?(Map.get(definitions, :filter_by_since_limit, []), &ast_mentions_until?/1)
+  end
+
+  defp ast_mentions_until?(ast) do
+    {_ast, found?} =
+      Macro.prewalk(ast, false, fn
+        :until = node, _found? -> {node, true}
+        {:until, _, _} = node, _found? -> {node, true}
+        node, found? -> {node, found?}
+      end)
+
+    found?
+  end
+
+  defp translated_or_locally_used?(definitions, handler, method, param) do
+    additions_translate?(definitions, handler, method, param) or
+      extracted_binding_used_locally?(definitions, handler, param)
+  end
+
+  defp additions_translate?(definitions, handler, method, param) do
+    target = translation_target(param)
+
+    Enum.any?(call_method_sites(definitions, handler), fn site ->
+      site.method == method and target in delegated_addition_keys(site.params)
+    end)
+  end
+
+  defp translation_target(:symbol), do: "symbols"
+  defp translation_target(:symbols), do: "symbols"
+  defp translation_target(_param), do: nil
+
+  defp delegated_addition_keys({:delegated_params, _, [_params, _handler, _method, {:%{}, _, pairs}]})
+       when is_list(pairs) do
+    for {key, _value} <- pairs, do: key
+  end
+
+  defp delegated_addition_keys(_params), do: []
+
+  defp extracted_binding_used_locally?(definitions, handler, param) do
+    bodies =
+      definitions
+      |> reachable_functions(handler)
+      |> Enum.flat_map(&Map.fetch!(definitions, &1))
+
+    bindings =
+      for body <- bodies,
+          var <- extract_param_bindings(body, param),
+          uniq: true,
+          do: var
+
+    bindings != [] and
+      Enum.any?(bodies, fn body ->
+        Enum.any?(bindings, &variable_used_as_call_arg?(body, &1))
+      end)
+  end
+
+  defp extract_param_bindings(ast, param) do
+    {_ast, vars} =
+      Macro.prewalk(ast, [], fn
+        {:=, _, [{var, _, _}, rhs]} = node, vars when is_atom(var) ->
+          if extract_param_in?(rhs, param) do
+            {node, [var | vars]}
+          else
+            {node, vars}
+          end
+
+        node, vars ->
+          {node, vars}
+      end)
+
+    vars
+  end
+
+  defp extract_param_in?(ast, param) do
+    {_ast, found?} =
+      Macro.prewalk(ast, false, fn
+        {:extract_param, _, [{:params, _, _}, ^param]} = node, _found? -> {node, true}
+        node, found? -> {node, found?}
+      end)
+
+    found?
+  end
+
+  defp variable_used_as_call_arg?(ast, var) do
+    {_ast, used?} =
+      Macro.prewalk(ast, false, fn
+        {:=, _, [{^var, _, _}, {:extract_param, _, _}]} = node, used? ->
+          {node, used?}
+
+        {name, _, args} = node, used? when is_atom(name) and is_list(args) ->
+          {node, used? or Enum.any?(args, &match?({^var, _, _}, &1))}
+
+        node, used? ->
+          {node, used?}
+      end)
+
+    used?
+  end
+
+  defp nested_method_atoms(definitions) do
+    methods =
+      for {_name, bodies} <- definitions,
+          body <- bodies,
+          call_name <- [:call_method, :call_optional_method],
+          %{method: method} <- calls_in(body, call_name),
+          is_atom(method),
+          uniq: true,
+          do: method
+
+    MapSet.new(methods)
+  end
+
+  defp emulated_capability_methods do
+    emulated_capability_pairs()
+    |> Enum.map(fn {_venue, js_name} -> capability_method!(js_name) end)
+    |> Enum.uniq()
+  end
+
+  defp record_nested_calls(method, nested_methods, params) do
+    ExchangeStub.configure_endpoints!(nested_methods)
+    {:ok, recorder} = Agent.start_link(fn -> [] end)
+
+    _result =
+      dispatch_declared(method, params, fn nested_method, nested_params ->
+        Agent.update(recorder, &[{nested_method, nested_params} | &1])
+        {:ok, []}
+      end)
+
+    recorded = Agent.get(recorder, &Enum.reverse/1)
+    Agent.stop(recorder)
+    recorded
+  end
 
   defp emulated_capability_pairs do
     for venue <- Spec.exchanges(),

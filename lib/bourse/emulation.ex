@@ -29,9 +29,6 @@ defmodule Bourse.Emulation do
     {:handle_fetch_bids_asks, :fetch_tickers} => %{
       symbol: "translated to the delegated plural symbols selector"
     },
-    {:handle_fetch_deposit_address, :fetch_deposit_addresses} => %{
-      network: "used locally to select one address from the delegated result"
-    },
     {:handle_fetch_deposit_address, :fetch_deposit_addresses_by_network} => %{
       network: "used locally to select one address from the delegated result"
     },
