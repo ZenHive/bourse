@@ -102,14 +102,16 @@ defmodule Bourse.Unified.RequestShape.OKX do
   def build(params, "fetchLedger", %Exchange{} = exchange) when is_map(params),
     do: params |> rename("code", "ccy") |> put_inst_type(exchange, default_type(exchange))
 
-  def build(params, "fetchDeposits", %Exchange{}) when is_map(params), do: build_deposits(params)
+  def build(params, "fetchDeposits", %Exchange{}) when is_map(params), do: build_asset_history(params)
 
   # Deposit-address and withdrawal-history filter on OKX `ccy`. A raw unified
   # `code` is ignored by the venue, so the currency filter silently vanishes
   # (C-T484a). Same rename C-T434c already authored for ledger/deposits.
   def build(params, "fetchDepositAddress", %Exchange{}) when is_map(params), do: rename(params, "code", "ccy")
 
-  def build(params, "fetchWithdrawals", %Exchange{}) when is_map(params), do: rename(params, "code", "ccy")
+  # Withdrawal-history is the deposit twin: same exclusive before/after cursors
+  # (C-T637a). A raw unified until is unread; a row on the bound is never asked.
+  def build(params, "fetchWithdrawals", %Exchange{}) when is_map(params), do: build_asset_history(params)
 
   # On-chain withdrawal body: composite `chain` from unified network, and string
   # `amt`/`fee` as OKX documents (C-T484b). Endpoint selection is C-T432.
@@ -1233,7 +1235,7 @@ defmodule Bourse.Unified.RequestShape.OKX do
   defp positive_integer(value, _default) when is_integer(value) and value > 0, do: value
   defp positive_integer(_value, default), do: default
 
-  defp build_deposits(params) do
+  defp build_asset_history(params) do
     {since, params} = Map.pop(params, "since")
     {until_ms, params} = Map.pop(params, "until")
 

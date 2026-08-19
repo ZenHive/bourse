@@ -745,6 +745,19 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
     assert {:ok, withdrawals} = Bourse.fetch_withdrawals(exchange, code: "USDT")
     assert is_list(withdrawals)
 
+    # Compensated exclusive cursors (C-T637a): official GET
+    # /api/v5/asset/withdrawal-history example is
+    # ?ccy=BTC&after=1654041600000&before=1656633600000. Unified until is
+    # inclusive, so the request sends after = until + 1. A raw `until` is
+    # unread and is not required.
+    since = 1_654_041_600_000
+    until_ms = 1_656_633_600_000
+
+    assert {:ok, windowed} =
+             Bourse.fetch_withdrawals(exchange, code: "USDT", since: since, until: until_ms, limit: 1)
+
+    assert is_list(windowed)
+
     assert {:ok, funding_history} = Bourse.fetch_funding_history(exchange, "BTC/USDT:USDT")
     assert is_list(funding_history)
 

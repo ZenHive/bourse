@@ -6,6 +6,24 @@ Append-only schema confrontations for OKX. Follow the allocation and evidence ru
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete OKX carve record.
 
+## 2026-08-19 — withdrawal-history exclusive before/after (Task 637)
+
+**C-T637a — `fetchWithdrawals` maps inclusive unified `since`/`until` onto exclusive
+`before`/`after` (task 637). Outcome: CONFIRM the provider pagination contract; close the
+remaining raw since/until pass-through that C-T635a left on the deposit twin.** Official
+[Get withdrawal history](https://www.okx.com/docs-v5/en/#funding-account-rest-api-get-withdrawal-history)
+documents `before`/`after` as Unix-ms pagination (example
+`?ccy=BTC&after=1654041600000&before=1656633600000` for 2022-06-01..2022-07-01). The same
+[pagination guide](https://www.okx.com/docs-v5/trick_en/#pagination) C-T635a cited — indexed
+from `priv/authority/okx/manifest.json` artifact `api-v5-docs` — makes those cursors exclusive.
+A caller who passed unified `until` therefore sent an unread `until` key; a row sitting on the
+bound was never requested. The request now sends `before = since - 1` and `after = until + 1`,
+matching deposits. A caller-supplied native `after` is preserved (`put_new`).
+
+<!-- carve-evidence-status
+{"carve_id":"C-T637a","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 GET /api/v5/asset/withdrawal-history before/after Unix-ms pagination plus the pagination guide (before/after exclusive), indexed from priv/authority/okx/manifest.json artifact api-v5-docs"},"observed_evidence":{"kind":"live_venue","reference":"Live www.okx.com international-demo signed GET /api/v5/asset/withdrawal-history accepted before=since-1 and after=until+1 with code 0 on 2026-08-19; a raw until query key is not required"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-18 — inclusive unified until on exclusive after cursors (Task 635)
 
 **C-T635a — Unified `since`/`until` are inclusive on every OKX exclusive `before`/`after`

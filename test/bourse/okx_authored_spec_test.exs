@@ -1389,6 +1389,25 @@ defmodule Bourse.OkxAuthoredSpecTest do
                "before" => 1_699_999_999_999,
                "after" => 1_700_000_100_001
              }
+
+      assert RequestShape.apply(
+               %{"code" => "USDT", "since" => 1_700_000_000_000, "until" => 1_700_000_100_000},
+               exchange,
+               "fetchWithdrawals"
+             ) == %{
+               "ccy" => "USDT",
+               "before" => 1_699_999_999_999,
+               "after" => 1_700_000_100_001
+             }
+
+      caller_after = 1_700_000_100_050
+
+      assert %{"after" => ^caller_after, "ccy" => "USDT"} =
+               RequestShape.apply(
+                 %{"code" => "USDT", "until" => 1_700_000_100_000, "after" => caller_after},
+                 exchange,
+                 "fetchWithdrawals"
+               )
     end
 
     test "position reads expand native ids and map history until to native after" do
@@ -1940,6 +1959,27 @@ defmodule Bourse.OkxAuthoredSpecTest do
                )
 
       assert_get!(withdrawal_requests, "/api/v5/asset/withdrawal-history", %{"ccy" => "USDT"})
+    end
+
+    test "fetchWithdrawals maps inclusive since/until onto exclusive before/after" do
+      withdrawal_requests = collector()
+      since = 1_654_041_600_000
+      until_ms = 1_656_633_600_000
+
+      assert {:ok, _} =
+               Unified.call(
+                 private_exchange(),
+                 :fetch_withdrawals,
+                 "fetchWithdrawals",
+                 %{"code" => "USDT", "since" => since, "until" => until_ms},
+                 plug: {Req.Test, stub_json(withdrawal_requests, %{"code" => "0", "msg" => "", "data" => []})}
+               )
+
+      assert_get!(withdrawal_requests, "/api/v5/asset/withdrawal-history", %{
+        "after" => Integer.to_string(until_ms + @exclusive_time_offset_ms),
+        "before" => Integer.to_string(since - @exclusive_time_offset_ms),
+        "ccy" => "USDT"
+      })
     end
 
     test "fetchFundingHistory derives instType/ctType/ccy from a linear swap symbol" do
@@ -4043,6 +4083,9 @@ defmodule Bourse.OkxAuthoredSpecTest do
 
       assert %{"before" => 999, "after" => 2_001, "ccy" => "USDT"} =
                OKX.build(%{"code" => "USDT", "since" => 1_000, "until" => 2_000}, "fetchDeposits", exchange)
+
+      assert %{"before" => 999, "after" => 2_001, "ccy" => "USDT"} =
+               OKX.build(%{"code" => "USDT", "since" => 1_000, "until" => 2_000}, "fetchWithdrawals", exchange)
     end
 
     test "close-position maps unified sides without inventing a net-mode side" do

@@ -7,8 +7,8 @@ defmodule Bourse.Test.TimeWindowProbeMatrix do
 
   Unified `since` and `until` are inclusive. Venues with exclusive cursors
   compensate on the request: OKX pagination `before`/`after` send
-  `before = since - 1` and `after = until + 1` (candles, deposits, and
-  positions-history).
+  `before = since - 1` and `after = until + 1` (candles, deposits,
+  withdrawals, and positions-history).
 
   The live `until` direction mutation-killed OKX's translation. The live
   `since` direction does not prove request translation: `ReadParse`'s
@@ -668,8 +668,7 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
         :fetch_open_orders,
         :fetch_order_trades,
         :fetch_trades,
-        :fetch_transfers,
-        :fetch_withdrawals
+        :fetch_transfers
       ],
       raw_keys: ["since", "until"],
       contract:
@@ -754,6 +753,7 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
   test "OKX compensates exclusive pagination cursors for inclusive unified bounds" do
     ohlcv = shape_window(:okx, :fetch_ohlcv)
     deposits = shape_window(:okx, :fetch_deposits)
+    withdrawals = shape_window(:okx, :fetch_withdrawals)
     history = shape_window(:okx, :fetch_positions_history)
 
     assert ohlcv["before"] == @since_ms - @exclusive_cursor_offset_ms
@@ -765,6 +765,11 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
     assert deposits["after"] == @until_ms + @exclusive_cursor_offset_ms
     refute Map.has_key?(deposits, "since")
     refute Map.has_key?(deposits, "until")
+
+    assert withdrawals["before"] == @since_ms - @exclusive_cursor_offset_ms
+    assert withdrawals["after"] == @until_ms + @exclusive_cursor_offset_ms
+    refute Map.has_key?(withdrawals, "since")
+    refute Map.has_key?(withdrawals, "until")
 
     assert history["after"] == @until_ms + @exclusive_cursor_offset_ms
     refute Map.has_key?(history, "before")
@@ -813,13 +818,23 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
     |> MapSet.new()
   end
 
+  # Inclusive natives that are not exclusive before/after (OKX begin/end).
+  # A consumed unified bound that lands here is a different contract, not a miss.
+  @inclusive_window_natives %{"since" => "begin", "until" => "end"}
+
+  # Documented local-only filters: the unified bound is consumed on purpose
+  # and is not an exclusive timestamp cursor (C-T434d / C-T635a).
+  @exclusive_cursor_local_filters MapSet.new([
+                                    {:okx, :fetch_positions_history, "since"}
+                                  ])
+
   defp exclusive_cursor_sites do
     for {venue, method} <- supported_time_window_reads(),
         cursors = Map.get(@exclusive_cursors, Atom.to_string(venue), %{}),
         {native, %{unified: unified, offset: offset}} <- cursors,
         shaped = shape_window(venue, method),
         is_map(shaped),
-        Map.has_key?(shaped, native) do
+        exclusive_cursor_site?(venue, method, shaped, native, unified) do
       bound = if unified == "since", do: @since_ms, else: @until_ms
 
       %{
@@ -829,6 +844,39 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
         actual: shaped[native],
         expected: bound + offset
       }
+    end
+  end
+
+  # Requiring the native cursor to already be present skipped the hole this
+  # task closed: a translation that drops since/until without emitting
+  # before/after passed both the raw-allowlist and exclusive-cursor sweeps.
+  defp exclusive_cursor_site?(venue, method, shaped, native, unified) do
+    cond do
+      Map.has_key?(shaped, native) ->
+        true
+
+      Map.has_key?(shaped, unified) ->
+        false
+
+      exclusive_cursor_local_filter?(venue, method, unified) ->
+        false
+
+      inclusive_window_native?(shaped, unified) ->
+        false
+
+      true ->
+        true
+    end
+  end
+
+  defp exclusive_cursor_local_filter?(venue, method, unified) do
+    MapSet.member?(@exclusive_cursor_local_filters, {venue, method, unified})
+  end
+
+  defp inclusive_window_native?(shaped, unified) do
+    case Map.get(@inclusive_window_natives, unified) do
+      nil -> false
+      inclusive -> Map.has_key?(shaped, inclusive)
     end
   end
 
