@@ -7,6 +7,26 @@ Append-only schema confrontations for Binance COIN-M. Follow the allocation and 
 venue-specific decision in the self-contained runtime document. Provider-owned evidence is
 indexed by `priv/authority/binancecoinm/manifest.json`.
 
+## 2026-08-19 — COIN-M order-history window residual (Task 633)
+
+**C-T633b — COIN-M all-orders and account-trades histories keep `startTime`/`endTime`;
+open orders drop unified bounds (task 633).** Outcome: CONFIRM provider contract.
+The official COIN-M connector documents `startTime`/`endTime` on
+`GET /dapi/v1/allOrders` and `GET /dapi/v1/userTrades`, and documents no time
+bounds on `GET /dapi/v1/openOrders` (`symbol`, `recvWindow` only). Dedicated
+COIN-M history reads hit DAPI `allOrders`/`userTrades` and do not merge
+`allAlgoOrders` (C-T545a; the COIN-M REST index publishes no allAlgoOrders
+history). `fetchOrders`, `fetchMyTrades`, `fetchClosedOrders`, and
+`fetchCanceledOrders` now map unified `since`/`until` to those native names
+so the offline request-shape guard can drop them from the raw-window
+allowlist. `fetchOpenOrders` omits the bounds rather than renaming them —
+open-order reads still merge `openOrders` with `openAlgoOrders`, and neither
+contract documents time filters.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T633b","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"Binance official COIN-M connector GET /dapi/v1/allOrders and /dapi/v1/userTrades startTime/endTime; GET /dapi/v1/openOrders has no time-bound parameters. Indexed by priv/authority/binancecoinm/manifest.json artifacts developer-docs-full and coin-futures-postman"},"observed_evidence":{"kind":"provider_shaped","reference":"Request-shape goldens in test/bourse/time_window_integration_test.exs and test/bourse/binance_authored_spec_test.exs pin startTime/endTime on COIN-M orders/my-trades/closed/canceled reads and omit since/until/startTime/endTime on fetchOpenOrders"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Open-orders omit and history rename are pinned request-side; populated-row boundary evidence for those private histories remains on the time-window exclusion matrix"}
+-->
+
 ## 2026-08-18 — native order-type reads invert the write mapping (Task 632)
 
 **C-T632c — COIN-M order `type` shares the USD-M regular-plus-algo enum

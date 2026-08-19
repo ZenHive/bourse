@@ -3984,6 +3984,36 @@
             "value": null
           }
         },
+        "fetchCanceledAndClosedOrders": {
+          "endTime": {
+            "source": "until",
+            "source_class": "optional"
+          },
+          "startTime": {
+            "source": "since",
+            "source_class": "optional"
+          }
+        },
+        "fetchCanceledOrders": {
+          "endTime": {
+            "source": "until",
+            "source_class": "optional"
+          },
+          "startTime": {
+            "source": "since",
+            "source_class": "optional"
+          }
+        },
+        "fetchClosedOrders": {
+          "endTime": {
+            "source": "until",
+            "source_class": "optional"
+          },
+          "startTime": {
+            "source": "since",
+            "source_class": "optional"
+          }
+        },
         "fetchConvertQuote": {
           "fromAmount": {
             "kind": "unresolved",
@@ -4135,6 +4165,12 @@
             "value": null
           }
         },
+        "fetchOpenOrders": {
+          "_omit": [
+            "since",
+            "until"
+          ]
+        },
         "fetchOption": {
           "symbol": {
             "kind": "unresolved",
@@ -4160,6 +4196,16 @@
             "kind": "unresolved",
             "reason": "identifier_reference",
             "value": null
+          }
+        },
+        "fetchOrderTrades": {
+          "endTime": {
+            "source": "until",
+            "source_class": "optional"
+          },
+          "startTime": {
+            "source": "since",
+            "source_class": "optional"
           }
         },
         "fetchOrders": {

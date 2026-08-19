@@ -6,6 +6,27 @@ Append-only schema confrontations for Binance USD-M. Follow the allocation and e
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance USD-M carve record.
 
+## 2026-08-19 — USD-M order-history window residual (Task 633)
+
+**C-T633a — USD-M all-orders and account-trades histories keep `startTime`/`endTime`;
+open orders drop unified bounds (task 633).** Outcome: CONFIRM provider contract.
+The official USD-M connector documents `startTime`/`endTime` on
+`GET /fapi/v1/allOrders` and `GET /fapi/v1/userTrades`, and documents no time
+bounds on `GET /fapi/v1/openOrders` (`symbol`, `recvWindow` only). That is
+the same unread-parameter class C-T617b carved on spot. Dedicated USD-M
+routing is not the umbrella fan-out: history and open-order reads merge the
+regular FAPI book with `allAlgoOrders` / `openAlgoOrders`. Method-level
+rename already applies to both `fetchOrders` legs (C-T540d, live-probed);
+`fetchClosedOrders`, `fetchCanceledOrders`, and
+`fetchCanceledAndClosedOrders` now carry the same authored rename so the
+offline request-shape guard can see those method names.
+`fetchOrderTrades` maps the userTrades native bounds. `fetchOpenOrders`
+omits `since`/`until` rather than renaming them.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T633a","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"Binance official USD-M connector GET /fapi/v1/allOrders and /fapi/v1/userTrades startTime/endTime; GET /fapi/v1/openOrders has no time-bound parameters. Indexed by priv/authority/binanceusdm/manifest.json artifacts developer-docs-full and usds-futures-postman"},"observed_evidence":{"kind":"provider_shaped","reference":"Request-shape goldens in test/bourse/time_window_integration_test.exs and test/bourse/binance_authored_spec_test.exs pin startTime/endTime on USD-M closed/canceled/order-trades reads and omit since/until/startTime/endTime on fetchOpenOrders"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Open-orders omit and history rename are pinned request-side; populated-row boundary evidence for those private histories remains on the time-window exclusion matrix"}
+-->
+
 ## 2026-08-19 — private user data uses the routed query URL (Task 643)
 
 **C-T643a — USD-M private user data connects through

@@ -1510,9 +1510,17 @@ defmodule Bourse.BinanceAuthoredSpecTest do
   test "futures time-window reads rename both bounds before dispatch" do
     cases = [
       {"binancecoinm", "fetchTrades", "BTC/USD:BTC"},
+      {"binancecoinm", "fetchOrders", "BTC/USD:BTC"},
+      {"binancecoinm", "fetchMyTrades", "BTC/USD:BTC"},
+      {"binancecoinm", "fetchClosedOrders", "BTC/USD:BTC"},
+      {"binancecoinm", "fetchCanceledOrders", "BTC/USD:BTC"},
       {"binanceusdm", "fetchOHLCV", "BTC/USDT:USDT"},
       {"binanceusdm", "fetchTrades", "BTC/USDT:USDT"},
-      {"binanceusdm", "fetchMyTrades", "BTC/USDT:USDT"}
+      {"binanceusdm", "fetchMyTrades", "BTC/USDT:USDT"},
+      {"binanceusdm", "fetchClosedOrders", "BTC/USDT:USDT"},
+      {"binanceusdm", "fetchCanceledOrders", "BTC/USDT:USDT"},
+      {"binanceusdm", "fetchCanceledAndClosedOrders", "BTC/USDT:USDT"},
+      {"binanceusdm", "fetchOrderTrades", "BTC/USDT:USDT"}
     ]
 
     for {exchange_id, js_name, symbol} <- cases do
@@ -1535,6 +1543,46 @@ defmodule Bourse.BinanceAuthoredSpecTest do
       assert shaped["endTime"] == @window_end_ms
       refute Map.has_key?(shaped, "since")
       refute Map.has_key?(shaped, "until")
+    end
+  end
+
+  test "futures open-order reads omit time bounds the venues do not document" do
+    for {exchange_id, symbol} <- [{"binanceusdm", "BTC/USDT:USDT"}, {"binancecoinm", "BTC/USD:BTC"}] do
+      exchange = Exchange.new!(exchange_id, api_key: "key", secret: "secret", sandbox: true)
+
+      params =
+        Unified.maybe_denormalize_symbol(
+          %{"symbol" => symbol, "since" => @frozen_timestamp_ms, "until" => @window_end_ms},
+          exchange
+        )
+
+      shaped = RequestShape.apply(params, exchange, "fetchOpenOrders")
+      refute Map.has_key?(shaped, "since")
+      refute Map.has_key?(shaped, "until")
+      refute Map.has_key?(shaped, "startTime")
+      refute Map.has_key?(shaped, "endTime")
+
+      {requests, stub} = path_body_stub([])
+
+      assert {:ok, []} =
+               Bourse.fetch_open_orders(exchange,
+                 symbol: symbol,
+                 since: @frozen_timestamp_ms,
+                 until: @window_end_ms,
+                 plug: {Req.Test, stub},
+                 timestamp_ms_override: @frozen_timestamp_ms
+               )
+
+      observed = RequestCollector.requests(requests)
+      assert observed != []
+
+      for %{conn: conn} <- observed do
+        query = conn |> RequestCollector.query() |> signed_query_params()
+        refute Map.has_key?(query, "since")
+        refute Map.has_key?(query, "until")
+        refute Map.has_key?(query, "startTime")
+        refute Map.has_key?(query, "endTime")
+      end
     end
   end
 

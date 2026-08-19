@@ -522,26 +522,16 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
     },
     %{
       venue: :binancecoinm,
-      methods: [
-        :fetch_canceled_orders,
-        :fetch_closed_orders,
-        :fetch_ledger,
-        :fetch_my_trades,
-        :fetch_open_orders,
-        :fetch_orders
-      ],
+      methods: [:fetch_ledger],
       raw_keys: ["since", "until"],
       contract:
-        "priv/authority/binancecoinm/manifest.json — COIN-M allOrders/userTrades/income/openOrders contracts have no authored bound mapping; raw since/until pass through"
+        "priv/authority/binancecoinm/manifest.json — COIN-M income history has no authored bound mapping; raw since/until pass through"
     },
     %{
       venue: :binanceusdm,
       methods: [
         :fetch_borrow_interest,
         :fetch_borrow_rate_history,
-        :fetch_canceled_and_closed_orders,
-        :fetch_canceled_orders,
-        :fetch_closed_orders,
         :fetch_convert_trade_history,
         :fetch_deposits,
         :fetch_funding_history,
@@ -550,14 +540,12 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
         :fetch_long_short_ratio_history,
         :fetch_margin_adjustment_history,
         :fetch_my_liquidations,
-        :fetch_open_orders,
-        :fetch_order_trades,
         :fetch_transfers,
         :fetch_withdrawals
       ],
       raw_keys: ["since", "until"],
       contract:
-        "priv/authority/binanceusdm/manifest.json — USD-M account/data history contracts have no authored bound mapping; raw since/until pass through"
+        "priv/authority/binanceusdm/manifest.json — USD-M funding, ledger, deposit, transfer, and ratio history contracts have no authored bound mapping; raw since/until pass through"
     },
     %{
       venue: :bybit,
@@ -744,6 +732,49 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
     end
 
     open_orders = shape_window(:binance, :fetch_open_orders)
+    refute Map.has_key?(open_orders, "since")
+    refute Map.has_key?(open_orders, "until")
+    refute Map.has_key?(open_orders, "startTime")
+    refute Map.has_key?(open_orders, "endTime")
+  end
+
+  test "Binance USD-M order histories map bounds and open orders drops unsupported bounds" do
+    methods = [
+      :fetch_closed_orders,
+      :fetch_canceled_orders,
+      :fetch_canceled_and_closed_orders,
+      :fetch_order_trades
+    ]
+
+    for method <- methods do
+      shaped = shape_window(:binanceusdm, method)
+
+      assert shaped["startTime"] == @since_ms
+      assert shaped["endTime"] == @until_ms
+      refute Map.has_key?(shaped, "since")
+      refute Map.has_key?(shaped, "until")
+    end
+
+    open_orders = shape_window(:binanceusdm, :fetch_open_orders)
+    refute Map.has_key?(open_orders, "since")
+    refute Map.has_key?(open_orders, "until")
+    refute Map.has_key?(open_orders, "startTime")
+    refute Map.has_key?(open_orders, "endTime")
+  end
+
+  test "Binance COIN-M order histories map bounds and open orders drops unsupported bounds" do
+    methods = [:fetch_orders, :fetch_my_trades, :fetch_closed_orders, :fetch_canceled_orders]
+
+    for method <- methods do
+      shaped = shape_window(:binancecoinm, method)
+
+      assert shaped["startTime"] == @since_ms
+      assert shaped["endTime"] == @until_ms
+      refute Map.has_key?(shaped, "since")
+      refute Map.has_key?(shaped, "until")
+    end
+
+    open_orders = shape_window(:binancecoinm, :fetch_open_orders)
     refute Map.has_key?(open_orders, "since")
     refute Map.has_key?(open_orders, "until")
     refute Map.has_key?(open_orders, "startTime")
