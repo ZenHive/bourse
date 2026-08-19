@@ -5058,9 +5058,12 @@
           }
         },
         "fetchLeverageTiers": {
+          "_builder": "bybit_v5",
           "category": {
-            "kind": "literal",
-            "value": "linear"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "default": "linear"
           }
         }
       },

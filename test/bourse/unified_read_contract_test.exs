@@ -9,6 +9,7 @@ defmodule Bourse.UnifiedReadContractTest do
   alias Bourse.Unified
   alias Bourse.Unified.Descriptor
   alias Bourse.Unified.ReadParse
+  alias Bourse.Unified.RequestShape
 
   @runtime_manifest "priv/specs/json/runtime_support.json"
   @exclusions_path "test/fixtures/unified_read_parse_coverage_exclusions.json"
@@ -288,8 +289,8 @@ defmodule Bourse.UnifiedReadContractTest do
              end)
 
       assert Enum.frequencies_by(category_contracts, fn {_method, contract} -> contract["kind"] end) == %{
-               "computed" => 44,
-               "literal" => 8,
+               "computed" => 45,
+               "literal" => 7,
                "omit" => 15
              }
 
@@ -314,6 +315,15 @@ defmodule Bourse.UnifiedReadContractTest do
                    contract
                  ),
                "#{method} has no authored category resolution"
+
+        assert_bybit_category_resolves!(exchange, method, contract)
+      end
+
+      for {method, %{"kind" => "omit"}} <- category_contracts do
+        pre = RequestShape.apply_premarket(%{"category" => "linear"}, exchange, method)
+
+        refute Map.has_key?(pre, "category"),
+               "#{method} leaked a category the provider contract does not consume"
       end
 
       assert get_in(spec, ["capabilities", "has", "fetchDerivativesOpenInterestHistory"]) == true
@@ -1321,6 +1331,32 @@ defmodule Bourse.UnifiedReadContractTest do
   defp parsed_count(value) when is_map(value) and not is_struct(value), do: map_size(value)
   defp parsed_count(nil), do: 0
   defp parsed_count(_value), do: 1
+
+  defp assert_bybit_category_resolves!(exchange, method, %{"kind" => "literal", "value" => value})
+       when is_binary(value) do
+    pre = RequestShape.apply_premarket(%{}, exchange, method)
+    assert pre["category"] == value, "#{method} literal category was not applied before dispatch"
+  end
+
+  defp assert_bybit_category_resolves!(exchange, method, %{"kind" => "computed", "default" => default})
+       when is_binary(default) do
+    pre = RequestShape.apply_premarket(%{}, exchange, method)
+    assert pre["category"] == default, "#{method} authored default was not applied before dispatch"
+
+    derived = RequestShape.apply_premarket(%{"symbol" => "BTC/USDT:USDT"}, exchange, method)
+    assert derived["category"] == "linear", "#{method} did not derive linear from a unified swap symbol"
+  end
+
+  defp assert_bybit_category_resolves!(exchange, method, %{"kind" => "computed", "required" => true}) do
+    derived = RequestShape.apply_premarket(%{"symbol" => "BTC/USDT:USDT"}, exchange, method)
+
+    assert derived["category"] == "linear",
+           "#{method} did not derive category from a unified linear symbol"
+
+    error = assert_raise Error, fn -> RequestShape.apply(%{}, exchange, method) end
+    assert error.raw["reason"] == "missing_required_param", "#{method} did not fail closed without a category signal"
+    assert error.raw["parameter"] == "category"
+  end
 
   defp symbol_keyed_method?(method),
     do: method in [:fetch_bids_asks, :fetch_funding_intervals, :fetch_last_prices, :fetch_leverages]

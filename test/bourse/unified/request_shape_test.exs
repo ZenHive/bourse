@@ -2088,6 +2088,11 @@ defmodule Bourse.Unified.RequestShapeTest do
                "category" => "linear",
                "symbols" => []
              }
+
+      assert RequestShape.apply_premarket(%{"type" => "not-a-family"}, exchange, "fetchTickers") == %{
+               "category" => "linear",
+               "type" => "not-a-family"
+             }
     end
 
     test "covers legacy dynamic resolution construction" do

@@ -883,14 +883,16 @@ name the accepted families for their endpoints.
 
 The 67 authored category entries have these exhaustive dispositions:
 
-- Fixed literals (8): option for `fetchAllGreeks`, `fetchGreeks`, `fetchOption`,
+- Fixed literals (7): option for `fetchAllGreeks`, `fetchGreeks`, `fetchOption`,
   `fetchOptionChain`, `fetchOptionMarkets`, and `fetchVolatilityHistory`; spot
-  for `fetchSpotMarkets`; linear for `fetchLeverageTiers`.
-- Authored defaults (14): linear for `cancelAllOrders`,
+  for `fetchSpotMarkets`.
+- Authored defaults (15): linear for `cancelAllOrders`,
   `fetchCanceledAndClosedOrders`, `fetchCanceledOrders`, `fetchClosedOrders`,
   `fetchFundingHistory`, `fetchFundingRates`, `fetchFutureMarkets`,
-  `fetchMyLiquidations`, `fetchMyTrades`, `fetchOpenOrders`, `fetchPositions`,
-  `fetchPositionsHistory`, and `fetchTickers`; spot for `fetchMarkets`.
+  `fetchLeverageTiers`, `fetchMyLiquidations`, `fetchMyTrades`, `fetchOpenOrders`,
+  `fetchPositions`, `fetchPositionsHistory`, and `fetchTickers`; spot for
+  `fetchMarkets`. An inverse unified symbol still selects `inverse` for
+  `fetchLeverageTiers`; the linear value is only the no-signal default.
 - Market-derived (30): `cancelOrder`, `cancelOrders`,
   `cancelOrdersForSymbols`, `createMarketBuyOrderWithCost`,
   `createMarketSellOrderWithCost`, `createOrder`, `createOrders`, `editOrder`,

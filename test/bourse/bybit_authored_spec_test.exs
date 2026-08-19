@@ -29,6 +29,18 @@ defmodule Bourse.BybitAuthoredSpecTest do
     assert_request!(requests, "/v5/market/risk-limit", %{"category" => "linear"})
   end
 
+  test "fetch_leverage_tiers derives inverse from a unified inverse symbol" do
+    exchange = Exchange.new!("bybit", sandbox: true)
+
+    pre =
+      %{"symbol" => "BTC/USD:BTC"}
+      |> RequestShape.apply_premarket(exchange, "fetchLeverageTiers")
+      |> Unified.maybe_denormalize_symbol(exchange)
+      |> RequestShape.apply(exchange, "fetchLeverageTiers")
+
+    assert pre == %{"category" => "inverse", "symbol" => "BTCUSD"}
+  end
+
   test "ambiguous order lookup returns the authored required-category error before dispatch" do
     {:ok, requests} = RequestCollector.start_link()
     exchange = Exchange.new!("bybit", api_key: "test-key", secret: "test-secret", sandbox: true)

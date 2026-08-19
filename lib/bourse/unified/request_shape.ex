@@ -648,8 +648,15 @@ defmodule Bourse.Unified.RequestShape do
   defp authored_market_category(params, contract) do
     cond do
       is_binary(params["category"]) -> params["category"]
-      type = first_type_hint(params, contract) -> bybit_category_from_type(type) || category_from_params_symbol(params)
+      mapped = type_hint_category(params, contract) -> mapped
       true -> category_from_params_symbol(params) || contract["default"]
+    end
+  end
+
+  defp type_hint_category(params, contract) do
+    case first_type_hint(params, contract) do
+      nil -> nil
+      type -> bybit_category_from_type(type)
     end
   end
 
