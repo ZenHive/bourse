@@ -71,6 +71,190 @@ roadmap.
 
 ---
 
+## 2026-08-19 — Admission-rule sweep: measured findings parked from the workbench roadmap
+
+**Status:** 📋 recorded — these are NOT consumer reports. Per CLAUDE.md § "The roadmap
+admits reported defects" (031c231), the workbench roadmap was swept on 2026-08-19: every
+live task whose provenance was a live measurement, an ARC/orchestrator pass or a reviewer
+proposal was superseded, and its evidence is preserved here at zero dispatch cost. A future
+consumer report matching one of these re-admits the class to the roadmap with this entry as
+prior evidence. Kept on the roadmap (consumer-reported or consumer-facet): workbench tasks
+570 (three-fact spec separation; carries the `parse_order_list` consumer facet), 572 (bybit
+category defaults — four prior consumer reports in this file), 626 (combo taxonomy,
+bourse_trading report), 648 (unified account facts, trading_dashboard report).
+
+### W-550/W-566 — unified parse-coverage gap (tracker + residue)
+
+Measured 2026-08-08 against the real parse path (`Unified.parser_plan/2` +
+`ReadParse` field maps — NOT the dead `endpoints.handlers.parse`): 63 real
+method-venue gaps; exclusion file `test/fixtures/unified_read_parse_coverage_exclusions.json`
+stood at 37 after tasks 567/568. Each gap is a latent raw-envelope leak: no parse slice →
+`{:ok, transport_envelope}` indistinguishable from success. Residue with no plausible
+existing unified struct: fetchStatus (6 venues), fetchDepositWithdrawFees (5),
+fetchPositionMode (4), fetchSettlementHistory/fetchMySettlementHistory (4), okx
+fetchUnderlyingAssets/fetchMarketsByType, bybit fetchDerivativesOpenInterestHistory. Under
+kept task 570's model these stay callable as labelled raw reads; net-new unified types get
+built when a consumer reports needing one.
+
+### W-551 — 246 of 313 sliced read methods graded by no recording
+
+Measured 2026-08-04 (denominator needs recompute post-564). Live repro that proved the
+class: okx `fetch_open_interests` carried a parse slice, passed every static gate, and the
+live call returned the raw `{code, data, msg}` envelope as `{:ok, ...}`. Salvage: retained
+branch `harness/run-1786669327946-609a7675` in this repo carries a shrinking coverage-file
+guard plus six live OKX recordings with replay assertions.
+
+### W-557 — Deribit current-REST read-evidence drain (program)
+
+Per-provider-contract-section capture program. Recorded blocker for whoever resumes it: the
+landed capture machinery accepts only map-shaped JSON-RPC results
+(`capture.ex` `row_fields_populated?`, `provider_operations.ex` `validate_observation!`)
+while most of Deribit's read surface returns arrays, and the result/error envelope keys are
+JSON-RPC hardcodes.
+
+### W-563 — derive private WS connects without a handshake
+
+Authored derive slice wires no runnable auth pattern, so `Bourse.WS.connect(derive,
+:private)` returns an open unauthenticated socket; a private subscription is a silent empty
+stream. The wiring scaffold exists (`spec_config.ex` `public/login` clause ~330–336, next to
+deribit's `public/auth`). Probe trap: derive's edge proxy answers a wrong signer with HTML
+403 (signer must equal `X-LyraWallet` or a registered session key; the owner EOA is NOT
+auto-registered).
+
+### W-582 — populated-evidence backfill + binance-family folds
+
+C-T548 (binance order lists) and C-T549b (derive ERC-20 transfers) are shape-only tier 2 —
+populated captures need a throwaway OCO group / a demo transfer. binanceusdm
+`exceptions.exact` carries one code (−1016) vs binancecoinm's ~60; −4059 observed live
+2026-08-10, unpinned. **Latent crash, inline-doable:** `assert_private_shape!`'s
+`[raw | _rest]` list head MatchErrors on binancecoinm's map-shaped positions envelope the
+moment that venue enters the private replay set. Open policy question: one −4059 recording
+credited `exact.-4059` into portfolioMargin/spot/option sub-tables the call's route never
+consults.
+
+### W-583 — generic binance inverse family: wrong outbound symbol form
+
+`Symbol.to_exchange_id("BTC/USD:BTC", binance)` emits the pair form `BTCUSD`, not
+`BTCUSD_PERP`; DAPI answers the pair form 200+[] (silent), post-646 an audible unservable
+refusal (re-confirmed 2026-08-19, no `load_markets`). Inbound mirror:
+`binance_contract_symbol` guard excludes plain `binance`. Also: binanceusdm inverse singular
+read fails-open the same way; the offline funding stub keys responses by the EXPECTED symbol
+(blind stub — asserts nothing about the wire); generic spec lacks the inverse algo/book_routes
+parity the dedicated binancecoinm has.
+
+### W-588 — native-symbol backfill silently passes through on 9 of 10 venues
+
+Only bybit's authored nil clause reaches the fail-loud `{:error,
+{:unresolved_unified_symbol, ...}}` branch; every other venue's catch-all always answers
+`:spot`/`:swap`. Live: `fetch_leverage_tiers(binanceusdm)` returned 6714 rows passing
+`BNXUSDTSETTLED` / `OPENUSDT_SETTLED` through as native symbols. `unified_symbol?/1` accepts
+degenerate forms (`"/USDT:USDT"`, empty base) as unified.
+
+### W-590 — coinm margin-mode unreadable + leverage-0 sentinel ships as a number
+
+binancecoinm declares fetchMarginMode/fetchMarginModes false while setMarginMode is true and
+every recorded position row carries the `isolated` flag; `annotate_binance_margin_mode/1` is
+wired only for parse_type `margin_mode` and its map-only head drops list payloads. Binance
+leverage `"0"` means "never configured" (46/47 rows in the committed coinm recording), yet
+ships as `%Bourse.Leverage{long_leverage: 0}` — a multipliable number. Honest form: nil with
+raw 0 in `info`.
+
+### W-612 — deribit combo inverse misclassification → FOLDED into workbench task 626
+
+`deribit_inverse_instrument_id?/1` reads option/future combos (`BTC-CS-…`, ~188/4971
+instruments) as inverse, so a symbol-less combo fill takes `amount / price` where combo
+amounts are base coin (`amount * price`) — an error off by price². Carried as an acceptance
+criterion on kept task 626 (consumer-reported), which owns the combo adjudication both
+classifiers must then agree on.
+
+### W-629 — Binance COIN-M unified WS watch channels unauthored
+
+`websocket.subscribe` is `supported: false` on binancecoinm, so every unified `watch_*`
+fails `:no_channel_templates` despite a working public/private transport (task-618
+residual). Authoring source: Binance COIN-M stream docs + live demo-dstream frames; a
+subscribe ack alone is insufficient evidence.
+
+### W-640 — surface-digest provenance unvalidated
+
+`authority_corpus.ex` validates only top-level `key_sets`; the digest's `prior` slice falls
+through the offline gate, and `current-asyncapi.json`'s prior was reconstructed from release
+notes (inferred) yet `lib/mix/tasks/ccxt/contract_comparator.ex` hands it downstream
+indistinguishable from a hash-backed set. `priv/authority/deribit/manifest.json:197` and the
+2026-08-18 drift report still claim the three added channels "cannot be named" while the
+digest names `user.isolated.liquidation` / `user.liquidation` / `user.lsp`. (Correction to
+the original task: `test/fixtures/provider_operations/_manifest.json` does NOT carry the
+duplicate claim.)
+
+### W-644 — watch_order_book dead on three venues + multi-symbol key collapse
+
+Authored `apply_mode: "incremental"` (deribit, binance, binanceusdm) is unknown to
+`Orderbook.classify_update/2` (matches snapshot/delta/replace/both) → `:unknown` → the book
+is never written: an empty book indistinguishable from a quiet market. And binance
+partial-depth frames carry no `e`/`s` field, so the routing key degrades to the channel name
+and several symbols on one socket overwrite one book/topic. Class rule: an authored value
+the runtime cannot honour must fail loudly at spec load/connect.
+
+### W-655 — balance-timestamp backfill blinds the oracle
+
+`put_balance_info/2` unconditionally `Map.put`s `:timestamp` from the envelope's `"time"`
+after the field-map parse; hyperliquid's authored envelope rule reads the same key — if the
+authored path broke, the backfill supplies the identical value and every replay stays green.
+Carve C-T562's claim that row-stripped replay discriminates the two sources is provably
+false (both read the envelope, not the row).
+
+### W-656 — the 95% critical coverage tier binds nothing
+
+Measured 2026-08-19 (offline floor, `mix test.json --cover`, overall 89.74%):
+RequestShape.Hyperliquid 66.5%, RequestShape.Lighter 82.3%, ReadParse 83.5% (331 uncovered
+lines), Dispatch 89.2%, Parser 90.0%, RequestShape.Binance 91.9% — all on the money path,
+all below the 95% tier, mutated every wave. No gate measures per-module coverage
+(`mix.exs` documents the `:cover` multi-GB cold-tree spike that keeps it out of
+check.dispatch).
+
+### W-657 — fundingless predicate names one of four market types
+
+`fundingless_symbol?/1` tests only `:spot` of `detect_market_type/1`'s four values. Live
+2026-08-19: bybit answers a `%FundingRate{rate: nil}` for an option (a market that never
+funds) through the non-empty clause of `shape_singular_funding_rate/2`; deribit refuses the
+same class venue-side (−32602). Venues disagree, so the fix needs per-venue provider
+confrontation, not a blanket predicate.
+
+### W-661 — bybit InverseFutures native ids are quarterly codes
+
+Live testnet: `BTCUSDU26`, `BTCUSDZ26`, `ETHUSDU26`, `ETHUSDZ26` — not BASE-DDMMMYY.
+`apply_future_ddmmmyy/2` dispatches on market SHAPE (`quote == "USD" and settle == base` ⇒
+Deribit form), so to_exchange_id emits `BTC-25SEP26`, not addressable on bybit; the
+quarterly grammar is not reversed either — both directions dead for all four markets,
+pre-existing before task 660. Class rule: the outbound id grammar must dispatch on the
+authored venue spec, never the market shape. Also: `convert_date/3` ddmmmyy→yymmdd silently
+returns malformed input while the opposite direction raises.
+
+### W-175 — WS frame authoring + cassette harness (deferred program, 2026-06)
+
+Genuine residue after the CCXT-pro verification (parse slices are shared with REST):
+subscribe/auth FRAME shapes per venue + a cassette harness for the stateful accumulation
+layer only. Evidence fold worth keeping: derive subscribe frames lack a per-request
+correlation `id` (official docs require it; our MethodParams frame emits none, and CCXT.WS
+only correlates id-carrying frames).
+
+### W-N1 — the symbol round-trip guard ratifies grammar bugs
+
+`test/bourse/symbol_test.exs:1084–1122` takes only the FIRST row per market type and asserts
+only self-stability (`to → from → to` idempotent), never equality with the venue's own
+`market.id`. A consistently wrong grammar round-trips to itself perfectly — this is how
+W-583, W-588 and W-661 all shipped green. Invariant when re-admitted: every recorded market
+row, both directions against `market.id`, allowlist-only exceptions, guard verified by
+breaking it.
+
+### W-N2 — authored vocabulary values without runtime clauses degrade silently
+
+The class behind W-563, W-588, W-644 (and the shipped 572-adjacent category defaults): an
+authored value the runtime does not dispatch on falls through to a silent default. Proposed
+gate (the task-617 shape, proven in-repo): computed-set comparison of each authored
+vocabulary (`auth_pattern`, `apply_mode`, request-default resolution state, parse/return
+type, `market_family`) against the clauses the runtime handles, drift red in both
+directions.
+
 ## 2026-08-12 — `InvalidNonce` classified `:authentication_error` → `retry_class :auth` (non-retryable); nonce/timestamp drift is transient
 
 **Method:** any signed call whose venue error maps through `"InvalidNonce"` (`lib/bourse/error.ex` name map) · **Exchange:** all (classification layer, not venue-specific) · **Severity:** medium (consumer-side terminal handling of a transient error)
@@ -1508,3 +1692,30 @@ sobald bourse das Flag wieder korrekt shippt.
 > withdrawn report: the observed block remains a consumer-side exchange-id
 > selection error, and both inspected historical Bourse releases declared the
 > USD-M capability correctly.
+
+## 2026-08-19 — Deribit `parse_order_list/2` hat keinen Field-Map-Slot
+
+Call: `Bourse.Deribit.parse_order_list([], symbol: instrument)` (bourse 0.6.0),
+entsprechend dem `result: []` von Deribit
+`private/get_open_orders_by_instrument` auf einem Instrument ohne offene Orders.
+
+Observed: `{:error, :no_field_map}`. `Bourse.Deribit.__field_maps__()` besitzt
+für `order_list` keinen ableitbaren Field Map; damit scheitert auch der
+unzweideutige leere Provider-Response und ein Consumer kann keinen vollständigen
+Reconciliation-Snapshot aufbauen.
+
+Expected: der leere Response normalisiert zu `{:ok, []}`; für nichtleere Rows
+soll Deribits provider-eigene Order-Vokabel in `Bourse.Order` normalisiert werden.
+
+Konsument-Handling (trading_dashboard, Task 184): behandelt ausschließlich den
+leeren Raw-Response lokal als leere Orderliste. Nichtleere Responses laufen
+weiter durch `Bourse.Deribit.parse_order_list/2`, damit kein geratenes Mapping
+die fehlende Bourse-Semantik verdeckt.
+
+> *Triage note (2026-08-19, orchestrator):* in Workbench-Task **570** eingefaltet
+> (Drei-Fakten-Trennung). Befund dort verifiziert: deribit führt einen Field Map
+> für `order` und keinen für `order_list` und deklariert keinerlei
+> fetchOrderList-Capability — die Venue hat keine OCO-Order-Group-Surface. Die
+> ehrliche Antwort ist also der Unsupported-Operation-Fakt (Fakt 1 false), nicht
+> `:no_field_map` (Fakt 2); genau diese Verwechslung beendet Task 570. Für offene
+> Orders unterstützt deribit `parse_order/2`.
