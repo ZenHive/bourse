@@ -240,7 +240,8 @@ defmodule Bourse.Market do
   @doc """
   True when `contract_size` has a resolvable unit for exposure math.
 
-  False when this is a multi-leg combo, and false when both
+  False when this is a multi-leg combo (the mark is a spread or premium
+  difference, not an underlying), and false when both
   `native_quantity_unit` and `quantity_unit` are unset on a market that is
   not a single-leg inverse or linear contract with a published size.
   Block exposure on `false` rather than multiplying by a unit-less

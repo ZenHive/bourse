@@ -264,9 +264,10 @@ defmodule Bourse.DeribitAuthoredSpecTest do
   # Provider: "For perpetual and inverse futures the amount is in USD units. For
   # options and linear futures it is the underlying base currency coin."
   # (private/get_user_trades_by_currency). Option cost is therefore
-  # `amount * price`, and the venue leaves `instrument_type` off option
-  # instruments so a loaded option market reads `inverse: false` — the id
-  # degradation path must agree with it instead of emitting `amount / price`.
+  # `amount * price`. Recorded `get_instruments` still labels BTC options
+  # `instrument_type: reversed`, so the authored inverse enum_map would mark
+  # them inverse; the id classifier overwrites that to false and is the one
+  # source of truth — guessing inverse here emits `amount / price`.
   test "option rows are never inverse, with or without a loaded market" do
     option = %{"amount" => 10, "instrument_name" => "BTC-31JUL26-65000-C", "price" => 0.02}
     usdc_option = %{"amount" => 10, "instrument_name" => "ETH_USDC-31JUL26-3000-P", "price" => 0.02}

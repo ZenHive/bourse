@@ -330,6 +330,23 @@ defmodule Bourse.TypesTest do
         info: %{"kind" => "option_combo"}
       }
 
+      leftover = %Bourse.Market{
+        type: "option",
+        option: false,
+        contract: true,
+        inverse: true,
+        contract_size: 1.0,
+        info: %{"kind" => "option_combo"}
+      }
+
+      future_combo = %Bourse.Market{
+        type: "future_combo",
+        future: false,
+        contract: true,
+        inverse: true,
+        contract_size: 10.0
+      }
+
       option = %Bourse.Market{
         type: "option",
         option: true,
@@ -346,12 +363,29 @@ defmodule Bourse.TypesTest do
         contract_size: 10.0
       }
 
+      linear = %Bourse.Market{
+        type: "swap",
+        contract: true,
+        linear: true,
+        contract_size: 1.0
+      }
+
+      spot = %Bourse.Market{type: "spot", spot: true, contract_size: nil}
+
       assert Bourse.Market.combo?(combo)
       refute Bourse.Market.quantity_resolvable?(combo)
+      assert Bourse.Market.combo?(leftover)
+      refute Bourse.Market.quantity_resolvable?(leftover)
+      assert Bourse.Market.combo?(future_combo)
+      refute Bourse.Market.quantity_resolvable?(future_combo)
       refute Bourse.Market.combo?(option)
       assert Bourse.Market.quantity_resolvable?(option)
       refute Bourse.Market.combo?(inverse)
       assert Bourse.Market.quantity_resolvable?(inverse)
+      refute Bourse.Market.combo?(linear)
+      assert Bourse.Market.quantity_resolvable?(linear)
+      refute Bourse.Market.combo?(spot)
+      refute Bourse.Market.quantity_resolvable?(spot)
     end
   end
 

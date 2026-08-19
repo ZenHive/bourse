@@ -6,7 +6,8 @@ defmodule Bourse.MarketTypeFlagContractTest do
   alias Bourse.Spec
   alias Bourse.Unified.ReadParse
 
-  # Rows that declare a type without the matching flag. The allowlist may only
+  # Rows that declare a type without the matching flag, or an option flag
+  # without type "option". Values are per-row reasons. The allowlist may only
   # shrink: a newly-mismatched row fails the first assertion, and an entry that
   # now agrees fails as stale. Empty after carve C-T626 stopped Deribit combos
   # borrowing a single-leg type they do not satisfy.
@@ -50,6 +51,11 @@ defmodule Bourse.MarketTypeFlagContractTest do
 
     assert missing_recording == [],
            "venues with no fetch_markets recording must be listed: #{inspect(missing_recording)}"
+
+    assert Enum.all?(@type_flag_allowlist, fn {{venue, id}, reason} ->
+             is_binary(venue) and is_binary(id) and is_binary(reason) and String.trim(reason) != ""
+           end),
+           "type/flag allowlist entries must carry a per-row reason"
 
     stale_no_recording =
       @no_fetch_markets_recording
@@ -134,6 +140,7 @@ defmodule Bourse.MarketTypeFlagContractTest do
   end
 
   defp type_flag_mismatch?(%Market{type: "option", option: option}), do: option != true
+  defp type_flag_mismatch?(%Market{option: true, type: type}), do: type != "option"
   defp type_flag_mismatch?(%Market{type: type, contract: contract}) when type in ["swap", "future"], do: contract != true
   defp type_flag_mismatch?(_market), do: false
 
@@ -181,8 +188,8 @@ defmodule Bourse.MarketTypeFlagContractTest do
       {:ok, %Market{} = market} ->
         [market]
 
-      {:ok, _} ->
-        []
+      {:ok, other} ->
+        flunk("#{exchange_id} fetch_markets parsed unexpected #{inspect(other)}")
 
       {:error, reason} ->
         flunk("#{exchange_id} fetch_markets fixture failed to parse: #{inspect(reason)}")
