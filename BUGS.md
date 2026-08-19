@@ -1500,3 +1500,11 @@ sobald bourse das Flag wieder korrekt shippt.
 > würde erklären, warum derselbe App-Pfad am 2026-08-12 durchging — dann war
 > 0.6.0 die Korrektur. Task 649 kann auf diese eine Diff-Frage reduziert oder
 > geschlossen werden.
+
+> **2026-08-19 — Bourse follow-up shipped:** Task 649 now packages the
+> release-pinned capability surface, exposes it through
+> `Bourse.Exchange.capability_surface/0`, and makes the offline oracle require
+> an explicit re-pin for future capability changes. This does not reopen the
+> withdrawn report: the observed block remains a consumer-side exchange-id
+> selection error, and both inspected historical Bourse releases declared the
+> USD-M capability correctly.

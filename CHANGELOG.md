@@ -31,6 +31,12 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   runtime venue without a WS config, and `Bourse.WS.connect/3` answers
   `{:error, :websocket_not_configured}` for it, distinct from
   `:unsupported_exchange` for a venue outside runtime support.
+- `Bourse.Exchange.capability_surface/0` exposes the release-pinned `has`
+  declarations for every runtime venue, and
+  `capability_surface_differences/2` reports sorted additions, removals, and
+  value changes between two surfaces. The machine-readable surface ships in
+  the Hex package and the offline oracle requires an explicit re-pin when an
+  authored capability changes.
 
 ### Fixed
 
@@ -66,11 +72,23 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   before the error returns, so retrying does not stack a hidden subscription.
   Routed sockets are linked to their connection owner and cannot survive an
   owner crash as unreachable orphan connections.
+- `Bourse.WS.Adapter` reconnects close the previous connection owner after the
+  replacement is adopted, so repeated reconnects no longer leak one owner per
+  attempt. Connection owners are temporary supervised children, and an owner
+  crash is visible to the adapter instead of leaving an unreachable socket.
+- Lighter's `subscribed/*` response is both the subscription acknowledgement
+  and the first market snapshot. Default `Bourse.WS.subscribe/3` now re-queues
+  that frame after returning `:ok`; later `update/*` frames remain data and an
+  invalid channel still returns `{:subscription_rejected, frame}`.
 - The unified boundary validates parameter value shapes before dispatch. A
   non-encodable value (keyword list, tuple, struct) returns
   `{:error, %Bourse.Error{type: :invalid_parameters}}` naming the parameter
   instead of raising inside the signing layer. Nothing is coerced and no
   positional signature changed.
+- The non-bang unified boundary also returns error tuples for Binance-family
+  orders carrying both conditional legs and empty Bybit batch-order lists;
+  those request-shape rejections previously escaped as exceptions. Bang
+  variants continue to raise.
 - Binance-family unified order reads now see the Algo book. `fetch_order`,
   `fetch_open_order`, `fetch_orders`, `fetch_closed_orders`, and
   `fetch_canceled_orders` fan out to the algo endpoints, so an identifier
@@ -116,6 +134,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `since`/`until` to `startTime`/`endTime`. `fetch_open_orders` drops
   those bounds rather than sending unread parameters the venue rejects
   with `-1104`.
+- Generic Binance `fetch_funding_rate/2` no longer relabels a USD-M perpetual
+  rate as the spot pair that shares its compact market id. Spot requests now
+  return a named fundingless-market error, an unservable COIN-M request returns
+  a named error instead of `{:ok, []}`, and served perpetuals preserve the
+  venue-answered market identity.
 
 ## [0.6.0] - 2026-08-18
 

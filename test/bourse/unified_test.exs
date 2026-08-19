@@ -465,8 +465,9 @@ defmodule Bourse.UnifiedTest do
     @too_long_client_order_id String.duplicate("a", 65)
 
     # Public invocations below must cover every RequestShape Error raise reason.
-    # A fourth validator that raises Error without joining this set reddens the
-    # class sweep — that is the point of task 651 versus another allowlist row.
+    # Any additional validator that raises Error without joining this set
+    # reddens the class sweep — that is the point of task 651 versus another
+    # allowlist row.
     @invoked_request_shape_reasons ~w(
       unresolved_identifier_reference
       max_length_exceeded
