@@ -51,3 +51,7 @@ bourse-*.tar
 # harness dispatch runtime scaffolding — excluded from delivery commits by contract
 .harness/
 .cursor/rules/harness-operational.mdc
+
+# Scheduled live-lane reports. ops/live-drift.sh writes them under artifacts/;
+# they are CI/operator output, not source.
+/artifacts/

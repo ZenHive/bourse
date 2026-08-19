@@ -37,6 +37,12 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   value changes between two surfaces. The machine-readable surface ships in
   the Hex package and the offline oracle requires an explicit re-pin when an
   authored capability changes.
+- The scheduled live lane now runs the `:network` / `:capability_live` corpus
+  (including WebSocket auth smoke), the listen-key auth-smoke file on
+  `:dangerous`, and a classified public WebSocket first-frame matrix.
+  `mix ccxt.verify_ws_first_frame` and `mix ccxt.aggregate_live_lane` merge
+  those surfaces into one durable `live-lane-report.json`. Silence after a
+  successful connect is a named venue/channel failure, not a pass.
 
 ### Fixed
 
@@ -139,6 +145,16 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   return a named fundingless-market error, an unservable COIN-M request returns
   a named error instead of `{:ok, []}`, and served perpetuals preserve the
   venue-answered market identity.
+- RequestShape caller-input rejections that still raised `ArgumentError`
+  (Binance batch-order field rules, Hyperliquid and Lighter order
+  validation, OKX cost-based derivative markets, option-underlying and
+  open-interest period checks) now raise
+  `%Bourse.Error{type: :invalid_parameters}` so the non-bang unified API
+  returns a tuple. Bang variants continue to raise.
+- Unified `convert_date/3` no longer raises `FunctionClauseError` for date
+  formats the symbol layer does not enumerate. Unsupported pairs and
+  unmatched source strings pass through unchanged, so Bybit dated futures
+  round-trip through unified methods.
 
 ## [0.6.0] - 2026-08-18
 

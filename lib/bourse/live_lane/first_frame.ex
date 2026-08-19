@@ -406,13 +406,7 @@ defmodule Bourse.LiveLane.FirstFrame do
   end
 
   defp continue_after_ack(venue, deadline, first_kind, frame) do
-    kind = frame_kind(:success, frame)
-
-    if kind == "acknowledgement_with_payload" do
-      {:data, frame, :success, first_kind_or(first_kind, kind)}
-    else
-      await_frame(venue, deadline, first_kind_or(first_kind, kind))
-    end
+    await_frame(venue, deadline, first_kind_or(first_kind, frame_kind(:success, frame)))
   end
 
   defp first_kind_or(:none, kind), do: kind
