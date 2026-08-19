@@ -67,10 +67,13 @@ defmodule Bourse.PublicReadSmokeInventoryTest do
     exclusions = PublicReadSmokeMatrix.exclusions()
     assert is_list(exclusions)
 
-    for %{venue: venue, reason: reason, tracking: tracking} <- exclusions do
+    Enum.each(exclusions, fn exclusion ->
+      assert exclusion |> Map.keys() |> Enum.sort() == [:reason, :tracking, :venue]
+
+      %{venue: venue, reason: reason, tracking: tracking} = exclusion
       assert String.trim(reason) != "", "#{venue} exclusion has no reason"
       assert tracking =~ ~r/task(?:s)? \d+/i, "#{venue} exclusion has no task tracking reference"
-    end
+    end)
   end
 end
 
