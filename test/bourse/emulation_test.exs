@@ -880,6 +880,9 @@ defmodule Bourse.EmulationTest do
   defp emulated_capability_pairs do
     for venue <- Spec.exchanges(),
         {js_name, "emulated"} <- get_in(Spec.load!(venue), ["capabilities", "has"]),
+        method = Emulation.method_atom(js_name),
+        is_atom(method),
+        MapSet.member?(Emulation.implemented_methods(), method),
         do: {venue, js_name}
   end
 

@@ -874,7 +874,7 @@
     },
     "has": {
       "fetchTradingFee": true,
-      "fetchMarginAdjustmentHistory": false,
+      "fetchMarginAdjustmentHistory": true,
       "fetchSettlementHistory": false,
       "fetchBorrowRateHistory": false,
       "spot": false,
@@ -889,7 +889,7 @@
       "fetchTransfer": false,
       "createStopOrder": false,
       "fetchAllGreeks": false,
-      "fetchFundingHistory": false,
+      "fetchFundingHistory": true,
       "fetchPositionMode": true,
       "createReduceOnlyOrder": false,
       "fetchFundingRate": true,
@@ -1048,6 +1048,325 @@
       "5m": "5m",
       "6h": "6h",
       "8h": "8h"
+    },
+    "unsupported_raw_endpoints": {},
+    "mapping_complete": {
+      "addMargin": false,
+      "borrowCrossMargin": false,
+      "borrowIsolatedMargin": false,
+      "cancelAllOrders": true,
+      "cancelOrder": true,
+      "cancelOrders": false,
+      "closeAllPositions": false,
+      "closePosition": false,
+      "createConvertTrade": false,
+      "createDepositAddress": false,
+      "createGiftCode": false,
+      "createLimitBuyOrder": false,
+      "createLimitOrder": false,
+      "createLimitSellOrder": false,
+      "createMarketBuyOrder": false,
+      "createMarketBuyOrderWithCost": false,
+      "createMarketOrder": false,
+      "createMarketOrderWithCost": false,
+      "createMarketOrderWs": false,
+      "createMarketSellOrder": false,
+      "createMarketSellOrderWithCost": false,
+      "createOrder": true,
+      "createOrderWithTakeProfitAndStopLoss": false,
+      "createOrders": false,
+      "createPostOnlyOrder": false,
+      "createReduceOnlyOrder": false,
+      "createStopLimitOrder": false,
+      "createStopLossOrder": false,
+      "createStopMarketOrder": false,
+      "createStopOrder": false,
+      "createTakeProfitOrder": false,
+      "createTrailingPercentOrder": false,
+      "createTriggerOrder": false,
+      "editContractOrder": false,
+      "editOrder": false,
+      "editOrders": false,
+      "editSpotOrder": false,
+      "fetchADLRank": true,
+      "fetchAccountPositions": false,
+      "fetchAllGreeks": false,
+      "fetchBalance": true,
+      "fetchBidsAsks": false,
+      "fetchBorrowInterest": false,
+      "fetchBorrowRateHistories": false,
+      "fetchBorrowRateHistory": false,
+      "fetchCanceledAndClosedOrders": false,
+      "fetchCanceledOrders": true,
+      "fetchClosedOrder": false,
+      "fetchClosedOrders": true,
+      "fetchConvertCurrencies": false,
+      "fetchConvertQuote": false,
+      "fetchConvertTrade": false,
+      "fetchConvertTradeHistory": false,
+      "fetchCrossBorrowRate": false,
+      "fetchCrossBorrowRates": false,
+      "fetchCurrencies": false,
+      "fetchCurrenciesWs": false,
+      "fetchDeposit": false,
+      "fetchDepositAddress": false,
+      "fetchDepositAddresses": false,
+      "fetchDepositAddressesByNetwork": false,
+      "fetchDepositWithdrawFee": false,
+      "fetchDepositWithdrawFees": false,
+      "fetchDeposits": false,
+      "fetchDepositsWithdrawals": false,
+      "fetchFundingHistory": false,
+      "fetchFundingInterval": false,
+      "fetchFundingIntervals": true,
+      "fetchFundingRate": true,
+      "fetchFundingRateHistory": true,
+      "fetchFundingRates": true,
+      "fetchGreeks": false,
+      "fetchIndexOHLCV": false,
+      "fetchIsolatedBorrowRate": false,
+      "fetchIsolatedBorrowRates": false,
+      "fetchL2OrderBook": false,
+      "fetchL3OrderBook": false,
+      "fetchLastPrices": false,
+      "fetchLedger": true,
+      "fetchLedgerEntry": false,
+      "fetchLeverage": true,
+      "fetchLeverageTiers": true,
+      "fetchLeverages": true,
+      "fetchLiquidations": false,
+      "fetchLongShortRatio": false,
+      "fetchLongShortRatioHistory": false,
+      "fetchMarginAdjustmentHistory": false,
+      "fetchMarginMode": false,
+      "fetchMarginModes": false,
+      "fetchMarkOHLCV": false,
+      "fetchMarkPrice": false,
+      "fetchMarkPrices": false,
+      "fetchMarketLeverageTiers": false,
+      "fetchMarkets": true,
+      "fetchMyDustTrades": false,
+      "fetchMyLiquidations": false,
+      "fetchMySettlementHistory": false,
+      "fetchMyTrades": true,
+      "fetchOHLCV": false,
+      "fetchOpenInterest": true,
+      "fetchOpenInterestHistory": false,
+      "fetchOpenOrder": true,
+      "fetchOpenOrders": true,
+      "fetchOption": false,
+      "fetchOptionChain": false,
+      "fetchOptionPositions": false,
+      "fetchOrder": true,
+      "fetchOrderBook": true,
+      "fetchOrderBooks": false,
+      "fetchOrderTrades": false,
+      "fetchOrders": true,
+      "fetchPosition": false,
+      "fetchPositionADLRank": false,
+      "fetchPositionHistory": false,
+      "fetchPositionMode": false,
+      "fetchPositions": true,
+      "fetchPositionsADLRank": false,
+      "fetchPositionsHistory": false,
+      "fetchPositionsRisk": false,
+      "fetchPremiumIndexOHLCV": false,
+      "fetchSettlementHistory": false,
+      "fetchStatus": false,
+      "fetchTicker": true,
+      "fetchTickers": false,
+      "fetchTime": true,
+      "fetchTrades": true,
+      "fetchTradingFee": true,
+      "fetchTradingFees": false,
+      "fetchTradingLimits": false,
+      "fetchTransactionFee": false,
+      "fetchTransactionFees": false,
+      "fetchTransactions": false,
+      "fetchTransfer": false,
+      "fetchTransfers": false,
+      "fetchUnderlyingAssets": false,
+      "fetchVolatilityHistory": false,
+      "fetchWithdrawAddresses": false,
+      "fetchWithdrawal": false,
+      "fetchWithdrawalWhitelist": false,
+      "fetchWithdrawals": false,
+      "future": false,
+      "margin": false,
+      "privateAPI": false,
+      "publicAPI": false,
+      "reduceMargin": false,
+      "repayCrossMargin": false,
+      "repayIsolatedMargin": false,
+      "sandbox": false,
+      "setLeverage": true,
+      "setMargin": false,
+      "setMarginMode": true,
+      "setPositionMode": true,
+      "signIn": false,
+      "spot": false,
+      "swap": false,
+      "transfer": false,
+      "withdraw": false
+    },
+    "verification": {
+      "addMargin": "unverified",
+      "borrowCrossMargin": "unverified",
+      "borrowIsolatedMargin": "unverified",
+      "cancelAllOrders": "unverified",
+      "cancelOrder": "unverified",
+      "cancelOrders": "unverified",
+      "closeAllPositions": "unverified",
+      "closePosition": "unverified",
+      "createConvertTrade": "unverified",
+      "createDepositAddress": "unverified",
+      "createGiftCode": "unverified",
+      "createLimitBuyOrder": "unverified",
+      "createLimitOrder": "unverified",
+      "createLimitSellOrder": "unverified",
+      "createMarketBuyOrder": "unverified",
+      "createMarketBuyOrderWithCost": "unverified",
+      "createMarketOrder": "unverified",
+      "createMarketOrderWithCost": "unverified",
+      "createMarketOrderWs": "unverified",
+      "createMarketSellOrder": "unverified",
+      "createMarketSellOrderWithCost": "unverified",
+      "createOrder": "unverified",
+      "createOrderWithTakeProfitAndStopLoss": "unverified",
+      "createOrders": "unverified",
+      "createPostOnlyOrder": "unverified",
+      "createReduceOnlyOrder": "unverified",
+      "createStopLimitOrder": "unverified",
+      "createStopLossOrder": "unverified",
+      "createStopMarketOrder": "unverified",
+      "createStopOrder": "unverified",
+      "createTakeProfitOrder": "unverified",
+      "createTrailingPercentOrder": "unverified",
+      "createTriggerOrder": "unverified",
+      "editContractOrder": "unverified",
+      "editOrder": "unverified",
+      "editOrders": "unverified",
+      "editSpotOrder": "unverified",
+      "fetchADLRank": "verified",
+      "fetchAccountPositions": "unverified",
+      "fetchAllGreeks": "unverified",
+      "fetchBalance": "verified",
+      "fetchBidsAsks": "unverified",
+      "fetchBorrowInterest": "unverified",
+      "fetchBorrowRateHistories": "unverified",
+      "fetchBorrowRateHistory": "unverified",
+      "fetchCanceledAndClosedOrders": "unverified",
+      "fetchCanceledOrders": "verified",
+      "fetchClosedOrder": "unverified",
+      "fetchClosedOrders": "verified",
+      "fetchConvertCurrencies": "unverified",
+      "fetchConvertQuote": "unverified",
+      "fetchConvertTrade": "unverified",
+      "fetchConvertTradeHistory": "unverified",
+      "fetchCrossBorrowRate": "unverified",
+      "fetchCrossBorrowRates": "unverified",
+      "fetchCurrencies": "unverified",
+      "fetchCurrenciesWs": "unverified",
+      "fetchDeposit": "unverified",
+      "fetchDepositAddress": "unverified",
+      "fetchDepositAddresses": "unverified",
+      "fetchDepositAddressesByNetwork": "unverified",
+      "fetchDepositWithdrawFee": "unverified",
+      "fetchDepositWithdrawFees": "unverified",
+      "fetchDeposits": "unverified",
+      "fetchDepositsWithdrawals": "unverified",
+      "fetchFundingHistory": "unverified",
+      "fetchFundingInterval": "unverified",
+      "fetchFundingIntervals": "unverified",
+      "fetchFundingRate": "unverified",
+      "fetchFundingRateHistory": "unverified",
+      "fetchFundingRates": "unverified",
+      "fetchGreeks": "unverified",
+      "fetchIndexOHLCV": "unverified",
+      "fetchIsolatedBorrowRate": "unverified",
+      "fetchIsolatedBorrowRates": "unverified",
+      "fetchL2OrderBook": "unverified",
+      "fetchL3OrderBook": "unverified",
+      "fetchLastPrices": "unverified",
+      "fetchLedger": "verified",
+      "fetchLedgerEntry": "unverified",
+      "fetchLeverage": "unverified",
+      "fetchLeverageTiers": "verified",
+      "fetchLeverages": "verified",
+      "fetchLiquidations": "unverified",
+      "fetchLongShortRatio": "unverified",
+      "fetchLongShortRatioHistory": "unverified",
+      "fetchMarginAdjustmentHistory": "unverified",
+      "fetchMarginMode": "unverified",
+      "fetchMarginModes": "unverified",
+      "fetchMarkOHLCV": "unverified",
+      "fetchMarkPrice": "unverified",
+      "fetchMarkPrices": "unverified",
+      "fetchMarketLeverageTiers": "unverified",
+      "fetchMarkets": "verified",
+      "fetchMyDustTrades": "unverified",
+      "fetchMyLiquidations": "unverified",
+      "fetchMySettlementHistory": "unverified",
+      "fetchMyTrades": "verified",
+      "fetchOHLCV": "unverified",
+      "fetchOpenInterest": "verified",
+      "fetchOpenInterestHistory": "unverified",
+      "fetchOpenOrder": "unverified",
+      "fetchOpenOrders": "verified",
+      "fetchOption": "unverified",
+      "fetchOptionChain": "unverified",
+      "fetchOptionPositions": "unverified",
+      "fetchOrder": "unverified",
+      "fetchOrderBook": "unverified",
+      "fetchOrderBooks": "unverified",
+      "fetchOrderTrades": "unverified",
+      "fetchOrders": "verified",
+      "fetchPosition": "unverified",
+      "fetchPositionADLRank": "unverified",
+      "fetchPositionHistory": "unverified",
+      "fetchPositionMode": "unverified",
+      "fetchPositions": "verified",
+      "fetchPositionsADLRank": "unverified",
+      "fetchPositionsHistory": "unverified",
+      "fetchPositionsRisk": "unverified",
+      "fetchPremiumIndexOHLCV": "unverified",
+      "fetchSettlementHistory": "unverified",
+      "fetchStatus": "unverified",
+      "fetchTicker": "verified",
+      "fetchTickers": "unverified",
+      "fetchTime": "unverified",
+      "fetchTrades": "unverified",
+      "fetchTradingFee": "verified",
+      "fetchTradingFees": "unverified",
+      "fetchTradingLimits": "unverified",
+      "fetchTransactionFee": "unverified",
+      "fetchTransactionFees": "unverified",
+      "fetchTransactions": "unverified",
+      "fetchTransfer": "unverified",
+      "fetchTransfers": "unverified",
+      "fetchUnderlyingAssets": "unverified",
+      "fetchVolatilityHistory": "unverified",
+      "fetchWithdrawAddresses": "unverified",
+      "fetchWithdrawal": "unverified",
+      "fetchWithdrawalWhitelist": "unverified",
+      "fetchWithdrawals": "unverified",
+      "future": "unverified",
+      "margin": "unverified",
+      "privateAPI": "unverified",
+      "publicAPI": "unverified",
+      "reduceMargin": "unverified",
+      "repayCrossMargin": "unverified",
+      "repayIsolatedMargin": "unverified",
+      "sandbox": "unverified",
+      "setLeverage": "unverified",
+      "setMargin": "unverified",
+      "setMarginMode": "unverified",
+      "setPositionMode": "unverified",
+      "signIn": "unverified",
+      "spot": "unverified",
+      "swap": "unverified",
+      "transfer": "unverified",
+      "withdraw": "unverified"
     }
   },
   "config": {
@@ -9415,7 +9734,9 @@
       "fetchTradingFee": [
         "dapiPrivateGetCommissionRate"
       ],
-      "fetchMarginAdjustmentHistory": [],
+      "fetchMarginAdjustmentHistory": [
+        "dapiPrivateGetPositionMarginHistory"
+      ],
       "fetchSettlementHistory": [],
       "fetchBorrowRateHistory": [],
       "spot": [],
@@ -9436,7 +9757,9 @@
       "fetchTransfer": [],
       "createStopOrder": [],
       "fetchAllGreeks": [],
-      "fetchFundingHistory": [],
+      "fetchFundingHistory": [
+        "dapiPrivateGetIncome"
+      ],
       "fetchPositionMode": [
         "dapiPrivateGetPositionSideDual"
       ],
@@ -9957,7 +10280,6 @@
         "sapiV4": "spot",
         "v1": "spot"
       },
-
       "runtime_body_checks": [
         {
           "field": "code",
@@ -10762,15 +11084,15 @@
             ],
             [
               250,
-              8.0e-5
+              0.000080
             ],
             [
               2500,
-              5.0e-5
+              0.000050
             ],
             [
               7500,
-              3.0e-6
+              0.0000030
             ],
             [
               22500,
@@ -10778,23 +11100,23 @@
             ],
             [
               50000,
-              -5.0e-5
+              -0.000050
             ],
             [
               100000,
-              -6.0e-5
+              -0.000060
             ],
             [
               200000,
-              -7.0e-5
+              -0.000070
             ],
             [
               400000,
-              -8.0e-5
+              -0.000080
             ],
             [
               750000,
-              -9.0e-5
+              -0.000090
             ]
           ],
           "taker": [
@@ -10804,7 +11126,7 @@
             ],
             [
               250,
-              4.5e-4
+              0.00045
             ],
             [
               2500,
@@ -10816,27 +11138,27 @@
             ],
             [
               22500,
-              2.5e-4
+              0.00025
             ],
             [
               50000,
-              2.4e-4
+              0.00024
             ],
             [
               100000,
-              2.4e-4
+              0.00024
             ],
             [
               200000,
-              2.4e-4
+              0.00024
             ],
             [
               400000,
-              2.4e-4
+              0.00024
             ],
             [
               750000,
-              2.4e-4
+              0.00024
             ]
           ]
         }
@@ -10857,15 +11179,15 @@
             ],
             [
               250,
-              1.6e-4
+              0.00016
             ],
             [
               2500,
-              1.4e-4
+              0.00014
             ],
             [
               7500,
-              1.2e-4
+              0.00012
             ],
             [
               22500,
@@ -10873,19 +11195,19 @@
             ],
             [
               50000,
-              8.0e-5
+              0.000080
             ],
             [
               100000,
-              6.0e-5
+              0.000060
             ],
             [
               200000,
-              4.0e-5
+              0.000040
             ],
             [
               400000,
-              2.0e-5
+              0.000020
             ],
             [
               750000,
@@ -10903,11 +11225,11 @@
             ],
             [
               2500,
-              3.5e-4
+              0.00035
             ],
             [
               7500,
-              3.2e-4
+              0.00032
             ],
             [
               22500,
@@ -10915,15 +11237,15 @@
             ],
             [
               50000,
-              2.7e-4
+              0.00027
             ],
             [
               100000,
-              2.5e-4
+              0.00025
             ],
             [
               200000,
-              2.2e-4
+              0.00022
             ],
             [
               400000,
@@ -10931,7 +11253,7 @@
             ],
             [
               750000,
-              1.7e-4
+              0.00017
             ]
           ]
         }
@@ -10978,7 +11300,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "ADA": {
         "code": "ADA",
@@ -10989,7 +11311,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "APE": {
         "code": "APE",
@@ -11000,7 +11322,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "AVAX": {
         "code": "AVAX",
@@ -11011,7 +11333,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "BCH": {
         "code": "BCH",
@@ -11022,7 +11344,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "BNB": {
         "code": "BNB",
@@ -11033,7 +11355,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "BNFCR": {
         "code": "BNFCR",
@@ -11055,7 +11377,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "DOGE": {
         "code": "DOGE",
@@ -11066,7 +11388,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "DOT": {
         "code": "DOT",
@@ -11077,7 +11399,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "ETC": {
         "code": "ETC",
@@ -11088,7 +11410,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "ETH": {
         "code": "ETH",
@@ -11099,7 +11421,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "FIL": {
         "code": "FIL",
@@ -11110,7 +11432,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "GALA": {
         "code": "GALA",
@@ -11121,7 +11443,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "ICX": {
         "code": "ICX",
@@ -11132,7 +11454,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "KNC": {
         "code": "KNC",
@@ -11143,7 +11465,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "LINK": {
         "code": "LINK",
@@ -11154,7 +11476,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "LTC": {
         "code": "LTC",
@@ -11165,7 +11487,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "NEAR": {
         "code": "NEAR",
@@ -11176,7 +11498,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "ROSE": {
         "code": "ROSE",
@@ -11187,7 +11509,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "SOL": {
         "code": "SOL",
@@ -11198,7 +11520,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "SUI": {
         "code": "SUI",
@@ -11209,7 +11531,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "TRX": {
         "code": "TRX",
@@ -11220,7 +11542,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "UNI": {
         "code": "UNI",
@@ -11231,7 +11553,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "USD": {
         "code": "USD",
@@ -11242,7 +11564,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "VET": {
         "code": "VET",
@@ -11253,7 +11575,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "XLM": {
         "code": "XLM",
@@ -11264,7 +11586,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "XRP": {
         "code": "XRP",
@@ -11275,7 +11597,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "XTZ": {
         "code": "XTZ",
@@ -11286,7 +11608,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       },
       "ZIL": {
         "code": "ZIL",
@@ -11297,7 +11619,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1.0e-8
+        "precision": 1.0E-8
       }
     },
     "patterns": {
@@ -11732,12 +12054,12 @@
             "key": "asset"
           },
           "datetime": null,
-        "direction": {
-          "key": "income",
-          "kind": "sign_direction",
-          "negative": "out",
-          "positive": "in",
-          "zero": null
+          "direction": {
+            "key": "income",
+            "kind": "sign_direction",
+            "negative": "out",
+            "positive": "in",
+            "zero": null
           },
           "fee": null,
           "id": {
@@ -11767,13 +12089,13 @@
           "type": {
             "coercion": "safeString",
             "enum_map": {
-            "COMMISSION": "commission",
-            "DELIVERED_SETTELMENT": "settlement",
-            "FUNDING_FEE": "funding_fee",
-            "INSURANCE_CLEAR": "settlement",
-            "REALIZED_PNL": "realized_pnl",
-            "TRANSFER": "transfer",
-            "WELCOME_BONUS": "bonus"
+              "COMMISSION": "commission",
+              "DELIVERED_SETTELMENT": "settlement",
+              "FUNDING_FEE": "funding_fee",
+              "INSURANCE_CLEAR": "settlement",
+              "REALIZED_PNL": "realized_pnl",
+              "TRANSFER": "transfer",
+              "WELCOME_BONUS": "bonus"
             },
             "format": null,
             "key": "incomeType"
@@ -18563,15 +18885,15 @@
                 ],
                 [
                   250,
-                  8.0e-5
+                  0.000080
                 ],
                 [
                   2500,
-                  5.0e-5
+                  0.000050
                 ],
                 [
                   7500,
-                  3.0e-6
+                  0.0000030
                 ],
                 [
                   22500,
@@ -18579,23 +18901,23 @@
                 ],
                 [
                   50000,
-                  -5.0e-5
+                  -0.000050
                 ],
                 [
                   100000,
-                  -6.0e-5
+                  -0.000060
                 ],
                 [
                   200000,
-                  -7.0e-5
+                  -0.000070
                 ],
                 [
                   400000,
-                  -8.0e-5
+                  -0.000080
                 ],
                 [
                   750000,
-                  -9.0e-5
+                  -0.000090
                 ]
               ],
               "taker": [
@@ -18605,7 +18927,7 @@
                 ],
                 [
                   250,
-                  4.5e-4
+                  0.00045
                 ],
                 [
                   2500,
@@ -18617,27 +18939,27 @@
                 ],
                 [
                   22500,
-                  2.5e-4
+                  0.00025
                 ],
                 [
                   50000,
-                  2.4e-4
+                  0.00024
                 ],
                 [
                   100000,
-                  2.4e-4
+                  0.00024
                 ],
                 [
                   200000,
-                  2.4e-4
+                  0.00024
                 ],
                 [
                   400000,
-                  2.4e-4
+                  0.00024
                 ],
                 [
                   750000,
-                  2.4e-4
+                  0.00024
                 ]
               ]
             }
@@ -18658,15 +18980,15 @@
                 ],
                 [
                   250,
-                  1.6e-4
+                  0.00016
                 ],
                 [
                   2500,
-                  1.4e-4
+                  0.00014
                 ],
                 [
                   7500,
-                  1.2e-4
+                  0.00012
                 ],
                 [
                   22500,
@@ -18674,19 +18996,19 @@
                 ],
                 [
                   50000,
-                  8.0e-5
+                  0.000080
                 ],
                 [
                   100000,
-                  6.0e-5
+                  0.000060
                 ],
                 [
                   200000,
-                  4.0e-5
+                  0.000040
                 ],
                 [
                   400000,
-                  2.0e-5
+                  0.000020
                 ],
                 [
                   750000,
@@ -18704,11 +19026,11 @@
                 ],
                 [
                   2500,
-                  3.5e-4
+                  0.00035
                 ],
                 [
                   7500,
-                  3.2e-4
+                  0.00032
                 ],
                 [
                   22500,
@@ -18716,15 +19038,15 @@
                 ],
                 [
                   50000,
-                  2.7e-4
+                  0.00027
                 ],
                 [
                   100000,
-                  2.5e-4
+                  0.00025
                 ],
                 [
                   200000,
-                  2.2e-4
+                  0.00022
                 ],
                 [
                   400000,
@@ -18732,7 +19054,7 @@
                 ],
                 [
                   750000,
-                  1.7e-4
+                  0.00017
                 ]
               ]
             }
@@ -18805,7 +19127,7 @@
         "defaultSubType": "inverse",
         "defaultTimeInForce": "GTC",
         "defaultType": "spot",
-        "defaultWithdrawPrecision": 1.0e-8,
+        "defaultWithdrawPrecision": 1.0E-8,
         "fetchCurrencies": true,
         "fetchMargins": true,
         "fetchMarkets": {

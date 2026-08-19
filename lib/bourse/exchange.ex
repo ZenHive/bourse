@@ -138,7 +138,7 @@ defmodule Bourse.Exchange do
           rate_limit_ms: number(),
           hostname: String.t() | nil,
           base_urls: map(),
-          has: %{String.t() => boolean() | String.t()},
+          has: %{String.t() => boolean()},
           timeframes: %{String.t() => String.t()},
           features: %{String.t() => map()} | nil,
           fees: fees(),
@@ -272,6 +272,8 @@ defmodule Bourse.Exchange do
       escaped_endpoints: escaped_endpoints,
       escaped_unified: escaped_unified,
       escaped_field_maps: escaped_field_maps,
+      escaped_mapping_complete: escaped_mapping_complete,
+      escaped_verification: escaped_verification,
       escaped_response_envelopes: escaped_response_envelopes,
       endpoint_functions: endpoint_functions,
       parse_functions: parse_functions
@@ -291,11 +293,21 @@ defmodule Bourse.Exchange do
       @bourse_endpoint_configs unquote(escaped_endpoints)
       @bourse_unified_mapping unquote(escaped_unified)
       @bourse_field_maps unquote(escaped_field_maps)
+      @bourse_mapping_complete unquote(escaped_mapping_complete)
+      @bourse_verification unquote(escaped_verification)
       @bourse_response_envelopes unquote(escaped_response_envelopes)
 
       @doc "Returns the owned normalization field maps (per response-type slot)."
       @spec __field_maps__() :: map()
       def __field_maps__, do: @bourse_field_maps
+
+      @doc "Returns whether each unified method has a complete Bourse mapping."
+      @spec __mapping_complete__() :: %{String.t() => boolean()}
+      def __mapping_complete__, do: @bourse_mapping_complete
+
+      @doc "Returns each unified method's provider-verification state."
+      @spec __verification__() :: %{String.t() => String.t()}
+      def __verification__, do: @bourse_verification
 
       @doc "Returns per-slot unified-method response envelope configs."
       @spec __response_envelopes__() :: map()
@@ -309,26 +321,34 @@ defmodule Bourse.Exchange do
 
   @doc """
   Builds quoted `parse_<slot>/2` wrapper functions from the spec's normalization
-  field maps.
+  field maps and provider-support declarations.
 
   One function per `@parse_slots` entry (`parse_ticker/2`, `parse_trade/2`, …).
   Each embeds its slot mapping as a literal and delegates to `Bourse.Parser.parse/4`,
-  which applies the Honesty Rule (nil slot → `{:error, :no_field_map}`,
-  non-`nil` `_unresolved_reason` → `{:error, {:unresolved, reason}}`).
+  A slot with no provider-offered operation returns
+  `{:error, {:unsupported_operation, slot}}`. An offered but unmapped slot
+  returns `{:error, :no_field_map}`; a non-`nil` `_unresolved_reason` returns
+  `{:error, {:unresolved, reason}}`.
   """
-  @spec build_parse_functions(map()) :: [Macro.t()]
-  def build_parse_functions(field_maps) when is_map(field_maps) do
+  @spec build_parse_functions(map(), map(), map()) :: [Macro.t()]
+  def build_parse_functions(field_maps, venue_support, unified)
+      when is_map(field_maps) and is_map(venue_support) and is_map(unified) do
+    supported_slots = supported_parse_slots(venue_support, unified)
+
     Enum.map(@parse_slots, fn {slot, fn_name, target} ->
       escaped_mapping = Macro.escape(Map.get(field_maps, slot))
+      operation_supported? = MapSet.member?(supported_slots, slot)
 
       quote do
         @doc """
         Parses a raw #{unquote(slot)} response into `#{inspect(unquote(target))}`.
 
-        Delegates to `Bourse.Parser.parse/4` with this exchange's upstream
-        normalization field map. Returns `{:error, :no_field_map}` when the slot
-        is unmapped and `{:error, {:unresolved, reason}}` when upstream flagged it
-        as not safely derivable. `opts` may carry `:market` for discriminated maps.
+        Delegates to `Bourse.Parser.parse/4` with this exchange's authored
+        normalization field map. Returns `{:error, {:unsupported_operation, slot}}`
+        when the provider does not offer the operation, `{:error, :no_field_map}`
+        when an offered slot is unmapped, and `{:error, {:unresolved, reason}}`
+        when the authored map is not safely derivable. `opts` may carry `:market`
+        for discriminated maps.
         When the slot authors per-route field maps (`route_field_maps`), `opts`
         MUST carry `:route` (the endpoint path template, e.g. `"account/bills"`);
         an absent or unknown route returns `{:error, :no_matching_parser_branch}`
@@ -337,9 +357,26 @@ defmodule Bourse.Exchange do
         @spec unquote(fn_name)(term(), keyword()) ::
                 {:ok, struct() | [struct()]} | {:error, term()}
         def unquote(fn_name)(data, opts \\ []) do
-          opts = Keyword.put_new(opts, :venue, __id__())
+          opts =
+            opts
+            |> Keyword.put_new(:venue, __id__())
+            |> Keyword.put_new(:operation_supported, unquote(operation_supported?))
+            |> Keyword.put_new(:parse_slot, unquote(slot))
+
           Bourse.Parser.parse(data, unquote(escaped_mapping), unquote(target), opts)
         end
+      end
+    end)
+  end
+
+  defp supported_parse_slots(venue_support, unified) do
+    unified
+    |> Map.keys()
+    |> Enum.filter(&(Map.get(venue_support, &1) in [true, "emulated"]))
+    |> Enum.reduce(MapSet.new(), fn method, slots ->
+      case Bourse.Unified.parse_type_for_method(method) do
+        {:ok, slot} -> MapSet.put(slots, slot)
+        :error -> slots
       end
     end)
   end
@@ -385,6 +422,10 @@ defmodule Bourse.Exchange do
         @spec __features__() :: map()
         def __features__, do: unquote(escaped_features)
 
+        @doc "Returns provider support independently of Bourse implementation."
+        @spec __venue_support__() :: map()
+        def __venue_support__, do: unquote(escaped_features)
+
         @doc "Returns the signing pattern and config for this exchange."
         @spec __signing__() :: %{pattern: atom() | nil, config: map()}
         def __signing__ do
@@ -418,7 +459,7 @@ defmodule Bourse.Exchange do
     endpoint_configs =
       Bourse.Exchange.build_endpoint_configs(describe["api"] || %{}, url_prefixes, auth_sections)
 
-    features = get_in(spec, ["capabilities", "has"]) || %{}
+    {features, mapping_complete, verification} = capability_facts(spec)
     lean = Map.delete(describe, "api")
 
     {signing_pattern, signing_config} = Bourse.Exchange.signing_from_spec(spec)
@@ -439,13 +480,30 @@ defmodule Bourse.Exchange do
       escaped_lean: Macro.escape(lean),
       escaped_endpoints: Macro.escape(endpoint_configs),
       escaped_features: Macro.escape(features),
+      escaped_mapping_complete: Macro.escape(mapping_complete),
+      escaped_verification: Macro.escape(verification),
       escaped_signing_config: Macro.escape(signing_config),
       escaped_unified: Macro.escape(unified_mapping),
       escaped_field_maps: Macro.escape(field_maps),
       escaped_response_envelopes: Macro.escape(response_envelopes),
       endpoint_functions: Bourse.Exchange.build_endpoint_functions(endpoint_configs),
-      parse_functions: Bourse.Exchange.build_parse_functions(field_maps),
+      parse_functions:
+        Bourse.Exchange.build_parse_functions(
+          field_maps,
+          features,
+          spec["endpoints"]["unified"]
+        ),
       doc_meta: doc_meta
+    }
+  end
+
+  defp capability_facts(spec) do
+    capabilities = spec["capabilities"]
+
+    {
+      capabilities["has"],
+      capabilities["mapping_complete"],
+      capabilities["verification"]
     }
   end
 
@@ -496,7 +554,9 @@ defmodule Bourse.Exchange do
 
     - `__endpoints__/0` — #{meta.endpoint_count} raw REST endpoints
     - `__unified_endpoints__/0` — unified method → endpoint mapping
-    - `__features__/0` — explicit owned capability declarations
+    - `__features__/0` — provider-support declarations
+    - `__mapping_complete__/0` — Bourse implementation completeness
+    - `__verification__/0` — provider-verification state
     - `__signing__/0` — resolved signing pattern and config
 
     ## Usage
@@ -687,7 +747,9 @@ defmodule Bourse.Exchange do
   end
 
   defp supported_unified_methods(unified, support) when is_map(unified) and is_map(support) do
-    Map.filter(unified, fn {method, _endpoints} -> Map.get(support, method) in [true, "emulated"] end)
+    Map.filter(unified, fn {method, endpoints} ->
+      Map.get(support, method) in [true, "emulated"] and is_list(endpoints) and endpoints != []
+    end)
   end
 
   defp supported_unified_methods(unified, _support), do: unified
@@ -958,8 +1020,7 @@ defmodule Bourse.Exchange do
 
         options = Map.merge(Keyword.get(opts, :options, %{}), sandbox_options)
 
-        {capabilities_has, capabilities_timeframes, capabilities_features} =
-          build_capabilities(spec)
+        {capabilities_has, capabilities_timeframes, capabilities_features} = build_capabilities(spec)
 
         exchange = %__MODULE__{
           id: spec["exchange"]["id"],
@@ -1009,6 +1070,7 @@ defmodule Bourse.Exchange do
             describe
             |> lean_spec()
             |> put_websocket_section(spec)
+            |> Map.put("capabilities", Map.take(spec["capabilities"], ~w(has mapping_complete verification)))
             |> Map.put("error_scopes", build_error_scopes(spec, describe, base_urls, hostname))
         }
 
@@ -1087,8 +1149,11 @@ defmodule Bourse.Exchange do
   @doc """
   Checks if the exchange supports a given capability.
 
-  Returns `true` for capabilities marked `true` or `"emulated"` in the derived
-  `capabilities.has` map. Returns `false` for `false`, `"__undefined"`, or missing capabilities.
+  Returns the derived callable surface, not the provider-support declaration.
+  Provider-native capabilities require an authored route; provider-emulated
+  capabilities require either an authored raw route or an implemented Bourse
+  emulation.
+  Verification state never changes this result.
 
   Capability names use camelCase strings matching the Bourse spec
   (e.g., `"fetchTicker"`, `"createOrder"`).
@@ -1104,7 +1169,30 @@ defmodule Bourse.Exchange do
   """
   @spec has?(t(), String.t()) :: boolean()
   def has?(%__MODULE__{has: has}, capability) when is_binary(capability) do
-    has[capability] == true or has[capability] == "emulated"
+    Map.get(has, capability, false)
+  end
+
+  @doc "Returns whether Bourse has a complete normalized mapping for a unified method."
+  @spec mapping_complete?(t(), String.t()) :: boolean()
+  def mapping_complete?(%__MODULE__{spec: spec}, _capability) when not is_map_key(spec, "capabilities"), do: true
+
+  def mapping_complete?(%__MODULE__{spec: spec}, capability) when is_binary(capability) do
+    get_in(spec, ["capabilities", "mapping_complete", capability]) == true
+  end
+
+  @doc "Returns the provider-verification state for a unified method."
+  @spec verification_state(t(), String.t()) :: :verified | :unverified
+  def verification_state(%__MODULE__{spec: spec}, capability) when is_binary(capability) do
+    case get_in(spec, ["capabilities", "verification", capability]) do
+      "verified" -> :verified
+      _ -> :unverified
+    end
+  end
+
+  @doc "Returns the provider-support declaration for a unified method."
+  @spec venue_support(t(), String.t()) :: true | false | String.t() | nil
+  def venue_support(%__MODULE__{spec: spec}, capability) when is_binary(capability) do
+    get_in(spec, ["capabilities", "has", capability])
   end
 
   @doc """
@@ -1581,12 +1669,36 @@ defmodule Bourse.Exchange do
   # unified→native OHLCV timeframes, and per-market-type features matrix.
   defp build_capabilities(spec) do
     capabilities = spec["capabilities"] || %{}
+    support = Map.get(capabilities, "has") || %{}
+    unified = get_in(spec, ["endpoints", "unified"]) || %{}
 
     {
-      Map.get(capabilities, "has") || %{},
+      callable_capabilities(support, unified),
       Map.get(capabilities, "timeframes") || %{},
       Map.get(capabilities, "features")
     }
+  end
+
+  defp callable_capabilities(support, unified) do
+    Map.new(support, fn {method, declaration} ->
+      callable? = callable_capability?(method, declaration, unified)
+      {method, callable?}
+    end)
+  end
+
+  defp callable_capability?(method, true, unified), do: Map.get(unified, method, []) != []
+
+  defp callable_capability?(method, "emulated", unified) do
+    Map.get(unified, method, []) != [] or implemented_emulation?(method)
+  end
+
+  defp callable_capability?(_method, _declaration, _unified), do: false
+
+  defp implemented_emulation?(method) do
+    case Bourse.Emulation.method_atom(method) do
+      method_atom when is_atom(method_atom) -> MapSet.member?(Bourse.Emulation.implemented_methods(), method_atom)
+      nil -> false
+    end
   end
 
   @fee_market_type_keys %{

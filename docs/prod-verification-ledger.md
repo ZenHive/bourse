@@ -29,6 +29,52 @@ Entry template:
 > (`www.okx.com`) and `OKX_INTL_*` credentials. References to `my.okx.com` below are
 > historical negative evidence only, never the target for a new probe.
 
+### binance family — production-only SAPI/EAPI reads (task 570, filed 2026-08-19)
+
+- Authored slices: `binance:capabilities.verification.fetchMyDustTrades`,
+  `fetchIsolatedBorrowRates`, `fetchOptionPositions`; the same three paths in
+  `binanceusdm`
+- Blocked by: the Spot testnet and USD-M demo hosts do not serve the production SAPI and
+  EAPI account surfaces. The provisioned keys therefore cannot confront these six reads.
+- What tier-2 already proved: the pinned provider-owned SAPI and Options contracts document
+  the operations and their native routes. This establishes provider support, not Bourse
+  mapping completeness or verification.
+- The open question: the production response envelopes and whether the incomplete authored
+  mappings normalize every returned variant.
+- Exact call: construct `binance` and `binanceusdm` exchanges with production hosts and
+  production-authorized credentials, then call each of `fetch_my_dust_trades/1`,
+  `fetch_isolated_borrow_rates/1`, and `fetch_option_positions/1`.
+- Expected evidence: accepted production responses registered against all six methods, with
+  populated rows where the account has relevant history or positions.
+
+### binance — cross-product position joins (task 570, filed 2026-08-19)
+
+- Authored slices: `binance:capabilities.verification.fetchAccountPositions`,
+  `fetchPositionsRisk`
+- Blocked by: the available product accounts do not carry a populated cross-product position
+  that can prove the required account/position and leverage-response join.
+- What tier-2 already proved: the provider contracts expose both operations and the distinct
+  source responses. Selecting either response alone fabricates the unified position.
+- The open question: the joined normalized result across populated Spot/Portfolio/Futures
+  account state.
+- Exact call: on an account with a populated cross-product position, call
+  `Bourse.fetch_account_positions/1` and `Bourse.fetch_positions_risk/1`.
+- Expected evidence: registered responses for both source routes and a normalized result whose
+  position and leverage members reconcile to those responses.
+
+### okx — deposit and withdrawal record reads (task 570, filed 2026-08-19)
+
+- Authored slices: `okx:capabilities.verification.fetchDeposit`, `fetchWithdrawal`
+- Blocked by: the international demo account has no deposit or withdrawal history, so it
+  cannot supply the required transaction identifier.
+- What tier-2 already proved: the provider-owned API v5 contracts document both single-record
+  operations and their identifier parameters.
+- The open question: the populated response envelope and complete normalized record mapping.
+- Exact call: on an account with matching history, call `Bourse.fetch_deposit/2` with a deposit
+  identifier and `Bourse.fetch_withdrawal/2` with a withdrawal identifier.
+- Expected evidence: accepted populated responses registered for both methods, retaining the
+  provider identifier and status semantics.
+
 ### deribit — account-wide and position-moving mutations (task 558, filed 2026-08-14)
 
 - Authored slices: none — this entry is about raw provider operations, not an authored field-map slot
@@ -161,6 +207,7 @@ instrument families, or provider error conditions unavailable through the provis
 the far-from-market/cancel-in-session mutation discipline.
 
 - [oracle-critical-slot-waiver-review 2026-08-10]
+- [oracle-critical-slot-waiver-review 2026-08-19]
 
 The review marker periodically re-acknowledges the complete open waiver set. It is valid through
 day 30; on day 31, or when a waiver is filed after the latest review, `mix ccxt.oracle_gate` names
@@ -204,6 +251,9 @@ evidence beyond the batch review.
   - [oracle-critical-slot-waiver 2026-08-10] `binance:auth.sign_recipe.sapi`
   - [oracle-critical-slot-waiver 2026-08-10] `binance:markets.patterns.currency_aliases`
   - [oracle-critical-slot-waiver 2026-08-10] `binance:normalization.field_maps.position`
+  - [oracle-critical-slot-waiver 2026-08-19] `binance:request_shape.fetchAccountPositions`
+  - [oracle-critical-slot-waiver 2026-08-19] `binance:request_shape.fetchOptionPositions`
+  - [oracle-critical-slot-waiver 2026-08-19] `binance:request_shape.fetchPositionsRisk`
   - [oracle-critical-slot-waiver 2026-08-10] `binance:request_shape.fetchPositions`
   - [oracle-critical-slot-waiver 2026-08-10] `binance:request_shape.fetchTicker`
 
@@ -233,6 +283,7 @@ evidence beyond the batch review.
   - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.private`
   - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:auth.sign_recipe.sapi`
   - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:markets.patterns.currency_aliases`
+  - [oracle-critical-slot-waiver 2026-08-19] `binanceusdm:request_shape.fetchOptionPositions`
   - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:request_shape.fetchTicker`
   - [oracle-critical-slot-waiver 2026-08-10] `binanceusdm:request_shape.fetchTickers`
 

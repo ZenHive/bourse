@@ -2,6 +2,7 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
   use ExUnit.Case, async: false
 
   alias Bourse.OracleLabel
+  alias Bourse.RawResponse
   alias Bourse.RecordedResponseFixtures
   alias Bourse.RecordedResponseFixtures.ListBody
   alias Bourse.ReplayExchange
@@ -490,6 +491,14 @@ defmodule Bourse.PrivateRecordedResponseReplayTest do
 
     assert %Bourse.Leverage{} = leverage = Map.fetch!(parsed, requested_symbol)
     assert ListBody.binds_wire_row?(leverage, raw), identity
+  end
+
+  defp assert_private_shape!(method, %RawResponse{} = raw, fixture, identity)
+       when method in [:fetch_account_positions, :fetch_positions_risk] do
+    assert raw.payload == fixture["body"], identity
+    assert raw.venue == fixture["exchange"], identity
+    assert raw.method == js_name(method), identity
+    assert raw.verification == :unverified, identity
   end
 
   defp assert_private_shape!(method, parsed, fixture, identity)

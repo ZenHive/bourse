@@ -49,7 +49,7 @@ defmodule Mix.Tasks.Ccxt.OracleGateTest do
   test "task rejects an expired critical-slot waiver with its renewal path" do
     error =
       assert_raise Mix.Error, fn ->
-        OracleGate.run([], today: ~D[2026-09-10])
+        OracleGate.run([], today: ~D[2026-09-19])
       end
 
     assert error.message =~ "alpaca:normalization.field_maps.position waiver review expired after 30 days"

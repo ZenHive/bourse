@@ -256,14 +256,18 @@ defmodule Bourse.Test.TimeWindowProbeMatrix do
       methods: [
         :fetch_canceled_orders,
         :fetch_closed_orders,
+        :fetch_funding_history,
         :fetch_funding_rate_history,
         :fetch_ledger,
+        :fetch_margin_adjustment_history,
         :fetch_my_trades,
         :fetch_open_orders,
         :fetch_orders
       ],
-      reason: "the COIN-M demo wallet does not guarantee populated account-history boundaries",
-      tracking: "docs/prod-verification-ledger.md — task 526 residual oracle critical slots"
+      reason:
+        "the COIN-M demo wallet does not guarantee populated account-history boundaries; " <>
+          "the restored reads stay labelled raw until task 550 completes their mappings",
+      tracking: "docs/prod-verification-ledger.md — task 526 residual oracle critical slots; task 550 mappings"
     },
     %{
       venue: :binanceusdm,
@@ -523,10 +527,10 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
     },
     %{
       venue: :binancecoinm,
-      methods: [:fetch_ledger],
+      methods: [:fetch_funding_history, :fetch_ledger, :fetch_margin_adjustment_history],
       raw_keys: ["since", "until"],
       contract:
-        "priv/authority/binancecoinm/manifest.json — COIN-M income history has no authored bound mapping; raw since/until pass through"
+        "priv/authority/binancecoinm/manifest.json — COIN-M income and position-margin histories have no authored bound mapping; raw since/until pass through"
     },
     %{
       venue: :binanceusdm,

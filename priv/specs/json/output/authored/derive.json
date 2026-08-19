@@ -193,6 +193,87 @@
       "4h": "4h",
       "5m": "5m",
       "8h": "8h"
+    },
+    "unsupported_raw_endpoints": {
+      "fetchBorrowInterest": {
+        "carve": "C-T549c",
+        "endpoints": [
+          "privatePostGetInterestHistory"
+        ]
+      },
+      "fetchLiquidations": {
+        "carve": "C-T549a",
+        "endpoints": [
+          "publicPostGetLiquidationHistory",
+          "privatePostGetLiquidationHistory",
+          "privatePostGetLiquidatorHistory"
+        ]
+      },
+      "fetchSettlementHistory": {
+        "carve": "C-T549d",
+        "endpoints": [
+          "publicPostGetOptionSettlementHistory",
+          "privatePostGetOptionSettlementHistory"
+        ]
+      }
+    },
+    "mapping_complete": {
+      "cancelAllOrders": true,
+      "cancelOrder": true,
+      "createOrder": true,
+      "editOrder": true,
+      "fetchBalance": true,
+      "fetchCanceledOrders": true,
+      "fetchClosedOrders": true,
+      "fetchCurrencies": true,
+      "fetchDeposits": true,
+      "fetchFundingHistory": true,
+      "fetchFundingRate": true,
+      "fetchFundingRateHistory": true,
+      "fetchGreeks": true,
+      "fetchMarkets": true,
+      "fetchMyTrades": true,
+      "fetchOpenOrders": true,
+      "fetchOptionMarkets": true,
+      "fetchOrderTrades": true,
+      "fetchOrders": true,
+      "fetchPositions": true,
+      "fetchSpotMarkets": true,
+      "fetchSwapMarkets": true,
+      "fetchTicker": true,
+      "fetchTime": true,
+      "fetchTrades": true,
+      "fetchTransfers": true,
+      "fetchWithdrawals": true
+    },
+    "verification": {
+      "cancelAllOrders": "unverified",
+      "cancelOrder": "unverified",
+      "createOrder": "unverified",
+      "editOrder": "unverified",
+      "fetchBalance": "verified",
+      "fetchCanceledOrders": "verified",
+      "fetchClosedOrders": "unverified",
+      "fetchCurrencies": "unverified",
+      "fetchDeposits": "unverified",
+      "fetchFundingHistory": "unverified",
+      "fetchFundingRate": "unverified",
+      "fetchFundingRateHistory": "unverified",
+      "fetchGreeks": "unverified",
+      "fetchMarkets": "verified",
+      "fetchMyTrades": "verified",
+      "fetchOpenOrders": "verified",
+      "fetchOptionMarkets": "unverified",
+      "fetchOrderTrades": "unverified",
+      "fetchOrders": "unverified",
+      "fetchPositions": "verified",
+      "fetchSpotMarkets": "unverified",
+      "fetchSwapMarkets": "unverified",
+      "fetchTicker": "unverified",
+      "fetchTime": "unverified",
+      "fetchTrades": "verified",
+      "fetchTransfers": "unverified",
+      "fetchWithdrawals": "unverified"
     }
   },
   "config": {
@@ -981,15 +1062,15 @@
     },
     "request": {
       "defaults": {
-      "fetchGreeks": {
-        "instrument_name": {
-          "kind": "reference",
-          "reason": "identifier_reference",
-          "source": "symbol",
-          "source_class": "unified_param",
-          "value": null
-        }
-      },
+        "fetchGreeks": {
+          "instrument_name": {
+            "kind": "reference",
+            "reason": "identifier_reference",
+            "source": "symbol",
+            "source_class": "unified_param",
+            "value": null
+          }
+        },
         "cancelAllOrders": {
           "subaccount_id": {
             "kind": "unresolved",
@@ -2452,7 +2533,6 @@
     },
     "handle_errors": {
       "exception_scopes": {},
-
       "runtime_body_checks": [],
       "runtime_code_fields": [
         "code",

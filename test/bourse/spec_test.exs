@@ -727,6 +727,32 @@ defmodule Bourse.SpecTest do
 
       assert spec["capabilities"]["has"]["fetchTrades"] == false
       refute Map.has_key?(mapping, :fetch_trades)
+
+      invalid = put_in(spec, ["endpoints", "unified", "fetchTrades"], ["publicPostInfo"])
+
+      assert_raise ArgumentError, ~r/unsupported operation must have an empty endpoint list/, fn ->
+        Schema.validate!(invalid, "hyperliquid")
+      end
+    end
+
+    test "mapping and verification facts cannot overwrite provider support" do
+      spec = owned_spec("alpaca")
+      method = "fetchCurrencies"
+
+      assert get_in(spec, ["capabilities", "has", method]) == false
+
+      mapped = put_in(spec, ["capabilities", "mapping_complete", method], true)
+
+      assert_raise ArgumentError, ~r/cannot map a provider-unsupported operation/, fn ->
+        Schema.validate!(mapped, "alpaca")
+      end
+
+      bybit = owned_spec("bybit")
+      incomplete = put_in(bybit, ["capabilities", "verification", "fetchConvertQuote"], "verified")
+
+      assert_raise ArgumentError, ~r/cannot verify an incomplete implementation/, fn ->
+        Schema.validate!(incomplete, "bybit")
+      end
     end
 
     test "preserves typed literals, references and meaningful null values" do

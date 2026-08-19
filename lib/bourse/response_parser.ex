@@ -301,7 +301,7 @@ defmodule Bourse.ResponseParser do
   defp extract_field(data, %{"kind" => "computed"} = rule, context) do
     operands = Enum.map(Map.get(rule, "operands", []), &computed_operand(data, &1))
 
-    if Enum.any?(operands, &is_nil/1) do
+    if Enum.any?(operands, &empty_operand?/1) do
       nil
     else
       operands
@@ -952,6 +952,8 @@ defmodule Bourse.ResponseParser do
   end
 
   defp computed_operand(_data, _operand), do: nil
+
+  defp empty_operand?(value), do: is_nil(value) or value == ""
 
   defp compute([left, right], "mul"), do: Precise.string_mul(left, right)
   defp compute([left, right], "div"), do: Precise.string_div(left, right)

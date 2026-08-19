@@ -12,6 +12,7 @@ defmodule Bourse.BinancecoinmPromotionTest do
     createOrder
     fetchADLRank
     fetchBalance
+    fetchFundingHistory
     fetchFundingIntervals
     fetchFundingRate
     fetchFundingRateHistory
@@ -19,6 +20,7 @@ defmodule Bourse.BinancecoinmPromotionTest do
     fetchLedger
     fetchLeverageTiers
     fetchLeverages
+    fetchMarginAdjustmentHistory
     fetchMarkets
     fetchMyTrades
     fetchOpenInterest

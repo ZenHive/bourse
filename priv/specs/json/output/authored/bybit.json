@@ -517,7 +517,7 @@
       "fetchDepositWithdrawFees": true,
       "fetchDeposits": true,
       "fetchDerivativesMarketLeverageTiers": true,
-      "fetchDerivativesOpenInterestHistory": false,
+      "fetchDerivativesOpenInterestHistory": true,
       "fetchFundingHistory": true,
       "fetchFundingRate": "emulated",
       "fetchFundingRateHistory": true,
@@ -605,6 +605,179 @@
       "4h": "240",
       "5m": "5",
       "6h": "360"
+    },
+    "unsupported_raw_endpoints": {},
+    "mapping_complete": {
+      "borrowCrossMargin": true,
+      "cancelAllOrders": true,
+      "cancelAllOrdersAfter": true,
+      "cancelOrder": true,
+      "cancelOrders": true,
+      "cancelOrdersForSymbols": true,
+      "createConvertTrade": true,
+      "createMarketBuyOrderWithCost": true,
+      "createMarketSellOrderWithCost": true,
+      "createOrder": true,
+      "createOrders": true,
+      "editOrder": true,
+      "editOrders": true,
+      "fetchAllGreeks": true,
+      "fetchBalance": true,
+      "fetchBidsAsks": true,
+      "fetchBorrowRateHistory": true,
+      "fetchCanceledAndClosedOrders": true,
+      "fetchCanceledOrders": true,
+      "fetchClosedOrder": true,
+      "fetchClosedOrders": true,
+      "fetchConvertCurrencies": true,
+      "fetchConvertQuote": false,
+      "fetchConvertTrade": false,
+      "fetchConvertTradeHistory": false,
+      "fetchCrossBorrowRate": true,
+      "fetchCurrencies": true,
+      "fetchDepositAddress": true,
+      "fetchDepositAddressesByNetwork": true,
+      "fetchDepositWithdrawFees": false,
+      "fetchDeposits": true,
+      "fetchDerivativesMarketLeverageTiers": true,
+      "fetchDerivativesOpenInterestHistory": false,
+      "fetchFundingHistory": true,
+      "fetchFundingRateHistory": true,
+      "fetchFundingRates": true,
+      "fetchFutureMarkets": true,
+      "fetchGreeks": true,
+      "fetchLedger": true,
+      "fetchLeverage": true,
+      "fetchLeverageTiers": true,
+      "fetchLongShortRatioHistory": true,
+      "fetchMarginMode": true,
+      "fetchMarketLeverageTiers": true,
+      "fetchMarkets": true,
+      "fetchMyLiquidations": true,
+      "fetchMySettlementHistory": false,
+      "fetchMyTrades": true,
+      "fetchOHLCV": true,
+      "fetchOpenInterest": true,
+      "fetchOpenInterestHistory": true,
+      "fetchOpenOrder": true,
+      "fetchOpenOrders": true,
+      "fetchOption": true,
+      "fetchOptionChain": true,
+      "fetchOptionMarkets": true,
+      "fetchOrder": true,
+      "fetchOrderBook": true,
+      "fetchOrderClassic": true,
+      "fetchOrderTrades": true,
+      "fetchOrdersClassic": true,
+      "fetchPosition": true,
+      "fetchPositionADLRank": true,
+      "fetchPositions": true,
+      "fetchPositionsADLRank": true,
+      "fetchPositionsHistory": true,
+      "fetchSettlementHistory": false,
+      "fetchSpotMarkets": true,
+      "fetchStatus": false,
+      "fetchTicker": true,
+      "fetchTickers": true,
+      "fetchTime": true,
+      "fetchTrades": true,
+      "fetchTradingFee": true,
+      "fetchTradingFees": true,
+      "fetchTransfers": true,
+      "fetchVolatilityHistory": true,
+      "fetchWithdrawals": true,
+      "repayCrossMargin": true,
+      "setLeverage": true,
+      "setMarginMode": true,
+      "setPositionMode": true,
+      "transfer": true,
+      "withdraw": true
+    },
+    "verification": {
+      "borrowCrossMargin": "unverified",
+      "cancelAllOrders": "unverified",
+      "cancelAllOrdersAfter": "unverified",
+      "cancelOrder": "unverified",
+      "cancelOrders": "unverified",
+      "cancelOrdersForSymbols": "unverified",
+      "createConvertTrade": "unverified",
+      "createMarketBuyOrderWithCost": "unverified",
+      "createMarketSellOrderWithCost": "unverified",
+      "createOrder": "unverified",
+      "createOrders": "unverified",
+      "editOrder": "unverified",
+      "editOrders": "unverified",
+      "fetchAllGreeks": "unverified",
+      "fetchBalance": "verified",
+      "fetchBidsAsks": "unverified",
+      "fetchBorrowRateHistory": "unverified",
+      "fetchCanceledAndClosedOrders": "unverified",
+      "fetchCanceledOrders": "unverified",
+      "fetchClosedOrder": "unverified",
+      "fetchClosedOrders": "unverified",
+      "fetchConvertCurrencies": "unverified",
+      "fetchConvertQuote": "unverified",
+      "fetchConvertTrade": "unverified",
+      "fetchConvertTradeHistory": "unverified",
+      "fetchCrossBorrowRate": "unverified",
+      "fetchCurrencies": "unverified",
+      "fetchDepositAddress": "unverified",
+      "fetchDepositAddressesByNetwork": "unverified",
+      "fetchDepositWithdrawFees": "unverified",
+      "fetchDeposits": "unverified",
+      "fetchDerivativesMarketLeverageTiers": "unverified",
+      "fetchDerivativesOpenInterestHistory": "unverified",
+      "fetchFundingHistory": "unverified",
+      "fetchFundingRateHistory": "unverified",
+      "fetchFundingRates": "unverified",
+      "fetchFutureMarkets": "unverified",
+      "fetchGreeks": "unverified",
+      "fetchLedger": "unverified",
+      "fetchLeverage": "unverified",
+      "fetchLeverageTiers": "verified",
+      "fetchLongShortRatioHistory": "unverified",
+      "fetchMarginMode": "unverified",
+      "fetchMarketLeverageTiers": "unverified",
+      "fetchMarkets": "verified",
+      "fetchMyLiquidations": "unverified",
+      "fetchMySettlementHistory": "unverified",
+      "fetchMyTrades": "verified",
+      "fetchOHLCV": "unverified",
+      "fetchOpenInterest": "unverified",
+      "fetchOpenInterestHistory": "unverified",
+      "fetchOpenOrder": "unverified",
+      "fetchOpenOrders": "verified",
+      "fetchOption": "unverified",
+      "fetchOptionChain": "unverified",
+      "fetchOptionMarkets": "unverified",
+      "fetchOrder": "unverified",
+      "fetchOrderBook": "unverified",
+      "fetchOrderClassic": "unverified",
+      "fetchOrderTrades": "unverified",
+      "fetchOrdersClassic": "unverified",
+      "fetchPosition": "unverified",
+      "fetchPositionADLRank": "unverified",
+      "fetchPositions": "verified",
+      "fetchPositionsADLRank": "unverified",
+      "fetchPositionsHistory": "unverified",
+      "fetchSettlementHistory": "unverified",
+      "fetchSpotMarkets": "unverified",
+      "fetchStatus": "unverified",
+      "fetchTicker": "verified",
+      "fetchTickers": "unverified",
+      "fetchTime": "unverified",
+      "fetchTrades": "verified",
+      "fetchTradingFee": "unverified",
+      "fetchTradingFees": "unverified",
+      "fetchTransfers": "unverified",
+      "fetchVolatilityHistory": "unverified",
+      "fetchWithdrawals": "unverified",
+      "repayCrossMargin": "unverified",
+      "setLeverage": "unverified",
+      "setMarginMode": "unverified",
+      "setPositionMode": "unverified",
+      "transfer": "unverified",
+      "withdraw": "unverified"
     }
   },
   "config": {
@@ -9584,7 +9757,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-09
+        "precision": 1E-9
       },
       "BTR": {
         "code": "BTR",
@@ -10629,7 +10802,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-05
+        "precision": 0.00001
       },
       "ETHBTC": {
         "code": "ETHBTC",
@@ -10684,7 +10857,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-09
+        "precision": 1E-9
       },
       "EVAA": {
         "code": "EVAA",
@@ -12004,7 +12177,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-06
+        "precision": 0.000001
       },
       "LDO": {
         "code": "LDO",
@@ -12147,7 +12320,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-05
+        "precision": 0.00001
       },
       "LUMIA": {
         "code": "LUMIA",
@@ -12466,7 +12639,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-05
+        "precision": 0.00001
       },
       "METIS": {
         "code": "METIS",
@@ -12554,7 +12727,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-09
+        "precision": 1E-9
       },
       "MOCA": {
         "code": "MOCA",
@@ -14567,7 +14740,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-05
+        "precision": 0.00001
       },
       "STG": {
         "code": "STG",
@@ -15194,7 +15367,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-05
+        "precision": 0.00001
       },
       "USD1": {
         "code": "USD1",
@@ -15216,7 +15389,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-09
+        "precision": 1E-9
       },
       "USDE": {
         "code": "USDE",
@@ -15249,7 +15422,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-13
+        "precision": 1E-13
       },
       "USDTB": {
         "code": "USDTB",
@@ -15491,7 +15664,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-06
+        "precision": 0.000001
       },
       "WCT": {
         "code": "WCT",
@@ -15645,7 +15818,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-05
+        "precision": 0.00001
       },
       "XAVA": {
         "code": "XAVA",
@@ -15821,7 +15994,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-05
+        "precision": 0.00001
       },
       "YGG": {
         "code": "YGG",
@@ -16779,27 +16952,27 @@
             "key": "transactionTime"
           },
           "type": {
-          "coercion": "safeString",
-          "enum_map": {
-            "ADL": "adl",
-            "BONUS": "bonus",
-            "BONUS_RECOLLECT": "bonus",
-            "BONUS_TRANSFER_IN": "bonus",
-            "BONUS_TRANSFER_OUT": "bonus",
-            "CONVERT": "conversion",
-            "CURRENCY_BUY": "conversion",
-            "CURRENCY_SELL": "conversion",
-            "DELIVERY": "settlement",
-            "FEE_REFUND": "rebate",
-            "INTEREST": "interest",
-            "LIQUIDATION": "liquidation",
-            "SETTLEMENT": "funding_fee",
-            "TRADE": "trade",
-            "TRANSFER_IN": "transfer",
-            "TRANSFER_OUT": "transfer"
-          },
-          "enum_passthrough": true,
-          "format": null,
+            "coercion": "safeString",
+            "enum_map": {
+              "ADL": "adl",
+              "BONUS": "bonus",
+              "BONUS_RECOLLECT": "bonus",
+              "BONUS_TRANSFER_IN": "bonus",
+              "BONUS_TRANSFER_OUT": "bonus",
+              "CONVERT": "conversion",
+              "CURRENCY_BUY": "conversion",
+              "CURRENCY_SELL": "conversion",
+              "DELIVERY": "settlement",
+              "FEE_REFUND": "rebate",
+              "INTEREST": "interest",
+              "LIQUIDATION": "liquidation",
+              "SETTLEMENT": "funding_fee",
+              "TRADE": "trade",
+              "TRANSFER_IN": "transfer",
+              "TRANSFER_OUT": "transfer"
+            },
+            "enum_passthrough": true,
+            "format": null,
             "key": "type"
           }
         }

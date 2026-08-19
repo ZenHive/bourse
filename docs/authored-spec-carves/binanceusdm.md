@@ -638,44 +638,49 @@ CONFIRM venue.**
 {"carve_id":"C-T536","date":"2026-08-04","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M All Orders contract: GET /fapi/v1/allOrders returns active, canceled, or filled orders"},"observed_evidence":{"kind":"live_venue","reference":"USD-M demo BTC/USDT:USDT fetch_orders returned 29 mixed rows; fetch_closed_orders returned 22 closed rows and fetch_canceled_orders returned 7 canceled rows"},"compatibility_reference":null,"resolved_tier":1}
 -->
 
-## 2026-08-08 — composite positions and unavailable API families (Task 565)
+## 2026-08-08 — composite positions and production-only API families (Tasks 565 and 570)
 
-**C-T565c — Position reads must not parse leverage brackets as positions; SAPI/EAPI reads
-need a reachable provider sandbox (task 565). Outcome: DIVERGE from the inherited capability
-declarations.**
+**C-T565c — Position reads must not parse leverage brackets as positions, while sandbox absence
+changes verification only (task 565, corrected by task 570). Outcome: CONFIRM provider support;
+retain incomplete raw reads.**
 
-- *Provider boundary:* USD-M position/account responses and leverage-bracket responses are
-  distinct contracts. SAPI dust/isolated-margin and EAPI option-account routes are not served by
-  the USD-M demo host.
-- *Live evidence:* demo-fapi returned 877 `{symbol, brackets}` carriers for the route selected by
-  `fetchAccountPositions` and `fetchPositionsRisk`; the old parser produced 877 mostly-empty
-  position structs. SAPI/EAPI probes had no sandbox base URL.
-- *Our carve:* `fetchAccountPositions`, `fetchOptionPositions`, `fetchPositionsRisk`,
-  `fetchMyDustTrades`, and `fetchIsolatedBorrowRates` are `has=false`. `fetchLeverageTiers`
-  remains declared and explicitly flattens the provider's nested bracket carrier.
+- *Provider contract:* `priv/authority/binanceusdm/` distinguishes account, position-risk,
+  leverage-bracket, EAPI option-position, SAPI dust and SAPI isolated-margin operations. All five
+  unified operations are provider-supported.
+- *Implementation:* `fetchAccountPositions` and `fetchPositionsRisk` still need the position and
+  leverage responses joined. They and `fetchOptionPositions`, `fetchMyDustTrades`, and
+  `fetchIsolatedBorrowRates` therefore record support `true`, mapping completeness `false`, and
+  verification `unverified`. The routes return `%Bourse.RawResponse{}`; `fetchLeverageTiers`
+  remains independently normalized.
+- *Verification boundary:* demo-fapi proved the distinct account, risk and bracket routes, but it
+  cannot serve SAPI/EAPI. Those blockers are ledger entries, not support decisions.
+- *Compatibility:* task 570 restores the methods removed by task 565. `Exchange.has?/2` reports
+  them callable and their result changes from `not_supported` to labelled raw; the global
+  `Bourse.describe/2` vocabulary is unchanged.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T565c","date":"2026-08-08","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binanceusdm provider artifacts distinguish account, position-risk, and leverage-bracket responses"},"observed_evidence":{"kind":"live_venue","reference":"Task 565 demo-fapi probes observed 877 nested leverage-bracket carriers on the incorrectly selected position routes and no SAPI/EAPI sandbox host"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T565c","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binanceusdm provider artifacts distinguish account, position-risk, leverage-bracket, EAPI, and SAPI operations"},"observed_evidence":{"kind":"live_venue","reference":"demo-fapi account, position-risk, and leverage-bracket responses proved the routes are distinct"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The Bourse joins and production-only SAPI/EAPI confrontations remain incomplete; demo-host absence affects verification only"}
 -->
 
 ## 2026-08-09 — reachable USD-M account and position selectors (Task 534)
 
 **C-T534a — Account positions, position risk, and configured leverage select their distinct
-provider contracts (task 534). Outcome: CONFIRM provider contract.**
+provider contracts (task 534; mapping status corrected by task 570). Outcome: CONFIRM routing,
+not mapping completeness.**
 
 - *Provider boundary:* `GET /fapi/v3/account` carries account `positions`,
   `GET /fapi/v3/positionRisk` returns position-risk rows, and
   `GET /fapi/v1/symbolConfig` returns configured per-symbol leverage.
-- *Our carve:* the three unified methods select those respective FAPI routes. Account positions
-  unwrap the account `positions` member; leverage maps `symbol`, `leverage`, and `marginType`
-  into a unified-symbol-keyed collection without dropping provider rows.
+- *Our carve:* the three unified methods select those respective FAPI routes. Leverage maps
+  `symbol`, `leverage`, and `marginType` into a unified-symbol-keyed collection. The two position
+  reads remain mapping-incomplete because their complete unified result needs leverage data joined
+  to the position rows; task 570 therefore returns their recorded bodies as labelled raw payloads.
 - *Live evidence:* a test-owned 0.002 BTCUSDT LONG made both position reads non-empty while the
   symbol-config response remained populated. The three scrubbed demo responses are registered
   in the reality manifest; the position was then closed and the account verified flat with no
   open orders.
-- *History:* this supersedes only the USD-M position-route conclusion in C-T565c. That entry
-  remains the evidence for the prior selector defect and for the still-unavailable SAPI/EAPI
-  reads.
+- *History:* this supersedes only the route-selection defect in C-T565c. It does not turn route
+  verification into a complete joined-position mapping.
 
 <!-- carve-evidence-status
 {"carve_id":"C-T534a","date":"2026-08-09","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binanceusdm/manifest.json artifact developer-docs-full; USD-M account information, position risk, and symbol configuration contracts"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/responses/binanceusdm/fetch_account_positions.json, test/fixtures/responses/binanceusdm/fetch_positions_risk.json, and test/fixtures/responses/binanceusdm/fetch_leverages.json"},"compatibility_reference":null,"resolved_tier":1}

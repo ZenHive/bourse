@@ -7,6 +7,81 @@ venue register.
 **Canonical for cross-venue carves.** This file is the complete record for confrontations whose
 scope spans venues; venue-specific decisions remain canonical in their owning registers.
 
+## 2026-08-19 — provider support, mapping completeness, and verification (Task 570)
+
+**C-T570 — One authored field owns each independent fact. Outcome: DIVERGE from the
+single `capabilities.has` implementation-and-evidence flag (task 570).**
+
+| Fact | Owner field | Meaning |
+|---|---|---|
+| Provider support | `capabilities.has` | `true` when the provider offers the operation natively, `false` when it offers neither the operation nor sufficient primitives, and `"emulated"` when provider primitives can derive it without a native endpoint. This fact comes only from the provider contract. |
+| Bourse mapping completeness | `capabilities.mapping_complete` | `true` only when Bourse completely maps the operation to its normalized return contract. |
+| Venue verification | `capabilities.verification` | `"verified"` only when registered venue evidence confronts the implementation; otherwise `"unverified"`. Sandbox and demo reachability affect only this field. |
+
+`"emulated"` describes the provider, not Bourse. It is therefore valid alongside
+`mapping_complete: false`. A provider-offered operation with an authored raw route remains
+callable when its mapping is incomplete, but returns `%Bourse.RawResponse{}` carrying the
+provider payload, venue, method, and verification state. A provider-emulated operation with
+neither a raw route nor an implemented Bourse emulation is not callable and cannot generate a
+method that dispatches nothing.
+
+### Public-surface decision
+
+- Generated unified functions require provider support (`true` or `"emulated"`) and a non-empty
+  authored route. An implemented Bourse emulation also makes a provider-emulated capability
+  callable.
+- `Bourse.Exchange.has?/2` reports that derived callable surface. Provider support remains
+  available separately through `Bourse.Exchange.venue_support/2` and generated
+  `__venue_support__/0`.
+- `Bourse.describe/2` continues to describe the library-wide unified method vocabulary; it is
+  not a venue-availability query.
+- Verification never changes method generation, `has?/2`, or the coverage obligation.
+
+This preserves working normalized calls. It intentionally restores methods task 565 removed;
+callers now receive a labelled raw value instead of either a missing function or a normalized
+success shape. Callers that treated task 565's missing functions as permanent provider absence
+must handle `%Bourse.RawResponse{}`. Removing a wrong mapping remains independent: Deribit's
+settlements wiring for `fetchLiquidations` was deleted because it returned settlements, while
+the capability is provider-emulated from recent trades and its mapping remains incomplete.
+
+### Re-adjudication audit
+
+The sweep found **17** provider-offered operations whose incomplete mapping had been encoded as
+unsupported. All remain in the mapping backlog:
+
+| Venue | Operations | Provider support | Mapping | Verification |
+|---|---|---|---|---|
+| Binance | `fetchMyDustTrades`, `fetchIsolatedBorrowRates`, `fetchOptionPositions`, `fetchAccountPositions`, `fetchPositionsRisk`, `fetchMarginModes` | `true` | incomplete | unverified |
+| Binance USD-M | `fetchMyDustTrades`, `fetchIsolatedBorrowRates`, `fetchOptionPositions`, `fetchAccountPositions`, `fetchPositionsRisk` | `true` | incomplete | unverified |
+| Binance COIN-M | `fetchFundingHistory`, `fetchMarginAdjustmentHistory` | `true` | incomplete | unverified |
+| Bybit | `fetchDerivativesOpenInterestHistory` | `true` | incomplete | unverified |
+| Deribit | `fetchLiquidations` | `"emulated"` | incomplete | unverified |
+| OKX | `fetchDeposit`, `fetchWithdrawal` | `true` | incomplete | unverified |
+
+Binance COIN-M supplied the pre-task-565 control (task 570): `dapiPrivate_get_income` with
+`incomeType=FUNDING_FEE` and `dapiPrivate_get_positionmargin_history` both returned HTTP 200 on
+the demo host on 2026-08-09. Empty lists establish routing and authentication, not mapping
+completeness or semantic verification.
+
+After re-adjudication, three provider-unsupported capabilities retain similarly named raw Derive
+primitives; each is registered explicitly in `capabilities.unsupported_raw_endpoints` under
+C-T549a, C-T549c, or C-T549d. The repo-wide contract rejects unsupported capabilities with
+wired unified routes and validates every registered raw-endpoint carve against a generated raw
+endpoint. Its per-venue audit digest covers the complete provider-false capability set and raw
+endpoint inventory, so adding a fifth capability or changing any venue's raw surface forces a
+fresh provider-contract adjudication before the fixture can move. No task-565 or earlier
+reachability-based false declaration remains.
+
+The parse-coverage obligation is provider support (`true` or `"emulated"`) **and** incomplete
+mapping. Its regenerated count is **54**, up **17** from 37. Labelling a result raw or removing
+its callable route cannot discharge that obligation. The two Binance USD-M convert cells are
+classified by their first caller-visible blocker, `ambiguous_endpoint_selection`, rather than
+the later absent field map.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T570","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"Pinned per-venue contracts under priv/authority for the 17 audited operations; venue-local task 565 entries contain the operation-specific citations"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-09 Binance COIN-M demo HTTP 200 observations for income FUNDING_FEE and position-margin history; prior task-565 venue observations cited in the local registers"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Every restored operation has an incomplete Bourse mapping; production-only SAPI/EAPI and history-dependent OKX confrontations remain in docs/prod-verification-ledger.md"}
+-->
+
 ## 2026-08-18 — client identifier round-trip (Task 622)
 
 **C-T622a — A venue maps a client identifier in both directions or in neither

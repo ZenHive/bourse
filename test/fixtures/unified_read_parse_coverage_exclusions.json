@@ -2,8 +2,20 @@
   "alpaca": [],
   "binance": [
     {
+      "failure": "response_join_required",
+      "method": "fetchAccountPositions",
+      "parse_type": "position",
+      "tracking_task": 550
+    },
+    {
       "failure": "no_parse_type",
       "method": "fetchDepositWithdrawFees",
+      "tracking_task": 550
+    },
+    {
+      "failure": "incomplete_mapping",
+      "method": "fetchIsolatedBorrowRates",
+      "parse_type": "borrow_rate",
       "tracking_task": 550
     },
     {
@@ -13,13 +25,37 @@
       "tracking_task": 550
     },
     {
+      "failure": "incompatible_endpoint_selection",
+      "method": "fetchMarginModes",
+      "parse_type": "margin_mode",
+      "tracking_task": 550
+    },
+    {
+      "failure": "incomplete_mapping",
+      "method": "fetchMyDustTrades",
+      "parse_type": "trade",
+      "tracking_task": 550
+    },
+    {
       "failure": "no_parse_type",
       "method": "fetchMySettlementHistory",
       "tracking_task": 550
     },
     {
+      "failure": "incomplete_mapping",
+      "method": "fetchOptionPositions",
+      "parse_type": "position",
+      "tracking_task": 550
+    },
+    {
       "failure": "no_parse_type",
       "method": "fetchPositionMode",
+      "tracking_task": 550
+    },
+    {
+      "failure": "response_join_required",
+      "method": "fetchPositionsRisk",
+      "parse_type": "position",
       "tracking_task": 550
     },
     {
@@ -40,12 +76,30 @@
   ],
   "binancecoinm": [
     {
+      "failure": "no_field_map",
+      "method": "fetchFundingHistory",
+      "parse_type": "funding_history",
+      "tracking_task": 550
+    },
+    {
+      "failure": "no_field_map",
+      "method": "fetchMarginAdjustmentHistory",
+      "parse_type": "margin_modification",
+      "tracking_task": 550
+    },
+    {
       "failure": "no_parse_type",
       "method": "fetchPositionMode",
       "tracking_task": 550
     }
   ],
   "binanceusdm": [
+    {
+      "failure": "response_join_required",
+      "method": "fetchAccountPositions",
+      "parse_type": "position",
+      "tracking_task": 550
+    },
     {
       "failure": "no_field_map",
       "method": "fetchConvertCurrencies",
@@ -59,13 +113,13 @@
       "tracking_task": 550
     },
     {
-      "failure": "no_field_map",
+      "failure": "ambiguous_endpoint_selection",
       "method": "fetchConvertTrade",
       "parse_type": "conversion",
       "tracking_task": 550
     },
     {
-      "failure": "no_field_map",
+      "failure": "ambiguous_endpoint_selection",
       "method": "fetchConvertTradeHistory",
       "parse_type": "conversion",
       "tracking_task": 550
@@ -82,13 +136,37 @@
       "tracking_task": 550
     },
     {
+      "failure": "incomplete_mapping",
+      "method": "fetchIsolatedBorrowRates",
+      "parse_type": "borrow_rate",
+      "tracking_task": 550
+    },
+    {
+      "failure": "incomplete_mapping",
+      "method": "fetchMyDustTrades",
+      "parse_type": "trade",
+      "tracking_task": 550
+    },
+    {
       "failure": "no_parse_type",
       "method": "fetchMySettlementHistory",
       "tracking_task": 550
     },
     {
+      "failure": "incomplete_mapping",
+      "method": "fetchOptionPositions",
+      "parse_type": "position",
+      "tracking_task": 550
+    },
+    {
       "failure": "no_parse_type",
       "method": "fetchPositionMode",
+      "tracking_task": 550
+    },
+    {
+      "failure": "response_join_required",
+      "method": "fetchPositionsRisk",
+      "parse_type": "position",
       "tracking_task": 550
     },
     {
@@ -132,6 +210,12 @@
       "tracking_task": 550
     },
     {
+      "failure": "incomplete_request_binding",
+      "method": "fetchDerivativesOpenInterestHistory",
+      "parse_type": "open_interest",
+      "tracking_task": 550
+    },
+    {
       "failure": "no_parse_type",
       "method": "fetchMySettlementHistory",
       "tracking_task": 550
@@ -152,6 +236,11 @@
     {
       "failure": "no_parse_type",
       "method": "fetchDepositWithdrawFees",
+      "tracking_task": 550
+    },
+    {
+      "failure": "emulation_not_implemented",
+      "method": "fetchLiquidations",
       "tracking_task": 550
     },
     {
@@ -179,6 +268,12 @@
     {
       "failure": "no_parse_type",
       "method": "fetchBorrowRateHistories",
+      "tracking_task": 550
+    },
+    {
+      "failure": "incomplete_mapping",
+      "method": "fetchDeposit",
+      "parse_type": "transaction",
       "tracking_task": 550
     },
     {
@@ -210,6 +305,12 @@
     {
       "failure": "no_parse_type",
       "method": "fetchUnderlyingAssets",
+      "tracking_task": 550
+    },
+    {
+      "failure": "incomplete_mapping",
+      "method": "fetchWithdrawal",
+      "parse_type": "transaction",
       "tracking_task": 550
     }
   ]

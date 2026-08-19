@@ -646,10 +646,20 @@ defmodule Bourse.ExchangeTest do
       refute Exchange.has?(exchange, "fetchTransactions")
     end
 
-    test "returns true for emulated capabilities from capabilities.has" do
+    test "keeps provider emulation separate from callable support" do
       {:ok, exchange} = Exchange.new("bybit")
-      assert exchange.has["fetchFundingRate"] == "emulated"
+
+      assert Exchange.venue_support(exchange, "fetchFundingRate") == "emulated"
       assert Exchange.has?(exchange, "fetchFundingRate")
+
+      assert Exchange.venue_support(exchange, "fetchBidsAsks") == "emulated"
+      assert Exchange.has?(exchange, "fetchBidsAsks")
+
+      deribit = Exchange.new!("deribit")
+      assert Exchange.venue_support(deribit, "fetchLiquidations") == "emulated"
+      refute Exchange.mapping_complete?(deribit, "fetchLiquidations")
+      assert Exchange.has?(deribit, "fetchLiquidations")
+      refute Exchange.has?(deribit, "fetchCurrenciesWs")
     end
   end
 

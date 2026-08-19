@@ -1052,6 +1052,11 @@ defmodule Bourse.ExchangeGeneratorTest do
                Bybit.parse_ticker([%{"lastPrice" => "1.0"}, %{"lastPrice" => "2.0"}])
     end
 
+    test "raw parse slots distinguish unsupported operations from incomplete mappings" do
+      assert {:error, {:unsupported_operation, "order_list"}} = Bourse.Deribit.parse_order_list([])
+      assert {:error, :no_field_map} = Bourse.Binanceusdm.parse_currency([])
+    end
+
     test "parse_market parses a resolved bybit slot into a %Bourse.Market{}" do
       assert {:ok, %Bourse.Market{id: "BTCUSDT", base: "BTC", quote: "USDT"}} =
                Bybit.parse_market(%{

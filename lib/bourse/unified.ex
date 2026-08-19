@@ -753,7 +753,7 @@ defmodule Bourse.Unified do
 
       # edit_order carries only the fields being changed, so an absent amount or
       # price is a partial update rather than a missing required field.
-      sanity_opts = [has: exchange.has, partial: method == :edit_order]
+      sanity_opts = [has: exchange.spec["capabilities"]["has"], partial: method == :edit_order]
 
       case Sanity.validate(params, market, sanity_opts) do
         {:ok, _params} -> {:ok, params}
@@ -968,7 +968,7 @@ defmodule Bourse.Unified do
     end
   end
 
-  @doc false
+  @doc "Builds the final request parameter shape for every selected endpoint."
   @spec request_param_shapes(Exchange.t(), atom(), map(), keyword()) ::
           {:ok, [map()]} | {:error, Error.t() | term()}
   def request_param_shapes(%Exchange{} = exchange, method_atom, params, opts \\ [])
@@ -1964,7 +1964,11 @@ defmodule Bourse.Unified do
         |> reconcile_position_units(parser, exchange)
 
       :none ->
-        {:ok, response_body(response)}
+        if Exchange.mapping_complete?(exchange, js_name) do
+          {:ok, response_body(response)}
+        else
+          ReadParse.label_raw_response(exchange, js_name, response_body(response))
+        end
     end
   end
 
@@ -2126,6 +2130,15 @@ defmodule Bourse.Unified do
   defp parse_type_from_return(_return_type), do: :error
 
   defp parse_type_for_token(type_token), do: Map.fetch(@parse_types_by_return_type, type_token)
+
+  @doc "Returns the normalized parser slot for a unified JavaScript method name."
+  @spec parse_type_for_method(String.t()) :: {:ok, String.t()} | :error
+  def parse_type_for_method(js_name) when is_binary(js_name) do
+    case Map.get(Descriptor.descriptors(), js_name) do
+      %{"signature" => %{"return_type" => return_type}} -> parse_type_from_return(return_type)
+      _ -> :error
+    end
+  end
 
   defp response_body(%{body: body}), do: body
 

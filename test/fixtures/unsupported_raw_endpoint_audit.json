@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-08-19",
+  "venues": {
+    "alpaca": {
+      "unsupported_count": 104,
+      "raw_endpoint_count": 70,
+      "sha256": "ba89b36fc080df99c3f4fe374f265809349518e3c766edf26f7c93904066dc20"
+    },
+    "binance": {
+      "unsupported_count": 28,
+      "raw_endpoint_count": 789,
+      "sha256": "2394cf0573e1b7df882481e57350c09c16cb0ed83c6284f0ad1a4b577bc68980"
+    },
+    "binancecoinm": {
+      "unsupported_count": 123,
+      "raw_endpoint_count": 794,
+      "sha256": "f9c7153b0f79b5440fda7bc2ddf75bd5bdba88db8bf680b4f4a2b741968ee44f"
+    },
+    "binanceusdm": {
+      "unsupported_count": 30,
+      "raw_endpoint_count": 789,
+      "sha256": "35c2ed1e03e035147e03a7eda9eb06cf074f7dfb98c8a953fe8ae06fab827afd"
+    },
+    "bybit": {
+      "unsupported_count": 14,
+      "raw_endpoint_count": 366,
+      "sha256": "dff6518f47c450f445524a4823810181ae7fc328abb75e1e984e5aec49d53b5d"
+    },
+    "coinbaseexchange": {
+      "unsupported_count": 111,
+      "raw_endpoint_count": 2,
+      "sha256": "635104b4719f171b0e465aa1fe81353cba92d96db2b19bfed27ec7bd07370eee"
+    },
+    "deribit": {
+      "unsupported_count": 25,
+      "raw_endpoint_count": 123,
+      "sha256": "2a88c6d3a3619fd1d70726f49a28d2bf335e598c93d0646fef95941993a29469"
+    },
+    "derive": {
+      "unsupported_count": 63,
+      "raw_endpoint_count": 113,
+      "sha256": "faf3051cd1ef375b6854b072b7f827c94b88d0b17f67726a64e0b470939c8faf"
+    },
+    "hyperliquid": {
+      "unsupported_count": 42,
+      "raw_endpoint_count": 2,
+      "sha256": "6b36f5577946ccb81e3ab17e013ac9a595de97f4c86538c58d0f61977df89bb8"
+    },
+    "lighter": {
+      "unsupported_count": 94,
+      "raw_endpoint_count": 47,
+      "sha256": "785bde538ac9bb310b2dbda3e2c54a0294f13ac8fdf869b5356aba7778246cf6"
+    },
+    "okx": {
+      "unsupported_count": 25,
+      "raw_endpoint_count": 433,
+      "sha256": "57acfe4ffc5649f4cd7e1f4827d663e3337f3e9587f98af7564164bb7f594a6b"
+    }
+  }
+}

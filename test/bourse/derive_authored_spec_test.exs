@@ -17,64 +17,6 @@ defmodule Bourse.DeriveAuthoredSpecTest do
   @derive_option_symbol "ZEC/USDC:USDC-260925-800-P"
   @observed_timestamp_ms 1_700_000_000_000
   @observed_next_timestamp_ms 1_700_000_000_001
-  @derive_carve_register Path.expand("../../docs/authored-spec-carves/derive.md", __DIR__)
-  @external_resource @derive_carve_register
-  @capability_confrontations %{
-    "fetchBorrowInterest" => %{
-      carve: "C-T549c",
-      method: :fetch_borrow_interest,
-      raw: [:private_post_get_interest_history]
-    },
-    "fetchLiquidations" => %{
-      carve: "C-T549a",
-      method: :fetch_liquidations,
-      raw: [
-        :public_post_get_liquidation_history,
-        :private_post_get_liquidation_history,
-        :private_post_get_liquidator_history
-      ]
-    },
-    "fetchSettlementHistory" => %{
-      carve: "C-T549d",
-      method: :fetch_settlement_history,
-      raw: [
-        :public_post_get_option_settlement_history,
-        :private_post_get_option_settlement_history
-      ]
-    },
-    "fetchTransfers" => %{
-      carve: "C-T549b",
-      method: :fetch_transfers,
-      raw: [:private_post_get_erc20_transfer_history]
-    }
-  }
-
-  test "available Derive capability endpoints are wired or registered as deliberate carves" do
-    features = Bourse.Derive.__features__()
-    raw_endpoints = MapSet.new(Bourse.Derive.__endpoints__(), & &1.name)
-    carve_register = File.read!(@derive_carve_register)
-
-    assert Map.take(features, Map.keys(@capability_confrontations)) == %{
-             "fetchBorrowInterest" => false,
-             "fetchLiquidations" => false,
-             "fetchSettlementHistory" => false,
-             "fetchTransfers" => true
-           }
-
-    Enum.each(@capability_confrontations, fn {js_name, confrontation} ->
-      Enum.each(confrontation.raw, &assert(MapSet.member?(raw_endpoints, &1)))
-      routes = Bourse.Derive.__unified_endpoint__(confrontation.method)
-
-      if features[js_name] do
-        assert routes != []
-      else
-        assert routes == []
-        assert carve_register =~ confrontation.carve
-        assert carve_register =~ "`#{js_name}`"
-      end
-    end)
-  end
-
   test "funding history keeps the provider funding cashflow as amount rather than rate" do
     body = %{
       "result" => %{

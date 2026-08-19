@@ -32,7 +32,12 @@ defmodule Bourse.Spec.PromotionTest do
     methods = candidate["capabilities"]["has"] |> Map.keys() |> Enum.sort()
     assert methods != []
     assert methods == candidate["endpoints"]["unified"] |> Map.keys() |> Enum.sort()
+    assert methods == candidate["capabilities"]["mapping_complete"] |> Map.keys() |> Enum.sort()
+    assert methods == candidate["capabilities"]["verification"] |> Map.keys() |> Enum.sort()
     assert Enum.all?(methods, &(candidate["capabilities"]["has"][&1] == false))
+    assert Enum.all?(methods, &(candidate["capabilities"]["mapping_complete"][&1] == false))
+    assert Enum.all?(methods, &(candidate["capabilities"]["verification"][&1] == "unverified"))
+    assert candidate["capabilities"]["unsupported_raw_endpoints"] == %{}
     assert Enum.all?(methods, &(candidate["endpoints"]["unified"][&1] == []))
 
     assert report["status"] == "candidate"
@@ -567,6 +572,9 @@ defmodule Bourse.Spec.PromotionTest do
     owned
     |> Map.merge(%{"authored" => false, "frozen" => false, "hand_owned" => false})
     |> put_in(["capabilities", "has"], support)
+    |> put_in(["capabilities", "mapping_complete"], Map.new(methods, &{&1, false}))
+    |> put_in(["capabilities", "verification"], Map.new(methods, &{&1, "unverified"}))
+    |> put_in(["capabilities", "unsupported_raw_endpoints"], %{})
     |> put_in(["endpoints", "unified"], unified)
   end
 

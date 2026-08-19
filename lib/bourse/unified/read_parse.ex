@@ -8,6 +8,7 @@ defmodule Bourse.Unified.ReadParse do
   alias Bourse.MarginModification
   alias Bourse.OrderBook
   alias Bourse.Parser
+  alias Bourse.RawResponse
   alias Bourse.ResponseParser
   alias Bourse.ResponseTransformer
   alias Bourse.Symbol
@@ -77,11 +78,23 @@ defmodule Bourse.Unified.ReadParse do
           boolean()
         ) :: {:ok, term()} | {:error, term()}
   def parse(%Exchange{} = exchange, module, method_atom, js_name, body, params, parser, list_return?) do
-    parse_type = Map.fetch!(@parser_slots, parser)
-
-    result = do_parse(parse_type, exchange, module, js_name, body, params, parser, list_return?)
+    result =
+      if module != exchange.module or Exchange.mapping_complete?(exchange, js_name) do
+        parse_type = Map.fetch!(@parser_slots, parser)
+        do_parse(parse_type, exchange, module, js_name, body, params, parser, list_return?)
+      else
+        label_raw_response(exchange, js_name, body)
+      end
 
     normalize_error(result, exchange, method_atom)
+  end
+
+  @doc "Labels an incomplete mapping's provider payload without normalizing it."
+  @spec label_raw_response(Exchange.t(), String.t(), term()) :: {:ok, RawResponse.t()} | {:error, term()}
+  def label_raw_response(%Exchange{} = exchange, js_name, body) when is_binary(js_name) do
+    with :ok <- reject_error_envelope(body, exchange) do
+      {:ok, RawResponse.new(body, exchange.id, js_name, Exchange.verification_state(exchange, js_name))}
+    end
   end
 
   # `fetchTime` returns an integer millisecond timestamp (not a struct). OKX/Bybit
@@ -4288,7 +4301,7 @@ defmodule Bourse.Unified.ReadParse do
     end)
   end
 
-  @doc false
+  @doc "Rekeys parsed ticker structs from native market ids to unified symbols."
   @spec index_tickers_by_market_id(map(), list()) :: map()
   def index_tickers_by_market_id(tickers, markets) when is_map(tickers) and is_list(markets) do
     symbols_by_id =

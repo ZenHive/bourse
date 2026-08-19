@@ -19,6 +19,8 @@ defmodule Bourse.Spec.Schema do
     ~w(endpoints unified),
     ~w(capabilities),
     ~w(capabilities has),
+    ~w(capabilities mapping_complete),
+    ~w(capabilities verification),
     ~w(auth),
     ~w(normalization),
     ~w(normalization field_maps),
@@ -34,6 +36,7 @@ defmodule Bourse.Spec.Schema do
   ]
 
   @required_maps [
+    ~w(capabilities unsupported_raw_endpoints),
     ~w(auth signing_config),
     ~w(auth sign_recipe),
     ~w(config),
@@ -92,6 +95,7 @@ defmodule Bourse.Spec.Schema do
   ]
 
   @support_values [true, false, "emulated"]
+  @verification_values ~w(verified unverified)
   @signing_patterns ~w(
     api_key_secret_headers
     deribit
@@ -572,7 +576,12 @@ defmodule Bourse.Spec.Schema do
 
   defp validate_support!(spec, exchange_id) do
     support = get_in(spec, ["capabilities", "has"])
+    mapping_complete = get_in(spec, ["capabilities", "mapping_complete"])
+    verification = get_in(spec, ["capabilities", "verification"])
     unified = get_in(spec, ["endpoints", "unified"])
+
+    validate_fact_keys!(mapping_complete, unified, exchange_id, "mapping_complete")
+    validate_fact_keys!(verification, unified, exchange_id, "verification")
 
     Enum.each(support, fn {method, declaration} ->
       if declaration not in @support_values do
@@ -581,8 +590,50 @@ defmodule Bourse.Spec.Schema do
     end)
 
     Enum.each(unified, fn {method, endpoints} ->
-      validate_unified_support!(Map.fetch(support, method), endpoints, exchange_id, method)
+      support_fact = Map.fetch(support, method)
+      mapping_fact = Map.fetch!(mapping_complete, method)
+
+      validate_unified_support!(support_fact, endpoints, exchange_id, method)
+      validate_mapping_fact!(mapping_fact, support_fact, endpoints, exchange_id, method)
+
+      validate_verification_fact!(
+        Map.fetch!(verification, method),
+        mapping_fact,
+        exchange_id,
+        method
+      )
     end)
+  end
+
+  defp validate_fact_keys!(facts, unified, exchange_id, field) do
+    if Enum.sort(Map.keys(facts)) != Enum.sort(Map.keys(unified)) do
+      gap!(exchange_id, ["capabilities", field], "expected exactly the endpoints.unified method keys")
+    end
+  end
+
+  defp validate_mapping_fact!(true, {:ok, false}, _endpoints, exchange_id, method) do
+    gap!(exchange_id, ["capabilities", "mapping_complete", method], "cannot map a provider-unsupported operation")
+  end
+
+  defp validate_mapping_fact!(true, _support, [], exchange_id, method) do
+    gap!(exchange_id, ["capabilities", "mapping_complete", method], "cannot be complete without a callable route")
+  end
+
+  defp validate_mapping_fact!(value, _support, _endpoints, _exchange_id, _method) when is_boolean(value), do: :ok
+
+  defp validate_mapping_fact!(value, _support, _endpoints, exchange_id, method) do
+    gap!(exchange_id, ["capabilities", "mapping_complete", method], "expected boolean, got #{inspect(value)}")
+  end
+
+  defp validate_verification_fact!("verified", false, exchange_id, method) do
+    gap!(exchange_id, ["capabilities", "verification", method], "cannot verify an incomplete implementation")
+  end
+
+  defp validate_verification_fact!(value, _mapping_complete, _exchange_id, _method) when value in @verification_values,
+    do: :ok
+
+  defp validate_verification_fact!(value, _mapping_complete, exchange_id, method) do
+    gap!(exchange_id, ["capabilities", "verification", method], "expected verified or unverified, got #{inspect(value)}")
   end
 
   defp validate_unified_support!(:error, _endpoints, exchange_id, method) do
@@ -590,12 +641,25 @@ defmodule Bourse.Spec.Schema do
   end
 
   defp validate_unified_support!({:ok, false}, endpoints, exchange_id, method) do
+    require_empty_endpoint_list!(endpoints, exchange_id, method)
+  end
+
+  defp validate_unified_support!({:ok, true}, endpoints, exchange_id, method) do
+    require_endpoint_list!(endpoints, exchange_id, method)
+  end
+
+  defp validate_unified_support!({:ok, "emulated"}, endpoints, exchange_id, method) do
     require_endpoint_list_type!(endpoints, exchange_id, method)
   end
 
-  defp validate_unified_support!({:ok, declaration}, endpoints, exchange_id, method)
-       when declaration in [true, "emulated"] do
-    require_endpoint_list!(endpoints, exchange_id, method)
+  defp require_empty_endpoint_list!([], _exchange_id, _method), do: :ok
+
+  defp require_empty_endpoint_list!(endpoints, exchange_id, method) do
+    gap!(
+      exchange_id,
+      ["endpoints", "unified", method],
+      "unsupported operation must have an empty endpoint list, got #{inspect(endpoints)}"
+    )
   end
 
   defp require_endpoint_list_type!(endpoints, _exchange_id, _method) when is_list(endpoints), do: :ok

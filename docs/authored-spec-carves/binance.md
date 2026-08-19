@@ -1183,23 +1183,29 @@ ALIGNED-to-ccxt (task 366).**
 {"carve_id":"C-T540b","date":"2026-08-04","semantic_source":{"kind":"provider_owned","reference":"Binance Spot All Orders GET /api/v3/allOrders parameter contract in the pinned spot-openapi authority artifact"},"observed_evidence":{"kind":"recorded_venue","reference":"test/fixtures/exchange_accepted_requests/binance/fetch_orders.json"},"compatibility_reference":null,"resolved_tier":1}
 -->
 
-## 2026-08-08 — unsupported composite and sandbox-absent reads (Task 565)
+## 2026-08-08 — composite and production-only reads (Tasks 565 and 570)
 
-**C-T565b — Do not declare a unified read when one provider response cannot satisfy it
-(task 565). Outcome: DIVERGE from the inherited capability declarations.**
+**C-T565b — Provider support, Bourse mapping completeness, and venue verification are separate
+facts (task 565, corrected by task 570). Outcome: CONFIRM provider support; retain incomplete raw
+reads.**
 
-- *Provider boundary:* account positions and position risk require account/position rows plus
-  leverage-bracket data; selecting the bracket route alone does not return positions. The EAPI
-  option-account and SAPI dust/isolated-margin routes have no Spot Testnet host.
-- *Live evidence:* Spot/Futures sandbox probes selected either an incompatible route or reported
-  no sandbox base URL. `fetchMarginModes` also had multiple incompatible market-family routes.
-- *Our carve:* `fetchAccountPositions`, `fetchOptionPositions`, `fetchPositionsRisk`,
-  `fetchMyDustTrades`, `fetchIsolatedBorrowRates`, and `fetchMarginModes` are `has=false` on the
-  multi-market Binance surface. This prevents leverage brackets from being silently parsed as
-  positions and keeps sandbox-unverifiable reads out of the declared client surface.
+- *Provider contract:* the pinned Spot, USD-M, COIN-M, Options and SAPI artifacts under
+  `priv/authority/binance/` document all six operations. Account positions and position risk need
+  account/position rows joined with leverage brackets; `fetchMarginModes` spans incompatible
+  account families. EAPI serves option positions and SAPI serves dust and isolated-borrow data.
+- *Implementation:* `fetchAccountPositions`, `fetchOptionPositions`, `fetchPositionsRisk`,
+  `fetchMyDustTrades`, `fetchIsolatedBorrowRates`, and `fetchMarginModes` record provider support
+  `true`, mapping completeness `false`, and verification `unverified`. Their routes remain callable
+  and return `%Bourse.RawResponse{}` until task 550 completes the mapping; bracket rows cannot pose
+  as positions.
+- *Verification boundary:* absence of SAPI/EAPI on Spot Testnet affects only verification. The
+  production-only confrontations are registered in `docs/prod-verification-ledger.md`.
+- *Compatibility:* task 565 removed these methods. Task 570 restores `Exchange.has?/2` and the
+  generated route surface, deliberately changing those callers from `not_supported` to a labelled
+  raw success. `Bourse.describe/2` remains the venue-independent unified catalog.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T565b","date":"2026-08-08","semantic_source":{"kind":"provider_owned","reference":"Pinned Binance Spot, USD-M, and Options API artifacts in priv/authority/binance identify separate account, leverage-bracket, EAPI, and SAPI contracts"},"observed_evidence":{"kind":"live_venue","reference":"Task 565 Spot/Futures sandbox differential probes: bracket rows were selected as positions; EAPI and SAPI reported no sandbox base URL"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T565b","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"Pinned Binance Spot, USD-M, COIN-M, Options, and SAPI artifacts in priv/authority/binance document the six provider operations"},"observed_evidence":{"kind":"live_venue","reference":"Task 565 Spot/Futures probes established that leverage-bracket rows alone are not position rows"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The Bourse joins and production-only SAPI/EAPI confrontations remain incomplete; sandbox absence does not negate provider support"}
 -->
 
 ## 2026-08-09 — reachable method-specific endpoint defaults (Task 534)

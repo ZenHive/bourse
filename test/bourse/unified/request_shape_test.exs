@@ -240,11 +240,15 @@ defmodule Bourse.Unified.RequestShapeTest do
              }
     end
 
-    test "keeps unsupported OKX single-record histories disabled and maps deposit-address currency" do
+    test "keeps incomplete OKX single-record histories callable and maps deposit-address currency" do
       {:ok, exchange} = Exchange.new("okx")
 
-      refute exchange.has["fetchDeposit"]
-      refute exchange.has["fetchWithdrawal"]
+      assert Exchange.venue_support(exchange, "fetchDeposit") == true
+      assert Exchange.venue_support(exchange, "fetchWithdrawal") == true
+      assert exchange.has["fetchDeposit"] == true
+      assert exchange.has["fetchWithdrawal"] == true
+      refute Exchange.mapping_complete?(exchange, "fetchDeposit")
+      refute Exchange.mapping_complete?(exchange, "fetchWithdrawal")
 
       assert %{query: %{"ccy" => "USDT"}} =
                okx_request(&Bourse.fetch_deposit_addresses_by_network(&1, "USDT", &2))

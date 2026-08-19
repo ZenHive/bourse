@@ -34,7 +34,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
   }
 
   test "EAPI ticker fractions emit percent points on the option surface" do
-    for exchange_id <- ~w(binance binancecoinm binanceusdm) do
+    for exchange_id <- ~w(binance binanceusdm) do
       module = Exchange.new!(exchange_id).module
 
       assert {:ok, %Bourse.OptionData{percentage: @eapi_percentage_points}} =
@@ -990,7 +990,7 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     end
   end
 
-  test "USD-M position and leverage methods select semantic endpoints and parse typed results" do
+  test "USD-M incomplete position joins stay raw while leverage parses typed results" do
     exchange =
       "binanceusdm"
       |> Exchange.new!(api_key: "key", secret: "secret", sandbox: true)
@@ -1016,7 +1016,14 @@ defmodule Bourse.BinanceAuthoredSpecTest do
       "fetchPositionsRisk",
       [position],
       "/fapi/v3/positionRisk",
-      fn result -> assert [%Position{info: ^position}] = result end
+      fn result ->
+        assert %Bourse.RawResponse{
+                 payload: [^position],
+                 venue: "binanceusdm",
+                 method: "fetchPositionsRisk",
+                 verification: :unverified
+               } = result
+      end
     )
 
     assert_usdm_typed_endpoint(
@@ -1025,7 +1032,14 @@ defmodule Bourse.BinanceAuthoredSpecTest do
       "fetchAccountPositions",
       %{"positions" => [position]},
       "/fapi/v3/account",
-      fn result -> assert [%Position{info: ^position}] = result end
+      fn result ->
+        assert %Bourse.RawResponse{
+                 payload: %{"positions" => [^position]},
+                 venue: "binanceusdm",
+                 method: "fetchAccountPositions",
+                 verification: :unverified
+               } = result
+      end
     )
 
     btc_leverage = %{"symbol" => "BTCUSDT", "leverage" => "20", "marginType" => "CROSSED"}
@@ -1070,8 +1084,10 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     filled = coinm_order_row(2, "FILLED")
 
     assert Exchange.has?(exchange, "fetchOrders")
-    assert exchange.has["fetchClosedOrders"] == "emulated"
-    assert exchange.has["fetchCanceledOrders"] == "emulated"
+    assert Exchange.venue_support(exchange, "fetchClosedOrders") == "emulated"
+    assert Exchange.venue_support(exchange, "fetchCanceledOrders") == "emulated"
+    assert exchange.has["fetchClosedOrders"] == true
+    assert exchange.has["fetchCanceledOrders"] == true
 
     assert_coinm_typed_endpoint(
       exchange,

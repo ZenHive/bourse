@@ -1767,20 +1767,26 @@ reality tier 1 (task 514).**
 {"carve_id":"C-T514a","date":"2026-07-25","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 Get order book response-row semantics"},"observed_evidence":{"kind":"live_venue","reference":"OKX production GET /api/v5/market/books BTC-USDT sz=1 returned [64137.9,4.01442447,0,24] bid and [64138,0.00806502,0,3] ask on 2026-07-25"},"compatibility_reference":{"kind":"ccxt","reference":"CCXT 4.5.65 parseOrderBookBidAsk default countOrIdKey=2 and OKX default parseOrderBook call"},"resolved_tier":1}
 -->
 
-## 2026-08-08 — single deposit and withdrawal reads (Task 565)
+## 2026-08-08 — single deposit and withdrawal reads (Tasks 565 and 570)
 
-**C-T565e — Single-record transfer reads require a venue identifier observed in the demo
-account (task 565). Outcome: mark unsupported without such evidence.**
+**C-T565e — Single-record transfer reads are provider-supported even when the demo account has
+no identifier with which to verify them (task 565, corrected by task 570). Outcome: CONFIRM
+provider support; mapping incomplete and unverified.**
 
 - *Provider contract:* single deposit and withdrawal lookup is keyed by an existing provider
   record identifier.
 - *Live evidence:* the international demo account returned empty deposit and withdrawal history,
   so it supplied no identifier with which to verify either single-record response contract.
-- *Our carve:* `fetchDeposit` and `fetchWithdrawal` are `has=false`; the list history methods
-  retain their independent contracts.
+- *Our carve:* `fetchDeposit` and `fetchWithdrawal` record provider support `true`, mapping
+  completeness `false`, and verification `unverified`. Both routes remain callable and return
+  `%Bourse.RawResponse{}`. Empty demo history affects only verification; the blocker is registered
+  in `docs/prod-verification-ledger.md`.
+- *Compatibility:* task 570 reverses task 565's method removal. `Exchange.has?/2` becomes true and
+  calls return labelled raw instead of `not_supported`; the global `Bourse.describe/2` catalog is
+  unchanged.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T565e","date":"2026-08-08","semantic_source":{"kind":"provider_owned","reference":"OKX API v5 deposit and withdrawal history record contracts"},"observed_evidence":{"kind":"live_venue","reference":"Task 565 www.okx.com simulated-trading account returned zero deposit and zero withdrawal history rows"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T565e","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"priv/authority/okx API v5 deposit and withdrawal history record contracts"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The international demo account has no deposit or withdrawal identifier; this leaves implementation verification unverified without changing provider support"}
 -->
 
 ## 2026-08-12 — rate-unit confrontation (Task 594)

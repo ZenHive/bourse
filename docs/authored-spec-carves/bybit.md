@@ -723,21 +723,24 @@ re-adjudicated (task 466).
 {"carve_id":"C-T347","date":"2026-07-22","semantic_source":{"kind":"provider_owned","reference":"Provider-owned documentation or schema cited in C-T347 and its register context"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Provider-owned semantics are recorded, but no independent live or recorded venue observation establishes this carve"}
 -->
 
-## 2026-08-08 — open-interest history request contract (Task 565)
+## 2026-08-08 — open-interest history request contract (Tasks 565 and 570)
 
-**C-T565d — A declared historical open-interest read must author all provider-required request
-fields (task 565). Outcome: mark unsupported.**
+**C-T565d — A provider-supported historical read with an incomplete request binding remains
+callable and labelled raw (task 565, corrected by task 570). Outcome: CONFIRM provider support;
+mapping incomplete.**
 
 - *Provider contract:* V5 `GET /v5/market/open-interest` requires `category`, `symbol`, and
   `intervalTime`.
 - *Live evidence:* testnet accepted native `BTCUSDT` with `category=linear` and
   `intervalTime=5min`; the unified method emitted an invalid-symbol request because its authored
   binding does not resolve that complete native request.
-- *Our carve:* `fetchDerivativesOpenInterestHistory` is `has=false` rather than attaching an
-  existing struct type to an unusable request path.
+- *Our carve:* `fetchDerivativesOpenInterestHistory` records provider support `true`, mapping
+  completeness `false`, and verification `unverified`. The route remains in the generated surface
+  and returns `%Bourse.RawResponse{}`. Its public accepted-request branch is explicitly excluded
+  until task 550 authors the complete binding; it cannot masquerade as a normalized history.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T565d","date":"2026-08-08","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 Market Open Interest request contract"},"observed_evidence":{"kind":"live_venue","reference":"Task 565 api-testnet.bybit.com differential: native BTCUSDT/category/intervalTime succeeded; unified request returned provider error 10001 invalid symbol"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T565d","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"priv/authority/bybit V5 Market Open Interest request contract"},"observed_evidence":{"kind":"live_venue","reference":"api-testnet.bybit.com accepted the native BTCUSDT/category/intervalTime request while the incomplete unified binding returned 10001"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The provider operation is proven; the Bourse request binding and normalized mapping are incomplete"}
 -->
 
 ## 2026-08-09 — option-market endpoint reachability (Task 534)

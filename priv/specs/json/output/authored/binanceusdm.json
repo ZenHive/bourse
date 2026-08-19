@@ -947,7 +947,7 @@
       "fetchGreeks": true,
       "fetchIndexOHLCV": true,
       "fetchIsolatedBorrowRate": "emulated",
-      "fetchIsolatedBorrowRates": false,
+      "fetchIsolatedBorrowRates": true,
       "fetchL2OrderBook": true,
       "fetchL3OrderBook": false,
       "fetchLastPrices": true,
@@ -967,7 +967,7 @@
       "fetchMarkPrices": true,
       "fetchMarketLeverageTiers": "emulated",
       "fetchMarkets": true,
-      "fetchMyDustTrades": false,
+      "fetchMyDustTrades": true,
       "fetchMyLiquidations": true,
       "fetchMySettlementHistory": true,
       "fetchMyTrades": true,
@@ -978,7 +978,7 @@
       "fetchOpenOrders": true,
       "fetchOption": true,
       "fetchOptionChain": false,
-      "fetchOptionPositions": false,
+      "fetchOptionPositions": true,
       "fetchOrder": true,
       "fetchOrderBook": true,
       "fetchOrderBooks": false,
@@ -1048,6 +1048,205 @@
       "5m": "5m",
       "6h": "6h",
       "8h": "8h"
+    },
+    "unsupported_raw_endpoints": {},
+    "mapping_complete": {
+      "addMargin": true,
+      "borrowCrossMargin": true,
+      "borrowIsolatedMargin": true,
+      "cancelAllOrders": true,
+      "cancelOrder": true,
+      "cancelOrders": true,
+      "createConvertTrade": true,
+      "createGiftCode": true,
+      "createMarketBuyOrderWithCost": true,
+      "createMarketOrderWithCost": true,
+      "createMarketSellOrderWithCost": true,
+      "createOrder": true,
+      "createOrders": true,
+      "editContractOrder": true,
+      "editOrder": true,
+      "editOrders": true,
+      "editSpotOrder": true,
+      "fetchADLRank": true,
+      "fetchAccountPositions": false,
+      "fetchAllGreeks": true,
+      "fetchBalance": true,
+      "fetchBidsAsks": true,
+      "fetchBorrowInterest": true,
+      "fetchBorrowRateHistory": true,
+      "fetchCanceledAndClosedOrders": true,
+      "fetchCanceledOrders": true,
+      "fetchClosedOrders": true,
+      "fetchConvertCurrencies": false,
+      "fetchConvertQuote": false,
+      "fetchConvertTrade": false,
+      "fetchConvertTradeHistory": false,
+      "fetchCrossBorrowRate": true,
+      "fetchCurrencies": false,
+      "fetchDepositAddress": true,
+      "fetchDepositWithdrawFees": false,
+      "fetchDeposits": true,
+      "fetchFundingHistory": true,
+      "fetchFundingIntervals": true,
+      "fetchFundingRate": true,
+      "fetchFundingRateHistory": true,
+      "fetchFundingRates": true,
+      "fetchGreeks": true,
+      "fetchIsolatedBorrowRate": true,
+      "fetchIsolatedBorrowRates": false,
+      "fetchLastPrices": true,
+      "fetchLedger": true,
+      "fetchLedgerEntry": true,
+      "fetchLeverageTiers": true,
+      "fetchLeverages": true,
+      "fetchLongShortRatioHistory": true,
+      "fetchMarginAdjustmentHistory": true,
+      "fetchMarginMode": true,
+      "fetchMarginModes": true,
+      "fetchMarkPrice": true,
+      "fetchMarkPrices": true,
+      "fetchMarkets": true,
+      "fetchMyDustTrades": false,
+      "fetchMyLiquidations": true,
+      "fetchMySettlementHistory": false,
+      "fetchMyTrades": true,
+      "fetchOHLCV": true,
+      "fetchOpenInterest": true,
+      "fetchOpenInterestHistory": true,
+      "fetchOpenOrder": true,
+      "fetchOpenOrders": true,
+      "fetchOption": true,
+      "fetchOptionPositions": false,
+      "fetchOrder": true,
+      "fetchOrderBook": true,
+      "fetchOrderTrades": true,
+      "fetchOrders": true,
+      "fetchPosition": true,
+      "fetchPositionADLRank": true,
+      "fetchPositionMode": false,
+      "fetchPositions": true,
+      "fetchPositionsADLRank": true,
+      "fetchPositionsRisk": false,
+      "fetchSettlementHistory": false,
+      "fetchStatus": false,
+      "fetchTicker": true,
+      "fetchTickers": true,
+      "fetchTime": true,
+      "fetchTrades": true,
+      "fetchTradingFee": true,
+      "fetchTradingFees": false,
+      "fetchTradingLimits": true,
+      "fetchTransactionFees": false,
+      "fetchTransfers": true,
+      "fetchWithdrawals": true,
+      "reduceMargin": true,
+      "repayCrossMargin": true,
+      "repayIsolatedMargin": true,
+      "setLeverage": true,
+      "setMarginMode": true,
+      "setPositionMode": true,
+      "transfer": true,
+      "withdraw": true
+    },
+    "verification": {
+      "addMargin": "unverified",
+      "borrowCrossMargin": "unverified",
+      "borrowIsolatedMargin": "unverified",
+      "cancelAllOrders": "unverified",
+      "cancelOrder": "unverified",
+      "cancelOrders": "unverified",
+      "createConvertTrade": "unverified",
+      "createGiftCode": "unverified",
+      "createMarketBuyOrderWithCost": "unverified",
+      "createMarketOrderWithCost": "unverified",
+      "createMarketSellOrderWithCost": "unverified",
+      "createOrder": "unverified",
+      "createOrders": "unverified",
+      "editContractOrder": "unverified",
+      "editOrder": "unverified",
+      "editOrders": "unverified",
+      "editSpotOrder": "unverified",
+      "fetchADLRank": "unverified",
+      "fetchAccountPositions": "unverified",
+      "fetchAllGreeks": "unverified",
+      "fetchBalance": "verified",
+      "fetchBidsAsks": "unverified",
+      "fetchBorrowInterest": "unverified",
+      "fetchBorrowRateHistory": "unverified",
+      "fetchCanceledAndClosedOrders": "unverified",
+      "fetchCanceledOrders": "unverified",
+      "fetchClosedOrders": "unverified",
+      "fetchConvertCurrencies": "unverified",
+      "fetchConvertQuote": "unverified",
+      "fetchConvertTrade": "unverified",
+      "fetchConvertTradeHistory": "unverified",
+      "fetchCrossBorrowRate": "unverified",
+      "fetchCurrencies": "unverified",
+      "fetchDepositAddress": "unverified",
+      "fetchDepositWithdrawFees": "unverified",
+      "fetchDeposits": "unverified",
+      "fetchFundingHistory": "unverified",
+      "fetchFundingIntervals": "verified",
+      "fetchFundingRate": "unverified",
+      "fetchFundingRateHistory": "unverified",
+      "fetchFundingRates": "unverified",
+      "fetchGreeks": "unverified",
+      "fetchIsolatedBorrowRate": "unverified",
+      "fetchIsolatedBorrowRates": "unverified",
+      "fetchLastPrices": "verified",
+      "fetchLedger": "verified",
+      "fetchLedgerEntry": "unverified",
+      "fetchLeverageTiers": "verified",
+      "fetchLeverages": "verified",
+      "fetchLongShortRatioHistory": "unverified",
+      "fetchMarginAdjustmentHistory": "unverified",
+      "fetchMarginMode": "unverified",
+      "fetchMarginModes": "verified",
+      "fetchMarkPrice": "unverified",
+      "fetchMarkPrices": "unverified",
+      "fetchMarkets": "verified",
+      "fetchMyDustTrades": "unverified",
+      "fetchMyLiquidations": "unverified",
+      "fetchMySettlementHistory": "unverified",
+      "fetchMyTrades": "verified",
+      "fetchOHLCV": "verified",
+      "fetchOpenInterest": "unverified",
+      "fetchOpenInterestHistory": "unverified",
+      "fetchOpenOrder": "unverified",
+      "fetchOpenOrders": "verified",
+      "fetchOption": "unverified",
+      "fetchOptionPositions": "unverified",
+      "fetchOrder": "unverified",
+      "fetchOrderBook": "unverified",
+      "fetchOrderTrades": "unverified",
+      "fetchOrders": "unverified",
+      "fetchPosition": "unverified",
+      "fetchPositionADLRank": "verified",
+      "fetchPositionMode": "unverified",
+      "fetchPositions": "verified",
+      "fetchPositionsADLRank": "unverified",
+      "fetchPositionsRisk": "unverified",
+      "fetchSettlementHistory": "unverified",
+      "fetchStatus": "unverified",
+      "fetchTicker": "verified",
+      "fetchTickers": "unverified",
+      "fetchTime": "unverified",
+      "fetchTrades": "verified",
+      "fetchTradingFee": "unverified",
+      "fetchTradingFees": "unverified",
+      "fetchTradingLimits": "unverified",
+      "fetchTransactionFees": "unverified",
+      "fetchTransfers": "unverified",
+      "fetchWithdrawals": "unverified",
+      "reduceMargin": "unverified",
+      "repayCrossMargin": "unverified",
+      "repayIsolatedMargin": "unverified",
+      "setLeverage": "unverified",
+      "setMarginMode": "unverified",
+      "setPositionMode": "unverified",
+      "transfer": "unverified",
+      "withdraw": "unverified"
     }
   },
   "config": {
@@ -11225,15 +11424,15 @@
             ],
             [
               250,
-              8e-05
+              0.00008
             ],
             [
               2500,
-              5e-05
+              0.00005
             ],
             [
               7500,
-              3e-06
+              0.000003
             ],
             [
               22500,
@@ -11241,23 +11440,23 @@
             ],
             [
               50000,
-              -5e-05
+              -0.00005
             ],
             [
               100000,
-              -6e-05
+              -0.00006
             ],
             [
               200000,
-              -7e-05
+              -0.00007
             ],
             [
               400000,
-              -8e-05
+              -0.00008
             ],
             [
               750000,
-              -9e-05
+              -0.00009
             ]
           ],
           "taker": [
@@ -11336,19 +11535,19 @@
             ],
             [
               50000,
-              8e-05
+              0.00008
             ],
             [
               100000,
-              6e-05
+              0.00006
             ],
             [
               200000,
-              4e-05
+              0.00004
             ],
             [
               400000,
-              2e-05
+              0.00002
             ],
             [
               750000,
@@ -11448,7 +11647,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "1000000BOB": {
         "code": "1000000BOB",
@@ -11459,7 +11658,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "1000000MOG": {
         "code": "1000000MOG",
@@ -11470,7 +11669,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "1000BONK": {
         "code": "1000BONK",
@@ -11481,7 +11680,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "1000CAT": {
         "code": "1000CAT",
@@ -11492,7 +11691,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "1000CHEEMS": {
         "code": "1000CHEEMS",
@@ -11503,7 +11702,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "1000FLOKI": {
         "code": "1000FLOKI",
@@ -11514,7 +11713,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "1000LUNC": {
         "code": "1000LUNC",
@@ -11525,7 +11724,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "1000PEPE": {
         "code": "1000PEPE",
@@ -11536,7 +11735,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "1000RATS": {
         "code": "1000RATS",
@@ -11547,7 +11746,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "1000SATS": {
         "code": "1000SATS",
@@ -11558,7 +11757,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "1000SHIB": {
         "code": "1000SHIB",
@@ -11569,7 +11768,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "1000WHY": {
         "code": "1000WHY",
@@ -11580,7 +11779,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "1000X": {
         "code": "1000X",
@@ -11591,7 +11790,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "1000XEC": {
         "code": "1000XEC",
@@ -11602,7 +11801,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "1INCH": {
         "code": "1INCH",
@@ -11613,7 +11812,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "1MBABYDOGE": {
         "code": "1MBABYDOGE",
@@ -11624,7 +11823,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "2Z": {
         "code": "2Z",
@@ -11635,7 +11834,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "4": {
         "code": "4",
@@ -11646,7 +11845,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "42": {
         "code": "42",
@@ -11657,7 +11856,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "A": {
         "code": "A",
@@ -11668,7 +11867,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "A2Z": {
         "code": "A2Z",
@@ -11679,7 +11878,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AAOI": {
         "code": "AAOI",
@@ -11690,7 +11889,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AAPL": {
         "code": "AAPL",
@@ -11701,7 +11900,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AAVE": {
         "code": "AAVE",
@@ -11712,7 +11911,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ACE": {
         "code": "ACE",
@@ -11723,7 +11922,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ACH": {
         "code": "ACH",
@@ -11734,7 +11933,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ACT": {
         "code": "ACT",
@@ -11745,7 +11944,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ACU": {
         "code": "ACU",
@@ -11756,7 +11955,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ACX": {
         "code": "ACX",
@@ -11767,7 +11966,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ADA": {
         "code": "ADA",
@@ -11778,7 +11977,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ADBE": {
         "code": "ADBE",
@@ -11789,7 +11988,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AERGO": {
         "code": "AERGO",
@@ -11800,7 +11999,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AERO": {
         "code": "AERO",
@@ -11811,7 +12010,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AEVO": {
         "code": "AEVO",
@@ -11822,7 +12021,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AGIX": {
         "code": "AGIX",
@@ -11833,7 +12032,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AGLD": {
         "code": "AGLD",
@@ -11844,7 +12043,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AGT": {
         "code": "AGT",
@@ -11855,7 +12054,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AI": {
         "code": "AI",
@@ -11866,7 +12065,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AI16Z": {
         "code": "AI16Z",
@@ -11877,7 +12076,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AIA": {
         "code": "AIA",
@@ -11888,7 +12087,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AIGENSYN": {
         "code": "AIGENSYN",
@@ -11899,7 +12098,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AIN": {
         "code": "AIN",
@@ -11910,7 +12109,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AIO": {
         "code": "AIO",
@@ -11921,7 +12120,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AIOT": {
         "code": "AIOT",
@@ -11932,7 +12131,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AIXBT": {
         "code": "AIXBT",
@@ -11943,7 +12142,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AKE": {
         "code": "AKE",
@@ -11954,7 +12153,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AKT": {
         "code": "AKT",
@@ -11965,7 +12164,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ALCH": {
         "code": "ALCH",
@@ -11976,7 +12175,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ALGO": {
         "code": "ALGO",
@@ -11987,7 +12186,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ALICE": {
         "code": "ALICE",
@@ -11998,7 +12197,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ALL": {
         "code": "ALL",
@@ -12009,7 +12208,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ALLO": {
         "code": "ALLO",
@@ -12020,7 +12219,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ALPACA": {
         "code": "ALPACA",
@@ -12031,7 +12230,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ALPHA": {
         "code": "ALPHA",
@@ -12042,7 +12241,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ALPINE": {
         "code": "ALPINE",
@@ -12053,7 +12252,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ALT": {
         "code": "ALT",
@@ -12064,7 +12263,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AMAT": {
         "code": "AMAT",
@@ -12075,7 +12274,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AMB": {
         "code": "AMB",
@@ -12086,7 +12285,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AMD": {
         "code": "AMD",
@@ -12097,7 +12296,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AMZN": {
         "code": "AMZN",
@@ -12108,7 +12307,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ANIME": {
         "code": "ANIME",
@@ -12119,7 +12318,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ANKR": {
         "code": "ANKR",
@@ -12130,7 +12329,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ANTHROPIC": {
         "code": "ANTHROPIC",
@@ -12141,7 +12340,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "APE": {
         "code": "APE",
@@ -12152,7 +12351,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "API3": {
         "code": "API3",
@@ -12163,7 +12362,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "APR": {
         "code": "APR",
@@ -12174,7 +12373,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "APT": {
         "code": "APT",
@@ -12185,7 +12384,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AR": {
         "code": "AR",
@@ -12196,7 +12395,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ARB": {
         "code": "ARB",
@@ -12207,7 +12406,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ARC": {
         "code": "ARC",
@@ -12218,7 +12417,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ARIA": {
         "code": "ARIA",
@@ -12229,7 +12428,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ARK": {
         "code": "ARK",
@@ -12240,7 +12439,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ARKM": {
         "code": "ARKM",
@@ -12251,7 +12450,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ARM": {
         "code": "ARM",
@@ -12262,7 +12461,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ARPA": {
         "code": "ARPA",
@@ -12273,7 +12472,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ASML": {
         "code": "ASML",
@@ -12284,7 +12483,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ASR": {
         "code": "ASR",
@@ -12295,7 +12494,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ASTER": {
         "code": "ASTER",
@@ -12306,7 +12505,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ASTR": {
         "code": "ASTR",
@@ -12317,7 +12516,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ASTS": {
         "code": "ASTS",
@@ -12328,7 +12527,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AT": {
         "code": "AT",
@@ -12339,7 +12538,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ATA": {
         "code": "ATA",
@@ -12350,7 +12549,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ATH": {
         "code": "ATH",
@@ -12361,7 +12560,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ATOM": {
         "code": "ATOM",
@@ -12372,7 +12571,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AUCTION": {
         "code": "AUCTION",
@@ -12383,7 +12582,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AVA": {
         "code": "AVA",
@@ -12394,7 +12593,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AVAAI": {
         "code": "AVAAI",
@@ -12405,7 +12604,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AVAX": {
         "code": "AVAX",
@@ -12416,7 +12615,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AVGO": {
         "code": "AVGO",
@@ -12427,7 +12626,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AVNT": {
         "code": "AVNT",
@@ -12438,7 +12637,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AWE": {
         "code": "AWE",
@@ -12449,7 +12648,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AXL": {
         "code": "AXL",
@@ -12460,7 +12659,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AXS": {
         "code": "AXS",
@@ -12471,7 +12670,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AXTI": {
         "code": "AXTI",
@@ -12482,7 +12681,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "AZTEC": {
         "code": "AZTEC",
@@ -12493,7 +12692,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "B": {
         "code": "B",
@@ -12504,7 +12703,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "B2": {
         "code": "B2",
@@ -12515,7 +12714,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "B3": {
         "code": "B3",
@@ -12526,7 +12725,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BABA": {
         "code": "BABA",
@@ -12537,7 +12736,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BABY": {
         "code": "BABY",
@@ -12548,7 +12747,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BADGER": {
         "code": "BADGER",
@@ -12559,7 +12758,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BAKE": {
         "code": "BAKE",
@@ -12570,7 +12769,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BAL": {
         "code": "BAL",
@@ -12581,7 +12780,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BAN": {
         "code": "BAN",
@@ -12592,7 +12791,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BANANA": {
         "code": "BANANA",
@@ -12603,7 +12802,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BANANAS31": {
         "code": "BANANAS31",
@@ -12614,7 +12813,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BAND": {
         "code": "BAND",
@@ -12625,7 +12824,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BANK": {
         "code": "BANK",
@@ -12636,7 +12835,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BARD": {
         "code": "BARD",
@@ -12647,7 +12846,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BAS": {
         "code": "BAS",
@@ -12658,7 +12857,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BASED": {
         "code": "BASED",
@@ -12669,7 +12868,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BAT": {
         "code": "BAT",
@@ -12680,7 +12879,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BB": {
         "code": "BB",
@@ -12691,7 +12890,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BBX": {
         "code": "BBX",
@@ -12702,7 +12901,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BCH": {
         "code": "BCH",
@@ -12713,7 +12912,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BE": {
         "code": "BE",
@@ -12724,7 +12923,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BEAMX": {
         "code": "BEAMX",
@@ -12735,7 +12934,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BEAT": {
         "code": "BEAT",
@@ -12746,7 +12945,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BEL": {
         "code": "BEL",
@@ -12757,7 +12956,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BERA": {
         "code": "BERA",
@@ -12768,7 +12967,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BICO": {
         "code": "BICO",
@@ -12779,7 +12978,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BID": {
         "code": "BID",
@@ -12790,7 +12989,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BIGTIME": {
         "code": "BIGTIME",
@@ -12801,7 +13000,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BILL": {
         "code": "BILL",
@@ -12812,7 +13011,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BIO": {
         "code": "BIO",
@@ -12823,7 +13022,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BIRB": {
         "code": "BIRB",
@@ -12834,7 +13033,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BLESS": {
         "code": "BLESS",
@@ -12845,7 +13044,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BLUAI": {
         "code": "BLUAI",
@@ -12856,7 +13055,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BLUR": {
         "code": "BLUR",
@@ -12867,7 +13066,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BLZ": {
         "code": "BLZ",
@@ -12878,7 +13077,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BMNR": {
         "code": "BMNR",
@@ -12889,7 +13088,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BMT": {
         "code": "BMT",
@@ -12900,7 +13099,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BNB": {
         "code": "BNB",
@@ -12911,7 +13110,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BNFCR": {
         "code": "BNFCR",
@@ -12933,7 +13132,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BNX": {
         "code": "BNX",
@@ -12944,7 +13143,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BOB": {
         "code": "BOB",
@@ -12955,7 +13154,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BOME": {
         "code": "BOME",
@@ -12966,7 +13165,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BOND": {
         "code": "BOND",
@@ -12977,7 +13176,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BR": {
         "code": "BR",
@@ -12988,7 +13187,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BRETT": {
         "code": "BRETT",
@@ -12999,7 +13198,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BREV": {
         "code": "BREV",
@@ -13010,7 +13209,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BRKB": {
         "code": "BRKB",
@@ -13021,7 +13220,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BROCCOLI714": {
         "code": "BROCCOLI714",
@@ -13032,7 +13231,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BROCCOLIF3B": {
         "code": "BROCCOLIF3B",
@@ -13043,7 +13242,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BSB": {
         "code": "BSB",
@@ -13054,7 +13253,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BSV": {
         "code": "BSV",
@@ -13065,7 +13264,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BSW": {
         "code": "BSW",
@@ -13076,7 +13275,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BTC": {
         "code": "BTC",
@@ -13087,7 +13286,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BTCDOM": {
         "code": "BTCDOM",
@@ -13098,7 +13297,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BTCST": {
         "code": "BTCST",
@@ -13109,7 +13308,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BTR": {
         "code": "BTR",
@@ -13120,7 +13319,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BTW": {
         "code": "BTW",
@@ -13131,7 +13330,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BULLA": {
         "code": "BULLA",
@@ -13142,7 +13341,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BX": {
         "code": "BX",
@@ -13153,7 +13352,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "BZ": {
         "code": "BZ",
@@ -13164,7 +13363,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "C": {
         "code": "C",
@@ -13175,7 +13374,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "C98": {
         "code": "C98",
@@ -13186,7 +13385,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CAKE": {
         "code": "CAKE",
@@ -13197,7 +13396,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CARV": {
         "code": "CARV",
@@ -13208,7 +13407,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CATI": {
         "code": "CATI",
@@ -13219,7 +13418,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CBRS": {
         "code": "CBRS",
@@ -13230,7 +13429,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CC": {
         "code": "CC",
@@ -13241,7 +13440,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CELO": {
         "code": "CELO",
@@ -13252,7 +13451,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CELR": {
         "code": "CELR",
@@ -13263,7 +13462,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CETUS": {
         "code": "CETUS",
@@ -13274,7 +13473,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CFG": {
         "code": "CFG",
@@ -13285,7 +13484,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CFX": {
         "code": "CFX",
@@ -13296,7 +13495,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CGPT": {
         "code": "CGPT",
@@ -13307,7 +13506,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CHESS": {
         "code": "CHESS",
@@ -13318,7 +13517,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CHILLGUY": {
         "code": "CHILLGUY",
@@ -13329,7 +13528,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CHIP": {
         "code": "CHIP",
@@ -13340,7 +13539,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CHR": {
         "code": "CHR",
@@ -13351,7 +13550,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CHZ": {
         "code": "CHZ",
@@ -13362,7 +13561,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CKB": {
         "code": "CKB",
@@ -13373,7 +13572,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CL": {
         "code": "CL",
@@ -13384,7 +13583,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CLANKER": {
         "code": "CLANKER",
@@ -13395,7 +13594,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CLO": {
         "code": "CLO",
@@ -13406,7 +13605,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "COAI": {
         "code": "COAI",
@@ -13417,7 +13616,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "COHR": {
         "code": "COHR",
@@ -13428,7 +13627,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "COIN": {
         "code": "COIN",
@@ -13439,7 +13638,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "COLLECT": {
         "code": "COLLECT",
@@ -13450,7 +13649,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "COMBO": {
         "code": "COMBO",
@@ -13461,7 +13660,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "COMMON": {
         "code": "COMMON",
@@ -13472,7 +13671,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "COMP": {
         "code": "COMP",
@@ -13483,7 +13682,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "COOKIE": {
         "code": "COOKIE",
@@ -13494,7 +13693,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "COPPER": {
         "code": "COPPER",
@@ -13505,7 +13704,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "COS": {
         "code": "COS",
@@ -13516,7 +13715,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "COST": {
         "code": "COST",
@@ -13527,7 +13726,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "COTI": {
         "code": "COTI",
@@ -13538,7 +13737,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "COW": {
         "code": "COW",
@@ -13549,7 +13748,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CRCL": {
         "code": "CRCL",
@@ -13560,7 +13759,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CRDO": {
         "code": "CRDO",
@@ -13571,7 +13770,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CRM": {
         "code": "CRM",
@@ -13582,7 +13781,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CROSS": {
         "code": "CROSS",
@@ -13593,7 +13792,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CRV": {
         "code": "CRV",
@@ -13604,7 +13803,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CRWD": {
         "code": "CRWD",
@@ -13615,7 +13814,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CRWV": {
         "code": "CRWV",
@@ -13626,7 +13825,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CSCO": {
         "code": "CSCO",
@@ -13637,7 +13836,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CTK": {
         "code": "CTK",
@@ -13648,7 +13847,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CTR": {
         "code": "CTR",
@@ -13659,7 +13858,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CTSI": {
         "code": "CTSI",
@@ -13670,7 +13869,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CUDIS": {
         "code": "CUDIS",
@@ -13681,7 +13880,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CVC": {
         "code": "CVC",
@@ -13692,7 +13891,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CVX": {
         "code": "CVX",
@@ -13703,7 +13902,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CYBER": {
         "code": "CYBER",
@@ -13714,7 +13913,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "CYS": {
         "code": "CYS",
@@ -13725,7 +13924,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "D": {
         "code": "D",
@@ -13736,7 +13935,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DAM": {
         "code": "DAM",
@@ -13747,7 +13946,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DAR": {
         "code": "DAR",
@@ -13758,7 +13957,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DASH": {
         "code": "DASH",
@@ -13769,7 +13968,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DEEP": {
         "code": "DEEP",
@@ -13780,7 +13979,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DEFI": {
         "code": "DEFI",
@@ -13791,7 +13990,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DEGEN": {
         "code": "DEGEN",
@@ -13802,7 +14001,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DEGO": {
         "code": "DEGO",
@@ -13813,7 +14012,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DELL": {
         "code": "DELL",
@@ -13824,7 +14023,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DENT": {
         "code": "DENT",
@@ -13835,7 +14034,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DEXE": {
         "code": "DEXE",
@@ -13846,7 +14045,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DF": {
         "code": "DF",
@@ -13857,7 +14056,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DGB": {
         "code": "DGB",
@@ -13868,7 +14067,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DIA": {
         "code": "DIA",
@@ -13879,7 +14078,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DIS": {
         "code": "DIS",
@@ -13890,7 +14089,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DKNG": {
         "code": "DKNG",
@@ -13901,7 +14100,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DMC": {
         "code": "DMC",
@@ -13912,7 +14111,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DODOX": {
         "code": "DODOX",
@@ -13923,7 +14122,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DOGE": {
         "code": "DOGE",
@@ -13934,7 +14133,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DOGS": {
         "code": "DOGS",
@@ -13945,7 +14144,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DOLO": {
         "code": "DOLO",
@@ -13956,7 +14155,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DOOD": {
         "code": "DOOD",
@@ -13967,7 +14166,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DOT": {
         "code": "DOT",
@@ -13978,7 +14177,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DRAM": {
         "code": "DRAM",
@@ -13989,7 +14188,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DRIFT": {
         "code": "DRIFT",
@@ -14000,7 +14199,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DUSK": {
         "code": "DUSK",
@@ -14011,7 +14210,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DYDX": {
         "code": "DYDX",
@@ -14022,7 +14221,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "DYM": {
         "code": "DYM",
@@ -14033,7 +14232,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "EBAY": {
         "code": "EBAY",
@@ -14044,7 +14243,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "EDEN": {
         "code": "EDEN",
@@ -14055,7 +14254,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "EDGE": {
         "code": "EDGE",
@@ -14066,7 +14265,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "EDU": {
         "code": "EDU",
@@ -14077,7 +14276,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "EGLD": {
         "code": "EGLD",
@@ -14088,7 +14287,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "EIGEN": {
         "code": "EIGEN",
@@ -14099,7 +14298,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ELSA": {
         "code": "ELSA",
@@ -14110,7 +14309,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ENA": {
         "code": "ENA",
@@ -14121,7 +14320,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ENJ": {
         "code": "ENJ",
@@ -14132,7 +14331,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ENS": {
         "code": "ENS",
@@ -14143,7 +14342,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ENSO": {
         "code": "ENSO",
@@ -14154,7 +14353,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "EPIC": {
         "code": "EPIC",
@@ -14165,7 +14364,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "EPT": {
         "code": "EPT",
@@ -14176,7 +14375,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ERA": {
         "code": "ERA",
@@ -14187,7 +14386,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ESP": {
         "code": "ESP",
@@ -14198,7 +14397,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ESPORTS": {
         "code": "ESPORTS",
@@ -14209,7 +14408,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ETC": {
         "code": "ETC",
@@ -14220,7 +14419,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ETH": {
         "code": "ETH",
@@ -14231,7 +14430,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ETHFI": {
         "code": "ETHFI",
@@ -14242,7 +14441,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ETHW": {
         "code": "ETHW",
@@ -14253,7 +14452,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "EUL": {
         "code": "EUL",
@@ -14264,7 +14463,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "EVAA": {
         "code": "EVAA",
@@ -14275,7 +14474,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "EWJ": {
         "code": "EWJ",
@@ -14286,7 +14485,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "EWT": {
         "code": "EWT",
@@ -14297,7 +14496,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "EWY": {
         "code": "EWY",
@@ -14308,7 +14507,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "EWZ": {
         "code": "EWZ",
@@ -14319,7 +14518,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "F": {
         "code": "F",
@@ -14330,7 +14529,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FARTCOIN": {
         "code": "FARTCOIN",
@@ -14341,7 +14540,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FET": {
         "code": "FET",
@@ -14352,7 +14551,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FF": {
         "code": "FF",
@@ -14363,7 +14562,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FHE": {
         "code": "FHE",
@@ -14374,7 +14573,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FIDA": {
         "code": "FIDA",
@@ -14385,7 +14584,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FIGHT": {
         "code": "FIGHT",
@@ -14396,7 +14595,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FIL": {
         "code": "FIL",
@@ -14407,7 +14606,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FIO": {
         "code": "FIO",
@@ -14418,7 +14617,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FIS": {
         "code": "FIS",
@@ -14429,7 +14628,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FLM": {
         "code": "FLM",
@@ -14440,7 +14639,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FLNC": {
         "code": "FLNC",
@@ -14451,7 +14650,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FLOCK": {
         "code": "FLOCK",
@@ -14462,7 +14661,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FLOW": {
         "code": "FLOW",
@@ -14473,7 +14672,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FLUID": {
         "code": "FLUID",
@@ -14484,7 +14683,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FLUX": {
         "code": "FLUX",
@@ -14495,7 +14694,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FOGO": {
         "code": "FOGO",
@@ -14506,7 +14705,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FOLKS": {
         "code": "FOLKS",
@@ -14517,7 +14716,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FORM": {
         "code": "FORM",
@@ -14528,7 +14727,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FORTH": {
         "code": "FORTH",
@@ -14539,7 +14738,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FRAX": {
         "code": "FRAX",
@@ -14550,7 +14749,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FTM": {
         "code": "FTM",
@@ -14561,7 +14760,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FTT": {
         "code": "FTT",
@@ -14572,7 +14771,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FUN": {
         "code": "FUN",
@@ -14583,7 +14782,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "FXS": {
         "code": "FXS",
@@ -14594,7 +14793,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "G": {
         "code": "G",
@@ -14605,7 +14804,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GAIB": {
         "code": "GAIB",
@@ -14616,7 +14815,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GALA": {
         "code": "GALA",
@@ -14627,7 +14826,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GAS": {
         "code": "GAS",
@@ -14638,7 +14837,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GENIUS": {
         "code": "GENIUS",
@@ -14649,7 +14848,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GHST": {
         "code": "GHST",
@@ -14660,7 +14859,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GIGGLE": {
         "code": "GIGGLE",
@@ -14671,7 +14870,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GLM": {
         "code": "GLM",
@@ -14682,7 +14881,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GLMR": {
         "code": "GLMR",
@@ -14693,7 +14892,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GLW": {
         "code": "GLW",
@@ -14704,7 +14903,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GME": {
         "code": "GME",
@@ -14715,7 +14914,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GMT": {
         "code": "GMT",
@@ -14726,7 +14925,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GMX": {
         "code": "GMX",
@@ -14737,7 +14936,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GOAT": {
         "code": "GOAT",
@@ -14748,7 +14947,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GOOGL": {
         "code": "GOOGL",
@@ -14759,7 +14958,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GPS": {
         "code": "GPS",
@@ -14770,7 +14969,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GRASS": {
         "code": "GRASS",
@@ -14781,7 +14980,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GRIFFAIN": {
         "code": "GRIFFAIN",
@@ -14792,7 +14991,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GRT": {
         "code": "GRT",
@@ -14803,7 +15002,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GTC": {
         "code": "GTC",
@@ -14814,7 +15013,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GUA": {
         "code": "GUA",
@@ -14825,7 +15024,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GUN": {
         "code": "GUN",
@@ -14836,7 +15035,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "GWEI": {
         "code": "GWEI",
@@ -14847,7 +15046,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "H": {
         "code": "H",
@@ -14858,7 +15057,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HAEDAL": {
         "code": "HAEDAL",
@@ -14869,7 +15068,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HANA": {
         "code": "HANA",
@@ -14880,7 +15079,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HBAR": {
         "code": "HBAR",
@@ -14891,7 +15090,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HD": {
         "code": "HD",
@@ -14902,7 +15101,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HEI": {
         "code": "HEI",
@@ -14913,7 +15112,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HEMI": {
         "code": "HEMI",
@@ -14924,7 +15123,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HFT": {
         "code": "HFT",
@@ -14935,7 +15134,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HIFI": {
         "code": "HIFI",
@@ -14946,7 +15145,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HIGH": {
         "code": "HIGH",
@@ -14957,7 +15156,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HIMS": {
         "code": "HIMS",
@@ -14968,7 +15167,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HIPPO": {
         "code": "HIPPO",
@@ -14979,7 +15178,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HIVE": {
         "code": "HIVE",
@@ -14990,7 +15189,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HMSTR": {
         "code": "HMSTR",
@@ -15001,7 +15200,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HOLO": {
         "code": "HOLO",
@@ -15012,7 +15211,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HOME": {
         "code": "HOME",
@@ -15023,7 +15222,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HOOD": {
         "code": "HOOD",
@@ -15034,7 +15233,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HOOK": {
         "code": "HOOK",
@@ -15045,7 +15244,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HOT": {
         "code": "HOT",
@@ -15056,7 +15255,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HPE": {
         "code": "HPE",
@@ -15067,7 +15266,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HUMA": {
         "code": "HUMA",
@@ -15078,7 +15277,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HYPE": {
         "code": "HYPE",
@@ -15089,7 +15288,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HYPER": {
         "code": "HYPER",
@@ -15100,7 +15299,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "HYUNDAI": {
         "code": "HYUNDAI",
@@ -15111,7 +15310,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "IBM": {
         "code": "IBM",
@@ -15122,7 +15321,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ICNT": {
         "code": "ICNT",
@@ -15133,7 +15332,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ICP": {
         "code": "ICP",
@@ -15144,7 +15343,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ICX": {
         "code": "ICX",
@@ -15155,7 +15354,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ID": {
         "code": "ID",
@@ -15166,7 +15365,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "IDEX": {
         "code": "IDEX",
@@ -15177,7 +15376,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "IDOL": {
         "code": "IDOL",
@@ -15188,7 +15387,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ILV": {
         "code": "ILV",
@@ -15199,7 +15398,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "IMX": {
         "code": "IMX",
@@ -15210,7 +15409,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "IN": {
         "code": "IN",
@@ -15221,7 +15420,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "INIT": {
         "code": "INIT",
@@ -15232,7 +15431,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "INJ": {
         "code": "INJ",
@@ -15243,7 +15442,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "INTC": {
         "code": "INTC",
@@ -15254,7 +15453,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "INX": {
         "code": "INX",
@@ -15265,7 +15464,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "IO": {
         "code": "IO",
@@ -15276,7 +15475,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "IOST": {
         "code": "IOST",
@@ -15287,7 +15486,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "IOTA": {
         "code": "IOTA",
@@ -15298,7 +15497,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "IOTX": {
         "code": "IOTX",
@@ -15309,7 +15508,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "IP": {
         "code": "IP",
@@ -15320,7 +15519,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "IR": {
         "code": "IR",
@@ -15331,7 +15530,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "IREN": {
         "code": "IREN",
@@ -15342,7 +15541,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "IRYS": {
         "code": "IRYS",
@@ -15353,7 +15552,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "IWM": {
         "code": "IWM",
@@ -15364,7 +15563,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "JASMY": {
         "code": "JASMY",
@@ -15375,7 +15574,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "JCT": {
         "code": "JCT",
@@ -15386,7 +15585,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "JELLYJELLY": {
         "code": "JELLYJELLY",
@@ -15397,7 +15596,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "JOE": {
         "code": "JOE",
@@ -15408,7 +15607,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "JPM": {
         "code": "JPM",
@@ -15419,7 +15618,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "JST": {
         "code": "JST",
@@ -15430,7 +15629,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "JTO": {
         "code": "JTO",
@@ -15441,7 +15640,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "JUP": {
         "code": "JUP",
@@ -15452,7 +15651,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "KAIA": {
         "code": "KAIA",
@@ -15463,7 +15662,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "KAITO": {
         "code": "KAITO",
@@ -15474,7 +15673,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "KAS": {
         "code": "KAS",
@@ -15485,7 +15684,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "KAT": {
         "code": "KAT",
@@ -15496,7 +15695,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "KAVA": {
         "code": "KAVA",
@@ -15507,7 +15706,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "KDA": {
         "code": "KDA",
@@ -15518,7 +15717,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "KERNEL": {
         "code": "KERNEL",
@@ -15529,7 +15728,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "KEY": {
         "code": "KEY",
@@ -15540,7 +15739,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "KGEN": {
         "code": "KGEN",
@@ -15551,7 +15750,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "KITE": {
         "code": "KITE",
@@ -15562,7 +15761,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "KLAY": {
         "code": "KLAY",
@@ -15573,7 +15772,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "KMNO": {
         "code": "KMNO",
@@ -15584,7 +15783,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "KNC": {
         "code": "KNC",
@@ -15595,7 +15794,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "KOMA": {
         "code": "KOMA",
@@ -15606,7 +15805,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "KSM": {
         "code": "KSM",
@@ -15617,7 +15816,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LA": {
         "code": "LA",
@@ -15628,7 +15827,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LAB": {
         "code": "LAB",
@@ -15639,7 +15838,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LAYER": {
         "code": "LAYER",
@@ -15650,7 +15849,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LDO": {
         "code": "LDO",
@@ -15661,7 +15860,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LEVER": {
         "code": "LEVER",
@@ -15672,7 +15871,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LIGHT": {
         "code": "LIGHT",
@@ -15683,7 +15882,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LINA": {
         "code": "LINA",
@@ -15694,7 +15893,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LINEA": {
         "code": "LINEA",
@@ -15705,7 +15904,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LINK": {
         "code": "LINK",
@@ -15716,7 +15915,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LISTA": {
         "code": "LISTA",
@@ -15727,7 +15926,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LIT": {
         "code": "LIT",
@@ -15738,7 +15937,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LITE": {
         "code": "LITE",
@@ -15749,7 +15948,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LLY": {
         "code": "LLY",
@@ -15760,7 +15959,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LOKA": {
         "code": "LOKA",
@@ -15771,7 +15970,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LOOM": {
         "code": "LOOM",
@@ -15782,7 +15981,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LPT": {
         "code": "LPT",
@@ -15793,7 +15992,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LQTY": {
         "code": "LQTY",
@@ -15804,7 +16003,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LRC": {
         "code": "LRC",
@@ -15815,7 +16014,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LSK": {
         "code": "LSK",
@@ -15826,7 +16025,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LTC": {
         "code": "LTC",
@@ -15837,7 +16036,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LUMIA": {
         "code": "LUMIA",
@@ -15848,7 +16047,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LUNA2": {
         "code": "LUNA2",
@@ -15859,7 +16058,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "LYN": {
         "code": "LYN",
@@ -15870,7 +16069,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "M": {
         "code": "M",
@@ -15881,7 +16080,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MAGIC": {
         "code": "MAGIC",
@@ -15892,7 +16091,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MAGMA": {
         "code": "MAGMA",
@@ -15903,7 +16102,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MANA": {
         "code": "MANA",
@@ -15914,7 +16113,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MANTA": {
         "code": "MANTA",
@@ -15925,7 +16124,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MANTRA": {
         "code": "MANTRA",
@@ -15936,7 +16135,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MASK": {
         "code": "MASK",
@@ -15947,7 +16146,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MAV": {
         "code": "MAV",
@@ -15958,7 +16157,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MAVIA": {
         "code": "MAVIA",
@@ -15969,7 +16168,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MBOX": {
         "code": "MBOX",
@@ -15980,7 +16179,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MDT": {
         "code": "MDT",
@@ -15991,7 +16190,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ME": {
         "code": "ME",
@@ -16002,7 +16201,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MEGA": {
         "code": "MEGA",
@@ -16013,7 +16212,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MELANIA": {
         "code": "MELANIA",
@@ -16024,7 +16223,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MEME": {
         "code": "MEME",
@@ -16035,7 +16234,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MEMEFI": {
         "code": "MEMEFI",
@@ -16046,7 +16245,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MERL": {
         "code": "MERL",
@@ -16057,7 +16256,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MET": {
         "code": "MET",
@@ -16068,7 +16267,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "META": {
         "code": "META",
@@ -16079,7 +16278,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "METIS": {
         "code": "METIS",
@@ -16090,7 +16289,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MEW": {
         "code": "MEW",
@@ -16101,7 +16300,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MILK": {
         "code": "MILK",
@@ -16112,7 +16311,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MINA": {
         "code": "MINA",
@@ -16123,7 +16322,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MIRA": {
         "code": "MIRA",
@@ -16134,7 +16333,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MITO": {
         "code": "MITO",
@@ -16145,7 +16344,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MKR": {
         "code": "MKR",
@@ -16156,7 +16355,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MLN": {
         "code": "MLN",
@@ -16167,7 +16366,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MMT": {
         "code": "MMT",
@@ -16178,7 +16377,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MOCA": {
         "code": "MOCA",
@@ -16189,7 +16388,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MON": {
         "code": "MON",
@@ -16200,7 +16399,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MOODENG": {
         "code": "MOODENG",
@@ -16211,7 +16410,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MORPHO": {
         "code": "MORPHO",
@@ -16222,7 +16421,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MOVE": {
         "code": "MOVE",
@@ -16233,7 +16432,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MOVR": {
         "code": "MOVR",
@@ -16244,7 +16443,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MRVL": {
         "code": "MRVL",
@@ -16255,7 +16454,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MSFT": {
         "code": "MSFT",
@@ -16266,7 +16465,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MSTR": {
         "code": "MSTR",
@@ -16277,7 +16476,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MTL": {
         "code": "MTL",
@@ -16288,7 +16487,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MU": {
         "code": "MU",
@@ -16299,7 +16498,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MUBARAK": {
         "code": "MUBARAK",
@@ -16310,7 +16509,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MYRO": {
         "code": "MYRO",
@@ -16321,7 +16520,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "MYX": {
         "code": "MYX",
@@ -16332,7 +16531,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NAORIS": {
         "code": "NAORIS",
@@ -16343,7 +16542,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NATGAS": {
         "code": "NATGAS",
@@ -16354,7 +16553,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NBIS": {
         "code": "NBIS",
@@ -16365,7 +16564,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NEAR": {
         "code": "NEAR",
@@ -16376,7 +16575,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NEIRO": {
         "code": "NEIRO",
@@ -16387,7 +16586,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NEIROETH": {
         "code": "NEIROETH",
@@ -16398,7 +16597,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NEO": {
         "code": "NEO",
@@ -16409,7 +16608,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NEWT": {
         "code": "NEWT",
@@ -16420,7 +16619,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NFLX": {
         "code": "NFLX",
@@ -16431,7 +16630,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NFP": {
         "code": "NFP",
@@ -16442,7 +16641,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NIGHT": {
         "code": "NIGHT",
@@ -16453,7 +16652,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NIL": {
         "code": "NIL",
@@ -16464,7 +16663,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NKN": {
         "code": "NKN",
@@ -16475,7 +16674,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NMR": {
         "code": "NMR",
@@ -16486,7 +16685,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NOK": {
         "code": "NOK",
@@ -16497,7 +16696,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NOM": {
         "code": "NOM",
@@ -16508,7 +16707,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NOT": {
         "code": "NOT",
@@ -16519,7 +16718,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NOW": {
         "code": "NOW",
@@ -16530,7 +16729,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NTRN": {
         "code": "NTRN",
@@ -16541,7 +16740,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NULS": {
         "code": "NULS",
@@ -16552,7 +16751,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NVDA": {
         "code": "NVDA",
@@ -16563,7 +16762,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NVO": {
         "code": "NVO",
@@ -16574,7 +16773,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "NXPC": {
         "code": "NXPC",
@@ -16585,7 +16784,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "OBOL": {
         "code": "OBOL",
@@ -16596,7 +16795,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "OCEAN": {
         "code": "OCEAN",
@@ -16607,7 +16806,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "OG": {
         "code": "OG",
@@ -16618,7 +16817,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "OGN": {
         "code": "OGN",
@@ -16629,7 +16828,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "OL": {
         "code": "OL",
@@ -16640,7 +16839,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "OM": {
         "code": "OM",
@@ -16651,7 +16850,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "OMG": {
         "code": "OMG",
@@ -16662,7 +16861,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "OMNI": {
         "code": "OMNI",
@@ -16673,7 +16872,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ON": {
         "code": "ON",
@@ -16684,7 +16883,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ONDO": {
         "code": "ONDO",
@@ -16695,7 +16894,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ONDS": {
         "code": "ONDS",
@@ -16706,7 +16905,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ONE": {
         "code": "ONE",
@@ -16717,7 +16916,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ONG": {
         "code": "ONG",
@@ -16728,7 +16927,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ONT": {
         "code": "ONT",
@@ -16739,7 +16938,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "OP": {
         "code": "OP",
@@ -16750,7 +16949,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "OPEN": {
         "code": "OPEN",
@@ -16761,7 +16960,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "OPENAI": {
         "code": "OPENAI",
@@ -16772,7 +16971,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "OPG": {
         "code": "OPG",
@@ -16783,7 +16982,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "OPN": {
         "code": "OPN",
@@ -16794,7 +16993,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ORBS": {
         "code": "ORBS",
@@ -16805,7 +17004,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ORCA": {
         "code": "ORCA",
@@ -16816,7 +17015,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ORCL": {
         "code": "ORCL",
@@ -16827,7 +17026,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ORDER": {
         "code": "ORDER",
@@ -16838,7 +17037,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ORDI": {
         "code": "ORDI",
@@ -16849,7 +17048,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "OXT": {
         "code": "OXT",
@@ -16860,7 +17059,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PARTI": {
         "code": "PARTI",
@@ -16871,7 +17070,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PAXG": {
         "code": "PAXG",
@@ -16882,7 +17081,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PAYP": {
         "code": "PAYP",
@@ -16893,7 +17092,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PENDLE": {
         "code": "PENDLE",
@@ -16904,7 +17103,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PENGU": {
         "code": "PENGU",
@@ -16915,7 +17114,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PEOPLE": {
         "code": "PEOPLE",
@@ -16926,7 +17125,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PERP": {
         "code": "PERP",
@@ -16937,7 +17136,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PHA": {
         "code": "PHA",
@@ -16948,7 +17147,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PHAROS": {
         "code": "PHAROS",
@@ -16959,7 +17158,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PHB": {
         "code": "PHB",
@@ -16970,7 +17169,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PIEVERSE": {
         "code": "PIEVERSE",
@@ -16981,7 +17180,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PIPPIN": {
         "code": "PIPPIN",
@@ -16992,7 +17191,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PIXEL": {
         "code": "PIXEL",
@@ -17003,7 +17202,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PLAY": {
         "code": "PLAY",
@@ -17014,7 +17213,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PLTR": {
         "code": "PLTR",
@@ -17025,7 +17224,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PLUME": {
         "code": "PLUME",
@@ -17036,7 +17235,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PNUT": {
         "code": "PNUT",
@@ -17047,7 +17246,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "POL": {
         "code": "POL",
@@ -17058,7 +17257,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "POLYX": {
         "code": "POLYX",
@@ -17069,7 +17268,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PONKE": {
         "code": "PONKE",
@@ -17080,7 +17279,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "POPCAT": {
         "code": "POPCAT",
@@ -17091,7 +17290,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PORT3": {
         "code": "PORT3",
@@ -17102,7 +17301,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PORTAL": {
         "code": "PORTAL",
@@ -17113,7 +17312,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "POWER": {
         "code": "POWER",
@@ -17124,7 +17323,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "POWR": {
         "code": "POWR",
@@ -17135,7 +17334,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PRL": {
         "code": "PRL",
@@ -17146,7 +17345,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PROM": {
         "code": "PROM",
@@ -17157,7 +17356,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PROMPT": {
         "code": "PROMPT",
@@ -17168,7 +17367,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PROVE": {
         "code": "PROVE",
@@ -17179,7 +17378,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PTB": {
         "code": "PTB",
@@ -17190,7 +17389,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PUFFER": {
         "code": "PUFFER",
@@ -17201,7 +17400,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PUMP": {
         "code": "PUMP",
@@ -17212,7 +17411,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PUMPBTC": {
         "code": "PUMPBTC",
@@ -17223,7 +17422,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PUNDIX": {
         "code": "PUNDIX",
@@ -17234,7 +17433,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "PYTH": {
         "code": "PYTH",
@@ -17245,7 +17444,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "Q": {
         "code": "Q",
@@ -17256,7 +17455,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "QCOM": {
         "code": "QCOM",
@@ -17267,7 +17466,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "QNT": {
         "code": "QNT",
@@ -17278,7 +17477,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "QNTX": {
         "code": "QNTX",
@@ -17289,7 +17488,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "QQQ": {
         "code": "QQQ",
@@ -17300,7 +17499,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "QTUM": {
         "code": "QTUM",
@@ -17311,7 +17510,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "QUICK": {
         "code": "QUICK",
@@ -17322,7 +17521,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RAD": {
         "code": "RAD",
@@ -17333,7 +17532,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RARE": {
         "code": "RARE",
@@ -17344,7 +17543,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RAVE": {
         "code": "RAVE",
@@ -17355,7 +17554,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RAY": {
         "code": "RAY",
@@ -17366,7 +17565,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RAYSOL": {
         "code": "RAYSOL",
@@ -17377,7 +17576,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RDNT": {
         "code": "RDNT",
@@ -17388,7 +17587,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RE": {
         "code": "RE",
@@ -17399,7 +17598,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RECALL": {
         "code": "RECALL",
@@ -17410,7 +17609,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RED": {
         "code": "RED",
@@ -17421,7 +17620,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "REEF": {
         "code": "REEF",
@@ -17432,7 +17631,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "REI": {
         "code": "REI",
@@ -17443,7 +17642,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "REN": {
         "code": "REN",
@@ -17454,7 +17653,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RENDER": {
         "code": "RENDER",
@@ -17465,7 +17664,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RESOLV": {
         "code": "RESOLV",
@@ -17476,7 +17675,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "REZ": {
         "code": "REZ",
@@ -17487,7 +17686,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RIF": {
         "code": "RIF",
@@ -17498,7 +17697,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RIVER": {
         "code": "RIVER",
@@ -17509,7 +17708,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RIVN": {
         "code": "RIVN",
@@ -17520,7 +17719,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RKLB": {
         "code": "RKLB",
@@ -17531,7 +17730,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RLC": {
         "code": "RLC",
@@ -17542,7 +17741,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RLS": {
         "code": "RLS",
@@ -17553,7 +17752,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ROBO": {
         "code": "ROBO",
@@ -17564,7 +17763,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RONIN": {
         "code": "RONIN",
@@ -17575,7 +17774,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ROSE": {
         "code": "ROSE",
@@ -17586,7 +17785,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RPL": {
         "code": "RPL",
@@ -17597,7 +17796,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RSR": {
         "code": "RSR",
@@ -17608,7 +17807,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RUNE": {
         "code": "RUNE",
@@ -17619,7 +17818,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RVN": {
         "code": "RVN",
@@ -17630,7 +17829,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "RVV": {
         "code": "RVV",
@@ -17641,7 +17840,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "S": {
         "code": "S",
@@ -17652,7 +17851,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SAFE": {
         "code": "SAFE",
@@ -17663,7 +17862,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SAGA": {
         "code": "SAGA",
@@ -17674,7 +17873,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SAHARA": {
         "code": "SAHARA",
@@ -17685,7 +17884,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SAMSUNG": {
         "code": "SAMSUNG",
@@ -17696,7 +17895,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SAND": {
         "code": "SAND",
@@ -17707,7 +17906,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SANTOS": {
         "code": "SANTOS",
@@ -17718,7 +17917,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SAPIEN": {
         "code": "SAPIEN",
@@ -17729,7 +17928,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SC": {
         "code": "SC",
@@ -17740,7 +17939,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SCR": {
         "code": "SCR",
@@ -17751,7 +17950,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SCRT": {
         "code": "SCRT",
@@ -17762,7 +17961,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SEI": {
         "code": "SEI",
@@ -17773,7 +17972,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SENT": {
         "code": "SENT",
@@ -17784,7 +17983,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SFP": {
         "code": "SFP",
@@ -17795,7 +17994,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SHELL": {
         "code": "SHELL",
@@ -17806,7 +18005,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SIGN": {
         "code": "SIGN",
@@ -17817,7 +18016,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SIREN": {
         "code": "SIREN",
@@ -17828,7 +18027,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SKATE": {
         "code": "SKATE",
@@ -17839,7 +18038,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SKHYNIX": {
         "code": "SKHYNIX",
@@ -17850,7 +18049,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SKL": {
         "code": "SKL",
@@ -17861,7 +18060,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SKR": {
         "code": "SKR",
@@ -17872,7 +18071,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SKY": {
         "code": "SKY",
@@ -17883,7 +18082,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SKYAI": {
         "code": "SKYAI",
@@ -17894,7 +18093,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SLERF": {
         "code": "SLERF",
@@ -17905,7 +18104,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SLP": {
         "code": "SLP",
@@ -17916,7 +18115,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SLX": {
         "code": "SLX",
@@ -17927,7 +18126,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SNDK": {
         "code": "SNDK",
@@ -17938,7 +18137,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SNT": {
         "code": "SNT",
@@ -17949,7 +18148,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SNX": {
         "code": "SNX",
@@ -17960,7 +18159,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SOL": {
         "code": "SOL",
@@ -17971,7 +18170,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SOLV": {
         "code": "SOLV",
@@ -17982,7 +18181,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SOMI": {
         "code": "SOMI",
@@ -17993,7 +18192,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SONIC": {
         "code": "SONIC",
@@ -18004,7 +18203,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SOON": {
         "code": "SOON",
@@ -18015,7 +18214,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SOPH": {
         "code": "SOPH",
@@ -18026,7 +18225,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SOXL": {
         "code": "SOXL",
@@ -18037,7 +18236,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SPACE": {
         "code": "SPACE",
@@ -18048,7 +18247,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SPCX": {
         "code": "SPCX",
@@ -18059,7 +18258,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SPELL": {
         "code": "SPELL",
@@ -18070,7 +18269,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SPK": {
         "code": "SPK",
@@ -18081,7 +18280,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SPORTFUN": {
         "code": "SPORTFUN",
@@ -18092,7 +18291,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SPX": {
         "code": "SPX",
@@ -18103,7 +18302,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SPY": {
         "code": "SPY",
@@ -18114,7 +18313,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SQD": {
         "code": "SQD",
@@ -18125,7 +18324,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SSV": {
         "code": "SSV",
@@ -18136,7 +18335,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "STABLE": {
         "code": "STABLE",
@@ -18147,7 +18346,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "STAR": {
         "code": "STAR",
@@ -18158,7 +18357,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "STBL": {
         "code": "STBL",
@@ -18169,7 +18368,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "STEEM": {
         "code": "STEEM",
@@ -18180,7 +18379,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "STG": {
         "code": "STG",
@@ -18191,7 +18390,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "STMX": {
         "code": "STMX",
@@ -18202,7 +18401,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "STO": {
         "code": "STO",
@@ -18213,7 +18412,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "STORJ": {
         "code": "STORJ",
@@ -18224,7 +18423,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "STPT": {
         "code": "STPT",
@@ -18235,7 +18434,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "STRAX": {
         "code": "STRAX",
@@ -18246,7 +18445,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "STRK": {
         "code": "STRK",
@@ -18257,7 +18456,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "STX": {
         "code": "STX",
@@ -18268,7 +18467,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "STXX": {
         "code": "STXX",
@@ -18279,7 +18478,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SUI": {
         "code": "SUI",
@@ -18290,7 +18489,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SUN": {
         "code": "SUN",
@@ -18301,7 +18500,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SUPER": {
         "code": "SUPER",
@@ -18312,7 +18511,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SUSHI": {
         "code": "SUSHI",
@@ -18323,7 +18522,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SWARMS": {
         "code": "SWARMS",
@@ -18334,7 +18533,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SWELL": {
         "code": "SWELL",
@@ -18345,7 +18544,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SXT": {
         "code": "SXT",
@@ -18356,7 +18555,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SYN": {
         "code": "SYN",
@@ -18367,7 +18566,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SYRUP": {
         "code": "SYRUP",
@@ -18378,7 +18577,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "SYS": {
         "code": "SYS",
@@ -18389,7 +18588,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "T": {
         "code": "T",
@@ -18400,7 +18599,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TA": {
         "code": "TA",
@@ -18411,7 +18610,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TAC": {
         "code": "TAC",
@@ -18422,7 +18621,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TAG": {
         "code": "TAG",
@@ -18433,7 +18632,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TAIKO": {
         "code": "TAIKO",
@@ -18444,7 +18643,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TAKE": {
         "code": "TAKE",
@@ -18455,7 +18654,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TANSSI": {
         "code": "TANSSI",
@@ -18466,7 +18665,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TAO": {
         "code": "TAO",
@@ -18477,7 +18676,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "THE": {
         "code": "THE",
@@ -18488,7 +18687,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "THETA": {
         "code": "THETA",
@@ -18499,7 +18698,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TIA": {
         "code": "TIA",
@@ -18510,7 +18709,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TLM": {
         "code": "TLM",
@@ -18521,7 +18720,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TNSR": {
         "code": "TNSR",
@@ -18532,7 +18731,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TOKEN": {
         "code": "TOKEN",
@@ -18543,7 +18742,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TON": {
         "code": "TON",
@@ -18554,7 +18753,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TOSHI": {
         "code": "TOSHI",
@@ -18565,7 +18764,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TOWNS": {
         "code": "TOWNS",
@@ -18576,7 +18775,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TRADOOR": {
         "code": "TRADOOR",
@@ -18587,7 +18786,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TRB": {
         "code": "TRB",
@@ -18598,7 +18797,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TREE": {
         "code": "TREE",
@@ -18609,7 +18808,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TRIA": {
         "code": "TRIA",
@@ -18620,7 +18819,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TROY": {
         "code": "TROY",
@@ -18631,7 +18830,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TRU": {
         "code": "TRU",
@@ -18642,7 +18841,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TRUMP": {
         "code": "TRUMP",
@@ -18653,7 +18852,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TRUST": {
         "code": "TRUST",
@@ -18664,7 +18863,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TRUTH": {
         "code": "TRUTH",
@@ -18675,7 +18874,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TRX": {
         "code": "TRX",
@@ -18686,7 +18885,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TSLA": {
         "code": "TSLA",
@@ -18697,7 +18896,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TSM": {
         "code": "TSM",
@@ -18708,7 +18907,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TST": {
         "code": "TST",
@@ -18719,7 +18918,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TURBO": {
         "code": "TURBO",
@@ -18730,7 +18929,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TURTLE": {
         "code": "TURTLE",
@@ -18741,7 +18940,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TUT": {
         "code": "TUT",
@@ -18752,7 +18951,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "TWT": {
         "code": "TWT",
@@ -18763,7 +18962,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "UAI": {
         "code": "UAI",
@@ -18774,7 +18973,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "UB": {
         "code": "UB",
@@ -18785,7 +18984,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "UBER": {
         "code": "UBER",
@@ -18796,7 +18995,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "UMA": {
         "code": "UMA",
@@ -18807,7 +19006,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "UNFI": {
         "code": "UNFI",
@@ -18818,7 +19017,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "UNI": {
         "code": "UNI",
@@ -18829,7 +19028,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "URNM": {
         "code": "URNM",
@@ -18840,7 +19039,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "US": {
         "code": "US",
@@ -18851,7 +19050,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "USAR": {
         "code": "USAR",
@@ -18862,7 +19061,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "USD1": {
         "code": "USD1",
@@ -18873,7 +19072,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "USDC": {
         "code": "USDC",
@@ -18884,7 +19083,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "USDT": {
         "code": "USDT",
@@ -18895,7 +19094,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "USELESS": {
         "code": "USELESS",
@@ -18906,7 +19105,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "USTC": {
         "code": "USTC",
@@ -18917,7 +19116,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "USUAL": {
         "code": "USUAL",
@@ -18928,7 +19127,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "UVXY": {
         "code": "UVXY",
@@ -18939,7 +19138,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "UXLINK": {
         "code": "UXLINK",
@@ -18950,7 +19149,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "V": {
         "code": "V",
@@ -18961,7 +19160,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "VANA": {
         "code": "VANA",
@@ -18972,7 +19171,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "VANRY": {
         "code": "VANRY",
@@ -18983,7 +19182,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "VELODROME": {
         "code": "VELODROME",
@@ -18994,7 +19193,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "VELVET": {
         "code": "VELVET",
@@ -19005,7 +19204,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "VET": {
         "code": "VET",
@@ -19016,7 +19215,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "VFY": {
         "code": "VFY",
@@ -19027,7 +19226,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "VIC": {
         "code": "VIC",
@@ -19038,7 +19237,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "VIDT": {
         "code": "VIDT",
@@ -19049,7 +19248,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "VINE": {
         "code": "VINE",
@@ -19060,7 +19259,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "VIRTUAL": {
         "code": "VIRTUAL",
@@ -19071,7 +19270,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "VOXEL": {
         "code": "VOXEL",
@@ -19082,7 +19281,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "VTHO": {
         "code": "VTHO",
@@ -19093,7 +19292,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "VVV": {
         "code": "VVV",
@@ -19104,7 +19303,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "W": {
         "code": "W",
@@ -19115,7 +19314,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "WAL": {
         "code": "WAL",
@@ -19126,7 +19325,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "WAVES": {
         "code": "WAVES",
@@ -19137,7 +19336,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "WAXP": {
         "code": "WAXP",
@@ -19148,7 +19347,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "WCT": {
         "code": "WCT",
@@ -19159,7 +19358,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "WDC": {
         "code": "WDC",
@@ -19170,7 +19369,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "WET": {
         "code": "WET",
@@ -19181,7 +19380,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "WIF": {
         "code": "WIF",
@@ -19192,7 +19391,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "WLD": {
         "code": "WLD",
@@ -19203,7 +19402,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "WLFI": {
         "code": "WLFI",
@@ -19214,7 +19413,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "WMT": {
         "code": "WMT",
@@ -19225,7 +19424,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "WOO": {
         "code": "WOO",
@@ -19236,7 +19435,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XAG": {
         "code": "XAG",
@@ -19247,7 +19446,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XAI": {
         "code": "XAI",
@@ -19258,7 +19457,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XAN": {
         "code": "XAN",
@@ -19269,7 +19468,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XAU": {
         "code": "XAU",
@@ -19280,7 +19479,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XAUT": {
         "code": "XAUT",
@@ -19291,7 +19490,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XCN": {
         "code": "XCN",
@@ -19302,7 +19501,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XEM": {
         "code": "XEM",
@@ -19313,7 +19512,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XLE": {
         "code": "XLE",
@@ -19324,7 +19523,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XLM": {
         "code": "XLM",
@@ -19335,7 +19534,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XMR": {
         "code": "XMR",
@@ -19346,7 +19545,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XNY": {
         "code": "XNY",
@@ -19357,7 +19556,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XPD": {
         "code": "XPD",
@@ -19368,7 +19567,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XPIN": {
         "code": "XPIN",
@@ -19379,7 +19578,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XPL": {
         "code": "XPL",
@@ -19390,7 +19589,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XPT": {
         "code": "XPT",
@@ -19401,7 +19600,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XRP": {
         "code": "XRP",
@@ -19412,7 +19611,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XTZ": {
         "code": "XTZ",
@@ -19423,7 +19622,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XVG": {
         "code": "XVG",
@@ -19434,7 +19633,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "XVS": {
         "code": "XVS",
@@ -19445,7 +19644,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "YALA": {
         "code": "YALA",
@@ -19456,7 +19655,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "YB": {
         "code": "YB",
@@ -19467,7 +19666,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "YFI": {
         "code": "YFI",
@@ -19478,7 +19677,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "YGG": {
         "code": "YGG",
@@ -19489,7 +19688,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZAMA": {
         "code": "ZAMA",
@@ -19500,7 +19699,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZBT": {
         "code": "ZBT",
@@ -19511,7 +19710,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZEC": {
         "code": "ZEC",
@@ -19522,7 +19721,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZEN": {
         "code": "ZEN",
@@ -19533,7 +19732,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZEREBRO": {
         "code": "ZEREBRO",
@@ -19544,7 +19743,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZEST": {
         "code": "ZEST",
@@ -19555,7 +19754,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZETA": {
         "code": "ZETA",
@@ -19566,7 +19765,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZIL": {
         "code": "ZIL",
@@ -19577,7 +19776,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZK": {
         "code": "ZK",
@@ -19588,7 +19787,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZKC": {
         "code": "ZKC",
@@ -19599,7 +19798,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZKJ": {
         "code": "ZKJ",
@@ -19610,7 +19809,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZKP": {
         "code": "ZKP",
@@ -19621,7 +19820,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZM": {
         "code": "ZM",
@@ -19632,7 +19831,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZORA": {
         "code": "ZORA",
@@ -19643,7 +19842,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZRC": {
         "code": "ZRC",
@@ -19654,7 +19853,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZRO": {
         "code": "ZRO",
@@ -19665,7 +19864,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "ZRX": {
         "code": "ZRX",
@@ -19676,7 +19875,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "币安人生": {
         "code": "币安人生",
@@ -19687,7 +19886,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "我踏马来了": {
         "code": "我踏马来了",
@@ -19698,7 +19897,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       },
       "龙虾": {
         "code": "龙虾",
@@ -19709,7 +19908,7 @@
           "withdraw": {}
         },
         "networks": {},
-        "precision": 1e-08
+        "precision": 1E-8
       }
     },
     "patterns": {
@@ -19929,13 +20128,13 @@
         "_unresolved_reason": null,
         "extras": [],
         "field_map": {
-        "amount": {
-          "coercion": "safeNumber",
-          "fallback_keys": [
-            "amount"
-          ],
-          "format": null,
-          "key": "income"
+          "amount": {
+            "coercion": "safeNumber",
+            "fallback_keys": [
+              "amount"
+            ],
+            "format": null,
+            "key": "income"
           },
           "code": {
             "coercion": "safeString",
@@ -20165,15 +20364,15 @@
             "key": "asset"
           },
           "datetime": null,
-        "direction": {
-          "fallback_keys": [
-            "amount"
-          ],
-          "key": "income",
-          "kind": "sign_direction",
-          "negative": "out",
-          "positive": "in",
-          "zero": null
+          "direction": {
+            "fallback_keys": [
+              "amount"
+            ],
+            "key": "income",
+            "kind": "sign_direction",
+            "negative": "out",
+            "positive": "in",
+            "zero": null
           },
           "fee": null,
           "id": {
@@ -20203,34 +20402,34 @@
           "type": {
             "coercion": "safeString",
             "enum_map": {
-            "API_REBATE": "rebate",
-            "AUTO_EXCHANGE": "conversion",
-            "BFUSD_REWARD": "bonus",
-            "COIN_SWAP_DEPOSIT": "deposit",
-            "COIN_SWAP_WITHDRAW": "withdrawal",
-            "COMMISSION": "commission",
-            "COMMISSION_REBATE": "rebate",
-            "CONTEST_REWARD": "bonus",
-            "CROSS_COLLATERAL_TRANSFER": "transfer",
-            "DELIVERED_SETTELMENT": "settlement",
-            "FEE_RETURN": "rebate",
-            "FUNDING_FEE": "funding_fee",
+              "API_REBATE": "rebate",
+              "AUTO_EXCHANGE": "conversion",
+              "BFUSD_REWARD": "bonus",
+              "COIN_SWAP_DEPOSIT": "deposit",
+              "COIN_SWAP_WITHDRAW": "withdrawal",
+              "COMMISSION": "commission",
+              "COMMISSION_REBATE": "rebate",
+              "CONTEST_REWARD": "bonus",
+              "CROSS_COLLATERAL_TRANSFER": "transfer",
+              "DELIVERED_SETTELMENT": "settlement",
+              "FEE_RETURN": "rebate",
+              "FUNDING_FEE": "funding_fee",
               "INTERNAL_TRANSFER": "transfer",
               "INSURANCE_CLEAR": "settlement",
               "OPTIONS_PREMIUM_FEE": "fee",
               "OPTIONS_SETTLE_PROFIT": "settlement",
               "POSITION_LIMIT_INCREASE_FEE": "fee",
               "REALIZED_PNL": "realized_pnl",
-            "REFERRAL_KICKBACK": "referral",
-            "STRATEGY_UMFUTURES_TRANSFER": "transfer",
-            "TRANSFER": "transfer",
-            "WELCOME_BONUS": "bonus"
-          },
-          "fallback_keys": [
-            "type"
-          ],
-          "format": null,
-          "key": "incomeType"
+              "REFERRAL_KICKBACK": "referral",
+              "STRATEGY_UMFUTURES_TRANSFER": "transfer",
+              "TRANSFER": "transfer",
+              "WELCOME_BONUS": "bonus"
+            },
+            "fallback_keys": [
+              "type"
+            ],
+            "format": null,
+            "key": "incomeType"
           }
         },
         "route_field_maps": {
@@ -27530,15 +27729,15 @@
                 ],
                 [
                   250,
-                  8e-05
+                  0.00008
                 ],
                 [
                   2500,
-                  5e-05
+                  0.00005
                 ],
                 [
                   7500,
-                  3e-06
+                  0.000003
                 ],
                 [
                   22500,
@@ -27546,23 +27745,23 @@
                 ],
                 [
                   50000,
-                  -5e-05
+                  -0.00005
                 ],
                 [
                   100000,
-                  -6e-05
+                  -0.00006
                 ],
                 [
                   200000,
-                  -7e-05
+                  -0.00007
                 ],
                 [
                   400000,
-                  -8e-05
+                  -0.00008
                 ],
                 [
                   750000,
-                  -9e-05
+                  -0.00009
                 ]
               ],
               "taker": [
@@ -27641,19 +27840,19 @@
                 ],
                 [
                   50000,
-                  8e-05
+                  0.00008
                 ],
                 [
                   100000,
-                  6e-05
+                  0.00006
                 ],
                 [
                   200000,
-                  4e-05
+                  0.00004
                 ],
                 [
                   400000,
-                  2e-05
+                  0.00002
                 ],
                 [
                   750000,
@@ -28043,7 +28242,7 @@
         "defaultSubType": "linear",
         "defaultTimeInForce": "GTC",
         "defaultType": "swap",
-        "defaultWithdrawPrecision": 1e-08,
+        "defaultWithdrawPrecision": 1E-8,
         "fetchCurrencies": true,
         "fetchMargins": true,
         "fetchMarkets": {

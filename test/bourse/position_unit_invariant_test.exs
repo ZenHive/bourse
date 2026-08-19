@@ -18,6 +18,9 @@ defmodule Bourse.PositionUnitInvariantTest do
     for position_case <- position_cases() do
       position = parse_position!(position_case)
 
+      assert is_number(position.notional),
+             "#{position_case.venue} did not emit a numeric notional: #{inspect(position)}"
+
       assert_in_delta position.notional,
                       position_case.expected_notional,
                       @unit_tolerance,
@@ -196,6 +199,11 @@ defmodule Bourse.PositionUnitInvariantTest do
       position_case.venue
       |> Exchange.new!()
       |> Exchange.put_markets(position_case.markets)
+
+    exchange = %{
+      exchange
+      | spec: put_in(exchange.spec, ["capabilities", "mapping_complete", "fetchPosition"], true)
+    }
 
     assert {:ok, %Position{} = position} =
              ReadParse.parse(

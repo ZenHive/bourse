@@ -1,7 +1,18 @@
 {
   "count": 172,
-  "exclusion_count": 96,
+  "exclusion_count": 97,
   "exclusions": [
+    {
+      "branch": "public_get_v5_market_open_interest",
+      "capture_date": "2026-08-19",
+      "endpoint": "v5/market/open-interest",
+      "method": "fetchDerivativesOpenInterestHistory",
+      "reason": "The provider operation is available, but Bourse has no complete category/symbol/intervalTime request binding; task 550 owns the mapping.",
+      "sections": [
+        "public"
+      ],
+      "venue": "bybit"
+    },
     {
       "branch": "eapiPublic_get_mark",
       "capture_date": "2026-07-26",

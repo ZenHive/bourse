@@ -76,6 +76,9 @@ defmodule Bourse.Spec.Promotion do
       |> remove_reference_capability_claims()
       |> reset_interpretive_slots()
       |> put_in(["capabilities", "has"], Map.new(methods, &{&1, false}))
+      |> put_in(["capabilities", "mapping_complete"], Map.new(methods, &{&1, false}))
+      |> put_in(["capabilities", "verification"], Map.new(methods, &{&1, "unverified"}))
+      |> put_in(["capabilities", "unsupported_raw_endpoints"], %{})
       |> put_in(["endpoints", "unified"], Map.new(methods, &{&1, []}))
 
     report =
@@ -339,10 +342,11 @@ defmodule Bourse.Spec.Promotion do
   defp validate_support_contract(method, false, _endpoints),
     do: [support_gap(method, "is unsupported and must have no unified endpoints")]
 
-  defp validate_support_contract(_method, declaration, endpoints)
-       when declaration in [true, "emulated"] and is_list(endpoints) and endpoints != [], do: []
+  defp validate_support_contract(_method, true, endpoints) when is_list(endpoints) and endpoints != [], do: []
 
-  defp validate_support_contract(method, declaration, _endpoints) when declaration in [true, "emulated"] do
+  defp validate_support_contract(_method, "emulated", endpoints) when is_list(endpoints), do: []
+
+  defp validate_support_contract(method, true, _endpoints) do
     [support_gap(method, "is supported and must have at least one unified endpoint")]
   end
 

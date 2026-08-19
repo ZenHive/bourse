@@ -3,6 +3,7 @@ defmodule Bourse.Unified.ReadParseTest do
 
   alias Bourse.Error
   alias Bourse.Exchange
+  alias Bourse.RawResponse
   alias Bourse.Unified.FieldMaps
   alias Bourse.Unified.ReadParse
 
@@ -861,14 +862,17 @@ defmodule Bourse.Unified.ReadParseTest do
       assert message =~ "all-nil"
     end
 
-    test "missing currency field map fails loud naming venue and slice (task 319)" do
-      # binanceusdm is first-class with no authored currency map (hyperliquid's was
-      # authored in task 370). Before the fail-loud guard, raw rows reached
-      # build_currency_map/2 and raised KeyError `key :id not found` on a plain map.
+    test "incomplete currency mapping returns a labelled raw provider payload" do
       exchange = Exchange.new!("binanceusdm")
       body = [%{"coin" => "USDC", "name" => "USD Coin", "networkList" => []}]
 
-      assert {:error, %Error{type: :exchange_error, message: message, exchange: "binanceusdm"}} =
+      assert {:ok,
+              %RawResponse{
+                payload: ^body,
+                venue: "binanceusdm",
+                method: "fetchCurrencies",
+                verification: :unverified
+              }} =
                ReadParse.parse(
                  exchange,
                  Bourse.Binanceusdm,
@@ -879,10 +883,6 @@ defmodule Bourse.Unified.ReadParseTest do
                  :parse_currency,
                  false
                )
-
-      assert message =~ "Missing authored normalization.field_maps.currency"
-      assert message =~ "binanceusdm"
-      refute message =~ "key :id not found"
     end
 
     test "missing funding_history field map fails as data instead of raising during symbol backfill" do

@@ -124,11 +124,28 @@ the complete offline suite without fetching authoring inputs:
   declaration with no entries and is accepted only on slots whose schema permits emptiness.
   The owned loader returns the decoded document unchanged; it does not recursively strip
   values or manufacture defaults.
-- **Support is explicit.** Every method in a promotion candidate appears in both
-  `capabilities.has` and `endpoints.unified`, declared `true`, `false` or `"emulated"`.
-  Unsupported methods carry an empty endpoint list; only `true` and `"emulated"` with an
-  authored non-empty route generate support. Endpoint presence, `reason`,
-  `_unresolved_reason` and raw CCXT `describe.has` values cannot create support.
+- **Three independent method facts are explicit.** `capabilities.has` is provider support:
+  `true` means the venue has the operation, `false` means its contract exposes neither the
+  operation nor primitives sufficient to derive it, and `"emulated"` means the venue exposes
+  derivation primitives but no native operation. `"emulated"` says nothing about whether Bourse
+  performs that derivation. `capabilities.mapping_complete` says only whether Bourse completely
+  maps the authored unified route. `capabilities.verification` is `"verified"` only when that
+  implementation has manifest-registered venue evidence; sandbox reachability may change this
+  field and no other. The two implementation maps have exactly the `endpoints.unified` keys.
+- **Callability is derived without conflation.** A provider-native declaration needs an authored
+  route; provider-emulated operations are callable only through an authored raw route or an
+  implemented Bourse emulation. Per-venue generated endpoint mappings use provider support plus
+  a non-empty route; `Exchange.has?/2` uses the same callable outcome. Native feature declarations
+  used by order validation remain available separately as `Exchange.venue_support`.
+  `Bourse.describe/2` remains the global unified vocabulary and is not a venue-availability query.
+  Verification never changes any of these surfaces. An incomplete read returns
+  `{:ok, %Bourse.RawResponse{}}`, labelled with its payload, venue, method and verification state,
+  instead of posing as a normalized result.
+- **Unsupported is stricter than incomplete.** A provider-unsupported method carries no unified
+  route. An offered method with an incomplete mapping retains its route and stays callable as a
+  labelled raw read. Deleting a wrong route does not itself declare the provider operation
+  unsupported. Endpoint presence, `reason`, `_unresolved_reason` and compatibility-reference
+  capability values cannot create provider support.
 - **Runtime-only surface.** Extraction ASTs, source receipts, provenance payloads, method
   inventories and test-only symbol indexes are forbidden by path. Evidence remains in the
   authority/carve/fixture surfaces; integration symbol selection reads the frozen reference

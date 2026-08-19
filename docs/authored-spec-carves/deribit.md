@@ -45,23 +45,28 @@ timestamps land at the requested bounds rather than accepting a merely successfu
 {"carve_id":"C-T553e","date":"2026-08-14","semantic_source":{"kind":"provider_owned","reference":"Deribit public/get_tradingview_chart_data start_timestamp/end_timestamp contract"},"observed_evidence":{"kind":"live_venue","reference":"Live test.deribit.com fetchOHLCV returned-window assertion on 2026-08-14"},"compatibility_reference":null,"resolved_tier":1}
 -->
 
-**C-T565a — `fetchLiquidations` is not a liquidation surface on Deribit; the wired
-endpoint returns settlement history (task 565). Outcome: DIVERGE; capabilities.has = false.**
+**C-T565a — Deribit exposes liquidation markers on recent trades, not on the previously wired
+settlements endpoint (task 565, re-adjudicated by task 570). Outcome: provider-emulated;
+mapping incomplete.**
 
 - *Exchange semantics:* Deribit's
   [`public/get_last_settlements_by_instrument`](https://docs.deribit.com/api-reference/market-data/public-get_last_settlements_by_instrument)
   returns a `settlements` array of delivery/settlement records, not forced-liquidation
   events. The authored unified mapping pointed `fetchLiquidations` at that endpoint.
-- *Live evidence (2026-08-08, testnet):* `fetchLiquidations("BTC-PERPETUAL")` answered
-  `result.settlements` (empty list on the probe) inside a JSON-RPC envelope. No
-  liquidation price, side, or quantity fields are present.
-- *Our carve:* `capabilities.has.fetchLiquidations = false`. Declaring the method as a
-  liquidation read would alias onto `%Bourse.Liquidation{}` and silently mis-parse
-  settlement rows. Settlement history remains a net-new unified type owned by the
-  sibling of task 565.
+- *Provider primitive:* `priv/authority/deribit/manifest.json` pins the provider contract for
+  `public/get_last_trades_by_instrument`; each trade may carry `liquidation` equal to `M`, `T`, or
+  `MT`. A 2,000-row BTC-PERPETUAL/ETH-PERPETUAL production sample on 2026-08-09 contained no marked
+  row, which establishes rarity only, not absence.
+- *Our carve:* the wrong settlements route is deleted. Provider support is `"emulated"`, the raw
+  route is `public/get_last_trades_by_instrument`, mapping completeness is `false`, and verification
+  is `unverified`. The labelled raw result exposes the recent trade window; no historical
+  liquidation backfill is claimed. Task 550 owns the marker filter and normalized mapping.
+- *Compatibility:* task 565 removed the method. Task 570 restores it as callable labelled raw;
+  `Exchange.has?/2` is true because a raw primitive route exists, while `Bourse.describe/2` remains
+  the global method catalog.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T565a","date":"2026-08-08","semantic_source":{"kind":"provider_owned","reference":"Deribit public/get_last_settlements_by_instrument documentation"},"observed_evidence":{"kind":"live_venue","reference":"Deribit testnet fetchLiquidations BTC-PERPETUAL returned result.settlements 2026-08-08"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T565a","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"priv/authority/deribit api-openapi public/get_last_trades_by_instrument liquidation marker contract"},"observed_evidence":{"kind":"live_venue","reference":"The wrong settlements route returned settlement rows on testnet; a 2,000-row production recent-trades sample had no rare liquidation marker"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The provider primitive is documented, but no marked live trade is registered and the recent-window emulation is not implemented"}
 -->
 
 **C-T535a — Deribit publishes hourly funding history; an eight-hour query window is not the
@@ -282,7 +287,7 @@ slice left unresolved in the full vendored defaults:
 | --- | --- | --- | --- |
 | `fetchOrderTrades` | `order_id` | `source: "id"` (+ omit `symbol`) | `private/get_user_trades_by_order` requires `order_id` |
 | `fetchMyLiquidations` | `instrument_name` | `source: "symbol"` (+ date transform) | `private/get_settlement_history_by_instrument` |
-| `fetchLiquidations` | `instrument_name` | same | `public/get_last_settlements_by_instrument` |
+| `fetchLiquidations` | `instrument_name` | same | `public/get_last_trades_by_instrument` (task 570 re-adjudication) |
 | `fetchOpenInterest` | `instrument_name` | same | `public/get_book_summary_by_instrument` |
 | `fetchFundingRate` | `instrument_name` | same (8h window stays dynamic_construction) | `public/get_funding_rate_value` |
 | `transfer` / `withdraw` | `amount` / `address` | self-reference (same unified key) | closes residual `kind: unresolved` stubs |

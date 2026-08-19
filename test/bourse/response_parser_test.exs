@@ -1132,6 +1132,24 @@ defmodule Bourse.ResponseParserTest do
                ResponseParser.apply_mappings(%{"amount" => "0.0001", "price" => "104727.0"}, @cost_mul, target: Trade)
     end
 
+    test "treats an empty-string operand as missing" do
+      mapping = %{
+        "interval" => %{
+          "kind" => "computed",
+          "op" => "sub",
+          "operands" => ["nextFundingTime", "fundingTime"],
+          "coercion" => "safeNumber"
+        }
+      }
+
+      assert {:ok, %FundingRate{interval: nil}} =
+               ResponseParser.apply_mappings(
+                 %{"nextFundingTime" => "", "fundingTime" => "1787000000000"},
+                 mapping,
+                 target: FundingRate
+               )
+    end
+
     test "uses inverse_op when the market is inverse" do
       mapping = put_in(@cost_mul, ["cost", "inverse_op"], "div")
 

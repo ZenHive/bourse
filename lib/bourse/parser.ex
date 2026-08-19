@@ -45,15 +45,21 @@ defmodule Bourse.Parser do
   """
   @spec parse(term(), map() | nil, module(), keyword()) ::
           {:ok, struct() | [struct()]} | {:error, term()}
-  def parse(data, mapping, target, opts \\ [])
+  def parse(data, mapping, target, opts \\ []) do
+    if Keyword.get(opts, :operation_supported, true) do
+      parse_supported(data, mapping, target, opts)
+    else
+      {:error, {:unsupported_operation, Keyword.get(opts, :parse_slot)}}
+    end
+  end
 
-  def parse(_data, nil, _target, _opts), do: {:error, :no_field_map}
+  defp parse_supported(_data, nil, _target, _opts), do: {:error, :no_field_map}
 
-  def parse(_data, %{"_unresolved_reason" => reason}, _target, _opts) when not is_nil(reason) do
+  defp parse_supported(_data, %{"_unresolved_reason" => reason}, _target, _opts) when not is_nil(reason) do
     {:error, {:unresolved, reason}}
   end
 
-  def parse(data, mapping, target, opts) when is_map(mapping) do
+  defp parse_supported(data, mapping, target, opts) when is_map(mapping) do
     if parseable?(mapping) do
       apply_mappings(data, mapping,
         target: target,
@@ -73,7 +79,7 @@ defmodule Bourse.Parser do
     end
   end
 
-  def parse(_data, _mapping, _target, _opts), do: {:error, :no_field_map}
+  defp parse_supported(_data, _mapping, _target, _opts), do: {:error, :no_field_map}
 
   defp parseable?(%{"branches" => branches}) when is_list(branches) and branches != [], do: true
   defp parseable?(%{"field_map" => field_map}) when is_map(field_map) and map_size(field_map) > 0, do: true

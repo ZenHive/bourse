@@ -408,6 +408,26 @@ Outcome: CONFIRMED provider contract.**
 {"carve_id":"C-T540c","date":"2026-08-04","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binancecoinm/manifest.json artifact developer-docs-full; COIN-M funding-rate history parameters"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Provider-owned semantics and offline request shape are pinned; no task-specific live window recording is registered"}
 -->
 
+## 2026-08-19 — income and margin-adjustment support (Task 570)
+
+**C-T570c — Empty demo history establishes provider routing, not a complete Bourse mapping
+(task 570). Outcome: CONFIRM both operations are provider-supported and leave their mappings
+unverified.**
+
+- *Provider contract:* COIN-M documents Income History, including `incomeType=FUNDING_FEE`, and
+  Position Margin Change History for a symbol.
+- *Live reachability:* on 2026-08-09, signed calls to `dapiPrivate_get_income` with
+  `incomeType=FUNDING_FEE` and `dapiPrivate_get_positionmargin_history` for `BTCUSD_PERP`
+  returned HTTP 200 with empty lists on `demo-dapi.binance.com`.
+- *Three facts:* `fetchFundingHistory` and `fetchMarginAdjustmentHistory` record provider support
+  `true`, mapping completeness `false`, and verification `unverified`. Their generated raw routes
+  remain callable and return labelled `%Bourse.RawResponse{}` values. An empty response cannot
+  certify either normalized mapping.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T570c","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"priv/authority/binancecoinm/manifest.json Income History and Position Margin Change History contracts"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-09 demo-dapi.binance.com signed HTTP 200 empty-list responses for FUNDING_FEE income and BTCUSD_PERP position-margin history"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The demo wallet has no matching history, so the complete normalized mappings remain unverified"}
+-->
+
 **C-T592a — COIN-M income types and signed direction come from the complete Income History
 contract (task 592). Outcome: CONFIRM provider contract.**
 
