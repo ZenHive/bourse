@@ -692,7 +692,31 @@ defmodule Bourse.Unified.ReadParse do
     end
   end
 
+  # Singular funding-rate reads must not answer for a fundingless market or
+  # collapse an empty payload to `{:ok, []}`. Spot symbols alias onto the
+  # linear perp's compact id; the empty-list fallthrough is the unservable
+  # surface (task 646).
+  defp shape_parsed_result(parsed, "fetchFundingRate", false, params) do
+    shape_singular_funding_rate(parsed, params["symbol"])
+  end
+
   defp shape_parsed_result(parsed, _js_name, _list_return?, _params), do: {:ok, parsed}
+
+  defp shape_singular_funding_rate([], symbol) do
+    if fundingless_symbol?(symbol) do
+      {:error, {:fundingless_symbol, symbol}}
+    else
+      {:error, {:unservable_funding_symbol, symbol}}
+    end
+  end
+
+  defp shape_singular_funding_rate(parsed, symbol) do
+    if fundingless_symbol?(symbol) do
+      {:error, {:fundingless_symbol, symbol}}
+    else
+      {:ok, parsed}
+    end
+  end
 
   defp maybe_enrich_list(parsed, payload, js_name) when js_name in @dict_return_methods do
     enrich(parsed, payload, true)
@@ -1826,6 +1850,18 @@ defmodule Bourse.Unified.ReadParse do
     "Unexpected #{js_name} response shape: expected a list of rows to index by symbol, got #{parsed_shape_name(other)}"
   end
 
+  defp response_error_message({:fundingless_symbol, symbol}) do
+    "#{symbol} is fundingless; fetch_funding_rate requires a market that publishes funding"
+  end
+
+  defp response_error_message({:unservable_funding_symbol, symbol}) do
+    "#{symbol} is not servable on this funding-rate surface"
+  end
+
+  defp response_error_message({:funding_symbol_mismatch, requested, answered}) do
+    "fetch_funding_rate requested #{requested} but the venue answered for #{answered}"
+  end
+
   defp response_error_message({:unexpected_response_shape, _}), do: "Unexpected response shape for unified parse"
   defp response_error_message({:no_field_map, _raw}), do: "No field map available for unified parse"
 
@@ -1876,6 +1912,13 @@ defmodule Bourse.Unified.ReadParse do
   defp response_error_raw({:unmapped_ledger_type, details}), do: details
   defp response_error_raw({:unmapped_order_type, details}), do: details
   defp response_error_raw({:unexpected_symbol_dict_shape, _js_name, parsed}), do: parsed
+  defp response_error_raw({:fundingless_symbol, symbol}), do: %{reason: :fundingless_symbol, symbol: symbol}
+
+  defp response_error_raw({:unservable_funding_symbol, symbol}), do: %{reason: :unservable_funding_symbol, symbol: symbol}
+
+  defp response_error_raw({:funding_symbol_mismatch, requested, answered}),
+    do: %{reason: :funding_symbol_mismatch, requested: requested, answered: answered}
+
   defp response_error_raw({_tag, raw}), do: raw
   defp response_error_raw(_other), do: nil
 
@@ -2166,9 +2209,13 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   defp backfill_request_symbols(%{__struct__: Bourse.FundingRate} = fr, params, "funding_rate", false) do
-    # Single funding-rate reads are market-scoped, so the request symbol wins
-    # over native reverse parsing.
-    {:ok, %{fr | symbol: requested_symbol(params, fr.symbol)}}
+    # The venue-answered market is the identity. Stamping the requested
+    # unified symbol would re-label a linear perp row as the spot pair that
+    # shares its compact id (task 646).
+    case funding_rate_identity(params, fr.symbol) do
+      {:ok, symbol} -> {:ok, %{fr | symbol: symbol}}
+      {:error, _} = error -> error
+    end
   end
 
   defp backfill_request_symbols(%{__struct__: Bourse.BorrowRate} = rate, params, "borrow_rate", false) do
@@ -2190,10 +2237,21 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   # fetchFundingRates returns a list that is later re-keyed by symbol.
+  defp backfill_request_symbols([], params, "funding_rate", false) do
+    symbol = params["symbol"]
+
+    if fundingless_symbol?(symbol) do
+      {:error, {:fundingless_symbol, symbol}}
+    else
+      {:error, {:unservable_funding_symbol, symbol}}
+    end
+  end
+
   defp backfill_request_symbols(rates, params, "funding_rate", true) when is_list(rates) do
     # Multi-symbol funding-rates reads must keep native symbols for indexing;
-    # only a singular requested symbol is authoritative.
-    {:ok, Enum.map(rates, &%{&1 | symbol: requested_symbol(params, &1.symbol)})}
+    # only a singular requested symbol may fill a nil row, and never overwrite
+    # a different answered market.
+    {:ok, Enum.map(rates, &%{&1 | symbol: keep_answered_funding_symbol(params, &1.symbol)})}
   end
 
   defp backfill_request_symbols(%{__struct__: Bourse.FundingRateHistory} = fr, params, "funding_rate_history", false) do
@@ -2399,6 +2457,53 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   defp requested_symbol(_params, native_symbol), do: native_symbol
+
+  defp funding_rate_identity(params, parsed_symbol) do
+    requested = params["symbol"]
+
+    cond do
+      fundingless_symbol?(requested) ->
+        {:error, {:fundingless_symbol, requested}}
+
+      funding_symbol_mismatch?(requested, parsed_symbol) ->
+        {:error, {:funding_symbol_mismatch, requested, parsed_symbol}}
+
+      true ->
+        {:ok, choose_funding_symbol(requested, parsed_symbol)}
+    end
+  end
+
+  defp funding_symbol_mismatch?(requested, parsed_symbol) do
+    unified_symbol?(requested) and unified_symbol?(parsed_symbol) and requested != parsed_symbol
+  end
+
+  defp choose_funding_symbol(requested, parsed_symbol) do
+    cond do
+      unified_symbol?(requested) and not unified_symbol?(parsed_symbol) -> requested
+      is_binary(parsed_symbol) and parsed_symbol != "" -> parsed_symbol
+      is_binary(requested) -> requested
+      true -> parsed_symbol
+    end
+  end
+
+  defp keep_answered_funding_symbol(params, parsed_symbol) do
+    requested = params["symbol"]
+
+    cond do
+      unified_symbol?(parsed_symbol) -> parsed_symbol
+      unified_symbol?(requested) and not fundingless_symbol?(requested) -> requested
+      true -> parsed_symbol
+    end
+  end
+
+  defp fundingless_symbol?(symbol) when is_binary(symbol) do
+    case Symbol.parse_extended(symbol) do
+      {:ok, parsed} -> Symbol.detect_market_type(parsed) == :spot
+      {:error, _reason} -> false
+    end
+  end
+
+  defp fundingless_symbol?(_symbol), do: false
 
   defp put_if_nil(struct, field, value) do
     case Map.get(struct, field) do

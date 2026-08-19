@@ -106,7 +106,6 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
   test "Binance-family and OKX current funding rates publish provider cadence" do
     probes = [
       {:binance, "BTC/USDT:USDT", true},
-      {:binance, "BTC/USD:BTC", true},
       {:binanceusdm, "BTC/USDT:USDT", true},
       {:binancecoinm, "BTC/USD:BTC", true},
       {:okx, "BTC/USDT:USDT", true}
@@ -121,6 +120,27 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
       assert is_binary(interval) and Regex.match?(~r/^\d+h$/, interval),
              "#{exchange_id} returned invalid funding interval #{inspect(interval)}"
     end)
+  end
+
+  test "umbrella fetch_funding_rate refuses fundingless spot and unservable COIN-M" do
+    exchange = build_exchange(:binance, sandbox: true)
+
+    assert {:error, %Error{type: :exchange_error, message: spot_message, raw: spot_raw}} =
+             Bourse.fetch_funding_rate(exchange, "BTC/USDT")
+
+    assert spot_message =~ "BTC/USDT is fundingless"
+    assert spot_raw == %{reason: :fundingless_symbol, symbol: "BTC/USDT"}
+
+    assert {:error, %Error{type: :exchange_error, message: inverse_message, raw: inverse_raw}} =
+             Bourse.fetch_funding_rate(exchange, "BTC/USD:BTC")
+
+    assert inverse_message =~ "BTC/USD:BTC is not servable on this funding-rate surface"
+    assert inverse_raw == %{reason: :unservable_funding_symbol, symbol: "BTC/USD:BTC"}
+
+    assert {:ok, %Bourse.FundingRate{symbol: "BTC/USDT:USDT", funding_rate: rate}} =
+             Bourse.fetch_funding_rate(exchange, "BTC/USDT:USDT")
+
+    assert is_number(rate)
   end
 
   test "signed spot and USD-M balances parse funded account rows" do

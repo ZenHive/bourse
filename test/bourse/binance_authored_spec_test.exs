@@ -305,6 +305,32 @@ defmodule Bourse.BinanceAuthoredSpecTest do
     assert length(RequestCollector.requests(requests)) == 2
   end
 
+  test "fetch_funding_rate refuses fundingless and unservable symbols and keeps the answered market" do
+    exchange = Exchange.new!("binance", sandbox: true)
+    {_requests, perp_stub} = funding_rate_stub("BTCUSDT", "/fapi/v1/premiumIndex", "/fapi/v1/fundingInfo", 8)
+
+    assert {:error, %Bourse.Error{type: :exchange_error, message: spot_message, raw: spot_raw}} =
+             Bourse.fetch_funding_rate(exchange, "BTC/USDT", plug: {Req.Test, perp_stub})
+
+    assert spot_message =~ "BTC/USDT is fundingless"
+    assert spot_raw == %{reason: :fundingless_symbol, symbol: "BTC/USDT"}
+
+    empty_stub = unique_stub("binance_unservable_funding_rate")
+    Req.Test.stub(empty_stub, &Req.Test.json(&1, []))
+
+    assert {:error, %Bourse.Error{type: :exchange_error, message: inverse_message, raw: inverse_raw}} =
+             Bourse.fetch_funding_rate(exchange, "BTC/USD:BTC", plug: {Req.Test, empty_stub})
+
+    assert inverse_message =~ "BTC/USD:BTC is not servable on this funding-rate surface"
+    assert inverse_raw == %{reason: :unservable_funding_symbol, symbol: "BTC/USD:BTC"}
+
+    {_served_requests, served_stub} =
+      funding_rate_stub("BTCUSDT", "/fapi/v1/premiumIndex", "/fapi/v1/fundingInfo", 8)
+
+    assert {:ok, %Bourse.FundingRate{symbol: "BTC/USDT:USDT", funding_rate: 0.0001}} =
+             Bourse.fetch_funding_rate(exchange, "BTC/USDT:USDT", plug: {Req.Test, served_stub})
+  end
+
   test "Binance USD-M conditional order opts reach the Algo Order request" do
     for {trigger_opt, trigger_value, order_type, native_type, unified_type} <- [
           {:trigger_price, "3000", "market", "STOP_MARKET", "stop_market"},

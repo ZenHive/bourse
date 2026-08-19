@@ -6,6 +6,29 @@ Append-only schema confrontations for Binance spot. Follow the allocation and ev
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Binance spot carve record.
 
+## 2026-08-19 — fetch_funding_rate does not answer for fundingless or unservable markets (Task 646)
+
+**C-T646a — Spot has no funding; a compact-id collision must not borrow the linear perp's
+rate, and an empty premiumIndex must not become `{:ok, []}` (task 646).** Outcome:
+CONFIRM provider contract; DIVERGE from stamping the requested unified symbol onto
+whatever row `fapiPublicGetPremiumIndex` returned. Binance's
+[USD-M Mark Price](https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Mark-Price)
+and [COIN-M Index Price and Mark Price](https://developers.binance.com/docs/derivatives/coin-margined-futures/market-data/rest-api/Index-Price-and-Mark-Price)
+contracts are futures premium-index reads (`lastFundingRate` / `nextFundingTime`).
+Spot [Market Data](https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints)
+publishes no funding. Umbrella `fetchFundingRate` still defaults to
+`fapiPublic_get_premiumindex`; `BTC/USDT` and `BTC/USDT:USDT` share native id
+`BTCUSDT`, so the spot request was answered with the linear perp's rate and
+then relabelled as spot. A COIN-M symbol that this surface cannot serve
+(`BTC/USD:BTC` without a loaded `BTCUSD_PERP` id) previously returned
+`{:ok, []}`. The singular read now errors: fundingless names the spot symbol;
+unservable names the empty-list fallthrough; a served perp keeps the market
+the venue answered for.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T646a","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M Mark Price / COIN-M Index Price and Mark Price lastFundingRate; Spot Market Data has no funding"},"observed_evidence":{"kind":"live_venue","reference":"Live 2026-08-19 Exchange.new!(binance, sandbox: true) fetch_funding_rate BTC/USDT returned the linear perp rate labelled as spot; BTC/USDT:USDT same rate; BTC/USD:BTC {:ok, []}"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-18 — spot partial-book frames have no event type (Task 628)
 
 **C-T628a — Spot partial-book snapshots are `{lastUpdateId, bids, asks}` with no

@@ -129,6 +129,24 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
     end
   end
 
+  defmodule FundingRateRowParser do
+    @moduledoc false
+    def __response_envelopes__, do: %{}
+
+    def parse_funding_rate(rows, _opts) when is_list(rows), do: {:ok, []}
+
+    def parse_funding_rate(%{"symbol" => symbol} = row, _opts) do
+      {:ok,
+       %Bourse.FundingRate{
+         symbol: symbol,
+         funding_rate: Bourse.Safe.number(row["lastFundingRate"] || row["fundingRate"]),
+         timestamp: Bourse.Safe.integer(row["time"]),
+         mark_price: Bourse.Safe.number(row["markPrice"]),
+         info: row
+       }}
+    end
+  end
+
   defmodule BadCurrencyParser do
     @moduledoc false
     def __response_envelopes__ do
@@ -2084,6 +2102,101 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
                )
 
       assert [%Bourse.FundingRate{symbol: "BTC/USDT:USDT", funding_rate: 0.1}] = rates
+    end
+
+    test "singular fetch_funding_rate refuses a fundingless spot symbol" do
+      exchange = Exchange.new!("binance")
+
+      body = %{
+        "lastFundingRate" => "0.00008235",
+        "markPrice" => "64346.85",
+        "symbol" => "BTC/USDT:USDT",
+        "time" => 1_787_097_890_001
+      }
+
+      assert {:error, %Error{type: :exchange_error, message: message, raw: raw}} =
+               ReadParse.parse(
+                 exchange,
+                 FundingRateRowParser,
+                 :fetch_funding_rate,
+                 "fetchFundingRate",
+                 body,
+                 %{"symbol" => "BTC/USDT"},
+                 :parse_funding_rate,
+                 false
+               )
+
+      assert message =~ "BTC/USDT is fundingless"
+      assert raw == %{reason: :fundingless_symbol, symbol: "BTC/USDT"}
+    end
+
+    test "singular fetch_funding_rate refuses an empty payload as unservable" do
+      exchange = Exchange.new!("binance")
+
+      assert {:error, %Error{type: :exchange_error, message: message, raw: raw}} =
+               ReadParse.parse(
+                 exchange,
+                 FundingRateRowParser,
+                 :fetch_funding_rate,
+                 "fetchFundingRate",
+                 [],
+                 %{"symbol" => "BTC/USD:BTC"},
+                 :parse_funding_rate,
+                 false
+               )
+
+      assert message =~ "BTC/USD:BTC is not servable on this funding-rate surface"
+      assert raw == %{reason: :unservable_funding_symbol, symbol: "BTC/USD:BTC"}
+    end
+
+    test "singular fetch_funding_rate keeps the venue-answered market identity" do
+      exchange = Exchange.new!("binance")
+
+      body = %{
+        "lastFundingRate" => "0.00008235",
+        "markPrice" => "64346.85",
+        "symbol" => "BTC/USDT:USDT",
+        "time" => 1_787_097_890_001
+      }
+
+      assert {:ok, %Bourse.FundingRate{symbol: "BTC/USDT:USDT", funding_rate: 8.235e-5}} =
+               ReadParse.parse(
+                 exchange,
+                 FundingRateRowParser,
+                 :fetch_funding_rate,
+                 "fetchFundingRate",
+                 body,
+                 %{"symbol" => "BTC/USDT:USDT"},
+                 :parse_funding_rate,
+                 false
+               )
+    end
+
+    test "singular fetch_funding_rate refuses to re-label another market's row" do
+      exchange = Exchange.new!("binance")
+
+      body = %{
+        "lastFundingRate" => "0.00008235",
+        "markPrice" => "64346.85",
+        "symbol" => "BTC/USDT:USDT",
+        "time" => 1_787_097_890_001
+      }
+
+      assert {:error, %Error{type: :exchange_error, message: message, raw: raw}} =
+               ReadParse.parse(
+                 exchange,
+                 FundingRateRowParser,
+                 :fetch_funding_rate,
+                 "fetchFundingRate",
+                 body,
+                 %{"symbol" => "ETH/USDT:USDT"},
+                 :parse_funding_rate,
+                 false
+               )
+
+      assert message =~ "requested ETH/USDT:USDT"
+      assert message =~ "answered for BTC/USDT:USDT"
+      assert raw == %{reason: :funding_symbol_mismatch, requested: "ETH/USDT:USDT", answered: "BTC/USDT:USDT"}
     end
 
     test "order pagination cursor merges onto a single map payload" do
