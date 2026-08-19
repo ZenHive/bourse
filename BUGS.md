@@ -71,6 +71,87 @@ roadmap.
 
 ---
 
+## 2026-08-19 (later) — Dispatch wave 570 → 626 → 648 → 572: reviewer findings parked
+
+**Status:** 📋 recorded — NOT consumer reports. The four consumer-reported tasks kept by the
+admission-rule sweep below were dispatched and all four landed. These are the findings the
+reviewers and the whole-surface pass produced along the way; per CLAUDE.md § "The roadmap
+admits reported defects" (031c231) they stay here rather than re-entering the roadmap. A
+consumer report matching one of them re-admits the class with this entry as prior evidence.
+
+Landed: 570 `4667e8fc1b0a`, 626 `ec4784b38d9e`, 648 `f291108000f5`, 572 `2e25502e3fd3`.
+
+### W-570/648-A — `has?/2` answers false for a callable, working method
+
+**Class:** cross-task coherence gap — visible only on the integrated base. Neither per-task
+reviewer could see it: it is created by two separately-approved diffs.
+
+Task 570 redefined `Exchange.has?/2` as **the callable surface** (carve C-T570): the
+predicate answers "can a caller invoke this?". Task 648 then shipped
+`Bourse.fetch_account_facts/2` as a `Unified.call/5` special case that is not advertised in
+the authored `capabilities.has`. On the merged tree, for all six venues 648 actually mapped:
+
+```elixir
+Exchange.has?(ex, "fetchAccountFacts")   #=> false
+Bourse.fetch_account_facts(ex, %{})      #=> {:ok, %{...}}   # works
+```
+
+So the documented way to ask "can I call this?" says no about a working read, and a consumer
+that gates on `has?` silently skips it. Evidence: task 648 reviewer verdict, run
+`run-1787146246444-a5bab029`, concern 1.
+
+Two candidate resolutions; the choice is a **design decision, not a bug fix**, and is left to
+the maintainer:
+
+1. Advertise `fetchAccountFacts` in authored `capabilities.has` for the six mapped venues, so
+   `has?` answers true and 570's invariant holds as written; or
+2. State explicitly that `Unified.call` special cases sit outside the `has?` surface — which
+   weakens 570's "has? == callable" definition and requires the C-T570 carve to say so.
+
+### W-648-B — `fetch_account_facts` is `not_supported` on binanceusdm / binancecoinm
+
+**Class:** coverage gap (reviewer `proposed_tasks` entry, declined for the roadmap).
+
+Task 648 mapped alpaca, bybit, deribit, binance (spot module), hyperliquid and lighter.
+`binanceusdm` and `binancecoinm` were explicitly out of scope and hit the `not_supported`
+clause in `Unified.call`. The upstream fields do exist: USD-M `GET /fapi/v2/account` carries
+`positions[].isolated`, COIN-M `GET /dapi/v1/account` the same classification. Today the
+USD-M isolated facts are reachable only by constructing the **spot** `binance` exchange with
+futures credentials and `type: "swap"`.
+
+Consumer relevance: `trading_dashboard` constructs `binanceusdm` as a first-class exchange
+id, not as `binance` + `type`, so such a consumer sees `not_supported` for a surface the
+venue does expose.
+
+Reviewer's suggested shape, if this is ever admitted (D3 / B6 / U4, marker `parallel`): map
+`fetch_account_facts` onto both ids, deriving `position_margin_modes` from the provider
+`isolated` field, leaving `product_access` `unavailable` when `accountType`/`permissions` are
+absent, keeping the raw body in `info`, never copying `default_family` or the caller `type`
+into facts, with a live sandbox pin and a carve-register entry per venue. `fetch_balance` and
+`fetch_positions` stay untouched.
+
+**Why declined for the roadmap:** reviewer-measured coverage gap, not a reported defect. The
+attribution the proposal cited (the 2026-08-19 `has.createStopMarketOrder` entry in this
+file) was **withdrawn**, so it is not a consumer report for this surface either.
+
+### W-570-C — parse-coverage obligation grew 37 → 54 (measurement, not regression)
+
+Required by 570's own acceptance criteria: the obligation is computed from fact 1 AND NOT
+fact 2, so neither deleting a method nor labelling a read raw may shrink it. The +17 are the
+re-adjudicated cells — eight sandbox flips, the contract-based incompletes, binancecoinm
+funding/margin-adjustment history, and deribit `fetchLiquidations` re-adjudicated as
+emulated-from-trades. Recorded so a later session does not read the jump as a regression.
+
+### Nothing to park from 626 and 572
+
+Both landed with `review_warning: false`, zero concerns and zero proposed tasks, each with a
+live testnet confrontation of its core claim — 626: Deribit `BTC-CS-25SEP26-135000_160000`
+returned `mark_price -0.0683` against `index_price 64901.05`, i.e. a signed premium
+difference rather than an underlying; 572: Bybit `fetch_leverage_tiers` with no caller
+category returned a populated tier list. Recorded only so the sweep's coverage is legible.
+
+---
+
 ## 2026-08-19 — Admission-rule sweep: measured findings parked from the workbench roadmap
 
 **Status:** 📋 recorded — these are NOT consumer reports. Per CLAUDE.md § "The roadmap
