@@ -385,6 +385,12 @@ defmodule Bourse.StructValidatorsTest do
       assert :ok = assert_market_struct(market)
     end
 
+    test "accepts multi-leg venue market types" do
+      for type <- ["future_combo", "option_combo"] do
+        assert :ok = assert_market_struct(%Market{symbol: "BTC-COMBO", type: type})
+      end
+    end
+
     test "flunks without symbol" do
       assert_raise ExUnit.AssertionError, ~r/market\.symbol/, fn ->
         assert_market_struct(%Market{base: "BTC"})

@@ -159,13 +159,18 @@ leverage `"0"` means "never configured" (46/47 rows in the committed coinm recor
 ships as `%Bourse.Leverage{long_leverage: 0}` — a multipliable number. Honest form: nil with
 raw 0 in `info`.
 
-### W-612 — deribit combo inverse misclassification → FOLDED into workbench task 626
+### W-612 — deribit combo inverse misclassification → FIXED by workbench task 626
 
-`deribit_inverse_instrument_id?/1` reads option/future combos (`BTC-CS-…`, ~188/4971
-instruments) as inverse, so a symbol-less combo fill takes `amount / price` where combo
-amounts are base coin (`amount * price`) — an error off by price². Carried as an acceptance
-criterion on kept task 626 (consumer-reported), which owns the combo adjudication both
-classifiers must then agree on.
+**Status (2026-08-19):** ✅ fixed by task 626 (`aa3b358`, reviewer follow-up
+`ec4784b`). `deribit_inverse_instrument_id?/1` now positively identifies only
+inverse perpetuals, dated futures, and future spreads; option/combo and unknown
+shapes keep the multiplication identity. Parsed market rows are reconciled
+through the same classifier, and multi-leg markets preserve their venue kind
+without claiming single-leg `option` / `future` flags.
+
+Before the fix, option/future combos (`BTC-CS-…`, ~188/4971 instruments) were
+read as inverse, so a symbol-less combo fill took `amount / price` where combo
+amounts are base coin (`amount * price`) — an error off by price².
 
 ### W-629 — Binance COIN-M unified WS watch channels unauthored
 

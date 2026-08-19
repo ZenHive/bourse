@@ -182,7 +182,7 @@ defmodule Bourse.StructValidators do
   @min_ts_ms 1_230_940_800_000
   @max_ts_ms 2_147_483_648_000
 
-  @market_types ~w(spot swap future option margin index other)
+  @market_types ~w(spot swap future future_combo option option_combo margin index other)
   @trade_sides ~w(buy sell)
   @taker_or_maker ~w(taker maker)
   @position_sides ~w(long short)

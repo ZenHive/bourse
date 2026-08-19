@@ -9,6 +9,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- `Bourse.Market.combo?/1` identifies multi-leg strategy books, and
+  `quantity_resolvable?/1` tells exposure consumers whether a market carries
+  usable quantity semantics.
 - `Bourse.Position` gained `notional_currency` — the currency `notional` is
   denominated in, populated on the unified read path whenever `notional` is
   present. An unresolved currency fails loud rather than emitting an
@@ -51,6 +54,10 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+- **Breaking (deribit):** `fetch_markets` preserves multi-leg venue kinds as
+  `"option_combo"` / `"future_combo"` instead of reporting them as single-leg
+  `"option"` / `"future"` markets. Their corresponding single-leg flags stay
+  false, so type and capability signals no longer disagree.
 - `capabilities.has` is provider support only (`true` / `false` /
   `"emulated"`). Mapping completeness and verification are separate authored
   maps. `Bourse.Exchange.has?/2` reports the derived callable surface;
@@ -60,6 +67,10 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- Deribit option and option-combo amounts no longer take inverse-future
+  arithmetic when `instrument_type` says `reversed`. Loaded markets and the
+  instrument-id fallback now share the same positive inverse classifier;
+  unrecognized shapes keep the multiplication identity.
 - binance (USD-M umbrella), bybit linear and derive perpetual markets now
   populate `contract_size` from the venue's own contract unit (`1`,
   `quantity_unit: "base"`), closing the last known linear gaps. Each recipe was
