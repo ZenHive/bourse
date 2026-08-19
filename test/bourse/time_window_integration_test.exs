@@ -794,6 +794,24 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
            "exclusive cursor missing compensation: #{inspect(uncompensated)}"
   end
 
+  test "exclusive-cursor sweep includes translations that drop unified bounds without emitting native cursors" do
+    dropped = %{"ccy" => "USDT"}
+
+    assert exclusive_cursor_site?(:okx, :fetch_withdrawals, dropped, "before", "since")
+    assert exclusive_cursor_site?(:okx, :fetch_withdrawals, dropped, "after", "until")
+
+    refute exclusive_cursor_site?(
+             :okx,
+             :fetch_withdrawals,
+             Map.put(dropped, "since", @since_ms),
+             "before",
+             "since"
+           )
+
+    refute exclusive_cursor_site?(:okx, :fetch_positions_history, %{"after" => @until_ms}, "before", "since")
+    refute exclusive_cursor_site?(:okx, :fetch_my_trades, %{"begin" => @since_ms}, "before", "since")
+  end
+
   test "authored exclusive-cursor remaps carry the compensating transform" do
     uncompensated = uncompensated_exclusive_spec_remaps()
 
