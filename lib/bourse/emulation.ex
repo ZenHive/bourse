@@ -5,6 +5,12 @@ defmodule Bourse.Emulation do
   Uses extracted emulated method metadata to decide when a method should be
   derived at runtime instead of issuing HTTP or WebSocket requests.
 
+  Emulated reads forward the incoming parameter map into the nested method.
+  Only selectors listed in `@consumed_delegated_params` are stripped first
+  (local picks such as a singular `symbol` rewritten as `symbols`, or an
+  `id` used to select one row). Everything else, including `until` and
+  venue-native options, reaches the delegated call.
+
   The metadata index is cached in `:persistent_term` for the life of the VM.
   In a long-running dev session, `recompile/0` reloads modules but does not
   invalidate that cache — after editing a venue's `emulated_methods` slice,

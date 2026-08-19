@@ -155,6 +155,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   formats the symbol layer does not enumerate. Unsupported pairs and
   unmatched source strings pass through unchanged, so Bybit dated futures
   round-trip through unified methods.
+- Emulated unified reads forward the caller's full parameter map into the
+  nested method. Handlers used to rebuild that map from a few hardcoded
+  keys, so `until` and venue-native options never reached the delegated
+  request. Only locally consumed selectors (a singular `symbol` rewritten
+  as `symbols`, an `id` used to pick one row) are stripped.
 
 ## [0.6.0] - 2026-08-18
 
