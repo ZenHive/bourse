@@ -150,9 +150,13 @@ separate streams. `derive` has no authored handshake yet and connects without on
 Consumer-facing gotchas not obvious from the API signatures. Full context in
 [CLAUDE.md](https://github.com/ZenHive/bourse/blob/main/CLAUDE.md).
 
-- **`has?/2` is support introspection, while endpoint mapping is the dispatch
-  gate.** Cross-check a venue's generated `__unified_endpoints__/0` when choosing
-  among multiple native endpoint families.
+- **`has?/2` is the derived callable surface, not the provider-support
+  declaration.** Provider support lives on `venue_support/2` (and generated
+  `__venue_support__/0`); that is where order-type flags such as
+  `createMarketOrder` stay. A callable method with an incomplete mapping
+  returns `{:ok, %Bourse.RawResponse{}}` instead of a normalized struct.
+  Cross-check `__unified_endpoints__/0` when choosing among multiple native
+  endpoint families.
 
 - **Signing is a closed authored contract.** HMAC venues execute their authored
   deterministic recipes. Derive, Hyperliquid, and Lighter use bundled

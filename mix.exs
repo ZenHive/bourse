@@ -53,6 +53,7 @@ defmodule Bourse.MixProject do
           Bourse.UnifiedMethod,
           Bourse.Symbol,
           Bourse.Parser,
+          Bourse.RawResponse,
           Bourse.Dispatch,
           Bourse.HTTP,
           Bourse.Credentials,

@@ -739,7 +739,7 @@ Any venue-source, contract-coverage or field-judgment question opens `priv/autho
 
 Artifact **freshness**, **expressiveness** and **scope** are separate axes. A maintained Postman collection can be current but untyped; a frozen OpenAPI can be richly typed but stale. A manifest pin proves which bytes were reviewed, not that the artifact is complete.
 
-**Missing coverage fails open.** A declared unified read without an authored parse slice can return the provider's raw transport envelope inside `{:ok, ...}`; an operation absent from the authored spec is invisible even to that guard. Completeness work must measure both boundaries.
+**Missing coverage fails open.** A declared unified read without an authored parse slice returns `{:ok, %Bourse.RawResponse{}}` labelled with the provider payload, venue, method, and verification state; an operation the provider does not offer is invisible to that guard and a raw parse slot answers `{:error, {:unsupported_operation, slot}}`. Completeness work must measure both boundaries.
 
 ## Toolchain & check commands
 

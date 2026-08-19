@@ -19,7 +19,7 @@ defmodule Bourse.Parser do
 
   This is the runtime entry point for the generated per-exchange `parse_*`
   functions (`parse_ticker/2`, `parse_trade/2`, …). It applies the **Honesty
-  Rule** to the upstream Phase 12 field maps before delegating to
+  Rule** to the authored field maps before delegating to
   `apply_mappings/3`:
 
     * `operation_supported: false` → `{:error, {:unsupported_operation, slot}}`

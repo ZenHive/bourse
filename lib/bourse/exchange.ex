@@ -418,11 +418,11 @@ defmodule Bourse.Exchange do
         @spec __endpoints__() :: [map()]
         def __endpoints__, do: @bourse_endpoint_configs
 
-        @doc "Returns the exchange capability map."
+        @doc "Returns provider-support declarations (`true`, `false`, or `\"emulated\"`)."
         @spec __features__() :: map()
         def __features__, do: unquote(escaped_features)
 
-        @doc "Returns provider support independently of Bourse implementation."
+        @doc "Returns provider support independently of Bourse implementation. Same map as `__features__/0`."
         @spec __venue_support__() :: map()
         def __venue_support__, do: unquote(escaped_features)
 
@@ -554,7 +554,7 @@ defmodule Bourse.Exchange do
 
     - `__endpoints__/0` — #{meta.endpoint_count} raw REST endpoints
     - `__unified_endpoints__/0` — unified method → endpoint mapping
-    - `__features__/0` — provider-support declarations
+    - `__features__/0` / `__venue_support__/0` — provider-support declarations
     - `__mapping_complete__/0` — Bourse implementation completeness
     - `__verification__/0` — provider-verification state
     - `__signing__/0` — resolved signing pattern and config

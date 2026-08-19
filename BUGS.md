@@ -1719,3 +1719,10 @@ die fehlende Bourse-Semantik verdeckt.
 > ehrliche Antwort ist also der Unsupported-Operation-Fakt (Fakt 1 false), nicht
 > `:no_field_map` (Fakt 2); genau diese Verwechslung beendet Task 570. Für offene
 > Orders unterstützt deribit `parse_order/2`.
+>
+> **2026-08-19 — Bourse follow-up shipped:** Task 570 restored the three
+> independent facts. `Bourse.Deribit.parse_order_list/2` now returns
+> `{:error, {:unsupported_operation, "order_list"}}` instead of
+> `:no_field_map`. The empty-list snapshot the reporter wanted remains a
+> consumer-side interpretation of a provider-unsupported parse slot; open
+> orders continue to go through `parse_order/2`.

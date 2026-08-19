@@ -43,6 +43,20 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `mix ccxt.verify_ws_first_frame` and `mix ccxt.aggregate_live_lane` merge
   those surfaces into one durable `live-lane-report.json`. Silence after a
   successful connect is a named venue/channel failure, not a pass.
+- Incomplete unified reads return `{:ok, %Bourse.RawResponse{}}` labelled
+  with the provider payload, venue, method, and verification state. Callers
+  no longer receive an unlabelled transport envelope posing as a normalized
+  struct, and an offered-but-unmapped method stays callable instead of
+  disappearing from the surface.
+
+### Changed
+
+- `capabilities.has` is provider support only (`true` / `false` /
+  `"emulated"`). Mapping completeness and verification are separate authored
+  maps. `Bourse.Exchange.has?/2` reports the derived callable surface;
+  order-type flags such as `createMarketOrder` stay on
+  `venue_support/2`. A raw parse slot the provider does not offer answers
+  `{:error, {:unsupported_operation, slot}}` instead of `:no_field_map`.
 
 ### Fixed
 
@@ -152,9 +166,16 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `%Bourse.Error{type: :invalid_parameters}` so the non-bang unified API
   returns a tuple. Bang variants continue to raise.
 - Unified `convert_date/3` no longer raises `FunctionClauseError` for date
-  formats the symbol layer does not enumerate. Unsupported pairs and
-  unmatched source strings pass through unchanged, so Bybit dated futures
-  round-trip through unified methods.
+  formats the symbol layer does not enumerate. Unsupported format pairs
+  and unmatched source strings raise `ArgumentError` naming both formats
+  and the input.
+- Bybit dated-future unified symbols convert to venue-padded DDMMMYY
+  (`BTCUSDT-04SEP26`) instead of carrying the native expiry through. Deribit
+  keeps `convert_date/3`'s unpadded width (`BTC-4SEP26`).
+- Non-numeric order amounts and prices that previously raised `MatchError`
+  inside precision snapping now return
+  `{:error, %Bourse.Error{type: :invalid_parameters}}` at the non-bang
+  unified boundary. Bang variants continue to raise.
 - Emulated unified reads forward the caller's full parameter map into the
   nested method. Handlers used to rebuild that map from a few hardcoded
   keys, so `until` and venue-native options never reached the delegated

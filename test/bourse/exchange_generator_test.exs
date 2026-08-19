@@ -128,8 +128,19 @@ defmodule Bourse.ExchangeGeneratorTest do
       features = Bybit.__features__()
       assert is_map(features)
       assert features == Bourse.Spec.load!("bybit")["capabilities"]["has"]
+      assert features == Bybit.__venue_support__()
       assert Enum.all?(features, fn {_method, declaration} -> declaration in [true, false, "emulated"] end)
       assert features["fetchTicker"] == true
+    end
+
+    test "__mapping_complete__ and __verification__ cover every unified method" do
+      spec = Bourse.Spec.load!("bybit")
+      methods = spec["endpoints"]["unified"] |> Map.keys() |> Enum.sort()
+
+      assert Bybit.__mapping_complete__() |> Map.keys() |> Enum.sort() == methods
+      assert Bybit.__verification__() |> Map.keys() |> Enum.sort() == methods
+      assert Bybit.__mapping_complete__() == spec["capabilities"]["mapping_complete"]
+      assert Bybit.__verification__() == spec["capabilities"]["verification"]
     end
 
     test "__endpoints__ returns list of endpoint configs" do

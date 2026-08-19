@@ -414,7 +414,8 @@ defmodule Bourse.Symbol do
         "#{year_str}#{pad_two(month)}#{pad_two(day)}"
 
       _ ->
-        date_str
+        raise ArgumentError,
+              "cannot convert #{inspect(date_str)} from :ddmmmyy to :yymmdd"
     end
   end
 

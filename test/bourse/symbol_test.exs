@@ -1656,8 +1656,10 @@ defmodule Bourse.SymbolTest do
   end
 
   describe "convert_date/3 edge cases" do
-    test "returns invalid ddmmmyy strings unchanged" do
-      assert "not-a-date" = Symbol.convert_date("not-a-date", :ddmmmyy, :yymmdd)
+    test "raises when a ddmmmyy string does not match the declared source format" do
+      assert_raise ArgumentError, ~r/cannot convert "not-a-date" from :ddmmmyy to :yymmdd/, fn ->
+        Symbol.convert_date("not-a-date", :ddmmmyy, :yymmdd)
+      end
     end
   end
 
