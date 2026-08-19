@@ -1127,11 +1127,9 @@ defmodule Bourse.Unified.RequestShapeTest do
                "request" => [%{"symbol" => "LTCUSDT", "orderId" => "order-1"}]
              }
 
-      assert RequestShape.apply(
-               %{"ids" => ["order-1"], "params" => %{"foo" => "bar"}},
-               exchange,
-               "cancelOrders"
-             ) == %{"request" => [%{"orderId" => "order-1"}]}
+      assert_raise Error, ~r/Missing required `category` for cancelOrders/, fn ->
+        RequestShape.apply(%{"ids" => ["order-1"], "params" => %{"foo" => "bar"}}, exchange, "cancelOrders")
+      end
     end
 
     test "keeps extra params maps out of bybit position-mode symbols" do
@@ -1143,11 +1141,9 @@ defmodule Bourse.Unified.RequestShapeTest do
                "setPositionMode"
              ) == %{"category" => "linear", "symbol" => "LTCUSDT", "mode" => 3}
 
-      assert RequestShape.apply(
-               %{"hedge_mode" => true, "params" => %{"foo" => "bar"}},
-               exchange,
-               "setPositionMode"
-             ) == %{"mode" => 3}
+      assert_raise Error, ~r/Missing required `category` for setPositionMode/, fn ->
+        RequestShape.apply(%{"hedge_mode" => true, "params" => %{"foo" => "bar"}}, exchange, "setPositionMode")
+      end
     end
 
     test "keeps extra params maps out of bybit single-order lookup symbols" do
@@ -1162,13 +1158,11 @@ defmodule Bourse.Unified.RequestShapeTest do
         assert shaped["orderId"] == "order-1"
       end
 
-      # The originally reported repro: an extra-params map and no symbol at all.
+      # An order id does not identify which Bybit market family owns the order.
       for js_name <- ["fetchOrder", "fetchOpenOrder", "fetchClosedOrder"] do
-        shaped = RequestShape.apply(%{"id" => "order-1", "params" => %{"foo" => "bar"}}, exchange, js_name)
-
-        assert shaped["category"] == "spot"
-        assert shaped["orderId"] == "order-1"
-        refute Map.has_key?(shaped, "symbol")
+        assert_raise Error, ~r/Missing required `category` for #{js_name}/, fn ->
+          RequestShape.apply(%{"id" => "order-1", "params" => %{"foo" => "bar"}}, exchange, js_name)
+        end
       end
     end
 
@@ -1612,6 +1606,7 @@ defmodule Bourse.Unified.RequestShapeTest do
       assert %{"category" => "linear", "request" => [%{"symbol" => "LTCUSDT", "qty" => "1", "price" => "60"}]} =
                Bybit.build(
                  %{
+                   "category" => "linear",
                    "orders" => [
                      %{
                        "symbol" => "LTC/USDT:USDT",
@@ -1629,7 +1624,7 @@ defmodule Bourse.Unified.RequestShapeTest do
 
       assert %{"category" => "linear", "request" => [%{"symbol" => "LTCUSDT", "orderId" => "order-1"}]} =
                Bybit.build(
-                 %{"orders" => [%{"symbol" => "LTC/USDT:USDT", "id" => "order-1"}]},
+                 %{"category" => "linear", "orders" => [%{"symbol" => "LTC/USDT:USDT", "id" => "order-1"}]},
                  "cancelOrdersForSymbols",
                  exchange,
                  %{}
@@ -1669,18 +1664,19 @@ defmodule Bourse.Unified.RequestShapeTest do
 
     test "handles Bybit native-symbol and scalar boundary inputs" do
       exchange = Exchange.new!("bybit")
-      spot_default = %{exchange | options: Map.put(exchange.options, "defaultType", "spot")}
 
       assert %{"category" => "inverse"} =
                Bybit.build(
-                 %{"orders" => [%{"symbol" => "BTCUSD", "id" => "order-1"}]},
+                 %{"category" => "inverse", "orders" => [%{"symbol" => "BTCUSD", "id" => "order-1"}]},
                  "cancelOrdersForSymbols",
                  exchange,
                  %{}
                )
 
-      assert %{"category" => "spot"} = Bybit.build(%{}, "fetchTickers", spot_default, %{})
-      assert %{"category" => "linear"} = Bybit.build(%{"symbols" => ["not-a-symbol"]}, "fetchTickers", exchange, %{})
+      assert %{"category" => "spot"} = Bybit.build(%{"category" => "spot"}, "fetchTickers", exchange, %{})
+
+      assert %{"category" => "linear"} =
+               Bybit.build(%{"category" => "linear", "symbols" => ["not-a-symbol"]}, "fetchTickers", exchange, %{})
 
       assert %{"side" => ""} =
                Bybit.build(
@@ -2087,7 +2083,11 @@ defmodule Bourse.Unified.RequestShapeTest do
       {:ok, exchange} = Exchange.new("bybit")
 
       assert RequestShape.apply_premarket(%{}, exchange, "fetchTicker") == %{}
-      assert RequestShape.apply_premarket(%{"symbols" => []}, exchange, "fetchTickers") == %{"symbols" => []}
+
+      assert RequestShape.apply_premarket(%{"symbols" => []}, exchange, "fetchTickers") == %{
+               "category" => "linear",
+               "symbols" => []
+             }
     end
 
     test "covers legacy dynamic resolution construction" do

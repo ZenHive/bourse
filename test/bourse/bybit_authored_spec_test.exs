@@ -16,6 +16,37 @@ defmodule Bourse.BybitAuthoredSpecTest do
     assert exchange.request_defaults["fetchBalance"]["accountType"] == "UNIFIED"
   end
 
+  test "fetch_leverage_tiers authors linear category without caller input" do
+    fixture = "test/fixtures/responses/bybit/fetch_leverage_tiers.json" |> File.read!() |> Jason.decode!()
+    {:ok, requests} = RequestCollector.start_link()
+
+    assert {:ok, [%Bourse.LeverageTier{} | _]} =
+             Bourse.fetch_leverage_tiers(
+               Exchange.new!("bybit", sandbox: true),
+               plug: {Req.Test, stub(requests, fixture["body"])}
+             )
+
+    assert_request!(requests, "/v5/market/risk-limit", %{"category" => "linear"})
+  end
+
+  test "ambiguous order lookup returns the authored required-category error before dispatch" do
+    {:ok, requests} = RequestCollector.start_link()
+    exchange = Exchange.new!("bybit", api_key: "test-key", secret: "test-secret", sandbox: true)
+
+    assert {:error,
+            %Bourse.Error{
+              type: :invalid_parameters,
+              raw: %{
+                "method" => "fetchOrder",
+                "parameter" => "category",
+                "reason" => "missing_required_param"
+              }
+            }} =
+             Bourse.fetch_order(exchange, "order-1", plug: {Req.Test, stub(requests, %{})})
+
+    assert RequestCollector.requests(requests) == []
+  end
+
   test "unified wallet balance branches free and used per coin" do
     body = %{
       "retCode" => 0,
@@ -1030,16 +1061,18 @@ defmodule Bourse.BybitAuthoredSpecTest do
   test "order-trades request shape tolerates an extra-params map in the positional slot" do
     exchange = Exchange.new!("bybit", api_key: "k", secret: "s")
 
-    # The positional `params` slot carries extra params as a map when the caller
-    # passes no symbol; it must never be read as the symbol (FunctionClauseError).
-    request =
-      %{"id" => "123", "params" => %{"orderLinkId" => "abc"}}
-      |> RequestShape.apply_premarket(exchange, "fetchOrderTrades")
-      |> RequestShape.apply(exchange, "fetchOrderTrades")
+    error =
+      assert_raise Bourse.Error, fn ->
+        %{"id" => "123", "params" => %{"orderLinkId" => "abc"}}
+        |> RequestShape.apply_premarket(exchange, "fetchOrderTrades")
+        |> RequestShape.apply(exchange, "fetchOrderTrades")
+      end
 
-    assert request["category"] == "linear"
-    assert request["orderId"] == "123"
-    refute Map.has_key?(request, "symbol")
+    assert error.raw == %{
+             "method" => "fetchOrderTrades",
+             "parameter" => "category",
+             "reason" => "missing_required_param"
+           }
 
     # The symbol travels in its own `"symbol"` channel, never the positional slot.
     with_symbol =

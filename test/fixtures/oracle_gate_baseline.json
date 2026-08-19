@@ -210,6 +210,7 @@
         "request_shape.fetchBalance",
         "request_shape.fetchFundingRates",
         "request_shape.fetchGreeks",
+        "request_shape.fetchLeverageTiers",
         "request_shape.fetchMarkets",
         "request_shape.fetchMyTrades",
         "request_shape.fetchOHLCV",

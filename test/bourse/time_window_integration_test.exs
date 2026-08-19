@@ -1134,6 +1134,7 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
         "since" => @since_ms,
         "until" => @until_ms
       })
+      |> maybe_put_bybit_category(venue, js_name)
 
     shape_opts = [
       endpoint_path: endpoint_path(venue, method),
@@ -1147,6 +1148,9 @@ defmodule Bourse.TimeWindowProbeInventoryTest do
     |> Unified.maybe_merge_request_defaults(exchange, js_name)
     |> RequestShape.apply(exchange, js_name, shape_opts)
   end
+
+  defp maybe_put_bybit_category(params, :bybit, "fetchOrderTrades"), do: Map.put(params, "category", "linear")
+  defp maybe_put_bybit_category(params, _venue, _js_name), do: params
 
   defp window_exchange(venue) do
     Exchange.new!(Atom.to_string(venue),

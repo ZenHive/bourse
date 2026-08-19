@@ -160,8 +160,7 @@ defmodule Bourse.RecordedResponseFixtures.Capture do
       {"bybit", :fetch_leverage_tiers} =>
         public("v5/market/risk-limit", "api-testnet.bybit.com", nil,
           environment: "testnet-demo",
-          exchange_opts: [sandbox: true],
-          params: %{"category" => "linear"}
+          exchange_opts: [sandbox: true]
         ),
       {"deribit", :fetch_ticker} => public("public/ticker", "www.deribit.com", "BTC-PERPETUAL"),
       {"deribit", :fetch_trades} => public("public/get_last_trades_by_instrument", "www.deribit.com", "BTC-PERPETUAL"),

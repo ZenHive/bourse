@@ -98,7 +98,11 @@ defmodule Bourse.Unified.OrderPrecisionTest do
     exchange = exchange("bybit")
 
     assert %{"qty" => "0.123456", "price" => "60.423"} =
-             RequestShape.apply(order("LTCUSDT", 0.123_456, 60.423), exchange, "createOrder")
+             RequestShape.apply(
+               Map.put(order("LTCUSDT", 0.123_456, 60.423), "category", "linear"),
+               exchange,
+               "createOrder"
+             )
   end
 
   test "dispatch shaping names missing precision fields on a loaded market" do
@@ -198,7 +202,7 @@ defmodule Bourse.Unified.OrderPrecisionTest do
       ])
 
     assert %{"qty" => "0.123", "price" => "60.4"} =
-             RequestShape.apply(order("BTCUSDT"), bybit, "createOrder", @dispatch_opts)
+             RequestShape.apply(Map.put(order("BTCUSDT"), "category", "spot"), bybit, "createOrder", @dispatch_opts)
 
     assert %{"sz" => "0.123", "px" => "60.4"} =
              RequestShape.apply(order("BTC-USDT"), okx, "createOrder", @dispatch_opts)
@@ -284,10 +288,7 @@ defmodule Bourse.Unified.OrderPrecisionTest do
              )
   end
 
-  test "a guard-passing Bybit editOrder without an explicit category still rounds to the tick grid" do
-    # The guard resolves a market by symbol alone, but Bybit's own precision
-    # lookup keys on category too. An unset category used to pass the guard and
-    # then silently skip rounding — the guard passing must imply the shape rounds.
+  test "a guard-passing Bybit editOrder with its authored category rounds to the tick grid" do
     exchange =
       "bybit"
       |> exchange()
@@ -297,14 +298,20 @@ defmodule Bourse.Unified.OrderPrecisionTest do
 
     shaped =
       RequestShape.apply(
-        %{"symbol" => "LTCUSDT", "id" => "123", "amount" => 0.144_444_423, "price" => 60.423_777_7},
+        %{
+          "category" => "spot",
+          "symbol" => "LTCUSDT",
+          "id" => "123",
+          "amount" => 0.144_444_423,
+          "price" => 60.423_777_7
+        },
         exchange,
         "editOrder",
         @dispatch_opts
       )
 
     assert %{"qty" => "0.14", "price" => "60.42"} = shaped
-    refute Map.has_key?(shaped, "category")
+    assert shaped["category"] == "spot"
   end
 
   test "unified Bybit edit resolves a same-id linear market before symbol denormalization" do

@@ -36,7 +36,7 @@ defmodule Bourse.Unified.RequestShape.Bybit do
 
   defp create_order(params, js_name, exchange) do
     params = market_cost_params(params, js_name)
-    category = category(params, exchange)
+    category = params["category"]
     type = Map.get(params, "type", "market")
     side = Map.get(params, "side", if(js_name == "createMarketSellOrderWithCost", do: "sell", else: "buy"))
     trading_stop? = trading_stop?(params, category)
@@ -273,9 +273,9 @@ defmodule Bourse.Unified.RequestShape.Bybit do
          params["tradingStopEndpoint"] == true)
   end
 
-  defp batch_orders(%{"orders" => [first | _] = orders}, exchange, item_builder) do
+  defp batch_orders(%{"orders" => [_first | _] = orders} = params, _exchange, item_builder) do
     %{
-      "category" => category(%{"symbol" => first["symbol"]}, exchange),
+      "category" => params["category"],
       "request" => Enum.map(orders, item_builder)
     }
   end
@@ -347,14 +347,14 @@ defmodule Bourse.Unified.RequestShape.Bybit do
     # RequestShape), and a bybit id like `LTCUSDT` is shared by the spot and
     # linear-swap markets — unresolvable back to a category. `apply_premarket`
     # resolved it from the still-unified symbol, so prefer that.
-    %{"category" => category(%{"category" => params["category"], "symbol" => symbol}, exchange), "request" => requests}
+    %{"category" => params["category"], "request" => requests}
   end
 
   defp cancel_orders_for_symbols(params, exchange) do
     orders = params["orders"] || []
 
     %{
-      "category" => category(%{"symbol" => get_in(List.first(orders) || %{}, ["symbol"])}, exchange),
+      "category" => params["category"],
       "request" => Enum.map(orders, &%{"symbol" => native_symbol(&1["symbol"], exchange), "orderId" => &1["id"]})
     }
   end
@@ -463,7 +463,7 @@ defmodule Bourse.Unified.RequestShape.Bybit do
     # shared by the spot and linear-swap markets — unresolvable back to a
     # category. `apply_premarket` resolved it from the still-unified symbol.
     %{
-      "category" => category(%{"category" => params["category"], "symbol" => symbol}, exchange),
+      "category" => params["category"],
       "symbol" => native_symbol(symbol, exchange),
       "mode" => if(params["hedge_mode"], do: 3, else: 0)
     }
@@ -484,8 +484,8 @@ defmodule Bourse.Unified.RequestShape.Bybit do
     })
   end
 
-  defp tickers_request(params, exchange) do
-    category = params["category"] || category(params, exchange) || default_category(exchange)
+  defp tickers_request(params, _exchange) do
+    category = params["category"]
     base = params["baseCoin"] || params["code"] || base_from_symbols(params["symbols"])
     base = if category == "option", do: base || "BTC", else: base
 
@@ -521,7 +521,7 @@ defmodule Bourse.Unified.RequestShape.Bybit do
     symbol = params["symbol"]
 
     clean(%{
-      "category" => params["category"] || category(%{"symbol" => symbol}, exchange) || "spot",
+      "category" => params["category"],
       "symbol" => native_symbol(symbol, exchange),
       "orderId" => params["id"],
       "orderStatus" => params["status"] || if(js_name == "fetchClosedOrder", do: "Filled")
@@ -529,7 +529,7 @@ defmodule Bourse.Unified.RequestShape.Bybit do
   end
 
   defp orders_lookup(params, js_name) do
-    category = params["category"] || default_order_category(params)
+    category = params["category"]
 
     clean(%{
       "category" => category,
@@ -542,12 +542,6 @@ defmodule Bourse.Unified.RequestShape.Bybit do
     })
   end
 
-  # Bybit returns retCode 10005 ("Permission denied") for order/execution reads that
-  # omit `category` — not a real auth failure. Default to linear.
-  defp default_order_category(%{"category" => category}) when is_binary(category), do: category
-  defp default_order_category(%{"symbol" => symbol}) when is_binary(symbol), do: nil
-  defp default_order_category(_params), do: "linear"
-
   defp order_settle_coin(%{"settleCoin" => settle}, _category) when is_binary(settle), do: settle
   defp order_settle_coin(%{"symbol" => symbol}, _category) when is_binary(symbol), do: nil
   defp order_settle_coin(_params, category) when category in ["linear", "inverse"], do: "USDT"
@@ -555,7 +549,7 @@ defmodule Bourse.Unified.RequestShape.Bybit do
 
   defp order_trades_request(params, exchange) do
     symbol = params["symbol"]
-    category = params["category"] || category(%{"symbol" => symbol}, exchange) || "linear"
+    category = params["category"]
 
     clean(%{
       "category" => category,
@@ -570,7 +564,7 @@ defmodule Bourse.Unified.RequestShape.Bybit do
 
   defp leverage_tiers_request(params, exchange) do
     symbol = params["symbol"]
-    category = params["category"] || category(%{"symbol" => symbol}, exchange)
+    category = params["category"]
 
     clean(%{
       "category" => category,
@@ -604,7 +598,7 @@ defmodule Bourse.Unified.RequestShape.Bybit do
 
   defp history_request(params, js_name, exchange) do
     symbol = first_symbol(params) || params["symbol"]
-    category = params["category"] || category(%{"symbol" => symbol}, exchange) || "linear"
+    category = params["category"]
 
     clean(%{
       "category" => category,
@@ -775,13 +769,6 @@ defmodule Bourse.Unified.RequestShape.Bybit do
       :spot -> "spot"
       :option -> "option"
       type when type in [:swap, :future] -> if(settle in ["USDT", "USDC"], do: "linear", else: "inverse")
-    end
-  end
-
-  defp default_category(exchange) do
-    case exchange.options["defaultType"] do
-      "spot" -> "spot"
-      _ -> "linear"
     end
   end
 

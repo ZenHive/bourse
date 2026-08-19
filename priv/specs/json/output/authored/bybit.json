@@ -4197,7 +4197,8 @@
             "value": null
           },
           "category": {
-            "reason": "conditional_value"
+            "kind": "omit",
+            "reason": "not_applicable"
           },
           "coin": {
             "kind": "unresolved",
@@ -4208,7 +4209,10 @@
         "cancelAllOrders": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "default": "linear"
           }
         },
         "cancelAllOrdersAfter": {
@@ -4221,15 +4225,17 @@
         "cancelOrder": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           }
         },
         "cancelOrders": {
           "_builder": "bybit_v5",
           "category": {
-            "kind": "unresolved",
-            "reason": "conditional_value",
-            "value": null
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           },
           "request": {
             "kind": "unresolved",
@@ -4240,9 +4246,9 @@
         "cancelOrdersForSymbols": {
           "_builder": "bybit_v5",
           "category": {
-            "kind": "unresolved",
-            "reason": "conditional_value",
-            "value": null
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           },
           "request": {
             "kind": "unresolved",
@@ -4253,7 +4259,8 @@
         "createConvertTrade": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "omit",
+            "reason": "not_applicable"
           },
           "quoteTxId": {
             "kind": "unresolved",
@@ -4264,27 +4271,49 @@
         "createMarketBuyOrderWithCost": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "type_sources": [
+              "subType",
+              "sub_type"
+            ]
           }
         },
         "createMarketSellOrderWithCost": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "type_sources": [
+              "subType",
+              "sub_type"
+            ]
           }
         },
         "createOrder": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "type_sources": [
+              "subType",
+              "sub_type"
+            ]
           }
         },
         "createOrders": {
           "_builder": "bybit_v5",
           "category": {
-            "kind": "unresolved",
-            "reason": "conditional_value",
-            "value": null
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "type_sources": [
+              "subType",
+              "sub_type"
+            ]
           },
           "request": {
             "kind": "unresolved",
@@ -4295,15 +4324,25 @@
         "editOrder": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "type_sources": [
+              "subType",
+              "sub_type"
+            ]
           }
         },
         "editOrders": {
           "_builder": "bybit_v5",
           "category": {
-            "kind": "unresolved",
-            "reason": "conditional_value",
-            "value": null
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "type_sources": [
+              "subType",
+              "sub_type"
+            ]
           },
           "request": {
             "kind": "unresolved",
@@ -4320,7 +4359,6 @@
           },
           "category": {
             "kind": "literal",
-            "reason": "conditional_value",
             "value": "option"
           }
         },
@@ -4331,13 +4369,15 @@
             "value": "UNIFIED"
           },
           "category": {
-            "reason": "conditional_value"
+            "kind": "omit",
+            "reason": "not_applicable"
           }
         },
         "fetchBorrowRateHistory": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "omit",
+            "reason": "not_applicable"
           },
           "currency": {
             "kind": "unresolved",
@@ -4348,25 +4388,36 @@
         "fetchCanceledAndClosedOrders": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "default": "linear"
           }
         },
         "fetchCanceledOrders": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "default": "linear"
           }
         },
         "fetchClosedOrder": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           }
         },
         "fetchClosedOrders": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "default": "linear"
           }
         },
         "fetchConvertCurrencies": {
@@ -4377,7 +4428,8 @@
             "value": null
           },
           "category": {
-            "reason": "conditional_value"
+            "kind": "omit",
+            "reason": "not_applicable"
           }
         },
         "fetchConvertQuote": {
@@ -4388,7 +4440,8 @@
             "value": null
           },
           "category": {
-            "reason": "conditional_value"
+            "kind": "omit",
+            "reason": "not_applicable"
           },
           "fromCoin": {
             "kind": "unresolved",
@@ -4419,7 +4472,8 @@
             "value": null
           },
           "category": {
-            "reason": "conditional_value"
+            "kind": "omit",
+            "reason": "not_applicable"
           },
           "quoteTxId": {
             "kind": "unresolved",
@@ -4430,7 +4484,8 @@
         "fetchConvertTradeHistory": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "omit",
+            "reason": "not_applicable"
           }
         },
         "fetchCrossBorrowRate": {
@@ -4465,7 +4520,9 @@
         "fetchDerivativesMarketLeverageTiers": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           },
           "symbol": {
             "kind": "unresolved",
@@ -4475,9 +4532,9 @@
         },
         "fetchDerivativesOpenInterestHistory": {
           "category": {
-            "kind": "unresolved",
-            "reason": "identifier_reference",
-            "value": null
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           },
           "intervalTime": {
             "kind": "unresolved",
@@ -4493,7 +4550,10 @@
         "fetchFundingHistory": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "default": "linear"
           },
           "execType": {
             "kind": "literal",
@@ -4504,7 +4564,9 @@
         "fetchFundingRateHistory": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           },
           "limit": {
             "kind": "unresolved",
@@ -4514,15 +4576,19 @@
         },
         "fetchFundingRates": {
           "category": {
-            "kind": "unresolved",
-            "reason": "conditional_value",
-            "value": null
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "default": "linear"
           }
         },
         "fetchFutureMarkets": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "default": "linear"
           },
           "limit": {
             "kind": "literal",
@@ -4532,7 +4598,6 @@
         "fetchGreeks": {
           "category": {
             "kind": "literal",
-            "reason": null,
             "value": "option"
           },
           "symbol": {
@@ -4544,21 +4609,24 @@
         "fetchLedger": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "omit",
+            "reason": "not_applicable"
           }
         },
         "fetchLeverage": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           }
         },
         "fetchLongShortRatioHistory": {
           "_builder": "bybit_v5",
           "category": {
-            "kind": "unresolved",
-            "reason": "conditional_value",
-            "value": null
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           },
           "period": {
             "kind": "unresolved",
@@ -4574,26 +4642,33 @@
         "fetchMarginMode": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "omit",
+            "reason": "not_applicable"
           }
         },
         "fetchMarketLeverageTiers": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           }
         },
         "fetchMarkets": {
           "category": {
-            "kind": "unresolved",
-            "reason": "conditional_value",
-            "value": null
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "default": "spot"
           }
         },
         "fetchMyLiquidations": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "default": "linear"
           },
           "execType": {
             "kind": "literal",
@@ -4604,7 +4679,10 @@
         "fetchMyTrades": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "default": "linear"
           },
           "execType": {
             "kind": "literal",
@@ -4615,9 +4693,9 @@
         "fetchOHLCV": {
           "_builder": "bybit_v5",
           "category": {
-            "kind": "unresolved",
-            "reason": "conditional_value",
-            "value": null
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           },
           "interval": {
             "kind": "unresolved",
@@ -4633,9 +4711,9 @@
         "fetchOpenInterest": {
           "_builder": "bybit_v5",
           "category": {
-            "kind": "unresolved",
-            "reason": "conditional_value",
-            "value": null
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           },
           "intervalTime": {
             "kind": "unresolved",
@@ -4651,20 +4729,24 @@
         "fetchOpenOrder": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           }
         },
         "fetchOpenOrders": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "default": "linear"
           }
         },
         "fetchOption": {
           "_builder": "bybit_v5",
           "category": {
             "kind": "literal",
-            "reason": "conditional_value",
             "value": "option"
           },
           "symbol": {
@@ -4682,23 +4764,21 @@
           },
           "category": {
             "kind": "literal",
-            "reason": "conditional_value",
             "value": "option"
           }
         },
         "fetchOptionMarkets": {
           "category": {
             "kind": "literal",
-            "reason": null,
             "value": "option"
           }
         },
         "fetchOrder": {
           "_builder": "bybit_v5",
           "category": {
-            "kind": "unresolved",
-            "reason": "conditional_value",
-            "value": null
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           },
           "orderId": {
             "kind": "unresolved",
@@ -4713,9 +4793,9 @@
         },
         "fetchOrderBook": {
           "category": {
-            "kind": "unresolved",
-            "reason": "conditional_value",
-            "value": null
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           },
           "symbol": {
             "kind": "unresolved",
@@ -4726,19 +4806,25 @@
         "fetchOrderClassic": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           }
         },
         "fetchOrderTrades": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           }
         },
         "fetchPosition": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           },
           "symbol": {
             "kind": "unresolved",
@@ -4749,35 +4835,40 @@
         "fetchPositionADLRank": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           }
         },
         "fetchPositions": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "default": "linear"
           }
         },
         "fetchPositionsHistory": {
           "_builder": "bybit_v5",
           "category": {
-            "kind": "unresolved",
-            "reason": "conditional_value",
-            "value": null
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "default": "linear"
           }
         },
         "fetchSpotMarkets": {
           "category": {
             "kind": "literal",
-            "reason": null,
             "value": "spot"
           }
         },
         "fetchTicker": {
           "category": {
-            "kind": "unresolved",
-            "reason": "conditional_value",
-            "value": null
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           },
           "symbol": {
             "kind": "unresolved",
@@ -4788,7 +4879,10 @@
         "fetchTickers": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true,
+            "default": "linear"
           }
         },
         "fetchTrades": {
@@ -4801,7 +4895,9 @@
         "fetchTradingFee": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           },
           "symbol": {
             "kind": "unresolved",
@@ -4812,7 +4908,8 @@
         "fetchTransfers": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "omit",
+            "reason": "not_applicable"
           }
         },
         "fetchVolatilityHistory": {
@@ -4826,15 +4923,14 @@
           },
           "category": {
             "kind": "literal",
-            "reason": null,
             "value": "option"
           }
         },
         "getLeverageTiersPaginated": {
           "category": {
-            "kind": "unresolved",
-            "reason": "identifier_reference",
-            "value": null
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           }
         },
         "repayCrossMargin": {
@@ -4845,7 +4941,8 @@
             "value": null
           },
           "category": {
-            "reason": "conditional_value"
+            "kind": "omit",
+            "reason": "not_applicable"
           },
           "coin": {
             "kind": "unresolved",
@@ -4861,7 +4958,9 @@
             "value": null
           },
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           },
           "sellLeverage": {
             "kind": "unresolved",
@@ -4877,13 +4976,16 @@
         "setMarginMode": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "omit",
+            "reason": "not_applicable"
           }
         },
         "setPositionMode": {
           "_builder": "bybit_v5",
           "category": {
-            "reason": "conditional_value"
+            "kind": "computed",
+            "operation": "market_category",
+            "required": true
           },
           "mode": {
             "kind": "unresolved",
@@ -4899,7 +5001,8 @@
             "value": null
           },
           "category": {
-            "reason": "conditional_value"
+            "kind": "omit",
+            "reason": "not_applicable"
           },
           "coin": {
             "kind": "unresolved",
@@ -4940,7 +5043,8 @@
             "value": null
           },
           "category": {
-            "reason": "conditional_value"
+            "kind": "omit",
+            "reason": "not_applicable"
           },
           "coin": {
             "kind": "unresolved",
@@ -4951,6 +5055,12 @@
             "kind": "unresolved",
             "reason": "dynamic_construction",
             "value": null
+          }
+        },
+        "fetchLeverageTiers": {
+          "category": {
+            "kind": "literal",
+            "value": "linear"
           }
         }
       },

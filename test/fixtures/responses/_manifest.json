@@ -122,7 +122,7 @@
     "okx/fetch_ticker.json",
     "okx/fetch_trades.json"
   ],
-  "generated_at": "2026-08-18T14:28:33.923044Z",
+  "generated_at": "2026-08-19T14:48:54.611081Z",
   "recordings": [
     {
       "capture_date": "2026-07-26",
@@ -725,14 +725,13 @@
       "venue": "bybit"
     },
     {
-      "body_populated": true,
-      "capture_date": "2026-08-08",
-      "captured_at": "2026-08-08T10:35:40.701877Z",
+      "capture_date": "2026-08-19",
+      "captured_at": "2026-08-19T14:48:54.599871Z",
       "endpoint": "v5/market/risk-limit",
       "host": "api-testnet.bybit.com",
       "method": "fetch_leverage_tiers",
       "path": "bybit/fetch_leverage_tiers.json",
-      "request_params_sha256": "103675476262690dc1fa9e77963f0dc6b47cb96c039e6813d45b09000ff2100a",
+      "request_params_sha256": "732ab89f20d0989b9100cf38e576d9c62579f33dbd984ae90bf4d64069d37704",
       "venue": "bybit"
     },
     {

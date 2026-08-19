@@ -48,6 +48,13 @@ defmodule Bourse.BybitAccountAnalyticsIntegrationTest do
     assert is_number(greeks.mark_implied_volatility)
   end
 
+  test "public fetch_leverage_tiers authors the required category" do
+    exchange = public_exchange!()
+
+    assert {:ok, [%Bourse.LeverageTier{} | _] = tiers} = Bourse.fetch_leverage_tiers(exchange)
+    assert length(tiers) > 1
+  end
+
   test "public fetch_all_greeks with illegal category yields Bybit bad_request" do
     exchange = public_exchange!()
 

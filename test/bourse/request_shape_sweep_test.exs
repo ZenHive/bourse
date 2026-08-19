@@ -25,6 +25,17 @@ defmodule Bourse.RequestShapeSweepTest do
     uid: "715085"
   ]
   @credentials [api_key: "key", secret: "secretsecret", password: "password", uid: "uid"]
+  @bybit_caller_category_methods ~w(
+    cancelOrder
+    cancelOrders
+    fetchClosedOrder
+    fetchOpenOrder
+    fetchOrder
+    fetchOrderClassic
+    fetchOrderTrades
+    getLeverageTiersPaginated
+    setPositionMode
+  )
   @time_window_contracts [
     {"alpaca", "fetchOHLCV", "start", "2023-11-14T22:13:20.000Z",
      %{"symbol" => "GLD", "timeframe" => "1d", "since" => @timestamp_ms, "limit" => 2},
@@ -36,7 +47,7 @@ defmodule Bourse.RequestShapeSweepTest do
     {"binanceusdm", "fetchOrders", "startTime", @timestamp_ms,
      %{"symbol" => "BTCUSDT", "since" => @timestamp_ms, "limit" => 2}, []},
     {"bybit", "fetchOHLCV", "start", @timestamp_ms,
-     %{"symbol" => "BTCUSDT", "timeframe" => "1h", "since" => @timestamp_ms, "limit" => 2}, []},
+     %{"category" => "linear", "symbol" => "BTCUSDT", "timeframe" => "1h", "since" => @timestamp_ms, "limit" => 2}, []},
     {"deribit", "fetchTrades", "start_timestamp", @timestamp_ms,
      %{"symbol" => "BTC-PERPETUAL", "since" => @timestamp_ms, "limit" => 2}, []},
     {"derive", "fetchTrades", "from_timestamp", @timestamp_ms,
@@ -354,7 +365,17 @@ defmodule Bourse.RequestShapeSweepTest do
 
   defp params_for("okx", "fetchOptionChain"), do: %{"symbol" => "BTC"}
 
+  defp params_for("bybit", js_name) when js_name in @bybit_caller_category_methods do
+    js_name
+    |> required_params()
+    |> Map.put("category", "linear")
+  end
+
   defp params_for(_exchange_id, js_name) do
+    required_params(js_name)
+  end
+
+  defp required_params(js_name) do
     @required_params_by_js_name
     |> Map.get(js_name, [])
     |> Map.new(fn param -> {Atom.to_string(param), Map.fetch!(@sample_required_params, param)} end)

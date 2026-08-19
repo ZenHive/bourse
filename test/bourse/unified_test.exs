@@ -482,6 +482,7 @@ defmodule Bourse.UnifiedTest do
       max_length_exceeded
       missing_l1_address
       missing_price
+      missing_required_param
       multiple_conditional_legs
       non_empty_orders_required
       non_negative_timeout
@@ -583,10 +584,11 @@ defmodule Bourse.UnifiedTest do
          :invalid_parameters, "max_length_exceeded"},
         {:create_order, [binance, "ETH/USDT", "market", "sell", 1, [stop_loss_price: "2900", take_profit_price: "3100"]],
          :invalid_parameters, "multiple_conditional_legs"},
-        {:create_orders, [bybit, []], :bad_request, "non_empty_orders_required"},
-        {:create_orders, [bybit, nil], :bad_request, "non_empty_orders_required"},
-        {:edit_orders, [bybit, []], :bad_request, "non_empty_orders_required"},
-        {:edit_orders, [bybit, nil], :bad_request, "non_empty_orders_required"},
+        {:fetch_order, [bybit, "order-1"], :invalid_parameters, "missing_required_param"},
+        {:create_orders, [bybit, [], [category: "linear"]], :bad_request, "non_empty_orders_required"},
+        {:create_orders, [bybit, nil, [category: "linear"]], :bad_request, "non_empty_orders_required"},
+        {:edit_orders, [bybit, [], [category: "linear"]], :bad_request, "non_empty_orders_required"},
+        {:edit_orders, [bybit, nil, [category: "linear"]], :bad_request, "non_empty_orders_required"},
         {:cancel_all_orders_after, [hyperliquid, -1], :invalid_parameters, "non_negative_timeout"},
         {:cancel_all_orders_after, [hyperliquid, "soon"], :invalid_parameters, "invalid_integer"},
         {:create_twap_order, [hyperliquid, "SOL/USDC:USDC", "buy", 1, "soon"], :invalid_parameters, "invalid_duration"},
@@ -707,7 +709,7 @@ defmodule Bourse.UnifiedTest do
           )
         end
 
-      batch_error = assert_raise Error, fn -> Bourse.create_orders!(bybit, []) end
+      batch_error = assert_raise Error, fn -> Bourse.create_orders!(bybit, [], category: "linear") end
 
       assert conditional_error.type == :invalid_parameters
       assert conditional_error.raw["reason"] == "multiple_conditional_legs"

@@ -63,6 +63,7 @@ defmodule Bourse.Unified do
     max_length_exceeded
     missing_l1_address
     missing_price
+    missing_required_param
     multiple_conditional_legs
     non_empty_orders_required
     non_negative_timeout

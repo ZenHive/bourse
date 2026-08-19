@@ -71,7 +71,10 @@ defmodule Bourse.Unified.RequestShape do
   def apply(params, _exchange, _js_name, _opts), do: params
 
   defp apply_shape_builder(params, shape, js_name, exchange, opts, context) do
-    case request_entries(shape, js_name, Keyword.get(opts, :endpoint_path)) do
+    entries = request_entries(shape, js_name, Keyword.get(opts, :endpoint_path))
+    params = apply_market_category_contract(params, entries, exchange, js_name, true)
+
+    case entries do
       %{"_builder" => builder} = config -> apply_named_builder(params, config, exchange, js_name, builder)
       %{} = entries -> apply_entries(params, entries, js_name, opts, context)
       _ -> params
@@ -135,39 +138,58 @@ defmodule Bourse.Unified.RequestShape do
     do: OKX.build(params, "fetchTickers", exchange)
 
   def apply_premarket(params, %Exchange{request_param_shape: shape} = exchange, js_name) when is_map(params) do
-    case Map.get(shape, js_name) do
-      %{"_builder" => builder} ->
-        case Spec.resolve_request_builder!(exchange.id, js_name, builder) do
-          :bybit -> put_premarket_category(params, js_name)
-          :binance -> params
-        end
+    entries = Map.get(shape, js_name)
+    validate_premarket_builder!(entries, exchange, js_name)
+    apply_market_category_contract(params, entries, exchange, js_name, false)
+  end
 
-      %{} = entries ->
-        with %{"reason" => "conditional_value"} <- Map.get(entries, "category"),
-             category when not is_nil(category) <- conditional_value("category", params, [], js_name) do
-          Map.put_new(params, "category", category)
-        else
-          _ -> params
-        end
+  def apply_premarket(params, _exchange, _js_name), do: params
+
+  defp validate_premarket_builder!(%{"_builder" => builder}, exchange, js_name) do
+    Spec.resolve_request_builder!(exchange.id, js_name, builder)
+    :ok
+  end
+
+  defp validate_premarket_builder!(_entries, _exchange, _js_name), do: :ok
+
+  defp apply_market_category_contract(params, %{} = entries, %Exchange{id: "bybit"} = exchange, js_name, raise?) do
+    case Map.get(entries, "category") do
+      %{"kind" => "literal", "value" => category} when is_binary(category) ->
+        Map.put_new(params, "category", category)
+
+      %{"kind" => "omit"} ->
+        Map.delete(params, "category")
+
+      %{"kind" => "computed", "operation" => "market_category"} = contract ->
+        put_authored_market_category(params, contract, exchange, js_name, raise?)
 
       _ ->
         params
     end
   end
 
-  def apply_premarket(params, _exchange, _js_name), do: params
+  defp apply_market_category_contract(params, _entries, _exchange, _js_name, _raise?), do: params
 
-  defp put_premarket_category(params, js_name) do
-    category_params =
-      if js_name in ["createOrder", "createMarketBuyOrderWithCost", "createMarketSellOrderWithCost", "editOrder"] do
-        Map.delete(params, "type")
-      else
-        params
-      end
+  defp put_authored_market_category(params, contract, exchange, js_name, raise?) do
+    case authored_market_category(params, contract) do
+      category when is_binary(category) ->
+        Map.put_new(params, "category", category)
 
-    case conditional_value("category", category_params, [], js_name) do
-      nil -> params
-      category -> Map.put_new(params, "category", category)
+      _ ->
+        if raise? and contract["required"] == true do
+          raise Error.invalid_parameters(
+                  message:
+                    "Missing required `category` for #{js_name}; pass `category: value` or a symbol/type that identifies the Bybit market family.",
+                  exchange: exchange.id,
+                  raw: %{
+                    "method" => js_name,
+                    "parameter" => "category",
+                    "reason" => "missing_required_param"
+                  }
+                )
+        else
+          params
+        end
     end
   end
 
@@ -596,8 +618,6 @@ defmodule Bourse.Unified.RequestShape do
     end
   end
 
-  defp conditional_value("category", params, _required, js_name), do: bybit_category(params, js_name)
-
   defp conditional_value("coin", %{"symbol" => symbol}, _required, _js_name) when is_binary(symbol) do
     # Hyperliquid /info coin is the universe name (e.g. "BTC"), not the
     # denormalized pair ("BTCUSDC"). build_final_params denormalizes before apply
@@ -625,29 +645,31 @@ defmodule Bourse.Unified.RequestShape do
 
   defp conditional_value(_native_key, _params, _required, _js_name), do: nil
 
-  defp bybit_category(params, js_name) do
+  defp authored_market_category(params, contract) do
     cond do
-      # An already-resolved category is authoritative — the fetchMarkets fan-out
-      # (unified.ex) pre-sets `category` per wave and re-deriving here would
-      # collapse every wave onto the `fetchMarkets -> "spot"` fallback below.
       is_binary(params["category"]) -> params["category"]
-      type = first_type_hint(params) -> bybit_category_from_type(type)
+      type = first_type_hint(params, contract) -> bybit_category_from_type(type) || category_from_params_symbol(params)
+      true -> category_from_params_symbol(params) || contract["default"]
+    end
+  end
+
+  defp first_type_hint(params, contract) do
+    Enum.find_value(Map.get(contract, "type_sources", ["subType", "sub_type", "type"]), fn key ->
+      if is_binary(params[key]), do: params[key]
+    end)
+  end
+
+  defp category_from_params_symbol(params) do
+    cond do
       is_binary(params["symbol"]) -> bybit_category_from_symbol(params["symbol"])
       is_list(params["symbols"]) -> bybit_category_from_symbols(params["symbols"])
-      js_name == "fetchFundingRates" -> "linear"
-      js_name == "fetchMarkets" -> "spot"
+      is_list(params["orders"]) -> params["orders"] |> List.first() |> category_from_order()
       true -> nil
     end
   end
 
-  # First present type hint, checked subType -> sub_type -> type. A present hint
-  # is authoritative even when it maps to nil (matches the prior per-key cond:
-  # a type key present but unmapped must not fall through to symbol/fallbacks).
-  defp first_type_hint(params) do
-    Enum.find_value(["subType", "sub_type", "type"], fn key ->
-      if is_binary(params[key]), do: params[key]
-    end)
-  end
+  defp category_from_order(%{"symbol" => symbol}) when is_binary(symbol), do: bybit_category_from_symbol(symbol)
+  defp category_from_order(_order), do: nil
 
   defp bybit_category_from_type(type) do
     case String.downcase(type) do
@@ -696,7 +718,7 @@ defmodule Bourse.Unified.RequestShape do
   end
 
   defp build_dynamic("baseCoin", params, _required, "fetchTickers", _context) do
-    if bybit_category(params, "fetchTickers") == "option" do
+    if authored_market_category(params, %{}) == "option" do
       params["baseCoin"] || params["code"] || params["currency"] || base_coin_from_symbols(params["symbols"])
     end
   end

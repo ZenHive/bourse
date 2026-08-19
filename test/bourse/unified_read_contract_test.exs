@@ -29,6 +29,47 @@ defmodule Bourse.UnifiedReadContractTest do
   @recording_manifest_path "test/fixtures/responses/_manifest.json"
   @external_resource @recording_manifest_path
   @recording_manifest @recording_manifest_path |> File.read!() |> Jason.decode!()
+  @bybit_category_required_reads ~w(
+    fetchAllGreeks
+    fetchCanceledAndClosedOrders
+    fetchCanceledOrders
+    fetchClosedOrder
+    fetchClosedOrders
+    fetchDerivativesMarketLeverageTiers
+    fetchDerivativesOpenInterestHistory
+    fetchFundingHistory
+    fetchFundingRateHistory
+    fetchFundingRates
+    fetchFutureMarkets
+    fetchGreeks
+    fetchLeverage
+    fetchLeverageTiers
+    fetchLongShortRatioHistory
+    fetchMarketLeverageTiers
+    fetchMarkets
+    fetchMyLiquidations
+    fetchMyTrades
+    fetchOHLCV
+    fetchOpenInterest
+    fetchOpenOrder
+    fetchOpenOrders
+    fetchOption
+    fetchOptionChain
+    fetchOptionMarkets
+    fetchOrder
+    fetchOrderBook
+    fetchOrderClassic
+    fetchOrderTrades
+    fetchPosition
+    fetchPositionADLRank
+    fetchPositions
+    fetchPositionsHistory
+    fetchSpotMarkets
+    fetchTicker
+    fetchTickers
+    fetchTradingFee
+    fetchVolatilityHistory
+  )
 
   # TODO(Task 538): remove each entry as the sibling task repairs the recorded
   # collection-shape violations. Exact enumeration keeps new regressions red.
@@ -229,6 +270,56 @@ defmodule Bourse.UnifiedReadContractTest do
         refute Exchange.mapping_complete?(exchange, method)
         assert Exchange.verification_state(exchange, method) == :unverified
       end
+    end
+
+    test "bybit declared reads resolve every provider-required category before dispatch" do
+      spec = authored_spec!("bybit")
+      defaults = get_in(spec, ["endpoints", "request", "defaults"])
+      support = get_in(spec, ["capabilities", "has"])
+      exchange = Exchange.new!("bybit")
+
+      category_contracts =
+        for {method, %{"category" => contract}} <- defaults, into: %{}, do: {method, contract}
+
+      assert map_size(category_contracts) == 67
+
+      refute Enum.any?(category_contracts, fn {_method, contract} ->
+               contract["kind"] == "unresolved" or contract["reason"] == "conditional_value"
+             end)
+
+      assert Enum.frequencies_by(category_contracts, fn {_method, contract} -> contract["kind"] end) == %{
+               "computed" => 44,
+               "literal" => 8,
+               "omit" => 15
+             }
+
+      resolved_reads =
+        category_contracts
+        |> Enum.filter(fn {method, contract} -> String.starts_with?(method, "fetch") and contract["kind"] != "omit" end)
+        |> Enum.map(&elem(&1, 0))
+        |> Enum.sort()
+
+      assert resolved_reads == Enum.sort(@bybit_category_required_reads)
+
+      for method <- @bybit_category_required_reads do
+        contract = Map.fetch!(category_contracts, method)
+
+        assert support[method] == true
+        assert get_in(spec, ["endpoints", "unified", method]) != []
+        assert Exchange.has?(exchange, method)
+
+        assert match?(%{"kind" => "literal", "value" => value} when is_binary(value), contract) or
+                 match?(
+                   %{"kind" => "computed", "operation" => "market_category", "required" => true},
+                   contract
+                 ),
+               "#{method} has no authored category resolution"
+      end
+
+      assert get_in(spec, ["capabilities", "has", "fetchDerivativesOpenInterestHistory"]) == true
+      assert get_in(spec, ["capabilities", "mapping_complete", "fetchDerivativesOpenInterestHistory"]) == false
+      assert get_in(spec, ["capabilities", "verification", "fetchDerivativesOpenInterestHistory"]) == "unverified"
+      assert Exchange.has?(exchange, "fetchDerivativesOpenInterestHistory")
     end
 
     test "unsupported raw endpoint confrontations are registered repo-wide" do

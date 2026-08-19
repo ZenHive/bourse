@@ -869,3 +869,66 @@ manufacturing a position margin mode. Its `info` is the full V5 response envelop
 <!-- carve-evidence-status
 {"carve_id":"C-T648c","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"https://bybit-exchange.github.io/docs/v5/account/account-info"},"observed_evidence":{"kind":"live_venue","reference":"test/bourse/account_facts_integration_test.exs Bybit demo /v5/account/info unifiedMarginStatus/marginMode pin 2026-08-19"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
+## 2026-08-19 — V5 request category contracts (Task 572)
+
+**C-T572 — Every Bybit request-default category is an authored contract (task
+572). Outcome: CONFIRM provider request boundary; DIVERGE from unresolved
+category markers and method-name fallbacks.** Bybit V5 uses `category` to select
+the `spot`, `linear`, `inverse`, or `option` product family. The provider's
+[risk-limit contract](https://bybit-exchange.github.io/docs/v5/market/risk-limit)
+requires `linear` or `inverse`; its order, position, execution, ticker,
+instrument, kline, order-book, open-interest, and fee-rate contracts likewise
+name the accepted families for their endpoints.
+
+The 67 authored category entries have these exhaustive dispositions:
+
+- Fixed literals (8): option for `fetchAllGreeks`, `fetchGreeks`, `fetchOption`,
+  `fetchOptionChain`, `fetchOptionMarkets`, and `fetchVolatilityHistory`; spot
+  for `fetchSpotMarkets`; linear for `fetchLeverageTiers`.
+- Authored defaults (14): linear for `cancelAllOrders`,
+  `fetchCanceledAndClosedOrders`, `fetchCanceledOrders`, `fetchClosedOrders`,
+  `fetchFundingHistory`, `fetchFundingRates`, `fetchFutureMarkets`,
+  `fetchMyLiquidations`, `fetchMyTrades`, `fetchOpenOrders`, `fetchPositions`,
+  `fetchPositionsHistory`, and `fetchTickers`; spot for `fetchMarkets`.
+- Market-derived (30): `cancelOrder`, `cancelOrders`,
+  `cancelOrdersForSymbols`, `createMarketBuyOrderWithCost`,
+  `createMarketSellOrderWithCost`, `createOrder`, `createOrders`, `editOrder`,
+  `editOrders`, `fetchClosedOrder`, `fetchDerivativesMarketLeverageTiers`,
+  `fetchDerivativesOpenInterestHistory`, `fetchFundingRateHistory`,
+  `fetchLeverage`, `fetchLongShortRatioHistory`, `fetchMarketLeverageTiers`,
+  `fetchOHLCV`, `fetchOpenInterest`, `fetchOpenOrder`, `fetchOrder`,
+  `fetchOrderBook`, `fetchOrderClassic`, `fetchOrderTrades`, `fetchPosition`,
+  `fetchPositionADLRank`, `fetchTicker`, `fetchTradingFee`,
+  `getLeverageTiersPaginated`, `setLeverage`, and `setPositionMode`. The derivation reads an explicit category, a product-type
+  selector, or a unified symbol (including the first symbol in a batch).
+- Not applicable (15): `borrowCrossMargin`, `createConvertTrade`,
+  `fetchBalance`, `fetchBorrowRateHistory`, `fetchConvertCurrencies`,
+  `fetchConvertQuote`, `fetchConvertTrade`, `fetchConvertTradeHistory`,
+  `fetchLedger`, `fetchMarginMode`, `fetchTransfers`, `repayCrossMargin`,
+  `setMarginMode`, `transfer`, and `withdraw`; their provider request contracts do not consume a
+  product category.
+
+An order identifier does not encode its product family. Consequently
+`cancelOrder`, ID-only `cancelOrders`, `fetchClosedOrder`, `fetchOpenOrder`,
+`fetchOrder`, `fetchOrderClassic`, `fetchOrderTrades`, and `setPositionMode`
+without a symbol require caller intent. They return typed
+`invalid_parameters` with `reason: missing_required_param` and
+`parameter: category` instead of sending an incomplete request to the venue.
+The internal `getLeverageTiersPaginated` contract has the same requirement.
+
+Provider support, mapping completeness, and verification remain independent.
+In particular, `fetchDerivativesOpenInterestHistory` stays provider-supported
+and callable, while its mapping remains incomplete and unverified under
+C-T565d; the category contract does not relabel that implementation gap as
+provider non-support.
+
+Live testnet evidence on 2026-08-19 reproduced `retCode 10001` / `Illegal
+category` with the prior empty request. The authored linear default then
+returned 407 leverage-tier rows without caller-supplied params. The refreshed
+manifest recording captures `caller_params: {}` and the accepted linear
+response from `/v5/market/risk-limit`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T572","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 category contracts, including https://bybit-exchange.github.io/docs/v5/market/risk-limit"},"observed_evidence":{"kind":"recorded_venue","reference":"api-testnet.bybit.com fetch_leverage_tiers with no caller params returned 407 rows after authored linear resolution","fixture":"test/fixtures/responses/bybit/fetch_leverage_tiers.json"},"compatibility_reference":null,"resolved_tier":1}
+-->
