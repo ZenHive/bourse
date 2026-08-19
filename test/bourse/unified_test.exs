@@ -457,9 +457,8 @@ defmodule Bourse.UnifiedTest do
   end
 
   # ---------------------------------------------------------------------------
-  # Caller-input error contract (task 642) — max_length and a rejected
-  # parameter value must share one public shape so a third validator cannot
-  # pick a third contract.
+  # Caller-input error contract (tasks 642 and 651) — known request-shape
+  # rejections and rejected parameter values share one public non-bang shape.
   # ---------------------------------------------------------------------------
 
   describe "public unified API caller-input error contract" do
@@ -480,6 +479,36 @@ defmodule Bourse.UnifiedTest do
       assert public_caller_input_shape(length_result) == public_caller_input_shape(value_result)
     end
 
+    test "known request-shape caller-input rejections return tuples from public non-bang functions" do
+      bybit = authenticated_bybit_exchange()
+      binance = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
+      deribit = deribit_create_order_exchange()
+
+      unresolved_identifier_exchange = %{
+        deribit
+        | request_param_shape: %{
+            "fetchBalance" => %{"mystery_param" => %{"reason" => "identifier_reference"}}
+          }
+      }
+
+      cases = [
+        {:fetch_balance, [unresolved_identifier_exchange], :invalid_parameters, "unresolved_identifier_reference"},
+        {:create_order, [deribit, "BTC/USD:BTC", "market", "buy", 10, [client_order_id: @too_long_client_order_id]],
+         :invalid_parameters, "max_length_exceeded"},
+        {:create_order, [binance, "ETH/USDT", "market", "sell", 1, [stop_loss_price: "2900", take_profit_price: "3100"]],
+         :invalid_parameters, "multiple_conditional_legs"},
+        {:create_orders, [bybit, []], :bad_request, "non_empty_orders_required"},
+        {:create_orders, [bybit, nil], :bad_request, "non_empty_orders_required"},
+        {:edit_orders, [bybit, []], :bad_request, "non_empty_orders_required"},
+        {:edit_orders, [bybit, nil], :bad_request, "non_empty_orders_required"}
+      ]
+
+      for {function, args, type, reason} <- cases do
+        assert {:error, %Error{type: ^type, raw: %{"reason" => ^reason}}} = apply(Bourse, function, args),
+               "#{function} with #{reason} must return the public error tuple"
+      end
+    end
+
     test "create_order! still raises on a too-long client_order_id" do
       exchange = deribit_create_order_exchange()
 
@@ -490,6 +519,26 @@ defmodule Bourse.UnifiedTest do
 
       assert error.type == :invalid_parameters
       assert error.raw["reason"] == "max_length_exceeded"
+    end
+
+    test "bang variants raise for Binance conditional legs and empty Bybit batches" do
+      binance = Exchange.new!("binance", api_key: "key", secret: "secret", sandbox: true)
+      bybit = authenticated_bybit_exchange()
+
+      conditional_error =
+        assert_raise Error, fn ->
+          Bourse.create_order!(binance, "ETH/USDT", "market", "sell", 1,
+            stop_loss_price: "2900",
+            take_profit_price: "3100"
+          )
+        end
+
+      batch_error = assert_raise Error, fn -> Bourse.create_orders!(bybit, []) end
+
+      assert conditional_error.type == :invalid_parameters
+      assert conditional_error.raw["reason"] == "multiple_conditional_legs"
+      assert batch_error.type == :bad_request
+      assert batch_error.raw["reason"] == "non_empty_orders_required"
     end
 
     test "OrderPrecision's load_markets/1 guard still raises through create_order" do
@@ -2830,6 +2879,12 @@ defmodule Bourse.UnifiedTest do
 
   defp deribit_create_order_exchange do
     Exchange.new!("deribit",
+      credentials: Bourse.Credentials.new!(api_key: "test-key", secret: "test-secret")
+    )
+  end
+
+  defp authenticated_bybit_exchange do
+    Exchange.new!("bybit",
       credentials: Bourse.Credentials.new!(api_key: "test-key", secret: "test-secret")
     )
   end

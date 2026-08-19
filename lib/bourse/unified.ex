@@ -46,6 +46,12 @@ defmodule Bourse.Unified do
 
   @sanity_methods [:create_order, :edit_order]
   @list_required_params [:ids, :orders]
+  @caller_input_reasons ~w(
+    max_length_exceeded
+    multiple_conditional_legs
+    non_empty_orders_required
+    unresolved_identifier_reference
+  )
 
   # First endpoint section names preferred per market type when multiple unified
   # routes exist (e.g. Binance spot "public" vs fapi/dapi/eapiPublic).
@@ -708,7 +714,7 @@ defmodule Bourse.Unified do
     error in Error ->
       case error do
         %Error{raw: %{"reason" => reason}}
-        when reason in ["unresolved_identifier_reference", "max_length_exceeded"] ->
+        when reason in @caller_input_reasons ->
           {:error, error}
 
         _ ->

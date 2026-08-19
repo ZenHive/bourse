@@ -387,15 +387,14 @@ defmodule Bourse.BinanceAuthoredSpecTest do
         ] do
       exchange = Exchange.new!(exchange_id, api_key: "key", secret: "secret", sandbox: true)
 
-      error =
-        assert_raise Bourse.Error, fn ->
-          Bourse.create_order(exchange, symbol, "market", "sell", 1,
-            stop_loss_price: "2900",
-            take_profit_price: "3100"
-          )
-        end
+      assert {:error, %Bourse.Error{} = error} =
+               Bourse.create_order(exchange, symbol, "market", "sell", 1,
+                 stop_loss_price: "2900",
+                 take_profit_price: "3100"
+               )
 
       assert error.type == :invalid_parameters
+      assert error.raw["reason"] == "multiple_conditional_legs"
 
       assert error.message ==
                "binance-family create_order accepts one conditional leg per order (stop_loss_price OR take_profit_price); two-leg protection is a separate order-list surface"

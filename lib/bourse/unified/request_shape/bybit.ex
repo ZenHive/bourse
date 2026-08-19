@@ -283,7 +283,8 @@ defmodule Bourse.Unified.RequestShape.Bybit do
   defp batch_orders(_params, exchange, _item_builder) do
     raise Error.bad_request(
             exchange: exchange.id,
-            message: "Bybit batch orders require a non-empty orders list"
+            message: "Bybit batch orders require a non-empty orders list",
+            raw: %{"reason" => "non_empty_orders_required"}
           )
   end
 

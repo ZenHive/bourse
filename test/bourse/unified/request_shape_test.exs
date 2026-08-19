@@ -1071,6 +1071,7 @@ defmodule Bourse.Unified.RequestShapeTest do
         assert error.type == :bad_request
         assert error.exchange == "bybit"
         assert error.message == "Bybit batch orders require a non-empty orders list"
+        assert error.raw["reason"] == "non_empty_orders_required"
       end
     end
 

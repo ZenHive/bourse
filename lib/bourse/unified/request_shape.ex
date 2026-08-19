@@ -399,6 +399,7 @@ defmodule Bourse.Unified.RequestShape do
          "createOrder"
        )
        when exchange_id in @binance_conditional_venues and not is_nil(stop_loss) and not is_nil(take_profit) do
+    # Caller input, normalized by Unified.call/5 at the public non-bang boundary.
     raise Error.invalid_parameters(
             message:
               "binance-family create_order accepts one conditional leg per order (stop_loss_price OR take_profit_price); two-leg protection is a separate order-list surface",
