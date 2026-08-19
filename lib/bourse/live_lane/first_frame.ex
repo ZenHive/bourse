@@ -212,23 +212,13 @@ defmodule Bourse.LiveLane.FirstFrame do
 
     cond do
       probed != supported ->
-        {:error, %{kind: :probe_set, actual: MapSet.to_list(probed), expected: MapSet.to_list(supported)}}
+        completeness_error(:probe_set, probed, supported)
 
       MapSet.union(probed, public_excluded) != runtime ->
-        {:error,
-         %{
-           kind: :public_coverage,
-           actual: MapSet.to_list(MapSet.union(probed, public_excluded)),
-           expected: MapSet.to_list(runtime)
-         }}
+        completeness_error(:public_coverage, MapSet.union(probed, public_excluded), runtime)
 
       private_excluded != runtime ->
-        {:error,
-         %{
-           kind: :private_coverage,
-           actual: MapSet.to_list(private_excluded),
-           expected: MapSet.to_list(runtime)
-         }}
+        completeness_error(:private_coverage, private_excluded, runtime)
 
       true ->
         :ok
@@ -267,16 +257,14 @@ defmodule Bourse.LiveLane.FirstFrame do
 
   defp exclusion_rows do
     Enum.map(@exclusions, fn exclusion ->
-      %{
-        channel: nil,
+      result_row(exclusion.venue, nil,
         data_frame: nil,
         first_frame: nil,
         reason: exclusion.reason,
         section: section_from_surface(exclusion.surface),
         status: "excluded",
-        tracking: exclusion.tracking,
-        venue: exclusion.venue
-      }
+        tracking: exclusion.tracking
+      )
     end)
   end
 
@@ -439,55 +427,58 @@ defmodule Bourse.LiveLane.FirstFrame do
   defp success_row(venue, channel, class, frame, first_kind) do
     data_kind = frame_kind(class, frame)
 
-    %{
-      channel: channel,
+    result_row(venue, channel,
       data_frame: data_kind,
       first_frame: first_kind,
       reason: nil,
       section: "public",
       status: "passed",
-      tracking: nil,
-      venue: venue
-    }
+      tracking: nil
+    )
   end
 
   defp silence_row(venue, channel, first_kind, detail) do
-    %{
-      channel: channel,
+    result_row(venue, channel,
       data_frame: nil,
       first_frame: first_kind,
       reason: "#{venue} #{channel}: #{detail}",
       section: "public",
       status: "failed",
-      tracking: nil,
-      venue: venue
-    }
+      tracking: nil
+    )
   end
 
   defp rejected_row(venue, channel, frame) do
-    %{
-      channel: channel,
+    result_row(venue, channel,
       data_frame: nil,
       first_frame: "rejected",
       reason: "#{venue} #{channel}: #{inspect(frame)}",
       section: "public",
       status: "failed",
-      tracking: nil,
-      venue: venue
-    }
+      tracking: nil
+    )
   end
 
   defp failure_row(spec, channel, reason) do
-    %{
-      channel: channel,
+    result_row(spec.venue, channel,
       data_frame: nil,
       first_frame: nil,
       reason: "#{spec.venue} #{channel}: #{reason}",
       section: to_string(spec.section),
       status: "failed",
-      tracking: nil,
-      venue: spec.venue
-    }
+      tracking: nil
+    )
+  end
+
+  defp result_row(venue, channel, fields) do
+    fields
+    |> Keyword.put(:channel, channel)
+    |> Keyword.put(:venue, venue)
+    |> Map.new()
+  end
+
+  defp completeness_error(kind, actual, expected) do
+    {:error, %{kind: kind, actual: MapSet.to_list(actual), expected: MapSet.to_list(expected)}}
   end
 
   defp unreachable_row?(%{reason: reason}) when is_binary(reason) do

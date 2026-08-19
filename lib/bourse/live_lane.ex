@@ -89,12 +89,12 @@ defmodule Bourse.LiveLane do
     if status == "passed", do: {:ok, report}, else: {:error, report}
   end
 
-  defp authority_surface(rc, path) when rc == 0 do
+  defp authority_surface(0, path) do
     %{report: path, status: "passed"}
   end
 
   defp authority_surface(rc, path) do
-    %{report: path, status: "failed", reason: "authority_check exited #{rc}"}
+    failure_surface(path, "authority_check exited #{rc}")
   end
 
   defp json_surface({:ok, json}, default_name) do
@@ -106,7 +106,7 @@ defmodule Bourse.LiveLane do
   end
 
   defp json_surface({:error, reason}, default_name) do
-    %{report: default_name, status: "failed", reason: reason}
+    failure_surface(default_name, reason)
   end
 
   defp ws_surface({:ok, json}) do
@@ -118,8 +118,10 @@ defmodule Bourse.LiveLane do
   end
 
   defp ws_surface({:error, reason}) do
-    %{report: "ws-first-frame-report.json", status: "failed", reason: reason}
+    failure_surface("ws-first-frame-report.json", reason)
   end
+
+  defp failure_surface(report, reason), do: %{report: report, status: "failed", reason: reason}
 
   defp corpus_surface({:ok, json}) do
     test_surface(json, "live-corpus-report.json", %{
