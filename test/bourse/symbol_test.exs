@@ -4,6 +4,7 @@ defmodule Bourse.SymbolTest do
   alias Bourse.Symbol
   alias Bourse.Symbol.Error
   alias Bourse.Symbol.ParsedSymbol
+  alias Bourse.Unified.ReadParse
 
   # ===========================================================================
   # parse/1
@@ -420,6 +421,14 @@ defmodule Bourse.SymbolTest do
       converted = Symbol.convert_date(original, :yymmdd, :ddmmmyy)
       assert original == Symbol.convert_date(converted, :ddmmmyy, :yymmdd)
     end
+
+    test "passes through a value that does not match the declared source format" do
+      assert "04SEP26" = Symbol.convert_date("04SEP26", :yymmdd, :ddmmmyy)
+    end
+
+    test "passes through unsupported format pairs" do
+      assert "260904" = Symbol.convert_date("260904", :unknown, :ddmmmyy)
+    end
   end
 
   # ===========================================================================
@@ -807,6 +816,56 @@ defmodule Bourse.SymbolTest do
     end
   end
 
+  describe "to_exchange_id/2 - Bybit provider date format" do
+    setup do
+      {:ok, exchange: Bourse.Exchange.new!("bybit")}
+    end
+
+    test "the authored future_ddmmmyy pattern accepts the provider's DDMMMYY date", %{exchange: exchange} do
+      assert %{pattern: :future_ddmmmyy, date_format: :ddmmmyy} = exchange.symbol_patterns.future
+
+      # Bybit's provider-owned V5 symbol enum documents the same shape with
+      # `BTCUSDT-21FEB25`; both live-measured dates therefore stay DDMMMYY.
+      for {unified_symbol, native_symbol} <- [
+            {"BTC/USDT:USDT-04SEP26", "BTCUSDT-04SEP26"},
+            {"BTC/USDT:USDT-21AUG26", "BTCUSDT-21AUG26"}
+          ] do
+        assert Symbol.to_exchange_id(unified_symbol, exchange) == native_symbol
+      end
+    end
+
+    test "dated-future non-bang reads reach HTTP and return a typed provider error", %{exchange: exchange} do
+      symbol = "BTC/USDT:USDT-04SEP26"
+      native_symbol = "BTCUSDT-04SEP26"
+      test_pid = self()
+      stub = {__MODULE__, System.unique_integer([:positive])}
+
+      error_body =
+        "bybit"
+        |> Bourse.RecordedResponseFixtures.fixture_path(:error_bad_symbol)
+        |> Bourse.RecordedResponseFixtures.load_fixture!()
+        |> Map.fetch!("body")
+
+      Req.Test.stub(stub, fn conn ->
+        send(test_pid, {:dated_future_request, conn.request_path, URI.decode_query(conn.query_string)})
+        Req.Test.json(conn, error_body)
+      end)
+
+      assert {:error, %Bourse.Error{type: :bad_request}} =
+               Bourse.fetch_ticker(exchange, symbol, plug: {Req.Test, stub})
+
+      assert {:error, %Bourse.Error{type: :bad_request}} =
+               Bourse.fetch_ohlcv(exchange, symbol, "1m", plug: {Req.Test, stub})
+
+      assert {:error, %Bourse.Error{type: :bad_request}} =
+               Bourse.fetch_order_book(exchange, symbol, plug: {Req.Test, stub})
+
+      for path <- ["/v5/market/tickers", "/v5/market/kline", "/v5/market/orderbook"] do
+        assert_receive {:dated_future_request, ^path, %{"category" => "linear", "symbol" => ^native_symbol}}
+      end
+    end
+  end
+
   describe "from_exchange_id/3 - Binance patterns" do
     setup do
       exchange =
@@ -991,6 +1050,36 @@ defmodule Bourse.SymbolTest do
   # ===========================================================================
 
   describe "roundtrip: to_exchange_id → from_exchange_id" do
+    test "each market type in every supported venue's recorded market list round-trips" do
+      for exchange_id <- Bourse.Spec.exchanges() do
+        exchange = Bourse.Exchange.new!(exchange_id)
+
+        if exchange.has["fetchMarkets"] == true do
+          markets = recorded_markets!(exchange)
+          loaded_exchange = Bourse.Exchange.put_markets(exchange, markets)
+
+          refute Enum.empty?(markets), "#{exchange_id}: recorded market list is empty"
+
+          markets
+          |> Enum.filter(&is_binary(&1.type))
+          |> Enum.group_by(& &1.type)
+          |> Enum.each(fn {market_type, [market | _same_type]} ->
+            market_type_atom = String.to_existing_atom(market_type)
+            native_symbol = Symbol.to_exchange_id(market.symbol, loaded_exchange)
+            unified_symbol = Symbol.from_exchange_id(native_symbol, loaded_exchange, market_type_atom)
+            stable_native_symbol = Symbol.to_exchange_id(unified_symbol, loaded_exchange)
+            stable_unified_symbol = Symbol.from_exchange_id(stable_native_symbol, loaded_exchange, market_type_atom)
+
+            assert stable_native_symbol == native_symbol,
+                   "#{exchange_id} #{market_type}: native symbol changed after round-trip"
+
+            assert stable_unified_symbol == unified_symbol,
+                   "#{exchange_id} #{market_type}: unified symbol changed after round-trip"
+          end)
+        end
+      end
+    end
+
     test "Binance spot roundtrip" do
       ex =
         make_exchange("binance", %{
@@ -1800,6 +1889,40 @@ defmodule Bourse.SymbolTest do
       # Without aliases, first (longest-first quote list) match wins
       no_aliases = make_exchange("test", %{spot: @no_sep_upper}, %{})
       assert "BTC/BUSD" = Symbol.from_exchange_id("BTCBUSD", no_aliases, :spot)
+    end
+  end
+
+  defp recorded_markets!(exchange) do
+    path = Bourse.RecordedResponseFixtures.fixture_path(exchange.id, :fetch_markets)
+    assert File.regular?(path), "#{exchange.id}: missing recorded fetch_markets fixture"
+
+    fixture = Bourse.RecordedResponseFixtures.load_fixture!(path)
+
+    fixture
+    |> recorded_market_responses()
+    |> Enum.flat_map(&parse_recorded_markets!(exchange, fixture, &1))
+  end
+
+  defp recorded_market_responses(%{"responses" => responses}) when is_list(responses), do: responses
+  defp recorded_market_responses(%{"body" => _body} = fixture), do: [fixture]
+
+  defp parse_recorded_markets!(exchange, fixture, response) do
+    params = response["params"] || fixture["params"] || %{}
+
+    case ReadParse.parse(
+           exchange,
+           exchange.module,
+           :fetch_markets,
+           "fetchMarkets",
+           response["body"],
+           params,
+           :parse_market,
+           true
+         ) do
+      {:ok, markets} when is_list(markets) -> markets
+      {:ok, %Bourse.Market{} = market} -> [market]
+      {:ok, other} -> flunk("#{exchange.id}: expected a market list, got: #{inspect(other)}")
+      {:error, reason} -> flunk("#{exchange.id}: fetch_markets fixture failed to parse: #{inspect(reason)}")
     end
   end
 end

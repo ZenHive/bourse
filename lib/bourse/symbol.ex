@@ -383,6 +383,8 @@ defmodule Bourse.Symbol do
   Converts dates between derivative symbol formats.
 
   Supported formats: `:yymmdd`, `:ddmmmyy`, `:yyyymmdd`.
+  Returns the input unchanged when the format pair is unsupported or the input
+  does not match the declared source format.
 
       Bourse.Symbol.convert_date("260327", :yymmdd, :ddmmmyy)
       #=> "27MAR26"
@@ -426,6 +428,8 @@ defmodule Bourse.Symbol do
   def convert_date(date_str, :ddmmmyy, :yyyymmdd) do
     date_str |> convert_date(:ddmmmyy, :yymmdd) |> convert_date(:yymmdd, :yyyymmdd)
   end
+
+  def convert_date(date_str, _source_format, _target_format), do: date_str
 
   # ===========================================================================
   # Market Type Detection
