@@ -632,6 +632,34 @@ This repo was extracted from `../bourse_workbench`, which remains the **authorin
 | Roadmap and task scoring, and the CHANGELOG gate that reads it | workbench — one rmap, declaring `project = "bourse"`. It is not a workbench roadmap that mentions this client; it **is** this client's roadmap. Do **not** stand up a second rmap here. |
 | Where does a consumer file a bug? | **here**, in `BUGS.md` — this is the only repo a consumer knows. Triage into scored tasks happens in the workbench, and writes a dated note back into the entry. |
 
+#### 🚨 The roadmap admits reported defects — quality work against the API surface has no end
+
+Eleven venues times ~240 unified methods is an effectively unbounded surface. A live
+measurement, a reviewer proposal or a coverage sweep will *always* find one more true
+thing, and every one of those findings is real. That is precisely why "is it real"
+cannot be the filter: it rejects nothing, so the backlog stops converging. Measured on
+this project — 103 tasks filed against 101 landed across fourteen days, and fifteen
+tasks created in one day (647–661), several of them grandchildren of a single stack
+trace.
+
+**A finding enters the workbench roadmap only when a consumer reported the defect.**
+Everything else — a drift you measured live, a reviewer's `proposed_tasks`, an
+uncovered branch, a carve you would author differently — goes into `BUGS.md` with its
+evidence and stops there. `BUGS.md` is the durable record; the roadmap is the work
+queue, and they are not the same list.
+
+- ✅ DO: append the measurement to `BUGS.md` with the exact call, the observed value and the expected one. That preserves the finding at zero dispatch cost.
+- ✅ DO: fix it inline and say so when it is bounded and local. A finding you can close in minutes never needed a task.
+- ❌ DO NOT: file because a finding is genuine, evidenced and cross-session. Those are the floor, not the bar — they admit everything.
+- ❌ DO NOT: promote a reviewer proposal on the strength of its shape. Proposals arrive pre-scored and dispatch-ready; that is a rendering choice, not a routing decision.
+
+**Security and data-loss defects are filed on discovery** regardless of who found
+them, sanitized per `critical-rules.md` § NEVER BROADCAST AN UNPATCHED VULNERABILITY.
+
+This tightens the portfolio-wide Default-DECLINE bar in `harness-workflow.md`, which
+governs whether a proposal is *worth* filing. Here the question is prior: whether the
+roadmap is the right destination at all.
+
 #### Where harness runs from — three locations, none of them optional
 
 `bourse` is registered in `Harness.ProjectRegistry`, and the registration is what
