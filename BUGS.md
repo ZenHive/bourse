@@ -1594,6 +1594,19 @@ jeder Reconcile scheitert, ohne dass etwas alarmiert) wird dort getrennt gefilet
 
 ## 2026-08-18 — Account-Klasse und Margin-Modi fehlen als provider-treue Unified Facts
 
+**Status (2026-08-19):** ✅ fixed by task 648 (`f291108`).
+`Bourse.fetch_account_facts/1` returns independent `product_access`,
+`account_margin_model`, and `position_margin_modes` facts for alpaca,
+binance, bybit, deribit, hyperliquid, and lighter. Missing provider
+fields stay `:unavailable`; caller selectors are never returned as
+facts. The six venue carve register entries are C-T648a–f.
+
+**Residual:** `has?("fetchAccountFacts")` stays false — the method is
+special-cased in `Unified.call/5` and is not an authored
+`capabilities.has` / unified route, so the derived callable surface
+does not advertise it. Dedicated `binanceusdm` / `binancecoinm` /
+`okx` / `derive` clients still return `:not_supported`.
+
 **Methods:** private Account-Reads (`/v5/account/info`,
 `private/get_account_summaries`, `/v2/account`, Binance Account/Positions sowie
 Hyperliquid/Lighter Account-State) · **Exchanges:** alpaca, binance, bybit,

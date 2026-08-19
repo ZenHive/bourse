@@ -9,6 +9,13 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- `Bourse.fetch_account_facts/1` reads provider-owned product access, account
+  margin model, and position margin modes as independent facts. Observed
+  fields keep their native names and values; missing ones stay
+  `:unavailable` rather than being inferred from caller options or
+  `capabilities.has`. Mapped on alpaca, binance (spot / USD-M / COIN-M
+  families), bybit, deribit, hyperliquid, and lighter. Other runtime
+  venues return `:not_supported`.
 - `Bourse.Market.combo?/1` identifies multi-leg strategy books, and
   `quantity_resolvable?/1` tells exposure consumers whether a market carries
   usable quantity semantics.
