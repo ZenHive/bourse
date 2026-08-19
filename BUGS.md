@@ -1436,3 +1436,40 @@ provider-treu shippt.
 > margin model are not readable as unified facts"), gegen den allgemeinen Defekt
 > geschnitten; die sechs genannten Venues stehen als Evidenz in den Acceptance
 > Criteria, nicht als Scope-Grenze.
+
+## 2026-08-19 — binanceusdm: `has.createStopMarketOrder` = false, Regression gegen 0.4.0 (Venue kann STOP_MARKET nachweislich)
+
+Call: `Bourse.Exchange.has?(exchange, "createStopMarketOrder")` auf einem
+gebauten `binanceusdm`-Exchange (bourse 0.6.0, hex).
+
+Observed: `false`. Nachbarn: `createStopOrder` true, `createStopLimitOrder`
+true, `createTriggerOrder` true.
+
+Expected: `true`. Binance USD-M dokumentiert `STOP_MARKET` (und
+`TAKE_PROFIT_MARKET`) als Ordertypen (`POST /fapi/v1/order`, Parameter `type`).
+Live-Beweis: trading_dashboard hat am 2026-08-12 unter bourse 0.4.0 über den
+Capability-gateten App-Pfad einen STOP_MARKET (closePosition, MARK_PRICE,
+Trigger 1620) auf dem Binance-USD-M-Demo-Env platziert — Venue-Order-ID
+1000000165145628 lag am Venue. Nach dem Bump 0.4.0 → 0.6.0 (trading_dashboard
+commit deaf97c, 2026-08-18) blockiert derselbe Pfad mit "Order capability
+:stop_market is not available". Das Flag ist also zwischen 0.4.0 und 0.6.0 von
+true auf false gekippt, ohne dass sich die Venue-Fähigkeit geändert hat.
+
+Impact: jeder Capability-gatete Consumer verliert Stop-Market-Schutzorders auf
+binanceusdm; im trading_dashboard hat das den BracketGuard-Rearm einer laufenden
+Position blockiert (Position zeitweise ohne Stop am Venue).
+
+Konsument-Handling (trading_dashboard): `OrderPlacement.@documented_capabilities`
+trägt jetzt `"binanceusdm" => [:stop_market]` als dokumentierte
+Venue-Capability-Ergänzung, mit Kommentar-Verweis auf diesen Eintrag. Rollback
+sobald bourse das Flag wieder korrekt shippt.
+
+> **2026-08-19 — triagiert:** gefiled als Workbench-Task **649**. Wichtig für die
+> Reproduktion: das authored spec ist NICHT gekippt — `git show
+> v0.6.0:priv/specs/json/output/authored/binanceusdm.json` liefert
+> `capabilities.has.createStopMarketOrder = true`, und diese Datei liegt im
+> Hex-Paket. `Exchange.build_capabilities/1` liest die Map wörtlich, `has?/2`
+> ist ein reiner Lookup. Der beobachtete `false` entsteht also woanders; die
+> Task verlangt Reproduktion vor Fix und pinnt danach die gesamte
+> Capability-Fläche im Offline-Gate.
+
