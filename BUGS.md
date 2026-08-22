@@ -71,6 +71,176 @@ roadmap.
 
 ---
 
+## 2026-08-22 — deribit option positions: `notional` / `notional_currency` left nil although every input is present
+
+**Status:** 📋 triaged — workbench task **664** · **Venue:** deribit (testnet, `sandbox: true`) ·
+**Class:** unfilled unified field — not a venue gap.
+
+**Reporter:** `trading_dashboard` (task 225 payload observation, live Deribit testnet).
+
+> **Triage 2026-08-22 (workbench orchestrator) → task 664.** Both "where it stops" claims
+> confirmed against the current tree, and one correction worth recording: the nil is **authored,
+> not accidental**. `priv/specs/json/output/authored/deribit.json` →
+> `normalization.field_maps.position.field_map.notional` is a `when` rule guarded on
+> `kind in ["future"]` reading `size`, with an explicit `else: null`; the sibling `contracts`
+> rule is its mirror image (null for futures, `size` otherwise). That guard is right as far as it
+> goes — an option's `size` is a contract count, not a value — so the gap is a **missing
+> derivation**, not a broken mapping. `DeribitPositionUnits.reconcile_position/2` (future-only
+> head) and the `%Position{notional: nil}` short-circuit in `put_notional_currency/2` are both
+> exactly as described.
+>
+> Task 664 is scoped to the unit question rather than the multiplication: deribit quotes option
+> `mark_price` in the base currency per contract, so the product is base-denominated and lands in
+> a different `notional_currency` than the future row — which is why shipping the number without
+> the unit is not an acceptable fix. The `0.1 × 1.0 × 0.00701189` reading is carried into the task
+> as evidence, not as a specification to implement unexamined; the venue's own position
+> documentation is the authority.
+>
+> One caveat folded into the acceptance criteria: the repro ran without `load_markets`, which is
+> also why the *future* row shows `contracts: nil` — `market_units/1` had nothing to build from.
+> A derivation that needs `contract_size` must leave `notional` nil when markets are absent
+> rather than substituting 1.0. The delta-weighting caveat is honored as written: it is recorded
+> in the task's `out_of_scope`, so a populated option notional will not be mistaken for one that
+> is summable with a future's.
+
+A Deribit **option** position comes back with `notional: nil` and therefore also
+`notional_currency: nil`, while the sibling **future** row on the same account is fully
+populated. Observed live, one credential holding both legs at once:
+
+```elixir
+{:ok, positions} = Bourse.fetch_positions(ex)   # exchange built WITHOUT load_markets
+
+# future
+%{symbol: "BTC/USD:BTC", contracts: nil, notional: 10.0,
+  info: %{"kind" => "future", "size" => 10.0, "size_currency" => 1.2996e-4}}
+
+# option
+%{symbol: "BTC/USD:BTC-260823-77000-C", contracts: 0.1, notional: nil,
+  info: %{"kind" => "option", "size" => 0.1, "mark_price" => 0.00701189,
+          "index_price" => 76948.23, "average_price_usd" => 538.41074,
+          "delta" => 0.04945, "vega" => 1.54039, "theta" => -27.91852}}
+```
+
+**Expected:** `notional` populated for the option too, with `notional_currency` naming its
+unit. Every input is already in hand — `contracts` (0.1) is on the unified struct,
+`contract_size` (1.0 BTC) is on the option market, and `mark_price` (0.00701189 BTC per
+contract) is in the raw payload:
+
+```
+0.1 contracts × 1.0 BTC × 0.00701189 BTC/contract = 0.000701189 BTC
+```
+
+The raw payload additionally carries `average_price_usd` (538.41 per contract) and
+`index_price`, so a USD-denominated figure is available too if that is the preferred
+`notional_currency` for options.
+
+**Where it stops.** `Bourse.Unified.DeribitPositionUnits.reconcile_position/2` matches only
+`%{"kind" => "future"}`; options fall through the catch-all clause untouched. Then
+`put_notional_currency/2` short-circuits on `%Position{notional: nil}` and returns the
+position unchanged, so the unit never gets attached either. Both are consistent with
+`Position`'s own moduledoc ("Populated whenever `notional` is populated") — the gap is that
+`notional` is never populated for the option kind in the first place.
+
+**Consumer impact.** `trading_dashboard` folds open positions into one long/short notional
+pair that feeds hedge sizing. A nil notional is coerced to zero on our side, so an open
+option currently contributes **zero** to the hedge book and its row prints `0` — a number
+that reads as real. We are fixing the fold to stop treating a missing notional as zero, but
+the missing figure itself belongs here: the consumer should not be recomputing a unified
+field from `info` when the library already owns that mapping for futures.
+
+**Caveat for the fix, so the two do not get conflated.** A correctly populated option
+notional is still **not** additively summable with a future's notional for hedging purposes —
+the option's directional exposure is delta-weighted (this row: `delta 0.04945`, i.e. ~5% of a
+linear position of the same size). That is the consumer's problem, not bourse's; it is noted
+only so a fix here is not mistaken for making the two figures interchangeable. What bourse
+owes is the populated value plus the honest `notional_currency`, not summability.
+
+**Doc authority:** https://docs.deribit.com/api-reference/account-management/private-get_positions
+— option `size` is the number of contracts in base currency, and `mark_price` for an option
+is quoted in the base currency per contract.
+
+---
+
+## 2026-08-22 — `create_order` silently places a BUY when `side` is an ATOM (`:sell`), and drops `params`
+
+**Status:** 📋 triaged — workbench task **663** · **Venue:** deribit (testnet, `sandbox: true`) ·
+**Severity:** money path — a sell becomes a buy with no error.
+
+**Reporter:** `trading_dashboard` (task 225 payload observation, live Deribit testnet).
+
+> **Triage 2026-08-22 (workbench orchestrator) → task 663.** Confirmed statically against the
+> current tree; filed as the defect class rather than the deribit instance. Root cause read from
+> the code: `priv/specs/json/output/authored/deribit.json` →
+> `endpoints.request.endpoint_selection.createOrder` is
+> `{"cases": [{"path": "sell", "when": {"side": "sell"}}], "default": "buy"}`, and the same
+> method's request defaults carry `"_omit": ["side"]` — on deribit the direction *is* the
+> endpoint, so an atom `:sell` fails the string match, falls to `default`, and becomes a buy with
+> no side param on the wire. `Bourse.Order.Sanity.check_side/1` already rejects anything outside
+> `buy`/`sell`, but sanity is opt-in (`sanity: true`, default `false` — task 411's deliberate
+> decision) and is skipped without loaded markets, so the one guard that would have caught this
+> is off by default on the money path. The venues also disagree with each other today:
+> `RequestShape.Lighter.side_is_ask!/1` accepts `:sell`, `RequestShape.Bybit` defaults a missing
+> side to `"buy"`, and `RequestShape.OKX` derives `posSide` from `params["side"] == "sell"` (an
+> unmatched side silently becomes `long`). Task 663 makes side interpretability an unconditional
+> boundary check independent of `sanity:`, and removes every direction-bearing silent `default`
+> from the authored selection layer.
+>
+> On the second defect: `reduce_only` is sourced from the venue-native `reduceOnly`
+> (`native_passthrough`) in the deribit authored request, so the snake_case key in the repro may
+> never have been a recognized param rather than having been dropped by the atom-side path. Left
+> unadjudicated on purpose — task 663 carries a live confrontation of it as an acceptance
+> criterion, because either verdict is the same class: caller intent discarded without a word.
+
+`Bourse.create_order/5,6` accepts `side` as an atom without complaint and places the order as a
+**buy** regardless. Only the string form is honored. Observed on three consecutive calls; each
+one *increased* an existing long instead of reducing it.
+
+```elixir
+{:ok, ex} = Bourse.Exchange.new(:deribit, credentials: creds, sandbox: true)
+
+# 1) atom side + params  -> venue echoes direction "buy", reduce_only false
+{:ok, o} = Bourse.create_order(ex, "BTC-PERPETUAL", :market, :sell, 10,
+                               params: %{"reduce_only" => true})
+o.side                  #=> "buy"      EXPECTED "sell"
+o.info["direction"]     #=> "buy"      EXPECTED "sell"
+o.info["reduce_only"]   #=> false      EXPECTED true
+
+# 2) atom side, arity 5, no params -> still a buy
+{:ok, o} = Bourse.create_order(ex, "BTC-PERPETUAL", :market, :sell, 10)
+o.info["direction"]     #=> "buy"      EXPECTED "sell"
+
+# 3) string side -> correct
+{:ok, o} = Bourse.create_order(ex, "BTC-PERPETUAL", "market", "sell", 10)
+o.info["direction"]     #=> "sell"     correct
+```
+
+Observed vs. expected, two defects in one call:
+
+1. **Unrecognized `side` falls back to buy instead of erroring.** An atom is the idiomatic
+   Elixir spelling and the same atom is accepted for `type` (`:market` worked in call 3's
+   string form and in the atom form alike), so the asymmetry is invisible at the call site.
+   A side the library cannot interpret must be `{:error, …}` — never a default direction.
+   The buy default is the worst possible fallback: on a long it doubles exposure, and on a
+   flat account it opens a position the caller never asked for.
+2. **`params:` was dropped** on the atom-side path — the venue echoed `reduce_only: false`
+   for a call that passed `%{"reduce_only" => true}`. Not separately isolated on the string
+   path; may be the same root cause (opts arm not reached) or a second gap.
+
+**Consumer impact.** `trading_dashboard`'s own write path is not exposed: it is the single
+call site `Exchange.OrderPlacement.venue_place/3`, and `placement_request/1` stringifies with
+`Atom.to_string(order.side)`. The exposure is any ad-hoc/operator/REPL call and any new
+consumer following Elixir convention. Cost here: three unintended testnet buys
+(BTC-PERPETUAL 10 USD each), flattened afterwards.
+
+**Suggested fix:** normalize `side` (and `type`) through one strict resolver that accepts
+`:buy | :sell | "buy" | "sell"` and returns `{:error, {:invalid_side, given}}` for anything
+else. No silent default.
+
+**Doc authority:** https://docs.deribit.com/api-reference/trading/private-sell — a sell is
+its own endpoint, so the direction is chosen inside the library, not by the venue.
+
+---
+
 ## 2026-08-19 (later) — Dispatch wave 570 → 626 → 648 → 572: reviewer findings parked
 
 **Status:** 📋 recorded — NOT consumer reports. The four consumer-reported tasks kept by the
