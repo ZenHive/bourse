@@ -1,7 +1,7 @@
 defmodule Bourse.MixProject do
   use Mix.Project
 
-  @version "0.6.0"
+  @version "0.7.0"
   @source_url "https://github.com/ZenHive/bourse"
   @runtime_manifest "priv/specs/json/runtime_support.json"
   @capability_surface "priv/specs/json/capability_surface.json"
@@ -35,7 +35,7 @@ defmodule Bourse.MixProject do
       # broken links; README links it on GitHub instead, where they resolve.
       extras: ["README.md", "CHANGELOG.md", "CONTRIBUTING.md"],
       source_url_pattern: "#{@source_url}/blob/main/%{path}#L%{line}",
-      description: "Unified and raw REST APIs for ten complete provider-authored exchange integrations.",
+      description: "Unified and raw REST APIs for eleven complete provider-authored exchange integrations.",
       # Docs mirror the package: only `ccxt.build_lighter_signer` ships, so the
       # repo-internal tasks must not appear on hexdocs as tasks consumers can run.
       # `filter_modules` is a KEEP predicate — true documents the module.

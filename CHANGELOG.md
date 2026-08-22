@@ -5,7 +5,7 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.7.0] - 2026-08-22
 
 ### Added
 
@@ -50,9 +50,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - The scheduled live lane now runs the `:network` / `:capability_live` corpus
   (including WebSocket auth smoke), the listen-key auth-smoke file on
   `:dangerous`, and a classified public WebSocket first-frame matrix.
-  `mix ccxt.verify_ws_first_frame` and `mix ccxt.aggregate_live_lane` merge
-  those surfaces into one durable `live-lane-report.json`. Silence after a
-  successful connect is a named venue/channel failure, not a pass.
+  The repo-internal first-frame and aggregation tasks merge those surfaces
+  into one durable `live-lane-report.json`. Silence after a successful
+  connect is a named venue/channel failure, not a pass.
 - Incomplete unified reads return `{:ok, %Bourse.RawResponse{}}` labelled
   with the provider payload, venue, method, and verification state. Callers
   no longer receive an unlabelled transport envelope posing as a normalized
@@ -71,8 +71,25 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   order-type flags such as `createMarketOrder` stay on
   `venue_support/2`. A raw parse slot the provider does not offer answers
   `{:error, {:unsupported_operation, slot}}` instead of `:no_field_map`.
+- `Bourse.load_markets/2` accepts and ignores `:type` / `:subType` /
+  `:sub_type`, so one option list can be threaded through it and the private
+  reads alike. The catalog is never filtered by them.
 
 ### Fixed
+
+- An unrecognized request option is now rejected before any wire attempt as
+  `{:error, %Bourse.Error{type: :bad_request, recoverable: false, retry_class:
+  :non_retryable}}` naming the offending key. Options forwarded to the HTTP
+  client are an allowlist rather than a deny-list, and the request rescue
+  classifies before recording, so a caller typo no longer reports as a
+  recoverable venue network fault that melts the circuit breaker and takes
+  every read on that venue down. A genuine transport failure still melts it.
+- Bybit `category` is resolved from the authored request contract for all 67
+  category-carrying methods, so declared reads no longer fail live with error
+  `10001`. `fetch_leverage_tiers` with no caller parameters resolves the
+  category from the market instead of assuming `linear`, and an ambiguous
+  ID-only order lookup returns `invalid_parameters` / `missing_required_param`
+  before dispatch rather than failing at the venue.
 
 - Deribit option and option-combo amounts no longer take inverse-future
   arithmetic when `instrument_type` says `reversed`. Loaded markets and the
@@ -909,6 +926,7 @@ Published before this repository existed, from the tree that is now the private
   ccxt.build_lighter_signer`, the prerequisite for private Lighter calls, is the
   one task consumers receive.
 
+[0.7.0]: https://hex.pm/packages/bourse/0.7.0
 [0.6.0]: https://hex.pm/packages/bourse/0.6.0
 [0.5.0]: https://hex.pm/packages/bourse/0.5.0
 [0.4.0]: https://hex.pm/packages/bourse/0.4.0
