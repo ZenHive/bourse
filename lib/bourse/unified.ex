@@ -521,6 +521,7 @@ defmodule Bourse.Unified do
   @js_names Map.new(@method_defs, fn {name, js_name, _params} -> {name, js_name} end)
   @js_to_method Map.new(@method_defs, fn {name, js_name, _params} -> {js_name, name} end)
   @required_params_by_method Map.new(@method_defs, fn {name, _js_name, params} -> {name, params} end)
+  @side_methods for {name, _js_name, params} <- @method_defs, :side in params, do: name
   @parse_types_by_return_type FieldMaps.parse_types()
                               |> Map.new(fn parse_type ->
                                 type_name = parse_type |> FieldMaps.struct_for() |> Module.split() |> List.last()
@@ -1873,6 +1874,30 @@ defmodule Bourse.Unified do
   """
   @spec validate_param_values(map(), atom()) :: {:ok, map()} | {:error, Error.t()}
   def validate_param_values(params, method) when is_map(params) and is_atom(method) do
+    with :ok <- validate_side_param(params, method) do
+      validate_wire_param_values(params, method)
+    end
+  end
+
+  defp validate_side_param(params, method) when method in @side_methods and is_map_key(params, "side") do
+    side = Map.get(params, "side")
+
+    case Sanity.check_side(side) do
+      :ok ->
+        :ok
+
+      {:error, message} ->
+        {:error,
+         Error.invalid_parameters(
+           message: message,
+           raw: %{"accepted" => ["buy", "sell"], "reason" => "invalid_side", "side" => inspect(side)}
+         )}
+    end
+  end
+
+  defp validate_side_param(_params, _method), do: :ok
+
+  defp validate_wire_param_values(params, method) do
     case Enum.find(params, fn {_key, value} -> not wire_encodable?(value) end) do
       nil -> {:ok, params}
       {key, value} -> {:error, non_encodable_param_error(key, value, method)}

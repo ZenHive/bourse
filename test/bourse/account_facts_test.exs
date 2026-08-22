@@ -225,6 +225,61 @@ defmodule Bourse.AccountFactsTest do
       refute URI.decode_query(query)["type"]
     end
 
+    test "binance resolves spot, inverse, and default-family account surfaces" do
+      test_pid = self()
+      stub = unique_stub("binance_account_fact_families")
+
+      Req.Test.stub(stub, fn conn ->
+        send(test_pid, {:account_facts_path, conn.request_path})
+        Req.Test.json(conn, %{"accountType" => "SPOT", "permissions" => ["SPOT"], "positions" => []})
+      end)
+
+      exchange = exchange_with_credentials("binance")
+      exchange_without_default = %{exchange | default_family: nil}
+
+      for {selected_exchange, opts, path} <- [
+            {exchange, [subType: "inverse"], "/dapi/v1/account"},
+            {exchange, [type: "spot"], "/api/v3/account"},
+            {exchange_without_default, [], "/api/v3/account"}
+          ] do
+        assert {:ok, _facts} =
+                 Bourse.fetch_account_facts(
+                   selected_exchange,
+                   opts ++ [plug: {Req.Test, stub}, timestamp_ms_override: @fixed_timestamp_ms]
+                 )
+
+        assert_receive {:account_facts_path, ^path}
+      end
+    end
+
+    test "deribit account facts use the authenticated balance route" do
+      test_pid = self()
+      stub = unique_stub("deribit_account_facts")
+      body = fixture_body("deribit")
+
+      Req.Test.stub(stub, fn conn ->
+        send(test_pid, {:account_facts_path, conn.request_path})
+        Req.Test.json(conn, body)
+      end)
+
+      assert {:ok, %{info: ^body}} =
+               Bourse.fetch_account_facts(exchange_with_credentials("deribit"),
+                 plug: {Req.Test, stub},
+                 timestamp_ms_override: @fixed_timestamp_ms
+               )
+
+      assert_receive {:account_facts_path, "/api/v2/private/get_account_summaries"}
+    end
+
+    test "bybit reports a missing authored account-info endpoint" do
+      exchange = %{exchange_with_credentials("bybit") | module: Bourse.Alpaca}
+
+      assert {:error, %Error{type: :not_supported, message: message}} =
+               Bourse.fetch_account_facts(exchange)
+
+      assert message =~ "does not expose the account classification endpoint"
+    end
+
     test "unmapped venue and binance family return not-supported errors" do
       assert {:error, %Error{type: :not_supported}} =
                Bourse.fetch_account_facts(Exchange.new!("okx"))

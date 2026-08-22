@@ -1639,6 +1639,9 @@
             "source_class": "optional"
           },
           "reduce_only": {
+            "fallback_sources": [
+              "reduce_only"
+            ],
             "kind": "reference",
             "source": "reduceOnly",
             "source_class": "native_passthrough"
@@ -2168,13 +2171,18 @@
         "createOrder": {
           "cases": [
             {
+              "path": "buy",
+              "when": {
+                "side": "buy"
+              }
+            },
+            {
               "path": "sell",
               "when": {
                 "side": "sell"
               }
             }
-          ],
-          "default": "buy"
+          ]
         },
         "fetchBalance": {
           "cases": [

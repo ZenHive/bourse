@@ -10,6 +10,11 @@ defmodule Bourse.Order.Sanity do
   exchange's validation contract; validation is skipped when markets have not
   been loaded with `Bourse.load_markets/1`.
 
+  Order side interpretability is separate and unconditional at the unified
+  write boundary. Only the wire forms `"buy"` and `"sell"` are accepted;
+  `:buy` and `:sell` are rejected rather than coerced so direction cannot vary
+  with venue-specific atom handling.
+
   ## Options
 
   - `:has` — the exchange capability map, used to reject unsupported order types.
@@ -53,7 +58,8 @@ defmodule Bourse.Order.Sanity do
   @doc "Validates order side."
   @spec check_side(any()) :: :ok | {:error, String.t()}
   def check_side(side) when side in @valid_sides, do: :ok
-  def check_side(side), do: {:error, "Invalid side: #{inspect(side)}. Must be \"buy\" or \"sell\""}
+
+  def check_side(side), do: {:error, "Invalid side: #{inspect(side)}. Accepted forms: \"buy\" or \"sell\""}
 
   @doc "Validates order type and optional exchange capability support."
   @spec check_order_type(any(), keyword()) :: :ok | {:error, String.t()}
@@ -201,7 +207,7 @@ defmodule Bourse.Order.Sanity do
     %{
       symbol: builder.symbol,
       type: to_string_safe(builder.type),
-      side: to_string_safe(builder.side),
+      side: builder.side,
       amount: builder.amount,
       price: Keyword.get(builder.params, :price)
     }
@@ -211,7 +217,7 @@ defmodule Bourse.Order.Sanity do
     %{
       symbol: get_field(params, "symbol", :symbol),
       type: params |> get_field("type", :type) |> to_string_safe(),
-      side: params |> get_field("side", :side) |> to_string_safe(),
+      side: get_field(params, "side", :side),
       amount: get_field(params, "amount", :amount),
       price: get_field(params, "price", :price)
     }

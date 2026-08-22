@@ -862,6 +862,29 @@ defmodule Bourse.DeribitAuthoredSpecTest do
     refute Map.has_key?(parsed.info, "trades")
   end
 
+  test "createOrder string sides select explicit direction endpoints and preserve reduce_only" do
+    for side <- ["buy", "sell"] do
+      order =
+        "direction-#{side}"
+        |> deribit_order_row("open", 10_000.0)
+        |> Map.put("direction", side)
+        |> Map.put("reduce_only", true)
+
+      {:ok, requests} = RequestCollector.start_link()
+
+      assert {:ok, %Bourse.Order{side: ^side}} =
+               Bourse.create_order(private_exchange(), "BTC/USD:BTC", "limit", side, 10,
+                 price: 10_000,
+                 params: %{"reduce_only" => true},
+                 plug: {Req.Test, stub(requests, rpc_result(%{"order" => order, "trades" => []}))}
+               )
+
+      assert_request!(requests, "/api/v2/private/#{side}")
+      assert RequestCollector.query(requests)["reduce_only"] == "true"
+      refute Map.has_key?(RequestCollector.query(requests), "side")
+    end
+  end
+
   test "order and trade field maps round-trip Deribit's label as client_order_id" do
     order = Map.put(deribit_order_row("107869080813", "open", 10_000.0), "label", "t622-order")
     trade = Map.put(deribit_trade_row(), "label", "t622-order")

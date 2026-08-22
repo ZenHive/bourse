@@ -412,7 +412,7 @@ defmodule Bourse.UnifiedTest do
         "none" => nil
       }
 
-      assert {:ok, ^params} = Unified.validate_param_values(params, :create_order)
+      assert {:ok, ^params} = Unified.validate_param_values(params, :fetch_ticker)
     end
 
     test "refuses a tuple, struct, or keyword list and names the param" do
@@ -432,6 +432,27 @@ defmodule Bourse.UnifiedTest do
 
       assert keyword_message =~ "keyword list"
       refute keyword_message =~ "positional argument"
+    end
+
+    test "refuses every non-encodable runtime value and malformed nested map key" do
+      bad_values = [self(), &is_atom/1, make_ref()]
+
+      for bad <- bad_values do
+        assert {:error, %Error{type: :invalid_parameters, message: message}} =
+                 Unified.validate_param_values(%{"probe" => bad}, :fetch_ticker)
+
+        assert message =~ ~s(invalid parameter "probe")
+      end
+
+      assert {:error, %Error{type: :invalid_parameters, message: unknown_key_message}} =
+               Unified.validate_param_values(%{"unknown-param-key" => self()}, :fetch_ticker)
+
+      assert unknown_key_message =~ ~s(invalid parameter "unknown-param-key")
+
+      assert {:error, %Error{type: :invalid_parameters, message: nested_key_message}} =
+               Unified.validate_param_values(%{"probe" => %{1 => "not encodable"}}, :fetch_ticker)
+
+      assert nested_key_message =~ ~s(invalid parameter "probe")
     end
 
     test "a keyword list in a required binary slot names the positional convention" do
@@ -3266,6 +3287,7 @@ defmodule Bourse.UnifiedTest do
   defp dummy_required_value(:orders), do: [%{"symbol" => "BTC/USDT"}]
   defp dummy_required_value(:ids), do: ["id"]
   defp dummy_required_value(:hedge_mode), do: true
+  defp dummy_required_value(:side), do: "buy"
 
   defp dummy_required_value(name) when name in [:amount, :leverage, :timeout, :duration, :cost], do: 1
 

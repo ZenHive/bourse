@@ -83,6 +83,23 @@ defmodule Bourse.SpecTest do
       assert spec["exchange"]["id"] == "deribit"
     end
 
+    test "direction-bearing endpoint selections never carry a silent default" do
+      direction_selections =
+        for exchange_id <- Bourse.Spec.exchanges(),
+            selections = get_in(Bourse.Spec.load!(exchange_id), ["endpoints", "request", "endpoint_selection"]) || %{},
+            {method, selection} <- selections,
+            direction_selection?(selection),
+            do: {exchange_id, method, selection}
+
+      assert Enum.any?(direction_selections, fn {exchange_id, method, _selection} ->
+               exchange_id == "deribit" and method == "createOrder"
+             end)
+
+      assert Enum.all?(direction_selections, fn {_exchange_id, _method, selection} ->
+               not Map.has_key?(selection, "default")
+             end)
+    end
+
     test "rejects a reference-only exchange" do
       assert_raise ArgumentError, ~r/unsupported exchange: "kraken"/, fn ->
         Bourse.Spec.load!("kraken")
@@ -383,6 +400,12 @@ defmodule Bourse.SpecTest do
       assert Bourse.Spec.owned_spec_path("kraken") == nil
       assert Bourse.Spec.authored_spec_path("kraken") == nil
     end
+  end
+
+  defp direction_selection?(selection) do
+    selection
+    |> then(&Map.get(&1, "cases", Map.get(&1, "rules", [])))
+    |> Enum.any?(fn branch -> Map.has_key?(Map.get(branch, "when", %{}), "side") end)
   end
 
   describe "JSON document validation" do

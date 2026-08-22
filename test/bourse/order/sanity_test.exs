@@ -81,13 +81,24 @@ defmodule Bourse.Order.SanityTest do
     end
 
     test "skips market checks when market metadata is absent" do
-      params = %{symbol: "BTC/USDT", type: "market", side: :buy, amount: 0.1}
+      params = %{symbol: "BTC/USDT", type: "market", side: "buy", amount: 0.1}
 
       assert {:ok, %{side: "buy", price: nil}} = Sanity.validate(params, nil)
     end
   end
 
   describe "individual checks" do
+    test "check_side/1 accepts only explicit wire strings" do
+      assert :ok = Sanity.check_side("buy")
+      assert :ok = Sanity.check_side("sell")
+
+      for side <- [:buy, :sell, "hold", nil] do
+        assert {:error, message} = Sanity.check_side(side)
+        assert message =~ inspect(side)
+        assert message =~ ~s(Accepted forms: "buy" or "sell")
+      end
+    end
+
     test "check_order_type/1 rejects unknown and non-string types" do
       assert :ok = Sanity.check_order_type("limit")
       assert {:error, unknown} = Sanity.check_order_type("iceberg")

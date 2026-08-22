@@ -5,6 +5,7 @@ defmodule Bourse.UnifiedOrderSanityTest do
   alias Bourse.Exchange
   alias Bourse.Market
   alias Bourse.Test.RequestCollector
+  alias Bourse.Unified
 
   test "create_order rejects an amount below the loaded market minimum before dispatch" do
     stub = refusing_stub()
@@ -56,6 +57,31 @@ defmodule Bourse.UnifiedOrderSanityTest do
              )
 
     assert RequestCollector.one!(requests).method == "POST"
+  end
+
+  test "every positional-side write rejects an atom before dispatch without markets or sanity" do
+    exchange = Exchange.new!("okx", api_key: "test-key", secret: "test-secret", password: "test-pass")
+    refute is_list(exchange.markets)
+    stub = refusing_stub()
+
+    side_methods =
+      Enum.filter(Unified.method_defs(), fn {_name, _js_name, required, _description} -> :side in required end)
+
+    assert side_methods != []
+
+    for {name, _js_name, required, _description} <- side_methods do
+      required_values = Enum.map(required, &side_method_value/1)
+
+      assert {:error, %Error{type: :invalid_parameters} = error} =
+               apply(Bourse, name, [exchange | required_values] ++ [[plug: {Req.Test, stub}]]),
+             "#{name} accepted an atom side"
+
+      assert error.message =~ "Invalid side: :sell"
+      assert error.message =~ ~s(Accepted forms: "buy" or "sell")
+      assert error.raw == %{"accepted" => ["buy", "sell"], "reason" => "invalid_side", "side" => ":sell"}
+    end
+
+    refute_request_issued()
   end
 
   test "create_order dispatches when the amount satisfies the market minimum" do
@@ -168,4 +194,12 @@ defmodule Bourse.UnifiedOrderSanityTest do
   end
 
   defp unique_stub, do: {__MODULE__, System.unique_integer([:positive])}
+
+  defp side_method_value(:amount), do: 1
+  defp side_method_value(:cost), do: 1
+  defp side_method_value(:duration), do: 60
+  defp side_method_value(:id), do: "order-id"
+  defp side_method_value(:side), do: :sell
+  defp side_method_value(:symbol), do: "BTC/USDT"
+  defp side_method_value(:type), do: "limit"
 end
