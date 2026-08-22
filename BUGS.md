@@ -1906,3 +1906,14 @@ only the private reads. Local workaround only; the misclassification is the fix 
 > option set, and nothing enforces them at runtime — which is what lets an
 > undeclared option reach Req at all. Enforcing the declaration would answer both
 > halves at once; that confrontation is written into the task.
+>
+> **2026-08-22 — behoben in bourse 0.7.0.** Both halves shipped: an unrecognized
+> request option is now rejected pre-wire as
+> `%Bourse.Error{type: :bad_request, recoverable: false, retry_class: :non_retryable}`,
+> so it never reaches Req and never records a breaker failure; and
+> `load_markets/2` accepts and ignores `:type` / `:subType` / `:sub_type`, which
+> was the instance that surfaced this. Verified from the consumer side by
+> `trading_dashboard` on the 0.7.0 upgrade — its `Risk.credential_scope/2`
+> workaround stays, but only for the reason that was always independently true
+> (markets are venue-wide public data, so one load answers for every credential
+> on the venue), not to route around this defect.
