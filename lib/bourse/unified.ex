@@ -40,9 +40,14 @@ defmodule Bourse.Unified do
   ]
 
   # Dispatch opts that only steer endpoint SELECTION — they are consumed before
-  # the request is built and are not Req options, so they must be dropped before
-  # the call reaches `Bourse.HTTP` (Req raises `unknown option` otherwise).
+  # the request is built and are not HTTP options, so they must be dropped before
+  # the call reaches `Bourse.HTTP` (unknown keys are rejected as `:bad_request`).
   @selection_opts [:endpoint_index, :market_type]
+
+  # Account/family selectors used by private reads. `load_markets/2` always
+  # returns the full catalog, so these are accepted and dropped rather than
+  # forwarded as HTTP options or as fetchMarkets params.
+  @catalog_ignored_opts [:type, :subType, :sub_type]
 
   @account_fact_venues ~w(alpaca binance bybit deribit hyperliquid lighter)
   @account_fact_selector_fields ~w(type subType sub_type)
@@ -699,10 +704,17 @@ defmodule Bourse.Unified do
   returned struct. Subsequent unified calls that need market
   metadata (e.g. lighter `market_id` resolution) reuse `exchange.markets`
   without another network round-trip. Call again for an explicit reload.
+
+  Always loads the full catalog. Account-selection keys (`:type`, `:subType`,
+  `:sub_type`) are accepted and ignored so a shared `request_opts` list can
+  include the family selector private reads require; they do not filter
+  markets. Unrecognized HTTP options are rejected as `:bad_request`.
   """
   @spec load_markets(Exchange.t(), keyword()) ::
           {:ok, Exchange.t()} | {:error, Error.t() | term()}
   def load_markets(%Exchange{} = exchange, opts \\ []) when is_list(opts) do
+    opts = Keyword.drop(opts, @catalog_ignored_opts)
+
     with {:ok, module} <- require_module(exchange),
          {:ok, markets} when is_list(markets) <-
            call_dispatch(exchange, module, :fetch_markets, "fetchMarkets", %{}, opts) do

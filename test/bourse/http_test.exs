@@ -960,6 +960,94 @@ defmodule Bourse.HTTPTest do
   end
 
   # ===========================================================================
+  # Unrecognized caller options
+  # ===========================================================================
+
+  describe "request/4 unrecognized options" do
+    test "rejects an unknown option before contacting the venue", %{exchange: exchange} do
+      assert {:error, %Error{} = error} =
+               HTTP.request(exchange, :get, "/test", type: "swap")
+
+      assert error.type == :bad_request
+      assert error.recoverable == false
+      assert error.retry_class == :non_retryable
+      assert error.message == "unknown option :type"
+      assert error.exchange == exchange.id
+    end
+
+    test "names every unknown option when several are supplied", %{exchange: exchange} do
+      assert {:error, %Error{type: :bad_request, message: message}} =
+               HTTP.request(exchange, :get, "/test", type: "swap", category: "linear")
+
+      assert message == "unknown options :type, :category"
+    end
+
+    test "does not emit request telemetry for an unrecognized option", %{exchange: exchange} do
+      parent = self()
+      handler_id = "test-http-unknown-opt-#{System.unique_integer([:positive])}"
+
+      :telemetry.attach_many(
+        handler_id,
+        [
+          [:bourse, :request, :start],
+          [:bourse, :request, :stop],
+          [:bourse, :request, :exception]
+        ],
+        fn event, measurements, metadata, _config ->
+          send(parent, {:telemetry, event, measurements, metadata})
+        end,
+        nil
+      )
+
+      on_exit(fn -> :telemetry.detach(handler_id) end)
+
+      assert {:error, %Error{type: :bad_request}} =
+               HTTP.request(exchange, :get, "/test", type: "swap")
+
+      refute_received {:telemetry, [:bourse, :request, :start], _, _}
+      refute_received {:telemetry, [:bourse, :request, :exception], _, _}
+    end
+
+    test "a rejected option leaves the venue fuse closed past the melt threshold" do
+      exchange_id = "binance"
+      CircuitBreakerControl.isolate!(exchange_id, %{max_failures: 3, window_ms: 60_000, reset_ms: 60_000})
+      exchange = Exchange.new!(exchange_id)
+
+      assert CircuitBreaker.check(exchange_id) == :ok
+      assert CircuitBreaker.status(exchange_id) == :ok
+
+      for _ <- 1..5 do
+        assert {:error, %Error{type: :bad_request, recoverable: false, retry_class: :non_retryable}} =
+                 HTTP.request(exchange, :get, "/api/v3/ping", type: "swap")
+      end
+
+      assert CircuitBreaker.status(exchange_id) == :ok
+    end
+
+    test "an ArgumentError naming an unknown option in the rescue does not melt" do
+      exchange_id = "binance"
+      CircuitBreakerControl.isolate!(exchange_id, %{max_failures: 3, window_ms: 60_000, reset_ms: 60_000})
+      exchange = Exchange.new!(exchange_id)
+
+      adapter = fn _request ->
+        raise ArgumentError, "unknown option :type"
+      end
+
+      assert CircuitBreaker.check(exchange_id) == :ok
+
+      for _ <- 1..5 do
+        assert {:error, %Error{type: :bad_request, recoverable: false} = error} =
+                 HTTP.request(exchange, :get, "/api/v3/ping", adapter: adapter)
+
+        assert error.message =~ ":type"
+        refute error.retry_class == :network
+      end
+
+      assert CircuitBreaker.status(exchange_id) == :ok
+    end
+  end
+
+  # ===========================================================================
   # Circuit Breaker Integration
   # ===========================================================================
 
@@ -1022,6 +1110,29 @@ defmodule Bourse.HTTPTest do
       end
 
       assert {:error, %Error{type: :exchange_not_available, retry_class: :server_busy}} = request.()
+      assert CircuitBreaker.status(exchange_id) == :ok
+
+      for _ <- 1..3, do: request.()
+
+      assert CircuitBreaker.status(exchange_id) == :blown
+      assert {:error, %Error{type: :circuit_open}} = request.()
+    end
+
+    test "a transport exception raised inside the request still melts" do
+      exchange_id = "binance"
+      CircuitBreakerControl.isolate!(exchange_id, %{max_failures: 3, window_ms: 60_000, reset_ms: 60_000})
+      exchange = Exchange.new!(exchange_id)
+      stub = unique_stub()
+
+      Req.Test.stub(stub, fn _conn ->
+        raise "plug boom"
+      end)
+
+      request = fn ->
+        HTTP.request(exchange, :get, "/api/v3/ping", plug: {Req.Test, stub})
+      end
+
+      assert {:error, %Error{type: :network_error, retry_class: :network, recoverable: true}} = request.()
       assert CircuitBreaker.status(exchange_id) == :ok
 
       for _ <- 1..3, do: request.()
@@ -1112,6 +1223,18 @@ defmodule Bourse.HTTPTest do
 
       conn = RequestCollector.one!(requests)
       assert Plug.Conn.get_req_header(conn, "x-simulated-trading") == ["1"]
+    end
+
+    test "rejects an unknown option as a non-recoverable bad_request", %{exchange: exchange} do
+      signed = %{url: "/api/v5/account/balance", method: :get, headers: [], body: nil}
+
+      assert {:error, %Error{} = error} =
+               HTTP.signed_request(exchange, signed, "https://api.test.com", type: "swap")
+
+      assert error.type == :bad_request
+      assert error.recoverable == false
+      assert error.retry_class == :non_retryable
+      assert error.message == "unknown option :type"
     end
 
     test "prepends base_url to signed url and passes headers", %{exchange: exchange} do

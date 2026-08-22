@@ -56,6 +56,25 @@ defmodule Bourse.HTTP do
 
   @base_client_key {__MODULE__, :base_client}
 
+  # Bourse-consumed keys plus the Req options this client actually forwards.
+  # Anything else is a caller error: the previous deny-list (`Keyword.drop/2`)
+  # let unknown keys reach Req, which raised, which the rescue then labeled
+  # as a venue `:network_error` and melted the fuse.
+  @known_request_opts [
+    :params,
+    :headers,
+    :timeout,
+    :base_url,
+    :body_encoding,
+    :endpoint_weight,
+    :endpoint_rate_limit,
+    :plug,
+    :adapter,
+    :retry,
+    :retry_delay,
+    :max_retries
+  ]
+
   @typedoc "HTTP response with status, headers, and decoded body"
   @type response_headers :: %{optional(String.t()) => [String.t()]}
   @type response :: %{status: integer(), headers: response_headers(), body: term()}
@@ -76,8 +95,12 @@ defmodule Bourse.HTTP do
   - `:timeout` - Request timeout in milliseconds (default: from `Bourse.Defaults`)
   - `:base_url` - Override base URL (default: uses exchange.base_urls)
   - `:body_encoding` - Endpoint body convention from the exchange spec
+  - `:plug` / `:adapter` - Req transport override (tests / custom adapter)
+  - `:retry` / `:retry_delay` / `:max_retries` - Req retry controls
 
-  Any additional options are passed through to Req (useful for `:plug` in tests).
+  Any other key is rejected as `{:error, %Bourse.Error{type: :bad_request}}`
+  before a request is issued. Unknown options are a caller error; they are
+  not forwarded to Req and they do not melt the venue circuit breaker.
 
   ## Returns
 
@@ -106,7 +129,8 @@ defmodule Bourse.HTTP do
         :endpoint_rate_limit
       ])
 
-    with :ok <- check_circuit_breaker(exchange),
+    with :ok <- reject_unknown_opts(opts, exchange.id),
+         :ok <- check_circuit_breaker(exchange),
          :ok <- Shaping.maybe_rate_limit(Shaping.rate_key(exchange), exchange, endpoint_rate_limit) do
       base_url = custom_base_url || default_base_url(exchange)
 
@@ -169,6 +193,10 @@ defmodule Bourse.HTTP do
 
     # Rescue wraps *transport only*. Classifier runs outside so a bug in
     # Errors.classify_response cannot be mislabeled as network_error (task 255).
+    # Raised exceptions are classified before the breaker records them: caller
+    # option/validation faults are `:bad_request` (no melt); everything else is
+    # `:network_error`. Both flow through `record_result/2` like the other
+    # branches — never an unconditional `record_failure/1`.
     transport =
       try do
         base_client = get_base_client()
@@ -177,13 +205,14 @@ defmodule Bourse.HTTP do
         # reach:disable-next-line bare_rescue — transport boundary only
         e ->
           emit_exception(exchange_id, method, path, :exception, e, start_time)
-          CircuitBreaker.record_failure(exchange_id)
-          {:transport_exception, e}
+          {:raised, e}
       end
 
     case transport do
-      {:transport_exception, e} ->
-        {:error, Error.network_error(message: "Exception: #{Exception.message(e)}", exchange: exchange_id)}
+      {:raised, e} ->
+        outcome = raised_exception_outcome(exchange_id, e)
+        CircuitBreaker.record_result(exchange_id, outcome)
+        outcome
 
       {:ok, %Req.Response{status: status, headers: resp_headers, body: body}} ->
         emit_stop(exchange_id, method, path, status, start_time)
@@ -290,7 +319,8 @@ defmodule Bourse.HTTP do
     endpoint_rate_limit = Keyword.get(opts, :endpoint_rate_limit, endpoint_weight)
     extra_opts = Keyword.drop(opts, [:timeout, :endpoint_weight, :endpoint_rate_limit])
 
-    with :ok <- check_circuit_breaker(exchange),
+    with :ok <- reject_unknown_opts(opts, exchange.id),
+         :ok <- check_circuit_breaker(exchange),
          :ok <- Shaping.maybe_rate_limit(Shaping.rate_key(exchange), exchange, endpoint_rate_limit) do
       url = base_url <> signed.url
       body_opts = if signed.body, do: [body: signed.body], else: []
@@ -442,6 +472,48 @@ defmodule Bourse.HTTP do
       %{exchange: exchange_id, method: method, path: path, kind: kind, reason: reason}
     )
   end
+
+  # ===========================================================================
+  # Option validation
+  # ===========================================================================
+
+  defp reject_unknown_opts(opts, exchange_id) do
+    case Keyword.drop(opts, @known_request_opts) do
+      [] ->
+        :ok
+
+      unknown ->
+        {:error, Error.bad_request(message: unknown_option_message(unknown), exchange: exchange_id)}
+    end
+  end
+
+  defp unknown_option_message([{key, _}]) do
+    "unknown option #{inspect(key)}"
+  end
+
+  defp unknown_option_message(unknown) do
+    names = Enum.map_join(unknown, ", ", fn {key, _} -> inspect(key) end)
+    "unknown options #{names}"
+  end
+
+  defp raised_exception_outcome(exchange_id, exception) do
+    message = Exception.message(exception)
+
+    error =
+      if unknown_option_exception?(exception, message) do
+        Error.bad_request(message: message, exchange: exchange_id)
+      else
+        Error.network_error(message: "Exception: #{message}", exchange: exchange_id)
+      end
+
+    {:error, error}
+  end
+
+  defp unknown_option_exception?(%ArgumentError{}, message) when is_binary(message) do
+    String.contains?(message, "unknown option")
+  end
+
+  defp unknown_option_exception?(_exception, _message), do: false
 
   # ===========================================================================
   # Circuit Breaker

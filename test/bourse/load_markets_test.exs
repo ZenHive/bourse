@@ -38,6 +38,28 @@ defmodule Bourse.LoadMarketsTest do
       assert :counters.get(markets_count, 1) == 1
     end
 
+    test "accepts type so a shared request_opts list can include account selection" do
+      markets_count = :counters.new(1, [:atomics])
+      stub = lighter_stub(markets_count)
+      exchange = Exchange.new!("lighter")
+
+      assert {:ok, loaded} = Bourse.load_markets(exchange, type: "swap", plug: {Req.Test, stub})
+      assert match?([_ | _], loaded.markets)
+      assert :counters.get(markets_count, 1) == 1
+    end
+
+    test "rejects an unrecognized HTTP option as a non-recoverable bad_request" do
+      exchange = Exchange.new!("lighter")
+
+      assert {:error, %Bourse.Error{} = error} =
+               Bourse.load_markets(exchange, not_a_real_opt: 1)
+
+      assert error.type == :bad_request
+      assert error.recoverable == false
+      assert error.retry_class == :non_retryable
+      assert error.message == "unknown option :not_a_real_opt"
+    end
+
     test "load_markets!/2 raises on transport error" do
       stub = unique_stub("load_markets_error")
 

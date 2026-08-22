@@ -4,6 +4,7 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
   import Bourse.IntegrationHelper, only: [build_exchange: 2, require_credentials!: 2]
 
   alias Bourse.Balance
+  alias Bourse.CircuitBreaker
   alias Bourse.Credentials
   alias Bourse.Error
   alias Bourse.Greeks
@@ -11,6 +12,7 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
   alias Bourse.Order
   alias Bourse.OrderList
   alias Bourse.Position
+  alias Bourse.Test.CircuitBreakerControl
   alias Bourse.Test.FixtureGateIsolation
 
   @binance_eapi_exchange_info_url "https://eapi.binance.com/eapi/v1/exchangeInfo"
@@ -56,6 +58,18 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
     FixtureGateIsolation.isolate!("binancecoinm")
     FixtureGateIsolation.isolate!("binanceusdm")
     :ok
+  end
+
+  test "load_markets/2 accepts type: swap without melting the binance fuse" do
+    CircuitBreakerControl.isolate!("binance")
+    assert CircuitBreaker.check("binance") == :ok
+    assert CircuitBreaker.status("binance") == :ok
+
+    exchange = build_exchange(:binance, sandbox: true)
+
+    assert {:ok, loaded} = Bourse.load_markets(exchange, type: "swap")
+    assert match?([_ | _], loaded.markets)
+    assert CircuitBreaker.status("binance") == :ok
   end
 
   test "spot and USD-M public reads select their native endpoint families" do

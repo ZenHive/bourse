@@ -158,7 +158,12 @@ defmodule Bourse do
     ],
     opts: [
       plug: [kind: :value, description: "Optional Req plug (tests / custom transport)"],
-      timeout: [kind: :value, description: "Request timeout in milliseconds"]
+      timeout: [kind: :value, description: "Request timeout in milliseconds"],
+      type: [
+        kind: :value,
+        description:
+          "Account/family selector shared with private reads (e.g. \"swap\"); ignored. load_markets always returns the full catalog."
+      ]
     ],
     returns: %{
       type: :result_tuple,
@@ -174,6 +179,17 @@ defmodule Bourse do
   returned struct into subsequent unified calls so market-metadata consumers
   (e.g. lighter symbol→`market_id` resolution) reuse the list without another
   network round-trip. Call again for an explicit reload.
+
+  `load_markets/2` always loads the full catalog — it is not account-scoped.
+  Account-selection keys that private reads use to pick a family (`:type`,
+  `:subType`, `:sub_type`) are accepted and ignored so a caller can thread one
+  `request_opts` list through `load_markets/2`, `fetch_balance/2`,
+  `fetch_positions/2` and `fetch_open_orders/2`. They do not filter the catalog.
+
+  Other options match the unified dispatch set (`:plug`, `:timeout`, `:headers`,
+  `:base_url`, `:market_type`, `:endpoint_index`). An unrecognized HTTP option
+  is rejected as `{:error, %Bourse.Error{type: :bad_request}}` before any
+  request is issued.
 
       {:ok, exchange} = Bourse.exchange("lighter")
       {:ok, exchange} = Bourse.load_markets(exchange)
