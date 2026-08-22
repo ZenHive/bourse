@@ -6,9 +6,16 @@ defmodule Bourse.Unified.DeribitPositionUnits do
   Inverse market `contract_size` is quote-denominated, while linear market
   `contract_size` is base-denominated, so the divisor follows settlement.
 
+  Deribit option `size` is a contract count (base-denominated when
+  `contract_size` is 1). The venue does not publish a quote notional; the
+  premium value is `abs(contracts) * contract_size * abs(mark_price)` in the
+  option's settlement currency, and only when loaded markets supply
+  `contract_size`. Combo books are not converted.
+
   Every populated `notional` is paired with its actual unified currency code.
   Most venues publish quote value; Binance COIN-M and inverse Bybit/OKX rows
   publish settlement value, while OKX linear rows publish USD `notionalUsd`.
+  Deribit option rows publish settlement-currency premium value.
   """
 
   alias Bourse.Exchange
@@ -18,7 +25,7 @@ defmodule Bourse.Unified.DeribitPositionUnits do
 
   @type parse_result :: {:ok, term()} | {:error, term()}
 
-  @doc "Populates position unit fields and reconciles Deribit future contracts."
+  @doc "Populates position unit fields and reconciles Deribit future contracts and option premium notionals."
   @spec reconcile(parse_result(), Exchange.t()) :: parse_result()
   def reconcile({:ok, positions}, %Exchange{} = exchange) when is_list(positions) do
     positions
@@ -77,6 +84,10 @@ defmodule Bourse.Unified.DeribitPositionUnits do
 
   defp notional_currency(_position, %Exchange{id: "alpaca"}), do: "USD"
   defp notional_currency(_position, %Exchange{id: "lighter"}), do: "USDC"
+
+  defp notional_currency(%Position{info: %{"kind" => "option"}} = position, %Exchange{id: "deribit"}) do
+    with {:ok, parsed} <- parsed_symbol(position), do: parsed.settle
+  end
 
   defp notional_currency(position, %Exchange{id: "okx"}) do
     with {:ok, parsed} <- parsed_symbol(position) do
@@ -142,7 +153,42 @@ defmodule Bourse.Unified.DeribitPositionUnits do
     end
   end
 
+  defp reconcile_position(
+         %Position{info: %{"instrument_name" => instrument_name, "kind" => "option"}} = position,
+         market_units
+       ) do
+    case Map.get(market_units, instrument_name) do
+      %{contract_size: contract_size} ->
+        case option_notional(position, contract_size) do
+          notional when is_number(notional) ->
+            %{position | contract_size: contract_size, notional: notional}
+
+          _missing_notional ->
+            position
+        end
+
+      _missing_market_units ->
+        position
+    end
+  end
+
   defp reconcile_position(position, _market_units), do: position
+
+  defp option_notional(%Position{} = position, contract_size) do
+    case {position.contracts, option_mark_price(position)} do
+      {contracts, mark_price} when is_number(contracts) and is_number(mark_price) ->
+        abs(contracts) * contract_size * abs(mark_price)
+
+      _missing_inputs ->
+        nil
+    end
+  end
+
+  defp option_mark_price(%Position{mark_price: mark_price}) when is_number(mark_price), do: mark_price
+
+  defp option_mark_price(%Position{info: %{"mark_price" => mark_price}}), do: Safe.number(mark_price)
+
+  defp option_mark_price(_position), do: nil
 
   defp contract_quantity(%Position{notional: notional}, true), do: notional
   defp contract_quantity(%Position{base_quantity: base_quantity}, false), do: base_quantity

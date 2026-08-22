@@ -412,6 +412,83 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
     end
   end
 
+  @tag :dangerous
+  test "an open option and future on one account populate option premium notional only with loaded markets" do
+    credentials = require_credentials!(:deribit, url: @deribit_testnet_url)
+    base = build_exchange(:deribit, credentials: credentials, sandbox: true)
+    assert {:ok, exchange} = Bourse.load_markets(base)
+    assert {:ok, chain} = Bourse.fetch_option_chain(exchange, "BTC")
+    assert {:ok, positions} = Bourse.fetch_positions(exchange, code: "BTC")
+    assert {:ok, open_orders} = Bourse.fetch_open_orders(exchange, code: "BTC")
+
+    {market, quote} = speed_bump_candidate!(exchange.markets, chain, positions, open_orders)
+    future = Enum.find(exchange.markets, &(&1.id == "BTC-PERPETUAL"))
+    assert %Bourse.Market{contract_size: 10.0} = future
+    option_amount = market.native_amount_step || market.precision["amount"]
+    future_amount = Bourse.Safe.number(future.info["min_trade_amount"])
+    assert is_number(market.contract_size) and market.contract_size > 0
+    assert is_number(option_amount) and option_amount > 0
+    assert is_number(future_amount) and future_amount > 0
+    assert position_size(positions, market.symbol) == 0
+    assert position_size(positions, future.symbol) == 0
+
+    {:ok, ticker} = Bourse.fetch_ticker(exchange, market.symbol)
+    ask = ticker.ask || quote.ask_price
+    assert is_number(ask) and ask > 0
+
+    try do
+      assert {:ok, %{body: %{"result" => %{"order" => option_order}}}} =
+               Bourse.Deribit.private_get_buy(exchange, %{
+                 "amount" => option_amount,
+                 "instrument_name" => market.id,
+                 "label" => "t664o#{System.unique_integer([:positive])}",
+                 "price" => ask,
+                 "type" => "limit"
+               })
+
+      assert option_order["order_state"] in ["speed_bumped", "filled", "open"]
+
+      assert {:ok, %{body: %{"result" => %{"order" => future_order}}}} =
+               Bourse.Deribit.private_get_buy(exchange, %{
+                 "amount" => future_amount,
+                 "instrument_name" => future.id,
+                 "label" => "t664f#{System.unique_integer([:positive])}",
+                 "type" => "market"
+               })
+
+      assert future_order["order_state"] in ["speed_bumped", "filled", "open"]
+      poll_open_position!(exchange, market.id, "BTC")
+      poll_open_position!(exchange, future.id, "BTC")
+
+      assert {:ok, loaded} = Bourse.fetch_positions(exchange, code: "BTC")
+      option_row = open_row!(loaded, market.id, "option")
+      future_row = open_row!(loaded, future.id, "future")
+
+      assert {:ok, parsed} = Bourse.Symbol.parse_extended(option_row.symbol)
+      assert option_row.notional_currency == parsed.settle
+      assert option_row.contract_size == market.contract_size
+
+      assert_in_delta option_row.notional,
+                      abs(option_row.contracts) * option_row.contract_size * abs(option_row.mark_price),
+                      @position_unit_tolerance
+
+      assert future_row.notional == abs(future_row.info["size"])
+      assert future_row.notional_currency == "USD"
+      assert future_row.contract_size == 10.0
+
+      assert {:ok, unloaded} = Bourse.fetch_positions(base, code: "BTC")
+      unloaded_option = open_row!(unloaded, market.id, "option")
+      unloaded_future = open_row!(unloaded, future.id, "future")
+      assert unloaded_option.notional == nil
+      assert unloaded_option.notional_currency == nil
+      assert unloaded_future.notional == abs(unloaded_future.info["size"])
+      assert unloaded_future.notional_currency == "USD"
+    after
+      close_deribit_position!(exchange, market, option_amount)
+      close_deribit_position!(exchange, future, future_amount)
+    end
+  end
+
   test "USDC dated future and option symbols reach their live instruments" do
     credentials = require_credentials!(:deribit, url: @deribit_testnet_url)
     exchange = build_exchange(:deribit, credentials: credentials, sandbox: true)
@@ -669,6 +746,64 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
     "#{div(gap_ms, @milliseconds_per_hour)}h"
   end
 
+  defp poll_open_position!(exchange, instrument_name, code, attempts \\ @order_poll_attempts)
+
+  defp poll_open_position!(_exchange, instrument_name, _code, 0) do
+    flunk("Deribit #{instrument_name} did not open a non-zero position")
+  end
+
+  defp poll_open_position!(exchange, instrument_name, code, attempts) do
+    case open_instrument_row(exchange, instrument_name, code) do
+      %Position{} = position ->
+        position
+
+      :pending ->
+        wait_then(fn -> poll_open_position!(exchange, instrument_name, code, attempts - 1) end)
+    end
+  end
+
+  defp open_instrument_row(exchange, instrument_name, code) do
+    case Bourse.fetch_positions(exchange, code: code) do
+      {:ok, positions} -> Enum.find(positions, :pending, &open_instrument?(&1, instrument_name))
+      _other -> :pending
+    end
+  end
+
+  defp open_row!(positions, instrument_name, kind) do
+    case Enum.find(positions, &open_instrument?(&1, instrument_name)) do
+      %Position{info: %{"kind" => ^kind}} = position ->
+        position
+
+      other ->
+        flunk("Deribit #{instrument_name} #{kind} row missing: #{inspect(other)}")
+    end
+  end
+
+  defp open_instrument?(%Position{info: %{"instrument_name" => instrument_name, "size" => size}}, instrument_name) do
+    is_number(size) and size != 0
+  end
+
+  defp open_instrument?(_position, _instrument_name), do: false
+
+  defp close_deribit_position!(exchange, market, amount) do
+    case Bourse.Deribit.private_get_sell(exchange, %{
+           "amount" => amount,
+           "instrument_name" => market.id,
+           "label" => "t664c#{System.unique_integer([:positive])}",
+           "reduce_only" => true,
+           "type" => "market"
+         }) do
+      {:ok, %{body: %{"result" => %{"order" => %{"order_id" => order_id}}}}} when is_binary(order_id) ->
+        :ok
+
+      {:error, %Error{code: code}} when code in [11_044, "11044", 11_094, "11094"] ->
+        :ok
+
+      other ->
+        flunk("Deribit #{market.id} reduce-only close failed: #{inspect(other)}")
+    end
+  end
+
   defp speed_bump_candidate!(markets, chain, positions, open_orders) do
     Enum.find_value(chain, fn {symbol, quote} ->
       market = Enum.find(markets, &(&1.symbol == symbol))
@@ -681,7 +816,7 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
         {market, quote}
       end
     end) ||
-      flunk("Deribit testnet has no two-sided ETH option with a zero position/open-order baseline")
+      flunk("Deribit testnet has no two-sided option with a zero position/open-order baseline")
   end
 
   defp fresh_option_bid!(exchange, symbol, fallback_bid) do

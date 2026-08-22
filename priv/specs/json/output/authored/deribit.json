@@ -5000,6 +5000,10 @@
           },
           "notional": {
             "else": null,
+            "evidence": {
+              "carve_id": "C-T664",
+              "derivation": "option_premium_notional"
+            },
             "guard": {
               "field": "kind",
               "in": [

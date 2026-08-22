@@ -353,6 +353,32 @@ defmodule Bourse.PositionUnitInvariantTest do
         quantity_basis: :base_contract
       },
       %{
+        venue: "deribit",
+        module: Bourse.Deribit,
+        symbol: "ETH/USD:ETH-260925-2700-P",
+        row: %{
+          "direction" => "buy",
+          "instrument_name" => "ETH-25SEP26-2700-P",
+          "kind" => "option",
+          "mark_price" => 0.415961,
+          "size" => 0.1
+        },
+        markets: [
+          %Market{
+            id: "ETH-25SEP26-2700-P",
+            symbol: "ETH/USD:ETH-260925-2700-P",
+            contract_size: 1.0,
+            option: true
+          }
+        ],
+        expected_base_quantity: 0.1,
+        expected_contracts: 0.1,
+        expected_contract_size: 1.0,
+        expected_notional: 0.0415961,
+        expected_notional_currency: "ETH",
+        quantity_basis: :base_contract
+      },
+      %{
         venue: "derive",
         module: Bourse.Derive,
         symbol: "ETH/USDC:USDC",

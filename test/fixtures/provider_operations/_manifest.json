@@ -46,7 +46,7 @@
           }
         }
       ],
-      "authored_spec_canonical_sha256": "1342b2a7198d984a9cae732e3e164d03c547b669490add94bb41ad63ce451ddc",
+      "authored_spec_canonical_sha256": "c0ff6493f12461948f13ce057189473aa6aa8326fdb7fd6dd698a6ac26018a51",
       "authority_manifest": "priv/authority/deribit/manifest.json"
     },
     "report_type": "provider_contract_comparison",

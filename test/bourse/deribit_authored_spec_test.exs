@@ -119,11 +119,17 @@ defmodule Bourse.DeribitAuthoredSpecTest do
            }
 
     assert field_map["notional"]["guard"] == %{"field" => "kind", "in" => ["future"]}
+    assert field_map["notional"]["else"] == nil
 
     assert field_map["notional"]["then"] == %{
              "coercion" => "safeNumber",
              "key" => "size",
              "kind" => "absolute"
+           }
+
+    assert field_map["notional"]["evidence"] == %{
+             "carve_id" => "C-T664",
+             "derivation" => "option_premium_notional"
            }
 
     for field <- ["initialMarginPercentage", "maintenanceMarginPercentage"] do
@@ -586,6 +592,76 @@ defmodule Bourse.DeribitAuthoredSpecTest do
              Bourse.fetch_positions(exchange, plug: {Req.Test, stub(requests, body)})
 
     assert_request!(requests, "/api/v2/private/get_positions")
+  end
+
+  test "option fetch_positions derives settlement-currency premium notional from loaded contract size" do
+    native_id = "BTC-31JUL26-65000-C"
+    symbol = "BTC/USD:BTC-260731-65000-C"
+
+    market = %Bourse.Market{
+      id: native_id,
+      symbol: symbol,
+      option: true,
+      contract_size: 1.0
+    }
+
+    exchange = Exchange.put_markets(private_exchange(), [market])
+    {:ok, requests} = RequestCollector.start_link()
+
+    body =
+      rpc_result([
+        %{
+          "direction" => "buy",
+          "instrument_name" => native_id,
+          "kind" => "option",
+          "mark_price" => 0.00701189,
+          "size" => 0.1
+        }
+      ])
+
+    assert {:ok, [%Bourse.Position{} = position]} =
+             Bourse.fetch_positions(exchange, plug: {Req.Test, stub(requests, body)})
+
+    assert position.symbol == symbol
+    assert position.contracts == 0.1
+    assert position.contract_size == 1.0
+    assert position.notional_currency == "BTC"
+    assert_in_delta position.notional, 0.000701189, 1.0e-12
+    assert_request!(requests, "/api/v2/private/get_positions")
+  end
+
+  test "option fetch_positions keeps notional nil on an exchange with no loaded markets" do
+    {:ok, requests} = RequestCollector.start_link()
+
+    body =
+      rpc_result([
+        %{
+          "direction" => "buy",
+          "instrument_name" => "BTC-31JUL26-65000-C",
+          "kind" => "option",
+          "mark_price" => 0.00701189,
+          "size" => 0.1
+        }
+      ])
+
+    assert {:ok, [%Bourse.Position{contracts: 0.1, contract_size: nil, notional: nil, notional_currency: nil}]} =
+             Bourse.fetch_positions(private_exchange(), plug: {Req.Test, stub(requests, body)})
+
+    assert_request!(requests, "/api/v2/private/get_positions")
+  end
+
+  test "okx and bybit do not author a future-only null notional for options" do
+    for venue <- ["okx", "bybit"] do
+      notional_rules = position_notional_rules(Bourse.Spec.load!(venue))
+
+      assert notional_rules != [], "#{venue} authors no position notional rule"
+
+      refute Enum.any?(notional_rules, &future_only_null_notional?/1),
+             "#{venue} authors the Deribit future-only notional null"
+    end
+
+    assert Enum.any?(position_notional_rules(Bourse.Spec.load!("okx")), &(&1["key"] == "_bourse_notional"))
+    assert Enum.any?(position_notional_rules(Bourse.Spec.load!("bybit")), &(&1["key"] == "_bourse_notional"))
   end
 
   test "authored Deribit future and option examples round-trip to their native ids" do
@@ -1073,6 +1149,28 @@ defmodule Bourse.DeribitAuthoredSpecTest do
   defp private_exchange do
     Exchange.new!("deribit", api_key: "test-key", secret: "test-secret")
   end
+
+  defp position_notional_rules(spec) do
+    case get_in(spec, ["normalization", "field_maps", "position"]) do
+      %{"branches" => branches} when is_list(branches) ->
+        Enum.flat_map(branches, fn
+          %{"field_map" => %{"notional" => rule}} -> [rule]
+          _branch -> []
+        end)
+
+      %{"field_map" => %{"notional" => rule}} ->
+        [rule]
+
+      _mapping ->
+        []
+    end
+  end
+
+  defp future_only_null_notional?(%{"kind" => "when", "else" => nil, "guard" => guard}) do
+    guard["field"] == "kind" and "future" in List.wrap(guard["in"])
+  end
+
+  defp future_only_null_notional?(_rule), do: false
 
   defp transaction_rows(row), do: rpc_result(%{"data" => [row]})
   defp rpc_result(result), do: %{"jsonrpc" => "2.0", "result" => result}

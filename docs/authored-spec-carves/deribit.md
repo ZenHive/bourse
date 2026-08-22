@@ -6,6 +6,58 @@ Append-only schema confrontations for Deribit. Follow the allocation and evidenc
 **Canonical for this venue.** Historical narrative may still appear in `docs/authored-specs.md`;
 this file is the complete Deribit carve record.
 
+## 2026-08-22 — option premium notional (Task 664)
+
+**C-T664 — Deribit option `notional` is the settlement-currency premium
+`abs(contracts) × contract_size × abs(mark_price)`, never a guessed contract
+size (task 664). Outcome: DIVERGE from mapping option `size` onto quote
+notional; closes named gap `G-T610-options`.**
+
+- *Exchange semantics (non-CCXT — [`private/get_positions`](https://docs.deribit.com/api-reference/account-management/private-get_positions)
+  + [`public/get_contract_size`](https://docs.deribit.com/api-reference/market-data/public-get_contract_size)):*
+  future `size` is quote currency (USD on BTC-PERPETUAL). Option `size` is a
+  contract count; for inverse BTC/ETH options one contract is one coin of
+  underlying, so that count is also base exposure. Option `mark_price` is the
+  premium per unit of underlying in the instrument's settlement currency
+  (BTC on `BTC-…-C`, USDC on `AVAX_USDC-…-C`).
+  [`public/get_contract_size`](https://docs.deribit.com/api-reference/market-data/public-get_contract_size)
+  names that underlying unit: "For options, spots, and for linear futures and
+  perpetuals it is the base currency coin." The venue does not publish a quote
+  notional for options (`size_currency` is future-only; `average_price_usd` is
+  a USD conversion of the entry, not a mark notional). The premium value is
+  therefore `abs(size) × contract_size × abs(mark_price)` in the settlement
+  currency. Combo marks stay unconverted (C-T626).
+- *Our carve:* the authored `notional` when-rule still copies future `size`
+  and stays `null` for every other kind — option `size` is not a quote value.
+  `Bourse.Unified.DeribitPositionUnits` derives the option premium only when
+  loaded markets supply a positive `contract_size` and the row carries
+  `contracts` plus `mark_price`. Missing `contract_size` (an exchange built
+  without `load_markets`) leaves `notional` nil rather than substituting 1.0.
+  `notional_currency` is the option's settlement code (`parsed.settle`);
+  `put_notional_currency/2` still errors if that code cannot be resolved.
+  Future contract-quantity reconciliation is unchanged.
+- *Live evidence (2026-08-22, test.deribit.com):* one account held
+  `BTC-23AUG26-77000-C` (`size` 0.1, `mark_price` 0.00569993, loaded
+  `contract_size` 1) and `BTC-PERPETUAL` (`size` 10 USD) at once. With
+  `load_markets` the option unified as `notional: 0.000569993`,
+  `notional_currency: "BTC"` (`0.1 × 1 × 0.00569993`). The future stayed
+  `notional: 10.0`, `notional_currency: "USD"`. The same payloads on a
+  sibling exchange with no loaded markets left the option `notional` nil.
+- *Sibling-venue audit:* OKX and Bybit do not author a `kind in ["future"]`
+  else-null notional. Bybit option rows publish `positionValue` (recorded
+  `test/fixtures/responses/bybit/fetch_positions.json`: `size` 0.01,
+  `markPrice` 473.44640682, `positionValue` 4.73446406) and the open-position
+  map reads `_bourse_notional` from that field. OKX option rows publish
+  `notionalUsd` and `optVal` (recorded
+  `test/fixtures/responses/okx/fetch_positions.json`: `instType` OPTION,
+  `pos` 1, `notionalUsd` 649.947); the open-position map reads
+  `_bourse_notional` from `notionalUsd` on the linear path. Neither venue
+  needs this Deribit premium derivation.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T664","date":"2026-08-22","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions option size/mark_price contract and public/get_contract_size base-coin unit for options"},"observed_evidence":{"kind":"live_venue","reference":"Live test.deribit.com 2026-08-22: simultaneous BTC-23AUG26-77000-C size 0.1 mark_price 0.00569993 contract_size 1 → notional 0.000569993 BTC, and BTC-PERPETUAL size 10 USD; option notional nil without load_markets"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-19 — multi-leg type, quantity, and inverse (Task 626)
 
 **C-T626 — Deribit combo books are not a single-leg type, have no resolvable

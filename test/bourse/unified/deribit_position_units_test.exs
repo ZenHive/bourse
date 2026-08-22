@@ -118,6 +118,132 @@ defmodule Bourse.Unified.DeribitPositionUnitsTest do
              DeribitPositionUnits.reconcile({:ok, position}, exchange)
   end
 
+  test "derives option premium notional in the settlement currency from loaded contract size" do
+    exchange =
+      "deribit"
+      |> Exchange.new!()
+      |> Exchange.put_markets([
+        %Market{id: "BTC-31JUL26-65000-C", contract_size: 1.0},
+        %Market{id: "AVAX_USDC-22JUN26-5d5-C", contract_size: 10.0}
+      ])
+
+    inverse_option = %Position{
+      contracts: 0.1,
+      mark_price: 0.00701189,
+      symbol: "BTC/USD:BTC-260731-65000-C",
+      info: %{
+        "instrument_name" => "BTC-31JUL26-65000-C",
+        "kind" => "option",
+        "mark_price" => 0.00701189,
+        "size" => 0.1
+      }
+    }
+
+    linear_option = %Position{
+      contracts: 5.0,
+      mark_price: 2.0,
+      symbol: "AVAX/USDC:USDC-260622-5.5-C",
+      info: %{"instrument_name" => "AVAX_USDC-22JUN26-5d5-C", "kind" => "option"}
+    }
+
+    assert {:ok,
+            %Position{
+              contract_size: 1.0,
+              contracts: 0.1,
+              notional: notional,
+              notional_currency: "BTC"
+            }} = DeribitPositionUnits.reconcile({:ok, inverse_option}, exchange)
+
+    assert_in_delta notional, 0.000701189, 1.0e-12
+
+    assert {:ok,
+            %Position{
+              contract_size: 10.0,
+              contracts: 5.0,
+              notional: 100.0,
+              notional_currency: "USDC"
+            }} = DeribitPositionUnits.reconcile({:ok, linear_option}, exchange)
+  end
+
+  test "leaves option notional nil when contract size is missing rather than guessing 1.0" do
+    exchange = Exchange.new!("deribit")
+
+    option = %Position{
+      contracts: 0.1,
+      mark_price: 0.00701189,
+      symbol: "BTC/USD:BTC-260731-65000-C",
+      info: %{"instrument_name" => "BTC-31JUL26-65000-C", "kind" => "option", "mark_price" => 0.00701189}
+    }
+
+    assert {:ok, %Position{contract_size: nil, notional: nil, notional_currency: nil}} =
+             DeribitPositionUnits.reconcile({:ok, option}, exchange)
+  end
+
+  test "reads option mark price from the raw payload when the struct field is empty" do
+    exchange =
+      "deribit"
+      |> Exchange.new!()
+      |> Exchange.put_markets([%Market{id: "BTC-31JUL26-65000-C", contract_size: 1.0}])
+
+    option = %Position{
+      contracts: 0.1,
+      symbol: "BTC/USD:BTC-260731-65000-C",
+      info: %{"instrument_name" => "BTC-31JUL26-65000-C", "kind" => "option", "mark_price" => "0.007"}
+    }
+
+    assert {:ok, %Position{notional: notional, notional_currency: "BTC"}} =
+             DeribitPositionUnits.reconcile({:ok, option}, exchange)
+
+    assert_in_delta notional, 0.0007, 1.0e-12
+  end
+
+  test "leaves option notional nil when mark price is missing even with loaded contract size" do
+    exchange =
+      "deribit"
+      |> Exchange.new!()
+      |> Exchange.put_markets([%Market{id: "BTC-31JUL26-65000-C", contract_size: 1.0}])
+
+    option = %Position{
+      contracts: 0.1,
+      symbol: "BTC/USD:BTC-260731-65000-C",
+      info: %{"instrument_name" => "BTC-31JUL26-65000-C", "kind" => "option", "size" => 0.1}
+    }
+
+    assert {:ok, ^option} = DeribitPositionUnits.reconcile({:ok, option}, exchange)
+  end
+
+  test "does not convert option combo marks into a premium notional" do
+    exchange =
+      "deribit"
+      |> Exchange.new!()
+      |> Exchange.put_markets([%Market{id: "BTC-REV-18JUL26-65000", contract_size: 1.0}])
+
+    combo = %Position{
+      contracts: 0.1,
+      mark_price: -0.0683,
+      symbol: "BTC-REV-18JUL26-65000",
+      info: %{"instrument_name" => "BTC-REV-18JUL26-65000", "kind" => "option_combo"}
+    }
+
+    assert {:ok, ^combo} = DeribitPositionUnits.reconcile({:ok, combo}, exchange)
+  end
+
+  test "fails loudly when a deribit option notional has no resolvable currency" do
+    exchange =
+      "deribit"
+      |> Exchange.new!()
+      |> Exchange.put_markets([%Market{id: "BTC-31JUL26-65000-C", contract_size: 1.0}])
+
+    position = %Position{
+      contracts: 0.1,
+      mark_price: 0.007,
+      info: %{"instrument_name" => "BTC-31JUL26-65000-C", "kind" => "option"}
+    }
+
+    assert {:error, {:missing_position_notional_currency, %{exchange: "deribit", symbol: nil}}} =
+             DeribitPositionUnits.reconcile({:ok, position}, exchange)
+  end
+
   test "labels inverse settlement notionals with the settle currency" do
     coinm = Exchange.new!("binancecoinm")
     bybit = Exchange.new!("bybit")
