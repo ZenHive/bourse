@@ -171,8 +171,23 @@ is quoted in the base currency per contract.
 
 ## 2026-08-22 — `create_order` silently places a BUY when `side` is an ATOM (`:sell`), and drops `params`
 
-**Status:** 📋 triaged — workbench task **663** · **Venue:** deribit (testnet, `sandbox: true`) ·
-**Severity:** money path — a sell becomes a buy with no error.
+**Status:** ✅ fixed on `main` after 0.7.0 by task **663** (`5cde00f`) · **Venue:** deribit
+(testnet, `sandbox: true`) · **Severity:** money path — a sell becomes a buy with no error.
+
+> **Fixed 2026-08-22 (task 663, `907f62c` + `5cde00f`).** An uninterpretable `side` is now a hard
+> `{:error, %Bourse.Error{type: :invalid_parameters}}` at `Bourse.Unified.validate_param_values/2`
+> for every unified method whose required params include `:side` — before any HTTP request,
+> independent of `sanity:` and of loaded markets. Atoms are rejected, not coerced, and
+> `RequestShape.Lighter.side_is_ask!/1` no longer disagrees. deribit's `createOrder`
+> `endpoint_selection` lost its `default: "buy"`; every authored venue was audited and it was the
+> only direction-bearing selection. The dropped-`params` half was a separate authoring defect:
+> `reduce_only` is deribit's native snake_case field and the authored source listed only
+> `reduceOnly`, so the nil lookup deleted the caller's key — `fallback_sources: ["reduce_only"]`
+> restores it. Live testnet confirmation on BTC-PERPETUAL: the atom call was refused with no order
+> placed; the string buy (`115028667016`) and the `reduce_only: true` sell (`115028668271`)
+> both went through in the right direction, positions empty afterwards.
+> **Still open, filed separately:** the batch write paths (`create_orders` and siblings) take
+> `:orders` and never enter that clause, so a nested atom side is not yet refused.
 
 **Reporter:** `trading_dashboard` (task 225 payload observation, live Deribit testnet).
 
