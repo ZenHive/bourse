@@ -182,10 +182,16 @@ defmodule Bourse.Signing.HmacRecipe do
   end
 
   defp timestamp(recipe, config) do
-    case get_in(recipe, ["timestamp", "format"]) do
-      "iso8601" -> Signing.timestamp_iso8601_from_config(config)
-      "iso8601_seconds" -> timestamp_iso8601_seconds_from_config(config)
-      _ -> config |> Signing.timestamp_ms_from_config() |> to_string()
+    case Map.get(config, :timestamp) do
+      ts when is_binary(ts) ->
+        ts
+
+      _ ->
+        case get_in(recipe, ["timestamp", "format"]) do
+          "iso8601" -> Signing.timestamp_iso8601_from_config(config)
+          "iso8601_seconds" -> timestamp_iso8601_seconds_from_config(config)
+          _ -> config |> Signing.timestamp_ms_from_config() |> to_string()
+        end
     end
   end
 

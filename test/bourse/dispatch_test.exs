@@ -872,16 +872,76 @@ defmodule Bourse.DispatchTest do
   # ---------------------------------------------------------------------------
 
   describe "call/4 signed requests" do
-    # Bybit-style signing config for testing
+    # Flat HMAC recipe for synthetic exchanges. Nested venue recipes (Bybit
+    # section keys) would pick the wrong branch on these fake paths.
+    @header_sign_recipe %{
+      "auth_headers" => [
+        %{"name" => "X-BAPI-API-KEY", "source" => "api_key"},
+        %{"name" => "X-BAPI-TIMESTAMP", "source" => "timestamp"},
+        %{"name" => "X-BAPI-RECV-WINDOW", "source" => "recv_window"}
+      ],
+      "canonical_string" => %{
+        "*" => %{
+          "components" => [
+            %{"source" => "timestamp"},
+            %{"source" => "api_key"},
+            %{"source" => "recv_window"},
+            %{"source" => "body"}
+          ]
+        }
+      },
+      "crypto_op" => %{"algo" => "hmac_sha256"},
+      "pre_sign_transforms" => [
+        %{"op" => "json_encode", "target" => "body"},
+        %{"op" => "hex_encode", "target" => "signature"}
+      ],
+      "signature_placement" => %{"key" => "X-BAPI-SIGN", "location" => "header"},
+      "timestamp" => %{"format" => "string", "source" => "timestamp_ms"}
+    }
+
+    @query_sign_recipe %{
+      "auth_headers" => [%{"name" => "X-MBX-APIKEY", "source" => "api_key"}],
+      "canonical_string" => %{"*" => %{"components" => [%{"source" => "query"}]}},
+      "crypto_op" => %{"algo" => "hmac_sha256"},
+      "pre_sign_transforms" => [%{"op" => "hex_encode", "target" => "signature"}],
+      "signature_placement" => %{"key" => "signature", "location" => "query"},
+      "timestamp" => %{"format" => "string", "source" => "timestamp_ms"}
+    }
+
+    @iso_sign_recipe %{
+      "auth_headers" => [
+        %{"name" => "OK-ACCESS-KEY", "source" => "api_key"},
+        %{"name" => "OK-ACCESS-PASSPHRASE", "source" => "passphrase"},
+        %{"name" => "OK-ACCESS-TIMESTAMP", "source" => "timestamp"}
+      ],
+      "canonical_string" => %{
+        "*" => %{
+          "components" => [
+            %{"source" => "timestamp"},
+            %{"source" => "method"},
+            %{"source" => "path"}
+          ]
+        }
+      },
+      "crypto_op" => %{"algo" => "hmac_sha256"},
+      "pre_sign_transforms" => [
+        %{"op" => "base64_encode", "target" => "signature"}
+      ],
+      "signature_placement" => %{"key" => "OK-ACCESS-SIGN", "location" => "header"},
+      "timestamp" => %{"format" => "iso8601", "source" => "timestamp_ms"}
+    }
+
     @bybit_signing_config %{
       api_key_header: "X-BAPI-API-KEY",
       timestamp_header: "X-BAPI-TIMESTAMP",
       signature_header: "X-BAPI-SIGN",
-      recv_window_header: "X-BAPI-RECV-WINDOW"
+      recv_window_header: "X-BAPI-RECV-WINDOW",
+      sign_recipe: @header_sign_recipe
     }
 
     defp build_signed_exchange(base_urls, opts \\ []) do
       exchange_id = Keyword.get(opts, :id, "signed_test_#{System.unique_integer([:positive])}")
+      pattern = Keyword.get(opts, :signing_pattern, :hmac_sha256_headers)
 
       credentials =
         Keyword.get(opts, :credentials, %Bourse.Credentials{
@@ -899,13 +959,42 @@ defmodule Bourse.DispatchTest do
         base_urls: base_urls,
         has: %{},
         required_credentials: %{},
-        signing_pattern: Keyword.get(opts, :signing_pattern, :hmac_sha256_headers),
-        signing_config: Keyword.get(opts, :signing_config, @bybit_signing_config),
+        signing_pattern: pattern,
+        signing_config: opts |> Keyword.get(:signing_config, @bybit_signing_config) |> ensure_hmac_recipe(pattern),
         options: %{},
         error_codes: %{},
         broad_error_patterns: %{},
         http_exceptions: %{},
         spec: %{}
+      }
+    end
+
+    defp ensure_hmac_recipe(%{sign_recipe: recipe} = config, _pattern) when is_map(recipe), do: config
+    defp ensure_hmac_recipe(config, :hmac_sha256_headers), do: Map.put(config, :sign_recipe, header_recipe(config))
+    defp ensure_hmac_recipe(config, :hmac_sha256_query), do: Map.put(config, :sign_recipe, @query_sign_recipe)
+    defp ensure_hmac_recipe(config, :hmac_sha256_iso_passphrase), do: Map.put(config, :sign_recipe, @iso_sign_recipe)
+    defp ensure_hmac_recipe(config, _pattern), do: config
+
+    defp header_recipe(config) do
+      api_key_header = Map.get(config, :api_key_header, "X-BAPI-API-KEY")
+      timestamp_header = Map.get(config, :timestamp_header, "X-BAPI-TIMESTAMP")
+      signature_header = Map.get(config, :signature_header, "X-BAPI-SIGN")
+
+      %{
+        "auth_headers" => [
+          %{"name" => api_key_header, "source" => "api_key"},
+          %{"name" => timestamp_header, "source" => "timestamp"}
+        ],
+        "canonical_string" => %{
+          "*" => %{"components" => [%{"source" => "timestamp"}, %{"source" => "method"}, %{"source" => "path"}]}
+        },
+        "crypto_op" => %{"algo" => "hmac_sha256"},
+        "pre_sign_transforms" => [
+          %{"op" => "json_encode", "target" => "body"},
+          %{"op" => "hex_encode", "target" => "signature"}
+        ],
+        "signature_placement" => %{"key" => signature_header, "location" => "header"},
+        "timestamp" => %{"format" => "string", "source" => "timestamp_ms"}
       }
     end
 

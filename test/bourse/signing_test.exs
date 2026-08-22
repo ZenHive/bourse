@@ -329,9 +329,9 @@ defmodule Bourse.SigningTest do
 
   describe "module_for_pattern/1" do
     test "returns correct module for each pattern" do
-      assert Signing.module_for_pattern(:hmac_sha256_query) == Bourse.Signing.HmacSha256Query
-      assert Signing.module_for_pattern(:hmac_sha256_headers) == Bourse.Signing.HmacSha256Headers
-      assert Signing.module_for_pattern(:hmac_sha256_iso_passphrase) == Bourse.Signing.HmacSha256Iso
+      assert Signing.module_for_pattern(:hmac_sha256_query) == Bourse.Signing.HmacRecipe
+      assert Signing.module_for_pattern(:hmac_sha256_headers) == Bourse.Signing.HmacRecipe
+      assert Signing.module_for_pattern(:hmac_sha256_iso_passphrase) == Bourse.Signing.HmacRecipe
       assert Signing.module_for_pattern(:deribit) == Bourse.Signing.Deribit
       assert Signing.module_for_pattern(:hyperliquid) == Bourse.Signing.Hyperliquid
       assert Signing.module_for_pattern(:derive) == Bourse.Signing.Derive
@@ -397,7 +397,7 @@ defmodule Bourse.SigningTest do
       creds = %Bourse.Credentials{api_key: "k", secret: "s"}
 
       assert %SignedRequest{} =
-               Signing.sign(:hmac_sha256_query, req, creds, %{})
+               Signing.sign(:hmac_sha256_query, req, creds, hmac_query_config())
     end
 
     test "sign accepts Request struct input" do
@@ -405,7 +405,16 @@ defmodule Bourse.SigningTest do
       creds = %Bourse.Credentials{api_key: "k", secret: "s"}
 
       assert %SignedRequest{method: :get} =
-               Signing.sign(:hmac_sha256_query, req, creds, %{})
+               Signing.sign(:hmac_sha256_query, req, creds, hmac_query_config())
+    end
+
+    test "HMAC patterns without a sign_recipe raise" do
+      req = %{method: :get, path: "/x", body: nil, params: %{}}
+      creds = %Bourse.Credentials{api_key: "k", secret: "s"}
+
+      assert_raise ArgumentError, ~r/requires config.sign_recipe/, fn ->
+        Signing.sign(:hmac_sha256_query, req, creds, %{})
+      end
     end
   end
 
@@ -431,8 +440,7 @@ defmodule Bourse.SigningTest do
     test "emits :sign event with duration on success path" do
       req = %{method: :get, path: "/v5/market/tickers", body: nil, params: %{"category" => "spot"}}
       creds = %Bourse.Credentials{api_key: "k", secret: "s"}
-      config = %{}
-      _ = Signing.sign(:hmac_sha256_query, req, creds, config)
+      _ = Signing.sign(:hmac_sha256_query, req, creds, hmac_query_config())
 
       assert_received {:telemetry, [:bourse, :signing, :sign], %{duration: d}, %{pattern: :hmac_sha256_query}}
       assert is_integer(d)
@@ -441,5 +449,53 @@ defmodule Bourse.SigningTest do
 
   # Builds minimal config for each pattern to avoid crashes
   defp build_config_for_pattern(:api_key_secret_headers), do: %{api_key_header: "API-KEY", secret_header: "API-SECRET"}
+  defp build_config_for_pattern(:hmac_sha256_query), do: hmac_query_config()
+  defp build_config_for_pattern(:hmac_sha256_headers), do: hmac_header_config()
+  defp build_config_for_pattern(:hmac_sha256_iso_passphrase), do: hmac_iso_config()
   defp build_config_for_pattern(_), do: %{}
+
+  defp hmac_query_config do
+    %{
+      sign_recipe: %{
+        "auth_headers" => [%{"name" => "X-MBX-APIKEY", "source" => "api_key"}],
+        "canonical_string" => %{"*" => %{"components" => [%{"source" => "query"}]}},
+        "crypto_op" => %{"algo" => "hmac_sha256"},
+        "pre_sign_transforms" => [%{"op" => "hex_encode", "target" => "signature"}],
+        "signature_placement" => %{"key" => "signature", "location" => "query"},
+        "timestamp" => %{"format" => "string", "source" => "timestamp_ms"}
+      }
+    }
+  end
+
+  defp hmac_header_config do
+    %{
+      sign_recipe: %{
+        "auth_headers" => [
+          %{"name" => "X-BAPI-API-KEY", "source" => "api_key"},
+          %{"name" => "X-BAPI-SIGN", "source" => "signature"}
+        ],
+        "canonical_string" => %{"*" => %{"components" => [%{"source" => "path"}]}},
+        "crypto_op" => %{"algo" => "hmac_sha256"},
+        "pre_sign_transforms" => [%{"op" => "hex_encode", "target" => "signature"}],
+        "signature_placement" => %{"key" => "X-BAPI-SIGN", "location" => "header"}
+      }
+    }
+  end
+
+  defp hmac_iso_config do
+    %{
+      sign_recipe: %{
+        "auth_headers" => [
+          %{"name" => "OK-ACCESS-KEY", "source" => "api_key"},
+          %{"name" => "OK-ACCESS-PASSPHRASE", "source" => "passphrase"},
+          %{"name" => "OK-ACCESS-TIMESTAMP", "source" => "timestamp"}
+        ],
+        "canonical_string" => %{"*" => %{"components" => [%{"source" => "timestamp"}, %{"source" => "method"}]}},
+        "crypto_op" => %{"algo" => "hmac_sha256"},
+        "pre_sign_transforms" => [%{"op" => "base64_encode", "target" => "signature"}],
+        "signature_placement" => %{"key" => "OK-ACCESS-SIGN", "location" => "header"},
+        "timestamp" => %{"format" => "iso8601", "source" => "timestamp_ms"}
+      }
+    }
+  end
 end

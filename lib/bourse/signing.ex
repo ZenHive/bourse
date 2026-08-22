@@ -35,9 +35,6 @@ defmodule Bourse.Signing do
   alias Bourse.Signing.Deribit
   alias Bourse.Signing.Derive
   alias Bourse.Signing.HmacRecipe
-  alias Bourse.Signing.HmacSha256Headers
-  alias Bourse.Signing.HmacSha256Iso
-  alias Bourse.Signing.HmacSha256Query
   alias Bourse.Signing.Hyperliquid
   alias Bourse.Signing.Lighter
   alias Bourse.Signing.Request
@@ -94,6 +91,11 @@ defmodule Bourse.Signing do
   end
 
   # Telemetry wrapper for sign duration (single event; signing is fast sync op).
+  defp hmac_recipe_sign(pattern, request, credentials, config) do
+    exchange = Map.get(config, :exchange)
+    timed_sign(&HmacRecipe.sign/3, request, credentials, config, pattern, exchange)
+  end
+
   defp timed_sign(fun, request, credentials, config, pattern, exchange) when is_function(fun, 3) do
     request = normalize_request(request)
     start_time = System.monotonic_time()
@@ -141,25 +143,22 @@ defmodule Bourse.Signing do
   @spec sign(pattern(), request(), Credentials.t(), config()) ::
           signed_request()
           | {:error, {:unsupported_signing, term()} | {:lighter_signing, term()}}
-  def sign(pattern, request, credentials, %{sign_recipe: recipe} = config)
-      when pattern in @hmac_recipe_patterns and is_map(recipe) do
-    exchange = Map.get(config, :exchange)
-    timed_sign(&HmacRecipe.sign/3, request, credentials, config, pattern, exchange)
+  def sign(:hmac_sha256_query, request, credentials, %{sign_recipe: recipe} = config) when is_map(recipe) do
+    hmac_recipe_sign(:hmac_sha256_query, request, credentials, config)
   end
 
-  def sign(:hmac_sha256_query, request, credentials, config) do
-    exchange = Map.get(config, :exchange)
-    timed_sign(&HmacSha256Query.sign/3, request, credentials, config, :hmac_sha256_query, exchange)
+  def sign(:hmac_sha256_headers, request, credentials, %{sign_recipe: recipe} = config) when is_map(recipe) do
+    hmac_recipe_sign(:hmac_sha256_headers, request, credentials, config)
   end
 
-  def sign(:hmac_sha256_headers, request, credentials, config) do
-    exchange = Map.get(config, :exchange)
-    timed_sign(&HmacSha256Headers.sign/3, request, credentials, config, :hmac_sha256_headers, exchange)
+  def sign(:hmac_sha256_iso_passphrase, request, credentials, %{sign_recipe: recipe} = config)
+      when is_map(recipe) do
+    hmac_recipe_sign(:hmac_sha256_iso_passphrase, request, credentials, config)
   end
 
-  def sign(:hmac_sha256_iso_passphrase, request, credentials, config) do
-    exchange = Map.get(config, :exchange)
-    timed_sign(&HmacSha256Iso.sign/3, request, credentials, config, :hmac_sha256_iso_passphrase, exchange)
+  def sign(pattern, _request, _credentials, config) when pattern in @hmac_recipe_patterns do
+    raise ArgumentError,
+          "HMAC pattern #{inspect(pattern)} requires config.sign_recipe (a map); got #{inspect(Map.get(config, :sign_recipe))}"
   end
 
   def sign(:api_key_secret_headers, request, credentials, config) do
@@ -224,9 +223,9 @@ defmodule Bourse.Signing do
   Returns the signing module for a given pattern.
   """
   @spec module_for_pattern(pattern()) :: module() | nil
-  def module_for_pattern(:hmac_sha256_query), do: HmacSha256Query
-  def module_for_pattern(:hmac_sha256_headers), do: HmacSha256Headers
-  def module_for_pattern(:hmac_sha256_iso_passphrase), do: HmacSha256Iso
+  def module_for_pattern(:hmac_sha256_query), do: HmacRecipe
+  def module_for_pattern(:hmac_sha256_headers), do: HmacRecipe
+  def module_for_pattern(:hmac_sha256_iso_passphrase), do: HmacRecipe
   def module_for_pattern(:api_key_secret_headers), do: ApiKeySecretHeaders
   def module_for_pattern(:deribit), do: Deribit
   def module_for_pattern(:hyperliquid), do: Hyperliquid
