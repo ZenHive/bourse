@@ -5,11 +5,13 @@ durable design anchor; the `authored_specs` rmap tasks reference it.
 
 ## Read this first: authority and verification
 
-The exchange-owned API contract is the semantic authority. Live API behavior, observed
-traffic, or raw venue recordings establish what the venue did; the provider's official
-docs/specs/SDK establish what its fields and parameters mean. A claim is `verified` only
-when manifest-registered reality and provider-owned semantics support it; otherwise it is
-`unverified`. CCXT source, execution, and static data are authoring references only.
+The exchange-owned API contract is the semantic authority. A **live call** against the
+venue establishes what the venue did; the provider's official docs/specs/SDK establish
+what its fields and parameters mean. A claim is `verified` only when that live call has
+been observed and provider-owned semantics support the meaning; otherwise it is
+`unverified`. Manifest-registered recordings are optional drift pins taken after the live
+call — never the test, and never committed in the same diff as the spec they certify.
+CCXT source, execution, and static data are authoring references only.
 
 ## Why
 
@@ -218,9 +220,10 @@ We build the client ourselves, by our own rules, but those rules answer to the e
 | **Authoring reference** | CCXT source/execution/static data, training, third-party docs, general web | Implementation clue only; claim remains unverified |
 
 If author and grader share the same third-party interpretation, both can converge on the same
-wrong belief. `mix ccxt.oracle_gate` therefore grades only manifest-registered reality:
-recorded responses, accepted-request goldens, and recorded exchange errors. CCXT-derived data
-can help discover or compare behavior, but cannot make a claim verified.
+wrong belief. A live venue call is the grader for a **new** claim. `mix ccxt.oracle_gate`
+replays already-registered recordings so they do not rot; adding a recording in the same
+change as the spec is not verification. CCXT-derived data can help discover or compare
+behavior, but cannot make a claim verified.
 
 ## Contract coverage is not behavior verification
 

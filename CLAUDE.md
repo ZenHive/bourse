@@ -107,18 +107,19 @@ host only, so no CI check can ever guard it. Read them from
 
 **Authority ladder — the exchange-owned contract wins.** Live or recorded raw exchange behavior establishes what the venue does; the exchange's own documentation, specifications and SDKs establish what its fields and parameters mean. CCXT source, execution and static files are unverified authoring references only.
 
-**Authoring and verification stay separate.** Author by reading multiple sources; verify through manifest-registered venue recordings, accepted-request goldens and recorded exchange errors. `mix ccxt.oracle_gate` is the only verification oracle in the check pipeline.
+**Authoring and verification stay separate.** Author by reading. Verify by a **live call** against testnet/demo (production public host for Coinbase Exchange). `mix ccxt.oracle_gate` replays already-registered goldens so they do not rot; it does **not** verify a new method. A recording committed in the same diff as the spec it certifies is the Deribit-`"8h"` bug: the golden is computed from the same wrong constant.
 
-**Verification is binary.** A claim is `verified` only when the reality manifests and `mix ccxt.oracle_gate` cover it; otherwise it is `unverified`. CCXT JS is a tool, not the truth: its parser output can inform authoring but cannot verify venue semantics.
+**Verification is binary.** A claim is `verified` only when a live venue call has been observed (IEx transcript, or `mix test.json --include network` / `--include dangerous` against the real host) and provider-owned semantics support the meaning. Manifest recordings are optional drift pins taken **after** that live call, never the test. CCXT JS cannot verify venue semantics.
 
 ### Rules
 
-- ✅ DO: author interpretive slices against the exchange-owned API contract, using CCXT only as reference material; keep `mix ccxt.oracle_gate` green.
+- ✅ DO: author interpretive slices against the exchange-owned API contract, using CCXT only as reference material. Keep `mix ccxt.oracle_gate` green for **existing** goldens — do not add a fixture to make a new method look verified.
 - ✅ DO: verify by **running/observing**; author by **reading** any source. A source that fed authoring cannot also be the oracle.
 - ✅ DO: run the **confrontation step** when authoring a venue slice (`docs/authored-specs.md`) — for each schema decision, confront the CARVE (does the field exist here? what does the value mean? is the abstraction right for this venue?) against the exchange's OWN semantics. Record every CONFIRMED / DIVERGE outcome in the venue's carve register under `docs/authored-spec-carves/`. A CCXT carve adopted without a register entry is inherited, not confronted.
 - 🚨 DO: keep it REAL — for divergence-prone fields (anything CCXT *computes* or *branches* rather than copies: precision, inverse-vs-linear cost, funding cadence, fee tiers), test against the **REAL API plus a non-CCXT semantic source**, never against a potentially-wrong CCXT fixture. A wrong fixture is *more costly* than a live call: it certifies our bug green and silent. The canonical case: deribit's funding `interval` was the authored literal `"8h"` while the venue publishes hourly — internally consistent, fully tested, and wrong, because the golden was computed with the same wrong constant.
 - 🚨 DO: **decolor on touch.** Comments, moduledocs and docs that cite CCXT as the *reason or authority* for a decision steer every future session back toward CCXT-as-truth. Never write a new one. `test/bourse/ccxt_authority_language_test.exs` enforces this with an explicit allowlist — a new CCXT mention in `lib/` fails the suite until it is either reworded or allowlisted with a compatibility-framed phrase.
-- ✅ DO: when a reality confrontation is **unreachable with our keys/hosts** (prod-only endpoint, region-restricted key, needs a real open position), append an entry to `docs/prod-verification-ledger.md`. The slice stays `unverified` until the ledger entry closes and the recording is registered.
+- ✅ DO: when a live call is **unreachable with our keys/hosts** (prod-only endpoint, region-restricted key, needs a real open position), append an entry to `docs/prod-verification-ledger.md`. The slice stays `unverified` until a live call exists.
+- ❌ DO NOT: write `test/fixtures/**`, call `Bourse.RecordedResponseFixtures`, or add a manifest row in the same change as the spec or parser under test. That recording is not independent evidence.
 - ❌ DO NOT: treat CCXT-derived data or training/web as verification. Independence comes from execution/reality, not a second read.
 - 🚨🚨 DO (behavioral default, anchored to the ACTION): **when you set out to check whether a venue "works," your FIRST call hits the LIVE venue.** Use testnet/demo for credentialed venues and the production public host for public-only Coinbase Exchange. Recipe: `creds = Bourse.Credentials.new!(api_key: System.get_env("DERIBIT_TESTNET_API_KEY"), secret: ...); {:ok, ex} = Bourse.Exchange.new("deribit", credentials: creds, sandbox: true)` → then a real `Bourse.fetch_ticker/fetch_balance`. Testnet credentials for all ten credentialed venues are provisioned (below); Coinbase Exchange needs none.
 
@@ -159,7 +160,7 @@ For cross-family reviewers (codex / cursor / grok) and any dispatch run.
 |-------|---------|-------|
 | Compile | `mix compile --warnings-as-errors` | silent finish = success |
 | Tests | `mix test.json --quiet` | **emits JSON by design** — parse it for real failures; the envelope is **not** a build error. Read `summary.result` / `summary.failed`. Most integration tests are excluded without `--include` tags. |
-| Reality oracle | `mix ccxt.oracle_gate` | Verifies registered response recordings, accepted-request goldens and recorded exchange errors. |
+| Reality oracle | `mix ccxt.oracle_gate` | Replays already-registered recordings, accepted-request goldens and recorded exchange errors. Does not verify a new method. |
 | Dialyzer | `mix dialyzer.json --quiet` | **emits JSON by design**. Plain `mix dialyzer` is the authoritative fallback when the JSON encoder can't serialize a warning shape. |
 | Lint | `mix credo --strict` | |
 | Security | `mix sobelow` | honors `.sobelow-skips` (hash-based), **not** inline comments |
@@ -223,7 +224,7 @@ Loaded via `Bourse.Testnet.register_all_from_env/1` in `test_helper.exs`. Env co
 ## Do NOT edit (generated) / DO author (frozen specs)
 
 - `lib/bourse/exchanges/*.ex` — generated at compile time; never hand-edit (fix the generator).
-- `priv/specs/json/output/authored/<venue>.json` — **the complete hand-owned runtime documents** (eleven venues, schema version `3`). These you DO edit, by authoring per the loop in `docs/authored-specs.md`, then proving green with `mix ccxt.oracle_gate`.
+- `priv/specs/json/output/authored/<venue>.json` — **the complete hand-owned runtime documents** (eleven venues, schema version `3`). These you DO edit, by authoring per the loop in `docs/authored-specs.md`, then proving with a live venue call. `mix ccxt.oracle_gate` must stay green for already-registered goldens; it is not the proof for a new slice.
 - `priv/specs/json/output/<venue>.json` — frozen CCXT-derived **reference** siblings (the 16-venue slice), pinned by `reference_corpus.json`. Never loaded at runtime, never shipped in the Hex package; read-only authoring/test input (e.g. the test-only `markets.symbols_index` used by integration symbol selection).
 - `priv/reference_cache/` — vendored market/currency slice for `Bourse.ReplayExchange`. Compatibility reference only; the one module that reads it. Neither the cache nor its reader is packaged.
 
