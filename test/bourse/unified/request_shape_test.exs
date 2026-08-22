@@ -1893,6 +1893,61 @@ defmodule Bourse.Unified.RequestShapeTest do
       end
     end
 
+    test "deribit createOrder keeps caller reduce_only when reduceOnly is absent" do
+      {:ok, exchange} = Exchange.new("deribit")
+
+      shaped =
+        RequestShape.apply(
+          %{
+            "amount" => 10,
+            "reduce_only" => true,
+            "side" => "sell",
+            "symbol" => "BTC-PERPETUAL",
+            "type" => "market"
+          },
+          exchange,
+          "createOrder"
+        )
+
+      assert shaped["reduce_only"] == true
+    end
+
+    test "deribit createOrder maps reduceOnly onto reduce_only" do
+      {:ok, exchange} = Exchange.new("deribit")
+
+      shaped =
+        RequestShape.apply(
+          %{
+            "amount" => 10,
+            "reduceOnly" => true,
+            "side" => "sell",
+            "symbol" => "BTC-PERPETUAL",
+            "type" => "market"
+          },
+          exchange,
+          "createOrder"
+        )
+
+      assert shaped["reduce_only"] == true
+      refute Map.has_key?(shaped, "reduceOnly")
+    end
+
+    test "a synthetic rename keeps a caller-supplied native key when the source is absent" do
+      exchange = %Exchange{
+        id: "shape_test",
+        name: "Shape Test",
+        request_param_shape: %{
+          "createOrder" => %{
+            "reduce_only" => %{"source" => "reduceOnly", "source_class" => "native_passthrough"}
+          }
+        }
+      }
+
+      shaped = RequestShape.apply(%{"reduce_only" => true, "side" => "sell"}, exchange, "createOrder")
+
+      assert shaped["reduce_only"] == true
+    end
+
     test "deribit createOrder maps unified clientOrderId onto label and drops the unified key" do
       {:ok, exchange} = Exchange.new("deribit")
 

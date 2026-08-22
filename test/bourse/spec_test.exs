@@ -100,6 +100,19 @@ defmodule Bourse.SpecTest do
              end)
     end
 
+    test "schema refuses a direction-bearing selection default" do
+      spec =
+        "deribit"
+        |> owned_spec()
+        |> put_in(["endpoints", "request", "endpoint_selection", "createOrder", "default"], "buy")
+
+      assert_raise ArgumentError,
+                   ~r/owned spec "deribit" gap endpoints\.request\.endpoint_selection\.createOrder\.default: direction-bearing selection cannot carry a silent default/,
+                   fn ->
+                     Schema.validate!(spec, "deribit")
+                   end
+    end
+
     test "rejects a reference-only exchange" do
       assert_raise ArgumentError, ~r/unsupported exchange: "kraken"/, fn ->
         Bourse.Spec.load!("kraken")

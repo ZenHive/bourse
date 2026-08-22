@@ -350,6 +350,8 @@ defmodule Bourse.Unified.RequestShape do
     end
   end
 
+  # Caller-supplied native keys win. A missing source must not delete a value
+  # the caller already set on native_key (deribit createOrder.reduce_only).
   defp put_authored_reference(params, native_key, source, entry, required, js_name, context) do
     validate_unified_source!(entry, source, required, js_name, context)
     value = reference_value(params, source, entry)
@@ -358,7 +360,7 @@ defmodule Bourse.Unified.RequestShape do
       present?(params, Map.get(entry, "unless_present")) ->
         Map.delete(params, native_key)
 
-      preserve_native?(entry) and Map.has_key?(params, native_key) and native_key != source ->
+      Map.has_key?(params, native_key) and native_key != source ->
         enforce_max_length!(params, native_key, Map.fetch!(params, native_key), entry, js_name, context)
 
       is_nil(value) ->
@@ -372,9 +374,6 @@ defmodule Bourse.Unified.RequestShape do
         |> enforce_max_length!(native_key, transformed, entry, js_name, context)
     end
   end
-
-  defp preserve_native?(%{"preserve_native" => true}), do: true
-  defp preserve_native?(_entry), do: false
 
   # Caller input, not an internal invariant. RequestShape.apply/4 still
   # raises so fixture/shaping tests stay raise-based; Unified.call/5 converts

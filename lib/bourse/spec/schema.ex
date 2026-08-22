@@ -153,6 +153,7 @@ defmodule Bourse.Spec.Schema do
     validate_emulated_methods!(spec, exchange_id)
     validate_runtime_error_contract!(spec, exchange_id)
     validate_support!(spec, exchange_id)
+    validate_endpoint_selection!(spec, exchange_id)
     validate_oracles!(spec, exchange_id)
     validate_option_quantity!(spec, exchange_id)
     validate_contract_unit!(spec, exchange_id)
@@ -624,6 +625,31 @@ defmodule Bourse.Spec.Schema do
   defp validate_mapping_fact!(value, _support, _endpoints, exchange_id, method) do
     gap!(exchange_id, ["capabilities", "mapping_complete", method], "expected boolean, got #{inspect(value)}")
   end
+
+  defp validate_endpoint_selection!(spec, exchange_id) do
+    selections = get_in(spec, ["endpoints", "request", "endpoint_selection"]) || %{}
+
+    Enum.each(selections, fn {method, selection} ->
+      if direction_bearing_selection?(selection) and is_map_key(selection, "default") do
+        gap!(
+          exchange_id,
+          ["endpoints", "request", "endpoint_selection", method, "default"],
+          "direction-bearing selection cannot carry a silent default"
+        )
+      end
+    end)
+  end
+
+  defp direction_bearing_selection?(%{} = selection) do
+    branches = Map.get(selection, "cases") || Map.get(selection, "rules") || []
+
+    Enum.any?(branches, fn
+      %{"when" => when_clause} when is_map(when_clause) -> is_map_key(when_clause, "side")
+      _ -> false
+    end)
+  end
+
+  defp direction_bearing_selection?(_selection), do: false
 
   defp validate_verification_fact!("verified", false, exchange_id, method) do
     gap!(exchange_id, ["capabilities", "verification", method], "cannot verify an incomplete implementation")
