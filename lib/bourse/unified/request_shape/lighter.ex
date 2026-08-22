@@ -163,8 +163,8 @@ defmodule Bourse.Unified.RequestShape.Lighter do
           )
   end
 
-  defp side_is_ask!(side) when side in ["sell", :sell], do: true
-  defp side_is_ask!(side) when side in ["buy", :buy], do: false
+  defp side_is_ask!("sell"), do: true
+  defp side_is_ask!("buy"), do: false
 
   defp side_is_ask!(side) do
     raise Error.invalid_parameters(

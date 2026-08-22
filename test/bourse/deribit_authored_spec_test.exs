@@ -862,6 +862,21 @@ defmodule Bourse.DeribitAuthoredSpecTest do
     refute Map.has_key?(parsed.info, "trades")
   end
 
+  test "create_order rejects an atom side before selecting a Deribit direction endpoint" do
+    {:ok, requests} = RequestCollector.start_link()
+
+    assert {:error, %Error{type: :invalid_parameters} = error} =
+             Bourse.create_order(private_exchange(), "BTC/USD:BTC", "market", :sell, 10,
+               plug:
+                 {Req.Test, stub(requests, rpc_result(%{"order" => deribit_order_row("atom-side", "open", 10_000.0)}))}
+             )
+
+    assert error.message =~ "Invalid side: :sell"
+    assert error.message =~ ~s(Accepted forms: "buy" or "sell")
+    assert error.raw["reason"] == "invalid_side"
+    assert RequestCollector.requests(requests) == []
+  end
+
   test "createOrder string sides select explicit direction endpoints and preserve reduce_only" do
     for side <- ["buy", "sell"] do
       order =

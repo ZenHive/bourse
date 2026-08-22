@@ -1871,6 +1871,10 @@ defmodule Bourse.Unified do
   Keyword lists, tuples, and structs survive `split_opts/2` (the opts
   envelope) and otherwise detonate in the signer. A keyword list in a
   required positional slot names the positional convention.
+
+  Methods that take a `side` also refuse any value other than the wire
+  strings `"buy"` and `"sell"` (including `:buy` / `:sell`). Direction is
+  never defaulted from an uninterpretable caller value.
   """
   @spec validate_param_values(map(), atom()) :: {:ok, map()} | {:error, Error.t()}
   def validate_param_values(params, method) when is_map(params) and is_atom(method) do

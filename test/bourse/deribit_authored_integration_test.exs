@@ -39,6 +39,65 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
   end
 
   @tag :dangerous
+  test "atom side is refused client-side; string sides and reduce_only reach Deribit" do
+    credentials = require_credentials!(:deribit, url: @deribit_testnet_url)
+    base = build_exchange(:deribit, credentials: credentials, sandbox: true)
+    assert {:ok, exchange} = Bourse.load_markets(base)
+    market = Enum.find(exchange.markets, &(&1.id == "BTC-PERPETUAL"))
+    assert %Bourse.Market{} = market
+    amount = Bourse.Safe.number(market.info["min_trade_amount"])
+    assert is_number(amount) and amount > 0
+    assert future_position(exchange, market.id, "BTC") == nil
+
+    {:ok, open_before} = Bourse.fetch_open_orders(exchange, symbol: market.symbol)
+    before_ids = MapSet.new(open_before, & &1.id)
+
+    assert {:error, %Error{type: :invalid_parameters} = error} =
+             Bourse.create_order(exchange, market.symbol, :market, :sell, amount)
+
+    assert error.message =~ "Invalid side: :sell"
+    assert error.message =~ ~s(Accepted forms: "buy" or "sell")
+    assert error.raw["reason"] == "invalid_side"
+
+    {:ok, open_after_atom} = Bourse.fetch_open_orders(exchange, symbol: market.symbol)
+    assert MapSet.new(open_after_atom, & &1.id) == before_ids
+    assert future_position(exchange, market.id, "BTC") == nil
+
+    assert {:ok, %Order{id: buy_id, side: "buy"} = buy_order} =
+             Bourse.create_order(exchange, market.symbol, "market", "buy", amount)
+
+    try do
+      assert is_binary(buy_id)
+      _position = poll_future_position!(exchange, market.id, "BTC", :notional, amount)
+
+      assert {:ok, %Order{id: sell_id, side: "sell"} = sell_order} =
+               Bourse.create_order(exchange, market.symbol, "market", "sell", amount, params: %{"reduce_only" => true})
+
+      assert is_binary(sell_id)
+      assert sell_order.info["reduce_only"] == true
+      assert buy_order.info["direction"] == "buy"
+      assert sell_order.info["direction"] == "sell"
+      assert_future_position_closed!(exchange, market.id, "BTC")
+    after
+      case future_position(exchange, market.id, "BTC") do
+        nil ->
+          :ok
+
+        _open ->
+          assert_cleanup_order!(
+            Bourse.Deribit.private_get_sell(exchange, %{
+              "instrument_name" => market.id,
+              "amount" => amount,
+              "type" => "market",
+              "reduce_only" => true,
+              "label" => "task663-close-#{System.unique_integer([:positive])}"
+            })
+          )
+      end
+    end
+  end
+
+  @tag :dangerous
   test "stop_market create_order with trigger index_price reaches Deribit trigger-price validation" do
     credentials = require_credentials!(:deribit, url: @deribit_testnet_url)
     exchange = build_exchange(:deribit, credentials: credentials, sandbox: true)

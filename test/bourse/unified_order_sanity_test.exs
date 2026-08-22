@@ -84,6 +84,24 @@ defmodule Bourse.UnifiedOrderSanityTest do
     refute_request_issued()
   end
 
+  test "create_order rejects an uninterpretable string side before dispatch without markets" do
+    exchange = Exchange.new!("okx", api_key: "test-key", secret: "test-secret", password: "test-pass")
+    refute is_list(exchange.markets)
+    stub = refusing_stub()
+
+    for side <- ["hold", "BUY", ""] do
+      assert {:error, %Error{type: :invalid_parameters} = error} =
+               Bourse.create_order(exchange, "BTC/USDT", "limit", side, 1, plug: {Req.Test, stub})
+
+      assert error.message =~ "Invalid side: #{inspect(side)}"
+      assert error.message =~ ~s(Accepted forms: "buy" or "sell")
+      assert error.raw["reason"] == "invalid_side"
+      assert error.raw["accepted"] == ["buy", "sell"]
+    end
+
+    refute_request_issued()
+  end
+
   test "create_order dispatches when the amount satisfies the market minimum" do
     {stub, requests} = order_stub("3")
 

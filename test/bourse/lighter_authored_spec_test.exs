@@ -161,6 +161,24 @@ defmodule Bourse.LighterAuthoredSpecTest do
       |> Map.merge(%{"type" => "limit", "amount" => "0.01001"})
       |> LighterRequestShape.build("createOrder", exchange, [])
     end
+
+    for side <- [:sell, :buy, "hold"] do
+      assert_raise Bourse.Error, ~r/Lighter order side must be buy or sell/, fn ->
+        base
+        |> Map.merge(%{"type" => "limit", "side" => side})
+        |> LighterRequestShape.build("createOrder", exchange, [])
+      end
+    end
+
+    sell =
+      LighterRequestShape.build(
+        Map.merge(base, %{"type" => "limit", "side" => "sell"}),
+        "createOrder",
+        exchange,
+        []
+      )
+
+    assert sell["__bourse_lighter_transaction_params"].is_ask == true
   end
 
   test "account read builders source account identity and private auth defaults" do
