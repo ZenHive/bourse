@@ -965,9 +965,18 @@ defmodule Bourse.HTTPTest do
 
   describe "request/4 unrecognized options" do
     test "rejects an unknown option before contacting the venue", %{exchange: exchange} do
-      assert {:error, %Error{} = error} =
-               HTTP.request(exchange, :get, "/test", type: "swap")
+      stub = unique_stub()
+      {:ok, requests} = RequestCollector.start_link()
 
+      Req.Test.stub(stub, fn conn ->
+        conn = RequestCollector.capture(requests, conn)
+        Req.Test.json(conn, %{})
+      end)
+
+      assert {:error, %Error{} = error} =
+               HTTP.request(exchange, :get, "/test", type: "swap", plug: {Req.Test, stub})
+
+      assert RequestCollector.requests(requests) == []
       assert error.type == :bad_request
       assert error.recoverable == false
       assert error.retry_class == :non_retryable
@@ -1130,6 +1139,28 @@ defmodule Bourse.HTTPTest do
 
       request = fn ->
         HTTP.request(exchange, :get, "/api/v3/ping", plug: {Req.Test, stub})
+      end
+
+      assert {:error, %Error{type: :network_error, retry_class: :network, recoverable: true}} = request.()
+      assert CircuitBreaker.status(exchange_id) == :ok
+
+      for _ <- 1..3, do: request.()
+
+      assert CircuitBreaker.status(exchange_id) == :blown
+      assert {:error, %Error{type: :circuit_open}} = request.()
+    end
+
+    test "an ArgumentError that is not an unknown option still melts" do
+      exchange_id = "binance"
+      CircuitBreakerControl.isolate!(exchange_id, %{max_failures: 3, window_ms: 60_000, reset_ms: 60_000})
+      exchange = Exchange.new!(exchange_id)
+
+      adapter = fn _request ->
+        raise ArgumentError, "argument error"
+      end
+
+      request = fn ->
+        HTTP.request(exchange, :get, "/api/v3/ping", adapter: adapter)
       end
 
       assert {:error, %Error{type: :network_error, retry_class: :network, recoverable: true}} = request.()

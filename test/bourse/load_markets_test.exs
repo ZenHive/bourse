@@ -43,7 +43,14 @@ defmodule Bourse.LoadMarketsTest do
       stub = lighter_stub(markets_count)
       exchange = Exchange.new!("lighter")
 
-      assert {:ok, loaded} = Bourse.load_markets(exchange, type: "swap", plug: {Req.Test, stub})
+      assert {:ok, loaded} =
+               Bourse.load_markets(exchange,
+                 type: "swap",
+                 subType: "linear",
+                 sub_type: "linear",
+                 plug: {Req.Test, stub}
+               )
+
       assert match?([_ | _], loaded.markets)
       assert :counters.get(markets_count, 1) == 1
     end

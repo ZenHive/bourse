@@ -57,23 +57,26 @@ defmodule Bourse.HTTP do
   @base_client_key {__MODULE__, :base_client}
 
   # Bourse-consumed keys plus the Req options this client actually forwards.
-  # Anything else is a caller error: the previous deny-list (`Keyword.drop/2`)
-  # let unknown keys reach Req, which raised, which the rescue then labeled
-  # as a venue `:network_error` and melted the fuse.
-  @known_request_opts [
+  # Forwarding is an allowlist (`Keyword.take/2`); a deny-list (`Keyword.drop/2`)
+  # was what let unknown keys reach Req, which raised, which the rescue then
+  # labeled as a venue `:network_error` and melted the fuse.
+  @consumed_request_opts [
     :params,
     :headers,
     :timeout,
     :base_url,
     :body_encoding,
     :endpoint_weight,
-    :endpoint_rate_limit,
+    :endpoint_rate_limit
+  ]
+  @forwarded_request_opts [
     :plug,
     :adapter,
     :retry,
     :retry_delay,
     :max_retries
   ]
+  @known_request_opts @consumed_request_opts ++ @forwarded_request_opts
 
   @typedoc "HTTP response with status, headers, and decoded body"
   @type response_headers :: %{optional(String.t()) => [String.t()]}
@@ -118,16 +121,7 @@ defmodule Bourse.HTTP do
     endpoint_weight = Keyword.get(opts, :endpoint_weight, 1)
     endpoint_rate_limit = Keyword.get(opts, :endpoint_rate_limit, endpoint_weight)
 
-    extra_opts =
-      Keyword.drop(opts, [
-        :params,
-        :headers,
-        :timeout,
-        :base_url,
-        :body_encoding,
-        :endpoint_weight,
-        :endpoint_rate_limit
-      ])
+    extra_opts = Keyword.take(opts, @forwarded_request_opts)
 
     with :ok <- reject_unknown_opts(opts, exchange.id),
          :ok <- check_circuit_breaker(exchange),
