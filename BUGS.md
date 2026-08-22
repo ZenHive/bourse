@@ -1825,3 +1825,84 @@ die fehlende Bourse-Semantik verdeckt.
 > `:no_field_map`. The empty-list snapshot the reporter wanted remains a
 > consumer-side interpretation of a provider-unsupported parse slot; open
 > orders continue to go through `parse_order/2`.
+
+---
+
+## 2026-08-22 — `Bourse.load_markets/2` rejects `:type` and reports the unknown option as a recoverable network error, blowing the circuit breaker
+
+Reporter: trading_dashboard (`TradingDashboard.Risk`, `/risk` account rows), verified
+live against Binance testnet on 2026-08-22.
+
+**The call.** A Binance futures credential needs its account selected on private
+reads (`type: "swap"` for USDT-M, `"future"` for COIN-M); without it `fetch_balance`
+goes to the spot endpoint and answers `-2015 Invalid API-key, IP, or permissions`.
+`Bourse.PortfolioRisk.scope/3` takes one `request_opts` keyword list and hands the
+*same* list to `Bourse.load_markets/2`, `fetch_balance/2`, `fetch_positions/2` and
+`fetch_open_orders/2`. The three private reads accept `:type`; `load_markets/2` does
+not.
+
+```elixir
+{:ok, ex} = Connectivity.build_exchange(binance_usdm_credential, tenant, actor)
+
+Bourse.fetch_balance(ex, type: "swap")      #=> {:ok, %Bourse.Balance{}}
+Bourse.fetch_positions(ex, type: "swap")    #=> {:ok, [...]}
+Bourse.fetch_open_orders(ex, type: "swap")  #=> {:ok, [...]}
+Bourse.load_markets(ex, type: "swap")
+#=> {:error, %Bourse.Error{
+#     type: :network_error,
+#     message: "Exception: unknown option :type",
+#     recoverable: true,
+#     retry_class: :network,
+#     exchange: "binance"
+#   }}
+```
+
+**Two defects, the second the damaging one.**
+
+1. `load_markets/2` accepts only `:params` / `:plug` / `:timeout`, so a caller cannot
+   thread one `request_opts` set through `PortfolioRisk`. Whether it should accept
+   `:type` is a design call; that it silently diverges from every sibling read in the
+   same opts set is at least a documentation gap.
+
+2. **An unknown option is classified as `:network_error` / `recoverable: true` /
+   `retry_class: :network`.** That is a caller programming error, not venue
+   downtime — and the `:network` bucket melts `Bourse.CircuitBreaker`. Three Binance
+   credentials in one snapshot produced enough melts to blow the venue's fuse, after
+   which *every* Binance read in the whole application failed with
+   `Binance circuit open: Circuit breaker is open. Not recoverable.` The originating
+   fault was a bad keyword in our own call, and the reported cause pointed at Binance.
+   Observed twice in a row; `Bourse.CircuitBreaker.status("binance")` went `:ok` →
+   `:blown` across a single `PortfolioRisk.snapshot/1`.
+
+**Expected.** An unrecognized option raises or returns a non-retryable client-error
+`Bourse.Error` (`recoverable: false`, no `:network` retry class) so it never melts the
+breaker. Ideally `load_markets/2` documents which opts it accepts, or tolerates the
+account-selection opts its sibling reads require.
+
+**Consumer handling (trading_dashboard).** `Risk.credential_scope/2` loads markets
+itself with **no** opts before building the scope — `PortfolioRisk.ensure_markets/3`
+short-circuits on an already-populated `:markets` list — so the account opts reach
+only the private reads. Local workaround only; the misclassification is the fix path.
+
+> **2026-08-22 — triagiert:** gefiled als Workbench-Task **662** ("An unrecognized
+> caller option is reported as a recoverable venue network fault and melts the
+> circuit breaker"), scoped to defect 2 as the general class rather than to the
+> `:type`-on-`load_markets` instance. Mechanism confirmed on the landed tree:
+> `Bourse.HTTP.request/4` builds `extra_opts` with a **deny-list**
+> (`Keyword.drop/2` over seven known keys), so any unknown key survives and is
+> merged verbatim into the Req option list; Req raises; the rescue in
+> `execute_request/6` calls `CircuitBreaker.record_failure/1` unconditionally and
+> returns `Error.network_error(...)`. Every other branch of that same case routes
+> through `record_result/2` so the melt flows from the retry classification — the
+> rescue bypasses it and melts on anything that raises. So the report is right
+> that the fault is a caller error, and right that the breaker is the damage; the
+> reach is wider than Binance and wider than `load_markets` — any unrecognized
+> option on any venue and any method does this. `Bourse.Error` already carries
+> `:bad_request` as non-recoverable, so the correct classification exists unused.
+>
+> Defect 1 (the option surface of `load_markets/2`) rides the same task as a
+> deliberate decision with a documented rationale, not as a silent widening: the
+> `api/2` declarations in `lib/bourse.ex` already state each method's accepted
+> option set, and nothing enforces them at runtime — which is what lets an
+> undeclared option reach Req at all. Enforcing the declaration would answer both
+> halves at once; that confrontation is written into the task.
