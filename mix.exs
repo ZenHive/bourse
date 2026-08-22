@@ -239,7 +239,7 @@ defmodule Bourse.MixProject do
       {:ex_secp256k1, "~> 0.8.0"},
 
       # WebSocket client (Gun-based, 5-function API + Deribit heartbeat + reconnection)
-      {:zen_websocket, "~> 0.6.0"}
+      {:zen_websocket, "~> 0.7.0"}
     ]
   end
 
