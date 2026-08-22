@@ -7,11 +7,20 @@ durable design anchor; the `authored_specs` rmap tasks reference it.
 
 The exchange-owned API contract is the semantic authority. A **live call** against the
 venue establishes what the venue did; the provider's official docs/specs/SDK establish
-what its fields and parameters mean. A claim is `verified` only when that live call has
-been observed and provider-owned semantics support the meaning; otherwise it is
-`unverified`. Manifest-registered recordings are optional drift pins taken after the live
-call — never the test, and never committed in the same diff as the spec they certify.
-CCXT source, execution, and static data are authoring references only.
+what its fields and parameters mean.
+
+Provenance for every external API claim, in this order:
+
+1. Live E2E against the real host.
+2. Understand one success and one relevant error from that interaction.
+3. Write an integration test that hits the same host and asserts those semantics.
+4. Only then derive an offline fixture from that captured interaction, if CI needs a
+   replay cache.
+
+No mock or recording may invent behavior. The offline suite replays reality; it is not
+the authority. A claim is `verified` only after steps 1–3 plus provider-owned meaning;
+otherwise it is `unverified`. A recording in the same diff as the spec it certifies is
+not verification. CCXT source, execution, and static data are authoring references only.
 
 ## Why
 
@@ -203,9 +212,10 @@ The gate refuses missing or unresolved interpretation; CCXT-only evidence; incom
 or authenticated success/error observations; missing provider semantics; unsafe or incomplete
 create/fetch/cancel evidence for trading venues; silently skipped or credential-less
 integration tests; missing carve/authority artifacts; schema failures; non-deterministic JSON;
-a failing `mix ccxt.oracle_gate`; or any critical slot without a manifest-registered response,
-accepted-request golden, or recorded exchange error. Venue eleven therefore gets reality
-provenance whether or not a CCXT reference exists. A written owned document is still not a
+a failing `mix ccxt.oracle_gate` over already-registered goldens; or any critical slot without
+a live success and a relevant live error. Recordings, if added, are derived from those calls
+afterwards. Venue eleven therefore gets reality provenance whether or not a CCXT reference
+exists. A written owned document is still not a
 supported venue: the named venue delivery must separately add it to `Bourse.Spec`, the registry,
 and the compiled set.
 
@@ -216,7 +226,8 @@ We build the client ourselves, by our own rules, but those rules answer to the e
 | Role | Allowed sources | Verification effect |
 |---|---|---|
 | **Semantic authority** | Exchange-owned docs/specs/SDKs | Required meaning for a verified claim |
-| **Observed behavior** | Live API / observed traffic / manifest-registered raw venue recording | Establishes what the venue actually did |
+| **Observed behavior** | Live API call (success and a relevant error) | Establishes what the venue actually did |
+| **Replay cache** | Manifest-registered recording derived from a prior live call | Speeds CI; never the authority; never authored in the same diff as the spec |
 | **Authoring reference** | CCXT source/execution/static data, training, third-party docs, general web | Implementation clue only; claim remains unverified |
 
 If author and grader share the same third-party interpretation, both can converge on the same

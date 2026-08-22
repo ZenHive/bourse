@@ -702,11 +702,18 @@ host only, so no CI check can ever guard it. Read them from
 
 **The one and only reality is the exchange APIs we talk to** — not CCXT, not CCXT's fixtures, not training. CCXT was the bootstrap; it is now **one disposable reference among several** (exchange API docs, official SDKs, observed behavior). The DEX venues already live this way. Three axes, kept distinct: **value** correctness (is the number right vs reality), **carve** correctness (is the field/abstraction itself right, willing to *diverge* from CCXT's ontology), and **freshness** (frozen recordings kept honest by live drift checks).
 
-**Authority ladder — the exchange-owned contract wins.** Live or recorded raw exchange behavior establishes what the venue does; the exchange's own documentation, specifications and SDKs establish what its fields and parameters mean. CCXT source, execution and static files are unverified authoring references only.
+**Authority ladder — the exchange-owned contract wins.** A live venue call establishes what the venue does; the exchange's own documentation, specifications and SDKs establish what its fields and parameters mean. CCXT source, execution and static files are unverified authoring references only.
 
-**Authoring and verification stay separate.** Author by reading. Verify by a **live call** against testnet/demo (production public host for Coinbase Exchange). `mix ccxt.oracle_gate` replays already-registered goldens so they do not rot; it does **not** verify a new method. A recording committed in the same diff as the spec it certifies is the Deribit-`"8h"` bug: the golden is computed from the same wrong constant.
+**Provenance for every external API claim — this order, not the reverse:**
 
-**Verification is binary.** A claim is `verified` only when a live venue call has been observed (IEx transcript, or `mix test.json --include network` / `--include dangerous` against the real host) and provider-owned semantics support the meaning. Manifest recordings are optional drift pins taken **after** that live call, never the test. CCXT JS cannot verify venue semantics.
+1. Live E2E against the real host (testnet/demo; production public for Coinbase Exchange).
+2. Understand one success **and** one relevant error from that interaction.
+3. Write an integration test (`--include network` / `--include dangerous`) that hits the same host and asserts those semantics.
+4. Only then, if CI needs a fast offline replay, derive a fixture from that captured interaction.
+
+No mock or recording may invent behavior. Every expectation traces to a documented real call. The offline suite is a replay cache of reality, not its authority. `mix ccxt.oracle_gate` grades that cache so it does not rot; it does **not** verify a new method. A recording in the same diff as the spec it certifies is the Deribit-`"8h"` bug.
+
+**Verification is binary.** A claim is `verified` only after steps 1–3, plus provider-owned meaning. Otherwise it is `unverified`. CCXT JS cannot verify venue semantics.
 
 ### Rules
 
