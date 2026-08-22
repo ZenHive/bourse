@@ -5,6 +5,16 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Deribit option positions derive premium notional as
+  `abs(contracts) × contract_size × abs(mark_price)` when loaded markets provide
+  a positive contract size, and label it with the option settlement currency.
+  Without loaded market units the notional remains nil rather than assuming a
+  contract size.
+
 ## [0.7.0] - 2026-08-22
 
 ### Added

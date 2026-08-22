@@ -73,7 +73,7 @@ roadmap.
 
 ## 2026-08-22 — deribit option positions: `notional` / `notional_currency` left nil although every input is present
 
-**Status:** 📋 triaged — workbench task **664** · **Venue:** deribit (testnet, `sandbox: true`) ·
+**Status:** ✅ fixed on `main` after 0.7.0 by task **664** (`74ca5d2`) · **Venue:** deribit (testnet, `sandbox: true`) ·
 **Class:** unfilled unified field — not a venue gap.
 
 **Reporter:** `trading_dashboard` (task 225 payload observation, live Deribit testnet).
@@ -102,6 +102,14 @@ roadmap.
 > rather than substituting 1.0. The delta-weighting caveat is honored as written: it is recorded
 > in the task's `out_of_scope`, so a populated option notional will not be mistaken for one that
 > is summable with a future's.
+>
+> **Update 2026-08-22 — fixed on `main` after 0.7.0.** Task 664 landed in
+> `74ca5d2`. Deribit option rows now derive settlement-currency premium notional
+> from `abs(contracts) × contract_size × abs(mark_price)` when loaded markets
+> provide a positive contract size, and populate `notional_currency` from the
+> parsed settlement code. The live integration pin covers simultaneous option
+> and future positions and confirms that an exchange without loaded markets
+> still leaves the option notional nil rather than guessing a unit.
 
 A Deribit **option** position comes back with `notional: nil` and therefore also
 `notional_currency: nil`, while the sibling **future** row on the same account is fully

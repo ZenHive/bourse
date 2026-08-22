@@ -163,6 +163,14 @@ defmodule Bourse do
         kind: :value,
         description:
           "Account/family selector shared with private reads (e.g. \"swap\"); ignored. load_markets always returns the full catalog."
+      ],
+      subType: [
+        kind: :value,
+        description: "camelCase account/family selector alias; ignored by load_markets"
+      ],
+      sub_type: [
+        kind: :value,
+        description: "snake_case account/family selector alias; ignored by load_markets"
       ]
     ],
     returns: %{

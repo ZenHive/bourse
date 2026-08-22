@@ -403,6 +403,14 @@ defmodule BourseTest do
       assert Map.has_key?(order.hints.params, :amount)
     end
 
+    test "load_markets exposes every accepted account selector alias" do
+      load_markets = Bourse.__api__(:load_markets)
+
+      for selector <- [:type, :subType, :sub_type] do
+        assert Map.has_key?(load_markets.hints.opts, selector)
+      end
+    end
+
     test "returns full detail for exchange constructor" do
       exch = Bourse.__api__(:exchange)
       assert exch.name == :exchange
