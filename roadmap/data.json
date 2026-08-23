@@ -30543,7 +30543,7 @@
       "id": "672",
       "phase": 16,
       "bundle": "authored_specs",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Rotate the authored venue specs endpoint-major on disk so one endpoint diffs against one venue-doc page",
       "scores": {
         "d": 6,
@@ -30582,6 +30582,7 @@
       ],
       "body": "The operator's stated goal (2026-08-23): the authored specs must be reviewable against each venue's real published API documentation. Today each venue is one monolithic facet-major JSON (binance ~500KB post-cleanup, ~20 top-level keys) where a single endpoint's definition is smeared across up to 9-14 sibling maps — request defaults in one, parse mapping in another, params in a third. No human or reviewer can diff \"our deribit private/get_positions\" against Deribit's docs page for it.\n\nRotate the disk layout endpoint-major: one endpoint = one object, the unit of authoring, review and diff. Split each venue document into a small set of clearly named files under priv/venues/<venue>/authored/ (suggested: venue.json for identity/urls/signing, markets.json, endpoints.json for the unified methods, raw.json for raw endpoints, errors.json — adapt if the data argues otherwise). The compile-time loader (Bourse.Spec) reassembles the exact facet-major in-memory map so Bourse.Spec.Schema, the exchange generator macro and every consumer stay untouched; the deep-equality of loaded maps before vs after is the mechanical proof, and the 427-case provider-live contract lane is the semantic proof. Keep @external_resource coverage so edits to any split file trigger recompilation.\n\nA pre-cleanup session measurement (2026-08-23, before commit 1cb12e5 deleted the unread descriptor sources) found ~3.6x descriptor duplication across the binance family; re-measure on the current tree before hoisting and report actual numbers rather than reusing that figure.\n\nRouting trigger: repo-wide format invariant across all eleven authored specs plus the compile-time loader, gated by live external-system evidence (the contract lane).\n",
       "created_at": "2026-08-23",
+      "started_at": "2026-08-23",
       "scored_at": "2026-08-23",
       "cross_repo": []
     }

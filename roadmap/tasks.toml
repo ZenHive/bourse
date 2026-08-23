@@ -22776,7 +22776,7 @@ scored_at = "2026-08-23"
 id = "672"
 phase = 16
 bundle = "authored_specs"
-status = "pending"
+status = "in_progress"
 title = "Rotate the authored venue specs endpoint-major on disk so one endpoint diffs against one venue-doc page"
 scores = { d = 6, b = 7, u = 8 }
 acceptance_criteria = ["Each of the eleven authored documents under priv/venues/<venue>/authored/ is endpoint-major on disk: one unified method or raw endpoint is one self-contained JSON object carrying its request, parse, params and error facets, and no facet of an endpoint lives in a sibling top-level map; venue-global slices (markets, symbol patterns, error taxonomy, base urls, signing) live in their own clearly named files", "The compile-time loader rotates the disk format back so the in-memory spec map is unchanged: a recorded deep-equality check (old loaded map == new loaded map) passes for all eleven venues, and Bourse.Spec.Schema still raises on any missing/forbidden slot with unreduced strictness", "mix ccxt.verify_rest_read_contracts on the delivered tree reports denominator=427 executed=427 failures=0 — the live lane, not any stored artifact, is the semantic-invariance evidence", "Descriptor content repeated across the binance/binancecoinm/binanceusdm family (and any other same-family duplication) is hoisted into one shared file referenced by the per-venue documents, with before/after on-disk byte counts re-measured and reported in the delivery", "Diffability is demonstrated in the delivery: one deribit endpoint's complete definition shown as a single contiguous object that can be reviewed against the corresponding page of Deribit's own API docs without opening any sibling map", "mix check.dispatch is green; docs/authored-specs.md describes the on-disk format truthfully; CLAUDE.md path/format claims are updated and AGENTS.md is regenerated with mix ccxt.agents_md --check passing"]
@@ -22794,4 +22794,5 @@ A pre-cleanup session measurement (2026-08-23, before commit 1cb12e5 deleted the
 Routing trigger: repo-wide format invariant across all eleven authored specs plus the compile-time loader, gated by live external-system evidence (the contract lane).
 """
 created_at = "2026-08-23"
+started_at = "2026-08-23"
 scored_at = "2026-08-23"
