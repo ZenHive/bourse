@@ -3274,7 +3274,53 @@ defmodule Bourse.Unified.ReadParse do
     end
   end
 
+  # OKX convert rows (`asset/convert/estimate-quote`, `asset/convert/trade`,
+  # `asset/convert/history`) describe the conversion as an instrument side rather
+  # than a from/to pair: `side` is taken against `baseCcy` of `instId`, so a `buy`
+  # spends `quoteCcy` and receives `baseCcy`. Pre-compute the directional pair so
+  # the field map reads stable `_bourse_*` keys. Live-verified on the OKX
+  # international demo host 2026-08-23: a `side: "buy"` BTC-USDT conversion debited
+  # `fillQuoteSz` USDT and credited `fillBaseSz` BTC.
+  defp annotate_okx_payload(payload, %Exchange{id: "okx"}, "conversion") do
+    case payload do
+      rows when is_list(rows) -> Enum.map(rows, &annotate_okx_conversion_row/1)
+      %{} = row -> annotate_okx_conversion_row(row)
+      other -> other
+    end
+  end
+
   defp annotate_okx_payload(payload, _exchange, _parse_type), do: payload
+
+  defp annotate_okx_conversion_row(row) when is_map(row) do
+    base = non_empty_string(Map.get(row, "baseCcy"))
+    quote_ccy = non_empty_string(Map.get(row, "quoteCcy"))
+    base_size = okx_conversion_size(row, ["fillBaseSz", "baseSz"])
+    quote_size = okx_conversion_size(row, ["fillQuoteSz", "quoteSz"])
+
+    put_okx_conversion_pair(row, non_empty_string(Map.get(row, "side")), {base, base_size}, {quote_ccy, quote_size})
+  end
+
+  defp annotate_okx_conversion_row(other), do: other
+
+  defp put_okx_conversion_pair(row, "buy", {base, base_size}, {quote_ccy, quote_size}),
+    do: put_okx_conversion_direction(row, {quote_ccy, quote_size}, {base, base_size})
+
+  defp put_okx_conversion_pair(row, "sell", {base, base_size}, {quote_ccy, quote_size}),
+    do: put_okx_conversion_direction(row, {base, base_size}, {quote_ccy, quote_size})
+
+  # An unknown `side` has no directional meaning; leave the row unannotated so the
+  # unified fields stay nil rather than claiming a direction the venue never sent.
+  defp put_okx_conversion_pair(row, _side, _base, _quote), do: row
+
+  defp put_okx_conversion_direction(row, {from_ccy, from_size}, {to_ccy, to_size}) do
+    row
+    |> maybe_put_synthetic("_bourse_from_currency", from_ccy)
+    |> maybe_put_synthetic("_bourse_from_amount", from_size)
+    |> maybe_put_synthetic("_bourse_to_currency", to_ccy)
+    |> maybe_put_synthetic("_bourse_to_amount", to_size)
+  end
+
+  defp okx_conversion_size(row, keys), do: Enum.find_value(keys, &non_empty_string(Map.get(row, &1)))
 
   defp annotate_okx_position_row(row, exchange) when is_map(row) do
     if Map.has_key?(row, "openAvgPx") do
@@ -5471,8 +5517,12 @@ defmodule Bourse.Unified.ReadParse do
     end
   end
 
+  # Strict `>`: the venue answers newest-first, so on an equal statusTimestamp
+  # (an IOC that opens and fills in the same millisecond emits both rows with
+  # one ts) the first-seen row is the terminal status and must win the tie —
+  # `>=` let the later-processed "open" row overwrite the "filled" one.
   defp keep_newer_hyperliquid_order(acc, oid, row, existing) do
-    if hyperliquid_status_ts(row) >= hyperliquid_status_ts(existing) do
+    if hyperliquid_status_ts(row) > hyperliquid_status_ts(existing) do
       Map.put(acc, oid, row)
     else
       acc

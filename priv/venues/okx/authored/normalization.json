@@ -143,14 +143,16 @@
         "fromAmount": {
           "coercion": "safeNumber",
           "fallback_keys": [
-            "rfqSz"
+            "rfqSz",
+            "_bourse_from_amount"
           ],
           "key": "fromSz"
         },
         "fromCurrency": {
           "coercion": "safeCurrencyCode",
           "fallback_keys": [
-            "rfqSzCcy"
+            "rfqSzCcy",
+            "_bourse_from_currency"
           ],
           "key": "fromCcy"
         },
@@ -158,9 +160,9 @@
           "coercion": "safeString",
           "fallback_keys": [
             "quoteId",
-            "clTReqId"
+            "tradeId"
           ],
-          "key": "tradeId"
+          "key": "clTReqId"
         },
         "info": null,
         "price": {
@@ -182,11 +184,16 @@
         },
         "toAmount": {
           "coercion": "safeNumber",
-          "fallback_keys": [],
+          "fallback_keys": [
+            "_bourse_to_amount"
+          ],
           "key": "toSz"
         },
         "toCurrency": {
           "coercion": "safeCurrencyCode",
+          "fallback_keys": [
+            "_bourse_to_currency"
+          ],
           "key": "toCcy"
         }
       }

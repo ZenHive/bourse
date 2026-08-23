@@ -2145,6 +2145,16 @@
               "name": "symbol",
               "strategy": "market_symbol"
             }
+          ],
+          "arguments": [
+            {
+              "name": "id",
+              "strategy": "resource",
+              "source_method": "fetchCanceledOrders",
+              "source_endpoint_index": 0,
+              "field": "id",
+              "collection": false
+            }
           ]
         }
       ],

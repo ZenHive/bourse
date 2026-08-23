@@ -399,7 +399,15 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
              Bourse.fetch_positions_history(exchange, instType: "NOPE", until: until_ms, limit: 1)
 
     assert {:ok, position_rows} = Bourse.fetch_position(exchange, "BTC/USDT:USDT")
-    assert is_list(position_rows)
+
+    # `fetch_position` narrows to the venue's single row for the requested
+    # instrument; OKX keeps a `pos: "0"` row after a position is closed and drops
+    # it later, so the account may hold one row or none. Both shapes are the
+    # venue's, and this suite does not own which one is present.
+    case position_rows do
+      %Bourse.Position{} = position -> assert position.symbol == "BTC/USDT:USDT"
+      rows -> assert rows == []
+    end
 
     assert {:error, %Error{type: :bad_symbol, code: "51001"}} =
              Bourse.fetch_position(exchange, "NOPE/USDT:USDT")
@@ -1073,8 +1081,13 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
         hostname: @okx_demo_host
       )
 
+    # `transId: "0"` is not an invalid id to OKX — the venue treats it as "no
+    # filter" and answers with the account's latest transfer (observed live
+    # 2026-08-23 on www.okx.com demo, once the account had one transfer on
+    # record). A syntactically valid but unissued transId is what the venue
+    # rejects with 58129, and it does so regardless of account state.
     assert {:error, %Error{code: code, message: message}} =
-             Bourse.fetch_transfer(exchange, "0")
+             Bourse.fetch_transfer(exchange, "999999999999")
 
     refute to_string(code) in [nil, "", "0"]
     assert is_binary(message) and message != ""

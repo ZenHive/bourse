@@ -271,7 +271,10 @@ defmodule Bourse.Test.RestReadContractScenario do
 
   defp resource_value!(argument, contract_case, context) do
     source = existing_method_atom!(argument["source_method"])
-    source_result = apply(Bourse, source, [context.exchange, resource_source_options(contract_case, context)])
+
+    source_result =
+      apply(Bourse, source, [context.exchange, resource_source_options(argument, contract_case, context)])
+
     rows = successful_rows!(source_result, contract_case, argument["source_method"])
     collection? = argument["collection"] == true
 
@@ -291,13 +294,25 @@ defmodule Bourse.Test.RestReadContractScenario do
     end
   end
 
-  defp resource_source_options(contract_case, context) do
-    Enum.flat_map(contract_case["options"] || [], fn option ->
-      case resource_option_atom(option["name"]) do
-        nil -> []
-        atom -> [{atom, option_value!(option, contract_case, context)}]
-      end
-    end)
+  defp resource_source_options(argument, contract_case, context) do
+    base =
+      Enum.flat_map(contract_case["options"] || [], fn option ->
+        case resource_option_atom(option["name"]) do
+          nil -> []
+          atom -> [{atom, option_value!(option, contract_case, context)}]
+        end
+      end)
+
+    case argument["source_endpoint_index"] do
+      nil ->
+        base
+
+      index when is_integer(index) and index >= 0 ->
+        [{:endpoint_index, index} | base]
+
+      other ->
+        flunk("#{contract_case["id"]}: source_endpoint_index must be a non-negative integer, got #{inspect(other)}")
+    end
   end
 
   defp resource_option_atom("account_index"), do: :account_index
