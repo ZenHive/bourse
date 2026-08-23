@@ -778,6 +778,10 @@ Entry template:
   held through a delivery, then `mix ccxt.verify_rest_read_contracts --venue bybit`.
 - Expected evidence: the eleven cases resolve their resource ids and assert their success
   meanings against non-empty provider rows.
+- Update (2026-08-23): the operator attempted to provision a trade-enabled testnet key and the
+  platform refused with the same business error 10024 ("not available to you due to regulatory
+  restrictions") at key creation — bybit blocks the global platform (testnet included) for the
+  operator's region, so a trade-capable key is not obtainable at all, not merely not configured.
 
 ### okx — funding-account and savings surfaces are disabled in demo trading (task 671, filed 2026-08-23)
 
@@ -814,3 +818,37 @@ Entry template:
 - Exact call: perform one funding→trading transfer (a write), capture its transId, then call
   `fetch_transfer(ex, transId)`.
 - Expected evidence: code 0 with the transfer's state row matching the authored map.
+- Update (2026-08-23, task 671): a real transfer now exists (transId 327514023, 30 USDT
+  trading→funding, since reversed via 327514025) and `Bourse.fetch_transfer(ex, "327514023")`
+  returned the correct `%Bourse.TransferEntry{}` — the state semantics are live-verified. What
+  remains unreachable is only the contract case's resource strategy: no read surface
+  (`asset/bills`, `account/bills`, `account/bills-archive`) exposes a `transId` (rows carry
+  `billId` only, re-probed live), so `source_method: fetchTransfers` can never resolve one.
+
+### hyperliquid — deposit-history rows require a real bridge/CCTP transaction (task 671, filed 2026-08-23)
+
+- Authored slices: hyperliquid case `fetchDeposits:0:publicPostInfo`
+- Blocked by: `info:userNonFundingLedgerUpdates`-backed deposit history holds zero rows for the
+  provisioned testnet wallet even though it carries drip-funded USDC — the official drip does not
+  register as a deposit event. A row exists only after a genuine Arbitrum-bridge or CCTP
+  transaction credits the wallet (provider onboarding docs:
+  https://hyperliquid.gitbook.io/hyperliquid-docs/onboarding/how-to-start-trading), which no
+  Bourse REST call can produce.
+- The open question: do populated deposit rows carry the documented amount/currency/timestamp
+  through the unified parser?
+- Exact call: after a real bridge deposit to the testnet (or production) wallet, call
+  `Bourse.fetch_deposits(ex)`.
+- Expected evidence: a populated row whose amount, currency and timestamp match the bridge
+  transaction.
+
+### hyperliquid — withdrawal-history rows are policy-blocked (task 671, filed 2026-08-23)
+
+- Authored slices: hyperliquid case `fetchWithdrawals:0:publicPostInfo`
+- Blocked by: the wallet has zero withdrawal rows (verified live 2026-08-23), and creating one
+  means executing a real withdrawal — forbidden by the standing no-withdrawals policy for
+  provisioned credentials.
+- The open question: withdrawal-row semantics (id, amount, fee, status, timestamp) through the
+  unified parser.
+- Exact call: after an operator-approved withdrawal from the testnet wallet, call
+  `Bourse.fetch_withdrawals(ex)`.
+- Expected evidence: a populated row matching the withdrawal's id, currency, amount and status.

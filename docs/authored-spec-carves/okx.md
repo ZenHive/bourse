@@ -105,3 +105,30 @@ provider-specific funding-account values (amended by Task 601).**
   `fetchMyTrades` now match the bundled CCXT fixture semantics for price/cost/fees/type without a
   divergence contract.
 
+
+## 2026-08-23 — conversion identity and direction (Task 671)
+
+**C-T671c — Conversion rows are addressable by `clTReqId`, not `tradeId`. Outcome: DIVERGE (task 671).**
+
+- *Exchange semantics:* `GET /api/v5/asset/convert/history` ignores its `tradeId` parameter — a
+  bogus `tradeId` still returns the row — and filters on `clTReqId` (a bogus `clTReqId` answers
+  `data: []`). Both probed live on the international demo host (`www.okx.com` +
+  `x-simulated-trading: 1`, 2026-08-23) against a real 20-USDT USDT→BTC conversion.
+- *Our carve:* `normalization.conversion.id` keys on `clTReqId` with fallbacks
+  `["quoteId", "tradeId"]`, so `fetchConvertTradeHistory → fetchConvertTrade` composes — the id
+  the client hands back is one the venue accepts. `fetchConvertQuote` is unaffected: quote rows
+  carry no `clTReqId`, so `quoteId` still wins there.
+- *Compatibility:* CCXT keys conversion identity on `tradeId`; that id round-trips into a filter
+  the venue ignores, which is compatibility-breaking in the direction that matters (lookups
+  silently return the wrong row set). DIVERGE is deliberate.
+
+**C-T671d — Conversion direction is `side` against `baseCcy`, never `fromCcy`/`toCcy`. Outcome: DIVERGE (task 671).**
+
+- *Exchange semantics:* the convert surfaces (`estimate-quote`, `convert/trade`,
+  `convert/history`) express direction as `side` (`buy`/`sell`) relative to `baseCcy`/`quoteCcy`
+  with sizes in `fillBaseSz`/`fillQuoteSz`. Live-verified: a `side: "buy"` trade debited
+  `fillQuoteSz` USDT and credited `fillBaseSz` BTC. No `fromCcy`/`toCcy` fields exist on these
+  rows.
+- *Our carve:* the parse layer derives `_bourse_from/to_currency|amount` from `side` +
+  `baseCcy`/`quoteCcy` + `fillBaseSz`/`fillQuoteSz`; an unknown `side` leaves the fields nil
+  rather than guessing.

@@ -71,6 +71,87 @@ roadmap.
 
 ---
 
+## 2026-08-23 — contract lane: seven binance-family cases (and three hyperliquid ones) are green only while live account state exists
+
+**Status:** 🆕 reported (task 671 state-population pass)
+
+**The call:** `mix ccxt.verify_rest_read_contracts --venue binance|binanceusdm|binancecoinm|hyperliquid`.
+
+**Observed:** `binance:fetchOpenOrder:7`, `binance:fetchOrderList:0`, `binanceusdm:fetchOpenOrder:1`,
+`binanceusdm:fetchOpenOrder:2`, `binanceusdm:fetchPositionADLRank:1`, `binancecoinm:fetchOpenOrder:0`,
+`binancecoinm:fetchOpenOrder:1` — plus hyperliquid `fetchOpenOrders:0`, `fetchPosition:0`,
+`fetchPositions:0`, and okx `fetchPosition:0` — resolve their arguments from live open
+orders / positions. They passed on
+2026-08-23 with hand-created testnet state (resting far-from-market limit orders, minimum
+positions) and go red again the moment that state is cleaned up, which cleanup policy requires.
+
+**Expected:** a case that needs account state should own it — the scenario executor
+(`Bourse.Test.RestReadContractScenario`) creating the resting order / minimum position before the
+branch runs and tearing it down afterwards. Until then these cases are state-flappy, not stable.
+
+**Impact:** anyone running the lane against a flat account reads ten reds that are neither code
+nor spec defects; the lane's honest-red discipline loses signal.
+
+## 2026-08-23 — okx: `endpoint_index`-selected algo reads can only ever see `ordType: "conditional"` orders
+
+**Status:** 🆕 reported (task 671, live-verified 2026-08-23)
+
+**The call:** `Bourse.fetch_open_orders(ex, endpoint_index: 0)` / `fetch_closed_orders(ex, endpoint_index: 0)` (okx algo branches).
+
+**Observed:** `Bourse.Unified.RequestShape.Okx.order_read_ord_type/1` defaults to `"conditional"`
+when no `trigger`/`trailing` selector is present, and an `endpoint_index`-selected algo route
+carries no selector. A live `trigger` algo order is invisible to the unified call — the raw
+pending list shows it under `ordType=trigger` while `fetch_open_orders(..., endpoint_index: 0)`
+returns `[]` (probed on the international demo host).
+
+**Expected:** the algo read surface should either fan out across the venue's algo `ordType`
+values or accept a caller-supplied selector on the algo route.
+
+**Impact:** trigger and trailing algo orders silently disappear from the unified read surface;
+both contract cases stay green because they allow an empty collection.
+
+## 2026-08-23 — binanceusdm: the `fetchOpenOrder`/`fetchOrder` algo branch can never reach `GET /fapi/v1/algoOrder`
+
+**Status:** 🆕 reported (task 671, live-verified 2026-08-23)
+
+**The call:** `Bourse.fetch_open_order(ex, id, endpoint_index: 1)` (binanceusdm).
+
+**Observed:** two live facts. (a) The authored request mapping sends `orderId ← id`, but the
+endpoint accepts only `algoId`/`clientAlgoId` — a raw call with `orderId` answers
+`-1102 "Param 'algoid' or 'clientalgoid' must be sent"` (provider doc: Query Algo Order,
+developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Query-Algo-Order).
+(b) `endpoint_selection.book_routes` runs `first_success` over
+`[fapiPrivate_get_openorder, fapiPrivate_get_algoorder]`, so `endpoint_index: 1` still returns the
+non-algo endpoint's row — byte-identical to `endpoint_index: 0` (verified live). The contract case
+`binanceusdm:fetchOpenOrder:1:fapiPrivateGetAlgoOrder` is therefore satisfied by the wrong
+endpoint.
+
+**Expected:** the algo route needs a per-endpoint request override (`id → algoId`) and pinned
+routing so `endpoint_index` actually selects it; its contract branch needs argument sourcing from
+open *algo* orders.
+
+**Impact:** algo/conditional orders are unreadable through the unified surface; the contract
+branch's green is vacuous.
+
+## 2026-08-23 — binancecoinm `fetch_adl_rank`: provider list collapsed into a single struct — second position silently dropped
+
+**Status:** 🆕 reported (task 671, live-verified 2026-08-23)
+
+**The call:** `Bourse.fetch_adl_rank(ex)` (binancecoinm).
+
+**Observed:** `GET /dapi/v1/adlQuantile` returns an array, one entry per position-carrying symbol
+(live with one position: `[%{"symbol" => "BTCUSD_PERP", "adlQuantile" => %{"BOTH" => 1, …}}]`),
+but the unified call returns a bare `%Bourse.ADLRank{}`. Root cause: the global `fetchADLRank`
+descriptor is `Promise<ADLRank>` while `binancecoinm/authored/endpoints.json` wires the
+list-returning `dapiPrivateGetAdlQuantile` to the singular `parseADLRank`; the sibling
+`binanceusdm:fetchPositionsADLRank` wires the same payload shape to `parseADLRanks` correctly.
+
+**Expected:** with two or more COIN-M positions every entry after the first must survive parsing —
+either the venue routes this through the plural method or the carve is corrected.
+
+**Impact:** silent data loss for any account holding more than one COIN-M position; the contract
+case has always passed vacuously because a flat account answers `[]`.
+
 ## 2026-08-23 — bybit: account-classification helper endpoints remain in `fetchBalance` reads and every write method's `unified` array
 
 **Status:** 🆕 reported (task 671 carved them out of the six red READ methods only — see `docs/authored-spec-carves/bybit.md` C-T671a)
