@@ -2,11 +2,10 @@ defmodule Bourse.SigningTest do
   use ExUnit.Case, async: true
 
   alias Bourse.Signing
+  alias Bourse.Signing.HmacRecipe
   alias Bourse.Signing.Request
   alias Bourse.Signing.SignedRequest
   alias Mix.Tasks.Ccxt.Helpers
-
-  # --- Crypto Helpers ---
 
   describe "hmac_sha256/2" do
     test "produces correct HMAC-SHA256 digest" do
@@ -252,8 +251,6 @@ defmodule Bourse.SigningTest do
     end
   end
 
-  # --- Introspection ---
-
   describe "patterns/0" do
     test "returns deterministic built-in patterns only" do
       patterns = Signing.patterns()
@@ -329,9 +326,9 @@ defmodule Bourse.SigningTest do
 
   describe "module_for_pattern/1" do
     test "returns correct module for each pattern" do
-      assert Signing.module_for_pattern(:hmac_sha256_query) == Bourse.Signing.HmacRecipe
-      assert Signing.module_for_pattern(:hmac_sha256_headers) == Bourse.Signing.HmacRecipe
-      assert Signing.module_for_pattern(:hmac_sha256_iso_passphrase) == Bourse.Signing.HmacRecipe
+      assert Signing.module_for_pattern(:hmac_sha256_query) == HmacRecipe
+      assert Signing.module_for_pattern(:hmac_sha256_headers) == HmacRecipe
+      assert Signing.module_for_pattern(:hmac_sha256_iso_passphrase) == HmacRecipe
       assert Signing.module_for_pattern(:deribit) == Bourse.Signing.Deribit
       assert Signing.module_for_pattern(:hyperliquid) == Bourse.Signing.Hyperliquid
       assert Signing.module_for_pattern(:derive) == Bourse.Signing.Derive
@@ -345,8 +342,6 @@ defmodule Bourse.SigningTest do
       assert Signing.module_for_pattern(:unknown) == nil
     end
   end
-
-  # --- Dispatcher ---
 
   describe "sign/4 dispatch" do
     setup do

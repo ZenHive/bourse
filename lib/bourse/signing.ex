@@ -151,8 +151,7 @@ defmodule Bourse.Signing do
     hmac_recipe_sign(:hmac_sha256_headers, request, credentials, config)
   end
 
-  def sign(:hmac_sha256_iso_passphrase, request, credentials, %{sign_recipe: recipe} = config)
-      when is_map(recipe) do
+  def sign(:hmac_sha256_iso_passphrase, request, credentials, %{sign_recipe: recipe} = config) when is_map(recipe) do
     hmac_recipe_sign(:hmac_sha256_iso_passphrase, request, credentials, config)
   end
 
