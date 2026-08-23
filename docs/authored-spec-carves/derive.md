@@ -1,9 +1,9 @@
 # Derive carve register
 
-Provider authority: [`priv/authority/derive/manifest.json`](../../priv/authority/derive/manifest.json).
+Provider authority: [`priv/venues/derive/authority/manifest.json`](../../priv/venues/derive/authority/manifest.json).
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
-  [pinned authority manifest](../../priv/authority/derive/manifest.json), artifact
+  [pinned authority manifest](../../priv/venues/derive/authority/manifest.json), artifact
 ## 2026-08-12 — rate-unit confrontation (Task 594)
 **C-T594h — Derive's authored rate-like slots name their venue units, and private funding history
 is corrected from rate to cashflow (task 594). Outcome: CONFIRMED against the venue's own contract;

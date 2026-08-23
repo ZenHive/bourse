@@ -1,9 +1,9 @@
 # Binance COIN-M carve register
 
-Provider authority: [`priv/authority/binancecoinm/manifest.json`](../../priv/authority/binancecoinm/manifest.json).
+Provider authority: [`priv/venues/binancecoinm/authority/manifest.json`](../../priv/venues/binancecoinm/authority/manifest.json).
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
-indexed by `priv/authority/binancecoinm/manifest.json`.
+indexed by `priv/venues/binancecoinm/authority/manifest.json`.
 ## 2026-08-12 — rate-unit confrontation (Task 594)
 **C-T594c — Binance COIN-M's authored rate-like slots name their venue units (task 594).
 Outcome: CONFIRM documented and arithmetic-derived units; retain explicit gaps.**

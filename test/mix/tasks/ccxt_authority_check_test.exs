@@ -4,7 +4,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
   alias Mix.Tasks.Ccxt.AuthorityCheck
   alias Mix.Tasks.Ccxt.AuthorityCorpus
 
-  @root "priv/authority"
+  @root "priv/venues"
   @canonical_key_set_digest_source "lib/mix/tasks/ccxt/authority_corpus.ex"
 
   test "committed corpus covers every first-class venue with reference-only licensing" do
@@ -97,10 +97,10 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
     artifact = Enum.find(manifest["artifacts"], &(&1["id"] == "api-openapi"))
 
     prior_report =
-      Bourse.JsonDocument.decode_file!("priv/authority/deribit/current-rest-drift-2026-08-10.json")
+      Bourse.JsonDocument.decode_file!("priv/venues/deribit/authority/current-rest-drift-2026-08-10.json")
 
     report =
-      Bourse.JsonDocument.decode_file!("priv/authority/deribit/current-rest-drift-2026-08-18.json")
+      Bourse.JsonDocument.decode_file!("priv/venues/deribit/authority/current-rest-drift-2026-08-18.json")
 
     assert prior_report["prior"]["sha256"] ==
              "70ba4617642d18aaff2bbcb7127bec499c4ef3ba34b6f5b12cb9cbdadbcffd2d"
@@ -305,7 +305,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
   test "every carve register cites its venue authority manifest" do
     for venue <- AuthorityCorpus.venues() do
       path = "docs/authored-spec-carves/#{venue}.md"
-      assert File.read!(path) =~ "priv/authority/#{venue}/manifest.json"
+      assert File.read!(path) =~ "priv/venues/#{venue}/authority/manifest.json"
     end
   end
 
@@ -323,7 +323,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
 
   test "a present surface digest must name the same pin as the manifest" do
     root = write_corpus(fn _venue, manifest -> manifest end)
-    digest_dir = Path.join([root, "binance", "surface-digests"])
+    digest_dir = Path.join([root, "binance", "authority", "surface-digests"])
     File.mkdir_p!(digest_dir)
 
     File.write!(
@@ -344,13 +344,13 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
   test "reference-only artifacts remain valid when no surface digest is retained" do
     root = write_corpus(fn _venue, manifest -> manifest end)
     assert [%{"venue" => "alpaca"} | _] = AuthorityCorpus.load!(root)
-    refute File.exists?(Path.join([root, "binance", "surface-digests", "fixture.json"]))
+    refute File.exists?(Path.join([root, "binance", "authority", "surface-digests", "fixture.json"]))
   end
 
   test "a surface digest that names the manifest pin is accepted" do
     root = write_corpus(fn _venue, manifest -> manifest end)
     artifact = List.first(fixture_manifest("binance")["artifacts"])
-    digest_dir = Path.join([root, "binance", "surface-digests"])
+    digest_dir = Path.join([root, "binance", "authority", "surface-digests"])
     File.mkdir_p!(digest_dir)
 
     File.write!(
@@ -369,7 +369,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
   test "a present surface digest must hash its key sets consistently" do
     root = write_corpus(fn _venue, manifest -> manifest end)
     artifact = List.first(fixture_manifest("binance")["artifacts"])
-    digest_dir = Path.join([root, "binance", "surface-digests"])
+    digest_dir = Path.join([root, "binance", "authority", "surface-digests"])
     File.mkdir_p!(digest_dir)
 
     File.write!(
@@ -438,7 +438,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
           manifest
       end)
 
-    File.write!(Path.join([root, "binance", "artifact.txt"]), "expacted")
+    File.write!(Path.join([root, "binance", "authority", "artifact.txt"]), "expacted")
 
     assert_raise Mix.Error, ~r/SHA-256 differs from manifest/, fn ->
       AuthorityCorpus.load!(root)
@@ -556,7 +556,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
     on_exit(fn -> File.rm_rf(root) end)
 
     for venue <- AuthorityCorpus.venues() do
-      directory = Path.join(root, venue)
+      directory = Path.join([root, venue, "authority"])
       File.mkdir_p!(directory)
 
       manifest = transform.(venue, fixture_manifest(venue))

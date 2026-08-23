@@ -1,9 +1,9 @@
 # Alpaca carve register
 
-Provider authority: [`priv/authority/alpaca/manifest.json`](../../priv/authority/alpaca/manifest.json).
+Provider authority: [`priv/venues/alpaca/authority/manifest.json`](../../priv/venues/alpaca/authority/manifest.json).
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
-{"carve_id":"C-T429a","date":"2026-07-23","semantic_source":{"kind":"provider_owned","reference":"Alpaca Trading API and Market Data product boundaries; priv/authority/alpaca/manifest.json"},"observed_evidence":{"kind":"live_venue","reference":"Live data.alpaca.markets reads and paper-api.alpaca.markets account/order lifecycle observed 2026-07-23"},"compatibility_reference":{"kind":"ccxt","reference":"Frozen Alpaca reference supplies the reconciled 118-method inventory only"},"resolved_tier":1}
+{"carve_id":"C-T429a","date":"2026-07-23","semantic_source":{"kind":"provider_owned","reference":"Alpaca Trading API and Market Data product boundaries; priv/venues/alpaca/authority/manifest.json"},"observed_evidence":{"kind":"live_venue","reference":"Live data.alpaca.markets reads and paper-api.alpaca.markets account/order lifecycle observed 2026-07-23"},"compatibility_reference":{"kind":"ccxt","reference":"Frozen Alpaca reference supplies the reconciled 118-method inventory only"},"resolved_tier":1}
 ## 2026-08-12 — rate-unit confrontation (Task 594)
 **C-T594a — Alpaca's authored rate-like slots name their venue units (task 594).
 Outcome: CONFIRM provider units; documentation-anchored.**

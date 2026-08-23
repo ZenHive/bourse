@@ -32,7 +32,7 @@ Entry template:
 - Blocked by: the provisioned sandbox hosts do not publish those API sections (`No base URL
   for section … (sandbox)` live, or they require production keys)
 - What the live contract lane covers: the venue-native prefixes in
-  `priv/authority/rest-read-contracts.json` (`provider_operation_prefixes`)
+  `priv/venues/<venue>/authority/rest_read_contract.json` (`provider_operation_prefixes`)
 - The open question: production-host semantics for the omitted sections
 - Exact call: construct the venue on its production host with production-authorized
   credentials, then run the omitted provider operations
@@ -90,7 +90,7 @@ Entry template:
 - Blocked by: a testnet account nobody else is using. Bulk cancellation reaches resting orders this session did
   not place, and the provider offers no operation that restores a cancelled order or a closed position.
 - What is already known: the provider's own description for each of these lives in the pinned `api-openapi`
-  revision recorded in `priv/authority/deribit/manifest.json`, and the per-order lifecycle
+  revision recorded in `priv/venues/deribit/authority/manifest.json`, and the per-order lifecycle
   (`private/buy` → `private/cancel`) is verified live.
 - The open question: the accepted request shape and the response body each bulk form returns, which only a live
   call on an isolated account can show.
@@ -108,7 +108,7 @@ Entry template:
 - Blocked by: nothing technical — this is a standing refusal. Value movement is never sent for coverage, on
   testnet or anywhere else, and the cancel forms only become reachable after creating the transfer they cancel.
 - What is already known: the provider's own descriptions, in the pinned `api-openapi` revision recorded in
-  `priv/authority/deribit/manifest.json`.
+  `priv/venues/deribit/authority/manifest.json`.
 - The open question: unanswerable without moving funds; it stays open by decision, not by blocker.
 - Exact call: none.
 - Expected evidence: none will be produced. These remain `evidence=unverified`, `reachability=unsafe`
@@ -438,7 +438,7 @@ Entry template:
 - What tier-1 already proved: signed routing, `currency=BTC`, `extended=true`, the JSON-RPC
   result envelope, and the no-discount/field-absent branch were all observed on a real body.
 - Provider-contract confrontation (2026-07-22): Deribit's schema version `2.1.1`, identified by
-  `priv/authority/deribit/manifest.json`, defines `fees` as
+  `priv/venues/deribit/authority/manifest.json`, defines `fees` as
   `index_name -> instrument_type -> default.{type,maker,taker}` plus optional `block_trade`.
   This DIVERGES from C-T380a's authored legacy `fees[]` / `instrument_type` / `maker_fee` /
   `taker_fee` carrier; CCXT 4.5.65 still expects that legacy list and is only a compatibility
@@ -697,7 +697,7 @@ Entry template:
   2026-08-14 observations are fresh and real (`withdraw_history` → `{"code":200,"withdraws":[]}`,
   `liquidations` → `{"code":200,"liquidations":[],"next_cursor":""}`), reached through the runtime
   request builder. Field meanings rest on the pinned provider OpenAPI
-  (`priv/authority/lighter/manifest.json` artifact `rest-openapi`, revision `6957dd8a`) —
+  (`priv/venues/lighter/authority/manifest.json` artifact `rest-openapi`, revision `6957dd8a`) —
   `WithdrawHistoryItem` required `id amount timestamp status type l1_tx_hash asset_id`,
   `Liquidation` required `id market_id type trade info executed_at`.
 - The open question: does a real withdrawal row's `status`/`type` pair normalize to the unified

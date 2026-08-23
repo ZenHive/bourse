@@ -1,0 +1,1890 @@
+{
+  "host_mode": "sandbox",
+  "authority_sources": [
+    {
+      "id": "developer-docs-full",
+      "kind": "llms-full-text",
+      "source_url": "https://developers.binance.com/en/docs/llms-full.txt",
+      "sha256": "a2b6e0dd14a58198d35cfeb9212dd7ff362008f1455ff04181952ae8545d811e",
+      "upstream_pin": {
+        "type": "http_etag_last_modified",
+        "value": "\"6a5f70d8-779e79\"; Tue, 21 Jul 2026 13:15:04 GMT"
+      }
+    },
+    {
+      "id": "usds-futures-postman",
+      "kind": "postman-collection",
+      "source_url": "https://github.com/binance/binance-api-postman/blob/da581021c528c044c08c6dc204ec9de406224337/collections/Binance Derivatives Trading USDS Futures API.json",
+      "sha256": "e62d64cc51350db24514aacada6607adff8e75b9c81a8bacac801118037b1133",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "da581021c528c044c08c6dc204ec9de406224337"
+      }
+    }
+  ],
+  "credentials": {
+    "exports": [
+      "BINANCE_FUTURES_TEST_API_KEY",
+      "BINANCE_FUTURES_TEST_API_SECRET"
+    ],
+    "url": "https://demo.binance.com"
+  },
+  "operations": [
+    {
+      "method": "fetchADLRank",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetSymbolAdlRisk",
+          "http_method": "GET",
+          "path": "symbolAdlRisk",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.ADLRank",
+        "required_fields": [
+          "symbol",
+          "rank"
+        ],
+        "any_fields": [
+          "percentage",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchAccountPositions",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetLeverageBracket",
+          "http_method": "GET",
+          "path": "leverageBracket",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        },
+        {
+          "provider_operation": "fapiPrivateV2GetAccount",
+          "http_method": "GET",
+          "path": "account",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        },
+        {
+          "provider_operation": "fapiPrivateV3GetAccount",
+          "http_method": "GET",
+          "path": "account",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Position",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "contracts",
+          "side",
+          "entryPrice"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchBalance",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateV2GetAccount",
+          "http_method": "GET",
+          "path": "account",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        },
+        {
+          "provider_operation": "fapiPrivateV3GetAccount",
+          "http_method": "GET",
+          "path": "account",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Balance",
+        "required_fields": [],
+        "any_fields": [
+          "free",
+          "used",
+          "total",
+          "debt"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchBidsAsks",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetTickerBookTicker",
+          "http_method": "GET",
+          "path": "ticker/bookTicker",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchCanceledAndClosedOrders",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetAllAlgoOrders",
+          "http_method": "GET",
+          "path": "allAlgoOrders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        },
+        {
+          "provider_operation": "fapiPrivateGetAllOrders",
+          "http_method": "GET",
+          "path": "allOrders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchCanceledOrders",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetAllAlgoOrders",
+          "http_method": "GET",
+          "path": "allAlgoOrders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        },
+        {
+          "provider_operation": "fapiPrivateGetAllOrders",
+          "http_method": "GET",
+          "path": "allOrders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchClosedOrders",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetAllAlgoOrders",
+          "http_method": "GET",
+          "path": "allAlgoOrders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        },
+        {
+          "provider_operation": "fapiPrivateGetAllOrders",
+          "http_method": "GET",
+          "path": "allOrders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchFundingHistory",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetIncome",
+          "http_method": "GET",
+          "path": "income",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.FundingHistory",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "amount",
+          "timestamp",
+          "rate"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchFundingIntervals",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetFundingInfo",
+          "http_method": "GET",
+          "path": "fundingInfo",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.FundingRate",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "fundingRate",
+          "nextFundingRate",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchFundingRate",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetPremiumIndex",
+          "http_method": "GET",
+          "path": "premiumIndex",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.FundingRate",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "fundingRate",
+          "nextFundingRate",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchFundingRateHistory",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetFundingRate",
+          "http_method": "GET",
+          "path": "fundingRate",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.FundingRateHistory",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "funding_rate",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchFundingRates",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetPremiumIndex",
+          "http_method": "GET",
+          "path": "premiumIndex",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.FundingRate",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "fundingRate",
+          "nextFundingRate",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchLastPrices",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicV2GetTickerPrice",
+          "http_method": "GET",
+          "path": "ticker/price",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.LastPrice",
+        "required_fields": [],
+        "any_fields": [
+          "id",
+          "symbol",
+          "timestamp",
+          "code"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchLedger",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetIncome",
+          "http_method": "GET",
+          "path": "income",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.LedgerEntry",
+        "required_fields": [
+          "id",
+          "currency"
+        ],
+        "any_fields": [
+          "amount",
+          "timestamp",
+          "type"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchLeverageTiers",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetLeverageBracket",
+          "http_method": "GET",
+          "path": "leverageBracket",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.LeverageTier",
+        "required_fields": [
+          "symbol",
+          "tier"
+        ],
+        "any_fields": [
+          "maxLeverage",
+          "minNotional",
+          "maxNotional"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchLeverages",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetLeverageBracket",
+          "http_method": "GET",
+          "path": "leverageBracket",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        },
+        {
+          "provider_operation": "fapiPrivateGetSymbolConfig",
+          "http_method": "GET",
+          "path": "symbolConfig",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.Leverage",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "longLeverage",
+          "shortLeverage"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchMarginAdjustmentHistory",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetPositionMarginHistory",
+          "http_method": "GET",
+          "path": "positionMargin/history",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.MarginModification",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "amount",
+          "type"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchMarginMode",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetSymbolConfig",
+          "http_method": "GET",
+          "path": "symbolConfig",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.MarginMode",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "marginMode"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchMarginModes",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetSymbolConfig",
+          "http_method": "GET",
+          "path": "symbolConfig",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.MarginMode",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "marginMode"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchMarkPrice",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetPremiumIndex",
+          "http_method": "GET",
+          "path": "premiumIndex",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchMarkPrices",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetPremiumIndex",
+          "http_method": "GET",
+          "path": "premiumIndex",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchMarkets",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetExchangeInfo",
+          "http_method": "GET",
+          "path": "exchangeInfo",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Market",
+        "required_fields": [
+          "symbol",
+          "id"
+        ],
+        "any_fields": [
+          "base",
+          "quote",
+          "type",
+          "active"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchMyLiquidations",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetForceOrders",
+          "http_method": "GET",
+          "path": "forceOrders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Liquidation",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchMyTrades",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetUserTrades",
+          "http_method": "GET",
+          "path": "userTrades",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchOHLCV",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetIndexPriceKlines",
+          "http_method": "GET",
+          "path": "indexPriceKlines",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "pair",
+              "strategy": "literal",
+              "value": "BTCUSDT"
+            }
+          ]
+        },
+        {
+          "provider_operation": "fapiPublicGetKlines",
+          "http_method": "GET",
+          "path": "klines",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        },
+        {
+          "provider_operation": "fapiPublicGetMarkPriceKlines",
+          "http_method": "GET",
+          "path": "markPriceKlines",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        },
+        {
+          "provider_operation": "fapiPublicGetPremiumIndexKlines",
+          "http_method": "GET",
+          "path": "premiumIndexKlines",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        },
+        {
+          "name": "timeframe",
+          "strategy": "literal",
+          "value": "1h"
+        }
+      ],
+      "success": {
+        "representation": "positional_rows",
+        "collection": "list",
+        "minimum_length": 5,
+        "fields": [
+          {
+            "name": "timestamp",
+            "index": 0,
+            "type": "integer"
+          },
+          {
+            "name": "open",
+            "index": 1,
+            "type": "number"
+          },
+          {
+            "name": "high",
+            "index": 2,
+            "type": "number"
+          },
+          {
+            "name": "low",
+            "index": 3,
+            "type": "number"
+          },
+          {
+            "name": "close",
+            "index": 4,
+            "type": "number"
+          }
+        ],
+        "invariants": [
+          {
+            "operator": "gte",
+            "left": "high",
+            "right": "low"
+          },
+          {
+            "operator": "between",
+            "value": "open",
+            "minimum": "low",
+            "maximum": "high"
+          },
+          {
+            "operator": "between",
+            "value": "close",
+            "minimum": "low",
+            "maximum": "high"
+          }
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchOpenInterest",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetOpenInterest",
+          "http_method": "GET",
+          "path": "openInterest",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.OpenInterest",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "open_interest_value",
+          "open_interest_amount",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchOpenOrder",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetAlgoOrder",
+          "http_method": "GET",
+          "path": "algoOrder",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        },
+        {
+          "provider_operation": "fapiPrivateGetOpenOrder",
+          "http_method": "GET",
+          "path": "openOrder",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchOpenOrders",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetOpenAlgoOrders",
+          "http_method": "GET",
+          "path": "openAlgoOrders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        },
+        {
+          "provider_operation": "fapiPrivateGetOpenOrders",
+          "http_method": "GET",
+          "path": "openOrders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchOrder",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetAlgoOrder",
+          "http_method": "GET",
+          "path": "algoOrder",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        },
+        {
+          "provider_operation": "fapiPrivateGetOrder",
+          "http_method": "GET",
+          "path": "order",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchOrderBook",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetDepth",
+          "http_method": "GET",
+          "path": "depth",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        },
+        {
+          "provider_operation": "fapiPublicGetRpiDepth",
+          "http_method": "GET",
+          "path": "rpiDepth",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.OrderBook",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "bids",
+          "asks",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchOrderTrades",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetUserTrades",
+          "http_method": "GET",
+          "path": "userTrades",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchOrders",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetAllAlgoOrders",
+          "http_method": "GET",
+          "path": "allAlgoOrders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        },
+        {
+          "provider_operation": "fapiPrivateGetAllOrders",
+          "http_method": "GET",
+          "path": "allOrders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchPositionADLRank",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetAdlQuantile",
+          "http_method": "GET",
+          "path": "adlQuantile",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.ADLRank",
+        "required_fields": [
+          "symbol",
+          "rank"
+        ],
+        "any_fields": [
+          "percentage",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchPositionMode",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetPositionSideDual",
+          "http_method": "GET",
+          "path": "positionSide/dual",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "raw",
+        "provider_meaning_keys": [
+          "position",
+          "mode",
+          "positions"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchPositions",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetLeverageBracket",
+          "http_method": "GET",
+          "path": "leverageBracket",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        },
+        {
+          "provider_operation": "fapiPrivateV2GetAccount",
+          "http_method": "GET",
+          "path": "account",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        },
+        {
+          "provider_operation": "fapiPrivateV2GetPositionRisk",
+          "http_method": "GET",
+          "path": "positionRisk",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        },
+        {
+          "provider_operation": "fapiPrivateV3GetAccount",
+          "http_method": "GET",
+          "path": "account",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        },
+        {
+          "provider_operation": "fapiPrivateV3GetPositionRisk",
+          "http_method": "GET",
+          "path": "positionRisk",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Position",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "contracts",
+          "side",
+          "entryPrice"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchPositionsADLRank",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetAdlQuantile",
+          "http_method": "GET",
+          "path": "adlQuantile",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.ADLRank",
+        "required_fields": [
+          "symbol",
+          "rank"
+        ],
+        "any_fields": [
+          "percentage",
+          "timestamp"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchPositionsRisk",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetLeverageBracket",
+          "http_method": "GET",
+          "path": "leverageBracket",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        },
+        {
+          "provider_operation": "fapiPrivateV2GetPositionRisk",
+          "http_method": "GET",
+          "path": "positionRisk",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        },
+        {
+          "provider_operation": "fapiPrivateV3GetPositionRisk",
+          "http_method": "GET",
+          "path": "positionRisk",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Position",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "contracts",
+          "side",
+          "entryPrice"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchTicker",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetTicker24hr",
+          "http_method": "GET",
+          "path": "ticker/24hr",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchTickers",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetTicker24hr",
+          "http_method": "GET",
+          "path": "ticker/24hr",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchTime",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetTime",
+          "http_method": "GET",
+          "path": "time",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "scalar",
+        "scalar": "integer",
+        "required_fields": [],
+        "any_fields": [],
+        "invariants": [
+          {
+            "operator": "recent_ms",
+            "tolerance_ms": 300000
+          }
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchTrades",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetAggTrades",
+          "http_method": "GET",
+          "path": "aggTrades",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchTradingFee",
+      "branches": [
+        {
+          "provider_operation": "fapiPrivateGetCommissionRate",
+          "http_method": "GET",
+          "path": "commissionRate",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.TradingFee",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "maker",
+          "taker",
+          "percentage"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    },
+    {
+      "method": "fetchTradingLimits",
+      "branches": [
+        {
+          "provider_operation": "fapiPublicGetExchangeInfo",
+          "http_method": "GET",
+          "path": "exchangeInfo",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "nested_map",
+        "provider_meaning_keys": [
+          "min",
+          "max",
+          "assets",
+          "symbols",
+          "trading"
+        ]
+      },
+      "authority_source_ids": [
+        "developer-docs-full"
+      ]
+    }
+  ],
+  "symbols": {
+    "spot": "BTC/USDT:USDT",
+    "linear": "BTC/USDT:USDT",
+    "inverse": "BTC/USDT:USDT",
+    "option": "BTC/USDT:USDT"
+  },
+  "currency": "USDT",
+  "error_cases": [
+    {
+      "id": "binanceusdm:fetchTicker:error:invalid_symbol",
+      "kind": "error",
+      "method": "fetchTicker",
+      "provider_operation": "provider_invalid_symbol",
+      "authority_source_id": "developer-docs-full",
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "literal",
+          "value": "ZZZ/USDT:USDT"
+        }
+      ],
+      "options": [],
+      "expected_error": {
+        "type": "bad_symbol",
+        "code": -1121,
+        "message_contains": "Invalid symbol"
+      },
+      "observed_at": "2026-08-23"
+    }
+  ],
+  "provider_operation_prefixes": [
+    "fapiPublic",
+    "fapiPrivate",
+    "fapiPrivateV2"
+  ]
+}

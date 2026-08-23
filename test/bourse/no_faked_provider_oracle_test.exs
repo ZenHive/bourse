@@ -30,7 +30,7 @@ defmodule Bourse.NoFakedProviderOracleTest do
     {"ReplayExchange", "builds an exchange from a frozen cache"}
   ]
 
-  # `priv/specs` and `priv/authority` are pinned third-party/provider reference
+  # `priv/specs` and `priv/venues` are pinned third-party/provider reference
   # material. Reading them to pick a symbol or to validate a manifest is not a
   # venue claim; only asserting behaviour from a stored response is.
   @self Path.relative_to_cwd(__ENV__.file)

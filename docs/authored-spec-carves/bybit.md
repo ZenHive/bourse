@@ -1,9 +1,9 @@
 # Bybit carve register
 
-Provider authority: [`priv/authority/bybit/manifest.json`](../../priv/authority/bybit/manifest.json).
+Provider authority: [`priv/venues/bybit/authority/manifest.json`](../../priv/venues/bybit/authority/manifest.json).
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
-  ([pinned authority manifest](../../priv/authority/bybit/manifest.json), artifact
+  ([pinned authority manifest](../../priv/venues/bybit/authority/manifest.json), artifact
 ## 2026-08-12 — rate-unit confrontation (Task 594)
 **C-T594e — Bybit's authored rate-like slots name their venue units (task 594).
 Outcome: CONFIRM provider arithmetic where available; retain one position-history gap.**

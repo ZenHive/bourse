@@ -7,7 +7,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheck do
       mix ccxt.authority_check
 
   Opt into a live upstream drift check, or materialize the pinned reference-only
-  artifacts outside `priv/authority/` for inspection:
+  artifacts outside `priv/venues/<venue>/authority/` for inspection:
 
       mix ccxt.authority_check --online
       mix ccxt.authority_check --fetch /tmp/ccxt-authority
@@ -20,7 +20,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheck do
 
   alias Mix.Tasks.Ccxt.AuthorityCorpus
 
-  @default_root "priv/authority"
+  @default_root "priv/venues"
   @curl_timeout_seconds 120
   @drift_acknowledgement_days 30
   @switches [online: :boolean, fetch: :string, root: :string]
@@ -59,7 +59,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheck do
   @doc """
   Raises unless `destination` resolves outside the authority tree at `root`.
 
-  Materializing pinned bytes inside `priv/authority/` would turn the read-only
+  Materializing pinned bytes inside `priv/venues/<venue>/authority/` would turn the read-only
   provenance tree into a content store, so the destination must be a sibling or
   unrelated directory.
   """

@@ -13,8 +13,8 @@ defmodule Bourse.Test.RestReadContracts do
   alias Bourse.Unified
   alias Bourse.UnifiedMethod
 
-  @inventory_path "priv/authority/rest-read-contracts.json"
-  @external_resource @inventory_path
+  @policy_path "priv/venues/rest-read-contracts-policy.json"
+  @external_resource @policy_path
   @runtime_venues ~w(
     alpaca
     binance
@@ -29,18 +29,44 @@ defmodule Bourse.Test.RestReadContracts do
     okx
   )
 
+  for venue <- @runtime_venues do
+    @external_resource "priv/venues/#{venue}/authority/rest_read_contract.json"
+  end
+
   @typedoc "One provider operation branch exercised by the live lane."
   @type contract_case :: %{
           required(String.t()) => term()
         }
 
-  @doc "Returns the provider-owned REST-read inventory."
-  @spec inventory() :: map()
-  def inventory, do: JsonDocument.decode_file!(@inventory_path)
+  @doc """
+  Returns the provider-owned REST-read inventory.
 
-  @doc "Returns the inventory path used by the canonical runner."
+  The inventory is stored venue-first: shared policy keys in
+  `priv/venues/rest-read-contracts-policy.json`, one contract per venue under
+  `priv/venues/<venue>/authority/rest_read_contract.json`. They are merged here into
+  the single document every validation below reads.
+  """
+  @spec inventory() :: map()
+  def inventory do
+    venues =
+      Map.new(@runtime_venues, fn venue ->
+        {venue, JsonDocument.decode_file!(venue_contract_path(venue))}
+      end)
+
+    @policy_path
+    |> JsonDocument.decode_file!()
+    |> Map.put("venues", venues)
+  end
+
+  @doc "Returns the shared inventory-policy path used by the canonical runner."
   @spec inventory_path() :: String.t()
-  def inventory_path, do: @inventory_path
+  def inventory_path, do: @policy_path
+
+  @doc "Returns one venue's provider-owned REST-read contract path."
+  @spec venue_contract_path(String.t()) :: String.t()
+  def venue_contract_path(venue) when is_binary(venue) do
+    Path.join(["priv/venues", venue, "authority", "rest_read_contract.json"])
+  end
 
   @doc "Returns the provider inventory's venue IDs."
   @spec venues() :: [String.t()]
@@ -89,7 +115,7 @@ defmodule Bourse.Test.RestReadContracts do
     Enum.each(document["venues"], fn {venue, contract} ->
       sources = contract["authority_sources"]
       ensure!(is_list(sources) and sources != [], "#{venue}: no provider-owned authority source")
-      manifest = JsonDocument.decode_file!("priv/authority/#{venue}/manifest.json")
+      manifest = JsonDocument.decode_file!("priv/venues/#{venue}/authority/manifest.json")
       artifacts = Map.new(manifest["artifacts"], &{&1["id"], &1})
 
       Enum.each(sources, fn source ->

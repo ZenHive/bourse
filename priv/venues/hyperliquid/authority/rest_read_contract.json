@@ -1,0 +1,1147 @@
+{
+  "host_mode": "sandbox",
+  "authority_sources": [
+    {
+      "id": "docs-full",
+      "kind": "llms-full-text",
+      "source_url": "https://hyperliquid.gitbook.io/hyperliquid-docs/llms-full.txt",
+      "sha256": "7bd65f92fe573e36fac6e62ec5547b3b0d264792796a3e3c5a94ed65d0364439",
+      "upstream_pin": {
+        "type": "http_etag",
+        "value": "7cfb85c2e972515a5f71a0976db85464"
+      }
+    },
+    {
+      "id": "python-sdk-info-subspecifications",
+      "kind": "official-sdk-source-archive",
+      "source_url": "https://github.com/hyperliquid-dex/hyperliquid-python-sdk/tree/2fdb18f9517675ea03695a0962bd19eece9c83f0/api",
+      "sha256": "e48dff272dbb1a021177d0a7e3f0be092665f060ec6a6b3224c3f51b47c43896",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "2fdb18f9517675ea03695a0962bd19eece9c83f0"
+      }
+    }
+  ],
+  "credentials": {
+    "exports": [
+      "HYPERLIQUID_TESTNET_API_KEY",
+      "HYPERLIQUID_TESTNET_API_SECRET"
+    ],
+    "url": "https://app.hyperliquid-testnet.xyz"
+  },
+  "operations": [
+    {
+      "method": "fetchBalance",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Balance",
+        "required_fields": [],
+        "any_fields": [
+          "free",
+          "used",
+          "total",
+          "debt"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchCanceledAndClosedOrders",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchCanceledOrders",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchClosedOrders",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchCurrencies",
+      "branches": [
+        {
+          "provider_operation": "privatePostExchange",
+          "http_method": "POST",
+          "path": "exchange",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "user",
+              "strategy": "credential_api_key"
+            }
+          ]
+        },
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.Currency",
+        "required_fields": [
+          "code"
+        ],
+        "any_fields": [
+          "name",
+          "network",
+          "precision"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchDeposits",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "startTime",
+              "strategy": "literal",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Transaction",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "currency",
+          "amount",
+          "status",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchFundingHistory",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "startTime",
+              "strategy": "literal",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.FundingHistory",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "amount",
+          "timestamp",
+          "rate"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchFundingRateHistory",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "startTime",
+              "strategy": "literal",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.FundingRateHistory",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "funding_rate",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchFundingRates",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.FundingRate",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "fundingRate",
+          "nextFundingRate",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchLedger",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "startTime",
+              "strategy": "literal",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.LedgerEntry",
+        "required_fields": [
+          "id",
+          "currency"
+        ],
+        "any_fields": [
+          "amount",
+          "timestamp",
+          "type"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchMarkets",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Market",
+        "required_fields": [
+          "symbol",
+          "id"
+        ],
+        "any_fields": [
+          "base",
+          "quote",
+          "type",
+          "active"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchMyTrades",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "startTime",
+              "strategy": "literal",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchOHLCV",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        },
+        {
+          "name": "timeframe",
+          "strategy": "literal",
+          "value": "1h"
+        }
+      ],
+      "success": {
+        "representation": "positional_rows",
+        "collection": "list",
+        "minimum_length": 5,
+        "fields": [
+          {
+            "name": "timestamp",
+            "index": 0,
+            "type": "integer"
+          },
+          {
+            "name": "open",
+            "index": 1,
+            "type": "number"
+          },
+          {
+            "name": "high",
+            "index": 2,
+            "type": "number"
+          },
+          {
+            "name": "low",
+            "index": 3,
+            "type": "number"
+          },
+          {
+            "name": "close",
+            "index": 4,
+            "type": "number"
+          }
+        ],
+        "invariants": [
+          {
+            "operator": "gte",
+            "left": "high",
+            "right": "low"
+          },
+          {
+            "operator": "between",
+            "value": "open",
+            "minimum": "low",
+            "maximum": "high"
+          },
+          {
+            "operator": "between",
+            "value": "close",
+            "minimum": "low",
+            "maximum": "high"
+          }
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchOpenInterest",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.OpenInterest",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "open_interest_value",
+          "open_interest_amount",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchOpenInterests",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.OpenInterest",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "open_interest_value",
+          "open_interest_amount",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchOpenOrders",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchOrder",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchOrderBook",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.OrderBook",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "bids",
+          "asks",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchOrders",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchPosition",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Position",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "contracts",
+          "side",
+          "entry_price"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchPositions",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Position",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "contracts",
+          "side",
+          "entryPrice"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchSpotMarkets",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Market",
+        "required_fields": [
+          "symbol",
+          "id"
+        ],
+        "any_fields": [
+          "base",
+          "quote",
+          "type",
+          "active"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchStatus",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "raw",
+        "provider_meaning_keys": [
+          "status"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchSwapMarkets",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Market",
+        "required_fields": [
+          "symbol",
+          "id"
+        ],
+        "any_fields": [
+          "base",
+          "quote",
+          "type",
+          "active"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchTickers",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchTime",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "scalar",
+        "scalar": "integer",
+        "required_fields": [],
+        "any_fields": [],
+        "invariants": [
+          {
+            "operator": "recent_ms",
+            "tolerance_ms": 300000
+          }
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchTradingFee",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.TradingFee",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "maker",
+          "taker",
+          "percentage"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    },
+    {
+      "method": "fetchWithdrawals",
+      "branches": [
+        {
+          "provider_operation": "publicPostInfo",
+          "http_method": "POST",
+          "path": "info",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "startTime",
+              "strategy": "literal",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Transaction",
+        "required_fields": [
+          "id",
+          "currency"
+        ],
+        "any_fields": [
+          "amount",
+          "status",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "docs-full"
+      ]
+    }
+  ],
+  "symbols": {
+    "spot": "BTC/USDC:USDC",
+    "linear": "BTC/USDC:USDC",
+    "inverse": "BTC/USDC:USDC",
+    "option": "BTC/USDC:USDC"
+  },
+  "currency": "USDC",
+  "error_cases": [
+    {
+      "id": "hyperliquid:fetchTicker:error:invalid_symbol",
+      "kind": "error",
+      "method": "fetchTicker",
+      "provider_operation": "provider_invalid_symbol",
+      "authority_source_id": "docs-full",
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "literal",
+          "value": "ZZZ/USDC:USDC"
+        }
+      ],
+      "options": [],
+      "expected_error": {
+        "type": "exchange_error",
+        "code": null,
+        "message_contains": "could not find a ticker"
+      },
+      "observed_at": "2026-08-23"
+    }
+  ],
+  "provider_operation_prefixes": [
+    "public",
+    "private"
+  ]
+}

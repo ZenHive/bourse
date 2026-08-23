@@ -1,0 +1,632 @@
+{
+  "host_mode": "sandbox",
+  "authority_sources": [
+    {
+      "id": "trading-api-create-order",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.alpaca.markets/us/reference/postorder",
+      "sha256": "a96386b92df2b8951c285aff1d9ffca4a19a52c5a4eb7bf5c9e7e94c34942ad4",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-07-23"
+      }
+    },
+    {
+      "id": "stock-bars-single",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.alpaca.markets/us/v1.1/reference/stockbarsingle-1",
+      "sha256": "e92adfe68d76ab5628aedbdb50cd6c2bceca0f03c6b5398b0d6d2b1c28621b3c",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-08-03"
+      }
+    },
+    {
+      "id": "crypto-snapshots",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.alpaca.markets/us/reference/cryptosnapshots-1",
+      "sha256": "fdb5984cc0def5f8e1063b7e8973296f91a938afc334b8703ede0f0e066e0769",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-07-26"
+      }
+    },
+    {
+      "id": "crypto-bars",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.alpaca.markets/us/reference/cryptobars-1",
+      "sha256": "2625774d48ab976cebf3b8c51584c1b58ae1c42e1159fb7c9b421183c8c00472",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-07-26"
+      }
+    }
+  ],
+  "credentials": {
+    "exports": [
+      "ALPACA_API_KEY",
+      "ALPACA_API_SECRET"
+    ],
+    "url": "https://app.alpaca.markets/signup"
+  },
+  "operations": [
+    {
+      "method": "fetchBalance",
+      "branches": [
+        {
+          "provider_operation": "traderPrivateGetV2Account",
+          "http_method": "GET",
+          "path": "v2/account",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Balance",
+        "required_fields": [],
+        "any_fields": [
+          "free",
+          "used",
+          "total",
+          "debt"
+        ]
+      },
+      "authority_source_ids": [
+        "trading-api-create-order"
+      ]
+    },
+    {
+      "method": "fetchClosedOrders",
+      "branches": [
+        {
+          "provider_operation": "traderPrivateGetV2Orders",
+          "http_method": "GET",
+          "path": "v2/orders",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "trading-api-create-order"
+      ]
+    },
+    {
+      "method": "fetchMarkets",
+      "branches": [
+        {
+          "provider_operation": "traderPrivateGetV2Assets",
+          "http_method": "GET",
+          "path": "v2/assets",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Market",
+        "required_fields": [
+          "symbol",
+          "id"
+        ],
+        "any_fields": [
+          "base",
+          "quote",
+          "type",
+          "active"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "trading-api-create-order"
+      ]
+    },
+    {
+      "method": "fetchMyTrades",
+      "branches": [
+        {
+          "provider_operation": "traderPrivateGetV2AccountActivitiesActivityType",
+          "http_method": "GET",
+          "path": "v2/account/activities/{activity_type}",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "trading-api-create-order"
+      ]
+    },
+    {
+      "method": "fetchOHLCV",
+      "branches": [
+        {
+          "provider_operation": "marketPrivateGetV2StocksSymbolBars",
+          "http_method": "GET",
+          "path": "v2/stocks/{symbol}/bars",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        },
+        {
+          "provider_operation": "marketPublicGetV1beta3CryptoLocBars",
+          "http_method": "GET",
+          "path": "v1beta3/crypto/{loc}/bars",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "loc",
+              "strategy": "literal",
+              "value": "us"
+            }
+          ],
+          "symbol": "BTC/USD"
+        },
+        {
+          "provider_operation": "marketPublicGetV1beta3CryptoLocLatestBars",
+          "http_method": "GET",
+          "path": "v1beta3/crypto/{loc}/latest/bars",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "loc",
+              "strategy": "literal",
+              "value": "us"
+            }
+          ],
+          "symbol": "BTC/USD"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        },
+        {
+          "name": "timeframe",
+          "strategy": "literal",
+          "value": "1h"
+        }
+      ],
+      "success": {
+        "representation": "positional_rows",
+        "collection": "list",
+        "minimum_length": 5,
+        "fields": [
+          {
+            "name": "timestamp",
+            "index": 0,
+            "type": "integer"
+          },
+          {
+            "name": "open",
+            "index": 1,
+            "type": "number"
+          },
+          {
+            "name": "high",
+            "index": 2,
+            "type": "number"
+          },
+          {
+            "name": "low",
+            "index": 3,
+            "type": "number"
+          },
+          {
+            "name": "close",
+            "index": 4,
+            "type": "number"
+          }
+        ],
+        "invariants": [
+          {
+            "operator": "gte",
+            "left": "high",
+            "right": "low"
+          },
+          {
+            "operator": "between",
+            "value": "open",
+            "minimum": "low",
+            "maximum": "high"
+          },
+          {
+            "operator": "between",
+            "value": "close",
+            "minimum": "low",
+            "maximum": "high"
+          }
+        ]
+      },
+      "authority_source_ids": [
+        "stock-bars-single",
+        "crypto-bars"
+      ]
+    },
+    {
+      "method": "fetchOpenOrders",
+      "branches": [
+        {
+          "provider_operation": "traderPrivateGetV2Orders",
+          "http_method": "GET",
+          "path": "v2/orders",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "trading-api-create-order"
+      ]
+    },
+    {
+      "method": "fetchOrder",
+      "branches": [
+        {
+          "provider_operation": "traderPrivateGetV2OrdersOrderId",
+          "http_method": "GET",
+          "path": "v2/orders/{order_id}",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "trading-api-create-order"
+      ]
+    },
+    {
+      "method": "fetchOrders",
+      "branches": [
+        {
+          "provider_operation": "traderPrivateGetV2Orders",
+          "http_method": "GET",
+          "path": "v2/orders",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "trading-api-create-order"
+      ]
+    },
+    {
+      "method": "fetchPositions",
+      "branches": [
+        {
+          "provider_operation": "traderPrivateGetV2Positions",
+          "http_method": "GET",
+          "path": "v2/positions",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Position",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "contracts",
+          "side",
+          "entryPrice"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "trading-api-create-order"
+      ]
+    },
+    {
+      "method": "fetchTicker",
+      "branches": [
+        {
+          "provider_operation": "marketPrivateGetV2StocksSymbolSnapshot",
+          "http_method": "GET",
+          "path": "v2/stocks/{symbol}/snapshot",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        },
+        {
+          "provider_operation": "marketPublicGetV1beta3CryptoLocSnapshots",
+          "http_method": "GET",
+          "path": "v1beta3/crypto/{loc}/snapshots",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "loc",
+              "strategy": "literal",
+              "value": "us"
+            }
+          ],
+          "symbol": "BTC/USD"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "crypto-snapshots",
+        "stock-bars-single"
+      ]
+    },
+    {
+      "method": "fetchTime",
+      "branches": [
+        {
+          "provider_operation": "traderPrivateGetV2Clock",
+          "http_method": "GET",
+          "path": "v2/clock",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "scalar",
+        "scalar": "integer",
+        "required_fields": [],
+        "any_fields": [],
+        "invariants": [
+          {
+            "operator": "recent_ms",
+            "tolerance_ms": 300000
+          }
+        ]
+      },
+      "authority_source_ids": [
+        "trading-api-create-order"
+      ]
+    },
+    {
+      "method": "fetchTrades",
+      "branches": [
+        {
+          "provider_operation": "marketPrivateGetV2StocksSymbolTrades",
+          "http_method": "GET",
+          "path": "v2/stocks/{symbol}/trades",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "trading-api-create-order"
+      ]
+    }
+  ],
+  "symbols": {
+    "spot": "GLD",
+    "linear": "GLD",
+    "inverse": "GLD",
+    "option": "GLD"
+  },
+  "currency": "USD",
+  "error_cases": [
+    {
+      "id": "alpaca:fetchTicker:error:invalid_symbol",
+      "kind": "error",
+      "method": "fetchTicker",
+      "provider_operation": "provider_invalid_symbol",
+      "authority_source_id": "trading-api-create-order",
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "literal",
+          "value": "ZZZZZZ"
+        }
+      ],
+      "options": [],
+      "expected_error": {
+        "type": "exchange_error",
+        "code": 404,
+        "message_contains": "no snapshot found"
+      },
+      "observed_at": "2026-08-23"
+    }
+  ],
+  "provider_operation_prefixes": [
+    "traderPrivate",
+    "marketPrivate",
+    "marketPublic"
+  ]
+}

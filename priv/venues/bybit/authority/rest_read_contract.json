@@ -1,0 +1,2989 @@
+{
+  "host_mode": "sandbox",
+  "authority_sources": [
+    {
+      "id": "v5-docs-source",
+      "kind": "official-docs-source-archive",
+      "source_url": "https://github.com/bybit-exchange/docs/tree/5ccd30109fe2eb5a39cf4d864365213658530f6c/docs/v5",
+      "sha256": "0b10a600d2b820bc88444594b0557a06d3e59973b217a7614873d7441c9e77ab",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "5ccd30109fe2eb5a39cf4d864365213658530f6c"
+      }
+    },
+    {
+      "id": "v5-postman",
+      "kind": "postman-collection",
+      "source_url": "https://github.com/bybit-exchange/QuickStartWithPostman/blob/cf5f580b8c6d9b36eb0ff6bbd4199edcf6c626c2/V5APIs/Open API V5.postman_collection.json",
+      "sha256": "c4f8b14e8002c3118b0973d50884d53677dc134d3548874d060efd23cc670c73",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "cf5f580b8c6d9b36eb0ff6bbd4199edcf6c626c2"
+      }
+    }
+  ],
+  "credentials": {
+    "exports": [
+      "BYBIT_TESTNET_API_KEY",
+      "BYBIT_TESTNET_API_SECRET"
+    ],
+    "url": "https://testnet.bybit.com"
+  },
+  "operations": [
+    {
+      "method": "fetchAllGreeks",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketTickers",
+          "http_method": "GET",
+          "path": "v5/market/tickers",
+          "authenticated": false,
+          "market_kind": "option",
+          "options": [
+            {
+              "name": "baseCoin",
+              "strategy": "literal",
+              "value": "BTC"
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Greeks",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "delta",
+          "gamma",
+          "theta",
+          "vega"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchBalance",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AccountInfo",
+          "http_method": "GET",
+          "path": "v5/account/info",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        },
+        {
+          "provider_operation": "privateGetV5AccountWalletBalance",
+          "http_method": "GET",
+          "path": "v5/account/wallet-balance",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        },
+        {
+          "provider_operation": "privateGetV5AssetTransferQueryAccountCoinsBalance",
+          "http_method": "GET",
+          "path": "v5/asset/transfer/query-account-coins-balance",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        },
+        {
+          "provider_operation": "privateGetV5SpotCrossMarginTradeAccount",
+          "http_method": "GET",
+          "path": "v5/spot-cross-margin-trade/account",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        },
+        {
+          "provider_operation": "privateGetV5UserQueryApi",
+          "http_method": "GET",
+          "path": "v5/user/query-api",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Balance",
+        "required_fields": [],
+        "any_fields": [
+          "free",
+          "used",
+          "total",
+          "debt"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchBidsAsks",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketTickers",
+          "http_method": "GET",
+          "path": "v5/market/tickers",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchBorrowRateHistory",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5SpotMarginTradeInterestRateHistory",
+          "http_method": "GET",
+          "path": "v5/spot-margin-trade/interest-rate-history",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "code",
+          "strategy": "venue_currency"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.BorrowRate",
+        "required_fields": [],
+        "any_fields": [
+          "currency",
+          "rate",
+          "period",
+          "timestamp"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchCanceledAndClosedOrders",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5OrderHistory",
+          "http_method": "GET",
+          "path": "v5/order/history",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchCanceledOrders",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5OrderHistory",
+          "http_method": "GET",
+          "path": "v5/order/history",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchClosedOrder",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5OrderHistory",
+          "http_method": "GET",
+          "path": "v5/order/history",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchClosedOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchClosedOrders",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5OrderHistory",
+          "http_method": "GET",
+          "path": "v5/order/history",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchConvertCurrencies",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AccountInfo",
+          "http_method": "GET",
+          "path": "v5/account/info",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        },
+        {
+          "provider_operation": "privateGetV5AssetExchangeQueryCoinList",
+          "http_method": "GET",
+          "path": "v5/asset/exchange/query-coin-list",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        },
+        {
+          "provider_operation": "privateGetV5UserQueryApi",
+          "http_method": "GET",
+          "path": "v5/user/query-api",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Currency",
+        "required_fields": [
+          "code"
+        ],
+        "any_fields": [
+          "name",
+          "network",
+          "precision"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchConvertQuote",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AccountInfo",
+          "http_method": "GET",
+          "path": "v5/account/info",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        },
+        {
+          "provider_operation": "privateGetV5UserQueryApi",
+          "http_method": "GET",
+          "path": "v5/user/query-api",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        },
+        {
+          "provider_operation": "privatePostV5AssetExchangeQuoteApply",
+          "http_method": "POST",
+          "path": "v5/asset/exchange/quote-apply",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "from_code",
+          "strategy": "literal",
+          "value": "USDC"
+        },
+        {
+          "name": "to_code",
+          "strategy": "literal",
+          "value": "BTC"
+        },
+        {
+          "name": "amount",
+          "strategy": "literal",
+          "value": 1
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Conversion",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "fromCurrency",
+          "toCurrency",
+          "amount"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchConvertTrade",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AccountInfo",
+          "http_method": "GET",
+          "path": "v5/account/info",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        },
+        {
+          "provider_operation": "privateGetV5AssetExchangeConvertResultQuery",
+          "http_method": "GET",
+          "path": "v5/asset/exchange/convert-result-query",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        },
+        {
+          "provider_operation": "privateGetV5UserQueryApi",
+          "http_method": "GET",
+          "path": "v5/user/query-api",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchConvertTradeHistory",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Conversion",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "fromCurrency",
+          "toCurrency",
+          "amount"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchConvertTradeHistory",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AssetExchangeQueryConvertHistory",
+          "http_method": "GET",
+          "path": "v5/asset/exchange/query-convert-history",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Conversion",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "fromCurrency",
+          "toCurrency",
+          "amount"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchCrossBorrowRate",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AccountCollateralInfo",
+          "http_method": "GET",
+          "path": "v5/account/collateral-info",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "code",
+          "strategy": "venue_currency"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.BorrowRate",
+        "required_fields": [
+          "currency"
+        ],
+        "any_fields": [
+          "rate",
+          "period",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchCurrencies",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AssetCoinQueryInfo",
+          "http_method": "GET",
+          "path": "v5/asset/coin/query-info",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.Currency",
+        "required_fields": [
+          "code"
+        ],
+        "any_fields": [
+          "name",
+          "network",
+          "precision"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchDepositAddress",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AssetDepositQueryAddress",
+          "http_method": "GET",
+          "path": "v5/asset/deposit/query-address",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "code",
+          "strategy": "venue_currency"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.DepositAddress",
+        "required_fields": [
+          "currency",
+          "address"
+        ],
+        "any_fields": [
+          "network",
+          "tag"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchDepositAddressesByNetwork",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AssetDepositQueryAddress",
+          "http_method": "GET",
+          "path": "v5/asset/deposit/query-address",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "code",
+          "strategy": "venue_currency"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.DepositAddress",
+        "required_fields": [
+          "currency",
+          "address"
+        ],
+        "any_fields": [
+          "network",
+          "tag"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchDepositWithdrawFees",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AssetCoinQueryInfo",
+          "http_method": "GET",
+          "path": "v5/asset/coin/query-info",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "raw",
+        "provider_meaning_keys": [
+          "deposit",
+          "withdraw",
+          "fees",
+          "fee",
+          "maker",
+          "taker",
+          "deposits"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchDeposits",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AssetDepositQueryRecord",
+          "http_method": "GET",
+          "path": "v5/asset/deposit/query-record",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Transaction",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "currency",
+          "amount",
+          "status",
+          "timestamp"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchDerivativesMarketLeverageTiers",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketRiskLimit",
+          "http_method": "GET",
+          "path": "v5/market/risk-limit",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.LeverageTier",
+        "required_fields": [
+          "symbol",
+          "tier"
+        ],
+        "any_fields": [
+          "maxLeverage",
+          "minNotional",
+          "maxNotional"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchDerivativesOpenInterestHistory",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketOpenInterest",
+          "http_method": "GET",
+          "path": "v5/market/open-interest",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.OpenInterest",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "openInterestValue",
+          "openInterestAmount",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchFundingHistory",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5ExecutionList",
+          "http_method": "GET",
+          "path": "v5/execution/list",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.FundingHistory",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "amount",
+          "timestamp",
+          "rate"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchFundingRateHistory",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketFundingHistory",
+          "http_method": "GET",
+          "path": "v5/market/funding/history",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.FundingRateHistory",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "funding_rate",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchFundingRates",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketTickers",
+          "http_method": "GET",
+          "path": "v5/market/tickers",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.FundingRate",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "fundingRate",
+          "nextFundingRate",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchFutureMarkets",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5MarketInstrumentsInfo",
+          "http_method": "GET",
+          "path": "v5/market/instruments-info",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        },
+        {
+          "provider_operation": "publicGetV5MarketInstrumentsInfo",
+          "http_method": "GET",
+          "path": "v5/market/instruments-info",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Market",
+        "required_fields": [
+          "symbol",
+          "id"
+        ],
+        "any_fields": [
+          "base",
+          "quote",
+          "type",
+          "active"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchGreeks",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketTickers",
+          "http_method": "GET",
+          "path": "v5/market/tickers",
+          "authenticated": false,
+          "market_kind": "option",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Greeks",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "delta",
+          "gamma",
+          "theta",
+          "vega"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchLedger",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AccountContractTransactionLog",
+          "http_method": "GET",
+          "path": "v5/account/contract-transaction-log",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        },
+        {
+          "provider_operation": "privateGetV5AccountInfo",
+          "http_method": "GET",
+          "path": "v5/account/info",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        },
+        {
+          "provider_operation": "privateGetV5AccountTransactionLog",
+          "http_method": "GET",
+          "path": "v5/account/transaction-log",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        },
+        {
+          "provider_operation": "privateGetV5UserQueryApi",
+          "http_method": "GET",
+          "path": "v5/user/query-api",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.LedgerEntry",
+        "required_fields": [
+          "id",
+          "currency"
+        ],
+        "any_fields": [
+          "amount",
+          "timestamp",
+          "type"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchLeverage",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5PositionList",
+          "http_method": "GET",
+          "path": "v5/position/list",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Leverage",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "long_leverage",
+          "short_leverage"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchLeverageTiers",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketRiskLimit",
+          "http_method": "GET",
+          "path": "v5/market/risk-limit",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.LeverageTier",
+        "required_fields": [
+          "symbol",
+          "tier"
+        ],
+        "any_fields": [
+          "maxLeverage",
+          "minNotional",
+          "maxNotional"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchLongShortRatioHistory",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketAccountRatio",
+          "http_method": "GET",
+          "path": "v5/market/account-ratio",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.LongShortRatio",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "ratio",
+          "longAccount",
+          "shortAccount",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchMarginMode",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AccountInfo",
+          "http_method": "GET",
+          "path": "v5/account/info",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.MarginMode",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "marginMode"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchMarketLeverageTiers",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketRiskLimit",
+          "http_method": "GET",
+          "path": "v5/market/risk-limit",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.LeverageTier",
+        "required_fields": [
+          "symbol",
+          "tier"
+        ],
+        "any_fields": [
+          "maxLeverage",
+          "minNotional",
+          "maxNotional"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchMarkets",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5MarketInstrumentsInfo",
+          "http_method": "GET",
+          "path": "v5/market/instruments-info",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        },
+        {
+          "provider_operation": "publicGetV5MarketInstrumentsInfo",
+          "http_method": "GET",
+          "path": "v5/market/instruments-info",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Market",
+        "required_fields": [
+          "symbol",
+          "id"
+        ],
+        "any_fields": [
+          "base",
+          "quote",
+          "type",
+          "active"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchMyLiquidations",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5ExecutionList",
+          "http_method": "GET",
+          "path": "v5/execution/list",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Liquidation",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchMySettlementHistory",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AssetDeliveryRecord",
+          "http_method": "GET",
+          "path": "v5/asset/delivery-record",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "raw",
+        "provider_meaning_keys": [
+          "my",
+          "settlement",
+          "history"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchMyTrades",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5ExecutionList",
+          "http_method": "GET",
+          "path": "v5/execution/list",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchOHLCV",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketIndexPriceKline",
+          "http_method": "GET",
+          "path": "v5/market/index-price-kline",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        },
+        {
+          "provider_operation": "publicGetV5MarketKline",
+          "http_method": "GET",
+          "path": "v5/market/kline",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        },
+        {
+          "provider_operation": "publicGetV5MarketMarkPriceKline",
+          "http_method": "GET",
+          "path": "v5/market/mark-price-kline",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        },
+        {
+          "provider_operation": "publicGetV5MarketPremiumIndexPriceKline",
+          "http_method": "GET",
+          "path": "v5/market/premium-index-price-kline",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        },
+        {
+          "name": "timeframe",
+          "strategy": "literal",
+          "value": "1h"
+        }
+      ],
+      "success": {
+        "representation": "positional_rows",
+        "collection": "list",
+        "minimum_length": 5,
+        "fields": [
+          {
+            "name": "timestamp",
+            "index": 0,
+            "type": "integer"
+          },
+          {
+            "name": "open",
+            "index": 1,
+            "type": "number"
+          },
+          {
+            "name": "high",
+            "index": 2,
+            "type": "number"
+          },
+          {
+            "name": "low",
+            "index": 3,
+            "type": "number"
+          },
+          {
+            "name": "close",
+            "index": 4,
+            "type": "number"
+          }
+        ],
+        "invariants": [
+          {
+            "operator": "gte",
+            "left": "high",
+            "right": "low"
+          },
+          {
+            "operator": "between",
+            "value": "open",
+            "minimum": "low",
+            "maximum": "high"
+          },
+          {
+            "operator": "between",
+            "value": "close",
+            "minimum": "low",
+            "maximum": "high"
+          }
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchOpenInterest",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketOpenInterest",
+          "http_method": "GET",
+          "path": "v5/market/open-interest",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.OpenInterest",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "open_interest_value",
+          "open_interest_amount",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchOpenInterestHistory",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketOpenInterest",
+          "http_method": "GET",
+          "path": "v5/market/open-interest",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.OpenInterest",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "open_interest_value",
+          "open_interest_amount",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchOpenOrder",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5OrderRealtime",
+          "http_method": "GET",
+          "path": "v5/order/realtime",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchClosedOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchOpenOrders",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5OrderRealtime",
+          "http_method": "GET",
+          "path": "v5/order/realtime",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchOption",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketTickers",
+          "http_method": "GET",
+          "path": "v5/market/tickers",
+          "authenticated": false,
+          "market_kind": "option",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.OptionData",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "impliedVolatility",
+          "openInterest",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchOptionChain",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketTickers",
+          "http_method": "GET",
+          "path": "v5/market/tickers",
+          "authenticated": false,
+          "market_kind": "option",
+          "options": [
+            {
+              "name": "baseCoin",
+              "strategy": "literal",
+              "value": "BTC"
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.OptionData",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "impliedVolatility",
+          "openInterest",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchOptionMarkets",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5MarketInstrumentsInfo",
+          "http_method": "GET",
+          "path": "v5/market/instruments-info",
+          "authenticated": true,
+          "market_kind": "option",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        },
+        {
+          "provider_operation": "publicGetV5MarketInstrumentsInfo",
+          "http_method": "GET",
+          "path": "v5/market/instruments-info",
+          "authenticated": false,
+          "market_kind": "option",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Market",
+        "required_fields": [
+          "symbol",
+          "id"
+        ],
+        "any_fields": [
+          "base",
+          "quote",
+          "type",
+          "active"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchOrder",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AccountInfo",
+          "http_method": "GET",
+          "path": "v5/account/info",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        },
+        {
+          "provider_operation": "privateGetV5OrderHistory",
+          "http_method": "GET",
+          "path": "v5/order/history",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        },
+        {
+          "provider_operation": "privateGetV5OrderRealtime",
+          "http_method": "GET",
+          "path": "v5/order/realtime",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        },
+        {
+          "provider_operation": "privateGetV5UserQueryApi",
+          "http_method": "GET",
+          "path": "v5/user/query-api",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchClosedOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchOrderBook",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketOrderbook",
+          "http_method": "GET",
+          "path": "v5/market/orderbook",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.OrderBook",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "bids",
+          "asks",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchOrderClassic",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AccountInfo",
+          "http_method": "GET",
+          "path": "v5/account/info",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        },
+        {
+          "provider_operation": "privateGetV5OrderHistory",
+          "http_method": "GET",
+          "path": "v5/order/history",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        },
+        {
+          "provider_operation": "privateGetV5UserQueryApi",
+          "http_method": "GET",
+          "path": "v5/user/query-api",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchClosedOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchOrderTrades",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5ExecutionList",
+          "http_method": "GET",
+          "path": "v5/execution/list",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchClosedOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchOrdersClassic",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5OrderHistory",
+          "http_method": "GET",
+          "path": "v5/order/history",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchPosition",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5PositionList",
+          "http_method": "GET",
+          "path": "v5/position/list",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "literal",
+              "value": "linear"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Position",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "contracts",
+          "side",
+          "entry_price"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchPositionADLRank",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5PositionList",
+          "http_method": "GET",
+          "path": "v5/position/list",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "literal",
+              "value": "linear"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.ADLRank",
+        "required_fields": [
+          "symbol",
+          "rank"
+        ],
+        "any_fields": [
+          "percentage",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchPositions",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5PositionList",
+          "http_method": "GET",
+          "path": "v5/position/list",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "literal",
+              "value": "linear"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Position",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "contracts",
+          "side",
+          "entryPrice"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchPositionsADLRank",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5PositionList",
+          "http_method": "GET",
+          "path": "v5/position/list",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "literal",
+              "value": "linear"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.ADLRank",
+        "required_fields": [
+          "symbol",
+          "rank"
+        ],
+        "any_fields": [
+          "percentage",
+          "timestamp"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchPositionsHistory",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5PositionClosedPnl",
+          "http_method": "GET",
+          "path": "v5/position/closed-pnl",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "literal",
+              "value": "linear"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Position",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "contracts",
+          "side",
+          "entryPrice"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchSettlementHistory",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketDeliveryPrice",
+          "http_method": "GET",
+          "path": "v5/market/delivery-price",
+          "authenticated": false,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "raw",
+        "provider_meaning_keys": [
+          "settlement",
+          "history"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchSpotMarkets",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5MarketInstrumentsInfo",
+          "http_method": "GET",
+          "path": "v5/market/instruments-info",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        },
+        {
+          "provider_operation": "publicGetV5MarketInstrumentsInfo",
+          "http_method": "GET",
+          "path": "v5/market/instruments-info",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Market",
+        "required_fields": [
+          "symbol",
+          "id"
+        ],
+        "any_fields": [
+          "base",
+          "quote",
+          "type",
+          "active"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchStatus",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5SystemStatus",
+          "http_method": "GET",
+          "path": "v5/system/status",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "raw",
+        "provider_meaning_keys": [
+          "status"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchTicker",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketTickers",
+          "http_method": "GET",
+          "path": "v5/market/tickers",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchTickers",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketTickers",
+          "http_method": "GET",
+          "path": "v5/market/tickers",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchTime",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketTime",
+          "http_method": "GET",
+          "path": "v5/market/time",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "scalar",
+        "scalar": "integer",
+        "required_fields": [],
+        "any_fields": [],
+        "invariants": [
+          {
+            "operator": "recent_ms",
+            "tolerance_ms": 300000
+          }
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchTrades",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketRecentTrade",
+          "http_method": "GET",
+          "path": "v5/market/recent-trade",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchTradingFee",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AccountFeeRate",
+          "http_method": "GET",
+          "path": "v5/account/fee-rate",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.TradingFee",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "maker",
+          "taker",
+          "percentage"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchTradingFees",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AccountFeeRate",
+          "http_method": "GET",
+          "path": "v5/account/fee-rate",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.TradingFee",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "maker",
+          "taker",
+          "percentage"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchTransfers",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AssetTransferQueryInterTransferList",
+          "http_method": "GET",
+          "path": "v5/asset/transfer/query-inter-transfer-list",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.TransferEntry",
+        "required_fields": [
+          "id",
+          "currency"
+        ],
+        "any_fields": [
+          "amount",
+          "status",
+          "timestamp"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchVolatilityHistory",
+      "branches": [
+        {
+          "provider_operation": "publicGetV5MarketHistoricalVolatility",
+          "http_method": "GET",
+          "path": "v5/market/historical-volatility",
+          "authenticated": false,
+          "market_kind": "option",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "baseCoin",
+              "strategy": "literal",
+              "value": "BTC"
+            },
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.VolatilityHistory",
+        "required_fields": [],
+        "any_fields": [
+          "volatility",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchWithdrawals",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5AssetWithdrawQueryRecord",
+          "http_method": "GET",
+          "path": "v5/asset/withdraw/query-record",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Transaction",
+        "required_fields": [
+          "id",
+          "currency"
+        ],
+        "any_fields": [
+          "amount",
+          "status",
+          "timestamp"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    }
+  ],
+  "symbols": {
+    "spot": "BTC/USDT",
+    "linear": "BTC/USDT:USDT",
+    "inverse": "BTC/USD:BTC",
+    "option": "BTC/USDT:USDT"
+  },
+  "currency": "BTC",
+  "error_cases": [
+    {
+      "id": "bybit:fetchTicker:error:invalid_symbol",
+      "kind": "error",
+      "method": "fetchTicker",
+      "provider_operation": "provider_invalid_symbol",
+      "authority_source_id": "v5-docs-source",
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "literal",
+          "value": "ZZZ/USDT"
+        }
+      ],
+      "options": [],
+      "expected_error": {
+        "type": "bad_request",
+        "code": 10001,
+        "message_contains": "Not supported symbols"
+      },
+      "observed_at": "2026-08-23"
+    }
+  ],
+  "provider_operation_prefixes": [
+    "public",
+    "private"
+  ]
+}

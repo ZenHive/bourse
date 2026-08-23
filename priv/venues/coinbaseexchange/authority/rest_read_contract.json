@@ -1,0 +1,181 @@
+{
+  "host_mode": "production_public",
+  "authority_sources": [
+    {
+      "id": "product-candles",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-candles",
+      "sha256": "821bc49d0f68b5a308f0b99ce1748d4049392568610d9d566b4595da094d28c6",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-08-11"
+      }
+    },
+    {
+      "id": "product-ticker",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-ticker",
+      "sha256": "102581cae9cd1c909fde0d4c04a17b7ae905344bc17cf6d874079a926bfd8acf",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-08-11"
+      }
+    }
+  ],
+  "credentials": {
+    "exports": [],
+    "url": "https://docs.cdp.coinbase.com/exchange"
+  },
+  "operations": [
+    {
+      "method": "fetchOHLCV",
+      "branches": [
+        {
+          "provider_operation": "publicGetProductsIdCandles",
+          "http_method": "GET",
+          "path": "products/{id}/candles",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        },
+        {
+          "name": "timeframe",
+          "strategy": "literal",
+          "value": "1h"
+        }
+      ],
+      "success": {
+        "representation": "positional_rows",
+        "collection": "list",
+        "minimum_length": 5,
+        "fields": [
+          {
+            "name": "timestamp",
+            "index": 0,
+            "type": "integer"
+          },
+          {
+            "name": "open",
+            "index": 1,
+            "type": "number"
+          },
+          {
+            "name": "high",
+            "index": 2,
+            "type": "number"
+          },
+          {
+            "name": "low",
+            "index": 3,
+            "type": "number"
+          },
+          {
+            "name": "close",
+            "index": 4,
+            "type": "number"
+          }
+        ],
+        "invariants": [
+          {
+            "operator": "gte",
+            "left": "high",
+            "right": "low"
+          },
+          {
+            "operator": "between",
+            "value": "open",
+            "minimum": "low",
+            "maximum": "high"
+          },
+          {
+            "operator": "between",
+            "value": "close",
+            "minimum": "low",
+            "maximum": "high"
+          }
+        ]
+      },
+      "authority_source_ids": [
+        "product-candles"
+      ]
+    },
+    {
+      "method": "fetchTicker",
+      "branches": [
+        {
+          "provider_operation": "publicGetProductsIdTicker",
+          "http_method": "GET",
+          "path": "products/{id}/ticker",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "product-ticker"
+      ]
+    }
+  ],
+  "symbols": {
+    "spot": "ETH/USD",
+    "linear": "ETH/USD",
+    "inverse": "ETH/USD",
+    "option": "ETH/USD"
+  },
+  "currency": "USD",
+  "error_cases": [
+    {
+      "id": "coinbaseexchange:fetchTicker:error:invalid_symbol",
+      "kind": "error",
+      "method": "fetchTicker",
+      "provider_operation": "provider_invalid_symbol",
+      "authority_source_id": "product-ticker",
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "literal",
+          "value": "ZZZ/USD"
+        }
+      ],
+      "options": [],
+      "expected_error": {
+        "type": "exchange_error",
+        "code": "NotFound",
+        "message_contains": "NotFound"
+      },
+      "observed_at": "2026-08-23"
+    }
+  ],
+  "provider_operation_prefixes": [
+    "public"
+  ]
+}

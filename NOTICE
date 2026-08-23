@@ -7,7 +7,7 @@ CCXT
 ----
 
 The authored venue specifications shipped under
-`priv/specs/json/output/authored/` were bootstrapped from the CCXT project and
+`priv/venues/<venue>/authored/` were bootstrapped from the CCXT project and
 retain descriptive text taken from it verbatim — method and return descriptions,
 including `{@link https://docs.ccxt.com/…}` references to CCXT's own
 documentation. Those portions are covered by the license below and are

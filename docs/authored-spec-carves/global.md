@@ -1,6 +1,6 @@
 # Cross-venue carve register
 
-Provider authority: [`priv/authority/global/manifest.json`](../../priv/authority/global/manifest.json).
+Provider authority: [`priv/venues/global/authority/manifest.json`](../../priv/venues/global/authority/manifest.json).
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 

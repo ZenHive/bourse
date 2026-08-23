@@ -3,8 +3,8 @@ defmodule Bourse.MixProject do
 
   @version "0.7.0"
   @source_url "https://github.com/ZenHive/bourse"
-  @runtime_manifest "priv/specs/json/runtime_support.json"
-  @capability_surface "priv/specs/json/capability_surface.json"
+  @runtime_manifest "priv/venues/runtime_support.json"
+  @capability_surface "priv/venues/capability_surface.json"
   @runtime_venues @runtime_manifest |> File.read!() |> :json.decode() |> Map.fetch!("venues")
 
   def project do
@@ -67,7 +67,7 @@ defmodule Bourse.MixProject do
   end
 
   # Repo-internal verification tooling: the WebSocket first-frame prober drives
-  # live venue sockets from the test lane and reads `priv/authority/**`, which is
+  # live venue sockets from the test lane and reads `priv/venues/*/authority/**`, which is
   # not packaged. Shipping it would drag this repo's `:dev`/`:test` toolchain
   # into a consumer's compile for a module they can never run. Every entry here
   # is reached solely from tests and from the `lib/mix/tasks` tooling that
@@ -107,14 +107,14 @@ defmodule Bourse.MixProject do
 
   defp package do
     runtime_specs =
-      Enum.map(@runtime_venues, &"priv/specs/json/output/authored/#{&1}.json")
+      Enum.map(@runtime_venues, &"priv/venues/#{&1}/authored/spec.json")
 
     [
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
       # `lib/mix/tasks` is repo-internal verification tooling: every task but the
       # Lighter build reads paths that are deliberately unpackaged
-      # (`priv/authority/**`, the roadmap and docs roots), so shipping them would
+      # (`priv/venues/*/authority/**`, the roadmap and docs roots), so shipping them would
       # put `mix help` entries in consumer projects that fail on a missing file.
       # `ccxt.build_lighter_signer` is the one consumer-facing task — README
       # documents it as the prerequisite for private Lighter calls.

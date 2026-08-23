@@ -3,7 +3,7 @@ defmodule Bourse.Test.Generator.RestReadContract do
   Generates only the repetitive ExUnit registration for REST-read contracts.
 
   Provider semantics, arguments, expected values, and branch judgments remain
-  data in `priv/authority/rest-read-contracts.json`; runtime assertions live in
+  data in `priv/venues/<venue>/authority/rest_read_contract.json`; runtime assertions live in
   `Bourse.Test.RestReadContractScenario`.
   """
 

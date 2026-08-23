@@ -1,6 +1,6 @@
 # Error maintenance adjudication (task 490)
 
-Adjudicated 2026-07-22. Provider-owned error enumerations under `priv/authority/<venue>/errors.json` are the authority; CCXT class names are the mapping target only.
+Adjudicated 2026-07-22. Provider-owned error enumerations under `priv/venues/<venue>/authority/errors.json` are the authority; CCXT class names are the mapping target only.
 
 Runtime note: `Bourse.Error.from_spec_class("OnMaintenance")` resolves to `:exchange_not_available` (retry class `:server_busy`). There is no separate `:on_maintenance` atom — the task's "on_maintenance" wording names the CCXT class / maintenance state.
 

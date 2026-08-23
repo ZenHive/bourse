@@ -17,7 +17,7 @@ defmodule Bourse.CurrencyActiveRollupTest do
 
   for exchange_id <- @first_class_venues do
     @external_resource Path.expand(
-                         "../../priv/specs/json/output/authored/#{exchange_id}.json",
+                         "../../priv/venues/#{exchange_id}/authored/spec.json",
                          __DIR__
                        )
   end

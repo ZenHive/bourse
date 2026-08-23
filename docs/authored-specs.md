@@ -14,7 +14,7 @@ Provenance for every external API claim, in this order:
 1. Live E2E against the real host.
 2. Understand one success and one relevant error from that interaction.
 3. Write a REST-read contract case that hits the same host and asserts those semantics,
-   inventoried in `priv/authority/rest-read-contracts.json`.
+   inventoried in `priv/venues/<venue>/authority/rest_read_contract.json`.
 
 There is no replay layer. Nothing stored in this repository may stand in for a venue —
 `test/bourse/no_faked_provider_oracle_test.exs` fails the suite on any `Req.Test`,
@@ -83,7 +83,7 @@ runs its own structural tests without fetching authoring inputs:
 
 - **Owned version.** Schema version `3` is ours, not distill's `4.13.0`. It changes only with a deliberate runtime-contract migration; extractor churn is not a version event.
 - **One complete runtime document.** Each first-class venue loads only
-  `priv/specs/json/output/authored/<venue>.json`. The frozen sibling
+  `priv/venues/<venue>/authored/spec.json`. The frozen sibling
   `output/<venue>.json` is reference input and cannot fill a runtime field. There is no
   runtime merge, inheritance, template, cross-venue reference or generated twin.
 - **Required sections.** The owned document declares identity (`exchange`), REST transport
@@ -161,7 +161,7 @@ public or authenticated success/error observations; without provider-owned seman
 or incomplete create/fetch/cancel evidence for a trading venue; on skipped or credential-less
 tests; without the carve and authority artifacts; on schema failures; or with any critical slot
 lacking a live success and a relevant live error against the venue's own host. Those calls are
-inventoried in `priv/authority/rest-read-contracts.json` and run by
+inventoried in `priv/venues/<venue>/authority/rest_read_contract.json` and run by
 `mix ccxt.verify_rest_read_contracts`, so the venue carries reality provenance whether or not a
 third-party reference for it exists. A written owned document is still not a supported venue:
 the named venue delivery must separately add it to `Bourse.Spec`, the registry, and the
@@ -274,7 +274,7 @@ what follows it. Write `Evidence sources:` and let the status block carry the ti
 
 The authoring order is real call → understand → inventory the branch → assert against the
 venue. Live calls discover the venue's current response and error shapes, and the same live
-calls grade the slice afterwards: `priv/authority/rest-read-contracts.json` names every
+calls grade the slice afterwards: `priv/venues/<venue>/authority/rest_read_contract.json` names every
 supported read operation and provider-defined semantic branch, and
 `mix ccxt.verify_rest_read_contracts` executes them against the venues' own hosts, reporting
 denominator, executed and failures. Drift is not something a periodic re-capture detects

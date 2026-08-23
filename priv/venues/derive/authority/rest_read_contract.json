@@ -1,0 +1,1031 @@
+{
+  "host_mode": "sandbox",
+  "authority_sources": [
+    {
+      "id": "liquidation-history",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.derive.xyz/reference/post_public-get-liquidation-history.md",
+      "sha256": "f22abc5f034d2dbad6e0ec3202e27372a15039cf76bd847ed035476728619087",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-08-10"
+      }
+    },
+    {
+      "id": "erc20-transfer-history",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.derive.xyz/reference/post_private-get-erc20-transfer-history.md",
+      "sha256": "1b6ca15ce4485a47f6a85354e230fa4b4888b25347bda08a1830c90dbc9d040d",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-08-10"
+      }
+    },
+    {
+      "id": "interest-history",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.derive.xyz/reference/post_private-get-interest-history.md",
+      "sha256": "fdcfa12ec45ecc0ed29f44c8d486fe1e461634b0ca702e8cb9832fe90ccc51be",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-08-10"
+      }
+    },
+    {
+      "id": "option-settlement-history",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.derive.xyz/reference/post_public-get-option-settlement-history.md",
+      "sha256": "5034d181522e292a2dbd6729cb646764af5eb3b46a246538118d665b9610fc16",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-08-10"
+      }
+    },
+    {
+      "id": "error-codes",
+      "kind": "official-errors-markdown",
+      "source_url": "https://docs.derive.xyz/reference/error-codes.md",
+      "sha256": "6bf4d73b421038b1e9d76ddda31d9401a3251516f0afebbfe4b311233b5d041d",
+      "upstream_pin": {
+        "type": "http_etag",
+        "value": "W/\"48d908492c3fde72b067df39a32ff43095073003:expanded|ced1e0b9\""
+      }
+    }
+  ],
+  "credentials": {
+    "exports": [
+      "DERIVE_TESTNET_API_KEY",
+      "DERIVE_TESTNET_API_SECRET"
+    ],
+    "url": "https://docs.derive.xyz"
+  },
+  "operations": [
+    {
+      "method": "fetchBalance",
+      "branches": [
+        {
+          "provider_operation": "privatePostGetAllPortfolios",
+          "http_method": "POST",
+          "path": "get_all_portfolios",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "subaccount_id",
+              "strategy": "literal",
+              "value": 144422
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Balance",
+        "required_fields": [],
+        "any_fields": [
+          "free",
+          "used",
+          "total",
+          "debt"
+        ]
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchCanceledOrders",
+      "branches": [
+        {
+          "provider_operation": "privatePostGetOrders",
+          "http_method": "POST",
+          "path": "get_orders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "subaccount_id",
+              "strategy": "literal",
+              "value": 144422
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchClosedOrders",
+      "branches": [
+        {
+          "provider_operation": "privatePostGetOrders",
+          "http_method": "POST",
+          "path": "get_orders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "subaccount_id",
+              "strategy": "literal",
+              "value": 144422
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchCurrencies",
+      "branches": [
+        {
+          "provider_operation": "publicGetGetAllCurrencies",
+          "http_method": "GET",
+          "path": "get_all_currencies",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.Currency",
+        "required_fields": [
+          "code"
+        ],
+        "any_fields": [
+          "name",
+          "network",
+          "precision"
+        ]
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchDeposits",
+      "branches": [
+        {
+          "provider_operation": "privatePostGetDepositHistory",
+          "http_method": "POST",
+          "path": "get_deposit_history",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "subaccount_id",
+              "strategy": "literal",
+              "value": 144422
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Transaction",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "currency",
+          "amount",
+          "status",
+          "timestamp"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchFundingHistory",
+      "branches": [
+        {
+          "provider_operation": "privatePostGetFundingHistory",
+          "http_method": "POST",
+          "path": "get_funding_history",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "subaccount_id",
+              "strategy": "literal",
+              "value": 144422
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.FundingHistory",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "amount",
+          "timestamp",
+          "rate"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchFundingRate",
+      "branches": [
+        {
+          "provider_operation": "publicPostGetFundingRateHistory",
+          "http_method": "POST",
+          "path": "get_funding_rate_history",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.FundingRate",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "fundingRate",
+          "nextFundingRate",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchFundingRateHistory",
+      "branches": [
+        {
+          "provider_operation": "publicPostGetFundingRateHistory",
+          "http_method": "POST",
+          "path": "get_funding_rate_history",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.FundingRateHistory",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "funding_rate",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchGreeks",
+      "branches": [
+        {
+          "provider_operation": "publicPostGetTicker",
+          "http_method": "POST",
+          "path": "get_ticker",
+          "authenticated": false,
+          "market_kind": "option",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Greeks",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "delta",
+          "gamma",
+          "theta",
+          "vega"
+        ]
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchMarkets",
+      "branches": [
+        {
+          "provider_operation": "publicPostGetAllInstruments",
+          "http_method": "POST",
+          "path": "get_all_instruments",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Market",
+        "required_fields": [
+          "symbol",
+          "id"
+        ],
+        "any_fields": [
+          "base",
+          "quote",
+          "type",
+          "active"
+        ]
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchMyTrades",
+      "branches": [
+        {
+          "provider_operation": "privatePostGetTradeHistory",
+          "http_method": "POST",
+          "path": "get_trade_history",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "subaccount_id",
+              "strategy": "literal",
+              "value": 144422
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchOpenOrders",
+      "branches": [
+        {
+          "provider_operation": "privatePostGetOrders",
+          "http_method": "POST",
+          "path": "get_orders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "subaccount_id",
+              "strategy": "literal",
+              "value": 144422
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchOptionMarkets",
+      "branches": [
+        {
+          "provider_operation": "publicPostGetAllInstruments",
+          "http_method": "POST",
+          "path": "get_all_instruments",
+          "authenticated": false,
+          "market_kind": "option",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Market",
+        "required_fields": [
+          "symbol",
+          "id"
+        ],
+        "any_fields": [
+          "base",
+          "quote",
+          "type",
+          "active"
+        ]
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchOrderTrades",
+      "branches": [
+        {
+          "provider_operation": "privatePostGetTradeHistory",
+          "http_method": "POST",
+          "path": "get_trade_history",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "subaccount_id",
+              "strategy": "literal",
+              "value": 144422
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchClosedOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchOrders",
+      "branches": [
+        {
+          "provider_operation": "privatePostGetOrders",
+          "http_method": "POST",
+          "path": "get_orders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "subaccount_id",
+              "strategy": "literal",
+              "value": 144422
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchPositions",
+      "branches": [
+        {
+          "provider_operation": "privatePostGetPositions",
+          "http_method": "POST",
+          "path": "get_positions",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "subaccount_id",
+              "strategy": "literal",
+              "value": 144422
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Position",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "contracts",
+          "side",
+          "entryPrice"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchSpotMarkets",
+      "branches": [
+        {
+          "provider_operation": "publicPostGetAllInstruments",
+          "http_method": "POST",
+          "path": "get_all_instruments",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Market",
+        "required_fields": [
+          "symbol",
+          "id"
+        ],
+        "any_fields": [
+          "base",
+          "quote",
+          "type",
+          "active"
+        ]
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchSwapMarkets",
+      "branches": [
+        {
+          "provider_operation": "publicPostGetAllInstruments",
+          "http_method": "POST",
+          "path": "get_all_instruments",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Market",
+        "required_fields": [
+          "symbol",
+          "id"
+        ],
+        "any_fields": [
+          "base",
+          "quote",
+          "type",
+          "active"
+        ]
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchTicker",
+      "branches": [
+        {
+          "provider_operation": "publicPostGetTicker",
+          "http_method": "POST",
+          "path": "get_ticker",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchTime",
+      "branches": [
+        {
+          "provider_operation": "publicPostGetTime",
+          "http_method": "POST",
+          "path": "get_time",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "scalar",
+        "scalar": "integer",
+        "required_fields": [],
+        "any_fields": [],
+        "invariants": [
+          {
+            "operator": "recent_ms",
+            "tolerance_ms": 300000
+          }
+        ]
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchTrades",
+      "branches": [
+        {
+          "provider_operation": "publicPostGetTradeHistory",
+          "http_method": "POST",
+          "path": "get_trade_history",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    },
+    {
+      "method": "fetchTransfers",
+      "branches": [
+        {
+          "provider_operation": "privatePostGetErc20TransferHistory",
+          "http_method": "POST",
+          "path": "get_erc20_transfer_history",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "subaccount_id",
+              "strategy": "literal",
+              "value": 144422
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.TransferEntry",
+        "required_fields": [
+          "id",
+          "currency"
+        ],
+        "any_fields": [
+          "amount",
+          "status",
+          "timestamp"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "erc20-transfer-history"
+      ]
+    },
+    {
+      "method": "fetchWithdrawals",
+      "branches": [
+        {
+          "provider_operation": "privatePostGetWithdrawalHistory",
+          "http_method": "POST",
+          "path": "get_withdrawal_history",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "subaccount_id",
+              "strategy": "literal",
+              "value": 144422
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Transaction",
+        "required_fields": [
+          "id",
+          "currency"
+        ],
+        "any_fields": [
+          "amount",
+          "status",
+          "timestamp"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "liquidation-history"
+      ]
+    }
+  ],
+  "symbols": {
+    "spot": "BTC/USD:USDC",
+    "linear": "BTC/USD:USDC",
+    "inverse": "BTC/USD:USDC",
+    "option": "BTC/USD:USDC"
+  },
+  "currency": "USDC",
+  "error_cases": [
+    {
+      "id": "derive:fetchTicker:error:invalid_symbol",
+      "kind": "error",
+      "method": "fetchTicker",
+      "provider_operation": "provider_invalid_symbol",
+      "authority_source_id": "error-codes",
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "literal",
+          "value": "ZZZ/USD:USDC"
+        }
+      ],
+      "options": [],
+      "expected_error": {
+        "type": "invalid_order",
+        "code": 12001,
+        "message_contains": "Instrument not found"
+      },
+      "observed_at": "2026-08-23"
+    }
+  ],
+  "provider_operation_prefixes": [
+    "public",
+    "private"
+  ]
+}

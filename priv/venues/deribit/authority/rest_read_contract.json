@@ -1,0 +1,1497 @@
+{
+  "host_mode": "sandbox",
+  "authority_sources": [
+    {
+      "id": "api-openapi",
+      "kind": "openapi-json",
+      "source_url": "https://docs.deribit.com/specifications/deribit_openapi.json",
+      "sha256": "8dfbbe9fdddfbf52e87973204cea5da59dc442812745752e99b615b3940c50ca",
+      "upstream_pin": {
+        "type": "document_version_http_etag",
+        "value": "2.1.1; W/\"DXTaA468CADkchO3\""
+      }
+    },
+    {
+      "id": "error-codes",
+      "kind": "official-errors-html",
+      "source_url": "https://docs.deribit.com/articles/errors",
+      "sha256": "09c5c24292623784c57f0715cf6806248dd0ab7956655719b26d7955ba8e1008",
+      "upstream_pin": {
+        "type": "http_last_modified",
+        "value": "Wed, 22 Jul 2026 04:22:13 GMT"
+      }
+    }
+  ],
+  "credentials": {
+    "exports": [
+      "DERIBIT_TESTNET_API_KEY",
+      "DERIBIT_TESTNET_API_SECRET"
+    ],
+    "url": "https://test.deribit.com"
+  },
+  "operations": [
+    {
+      "method": "fetchAccounts",
+      "branches": [
+        {
+          "provider_operation": "privateGetGetSubaccounts",
+          "http_method": "GET",
+          "path": "get_subaccounts",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Account",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "type",
+          "code"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchBalance",
+      "branches": [
+        {
+          "provider_operation": "privateGetGetAccountSummaries",
+          "http_method": "GET",
+          "path": "get_account_summaries",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": []
+        },
+        {
+          "provider_operation": "privateGetGetAccountSummary",
+          "http_method": "GET",
+          "path": "get_account_summary",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "currency",
+              "strategy": "venue_currency"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Balance",
+        "required_fields": [],
+        "any_fields": [
+          "free",
+          "used",
+          "total",
+          "debt"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchClosedOrders",
+      "branches": [
+        {
+          "provider_operation": "privateGetGetOrderHistoryByCurrency",
+          "http_method": "GET",
+          "path": "get_order_history_by_currency",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "currency",
+              "strategy": "venue_currency"
+            }
+          ]
+        },
+        {
+          "provider_operation": "privateGetGetOrderHistoryByInstrument",
+          "http_method": "GET",
+          "path": "get_order_history_by_instrument",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchCurrencies",
+      "branches": [
+        {
+          "provider_operation": "publicGetGetCurrencies",
+          "http_method": "GET",
+          "path": "get_currencies",
+          "authenticated": false,
+          "market_kind": "inverse",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.Currency",
+        "required_fields": [
+          "code"
+        ],
+        "any_fields": [
+          "name",
+          "network",
+          "precision"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchDepositAddress",
+      "branches": [
+        {
+          "provider_operation": "privateGetGetCurrentDepositAddress",
+          "http_method": "GET",
+          "path": "get_current_deposit_address",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "code",
+          "strategy": "venue_currency"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.DepositAddress",
+        "required_fields": [
+          "currency",
+          "address"
+        ],
+        "any_fields": [
+          "network",
+          "tag"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchDepositWithdrawFees",
+      "branches": [
+        {
+          "provider_operation": "publicGetGetCurrencies",
+          "http_method": "GET",
+          "path": "get_currencies",
+          "authenticated": false,
+          "market_kind": "inverse",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "raw",
+        "provider_meaning_keys": [
+          "deposit",
+          "withdraw",
+          "fees",
+          "fee",
+          "maker",
+          "taker",
+          "deposits"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchDeposits",
+      "branches": [
+        {
+          "provider_operation": "privateGetGetDeposits",
+          "http_method": "GET",
+          "path": "get_deposits",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "currency",
+              "strategy": "venue_currency"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Transaction",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "currency",
+          "amount",
+          "status",
+          "timestamp"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchFundingRate",
+      "branches": [
+        {
+          "provider_operation": "publicGetGetFundingRateValue",
+          "http_method": "GET",
+          "path": "get_funding_rate_value",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.FundingRate",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "fundingRate",
+          "nextFundingRate",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchFundingRateHistory",
+      "branches": [
+        {
+          "provider_operation": "publicGetGetFundingRateHistory",
+          "http_method": "GET",
+          "path": "get_funding_rate_history",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "start_timestamp",
+              "strategy": "literal",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.FundingRateHistory",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "funding_rate",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchGreeks",
+      "branches": [
+        {
+          "provider_operation": "publicGetTicker",
+          "http_method": "GET",
+          "path": "ticker",
+          "authenticated": false,
+          "market_kind": "option",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Greeks",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "delta",
+          "gamma",
+          "theta",
+          "vega"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchLiquidations",
+      "branches": [
+        {
+          "provider_operation": "publicGetGetLastTradesByInstrument",
+          "http_method": "GET",
+          "path": "get_last_trades_by_instrument",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Liquidation",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchMarkets",
+      "branches": [
+        {
+          "provider_operation": "publicGetGetInstruments",
+          "http_method": "GET",
+          "path": "get_instruments",
+          "authenticated": false,
+          "market_kind": "inverse",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Market",
+        "required_fields": [
+          "symbol",
+          "id"
+        ],
+        "any_fields": [
+          "base",
+          "quote",
+          "type",
+          "active"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchMyLiquidations",
+      "branches": [
+        {
+          "provider_operation": "privateGetGetSettlementHistoryByInstrument",
+          "http_method": "GET",
+          "path": "get_settlement_history_by_instrument",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Liquidation",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchMyTrades",
+      "branches": [
+        {
+          "provider_operation": "privateGetGetUserTradesByCurrency",
+          "http_method": "GET",
+          "path": "get_user_trades_by_currency",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "currency",
+              "strategy": "venue_currency"
+            }
+          ]
+        },
+        {
+          "provider_operation": "privateGetGetUserTradesByCurrencyAndTime",
+          "http_method": "GET",
+          "path": "get_user_trades_by_currency_and_time",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "currency",
+              "strategy": "venue_currency"
+            },
+            {
+              "name": "start_timestamp",
+              "strategy": "literal",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "provider_operation": "privateGetGetUserTradesByInstrument",
+          "http_method": "GET",
+          "path": "get_user_trades_by_instrument",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        },
+        {
+          "provider_operation": "privateGetGetUserTradesByInstrumentAndTime",
+          "http_method": "GET",
+          "path": "get_user_trades_by_instrument_and_time",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "start_timestamp",
+              "strategy": "literal",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchOHLCV",
+      "branches": [
+        {
+          "provider_operation": "publicGetGetTradingviewChartData",
+          "http_method": "GET",
+          "path": "get_tradingview_chart_data",
+          "authenticated": false,
+          "market_kind": "inverse",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        },
+        {
+          "name": "timeframe",
+          "strategy": "literal",
+          "value": "1h"
+        }
+      ],
+      "success": {
+        "representation": "positional_rows",
+        "collection": "list",
+        "minimum_length": 5,
+        "fields": [
+          {
+            "name": "timestamp",
+            "index": 0,
+            "type": "integer"
+          },
+          {
+            "name": "open",
+            "index": 1,
+            "type": "number"
+          },
+          {
+            "name": "high",
+            "index": 2,
+            "type": "number"
+          },
+          {
+            "name": "low",
+            "index": 3,
+            "type": "number"
+          },
+          {
+            "name": "close",
+            "index": 4,
+            "type": "number"
+          }
+        ],
+        "invariants": [
+          {
+            "operator": "gte",
+            "left": "high",
+            "right": "low"
+          },
+          {
+            "operator": "between",
+            "value": "open",
+            "minimum": "low",
+            "maximum": "high"
+          },
+          {
+            "operator": "between",
+            "value": "close",
+            "minimum": "low",
+            "maximum": "high"
+          }
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchOpenInterest",
+      "branches": [
+        {
+          "provider_operation": "publicGetGetBookSummaryByInstrument",
+          "http_method": "GET",
+          "path": "get_book_summary_by_instrument",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.OpenInterest",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "open_interest_value",
+          "open_interest_amount",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchOpenOrders",
+      "branches": [
+        {
+          "provider_operation": "privateGetGetOpenOrdersByCurrency",
+          "http_method": "GET",
+          "path": "get_open_orders_by_currency",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "currency",
+              "strategy": "venue_currency"
+            }
+          ]
+        },
+        {
+          "provider_operation": "privateGetGetOpenOrdersByInstrument",
+          "http_method": "GET",
+          "path": "get_open_orders_by_instrument",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchOption",
+      "branches": [
+        {
+          "provider_operation": "publicGetGetBookSummaryByInstrument",
+          "http_method": "GET",
+          "path": "get_book_summary_by_instrument",
+          "authenticated": false,
+          "market_kind": "option",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.OptionData",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "impliedVolatility",
+          "openInterest",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchOptionChain",
+      "branches": [
+        {
+          "provider_operation": "publicGetGetBookSummaryByCurrency",
+          "http_method": "GET",
+          "path": "get_book_summary_by_currency",
+          "authenticated": false,
+          "market_kind": "option",
+          "options": [
+            {
+              "name": "code",
+              "strategy": "venue_currency"
+            },
+            {
+              "name": "currency",
+              "strategy": "venue_currency"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.OptionData",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "impliedVolatility",
+          "openInterest",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchOrder",
+      "branches": [
+        {
+          "provider_operation": "privateGetGetOrderState",
+          "http_method": "GET",
+          "path": "get_order_state",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchClosedOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchOrderBook",
+      "branches": [
+        {
+          "provider_operation": "publicGetGetOrderBook",
+          "http_method": "GET",
+          "path": "get_order_book",
+          "authenticated": false,
+          "market_kind": "inverse",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.OrderBook",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "bids",
+          "asks",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchOrderTrades",
+      "branches": [
+        {
+          "provider_operation": "privateGetGetUserTradesByOrder",
+          "http_method": "GET",
+          "path": "get_user_trades_by_order",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchClosedOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchPosition",
+      "branches": [
+        {
+          "provider_operation": "privateGetGetPosition",
+          "http_method": "GET",
+          "path": "get_position",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Position",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "contracts",
+          "side",
+          "entry_price"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchPositions",
+      "branches": [
+        {
+          "provider_operation": "privateGetGetPositions",
+          "http_method": "GET",
+          "path": "get_positions",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Position",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "contracts",
+          "side",
+          "entryPrice"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchStatus",
+      "branches": [
+        {
+          "provider_operation": "publicGetStatus",
+          "http_method": "GET",
+          "path": "status",
+          "authenticated": false,
+          "market_kind": "inverse",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "raw",
+        "provider_meaning_keys": [
+          "status"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchTicker",
+      "branches": [
+        {
+          "provider_operation": "publicGetTicker",
+          "http_method": "GET",
+          "path": "ticker",
+          "authenticated": false,
+          "market_kind": "inverse",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchTickers",
+      "branches": [
+        {
+          "provider_operation": "publicGetGetBookSummaryByCurrency",
+          "http_method": "GET",
+          "path": "get_book_summary_by_currency",
+          "authenticated": false,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "code",
+              "strategy": "venue_currency"
+            },
+            {
+              "name": "currency",
+              "strategy": "venue_currency"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchTime",
+      "branches": [
+        {
+          "provider_operation": "publicGetGetTime",
+          "http_method": "GET",
+          "path": "get_time",
+          "authenticated": false,
+          "market_kind": "inverse",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "scalar",
+        "scalar": "integer",
+        "required_fields": [],
+        "any_fields": [],
+        "invariants": [
+          {
+            "operator": "recent_ms",
+            "tolerance_ms": 300000
+          }
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchTrades",
+      "branches": [
+        {
+          "provider_operation": "publicGetGetLastTradesByInstrument",
+          "http_method": "GET",
+          "path": "get_last_trades_by_instrument",
+          "authenticated": false,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        },
+        {
+          "provider_operation": "publicGetGetLastTradesByInstrumentAndTime",
+          "http_method": "GET",
+          "path": "get_last_trades_by_instrument_and_time",
+          "authenticated": false,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "start_timestamp",
+              "strategy": "literal",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchTradingFees",
+      "branches": [
+        {
+          "provider_operation": "privateGetGetAccountSummary",
+          "http_method": "GET",
+          "path": "get_account_summary",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "currency",
+              "strategy": "venue_currency"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.TradingFee",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "maker",
+          "taker",
+          "percentage"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchTransfers",
+      "branches": [
+        {
+          "provider_operation": "privateGetGetTransfers",
+          "http_method": "GET",
+          "path": "get_transfers",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "currency",
+              "strategy": "venue_currency"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.TransferEntry",
+        "required_fields": [
+          "id",
+          "currency"
+        ],
+        "any_fields": [
+          "amount",
+          "status",
+          "timestamp"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchVolatilityHistory",
+      "branches": [
+        {
+          "provider_operation": "publicGetGetHistoricalVolatility",
+          "http_method": "GET",
+          "path": "get_historical_volatility",
+          "authenticated": false,
+          "market_kind": "option",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "code",
+              "strategy": "venue_currency"
+            },
+            {
+              "name": "currency",
+              "strategy": "venue_currency"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.VolatilityHistory",
+        "required_fields": [],
+        "any_fields": [
+          "volatility",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    },
+    {
+      "method": "fetchWithdrawals",
+      "branches": [
+        {
+          "provider_operation": "privateGetGetWithdrawals",
+          "http_method": "GET",
+          "path": "get_withdrawals",
+          "authenticated": true,
+          "market_kind": "inverse",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "currency",
+              "strategy": "venue_currency"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Transaction",
+        "required_fields": [
+          "id",
+          "currency"
+        ],
+        "any_fields": [
+          "amount",
+          "status",
+          "timestamp"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "api-openapi"
+      ]
+    }
+  ],
+  "symbols": {
+    "spot": "BTC/USD:BTC",
+    "linear": "BTC/USD:BTC",
+    "inverse": "BTC/USD:BTC",
+    "option": "BTC/USD:BTC"
+  },
+  "currency": "BTC",
+  "error_cases": [
+    {
+      "id": "deribit:fetchTicker:error:invalid_symbol",
+      "kind": "error",
+      "method": "fetchTicker",
+      "provider_operation": "provider_invalid_symbol",
+      "authority_source_id": "error-codes",
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "literal",
+          "value": "ZZZ/USD:BTC"
+        }
+      ],
+      "options": [],
+      "expected_error": {
+        "type": "bad_request",
+        "code": -32602,
+        "message_contains": "instrument not found"
+      },
+      "observed_at": "2026-08-23"
+    }
+  ],
+  "provider_operation_prefixes": [
+    "public",
+    "private"
+  ]
+}

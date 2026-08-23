@@ -205,7 +205,7 @@ package; only `mix ccxt.build_lighter_signer` ships to consumers.
 
 For a supported venue, author the owned spec or normalization slice against the
 provider's API behavior and provider-owned documentation, then add the branch it
-covers to `priv/authority/rest-read-contracts.json` and keep
+covers to `priv/venues/<venue>/authority/rest_read_contract.json` and keep
 `mix ccxt.verify_rest_read_contracts` green — that lane calls the venue's own
 host, so a claim is graded by the provider, not by a stored response. CCXT and
 ccxt-distill are a pinned third-party extraction; they do not establish venue

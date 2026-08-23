@@ -1,0 +1,1007 @@
+{
+  "host_mode": "sandbox",
+  "authority_sources": [
+    {
+      "id": "spot-openapi",
+      "kind": "openapi-yaml",
+      "source_url": "https://github.com/binance/binance-api-swagger/blob/64b327c0addadd191ca0dca8e6b4cebd8a97c05c/spot_api.yaml",
+      "sha256": "0dd2f133e12dac2510cf5db1a4eb5de6e3c30c86b24c08867322030939df5e1c",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "64b327c0addadd191ca0dca8e6b4cebd8a97c05c"
+      }
+    },
+    {
+      "id": "spot-errors",
+      "kind": "official-errors-markdown",
+      "source_url": "https://github.com/binance/binance-spot-api-docs/blob/a5e0bc3ddc0fd7e6bb696849323b74423fa3a54d/errors.md",
+      "sha256": "6ab135ccdce95701394746c59e58327c8093c462706e5febc73f4500e0a679d8",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "a5e0bc3ddc0fd7e6bb696849323b74423fa3a54d"
+      }
+    },
+    {
+      "id": "spot-docs-source",
+      "kind": "official-docs-source-archive",
+      "source_url": "https://github.com/binance/binance-spot-api-docs/tree/b483413fcdf4da783cd3fcaad6fab7200a93297f",
+      "sha256": "55d5612cd8f45b08c133433cfea7a9b39fc21daa12260946a88d3bcecb8b6a64",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "b483413fcdf4da783cd3fcaad6fab7200a93297f"
+      }
+    },
+    {
+      "id": "spot-postman",
+      "kind": "postman-collection",
+      "source_url": "https://github.com/binance/binance-api-postman/blob/da581021c528c044c08c6dc204ec9de406224337/collections/Binance Spot API.json",
+      "sha256": "e6fe3bbc932e852d329fe9b6e4667222d4b68013be69a902ecc88bd998f29cc3",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "da581021c528c044c08c6dc204ec9de406224337"
+      }
+    }
+  ],
+  "credentials": {
+    "exports": [
+      "BINANCE_TESTNET_API_KEY",
+      "BINANCE_TESTNET_API_SECRET"
+    ],
+    "url": "https://testnet.binance.vision"
+  },
+  "operations": [
+    {
+      "method": "fetchBalance",
+      "branches": [
+        {
+          "provider_operation": "privateGetAccount",
+          "http_method": "GET",
+          "path": "account",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Balance",
+        "required_fields": [],
+        "any_fields": [
+          "free",
+          "used",
+          "total",
+          "debt"
+        ]
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchBidsAsks",
+      "branches": [
+        {
+          "provider_operation": "publicGetTickerBookTicker",
+          "http_method": "GET",
+          "path": "ticker/bookTicker",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchCanceledAndClosedOrders",
+      "branches": [
+        {
+          "provider_operation": "privateGetAllOrders",
+          "http_method": "GET",
+          "path": "allOrders",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchCanceledOrders",
+      "branches": [
+        {
+          "provider_operation": "privateGetAllOrders",
+          "http_method": "GET",
+          "path": "allOrders",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchClosedOrders",
+      "branches": [
+        {
+          "provider_operation": "privateGetAllOrders",
+          "http_method": "GET",
+          "path": "allOrders",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchLastPrices",
+      "branches": [
+        {
+          "provider_operation": "publicGetTickerPrice",
+          "http_method": "GET",
+          "path": "ticker/price",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.LastPrice",
+        "required_fields": [],
+        "any_fields": [
+          "id",
+          "symbol",
+          "timestamp",
+          "code"
+        ]
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchMarkets",
+      "branches": [
+        {
+          "provider_operation": "publicGetExchangeInfo",
+          "http_method": "GET",
+          "path": "exchangeInfo",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Market",
+        "required_fields": [
+          "symbol",
+          "id"
+        ],
+        "any_fields": [
+          "base",
+          "quote",
+          "type",
+          "active"
+        ]
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchMyTrades",
+      "branches": [
+        {
+          "provider_operation": "privateGetMyTrades",
+          "http_method": "GET",
+          "path": "myTrades",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchOHLCV",
+      "branches": [
+        {
+          "provider_operation": "publicGetKlines",
+          "http_method": "GET",
+          "path": "klines",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        },
+        {
+          "name": "timeframe",
+          "strategy": "literal",
+          "value": "1h"
+        }
+      ],
+      "success": {
+        "representation": "positional_rows",
+        "collection": "list",
+        "minimum_length": 5,
+        "fields": [
+          {
+            "name": "timestamp",
+            "index": 0,
+            "type": "integer"
+          },
+          {
+            "name": "open",
+            "index": 1,
+            "type": "number"
+          },
+          {
+            "name": "high",
+            "index": 2,
+            "type": "number"
+          },
+          {
+            "name": "low",
+            "index": 3,
+            "type": "number"
+          },
+          {
+            "name": "close",
+            "index": 4,
+            "type": "number"
+          }
+        ],
+        "invariants": [
+          {
+            "operator": "gte",
+            "left": "high",
+            "right": "low"
+          },
+          {
+            "operator": "between",
+            "value": "open",
+            "minimum": "low",
+            "maximum": "high"
+          },
+          {
+            "operator": "between",
+            "value": "close",
+            "minimum": "low",
+            "maximum": "high"
+          }
+        ]
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchOpenOrder",
+      "branches": [
+        {
+          "provider_operation": "privateGetOrder",
+          "http_method": "GET",
+          "path": "order",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchOpenOrderLists",
+      "branches": [
+        {
+          "provider_operation": "privateGetOpenOrderList",
+          "http_method": "GET",
+          "path": "openOrderList",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.OrderList",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchOpenOrders",
+      "branches": [
+        {
+          "provider_operation": "privateGetOpenOrders",
+          "http_method": "GET",
+          "path": "openOrders",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchOrder",
+      "branches": [
+        {
+          "provider_operation": "privateGetOrder",
+          "http_method": "GET",
+          "path": "order",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchOrderBook",
+      "branches": [
+        {
+          "provider_operation": "publicGetDepth",
+          "http_method": "GET",
+          "path": "depth",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.OrderBook",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "bids",
+          "asks",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchOrderList",
+      "branches": [
+        {
+          "provider_operation": "privateGetOrderList",
+          "http_method": "GET",
+          "path": "orderList",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchOrderLists",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.OrderList",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status"
+        ]
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchOrderLists",
+      "branches": [
+        {
+          "provider_operation": "privateGetAllOrderList",
+          "http_method": "GET",
+          "path": "allOrderList",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.OrderList",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchOrderTrades",
+      "branches": [
+        {
+          "provider_operation": "privateGetMyTrades",
+          "http_method": "GET",
+          "path": "myTrades",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchOrders",
+      "branches": [
+        {
+          "provider_operation": "privateGetAllOrders",
+          "http_method": "GET",
+          "path": "allOrders",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchTicker",
+      "branches": [
+        {
+          "provider_operation": "publicGetTicker",
+          "http_method": "GET",
+          "path": "ticker",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        },
+        {
+          "provider_operation": "publicGetTicker24hr",
+          "http_method": "GET",
+          "path": "ticker/24hr",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchTickers",
+      "branches": [
+        {
+          "provider_operation": "publicGetTicker",
+          "http_method": "GET",
+          "path": "ticker",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            }
+          ]
+        },
+        {
+          "provider_operation": "publicGetTicker24hr",
+          "http_method": "GET",
+          "path": "ticker/24hr",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchTime",
+      "branches": [
+        {
+          "provider_operation": "publicGetTime",
+          "http_method": "GET",
+          "path": "time",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "scalar",
+        "scalar": "integer",
+        "required_fields": [],
+        "any_fields": [],
+        "invariants": [
+          {
+            "operator": "recent_ms",
+            "tolerance_ms": 300000
+          }
+        ]
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchTrades",
+      "branches": [
+        {
+          "provider_operation": "publicGetAggTrades",
+          "http_method": "GET",
+          "path": "aggTrades",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    },
+    {
+      "method": "fetchTradingLimits",
+      "branches": [
+        {
+          "provider_operation": "publicGetExchangeInfo",
+          "http_method": "GET",
+          "path": "exchangeInfo",
+          "authenticated": false,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "nested_map",
+        "provider_meaning_keys": [
+          "min",
+          "max",
+          "assets",
+          "symbols",
+          "trading"
+        ]
+      },
+      "authority_source_ids": [
+        "spot-openapi"
+      ]
+    }
+  ],
+  "symbols": {
+    "spot": "BTC/USDT",
+    "linear": "BTC/USDT:USDT",
+    "inverse": "BTC/USD:BTC",
+    "option": "BTC/USDT:USDT"
+  },
+  "currency": "USDT",
+  "error_cases": [
+    {
+      "id": "binance:fetchTicker:error:invalid_symbol",
+      "kind": "error",
+      "method": "fetchTicker",
+      "provider_operation": "provider_invalid_symbol",
+      "authority_source_id": "spot-errors",
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "literal",
+          "value": "ZZZ/USDT"
+        }
+      ],
+      "options": [],
+      "expected_error": {
+        "type": "bad_symbol",
+        "code": -1121,
+        "message_contains": "Invalid symbol"
+      },
+      "observed_at": "2026-08-23"
+    }
+  ],
+  "provider_operation_prefixes": [
+    "public",
+    "private"
+  ]
+}

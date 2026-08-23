@@ -10,8 +10,8 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
   alias Mix.Tasks.Ccxt.AuthorityCorpus
   alias Mix.Tasks.Ccxt.ContractSource
 
-  @authority_root "priv/authority"
-  @spec_root "priv/specs/json/output/authored"
+  @authority_root "priv/venues"
+  @spec_root "priv/venues"
   @digest_dir "surface-digests"
   @key_set_fields ~w(channel_keys path_keys operation_keys)
   @surfaces ~w(current_rest upcoming_rest current_websocket upcoming_websocket)
@@ -46,7 +46,7 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
     |> AuthorityCorpus.load!()
     |> Enum.filter(&(is_nil(venue_filter) or &1["venue"] == venue_filter))
     |> Enum.map(fn manifest ->
-      authored = Bourse.JsonDocument.decode_file!(Path.join(spec_root, "#{manifest["venue"]}.json"))
+      authored = Bourse.JsonDocument.decode_file!(Path.join([spec_root, manifest["venue"], "authored", "spec.json"]))
       venue_facts = Enum.filter(facts, &(&1["venue"] == manifest["venue"]))
       report = compare_venue!(manifest, authored, artifact_root, venue_facts)
       validate_committed_baseline!(report, authority_root)
@@ -69,7 +69,7 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
   @doc "Returns the committed surface-digest path for one authority artifact."
   @spec surface_digest_path(Path.t(), String.t(), String.t()) :: Path.t()
   def surface_digest_path(authority_root, venue, artifact_id) do
-    Path.join([authority_root, venue, @digest_dir, "#{artifact_id}.json"])
+    Path.join([authority_root, venue, "authority", @digest_dir, "#{artifact_id}.json"])
   end
 
   @doc "Loads a retained surface digest, or `nil` when the artifact has none."
@@ -182,7 +182,7 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
   @doc "Validates a report against any committed source-revision baseline."
   @spec validate_committed_baseline!(report(), Path.t()) :: :ok
   def validate_committed_baseline!(report, authority_root \\ @authority_root) do
-    path = Path.join([authority_root, report["venue"], "contract-baselines.json"])
+    path = Path.join([authority_root, report["venue"], "authority", "contract-baselines.json"])
 
     if File.exists?(path) do
       baseline = Bourse.JsonDocument.decode_file!(path)

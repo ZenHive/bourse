@@ -22,14 +22,14 @@ defmodule Bourse.Spec do
   extractor versions and provenance metadata are not part of that contract.
 
   Every supported venue loads one complete hand-owned document from
-  `priv/specs/json/output/authored/`. Meaningful `null` and empty values are
+  `priv/venues/<venue>/authored/spec.json`. Meaningful `null` and empty values are
   preserved byte-for-byte from that document.
   """
 
   alias Bourse.JsonDocument
   alias Bourse.Spec.Schema
 
-  @spec_root "priv/specs/json"
+  @spec_root "priv/venues"
   @schema_version Schema.version()
 
   # Only lowercase alphanumeric and underscore — rejects path traversal ("../mix")
@@ -160,7 +160,7 @@ defmodule Bourse.Spec do
   ## Examples
 
       Bourse.Spec.spec_path("bybit")
-      #=> "/path/to/priv/specs/json/output/authored/bybit.json"
+      #=> "/path/to/priv/venues/bybit/authored/spec.json"
 
   """
   @spec spec_path(String.t()) :: String.t()
@@ -179,7 +179,7 @@ defmodule Bourse.Spec do
     validate_id!(exchange_id)
 
     if supported?(exchange_id) do
-      Path.join([spec_root(), "output", "authored", "#{exchange_id}.json"])
+      Path.join([spec_root(), exchange_id, "authored", "spec.json"])
     end
   end
 
@@ -189,7 +189,7 @@ defmodule Bourse.Spec do
   ## Examples
 
       Bourse.Spec.manifest_path()
-      #=> "/path/to/priv/specs/json/runtime_support.json"
+      #=> "/path/to/priv/venues/runtime_support.json"
 
   """
   @spec manifest_path() :: String.t()
@@ -234,7 +234,7 @@ defmodule Bourse.Spec do
   defp spec_root do
     case :code.priv_dir(:bourse) do
       {:error, :bad_name} -> @spec_root
-      priv_dir -> Path.join(to_string(priv_dir), "specs/json")
+      priv_dir -> Path.join(to_string(priv_dir), "venues")
     end
   end
 

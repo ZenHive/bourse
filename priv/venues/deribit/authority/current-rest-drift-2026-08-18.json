@@ -16,7 +16,7 @@
     "operation_key_set_sha256": "unavailable_reference_only_bytes_no_longer_fetchable"
   },
   "intermediate_observation": {
-    "record": "priv/authority/deribit/current-rest-drift-2026-08-14.json",
+    "record": "priv/venues/deribit/authority/current-rest-drift-2026-08-14.json",
     "retrieved_at": "2026-08-14",
     "sha256": "2ac2867b1f25544dd189244b17c230e2dea6bff0fc0e1c8c26e2003af06f9c55",
     "bytes": 1391568,
@@ -86,8 +86,8 @@
     "reason": "The provider rewrote the current document twice on 2026-08-18 while info.version remained 2.1.1. Declared version alone cannot identify the reviewed bytes, so SHA-256 remains the integrity key and the composite upstream pin records both the declared version and HTTP ETag."
   },
   "continuity": {
-    "prior_refresh_report": "priv/authority/deribit/current-rest-drift-2026-08-10.json",
-    "drift_observation": "priv/authority/deribit/current-rest-drift-2026-08-14.json",
+    "prior_refresh_report": "priv/venues/deribit/authority/current-rest-drift-2026-08-10.json",
+    "drift_observation": "priv/venues/deribit/authority/current-rest-drift-2026-08-14.json",
     "historical_regression_sha256": "70ba4617642d18aaff2bbcb7127bec499c4ef3ba34b6f5b12cb9cbdadbcffd2d"
   },
   "decision": "refresh_pin_and_rebind_corpus",

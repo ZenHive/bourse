@@ -5,8 +5,8 @@ defmodule Mix.Tasks.Ccxt.ErrorAuthorityTest do
   alias Mix.Tasks.Ccxt.ErrorAuthority
   alias Mix.Tasks.Ccxt.ErrorAuthorityCorpus
 
-  @authority_root "priv/authority"
-  @spec_root "priv/specs/json/output"
+  @authority_root "priv/venues"
+  @spec_root "priv/venues"
 
   test "every authored exact mapping is present in its venue's pinned enumeration" do
     reports = ErrorAuthorityCorpus.validate!()
@@ -34,7 +34,7 @@ defmodule Mix.Tasks.Ccxt.ErrorAuthorityTest do
 
   test "an unknown authored code fails with the venue and code" do
     spec_root = copy_specs()
-    path = Path.join([spec_root, "authored", "binance.json"])
+    path = Path.join([spec_root, "binance", "authored", "spec.json"])
     spec = path |> File.read!() |> Jason.decode!()
 
     spec =
@@ -51,7 +51,7 @@ defmodule Mix.Tasks.Ccxt.ErrorAuthorityTest do
 
   test "complete owned specs do not inherit reference-only error mappings" do
     reports = Map.new(ErrorAuthorityCorpus.validate!(), &{&1.venue, &1})
-    owned = @spec_root |> Path.join("authored/binancecoinm.json") |> File.read!() |> Jason.decode!()
+    owned = [@spec_root, "binancecoinm", "authored", "spec.json"] |> Path.join() |> File.read!() |> Jason.decode!()
     exact = get_in(owned, ["errors", "handle_errors", "exceptions", "exact"])
 
     assert reports["binancecoinm"].mapped_count == map_size(exact)
@@ -87,7 +87,7 @@ defmodule Mix.Tasks.Ccxt.ErrorAuthorityTest do
       assert venue in AuthorityCorpus.venues()
       assert is_binary(reason) and String.length(reason) > 40
 
-      refute File.exists?(Path.join([@authority_root, venue, "errors.json"])),
+      refute File.exists?(Path.join([@authority_root, venue, "authority", "errors.json"])),
              "#{venue} is exempt but ships an enumeration corpus — remove the exemption instead"
 
       for {code, _class} <- exempt_exact_mappings(venue) do
@@ -97,13 +97,13 @@ defmodule Mix.Tasks.Ccxt.ErrorAuthorityTest do
     end
 
     for venue <- AuthorityCorpus.error_enumeration_venues() do
-      assert File.exists?(Path.join([@authority_root, venue, "errors.json"])),
+      assert File.exists?(Path.join([@authority_root, venue, "authority", "errors.json"])),
              "#{venue} is graded against an enumeration but ships no corpus"
     end
   end
 
   defp exempt_exact_mappings(venue) do
-    [@spec_root, "authored", "#{venue}.json"]
+    [@spec_root, venue, "authored", "spec.json"]
     |> Path.join()
     |> File.read!()
     |> Jason.decode!()
@@ -135,15 +135,14 @@ defmodule Mix.Tasks.Ccxt.ErrorAuthorityTest do
 
   defp copy_specs do
     root = Path.join(System.tmp_dir!(), "error-authority-specs-#{System.unique_integer([:positive])}")
-    File.mkdir_p!(Path.join(root, "authored"))
     on_exit(fn -> File.rm_rf(root) end)
 
     for venue <- AuthorityCorpus.venues() do
-      File.cp!(Path.join(@spec_root, "#{venue}.json"), Path.join(root, "#{venue}.json"))
+      File.mkdir_p!(Path.join([root, venue, "authored"]))
 
       File.cp!(
-        Path.join([@spec_root, "authored", "#{venue}.json"]),
-        Path.join([root, "authored", "#{venue}.json"])
+        Path.join([@spec_root, venue, "authored", "spec.json"]),
+        Path.join([root, venue, "authored", "spec.json"])
       )
     end
 

@@ -1,6 +1,6 @@
 # Deribit carve register
 
-Provider authority: [`priv/authority/deribit/manifest.json`](../../priv/authority/deribit/manifest.json).
+Provider authority: [`priv/venues/deribit/authority/manifest.json`](../../priv/venues/deribit/authority/manifest.json).
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 ## 2026-08-18 — unified client_order_id round-trip (Task 622)
@@ -28,7 +28,7 @@ private order/fill echo (task 622). Outcome: CONFIRM provider contract.**
 <!-- carve-evidence-status
 {"carve_id":"C-T622","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Deribit private/buy, private/sell, and private/get_user_trades_by_instrument label contract (maximum 64 characters)"},"observed_evidence":{"kind":"live_venue","reference":"Live test.deribit.com labelled market order plus matching private/get_user_trades_by_instrument fill on 2026-08-18"},"compatibility_reference":null,"resolved_tier":1}
 -->
-- *Provider primitive:* `priv/authority/deribit/manifest.json` pins the provider contract for
+- *Provider primitive:* `priv/venues/deribit/authority/manifest.json` pins the provider contract for
 ## 2026-08-12 — rate-unit confrontation (Task 594)
 **C-T594g — Deribit's authored rate-like slots name their venue units (task 594).
 Outcome: CONFIRM provider units.**

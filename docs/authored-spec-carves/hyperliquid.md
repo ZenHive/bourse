@@ -1,10 +1,10 @@
 # Hyperliquid carve register
 
-Provider authority: [`priv/authority/hyperliquid/manifest.json`](../../priv/authority/hyperliquid/manifest.json).
+Provider authority: [`priv/venues/hyperliquid/authority/manifest.json`](../../priv/venues/hyperliquid/authority/manifest.json).
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 ## 2026-07-19 — fetchCurrencies public default (Task 378)
-  [pinned authority manifest](../../priv/authority/hyperliquid/manifest.json), artifact
+  [pinned authority manifest](../../priv/venues/hyperliquid/authority/manifest.json), artifact
 **C-T370 — Hyperliquid unified READ slices (markets / currencies / tickers / funding rates /
 ledger / order book / unknownOid). Outcome: CONFIRMED-against-HL docs with two deliberate
 divergences (task 370).**

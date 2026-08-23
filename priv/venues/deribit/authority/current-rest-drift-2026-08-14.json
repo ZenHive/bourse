@@ -51,8 +51,8 @@
     {
       "surface": "mutation_adjudication",
       "effect": "denominator_enumerated_from_observed_revision",
-      "detail": "priv/authority/deribit/mutation-adjudication.json enumerates its 178-operation denominator from the observed revision and says so in its own source binding. It never claims to have read the pinned bytes."
+      "detail": "priv/venues/deribit/authority/mutation-adjudication.json enumerates its 178-operation denominator from the observed revision and says so in its own source binding. It never claims to have read the pinned bytes."
     }
   ],
-  "unblock_path": "Run the authority corpus's controlled current-REST refresh: re-pin api-openapi in priv/authority/deribit/manifest.json, record a dated semantic diff, re-bind priv/authority/deribit/contract-baselines.json, regenerate the task 556 provider-operation corpus, and re-point the task 554/555 binding tests at the new dated report."
+  "unblock_path": "Run the authority corpus's controlled current-REST refresh: re-pin api-openapi in priv/venues/deribit/authority/manifest.json, record a dated semantic diff, re-bind priv/venues/deribit/authority/contract-baselines.json, regenerate the task 556 provider-operation corpus, and re-point the task 554/555 binding tests at the new dated report."
 }

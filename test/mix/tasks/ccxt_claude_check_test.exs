@@ -9,7 +9,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
       ### Outside
       `Bourse.Missing` and `docs/nope.md`
       ### The workbench boundary
-      | Deribit | `priv/authority/deribit/manifest.json` |
+      | Deribit | `priv/venues/deribit/authority/manifest.json` |
       ### Venue authority index
       mix ccxt.oracle_gate
       ### Key modules
@@ -92,7 +92,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
 
       claude = """
       ### The workbench boundary
-      | Nope | `priv/authority/nope/manifest.json` |
+      | Nope | `priv/venues/nope/authority/manifest.json` |
       ### Venue authority index
       no tasks here
       ### Key modules
@@ -177,7 +177,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
       assert "Bourse.Test.Generator.MissingGen" in refs
       assert "mix ccxt.does_not_exist" in refs
       assert "mix ccxt.authority_missing" in refs
-      assert "priv/authority/nope/manifest.json" in refs
+      assert "priv/venues/nope/authority/manifest.json" in refs
       assert "Mix.Tasks.Ccxt.AlsoMissing" in refs
       assert "scripts/missing_authority.sh" in refs
       assert "test/bourse/missing_file.exs" in refs

@@ -1,0 +1,689 @@
+{
+  "host_mode": "sandbox",
+  "authority_sources": [
+    {
+      "id": "rest-openapi",
+      "kind": "openapi-json",
+      "source_url": "https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json",
+      "sha256": "3a53c619ef3eb537217c889d1d6bd322015548a31c045538eb547c7195c9953f",
+      "upstream_pin": {
+        "type": "git_commit",
+        "value": "6957dd8a1b36894ca9580be0d51de30aeea3bd4a"
+      }
+    }
+  ],
+  "credentials": {
+    "exports": [
+      "LIGHTER_TESTNET_API_KEY_INDEX",
+      "LIGHTER_TESTNET_ACCOUNT_INDEX",
+      "LIGHTER_TESTNET_API_PRIVATE_KEY"
+    ],
+    "url": "https://testnet.zklighter.elliot.ai"
+  },
+  "operations": [
+    {
+      "method": "fetchBalance",
+      "branches": [
+        {
+          "provider_operation": "publicGetAccount",
+          "http_method": "GET",
+          "path": "account",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Balance",
+        "required_fields": [],
+        "any_fields": [
+          "free",
+          "used",
+          "total",
+          "debt"
+        ]
+      },
+      "authority_source_ids": [
+        "rest-openapi"
+      ]
+    },
+    {
+      "method": "fetchClosedOrders",
+      "branches": [
+        {
+          "provider_operation": "privateGetAccountInactiveOrders",
+          "http_method": "GET",
+          "path": "accountInactiveOrders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "account_index",
+              "strategy": "credential_uid"
+            },
+            {
+              "name": "auth_deadline",
+              "strategy": "auth_deadline"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "rest-openapi"
+      ]
+    },
+    {
+      "method": "fetchDeposits",
+      "branches": [
+        {
+          "provider_operation": "privateGetDepositHistory",
+          "http_method": "GET",
+          "path": "deposit/history",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "account_index",
+              "strategy": "credential_uid"
+            },
+            {
+              "name": "auth_deadline",
+              "strategy": "auth_deadline"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Transaction",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "currency",
+          "amount",
+          "status",
+          "timestamp"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "rest-openapi"
+      ]
+    },
+    {
+      "method": "fetchFundingRateHistory",
+      "branches": [
+        {
+          "provider_operation": "publicGetFundings",
+          "http_method": "GET",
+          "path": "fundings",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            }
+          ]
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.FundingRateHistory",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "funding_rate",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "rest-openapi"
+      ]
+    },
+    {
+      "method": "fetchMarkets",
+      "branches": [
+        {
+          "provider_operation": "publicGetOrderBookDetails",
+          "http_method": "GET",
+          "path": "orderBookDetails",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Market",
+        "required_fields": [
+          "symbol",
+          "id"
+        ],
+        "any_fields": [
+          "base",
+          "quote",
+          "type",
+          "active"
+        ]
+      },
+      "authority_source_ids": [
+        "rest-openapi"
+      ]
+    },
+    {
+      "method": "fetchMyLiquidations",
+      "branches": [
+        {
+          "provider_operation": "privateGetLiquidations",
+          "http_method": "GET",
+          "path": "liquidations",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "account_index",
+              "strategy": "credential_uid"
+            },
+            {
+              "name": "auth_deadline",
+              "strategy": "auth_deadline"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Liquidation",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "rest-openapi"
+      ]
+    },
+    {
+      "method": "fetchMyTrades",
+      "branches": [
+        {
+          "provider_operation": "privateGetTrades",
+          "http_method": "GET",
+          "path": "trades",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "account_index",
+              "strategy": "credential_uid"
+            },
+            {
+              "name": "auth_deadline",
+              "strategy": "auth_deadline"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Trade",
+        "required_fields": [
+          "id",
+          "symbol"
+        ],
+        "any_fields": [
+          "price",
+          "amount",
+          "timestamp",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "rest-openapi"
+      ]
+    },
+    {
+      "method": "fetchOHLCV",
+      "branches": [
+        {
+          "provider_operation": "publicGetCandles",
+          "http_method": "GET",
+          "path": "candles",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        },
+        {
+          "name": "timeframe",
+          "strategy": "literal",
+          "value": "1h"
+        }
+      ],
+      "success": {
+        "representation": "positional_rows",
+        "collection": "list",
+        "minimum_length": 5,
+        "fields": [
+          {
+            "name": "timestamp",
+            "index": 0,
+            "type": "integer"
+          },
+          {
+            "name": "open",
+            "index": 1,
+            "type": "number"
+          },
+          {
+            "name": "high",
+            "index": 2,
+            "type": "number"
+          },
+          {
+            "name": "low",
+            "index": 3,
+            "type": "number"
+          },
+          {
+            "name": "close",
+            "index": 4,
+            "type": "number"
+          }
+        ],
+        "invariants": [
+          {
+            "operator": "gte",
+            "left": "high",
+            "right": "low"
+          },
+          {
+            "operator": "between",
+            "value": "open",
+            "minimum": "low",
+            "maximum": "high"
+          },
+          {
+            "operator": "between",
+            "value": "close",
+            "minimum": "low",
+            "maximum": "high"
+          }
+        ]
+      },
+      "authority_source_ids": [
+        "rest-openapi"
+      ]
+    },
+    {
+      "method": "fetchOpenOrders",
+      "branches": [
+        {
+          "provider_operation": "privateGetAccountActiveOrders",
+          "http_method": "GET",
+          "path": "accountActiveOrders",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "account_index",
+              "strategy": "credential_uid"
+            },
+            {
+              "name": "auth_deadline",
+              "strategy": "auth_deadline"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "rest-openapi"
+      ]
+    },
+    {
+      "method": "fetchOrderBook",
+      "branches": [
+        {
+          "provider_operation": "publicGetOrderBookOrders",
+          "http_method": "GET",
+          "path": "orderBookOrders",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.OrderBook",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "bids",
+          "asks",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "rest-openapi"
+      ]
+    },
+    {
+      "method": "fetchPositions",
+      "branches": [
+        {
+          "provider_operation": "publicGetAccount",
+          "http_method": "GET",
+          "path": "account",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Position",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "contracts",
+          "side",
+          "entryPrice"
+        ]
+      },
+      "authority_source_ids": [
+        "rest-openapi"
+      ]
+    },
+    {
+      "method": "fetchTicker",
+      "branches": [
+        {
+          "provider_operation": "publicGetOrderBookDetails",
+          "http_method": "GET",
+          "path": "orderBookDetails",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "market_symbol"
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Ticker",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "last",
+          "bid",
+          "ask",
+          "close",
+          "mark",
+          "index",
+          "timestamp"
+        ]
+      },
+      "authority_source_ids": [
+        "rest-openapi"
+      ]
+    },
+    {
+      "method": "fetchTransfers",
+      "branches": [
+        {
+          "provider_operation": "privateGetTransferHistory",
+          "http_method": "GET",
+          "path": "transfer/history",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "account_index",
+              "strategy": "credential_uid"
+            },
+            {
+              "name": "auth_deadline",
+              "strategy": "auth_deadline"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.TransferEntry",
+        "required_fields": [
+          "id",
+          "currency"
+        ],
+        "any_fields": [
+          "amount",
+          "status",
+          "timestamp"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "rest-openapi"
+      ]
+    },
+    {
+      "method": "fetchWithdrawals",
+      "branches": [
+        {
+          "provider_operation": "privateGetWithdrawHistory",
+          "http_method": "GET",
+          "path": "withdraw/history",
+          "authenticated": true,
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
+            },
+            {
+              "name": "limit",
+              "strategy": "literal",
+              "value": 10
+            },
+            {
+              "name": "account_index",
+              "strategy": "credential_uid"
+            },
+            {
+              "name": "auth_deadline",
+              "strategy": "auth_deadline"
+            }
+          ]
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "list",
+        "module": "Bourse.Transaction",
+        "required_fields": [
+          "id",
+          "currency"
+        ],
+        "any_fields": [
+          "amount",
+          "status",
+          "timestamp"
+        ],
+        "empty_collection": "allowed"
+      },
+      "authority_source_ids": [
+        "rest-openapi"
+      ]
+    }
+  ],
+  "symbols": {
+    "spot": "BTC/USDC:USDC",
+    "linear": "BTC/USDC:USDC",
+    "inverse": "BTC/USDC:USDC",
+    "option": "BTC/USDC:USDC"
+  },
+  "currency": "USDC",
+  "error_cases": [
+    {
+      "id": "lighter:fetchTicker:error:invalid_symbol",
+      "kind": "error",
+      "method": "fetchTicker",
+      "provider_operation": "provider_invalid_symbol",
+      "authority_source_id": "rest-openapi",
+      "arguments": [
+        {
+          "name": "symbol",
+          "strategy": "literal",
+          "value": "ZZZ/USDC:USDC"
+        }
+      ],
+      "options": [],
+      "expected_error": {
+        "type": "bad_symbol",
+        "code": null,
+        "message_contains": "Unknown market symbol"
+      },
+      "observed_at": "2026-08-23"
+    }
+  ],
+  "provider_operation_prefixes": [
+    "public",
+    "private"
+  ]
+}

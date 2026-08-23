@@ -259,8 +259,7 @@ defmodule Bourse.ExchangeGeneratorTest do
       external_resources = Keyword.get_values(attrs, :external_resource)
       resources = List.flatten(external_resources)
 
-      assert Enum.any?(resources, &String.ends_with?(&1, "bybit.json"))
-      assert Enum.any?(resources, &String.ends_with?(&1, "authored/bybit.json"))
+      assert Enum.any?(resources, &String.ends_with?(&1, "bybit/authored/spec.json"))
     end
 
     test "Binance tracks spec file for recompilation" do
@@ -268,7 +267,7 @@ defmodule Bourse.ExchangeGeneratorTest do
       external_resources = Keyword.get_values(attrs, :external_resource)
       resources = List.flatten(external_resources)
 
-      assert Enum.any?(resources, &String.ends_with?(&1, "binance.json"))
+      assert Enum.any?(resources, &String.ends_with?(&1, "binance/authored/spec.json"))
     end
   end
 

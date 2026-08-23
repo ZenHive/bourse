@@ -73,7 +73,7 @@
     }
   },
   "continuity": {
-    "rest_surface_report": "priv/authority/deribit/current-rest-drift-2026-08-18.json",
+    "rest_surface_report": "priv/venues/deribit/authority/current-rest-drift-2026-08-18.json",
     "relation": "The same maintenance deploy republished both documents, evidenced by an identical ETag W/\"DXTaA468CADkchO3\" and an identical Last-Modified of Tue, 18 Aug 2026 10:26:03 GMT on the current REST and current WebSocket artifacts."
   },
   "limitations": [

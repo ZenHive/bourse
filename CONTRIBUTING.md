@@ -22,7 +22,7 @@ establish semantics.
 There is no promotion task. A new venue is hand-authored: write the owned
 document, add it to `Bourse.Spec`, the registry and the compiled set, and give
 every critical operation a live REST-read contract case in
-`priv/authority/rest-read-contracts.json`. Provider-owned semantics plus a
+`priv/venues/<venue>/authority/rest_read_contract.json`. Provider-owned semantics plus a
 passing live case are what make a slot `verified`. See `docs/authored-specs.md`
 § Adding a venue.
 
@@ -43,7 +43,7 @@ passing live case are what make a slot `verified`. See `docs/authored-specs.md`
 
 - Read `CLAUDE.md` — architectural decisions, naming conventions, and the Non-Unified Track scope policy.
 - Read `CHANGELOG.md` § Unreleased — what has landed since the last release.
-- Open `priv/authority/<venue>/` before authoring a supported-venue field.
+- Open `priv/venues/<venue>/authority/` before authoring a supported-venue field.
 
 ### Running the Suite
 

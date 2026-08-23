@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "inventory_basis": "provider_owned_contracts",
+  "runtime_specs_are_not_authority": true,
+  "observed_at": "2026-08-23",
+  "inventory_policy": "provider product prefixes are the live denominator; runtime metadata is compared only for drift on those prefixes"
+}

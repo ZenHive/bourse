@@ -1,6 +1,6 @@
 # Lighter carve register
 
-Provider authority: [`priv/authority/lighter/manifest.json`](../../priv/authority/lighter/manifest.json).
+Provider authority: [`priv/venues/lighter/authority/manifest.json`](../../priv/venues/lighter/authority/manifest.json).
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 ## 2026-08-11 — account and history response slices (Task 546)

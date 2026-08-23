@@ -1,6 +1,6 @@
 # Binance carve register
 
-Provider authority: [`priv/authority/binance/manifest.json`](../../priv/authority/binance/manifest.json).
+Provider authority: [`priv/venues/binance/authority/manifest.json`](../../priv/venues/binance/authority/manifest.json).
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 ## 2026-07-22 — market maker/taker + filter precision/limits (Task 164)
@@ -32,7 +32,7 @@ treating CCXT `this.fees` / member coercion as an authority.**
   carry filters without fee fields.
 - *Implementation:* 164.
 
-schema ([pinned authority manifest](../../priv/authority/binance/manifest.json), artifact
+schema ([pinned authority manifest](../../priv/venues/binance/authority/manifest.json), artifact
 ## 2026-08-12 — rate-unit confrontation (Task 594)
 **C-T594b — Binance's authored rate-like slots name their venue units (task 594).
 Outcome: CONFIRM documented and arithmetic-derived units; retain explicit gaps.**

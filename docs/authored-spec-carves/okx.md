@@ -1,9 +1,9 @@
 # OKX carve register
 
-Provider authority: [`priv/authority/okx/manifest.json`](../../priv/authority/okx/manifest.json).
+Provider authority: [`priv/venues/okx/authority/manifest.json`](../../priv/venues/okx/authority/manifest.json).
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
-from `priv/authority/okx/manifest.json` artifact `api-v5-docs` — makes those cursors exclusive.
+from `priv/venues/okx/authority/manifest.json` artifact `api-v5-docs` — makes those cursors exclusive.
 ## 2026-08-12 — rate-unit confrontation (Task 594)
 **C-T594j — OKX's authored rate-like slots name their venue units (task 594).
 Outcome: CONFIRM provider arithmetic; retain one history-position gap.**

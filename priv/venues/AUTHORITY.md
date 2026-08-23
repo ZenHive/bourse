@@ -79,7 +79,7 @@ Full-byte retention of the pinned corpus is declined. The numbers as of
 entire pinned corpus (including Bybit's 12.6 MB docs archive, the two Binance
 futures `llms-full` files at ~7.9 MB each, and OKX's 5.2 MB HTML snapshot) is
 about 52 MB. Vendoring that would make the authority tree a content store, which
-`mix ccxt.authority_check --fetch` deliberately keeps outside `priv/authority/`.
+`mix ccxt.authority_check --fetch` deliberately keeps outside `priv/venues/<venue>/authority/`.
 
 What *is* retained, by class:
 

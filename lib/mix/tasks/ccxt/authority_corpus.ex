@@ -90,7 +90,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
   def artifact_class(%{"expressiveness" => %{"level" => level}}) when level in @expressiveness_levels, do: :prose_docs
 
   defp load_manifest!(root, venue) do
-    path = Path.join([root, venue, "manifest.json"])
+    path = Path.join([root, venue, "authority", "manifest.json"])
     document = Bourse.JsonDocument.decode_file!(path)
 
     ensure!(document["schema_version"] == 2, "#{path}: unsupported schema_version")
@@ -270,7 +270,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
   end
 
   defp ensure_storage!(%{"storage" => "vendored", "path" => path} = artifact, root, venue, label) when is_binary(path) do
-    contents = File.read!(Path.join([root, venue, path]))
+    contents = File.read!(Path.join([root, venue, "authority", path]))
     verify_content!(artifact, contents, label)
   end
 
@@ -279,7 +279,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
   # A missing digest is valid: reference_only artifacts stay loadable without
   # one. When a digest is present it must name the same pin the manifest records.
   defp ensure_surface_digest!(artifact, root, venue, label) do
-    path = Path.join([root, venue, "surface-digests", "#{artifact["id"]}.json"])
+    path = Path.join([root, venue, "authority", "surface-digests", "#{artifact["id"]}.json"])
 
     if File.exists?(path) do
       digest = Bourse.JsonDocument.decode_file!(path)

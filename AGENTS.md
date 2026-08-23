@@ -728,7 +728,7 @@ in its `manifest.json`, run `mix ccxt.agents_md`.
 
 `bourse` (`:bourse`, namespace `Bourse.*`) — an Elixir client for eleven exchange integrations: `alpaca`, `binance`, `binancecoinm`, `binanceusdm`, `bybit`, `coinbaseexchange`, `deribit`, `derive`, `hyperliquid`, `lighter`, `okx`. One complete hand-authored JSON spec per venue drives macro-generated endpoint modules; the three DEX venues carry hand-written signing. Coinbase Exchange is deliberately public-only and exposes candles plus ticker.
 
-Runtime support is a **closed set**. `Bourse.Exchanges` and `Bourse.Registry` read `priv/specs/json/runtime_support.json` and generate exactly eleven modules; constructing anything else fails immediately with `unsupported_exchange`. There is no `config :bourse, exchanges:` knob — support is not a configuration outcome.
+Runtime support is a **closed set**. `Bourse.Exchanges` and `Bourse.Registry` read `priv/venues/runtime_support.json` and generate exactly eleven modules; constructing anything else fails immediately with `unsupported_exchange`. There is no `config :bourse, exchanges:` knob — support is not a configuration outcome.
 
 ### 🚧 The workbench boundary — read this before deciding where work goes
 
@@ -738,7 +738,7 @@ This repo was extracted from `../bourse_workbench`, which remains the **authorin
 |---|---|
 | Does the client behave correctly against a supported venue? | **here** |
 | Is a supported venue's authored spec right? | **here** — the spec, its authority manifest and its reality evidence all live here |
-| Does an eleventh venue get added? | **here** — the authored spec, its provider-owned contract entry in `priv/authority/rest-read-contracts.json`, and the live evidence that grades it all live here. |
+| Does an eleventh venue get added? | **here** — the authored spec, its provider-owned contract entry in `priv/venues/<venue>/authority/rest_read_contract.json`, and the live evidence that grades it all live here. |
 | Did the full CCXT reference extraction shift across all 110 venues? | workbench — this repo carries a 16-venue slice and cannot answer corpus-wide questions |
 | Roadmap and task scoring, and the CHANGELOG gate that reads it | workbench — one rmap, declaring `project = "bourse"`. It is not a workbench roadmap that mentions this client; it **is** this client's roadmap. Do **not** stand up a second rmap here. |
 | Where does a consumer file a bug? | **here**, in `BUGS.md` — this is the only repo a consumer knows. Triage into scored tasks happens in the workbench, and writes a dated note back into the entry. |
@@ -849,9 +849,9 @@ Unreachable is not green. A branch we cannot call with our keys and hosts — pr
 
 ### Venue authority index
 
-Any venue-source, contract-coverage or field-judgment question opens `priv/authority/<venue>/` **FIRST**. The manifest is the local provenance index, not the authority itself: when the question is discovery or freshness, check the provider's official upstream next. Manifests record URL, upstream revision, retrieval date, byte count, SHA-256 and licensing disposition.
+Any venue-source, contract-coverage or field-judgment question opens `priv/venues/<venue>/authority/` **FIRST**. The manifest is the local provenance index, not the authority itself: when the question is discovery or freshness, check the provider's official upstream next. Manifests record URL, upstream revision, retrieval date, byte count, SHA-256 and licensing disposition.
 
-The **live evidence** column is the venue's entry in `priv/authority/rest-read-contracts.json`: its provider-owned authority pins, its operation branches, and the credentials the lane needs to call them. A venue's coverage is what its cases prove against its own host — 427 across the eleven venues — and nothing is stored in this repo that could answer for it instead.
+The **live evidence** column is the venue's entry in `priv/venues/<venue>/authority/rest_read_contract.json`: its provider-owned authority pins, its operation branches, and the credentials the lane needs to call them. A venue's coverage is what its cases prove against its own host — 427 across the eleven venues — and nothing is stored in this repo that could answer for it instead.
 
 | Venue | Official docs | Testnet/demo host | Live contract cases | Credential env vars |
 |---|---|---|---|---|
@@ -917,7 +917,7 @@ touches it.
 | CLAUDE claims | `mix ccxt.claude_check` | modules / `mix ccxt.*` tasks / repo paths named in gated CLAUDE.md regions, plus the `Bourse.Signing` and `Bourse.Application` rows of the *Key modules* table, vs the tree. Both row gates are inert unless the row exists — a dropped row silently disables its check. Unlisted tree surfaces are not failures. |
 | AGENTS freshness | `mix ccxt.agents_md --check` | re-renders CLAUDE.md + the pinned `@`-imports (`priv/agents_includes/`) and fails on drift. Regenerate with `mix ccxt.agents_md`. |
 
-**Adding a venue** is authoring plus live proof, never a config flag: author its complete document under `priv/specs/json/output/authored/`, list it in `priv/specs/json/runtime_support.json`, add its provider-owned entry — authority-source pins, operation branches, arguments, success and error meanings — to `priv/authority/rest-read-contracts.json`, and get every one of its cases green against the venue's own host. `Bourse.Test.RestReadContracts` refuses an inventory that does not cover every runtime venue, or whose branches drift from the callable client surface, so the two cannot separate.
+**Adding a venue** is authoring plus live proof, never a config flag: author its complete document under `priv/venues/<venue>/authored/`, list it in `priv/venues/runtime_support.json`, add its provider-owned entry — authority-source pins, operation branches, arguments, success and error meanings — to `priv/venues/<venue>/authority/rest_read_contract.json`, and get every one of its cases green against the venue's own host. `Bourse.Test.RestReadContracts` refuses an inventory that does not cover every runtime venue, or whose branches drift from the callable client surface, so the two cannot separate.
 
 **Do not reject a run because `mix test.json` / `mix dialyzer.json` printed JSON** — that is the intended output format, not a failure.
 
@@ -935,7 +935,7 @@ mix ccxt.verify_ws_first_frame                       # classified public WS firs
 
 > 🚨 **The complete REST-read surface runs in `mix ci`, not in `precommit`.** `mix ccxt.verify_rest_read_contracts` reports denominator, executed count and failures, and fails when `executed < denominator`. Its denominator is scoped to the provider product prefixes each venue hosts on its sandbox; a branch we cannot reach with our keys is ledgered in `docs/prod-verification-ledger.md` as unverified rather than quietly dropped. Run it before calling a venue-facing task done, and say in the delivery that you ran it.
 
-**REST-read contracts:** `priv/authority/rest-read-contracts.json` owns the provider-source pins, operation/branch denominator, arguments, and success/error meanings for all eleven venues. `Bourse.Test.RestReadContracts` loads and validates it — schema, provider-owned basis, authority-pin match against each venue's manifest, case-ID uniqueness, and no drift between the inventory and the callable client surface. `Bourse.Test.Generator.RestReadContract` emits mechanical ExUnit shells, `test/bourse/rest_read_contract_live_test.exs` defines one module per venue from them, and `Bourse.Test.RestReadContractScenario` performs every real call and assertion. The raw endpoint probes remain transport-level coverage for request mechanics and write surfaces.
+**REST-read contracts:** `priv/venues/<venue>/authority/rest_read_contract.json` owns the provider-source pins, operation/branch denominator, arguments, and success/error meanings for all eleven venues. `Bourse.Test.RestReadContracts` loads and validates it — schema, provider-owned basis, authority-pin match against each venue's manifest, case-ID uniqueness, and no drift between the inventory and the callable client surface. `Bourse.Test.Generator.RestReadContract` emits mechanical ExUnit shells, `test/bourse/rest_read_contract_live_test.exs` defines one module per venue from them, and `Bourse.Test.RestReadContractScenario` performs every real call and assertion. The raw endpoint probes remain transport-level coverage for request mechanics and write surfaces.
 
 **`Bourse.Testnet` is not an application child.** It is a sandbox-only ETS credential registry that consumers must not boot; `test/test_helper.exs` starts it explicitly via `start_link/1`.
 
@@ -961,7 +961,7 @@ Loaded via `Bourse.Testnet.register_from_env/3` and `Bourse.Testnet.register/3` 
 ## Do NOT edit (generated) / DO author (frozen specs)
 
 - `lib/bourse/exchanges/*.ex` — generated at compile time; never hand-edit (fix the generator).
-- `priv/specs/json/output/authored/<venue>.json` — **the complete hand-owned runtime documents** (eleven venues, schema version `3`). These you DO edit, by authoring per the loop in `docs/authored-specs.md`, then proving each claim with a live call against the venue's own host.
+- `priv/venues/<venue>/authored/spec.json` — **the complete hand-owned runtime documents** (eleven venues, schema version `3`). These you DO edit, by authoring per the loop in `docs/authored-specs.md`, then proving each claim with a live call against the venue's own host.
 - `priv/specs/json/output/<venue>.json` — frozen CCXT-derived **reference** siblings (the 16-venue slice), pinned by `reference_corpus.json`. Never loaded at runtime, never shipped in the Hex package; read-only authoring/test input (e.g. the test-only `markets.symbols_index` used by integration symbol selection).
 
 ## Architecture

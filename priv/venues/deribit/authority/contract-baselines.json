@@ -9,7 +9,7 @@
         "type": "document_version_http_etag",
         "value": "2.1.1; W/\"DXTaA468CADkchO3\""
       },
-      "review_evidence": "priv/authority/deribit/current-rest-drift-2026-08-18.json",
+      "review_evidence": "priv/venues/deribit/authority/current-rest-drift-2026-08-18.json",
       "expected": {
         "path_count": 182,
         "provider_count": 182,
@@ -46,7 +46,7 @@
         "provider_count": 86,
         "message_reference_inversion_count": 86
       },
-      "review_evidence": "priv/authority/deribit/current-websocket-drift-2026-08-18.json"
+      "review_evidence": "priv/venues/deribit/authority/current-websocket-drift-2026-08-18.json"
     },
     "upcoming_websocket": {
       "artifact_id": "upcoming-asyncapi",

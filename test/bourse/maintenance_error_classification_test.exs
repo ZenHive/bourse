@@ -13,7 +13,7 @@ defmodule Bourse.MaintenanceErrorClassificationTest do
   alias Bourse.HTTP.Errors
   alias Mix.Tasks.Ccxt.AuthorityCorpus
 
-  # Documented identifiers from priv/authority/<venue>/errors.json (maintenance_adjudication).
+  # Documented identifiers from priv/venues/<venue>/authority/errors.json (maintenance_adjudication).
   # Runtime type is :exchange_not_available (from_spec_class("OnMaintenance")).
   @mapped_venues [
     {"binance", "-1016", "code"},
@@ -55,7 +55,7 @@ defmodule Bourse.MaintenanceErrorClassificationTest do
   test "venues without a documented maintenance code record that finding in the authority corpus" do
     for venue <- @no_documented_maintenance do
       corpus =
-        ["priv", "authority", venue, "errors.json"]
+        ["priv", "venues", venue, "authority", "errors.json"]
         |> Path.join()
         |> File.read!()
         |> Jason.decode!()
@@ -73,7 +73,7 @@ defmodule Bourse.MaintenanceErrorClassificationTest do
 
     for venue <- venues do
       corpus =
-        ["priv", "authority", venue, "errors.json"]
+        ["priv", "venues", venue, "authority", "errors.json"]
         |> Path.join()
         |> File.read!()
         |> Jason.decode!()

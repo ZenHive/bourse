@@ -5,8 +5,8 @@ defmodule Mix.Tasks.Ccxt.ErrorAuthorityCorpus do
 
   alias Mix.Tasks.Ccxt.AuthorityCorpus
 
-  @authority_root "priv/authority"
-  @spec_root "priv/specs/json/output"
+  @authority_root "priv/venues"
+  @spec_root "priv/venues"
 
   @typedoc "A venue's exact-mapping coverage against its official enumeration."
   @type report :: %{
@@ -48,10 +48,10 @@ defmodule Mix.Tasks.Ccxt.ErrorAuthorityCorpus do
   end
 
   defp load_authority!(venue, root) do
-    manifest_path = Path.join([root, venue, "manifest.json"])
+    manifest_path = Path.join([root, venue, "authority", "manifest.json"])
     manifest = Bourse.JsonDocument.decode_file!(manifest_path)
     pin = manifest["error_enumeration"] || Mix.raise("#{manifest_path}: missing error_enumeration")
-    corpus_path = Path.join([root, venue, pin["path"] || ""])
+    corpus_path = Path.join([root, venue, "authority", pin["path"] || ""])
     contents = File.read!(corpus_path)
 
     AuthorityCorpus.verify_content!(pin, contents, corpus_path)
@@ -85,7 +85,7 @@ defmodule Mix.Tasks.Ccxt.ErrorAuthorityCorpus do
   end
 
   defp load_spec!(root, venue) do
-    Bourse.JsonDocument.decode_file!(Path.join(root, "authored/#{venue}.json"))
+    Bourse.JsonDocument.decode_file!(Path.join([root, venue, "authored", "spec.json"]))
   end
 
   defp exact_mappings(spec) do

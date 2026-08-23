@@ -35,7 +35,7 @@ defmodule Bourse.Exchange do
   """
 
   @capability_surface_version 1
-  @capability_surface_path Path.expand("../../priv/specs/json/capability_surface.json", __DIR__)
+  @capability_surface_path Path.expand("../../priv/venues/capability_surface.json", __DIR__)
   @external_resource @capability_surface_path
   @capability_surface_document @capability_surface_path |> File.read!() |> :json.decode()
 
@@ -758,7 +758,7 @@ defmodule Bourse.Exchange do
   Returns the release-pinned capability surface for every runtime venue.
 
   The complete per-capability values are embedded from
-  `priv/specs/json/capability_surface.json`, which the offline oracle gate keeps
+  `priv/venues/capability_surface.json`, which the offline oracle gate keeps
   equal to the authored runtime specs.
   """
   @spec capability_surface() :: capability_surface()
