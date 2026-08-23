@@ -123,8 +123,8 @@ host only, so no CI check can ever guard it. Read them from
 
 - **Read `BUGS.md` before chasing a reported defect.** It is the inbound consumer queue, newest first, and each entry carries a `**Status:**` header — the bug in front of you may already be filed, already fixed, or already decided against. Entries are never deleted; a fixed one keeps its repro as the evidence trail.
 
-- One test deliberately stayed in the workbench because it is corpus-wide: the zero-param JSON-body gate audit, which asserts a gate set across all 110 reference specs. The same applies to anything else that iterates every document under `priv/specs/json/output/` expecting the full set. **Do not re-add a corpus-wide audit here** — it would be answering a 110-venue question with 16 specs.
-- `priv/specs/json/reference_corpus.json` honestly declares the 16 carried venues (the eleven supported plus `coinmetro`, `deepcoin`, `kraken`, `weex`, `whitebit`, used as parser and unsupported-venue counter-examples). Its two SHA-256 pins — `source` on CCXT's version file and `static_fixtures` on CCXT's own static-vintages file, both keys named in upstream CCXT terminology and neither referring to anything in this repo — still name the upstream revision the slice came from, so provenance stays verifiable. **Adding a reference venue means adding its JSON *and* the manifest entry** — `Bourse.ReferenceSlice` validates count, sort order and pins, and raises otherwise. That module lives in `test/support/`, not `lib/`: the slice is test input, so neither the client nor the Hex package can reach it.
+- One test deliberately stayed in the workbench because it is corpus-wide: the zero-param JSON-body gate audit, which asserts a gate set across all 110 reference specs. The same applies to anything else that iterates every document under `test/reference_slice/` expecting the full set. **Do not re-add a corpus-wide audit here** — it would be answering a 110-venue question with 16 specs.
+- `test/reference_slice/reference_corpus.json` honestly declares the 16 carried venues (the eleven supported plus `coinmetro`, `deepcoin`, `kraken`, `weex`, `whitebit`, used as parser and unsupported-venue counter-examples). Its two SHA-256 pins — `source` on CCXT's version file and `static_fixtures` on CCXT's own static-vintages file, both keys named in upstream CCXT terminology and neither referring to anything in this repo — still name the upstream revision the slice came from, so provenance stays verifiable. **Adding a reference venue means adding its JSON *and* the manifest entry** — `Bourse.ReferenceSlice` validates count, sort order and pins, and raises otherwise. That module lives in `test/support/`, not `lib/`: the slice is test input, so neither the client nor the Hex package can reach it.
 
 ## 🎯 Core doctrine: provider-authoritative, reality-verified
 
@@ -281,7 +281,7 @@ Loaded via `Bourse.Testnet.register_from_env/3` and `Bourse.Testnet.register/3` 
 
 - `lib/bourse/exchanges/*.ex` — generated at compile time; never hand-edit (fix the generator).
 - `priv/venues/<venue>/authored/spec.json` — **the complete hand-owned runtime documents** (eleven venues, schema version `3`). These you DO edit, by authoring per the loop in `docs/authored-specs.md`, then proving each claim with a live call against the venue's own host.
-- `priv/specs/json/output/<venue>.json` — frozen CCXT-derived **reference** siblings (the 16-venue slice), pinned by `reference_corpus.json`. Never loaded at runtime, never shipped in the Hex package; read-only authoring/test input (e.g. the test-only `markets.symbols_index` used by integration symbol selection).
+- `test/reference_slice/<venue>.json` — frozen CCXT-derived **reference** siblings (the 16-venue slice), pinned by `reference_corpus.json`. Never loaded at runtime, never shipped in the Hex package; read-only authoring/test input (e.g. the test-only `markets.symbols_index` used by integration symbol selection).
 
 ## Architecture
 

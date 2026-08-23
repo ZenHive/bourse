@@ -40,13 +40,9 @@ bourse-*.tar
 # In-tree extraction artifacts. The cloned CCXT source, raw AST/describe dumps,
 # and signing fixtures under this tree are working inputs — not tracked.
 # Intentionally force-tracked exceptions (already in the index):
-#   priv/specs/json/ccxt/ts/src/test/static/  — Task 168 static fixture oracle
-#   priv/specs/json/ccxt/js/                  — Task 177 pinned browser CCXT + runner
-/priv/specs/json/ccxt/
-/priv/specs/json/ccxt_bundle.js
-/priv/specs/json/ccxt_version.json
-/priv/specs/json/discoveries/
-/priv/specs/json/fixtures/
+#   test/reference_slice/ccxt/ts/src/test/static/  — Task 168 static fixture oracle
+#   test/reference_slice/ccxt/js/                  — Task 177 pinned browser CCXT + runner
+/test/reference_slice/ccxt/
 
 # harness dispatch runtime scaffolding — excluded from delivery commits by contract
 .harness/

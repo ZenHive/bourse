@@ -69,7 +69,7 @@ defmodule Bourse.Signing.HmacRecipeTest do
     "timestamp" => %{"format" => "string", "source" => "timestamp_ms"}
   }
 
-  @spec_dir Path.expand("../../../priv/specs/json/output", __DIR__)
+  @spec_dir Path.expand("../../reference_slice", __DIR__)
 
   @external_resource Path.join(@spec_dir, "weex.json")
   @external_resource Path.join(@spec_dir, "okx.json")

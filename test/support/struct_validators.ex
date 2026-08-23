@@ -7,8 +7,8 @@ defmodule Bourse.StructValidators do
 
   ## Provenance (Task 221)
 
-  Audit against **vendored CCXT 4.5.65** (committed marker `priv/specs/json/ccxt/js/VERSION`;
-  the CCXT source tree `priv/specs/json/ccxt/ts/src/test/` is a gitignored extraction artifact,
+  Audit against **vendored CCXT 4.5.65** (committed marker `test/reference_slice/ccxt/js/VERSION`;
+  the CCXT source tree `test/reference_slice/ccxt/ts/src/test/` is a gitignored extraction artifact,
   so only the `static/{request,response}` fixtures are committed — the structural validators
   live upstream at `ts/src/test/Exchange/`). Not auto-synced — re-diff these upstream paths at
   the pinned tag when upgrading the vendored tree.

@@ -65,13 +65,13 @@ Keep the macros and the JSON-spec format. Then:
 The client deliberately tracks its reference slice so a fresh clone compiles and
 runs its own structural tests without fetching authoring inputs:
 
-- The 16 documents in `priv/specs/json/output/` are test-only authoring references.
+- The 16 documents in `test/reference_slice/` are test-only authoring references.
   Tests read their complete endpoint trees and symbol indexes, including five
   unsupported-venue counter-examples. Fetching them on demand would make those
   structural tests depend on a third party's availability; the 19 MB slice
   therefore remains tracked. They are a pinned third-party extraction and grade
   nothing a venue owns.
-- `priv/specs/json/reference_corpus.json` remains tracked with the documents because
+- `test/reference_slice/reference_corpus.json` remains tracked with the documents because
   it declares their closed inventory and pins their provenance. Its
   `pins.source.sha256` is the cross-repository revision key shared with the
   workbench's 110-document corpus. `pins.static_fixtures` verifies each repository's

@@ -6,7 +6,7 @@ defmodule Bourse.PreciseTest do
   doctest Precise
 
   # Compatibility vectors transcribed from the pinned CCXT reference corpus at
-  # priv/specs/json/ccxt/ts/src/test/base/test.precise.ts.
+  # test/reference_slice/ccxt/ts/src/test/base/test.precise.ts.
   # Operand fixtures match Bourse's `w/x/y/z/a` exactly.
   @w "-1.123e-6"
   @x "0.00000002"

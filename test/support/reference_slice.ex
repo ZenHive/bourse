@@ -19,12 +19,12 @@ defmodule Bourse.ReferenceSlice do
 
   alias Bourse.JsonDocument
 
-  @reference_root "priv/specs/json"
+  @reference_root Path.expand("../reference_slice", __DIR__)
   @valid_id_pattern ~r/^[a-z0-9_]+$/
 
   @doc "Returns the reference-corpus manifest path."
   @spec manifest_path() :: String.t()
-  def manifest_path, do: Path.join(reference_root(), "reference_corpus.json")
+  def manifest_path, do: Path.join(@reference_root, "reference_corpus.json")
 
   @doc "Loads and validates the reference-corpus manifest."
   @spec load_manifest!() :: map()
@@ -59,7 +59,7 @@ defmodule Bourse.ReferenceSlice do
     validate_id!(exchange_id)
 
     if exchange_id in exchanges() do
-      Path.join([reference_root(), "output", "#{exchange_id}.json"])
+      Path.join(@reference_root, "#{exchange_id}.json")
     else
       raise ArgumentError, "unknown reference exchange: #{inspect(exchange_id)}"
     end
@@ -108,7 +108,7 @@ defmodule Bourse.ReferenceSlice do
   end
 
   defp verify_pin_sha256!(key, relative_path, expected_sha256) do
-    path = Path.join(reference_root(), relative_path)
+    path = Path.join(@reference_root, relative_path)
     contents = File.read!(path)
     actual_sha256 = :sha256 |> :crypto.hash(contents) |> Base.encode16(case: :lower)
 
@@ -120,13 +120,6 @@ defmodule Bourse.ReferenceSlice do
   defp validate_id!(exchange_id) do
     if !Regex.match?(@valid_id_pattern, exchange_id) do
       raise ArgumentError, "invalid exchange ID: #{inspect(exchange_id)}"
-    end
-  end
-
-  defp reference_root do
-    case :code.priv_dir(:bourse) do
-      {:error, :bad_name} -> @reference_root
-      priv_dir -> Path.join(to_string(priv_dir), "specs/json")
     end
   end
 end
