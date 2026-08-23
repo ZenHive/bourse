@@ -548,7 +548,6 @@
           ],
           "return_type": "Promise<OHLCV[]>"
         },
-        "source": "provider-authored public candle route",
         "unresolved_reason": null
       },
       "fetchTicker": {
@@ -580,7 +579,6 @@
           ],
           "return_type": "Promise<Ticker>"
         },
-        "source": "provider-authored public ticker route",
         "unresolved_reason": null
       }
     },
@@ -1027,15 +1025,6 @@
           "key": null
         }
       }
-    }
-  },
-  "oracles": {
-    "live_tier1": {
-      "grades": true
-    },
-    "private_real_recordings": {
-      "grades": false,
-      "reason": "This venue intentionally exposes no authenticated client surface."
     }
   },
   "rate_limits": {

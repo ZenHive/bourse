@@ -146,20 +146,6 @@ defmodule Bourse.Spec do
     load_manifest!()["venues"]
   end
 
-  @doc "Returns supported venues graded by the named authored oracle."
-  @spec oracle_venues(String.t() | atom()) :: [String.t()]
-  def oracle_venues(oracle) when is_atom(oracle), do: oracle |> Atom.to_string() |> oracle_venues()
-
-  def oracle_venues(oracle) when is_binary(oracle) do
-    if oracle not in Schema.oracle_names() do
-      raise ArgumentError, "unknown oracle: #{inspect(oracle)}"
-    end
-
-    Enum.filter(exchanges(), fn venue ->
-      get_in(load!(venue), ["oracles", oracle, "grades"])
-    end)
-  end
-
   @doc "Returns whether the exchange is part of the closed runtime-support inventory."
   @spec supported?(String.t() | atom()) :: boolean()
   def supported?(exchange_id) when is_atom(exchange_id), do: supported?(Atom.to_string(exchange_id))

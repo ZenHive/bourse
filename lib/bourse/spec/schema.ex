@@ -27,9 +27,6 @@ defmodule Bourse.Spec.Schema do
     ~w(normalization response_envelopes),
     ~w(markets),
     ~w(markets patterns),
-    ~w(oracles),
-    ~w(oracles live_tier1),
-    ~w(oracles private_real_recordings),
     ~w(errors),
     ~w(errors handle_errors),
     ~w(websocket)
@@ -125,16 +122,11 @@ defmodule Bourse.Spec.Schema do
   )
   @symbol_cases ~w(lower mixed upper)
   @date_formats ~w(ddmmmyy yymmdd yyyymmdd)
-  @oracle_names ~w(live_tier1 private_real_recordings)
   @field_rule_sources ~w(envelope row)
 
   @doc "Returns the current owned runtime-schema version."
   @spec version() :: pos_integer()
   def version, do: @version
-
-  @doc "Returns the closed oracle-profile vocabulary."
-  @spec oracle_names() :: [String.t()]
-  def oracle_names, do: @oracle_names
 
   @doc "Validates one complete owned runtime specification."
   @spec validate!(map(), String.t()) :: map()
@@ -154,7 +146,6 @@ defmodule Bourse.Spec.Schema do
     validate_runtime_error_contract!(spec, exchange_id)
     validate_support!(spec, exchange_id)
     validate_endpoint_selection!(spec, exchange_id)
-    validate_oracles!(spec, exchange_id)
     validate_option_quantity!(spec, exchange_id)
     validate_contract_unit!(spec, exchange_id)
     validate_greeks_conventions!(spec, exchange_id)
@@ -698,39 +689,6 @@ defmodule Bourse.Spec.Schema do
 
   defp require_endpoint_list!(endpoints, exchange_id, method) do
     gap!(exchange_id, ["endpoints", "unified", method], "expected a non-empty endpoint list, got #{inspect(endpoints)}")
-  end
-
-  defp validate_oracles!(spec, exchange_id) do
-    oracles = Map.fetch!(spec, "oracles")
-    unexpected = Map.keys(oracles) -- @oracle_names
-
-    if unexpected != [] do
-      gap!(exchange_id, "oracles", "unsupported declarations: #{Enum.join(Enum.sort(unexpected), ", ")}")
-    end
-
-    Enum.each(@oracle_names, fn oracle ->
-      validate_oracle!(Map.fetch!(oracles, oracle), exchange_id, oracle)
-    end)
-  end
-
-  defp validate_oracle!(%{"grades" => true}, _exchange_id, _oracle), do: :ok
-
-  defp validate_oracle!(%{"grades" => false, "reason" => reason} = declaration, exchange_id, oracle)
-       when is_binary(reason) do
-    if String.trim(reason) == "", do: invalid_oracle!(declaration, exchange_id, oracle), else: :ok
-  end
-
-  defp validate_oracle!(declaration, exchange_id, oracle) do
-    invalid_oracle!(declaration, exchange_id, oracle)
-  end
-
-  @spec invalid_oracle!(term(), String.t(), String.t()) :: no_return()
-  defp invalid_oracle!(declaration, exchange_id, oracle) do
-    gap!(
-      exchange_id,
-      ["oracles", oracle],
-      "expected grades=true or grades=false with a non-empty reason, got #{inspect(declaration)}"
-    )
   end
 
   defp validate_option_quantity!(spec, exchange_id) do

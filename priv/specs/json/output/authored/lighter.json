@@ -2797,15 +2797,6 @@
       }
     }
   },
-  "oracles": {
-    "live_tier1": {
-      "grades": true
-    },
-    "private_real_recordings": {
-      "grades": false,
-      "reason": "Private recordings are captured and manifest-registered for Lighter, but offline byte-replay is deferred until build_exchange! re-points off the compatibility markets caches (task 524); tagged live testnet evidence grades authenticated behavior."
-    }
-  },
   "rate_limits": {
     "buckets": {
       "buckets": [
