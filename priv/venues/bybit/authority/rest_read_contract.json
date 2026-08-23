@@ -55,7 +55,7 @@
       "arguments": [],
       "success": {
         "representation": "parsed",
-        "collection": "list",
+        "collection": "map",
         "module": "Bourse.Greeks",
         "required_fields": [
           "symbol"
@@ -1282,7 +1282,7 @@
       "arguments": [],
       "success": {
         "representation": "parsed",
-        "collection": "single",
+        "collection": "list",
         "module": "Bourse.LeverageTier",
         "required_fields": [
           "symbol",
@@ -1536,9 +1536,8 @@
       "success": {
         "representation": "raw",
         "provider_meaning_keys": [
-          "my",
-          "settlement",
-          "history"
+          "deliveryPrice",
+          "deliveryRpl"
         ]
       },
       "authority_source_ids": [
@@ -1600,8 +1599,13 @@
           "http_method": "GET",
           "path": "v5/market/index-price-kline",
           "authenticated": false,
-          "market_kind": "spot",
-          "options": []
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
         },
         {
           "provider_operation": "publicGetV5MarketKline",
@@ -1621,16 +1625,65 @@
           "http_method": "GET",
           "path": "v5/market/mark-price-kline",
           "authenticated": false,
-          "market_kind": "spot",
-          "options": []
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ]
         },
         {
           "provider_operation": "publicGetV5MarketPremiumIndexPriceKline",
           "http_method": "GET",
           "path": "v5/market/premium-index-price-kline",
           "authenticated": false,
-          "market_kind": "spot",
-          "options": []
+          "market_kind": "linear",
+          "options": [
+            {
+              "name": "category",
+              "strategy": "market_type"
+            }
+          ],
+          "success": {
+            "representation": "positional_rows",
+            "collection": "list",
+            "minimum_length": 5,
+            "fields": [
+              {
+                "name": "timestamp",
+                "index": 0,
+                "type": "integer"
+              },
+              {
+                "name": "open",
+                "index": 1,
+                "type": "number"
+              },
+              {
+                "name": "high",
+                "index": 2,
+                "type": "number"
+              },
+              {
+                "name": "low",
+                "index": 3,
+                "type": "number"
+              },
+              {
+                "name": "close",
+                "index": 4,
+                "type": "number"
+              }
+            ],
+            "invariants": [
+              {
+                "operator": "gte",
+                "left": "high",
+                "right": "low"
+              }
+            ]
+          }
         }
       ],
       "arguments": [
@@ -2499,8 +2552,8 @@
       "success": {
         "representation": "raw",
         "provider_meaning_keys": [
-          "settlement",
-          "history"
+          "deliveryPrice",
+          "deliveryTime"
         ]
       },
       "authority_source_ids": [
@@ -2571,7 +2624,7 @@
       ],
       "arguments": [],
       "success": {
-        "representation": "raw",
+        "representation": "nested_map",
         "provider_meaning_keys": [
           "status"
         ]

@@ -416,6 +416,7 @@ defmodule Bourse.Unified.RequestShape.Bybit do
     clean(%{
       "category" => "option",
       "baseCoin" => params["baseCoin"] || option_base(params["symbol"]),
+      "quoteCoin" => params["quoteCoin"] || option_quote_coin(params["symbol"]),
       "period" => params["period"],
       "startTime" => params["startTime"],
       "endTime" => params["endTime"]
@@ -435,7 +436,8 @@ defmodule Bourse.Unified.RequestShape.Bybit do
               "fetchOpenInterest",
               "fetchLeverage",
               "fetchMarginMode",
-              "fetchPositions"
+              "fetchPositions",
+              "fetchPositionsADLRank"
             ], do: history_request(params, name, exchange)
 
   defp build_general(_params, "fetchConvertCurrencies", _exchange), do: %{"accountType" => "eb_convert_uta"}
@@ -644,6 +646,15 @@ defmodule Bourse.Unified.RequestShape.Bybit do
     if is_nil(params["symbol"]), do: "USDT"
   end
 
+  # `/v5/position/list` — which carries the ADL rank — rejects a query that names
+  # neither `symbol` nor `settleCoin` ("Missing some parameters that must be
+  # filled in, symbol or settleCoin"). The ADL read takes `symbols`, so an unnamed
+  # portfolio read has to state the settle coin.
+  # https://bybit-exchange.github.io/docs/v5/position
+  defp settle_coin(params, "fetchPositionsADLRank") do
+    if is_nil(params["symbol"]) and is_nil(first_symbol(params)), do: "USDT"
+  end
+
   defp settle_coin(_params, _js_name), do: nil
 
   defp convert_quote(params) do
@@ -726,6 +737,21 @@ defmodule Bourse.Unified.RequestShape.Bybit do
   end
 
   defp option_base(_symbol), do: nil
+
+  # Option volatility series are quote-scoped and the venue defaults `quoteCoin`
+  # to USD, so a USDT-quoted option book answers an empty list unless the request
+  # names USDT. `symbol` is already denormalized here, so the native id suffix
+  # (`BTC-25JUN27-90000-P-USDT`) is the reliable signal; USD is the venue default
+  # and stays unstated. https://bybit-exchange.github.io/docs/v5/market/iv
+  defp option_quote_coin(symbol) when is_binary(symbol) do
+    cond do
+      String.ends_with?(symbol, "-USDT") -> "USDT"
+      match?({:ok, %{quote: "USDT"}}, Symbol.parse_extended(symbol)) -> "USDT"
+      true -> nil
+    end
+  end
+
+  defp option_quote_coin(_symbol), do: nil
 
   defp native_option_base(symbol) do
     if String.contains?(symbol, "-") do

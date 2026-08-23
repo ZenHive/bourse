@@ -60,7 +60,7 @@ defmodule Bourse.Spec do
         setPositionMode setMarginMode fetchOHLCV fetchTickers fetchBorrowRateHistory transfer
         fetchOrder fetchOpenOrder fetchClosedOrder fetchOrderClassic fetchOpenOrders
         fetchClosedOrders fetchCanceledOrders fetchCanceledAndClosedOrders fetchOrderTrades
-        fetchTradingFee fetchPosition fetchPositionADLRank fetchMarketLeverageTiers
+        fetchTradingFee fetchPosition fetchPositionADLRank fetchPositionsADLRank fetchMarketLeverageTiers
         fetchDerivativesMarketLeverageTiers fetchLeverageTiers fetchDepositAddress
         fetchDepositAddressesByNetwork fetchFutureMarkets fetchOption fetchOptionChain
         fetchVolatilityHistory fetchAllGreeks fetchPositionsHistory fetchFundingHistory

@@ -2149,7 +2149,7 @@
       "publicGetV5MarketOpenInterest"
     ],
     "has": true,
-    "mapping_complete": false,
+    "mapping_complete": true,
     "verification": "unverified",
     "descriptor": {
       "name": "fetchDerivativesOpenInterestHistory",
@@ -2172,9 +2172,8 @@
           "required": true
         },
         "intervalTime": {
-          "kind": "unresolved",
-          "reason": "identifier_reference",
-          "value": null
+          "kind": "literal",
+          "value": "1h"
         },
         "symbol": {
           "kind": "unresolved",
@@ -3285,6 +3284,24 @@
     "has": true,
     "mapping_complete": true,
     "verification": "unverified",
+    "request": {
+      "defaults": {
+        "category": {
+          "kind": "computed",
+          "operation": "market_category",
+          "required": true
+        },
+        "intervalTime": {
+          "kind": "literal",
+          "value": "1h"
+        },
+        "symbol": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
     "transaction_classification": {
       "on_chain": false,
       "transactional": false
@@ -4182,6 +4199,11 @@
         "return_type": "Promise<ADL[]>"
       },
       "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "_builder": "bybit_v5"
+      }
     },
     "parse": [
       "parseADLRanks"
