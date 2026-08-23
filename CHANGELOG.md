@@ -10,18 +10,31 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 
 - `mix ccxt.verify_rest_read_contracts` is the provider-live REST-read lane.
-  It inventories 427 sandbox-native branches across the eleven runtime venues
+  It inventories 409 sandbox-native branches across the eleven runtime venues
   and hits the venue host for each one. Product surfaces the provisioned
   sandboxes do not host remain on the prod-verification ledger.
 
 ### Changed
 
+- The bybit account-classification helpers (`/v5/account/info`, `/v5/user/query-api`)
+  are carved out of six unified read methods, and the retired
+  `/v5/spot-cross-margin-trade/account` branch is dropped from `fetchBalance` —
+  the REST-read contract denominator moves 427 → 409 with the same real
+  coverage (carve register C-T671a/b).
 - HMAC patterns require an authored `sign_recipe`. The leftover per-pattern
   HMAC executor modules are gone; a call without a recipe raises
   `ArgumentError` instead of falling through to those executors.
 
 ### Fixed
 
+- The provider-live REST-read lane went from 148 red cases to a fully
+  adjudicated surface (task 671): venue-scoped dict-shape and positional-row
+  parse repairs (binance family, okx, alpaca, bybit), the okx conversion
+  identity/direction carve (`clTReqId`, `side`-derived from/to), a hyperliquid
+  closed-orders dedup tie-break that let a same-millisecond "open" row
+  overwrite the terminal "filled" row, adlQuantile contract cases no longer
+  asserting fields the venue never sends, and every genuinely unreachable
+  branch recorded in `docs/prod-verification-ledger.md` instead of hidden.
 - Deribit option positions derive premium notional as
   `abs(contracts) × contract_size × abs(mark_price)` when loaded markets provide
   a positive contract size, and label it with the option settlement currency.

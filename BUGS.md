@@ -71,19 +71,23 @@ roadmap.
 
 ---
 
-## 2026-08-23 — contract lane: seven binance-family cases (and three hyperliquid ones) are green only while live account state exists
+## 2026-08-23 — contract lane: fourteen cases across five venues are green only while live account state exists
 
 **Status:** 🆕 reported (task 671 state-population pass)
 
-**The call:** `mix ccxt.verify_rest_read_contracts --venue binance|binanceusdm|binancecoinm|hyperliquid`.
+**The call:** `mix ccxt.verify_rest_read_contracts` (binance family, hyperliquid, okx, deribit).
 
 **Observed:** `binance:fetchOpenOrder:7`, `binance:fetchOrderList:0`, `binanceusdm:fetchOpenOrder:1`,
 `binanceusdm:fetchOpenOrder:2`, `binanceusdm:fetchPositionADLRank:1`, `binancecoinm:fetchOpenOrder:0`,
 `binancecoinm:fetchOpenOrder:1` — plus hyperliquid `fetchOpenOrders:0`, `fetchPosition:0`,
-`fetchPositions:0`, and okx `fetchPosition:0` — resolve their arguments from live open
-orders / positions. They passed on
-2026-08-23 with hand-created testnet state (resting far-from-market limit orders, minimum
-positions) and go red again the moment that state is cleaned up, which cleanup policy requires.
+`fetchPositions:0`, okx `fetchPosition:0`, and deribit `fetchOrder:0` / `fetchOrderTrades:0` —
+resolve their arguments from live account state (open orders / positions / recent closed
+orders). Deribit is the sharpest instance: a filled round-trip made both cases green, and
+~2.5 h later `fetchClosedOrders` returned zero rows even with `include_old: true` — the venue
+windows filled orders out of its history, so that state cannot even be made durable by hand.
+All fourteen passed on 2026-08-23 with hand-created testnet state (resting far-from-market
+limit orders, minimum positions, filled round-trips) and go red again once that state is
+cleaned up or ages out — cleanup policy requires removing it.
 
 **Expected:** a case that needs account state should own it — the scenario executor
 (`Bourse.Test.RestReadContractScenario`) creating the resting order / minimum position before the
