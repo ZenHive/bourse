@@ -71,6 +71,106 @@ roadmap.
 
 ---
 
+## 2026-08-23 — deribit `fetch_account_facts`: the account-level margin figures are parsed and then dropped — only the two classification flags survive
+
+**Status:** 🆕 reported · **Venue:** deribit (testnet, `sandbox: true`, bourse `0.7.0` from Hex) ·
+**Class:** unfilled unified field — not a venue gap. The venue publishes the numbers in the very
+payload the client already fetches and parses.
+
+**Reporter:** `bourse_trading` (task 4, `Bourse.PortfolioRisk` account-level snapshot layer).
+
+`Bourse.fetch_account_facts/1` returns three facts — `product_access`,
+`account_margin_model`, `position_margin_modes` — plus the raw `info`. Deribit's
+`/private/get_account_summaries` response carries **twelve** margin fields per currency row;
+exactly two of them (`portfolio_margining_enabled`, `margin_model`) reach a normalized fact.
+The margin **figures** are read, discarded, and are recoverable only from `info`.
+
+Observed live, this session (deribit testnet, PM-enabled account):
+
+```elixir
+{:ok, ex} = Bourse.Exchange.new("deribit", credentials: creds, sandbox: true)
+{:ok, facts} = Bourse.fetch_account_facts(ex)
+
+Map.keys(facts)
+#=> [:info, :product_access, :account_margin_model, :position_margin_modes]
+
+# the BTC summary row inside facts.info — every number below is already in hand:
+%{
+  "currency" => "BTC",
+  "initial_margin" => 2.75310915,
+  "maintenance_margin" => 2.20248732,
+  "projected_initial_margin" => 2.75310915,
+  "projected_maintenance_margin" => 2.20248732,
+  "margin_balance" => 19.55537393,
+  "equity" => 19.60656332,
+  "available_funds" => 16.80226477,
+  "portfolio_margining_enabled" => true,   # <- normalized
+  "margin_model" => "cross_pm",            # <- normalized
+  "cross_collateral_enabled" => true
+}
+
+# the full margin-bearing key set on that same row:
+["projected_close_out_margin", "close_out_margin", "portfolio_margining_enabled",
+ "margin_balance", "projected_initial_margin", "total_maintenance_margin_usd",
+ "projected_maintenance_margin", "maintenance_margin", "initial_margin",
+ "total_initial_margin_usd", "margin_model", "total_margin_balance_usd"]
+```
+
+**Expected:** the account-level margin figures readable as normalized facts alongside the two
+classification flags, with the same explicit-unavailability vocabulary the existing facts use
+(`%{status: :observed | :unavailable, provider_fields: [...], value: ...}`), so a venue that
+does not publish a field is distinguishable from one reporting zero.
+
+**No other normalized surface carries them.** Checked live on the same exchange:
+
+```elixir
+Bourse.fetch_margin_balance(ex)  #=> {:error, %Bourse.Error{type: :not_supported, ...}}
+Bourse.fetch_account(ex)         #=> {:error, %Bourse.Error{type: :not_supported, ...}}
+Bourse.fetch_balance(ex)         #=> %Bourse.Balance{free:, used:, total:, debt:} — no margin fields
+```
+
+`%Bourse.Account{}` is `[:id, :type, :code, :info]`; `%Bourse.Balance{}` is
+`free/used/total/debt/timestamp/datetime/info`. `%Bourse.Position{}` does carry
+`initial_margin` / `maintenance_margin`, but those are the **per-position** rows — the
+account-level figure is not their sum under portfolio margining, which is the whole point of
+asking for it.
+
+**Where it stops.** `Bourse.Unified.ReadParse.map_account_facts/2`'s deribit clause builds
+exactly three facts through the private `facts/4` constructor
+(`product_access`, `account_margin_model`, `position_margin_modes`, `info`). There is no slot
+in that shape for a numeric account fact, so the deribit clause has nowhere to put
+`initial_margin` even though it is holding the row it came from. The shape, not the deribit
+mapping, is the constraint.
+
+**Consumer impact.** `bourse_trading`'s `Bourse.PortfolioRisk.Snapshot` carries per-position
+rows only, so a consumer cannot render account margin health — utilisation against
+maintenance, headroom to a projected initial-margin call — from the normalized domain. The
+two workarounds both break something we deliberately built:
+
+1. Reach into `facts.info["result"]["summaries"]` from the domain layer. That re-introduces
+   raw-payload parsing in the consumer, which is exactly what the packaged-surface split
+   was meant to end — the domain repo depends on `{:bourse, "~> 0.7.0"}` from Hex precisely
+   to prove the packaged surface suffices.
+2. Sum the per-position `initial_margin` / `maintenance_margin` rows into an account total.
+   Under `margin_model: "cross_pm"` that number is **wrong by construction** — portfolio
+   margining nets the legs, so the sum overstates the requirement, and a hedged book is where
+   it overstates it worst. A risk surface that reports a fabricated margin requirement is
+   worse than one that reports nothing, so we are not doing it.
+
+The consumer-side task (`bourse_trading` task 4) is filed `blocked` on this and stays blocked;
+it will not work around the boundary. Note for triage: workbench task **602** covered this
+surface and was superseded on 2026-08-19 (admission-rule sweep; also stale, since
+`Bourse.PortfolioRisk` had moved to `bourse_trading`). Its account-margin half was noted onto
+task **648**, but 648 shipped the classification facts only — the figures were never picked up
+by a successor. This entry is that report.
+
+**Doc authority:** https://docs.deribit.com/#private-get_account_summaries — `initial_margin`,
+`maintenance_margin`, `projected_initial_margin`, `projected_maintenance_margin` and
+`margin_balance` are documented per-currency account fields, distinct from the per-position
+margin rows on `/private/get_positions`.
+
+---
+
 ## 2026-08-23 — reference-corpus `static_fixtures` pin unreadable, silently emptied every integration probe's symbol index
 
 **Status:** ✅ fixed in-session (pin removed, rescue made loud) · **Venue:** none — repo-internal
