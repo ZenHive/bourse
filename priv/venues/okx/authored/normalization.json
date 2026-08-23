@@ -143,12 +143,15 @@
         "fromAmount": {
           "coercion": "safeNumber",
           "fallback_keys": [
-            "baseSz"
+            "rfqSz"
           ],
           "key": "fromSz"
         },
         "fromCurrency": {
           "coercion": "safeCurrencyCode",
+          "fallback_keys": [
+            "rfqSzCcy"
+          ],
           "key": "fromCcy"
         },
         "id": {
@@ -163,7 +166,8 @@
         "price": {
           "coercion": "safeNumber",
           "fallback_keys": [
-            "fillPx"
+            "fillPx",
+            "cnvtPx"
           ],
           "key": "px"
         },
@@ -178,9 +182,7 @@
         },
         "toAmount": {
           "coercion": "safeNumber",
-          "fallback_keys": [
-            "quoteSz"
-          ],
+          "fallback_keys": [],
           "key": "toSz"
         },
         "toCurrency": {
@@ -467,7 +469,29 @@
         "timestamp": null
       }
     },
-    "funding_rate_history": null,
+    "funding_rate_history": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "datetime": {
+          "coercion": "iso8601",
+          "format": "ms",
+          "key": "fundingTime"
+        },
+        "fundingRate": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "fundingRate"
+        },
+        "info": null,
+        "symbol": null,
+        "timestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "fundingTime"
+        }
+      }
+    },
     "greeks": {
       "_unresolved_reason": null,
       "extras": [],
@@ -749,6 +773,50 @@
       }
     },
     "margin_mode": null,
+    "margin_modification": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "amount": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "balChg"
+        },
+        "code": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "ccy"
+        },
+        "datetime": {
+          "coercion": "iso8601",
+          "format": "ms",
+          "key": "ts"
+        },
+        "info": null,
+        "marginMode": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "mgnMode"
+        },
+        "status": null,
+        "symbol": {
+          "coercion": "safeSymbol",
+          "format": null,
+          "key": "instId"
+        },
+        "timestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "ts"
+        },
+        "total": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "bal"
+        },
+        "type": null
+      }
+    },
     "market": {
       "_unresolved_reason": null,
       "extras": [
@@ -2132,6 +2200,13 @@
         "key": "data"
       }
     },
+    "funding_rate_history": {
+      "fetchFundingRateHistory": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
     "greeks": {
       "fetchAllGreeks": {
         "default": [],
@@ -2158,6 +2233,18 @@
         "key": "data"
       },
       "fetchLongShortRatioHistory": {
+        "columns": [
+          "ts",
+          "longShortRatio"
+        ],
+        "default": [],
+        "fallback_keys": [],
+        "key": "data",
+        "transform": "positional_rows"
+      }
+    },
+    "margin_modification": {
+      "fetchMarginAdjustmentHistory": {
         "default": [],
         "fallback_keys": [],
         "key": "data"

@@ -2425,7 +2425,7 @@
       "privateGetAccountBillsArchive"
     ],
     "has": true,
-    "mapping_complete": false,
+    "mapping_complete": true,
     "verification": "unverified",
     "descriptor": {
       "async": true,
@@ -2687,7 +2687,7 @@
     },
     "request": {
       "defaults": {
-        "instType": {
+        "instId": {
           "kind": "unresolved",
           "reason": "identifier_reference",
           "value": null
@@ -2696,11 +2696,6 @@
           "kind": "literal",
           "reason": null,
           "value": "cross"
-        },
-        "uly": {
-          "kind": "unresolved",
-          "reason": "identifier_reference",
-          "value": null
         }
       }
     },
@@ -2985,16 +2980,6 @@
     "request": {
       "defaults": {
         "instId": {
-          "kind": "unresolved",
-          "reason": "identifier_reference",
-          "value": null
-        },
-        "instType": {
-          "kind": "unresolved",
-          "reason": "identifier_reference",
-          "value": null
-        },
-        "uly": {
           "kind": "unresolved",
           "reason": "identifier_reference",
           "value": null

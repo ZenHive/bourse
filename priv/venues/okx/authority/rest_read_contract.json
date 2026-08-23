@@ -78,7 +78,7 @@
       "arguments": [],
       "success": {
         "representation": "parsed",
-        "collection": "list",
+        "collection": "map",
         "module": "Bourse.Greeks",
         "required_fields": [
           "symbol"
@@ -436,7 +436,7 @@
       "arguments": [],
       "success": {
         "representation": "parsed",
-        "collection": "single",
+        "collection": "map",
         "module": "Bourse.Currency",
         "required_fields": [
           "code"
@@ -1412,7 +1412,7 @@
           "http_method": "GET",
           "path": "public/mark-price",
           "authenticated": false,
-          "market_kind": "spot",
+          "market_kind": "linear",
           "options": [
             {
               "name": "instType",
@@ -2116,12 +2116,16 @@
           "http_method": "GET",
           "path": "trade/order",
           "authenticated": true,
-          "market_kind": "spot",
+          "market_kind": "linear",
           "options": [
             {
               "name": "instType",
               "strategy": "literal",
-              "value": "SPOT"
+              "value": "SWAP"
+            },
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
             }
           ]
         },
@@ -2130,12 +2134,16 @@
           "http_method": "GET",
           "path": "trade/order-algo",
           "authenticated": true,
-          "market_kind": "spot",
+          "market_kind": "linear",
           "options": [
             {
               "name": "instType",
               "strategy": "literal",
-              "value": "SPOT"
+              "value": "SWAP"
+            },
+            {
+              "name": "symbol",
+              "strategy": "market_symbol"
             }
           ]
         }
@@ -2230,7 +2238,7 @@
           "http_method": "GET",
           "path": "trade/fills-history",
           "authenticated": true,
-          "market_kind": "spot",
+          "market_kind": "linear",
           "options": [
             {
               "name": "limit",
@@ -2240,7 +2248,7 @@
             {
               "name": "instType",
               "strategy": "literal",
-              "value": "SPOT"
+              "value": "SWAP"
             }
           ]
         }
@@ -2282,7 +2290,7 @@
           "http_method": "GET",
           "path": "account/positions",
           "authenticated": true,
-          "market_kind": "spot",
+          "market_kind": "linear",
           "options": [
             {
               "name": "instType",
@@ -2514,6 +2522,11 @@
               "name": "instType",
               "strategy": "literal",
               "value": "OPTION"
+            },
+            {
+              "name": "instFamily",
+              "strategy": "literal",
+              "value": "BTC-USD"
             }
           ]
         }
@@ -2522,8 +2535,7 @@
       "success": {
         "representation": "raw",
         "provider_meaning_keys": [
-          "settlement",
-          "history"
+          "details"
         ]
       },
       "authority_source_ids": [
@@ -2550,7 +2562,7 @@
       ],
       "arguments": [],
       "success": {
-        "representation": "raw",
+        "representation": "nested_map",
         "provider_meaning_keys": [
           "status"
         ]
@@ -2933,8 +2945,7 @@
       "success": {
         "representation": "raw",
         "provider_meaning_keys": [
-          "underlying",
-          "assets"
+          "data"
         ]
       },
       "authority_source_ids": [

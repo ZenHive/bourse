@@ -55,6 +55,14 @@ defmodule Bourse.Unified.RequestShape.OKX do
   # as 160/161 rather than the unified add/reduce vocabulary.
   @margin_sub_types %{"add" => "160", "reduce" => "161"}
 
+  # Order reads whose venue surface splits into a normal and an algo route.
+  @algo_order_read_methods ["fetchOpenOrders", "fetchClosedOrders", "fetchCanceledOrders", "fetchOrder"]
+  @algo_order_read_paths ["trade/orders-algo-pending", "trade/orders-algo-history", "trade/order-algo"]
+
+  # `public/position-tiers` addresses SWAP/FUTURES/OPTION by instFamily; MARGIN
+  # is the only family that keys on instId (or ccy).
+  @instrument_family_position_tier_types ["SWAP", "FUTURES", "OPTION"]
+
   @doc "Builds native OKX parameters for a unified method."
   @spec build(map(), String.t(), Exchange.t()) :: map() | [map()]
   def build(params, js_name, exchange)
@@ -68,6 +76,16 @@ defmodule Bourse.Unified.RequestShape.OKX do
   def build(params, "fetchOpenInterests", %Exchange{} = exchange) when is_map(params),
     do: put_inst_type(params, exchange, "swap")
 
+  # `public/open-interest` keys on instType + the optional instId; the venue has
+  # no `uly` parameter there and rejects an instId-shaped one with 51001.
+  def build(params, "fetchOpenInterest", %Exchange{} = exchange) when is_map(params),
+    do: put_symbol_inst_type(params, exchange)
+
+  # `public/position-tiers` requires instFamily for SWAP/FUTURES/OPTION and
+  # ignores instId there; MARGIN is the only family addressed by instId/ccy.
+  def build(params, "fetchMarketLeverageTiers", %Exchange{} = exchange) when is_map(params),
+    do: build_position_tiers(params, exchange)
+
   def build(params, "fetchTradingFee", %Exchange{} = exchange) when is_map(params),
     do: put_trading_fee_instrument(params, exchange)
 
@@ -80,6 +98,13 @@ defmodule Bourse.Unified.RequestShape.OKX do
     do: build_order_history(params, exchange, "canceled")
 
   def build(params, "fetchOrder", %Exchange{}) when is_map(params), do: put_order_read_id(params)
+
+  # `trade/fills-history` filters by the venue's `ordId`; a unified `id` left
+  # under its own name is ignored and the read answers every recent fill.
+  def build(params, "fetchOrderTrades", %Exchange{}) when is_map(params), do: rename(params, "id", "ordId")
+
+  def build(params, "fetchConvertQuote", %Exchange{} = exchange) when is_map(params),
+    do: build_convert_quote(params, exchange)
 
   def build(params, "transfer", %Exchange{} = exchange) when is_map(params), do: map_transfer_accounts(params, exchange)
 
@@ -215,6 +240,16 @@ defmodule Bourse.Unified.RequestShape.OKX do
   @spec build(map(), String.t(), Exchange.t(), keyword()) :: map() | [map()]
   def build(params, "fetchOpenInterestHistory", %Exchange{}, opts) when is_map(params) and is_list(opts),
     do: build_open_interest_history(params, Keyword.get(opts, :endpoint_path))
+
+  # An algo route reached through `:endpoint_index` carries no unified selector,
+  # so the algo vocabulary (required `ordType`, `state`, `algoId`) never fires and
+  # the venue rejects the read with 51000. The selected path is the selector of
+  # last resort; `stop` is consumed before the wire.
+  def build(params, js_name, %Exchange{} = exchange, opts) when is_map(params) and js_name in @algo_order_read_methods do
+    params
+    |> mark_algo_order_read(Keyword.get(opts, :endpoint_path))
+    |> build(js_name, exchange)
+  end
 
   def build(params, js_name, %Exchange{} = exchange, _opts) when is_map(params), do: build(params, js_name, exchange)
 
@@ -373,6 +408,10 @@ defmodule Bourse.Unified.RequestShape.OKX do
     |> put_order_read_state(normal_state)
     |> put_order_read_ord_type()
   end
+
+  defp mark_algo_order_read(params, path) when path in @algo_order_read_paths, do: Map.put_new(params, "stop", true)
+
+  defp mark_algo_order_read(params, _path), do: params
 
   defp put_order_read_state(params, normal_state) do
     state = if algo_order_read?(params), do: algo_order_read_state(normal_state), else: normal_state
@@ -1089,6 +1128,63 @@ defmodule Bourse.Unified.RequestShape.OKX do
     put_inst_type(params, exchange, market_type(params) || default_type(exchange))
   end
 
+  defp build_position_tiers(params, exchange) do
+    params
+    |> put_symbol_inst_type(exchange)
+    |> put_position_tier_instrument()
+  end
+
+  defp put_position_tier_instrument(%{"instType" => type} = params) when type in @instrument_family_position_tier_types do
+    case inst_family(params["instFamily"] || params["instId"]) do
+      nil -> Map.delete(params, "uly")
+      family -> params |> Map.put("instFamily", family) |> Map.drop(["instId", "uly"])
+    end
+  end
+
+  defp put_position_tier_instrument(params), do: Map.delete(params, "uly")
+
+  # `asset/convert/estimate-quote` speaks the venue's own pair vocabulary:
+  # baseCcy/quoteCcy name the listed pair and `side` is relative to baseCcy,
+  # while the unified call names the currency being spent. The venue's own spot
+  # catalog resolves which of the two codes is the base.
+  defp build_convert_quote(params, exchange) do
+    from = params["from_code"] || params["fromCcy"]
+    to = params["to_code"] || params["toCcy"]
+    {base, quote_ccy} = convert_pair(from, to, exchange)
+
+    params
+    |> Map.drop(["from_code", "to_code", "amount"])
+    |> Map.put("baseCcy", base)
+    |> Map.put("quoteCcy", quote_ccy)
+    |> Map.put("side", if(from == base, do: "sell", else: "buy"))
+    |> put_unless_nil("rfqSz", stringify_amount(params["amount"]))
+    |> put_unless_nil("rfqSzCcy", from)
+  end
+
+  # Fall back to spending the quote currency (`buy`) when the catalog carries no
+  # pair for the two codes; the venue then names the missing pair itself (58009).
+  defp convert_pair(from, to, %Exchange{} = exchange) when is_binary(from) and is_binary(to) do
+    exchange
+    |> Exchange.markets()
+    |> List.wrap()
+    |> Enum.find_value({to, from}, fn market ->
+      base = market_field(market, :base)
+      quote_ccy = market_field(market, :quote)
+
+      if market_field(market, :spot) == true and Enum.sort([base, quote_ccy]) == Enum.sort([from, to]),
+        do: {base, quote_ccy}
+    end)
+  end
+
+  defp convert_pair(from, to, _exchange), do: {to, from}
+
+  defp market_field(%{} = market, key), do: Map.get(market, key)
+  defp market_field(_market, _key), do: nil
+
+  defp stringify_amount(nil), do: nil
+  defp stringify_amount(amount) when is_binary(amount), do: amount
+  defp stringify_amount(amount), do: to_string(amount)
+
   # `account/trade-fee` additionally keys on the instrument id only for
   # SPOT/MARGIN; a derivative must be addressed by its family, and passing instId
   # there is rejected with 50016 "instId and instType don't match" (verified live
@@ -1392,6 +1488,9 @@ defmodule Bourse.Unified.RequestShape.OKX do
       option_family_settle(value) == @option_underlying_settle ->
         value
 
+      option_instrument_settle(value) == @option_underlying_settle ->
+        inst_family(value)
+
       true ->
         raise Error.invalid_parameters(
                 message:
@@ -1411,6 +1510,15 @@ defmodule Bourse.Unified.RequestShape.OKX do
   defp option_family_settle(value) do
     case String.split(value, "-", parts: 3) do
       [base, settle] when base != "" and settle != "" -> settle
+      _ -> nil
+    end
+  end
+
+  # A full option instrument id (BTC-USD-260824-58000-C) names its family in the
+  # first two segments; the family-scoped reads key on that, never on one strike.
+  defp option_instrument_settle(value) do
+    case String.split(value, "-") do
+      [_base, settle, _expiry, _strike, side] when side in ["C", "P"] -> settle
       _ -> nil
     end
   end
