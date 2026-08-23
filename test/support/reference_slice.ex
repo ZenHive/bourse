@@ -92,7 +92,7 @@ defmodule Bourse.ReferenceSlice do
   end
 
   defp validate_pins!(pins) do
-    Enum.each(["source", "static_fixtures"], &validate_pin!(pins, &1))
+    Enum.each(["source"], &validate_pin!(pins, &1))
   end
 
   defp validate_pin!(pins, key) do

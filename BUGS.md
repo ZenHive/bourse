@@ -71,6 +71,59 @@ roadmap.
 
 ---
 
+## 2026-08-23 — reference-corpus `static_fixtures` pin unreadable, silently emptied every integration probe's symbol index
+
+**Status:** ✅ fixed in-session (pin removed, rescue made loud) · **Venue:** none — repo-internal
+test infrastructure defect, not a venue gap · **Class:** false-green test scaffolding.
+
+**Reporter:** self-found, not consumer-reported (repo-internal integration-test-support defect
+uncovered while auditing the reference-slice manifest; filed for the durable record per this
+repo's `CLAUDE.md` security/data-loss-and-self-found-infra-defect exception).
+
+`priv/specs/json/reference_corpus.json` carried a second manifest pin, `pins.static_fixtures`,
+pointing at `ccxt/ts/src/test/static/VINTAGES.md` under `priv/specs/json/ccxt/`. That whole tree
+is gitignored (`.gitignore` `/priv/specs/json/ccxt/`) and, aside from the one force-tracked
+`ccxt/js/VERSION` file (the `source` pin's target, confirmed present and SHA-256-matching), is
+absent from every checkout. `Bourse.ReferenceSlice.load_manifest!/0` validated **both** pins
+(`test/support/reference_slice.ex:95`, `Enum.each(["source", "static_fixtures"], &validate_pin!/2)`),
+so `load_manifest!/0` — and therefore `spec_path/1` — raised `could not read file
+.../VINTAGES.md` on every single invocation, in every checkout, unconditionally.
+
+That raise never surfaced: `test/support/test_generator/symbol_resolver.ex:97-102` wrapped the
+whole decode pipeline in a bare `rescue _ -> %{}` (with a `reach:disable-next-line bare_rescue`
+suppressing the lint that would have flagged it), so `SymbolResolver.markets/1` silently
+degraded to an empty map on the raise instead of propagating it. Every caller of
+`pick_symbol/1` / `pick_funding_symbol/1` — i.e. every unified-integration probe that needs a
+live test symbol — saw `map_size(markets) == 0` and returned `nil`, which every call site reads
+as "this exchange has no markets, skip emission." The suite reported green throughout: skipped
+emission looks identical to legitimate emptiness, so no test failed and no gap was visible in
+any run's summary.
+
+**Repro (pre-fix):**
+
+```elixir
+Bourse.ReferenceSlice.spec_path("binance")
+# raised: could not read file .../priv/specs/json/ccxt/ts/src/test/static/VINTAGES.md
+
+Bourse.Test.Generator.SymbolResolver.markets("binance")
+# => %{}   (map_size 0 — should have been 4431 live binance markets)
+```
+
+> **Update 2026-08-23 — fixed in-session.** Removed the `static_fixtures` pin object from
+> `reference_corpus.json` and dropped it from `ReferenceSlice.validate_pins!/1`'s validation
+> list (the `source` pin, whose target `ccxt/js/VERSION` is genuinely tracked and
+> hash-verified, is untouched and still enforced). Removed the bare `rescue _ -> %{}` from
+> `SymbolResolver.markets/1` entirely — a decode failure now raises instead of degrading, and
+> the `_ -> %{}` case fallback for a missing `markets.symbols_index` key was changed to an
+> explicit raise naming the exchange id and spec path, since an empty symbol index was never a
+> valid answer for a spec that decoded successfully. Verified live:
+> `SymbolResolver.markets("binance")` now returns a map of size 4431 (was 0). `mix compile
+> --warnings-as-errors` clean; no test file directly exercises `ReferenceSlice` or
+> `SymbolResolver` (only an unrelated allowlist-pattern reference in
+> `ccxt_authority_language_test.exs`), so there is no test-suite delta beyond this fix.
+
+---
+
 ## 2026-08-22 — deribit option positions: `notional` / `notional_currency` left nil although every input is present
 
 **Status:** ✅ fixed on `main` after 0.7.0 by task **664** (`74ca5d2`) · **Venue:** deribit (testnet, `sandbox: true`) ·

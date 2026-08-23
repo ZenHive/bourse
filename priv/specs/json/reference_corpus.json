@@ -11,10 +11,6 @@
     "source": {
       "path": "ccxt/js/VERSION",
       "sha256": "c956fa6729e0f4bae6e84d11df89c4a5abc1a9dd72a998d81bc72e2ba4000a05"
-    },
-    "static_fixtures": {
-      "path": "ccxt/ts/src/test/static/VINTAGES.md",
-      "sha256": "b085e58464d516dbd5c31ce0e0f3f53642a0a071dce6dfd30bb4b5259e257cf5"
     }
   },
   "exchange_count": 16,

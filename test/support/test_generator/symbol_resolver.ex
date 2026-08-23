@@ -86,19 +86,15 @@ defmodule Bourse.Test.Generator.SymbolResolver do
   @doc "Returns the test-only frozen market index for an exchange."
   @spec markets(binary()) :: map()
   def markets(exchange_id) when is_binary(exchange_id) do
-    exchange_id
-    |> ReferenceSlice.spec_path()
+    path = ReferenceSlice.spec_path(exchange_id)
+
+    path
     |> Spec.decode_file!()
     |> get_in(["markets", "symbols_index"])
     |> case do
       m when is_map(m) -> m
-      _ -> %{}
+      _ -> raise "reference spec #{inspect(exchange_id)} at #{path} has no markets.symbols_index"
     end
-  rescue
-    # A spec-file decode failure (missing file, malformed JSON) degrades to an
-    # empty market index rather than crashing symbol resolution.
-    # reach:disable-next-line bare_rescue
-    _ -> %{}
   end
 
   @doc """
