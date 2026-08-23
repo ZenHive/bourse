@@ -45,11 +45,11 @@
       "arguments": [],
       "success": {
         "representation": "parsed",
-        "collection": "single",
+        "collection": "map",
         "module": "Bourse.ADLRank",
         "required_fields": [
           "symbol",
-          "rank"
+          "rating"
         ],
         "any_fields": [
           "percentage",
@@ -63,14 +63,6 @@
     {
       "method": "fetchAccountPositions",
       "branches": [
-        {
-          "provider_operation": "fapiPrivateGetLeverageBracket",
-          "http_method": "GET",
-          "path": "leverageBracket",
-          "authenticated": true,
-          "market_kind": "linear",
-          "options": []
-        },
         {
           "provider_operation": "fapiPrivateV2GetAccount",
           "http_method": "GET",
@@ -419,15 +411,13 @@
       "arguments": [],
       "success": {
         "representation": "parsed",
-        "collection": "single",
+        "collection": "map",
         "module": "Bourse.FundingRate",
         "required_fields": [
           "symbol"
         ],
         "any_fields": [
-          "fundingRate",
-          "nextFundingRate",
-          "timestamp"
+          "interval"
         ]
       },
       "authority_source_ids": [
@@ -625,7 +615,7 @@
       "arguments": [],
       "success": {
         "representation": "parsed",
-        "collection": "single",
+        "collection": "list",
         "module": "Bourse.LeverageTier",
         "required_fields": [
           "symbol",
@@ -644,14 +634,6 @@
     {
       "method": "fetchLeverages",
       "branches": [
-        {
-          "provider_operation": "fapiPrivateGetLeverageBracket",
-          "http_method": "GET",
-          "path": "leverageBracket",
-          "authenticated": true,
-          "market_kind": "linear",
-          "options": []
-        },
         {
           "provider_operation": "fapiPrivateGetSymbolConfig",
           "http_method": "GET",
@@ -811,8 +793,8 @@
           "bid",
           "ask",
           "close",
-          "mark",
-          "index",
+          "mark_price",
+          "index_price",
           "timestamp"
         ]
       },
@@ -835,7 +817,7 @@
       "arguments": [],
       "success": {
         "representation": "parsed",
-        "collection": "single",
+        "collection": "map",
         "module": "Bourse.Ticker",
         "required_fields": [
           "symbol"
@@ -845,8 +827,8 @@
           "bid",
           "ask",
           "close",
-          "mark",
-          "index",
+          "mark_price",
+          "index_price",
           "timestamp"
         ]
       },
@@ -1144,7 +1126,7 @@
         {
           "name": "id",
           "strategy": "resource",
-          "source_method": "fetchOrders",
+          "source_method": "fetchOpenOrders",
           "field": "id",
           "collection": false
         }
@@ -1261,7 +1243,7 @@
         {
           "name": "id",
           "strategy": "resource",
-          "source_method": "fetchOrders",
+          "source_method": "fetchOpenOrders",
           "field": "id",
           "collection": false
         }
@@ -1353,7 +1335,7 @@
         {
           "name": "id",
           "strategy": "resource",
-          "source_method": "fetchOrders",
+          "source_method": "fetchOpenOrders",
           "field": "id",
           "collection": false
         }
@@ -1502,14 +1484,6 @@
       "method": "fetchPositions",
       "branches": [
         {
-          "provider_operation": "fapiPrivateGetLeverageBracket",
-          "http_method": "GET",
-          "path": "leverageBracket",
-          "authenticated": true,
-          "market_kind": "linear",
-          "options": []
-        },
-        {
           "provider_operation": "fapiPrivateV2GetAccount",
           "http_method": "GET",
           "path": "account",
@@ -1595,14 +1569,6 @@
     {
       "method": "fetchPositionsRisk",
       "branches": [
-        {
-          "provider_operation": "fapiPrivateGetLeverageBracket",
-          "http_method": "GET",
-          "path": "leverageBracket",
-          "authenticated": true,
-          "market_kind": "linear",
-          "options": []
-        },
         {
           "provider_operation": "fapiPrivateV2GetPositionRisk",
           "http_method": "GET",

@@ -8,7 +8,7 @@ defmodule Bourse.RestReadContractInventoryTest do
     "alpaca" => 16,
     "binance" => 26,
     "binancecoinm" => 32,
-    "binanceusdm" => 65,
+    "binanceusdm" => 61,
     "bybit" => 91,
     "coinbaseexchange" => 3,
     "deribit" => 41,
@@ -27,7 +27,7 @@ defmodule Bourse.RestReadContractInventoryTest do
       end)
 
     assert actual_counts == @expected_case_counts
-    assert RestReadContracts.denominator() == 426
+    assert RestReadContracts.denominator() == 422
   end
 
   test "scalar time contracts assert current milliseconds without a module" do

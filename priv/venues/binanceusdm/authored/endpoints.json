@@ -630,17 +630,13 @@
   "fetchAccountPositions": {
     "unified": [
       "dapiPrivateGetAccount",
-      "dapiPrivateV2GetLeverageBracket",
-      "fapiPrivateGetLeverageBracket",
       "fapiPrivateV2GetAccount",
       "fapiPrivateV3GetAccount",
       "papiGetCmAccount",
-      "papiGetCmLeverageBracket",
-      "papiGetUmLeverageBracket",
       "papiV2GetUmAccount"
     ],
     "has": true,
-    "mapping_complete": false,
+    "mapping_complete": true,
     "verification": "unverified",
     "descriptor": {
       "$ref": "binance_family#fetchAccountPositions"
@@ -1660,13 +1656,9 @@
   "fetchLeverages": {
     "unified": [
       "dapiPrivateGetAccount",
-      "dapiPrivateV2GetLeverageBracket",
-      "fapiPrivateGetLeverageBracket",
       "fapiPrivateGetSymbolConfig",
       "papiGetCmAccount",
-      "papiGetCmLeverageBracket",
-      "papiGetUmAccount",
-      "papiGetUmLeverageBracket"
+      "papiGetUmAccount"
     ],
     "has": true,
     "mapping_complete": true,
@@ -2674,17 +2666,13 @@
     "unified": [
       "dapiPrivateGetAccount",
       "dapiPrivateGetPositionRisk",
-      "dapiPrivateV2GetLeverageBracket",
       "eapiPrivateGetPosition",
-      "fapiPrivateGetLeverageBracket",
       "fapiPrivateV2GetAccount",
       "fapiPrivateV2GetPositionRisk",
       "fapiPrivateV3GetAccount",
       "fapiPrivateV3GetPositionRisk",
       "papiGetCmAccount",
-      "papiGetCmLeverageBracket",
       "papiGetCmPositionRisk",
-      "papiGetUmLeverageBracket",
       "papiGetUmPositionRisk",
       "papiV2GetUmAccount"
     ],
@@ -2753,17 +2741,13 @@
   "fetchPositionsRisk": {
     "unified": [
       "dapiPrivateGetPositionRisk",
-      "dapiPrivateV2GetLeverageBracket",
-      "fapiPrivateGetLeverageBracket",
       "fapiPrivateV2GetPositionRisk",
       "fapiPrivateV3GetPositionRisk",
-      "papiGetCmLeverageBracket",
       "papiGetCmPositionRisk",
-      "papiGetUmLeverageBracket",
       "papiGetUmPositionRisk"
     ],
     "has": true,
-    "mapping_complete": false,
+    "mapping_complete": true,
     "verification": "unverified",
     "descriptor": {
       "$ref": "binance_family#fetchPositionsRisk"
