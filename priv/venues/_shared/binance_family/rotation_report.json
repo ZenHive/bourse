@@ -30,17 +30,17 @@
   "family_before_bytes": 2163905,
   "hash_encoding": "sha256 of key-sorted Jason-canonical JSON of the loaded facet-major map",
   "hashes": {
-    "alpaca": "2f2f5109806db2970a0d887b9d72e4cce5f0512fbf0ba4d284f93bf7e864d906",
-    "binance": "56c71f6d9bdc7c04e293c82f941c6de535106c2377ce73cadf6ed95b3cc12a43",
-    "binancecoinm": "f55818ec2860349779d03ee886dbee42a81da70b78861fb8ebc16034ee24cfab",
-    "binanceusdm": "b811f0f25d11c7d169ad2d07d1b1d2d8b4a759da7a680d5d43c61ac0b4d9fb11",
-    "bybit": "1ffa026d093952f9e2dad21a90a99dc942d903c7e78c656368f7d86aad449052",
+    "alpaca": "ab278d55241603e7b5555070f6d297acd2f117ff18620a964b87303901264ceb",
+    "binance": "398a346dab53ef4ce07c5a63822b83955f86308678d45f8e0d8273d4310a1c61",
+    "binancecoinm": "bf9f9c0ce36d55f9aa5f305b672e1d3def981d24e04198958720fca094385ea8",
+    "binanceusdm": "1bb577e43b19e40b3d5600adca7279c60c326d987a1aa052a273f5a9d086cdc9",
+    "bybit": "803c6406cbc8c6829c13b819a2f36aaebb6b46431ef8f65ace1fc2196f3e7451",
     "coinbaseexchange": "55292a5cef5670fbeccbbe2285142258430310a76a64d6bdc2fd6036d00c68c1",
-    "deribit": "6d64641acb40b51fd151e0a67b0b1f8fd7183f1bd545d5112d3f9613d12e79d8",
-    "derive": "5b24ea100a6b593e2da5275c2ec9846d00a2453af0afd65438d44b7e81fc6a35",
-    "hyperliquid": "e17cea2d48de095d72e72d68143bcba3c138f048dc196fbe25b1e19dc0978aa0",
+    "deribit": "bc1cec4a0396f0b934c9e7bb6c2842719630bb722ee3c1d2a90adc8ffc8e6be5",
+    "derive": "7105e8dcdbf4e81d250b640d9b067604d0978cb9a0479e28c69cf033f0bebd00",
+    "hyperliquid": "2f803d326296a2af169af03cfadc37015f10006f3dc06ef89c51576756d8f1bd",
     "lighter": "d0c68427167a78f8df140331d7cab5b28804159f29dc0892df2276d39a13aa92",
-    "okx": "7d6cb53b462091a5fa30df94bca696869ab410b06a7b82e4a5e2dbbaca07df9d"
+    "okx": "35df55a18ba9f7ae5f1993b08e548646678a76a1b24afca13b473b605fa1c06a"
   },
   "shared_descriptor_keys": 57,
   "shared_descriptors_bytes": 63362

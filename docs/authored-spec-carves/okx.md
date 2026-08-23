@@ -122,6 +122,10 @@ provider-specific funding-account values (amended by Task 601).**
   the venue ignores, which is compatibility-breaking in the direction that matters (lookups
   silently return the wrong row set). DIVERGE is deliberate.
 
+<!-- carve-evidence-status
+{"carve_id":"C-T671c","date":"2026-08-23","semantic_source":{"kind":"provider_owned","reference":"OKX v5 asset convert history contract, live-probed clTReqId/tradeId filter behaviour"},"observed_evidence":"international demo host, 20-USDT USDT->BTC conversion, 2026-08-23","compatibility_reference":null,"resolved_tier":null,"known_gap_reason":null}
+-->
+
 **C-T671d — Conversion direction is `side` against `baseCcy`, never `fromCcy`/`toCcy`. Outcome: DIVERGE (task 671).**
 
 - *Exchange semantics:* the convert surfaces (`estimate-quote`, `convert/trade`,
@@ -132,3 +136,26 @@ provider-specific funding-account values (amended by Task 601).**
 - *Our carve:* the parse layer derives `_bourse_from/to_currency|amount` from `side` +
   `baseCcy`/`quoteCcy` + `fillBaseSz`/`fillQuoteSz`; an unknown `side` leaves the fields nil
   rather than guessing.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T671d","date":"2026-08-23","semantic_source":{"kind":"provider_owned","reference":"OKX v5 convert estimate-quote / trade / history contracts"},"observed_evidence":"side buy debited fillQuoteSz USDT and credited fillBaseSz BTC on the international demo host, 2026-08-23","compatibility_reference":null,"resolved_tier":null,"known_gap_reason":null}
+-->
+
+## 2026-08-23 — funding-rate-history unit (Task 671)
+**C-T671f — `public/funding-rate-history` rows carry the same decimal funding fraction as the
+live funding-rate surface. Outcome: CONFIRM provider arithmetic (task 671).**
+
+- *Exchange semantics:* OKX publishes `fundingRate` and `realizedRate` on
+  `GET /api/v5/public/funding-rate-history` in the same decimal form its funding FAQ multiplies
+  against position value; the history rows are the settled values of the live rate.
+  [Funding rate history](https://www.okx.com/docs-v5/en/#public-data-rest-api-get-funding-rate-history)
+  [Funding FAQ](https://www.okx.com/en-us/help/funding-fees-for-perpetual-contracts-faq)
+- *Our carve:* `funding_rate_history.field_map.fundingRate` passes the provider value through
+  unscaled (`safeNumber`, no format), matching the fraction contract the funding_rate slots
+  already declare.
+
+<!-- rate-unit path="normalization.field_maps.funding_rate_history.field_map.fundingRate" unit="fraction" --> The settled history rate is the same decimal fraction as the live funding rate. [Funding rate history](https://www.okx.com/docs-v5/en/#public-data-rest-api-get-funding-rate-history)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T671f","date":"2026-08-23","semantic_source":{"kind":"provider_owned","reference":"OKX v5 funding-rate-history contract + funding FAQ arithmetic"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":null,"known_gap_reason":null}
+-->

@@ -658,7 +658,9 @@ defmodule Bourse.ExchangeTest do
 
       deribit = Exchange.new!("deribit")
       assert Exchange.venue_support(deribit, "fetchLiquidations") == "emulated"
-      refute Exchange.mapping_complete?(deribit, "fetchLiquidations")
+      # task 671 authored the liquidation parse slice, so the emulated method
+      # now carries a complete mapping while staying provider-emulated
+      assert Exchange.mapping_complete?(deribit, "fetchLiquidations")
       assert Exchange.has?(deribit, "fetchLiquidations")
       refute Exchange.has?(deribit, "fetchCurrenciesWs")
     end

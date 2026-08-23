@@ -158,3 +158,22 @@ unified `type` field when no deliberate alias exists (amended by Task 601).**
 <!-- carve-evidence-status
 {"carve_id":"C-T598d","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid WebSocket subscriptions WsUserNonFundingLedgerUpdates / WsLedgerUpdate union"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Venue-native literals deliberately pass through the unified type field; no account can summon every ledger event on demand"}
 -->
+
+## 2026-08-23 — funding-history rate unit (Task 671)
+**C-T671e — The account funding-history row's `delta.fundingRate` is the venue's decimal
+funding fraction. Outcome: CONFIRM provider arithmetic (task 671).**
+
+- *Exchange semantics:* `info:userFunding` deltas carry `usdc` (the cash payment), `szi`, and
+  `fundingRate`; Hyperliquid defines the payment as position size × oracle price × funding
+  rate, so the row's rate is the same decimal fraction its funding formula multiplies.
+  [Funding](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/funding)
+  [Info endpoint](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint#retrieve-a-users-funding-history)
+- *Our carve:* `funding_history.field_map.rate` passes `delta.fundingRate` through unscaled
+  (`safeNumber`, no format), matching the fraction contract the funding-rate slots already
+  declare.
+
+<!-- rate-unit path="normalization.field_maps.funding_history.field_map.rate" unit="fraction" --> The `userFunding` row's `fundingRate` is the same decimal rate the funding formula multiplies. [Funding](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/funding)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T671e","date":"2026-08-23","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid funding docs + info-endpoint userFunding contract"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":null,"known_gap_reason":"A populated userFunding row needs a position held across an hourly funding boundary (see the task-568 ledger entry)"}
+-->
