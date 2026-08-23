@@ -22803,3 +22803,28 @@ started_at = "2026-08-23"
 scored_at = "2026-08-23"
 done_at = "2026-08-23"
 shipped_in = "01347bd"
+
+[[task]]
+id = "673"
+phase = 16
+bundle = "polish"
+status = "pending"
+title = "Rename the mix ccxt.* task namespace to mix bourse.* — CCXT is a reference, not the project"
+scores = { d = 3, b = 5, u = 5 }
+depends_on = [671]
+acceptance_criteria = ["No Mix task under the ccxt. namespace remains: git grep -l 'Mix.Tasks.Ccxt' returns nothing, and mix help lists the same task set under bourse.* with shortdocs intact", '''All command references updated: mix.exs aliases, CLAUDE.md, test/README.md, test/live/README.md, docs/, priv/venues/README.md; git grep 'mix ccxt\.' over the tree returns only deliberate historical records (BUGS.md, roadmap history, carve registers)''', "mix bourse.claude_check and mix bourse.agents_md --check pass on the delivered tree with AGENTS.md regenerated", "mix check.dispatch on the delivered tree produces the same outcome set as on the base commit — the rename introduces no new failure and drops no check", "Task module logic is unchanged apart from names: the diff for lib/mix/tasks/ shows renames plus name-string edits only"]
+out_of_scope = ["Renaming or rewording CCXT-as-reference content (test/reference_slice/, ccxt_authority_language_test and its allowlist, docs/authored-spec-carves/)", "Changing what any task does, its flags, output format or gate semantics", "The harness project registry (operator-side, verified by the orchestrator at landing)"]
+touches = ["lib/mix/tasks/", "test/mix/", "mix.exs", "CLAUDE.md", "AGENTS.md", "test/README.md", "test/live/README.md", "docs/", "priv/venues/README.md"]
+assignee = "grok"
+model = "grok-4.6"
+body = """
+The repo's own doctrine demotes CCXT to disposable reference material, yet every Mix task still carries the ccxt. prefix (ccxt.verify_rest_read_contracts, ccxt.claude_check, ccxt.agents_md, ...). That naming steers every reader back toward CCXT-as-identity. Rename the whole namespace to bourse.* in one cut, no deprecation shims: rename the task modules under lib/mix/tasks/ (Mix.Tasks.Ccxt.* -> Mix.Tasks.Bourse.*, file names included), and update every reference — mix.exs aliases (check.dispatch, ci, precommit chains), CLAUDE.md incl. the Toolchain section, test/README.md, test/live/README.md, docs/, priv/venues/README.md, and any test that shells or names a ccxt.* task. Behavior must not change: logic byte-identical apart from module/task names and doc strings naming the command.
+
+This deliberately does NOT touch legitimate CCXT-as-reference language (test/reference_slice/, the ccxt_authority_language test and its allowlist, carve registers, historical BUGS.md/roadmap entries).
+
+Routing trigger: repo-wide check-infrastructure rename across ~55 files including the gates themselves. depends_on 671 because the reviewer's gate (mix check.dispatch) must be green on the base tree before a rename of that gate can be honestly graded.
+
+Note for the orchestrator at landing: verify the harness project registry check_command for bourse still resolves (it names mix check.dispatch, an alias — expected unaffected), and confirm no ~/.claude hook or marketplace script shells a mix ccxt.* task by name.
+"""
+created_at = "2026-08-23"
+scored_at = "2026-08-23"
