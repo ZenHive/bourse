@@ -30543,7 +30543,7 @@
       "id": "672",
       "phase": 16,
       "bundle": "authored_specs",
-      "status": "in_progress",
+      "status": "pending",
       "title": "Rotate the authored venue specs endpoint-major on disk so one endpoint diffs against one venue-doc page",
       "scores": {
         "d": 6,
