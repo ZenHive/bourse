@@ -126,6 +126,12 @@
             {
               "name": "auth_deadline",
               "strategy": "auth_deadline"
+            },
+            {
+              "name": "l1_address",
+              "strategy": "resource",
+              "source_method": "fetchBalance",
+              "field": "l1_address"
             }
           ]
         }

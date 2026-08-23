@@ -192,6 +192,7 @@ defmodule Bourse.Test.RestReadContractScenario do
     "currency" => :currency,
     "instFamily" => :instFamily,
     "instType" => :instType,
+    "l1_address" => :l1_address,
     "limit" => :limit,
     "loc" => :loc,
     "pair" => :pair,
@@ -224,6 +225,12 @@ defmodule Bourse.Test.RestReadContractScenario do
 
   defp option_value!(%{"strategy" => "current_time_ms"}, _contract_case, _context), do: System.system_time(:millisecond)
   defp option_value!(%{"strategy" => "literal", "value" => value}, _contract_case, _context), do: value
+
+  # Per-credential values the venue publishes about the live account (e.g.
+  # lighter's l1_address) resolve through the same live resource machinery
+  # the argument strategies use — never through an operator-specific literal.
+  defp option_value!(%{"strategy" => "resource"} = option, contract_case, context),
+    do: resource_value!(option, contract_case, context)
 
   defp maybe_put_resolved_symbol(options, %{"symbol" => symbol}), do: Keyword.put_new(options, :symbol, symbol)
   defp maybe_put_resolved_symbol(options, _resolved), do: options
@@ -293,6 +300,8 @@ defmodule Bourse.Test.RestReadContractScenario do
     end)
   end
 
+  defp resource_option_atom("account_index"), do: :account_index
+  defp resource_option_atom("auth_deadline"), do: :auth_deadline
   defp resource_option_atom("subaccount_id"), do: :subaccount_id
   defp resource_option_atom("category"), do: :category
   defp resource_option_atom("currency"), do: :currency
@@ -303,6 +312,13 @@ defmodule Bourse.Test.RestReadContractScenario do
     do: payload_rows!(payload, contract_case, source)
 
   defp successful_rows!({:ok, rows}, _contract_case, _source) when is_list(rows), do: rows
+
+  # A parsed struct's provider payload rides on :info; account-level fields
+  # (e.g. lighter's l1_address) live in those raw rows, not on the struct.
+  defp successful_rows!({:ok, %_{info: info} = struct}, _contract_case, _source) when is_map(info) or is_list(info) do
+    (struct |> Map.from_struct() |> Map.values()) ++ find_first_collection(info)
+  end
+
   defp successful_rows!({:ok, rows}, _contract_case, _source) when is_map(rows), do: Map.values(rows)
 
   defp successful_rows!({:error, reason}, contract_case, source),
