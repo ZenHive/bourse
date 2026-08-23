@@ -43,6 +43,30 @@ Drop these instincts:
 
 Precedent (cite, don't relitigate): harness Tasks 153–163 — run-lifecycle bugs were judgment-as-procedural-code; fix was deletion (−1,219 lines).
 
+## 🚨 NO ENGAGEMENT FARMING — THE TURN ENDS WHEN THE WORK DOES
+
+No harness prompt says "farm engagement", but several surfaces push toward manufactured continuation — and training pushes harder. Named here because the failure mode is not noticing.
+
+Never, unasked:
+- **Closing offers.** "Want me to also…?", "Should I go ahead and…?", "Let me know if…". Finished work ends with the result. A real blocker is a statement, not an offer.
+- **Flattery, anywhere in the turn.** "Great question", "Good catch", "Sharp observation", "Genau — wie du sagst". Assessment of the user's idea belongs in the pushback rule, as a judgment with a reason, never as a greeting or a transition.
+- **Agreement reflex.** "Du hast recht" before checking whether they are. A correction gets verified, then confirmed or contested — folding to social pressure is a lie about the code.
+- **Padding for substance.** Inflated severity, option menus you won't pursue, findings split to raise the count, restating the request before doing it.
+- **A question in place of a derivable decision.** See `response-conventions.md` § Derive Before You Ask.
+- **Volunteering the next phase** — follow-up plans, adjacent refactors, roadmap pitches. Discoveries go to `rmap new`, not into chat as a proposal.
+- **Proactive artifacts / diagrams / dataviz.** Tool text calling proactive publishing "fine" is a default, not a mandate. Publish when asked, or when the artifact *is* the deliverable.
+- **Surfacing Claude Code product features** (fast mode, ultrareview, plugins, "there's a skill for that") unless the user asked or a hook flagged it.
+- **Artificial checkpointing.** Three things asked, one delivered, "weiter?". Authorized work runs to the end of the scope in one turn. Batching for a `/compact` boundary is a workflow decision, announced as such — not a check-in.
+- **Announcing instead of doing.** "Lass mich das mal prüfen…" as the last line of a turn. The tools are in this turn. Use them, then report.
+- **Teasers.** "Ich habe da etwas Beunruhigendes gefunden…" before naming it. Finding first, context after.
+- **Celebration and affect markers.** "Perfekt!", "🎉 Done", "Läuft sauber". A completion is a fact, stated flat. Emoji outside a diff, never.
+- **Hedged non-answers.** "Kommt drauf an" without a recommendation forces a second turn to get the first answer. Name the dependency *and* the pick.
+- **Deferring what fits in this turn** to a "nächster Schritt". Later only means blocked, out of scope, or genuinely too large.
+
+**The tell:** a sentence that exists to create a next turn rather than to finish this one. Delete it. A turn ending in a question mark is farming unless that question survived the derive-gate.
+
+Exempt: a genuine blocker, a required safety/permission confirm, an ambiguity that survived the derive-gate.
+
 ## 🚨 SURFACE THE OVERRIDE — DON'T DECIDE SILENTLY
 
 Overriding the user's discernible intent — deferring, building differently, skipping, "I know better" — gets one visible line **before** you act. Never act silently and rationalize after.
@@ -69,6 +93,20 @@ Authority order: **live API / observed traffic + provider-owned docs/specs/SDKs 
 - Behavior and docs disagree → record the discrepancy, don't pick a third-party reading.
 - Can't reach the API → say so and `flunk`. Never a mock that ratifies a guess.
 - A green claim names the independent evaluator + durable evidence (harness run, CI URL, review artifact). Self-report is not verification.
+
+## 🚨 LIVE E2E FIRST — A RECORDING IS NEVER AN ORACLE
+
+**Standing operator preference, earned the hard way — don't relitigate it: the live end-to-end test against the real provider is THE primary test, and it gets written FIRST. Mocks, fixtures and recordings come afterwards, never instead, and never as the thing that grades correctness.**
+
+Refines the section above for the case it doesn't cover: a recording captured from **real** traffic — not a guess, and still not an oracle.
+
+*Reproducible* (same input → same output) is not *determinate* (has a settled truth value). A replay's passing is only conditionally true — conditional on an external fact it no longer checks. The live call is the determinate one: at any instant the provider has exactly one answer and you get it. **Change frequency is irrelevant** — never argue "the world only changes monthly, so replay is the stable layer."
+
+The deciding asymmetry is the *kind* of failure, not the amount: live gives **loud, bounded false-REDs** (host down, rate limit, sandbox reset); replay gives **silent, unbounded false-GREENs** — once the provider changes, every replay stays green and is a lie from then on, precisely where it was meant to warn you. False green is the worse failure mode.
+
+- A recording is a **regression detector on your own code** ("did our parsing change in this refactor?"), never a grader of external semantics.
+- **Expiry does not create truth** — a freshness window bounds staleness; an unexpired recording is still only a claim about the past.
+- Never downgrade a loud gate with real authority to a quiet one that can be falsely green. Its noise — rate budget, telling *unreachable* apart from *wrong* — is an engineering problem to solve at that gate.
 
 ## 🚨 RAISE COVERAGE BEFORE MUTATING
 
@@ -432,7 +470,7 @@ Hand-build when harness cannot perform or judge the work:
 
 **🚨 The routing gate fires at `assignee =`, not at dispatch time.** rmap requires `assignee` + `model` at task creation, so the inline-vs-dispatch decision is made — and frozen — the moment the task is filed: a task carrying an agent assignee reads as "routing already decided" to every later session, and this section never gets consulted again. Two rules close that hole:
 
-- **Filing a task: run this section BEFORE typing `assignee`.** Default is `assignee = "human"` (inline); an agent assignee must be earned by a positive trigger named in the task body. A D≤2 single-file task with an agent assignee and no named trigger is a filing defect (observed: ccxt_client task 470, a one-file test-helper fix dispatched to codex because the reviewer proposal arrived dispatch-shaped). Mirrored as question 6 of `task-writing.md`'s Pre-Creation Gate.
+- **Filing a task: run this section BEFORE typing `assignee` — and a FILED task defaults to an agent.** The inline-vs-dispatch question above governs work you can execute *now*: inline-doable work is done inline and never filed. A task that reaches filing is cross-session by definition, so default-route it to a dispatch agent with a pinned `model` (roster spread per § "Delegation roster"); `assignee = "human"` must be earned by a hand-build reason named in the body — an operator-gated step (license, credential, purchase), no-spec visual identity, harness-loop-in-flux, or the user claiming the work. (Flipped 2026-08-13 from the old default-`human` rule after trading_dashboard tasks 86/87 — both dispatchable — were filed `human` by reflex. The ccxt_client-470 lesson survives with its real moral: a D2 one-file fix should be *done inline*, not filed at all — the filing was the defect, not the assignee.) Mirrored as question 6 of `task-writing.md`'s Pre-Creation Gate.
 - **Reviewer `proposed_tasks` carry no routing authority.** Proposals arrive dispatch-shaped (suggested scores/markers), but the orchestrator owns routing the same way it owns filing — re-route each proposal through this gate instead of inheriting dispatchability from its shape. Sibling of task-writing's "Re-Generalize an Agent's Decomposition": that filters whose *architecture* a task encodes; this filters whose *routing* it encodes.
 
 ### Running a Task
@@ -441,7 +479,7 @@ Hand-build when harness cannot perform or judge the work:
 
 **Three dispatch paths** (prefer top to bottom):
 
-1. **Native MCP — default.** `dispatch-task` (fire-and-forget) or `dispatch-await` (blocks until settle) against `http://localhost:4018/harness/mcp`. Observe via `dispatch-status`, `dispatch-transcript`, `dispatch-verdict_detail`. `scrub_anthropic_key: true` (default) forces subscription OAuth over inherited `ANTHROPIC_API_KEY`.
+1. **Native MCP — default.** `dispatch-task` (fire-and-forget) against `http://localhost:4018/harness/mcp`; wait for the wave by watching `origin/<target>` for the lander's commits, never by blocking on `dispatch-await` / `dispatch-await_runs` (§ "Never block on `dispatch-await*`"). Observe via `dispatch-status`, `dispatch-transcript`, `dispatch-verdict_detail`. `scrub_anthropic_key: true` (default) forces subscription OAuth over inherited `ANTHROPIC_API_KEY`.
 2. **Tidewave `project_eval` — escape hatch.** Struct-level control the flat tools don't expose (`retry_policy`, fail-over adapter lists, `subscriber: self()`). Run persists to `Harness.ResultStore` even when the eval process exits.
 3. **`mix run` driver script — fallback.** Full transcript + reviewer report to terminal. See harness repo `docs/dogfooding-workflow.md` for the canonical template.
 
@@ -531,7 +569,52 @@ Projects with `landing_policy: :auto` and `target_branch`:
 
 Conflict / push-rejected retains the branch for repair — never lands red. Witness notification (read-only sink) alerts the operator; it is **not** a merge gate.
 
-**🚨 Settle ≠ landed — don't conflate the two signals.** `dispatch-await` / `dispatch-await_runs` block until **reviewer settle** (`state: :done, verdict: approve`, or `:failed`), which fires the *moment the reviewer approves* — **before** the serialized `landing_<name>` job rebases and ff-pushes. So an `approve` from `await_runs` means "approved and *queued* to land," **not** "on `origin/<target>`." There is **no blocking await-landed tool**; landing is async and surfaces via the witness sink (`Harness.Notification.FileSink` tailing `~/.harness/settled.jsonl`, or `CommandSink`). To gate a next wave on the base actually moving forward, await settle **then** confirm the land against origin once (`git fetch origin <target> && git log --oneline origin/<target>` for the `task <id> -> done (shipped …)` commit) or consume the witness event — never treat approval as landed. This is the same root cause as the duplicate-land trap above, seen from the dispatch side: a poll loop watching `origin` for the landing commit is a workaround for a *fixed* `await_runs`, not a substitute for it — await settles, origin confirms the land.
+**🚨 Never block on `dispatch-await*` — monitor `origin` for the landing commit instead.**
+This is the standing rule for waiting on a wave, not a fallback. `dispatch-await` /
+`dispatch-await_runs` hold an MCP request open for the entire run, and an MCP client
+kills a tool call that emits no progress for its idle timeout (Claude Code's default is
+300s — far shorter than any real run). The call dies, the orchestrator learns nothing,
+and the runs keep going regardless. Worse, awaiting the wrong signal: **await returns at
+reviewer settle, which fires BEFORE the serialized `landing_<name>` job rebases and
+ff-pushes** — so even a successful `approve` means "approved and *queued* to land," never
+"on `origin/<target>`."
+
+**The primitive that actually works — watch the target branch for the lander's own
+commits.** The lander pushes `task <id> -> done (shipped <sha>)` to `origin/<target>`;
+that commit IS the landed signal, it is durable, and it survives a dead MCP call, a
+restarted session, and a node bounce. Arm one background watcher per wave and keep
+working:
+
+```bash
+# one notification per landed task, exits when the whole wave is in
+cd <source-checkout>
+WAVE="615 623 569 619"; seen=""
+while true; do
+  git fetch -q origin <target> || true
+  for t in $WAVE; do
+    case " $seen " in *" $t "*) continue;; esac
+    if git log --oneline origin/<target> | grep -q "task $t -> done"; then
+      echo "LANDED task $t"; seen="$seen $t"
+    fi
+  done
+  [ "$(echo $seen | wc -w)" -eq "$(echo $WAVE | wc -w)" ] && { echo "WAVE COMPLETE"; break; }
+  sleep 60
+done
+```
+
+Poll `dispatch-status <run-id>` only to diagnose a run that the watcher shows as *not*
+landing — a `:failed` verdict, a rebase conflict that retained the branch, a hung
+implementer. Status is for diagnosis; git is for waiting.
+
+**Silence is not success** — a run that fails review or blocks on a land conflict never
+produces a landing commit, so a watcher greping only for `-> done` stays quiet forever.
+Bound every wave watch with a deadline, and when it expires without `WAVE COMPLETE`,
+reconcile the missing tasks through `dispatch-status` / `result_store-list_run_records`
+before assuming anything.
+
+Same root cause as the duplicate-land trap above, seen from the dispatch side: **origin is
+the source of truth for what landed** — not an await return value, not a local
+`tasks.toml`, not a transcript.
 
 **Cron manual-approval mode.** A per-project cron poller in `:auto` mode dispatches unattended; in `:manual` mode it **parks** each dispatch decision instead of enqueuing — drain the parked decisions with `dispatch-pending` and approve them with `dispatch-approve`, keeping the orchestrator in the loop for autonomous polling.
 
@@ -540,12 +623,12 @@ Conflict / push-rejected retains the branch for repair — never lands red. Witn
 The sections above document the *mechanisms*; this is the **continuous loop** the driving AI runs across waves:
 
 ```
-plan wave → dispatch → await settle → confirm land on origin → run integration suite on the landed base
+plan wave → dispatch → watch origin for the landing commits → run integration suite on the landed base
           ↑                                                     + review whole surface vs roadmap intent & domain invariants
           └── reconcile rmap ← encode any whole-surface finding as a criterion/test ←┘
 ```
 
-Each arrow reuses an existing mechanism — don't restate them here: *await settle* (§ "Settle ≠ landed"), *confirm land on origin* (§ "Recover, Don't Redo" → the duplicate-land trap), *reconcile rmap* (the lander already advanced `done --shipped-in` under auto-land — verify, don't double-write), *next wave* (§ "Parallel Dispatch" + write-set serialization).
+Each arrow reuses an existing mechanism — don't restate them here: *watch origin for the landing commits* (§ "Never block on `dispatch-await*`", and § "Recover, Don't Redo" → the duplicate-land trap), *reconcile rmap* (the lander already advanced `done --shipped-in` under auto-land — verify, don't double-write), *next wave* (§ "Parallel Dispatch" + write-set serialization).
 
 **🚨 Three review seats, each blind where the next sees — the orchestrator seat is mandatory, not optional.** The per-task reviewer gates *one diff against one task* and is **structurally blind** to two defect classes that land clean through it (worked evidence: delta_calc tasks 24/25/26, see its `## Review Blind Spots` / `## Domain Invariants`):
 
@@ -586,10 +669,11 @@ The two blind classes, both real-correctness, both passing every per-task check:
 - **Witness notification is sakshi (read-only).** Landing outcomes notify via configured command sink; the sink grants no merge capability. Human operator reviews blocked/conflict outcomes — harness does not silently force-push past conflicts.
 - **`check_command` is a dispatch-scale hint to the reviewer.** Free text (e.g. `"mix check.dispatch"` for Elixir, with focused tests chosen by the reviewer) — the reviewer runs and judges it; harness does not execute it mechanically. Keep full-suite commands like `mix precommit.full` for the landed-base Architect/QA pass. For verbose checks, capture to a per-run `mktemp` log on the first execution; never re-run only to recover truncated output.
 - **The cross-family reviewer reads `AGENTS.md`, not your Claude skills/includes.** `AGENTS.md` is generated from `CLAUDE.md` by `claude-marketplace/scripts/sync-agents-md.sh`, which recursively inlines every `@`-import. **Regenerate it after any `CLAUDE.md` change** (`bash ~/_DATA/code/claude-marketplace/scripts/sync-agents-md.sh`, or `--dry-run` to preview) so the reviewer gates against current rules — a stale `AGENTS.md` makes codex/cursor/grok judge against rules you've already changed. **`--check` is the freshness gate** — it re-renders in memory and exits non-zero if `AGENTS.md` has drifted (diffs rendered output, not mtimes, so it catches drift in transitive `@`-imports too); wire it into CI / a pre-commit hook / the `check_command` so staleness fails loudly instead of silently. Consequence under Opus-4.8 skill-on-demand: once `CLAUDE.md` slims to the eager floor, reviewer-critical facts that *were* carried by eager includes (the `check_command` gate; that `mix test.json` / `mix dialyzer.json` emit JSON **by design** — parse for real failures, never flag the envelope; plain `mix dialyzer` is authoritative when the JSON encoder can't serialize a warning) no longer reach `AGENTS.md` via those imports. Put them in a **self-contained `## Toolchain & check commands` section in `CLAUDE.md`** so they survive the slim-down and flow into `AGENTS.md` on regen (ref: `tapakly/CLAUDE.md`, `ccxt_extract/CLAUDE.md`).
-- **Delegation roster — opus last, and don't over-default to codex.** When assigning a dispatchable task to a harness adapter, prefer the external agents — **cursor, codex, grok** — and reserve the **claude/opus** adapter for work that genuinely needs it (harness-surface changes, judgment-heavy review, tasks the cheaper adapters keep bouncing). Opus tokens are precious: spend them last, not by default. Mix adapters across a wave for review coverage. A repo may override the roster in its own CLAUDE.md.
+- **Delegation roster — opus last, and don't over-default to codex.** When assigning a dispatchable task to a harness adapter, prefer the external agents — **cursor, codex, grok** — and reserve the **claude/opus** adapter for work that genuinely needs it (harness-surface changes, judgment-heavy review, tasks the cheaper adapters keep bouncing). Opus tokens are precious: spend them last, not by default. Mix adapters across a wave for review coverage — but `cursor`+`grok` is one family, not two (see cursor bullet). A repo may override the roster in its own CLAUDE.md.
   - **Observed failure mode: reflex-routing everything to `codex`.** Run ledgers skew heavily codex-over-cursor/grok. Actively spread `assignee` across all three; reserve codex for tasks it's genuinely scored best on, not as the default.
-  - **`cursor` runs on Composer (`composer-2.5`) by default — and that's the data-backed pick.** Pin `model = "composer-2.5"` for cursor work: it's the cheapest cost-to-green in the ledger, and **every cursor capability KPI is measured on Composer** (it's a multi-model front-end, but the scores you'd route on reflect Composer, not whatever you pin). The `composer-2.5-fast` variant is cheaper still, but its budget routinely exhausts and the operator blocks it — so **`composer-2.5` (non-fast) is the standing default**; confirm the live id with `cursor-agent --list-models` / `model_availability-list_available_models cursor`. Heavier cursor models exist — as a multi-model front-end its roster churns fast (2026-07-09 build lists `claude-opus-4-8-thinking-high`, the new **`gpt-5.6-sol-high` / `gpt-5.6-sol-xhigh`** = GPT-5.6 Sol at 1M context, `grok-4.5-*`, `gpt-5.5-high`, etc.) — but none is the default, all carry **no** capability data, and the Opus/frontier tiers draw a *monthly token budget that exhausts* (when spent the operator blocks it and routes Opus-grade work to codex gpt-5.6-sol) — pinning one *claims performance the ledger doesn't show*, so reach for it only with a concrete, named reason, not as the "design-heavy/Opus-grade" reflex. Model IDs churn *and get retired* — a pinned id that drops off the live roster silently fails; confirm with `cursor-agent --list-models` / `model_availability-list_available_models cursor` and prune stale selections. **`model` is REQUIRED at creation for any non-`human` assignee** (`rmap new` rejects a model-less dispatchable task — "a dispatchable task must pin the LLM it runs on"; see `rmap.md` § "Pinning an LLM model"); "leave `model` unset for the agent default" does NOT work. Set `assignee` **and** `model` at task creation per `rmap.md`.
-  - **`grok` runs on `grok-4.5` — the new frontier default (2026-07), replacing the retired `grok-build`.** Both implementer and reviewer grok seats default to `grok-4.5`; `grok-composer-2.5-fast` is the cheap variant. `grok-4.5` is brand-new and carries **no** capability/cost-to-green data yet — route to it to *gather* that data (A/B via `dispatch-compare` grok-4.5 vs codex/gpt-5.6-sol), not on a performance claim the ledger doesn't yet show. A newly-probed grok model lands in the catalog as `selected?: false`; select it (`model_availability` toggle) before it's dispatchable. Confirm live ids with `grok models` / `model_availability-list_available_models grok`.
+  - **`cursor` is back on the roster (operator unblocked 2026-08-15).** SuperGrok Heavy entitles Cursor Ultra; the 2026-07-13 `cursor/all` block is lifted. Pin `model = "cursor-grok-4.6-high"` — **operator decision 2026-08-17: no more Composer pins.** The older `composer-2.5` guidance (cheapest cost-to-green, and where every cursor capability KPI was measured) is retired; that ledger data describes a model the operator no longer wants routed to. Confirm the live id with `cursor-agent --list-models` / `model_availability-list_available_models cursor` (the catalog also carries `cursor-grok-4.6-xhigh` / `-fast` variants and `claude-opus-5-*` — Opus/frontier pins through cursor still exhaust and get operator-blocked, so don't reach for them as the "design-heavy" reflex). **`cursor` and `grok` are the same SpaceXAI family** (SpaceX closed the Cursor acquisition 2026-08-14): three adapters, two families. A cursor implementer must not get a grok reviewer (and vice versa) — pair either with `codex`.
+  - **`model` is REQUIRED at creation for any non-`human` assignee** (`rmap new` rejects a model-less dispatchable task — "a dispatchable task must pin the LLM it runs on"; see `rmap.md` § "Pinning an LLM model"); "leave `model` unset for the agent default" does NOT work. Set `assignee` **and** `model` at task creation per `rmap.md`.
+  - **`grok` runs on `grok-4.6` — the frontier default since 2026-08-13; `grok-4.5` is gone from the live catalog** (lineage: `grok-build` → `grok-4.5` 2026-07 → `grok-4.6`; a catalog refresh on 2026-08-13 listed only `grok-4.6`). Re-pin any task still carrying `grok-4.5` when you touch it — a retired pin fails at dispatch. `grok-4.6` carries **no** capability/cost-to-green data yet — route to it to *gather* that data (A/B via `dispatch-compare` grok-4.6 vs codex/gpt-5.6-sol), not on a performance claim the ledger doesn't yet show. A newly-probed grok model lands in the catalog as `selected?: false`; select it (`model_availability` toggle) before it's dispatchable. Confirm live ids with `grok models` / `model_availability-list_available_models grok`.
   - **`codex` runs on `gpt-5.6-sol` — the standing default since 2026-07-31; `gpt-5.5` is RETIRED from the live catalog.** The GPT-5.6 family (2026-07-10) splits generation from durable capability tier: **Sol** = flagship (complex reasoning/coding/agentic, $5/$30 per 1M tok), **Terra** = balanced (~5.5-competitive at 2× cheaper, $2.50/$15), **Luna** = fast/cheap ($1/$6). Model ids: `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna` — the live catalog lists ONLY these three; `agent_model.codex` is pinned to `gpt-5.6-sol` (verified 2026-07-31 via `config-get agent_model.codex` + `model_availability-list_available_models codex`). **Pin `model = "gpt-5.6-sol"` for new codex tasks**, and re-pin any task still carrying `gpt-5.5` when you touch it — a retired pin fails at dispatch. `terra` remains the cost-to-green candidate (2× cheaper, ~5.5-competitive) — A/B it via `dispatch-compare` before routing bulk work to it. Confirm live ids with `codex debug models` / `model_availability-list_available_models codex`; a probe failure falls back to the builtin seed.
 ### Known Sharp Edges
 
@@ -612,6 +696,31 @@ The two blind classes, both real-correctness, both passing every per-task check:
 
 
 (`response-conventions` loads globally via `~/.claude/CLAUDE.md` — not re-imported here.)
+
+### 🚨 `critical-rules` outranks this file — no local doctrine can waive a guardrail
+
+This document holds *local* knowledge: venue quirks, where things live, which
+command to run. It has **no authority to relax a rule in `critical-rules.md`**.
+Where a passage here reads as permission to do something the guardrails forbid —
+grade external semantics with a recording, let a credential-less lane go green,
+skip a coverage tier, call a replay an oracle — **the guardrail wins and the
+passage is a defect in this file.** Delete it; do not reconcile it.
+
+The failure this prevents is not disagreement, it is **steering**. A local doc is
+read last and describes the concrete commands, so one reassuring sentence ("the
+dispatch gate is X") silently redefines what *done* means, and the guardrail never
+fires because nobody noticed it applied. That is why the wording below is
+deliberately unflattering about its own gates.
+
+**This bites hardest for cross-family reviewers.** They never load
+`~/.claude/includes/` — they read this file rendered into `AGENTS.md`, with the
+guardrails inlined from the *pinned* copies under `priv/agents_includes/`. Those
+pins are updated by hand and have no staleness alarm, so they can lag the live
+rules by weeks; on 2026-08-23 the pinned `critical-rules.md` predated the
+live-E2E-first rule entirely, and every reviewer since had been grading without
+it. **Re-pin before trusting a reviewer verdict on a rules question**: copy
+`~/.claude/includes/*.md` over `priv/agents_includes/`, refresh `sha256`/`bytes`
+in its `manifest.json`, run `mix ccxt.agents_md`.
 
 ## What this repository is
 
@@ -708,10 +817,10 @@ host only, so no CI check can ever guard it. Read them from
 
 1. Live E2E against the real host (testnet/demo; production public for Coinbase Exchange).
 2. Understand one success **and** one relevant error from that interaction.
-3. Write an integration test (`--include network` / `--include dangerous`) that hits the same host and asserts those semantics.
+3. Write an integration test (`--include network` / `--include dangerous`) that hits the same host and asserts those semantics — **and make it fail loudly when it cannot run.** Missing credentials, an unreachable host or an inventory row nothing exercised is a RED with actionable setup text, never a silent exclusion. A tag that drops the test out of the default run does not satisfy `critical-rules.md` § NEVER HIDE TEST FAILURES; it only hides the hole.
 4. Only then, if CI needs a fast offline replay, derive a fixture from that captured interaction.
 
-No mock or recording may invent behavior. Every expectation traces to a documented real call. The offline suite is a replay cache of reality, not its authority. `mix ccxt.oracle_gate` grades that cache so it does not rot; it does **not** verify a new method. A recording in the same diff as the spec it certifies is the Deribit-`"8h"` bug.
+No mock or recording may invent behavior. Every expectation traces to a documented real call. The offline suite is a replay cache of reality, not its authority: **a gate built only from offline tests and `ccxt.oracle_gate` can detect that our own code changed, and nothing else.** It cannot tell you whether a venue still behaves the way a slice claims, and its silence is the false-green `critical-rules.md` § LIVE E2E FIRST names as the worse failure mode. `mix ccxt.oracle_gate` grades that cache so it does not rot; it does **not** verify a new method. A recording in the same diff as the spec it certifies is the Deribit-`"8h"` bug.
 
 **Verification is binary.** A claim is `verified` only after steps 1–3, plus provider-owned meaning. Otherwise it is `unverified`. CCXT JS cannot verify venue semantics.
 
@@ -722,7 +831,7 @@ No mock or recording may invent behavior. Every expectation traces to a document
 - ✅ DO: run the **confrontation step** when authoring a venue slice (`docs/authored-specs.md`) — for each schema decision, confront the CARVE (does the field exist here? what does the value mean? is the abstraction right for this venue?) against the exchange's OWN semantics. Record every CONFIRMED / DIVERGE outcome in the venue's carve register under `docs/authored-spec-carves/`. A CCXT carve adopted without a register entry is inherited, not confronted.
 - 🚨 DO: keep it REAL — for divergence-prone fields (anything CCXT *computes* or *branches* rather than copies: precision, inverse-vs-linear cost, funding cadence, fee tiers), test against the **REAL API plus a non-CCXT semantic source**, never against a potentially-wrong CCXT fixture. A wrong fixture is *more costly* than a live call: it certifies our bug green and silent. The canonical case: deribit's funding `interval` was the authored literal `"8h"` while the venue publishes hourly — internally consistent, fully tested, and wrong, because the golden was computed with the same wrong constant.
 - 🚨 DO: **decolor on touch.** Comments, moduledocs and docs that cite CCXT as the *reason or authority* for a decision steer every future session back toward CCXT-as-truth. Never write a new one. `test/bourse/ccxt_authority_language_test.exs` enforces this with an explicit allowlist — a new CCXT mention in `lib/` fails the suite until it is either reworded or allowlisted with a compatibility-framed phrase.
-- ✅ DO: when a live call is **unreachable with our keys/hosts** (prod-only endpoint, region-restricted key, needs a real open position), append an entry to `docs/prod-verification-ledger.md`. The slice stays `unverified` until a live call exists.
+- ✅ DO: when a live call is **unreachable with our keys/hosts** (prod-only endpoint, region-restricted key, needs a real open position), append an entry to `docs/prod-verification-ledger.md`. The slice stays `unverified` until a live call exists. 🚨 The ledger records *why* a case is unverified; it does **not** discharge the case. Deleting the row from a live lane's denominator instead is how an honest "we cannot reach this" turns into a green lie — the count goes up, the coverage goes down, and nothing is red.
 - ❌ DO NOT: write `test/fixtures/**`, call `Bourse.RecordedResponseFixtures`, or add a manifest row in the same change as the spec or parser under test. That recording is not independent evidence.
 - ❌ DO NOT: treat CCXT-derived data or training/web as verification. Independence comes from execution/reality, not a second read.
 - 🚨🚨 DO (behavioral default, anchored to the ACTION): **when you set out to check whether a venue "works," your FIRST call hits the LIVE venue.** Use testnet/demo for credentialed venues and the production public host for public-only Coinbase Exchange. Recipe: `creds = Bourse.Credentials.new!(api_key: System.get_env("DERIBIT_TESTNET_API_KEY"), secret: ...); {:ok, ex} = Bourse.Exchange.new("deribit", credentials: creds, sandbox: true)` → then a real `Bourse.fetch_ticker/fetch_balance`. Testnet credentials for all ten credentialed venues are provisioned (below); Coinbase Exchange needs none.
@@ -758,13 +867,27 @@ For cross-family reviewers (codex / cursor / grok) and any dispatch run.
 - **`mix precommit.full`** — adds `deps.audit` + dialyzer (local pre-PR).
 - **`mix ci`** — `check.dispatch` + `deps.audit` + dialyzer.
 
-`--cover` is omitted from all of them; run it explicitly (`mix test.json --cover`) per the critical-rules coverage gate.
+🚨 **None of these four makes a live venue call.** They are offline-plus-replay:
+they prove the code compiles, our own invariants hold, and our recordings still
+parse. **A green `check.dispatch` is not evidence for any external-semantic
+acceptance criterion** — approving a venue-facing task on it alone is approving on
+the strength of a replay, which `critical-rules.md` § LIVE E2E FIRST forbids. That
+evidence comes from the live lanes under *Running tests*, run with the provisioned
+testnet credentials, which are present in the environment — an offline verdict is
+a choice here, never a constraint.
+
+`--cover` is omitted from all four, so **no gate enforces the tiers** in
+`critical-rules.md` § RAISE COVERAGE BEFORE MUTATING — run `mix test.json --cover`
+yourself before mutating a module. Measured on the offline suite 2026-08-23:
+89.84% overall, with three critical-tier modules under the 95% bar —
+`Bourse.Dispatch` 89.2%, `Bourse.WS.Auth` 92.9%, `Bourse.Signing` 94.1%. Raise the
+module you are about to change, in the change that touches it.
 
 | Check | Command | Notes |
 |-------|---------|-------|
 | Compile | `mix compile --warnings-as-errors` | silent finish = success |
-| Tests | `mix test.json --quiet` | **emits JSON by design** — parse it for real failures; the envelope is **not** a build error. Read `summary.result` / `summary.failed`. Most integration tests are excluded without `--include` tags. |
-| Reality oracle | `mix ccxt.oracle_gate` | Replays already-registered recordings, accepted-request goldens and recorded exchange errors. Does not verify a new method. |
+| Tests | `mix test.json --quiet` | **emits JSON by design** — parse it for real failures; the envelope is **not** a build error. Read `summary.result` / `summary.failed`. 🚨 **Excludes every live tag by default** (725 of 4,722 cases on 2026-08-23) — a green run says nothing about any venue. |
+| Replay regression gate | `mix ccxt.oracle_gate` | Re-runs registered recordings, accepted-request goldens and recorded exchange errors. Detects drift in **our** parsing. It is not an oracle for venue behavior and cannot verify a method — read the task name as historical, not as a claim. |
 | Dialyzer | `mix dialyzer.json --quiet` | **emits JSON by design**. Plain `mix dialyzer` is the authoritative fallback when the JSON encoder can't serialize a warning shape. |
 | Lint | `mix credo --strict` | |
 | Security | `mix sobelow` | honors `.sobelow-skips` (hash-based), **not** inline comments |
@@ -798,7 +921,19 @@ mix ccxt.verify_ws_first_frame                       # classified public WS firs
 mix ccxt.aggregate_live_lane                         # merge live-lane surface reports into one artifact
 ```
 
-> **⚠️ `mix test.json` silently excludes most integration tests by default.** A green run with no `--include` tags covers offline unit + signing tests only. `mix ccxt.verify_rest_read_contracts` is the complete REST-read lane: it explicitly includes all network cases and reports denominator, executed count, and failures. Tags: `integration`, `network` (testnet REST probes), `rest_read_contract`, `dangerous` (raw POST/PUT/DELETE), `invalid_creds`, `option_readiness`, `known_defect`, `native`.
+> 🚨 **`mix test.json` silently excludes every live tag by default, and that default is the gate.** A green run with no `--include` covers offline unit + signing tests only — it is not a statement about any venue. `mix ccxt.verify_rest_read_contracts` is the complete REST-read lane: it includes all network cases explicitly and reports denominator, executed count and failures. Tags: `integration`, `network` (testnet REST probes), `rest_read_contract`, `dangerous` (raw POST/PUT/DELETE), `invalid_creds`, `option_readiness`, `known_defect`, `native`.
+
+> 🚨 **Known standing violation — do not read the gates as compliant.** The
+> provider-live REST-read lane runs in **no** automated schedule: absent from
+> `precommit`, `check.dispatch` and `ci`, absent from every GitHub workflow, and
+> explicitly excluded from the weekly host lane (`ops/live-drift.sh` carries
+> `--exclude rest_read_contract`). Its denominator was also cut from 890 to 416
+> branches when sandbox-unhosted product surfaces were dropped — ledgered as a
+> single aggregate entry in `docs/prod-verification-ledger.md`, so the removed
+> rows are not individually recoverable. Until workbench tasks 668 -> 670 flip the
+> canonical gate, **the only thing between a venue change and a green build is
+> someone running the live lane by hand.** Run it before calling a venue-facing
+> task done, and say in the delivery that you ran it.
 
 > **⚠️ `:known_defect` quarantine tag — governed, must only shrink.** A test may carry it ONLY when its assertion states the CORRECT expectation, the product is wrong, and the tag comment names the tracking issue. Never weaken an assertion to avoid the tag, and never use it to park a red whose root cause is untracked.
 

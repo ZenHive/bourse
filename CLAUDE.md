@@ -16,6 +16,31 @@ Eager-load only the irreducible floor; everything else is skill-on-demand via en
 
 (`response-conventions` loads globally via `~/.claude/CLAUDE.md` — not re-imported here.)
 
+### 🚨 `critical-rules` outranks this file — no local doctrine can waive a guardrail
+
+This document holds *local* knowledge: venue quirks, where things live, which
+command to run. It has **no authority to relax a rule in `critical-rules.md`**.
+Where a passage here reads as permission to do something the guardrails forbid —
+grade external semantics with a recording, let a credential-less lane go green,
+skip a coverage tier, call a replay an oracle — **the guardrail wins and the
+passage is a defect in this file.** Delete it; do not reconcile it.
+
+The failure this prevents is not disagreement, it is **steering**. A local doc is
+read last and describes the concrete commands, so one reassuring sentence ("the
+dispatch gate is X") silently redefines what *done* means, and the guardrail never
+fires because nobody noticed it applied. That is why the wording below is
+deliberately unflattering about its own gates.
+
+**This bites hardest for cross-family reviewers.** They never load
+`~/.claude/includes/` — they read this file rendered into `AGENTS.md`, with the
+guardrails inlined from the *pinned* copies under `priv/agents_includes/`. Those
+pins are updated by hand and have no staleness alarm, so they can lag the live
+rules by weeks; on 2026-08-23 the pinned `critical-rules.md` predated the
+live-E2E-first rule entirely, and every reviewer since had been grading without
+it. **Re-pin before trusting a reviewer verdict on a rules question**: copy
+`~/.claude/includes/*.md` over `priv/agents_includes/`, refresh `sha256`/`bytes`
+in its `manifest.json`, run `mix ccxt.agents_md`.
+
 ## What this repository is
 
 `bourse` (`:bourse`, namespace `Bourse.*`) — an Elixir client for eleven exchange integrations: `alpaca`, `binance`, `binancecoinm`, `binanceusdm`, `bybit`, `coinbaseexchange`, `deribit`, `derive`, `hyperliquid`, `lighter`, `okx`. One complete hand-authored JSON spec per venue drives macro-generated endpoint modules; the three DEX venues carry hand-written signing. Coinbase Exchange is deliberately public-only and exposes candles plus ticker.
@@ -111,10 +136,10 @@ host only, so no CI check can ever guard it. Read them from
 
 1. Live E2E against the real host (testnet/demo; production public for Coinbase Exchange).
 2. Understand one success **and** one relevant error from that interaction.
-3. Write an integration test (`--include network` / `--include dangerous`) that hits the same host and asserts those semantics.
+3. Write an integration test (`--include network` / `--include dangerous`) that hits the same host and asserts those semantics — **and make it fail loudly when it cannot run.** Missing credentials, an unreachable host or an inventory row nothing exercised is a RED with actionable setup text, never a silent exclusion. A tag that drops the test out of the default run does not satisfy `critical-rules.md` § NEVER HIDE TEST FAILURES; it only hides the hole.
 4. Only then, if CI needs a fast offline replay, derive a fixture from that captured interaction.
 
-No mock or recording may invent behavior. Every expectation traces to a documented real call. The offline suite is a replay cache of reality, not its authority. `mix ccxt.oracle_gate` grades that cache so it does not rot; it does **not** verify a new method. A recording in the same diff as the spec it certifies is the Deribit-`"8h"` bug.
+No mock or recording may invent behavior. Every expectation traces to a documented real call. The offline suite is a replay cache of reality, not its authority: **a gate built only from offline tests and `ccxt.oracle_gate` can detect that our own code changed, and nothing else.** It cannot tell you whether a venue still behaves the way a slice claims, and its silence is the false-green `critical-rules.md` § LIVE E2E FIRST names as the worse failure mode. `mix ccxt.oracle_gate` grades that cache so it does not rot; it does **not** verify a new method. A recording in the same diff as the spec it certifies is the Deribit-`"8h"` bug.
 
 **Verification is binary.** A claim is `verified` only after steps 1–3, plus provider-owned meaning. Otherwise it is `unverified`. CCXT JS cannot verify venue semantics.
 
@@ -125,7 +150,7 @@ No mock or recording may invent behavior. Every expectation traces to a document
 - ✅ DO: run the **confrontation step** when authoring a venue slice (`docs/authored-specs.md`) — for each schema decision, confront the CARVE (does the field exist here? what does the value mean? is the abstraction right for this venue?) against the exchange's OWN semantics. Record every CONFIRMED / DIVERGE outcome in the venue's carve register under `docs/authored-spec-carves/`. A CCXT carve adopted without a register entry is inherited, not confronted.
 - 🚨 DO: keep it REAL — for divergence-prone fields (anything CCXT *computes* or *branches* rather than copies: precision, inverse-vs-linear cost, funding cadence, fee tiers), test against the **REAL API plus a non-CCXT semantic source**, never against a potentially-wrong CCXT fixture. A wrong fixture is *more costly* than a live call: it certifies our bug green and silent. The canonical case: deribit's funding `interval` was the authored literal `"8h"` while the venue publishes hourly — internally consistent, fully tested, and wrong, because the golden was computed with the same wrong constant.
 - 🚨 DO: **decolor on touch.** Comments, moduledocs and docs that cite CCXT as the *reason or authority* for a decision steer every future session back toward CCXT-as-truth. Never write a new one. `test/bourse/ccxt_authority_language_test.exs` enforces this with an explicit allowlist — a new CCXT mention in `lib/` fails the suite until it is either reworded or allowlisted with a compatibility-framed phrase.
-- ✅ DO: when a live call is **unreachable with our keys/hosts** (prod-only endpoint, region-restricted key, needs a real open position), append an entry to `docs/prod-verification-ledger.md`. The slice stays `unverified` until a live call exists.
+- ✅ DO: when a live call is **unreachable with our keys/hosts** (prod-only endpoint, region-restricted key, needs a real open position), append an entry to `docs/prod-verification-ledger.md`. The slice stays `unverified` until a live call exists. 🚨 The ledger records *why* a case is unverified; it does **not** discharge the case. Deleting the row from a live lane's denominator instead is how an honest "we cannot reach this" turns into a green lie — the count goes up, the coverage goes down, and nothing is red.
 - ❌ DO NOT: write `test/fixtures/**`, call `Bourse.RecordedResponseFixtures`, or add a manifest row in the same change as the spec or parser under test. That recording is not independent evidence.
 - ❌ DO NOT: treat CCXT-derived data or training/web as verification. Independence comes from execution/reality, not a second read.
 - 🚨🚨 DO (behavioral default, anchored to the ACTION): **when you set out to check whether a venue "works," your FIRST call hits the LIVE venue.** Use testnet/demo for credentialed venues and the production public host for public-only Coinbase Exchange. Recipe: `creds = Bourse.Credentials.new!(api_key: System.get_env("DERIBIT_TESTNET_API_KEY"), secret: ...); {:ok, ex} = Bourse.Exchange.new("deribit", credentials: creds, sandbox: true)` → then a real `Bourse.fetch_ticker/fetch_balance`. Testnet credentials for all ten credentialed venues are provisioned (below); Coinbase Exchange needs none.
@@ -161,13 +186,27 @@ For cross-family reviewers (codex / cursor / grok) and any dispatch run.
 - **`mix precommit.full`** — adds `deps.audit` + dialyzer (local pre-PR).
 - **`mix ci`** — `check.dispatch` + `deps.audit` + dialyzer.
 
-`--cover` is omitted from all of them; run it explicitly (`mix test.json --cover`) per the critical-rules coverage gate.
+🚨 **None of these four makes a live venue call.** They are offline-plus-replay:
+they prove the code compiles, our own invariants hold, and our recordings still
+parse. **A green `check.dispatch` is not evidence for any external-semantic
+acceptance criterion** — approving a venue-facing task on it alone is approving on
+the strength of a replay, which `critical-rules.md` § LIVE E2E FIRST forbids. That
+evidence comes from the live lanes under *Running tests*, run with the provisioned
+testnet credentials, which are present in the environment — an offline verdict is
+a choice here, never a constraint.
+
+`--cover` is omitted from all four, so **no gate enforces the tiers** in
+`critical-rules.md` § RAISE COVERAGE BEFORE MUTATING — run `mix test.json --cover`
+yourself before mutating a module. Measured on the offline suite 2026-08-23:
+89.84% overall, with three critical-tier modules under the 95% bar —
+`Bourse.Dispatch` 89.2%, `Bourse.WS.Auth` 92.9%, `Bourse.Signing` 94.1%. Raise the
+module you are about to change, in the change that touches it.
 
 | Check | Command | Notes |
 |-------|---------|-------|
 | Compile | `mix compile --warnings-as-errors` | silent finish = success |
-| Tests | `mix test.json --quiet` | **emits JSON by design** — parse it for real failures; the envelope is **not** a build error. Read `summary.result` / `summary.failed`. Most integration tests are excluded without `--include` tags. |
-| Reality oracle | `mix ccxt.oracle_gate` | Replays already-registered recordings, accepted-request goldens and recorded exchange errors. Does not verify a new method. |
+| Tests | `mix test.json --quiet` | **emits JSON by design** — parse it for real failures; the envelope is **not** a build error. Read `summary.result` / `summary.failed`. 🚨 **Excludes every live tag by default** (725 of 4,722 cases on 2026-08-23) — a green run says nothing about any venue. |
+| Replay regression gate | `mix ccxt.oracle_gate` | Re-runs registered recordings, accepted-request goldens and recorded exchange errors. Detects drift in **our** parsing. It is not an oracle for venue behavior and cannot verify a method — read the task name as historical, not as a claim. |
 | Dialyzer | `mix dialyzer.json --quiet` | **emits JSON by design**. Plain `mix dialyzer` is the authoritative fallback when the JSON encoder can't serialize a warning shape. |
 | Lint | `mix credo --strict` | |
 | Security | `mix sobelow` | honors `.sobelow-skips` (hash-based), **not** inline comments |
@@ -201,7 +240,19 @@ mix ccxt.verify_ws_first_frame                       # classified public WS firs
 mix ccxt.aggregate_live_lane                         # merge live-lane surface reports into one artifact
 ```
 
-> **⚠️ `mix test.json` silently excludes most integration tests by default.** A green run with no `--include` tags covers offline unit + signing tests only. `mix ccxt.verify_rest_read_contracts` is the complete REST-read lane: it explicitly includes all network cases and reports denominator, executed count, and failures. Tags: `integration`, `network` (testnet REST probes), `rest_read_contract`, `dangerous` (raw POST/PUT/DELETE), `invalid_creds`, `option_readiness`, `known_defect`, `native`.
+> 🚨 **`mix test.json` silently excludes every live tag by default, and that default is the gate.** A green run with no `--include` covers offline unit + signing tests only — it is not a statement about any venue. `mix ccxt.verify_rest_read_contracts` is the complete REST-read lane: it includes all network cases explicitly and reports denominator, executed count and failures. Tags: `integration`, `network` (testnet REST probes), `rest_read_contract`, `dangerous` (raw POST/PUT/DELETE), `invalid_creds`, `option_readiness`, `known_defect`, `native`.
+
+> 🚨 **Known standing violation — do not read the gates as compliant.** The
+> provider-live REST-read lane runs in **no** automated schedule: absent from
+> `precommit`, `check.dispatch` and `ci`, absent from every GitHub workflow, and
+> explicitly excluded from the weekly host lane (`ops/live-drift.sh` carries
+> `--exclude rest_read_contract`). Its denominator was also cut from 890 to 416
+> branches when sandbox-unhosted product surfaces were dropped — ledgered as a
+> single aggregate entry in `docs/prod-verification-ledger.md`, so the removed
+> rows are not individually recoverable. Until workbench tasks 668 -> 670 flip the
+> canonical gate, **the only thing between a venue change and a green build is
+> someone running the live lane by hand.** Run it before calling a venue-facing
+> task done, and say in the delivery that you ran it.
 
 > **⚠️ `:known_defect` quarantine tag — governed, must only shrink.** A test may carry it ONLY when its assertion states the CORRECT expectation, the product is wrong, and the tag comment names the tracking issue. Never weaken an assertion to avoid the tag, and never use it to park a red whose root cause is untracked.
 
