@@ -31,8 +31,8 @@ defmodule Bourse.Ticker do
   currency, so that ratio collapses to contract size (`ctVal`, e.g. `0.01` on
   BTC-USDT-SWAP) rather than a ~mark price. We diverge from Bourse's
   always-divide carve there and leave `vwap` nil; consumers needing contract
-  volume should read `base_volume` / `quote_volume` / raw `info`. See
-  `docs/authored-specs.md` carve **C36**.
+  volume should read `base_volume` / `quote_volume` / raw `info`. Registered in
+  `docs/authored-spec-carves/okx.md`.
 
   """
 

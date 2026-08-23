@@ -264,13 +264,13 @@ defmodule Bourse.MixProject do
       "check.dispatch": [
         "precommit",
         # Cheap, network-free provider-authority structure/hash and exact-error
-        # consistency checks. Remote freshness belongs to the weekly drift lane.
+        # consistency checks. Remote freshness is `--online`, run by hand.
         "ccxt.authority_check",
         "ccxt.error_authority",
         "ccxt.check_lighter_signer",
-        # CLAUDE.md's mechanical claims (modules, mix tasks, repo paths, the
-        # signing pattern list, Application children) vs the tree, plus AGENTS.md
-        # freshness — the cross-family reviewer reads AGENTS.md, not CLAUDE.md,
+        # CLAUDE.md's mechanical claims (modules, mix tasks, repo paths, and the
+        # Signing / Application rows of the Key modules table) vs the tree, plus
+        # AGENTS.md freshness — the reviewer reads AGENTS.md, not CLAUDE.md,
         # so a stale render makes it grade against rules we already changed.
         "ccxt.claude_check",
         "ccxt.agents_md --check",

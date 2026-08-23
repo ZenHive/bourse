@@ -48,9 +48,10 @@ pinned fetch and then compares the mutable upstream hash (or Bybit repository HE
 to the recorded pin. Typed OpenAPI and AsyncAPI drift is blocking. Other governed
 roles are prose/docs for drift policy: a mismatch emits an `AUTHORITY_DRIFT` report
 line and passes only when `freshness.status` is `drift_detected` and `checked_at` is
-no more than 30 days old. The 30-day window gives the weekly lane four review
-opportunities while preventing an acknowledgment from becoming permanent. A
-missing or older acknowledgment blocks again.
+no more than 30 days old. Nothing runs the check on a schedule — the window only
+prevents an acknowledgment from becoming permanent, and a person has to run
+`mix ccxt.authority_check --online` for it to mean anything. A missing or older
+acknowledgment blocks again.
 
 `checked_at` is the date a prose/docs mismatch was acknowledged, not an automatic
 pin refresh. Drift remains a prompt to review the semantic diff before refreshing

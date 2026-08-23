@@ -12,7 +12,7 @@ provider-authoritative spec work under the authored-specs model.
 | Unsupported venue | Hand-author the owned document and earn live REST-read contract coverage for it; copying reference JSON alone never adds runtime support |
 | Exchange-specific quirk no spec field can represent | Author a provider-backed carve and register it rather than patching consumer heuristics |
 
-The ten supported venues are hand-owned (`docs/authored-specs.md`). CCXT source
+The eleven supported venues are hand-owned (`docs/authored-specs.md`). CCXT source
 and ccxt-distill are a pinned third-party extraction, usable as an authoring
 clue only. The provider's observed API behavior and provider-owned contract
 establish semantics.

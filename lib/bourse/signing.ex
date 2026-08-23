@@ -385,8 +385,8 @@ defmodule Bourse.Signing do
   Method). Hex digits from `URI.encode/2` are
   uppercase, matching the same Huobi rule. No first-class venue has been
   observed to require www-form `+` for the signed canonical query — if one
-  does, register a per-venue carve rather than reverting this default (see
-  `docs/authored-specs.md` C21).
+  does, register a per-venue carve in `docs/authored-spec-carves/` rather than
+  reverting this default.
 
   List-valued scalar params use empty-bracket keys
   (`%{"ids" => ["a", "b"]}` → `"ids%5B%5D=a&ids%5B%5D=b"`). That is the form

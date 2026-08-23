@@ -207,7 +207,7 @@ defmodule Bourse.Test.TimeWindowProbeMatrix do
       venue: :alpaca,
       methods: [:fetch_closed_orders, :fetch_open_orders, :fetch_orders],
       reason: "paper order-history rows depend on account activity and are not guaranteed to populate",
-      tracking: "docs/prod-verification-ledger.md — task 526 residual oracle critical slots"
+      tracking: "unreachable without populated account state — no ledger entry; the row is the record"
     },
     %{
       venue: :alpaca,
@@ -249,7 +249,7 @@ defmodule Bourse.Test.TimeWindowProbeMatrix do
       reason:
         "these histories do not have a stable populated boundary on the provisioned spot account; " <>
           "fetch_my_trades returned zero rows for BTC, ETH, BNB, LTC, and TRX pairs on 2026-08-14",
-      tracking: "docs/prod-verification-ledger.md — task 526 residual oracle critical slots"
+      tracking: "unreachable without populated account state — no ledger entry; the row is the record"
     },
     %{
       venue: :binancecoinm,
@@ -267,7 +267,7 @@ defmodule Bourse.Test.TimeWindowProbeMatrix do
       reason:
         "the COIN-M demo wallet does not guarantee populated account-history boundaries; " <>
           "the restored reads stay labelled raw until task 550 completes their mappings",
-      tracking: "docs/prod-verification-ledger.md — task 526 residual oracle critical slots; task 550 mappings"
+      tracking: "unreachable without populated account state — no ledger entry; the row is the record"
     },
     %{
       venue: :binanceusdm,
@@ -340,7 +340,7 @@ defmodule Bourse.Test.TimeWindowProbeMatrix do
         :fetch_withdrawals
       ],
       reason: "the test account does not guarantee populated rows for these history windows",
-      tracking: "docs/prod-verification-ledger.md — task 526 residual oracle critical slots"
+      tracking: "unreachable without populated account state — no ledger entry; the row is the record"
     },
     %{
       venue: :derive,
@@ -391,7 +391,7 @@ defmodule Bourse.Test.TimeWindowProbeMatrix do
         :fetch_withdrawals
       ],
       reason: "testnet account histories do not guarantee populated rows at both boundaries",
-      tracking: "docs/prod-verification-ledger.md — task 526 residual oracle critical slots"
+      tracking: "unreachable without populated account state — no ledger entry; the row is the record"
     },
     %{
       venue: :okx,

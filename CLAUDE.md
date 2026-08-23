@@ -35,9 +35,11 @@ deliberately unflattering about its own gates.
 `~/.claude/includes/` — they read this file rendered into `AGENTS.md`, with the
 guardrails inlined from the *pinned* copies under `priv/agents_includes/`. Those
 pins are updated by hand and have no staleness alarm, so they can lag the live
-rules by weeks; on 2026-08-23 the pinned `critical-rules.md` predated the
-live-E2E-first rule entirely, and every reviewer since had been grading without
-it. **Re-pin before trusting a reviewer verdict on a rules question**: copy
+rules by weeks: on 2026-08-23 the pinned `critical-rules.md` predated the
+live-E2E-first rule entirely, and every reviewer until then had been grading
+without it. The three pins were refreshed in `6065613` and are byte-identical to
+`~/.claude/includes/` as of that commit. **Re-pin before trusting a reviewer
+verdict on a rules question**: copy
 `~/.claude/includes/*.md` over `priv/agents_includes/`, refresh `sha256`/`bytes`
 in its `manifest.json`, run `mix ccxt.agents_md`.
 
@@ -121,14 +123,14 @@ host only, so no CI check can ever guard it. Read them from
 
 - **Read `BUGS.md` before chasing a reported defect.** It is the inbound consumer queue, newest first, and each entry carries a `**Status:**` header — the bug in front of you may already be filed, already fixed, or already decided against. Entries are never deleted; a fixed one keeps its repro as the evidence trail.
 
-- One test deliberately stayed in the workbench because it is corpus-wide: the zero-param JSON-body gate audit, which asserts a gate set across all 110 reference specs. The same applies to anything else that iterates every document under `priv/specs/json/output/` expecting the full set. **Do not re-add a corpus-wide audit here** — it would be answering a 110-venue question with 15 specs.
-- `priv/specs/json/reference_corpus.json` honestly declares the 16 carried venues (the eleven supported plus `coinmetro`, `deepcoin`, `kraken`, `weex`, `whitebit`, used as parser and unsupported-venue counter-examples). Its two SHA-256 pins still name the upstream revision the slice came from, so provenance stays verifiable. **Adding a reference venue means adding its JSON *and* the manifest entry** — `Bourse.ReferenceSlice` validates count, sort order and pins, and raises otherwise. That module lives in `test/support/`, not `lib/`: the slice is test input, so neither the client nor the Hex package can reach it.
+- One test deliberately stayed in the workbench because it is corpus-wide: the zero-param JSON-body gate audit, which asserts a gate set across all 110 reference specs. The same applies to anything else that iterates every document under `priv/specs/json/output/` expecting the full set. **Do not re-add a corpus-wide audit here** — it would be answering a 110-venue question with 16 specs.
+- `priv/specs/json/reference_corpus.json` honestly declares the 16 carried venues (the eleven supported plus `coinmetro`, `deepcoin`, `kraken`, `weex`, `whitebit`, used as parser and unsupported-venue counter-examples). Its two SHA-256 pins — `source` on CCXT's version file and `static_fixtures` on CCXT's own static-vintages file, both keys named in upstream CCXT terminology and neither referring to anything in this repo — still name the upstream revision the slice came from, so provenance stays verifiable. **Adding a reference venue means adding its JSON *and* the manifest entry** — `Bourse.ReferenceSlice` validates count, sort order and pins, and raises otherwise. That module lives in `test/support/`, not `lib/`: the slice is test input, so neither the client nor the Hex package can reach it.
 
 ## 🎯 Core doctrine: provider-authoritative, reality-verified
 
 **Interpret, don't extract.** Full model and rationale: `docs/authored-specs.md` — read it first.
 
-**The one and only reality is the exchange APIs we talk to** — not CCXT, not CCXT's fixtures, not training. CCXT was the bootstrap; it is now **one disposable reference among several** (exchange API docs, official SDKs, observed behavior). The DEX venues already live this way. Three axes, kept distinct: **value** correctness (is the number right vs reality), **carve** correctness (is the field/abstraction itself right, willing to *diverge* from CCXT's ontology), and **freshness** (every claim re-proved against the live venue on a schedule, never by a stored answer).
+**The one and only reality is the exchange APIs we talk to** — not CCXT, not CCXT's fixtures, not training. CCXT was the bootstrap; it is now **one disposable reference among several** (exchange API docs, official SDKs, observed behavior). The DEX venues already live this way. Three axes, kept distinct: **value** correctness (is the number right vs reality), **carve** correctness (is the field/abstraction itself right, willing to *diverge* from CCXT's ontology), and **freshness** (every claim re-proved by running the live lane again, never by a stored answer).
 
 **Authority ladder — the exchange-owned contract wins.** A live venue call establishes what the venue does; the exchange's own documentation, specifications and SDKs establish what its fields and parameters mean. CCXT source, execution and static files are unverified authoring references only.
 
@@ -192,10 +194,10 @@ Artifact **freshness**, **expressiveness** and **scope** are separate axes. A ma
 
 For cross-family reviewers (codex / cursor / grok) and any dispatch run.
 
-- **`mix check.dispatch`** — the dispatch-scale gate: `precommit`, `ccxt.authority_check` (offline), `ccxt.error_authority`, `ccxt.check_lighter_signer`, `ccxt.claude_check`, `ccxt.agents_md --check`, `ex_dna --max-clones 0`, `reach.check --arch --smells --strict`. No dialyzer (a cold worktree cold-builds the PLT for minutes).
-- **`mix precommit`** — format / compile --warnings-as-errors / credo --strict / doctor --raise / sobelow --skip / `test.json`. It carries no `--exclude`: the suite is provider-live, so this step calls real venues and needs the testnet credentials exported.
+- **`mix check.dispatch`** — the dispatch-scale gate: `precommit`, `ccxt.authority_check` (offline), `ccxt.error_authority`, `ccxt.check_lighter_signer`, `ccxt.claude_check`, `ccxt.agents_md --check`, `ex_dna --max-clones 0`, `reach.check --arch --smells --strict --path lib` (under `MIX_ENV=dev`; the `--path lib` pin is load-bearing — arch sources come from the Mix env, smell sources from `--path`). No dialyzer (a cold worktree cold-builds the PLT for minutes).
+- **`mix precommit`** — format / compile --warnings-as-errors / `credo --strict --ignore TagTODO,TagFIXME` / doctor --raise / sobelow --skip / `test.json`. It carries no `--exclude`: the suite is provider-live, so this step calls real venues and needs the testnet credentials exported.
 - **`mix precommit.full`** — adds `deps.audit` + dialyzer (local pre-PR).
-- **`mix ci`** — `check.dispatch` + the full `ccxt.verify_rest_read_contracts` lane + `test.json --cover --cover-threshold 80` + `deps.audit` + dialyzer.
+- **`mix ci`** — `check.dispatch` + the full `ccxt.verify_rest_read_contracts` lane + `test.json --cover --cover-threshold 80 --output /tmp/bourse-ci-cover.json` + `deps.audit` (an alias carrying `--ignore-advisory-ids`) + dialyzer.
 
 🚨 **There is no hosted CI, and nothing runs on a schedule.** Every gate here is
 executed by a person or a harness run on this host. The live surface is proven by
@@ -231,7 +233,7 @@ touches it.
 | Docs | `mix doctor` | |
 | Authority corpus | `mix ccxt.authority_check [--online]` | validates the pinned corpus offline; `--online` checks mutable upstreams for drift |
 | Error mappings | `mix ccxt.error_authority` | reconciles provider-documented error codes with authored mappings |
-| CLAUDE claims | `mix ccxt.claude_check` | modules / `mix ccxt.*` tasks / repo paths named in gated CLAUDE.md regions, plus the signing pattern list and `Application` children, vs the tree. Unlisted tree surfaces are not failures. |
+| CLAUDE claims | `mix ccxt.claude_check` | modules / `mix ccxt.*` tasks / repo paths named in gated CLAUDE.md regions, plus the `Bourse.Signing` and `Bourse.Application` rows of the *Key modules* table, vs the tree. Both row gates are inert unless the row exists — a dropped row silently disables its check. Unlisted tree surfaces are not failures. |
 | AGENTS freshness | `mix ccxt.agents_md --check` | re-renders CLAUDE.md + the pinned `@`-imports (`priv/agents_includes/`) and fails on drift. Regenerate with `mix ccxt.agents_md`. |
 
 **Adding a venue** is authoring plus live proof, never a config flag: author its complete document under `priv/specs/json/output/authored/`, list it in `priv/specs/json/runtime_support.json`, add its provider-owned entry — authority-source pins, operation branches, arguments, success and error meanings — to `priv/authority/rest-read-contracts.json`, and get every one of its cases green against the venue's own host. `Bourse.Test.RestReadContracts` refuses an inventory that does not cover every runtime venue, or whose branches drift from the callable client surface, so the two cannot separate.
@@ -248,7 +250,7 @@ mix ccxt.classify_signing                            # signing classification re
 mix ccxt.verify_ws_first_frame                       # classified public WS first data frame per venue
 ```
 
-> 🚨 **A bare `mix test.json` calls real venues, and a missing credential is a RED.** `test/test_helper.exs` raises with the venue name and the variables to export; `ExUnit.start/1` excludes `:dangerous` and nothing else, so the network and contract cases run by default. There is no `--exclude` that makes this suite offline, and no offline suite to fall back to. Tags in use: `integration`, `network` (testnet REST probes), `rest_read_contract`, `dangerous` (mutating probes — raw POST/PUT/DELETE), `invalid_creds`, `native`. Only `:dangerous` is opt-in.
+> 🚨 **A bare `mix test.json` calls real venues, and a missing credential is a RED.** `test/test_helper.exs` raises with the venue name and the variables to export; `ExUnit.start/1` excludes `:dangerous` and nothing else, so the network and contract cases run by default. There is no `--exclude` that makes this suite offline, and no offline suite to fall back to. Tags in use include `integration`, `network` (testnet REST probes), `rest_read_contract`, `dangerous` (mutating probes — raw POST/PUT/DELETE), `invalid_creds`, `native`, plus selection tags for `--only` filtering (`venue`, `exchange_<venue>`, `private`, `public`, `raw`, `ws_canary`, `ws_auth_smoke`, `unified_integration`, `time_window_live`). Only `:dangerous` is opt-in.
 
 > 🚨 **The complete REST-read surface runs in `mix ci`, not in `precommit`.** `mix ccxt.verify_rest_read_contracts` reports denominator, executed count and failures, and fails when `executed < denominator`. Its denominator is scoped to the provider product prefixes each venue hosts on its sandbox; a branch we cannot reach with our keys is ledgered in `docs/prod-verification-ledger.md` as unverified rather than quietly dropped. Run it before calling a venue-facing task done, and say in the delivery that you ran it.
 
@@ -258,7 +260,7 @@ mix ccxt.verify_ws_first_frame                       # classified public WS firs
 
 ### Testnet credentials
 
-Loaded via `Bourse.Testnet.register_all_from_env/1` in `test_helper.exs`. Env convention `{EXCHANGE}[_{SANDBOX}]_TESTNET_API_KEY/_API_SECRET`, with documented exceptions below. All ten credentialed venues are provisioned; public-only Coinbase Exchange uses no credentials.
+Loaded via `Bourse.Testnet.register_from_env/3` and `Bourse.Testnet.register/3` in `test_helper.exs`, which raises on any registration that is not `:ok`. Env convention `{EXCHANGE}[_{SANDBOX}]_TESTNET_API_KEY/_API_SECRET`, with documented exceptions below. All ten credentialed venues are provisioned; public-only Coinbase Exchange uses no credentials.
 
 - **Alpaca** — `ALPACA_API_KEY/SECRET`; `sandbox: true` resolves `paper-api.alpaca.markets`. Never point the lifecycle test at the live-money host.
 - **Bybit** — `BYBIT_TESTNET_API_KEY/SECRET` is **READ-ONLY**: the testnet key returns business error 10024 on any signed create (region-restricted). Don't burn a probe cycle rediscovering this. **Trade evidence runs on DEMO instead**: `BYBIT_DEMO_API_KEY/SECRET`, host `https://api-demo.bybit.com` — which is **not** `sandbox: true` (that's testnet); pass `base_url:` on the call. Requests omitting `category` fail with 10032.
@@ -269,7 +271,7 @@ Loaded via `Bourse.Testnet.register_all_from_env/1` in `test_helper.exs`. Env co
 - **Deribit** — `DERIBIT_TESTNET_API_KEY/SECRET`.
 - **Binance spot** — `BINANCE_TESTNET_API_KEY/SECRET`.
 - **Binance USD-M / COIN-M** — the **same** `BINANCE_FUTURES_TEST_API_KEY/SECRET` pair authenticates both (`_TEST_` is a silent fallback for `_TESTNET_`). `demo-dapi.binance.com` and the legacy `testnet.binancefuture.com` are one account, not two environments. **COIN-M and USD-M are separate wallets inside that one account**, and the UI faucet credits USD-M only — a drained COIN-M wallet is re-funded through the UI. The account runs **One-way mode** (verified live 2026-08-10: `GET /fapi/v1/positionSide/dual` → `dualSidePosition: false` — an earlier Hedge-Mode note here was stale), so orders need no `positionSide` and `reduceOnly` is accepted; if the mode is ever flipped to Hedge, orders REQUIRE `positionSide` and fail `-4061` without it. Oversized orders fail `-2019` — a real pinnable business error. `BTCUSD_PERP` is inverse, 100 USD notional per contract. `DELETE /dapi/v1/allOpenOrders` returns `code 200` even with nothing resting, so it is a safe idempotent cleanup hook.
-- **OKX — international demo is canonical.** `OKX_INTL_API_KEY` / `_API_SECRET` / `_PASSPHRASE`, host `www.okx.com` + `x-simulated-trading: 1` (both supplied by `sandbox: true`). The same key on live returns 50101. Option orders at `acctLv 3` require `tdMode: "isolated"`; demo option books carry no two-sided ATM liquidity, so order-accept/cancel is the available lifecycle. **Sharp edge:** batch envelopes report `code "1", msg "All operations failed"` with the real per-order `sCode`/`sMsg` only in `data[0]`. Never use `my.okx.com` or `OKX_TESTNET_*` for new probes — historical EEA recordings remain valid provenance only.
+- **OKX — international demo is canonical.** `OKX_INTL_API_KEY` / `_API_SECRET` / `_PASSPHRASE`, host `www.okx.com` + `x-simulated-trading: 1` (both supplied by `sandbox: true`). The same key on live returns 50101. Option orders at `acctLv 3` require `tdMode: "isolated"`; demo option books carry no two-sided ATM liquidity, so order-accept/cancel is the available lifecycle. **Sharp edge:** batch envelopes report `code "1", msg "All operations failed"` with the real per-order `sCode`/`sMsg` only in `data[0]`. Never use `my.okx.com` or `OKX_TESTNET_*`.
 - **Lighter** — DEX (zk perp), not an HMAC pair: `LIGHTER_TESTNET_API_KEY_INDEX` (0–255), `LIGHTER_TESTNET_ACCOUNT_INDEX`, `LIGHTER_TESTNET_API_PRIVATE_KEY` (40-byte hex). Signing is zk-Schnorr through the supervised first-party helper (`Bourse.Signing.Lighter` + `native/lighter_signer/`) — there is no in-Elixir signer. `sandbox: true` selects the testnet host **and** chain id 300 (mainnet is 304; the chain id is part of the signed payload, so a mainnet-chain signature is rejected on testnet). Private reads need an `auth_deadline` and `account_index`; writes need a caller-supplied `nonce` from `public_get_nextnonce` plus a `client_order_index`. Only `limit` orders are supported.
 - **Hyperliquid** — DEX; "creds" = an EVM wallet. `HYPERLIQUID_TESTNET_API_KEY` = wallet address, `_API_SECRET` = its private key. Testnet funded via the official drip (`POST /info {"type":"claimDrip","user":…}`, unlocked by a ≥5 native-USDC mainnet Bridge2 deposit from the same address; re-claimable every 4h).
 - **Derive** — DEX (Lyra v2). `DERIVE_TESTNET_API_KEY` = the **Derive smart-contract wallet** (what `X-LyraWallet` must carry, NOT the owner EOA); `DERIVE_TESTNET_API_SECRET` = a **registered Admin session key's** private key. REST base `api-demo.lyra.finance`. **Sharp edge:** Derive's edge proxy verifies auth *before* the app — the signer must equal `X-LyraWallet` or be a registered session key for it, else nginx returns HTML 403 with no JSON. The owner EOA is NOT auto-registered on UI onboarding, so a plain owner signature 403s.
@@ -311,11 +313,12 @@ Bourse.fetch_ticker(exchange, "BTC/USDT")     # Unified API
 | `Bourse.HTTP` | Req wrapper — manual query encoding, safe retry GET/HEAD only, telemetry, circuit breaker. |
 | `Bourse.RateLimiter` | Per-credential weighted GenServer, sliding window. Key `{exchange, api_key \| :public}`. |
 | `Bourse.LiveLane.FirstFrame` | **Repo-internal.** Probes each venue's public WebSocket and classifies its first data frame; `mix ccxt.verify_ws_first_frame` drives it. |
+| `Bourse.Signing` | Dispatches 8 patterns: `:hmac_sha256_query`, `:hmac_sha256_headers`, `:hmac_sha256_iso_passphrase`, `:api_key_secret_headers`, `:deribit`, `:hyperliquid`, `:derive`, `:lighter`. |
 | `Bourse.Application` | Supervises `Bourse.RateLimiter` + `Bourse.RateLimiter.State` + `Bourse.Signing.Lighter.Supervisor` + `Bourse.WS.Broadcast` + `Bourse.WS.ConnectionOwner.Supervisor`. |
 
 **Unified response types:** 7 original (`Ticker`, `Trade`, `Order`, `Balance`, `Market`, `OHLCV`, `Fee`), 9 tier-1 core (`OrderBook`, `Position`, `Currency`, `Transaction`, `LedgerEntry`, `FundingRate`, `DepositAddress`, `TransferEntry`, `TradingFee`), 9 tier-2 derivatives, 9 tier-3 analytics.
 
-**Signing:** `Bourse.Signing` dispatches 8 patterns — `:hmac_sha256_query`, `:hmac_sha256_headers`, `:hmac_sha256_iso_passphrase`, `:api_key_secret_headers` (Alpaca), `:deribit`, `:hyperliquid`, `:derive`, `:lighter`. The authoritative table lives in the module's `@moduledoc`.
+**Signing:** the pattern set is the `Bourse.Signing` row above, and `mix ccxt.claude_check` set-compares it against the `def sign/4` clause heads — a pattern added in code without editing that row fails the gate. `:api_key_secret_headers` is Alpaca's. Per-pattern detail lives in the module's `@moduledoc`.
 
 **WebSocket:** `Bourse.WS` wraps `ZenWebsocket.Client`. **10 of the eleven venues are configured and confirmed streaming live** (alpaca, binance, binancecoinm, binanceusdm, bybit, deribit, derive, hyperliquid, lighter, okx); Coinbase Exchange is the registered config divergence and `connect/3` answers `{:error, :websocket_not_configured}` for it, distinct from `:unsupported_exchange` for a venue outside runtime support. `subscribe/3` returns `:ok | {:error, term()}` and surfaces venue rejections as `{:error, {:subscription_rejected, frame}}`.
 
@@ -341,7 +344,7 @@ One auth surface remains **unwired, and fails loudly rather than silently**: **d
 
 **Dispatch:** symbol denormalization happens in `Unified.call/5`, NOT `Dispatch.call/4` — raw callers pass through untouched. Required params always win over opts (`Map.put_new` prevents silent override in trading calls).
 
-**Authored `path_params` descriptors are `%{"name", "source"}` and `source` is ALWAYS `"params"`** — verified 1668/1668 across the catalog. `interpolate_path/3` resolves from the params map by `"name"` and deliberately ignores `source`. This is a relied-on invariant: if an authored spec ever sets a path-param source to anything else, resolving from `params` silently reads the wrong place. The fix is not to pre-build unused branches but to make the day-it-changes failure LOUD — `path_param_name/1` should match `%{"source" => "params"}` and let any other shape hit a raising clause.
+**Authored `path_params` descriptors are `%{"name", "source"}` and `source` is ALWAYS `"params"`** — verified 90/90 across the carried slice, 47/47 in the eleven authored documents. `interpolate_path/3` resolves from the params map by `"name"` and deliberately ignores `source`. This is a relied-on invariant: if an authored spec ever sets a path-param source to anything else, resolving from `params` silently reads the wrong place. The fix is not to pre-build unused branches but to make the day-it-changes failure LOUD — `path_param_name/1` should match `%{"source" => "params"}` and let any other shape hit a raising clause.
 
 **Durable kernel:** when data is finite, verifiable, and fails silently when wrong, **author it explicitly — don't infer it at runtime.** `HmacRecipe` stays as the deterministic recipe *executor* (mechanism, not judgment); author recipes into its shape rather than rebuild a signer.
 
@@ -350,8 +353,6 @@ One auth surface remains **unwired, and fails loudly rather than silently**: **d
 The trading domain — OptionProposal, OptionReadiness, OptionSaga, PortfolioRisk and their submodules — lives in its own repo, https://github.com/ZenHive/bourse_trading (private, ZenHive), which depends on this client's published Hex package. The modules keep the Bourse module namespace there; that is deliberate, not a leftover.
 
 **The dependency stays one-directional: the domain calls the client's packaged surface, never the reverse.** Nothing in this repo may reference a domain module — a single inbound edge would couple the client to an unpublished repo. Domain logic (proposal checks, readiness collection, saga execution, exposure math) belongs in bourse_trading; venue behavior, authored specs, signing and unified parsing belong here.
-
-The `docs/option_readiness/` JSON snapshots stay in this repo as frozen evidence — `docs/prod-verification-ledger.md` cites them by path.
 
 ## Repo-internal tooling inside `lib/`
 

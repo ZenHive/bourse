@@ -33,6 +33,17 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Removed
 
+- Documentation that described the deleted replay lane, or claimed a gate that no
+  longer runs. `COVERAGE.md`, `docs/tier1-divergence-report.md`, `docs/option_readiness/`
+  and the post-merge reports under `.audit/` are gone. `docs/authored-specs.md` keeps its
+  doctrine and drops the dated task narratives, the divergence-register pointers and the
+  claims about a consistency test and a dispatch gate that do not exist. The per-venue
+  carve registers keep the `rate-unit` markers and unit tables
+  `authored_rate_unit_confrontation_test.exs` parses and drop the surrounding narrative;
+  an evidence block whose tier rested on a deleted recording now records that, instead of
+  reporting a tier. The prod-verification ledger drops the unenforced 30-day waiver ritual
+  it already admitted nothing checked. Roughly 13,600 lines.
+
 - The mock/fixture/replay test lane is gone: `test/fixtures/` and
   `priv/reference_cache/`, the `ccxt.oracle_gate` / `ccxt.promote_venue` /
   `ccxt.record_fixtures` / `ccxt.record_accepted_requests{,.bulk}` /

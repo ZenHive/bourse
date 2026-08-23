@@ -31,7 +31,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
   and is checked against a bad secret, which the venue rejects outright.
 
   Credentials: bybit + deribit testnet and okx demo keys must be registered via
-  `Bourse.Testnet.register_all_from_env/1` in `test_helper.exs`. Tests flunk
+  `Bourse.Testnet.register_from_env/3` in `test_helper.exs`. Tests flunk
   with setup instructions when credentials are missing — never silent skip.
   """
 

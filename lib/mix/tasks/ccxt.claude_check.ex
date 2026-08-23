@@ -9,17 +9,18 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheck do
       mix ccxt.claude_check
       mix ccxt.claude_check --claude path/to/CLAUDE.md --root .
 
-  Wired into `mix ci` alongside the AGENTS.md freshness gate. Pure filesystem /
-  source parsing — safe for cold reviewer worktrees and `mix check.dispatch`.
+  A step of `mix check.dispatch`, which `mix ci` then calls, alongside the
+  AGENTS.md freshness gate. Pure filesystem / source parsing — safe for cold
+  reviewer worktrees.
 
   ## Regions gated (only these are parsed)
 
   | Region | Start heading | Purpose |
   |--------|---------------|---------|
   | The workbench boundary | `### … The workbench boundary` | which repo owns what, and the paths that claim it |
-  | Venue authority index | `### Venue authority index` | per-venue manifest, recording, and carve-register paths |
-  | Toolchain & check commands | `## Toolchain & check commands` | check-command table, promotion commands |
-  | Running tests | `## Running tests` | command blocks and fixture-gate path claims |
+  | Venue authority index | `### Venue authority index` | per-venue manifest and contract-lane paths |
+  | Toolchain & check commands | `## Toolchain & check commands` | the check-command table |
+  | Running tests | `## Running tests` | command blocks and their path claims |
   | Do NOT edit | `## Do NOT edit` | generated-vs-authored path claims |
   | Key modules | `### Key modules` | module tables, counted Signing / Application claims |
   | The trading domain layer | `## The trading domain layer` | domain module names and the boundary guard |
@@ -668,7 +669,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheck do
         ["ccxt"]
 
       ["Ccxt" | nested] ->
-        # Mix.Tasks.Ccxt.OracleGate → ccxt.oracle_gate
+        # Mix.Tasks.Ccxt.ClaudeCheck → ccxt.claude_check
         # Mix.Tasks.Ccxt.Helpers → not a mix task entry point we care about for
         # `mix ccxt.*` docs, but still indexable.
         snake = Enum.map_join(nested, ".", &Macro.underscore/1)
