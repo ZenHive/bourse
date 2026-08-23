@@ -734,3 +734,83 @@ Entry template:
 - Expected evidence: a live `fetch_my_trades` response carrying populated `maker_fee`/`taker_fee`,
   the authored map given an explicit confirmed scale (or confirmed raw), and C-T546i amended to
   tier 1.
+
+### bybit — asset / margin / convert / fee-rate / ledger / transfer reads (task 671, filed 2026-08-23)
+
+- Authored slices: bybit runtime branches `privateGetV5AssetTransferQueryAccountCoinsBalance`,
+  `privateGetV5SpotMarginTradeInterestRateHistory`, `privateGetV5AssetExchangeQueryCoinList`,
+  `privatePostV5AssetExchangeQuoteApply`, `privateGetV5AssetExchangeConvertResultQuery`,
+  `privateGetV5AssetExchangeQueryConvertHistory`, `privateGetV5AccountContractTransactionLog`,
+  `privateGetV5AccountFeeRate`, `privateGetV5AssetTransferQueryInterTransferList`
+- Blocked by: the BYBIT_TESTNET key holds only `Derivatives: ["DerivativesTrade"]`
+  (observed via `/v5/user/query-api`, 2026-08-23) — every other permission list is empty, so
+  these reads answer `permission_denied`. The BYBIT_DEMO key holds the missing scopes but
+  `api-demo.bybit.com` answers `10032 "Demo trading are not supported."` on all of them, and
+  `/v5/account/fee-rate` answers `10001` with an empty message. Demo is not a workaround.
+- The open question: the wallet/convert/fee-rate response envelopes and whether the authored
+  maps normalize every returned variant.
+- Exact call: with a testnet key granted Wallet + Exchange + Spot + ContractTrade scopes, run
+  `mix ccxt.verify_rest_read_contracts --venue bybit`.
+- Expected evidence: retCode 0 bodies for all nine branches, parsed against the inventoried
+  success meanings.
+
+### bybit — deposit-address reads (task 671, filed 2026-08-23)
+
+- Authored slices: bybit runtime branch `privateGetV5AssetDepositQueryAddress`
+  (cases `fetchDepositAddress:0`, `fetchDepositAddressesByNetwork:0`)
+- Blocked by: jurisdiction, not key scope — testnet answers *"The product or service you are
+  seeking to access is not available to you due to regulatory restrictions"*; demo answers
+  `10032`. No key on this account unlocks it.
+- The open question: the deposit-address chain/tag envelope for this account class.
+- Exact call: same lane, from a jurisdiction where Bybit serves deposit addresses.
+- Expected evidence: retCode 0 with per-chain address rows matching the authored map.
+
+### bybit — order-identity and delivery reads need account state a read-only key cannot create (task 671, filed 2026-08-23)
+
+- Authored slices: bybit cases `fetchClosedOrder:0`, `fetchOpenOrder:0`, `fetchOrder:0/1/2/3`,
+  `fetchOrderClassic:0/1/2`, `fetchOrderTrades:0`, `fetchMySettlementHistory:0`
+- Blocked by: `/v5/order/history` and `/v5/order/realtime` return zero rows in every category,
+  and the testnet key is read-only (business error 10024 on any signed create) — the account
+  state cannot be produced through our own keys. `/v5/asset/delivery-record` is reachable
+  (retCode 0) but empty for `inverse`, `linear` and `option`.
+- The open question: order-detail and delivery-record semantics against real rows.
+- Exact call: with a trade-enabled testnet key, one spot round-trip order plus one position
+  held through a delivery, then `mix ccxt.verify_rest_read_contracts --venue bybit`.
+- Expected evidence: the eleven cases resolve their resource ids and assert their success
+  meanings against non-empty provider rows.
+
+### okx — funding-account and savings surfaces are disabled in demo trading (task 671, filed 2026-08-23)
+
+- Authored slices: okx cases `fetchCurrencies:0`, `fetchDepositWithdrawFees:0`,
+  `fetchDepositAddress:0`, `fetchDepositAddressesByNetwork:0`, `fetchBorrowRateHistory:0`,
+  `fetchBorrowRateHistories:0`
+- Blocked by: OKX demo trading answers `{"code":"50038","msg":"This feature is unavailable in
+  demo trading"}` on `asset/currencies`, `asset/deposit-address` and
+  `finance/savings/lending-rate-history` (signed live probes, 2026-08-23; the savings read
+  answers code 0 only without `x-simulated-trading`, i.e. on production). Provider authority:
+  https://www.okx.com/docs-v5/en/ § "Demo Trading Services" — deposit/withdraw/purchase-
+  redemption functions are excluded from demo.
+- The open question: the funding-account and savings envelopes on production.
+- Exact call: production OKX key (demo keys answer 50101 on live), then
+  `mix ccxt.verify_rest_read_contracts --venue okx`.
+- Expected evidence: code 0 bodies parsed against the six cases' success meanings.
+
+### okx — deposit/withdrawal history rows cannot exist on a demo account (task 671, filed 2026-08-23)
+
+- Authored slices: okx cases `fetchDeposit:0`, `fetchWithdrawal:0`
+- Blocked by: the history endpoints answer code 0 with `data: []` on demo, and deposits/
+  withdrawals are exactly the functions demo excludes — the account can never accumulate a row.
+- The open question: single-record lookup semantics (`txId`/`wdId` filters) against real rows.
+- Exact call: production account with at least one deposit and one withdrawal on record.
+- Expected evidence: the resource strategy resolves a real id and the lookup returns its row.
+
+### okx — no read-only source of a transId for transfer-state (task 671, filed 2026-08-23)
+
+- Authored slices: okx case `fetchTransfer:0:privateGetAssetTransferState`
+- Blocked by: OKX issues `transId` only from `POST /api/v5/asset/transfer`; every read surface
+  (`asset/bills`, `account/bills`) exposes `billId`, and `transfer-state` rejects a billId with
+  `58129 "transId is incorrect or transId does not match with 'type'"` (live probe 2026-08-23).
+- The open question: transfer-state semantics for a genuine transId.
+- Exact call: perform one funding→trading transfer (a write), capture its transId, then call
+  `fetch_transfer(ex, transId)`.
+- Expected evidence: code 0 with the transfer's state row matching the authored map.

@@ -71,6 +71,30 @@ roadmap.
 
 ---
 
+## 2026-08-23 — bybit: account-classification helper endpoints remain in `fetchBalance` reads and every write method's `unified` array
+
+**Status:** 🆕 reported (task 671 carved them out of the six red READ methods only — see `docs/authored-spec-carves/bybit.md` C-T671a)
+
+**The call:** `Bourse.fetch_balance(ex, endpoint_index: 0)` / `endpoint_index: 4` (bybit), and the
+`unified` arrays of `createOrder`, `createOrders`, `createMarketBuyOrderWithCost`,
+`createMarketSellOrderWithCost`, `cancelAllOrders`, `cancelOrders`, `cancelOrdersForSymbols`,
+`setMarginMode`, `withdraw`.
+
+**Observed:** those indices dispatch to `/v5/account/info` or `/v5/user/query-api` — account-
+classification helpers carrying no balance rows and no order/write capability. The two
+`fetchBalance` contract cases pass only because their success meanings are weak enough to be
+satisfied by the helper payload; a consumer iterating `endpoint_index` gets classification
+metadata labelled as a balance read. The write-method entries shift the meaning of
+`endpoint_index` for every write consumer.
+
+**Expected:** helper endpoints live outside the data-read/write branch lists (the client already
+has a first-class home: `Unified.call_account_facts_endpoint/5` uses `private_get_v5_account_info`
+for `fetch_account_facts`).
+
+**Impact:** wrong-but-green balance reads on two indices; index drift risk for writes. Write-side
+cleanup belongs with the writes task (668); the fetchBalance carve needs a decision on the two
+currently-green cases.
+
 ## 2026-08-23 — deribit `fetch_account_facts`: the account-level margin figures are parsed and then dropped — only the two classification flags survive
 
 **Status:** 🆕 reported · **Venue:** deribit (testnet, `sandbox: true`, bourse `0.7.0` from Hex) ·

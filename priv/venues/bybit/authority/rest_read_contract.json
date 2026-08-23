@@ -104,14 +104,6 @@
           "options": []
         },
         {
-          "provider_operation": "privateGetV5SpotCrossMarginTradeAccount",
-          "http_method": "GET",
-          "path": "v5/spot-cross-margin-trade/account",
-          "authenticated": true,
-          "market_kind": "spot",
-          "options": []
-        },
-        {
           "provider_operation": "privateGetV5UserQueryApi",
           "http_method": "GET",
           "path": "v5/user/query-api",
@@ -395,14 +387,6 @@
       "method": "fetchConvertCurrencies",
       "branches": [
         {
-          "provider_operation": "privateGetV5AccountInfo",
-          "http_method": "GET",
-          "path": "v5/account/info",
-          "authenticated": true,
-          "market_kind": "spot",
-          "options": []
-        },
-        {
           "provider_operation": "privateGetV5AssetExchangeQueryCoinList",
           "http_method": "GET",
           "path": "v5/asset/exchange/query-coin-list",
@@ -414,14 +398,6 @@
               "strategy": "market_type"
             }
           ]
-        },
-        {
-          "provider_operation": "privateGetV5UserQueryApi",
-          "http_method": "GET",
-          "path": "v5/user/query-api",
-          "authenticated": true,
-          "market_kind": "spot",
-          "options": []
         }
       ],
       "arguments": [],
@@ -445,22 +421,6 @@
     {
       "method": "fetchConvertQuote",
       "branches": [
-        {
-          "provider_operation": "privateGetV5AccountInfo",
-          "http_method": "GET",
-          "path": "v5/account/info",
-          "authenticated": true,
-          "market_kind": "spot",
-          "options": []
-        },
-        {
-          "provider_operation": "privateGetV5UserQueryApi",
-          "http_method": "GET",
-          "path": "v5/user/query-api",
-          "authenticated": true,
-          "market_kind": "spot",
-          "options": []
-        },
         {
           "provider_operation": "privatePostV5AssetExchangeQuoteApply",
           "http_method": "POST",
@@ -513,14 +473,6 @@
       "method": "fetchConvertTrade",
       "branches": [
         {
-          "provider_operation": "privateGetV5AccountInfo",
-          "http_method": "GET",
-          "path": "v5/account/info",
-          "authenticated": true,
-          "market_kind": "spot",
-          "options": []
-        },
-        {
           "provider_operation": "privateGetV5AssetExchangeConvertResultQuery",
           "http_method": "GET",
           "path": "v5/asset/exchange/convert-result-query",
@@ -532,14 +484,6 @@
               "strategy": "market_type"
             }
           ]
-        },
-        {
-          "provider_operation": "privateGetV5UserQueryApi",
-          "http_method": "GET",
-          "path": "v5/user/query-api",
-          "authenticated": true,
-          "market_kind": "spot",
-          "options": []
         }
       ],
       "arguments": [
@@ -1145,24 +1089,6 @@
           ]
         },
         {
-          "provider_operation": "privateGetV5AccountInfo",
-          "http_method": "GET",
-          "path": "v5/account/info",
-          "authenticated": true,
-          "market_kind": "spot",
-          "options": [
-            {
-              "name": "symbol",
-              "strategy": "market_symbol"
-            },
-            {
-              "name": "limit",
-              "strategy": "literal",
-              "value": 10
-            }
-          ]
-        },
-        {
           "provider_operation": "privateGetV5AccountTransactionLog",
           "http_method": "GET",
           "path": "v5/account/transaction-log",
@@ -1181,24 +1107,6 @@
             {
               "name": "category",
               "strategy": "market_type"
-            }
-          ]
-        },
-        {
-          "provider_operation": "privateGetV5UserQueryApi",
-          "http_method": "GET",
-          "path": "v5/user/query-api",
-          "authenticated": true,
-          "market_kind": "spot",
-          "options": [
-            {
-              "name": "symbol",
-              "strategy": "market_symbol"
-            },
-            {
-              "name": "limit",
-              "strategy": "literal",
-              "value": 10
             }
           ]
         }
@@ -2066,14 +1974,6 @@
       "method": "fetchOrder",
       "branches": [
         {
-          "provider_operation": "privateGetV5AccountInfo",
-          "http_method": "GET",
-          "path": "v5/account/info",
-          "authenticated": true,
-          "market_kind": "spot",
-          "options": []
-        },
-        {
           "provider_operation": "privateGetV5OrderHistory",
           "http_method": "GET",
           "path": "v5/order/history",
@@ -2098,14 +1998,6 @@
               "strategy": "market_type"
             }
           ]
-        },
-        {
-          "provider_operation": "privateGetV5UserQueryApi",
-          "http_method": "GET",
-          "path": "v5/user/query-api",
-          "authenticated": true,
-          "market_kind": "spot",
-          "options": []
         }
       ],
       "arguments": [
@@ -2179,14 +2071,6 @@
       "method": "fetchOrderClassic",
       "branches": [
         {
-          "provider_operation": "privateGetV5AccountInfo",
-          "http_method": "GET",
-          "path": "v5/account/info",
-          "authenticated": true,
-          "market_kind": "spot",
-          "options": []
-        },
-        {
           "provider_operation": "privateGetV5OrderHistory",
           "http_method": "GET",
           "path": "v5/order/history",
@@ -2198,14 +2082,6 @@
               "strategy": "market_type"
             }
           ]
-        },
-        {
-          "provider_operation": "privateGetV5UserQueryApi",
-          "http_method": "GET",
-          "path": "v5/user/query-api",
-          "authenticated": true,
-          "market_kind": "spot",
-          "options": []
         }
       ],
       "arguments": [

@@ -76,3 +76,31 @@ Outcome: CONFIRM provider vocabulary; DIVERGE because venue-native literals occu
 <!-- carve-evidence-status
 {"carve_id":"C-T598b","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Bybit docs commit 5ccd3010 docs/v5/enum.mdx type(uta-translog) and type(contract-translog), plus transaction-log change arithmetic"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Venue-native literals deliberately pass through the unified type field; no live account can summon every ledger type"}
 -->
+
+## 2026-08-23 — read-branch carve: account-classification helpers and a retired endpoint (Task 671)
+
+**C-T671a — six unified READ methods carried `privateGetV5AccountInfo` / `privateGetV5UserQueryApi`
+as data branches. Outcome: DIVERGE — the branches are removed from the read surface.**
+
+`/v5/account/info` and `/v5/user/query-api` are account-classification helpers (the
+compatibility reference calls them before choosing a real endpoint, e.g. its
+`isUnifiedEnabled()` pre-flight); neither carries currency, conversion, ledger or order
+rows, so a read branch on them can never satisfy its success meaning. Observed live
+(2026-08-23): `fetch_convert_currencies` on those indices fails with an unexpected parse
+shape, `fetch_convert_quote` fail-opens to a labelled `RawResponse`, and `fetch_ledger`
+manufactured a bogus `%LedgerEntry{}` from the API-key id. Removed from `unified` (and the
+matching inventory branches) for: `fetchConvertCurrencies`, `fetchConvertQuote`,
+`fetchConvertTrade`, `fetchLedger`, `fetchOrder`, `fetchOrderClassic` — twelve branches.
+`fetchMarginMode` keeps `privateGetV5AccountInfo`: the margin mode genuinely lives there
+([Account info](https://bybit-exchange.github.io/docs/v5/account/account-info)). The same
+helper contamination remains in `fetchBalance` (its two helper cases currently pass their
+weaker success meanings) and in the write methods' arrays; recorded in `BUGS.md` rather
+than carved here, since task 671 owns only the red read surface.
+
+**C-T671b — `privateGetV5SpotCrossMarginTradeAccount` (`/v5/spot-cross-margin-trade/account`)
+is removed from `fetchBalance`. Outcome: DIVERGE — the provider retired the endpoint.**
+
+The endpoint answers HTTP 404 live (raw transport call, so not a signing/params artifact).
+It belongs to the Classic-account spot-cross-margin surface; Bybit's docs describe the
+Classic account as "now unavailable" and expose UTA spot margin under
+`/v5/spot-margin-trade/*`. Our account is UTA (`uta: 1`).

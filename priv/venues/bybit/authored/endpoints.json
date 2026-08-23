@@ -988,7 +988,6 @@
       "privateGetV5AccountInfo",
       "privateGetV5AccountWalletBalance",
       "privateGetV5AssetTransferQueryAccountCoinsBalance",
-      "privateGetV5SpotCrossMarginTradeAccount",
       "privateGetV5UserQueryApi"
     ],
     "has": true,
@@ -1481,9 +1480,7 @@
   },
   "fetchConvertCurrencies": {
     "unified": [
-      "privateGetV5AccountInfo",
-      "privateGetV5AssetExchangeQueryCoinList",
-      "privateGetV5UserQueryApi"
+      "privateGetV5AssetExchangeQueryCoinList"
     ],
     "has": true,
     "mapping_complete": true,
@@ -1538,8 +1535,6 @@
   },
   "fetchConvertQuote": {
     "unified": [
-      "privateGetV5AccountInfo",
-      "privateGetV5UserQueryApi",
       "privatePostV5AssetExchangeQuoteApply"
     ],
     "has": true,
@@ -1639,9 +1634,7 @@
   },
   "fetchConvertTrade": {
     "unified": [
-      "privateGetV5AccountInfo",
-      "privateGetV5AssetExchangeConvertResultQuery",
-      "privateGetV5UserQueryApi"
+      "privateGetV5AssetExchangeConvertResultQuery"
     ],
     "has": true,
     "mapping_complete": false,
@@ -2503,9 +2496,7 @@
   "fetchLedger": {
     "unified": [
       "privateGetV5AccountContractTransactionLog",
-      "privateGetV5AccountInfo",
-      "privateGetV5AccountTransactionLog",
-      "privateGetV5UserQueryApi"
+      "privateGetV5AccountTransactionLog"
     ],
     "has": true,
     "mapping_complete": true,
@@ -3633,10 +3624,8 @@
   },
   "fetchOrder": {
     "unified": [
-      "privateGetV5AccountInfo",
       "privateGetV5OrderHistory",
-      "privateGetV5OrderRealtime",
-      "privateGetV5UserQueryApi"
+      "privateGetV5OrderRealtime"
     ],
     "has": true,
     "mapping_complete": true,
@@ -3782,9 +3771,7 @@
   },
   "fetchOrderClassic": {
     "unified": [
-      "privateGetV5AccountInfo",
-      "privateGetV5OrderHistory",
-      "privateGetV5UserQueryApi"
+      "privateGetV5OrderHistory"
     ],
     "has": true,
     "mapping_complete": true,
