@@ -1243,7 +1243,7 @@
         {
           "name": "id",
           "strategy": "resource",
-          "source_method": "fetchOpenOrders",
+          "source_method": "fetchOrders",
           "field": "id",
           "collection": false
         }
@@ -1335,7 +1335,7 @@
         {
           "name": "id",
           "strategy": "resource",
-          "source_method": "fetchOpenOrders",
+          "source_method": "fetchOrders",
           "field": "id",
           "collection": false
         }

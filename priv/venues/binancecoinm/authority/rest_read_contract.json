@@ -45,7 +45,7 @@
       "arguments": [],
       "success": {
         "representation": "parsed",
-        "collection": "single",
+        "collection": "list",
         "module": "Bourse.ADLRank",
         "required_fields": [
           "symbol",
@@ -54,7 +54,8 @@
         "any_fields": [
           "percentage",
           "timestamp"
-        ]
+        ],
+        "empty_collection": "allowed"
       },
       "authority_source_ids": [
         "developer-docs-full"
@@ -230,15 +231,13 @@
       "arguments": [],
       "success": {
         "representation": "parsed",
-        "collection": "single",
+        "collection": "map",
         "module": "Bourse.FundingRate",
         "required_fields": [
           "symbol"
         ],
         "any_fields": [
-          "fundingRate",
-          "nextFundingRate",
-          "timestamp"
+          "interval"
         ]
       },
       "authority_source_ids": [
@@ -441,7 +440,7 @@
       "arguments": [],
       "success": {
         "representation": "parsed",
-        "collection": "single",
+        "collection": "list",
         "module": "Bourse.LeverageTier",
         "required_fields": [
           "symbol",
@@ -671,7 +670,7 @@
         {
           "name": "id",
           "strategy": "resource",
-          "source_method": "fetchOrders",
+          "source_method": "fetchOpenOrders",
           "field": "id",
           "collection": false
         }

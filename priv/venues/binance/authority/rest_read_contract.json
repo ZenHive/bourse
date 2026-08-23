@@ -442,7 +442,7 @@
         {
           "name": "id",
           "strategy": "resource",
-          "source_method": "fetchOrders",
+          "source_method": "fetchOpenOrders",
           "field": "id",
           "collection": false
         }

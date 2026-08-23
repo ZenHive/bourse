@@ -22,7 +22,7 @@
       "dapiPrivateGetPositionMarginHistory"
     ],
     "has": true,
-    "mapping_complete": false,
+    "mapping_complete": true,
     "verification": "unverified",
     "descriptor": {
       "$ref": "binance_family#fetchMarginAdjustmentHistory"
@@ -235,7 +235,7 @@
       "dapiPrivateGetIncome"
     ],
     "has": true,
-    "mapping_complete": false,
+    "mapping_complete": true,
     "verification": "unverified",
     "parse": [
       "parseIncomes"
@@ -243,6 +243,15 @@
     "transaction_classification": {
       "on_chain": false,
       "transactional": false
+    },
+    "request": {
+      "defaults": {
+        "incomeType": {
+          "kind": "literal",
+          "reason": null,
+          "value": "FUNDING_FEE"
+        }
+      }
     }
   },
   "fetchPositionMode": {
@@ -648,7 +657,7 @@
           "subType",
           "sub_type"
         ],
-        "default": "fapiPrivate_get_allorders",
+        "default": "dapiPrivate_get_allorders",
         "rules": [
           {
             "endpoint": "dapiPrivate_get_allorders",

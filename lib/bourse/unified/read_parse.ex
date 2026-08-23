@@ -290,6 +290,52 @@ defmodule Bourse.Unified.ReadParse do
     end
   end
 
+  # Alpaca's two v1beta3 crypto bars endpoints are multi-symbol batch reads:
+  # the venue always answers `{"bars" => %{"<SYMBOL>" => rows_or_row}}`, one
+  # entry per requested symbol — historical bars nest an ARRAY of bar objects
+  # per symbol (https://docs.alpaca.markets/reference/cryptobars-1), latest
+  # bars nest a SINGLE bar object per symbol
+  # (https://docs.alpaca.markets/reference/cryptolatestbars-1). Neither is a
+  # bare rows list, so the shared `ohlcv_rows/2` extraction below (which
+  # expects the envelope key to resolve straight to the rows) sees a map and
+  # fails loud with `:unexpected_response_shape`. Dereference the requested
+  # symbol out of that wrapper first. The stocks endpoint
+  # (`v2/stocks/{symbol}/bars`) already answers a bare array under "bars" and
+  # falls through to the generic clause below untouched.
+  defp do_parse(
+         "ohlcv",
+         %Exchange{id: "alpaca"} = exchange,
+         _module,
+         _js_name,
+         %{"bars" => bars} = body,
+         params,
+         _parser,
+         _list_return?
+       )
+       when is_map(bars) do
+    with :ok <- reject_error_envelope(body, exchange) do
+      case Map.get(bars, params["symbol"]) do
+        rows when is_list(rows) ->
+          candles =
+            rows
+            |> Enum.map(&coerce_ohlcv_row(&1, %{}))
+            |> filter_ohlcv_by_since(params)
+            |> maybe_take_ohlcv_limit(params)
+
+          {:ok, candles}
+
+        %{} = single_bar ->
+          {:ok, [coerce_ohlcv_row(single_bar, %{})]}
+
+        nil ->
+          {:ok, []}
+
+        other ->
+          {:error, {:unexpected_response_shape, other}}
+      end
+    end
+  end
+
   # OHLCV is array-shaped, not a field-map struct: envelope-unwrap,
   # optionally transpose a columnar payload (deribit's tradingview shape) to rows, then
   # coerce the timestamp and OHLC values to numbers. Object
@@ -426,7 +472,8 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   defp do_parse(parse_type, exchange, module, js_name, body, params, parser, list_return?) do
-    envelope_list? = envelope_list_return?(js_name, list_return?)
+    dict_js_name = dict_shape_js_name(js_name, exchange)
+    envelope_list? = envelope_list_return?(dict_js_name, list_return?)
     unwrap_list? = envelope_list? and not has_authored_transform?(module, parse_type, js_name)
 
     with :ok <- reject_error_envelope(body, exchange),
@@ -440,7 +487,7 @@ defmodule Bourse.Unified.ReadParse do
          # Peel wire collection containers (data/list/rows/result.*) so list and
          # dict-return reads iterate rows — never fold an envelope map into one
          # all-nil struct. Empty collections become [] here (valid success).
-         payload = coerce_collection_payload(payload, envelope_list?),
+         payload = coerce_collection_payload(payload, envelope_list?, exchange, dict_js_name),
          payload = filter_selected_deposit_rows(payload, exchange, js_name),
          {:ok, payload} <- select_requested_row(payload, exchange, js_name, params),
          {:ok, payload} <- ensure_expected_shape(payload, envelope_list?),
@@ -463,7 +510,7 @@ defmodule Bourse.Unified.ReadParse do
          {:ok, parsed} <- invoke_parser(module, parser, payload, parse_opts),
          parsed =
            parsed
-           |> maybe_enrich_list(payload, js_name)
+           |> maybe_enrich_list(payload, dict_js_name)
            |> enrich(payload, list_return?)
            # Must follow enrich/3: the network is recovered from the explorer url
            # carried in `info`, which enrich/3 is what populates.
@@ -474,7 +521,7 @@ defmodule Bourse.Unified.ReadParse do
          parsed = stamp_bybit_fetch_position_timestamp(parsed, body, exchange, js_name),
          {:ok, parsed} <- backfill_native_symbols(parsed, exchange, parse_type, params),
          parsed = filter_deribit_requested_tickers(parsed, exchange, js_name, params),
-         {:ok, parsed} <- shape_parsed_result(parsed, js_name, list_return?, params),
+         {:ok, parsed} <- shape_parsed_result(parsed, dict_js_name, list_return?, params),
          {:ok, parsed} <- backfill_market_symbols(parsed, exchange, parse_type, payload, envelope_list?),
          # Emptiness is judged BEFORE request-symbol backfill so a genuinely
          # empty list/single parse (e.g. all-nil trades) is rejected rather than
@@ -553,6 +600,38 @@ defmodule Bourse.Unified.ReadParse do
 
   @dict_return_methods @symbol_dict_return_methods ++ @currency_dict_return_methods ++ @network_dict_return_methods
 
+  # binanceusdm's bookTicker/premiumIndex/fundingInfo endpoints return a bare
+  # array keyed by symbol when no symbol is given — the same shape as
+  # fetchTickers — but their descriptor return type ("Tickers"/"FundingRates")
+  # is shared with other venues whose current single-item collapse on these
+  # same JS method names is separately owned. Alias onto fetchTickers's
+  # dict-return classification (envelope shape, enrichment, symbol re-keying)
+  # only for binanceusdm, so other venues stay untouched.
+  @binanceusdm_dict_return_aliases ["fetchBidsAsks", "fetchMarkPrices", "fetchFundingIntervals", "fetchADLRank"]
+
+  defp dict_shape_js_name(js_name, %Exchange{id: "binanceusdm"}) when js_name in @binanceusdm_dict_return_aliases,
+    do: "fetchTickers"
+
+  # binance spot's `ticker/bookTicker` is the same no-symbol-bare-array shape
+  # as binanceusdm's aliased endpoints above — without a symbol it answers
+  # every symbol as one JSON array, which a non-dict-return classification
+  # collapses to a single first-row struct instead of the requested map.
+  # https://developers.binance.com/en/docs/binance-spot-api-docs/rest-api/market-data-endpoints#symbol-order-book-ticker
+  @binance_dict_return_aliases ["fetchBidsAsks"]
+
+  defp dict_shape_js_name(js_name, %Exchange{id: "binance"}) when js_name in @binance_dict_return_aliases,
+    do: "fetchTickers"
+
+  # binancecoinm's `fundingInfo` is the same no-symbol-bare-array shape,
+  # additionally spanning both COIN-M and USD-M symbols in one combined list
+  # (verified live: identical 616-row body from both dapi and fapi hosts).
+  @binancecoinm_dict_return_aliases ["fetchFundingIntervals"]
+
+  defp dict_shape_js_name(js_name, %Exchange{id: "binancecoinm"}) when js_name in @binancecoinm_dict_return_aliases,
+    do: "fetchTickers"
+
+  defp dict_shape_js_name(js_name, _exchange), do: js_name
+
   defp envelope_list_return?(js_name, list_return?) do
     list_return? or js_name in @dict_return_methods
   end
@@ -625,12 +704,21 @@ defmodule Bourse.Unified.ReadParse do
   defp nested_fee_key_shape(_value), do: nil
 
   defp apply_authored_transform(payload, module, parse_type, js_name, exchange) do
-    case get_in(module.__response_envelopes__(), [parse_type, js_name, "transform"]) do
+    config = get_in(module.__response_envelopes__(), [parse_type, js_name]) || %{}
+
+    case Map.get(config, "transform") do
       %{"kind" => "market_fee_rows"} = transform -> market_fee_rows(payload, exchange, transform)
       %{"kind" => "merge_fields"} = transform -> merge_fields(payload, transform)
+      "positional_rows" -> positional_rows(payload, Map.get(config, "columns"))
       _ -> payload
     end
   end
+
+  # A venue answering a collection as positional arrays (OKX rubik statistics)
+  # names its columns in the authored envelope; the field map then reads the row
+  # by name like any object payload.
+  defp positional_rows(payload, [_ | _] = columns), do: ResponseTransformer.positional_to_maps(payload, columns)
+  defp positional_rows(payload, _columns), do: payload
 
   defp merge_fields(%{} = payload, %{"fields" => fields}) when is_map(fields) do
     Enum.reduce(fields, payload, fn
@@ -1924,6 +2012,21 @@ defmodule Bourse.Unified.ReadParse do
     ]
   end
 
+  # Derived price series carry no traded volume: bybit's index-, mark- and
+  # premium-index klines publish exactly five columns, so the six-column clause
+  # never matches and the row would otherwise reach the caller as raw strings.
+  # https://bybit-exchange.github.io/docs/v5/market/index-kline
+  defp coerce_ohlcv_row([ts, o, h, l, c], _config) do
+    [
+      ohlcv_timestamp(ts),
+      Bourse.Safe.number(o),
+      Bourse.Safe.number(h),
+      Bourse.Safe.number(l),
+      Bourse.Safe.number(c),
+      nil
+    ]
+  end
+
   defp coerce_ohlcv_row(%{} = row, _config) do
     [
       ohlcv_timestamp(Map.get(row, "t")),
@@ -1991,6 +2094,20 @@ defmodule Bourse.Unified.ReadParse do
       timestamp: timestamp,
       datetime: Timestamp.iso8601_from_ms(timestamp),
       volatility: Bourse.Safe.number(vol)
+    }
+  end
+
+  # Bybit publishes each volatility observation as an object keyed
+  # `period`/`value`/`time`, not as the array-of-pairs deribit sends.
+  # https://bybit-exchange.github.io/docs/v5/market/iv
+  defp coerce_volatility_history_row(%{"time" => ts, "value" => value} = raw) do
+    timestamp = Bourse.Safe.integer(ts)
+
+    %VolatilityHistory{
+      info: raw,
+      timestamp: timestamp,
+      datetime: Timestamp.iso8601_from_ms(timestamp),
+      volatility: Bourse.Safe.number(value)
     }
   end
 
@@ -3121,11 +3238,29 @@ defmodule Bourse.Unified.ReadParse do
     end
   end
 
+  # Bybit's `category=linear`/`inverse` ticker list mixes perpetuals with dated
+  # delivery contracts, and a delivery contract publishes no funding at all —
+  # `fundingRate` comes back as `""` with `nextFundingTime` `"0"`. Keeping those
+  # rows would mint funding-rate records whose every funding field is nil.
+  # https://bybit-exchange.github.io/docs/v5/market/tickers
+  defp annotate_bybit_market_category(payload, body, %Exchange{id: "bybit"}, "funding_rate", _params)
+       when is_list(payload) do
+    payload
+    |> annotate_bybit_response_category(body)
+    |> case do
+      rows when is_list(rows) -> Enum.filter(rows, &bybit_funding_row?/1)
+      other -> other
+    end
+  end
+
   defp annotate_bybit_market_category(payload, body, %Exchange{id: "bybit"}, _parse_type, _params) do
     annotate_bybit_response_category(payload, body)
   end
 
   defp annotate_bybit_market_category(payload, _body, _exchange, _parse_type, _params), do: payload
+
+  defp bybit_funding_row?(%{"fundingRate" => rate}) when is_binary(rate), do: rate != ""
+  defp bybit_funding_row?(_row), do: true
 
   # Pre-compute OKX parsePosition money strings (notional / IM / collateral / ratio /
   # percentage / side / hedged / contract size) so field maps read stable `_bourse_*`
@@ -4160,6 +4295,23 @@ defmodule Bourse.Unified.ReadParse do
   # incidental nested array off a single-record body.
   @collection_keys ~w(data list rows)
 
+  # binance's per-symbol ticker read answers with a bare flat object instead
+  # of a one-element array when a single `symbol` is sent — the same wire
+  # endpoint returns an array only when no symbol is given. A dict-return
+  # method (fetchTickers, and fetchBidsAsks aliased above) must fold that
+  # single row into a one-element list before parsing, or the row parses as
+  # one flat struct and shape_parsed_result/4 has no list to re-key by symbol.
+  # https://developers.binance.com/en/docs/binance-spot-api-docs/rest-api/market-data-endpoints#24hr-ticker-price-change-statistics
+  defp coerce_collection_payload(payload, true, %Exchange{id: "binance"}, "fetchTickers") when is_map(payload) do
+    case collection_rows(payload) do
+      rows when is_list(rows) -> rows
+      :none -> [payload]
+    end
+  end
+
+  defp coerce_collection_payload(payload, envelope_list?, _exchange, _dict_js_name),
+    do: coerce_collection_payload(payload, envelope_list?)
+
   defp coerce_collection_payload(payload, true) when is_list(payload), do: payload
 
   defp coerce_collection_payload(payload, true) when is_map(payload) do
@@ -4822,6 +4974,9 @@ defmodule Bourse.Unified.ReadParse do
 
   defp annotate_hyperliquid_by_type("open_interest", payload, exchange, _js),
     do: annotate_hyperliquid_ctx_rows(payload, exchange, :open_interest)
+
+  defp annotate_hyperliquid_by_type("funding_history", payload, _exchange, _js),
+    do: annotate_hyperliquid_funding_history(payload)
 
   defp annotate_hyperliquid_by_type("order", payload, _exchange, js), do: annotate_hyperliquid_orders(payload, js)
   defp annotate_hyperliquid_by_type("position", payload, _exchange, _js), do: annotate_hyperliquid_positions(payload)
@@ -5651,6 +5806,21 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   defp annotate_hyperliquid_transactions(other, _js_name), do: other
+
+  # userFunding rows share the ledger-update shape ({"delta" => {...}, "hash",
+  # "time"}); promote delta.coin onto the row so the generic native-symbol
+  # backfill (hyperliquid_native_coin/2) can resolve `symbol`.
+  # https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint/perpetuals#retrieve-a-users-funding-history
+  defp annotate_hyperliquid_funding_history(rows) when is_list(rows),
+    do: Enum.map(rows, &annotate_hyperliquid_funding_history_row/1)
+
+  defp annotate_hyperliquid_funding_history(%{} = row), do: annotate_hyperliquid_funding_history_row(row)
+  defp annotate_hyperliquid_funding_history(other), do: other
+
+  defp annotate_hyperliquid_funding_history_row(%{"delta" => %{"coin" => coin}} = row) when is_binary(coin),
+    do: Map.put(row, "coin", coin)
+
+  defp annotate_hyperliquid_funding_history_row(other), do: other
 
   # Promote delta.type onto the ledger row.
   defp extract_hyperliquid_ledger_type(%{"delta" => %{"type" => type}} = row) when is_binary(type) do

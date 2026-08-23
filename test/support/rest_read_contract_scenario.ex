@@ -303,6 +303,7 @@ defmodule Bourse.Test.RestReadContractScenario do
   defp resource_option_atom("account_index"), do: :account_index
   defp resource_option_atom("auth_deadline"), do: :auth_deadline
   defp resource_option_atom("subaccount_id"), do: :subaccount_id
+  defp resource_option_atom("symbol"), do: :symbol
   defp resource_option_atom("category"), do: :category
   defp resource_option_atom("currency"), do: :currency
   defp resource_option_atom("instType"), do: :instType
