@@ -17,7 +17,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheck do
 
   | Region | Start heading | Purpose |
   |--------|---------------|---------|
-  | The workbench boundary | `### … The workbench boundary` | which repo owns what, and the paths that claim it |
+  | The workbench is dissolved | `### … The workbench is dissolved` | the roadmap lives here, and the paths that claim it |
   | Venue authority index | `### Venue authority index` | per-venue manifest and contract-lane paths |
   | Toolchain & check commands | `## Toolchain & check commands` | the check-command table |
   | Running tests | `## Running tests` | command blocks and their path claims |
@@ -78,7 +78,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheck do
   # until the next heading of the same or a higher level, so a `##` region keeps
   # its `###` subsections and a `###` region still stops at the next `##`.
   @regions [
-    {"The workbench boundary", 3, ~r/^### [^\n]*The workbench boundary\b/m},
+    {"The workbench is dissolved", 3, ~r/^### [^\n]*The workbench is dissolved\b/m},
     {"Venue authority index", 3, ~r/^### Venue authority index\b/m},
     {"Toolchain & check commands", 2, ~r/^## Toolchain & check commands\b/m},
     {"Running tests", 2, ~r/^## Running tests\b/m},

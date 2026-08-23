@@ -730,18 +730,13 @@ in its `manifest.json`, run `mix ccxt.agents_md`.
 
 Runtime support is a **closed set**. `Bourse.Exchanges` and `Bourse.Registry` read `priv/venues/runtime_support.json` and generate exactly eleven modules; constructing anything else fails immediately with `unsupported_exchange`. There is no `config :bourse, exchanges:` knob — support is not a configuration outcome.
 
-### 🚧 The workbench boundary — read this before deciding where work goes
+### 🚧 The workbench is dissolved — this repo is the whole project
 
-This repo was extracted from `../bourse_workbench`, which remains the **authoring workbench**. The split is by question, not by file type:
+`../bourse_workbench` was the CCXT-era authoring workbench this repo was extracted from. Dissolved 2026-08-23: the roadmap moved here; the rest — the 110-venue CCXT extraction corpus, the corpus-wide audits, the venue_compare/ws_sweep scripts — is archived in the code-archive on the mac mini (`/Volumes/RAID1-2TB/Master/Dev/code-archive/`). Everything routes here now:
 
-| Question | Repo |
-|---|---|
-| Does the client behave correctly against a supported venue? | **here** |
-| Is a supported venue's authored spec right? | **here** — the spec, its authority manifest and its reality evidence all live here |
-| Does an eleventh venue get added? | **here** — the authored spec, its provider-owned contract entry in `priv/venues/<venue>/authority/rest_read_contract.json`, and the live evidence that grades it all live here. |
-| Did the full CCXT reference extraction shift across all 110 venues? | workbench — this repo carries a 16-venue slice and cannot answer corpus-wide questions |
-| Roadmap and task scoring, and the CHANGELOG gate that reads it | workbench — one rmap, declaring `project = "bourse"`. It is not a workbench roadmap that mentions this client; it **is** this client's roadmap. Do **not** stand up a second rmap here. |
-| Where does a consumer file a bug? | **here**, in `BUGS.md` — this is the only repo a consumer knows. Triage into scored tasks happens in the workbench, and writes a dated note back into the entry. |
+- Roadmap and task scoring: `roadmap/tasks.toml` in this repo — one rmap, `project = "bourse"`. Do **not** stand up a second rmap anywhere else.
+- Consumer bugs: `BUGS.md` here; triage into scored tasks also happens here and writes a dated note back into the entry.
+- Corpus-wide CCXT questions (all 110 venues) are retired with the archive — this repo carries a 16-venue reference slice and cannot answer them, and nothing active needs to.
 
 #### 🚨 The roadmap admits reported defects — quality work against the API surface has no end
 
@@ -753,7 +748,7 @@ this project — 103 tasks filed against 101 landed across fourteen days, and fi
 tasks created in one day (647–661), several of them grandchildren of a single stack
 trace.
 
-**A finding enters the workbench roadmap only when a consumer reported the defect.**
+**A finding enters the roadmap only when a consumer reported the defect.**
 Everything else — a drift you measured live, a reviewer's `proposed_tasks`, an
 uncovered branch, a carve you would author differently — goes into `BUGS.md` with its
 evidence and stops there. `BUGS.md` is the durable record; the roadmap is the work
@@ -771,28 +766,24 @@ This tightens the portfolio-wide Default-DECLINE bar in `harness-workflow.md`, w
 governs whether a proposal is *worth* filing. Here the question is prior: whether the
 roadmap is the right destination at all.
 
-#### Where harness runs from — three locations, none of them optional
+#### Where harness runs from
 
-`bourse` is registered in `Harness.ProjectRegistry`, and the registration is what
-resolves the split. Verify it with `project_registry-list` rather than guessing:
+`bourse` is registered in `Harness.ProjectRegistry`. Verify the registration with
+`project_registry-list` rather than guessing:
 
 | Role | Location | Registry field |
 |---|---|---|
 | The harness BEAM | `~/_DATA/code/harness` (`iex -S mix`) | — never the target repo |
 | Code — what gets forked, reviewed and landed | `~/_DATA/code/bourse` | `source` |
-| Roadmap — what gets read, scored and status-written | `~/_DATA/code/bourse_workbench` | `roadmap_path` |
+| Roadmap — what gets read, scored and status-written | `~/_DATA/code/bourse` (`roadmap/tasks.toml`) | `roadmap_path` |
 
-**Harness resolves `roadmap_path` itself** — `Harness.Roadmap` shells `rmap` there
-and owns durable roadmap writes into that repo. A dispatch call passes
-`project: "bourse"` and nothing else; the orchestrator never shuttles task state
-between the two checkouts by hand.
+**Harness resolves `roadmap_path` itself** — `Harness.Roadmap` shells `rmap` here and
+owns durable roadmap writes. A dispatch call passes `project: "bourse"` and nothing
+else. Drive the loop from this repo: code, roadmap, `mix check.dispatch`, the testnet
+credentials, the venue authority index and this file's doctrine all live here, and
+`rmap` wants this repo as cwd.
 
-**Drive the loop from this repo.** The dispatched work is bourse code, and
-verification needs what only lives here: `mix check.dispatch`, the testnet
-credentials, the venue authority index, and this file's doctrine. Sit in the
-workbench only for deliberate roadmap surgery, where `rmap` wants to be cwd.
-
-🚨 **The two repo locations above are doctrine; every other registration value is
+🚨 **The repo locations above are doctrine; every other registration value is
 not written down here on purpose.** `check_command`, `concurrency_cap`,
 `landing_policy`, `target_branch`, `reviewer` and the model pins are operator
 settings that change without anyone thinking about this file — a copy of them here
@@ -804,8 +795,8 @@ host only, so no CI check can ever guard it. Read them from
 
 - **Read `BUGS.md` before chasing a reported defect.** It is the inbound consumer queue, newest first, and each entry carries a `**Status:**` header — the bug in front of you may already be filed, already fixed, or already decided against. Entries are never deleted; a fixed one keeps its repro as the evidence trail.
 
-- One test deliberately stayed in the workbench because it is corpus-wide: the zero-param JSON-body gate audit, which asserts a gate set across all 110 reference specs. The same applies to anything else that iterates every document under `test/reference_slice/` expecting the full set. **Do not re-add a corpus-wide audit here** — it would be answering a 110-venue question with 16 specs.
-- `test/reference_slice/reference_corpus.json` honestly declares the 16 carried venues (the eleven supported plus `coinmetro`, `deepcoin`, `kraken`, `weex`, `whitebit`, used as parser and unsupported-venue counter-examples). Its two SHA-256 pins — `source` on CCXT's version file and `static_fixtures` on CCXT's own static-vintages file, both keys named in upstream CCXT terminology and neither referring to anything in this repo — still name the upstream revision the slice came from, so provenance stays verifiable. **Adding a reference venue means adding its JSON *and* the manifest entry** — `Bourse.ReferenceSlice` validates count, sort order and pins, and raises otherwise. That module lives in `test/support/`, not `lib/`: the slice is test input, so neither the client nor the Hex package can reach it.
+- The corpus-wide zero-param JSON-body gate audit (asserting across all 110 reference specs) retired with the workbench archive. **Do not re-add a corpus-wide audit here** — anything that iterates every document under `test/reference_slice/` expecting the full set would be answering a 110-venue question with 16 specs.
+- `test/reference_slice/reference_corpus.json` honestly declares the 16 carried venues (the eleven supported plus `coinmetro`, `deepcoin`, `kraken`, `weex`, `whitebit`, used as parser and unsupported-venue counter-examples). Its SHA-256 `source` pin on CCXT's version file (a key named in upstream CCXT terminology, not referring to anything in this repo) still names the upstream revision the slice came from, so provenance stays verifiable. **Adding a reference venue means adding its JSON *and* the manifest entry** — `Bourse.ReferenceSlice` validates count, sort order and pins, and raises otherwise. That module lives in `test/support/`, not `lib/`: the slice is test input, so neither the client nor the Hex package can reach it.
 
 ## 🎯 Core doctrine: provider-authoritative, reality-verified
 
