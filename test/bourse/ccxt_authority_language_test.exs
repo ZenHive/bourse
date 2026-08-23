@@ -19,7 +19,6 @@ defmodule Bourse.CcxtAuthorityLanguageTest do
     {~r{^lib/bourse\.ex$}, ~r{CCXT corpus is authoring and compatibility}i},
     {~r{^lib/bourse/error\.ex$}, ~r{CCXT compatibility exception class}i},
     {~r{^lib/bourse/exchange\.ex$}, ~r{reference specs encode CCXT}i},
-    {~r{^lib/bourse/extract/json_loader\.ex$}, ~r{ccxt_emulated_methods\.json}i},
     {~r{^lib/bourse/multi\.ex$}, ~r{ccxt_client_bak}i},
     {~r{^lib/bourse/spec\.ex$}, ~r{(?:CCXT-derived documents|Mix\.Tasks\.Ccxt)}i},
     {~r{^lib/bourse/spec/schema\.ex$}, ~r{Mix\.Tasks\.Ccxt}i},
