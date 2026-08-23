@@ -2,9 +2,7 @@ defmodule Bourse.Test.Generator.RawEndpointProbe do
   @moduledoc """
   Compile-time generator for per-endpoint raw-surface integration tests (Task 83).
 
-  Sibling of `PublicEndpointProbe` (T40, zero-arg unified methods) and
-  `UnifiedMethodIntegrationProbe` (T39, unified gap-fill). Consumes each
-  exchange module's `__endpoints__/0` directly, iterating the full generated
+  Consumes each exchange module's `__endpoints__/0` directly, iterating the full generated
   surface (hundreds to thousands of endpoints per exchange) and emitting one
   test per endpoint that (a) the probe can legally invoke and (b) the
   configured path-param defaults allow to be fully interpolated.

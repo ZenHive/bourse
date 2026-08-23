@@ -1,6 +1,6 @@
 defmodule Bourse.IntegrationHelper do
   @moduledoc """
-  Integration test helpers for Phase 4b generators (Tasks 39/40/41/42).
+  Integration test helpers for raw endpoint probes.
 
   Provides four primitives:
 
@@ -8,19 +8,13 @@ defmodule Bourse.IntegrationHelper do
       when testnet credentials are missing, returns `%Bourse.Credentials{}` on success.
     * `build_exchange/2` — constructs `%Bourse.Exchange{}` with optional
       credentials + sandbox resolution.
-    * `assert_public_response/3` — validates public endpoint responses,
-      treats rate-limit/network errors as inconclusive.
-    * `assert_private_response/3` — same for private endpoints, additionally
-      treats auth/permission errors as inconclusive and accepts opt-gated
-      exchange errors (`:allow_not_found`, `:allow_no_position`,
-      `:allow_invalid_order`). The optional `:venue` is forwarded to struct
-      validators for provider-specific response semantics.
+    * `assert_public_response/3` — validates legacy raw public probes.
+    * `assert_private_response/3` — validates legacy raw private probes.
 
   ## Two-stage response detection
 
-  Responses are validated either as parsed unified structs (Phase 5) or raw
-  `%{status, body}` HTTP envelopes. When Phase 5 parsers land, the same tests
-  activate struct-level validation automatically via Task 42.
+  Responses are validated either as parsed unified structs or raw
+  `%{status, body}` HTTP envelopes.
 
   ## Usage
 
@@ -125,8 +119,7 @@ defmodule Bourse.IntegrationHelper do
   @doc """
   Returns the human-readable "missing testnet credentials" message that
   `require_credentials!/2` flunks with. Exposed so generators (e.g. the per-
-  exchange `setup_all` gates in `RawEndpointProbe` /
-  `UnifiedMethodIntegrationProbe`) can `raise` it from outside an `ExUnit.Case`
+  exchange `setup_all` gates in `RawEndpointProbe`) can `raise` it from outside an `ExUnit.Case`
   context where `flunk/1` isn't available.
   """
   @spec missing_credentials_message(atom(), atom(), keyword()) :: String.t()

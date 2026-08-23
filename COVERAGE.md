@@ -9,11 +9,10 @@ over-promises: lighter advertises `fetchMarkets: true` but errors live).
 - **Shortlist:** binance, bybit, lighter, deribit, hyperliquid.
 - **Method:** live probes via the consumer's Tidewave node (:4025) against this
   library as a path dep. Last swept **2026-06-23**.
-- **Standing gate (Task 188):** `test/bourse/public_api_live_test.exs` —
-  `@moduletag :capability_live` per-{venue,method} matrix over this shortlist.
-  Run: `mix test.json --quiet --include capability_live test/bourse/public_api_live_test.exs`.
-  A cell is green only when that test passes; this doc is the historical sweep,
-  not the gate.
+- **Standing gate:** `priv/authority/rest-read-contracts.json` inventories every
+  supported REST-read operation and provider branch across all eleven venues.
+  Run: `mix ccxt.verify_rest_read_contracts`. A cell is green only when its
+  provider-live contract passes; this doc is the historical sweep, not the gate.
 - **Companion:** defects found here are logged in `BUGS.md` (newest-first repros).
 
 ## Legend

@@ -63,9 +63,8 @@ ExUnit.start(
 {:ok, _testnet} = Bourse.Testnet.start_link([])
 
 # Register testnet credentials for any exchange whose env vars are set.
-# T39 private-pipeline probes (UnifiedMethodIntegrationProbe) flunk with
-# actionable setup instructions for any exchange not listed here whose
-# creds haven't been registered.
+# Provider-live contract and raw private probes flunk with actionable setup
+# instructions for exchanges whose credentials have not been registered.
 #
 # Add a supported venue here only after its owned spec exposes a real sandbox
 # host/flag.

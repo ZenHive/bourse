@@ -1144,9 +1144,9 @@ evidence beyond the batch review.
   `result.type == "deposit"`, matching Deribit's provider-owned endpoint schema. The committed
   address is scrubbed to `***REDACTED***`; currency and type remain available as the semantic
   oracle.
-- Offline tier-1 replay: `private_recorded_response_replay_test.exs` returns
-  `%Bourse.DepositAddress{currency: "BTC", address: "***REDACTED***"}` and keeps the JSON-RPC
-  envelope fields out of `info`. The focused Task-457 replay/fixture suite passed 63 tests.
+- The retained recording historically produced
+  `%Bourse.DepositAddress{currency: "BTC", address: "***REDACTED***"}` with JSON-RPC envelope
+  fields kept out of `info`; it is provenance and cannot certify the provider-live contract.
 
 ### lighter — authenticated private call + auth-failure semantics (task 146; closed 2026-07-21)
 - Was blocked by: the Lighter testnet account and account-authorized API signing key had not been provisioned under the environment names consumed by the integration test. The existing EVM test wallet was available; the review did not ask for it.

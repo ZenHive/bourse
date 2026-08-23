@@ -790,19 +790,19 @@ mix ccxt.promote_venue --check   --candidate CANDIDATE --report REPORT [--refere
 ```bash
 mix test.json --quiet --failed                       # default iteration
 mix ccxt.oracle_gate                                 # manifest-registered reality oracle
+mix ccxt.verify_rest_read_contracts                  # all 901 provider-live REST-read contracts
 mix test.json --quiet --include network              # integration probes (testnet env required)
-mix test.json --quiet --only unified_integration     # unified integration probes
 mix ccxt.classify_signing                            # signing classification report
 mix ccxt.verify_live_drift                           # recordings vs live venue drift
 mix ccxt.verify_ws_first_frame                       # classified public WS first data frame per venue
 mix ccxt.aggregate_live_lane                         # merge live-lane surface reports into one artifact
 ```
 
-> **⚠️ `mix test.json` silently excludes most integration tests by default.** A green run with no `--include` tags covers offline unit + signing tests only. Tags: `integration`, `network` (testnet REST probes), `dangerous` (raw POST/PUT/DELETE), `invalid_creds`, `capability_live`, `option_readiness`, `known_defect`, `native`.
+> **⚠️ `mix test.json` silently excludes most integration tests by default.** A green run with no `--include` tags covers offline unit + signing tests only. `mix ccxt.verify_rest_read_contracts` is the complete REST-read lane: it explicitly includes all network cases and reports denominator, executed count, and failures. Tags: `integration`, `network` (testnet REST probes), `rest_read_contract`, `dangerous` (raw POST/PUT/DELETE), `invalid_creds`, `capability_live`, `option_readiness`, `known_defect`, `native`.
 
 > **⚠️ `:known_defect` quarantine tag — governed, must only shrink.** A test may carry it ONLY when its assertion states the CORRECT expectation, the product is wrong, and the tag comment names the tracking issue. Never weaken an assertion to avoid the tag, and never use it to park a red whose root cause is untracked.
 
-**Per-exchange module split:** `raw_endpoint_probe_test.exs` and `unified_method_integration_test.exs` generate one module per exchange per auth class. `PrivateTest` / `PrivateDangerousTest` gate on a `setup_all` that raises once when creds aren't registered — a missing-creds exchange produces a single module-level flunk instead of N per-endpoint flunks. `PublicTest` / `PublicDangerousTest` always run.
+**REST-read contracts:** `priv/authority/rest-read-contracts.json` owns the provider-source pins, operation/branch denominator, arguments, and success/error meanings for all eleven venues. `test/bourse/rest_read_contract_live_test.exs` generates only ExUnit shells; `Bourse.Test.RestReadContractScenario` performs every real call and assertion. The raw endpoint probes remain transport-level coverage for request mechanics and write surfaces.
 
 **`Bourse.Testnet` is not an application child.** It is a sandbox-only ETS credential registry that consumers must not boot; `test/test_helper.exs` starts it explicitly via `start_link/1`.
 

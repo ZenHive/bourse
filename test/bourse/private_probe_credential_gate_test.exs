@@ -2,7 +2,6 @@ defmodule Bourse.PrivateProbeCredentialGateTest do
   use ExUnit.Case, async: false
 
   alias Bourse.Test.Generator.RawEndpointProbe
-  alias Bourse.Test.Generator.UnifiedMethodIntegrationProbe
   alias Bourse.Testnet
 
   @env_registered_exchanges [
@@ -25,17 +24,6 @@ defmodule Bourse.PrivateProbeCredentialGateTest do
   end
 
   describe "credential-gated private probe emission" do
-    test "unified private modules without registered credentials emit one flunk test and no setup_all" do
-      test_module = build_probe_module(:UnifiedUnregistered, UnifiedMethodIntegrationProbe, :kraken, :private)
-
-      assert %{setup_all?: false, tests: [test]} = test_module.__ex_unit__()
-      assert test.tags.private
-      assert test.tags.network
-      assert test.tags.unified_integration
-      assert test.tags.exchange_kraken
-      assert_missing_credentials_test(test_module, test, :kraken)
-    end
-
     test "raw private modules without registered credentials emit one flunk test and no setup_all" do
       test_module = build_probe_module(:RawPrivateUnregistered, RawEndpointProbe, :kraken, :private)
 
@@ -58,16 +46,6 @@ defmodule Bourse.PrivateProbeCredentialGateTest do
       assert test.tags.raw
       assert test.tags.exchange_kraken
       assert_missing_credentials_test(test_module, test, :kraken)
-    end
-
-    test "registered exchanges keep unified per-method tests and runtime setup_all backstop" do
-      Testnet.register(:bybit, api_key: "key", secret: "secret")
-
-      test_module = build_probe_module(:UnifiedRegistered, UnifiedMethodIntegrationProbe, :bybit, :private)
-
-      assert %{setup_all?: true, tests: tests} = test_module.__ex_unit__()
-      assert length(tests) > 1
-      assert Enum.all?(tests, & &1.tags.private)
     end
 
     test "registered exchanges keep raw per-endpoint tests and runtime setup_all backstop" do

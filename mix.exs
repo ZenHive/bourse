@@ -168,7 +168,8 @@ defmodule Bourse.MixProject do
       preferred_envs: [
         "test.json": :test,
         "dialyzer.json": :dev,
-        "ccxt.oracle_gate": :test
+        "ccxt.oracle_gate": :test,
+        "ccxt.verify_rest_read_contracts": :test
       ]
     ]
   end

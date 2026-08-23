@@ -412,7 +412,7 @@ defmodule Bourse.LiveLaneTest do
                   %{
                     "status" => "passed",
                     "summary" => %{"failed" => 0},
-                    "tests" => [passed_test("test/bourse/public_api_live_test.exs", "okx")]
+                    "tests" => [passed_test("test/bourse/rest_read_contract_live_test.exs", "okx")]
                   }},
                auth_smoke:
                  {:ok,
@@ -458,7 +458,7 @@ defmodule Bourse.LiveLaneTest do
                  %{
                    "summary" => %{"result" => "passed", "failed" => 0, "total" => 1, "passed" => 1},
                    "tests" => [
-                     passed_test("test/bourse/public_api_live_test.exs", "bybit"),
+                     passed_test("test/bourse/rest_read_contract_live_test.exs", "bybit"),
                      %{
                        "file" => "test/bourse/skipped_live_test.exs",
                        "name" => "registered exclusion",
@@ -488,7 +488,7 @@ defmodule Bourse.LiveLaneTest do
     assert bybit.live_tests.ws_auth_smoke_dangerous.status == "passed"
 
     assert report.surfaces.live_corpus.files == [
-             %{file: "test/bourse/public_api_live_test.exs", states: %{"passed" => 1}, status: "passed"},
+             %{file: "test/bourse/rest_read_contract_live_test.exs", states: %{"passed" => 1}, status: "passed"},
              %{file: "test/bourse/skipped_live_test.exs", states: %{"skipped" => 1}, status: "skipped"}
            ]
   end

@@ -579,9 +579,8 @@ markets-cache contamination; tier-1 owns cadence.**
   stamped from a pre-loaded markets cache, not from the recorded body. Our payload-scoped parse
   correctly returns `nil` for those fixtures — not a live gap.
 - *Our carve + rationale:* a payload without the interval remains `nil`; the parser never
-  invents one from an unrelated cache. `tier1_semantic_oracle_test` asserts `"8h"` against
-  a recorded cassette that includes
-  `fundingIntervalHour`. Live confrontation 2026-07-17 (public `bybit` mainnet ticker,
+  invents one from an unrelated cache. The retained cassette includes `fundingIntervalHour`
+  as provenance but cannot certify the live contract. Live confrontation 2026-07-17 (public `bybit` mainnet ticker,
   `BTC/USDT:USDT`) returns `fundingIntervalHour: "8"` and our parse yields `interval: "8h"`.
 - *Compatibility cost:* none on live payloads that carry the field; offline fixture goldens that
   invent interval from markets cache are not the oracle.

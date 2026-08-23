@@ -15,11 +15,9 @@ JS, CCXT static fixtures, or our own `field_maps`. CCXT appears only in the cros
 `diverge` (CCXT is wrong or lossy vs reality; we deliberately do otherwise — registered),
 `our-reading-wrong` (our implementation contradicts reality; CCXT may or may not be right).
 
-**Consuming gate:** `test/bourse/tier1_semantic_oracle_test.exs` (offline, default suite). Two
-assertion kinds: *tier-1 GREEN* (our parse matches reality — regression guard) and *adjudicated
-divergence PIN* (our parse is known-wrong/lossy; the pin freezes the defective state so both a new
-regression and the authoring fix fail loudly and force re-adjudication — a pin is never an
-endorsement).
+**Consuming gate:** `mix ccxt.verify_rest_read_contracts` reaches the provider-owned host for every
+inventoried REST-read branch. This report and its recordings remain historical provenance; they
+cannot make a semantic contract green.
 
 Live first-move evidence (2026-07-15): tidewave `project_eval` against deribit/bybit/hyperliquid
 testnets (`sandbox: true`) — `Bourse.fetch_markets`, `Bourse.fetch_trades("BTC/USD:BTC")`,
