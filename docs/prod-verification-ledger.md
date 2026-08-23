@@ -25,6 +25,20 @@ Entry template:
 
 ## Open
 
+### eleven venues — sandbox-unhosted REST-read product surfaces (task 667, filed 2026-08-23)
+
+- Authored slices: runtime `fetch*` branches whose provider operation is not on the venue's
+  testnet/demo product (`papi`, `sapi`, `eapi*`, `fapi*`/`dapi*` on the spot module, and the
+  inverse of that on USD-M / COIN-M)
+- Blocked by: the provisioned sandbox hosts do not publish those API sections (`No base URL
+  for section … (sandbox)` live, or they require production keys)
+- What the live contract lane covers: the venue-native prefixes in
+  `priv/authority/rest-read-contracts.json` (`provider_operation_prefixes`)
+- The open question: production-host semantics for the omitted sections
+- Exact call: construct the venue on its production host with production-authorized
+  credentials, then run the omitted provider operations
+- Expected evidence: accepted production responses whose meaning matches the provider docs
+
 > **OKX routing:** all remaining OKX probes use the international entity
 > (`www.okx.com`) and `OKX_INTL_*` credentials. References to `my.okx.com` below are
 > historical negative evidence only, never the target for a new probe.

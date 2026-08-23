@@ -72,7 +72,7 @@ defmodule Bourse.LiveLaneTest do
     assert LiveLane.corpus_include() == ~w(network capability_live)
 
     assert LiveLane.corpus_exclude() ==
-             ~w(dangerous raw public_probe unified_integration invalid_creds symbol_public_probe)
+             ~w(dangerous raw public_probe unified_integration invalid_creds symbol_public_probe rest_read_contract)
 
     lane = File.read!("ops/live-drift.sh")
     assert lane =~ "test/bourse/ws/auth_live_smoke_test.exs"
@@ -81,6 +81,7 @@ defmodule Bourse.LiveLaneTest do
     assert lane =~ "--include capability_live"
     refute lane =~ "--include integration"
     assert lane =~ "--exclude dangerous"
+    assert lane =~ "--exclude rest_read_contract"
     assert lane =~ "mix ccxt.verify_ws_first_frame --report"
     assert lane =~ "mix ccxt.aggregate_live_lane"
   end

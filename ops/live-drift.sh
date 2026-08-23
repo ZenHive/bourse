@@ -32,6 +32,7 @@ mix test.json --quiet \
   --exclude unified_integration \
   --exclude invalid_creds \
   --exclude symbol_public_probe \
+  --exclude rest_read_contract \
   --output "${corpus_report}" || corpus_rc=$?
 
 # Task 643 class: listen-key sockets connect and stay silent until an account

@@ -2,12 +2,13 @@ defmodule Bourse.RestReadContractInventoryTest do
   use ExUnit.Case, async: true
 
   alias Bourse.Test.RestReadContracts
+  alias Bourse.Test.RestReadContractScenario
 
   @expected_case_counts %{
     "alpaca" => 16,
-    "binance" => 284,
+    "binance" => 26,
     "binancecoinm" => 32,
-    "binanceusdm" => 281,
+    "binanceusdm" => 65,
     "bybit" => 91,
     "coinbaseexchange" => 3,
     "deribit" => 41,
@@ -26,7 +27,43 @@ defmodule Bourse.RestReadContractInventoryTest do
       end)
 
     assert actual_counts == @expected_case_counts
-    assert RestReadContracts.denominator() == 901
+    assert RestReadContracts.denominator() == 427
+  end
+
+  test "scalar time contracts assert current milliseconds without a module" do
+    now = System.system_time(:millisecond)
+
+    contract_case = %{
+      "id" => "binance:fetchTime:2:publicGetTime",
+      "method" => "fetchTime",
+      "venue" => "binance",
+      "success" => %{
+        "representation" => "parsed",
+        "collection" => "scalar",
+        "scalar" => "integer",
+        "invariants" => [%{"operator" => "recent_ms", "tolerance_ms" => 300_000}]
+      }
+    }
+
+    assert :ok = RestReadContractScenario.assert_live_value!(contract_case, now)
+  end
+
+  test "nested map contracts assert provider meaning keys without a module" do
+    contract_case = %{
+      "id" => "binance:fetchTradingLimits:3:publicGetExchangeInfo",
+      "method" => "fetchTradingLimits",
+      "venue" => "binance",
+      "success" => %{
+        "representation" => "nested_map",
+        "provider_meaning_keys" => ["min", "max"]
+      }
+    }
+
+    assert :ok =
+             RestReadContractScenario.assert_live_value!(
+               contract_case,
+               %{"BTC/USDT" => %{"min" => 0.00001, "max" => 9000.0}}
+             )
   end
 
   test "live contract implementation has no offline semantic substitute" do

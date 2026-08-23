@@ -28,7 +28,7 @@ defmodule Bourse.LiveLane do
         }
 
   @corpus_include ~w(network capability_live)
-  @corpus_exclude ~w(dangerous raw public_probe unified_integration invalid_creds symbol_public_probe)
+  @corpus_exclude ~w(dangerous raw public_probe unified_integration invalid_creds symbol_public_probe rest_read_contract)
 
   @doc "ExUnit include tags the scheduled live corpus runs with."
   @spec corpus_include() :: [String.t()]

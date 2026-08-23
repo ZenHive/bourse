@@ -56,28 +56,7 @@ defmodule Bourse.Test.RestReadContracts do
   def cases do
     Enum.flat_map(inventory()["venues"], fn {venue, venue_contract} ->
       contract_context = Map.drop(venue_contract, ["operations", "error_cases"])
-
-      success_cases =
-        for operation <- venue_contract["operations"],
-            {branch, endpoint_index} <- Enum.with_index(operation["branches"]) do
-          operation
-          |> Map.delete("branches")
-          |> Map.merge(branch)
-          |> Map.put("id", success_case_id(venue, operation, branch, endpoint_index))
-          |> Map.put("kind", "success")
-          |> Map.put("endpoint_index", endpoint_index)
-          |> Map.put("venue", venue)
-          |> Map.put("venue_contract", contract_context)
-        end
-
-      error_cases =
-        Enum.map(venue_contract["error_cases"], fn error_case ->
-          error_case
-          |> Map.put("venue", venue)
-          |> Map.put("venue_contract", contract_context)
-        end)
-
-      success_cases ++ error_cases
+      expand_venue_cases(venue, venue_contract, contract_context)
     end)
   end
 
@@ -166,56 +145,144 @@ defmodule Bourse.Test.RestReadContracts do
   end
 
   defp validate_runtime_surface! do
-    definitions =
-      Map.new(Unified.method_defs(), fn {method, js_name, params, _description} ->
-        {js_name, {method, params}}
-      end)
-
-    read_methods =
-      definitions
-      |> Enum.filter(fn {js_name, _definition} -> String.starts_with?(js_name, "fetch") end)
-      |> Map.new(fn {_js_name, {method, _params}} -> {method, true} end)
+    definitions = unified_read_definitions()
+    read_methods = Map.new(definitions, fn {_js_name, {method, _params}} -> {method, true} end)
 
     Enum.each(inventory()["venues"], fn {venue, venue_contract} ->
-      module = Registry.module_for(venue)
-      runtime = module.__unified_endpoints__()
-
-      inventoried =
-        Map.new(venue_contract["operations"], fn operation ->
-          {method, params} = Map.fetch!(definitions, operation["method"])
-
-          ensure!(
-            Enum.map(operation["arguments"], & &1["name"]) == Enum.map(params, &Atom.to_string/1),
-            "#{venue}.#{operation["method"]}: argument contract drift"
-          )
-
-          {method, operation}
-        end)
-
-      runtime_reads =
-        runtime
-        |> Map.new(fn {method, branches} -> {method, branches} end)
-        |> Map.take(Map.keys(read_methods))
-
-      ensure!(
-        Enum.sort(Map.keys(runtime_reads)) == Enum.sort(Map.keys(inventoried)),
-        "#{venue}: runtime read surface differs from provider inventory"
-      )
-
-      Enum.each(inventoried, fn {method, operation} ->
-        runtime_operations =
-          runtime
-          |> Map.fetch!(method)
-          |> Enum.map(&UnifiedMethod.endpoint_config_to_js_name(&1.sections, &1.method, &1.path))
-
-        provider_operations = Enum.map(operation["branches"], & &1["provider_operation"])
-        ensure!(runtime_operations == provider_operations, "#{venue}.#{operation["method"]}: provider branch drift")
-      end)
+      validate_venue_runtime!(venue, venue_contract, definitions, read_methods)
     end)
+  end
+
+  defp unified_read_definitions do
+    Unified.method_defs()
+    |> Enum.filter(fn {_method, js_name, _params, _description} -> String.starts_with?(js_name, "fetch") end)
+    |> Map.new(fn {method, js_name, params, _description} -> {js_name, {method, params}} end)
+  end
+
+  defp validate_venue_runtime!(venue, venue_contract, definitions, read_methods) do
+    prefixes = venue_contract["provider_operation_prefixes"]
+    ensure!(is_list(prefixes) and prefixes != [], "#{venue}: provider operation prefixes missing")
+    Enum.each(venue_contract["operations"], &validate_operation_surface!(venue, &1, definitions, prefixes))
+
+    inventoried = inventoried_provider_operations(venue_contract["operations"], definitions)
+    runtime = native_runtime_operations(venue, prefixes, read_methods)
+
+    ensure!(
+      inventoried == runtime,
+      "#{venue}: provider-prefix REST-read surface drifted from inventory"
+    )
+  end
+
+  defp validate_operation_surface!(venue, operation, definitions, prefixes) do
+    {_method, params} = Map.fetch!(definitions, operation["method"])
+
+    ensure!(
+      Enum.map(operation["arguments"], & &1["name"]) == Enum.map(params, &Atom.to_string/1),
+      "#{venue}.#{operation["method"]}: argument contract drift"
+    )
+
+    Enum.each(operation["branches"], fn branch ->
+      ensure!(
+        prefix_match?(branch["provider_operation"], prefixes),
+        "#{venue}.#{operation["method"]}: #{branch["provider_operation"]} is outside the provider product"
+      )
+    end)
+  end
+
+  defp inventoried_provider_operations(operations, definitions) do
+    operations
+    |> Enum.flat_map(fn operation ->
+      {method, _params} = Map.fetch!(definitions, operation["method"])
+      Enum.map(operation["branches"], &{method, &1["provider_operation"]})
+    end)
+    |> Enum.sort()
+  end
+
+  defp native_runtime_operations(venue, prefixes, read_methods) do
+    venue
+    |> Registry.module_for()
+    |> then(& &1.__unified_endpoints__())
+    |> Enum.filter(fn {method, _branches} -> Map.has_key?(read_methods, method) end)
+    |> Enum.flat_map(&provider_operations_for_method/1)
+    |> Enum.filter(fn {_method, provider_operation} -> prefix_match?(provider_operation, prefixes) end)
+    |> Enum.sort()
+  end
+
+  defp provider_operations_for_method({method, branches}) do
+    Enum.map(branches, fn config ->
+      {method, UnifiedMethod.endpoint_config_to_js_name(config.sections, config.method, config.path)}
+    end)
+  end
+
+  defp expand_venue_cases(venue, venue_contract, contract_context) do
+    success_cases =
+      Enum.flat_map(venue_contract["operations"], &expand_operation_cases(venue, &1, contract_context))
+
+    error_cases =
+      Enum.map(venue_contract["error_cases"], fn error_case ->
+        error_case
+        |> Map.put("venue", venue)
+        |> Map.put("venue_contract", contract_context)
+      end)
+
+    success_cases ++ error_cases
+  end
+
+  defp expand_operation_cases(venue, operation, contract_context) do
+    Enum.map(operation["branches"], &expand_success_case(venue, operation, &1, contract_context))
+  end
+
+  defp expand_success_case(venue, operation, branch, contract_context) do
+    endpoint_index = runtime_endpoint_index!(venue, operation["method"], branch["provider_operation"])
+
+    operation
+    |> Map.delete("branches")
+    |> Map.merge(branch)
+    |> Map.put("id", success_case_id(venue, operation, branch, endpoint_index))
+    |> Map.put("kind", "success")
+    |> Map.put("endpoint_index", endpoint_index)
+    |> Map.put("venue", venue)
+    |> Map.put("venue_contract", contract_context)
   end
 
   defp ensure!(true, _message), do: :ok
   defp ensure!(false, message), do: raise(ArgumentError, message)
+
+  defp prefix_match?(provider_operation, prefixes) when is_binary(provider_operation) do
+    Enum.any?(prefixes, &prefixed_by?(provider_operation, &1))
+  end
+
+  defp prefixed_by?(operation, prefix) do
+    String.starts_with?(operation, prefix) and suffix_starts_upper?(operation, prefix)
+  end
+
+  defp suffix_starts_upper?(operation, prefix) when byte_size(operation) == byte_size(prefix), do: true
+
+  defp suffix_starts_upper?(operation, prefix) do
+    size = byte_size(prefix)
+    <<_skip::binary-size(^size), char, _rest::binary>> = operation
+    char >= ?A and char <= ?Z
+  end
+
+  defp runtime_endpoint_index!(venue, js_name, provider_operation) do
+    method = Unified.method_atom_for_js_name(js_name)
+    ensure!(is_atom(method), "#{venue}: unknown unified method #{inspect(js_name)}")
+
+    configs = Registry.module_for(venue).__unified_endpoints__()[method]
+
+    index =
+      Enum.find_index(configs, fn config ->
+        UnifiedMethod.endpoint_config_to_js_name(config.sections, config.method, config.path) ==
+          provider_operation
+      end)
+
+    ensure!(
+      is_integer(index),
+      "#{venue}.#{js_name}: #{provider_operation} is not a runtime endpoint"
+    )
+
+    index
+  end
 
   defp success_case_id(venue, operation, branch, endpoint_index) do
     Enum.join([venue, operation["method"], endpoint_index, branch["provider_operation"]], ":")
@@ -241,7 +308,6 @@ defmodule Bourse.Test.RestReadContractScenario do
   alias Bourse.Unified
 
   @auth_deadline_seconds 300
-  @recent_time_tolerance_ms 300_000
 
   @typedoc "Live state shared by all provider branches for one venue."
   @type context :: %{
@@ -256,9 +322,14 @@ defmodule Bourse.Test.RestReadContractScenario do
   def setup_venue!(venue) do
     venue = to_string(venue)
     venue_contract = RestReadContracts.inventory()["venues"][venue]
-    exchange = live_exchange!(venue, venue_contract)
+    exchange = venue |> live_exchange!(venue_contract) |> loaded_exchange!(venue)
 
-    %{exchange: exchange, markets: [], venue: venue, venue_contract: venue_contract}
+    %{
+      exchange: exchange,
+      markets: exchange.markets || [],
+      venue: venue,
+      venue_contract: venue_contract
+    }
   end
 
   @doc "Performs one inventoried provider branch and asserts its domain meaning."
@@ -285,6 +356,25 @@ defmodule Bourse.Test.RestReadContractScenario do
       flunk(
         "#{contract_case["id"]} raised before proving provider semantics: #{Exception.format(:error, error, __STACKTRACE__)}"
       )
+  end
+
+  @doc "Asserts inventoried success meaning against an already-observed value."
+  @spec assert_live_value!(map(), term()) :: :ok
+  def assert_live_value!(contract_case, value) do
+    assert_success!(contract_case, {:ok, value}, %{})
+  end
+
+  defp loaded_exchange!(exchange, venue) do
+    case Bourse.load_markets(exchange) do
+      {:ok, loaded} ->
+        loaded
+
+      {:error, %Error{type: :not_supported}} ->
+        exchange
+
+      {:error, reason} ->
+        flunk("#{venue}: load_markets failed before REST-read contracts could run: #{format_reason(reason)}")
+    end
   end
 
   defp live_exchange!("coinbaseexchange", _contract), do: Exchange.new!(:coinbaseexchange)
@@ -345,7 +435,7 @@ defmodule Bourse.Test.RestReadContractScenario do
   end
 
   defp resolve_argument!(%{"strategy" => "market_symbol"}, contract_case, context),
-    do: market_symbol!(context, contract_case["market_kind"])
+    do: market_symbol!(context, contract_case)
 
   defp resolve_argument!(%{"strategy" => "market_type"}, contract_case, _context), do: contract_case["market_kind"]
 
@@ -377,8 +467,7 @@ defmodule Bourse.Test.RestReadContractScenario do
     |> maybe_put_resolved_symbol(resolved)
   end
 
-  defp option_value!(%{"strategy" => "market_symbol"}, contract_case, context),
-    do: market_symbol!(context, contract_case["market_kind"])
+  defp option_value!(%{"strategy" => "market_symbol"}, contract_case, context), do: market_symbol!(context, contract_case)
 
   defp option_value!(%{"strategy" => "market_type"}, contract_case, _context), do: contract_case["market_kind"]
   defp option_value!(%{"strategy" => "venue_currency"}, _contract_case, context), do: context.venue_contract["currency"]
@@ -401,12 +490,17 @@ defmodule Bourse.Test.RestReadContractScenario do
   defp credential_uid!(context),
     do: flunk("#{context.venue}: provider contract requires a numeric credential account index")
 
-  defp market_symbol!(%{markets: []} = context, kind) do
+  defp market_symbol!(_context, %{"symbol" => symbol}) when is_binary(symbol) and symbol != "", do: symbol
+
+  defp market_symbol!(%{markets: []} = context, contract_case) do
+    kind = contract_case["market_kind"]
+
     context.venue_contract["symbols"][kind] || context.venue_contract["symbols"]["spot"] ||
       flunk("#{context.venue}: provider contract has no live symbol strategy")
   end
 
-  defp market_symbol!(context, kind) do
+  defp market_symbol!(context, contract_case) do
+    kind = contract_case["market_kind"]
     candidates = Enum.filter(context.markets, &market_kind?(&1, kind))
     preferred = context.venue_contract["symbols"][kind]
 
@@ -448,10 +542,13 @@ defmodule Bourse.Test.RestReadContractScenario do
   end
 
   defp resource_source_options(contract_case, context) do
-    [
-      symbol: market_symbol!(context, contract_case["market_kind"]),
-      market_type: contract_case["market_kind"]
-    ]
+    Enum.flat_map(contract_case["options"] || [], fn option ->
+      if option["name"] in ["subaccount_id", "category", "currency", "instType"] do
+        [{String.to_atom(option["name"]), option_value!(option, contract_case, context)}]
+      else
+        []
+      end
+    end)
   end
 
   defp successful_rows!({:ok, %RawResponse{payload: payload}}, contract_case, source),
@@ -514,11 +611,22 @@ defmodule Bourse.Test.RestReadContractScenario do
     refute is_nil(payload), "#{contract_case["id"]}: provider payload is nil"
   end
 
+  defp assert_representation!(%{"success" => %{"representation" => "nested_map"}} = contract_case, value) do
+    assert is_map(value) and not is_struct(value),
+           "#{contract_case["id"]}: expected a provider map, got #{inspect(value)}"
+
+    assert map_size(value) > 0, "#{contract_case["id"]}: provider returned an empty map"
+  end
+
   defp assert_representation!(contract_case, %RawResponse{}),
     do:
       flunk(
         "#{contract_case["id"]}: expected provider-defined #{contract_case["success_contract"]}, got labelled raw data"
       )
+
+  defp assert_representation!(%{"success" => %{"collection" => "scalar"} = success} = contract_case, value) do
+    assert_scalar!(contract_case, value, success["scalar"])
+  end
 
   defp assert_representation!(%{"success" => %{"representation" => "positional_rows"} = success} = contract_case, value) do
     assert is_list(value), "#{contract_case["id"]}: expected positional provider rows"
@@ -538,35 +646,57 @@ defmodule Bourse.Test.RestReadContractScenario do
 
       collection when collection in ["list", "map"] ->
         assert_collection!(contract_case, value, module, collection)
-
-      "scalar" ->
-        assert_scalar!(contract_case, value, success["scalar"])
     end
   end
 
   defp assert_collection!(contract_case, value, module, "list") do
     assert is_list(value), "#{contract_case["id"]}: expected a provider list, got #{inspect(value)}"
-    assert value != [], "#{contract_case["id"]}: provider account/market state did not exercise the read"
 
-    assert Enum.all?(value, &is_struct(&1, module)),
-           "#{contract_case["id"]}: collection contains a non-#{inspect(module)} value"
+    if empty_unexercised?(contract_case) do
+      assert value != [], unexercised_message(contract_case)
+    end
+
+    if value != [] do
+      assert Enum.all?(value, &is_struct(&1, module)),
+             "#{contract_case["id"]}: collection contains a non-#{inspect(module)} value"
+    end
   end
 
   defp assert_collection!(contract_case, value, module, "map") do
     assert is_map(value), "#{contract_case["id"]}: expected a provider map, got #{inspect(value)}"
-    assert map_size(value) > 0, "#{contract_case["id"]}: provider account/market state did not exercise the read"
 
-    assert Enum.all?(Map.values(value), &is_struct(&1, module)),
-           "#{contract_case["id"]}: map contains a non-#{inspect(module)} value"
+    if empty_unexercised?(contract_case) do
+      assert map_size(value) > 0, unexercised_message(contract_case)
+    end
+
+    if map_size(value) > 0 do
+      assert Enum.all?(Map.values(value), &is_struct(&1, module)),
+             "#{contract_case["id"]}: map contains a non-#{inspect(module)} value"
+    end
+  end
+
+  defp empty_unexercised?(contract_case) do
+    contract_case["success"]["empty_collection"] != "allowed"
+  end
+
+  defp unexercised_message(contract_case) do
+    "#{contract_case["id"]}: provider account/market state did not exercise the read. " <>
+      "Populate the sandbox account or market so this branch returns a non-empty result, " <>
+      "then re-run `mix ccxt.verify_rest_read_contracts`."
   end
 
   defp assert_scalar!(contract_case, value, "integer") do
     assert is_integer(value), "#{contract_case["id"]}: expected integer semantics, got #{inspect(value)}"
 
-    if contract_case["method"] == "fetchTime" do
-      assert abs(System.system_time(:millisecond) - value) <= @recent_time_tolerance_ms,
-             "#{contract_case["id"]}: provider time is not current milliseconds"
-    end
+    Enum.each(List.wrap(contract_case["success"]["invariants"]), fn invariant ->
+      assert_scalar_invariant!(contract_case, invariant, value)
+    end)
+  end
+
+  defp assert_scalar_invariant!(contract_case, %{"operator" => "recent_ms", "tolerance_ms" => tolerance}, value)
+       when is_integer(tolerance) do
+    assert abs(System.system_time(:millisecond) - value) <= tolerance,
+           "#{contract_case["id"]}: provider time is not current milliseconds"
   end
 
   defp assert_meaning!(
@@ -578,6 +708,13 @@ defmodule Bourse.Test.RestReadContractScenario do
 
     assert contains_meaning?(payload, keys),
            "#{contract_case["id"]}: raw provider payload contains none of the semantic keys #{inspect(keys)}"
+  end
+
+  defp assert_meaning!(%{"success" => %{"representation" => "nested_map"}} = contract_case, value, _resolved) do
+    keys = contract_case["success"]["provider_meaning_keys"]
+
+    assert contains_meaning?(value, keys),
+           "#{contract_case["id"]}: provider map contains none of the semantic keys #{inspect(keys)}"
   end
 
   defp assert_meaning!(

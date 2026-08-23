@@ -193,7 +193,7 @@ mix ccxt.promote_venue --check   --candidate CANDIDATE --report REPORT [--refere
 ```bash
 mix test.json --quiet --failed                       # default iteration
 mix ccxt.oracle_gate                                 # manifest-registered reality oracle
-mix ccxt.verify_rest_read_contracts                  # all 901 provider-live REST-read contracts
+mix ccxt.verify_rest_read_contracts                  # all 427 provider-live REST-read contracts
 mix test.json --quiet --include network              # integration probes (testnet env required)
 mix ccxt.classify_signing                            # signing classification report
 mix ccxt.verify_live_drift                           # recordings vs live venue drift

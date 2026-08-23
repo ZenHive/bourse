@@ -6,7 +6,7 @@ defmodule Mix.Tasks.Ccxt.VerifyRestReadContractsTest do
   test "summarize! reports a fully executed inventory" do
     report = %{
       "summary" => %{
-        "total" => 901,
+        "total" => 427,
         "failed" => 0,
         "invalid" => 0,
         "skipped" => 0,
@@ -15,9 +15,9 @@ defmodule Mix.Tasks.Ccxt.VerifyRestReadContractsTest do
       }
     }
 
-    assert VerifyRestReadContracts.summarize!(report, 901) == %{
-             denominator: 901,
-             executed: 901,
+    assert VerifyRestReadContracts.summarize!(report, 427) == %{
+             denominator: 427,
+             executed: 427,
              failures: 0,
              result: "passed"
            }
@@ -26,7 +26,7 @@ defmodule Mix.Tasks.Ccxt.VerifyRestReadContractsTest do
   test "summarize! rejects an unexercised inventory row" do
     report = %{
       "summary" => %{
-        "total" => 901,
+        "total" => 427,
         "failed" => 0,
         "invalid" => 0,
         "skipped" => 0,
@@ -35,14 +35,14 @@ defmodule Mix.Tasks.Ccxt.VerifyRestReadContractsTest do
       }
     }
 
-    assert_raise Mix.Error, ~r/denominator=901 executed=900 failures=1/, fn ->
-      VerifyRestReadContracts.summarize!(report, 901)
+    assert_raise Mix.Error, ~r/denominator=427 executed=426 failures=1/, fn ->
+      VerifyRestReadContracts.summarize!(report, 427)
     end
   end
 
   test "summarize! rejects a malformed report" do
     assert_raise Mix.Error, ~r/no summary/, fn ->
-      VerifyRestReadContracts.summarize!(%{}, 901)
+      VerifyRestReadContracts.summarize!(%{}, 427)
     end
   end
 end

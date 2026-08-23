@@ -3,8 +3,8 @@ alias Mix.Tasks.Ccxt.BuildLighterSigner
 # Integration tests hit live exchange sandboxes and require credentials.
 # They never run by accident — include with `mix test --include integration`.
 # Network/invalid_creds (T67) hit live exchanges; run with `mix test --include network`.
-# capability_live (T188) is the COVERAGE.md standing shortlist gate — live PUBLIC
-# per-{venue,method} matrix; include with `--include capability_live` (file-target).
+# rest_read_contract is the provider-live REST-read lane — run with
+# `mix ccxt.verify_rest_read_contracts`, not the default suite.
 # known_defect marks a test whose assertion is CORRECT but which fails against a
 # real, filed product defect — quarantined so the gate stays honest without
 # ratifying the bug. Each one names its tracking task inline. Run the set with
