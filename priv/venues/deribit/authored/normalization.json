@@ -282,16 +282,8 @@
       "_unresolved_reason": null,
       "extras": [],
       "field_map": {
-        "baseValue": {
-          "coercion": "safeNumber",
-          "format": null,
-          "key": "session_bankrupcy"
-        },
-        "contractSize": {
-          "coercion": "safeNumber",
-          "format": null,
-          "key": "contractSize"
-        },
+        "baseValue": null,
+        "contractSize": null,
         "contracts": null,
         "datetime": null,
         "info": null,
@@ -299,10 +291,43 @@
         "quoteValue": null,
         "side": null,
         "symbol": null,
-        "timestamp": {
-          "coercion": "safeInteger",
-          "format": "ms",
-          "key": "timestamp"
+        "timestamp": null
+      },
+      "route_field_maps": {
+        "get_last_trades_by_instrument": {
+          "price": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "price"
+          },
+          "side": {
+            "coercion": "safeString",
+            "enum_map": null,
+            "format": null,
+            "key": "direction"
+          },
+          "timestamp": {
+            "coercion": "safeInteger",
+            "format": "ms",
+            "key": "timestamp"
+          },
+          "contracts": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "contracts"
+          }
+        },
+        "get_settlement_history_by_instrument": {
+          "baseValue": {
+            "coercion": "safeNumber",
+            "format": null,
+            "key": "session_bankruptcy"
+          },
+          "timestamp": {
+            "coercion": "safeInteger",
+            "format": "ms",
+            "key": "timestamp"
+          }
         }
       }
     },
@@ -1146,7 +1171,7 @@
         "id": {
           "coercion": "safeString",
           "format": null,
-          "key": "id"
+          "key": "transaction_id"
         },
         "info": null,
         "network": null,
@@ -1432,6 +1457,18 @@
         "default": [],
         "fallback_keys": [],
         "key": "result"
+      }
+    },
+    "liquidation": {
+      "fetchLiquidations": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "result.trades"
+      },
+      "fetchMyLiquidations": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "result.settlements"
       }
     }
   }

@@ -595,7 +595,7 @@
     ],
     "has": true,
     "mapping_complete": true,
-    "verification": "unverified",
+    "verification": "verified",
     "descriptor": {
       "async": true,
       "description": "fetch all deposits made to an account",
@@ -763,6 +763,16 @@
           "source_class": "optional",
           "transform": "decrement",
           "value": null
+        },
+        "end_timestamp": {
+          "kind": "computed",
+          "operation": "time_window_end",
+          "limit_source": "limit",
+          "default_limit": 1000,
+          "timeframe_source": "timeframe",
+          "default_timeframe_ms": 3600000,
+          "since_source": "since",
+          "until_source": "until"
         }
       }
     },
@@ -839,8 +849,8 @@
       "publicGetGetLastTradesByInstrument"
     ],
     "has": "emulated",
-    "mapping_complete": false,
-    "verification": "unverified",
+    "mapping_complete": true,
+    "verification": "verified",
     "request": {
       "defaults": {
         "instrument_name": {
@@ -850,11 +860,6 @@
           "source_class": "unified_param",
           "transform": "date_yymmdd_to_ddmmmyy",
           "value": null
-        },
-        "type": {
-          "kind": "literal",
-          "reason": null,
-          "value": "bankruptcy"
         }
       }
     },
@@ -864,6 +869,52 @@
     "transaction_classification": {
       "on_chain": false,
       "transactional": false
+    },
+    "descriptor": {
+      "async": true,
+      "description": "retrieves the public liquidations of a trading pair",
+      "errors": null,
+      "name": "fetchLiquidations",
+      "params_doc": {
+        "symbol": "unified CCXT market symbol",
+        "since": "the earliest time in ms to fetch liquidations for",
+        "limit": "the maximum number of liquidation structures to retrieve",
+        "params": "exchange specific parameters for the exchange API endpoint"
+      },
+      "returns": {
+        "description": "an array of [liquidation structures]{@link https://docs.ccxt.com/?id=liquidation-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Liquidation[]>"
+      },
+      "unresolved_reason": null
     }
   },
   "fetchMarkets": {
@@ -909,7 +960,7 @@
     ],
     "has": true,
     "mapping_complete": true,
-    "verification": "unverified",
+    "verification": "verified",
     "request": {
       "defaults": {
         "instrument_name": {
