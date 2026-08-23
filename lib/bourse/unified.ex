@@ -2042,6 +2042,51 @@ defmodule Bourse.Unified do
      }}
   end
 
+  # Alpaca's v1beta3 crypto snapshots endpoint batches by symbol:
+  # `{"snapshots" => %{"<SYMBOL>" => %{"latestQuote" => ..., "dailyBar" => ...}}}`
+  # (https://docs.alpaca.markets/us/reference/cryptosnapshots-1). The stocks
+  # snapshot endpoint (`v2/stocks/{symbol}/snapshot`) already answers that same
+  # per-symbol object directly at the top level — the shape the authored
+  # `merge_fields` ticker transform expects — so only the crypto branch needs
+  # its requested symbol dereferenced out of the "snapshots" wrapper first;
+  # a structural match on the body (not the dispatched path) keeps the stocks
+  # branch untouched.
+  defp parse_unified_response(
+         %Exchange{id: "alpaca"} = exchange,
+         module,
+         :fetch_ticker = method_atom,
+         "fetchTicker" = js_name,
+         params,
+         response,
+         config
+       ) do
+    case response_body(response) do
+      %{"snapshots" => %{} = snapshots} ->
+        ReadParse.parse(
+          exchange,
+          module,
+          method_atom,
+          js_name,
+          Map.get(snapshots, params["symbol"]) || %{},
+          put_endpoint_parse_context(params, config, exchange, method_atom),
+          :parse_ticker,
+          false
+        )
+
+      body ->
+        ReadParse.parse(
+          exchange,
+          module,
+          method_atom,
+          js_name,
+          body,
+          put_endpoint_parse_context(params, config, exchange, method_atom),
+          :parse_ticker,
+          false
+        )
+    end
+  end
+
   defp parse_unified_response(%Exchange{id: "derive"} = exchange, module, method_atom, js_name, params, response, config)
        when method_atom in [:create_order, :cancel_order] do
     ReadParse.parse(
@@ -2513,8 +2558,19 @@ defmodule Bourse.Unified do
   # Derive's `fetchMarkets` composes the three typed get_all_instruments calls.
   # Keep the variants in the authored leaf defaults so the literals remain part
   # of the venue contract rather than dispatcher configuration.
+  #
+  # `derive_markets_fan_out_allowed?/2` intentionally does NOT check
+  # `opts[:endpoint_index]` the way the shared `param_fan_out_allowed?/2` does.
+  # This clause only ever runs from `finalize_single_config_plan/5`, i.e. this
+  # method has exactly one raw endpoint config (`get_all_instruments`) — there
+  # is no second config an explicit endpoint_index could be disambiguating, so
+  # a caller-supplied index (always 0, the sole valid value) carries no intent
+  # to skip the composite fan-out. Without the fan-out, get_all_instruments is
+  # called with no `expired`/`instrument_type` body params — both required —
+  # and the venue answers `-32602 Invalid params` (docs:
+  # https://docs.derive.xyz/reference/post_public-get_all_instruments).
   defp param_fan_out_plan(%Exchange{id: "derive"} = exchange, :fetch_markets, params, opts) do
-    if param_fan_out_allowed?(params, opts) do
+    if derive_markets_fan_out_allowed?(params, opts) do
       variants =
         exchange.request_defaults
         |> Map.take(~w(fetchSpotMarkets fetchSwapMarkets fetchOptionMarkets))
@@ -2642,6 +2698,17 @@ defmodule Bourse.Unified do
   defp param_fan_out_allowed?(params, opts) do
     is_nil(Keyword.get(opts, :endpoint_index)) and
       is_nil(infer_market_type(params, opts)) and
+      is_nil(params["category"]) and
+      is_nil(params["type"]) and
+      is_nil(params["instType"]) and
+      is_nil(params["instrument_type"])
+  end
+
+  # Same explicit-narrowing checks as `param_fan_out_allowed?/2` minus the
+  # `endpoint_index` guard — see the moduledoc note on the derive `:fetch_markets`
+  # clause above for why that guard doesn't apply to a single-config method.
+  defp derive_markets_fan_out_allowed?(params, opts) do
+    is_nil(infer_market_type(params, opts)) and
       is_nil(params["category"]) and
       is_nil(params["type"]) and
       is_nil(params["instType"]) and

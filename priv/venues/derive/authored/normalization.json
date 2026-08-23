@@ -31,6 +31,14 @@
           "coercion": "safeString",
           "key": "currency"
         },
+        "name": {
+          "coercion": "safeString",
+          "key": "currency"
+        },
+        "precision": {
+          "coercion": "safeNumber",
+          "key": "erc20_details.decimals"
+        },
         "limits": {
           "default": {
             "deposit": {
@@ -813,7 +821,11 @@
         },
         "datetime": null,
         "fee": null,
-        "id": null,
+        "id": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "transaction_id"
+        },
         "info": null,
         "network": null,
         "status": {

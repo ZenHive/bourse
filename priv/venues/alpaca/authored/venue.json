@@ -386,6 +386,19 @@
             "source_class": "unified_param"
           }
         },
+        "v1beta3/crypto/{loc}/latest/bars": {
+          "_omit": [
+            "timeframe"
+          ],
+          "loc": {
+            "kind": "literal",
+            "value": "us"
+          },
+          "symbols": {
+            "source": "symbol",
+            "source_class": "unified_param"
+          }
+        },
         "v2/stocks/{symbol}/bars": {
           "_omit": [
             "since"
