@@ -1,7 +1,9 @@
 # Venues
 
-One directory per supported venue. `<venue>/authored/spec.json` is our hand-owned
-runtime document; `<venue>/authority/` is the provider-owned evidence that grades it —
+One directory per supported venue. `<venue>/authored/` is our hand-owned
+runtime document, split endpoint-major (`venue.json`, `markets.json`,
+`endpoints.json`, `raw.json`, `errors.json`, `normalization.json`);
+`<venue>/authority/` is the provider-owned evidence that grades it —
 the pinned source manifest, the normalized error enumeration, and the venue's
 REST-read contract (`rest_read_contract.json`, whose shared top-level policy keys live
 in `rest-read-contracts-policy.json`).

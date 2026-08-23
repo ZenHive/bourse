@@ -66,7 +66,7 @@
   },
   "live_probe": {
     "ccxt_type": "order_not_found",
-    "evidence": "test/bourse/hyperliquid_authored_integration_test.exs: live cancel with missing oid reaches Hyperliquid after load_markets",
+    "evidence": "test/live/hyperliquid/hyperliquid_authored_integration_test.exs: live cancel with missing oid reaches Hyperliquid after load_markets",
     "historical_evidence": "roadmap/tasks.toml: task 355 records the MissingOrder response observed on testnet 2026-07-18",
     "identifier": "MissingOrder",
     "observed_at": "2026-07-18"

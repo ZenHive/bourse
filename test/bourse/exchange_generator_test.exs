@@ -4,6 +4,7 @@ defmodule Bourse.ExchangeGeneratorTest do
   use ExUnit.Case, async: true
 
   alias Bourse.Exchanges.Loader
+  alias Bourse.Spec.Disk
   alias Bourse.TestExchange.Binance
   alias Bourse.TestExchange.Bybit
   alias Bourse.Unified
@@ -254,20 +255,28 @@ defmodule Bourse.ExchangeGeneratorTest do
   end
 
   describe "external resource tracking" do
-    test "Bybit tracks spec file for recompilation" do
+    test "Bybit tracks every authored split file for recompilation" do
       attrs = Bybit.__info__(:attributes)
       external_resources = Keyword.get_values(attrs, :external_resource)
       resources = List.flatten(external_resources)
 
-      assert Enum.any?(resources, &String.ends_with?(&1, "bybit/authored/spec.json"))
+      for name <- Disk.file_names() do
+        assert Enum.any?(resources, &String.ends_with?(&1, "bybit/authored/#{name}"))
+      end
     end
 
-    test "Binance tracks spec file for recompilation" do
+    test "Binance tracks split files and the shared family descriptors" do
       attrs = Binance.__info__(:attributes)
       external_resources = Keyword.get_values(attrs, :external_resource)
       resources = List.flatten(external_resources)
 
-      assert Enum.any?(resources, &String.ends_with?(&1, "binance/authored/spec.json"))
+      assert Enum.any?(resources, &String.ends_with?(&1, "binance/authored/venue.json"))
+      assert Enum.any?(resources, &String.ends_with?(&1, "binance/authored/endpoints.json"))
+
+      assert Enum.any?(
+               resources,
+               &String.ends_with?(&1, "_shared/binance_family/descriptors.json")
+             )
     end
   end
 

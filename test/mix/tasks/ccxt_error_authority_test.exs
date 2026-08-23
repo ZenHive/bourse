@@ -1,6 +1,7 @@
 defmodule Mix.Tasks.Ccxt.ErrorAuthorityTest do
   use ExUnit.Case, async: false
 
+  alias Bourse.Spec.Disk
   alias Mix.Tasks.Ccxt.AuthorityCorpus
   alias Mix.Tasks.Ccxt.ErrorAuthority
   alias Mix.Tasks.Ccxt.ErrorAuthorityCorpus
@@ -34,15 +35,15 @@ defmodule Mix.Tasks.Ccxt.ErrorAuthorityTest do
 
   test "an unknown authored code fails with the venue and code" do
     spec_root = copy_specs()
-    path = Path.join([spec_root, "binance", "authored", "spec.json"])
-    spec = path |> File.read!() |> Jason.decode!()
+    path = Path.join([spec_root, "binance", "authored", "errors.json"])
+    errors = path |> File.read!() |> Jason.decode!()
 
-    spec =
-      update_in(spec, ["errors", "handle_errors", "exceptions", "exact"], fn exact ->
+    errors =
+      update_in(errors, ["handle_errors", "exceptions", "exact"], fn exact ->
         Map.put(exact, "-999999", "__function:BadRequest")
       end)
 
-    File.write!(path, Jason.encode!(spec))
+    File.write!(path, Jason.encode!(errors))
 
     assert_raise Mix.Error, ~r/binance: authored error_codes entry "-999999".*official enumeration/, fn ->
       ErrorAuthorityCorpus.validate!(@authority_root, spec_root)
@@ -51,7 +52,7 @@ defmodule Mix.Tasks.Ccxt.ErrorAuthorityTest do
 
   test "complete owned specs do not inherit reference-only error mappings" do
     reports = Map.new(ErrorAuthorityCorpus.validate!(), &{&1.venue, &1})
-    owned = [@spec_root, "binancecoinm", "authored", "spec.json"] |> Path.join() |> File.read!() |> Jason.decode!()
+    owned = Bourse.Spec.load!("binancecoinm")
     exact = get_in(owned, ["errors", "handle_errors", "exceptions", "exact"])
 
     assert reports["binancecoinm"].mapped_count == map_size(exact)
@@ -103,10 +104,8 @@ defmodule Mix.Tasks.Ccxt.ErrorAuthorityTest do
   end
 
   defp exempt_exact_mappings(venue) do
-    [@spec_root, venue, "authored", "spec.json"]
-    |> Path.join()
-    |> File.read!()
-    |> Jason.decode!()
+    venue
+    |> Bourse.Spec.load!()
     |> get_in(["errors", "handle_errors", "exceptions", "exact"]) || %{}
   end
 
@@ -137,13 +136,19 @@ defmodule Mix.Tasks.Ccxt.ErrorAuthorityTest do
     root = Path.join(System.tmp_dir!(), "error-authority-specs-#{System.unique_integer([:positive])}")
     on_exit(fn -> File.rm_rf(root) end)
 
-    for venue <- AuthorityCorpus.venues() do
-      File.mkdir_p!(Path.join([root, venue, "authored"]))
+    File.mkdir_p!(root)
+    File.cp_r!(Path.join(@spec_root, "_shared"), Path.join(root, "_shared"))
 
-      File.cp!(
-        Path.join([@spec_root, venue, "authored", "spec.json"]),
-        Path.join([root, venue, "authored", "spec.json"])
-      )
+    for venue <- AuthorityCorpus.venues() do
+      dest = Path.join([root, venue, "authored"])
+      File.mkdir_p!(dest)
+
+      for name <- Disk.file_names() do
+        File.cp!(
+          Path.join([@spec_root, venue, "authored", name]),
+          Path.join(dest, name)
+        )
+      end
     end
 
     root

@@ -39,7 +39,7 @@
     "identifier": "40010001",
     "ccxt_type": "bad_request",
     "observed_at": "2026-07-23",
-    "evidence": "test/bourse/alpaca_authored_integration_test.exs: paper API rejects an order missing qty and notional with its provider code"
+    "evidence": "test/live/alpaca/alpaca_authored_integration_test.exs: paper API rejects an order missing qty and notional with its provider code"
   },
   "maintenance_adjudication": {
     "status": "no_documented_maintenance_code",

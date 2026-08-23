@@ -23,7 +23,7 @@
     "identifier": "Unsupported granularity",
     "ccxt_type": "bad_request",
     "observed_at": "2026-08-11",
-    "evidence": "test/bourse/coinbaseexchange_promotion_integration_test.exs: unsupported candle granularity preserves the venue's live error semantics"
+    "evidence": "test/live/coinbaseexchange/coinbaseexchange_promotion_integration_test.exs: unsupported candle granularity preserves the venue's live error semantics"
   },
   "maintenance_adjudication": {
     "status": "no_documented_maintenance_code",

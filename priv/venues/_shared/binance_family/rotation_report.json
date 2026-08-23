@@ -1,4 +1,17 @@
 {
+  "after_bytes": {
+    "alpaca": 95148,
+    "binance": 728588,
+    "binancecoinm": 450238,
+    "binanceusdm": 644770,
+    "bybit": 545810,
+    "coinbaseexchange": 30911,
+    "deribit": 183469,
+    "derive": 150955,
+    "hyperliquid": 260772,
+    "lighter": 82814,
+    "okx": 483199
+  },
   "before_bytes": {
     "alpaca": 101234,
     "binance": 853127,
@@ -12,34 +25,23 @@
     "lighter": 87456,
     "okx": 522483
   },
-  "after_bytes": {
-    "alpaca": 196382,
-    "binance": 1581715,
-    "binancecoinm": 999205,
-    "binanceusdm": 1406581,
-    "bybit": 1137216,
-    "coinbaseexchange": 63680,
-    "deribit": 379206,
-    "derive": 309919,
-    "hyperliquid": 542875,
-    "lighter": 170270,
-    "okx": 1005682
-  },
-  "shared_descriptors_bytes": 63362,
-  "shared_descriptor_keys": 57,
+  "descriptor_duplication_factor": 2.968,
+  "family_after_bytes": 1886958,
   "family_before_bytes": 2163905,
-  "family_after_bytes": 4050863,
+  "hash_encoding": "sha256 of key-sorted Jason-canonical JSON of the loaded facet-major map",
   "hashes": {
     "alpaca": "2f2f5109806db2970a0d887b9d72e4cce5f0512fbf0ba4d284f93bf7e864d906",
-    "binance": "8464151d707c8c7a36320f6a4617d00fda7b64e3a12111cb250ea5dd7e9f89e9",
-    "binancecoinm": "f84a0aaac00c3fda7f98a32c445f59420d6b369e2534ccfd63eb2b5e6c058e1c",
-    "binanceusdm": "f077a0f91e12c36450940a37c9cca7c6061446e9249c3839b070fcfc6fa25a8d",
-    "bybit": "edaf04f5431021e0b8acc8747097678ef510d2494fc852ea7366625cbe9f3c1d",
+    "binance": "56c71f6d9bdc7c04e293c82f941c6de535106c2377ce73cadf6ed95b3cc12a43",
+    "binancecoinm": "f55818ec2860349779d03ee886dbee42a81da70b78861fb8ebc16034ee24cfab",
+    "binanceusdm": "b811f0f25d11c7d169ad2d07d1b1d2d8b4a759da7a680d5d43c61ac0b4d9fb11",
+    "bybit": "1ffa026d093952f9e2dad21a90a99dc942d903c7e78c656368f7d86aad449052",
     "coinbaseexchange": "55292a5cef5670fbeccbbe2285142258430310a76a64d6bdc2fd6036d00c68c1",
-    "deribit": "4f1d4b29d26abdd05c9554587b99a21825662295b7931d57a6210d9272b6ea8e",
+    "deribit": "6d64641acb40b51fd151e0a67b0b1f8fd7183f1bd545d5112d3f9613d12e79d8",
     "derive": "5b24ea100a6b593e2da5275c2ec9846d00a2453af0afd65438d44b7e81fc6a35",
-    "hyperliquid": "9d05ca002b5750656a6a91999b826fbb3174769c25b99b88f4f76032d5f97bdf",
-    "lighter": "a95935d1c269e0cf6eb09723d6afe8b35294597d6f7e0c68da61ab73d9e757e2",
-    "okx": "f33ad2a8c069ec8edbf488f5b257773cd2cee366c62fea2ab63487a88d7c595a"
-  }
+    "hyperliquid": "e17cea2d48de095d72e72d68143bcba3c138f048dc196fbe25b1e19dc0978aa0",
+    "lighter": "d0c68427167a78f8df140331d7cab5b28804159f29dc0892df2276d39a13aa92",
+    "okx": "7d6cb53b462091a5fa30df94bca696869ab410b06a7b82e4a5e2dbbaca07df9d"
+  },
+  "shared_descriptor_keys": 57,
+  "shared_descriptors_bytes": 63362
 }

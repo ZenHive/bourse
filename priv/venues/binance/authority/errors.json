@@ -440,7 +440,7 @@
   },
   "live_probe": {
     "ccxt_type": "order_not_found",
-    "evidence": "test/bourse/binance_authored_integration_test.exs: order identifier mappings reach Binance's business validation",
+    "evidence": "test/live/binance_authored_integration_test.exs: order identifier mappings reach Binance's business validation",
     "identifier": "-2013",
     "observed_at": "2026-07-22"
   },

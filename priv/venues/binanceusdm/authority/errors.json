@@ -682,7 +682,7 @@
   },
   "live_probe": {
     "ccxt_type": "bad_symbol",
-    "evidence": "test/bourse/binance_authored_integration_test.exs: USD-M cancel all surfaces Binance's invalid-symbol error",
+    "evidence": "test/live/binance_authored_integration_test.exs: USD-M cancel all surfaces Binance's invalid-symbol error",
     "identifier": "-1121",
     "observed_at": "2026-07-22"
   },

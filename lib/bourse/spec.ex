@@ -154,9 +154,10 @@ defmodule Bourse.Spec do
   def supported?(exchange_id) when is_binary(exchange_id), do: exchange_id in exchanges()
 
   @doc """
-  Returns the absolute path to the runtime spec file for the given exchange ID.
+  Returns the absolute path to the primary venue metadata file for the given
+  exchange ID.
 
-  Supported venues resolve to their complete owned document. Unsupported
+  Use `source_files/1` for the complete split document. Unsupported
   reference-only venues raise immediately.
 
   ## Examples
@@ -175,7 +176,7 @@ defmodule Bourse.Spec do
     end
   end
 
-  @doc "Returns the complete owned runtime-document path for a first-class venue."
+  @doc "Returns the primary owned venue-file path for a first-class venue."
   @spec owned_spec_path(String.t()) :: String.t() | nil
   def owned_spec_path(exchange_id) when is_binary(exchange_id) do
     validate_id!(exchange_id)
@@ -206,8 +207,8 @@ defmodule Bourse.Spec do
   def load_from_root!(root, exchange_id) when is_binary(root) and is_binary(exchange_id) do
     validate_id!(exchange_id)
 
-    exchange_id
-    |> then(&Disk.authored_dir(root, &1))
+    root
+    |> Disk.authored_dir(exchange_id)
     |> Disk.assemble!(spec_root: root)
   end
 
@@ -229,7 +230,7 @@ defmodule Bourse.Spec do
   @spec schema_version() :: pos_integer()
   def schema_version, do: @schema_version
 
-  @doc "Returns the hand-authored document path for an authored venue, otherwise `nil`."
+  @doc "Returns the primary hand-authored venue-file path, otherwise `nil`."
   @spec authored_spec_path(String.t()) :: String.t() | nil
   def authored_spec_path(exchange_id) when is_binary(exchange_id) do
     validate_id!(exchange_id)

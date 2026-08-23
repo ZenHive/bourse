@@ -15,11 +15,8 @@ defmodule Bourse.CurrencyActiveRollupTest do
 
   @first_class_venues ~w(alpaca binance binancecoinm binanceusdm bybit coinbaseexchange deribit derive hyperliquid lighter okx)
 
-  for exchange_id <- @first_class_venues do
-    @external_resource Path.expand(
-                         "../../priv/venues/#{exchange_id}/authored/spec.json",
-                         __DIR__
-                       )
+  for exchange_id <- @first_class_venues, file <- Bourse.Spec.source_files(exchange_id) do
+    @external_resource file
   end
 
   test "first-class chain-derived active rules declare active_requires_both" do
@@ -159,9 +156,7 @@ defmodule Bourse.CurrencyActiveRollupTest do
 
   defp currency_field_map(exchange_id) do
     exchange_id
-    |> Bourse.Spec.authored_spec_path()
-    |> File.read!()
-    |> Jason.decode!()
+    |> Bourse.Spec.load!()
     |> get_in(["normalization", "field_maps", "currency", "field_map"])
   end
 

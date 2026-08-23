@@ -8,7 +8,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
       claude = """
       ### Outside
       `Bourse.Missing` and `docs/nope.md`
-      ### The workbench boundary
+      ### The workbench is dissolved
       | Deribit | `priv/venues/deribit/authority/manifest.json` |
       ### Venue authority index
       mix ccxt.oracle_gate
@@ -33,7 +33,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
       labels = Enum.map(regions, &elem(&1, 0))
 
       assert labels == [
-               "The workbench boundary",
+               "The workbench is dissolved",
                "Venue authority index",
                "Toolchain & check commands",
                "Running tests",
@@ -77,7 +77,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
       refs = Enum.map(findings, & &1.ref)
 
       assert "## Toolchain & check commands" in refs
-      assert "### The workbench boundary" in refs
+      assert "### The workbench is dissolved" in refs
       assert "### Key modules" in refs
       assert "## Running tests" in refs
       assert "## The trading domain layer" in refs
@@ -91,7 +91,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
       root = temp_tree!()
 
       claude = """
-      ### The workbench boundary
+      ### The workbench is dissolved
       | Nope | `priv/venues/nope/authority/manifest.json` |
       ### Venue authority index
       no tasks here
@@ -200,7 +200,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
       root = temp_tree!()
 
       claude = """
-      ### The workbench boundary
+      ### The workbench is dissolved
       ok
       ### Venue authority index
       ok
@@ -252,7 +252,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
       root = temp_tree!()
 
       claude = """
-      ### The workbench boundary
+      ### The workbench is dissolved
       x
       ### Venue authority index
       x
@@ -312,7 +312,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
       root = temp_tree!()
 
       claude = """
-      ### The workbench boundary
+      ### The workbench is dissolved
       x
       ### Venue authority index
       x
@@ -418,7 +418,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
       root = temp_tree!()
 
       claude = """
-      ### The workbench boundary
+      ### The workbench is dissolved
       x
       ### Venue authority index
       There is no `mix ccxt.sync` task and no distill-resolution helper surface.

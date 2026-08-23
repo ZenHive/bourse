@@ -329,8 +329,8 @@
     "source_artifact_id": "error-codes",
     "source_url": "https://docs.derive.xyz/reference/error-codes.md",
     "retrieved_at": "2026-07-22",
-    "sha256": "3254fa5526cdbabdb4af306a36326396a1ef59b6fa03da3404ae60e67bc69639",
-    "bytes": 19281
+    "sha256": "d947833818d94bd3d9bb1018b3573688affcb2f033f2876e83b7adbdee28cf7e",
+    "bytes": 19286
   },
   "rejected_candidates": []
 }

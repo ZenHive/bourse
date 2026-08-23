@@ -71,8 +71,8 @@
     "source_artifact_id": "api-v5-docs",
     "source_url": "https://www.okx.com/docs-v5/en/#error-code",
     "retrieved_at": "2026-07-22",
-    "sha256": "138febeb61f8da200608d5ef1cf455dd20b2e24079fe8d3c558278eea1cefbb0",
-    "bytes": 128840
+    "sha256": "c0e10417f07f9993323a0927297c1e458fc38c58e9dbd4c37aa27c97b1d748e6",
+    "bytes": 128842
   },
   "rejected_candidates": []
 }

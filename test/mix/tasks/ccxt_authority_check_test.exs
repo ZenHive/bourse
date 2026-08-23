@@ -9,10 +9,17 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
 
   test "committed corpus covers every first-class venue with reference-only licensing" do
     manifests = AuthorityCorpus.load!(@root)
-    venue_directories = @root |> File.ls!() |> Enum.filter(&File.dir?(Path.join(@root, &1))) |> Enum.sort()
+
+    venue_directories =
+      @root
+      |> File.ls!()
+      |> Enum.filter(&File.dir?(Path.join(@root, &1)))
+      |> List.delete("_shared")
+      |> Enum.sort()
 
     assert Enum.map(manifests, & &1["venue"]) == AuthorityCorpus.venues()
     assert venue_directories == Enum.sort(AuthorityCorpus.venues())
+    assert File.dir?(Path.join(@root, "_shared"))
 
     for manifest <- manifests,
         artifact <- manifest["artifacts"] do

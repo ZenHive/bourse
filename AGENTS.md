@@ -954,7 +954,7 @@ Loaded via `Bourse.Testnet.register_from_env/3` and `Bourse.Testnet.register/3` 
 ## Do NOT edit (generated) / DO author (frozen specs)
 
 - `lib/bourse/exchanges/*.ex` — generated at compile time; never hand-edit (fix the generator).
-- `priv/venues/<venue>/authored/spec.json` — **the complete hand-owned runtime documents** (eleven venues, schema version `3`). These you DO edit, by authoring per the loop in `docs/authored-specs.md`, then proving each claim with a live call against the venue's own host.
+- `priv/venues/<venue>/authored/` — **the complete hand-owned runtime documents** (eleven venues, schema version `3`), split endpoint-major: `venue.json` (identity/urls/signing), `markets.json`, `endpoints.json` (one unified method = one object), `raw.json` (one raw endpoint = one object), `errors.json`, `normalization.json`. `Bourse.Spec.Disk` rotates those files back into the facet-major in-memory map. Identical binance-family descriptors are hoisted to `priv/venues/_shared/binance_family/descriptors.json` and referenced by `$ref`. Author per the loop in `docs/authored-specs.md`, then prove each claim with a live call against the venue's own host.
 - `test/reference_slice/<venue>.json` — frozen CCXT-derived **reference** siblings (the 16-venue slice), pinned by `reference_corpus.json`. Never loaded at runtime, never shipped in the Hex package; read-only authoring/test input (e.g. the test-only `markets.symbols_index` used by integration symbol selection).
 
 ## Architecture

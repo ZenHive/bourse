@@ -82,10 +82,19 @@ runs its own structural tests without fetching authoring inputs:
 "Our schema" is not a slogan; it is a **versioned compile-time contract WE own** (T-B / 169):
 
 - **Owned version.** Schema version `3` is ours, not distill's `4.13.0`. It changes only with a deliberate runtime-contract migration; extractor churn is not a version event.
-- **One complete runtime document.** Each first-class venue loads only
-  `priv/venues/<venue>/authored/spec.json`. The frozen sibling
-  `output/<venue>.json` is reference input and cannot fill a runtime field. There is no
-  runtime merge, inheritance, template, cross-venue reference or generated twin.
+- **One complete runtime document, endpoint-major on disk.** Each first-class venue
+  lives under `priv/venues/<venue>/authored/` as six JSON files — `venue.json`
+  (identity, urls, signing, fees, websocket, emulated methods), `markets.json`,
+  `errors.json`, `normalization.json`, `endpoints.json` (one unified method = one
+  object carrying its request, parse, params and error facets) and `raw.json`
+  (one raw endpoint = one object). `Bourse.Spec.Disk` rotates that layout back
+  into the facet-major in-memory map `Bourse.Spec.Schema` and the exchange
+  generator consume. The frozen sibling under `test/reference_slice/` is
+  reference input and cannot fill a runtime field. There is no runtime merge,
+  inheritance, template or generated twin. The one compile-time cross-venue
+  reference is `$ref` on identical binance/binancecoinm/binanceusdm descriptors,
+  hoisted to `priv/venues/_shared/binance_family/descriptors.json` and resolved
+  before Schema sees the map.
 - **Required sections.** The owned document declares identity (`exchange`), REST transport
   (`raw.describe.api`, `raw.url_templates`, `urls`, `testnet`), raw and unified endpoint
   contracts (`endpoints`), support (`capabilities.has`), auth, normalization, market
@@ -144,6 +153,64 @@ runs its own structural tests without fetching authoring inputs:
   nobody confronted against the venue's own schedule. `true` is therefore an assertion that
   the schedule was confronted and belongs in market rows — today `binance` and `binanceusdm`
   (carve C-T164a); the remaining first-class venues declare `false`.
+
+### On-disk layout — one endpoint, one object
+
+The in-memory spec stays facet-major (`endpoints.unified`, `endpoints.request.defaults`,
+`endpoints.handlers.parse`, …). On disk those facets are folded into the method they
+belong to, so a reviewer opens one object and the matching venue-doc page.
+
+`priv/venues/deribit/authored/endpoints.json` → `fetchPositions` is the complete
+definition of Deribit's `private/get_positions` (docs: [get_positions](https://docs.deribit.com/api-reference/account-management/private-get_positions)).
+No sibling map has to be opened:
+
+```json
+"fetchPositions": {
+  "unified": ["privateGetGetPositions"],
+  "has": true,
+  "mapping_complete": true,
+  "verification": "verified",
+  "descriptor": {
+    "async": true,
+    "description": "fetch all open positions",
+    "errors": null,
+    "name": "fetchPositions",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.currency": "currency code filter for positions",
+      "params.kind": "market type filter for positions 'future', 'option', 'spot', 'future_combo' or 'option_combo'",
+      "params.subaccount_id": "the user id for the subaccount",
+      "symbols": "list of unified market symbols"
+    },
+    "returns": {
+      "description": "a list of [position structure]{@link https://docs.ccxt.com/?id=position-structure}",
+      "type": "object[]"
+    },
+    "signature": {
+      "params": [
+        {"default": "undefined", "name": "symbols", "optional": true, "type": "Strings"},
+        {"default": "{}", "name": "params", "optional": true, "type": null}
+      ],
+      "return_type": "Promise<Position[]>"
+    },
+    "unresolved_reason": null
+  },
+  "parse": ["parsePositions"],
+  "transaction_classification": {"on_chain": false, "transactional": false}
+}
+```
+
+Venue-global slices stay in their own files (`errors.json` is the error taxonomy,
+`venue.json` is urls/signing/identity). `@external_resource` on the generated
+exchange module tracks every split file plus any `$ref`'d shared descriptor file.
+
+Re-measured on this tree (after commit `1cb12e5` deleted unread descriptor
+sources — not the pre-cleanup ~3.6× figure): 57 binance-family descriptor keys
+are identical across at least two of binance/binancecoinm/binanceusdm, a 2.968×
+duplication (44,913 canonical bytes once vs 133,295 if inlined). After the
+split and hoist, family on-disk bytes are 2,163,905 → 1,886,958 (shared file
+63,362 bytes). Per-venue before/after and the recorded original-map hashes live
+in `priv/venues/_shared/binance_family/rotation_report.json`.
 
 ### Adding a venue
 
@@ -372,4 +439,3 @@ executed comparison.
 | `bybit` | `private_get_v5_user_del_submember` | Misclassified. Bybit documents this as destructive `rm-subuid` POST semantics, not a read-style GET. Skipping it also stops the raw probe from issuing a live sub-account deletion against testnet. | 2026-07-16 bybit venue_compare + docs confrontation; scratchpad `vcb/`. |
 | `okx` | `private_get_account_set_auto_repay` | Misclassified. OKX accepts the POST row; GET returns `50115` on both clients. | 2026-07-16 okx venue_compare; scratchpad `vcx/RESULTS.md`. |
 | `okx` | `public_get_support_announcements_types` | Retired typo/plural path. The real path is `support/announcement-types`, which also exists in the generated spec. | 2026-07-16 okx venue_compare: both clients returned `7002`; scratchpad `vcx/RESULTS.md`. |
-

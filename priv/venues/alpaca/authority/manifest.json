@@ -9,8 +9,8 @@
     "source_artifact_id": "trading-api-create-order",
     "source_url": "https://docs.alpaca.markets/us/reference/postorder",
     "retrieved_at": "2026-07-23",
-    "sha256": "9ebf21e2e8efe04f6359fd9dee3b685b222abfd94d1ebcae2d5fb5702b999058",
-    "bytes": 1835
+    "sha256": "fdb421776c59351fc226d406e447262738fd0d136f70d0dab6b0326ccb9d5962",
+    "bytes": 1840
   },
   "artifacts": [
     {

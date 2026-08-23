@@ -2346,7 +2346,7 @@
   "exact_messages": {},
   "live_probe": {
     "ccxt_type": "bad_request",
-    "evidence": "test/bourse/bybit_authored_integration_test.exs: an invalid public trade symbol yields Bybit bad_request",
+    "evidence": "test/live/bybit/bybit_authored_integration_test.exs: an invalid public trade symbol yields Bybit bad_request",
     "identifier": "10001",
     "observed_at": "2026-07-22"
   },

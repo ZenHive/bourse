@@ -237,8 +237,8 @@
     "source_artifact_id": "spot-errors",
     "source_url": "https://github.com/binance/binance-spot-api-docs/blob/a5e0bc3ddc0fd7e6bb696849323b74423fa3a54d/errors.md",
     "retrieved_at": "2026-07-22",
-    "sha256": "f213e2172c87a9b479ce80fde8209e8b15381a862da2b9eb7a780cabdc9ed63c",
-    "bytes": 9125
+    "sha256": "ca615c64ce47abb05883a0ceede8f567f114afe8b4000a7110f9b16caf069e37",
+    "bytes": 9123
   },
   "rejected_candidates": []
 }

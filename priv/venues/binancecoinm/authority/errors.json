@@ -481,7 +481,7 @@
     "identifier": "-2014",
     "ccxt_type": "authentication_error",
     "observed_at": "2026-07-25",
-    "evidence": "test/bourse/binancecoinm_promotion_integration_test.exs: invalid API key is classified as authentication_error"
+    "evidence": "test/live/binancecoinm/binancecoinm_promotion_integration_test.exs: invalid API key is classified as authentication_error"
   },
   "maintenance_adjudication": {
     "status": "mapped",

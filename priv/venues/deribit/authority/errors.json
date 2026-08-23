@@ -496,7 +496,7 @@
   "exact_messages": {},
   "live_probe": {
     "ccxt_type": "authentication_error",
-    "evidence": "test/bourse/deribit_authored_integration_test.exs: private read families return Deribit's authentication error for invalid credentials",
+    "evidence": "test/live/deribit/deribit_authored_integration_test.exs: private read families return Deribit's authentication error for invalid credentials",
     "identifier": "13004",
     "observed_at": "2026-07-22"
   },

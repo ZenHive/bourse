@@ -401,7 +401,7 @@
   "exact_messages": {},
   "live_probe": {
     "ccxt_type": "invalid_order",
-    "evidence": "test/bourse/derive_authored_integration_test.exs: missing public instrument parameter returns Derive's documented invalid-params code",
+    "evidence": "test/live/derive/derive_authored_integration_test.exs: missing public instrument parameter returns Derive's documented invalid-params code",
     "identifier": "-32602",
     "observed_at": "2026-07-22"
   },

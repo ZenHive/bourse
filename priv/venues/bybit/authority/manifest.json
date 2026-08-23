@@ -131,8 +131,8 @@
     "source_artifact_id": "v5-docs-source",
     "source_url": "https://github.com/bybit-exchange/docs/blob/5ccd30109fe2eb5a39cf4d864365213658530f6c/docs/v5/error.mdx",
     "retrieved_at": "2026-07-22",
-    "sha256": "cd5041faaddf80e9809093793897458381dc825ef93ff6d392a4c3ae8d3a491c",
-    "bytes": 64274
+    "sha256": "f0e079ea60adc3f2e895666282c979bb6d6f25f9a6ebe9307fae70c1b8340d7e",
+    "bytes": 64278
   },
   "rejected_candidates": []
 }

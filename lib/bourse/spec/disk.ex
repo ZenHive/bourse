@@ -11,6 +11,15 @@ defmodule Bourse.Spec.Disk do
   alias Bourse.JsonDocument
 
   @file_names ~w(venue.json markets.json errors.json normalization.json endpoints.json raw.json)
+  @venue_rotation_keys ~w(
+    classification_extras
+    descriptor_extras
+    error_handlers
+    has_endpoint_selection
+    parse_helpers
+    request_extras
+    signing_handlers
+  )
 
   @doc "JSON filenames that make up one authored venue document."
   @spec file_names() :: [String.t()]
@@ -86,18 +95,30 @@ defmodule Bourse.Spec.Disk do
 
     describe = Map.put(Map.fetch!(raw, "describe"), "api", unflatten_api(Map.fetch!(raw, "endpoints")))
 
-    %{
-      "auth" => Map.fetch!(venue, "auth"),
-      "authored" => Map.fetch!(venue, "authored"),
-      "capabilities" => %{
-        "features" => get_in(venue, ["capabilities", "features"]),
+    capabilities =
+      venue
+      |> Map.fetch!("capabilities")
+      |> Map.delete("has_extras")
+      |> Map.merge(%{
         "has" => has,
-        "timeframes" => get_in(venue, ["capabilities", "timeframes"]),
-        "unsupported_raw_endpoints" => get_in(venue, ["capabilities", "unsupported_raw_endpoints"]),
         "mapping_complete" => mapping_complete,
         "verification" => verification
-      },
-      "config" => Map.fetch!(venue, "config"),
+      })
+
+    rate_limits =
+      venue
+      |> Map.fetch!("rate_limits")
+      |> Map.put("per_endpoint_cost", pec)
+
+    raw_spec =
+      raw
+      |> Map.drop(["endpoints", "request_shape"])
+      |> Map.put("describe", describe)
+
+    venue
+    |> Map.drop(@venue_rotation_keys)
+    |> Map.merge(%{
+      "capabilities" => capabilities,
       "endpoints" => %{
         "descriptors" => descriptors,
         "handlers" => %{
@@ -110,27 +131,11 @@ defmodule Bourse.Spec.Disk do
         "unified" => unified
       },
       "errors" => Map.fetch!(files, "errors.json"),
-      "exchange" => Map.fetch!(venue, "exchange"),
-      "fees" => Map.fetch!(venue, "fees"),
-      "frozen" => Map.fetch!(venue, "frozen"),
-      "hand_owned" => Map.fetch!(venue, "hand_owned"),
       "markets" => Map.fetch!(files, "markets.json"),
       "normalization" => Map.fetch!(files, "normalization.json"),
-      "rate_limits" => %{
-        "buckets" => get_in(venue, ["rate_limits", "buckets"]),
-        "endpoint_cost_binding" => get_in(venue, ["rate_limits", "endpoint_cost_binding"]),
-        "per_endpoint_cost" => pec
-      },
-      "raw" => %{
-        "describe" => describe,
-        "url_templates" => Map.fetch!(raw, "url_templates")
-      },
-      "schema_version" => Map.fetch!(venue, "schema_version"),
-      "testnet" => Map.fetch!(venue, "testnet"),
-      "urls" => Map.fetch!(venue, "urls"),
-      "websocket" => Map.fetch!(venue, "websocket"),
-      "emulated_methods" => Map.fetch!(venue, "emulated_methods")
-    }
+      "rate_limits" => rate_limits,
+      "raw" => raw_spec
+    })
   end
 
   defp collect_methods(endpoints, venue, spec_root) do

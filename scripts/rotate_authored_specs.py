@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Split facet-major authored spec.json files into endpoint-major documents.
 
-Run from the repo root. Writes the split layout, then reassembles and asserts
-deep equality against the original maps before deleting spec.json.
+Run from the repo root. Writes the split layout, reassembles and asserts deep
+equality against the original maps, then deletes spec.json. One-shot: refuses
+to run once spec.json is gone. Committed rotation_report.json hashes are
+Elixir-canonical (see test/bourse/spec_disk_test.exs), not this script's.
 """
 
 from __future__ import annotations
@@ -310,6 +312,8 @@ def main() -> None:
         path.parent.parent.name
         for path in ROOT.glob("*/authored/spec.json")
     )
+    if not venues:
+        raise SystemExit("no priv/venues/*/authored/spec.json files found; this script is a one-shot")
     originals = {venue: load_json(ROOT / venue / "authored" / "spec.json") for venue in venues}
 
     before_bytes = {
@@ -341,13 +345,20 @@ def main() -> None:
         )
         if canonical(assembled) != canonical(spec):
             raise SystemExit(f"roundtrip mismatch for {venue}")
+        (authored / "spec.json").unlink()
 
     after_bytes = OrderedDict()
+    split_names = (
+        "venue.json",
+        "markets.json",
+        "errors.json",
+        "normalization.json",
+        "endpoints.json",
+        "raw.json",
+    )
     for venue in venues:
         authored = ROOT / venue / "authored"
-        after_bytes[venue] = sum(
-            path.stat().st_size for path in authored.glob("*.json")
-        )
+        after_bytes[venue] = sum((authored / name).stat().st_size for name in split_names)
     shared_size = SHARED.stat().st_size
     family_before = sum(before_bytes[v] for v in BINANCE_FAMILY)
     family_after = sum(after_bytes[v] for v in BINANCE_FAMILY) + shared_size
