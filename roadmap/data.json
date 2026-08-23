@@ -30490,7 +30490,7 @@
       "phase": 16,
       "bundle": "live_e2e",
       "milestone": "v1_2",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Make the provider-live REST-read contract compact and green",
       "scores": {
         "d": 9,
@@ -30536,6 +30536,7 @@
       ],
       "body": "Task 667 left a useful provider-live runner around a self-grading, runtime-derived catalog. Keep the live execution, provider source-pin checks, ordinary scenario functions and mechanical ExUnit shell; replace duplicated catalog rows and generic assertions with compact shared semantic scenarios derived from provider-owned contracts and observed live behavior.\n\nEvery supported branch must prove exact domain meaning through one real provider success and one relevant deliberately triggered provider error. Fix client, authored-spec and scenario defects exposed by the lane. Missing access or state is red unless provider evidence shows that the branch is outside the supported environment; such a branch remains visibly unverified and never contributes to a green verification claim.\n\nThe provider-live-only boundary established by source commit 1995bde remains intact. No fixture, replay, mock or legacy semantic suite returns, and the canonical gates execute the complete REST-read matrix once rather than layering duplicate runs.\n\nRouting trigger: live external-system semantics, public API contract repair and a repo-wide test invariant. Do not dispatch task 668 until this task is reviewer-approved and confirmed landed on origin/main.\n",
       "created_at": "2026-08-23",
+      "started_at": "2026-08-23",
       "scored_at": "2026-08-23",
       "cross_repo": []
     },
