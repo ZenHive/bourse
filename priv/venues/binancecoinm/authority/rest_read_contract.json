@@ -51,10 +51,7 @@
           "symbol",
           "rank"
         ],
-        "any_fields": [
-          "percentage",
-          "timestamp"
-        ],
+        "any_fields": [],
         "empty_collection": "allowed"
       },
       "authority_source_ids": [

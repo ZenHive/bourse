@@ -1446,10 +1446,7 @@
           "symbol",
           "rank"
         ],
-        "any_fields": [
-          "percentage",
-          "timestamp"
-        ]
+        "any_fields": []
       },
       "authority_source_ids": [
         "developer-docs-full"
@@ -1556,10 +1553,7 @@
           "symbol",
           "rank"
         ],
-        "any_fields": [
-          "percentage",
-          "timestamp"
-        ],
+        "any_fields": [],
         "empty_collection": "allowed"
       },
       "authority_source_ids": [
