@@ -23,7 +23,7 @@ private order/fill echo (task 622). Outcome: CONFIRM provider contract.**
   with unified `clientOrderId` returns `%Bourse.Order{client_order_id: id}` and the
   matching `private/get_user_trades_by_instrument` fill carries the same
   `client_order_id`. Durable pin:
-  `test/bourse/deribit_authored_integration_test.exs`.
+  `test/live/deribit/deribit_authored_integration_test.exs`.
 
 <!-- carve-evidence-status
 {"carve_id":"C-T622","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Deribit private/buy, private/sell, and private/get_user_trades_by_instrument label contract (maximum 64 characters)"},"observed_evidence":{"kind":"live_venue","reference":"Live test.deribit.com labelled market order plus matching private/get_user_trades_by_instrument fill on 2026-08-18"},"compatibility_reference":null,"resolved_tier":1}

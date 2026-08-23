@@ -10,7 +10,7 @@ defmodule Bourse.WS.BinanceWatchFrameDeliveryTest do
   Gated by `:network` + `:integration`. Run with:
 
       mix test.json --quiet --include network --include integration \\
-        test/bourse/ws/binance_watch_frame_delivery_test.exs
+        test/live/ws/binance_watch_frame_delivery_test.exs
   """
 
   use Bourse.Test.Case, async: false

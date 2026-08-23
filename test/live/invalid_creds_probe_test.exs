@@ -6,7 +6,7 @@ if Bourse.Test.Generator.OptIn.requested?([:network, :invalid_creds]) do
     Opt-in suite: file-level `@moduletag :network` keeps the default
     `mix test` run offline. To execute:
 
-        mix test.json --quiet --only network test/bourse/invalid_creds_probe_test.exs
+        mix test.json --quiet --only network test/live/invalid_creds_probe_test.exs
 
     Expect a mix of passes (exchange returned an auth-shaped error) and
     `⚠️  INCONCLUSIVE` Logger warnings for rate-limit / geo-block cases.

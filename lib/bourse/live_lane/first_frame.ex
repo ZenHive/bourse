@@ -117,7 +117,7 @@ defmodule Bourse.LiveLane.FirstFrame do
       reason:
         "user-data stream emits only on account events; handshake and bad-secret rejection " <>
           "are covered by auth_live_smoke",
-      tracking: "test/bourse/ws/auth_live_smoke_test.exs — task 650"
+      tracking: "test/live/ws/auth_live_smoke_test.exs — task 650"
     },
     %{
       venue: "binanceusdm",
@@ -125,7 +125,7 @@ defmodule Bourse.LiveLane.FirstFrame do
       reason:
         "listen-key private route is silent until an account event; a wrong key still reports " <>
           "connected. Covered by the auth_live_smoke ORDER_TRADE_UPDATE probe",
-      tracking: "test/bourse/ws/auth_live_smoke_test.exs — task 643"
+      tracking: "test/live/ws/auth_live_smoke_test.exs — task 643"
     },
     %{
       venue: "binancecoinm",
@@ -133,21 +133,21 @@ defmodule Bourse.LiveLane.FirstFrame do
       reason:
         "listen-key private route is silent until an account event; a wrong key still reports " <>
           "connected. Covered by the auth_live_smoke ORDER_TRADE_UPDATE probe",
-      tracking: "test/bourse/ws/auth_live_smoke_test.exs — task 643"
+      tracking: "test/live/ws/auth_live_smoke_test.exs — task 643"
     },
     %{
       venue: "bybit",
       surface: "ws_private",
       reason:
         "private order channel is idle without account events; differential handshake is covered by auth_live_smoke",
-      tracking: "test/bourse/ws/auth_live_smoke_test.exs — task 650"
+      tracking: "test/live/ws/auth_live_smoke_test.exs — task 650"
     },
     %{
       venue: "deribit",
       surface: "ws_private",
       reason:
         "private user channels are idle without account events; differential handshake is covered by auth_live_smoke",
-      tracking: "test/bourse/ws/auth_live_smoke_test.exs — task 650"
+      tracking: "test/live/ws/auth_live_smoke_test.exs — task 650"
     },
     %{
       venue: "derive",
@@ -160,7 +160,7 @@ defmodule Bourse.LiveLane.FirstFrame do
       surface: "ws_private",
       reason:
         "private orders channel is idle without account events; differential handshake is covered by auth_live_smoke",
-      tracking: "test/bourse/ws/auth_live_smoke_test.exs — task 650"
+      tracking: "test/live/ws/auth_live_smoke_test.exs — task 650"
     }
   ]
 

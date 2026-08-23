@@ -1481,7 +1481,7 @@ for `BTC/USDT`) on binance and binanceusdm. The four `watch_*` defaults were
 audited against the venue stream docs; leftover hashes
 (`orderbook::{symbol}`, `trade::{symbol}`, `myLiquidations::{symbol}`,
 `:{symbol}`, bare `miniTicker`/`kline`/`name`) are gone. Live
-frame-delivery tests in `test/bourse/ws/binance_watch_frame_delivery_test.exs`
+frame-delivery tests in `test/live/ws/binance_watch_frame_delivery_test.exs`
 pin a book frame on both venues — subscribe-ack is not treated as evidence.
 The trading_dashboard `depth20@100ms` workaround can now be retired.
 binancecoinm still authors no channel table and fails loud with

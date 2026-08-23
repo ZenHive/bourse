@@ -33,7 +33,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
       "Lighter publishes no error-code enumeration (confirmed 2026-07-23, task 451): the pinned " <>
         "`rest-openapi` artifact defines only the {code, message} result envelope and no docs page " <>
         "lists code values. Its authored codes are live-observation-derived and pinned by " <>
-        "test/bourse/lighter_promotion_integration_test.exs and test/bourse/lighter_signing_integration_test.exs."
+        "test/live/lighter/lighter_promotion_integration_test.exs and test/live/lighter/lighter_signing_integration_test.exs."
   }
 
   @doc "Returns the governed first-class venue ids."

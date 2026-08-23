@@ -496,7 +496,7 @@ Entry template:
 - What the live call DID confirm (tier 1, 2026-07-19): the signed request is accepted and
   routed — OKX answers with a *business* error (50038), not `401`/`50111` (bad signature),
   so auth, host, and the `x-simulated-trading` header are correct. Pinned in
-  `test/bourse/okx_demo_integration_test.exs`.
+  `test/live/okx/okx_demo_integration_test.exs`.
 - The open question: whether native `ccy` is accepted with code 0 on this endpoint (C-T484a),
   plus the **field semantics of a populated row** — specifically (a) that `addrEx.comment`
   is the memo carrier for TON-family currencies and that `tag`/`pmtId`/`memo` take precedence

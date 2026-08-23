@@ -11,7 +11,7 @@ defmodule Bourse.WS.BinanceWatchOrderBookBroadcastTest do
   Gated by `:network` + `:integration`. Run with:
 
       mix test.json --quiet --include network --include integration \\
-        test/bourse/ws/binance_watch_order_book_broadcast_test.exs
+        test/live/binance/binance_watch_order_book_broadcast_test.exs
   """
 
   use Bourse.Test.Case, async: false

@@ -4,7 +4,7 @@ defmodule Bourse.WS.SubscribeRejectionLiveTest do
   `{:error, {:subscription_rejected, frame}}` rather than `:ok` (task 543).
 
   Gated by `:network` + `:ws_canary`. Run with:
-    mix test.json --quiet --include ws_canary --only ws_canary test/bourse/ws/subscribe_rejection_live_test.exs
+    mix test.json --quiet --include ws_canary --only ws_canary test/live/ws/subscribe_rejection_live_test.exs
   """
 
   use Bourse.Test.Case, async: false
