@@ -5,14 +5,14 @@ defmodule Bourse.LinearContractUnitIntegrationTest do
 
   alias Bourse.Exchange
   alias Bourse.Market
-  alias Bourse.Test.FixtureGateIsolation
+  alias Bourse.Test.LiveGateIsolation
   alias Bourse.Unified
 
   @moduletag :integration
   @moduletag :network
 
   setup do
-    Enum.each(~w(binance bybit derive), &FixtureGateIsolation.isolate!/1)
+    Enum.each(~w(binance bybit derive), &LiveGateIsolation.isolate!/1)
     :ok
   end
 

@@ -13,14 +13,17 @@ Provenance for every external API claim, in this order:
 
 1. Live E2E against the real host.
 2. Understand one success and one relevant error from that interaction.
-3. Write an integration test that hits the same host and asserts those semantics.
-4. Only then derive an offline fixture from that captured interaction, if CI needs a
-   replay cache.
+3. Write a REST-read contract case that hits the same host and asserts those semantics,
+   inventoried in `priv/authority/rest-read-contracts.json`.
 
-No mock or recording may invent behavior. The offline suite replays reality; it is not
-the authority. A claim is `verified` only after steps 1–3 plus provider-owned meaning;
-otherwise it is `unverified`. A recording in the same diff as the spec it certifies is
-not verification. CCXT source, execution, and static data are authoring references only.
+There is no replay layer. Nothing stored in this repository may stand in for a venue —
+`test/bourse/no_faked_provider_oracle_test.exs` fails the suite on any `Req.Test`,
+`Bypass`, `Mox`, `plug: {`, fixture path or `@tag :skip` under `test/`. Offline tests
+cover our own mechanics (signing vectors, encoders, decimal arithmetic, URL construction,
+the rate limiter, WebSocket dialect parsing, types) and nothing a venue owns.
+Verification stays binary: a claim is `verified` only after steps 1–3 plus provider-owned
+meaning, and `unverified` otherwise. CCXT source, execution, and static data are a pinned
+third-party extraction — an authoring reference, never an oracle.
 
 ## Why
 
@@ -43,10 +46,10 @@ recurring, measured pain:
 
 ### Why the rebuttals hold (the cons that don't survive scrutiny)
 
-1. *"The compatibility corpus has holes (WS-parse, unfixtured methods)."* — The corpus is
-   **extensible**: add cassettes/VCR for WS frames and for unfixtured REST methods. A hole is a
-   compatibility fixture to write, not a reason to keep extraction or to lower the tier-1
-   evidence requirement.
+1. *"The compatibility corpus has holes (WS-parse, uncovered methods)."* — The inventory is
+   **extensible**: add the missing WS frame and REST-read branches as live contract cases. A
+   hole is a case to write against the venue, not a reason to keep extraction or to lower the
+   tier-1 evidence requirement.
 2. *"You're relocating churn, not eliminating it."* — Today we pay churn **twice**: in
    distill's extraction *and* in our implementation chasing its shape changes. Collapsing to
    authoring-only is strictly less churn, on one surface we own.
@@ -62,8 +65,9 @@ recurring, measured pain:
 ## The authority rule
 
 **Interpret, don't extract — and make interpretation answerable to the venue.** The
-exchange-owned API contract is the correctness authority: live or recorded raw behavior
-establishes what happens, and the exchange's own docs/specs/SDK establish what it means.
+exchange-owned API contract is the correctness authority: live raw behavior against the
+venue's own host establishes what happens, and the exchange's own docs/specs/SDK establish
+what it means.
 CCXT source, execution, and static data are unverified authoring references. The *mechanical*
 bulk (endpoint tree, urls, fees,
 rate-limits) may remain a one-time frozen CCXT projection, but **our spec is authored and
@@ -95,21 +99,15 @@ Keep the macros and the JSON-spec format. Then:
 
 ### Vendored reference storage decisions
 
-The client deliberately tracks its two reference slices so a fresh clone can run
-the complete offline suite without fetching authoring inputs:
+The client deliberately tracks its reference slice so a fresh clone compiles and
+runs its own structural tests without fetching authoring inputs:
 
-- `priv/reference_cache/` supplies `Bourse.ReplayExchange` with normalized market
-  and currency cache fields used by request reconstruction and parser tests.
-  Manifest-registered recordings preserve provider response envelopes instead;
-  they do not contain the normalized contract sizes, precision, asset indexes, or
-  currency-network metadata that replay consumes. Rebuilding those fields would
-  require rerunning the reference implementation, so the ~1 MB cache remains a
-  separate vendored compatibility input rather than reality evidence.
 - The 16 documents in `priv/specs/json/output/` are test-only authoring references.
   Tests read their complete endpoint trees and symbol indexes, including five
-  unsupported-venue counter-examples. Individual operation recordings cannot
-  represent that static document contract, while fetch-on-demand would put network
-  access on the offline test path; the 19 MB slice therefore remains tracked.
+  unsupported-venue counter-examples. Fetching them on demand would make those
+  structural tests depend on a third party's availability; the 19 MB slice
+  therefore remains tracked. They are a pinned third-party extraction and grade
+  nothing a venue owns.
 - `priv/specs/json/reference_corpus.json` remains tracked with the documents because
   it declares their closed inventory and pins their provenance. Its
   `pins.source.sha256` is the cross-repository revision key shared with the
@@ -140,8 +138,8 @@ the complete offline suite without fetching authoring inputs:
   operation nor primitives sufficient to derive it, and `"emulated"` means the venue exposes
   derivation primitives but no native operation. `"emulated"` says nothing about whether Bourse
   performs that derivation. `capabilities.mapping_complete` says only whether Bourse completely
-  maps the authored unified route. `capabilities.verification` is `"verified"` only when that
-  implementation has manifest-registered venue evidence; sandbox reachability may change this
+  maps the authored unified route. `capabilities.verification` is `"verified"` only when a
+  provider-live contract case covers that implementation; sandbox reachability may change this
   field and no other. The two implementation maps have exactly the `endpoints.unified` keys.
 - **Callability is derived without conflation.** A provider-native declaration needs an authored
   route; provider-emulated operations are callable only through an authored raw route or an
@@ -159,7 +157,7 @@ the complete offline suite without fetching authoring inputs:
   capability values cannot create provider support.
 - **Runtime-only surface.** Extraction ASTs, source receipts, provenance payloads, method
   inventories and test-only symbol indexes are forbidden by path. Evidence remains in the
-  authority/carve/fixture surfaces; integration symbol selection reads the frozen reference
+  authority and carve surfaces; integration symbol selection reads the frozen reference
   explicitly and never injects that index into a runtime spec.
 - **Macro-enforced.** `use Bourse.Exchange` validates the complete owned contract at compile
   time. A missing semantic decision is a named gap, not a consumer discovery.
@@ -185,39 +183,27 @@ the complete offline suite without fetching authoring inputs:
   (carve C-T164a); the remaining first-class venues declare `false`.
 - **One schema, many macro outputs.** The same owned schema generates endpoints *and* (follow-on, gated on the gate) the pattern-match verification assertions. Think in macros: the schema is the single source the codegen and the tests both read.
 
-### Venue promotion boundary
+### Adding a venue
 
-`mix ccxt.promote_venue` is the reusable candidate-to-owned boundary. Preparation copies the
-complete pinned reference's mechanical endpoint tree and metadata, strips reference-only
-payloads, removes raw capability claims, and replaces signing, authenticated sections, request
-shape, unified routing, normalization, symbols, errors, emulated methods, WebSocket semantics,
-and every method support decision with explicit unresolved candidate entries. Its JSON report
-uses one verification vocabulary: `verified` or `unverified`. Preparation never registers or
-compiles the venue.
+There is no promotion tooling. A candidate-to-owned boundary is hand-authored work, and it is
+judged by the same rules as every other slot rather than by a task's report.
 
-```sh
-mix ccxt.promote_venue --prepare --reference REF --candidate CANDIDATE --report REPORT
-mix ccxt.promote_venue --check --candidate CANDIDATE --report REPORT [--reference REF]
-mix ccxt.promote_venue --promote OWNED --candidate CANDIDATE --report REPORT [--reference REF]
-```
+An owned document starts from a pinned reference's mechanical endpoint tree and metadata only —
+reference-only payloads and raw capability claims are stripped, and signing, authenticated
+sections, request shape, unified routing, normalization, symbols, errors, emulated methods,
+WebSocket semantics and every method support decision are authored, each one `verified` or
+`unverified` with nothing in between.
 
-`--check` / `--promote` re-read the pinned CCXT reference (from `--reference` or
-`report.reference.path`), verify its bytes against `report.reference.sha256`, and re-derive
-the method inventory from that pin. Candidate support maps *and* report capability items must
-match that inventory — a both-sides deletion cannot self-consistently pass
-(`:method_inventory_reference_drift` / `:method_inventory_mismatch`). Digest or path failures
-are loud (`:reference_digest_mismatch`, `:reference_missing`, `:reference_pin_missing`).
-
-The gate refuses missing or unresolved interpretation; CCXT-only evidence; incomplete public
-or authenticated success/error observations; missing provider semantics; unsafe or incomplete
-create/fetch/cancel evidence for trading venues; silently skipped or credential-less
-integration tests; missing carve/authority artifacts; schema failures; non-deterministic JSON;
-a failing `mix ccxt.oracle_gate` over already-registered goldens; or any critical slot without
-a live success and a relevant live error. Recordings, if added, are derived from those calls
-afterwards. Venue eleven therefore gets reality provenance whether or not a CCXT reference
-exists. A written owned document is still not a
-supported venue: the named venue delivery must separately add it to `Bourse.Spec`, the registry,
-and the compiled set.
+A venue is not addable on unresolved interpretation; on third-party evidence; on incomplete
+public or authenticated success/error observations; without provider-owned semantics; on unsafe
+or incomplete create/fetch/cancel evidence for a trading venue; on skipped or credential-less
+tests; without the carve and authority artifacts; on schema failures; or with any critical slot
+lacking a live success and a relevant live error against the venue's own host. Those calls are
+inventoried in `priv/authority/rest-read-contracts.json` and run by
+`mix ccxt.verify_rest_read_contracts`, so the venue carries reality provenance whether or not a
+third-party reference for it exists. A written owned document is still not a supported venue:
+the named venue delivery must separately add it to `Bourse.Spec`, the registry, and the
+compiled set.
 
 ## The epistemology — provider-owned contract, binary verification
 
@@ -227,13 +213,14 @@ We build the client ourselves, by our own rules, but those rules answer to the e
 |---|---|---|
 | **Semantic authority** | Exchange-owned docs/specs/SDKs | Required meaning for a verified claim |
 | **Observed behavior** | Live API call (success and a relevant error) | Establishes what the venue actually did |
-| **Replay cache** | Manifest-registered recording derived from a prior live call | Speeds CI; never the authority; never authored in the same diff as the spec |
 | **Authoring reference** | CCXT source/execution/static data, training, third-party docs, general web | Implementation clue only; claim remains unverified |
 
 If author and grader share the same third-party interpretation, both can converge on the same
-wrong belief. A live venue call is the grader for a **new** claim. `mix ccxt.oracle_gate`
-replays already-registered recordings so they do not rot; adding a recording in the same
-change as the spec is not verification. CCXT-derived data can help discover or compare
+wrong belief. A live venue call is the grader for every claim, new or old — a stored response
+can only tell us our own parsing changed, and it says so silently and forever once the venue
+moves. `mix ccxt.verify_rest_read_contracts` therefore re-asks the venue rather than replaying
+an answer, and its runner fails when executed cases fall below the inventoried denominator, so
+a shrinking live surface cannot pass as green. CCXT-derived data can help discover or compare
 behavior, but cannot make a claim verified.
 
 ## Contract coverage is not behavior verification
@@ -266,24 +253,25 @@ only or carved operation can independently be verified, unsafe, or unreachable.
 |---|---|---|
 | **Relation** | `shared`, `provider_only`, `authored_only` | Which inventory contains the operation |
 | **Runtime scope** | `unified`, `raw_only`, `carved`, `not_implemented`, `unknown` | What this client deliberately exposes |
-| **Evidence** | `verified`, `unverified` | Whether manifest-registered reality covers the claim |
+| **Evidence** | `verified`, `unverified` | Whether a provider-live contract case covers the claim |
 | **Reachability** | `safe`, `unsafe`, `unreachable`, `unknown` | Whether and how a live call may be made |
 | **Contract scope** | `current_rest`, `upcoming_rest`, `current_websocket`, `upcoming_websocket` | Which provider surface defines the denominator |
 
 Task 555 makes these axes machine-readable. The comparator may carry forward registered facts,
 but it never makes semantic or safety judgments: absent evidence is `unverified`; absent runtime
-or reachability evidence is `unknown`. Direct provider-operation capture establishes the evidence
+or reachability evidence is `unknown`. A live call against the provider establishes the evidence
 axis; read evidence and mutation adjudication drain through separate one-session vertical tasks
-cut from the resulting inventory. Only manifest-registered live observations can advance the
+cut from the resulting inventory. Only a passing provider-live contract case can advance the
 evidence axis. Upcoming methods remain forward-compatibility observations, not missing
 current-runtime methods.
 
 ### Measured gaps on 2026-08-04
 
 The authored surface contained 392 declared read-method/venue pairs. Of those, 313 had a parse
-slice, 79 did not, and 246 of the sliced pairs had no manifest recording. The recording manifest
-contained 84 venue/method pairs in total, including pairs outside the declared-and-sliced set.
-Task 533 made the parse absence loud; tasks 550 and 551 own the remaining authored-surface gaps.
+slice, 79 did not, and 246 of the sliced pairs had no observed evidence at all. Task 533 made
+the parse absence loud; tasks 550 and 551 own the remaining authored-surface gaps. The
+denominator that measurement compared against is now
+`priv/authority/rest-read-contracts.json`.
 
 A separate Deribit comparison against the current official OpenAPI found 123 authored raw paths:
 116 overlapped the provider document, 62 provider paths were absent from the authored spec, and
@@ -293,9 +281,9 @@ OpenAPI-versus-authored conformance layer; the roadmap now owns that missing mec
 lands, these numbers are a dated measurement rather than a reproducible gate.
 
 **Coverage has three boundaries.** The provider-contract comparison measures what our authored
-inventory cannot see. Direct provider-operation capture establishes what the live raw API did.
-The unified reality oracle measures whether authored behavior means what the provider says it
-means. Passing any one boundary cannot substitute for the other two.
+inventory cannot see. A live raw call establishes what the provider's API did. The REST-read
+contract lane measures whether authored behavior means what the provider says it means. Passing
+any one boundary cannot substitute for the other two.
 
 ### Recording a carve's tier — the machine-readable evidence status (task 446)
 
@@ -309,7 +297,7 @@ tier; a dated status block is:
 <!-- carve-evidence-status
 {"carve_id":"C-T428a","date":"2026-07-20",
  "semantic_source":{"kind":"provider_owned","reference":"Alpaca market-data API reference"},
- "observed_evidence":{"kind":"recorded_venue","reference":"frozen 200 body, alpaca_authored_slice_test.exs"},
+ "observed_evidence":{"kind":"live_venue","reference":"200 body, alpaca market-data host"},
  "compatibility_reference":null,
  "resolved_tier":1}
 -->
@@ -318,43 +306,49 @@ tier; a dated status block is:
 **Supersession is by date, not by edit.** Append a new block; the latest `date` for a
 `carve_id` is the current status and outranks every earlier block and every `*Verification:*`
 line for that carve. Earlier blocks stay as provenance. Two blocks sharing one date is an
-error — the gate cannot order them.
+error — nothing can order them.
 
-Field rules, all enforced by `test/bourse/carve_register_consistency_test.exs` (default offline
-suite):
+Field rules — an authoring convention since the consistency gate was removed with the replay
+lane, so nothing mechanical grades them now:
 
 - `resolved_tier` is `1`, `2`, or `3`, and is the tier the § "Compatibility ≠ correctness"
   table defines.
 - **Tier 1 requires two independent facts**, matching the authority rule: a
   `semantic_source` of kind `provider_owned`, *and* an `observed_evidence` of kind
-  `live_venue` or `recorded_venue`, each with a non-empty `reference`. Docs alone, a closed
-  ledger entry alone, or anything of kind `ccxt` can never reach tier 1 — CCXT belongs in
-  `compatibility_reference`, which never affects the tier.
+  `live_venue`, each with a non-empty `reference`. Docs alone, a closed ledger entry alone, or
+  anything of kind `ccxt` can never reach tier 1 — CCXT belongs in `compatibility_reference`,
+  which never affects the tier. Blocks of kind `recorded_venue` predate the removal of the
+  replay lane; they stay as the record of what was observed then, and a new block names the
+  live contract case instead.
 - **Tier 2/3 requires `known_gap_reason`** — say what is missing, so the gap is a record
   rather than a silence.
 - A closed `docs/prod-verification-ledger.md` entry naming a carve id asserts tier 1 for it;
-  a register status that contradicts the ledger fails the gate naming venue, carve id, and
-  both tiers. Close the ledger entry and append the tier-1 status in the same change.
+  a register status that contradicts the ledger is wrong on its face. Close the ledger entry
+  and append the tier-1 status in the same change.
 - Every carve section carrying `*Verification:*` prose must have a status block, so legacy
   prose can never be the only tier claim.
 
 **Registers do not use a bare `Oracle:` label.** It reads as a correctness claim regardless of
 what follows it. Write `Evidence sources:` and let the status block carry the tier.
 
-## Discovery reality-first; reality gate offline
+## Discovery and grading are both live
 
-The authoring order is real call → record → register → pure assertions. Live calls discover
-the venue's current response and error shapes. Frozen raw venue responses, accepted-request
-goldens, and recorded errors make those observations deterministic and hermetic in CI.
-`mix ccxt.oracle_gate` checks their manifests, provenance, critical-slot coverage, and replay
-contracts. Periodic live re-recording remains the drift detector.
+The authoring order is real call → understand → inventory the branch → assert against the
+venue. Live calls discover the venue's current response and error shapes, and the same live
+calls grade the slice afterwards: `priv/authority/rest-read-contracts.json` names every
+supported read operation and provider-defined semantic branch, and
+`mix ccxt.verify_rest_read_contracts` executes them against the venues' own hosts, reporting
+denominator, executed and failures. Drift is not something a periodic re-capture detects
+later; the gate meets it on the next run. `ops/live-drift.sh` runs the whole provider-live lane
+on a schedule — authority check, REST-read contracts, the `:network` corpus, WS auth smoke, WS
+first frame, aggregate.
 
 ## Task spine (phase `authored_specs`)
 
 Evidence-first, reversible, REST before WS. Deps in brackets.
 
-- **T-A · Reality oracle.** Manifest-registered responses, accepted requests, and recorded
-  errors are the verification floor. `mix ccxt.oracle_gate` is the check-pipeline contract.
+- **T-A · Reality oracle.** A live success and a relevant live error per branch are the
+  verification floor. `mix ccxt.verify_rest_read_contracts` is the check-pipeline contract.
 - **T-B · Own the spec schema.** Decouple `Bourse.Spec` from distill's contract (drop
   `_provenance` requirement + provenance manifest fields); define "our schema" = the
   load-bearing key set; drop the ~20 never-read distill fields. Hand-build (reshapes loader).
@@ -376,9 +370,9 @@ Evidence-first, reversible, REST before WS. Deps in brackets.
   survives as the mechanical executor of authored recipes.
 - **T-F · Reconcile CLAUDE.md + docs doctrine.** Rewrite the distill-doctrine sections; point
   at this doc; regenerate `AGENTS.md`. `[after T-E1, T-E2]`
-- **T-G · WS authored slices + cassette harness (DEFERRED).** Author WS slices; build a frame
-  record/replay harness; port CCXT `pro/test/base` tests. Live `watch*` covers WS meanwhile.
-  `[after T-D]`
+- **T-G · WS authored slices (DEFERRED).** Author WS slices and assert them against frames the
+  venue's own socket sends. Live `watch*` and `mix ccxt.verify_ws_first_frame` cover WS
+  meanwhile. `[after T-D]`
 
 ## Authoring nuance — not all normalization is field_map-shaped
 
@@ -391,9 +385,9 @@ places that field on the original decoded response outside the row selected by
 format are then applied to the envelope without changing how the row itself is
 selected. `Bourse.Spec.Schema` rejects any other source value.
 
-Envelope-sourced fields need a committed response recording that carries the
-envelope key. The oracle gate replays that recording and rejects coverage when
-the parsed result drops the value; fixture presence alone is not verification.
+Envelope-sourced fields need a live response that carries the envelope key. The
+contract case asserts the parsed value against that response and fails when the
+parse drops it; declaring the rule is not verification.
 
 When T-C/T-D author a venue's interpretive slices, `parse*()` → field_maps covers the
 **flat-scalar** shapes (ticker, market, trade, balance fields). But some normalizations are
@@ -414,8 +408,8 @@ way.
 
 Every verification above grades our parser against a **target schema** — struct shapes, field
 names, semantic carves (`cost = amount × price`; inverse-divide; a funding `interval` string) —
-that was ported wholesale from Bourse. The fixture-vs-live axis is orthogonal to this: a live
-assertion inherits the same CCXT vocabulary, it just asserts less of it. So authoring a venue
+that was ported wholesale from Bourse. How much a case asserts is orthogonal to this: a thin
+live assertion inherits the same vocabulary, it just checks less of it. So authoring a venue
 slice (T-C/T-D) has an explicit step **before** the field-map is written — for each schema
 decision, confront the **carve**, not just the value:
 
@@ -859,11 +853,11 @@ twice in this repo) despite the generic spread-the-roster guidance.
 
 ## Verification
 
-- **Reality oracle:** `mix ccxt.oracle_gate` grades the manifest-registered response
-  recordings, accepted-request goldens, and recorded errors for all eleven venues. This is the
-  only verification oracle in `mix check.dispatch`.
-- **Suite:** `mix precommit` (offline) stays green throughout; `mix precommit.full` before PR.
-- **Live cross-check:** T39 `--include integration --include network` detects current venue
-  drift; accepted observations are recorded and registered before they become CI evidence.
+- **Reality oracle:** `mix ccxt.verify_rest_read_contracts` runs every inventoried REST-read
+  branch for all eleven venues against their own hosts and fails when executed falls below the
+  denominator. It is the only verification oracle, and it is a step of `mix ci`.
+- **Suite:** `mix precommit` stays green throughout — it is provider-live and excludes nothing
+  but `:dangerous`. `mix ci` before PR, locally: no hosted CI runs it.
+- **Live cross-check:** `ops/live-drift.sh` on a schedule detects current venue drift.
 - **Removal safety:** after T-E1/T-E2, `mix compile --warnings-as-errors` + full suite green
   confirms no live code depended on the deleted heuristics.

@@ -204,23 +204,30 @@ Mix tasks named below are repo-internal and are not part of the published
 package; only `mix ccxt.build_lighter_signer` ships to consumers.
 
 For a supported venue, author the owned spec or normalization slice against the
-provider's API behavior and provider-owned documentation. Register the
-applicable live recording, accepted-request golden, or recorded exchange error
-and keep the `ccxt.oracle_gate` Mix task green. CCXT and ccxt-distill remain
-reference/bootstrap material only; they do not establish venue semantics.
+provider's API behavior and provider-owned documentation, then add the branch it
+covers to `priv/authority/rest-read-contracts.json` and keep
+`mix ccxt.verify_rest_read_contracts` green — that lane calls the venue's own
+host, so a claim is graded by the provider, not by a stored response. CCXT and
+ccxt-distill are a pinned third-party extraction; they do not establish venue
+semantics.
 
-An unsupported venue enters through the `ccxt.promote_venue` Mix task; copying a
-reference spec into the repository does not make it runtime-supported. See
+Adding an unsupported venue is hand-authored work — there is no promotion task.
+It means writing the owned document, registering the venue, and earning live
+REST-read contract coverage for every critical operation; copying a reference
+spec into the repository does not make it runtime-supported. See
 [CONTRIBUTING.md](CONTRIBUTING.md) and
 [docs/authored-specs.md](https://github.com/ZenHive/bourse/blob/main/docs/authored-specs.md).
 
 ## Development
 
-Checks for work inside the source repository:
+Checks for work inside the source repository. The suite is provider-live: it
+calls the venues' testnet/demo/public hosts and raises when their credentials are
+absent, so there is no offline run.
 
 ```bash
 mix deps.get
 mix test.json --quiet
+mix ccxt.verify_rest_read_contracts
 mix dialyzer.json --quiet
 mix credo --strict --format json
 ```

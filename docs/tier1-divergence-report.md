@@ -7,17 +7,18 @@ targeted divergence-prone field gets a **reality-anchored expected value** (real
 + a non-CCXT semantic source) and an explicit adjudication — never auto-resolved toward CCXT.
 
 **Independence invariant.** The expected side of each row is derived from (a) a real captured
-exchange response (`test/fixtures/responses/`, captured by `mix ccxt.record_fixtures` against the
-live production APIs, 2026-07-15) and (b) the exchange's own API documentation — never from CCXT
-JS, CCXT static fixtures, or our own `field_maps`. CCXT appears only in the cross-check column.
+exchange response (captured against the live production APIs on 2026-07-15; the capture files
+themselves went away with the replay lane) and (b) the exchange's own API documentation — never
+from CCXT JS, a pinned third-party extraction, or our own `field_maps`. CCXT appears only in the
+cross-check column.
 
 **Adjudication vocabulary** (per task 180): `replicate` (CCXT is right; we match/should match it),
 `diverge` (CCXT is wrong or lossy vs reality; we deliberately do otherwise — registered),
 `our-reading-wrong` (our implementation contradicts reality; CCXT may or may not be right).
 
 **Consuming gate:** `mix ccxt.verify_rest_read_contracts` reaches the provider-owned host for every
-inventoried REST-read branch. This report and its recordings remain historical provenance; they
-cannot make a semantic contract green.
+inventoried REST-read branch. This report and the captures behind it remain historical
+provenance; they cannot make a semantic contract green.
 
 Live first-move evidence (2026-07-15): tidewave `project_eval` against deribit/bybit/hyperliquid
 testnets (`sandbox: true`) — `Bourse.fetch_markets`, `Bourse.fetch_trades("BTC/USD:BTC")`,

@@ -39,23 +39,8 @@ mix ccxt.error_authority                    # offline error-enumeration adjudica
 mix ccxt.authority_check --online           # explicit network drift check
 scripts/fetch_authority.sh /tmp/ccxt-authority
 mix ccxt.contract_compare --artifacts /tmp/ccxt-authority --output /tmp/contract-reports
-mix ccxt.capture_provider_operations --inventory /tmp/contract-reports/deribit.json --plan priv/authority/deribit/provider-operation-plan.json --output test/fixtures/provider_operations
+mix ccxt.verify_rest_read_contracts         # provider-live REST-read contract lane
 ```
-
-An authored-spec or provider-revision change invalidates the capture corpus's
-embedded congruence digest by design. Regenerate that inventory without reading
-the stale corpus, then recapture the reviewed public proofs and run the ordinary
-comparison again with the refreshed facts:
-
-```sh
-mix ccxt.contract_compare --artifacts /tmp/ccxt-authority --output /tmp/contract-reports --venue deribit --rebind-provider-corpus
-mix ccxt.capture_provider_operations --inventory /tmp/contract-reports/deribit.json --plan priv/authority/deribit/provider-operation-plan.json --output test/fixtures/provider_operations
-mix ccxt.contract_compare --artifacts /tmp/ccxt-authority --output /tmp/contract-reports --venue deribit
-```
-
-`--rebind-provider-corpus` only omits facts from the corpus being regenerated.
-It still verifies the pinned provider bytes and Deribit's complete mutation-
-adjudication operation-key binding.
 
 The offline command validates manifest structure and any locally vendored bytes; it
 cannot detect remote drift for reference-only artifacts. `--online` verifies each
@@ -130,35 +115,14 @@ authored surface survived, not what the provider gained.
 `false`. Such artifacts remain useful discovery or historical references, but they
 cannot establish current provider semantics.
 
-## Weekly lane contract
-
-`ops/live-drift.sh` is the canonical lane entry point for both the always-on operator
-host and the manual GitHub fallback. The host syncs the target branch before each
-run, invokes `bash ops/live-drift.sh artifacts`, and sends a successful healthcheck
-ping only when that command exits zero. The script always runs every surface —
-online authority drift, REST live-drift, the `:network`
-corpus (including `test/bourse/ws/auth_live_smoke_test.exs`), the listen-key
-auth-smoke file on `:dangerous`, and the classified WebSocket first-frame
-matrix — then exits nonzero if any return code is nonzero. Silence after a
-successful WebSocket connect is a failure, not a pass: the first-frame matrix
-fails the named venue and channel when no data frame arrives within the bounded
-wait, and classifies an acknowledgement that also carries payload as
-`acknowledgement_with_payload` rather than connectivity. Each run writes one
-durable `live-lane-report.json` listing per-venue / per-surface outcomes;
-venues or surfaces deliberately not probed carry a registered reason and
-tracking reference. GitHub calls the same script and uploads the aggregated
-artifact plus the per-surface reports, so its manual fallback has identical
-gating semantics.
-
 `ccxt.contract_compare` performs no network access. It verifies each available
 artifact against this corpus, writes one deterministic report per venue, and
 states an explicit source-capability limit for missing, prose-only, partial, or
 untyped inputs. Its differences are findings for later provider confrontation,
 not implementation or deletion decisions.
 
-`ccxt.capture_provider_operations` consumes that exact-revision report plus a
-separately reviewed execution plan. Provider examples remain request seeds; only
-the registered scrubbed raw request/response observation advances evidence.
+`mix ccxt.verify_rest_read_contracts` is the provider-live oracle: it runs the
+complete REST-read contract inventory against the venue's own host.
 
 ## Selected sources
 

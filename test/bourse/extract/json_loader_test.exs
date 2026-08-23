@@ -4,11 +4,14 @@ defmodule Bourse.Extract.JsonLoaderTest do
   alias Bourse.Extract.EmulatedMethods
   alias Bourse.Extract.JsonLoader
 
-  @fixture_dir Path.expand("../../fixtures/extractor", __DIR__)
-
   describe "duplicate-key rejection through the JsonLoader path" do
     test "rejects a duplicate key naming file, key, and object path" do
-      path = Path.join(@fixture_dir, "duplicate_key.json")
+      # Written here rather than committed: the sample proves what our decoder
+      # does with a duplicate key, so it carries no provider meaning to store.
+      path = Path.join(System.tmp_dir!(), "extractor-duplicate-#{System.unique_integer([:positive])}.json")
+
+      File.write!(path, ~s({"emulated_methods": {"hyperliquid": {"a": 1}, "hyperliquid": {"b": 2}}}))
+      on_exit(fn -> File.rm(path) end)
 
       error = assert_raise ArgumentError, fn -> JsonLoader.decode_file!(path) end
 

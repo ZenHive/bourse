@@ -1,1 +1,0 @@
-{"authenticated":true,"body":[],"call_opts":{},"captured_at":"2026-07-21T23:24:04.844960Z","endpoint":"api/v3/myTrades","environment":"testnet-demo","exchange":"binance","host":"testnet.binance.vision","method":"fetch_my_trades","params":{"limit":10,"symbol":"BTC/USDT"},"symbol":"BTC/USDT","timeframe":null,"body_populated":false}

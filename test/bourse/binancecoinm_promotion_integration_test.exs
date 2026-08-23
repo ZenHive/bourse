@@ -17,7 +17,7 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
   alias Bourse.Order
   alias Bourse.OrderBook
   alias Bourse.Position
-  alias Bourse.Test.FixtureGateIsolation
+  alias Bourse.Test.LiveGateIsolation
   alias Bourse.Ticker
   alias Bourse.Trade
   alias Bourse.TradingFee
@@ -40,7 +40,7 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
   @public_limit 5
 
   setup do
-    FixtureGateIsolation.isolate!("binancecoinm")
+    LiveGateIsolation.isolate!("binancecoinm")
     :ok
   end
 

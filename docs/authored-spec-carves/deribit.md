@@ -361,7 +361,8 @@ CCXT's 4-dp-truncated recipe (task 430). Outcome: CONFIRMED against CCXT
   the `-1.45` its 4.5.65 oracle records. Pinned by `response_parser_test.exs`
   ("pnl_percentage truncates the divide to 4dp before scaling by 100"); the deribit
   fixture-replay gate that also pinned it at the time is since retired (`check.dispatch`
-  now runs `mix ccxt.oracle_gate`).
+  no longer carries an oracle step; the provider-live oracle is
+  `mix ccxt.verify_rest_read_contracts`).
 - *Verification tier:* **tier 2 / compatibility.** The oracle is CCXT 4.5.65's recorded
   `parsedResponse` plus CCXT's own `safePosition` source; no live Deribit call can falsify a
   value the venue never sends. The arithmetic — not the venue's semantics — is what is pinned.

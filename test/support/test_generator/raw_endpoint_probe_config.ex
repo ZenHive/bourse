@@ -468,7 +468,7 @@ defmodule Bourse.Test.Generator.RawEndpointProbe.Config do
   defp bybit_spot_id do
     case SymbolResolver.pick_symbol("bybit") do
       nil -> "BTCUSDT"
-      sym -> sym |> String.split(":") |> List.first() |> String.replace("/", "")
+      sym -> sym |> String.split(":", parts: 2) |> List.first() |> String.replace("/", "")
     end
   end
 
@@ -481,7 +481,7 @@ defmodule Bourse.Test.Generator.RawEndpointProbe.Config do
 
     linear_sym
     |> to_string()
-    |> String.split(":")
+    |> String.split(":", parts: 2)
     |> List.first()
     |> String.replace("/", "")
   end

@@ -15,8 +15,6 @@ defmodule Bourse.CcxtAuthorityLanguageTest do
 
   @allowlist [
     {~r{^lib/mix/tasks/}, {:tokens, @mix_task_tokens}},
-    {~r{^lib/mix/tasks/ccxt\.promote_venue\.ex$}, ~r{pinned CCXT reference}i},
-    {~r{^lib/mix/tasks/ccxt\.record_fixtures\.ex$}, ~r{compatibility tooling.+CCXT-JS}i},
     {~r{^lib/mix/tasks/ccxt/reference_corpus\.ex$}, ~r{CCXT reference corpus}i},
     {~r{^lib/bourse\.ex$}, ~r{CCXT corpus is authoring and compatibility}i},
     {~r{^lib/bourse/error\.ex$}, ~r{CCXT compatibility exception class}i},
@@ -24,7 +22,6 @@ defmodule Bourse.CcxtAuthorityLanguageTest do
     {~r{^lib/bourse/extract/json_loader\.ex$}, ~r{ccxt_emulated_methods\.json}i},
     {~r{^lib/bourse/multi\.ex$}, ~r{ccxt_client_bak}i},
     {~r{^lib/bourse/spec\.ex$}, ~r{(?:CCXT-derived documents|Mix\.Tasks\.Ccxt)}i},
-    {~r{^lib/bourse/spec/promotion(?:/evidence)?\.ex$}, ~r{pinned CCXT reference}i},
     {~r{^lib/bourse/spec/schema\.ex$}, ~r{Mix\.Tasks\.Ccxt}i},
     {~r{^lib/bourse/unified\.ex$}, ~r{(?:mix ccxt\.|CCXT compatibility mapping)}i},
     {~r{^lib/bourse/unified/read_parse\.ex$}, ~r{CCXT-projected reference bulk}i},

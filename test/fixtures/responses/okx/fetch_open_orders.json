@@ -1,1 +1,0 @@
-{"authenticated":true,"body":{"code":"0","data":[],"msg":""},"call_opts":{},"captured_at":"2026-07-21T23:23:39.312876Z","endpoint":"api/v5/trade/orders-pending","environment":"testnet-demo","exchange":"okx","host":"my.okx.com","method":"fetch_open_orders","params":{"symbol":"BTC/USDT"},"symbol":"BTC/USDT","timeframe":null,"body_populated":false}

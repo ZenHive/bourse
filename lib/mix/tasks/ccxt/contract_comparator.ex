@@ -7,8 +7,6 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
   edits specs, or turns a syntactic difference into a semantic decision.
   """
 
-  alias Bourse.OracleProvenance.MutationAdjudication
-  alias Bourse.RecordedResponseFixtures
   alias Mix.Tasks.Ccxt.AuthorityCorpus
   alias Mix.Tasks.Ccxt.ContractSource
 
@@ -21,7 +19,6 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
   @runtime_scopes ~w(unified raw_only carved not_implemented unknown)
   @evidence_values ~w(verified unverified)
   @reachability_values ~w(safe unsafe unreachable unknown)
-  @registered_evidence_sources ~w(registered_live_capture registered_mutation_lifecycle_capture)
   @rest_methods %{
     "GET" => :get,
     "POST" => :post,
@@ -43,8 +40,6 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
     spec_root = Keyword.get(opts, :spec_root, @spec_root)
 
     facts = load_facts(Keyword.get(opts, :facts_path))
-    provider_facts = provider_operation_facts(Keyword.get(opts, :provider_operation_opts, []))
-
     venue_filter = Keyword.get(opts, :venue)
 
     authority_root
@@ -53,9 +48,7 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
     |> Enum.map(fn manifest ->
       authored = Bourse.JsonDocument.decode_file!(Path.join(spec_root, "#{manifest["venue"]}.json"))
       venue_facts = Enum.filter(facts, &(&1["venue"] == manifest["venue"]))
-      registered_facts = provider_facts ++ mutation_adjudication_facts(manifest, artifact_root)
-      venue_registered_facts = Enum.filter(registered_facts, &(&1["venue"] == manifest["venue"]))
-      report = compare_venue_with_facts!(manifest, authored, artifact_root, venue_facts, venue_registered_facts)
+      report = compare_venue!(manifest, authored, artifact_root, venue_facts)
       validate_committed_baseline!(report, authority_root)
       report
     end)
@@ -64,7 +57,13 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
   @doc "Builds one venue report from a validated manifest and authored document."
   @spec compare_venue!(map(), map(), Path.t(), [map()]) :: report()
   def compare_venue!(manifest, authored, artifact_root, facts \\ []) do
-    compare_venue_with_facts!(manifest, authored, artifact_root, facts, [])
+    facts = Enum.map(facts, &validate_fact!(&1, "registered facts"))
+
+    Enum.each(facts, fn fact ->
+      ensure!(fact["venue"] == manifest["venue"], "registered facts: venue mismatch")
+    end)
+
+    build_report(manifest, authored, artifact_root, facts)
   end
 
   @doc "Returns the committed surface-digest path for one authority artifact."
@@ -147,15 +146,7 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
     end
   end
 
-  defp compare_venue_with_facts!(manifest, authored, artifact_root, facts, registered_facts) do
-    facts = Enum.map(facts, &validate_fact!(&1, "registered facts", false))
-    registered_facts = Enum.map(registered_facts, &validate_fact!(&1, "registered capture facts", true))
-    facts = facts ++ registered_facts
-
-    Enum.each(facts, fn fact ->
-      ensure!(fact["venue"] == manifest["venue"], "registered facts: venue mismatch")
-    end)
-
+  defp build_report(manifest, authored, artifact_root, facts) do
     sources = load_sources(manifest, artifact_root)
     authored_rest = authored_rest_operations(authored)
     authored_websocket = authored_websocket_operations(authored)
@@ -167,8 +158,6 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
 
         {surface, compare_surface(surface, sources, authored_operations, facts)}
       end)
-
-    validate_mutation_source_inventory!(manifest, sources, surfaces)
 
     %{
       "schema_version" => 1,
@@ -223,7 +212,7 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
     document = Bourse.JsonDocument.decode_file!(path)
     ensure!(document["schema_version"] == 1, "#{path}: unsupported facts schema_version")
     ensure!(is_list(document["operations"]), "#{path}: operations must be a list")
-    Enum.map(document["operations"], &validate_fact!(&1, path, false))
+    Enum.map(document["operations"], &validate_fact!(&1, path))
   end
 
   defp load_sources(manifest, artifact_root) do
@@ -579,61 +568,27 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
     }
   end
 
-  defp validate_fact!(fact, path, verified_capture?) do
+  defp validate_fact!(fact, path) do
     ensure_string!(fact, "venue", path)
     ensure_string!(fact, "operation_key", path)
     ensure_member!(fact["contract_scope"], @surfaces, "contract_scope", path)
     validate_optional_member!(fact, "runtime_scope", @runtime_scopes, path)
     validate_optional_member!(fact, "evidence", @evidence_values, path)
     validate_optional_member!(fact, "reachability", @reachability_values, path)
-    validate_evidence_source!(fact, path, verified_capture?)
+    refuse_verified_evidence!(fact, path)
     fact
   end
 
-  defp provider_operation_facts(false), do: []
-  defp provider_operation_facts(opts) when is_list(opts), do: RecordedResponseFixtures.provider_operation_facts!(opts)
-
-  defp mutation_adjudication_facts(%{"venue" => "deribit"} = manifest, artifact_root) do
-    artifact = Enum.find(manifest["artifacts"], &(&1["id"] == "api-openapi"))
-
-    if artifact && File.regular?(Path.join([artifact_root, "deribit", artifact["filename"]])) do
-      MutationAdjudication.facts!()
-    else
-      []
-    end
-  end
-
-  defp mutation_adjudication_facts(_manifest, _artifact_root), do: []
-
-  defp validate_mutation_source_inventory!(%{"venue" => "deribit"}, sources, surfaces) do
-    source = Enum.find(sources, &(&1.artifact["id"] == "api-openapi"))
-
-    if source && source.available do
-      operation_keys =
-        surfaces["current_rest"]["operations"]
-        |> Enum.filter(&(&1["provider"] != []))
-        |> Enum.map(& &1["operation_key"])
-
-      MutationAdjudication.validate_source_inventory!(source.artifact["sha256"], operation_keys)
-    end
-
-    :ok
-  end
-
-  defp validate_mutation_source_inventory!(_manifest, _sources, _surfaces), do: :ok
-
-  defp validate_evidence_source!(%{"evidence" => "verified"} = fact, path, true) do
-    ensure!(
-      fact["evidence_source"] in @registered_evidence_sources,
-      "#{path}: evidence verified requires a registered capture source"
+  defp refuse_verified_evidence!(%{"evidence" => "verified"}, path) do
+    Mix.raise(
+      "#{path}: evidence verified cannot be declared here. This task compares pinned " <>
+        "provider artifacts against authored specs; it never calls a venue, so it can " <>
+        "establish no observed behaviour. Verification is earned only by the " <>
+        "provider-live contract lane (mix ccxt.verify_rest_read_contracts)."
     )
   end
 
-  defp validate_evidence_source!(%{"evidence" => "verified"}, path, false) do
-    Mix.raise("#{path}: evidence verified requires the validated provider-operation capture corpus")
-  end
-
-  defp validate_evidence_source!(_fact, _path, _verified_capture?), do: :ok
+  defp refuse_verified_evidence!(_fact, _path), do: :ok
 
   defp validate_baseline_document!(report, baseline, path) do
     ensure!(baseline["schema_version"] == 1, "#{path}: unsupported schema_version")

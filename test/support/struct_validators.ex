@@ -44,7 +44,7 @@ defmodule Bourse.StructValidators do
   | `assertStructure` key-set + type expectations | ontology-rejected | Encodes CCXT's canonical object shape; our owned schema + carves diverge (C1–C7) |
   | `assertTimestamp` integer + type | ported | Integer ms timestamps when present |
   | Timestamp window 2009-01-03 .. 2038-01-19 | policy-adjusted | Adopted window when timestamp present; fixtures and distant futures stay out of band |
-  | Timestamp `<= now + 1min` | policy-rejected | Fixture replays and clock skew false-red; live ordering is out of scope for offline gates |
+  | Timestamp `<= now + 1min` | policy-rejected | Clock skew false-reds the check; live ordering is out of scope for a structural validator |
   | `assertTimestampAndDatetime` iso8601 sibling | ontology-rejected | Requires both keys always present; our structs allow nil datetime |
   | `assertTimestampOrder` ascending | ported | Used for trades lists (see fetchTrades) |
   | `assertSymbol` / currency-id mapping | ontology-rejected | CCXT market registry coupling |
@@ -766,10 +766,7 @@ defmodule Bourse.StructValidators do
   defp numeric?(value) when is_number(value), do: true
 
   defp numeric?(value) when is_binary(value) do
-    case Float.parse(value) do
-      {_num, ""} -> true
-      _ -> false
-    end
+    match?({_num, ""}, Float.parse(value))
   end
 
   defp numeric?(_), do: false

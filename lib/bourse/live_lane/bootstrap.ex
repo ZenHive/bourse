@@ -1,13 +1,12 @@
 defmodule Bourse.LiveLane.Bootstrap do
   @moduledoc """
-  Starts the processes the live lane needs beyond REST drift.
+  Starts the processes the live lane needs.
 
-  Adds WebSocket transport (`zen_websocket`) plus the Broadcast registry and
+  Starts WebSocket transport (`zen_websocket`) plus the Broadcast registry and
   connection-owner supervisor so first-frame probes can follow authored host
   routing.
   """
 
-  alias Bourse.LiveDrift.Bootstrap, as: DriftBootstrap
   alias Bourse.WS.Broadcast
   alias Bourse.WS.ConnectionOwner.Supervisor, as: OwnerSupervisor
 
@@ -18,10 +17,9 @@ defmodule Bourse.LiveLane.Bootstrap do
           {:ensure_started, (atom() -> {:ok, [atom()]} | {:error, term()})}
           | {:start_supervisor, ([term()] -> Supervisor.on_start())}
 
-  @doc "Starts REST drift processes, then the WebSocket lane processes."
+  @doc "Starts the WebSocket lane processes."
   @spec start!([option()]) :: pid()
   def start!(opts \\ []) do
-    DriftBootstrap.start!(Keyword.take(opts, [:ensure_started, :start_supervisor]))
     ensure_started = Keyword.get(opts, :ensure_started, &Application.ensure_all_started/1)
     start_supervisor = Keyword.get(opts, :start_supervisor, &start_supervisor/1)
 

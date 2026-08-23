@@ -18,7 +18,7 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
   alias Bourse.FundingRateHistory
   alias Bourse.Order
   alias Bourse.Safe
-  alias Bourse.Test.FixtureGateIsolation
+  alias Bourse.Test.LiveGateIsolation
   alias Bourse.Ticker
   alias Bourse.Trade
   alias Bourse.TransferEntry
@@ -42,7 +42,7 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
   @order_client_id "task473-create-label"
 
   setup do
-    FixtureGateIsolation.isolate!("derive")
+    LiveGateIsolation.isolate!("derive")
     :ok
   end
 

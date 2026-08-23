@@ -15,6 +15,46 @@ over-promises: lighter advertises `fetchMarkets: true` but errors live).
   provider-live contract passes; this doc is the historical sweep, not the gate.
 - **Companion:** defects found here are logged in `BUGS.md` (newest-first repros).
 
+## Test suite
+
+The suite is provider-live only — there is no fixture, mock, or replay lane.
+`test/test_helper.exs` raises at startup when any runtime venue's
+testnet/demo credentials are absent rather than falling back to a fixture,
+and `test/bourse/no_faked_provider_oracle_test.exs` is a repo-wide guard
+forbidding `Req.Test`, `Bypass`, `Mox`, `plug: {`, fixture paths, and
+`@tag :skip` anywhere under `test/`. `:dangerous` (mutating probes, opt-in)
+is the only default tag exclusion.
+
+Nothing runs these lanes on a schedule. There is no hosted CI, no cron, and
+no GitHub-shaped reporting apparatus reading `GITHUB_RUN_ID` and assembling
+a per-run report — that aggregator (`Bourse.LiveLane`, the
+`mix ccxt.aggregate_live_lane` task, and `ops/live-drift.sh`) is deleted
+along with the GitHub Actions workflows it ran under. `Bourse.LiveLane.FirstFrame`
+and `Bourse.LiveLane.Bootstrap` survive under that namespace as the classified
+public WebSocket first-frame check (`mix ccxt.verify_ws_first_frame`), invoked
+directly with no scheduler above it. The gate is `mix ccxt.verify_rest_read_contracts`
+plus `mix ccxt.verify_ws_first_frame`, run on this host by a person or by a
+harness run — an unrun lane proves nothing about the venues it would have
+covered.
+
+- **153** `*_test.exs` files (`find test -name '*_test.exs' | wc -l`).
+- With `:network` and `:integration` also excluded — the offline-reachable
+  slice, still hitting testnet credentials for every registered venue — a
+  run against this checkout measured **2,860 tests** (2,178 passed, 682
+  excluded by those two tags, 0 failed) at **62.27%** line coverage. That
+  slice is a lower bound: `mix ci` gates the full suite (only `:dangerous`
+  excluded, so `:network`/`:integration` run too) at an **80%** coverage
+  threshold, and that full-suite figure was not measured here because it
+  requires exercising every live venue endpoint rather than the offline
+  subset.
+- This refactor deleted `test/fixtures/` (379 files) and
+  `priv/reference_cache/` (18 files) along with 67 test files that had
+  asserted venue behaviour against them, and removed all four GitHub
+  Actions workflows — there is no GitHub Actions CI. Every remaining test
+  is either offline-reachable against a testnet/demo credential or tagged
+  `:network` / `:integration` / `:dangerous` for a slower or mutating live
+  path.
+
 ## Legend
 
 | Mark | Meaning |
@@ -75,7 +115,9 @@ Wave-3 live deltas (2026-06-23, tidewave + recompile, tier-1 real API):
   window authored) — live `%FundingRate{funding_rate: …}` returned, tier-1 verified. `⚠️`
   not `✅` because deribit's `get_funding_rate_value` returns a bare scalar, so
   timestamp/mark_price/next_funding are inherently nil (endpoint shape, not a parse gap).
-  Static fixture-replay determinism for this dynamic request shape is a follow-up (task 194).
+  Static fixture-replay determinism for this dynamic request shape was floated as a
+  follow-up (task 194) at the time; the fixture/replay lane it would have used no
+  longer exists, so this dynamic request shape is exercised live instead.
 
 Wave-4 live deltas (2026-06-24, tidewave + recompile, tier-1 real API):
 - **bybit/deribit/lighter/hyperliquid fetchMarkets ⚠️ → ✅** (task 195: envelope unwrap for

@@ -1,1 +1,0 @@
-{"authenticated":true,"body":[],"call_opts":{},"captured_at":"2026-07-21T23:24:30.702785Z","endpoint":"info:openOrders","environment":"testnet-demo","exchange":"hyperliquid","host":"api.hyperliquid-testnet.xyz","method":"fetch_open_orders","params":{"symbol":"BTC/USDC:USDC"},"symbol":"BTC/USDC:USDC","timeframe":null,"body_populated":false}

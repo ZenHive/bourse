@@ -8,7 +8,7 @@ defmodule Bourse.HyperliquidAuthoredIntegrationTest do
   import Bourse.IntegrationHelper, only: [build_exchange: 2, require_credentials!: 1]
   import Bourse.StructValidators, only: [assert_order_book_struct: 2]
 
-  alias Bourse.Test.FixtureGateIsolation
+  alias Bourse.Test.LiveGateIsolation
   alias Bourse.Testnet
   alias Bourse.Unified.RequestShape
 
@@ -26,7 +26,7 @@ defmodule Bourse.HyperliquidAuthoredIntegrationTest do
   @resting_order_size 0.001
 
   setup do
-    FixtureGateIsolation.isolate!("hyperliquid")
+    LiveGateIsolation.isolate!("hyperliquid")
     :ok
   end
 

@@ -1,1 +1,0 @@
-{"authenticated":true,"body":[],"body_populated":false,"call_opts":{},"captured_at":"2026-07-26T05:47:36.990453Z","endpoint":"dapi/v1/openOrders","environment":"testnet-demo","exchange":"binancecoinm","host":"demo-dapi.binance.com","method":"fetch_open_orders","params":{"symbol":"BTCUSD_PERP"},"symbol":"BTC/USD:BTC","timeframe":null}

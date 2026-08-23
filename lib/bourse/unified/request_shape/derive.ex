@@ -121,9 +121,9 @@ defmodule Bourse.Unified.RequestShape.Derive do
   defp find_market!(_exchange, symbol),
     do: raise(ArgumentError, "Derive order build requires loaded markets for #{symbol}")
 
-  # `Exchange.markets` holds either `%Bourse.Market{}` structs (normal runtime) or
-  # raw string-keyed market maps (the offline replay cache — see
-  # `Bourse.ReplayExchange.build!/3`). Both shapes must resolve.
+  # `Exchange.markets` is documented as `%Bourse.Market{}` structs; no surviving
+  # producer builds raw string-keyed market maps (that path was the deleted
+  # offline replay cache). The plain-map branch below is defensive only.
   defp matching_market(market, symbol) when is_map(market) do
     id = market_field(market, :id)
 

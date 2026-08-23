@@ -7,7 +7,7 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
   alias Bourse.Credentials
   alias Bourse.Error
   alias Bourse.MarginModification
-  alias Bourse.Test.FixtureGateIsolation
+  alias Bourse.Test.LiveGateIsolation
   alias Bourse.Unified.ReadParse
 
   @moduletag :integration
@@ -30,7 +30,7 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
   @canonical_swap_symbol ~r"^[^/]+/[^:]+:[^-]+$"
 
   setup do
-    FixtureGateIsolation.isolate!("okx")
+    LiveGateIsolation.isolate!("okx")
     :ok
   end
 
@@ -1088,7 +1088,7 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
     assert {:error, %Error{raw: %{"data" => [%{"sCode" => "51400"} | _]}}} =
              Bourse.cancel_order(exchange, @missing_algo_id, symbol: "BTC/USDT:USDT", stop: true)
 
-    FixtureGateIsolation.isolate!("okx")
+    LiveGateIsolation.isolate!("okx")
 
     assert {:error, %Error{raw: %{"data" => [%{"sCode" => "51527"} | _]}}} =
              Bourse.edit_order(exchange, @missing_algo_id, "BTC/USDT:USDT", "conditional", "buy",

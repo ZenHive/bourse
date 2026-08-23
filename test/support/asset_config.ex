@@ -180,11 +180,11 @@ defmodule Bourse.Test.AssetConfig do
   end
 
   defp normalize_exchange!(exchange) when is_atom(exchange), do: exchange
-  defp normalize_exchange!(exchange) when is_binary(exchange), do: String.to_atom(exchange)
+  defp normalize_exchange!(exchange) when is_binary(exchange), do: String.to_existing_atom(exchange)
   defp normalize_exchange!(exchange), do: raise(ArgumentError, "invalid exchange_id: #{inspect(exchange)}")
 
   defp normalize_atom!(value) when is_atom(value), do: value
-  defp normalize_atom!(value) when is_binary(value), do: String.to_atom(value)
+  defp normalize_atom!(value) when is_binary(value), do: String.to_existing_atom(value)
   defp normalize_atom!(value), do: raise(ArgumentError, "invalid atom value: #{inspect(value)}")
 
   defp normalize_map!(value) when is_map(value), do: value

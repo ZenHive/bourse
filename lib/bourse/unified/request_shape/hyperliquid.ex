@@ -581,8 +581,7 @@ defmodule Bourse.Unified.RequestShape.Hyperliquid do
 
   # L1 `"a"` is Market.asset_index only (carve C-T339). Do not fall
   # back to id/base_id — those keep market-identity semantics and are often nil
-  # on live loadMarkets. Fixture-replay markets inject asset_index from the
-  # static cache (see RecordedResponseFixtures.markets_cache!/1).
+  # on live loadMarkets, so a fallback would silently address the wrong asset.
   #
   # Three answers, not one: markets never loaded (setup, keep raising),
   # no matching symbol (caller input), and a matched market with no usable

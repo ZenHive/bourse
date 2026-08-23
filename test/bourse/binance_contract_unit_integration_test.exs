@@ -4,14 +4,14 @@ defmodule Bourse.BinanceContractUnitIntegrationTest do
   use ExUnit.Case, async: false
 
   alias Bourse.Market
-  alias Bourse.Test.FixtureGateIsolation
+  alias Bourse.Test.LiveGateIsolation
 
   @moduletag :integration
   @moduletag :network
 
   setup do
-    FixtureGateIsolation.isolate!("binanceusdm")
-    FixtureGateIsolation.isolate!("binancecoinm")
+    LiveGateIsolation.isolate!("binanceusdm")
+    LiveGateIsolation.isolate!("binancecoinm")
     :ok
   end
 

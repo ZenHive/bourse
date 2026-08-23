@@ -66,23 +66,13 @@ defmodule Bourse.MixProject do
     ]
   end
 
-  # Repo-internal verification tooling: venue promotion grades a candidate
-  # against this repo's reality manifests, and the oracle / recording / replay /
-  # drift cluster reads `test/fixtures/**` and `priv/reference_cache/`. None of
-  # those roots are packaged, so a shipped copy could only fail on missing
-  # files — and it drags this repo's `:dev`/`:test` toolchain into a consumer's
-  # compile (`Req.Plug` exists only from req 0.7 and only behind `:plug`).
-  # Every entry here is reached solely from tests and from the `lib/mix/tasks`
-  # tooling that `package/0` already withholds.
+  # Repo-internal verification tooling: the WebSocket first-frame prober drives
+  # live venue sockets from the test lane and reads `priv/authority/**`, which is
+  # not packaged. Shipping it would drag this repo's `:dev`/`:test` toolchain
+  # into a consumer's compile for a module they can never run. Every entry here
+  # is reached solely from tests and from the `lib/mix/tasks` tooling that
+  # `package/0` already withholds.
   @unpackaged_prefixes ~w(
-    spec/promotion
-    exchange_acceptance_fixtures
-    public_accepted_requests
-    oracle_provenance
-    oracle_label
-    replay_exchange
-    recorded_response_fixtures
-    live_drift
     live_lane
   )
 
@@ -124,8 +114,8 @@ defmodule Bourse.MixProject do
       links: %{"GitHub" => @source_url},
       # `lib/mix/tasks` is repo-internal verification tooling: every task but the
       # Lighter build reads paths that are deliberately unpackaged
-      # (`test/fixtures`, the reference cache), so shipping them would put
-      # `mix help` entries in consumer projects that fail on a missing file.
+      # (`priv/authority/**`, the roadmap and docs roots), so shipping them would
+      # put `mix help` entries in consumer projects that fail on a missing file.
       # `ccxt.build_lighter_signer` is the one consumer-facing task — README
       # documents it as the prerequisite for private Lighter calls.
       files:
@@ -168,7 +158,6 @@ defmodule Bourse.MixProject do
       preferred_envs: [
         "test.json": :test,
         "dialyzer.json": :dev,
-        "ccxt.oracle_gate": :test,
         "ccxt.verify_rest_read_contracts": :test
       ]
     ]
@@ -214,7 +203,7 @@ defmodule Bourse.MixProject do
       # `optional: true` in reach's hex manifest, so we pull it in here.
       {:boxart, "~> 0.3.3", only: [:dev, :test], runtime: false},
 
-      # Plug.Conn for Req.Test stubs with custom status codes (also needed by tidewave in :dev)
+      # Required by tidewave in :dev; no first-party code references Plug.
       {:plug, "~> 1.20", only: [:dev, :test]},
 
       # Runtime dependencies
@@ -260,20 +249,20 @@ defmodule Bourse.MixProject do
         # `preferred_envs` (cli/0) is ignored for alias steps — set MIX_ENV
         # explicitly so test.json runs in :test (a bare alias step inherits the
         # alias's env, not :test). `cmd env VAR=val ...` so the assignment reaches
-        # the subprocess env, not System.cmd's executable slot. test.json excludes
-        # most integration tags by default; this is the offline unit + signing gate.
-        "cmd env MIX_ENV=test mix test.json --quiet --exclude integration"
+        # the subprocess env, not System.cmd's executable slot.
+        #
+        # No `--exclude`: this suite is provider-live and `test_helper.exs` carries
+        # no default exclusion either. A venue we cannot reach is a RED here. The
+        # one gate is `:dangerous` (mutating probes), which must be asked for.
+        "cmd env MIX_ENV=test mix test.json --quiet"
       ],
       # Dispatch-scale reviewer hint (the registered harness `check_command`).
-      # `precommit` (offline unit + signing gate) plus the clone + architecture/smell
+      # `precommit` (the provider-live suite) plus the clone + architecture/smell
       # analyzers a cold reviewer worktree would otherwise never run (they're only
       # host-PostToolUse-hook-run locally). No dialyzer (a cold harness worktree
       # cold-builds the PLT for minutes → `review_stuck`).
       "check.dispatch": [
         "precommit",
-        # Binary reality gate over recordings, accepted requests, and recorded
-        # errors. The committed exact-set baseline rejects lost provenance.
-        "cmd env MIX_ENV=test mix ccxt.oracle_gate",
         # Cheap, network-free provider-authority structure/hash and exact-error
         # consistency checks. Remote freshness belongs to the weekly drift lane.
         "ccxt.authority_check",
@@ -299,18 +288,21 @@ defmodule Bourse.MixProject do
       "deps.audit": "deps.audit --ignore-advisory-ids GHSA-w4f7-4cxr-rv3c",
       # Local pre-PR / post-merge-audit gate — adds dialyzer. SPLIT out because a
       # cold harness worktree cold-builds the PLT (minutes) → `review_stuck`.
-      # `--cover` is omitted everywhere here (`:cover` instruments every loaded
-      # beam, multi-GB spike on cold trees); run coverage explicitly via
-      # `mix test.json --cover` per the critical-rules gate.
+      # `--cover` stays out of `precommit` (`:cover` instruments every loaded beam
+      # — multi-GB spike on a cold tree); `ci` below enforces the tiers instead.
       "precommit.full": ["precommit", "deps.audit", "dialyzer.json --quiet"],
-      # Comprehensive pre-PR / CI gate: the dispatch gate + dialyzer.
+      # Comprehensive pre-PR / CI gate: the dispatch gate, the full provider-live
+      # REST-read contract lane, the coverage tiers, and dialyzer.
       ci: [
         "check.dispatch",
-        # Builds and unpacks the real Hex tarball. Kept out of `precommit` (it
-        # shells out to `mix hex.build` per run) but required here, because Hex's
-        # recursive directory expansion is invisible in `package[:files]` — see
-        # `test/mix_project_test.exs`.
-        "cmd env MIX_ENV=test mix test.json --quiet --only package",
+        # The complete provider-live REST-read lane. It reports
+        # denominator/executed/failures and fails when executed < denominator, so
+        # a shrinking live surface cannot pass as green.
+        "ccxt.verify_rest_read_contracts",
+        # `critical-rules.md` § RAISE COVERAGE BEFORE MUTATING sets the floor at
+        # 80% standard. The critical tier (95% — money, signing, crypto, low-level
+        # encoders) is judged per module against this run, not by a global number.
+        "cmd env MIX_ENV=test mix test.json --quiet --cover --cover-threshold 80 --output /tmp/bourse-ci-cover.json",
         "deps.audit",
         "dialyzer.json --quiet"
       ]

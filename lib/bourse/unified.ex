@@ -1026,8 +1026,10 @@ defmodule Bourse.Unified do
   @doc """
   Dispatches a unified public read without parsing the response body.
 
-  Used by `mix ccxt.record_fixtures` to capture raw exchange JSON for offline
-  replay tests. Returns a single raw response — for fan-out methods it selects
+  Used internally where a caller needs the raw exchange body before unified
+  parsing — `account_facts_response/4` for alpaca/deribit/hyperliquid/lighter
+  balances, and `Bourse.Unified.FundingInterval` for Binance-family funding
+  intervals. Returns a single raw response — for fan-out methods it selects
   one endpoint rather than crashing. Use `capture_responses/4` when every
   fan-out section is required.
   """

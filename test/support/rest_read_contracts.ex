@@ -352,6 +352,9 @@ defmodule Bourse.Test.RestReadContractScenario do
     error in [ExUnit.AssertionError, ArgumentError] ->
       reraise error, __STACKTRACE__
 
+    # The catch-all is deliberate: any other raise during contract assertion is
+    # itself evidence, to be reported via flunk rather than hidden.
+    # reach:disable-next-line bare_rescue
     error ->
       flunk(
         "#{contract_case["id"]} raised before proving provider semantics: #{Exception.format(:error, error, __STACKTRACE__)}"
@@ -459,7 +462,7 @@ defmodule Bourse.Test.RestReadContractScenario do
   defp case_options(contract_case, context, resolved) do
     options =
       Enum.map(contract_case["options"], fn option ->
-        {String.to_atom(option["name"]), option_value!(option, contract_case, context)}
+        {String.to_existing_atom(option["name"]), option_value!(option, contract_case, context)}
       end)
 
     options
@@ -543,13 +546,18 @@ defmodule Bourse.Test.RestReadContractScenario do
 
   defp resource_source_options(contract_case, context) do
     Enum.flat_map(contract_case["options"] || [], fn option ->
-      if option["name"] in ["subaccount_id", "category", "currency", "instType"] do
-        [{String.to_atom(option["name"]), option_value!(option, contract_case, context)}]
-      else
-        []
+      case resource_option_atom(option["name"]) do
+        nil -> []
+        atom -> [{atom, option_value!(option, contract_case, context)}]
       end
     end)
   end
+
+  defp resource_option_atom("subaccount_id"), do: :subaccount_id
+  defp resource_option_atom("category"), do: :category
+  defp resource_option_atom("currency"), do: :currency
+  defp resource_option_atom("instType"), do: :instType
+  defp resource_option_atom(_name), do: nil
 
   defp successful_rows!({:ok, %RawResponse{payload: payload}}, contract_case, source),
     do: payload_rows!(payload, contract_case, source)
@@ -670,7 +678,7 @@ defmodule Bourse.Test.RestReadContractScenario do
     end
 
     if map_size(value) > 0 do
-      assert Enum.all?(Map.values(value), &is_struct(&1, module)),
+      assert Enum.all?(value, fn {_key, entry} -> is_struct(entry, module) end),
              "#{contract_case["id"]}: map contains a non-#{inspect(module)} value"
     end
   end

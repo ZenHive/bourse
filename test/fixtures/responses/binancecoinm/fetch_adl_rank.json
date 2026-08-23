@@ -1,1 +1,0 @@
-{"authenticated":true,"body":{},"call_opts":{},"captured_at":"2026-08-10T23:34:35.205389Z","endpoint":"dapi/v1/adlQuantile","environment":"testnet-demo","exchange":"binancecoinm","host":"demo-dapi.binance.com","method":"fetch_adl_rank","params":{"symbol":"BTC/USD:BTC"},"symbol":"BTC/USD:BTC","timeframe":null}

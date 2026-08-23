@@ -178,8 +178,8 @@ defmodule Bourse.RateLimiter do
   @doc """
   Clears all rate-limit tracking state.
 
-  Used by offline fixture gates so co-running live probes cannot poison
-  capacity for Req.Test stub traffic (Task 179).
+  Used by `Bourse.Test.LiveGateIsolation` so one venue probe cannot enter its
+  window with capacity another probe already spent (Task 179).
   """
   @spec reset_all(GenServer.name()) :: :ok
   def reset_all(name \\ __MODULE__) do

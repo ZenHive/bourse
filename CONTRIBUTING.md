@@ -8,20 +8,23 @@ provider-authoritative spec work under the authored-specs model.
 | Symptom | Belongs In |
 |---------|------------|
 | Dispatcher, HTTP client, signing runtime, rate limiter, circuit breaker, unified-API translation layer | `bourse` (this repo) |
-| Supported-venue interpretive gap (signing, response normalization, symbol/error semantics) | **Author** the slice here from the provider contract, then verify it through the reality gate — see `docs/authored-specs.md` |
-| Unsupported venue | Prepare and grade a candidate with the `ccxt.promote_venue` Mix task; copying reference JSON alone never adds runtime support |
-| Exchange-specific quirk no spec field can represent | Record and author a provider-backed carve rather than patching consumer heuristics |
+| Supported-venue interpretive gap (signing, response normalization, symbol/error semantics) | **Author** the slice here from the provider contract, then verify it with a live REST-read contract case — see `docs/authored-specs.md` |
+| Unsupported venue | Hand-author the owned document and earn live REST-read contract coverage for it; copying reference JSON alone never adds runtime support |
+| Exchange-specific quirk no spec field can represent | Author a provider-backed carve and register it rather than patching consumer heuristics |
 
-The ten supported venues are hand-owned (`docs/authored-specs.md`). CCXT source,
-fixtures, and ccxt-distill are compatibility/bootstrap references only. The
-provider's observed API behavior and provider-owned contract establish
-semantics.
+The ten supported venues are hand-owned (`docs/authored-specs.md`). CCXT source
+and ccxt-distill are a pinned third-party extraction, usable as an authoring
+clue only. The provider's observed API behavior and provider-owned contract
+establish semantics.
 
-## Venue promotion
+## Adding a venue
 
-Use `mix ccxt.promote_venue --prepare` to create a candidate and evidence report.
-Promotion requires provider-owned semantics plus manifest-registered reality for
-every critical slot. See `docs/authored-specs.md` § Venue promotion boundary.
+There is no promotion task. A new venue is hand-authored: write the owned
+document, add it to `Bourse.Spec`, the registry and the compiled set, and give
+every critical operation a live REST-read contract case in
+`priv/authority/rest-read-contracts.json`. Provider-owned semantics plus a
+passing live case are what make a slot `verified`. See `docs/authored-specs.md`
+§ Adding a venue.
 
 ### Anti-Patterns
 
@@ -44,22 +47,31 @@ every critical slot. See `docs/authored-specs.md` § Venue promotion boundary.
 
 ### Running the Suite
 
+The suite is provider-live. Every assertion about what a venue does is a real
+call against that venue's testnet/demo/public host, so the venues' credentials
+must be present — `test/test_helper.exs` raises when they are not. What runs
+offline is our own mechanics: signing vectors, encoders, decimal arithmetic, URL
+construction, the rate limiter, WebSocket dialect parsing, types.
+
 ```bash
-mix test.json --quiet                        # offline suite
+mix test.json --quiet                        # the suite (provider-live)
 mix test.json --quiet --failed               # iterate on failures
-mix ccxt.oracle_gate                         # manifest-registered reality oracle
-mix test.json --quiet --include network      # integration probes (requires testnet creds)
+mix ccxt.verify_rest_read_contracts          # the full REST-read contract lane
 mix dialyzer.json --quiet
 mix credo --strict --format json
+mix ci                                       # everything, incl. the coverage gate
 ```
+
+`mix ci` is the gate a change is judged by; there is no hosted CI running it for
+you, so run it locally before opening a PR.
 
 Full flag reference: see the `ex-unit-json` and `dialyzer-json` sections in `CLAUDE.md`.
 
 ### PR Checklist
 
 - [ ] Code follows existing module/function naming and the conventions documented in `CLAUDE.md`.
-- [ ] New behavior has tests (unit + integration where appropriate). Tests fail loudly — no silent `assert true` branches on errors.
-- [ ] `mix test.json --quiet`, `mix dialyzer.json --quiet`, and `mix credo --strict` all pass.
+- [ ] New behavior has tests. A claim about what a venue returns is made by a live call to that venue; a claim about our own mechanics may be offline. Tests fail loudly — no silent `assert true` branches on errors, no mock or replay standing in for the provider (`test/bourse/no_faked_provider_oracle_test.exs` fails the suite on `Req.Test`, `Bypass`, `Mox`, `plug: {`, a fixture path, or `@tag :skip`).
+- [ ] `mix ci` passes locally — it carries `mix test.json`, `mix ccxt.verify_rest_read_contracts`, dialyzer, `mix credo --strict` and the 80% coverage gate.
 - [ ] `CHANGELOG.md` updated under `## [Unreleased]` with what was done and key decisions (no test counts or file-count stats).
 - [ ] `CLAUDE.md` updated only if architecture, conventions, or the module inventory changed.
 - [ ] If a discovery surfaced new work, open an issue — the task roadmap lives in

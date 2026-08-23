@@ -8,7 +8,7 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
   alias Bourse.Error
   alias Bourse.Order
   alias Bourse.Position
-  alias Bourse.Test.FixtureGateIsolation
+  alias Bourse.Test.LiveGateIsolation
   alias Bourse.Trade
 
   @moduletag :integration
@@ -25,7 +25,7 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
   @trade_cost_tolerance 1.0e-12
 
   setup do
-    FixtureGateIsolation.isolate!("deribit")
+    LiveGateIsolation.isolate!("deribit")
     :ok
   end
 

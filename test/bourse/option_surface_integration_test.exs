@@ -4,7 +4,7 @@ defmodule Bourse.OptionSurfaceIntegrationTest do
   alias Bourse.Error
   alias Bourse.InstrumentGreeks
   alias Bourse.OptionInstrument
-  alias Bourse.Test.FixtureGateIsolation
+  alias Bourse.Test.LiveGateIsolation
   alias Bourse.Unified.OptionSurface
 
   @moduletag :integration
@@ -18,7 +18,7 @@ defmodule Bourse.OptionSurfaceIntegrationTest do
   ]
 
   setup do
-    for {venue, _, _} <- @venues, do: FixtureGateIsolation.isolate!(venue)
+    for {venue, _, _} <- @venues, do: LiveGateIsolation.isolate!(venue)
     :ok
   end
 

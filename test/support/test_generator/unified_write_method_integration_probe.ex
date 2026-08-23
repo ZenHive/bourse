@@ -13,6 +13,7 @@ defmodule Bourse.Test.Generator.UnifiedWriteMethodIntegrationProbe do
   alias Bourse.Error, as: CError
   alias Bourse.Registry
   alias Bourse.Test.AssetConfig
+  alias Bourse.Test.Generator.TagAtoms
 
   @auth_classes [:private_dangerous]
   @custom_supported_patterns [:derive, :hyperliquid]
@@ -27,7 +28,7 @@ defmodule Bourse.Test.Generator.UnifiedWriteMethodIntegrationProbe do
     end
 
     exchange_id = to_string(exchange)
-    exchange_atom = String.to_atom(exchange_id)
+    exchange_atom = exchange
 
     test_blocks =
       for {kind, ^exchange_id, method} <- cases_for(exchange_id, auth) do
@@ -38,7 +39,7 @@ defmodule Bourse.Test.Generator.UnifiedWriteMethodIntegrationProbe do
       @moduletag :network
       @moduletag :dangerous
       @moduletag :unified_integration
-      @moduletag unquote(String.to_atom("exchange_#{exchange_id}"))
+      @moduletag unquote(TagAtoms.exchange_tag!(exchange_id))
 
       unquote(build_setup_gate(exchange_id, exchange_atom))
       unquote_splicing(test_blocks)

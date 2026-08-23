@@ -1252,10 +1252,10 @@ defmodule Bourse.Exchange do
   @doc """
   Returns the caller-threaded markets cache, or `nil` when not loaded.
 
-  `Bourse.load_markets/1` and `put_markets/2` store `%Bourse.Market{}` structs.
-  Static response replay stores raw Bourse string-keyed maps to preserve its
-  oracle input. Pure data — no process or global store. Reload by calling
-  `Bourse.load_markets/1` again and threading the returned struct.
+  `Bourse.load_markets/1` and `put_markets/2` store `%Bourse.Market{}` structs,
+  and they are the only writers, so that is the only shape a caller sees. Pure
+  data — no process or global store. Reload by calling `Bourse.load_markets/1`
+  again and threading the returned struct.
   """
   @spec markets(t()) :: market_cache()
   def markets(%__MODULE__{markets: markets}), do: markets

@@ -95,6 +95,9 @@ defmodule Bourse.Test.Generator.SymbolResolver do
       _ -> %{}
     end
   rescue
+    # A spec-file decode failure (missing file, malformed JSON) degrades to an
+    # empty market index rather than crashing symbol resolution.
+    # reach:disable-next-line bare_rescue
     _ -> %{}
   end
 

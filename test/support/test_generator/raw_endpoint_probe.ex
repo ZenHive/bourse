@@ -106,8 +106,24 @@ defmodule Bourse.Test.Generator.RawEndpointProbe do
 
   alias Bourse.Registry
   alias Bourse.Test.Generator.RawEndpointProbe.Config, as: ProbeConfig
+  alias Bourse.Test.Generator.TagAtoms
 
   @auth_classes [:public, :private, :public_dangerous, :private_dangerous]
+
+  defmodule InspectionSnapshot do
+    @moduledoc """
+    Accumulator/result shape for `__inspection_snapshot__/0` — the flattened
+    compile-time case/skip collection across every registered exchange.
+    """
+    @enforce_keys [:cases, :skips, :spec_loads]
+    defstruct [:cases, :skips, :spec_loads]
+
+    @type t :: %__MODULE__{
+            cases: [tuple()],
+            skips: [tuple()],
+            spec_loads: non_neg_integer()
+          }
+  end
 
   defmacro __using__(opts) do
     exchange = Keyword.fetch!(opts, :exchange)
@@ -119,7 +135,7 @@ defmodule Bourse.Test.Generator.RawEndpointProbe do
     end
 
     exchange_id = to_string(exchange)
-    exchange_atom = String.to_atom(exchange_id)
+    exchange_atom = exchange
 
     private_auth? = auth in [:private, :private_dangerous]
     registered? = !private_auth? or Bourse.Testnet.registered?(exchange_atom, :default)
@@ -146,7 +162,7 @@ defmodule Bourse.Test.Generator.RawEndpointProbe do
       quote do
         @moduletag :network
         @moduletag :raw
-        @moduletag unquote(String.to_atom("exchange_#{exchange_id}"))
+        @moduletag unquote(TagAtoms.exchange_tag!(exchange_id))
       end
 
     setup_gate =
@@ -180,17 +196,13 @@ defmodule Bourse.Test.Generator.RawEndpointProbe do
   `spec_loads` makes the bounded whole-catalog load count observable to the
   regression suite.
   """
-  @spec __inspection_snapshot__() :: %{
-          cases: [tuple()],
-          skips: [tuple()],
-          spec_loads: non_neg_integer()
-        }
+  @spec __inspection_snapshot__() :: InspectionSnapshot.t()
   def __inspection_snapshot__ do
     Registry.exchanges()
-    |> Enum.reduce(%{cases: [], skips: [], spec_loads: 0}, fn exchange_id, snapshot ->
+    |> Enum.reduce(%InspectionSnapshot{cases: [], skips: [], spec_loads: 0}, fn exchange_id, snapshot ->
       inspection = inspect_exchange(exchange_id)
 
-      %{
+      %InspectionSnapshot{
         cases: [inspection.cases | snapshot.cases],
         skips: [inspection.skips | snapshot.skips],
         spec_loads: inspection.spec_loads + snapshot.spec_loads
@@ -209,10 +221,10 @@ defmodule Bourse.Test.Generator.RawEndpointProbe do
     case case_context(exchange_id) do
       {:ok, context} ->
         {cases, skips} = @auth_classes |> Enum.map(&inspect_auth_class(exchange_id, context, &1)) |> Enum.unzip()
-        %{cases: List.flatten(cases), skips: List.flatten(skips), spec_loads: 1}
+        %InspectionSnapshot{cases: List.flatten(cases), skips: List.flatten(skips), spec_loads: 1}
 
       :error ->
-        %{cases: [], skips: [], spec_loads: 0}
+        %InspectionSnapshot{cases: [], skips: [], spec_loads: 0}
     end
   end
 
@@ -402,15 +414,28 @@ defmodule Bourse.Test.Generator.RawEndpointProbe do
   # Grouped skip emission (Task 112)
   # ----------------------------------------------------------------------
 
+  # A grouped-unprobeable endpoint set is a hole in the live surface, so it fails
+  # loudly. `@tag skip:` used to hide it behind a green body — under a live-only
+  # regime that is the exact failure mode this suite exists to prevent. The path
+  # to green is to probe the endpoints or to ledger them as explicitly unverified
+  # in `docs/prod-verification-ledger.md`; neither is achieved by a passing test.
   defp build_skip_test(exchange_id, auth, {_group_key, label, reason, count}) do
-    test_name = "#{exchange_id} raw skip: #{label} (#{count} endpoints)"
+    test_name = "#{exchange_id} raw unprobed: #{label} (#{count} endpoints)"
     tags = skip_tags(auth)
 
     quote do
       unquote_splicing(tags)
-      @tag skip: unquote(reason)
+
       test unquote(test_name) do
-        assert true
+        flunk("""
+        #{unquote(count)} #{unquote(exchange_id)} raw endpoints are not probed: #{unquote(label)}
+
+        Reason: #{unquote(reason)}
+
+        Give them a live probe, or record them as unverified with evidence in
+        docs/prod-verification-ledger.md. An unprobed provider surface must not
+        report green.
+        """)
       end
     end
   end
@@ -468,7 +493,7 @@ defmodule Bourse.Test.Generator.RawEndpointProbe do
 
     ctx = %{
       exchange_id: exchange_id,
-      id_atom: String.to_atom(exchange_id),
+      id_atom: String.to_existing_atom(exchange_id),
       module: module,
       endpoint: endpoint,
       name: endpoint.name,
@@ -494,6 +519,7 @@ defmodule Bourse.Test.Generator.RawEndpointProbe do
           try do
             Bourse.Exchange.new!(unquote(id_atom))
           rescue
+            # reach:disable-next-line bare_rescue -- Exchange.new!/build_exchange never raises in normal operation; any exception here IS the test failure (flunk formats it), so narrowing the rescue would defeat the diagnostic
             err ->
               flunk("""
               #{unquote(exchange_id)}: Exchange.new! raised — not a transport failure:
@@ -528,6 +554,7 @@ defmodule Bourse.Test.Generator.RawEndpointProbe do
               sandbox: true
             )
           rescue
+            # reach:disable-next-line bare_rescue -- Exchange.new!/build_exchange never raises in normal operation; any exception here IS the test failure (flunk formats it), so narrowing the rescue would defeat the diagnostic
             err ->
               flunk("""
               #{unquote(exchange_id)}: build_exchange raised — not a transport failure:
@@ -563,6 +590,7 @@ defmodule Bourse.Test.Generator.RawEndpointProbe do
           try do
             Bourse.Exchange.new!(unquote(id_atom))
           rescue
+            # reach:disable-next-line bare_rescue -- Exchange.new!/build_exchange never raises in normal operation; any exception here IS the test failure (flunk formats it), so narrowing the rescue would defeat the diagnostic
             err ->
               flunk("""
               #{unquote(exchange_id)}: Exchange.new! raised — not a transport failure:
@@ -598,6 +626,7 @@ defmodule Bourse.Test.Generator.RawEndpointProbe do
               sandbox: true
             )
           rescue
+            # reach:disable-next-line bare_rescue -- Exchange.new!/build_exchange never raises in normal operation; any exception here IS the test failure (flunk formats it), so narrowing the rescue would defeat the diagnostic
             err ->
               flunk("""
               #{unquote(exchange_id)}: build_exchange raised — not a transport failure:

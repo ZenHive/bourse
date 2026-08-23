@@ -25,6 +25,7 @@ defmodule Bourse.Test.Generator.SigningTests do
   """
 
   alias Bourse.Registry
+  alias Bourse.Test.Generator.TagAtoms
 
   defmacro __using__(_opts) do
     exchanges = collect_exchanges()
@@ -78,7 +79,7 @@ defmodule Bourse.Test.Generator.SigningTests do
   end
 
   defp build_describe(exchange_id, module, pattern) do
-    tag_atom = String.to_atom("exchange_#{exchange_id}")
+    tag_atom = TagAtoms.exchange_tag!(exchange_id)
 
     quote do
       describe "signing (#{unquote(exchange_id)} / #{unquote(pattern)})" do

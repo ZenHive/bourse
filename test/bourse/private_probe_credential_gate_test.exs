@@ -8,8 +8,7 @@ defmodule Bourse.PrivateProbeCredentialGateTest do
     {:bybit, testnet: true},
     {:binance, testnet: true},
     {:binance, :futures, testnet: true},
-    {:deribit, testnet: true},
-    {:aster, testnet: true}
+    {:deribit, testnet: true}
   ]
 
   setup do
@@ -25,27 +24,27 @@ defmodule Bourse.PrivateProbeCredentialGateTest do
 
   describe "credential-gated private probe emission" do
     test "raw private modules without registered credentials emit one flunk test and no setup_all" do
-      test_module = build_probe_module(:RawPrivateUnregistered, RawEndpointProbe, :kraken, :private)
+      test_module = build_probe_module(:RawPrivateUnregistered, RawEndpointProbe, :coinbaseexchange, :private)
 
       assert %{setup_all?: false, tests: [test]} = test_module.__ex_unit__()
       assert test.tags.private
       assert test.tags.network
       assert test.tags.raw
-      assert test.tags.exchange_kraken
-      assert_missing_credentials_test(test_module, test, :kraken)
+      assert test.tags.exchange_coinbaseexchange
+      assert_missing_credentials_test(test_module, test, :coinbaseexchange)
     end
 
     test "raw private_dangerous modules without registered credentials emit one flunk test and no setup_all" do
       test_module =
-        build_probe_module(:RawPrivateDangerousUnregistered, RawEndpointProbe, :kraken, :private_dangerous)
+        build_probe_module(:RawPrivateDangerousUnregistered, RawEndpointProbe, :coinbaseexchange, :private_dangerous)
 
       assert %{setup_all?: false, tests: [test]} = test_module.__ex_unit__()
       assert test.tags.private
       assert test.tags.dangerous
       assert test.tags.network
       assert test.tags.raw
-      assert test.tags.exchange_kraken
-      assert_missing_credentials_test(test_module, test, :kraken)
+      assert test.tags.exchange_coinbaseexchange
+      assert_missing_credentials_test(test_module, test, :coinbaseexchange)
     end
 
     test "registered exchanges keep raw per-endpoint tests and runtime setup_all backstop" do

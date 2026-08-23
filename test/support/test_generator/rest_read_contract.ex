@@ -7,6 +7,7 @@ defmodule Bourse.Test.Generator.RestReadContract do
   `Bourse.Test.RestReadContractScenario`.
   """
 
+  alias Bourse.Test.Generator.TagAtoms
   alias Bourse.Test.RestReadContracts
 
   defmacro __using__(opts) do
@@ -20,7 +21,7 @@ defmodule Bourse.Test.Generator.RestReadContract do
 
       @moduletag :network
       @moduletag :rest_read_contract
-      @moduletag unquote(String.to_atom("exchange_#{venue}"))
+      @moduletag unquote(TagAtoms.exchange_tag!(venue))
 
       setup_all do
         {:ok, context: RestReadContractScenario.setup_venue!(unquote(venue))}
@@ -32,7 +33,7 @@ defmodule Bourse.Test.Generator.RestReadContract do
 
   defp test_ast(contract_case) do
     escaped = Macro.escape(contract_case)
-    method_tag = String.to_atom("method_#{Macro.underscore(contract_case["method"])}")
+    method_tag = TagAtoms.method_tag!(contract_case["method"])
 
     quote do
       @tag unquote(method_tag)

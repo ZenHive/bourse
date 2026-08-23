@@ -1,7 +1,7 @@
 # Prod-Verification Ledger — deferred tier-1 confirmations
 
 Deferred live confirmations that our current keys/hosts **cannot falsify**: the slice is
-landed and green at tier 2 (CCXT fixture / docs), but the tier-1 confrontation against the
+landed and green at tier 2 (a pinned third-party extraction / provider docs), but the tier-1 confrontation against the
 real venue needs production keys or real market state we don't have yet. When such keys/state
 become available, work this file top-to-bottom; move closed entries to the "Closed" section
 with the observed evidence.
@@ -97,8 +97,9 @@ Entry template:
   `private/cancel_all_block_rfq_quotes`, `private/close_position`, `private/move_positions`, `private/mass_quote`
 - Blocked by: a testnet account nobody else is using. Bulk cancellation reaches resting orders this session did
   not place, and the provider offers no operation that restores a cancelled order or a closed position.
-- What is already known: `priv/authority/deribit/mutation-adjudication.json` records the provider's own
-  description for each of these, and the per-order lifecycle (`private/buy` → `private/cancel`) is verified live.
+- What is already known: the provider's own description for each of these lives in the pinned `api-openapi`
+  revision recorded in `priv/authority/deribit/manifest.json`, and the per-order lifecycle
+  (`private/buy` → `private/cancel`) is verified live.
 - The open question: the accepted request shape and the response body each bulk form returns, which only a live
   call on an isolated account can show.
 - Exact call: none — these stay `evidence=unverified`, `reachability=unsafe` until an isolated testnet account
@@ -114,7 +115,8 @@ Entry template:
   `private/cancel_transfer_by_id`
 - Blocked by: nothing technical — this is a standing refusal. Value movement is never sent for coverage, on
   testnet or anywhere else, and the cancel forms only become reachable after creating the transfer they cancel.
-- What is already known: the provider's own descriptions, recorded verbatim in the adjudication register.
+- What is already known: the provider's own descriptions, in the pinned `api-openapi` revision recorded in
+  `priv/authority/deribit/manifest.json`.
 - The open question: unanswerable without moving funds; it stays open by decision, not by blocker.
 - Exact call: none.
 - Expected evidence: none will be produced. These remain `evidence=unverified`, `reachability=unsafe`
@@ -214,9 +216,9 @@ Entry template:
 
 ### all venues — residual oracle critical slots (task 526, filed 2026-08-10)
 
-These markers are explicit hard-gate waivers, not verification. The response recordings cited by
-`mix ccxt.oracle_gate` close every slot for which the committed live call preserved sufficient
-request or populated-body evidence. The residual slots need account state, permissions,
+These markers are explicit hard-gate waivers, not verification. The provider-live REST-read
+contract lane (`mix ccxt.verify_rest_read_contracts`) closes every slot whose branch a live call
+against the venue's own host can reach. The residual slots need account state, permissions,
 instrument families, or provider error conditions unavailable through the provisioned hosts and
 the far-from-market/cancel-in-session mutation discipline.
 
@@ -224,10 +226,11 @@ the far-from-market/cancel-in-session mutation discipline.
 - [oracle-critical-slot-waiver-review 2026-08-19]
 
 The review marker periodically re-acknowledges the complete open waiver set. It is valid through
-day 30; on day 31, or when a waiver is filed after the latest review, `mix ccxt.oracle_gate` names
-the affected slot and blocks until an operator rechecks every listed blocker, removes any waiver
-that can now be closed, and appends a new review marker. Markers are append-only so renewal
-history remains in this ledger. Re-acknowledgment confirms only that the blocker still exists; it
+day 30; on day 31, or when a waiver is filed after the latest review, the set is stale and an
+operator rechecks every listed blocker, removes any waiver that can now be closed, and appends a
+new review marker. Nothing enforces that renewal — the check that did was removed with the replay
+lane, so it is an operator discipline. Markers are append-only so renewal history remains in this
+ledger. Re-acknowledgment confirms only that the blocker still exists; it
 does not turn a waiver into reality evidence.
 
 This uses the same 30-day boundary as task 579's prose-drift acknowledgment: both remain valid
@@ -446,7 +449,7 @@ evidence beyond the batch review.
 - What live production already proved: the read-only production probe returned a populated
   quote, one successful history row, and that row again through convert-status. The observed
   fields match Bybit's provider-owned quote/history/status contracts, but task 567 requires a
-  sandbox recording and does not treat production traffic as a substitute.
+  sandbox observation and does not treat production traffic as a substitute.
 - The open question: does an Exchange-enabled testnet account return the same conversion
   fields and meanings through all three unified reads?
 - Exact call: with an Exchange-enabled `BYBIT_TESTNET_*` key, call
@@ -472,7 +475,7 @@ evidence beyond the batch review.
 - What live production already proved: the production `sapi` host returned 600 Convert asset
   rows and 729 Wallet currency rows; Convert history returned a successful empty envelope and
   an invalid status id returned Binance's `-1102` parameter error. Those calls establish
-  production reachability but cannot supply the sandbox-success recordings task 567 requires.
+  production reachability but cannot supply the sandbox-success observations task 567 requires.
 - The open question: which sandbox-supported provider operations supply the five declared
   reads, and do their populated rows retain the production field meanings?
 - Exact call: with the provisioned `BINANCE_FUTURES_TEST_*` key, first call
@@ -529,7 +532,7 @@ evidence beyond the batch review.
 
 ### derive — documented expired order status (task 538, C-T538d, filed 2026-08-04)
 - Authored slices: `derive:normalization.field_maps.order.field_map.status`
-- Blocked by: no manifest-registered demo history row carries `expired`; producing one requires
+- Blocked by: no observed demo history row carries `expired`; producing one requires
   leaving an accepted order active through its expiry boundary.
 - What tier-2 already proved: Derive's provider-owned Get Open Orders schema publishes `expired`,
   and the runtime-wide coverage test pins it in the authored map.
@@ -539,7 +542,7 @@ evidence beyond the batch review.
 
 ### okx — documented MMP-canceled order status (task 538, C-T538e, filed 2026-08-04)
 - Authored slices: `okx:normalization.field_maps.order.field_map.status`
-- Blocked by: no manifest-registered international-demo history row carries `mmp_canceled`;
+- Blocked by: no observed international-demo history row carries `mmp_canceled`;
   producing one requires an account and option flow that trigger market-maker protection.
 - What tier-2 already proved: OKX's provider-owned order-details schema publishes the value, and
   the runtime-wide coverage test pins it in the authored map.
@@ -646,14 +649,14 @@ evidence beyond the batch review.
   omitted both `fee_group` and the optional `fees` field. Deribit's current endpoint
   documentation says `fees` is available only when `extended=true` **and the user has
   discounts**. `DERIBIT_CLIENT_ID` resolves to the same provisioned testnet key, and no separate
-  production or discounted credential is available. The 2026-07-21 UTC recording is frozen at
-  `test/fixtures/responses/deribit/fetch_trading_fees.json`; its offline replay correctly
-  returns an empty map instead of inventing a schedule.
+  production or discounted credential is available. The 2026-07-21 UTC capture of that
+  no-discount body went away with the replay lane; the parse it exercised correctly returned an
+  empty map instead of inventing a schedule.
 - What tier-2 already proved: the populated authoring-derived body exercises the legacy
   `fees[]` / `instrument_type` / `maker_fee` / `taker_fee` transform and remains covered by
   `deribit_authored_spec_test.exs`. CCXT has no static fixture for this method.
 - What tier-1 already proved: signed routing, `currency=BTC`, `extended=true`, the JSON-RPC
-  result envelope, and the no-discount/field-absent branch all replay from a real body.
+  result envelope, and the no-discount/field-absent branch were all observed on a real body.
 - Provider-contract confrontation (2026-07-22): Deribit's schema version `2.1.1`, identified by
   `priv/authority/deribit/manifest.json`, defines `fees` as
   `index_name -> instrument_type -> default.{type,maker,taker}` plus optional `block_trade`.
@@ -1055,13 +1058,12 @@ evidence beyond the batch review.
   driving a funded account through a real margin call. Task 595's evidence discipline —
   IOC fill closed in cleanup, USDC transfer round-tripped back — has no counterpart here.
 - What is already proved: the endpoints, auth scope and empty-envelope parse are tier-1. The
-  2026-08-14 recordings are fresh and real (`withdraw_history` → `{"code":200,"withdraws":[]}`,
-  `liquidations` → `{"code":200,"liquidations":[],"next_cursor":""}`), and their caller params
-  replay through the runtime builder under the congruence gate. Field meanings rest on the pinned
-  provider OpenAPI (`priv/authority/lighter/manifest.json` artifact `rest-openapi`, revision
-  `6957dd8a`) — `WithdrawHistoryItem` required `id amount timestamp status type l1_tx_hash
-  asset_id`, `Liquidation` required `id market_id type trade info executed_at` — pinned offline by
-  the provider-shaped stubs in `lighter_authored_spec_test.exs`.
+  2026-08-14 observations are fresh and real (`withdraw_history` → `{"code":200,"withdraws":[]}`,
+  `liquidations` → `{"code":200,"liquidations":[],"next_cursor":""}`), reached through the runtime
+  request builder. Field meanings rest on the pinned provider OpenAPI
+  (`priv/authority/lighter/manifest.json` artifact `rest-openapi`, revision `6957dd8a`) —
+  `WithdrawHistoryItem` required `id amount timestamp status type l1_tx_hash asset_id`,
+  `Liquidation` required `id market_id type trade info executed_at`.
 - The open question: does a real withdrawal row's `status`/`type` pair normalize to the unified
   transaction status and `"withdrawal"` type, and does a real liquidation row's nested `trade`
   (`price`/`size`/`taker_fee`/`maker_fee`) plus `executed_at` normalize to the unified
@@ -1074,8 +1076,8 @@ evidence beyond the batch review.
 - Exact call: with an operator-approved withdrawal window (or an account that has been liquidated),
   `Bourse.fetch_withdrawals(ex)` and `Bourse.fetch_my_liquidations(ex)` against
   `testnet.zklighter.elliot.ai` with `sandbox: true`.
-- Expected evidence: re-capture and manifest-register both recordings with `body_populated: true`,
-  assert the parsed symbol is `BTC/USDC:USDC` rather than the raw market id, and amend C-T546's
+- Expected evidence: reach both operations live with a populated body, assert the parsed symbol
+  is `BTC/USDC:USDC` rather than the raw market id, and amend C-T546's
   verification status from shape-only to populated for the two methods.
 
 ### lighter — trade fee value scale (ARC wave-2, C-T546i, filed 2026-08-14)
@@ -1085,15 +1087,15 @@ evidence beyond the batch review.
   unit (our signed write path submits `usdc_fee` at 1e6 per USDC). The authored parse passes the
   raw value through as `fee.cost`, which is an unconfirmed reading.
 - Blocked by: every observed fill on the provisioned testnet account omits both keys (zero-fee
-  testnet fills — re-confirmed by the 2026-08-14 re-recording of `fetch_my_trades`), so neither a
-  recording nor a live call can currently discriminate raw-decimal from 1e6-scaled.
+  testnet fills — re-confirmed by the 2026-08-14 `fetch_my_trades` observation), so no live call
+  can currently discriminate raw-decimal from 1e6-scaled.
 - What is already proved: parse plumbing only — the offline stub pins that a present integer
   passes through untouched, labelled in-line as a plumbing pin, not USDC semantics (C-T546i).
 - Exact call: one fee-bearing fill (a market/account combination with nonzero maker/taker fee —
   possibly mainnet, or a testnet market with fees enabled), then `Bourse.fetch_my_trades(ex)` and
   a cross-check of the returned integer against the account's USDC balance delta; alternatively a
   provider statement of the field's unit.
-- Expected evidence: a populated `maker_fee`/`taker_fee` recording registered in the manifest,
+- Expected evidence: a live `fetch_my_trades` response carrying populated `maker_fee`/`taker_fee`,
   the authored map given an explicit confirmed scale (or confirmed raw), and C-T546i amended to
   tier 1.
 
@@ -1151,14 +1153,13 @@ evidence beyond the batch review.
 
 ### deribit — fetchDepositAddress parsed shape (task 380; closed 2026-07-22 by task 457)
 - Evidence: the first verification move was a signed `Bourse.fetch_balance/1` call against
-  `test.deribit.com`; the same authenticated capture run then recorded
-  `private/get_current_deposit_address` on 2026-07-21 UTC at
-  `test/fixtures/responses/deribit/fetch_deposit_address.json`.
+  `test.deribit.com`; the same authenticated run then observed
+  `private/get_current_deposit_address` on 2026-07-21 UTC.
 - The real body carried a non-empty `result.address`, `result.currency == "BTC"`, and
-  `result.type == "deposit"`, matching Deribit's provider-owned endpoint schema. The committed
-  address is scrubbed to `***REDACTED***`; currency and type remain available as the semantic
+  `result.type == "deposit"`, matching Deribit's provider-owned endpoint schema. The address was
+  scrubbed to `***REDACTED***` before it was written down; currency and type remain the semantic
   oracle.
-- The retained recording historically produced
+- That observation historically produced
   `%Bourse.DepositAddress{currency: "BTC", address: "***REDACTED***"}` with JSON-RPC envelope
   fields kept out of `info`; it is provenance and cannot certify the provider-live contract.
 

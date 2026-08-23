@@ -1,1 +1,0 @@
-{"body":{"jsonrpc":"2.0","result":9.056435480116205e-5,"testnet":false,"usDiff":807,"usIn":1784087758339265,"usOut":1784087758340072},"call_opts":{},"captured_at":"2026-07-15T03:55:58.258821Z","exchange":"deribit","method":"fetch_funding_rate","symbol":"BTC/USD:BTC","timeframe":null}

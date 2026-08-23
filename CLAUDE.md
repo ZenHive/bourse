@@ -55,7 +55,7 @@ This repo was extracted from `../bourse_workbench`, which remains the **authorin
 |---|---|
 | Does the client behave correctly against a supported venue? | **here** |
 | Is a supported venue's authored spec right? | **here** — the spec, its authority manifest and its reality evidence all live here |
-| Does an eleventh venue get added? | **here** — `mix ccxt.promote_venue` grades its candidate against the reality manifests, and those live here. Pass the pinned CCXT reference document in from the workbench with `--reference`. |
+| Does an eleventh venue get added? | **here** — the authored spec, its provider-owned contract entry in `priv/authority/rest-read-contracts.json`, and the live evidence that grades it all live here. |
 | Did the full CCXT reference extraction shift across all 110 venues? | workbench — this repo carries a 16-venue slice and cannot answer corpus-wide questions |
 | Roadmap and task scoring, and the CHANGELOG gate that reads it | workbench — one rmap, declaring `project = "bourse"`. It is not a workbench roadmap that mentions this client; it **is** this client's roadmap. Do **not** stand up a second rmap here. |
 | Where does a consumer file a bug? | **here**, in `BUGS.md` — this is the only repo a consumer knows. Triage into scored tasks happens in the workbench, and writes a dated note back into the entry. |
@@ -128,7 +128,7 @@ host only, so no CI check can ever guard it. Read them from
 
 **Interpret, don't extract.** Full model and rationale: `docs/authored-specs.md` — read it first.
 
-**The one and only reality is the exchange APIs we talk to** — not CCXT, not CCXT's fixtures, not training. CCXT was the bootstrap; it is now **one disposable reference among several** (exchange API docs, official SDKs, observed behavior). The DEX venues already live this way. Three axes, kept distinct: **value** correctness (is the number right vs reality), **carve** correctness (is the field/abstraction itself right, willing to *diverge* from CCXT's ontology), and **freshness** (frozen recordings kept honest by live drift checks).
+**The one and only reality is the exchange APIs we talk to** — not CCXT, not CCXT's fixtures, not training. CCXT was the bootstrap; it is now **one disposable reference among several** (exchange API docs, official SDKs, observed behavior). The DEX venues already live this way. Three axes, kept distinct: **value** correctness (is the number right vs reality), **carve** correctness (is the field/abstraction itself right, willing to *diverge* from CCXT's ontology), and **freshness** (every claim re-proved against the live venue on a schedule, never by a stored answer).
 
 **Authority ladder — the exchange-owned contract wins.** A live venue call establishes what the venue does; the exchange's own documentation, specifications and SDKs establish what its fields and parameters mean. CCXT source, execution and static files are unverified authoring references only.
 
@@ -136,22 +136,31 @@ host only, so no CI check can ever guard it. Read them from
 
 1. Live E2E against the real host (testnet/demo; production public for Coinbase Exchange).
 2. Understand one success **and** one relevant error from that interaction.
-3. Write an integration test (`--include network` / `--include dangerous`) that hits the same host and asserts those semantics — **and make it fail loudly when it cannot run.** Missing credentials, an unreachable host or an inventory row nothing exercised is a RED with actionable setup text, never a silent exclusion. A tag that drops the test out of the default run does not satisfy `critical-rules.md` § NEVER HIDE TEST FAILURES; it only hides the hole.
-4. Only then, if CI needs a fast offline replay, derive a fixture from that captured interaction.
+3. Write the test that hits that same host and asserts those semantics — **and make it fail loudly when it cannot run.** Missing credentials, an unreachable host or an inventory row nothing exercised is a RED with actionable setup text, never a silent exclusion. A tag that drops the test out of the default run does not satisfy `critical-rules.md` § NEVER HIDE TEST FAILURES; it only hides the hole.
 
-No mock or recording may invent behavior. Every expectation traces to a documented real call. The offline suite is a replay cache of reality, not its authority: **a gate built only from offline tests and `ccxt.oracle_gate` can detect that our own code changed, and nothing else.** It cannot tell you whether a venue still behaves the way a slice claims, and its silence is the false-green `critical-rules.md` § LIVE E2E FIRST names as the worse failure mode. `mix ccxt.oracle_gate` grades that cache so it does not rot; it does **not** verify a new method. A recording in the same diff as the spec it certifies is the Deribit-`"8h"` bug.
+There is no step 4. A stored answer is a claim about a venue with no authority behind it, and it stays green forever after the venue changes — the false green `critical-rules.md` § LIVE E2E FIRST names as the worse failure mode. The canonical case is deribit's funding `interval`: the authored literal `"8h"` while the venue publishes hourly, internally consistent and fully covered, because the expectation was computed from the same wrong constant.
 
 **Verification is binary.** A claim is `verified` only after steps 1–3, plus provider-owned meaning. Otherwise it is `unverified`. CCXT JS cannot verify venue semantics.
 
+### 🚨 The suite is provider-live — there is no offline lane
+
+`mix test.json` reaches real venues. `test/test_helper.exs` registers every credentialed venue and **raises** when a pair is absent, naming the venue and pointing at the per-venue variables below; the run stops rather than reporting a green that covers nothing. `ExUnit.start/1` excludes `:dangerous` and nothing else, so the network and contract cases run by default.
+
+What stays offline is what asserts about **our** code rather than about a venue: signing vectors, encoders, decimal math, URL building, the rate limiter, WS dialect parsing, the response types.
+
+`test/bourse/no_faked_provider_oracle_test.exs` is the guard that keeps a faked-provider lane from growing back one convenient helper at a time. It fails the suite when any file under `test/` names `Req.Test`, `Bypass`, `Mox`, a `plug: {` transport override or a committed provider capture — and separately when any file carries a skip tag, because a skipped test reports neither pass nor fail and reads as coverage in every summary that counts it.
+
+Unreachable is not green. A branch we cannot call with our keys and hosts — production-only endpoint, region-restricted key, a position we cannot open — goes into `docs/prod-verification-ledger.md` as unverified and stays unverified. The ledger records *why* a case is unverified; it does not discharge the case, and dropping the row from a lane's denominator instead is how an honest "we cannot reach this" turns into a green lie.
+
 ### Rules
 
-- ✅ DO: author interpretive slices against the exchange-owned API contract, using CCXT only as reference material. Keep `mix ccxt.oracle_gate` green for **existing** goldens — do not add a fixture to make a new method look verified.
+- ✅ DO: author interpretive slices against the exchange-owned API contract, using CCXT only as reference material. A method is proven by a live call against the venue's own host, and by nothing else.
 - ✅ DO: verify by **running/observing**; author by **reading** any source. A source that fed authoring cannot also be the oracle.
 - ✅ DO: run the **confrontation step** when authoring a venue slice (`docs/authored-specs.md`) — for each schema decision, confront the CARVE (does the field exist here? what does the value mean? is the abstraction right for this venue?) against the exchange's OWN semantics. Record every CONFIRMED / DIVERGE outcome in the venue's carve register under `docs/authored-spec-carves/`. A CCXT carve adopted without a register entry is inherited, not confronted.
-- 🚨 DO: keep it REAL — for divergence-prone fields (anything CCXT *computes* or *branches* rather than copies: precision, inverse-vs-linear cost, funding cadence, fee tiers), test against the **REAL API plus a non-CCXT semantic source**, never against a potentially-wrong CCXT fixture. A wrong fixture is *more costly* than a live call: it certifies our bug green and silent. The canonical case: deribit's funding `interval` was the authored literal `"8h"` while the venue publishes hourly — internally consistent, fully tested, and wrong, because the golden was computed with the same wrong constant.
+- 🚨 DO: keep it REAL — for divergence-prone fields (anything a third-party client *computes* or *branches* rather than copies: precision, inverse-vs-linear cost, funding cadence, fee tiers), assert against the **live API plus a provider-owned semantic source**. A hardcoded expectation derived from the same assumption as the code certifies our bug green and silent, which costs more than the live call it replaced.
 - 🚨 DO: **decolor on touch.** Comments, moduledocs and docs that cite CCXT as the *reason or authority* for a decision steer every future session back toward CCXT-as-truth. Never write a new one. `test/bourse/ccxt_authority_language_test.exs` enforces this with an explicit allowlist — a new CCXT mention in `lib/` fails the suite until it is either reworded or allowlisted with a compatibility-framed phrase.
-- ✅ DO: when a live call is **unreachable with our keys/hosts** (prod-only endpoint, region-restricted key, needs a real open position), append an entry to `docs/prod-verification-ledger.md`. The slice stays `unverified` until a live call exists. 🚨 The ledger records *why* a case is unverified; it does **not** discharge the case. Deleting the row from a live lane's denominator instead is how an honest "we cannot reach this" turns into a green lie — the count goes up, the coverage goes down, and nothing is red.
-- ❌ DO NOT: write `test/fixtures/**`, call `Bourse.RecordedResponseFixtures`, or add a manifest row in the same change as the spec or parser under test. That recording is not independent evidence.
+- ✅ DO: when a live call is **unreachable with our keys/hosts** (prod-only endpoint, region-restricted key, needs a real open position), append an entry to `docs/prod-verification-ledger.md`. The slice stays `unverified` until a live call exists. 🚨 The ledger records *why* a case is unverified; it does **not** discharge the case. Deleting the row from the contract lane's denominator instead is how an honest "we cannot reach this" turns into a green lie — the count goes up, the coverage goes down, and nothing is red.
+- ❌ DO NOT: answer for a provider inside a test — no `Req.Test`, no `Bypass`, no `Mox`, no plug standing in for the venue's host, no committed response body. It is not independent evidence, and `test/bourse/no_faked_provider_oracle_test.exs` fails the suite on every one of them.
 - ❌ DO NOT: treat CCXT-derived data or training/web as verification. Independence comes from execution/reality, not a second read.
 - 🚨🚨 DO (behavioral default, anchored to the ACTION): **when you set out to check whether a venue "works," your FIRST call hits the LIVE venue.** Use testnet/demo for credentialed venues and the production public host for public-only Coinbase Exchange. Recipe: `creds = Bourse.Credentials.new!(api_key: System.get_env("DERIBIT_TESTNET_API_KEY"), secret: ...); {:ok, ex} = Bourse.Exchange.new("deribit", credentials: creds, sandbox: true)` → then a real `Bourse.fetch_ticker/fetch_balance`. Testnet credentials for all ten credentialed venues are provisioned (below); Coinbase Exchange needs none.
 
@@ -159,19 +168,21 @@ No mock or recording may invent behavior. Every expectation traces to a document
 
 Any venue-source, contract-coverage or field-judgment question opens `priv/authority/<venue>/` **FIRST**. The manifest is the local provenance index, not the authority itself: when the question is discovery or freshness, check the provider's official upstream next. Manifests record URL, upstream revision, retrieval date, byte count, SHA-256 and licensing disposition.
 
-| Venue | Official docs | Testnet/demo host | Recordings |
-|---|---|---|---|
-| Alpaca | [Trading API](https://docs.alpaca.markets/) | `https://paper-api.alpaca.markets` | tagged live integration |
-| Binance | [Spot API](https://developers.binance.com/en/docs/products/spot) | `https://testnet.binance.vision` | `test/fixtures/responses/binance/` |
-| Binance COIN-M | [COIN-M futures](https://developers.binance.com/en/docs/products/derivatives-trading-coin-futures) | `https://demo-dapi.binance.com` | `test/fixtures/responses/binancecoinm/` |
-| Binance USD-M | [USD-M futures](https://developers.binance.com/en/docs/products/derivatives-trading-usds-futures) | `https://demo-fapi.binance.com` | `test/fixtures/responses/binanceusdm/` |
-| Bybit | [V5 API](https://bybit-exchange.github.io/docs/v5/intro) | `https://api-testnet.bybit.com` | `test/fixtures/responses/bybit/` |
-| Coinbase Exchange | [Exchange REST API](https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products) | production public only | `test/fixtures/responses/coinbaseexchange/` |
-| Deribit | [API v2](https://docs.deribit.com/) | `https://test.deribit.com` | `test/fixtures/responses/deribit/` |
-| Derive | [API reference](https://docs.derive.xyz/) | `https://api-demo.lyra.finance` | `test/fixtures/responses/derive/` |
-| Hyperliquid | [API reference](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api) | `https://api.hyperliquid-testnet.xyz` | `test/fixtures/responses/hyperliquid/` |
-| Lighter | [API reference](https://apidocs.lighter.xyz/) | `https://testnet.zklighter.elliot.ai` | reality manifests + accepted-request goldens |
-| OKX | [API v5](https://www.okx.com/docs-v5/en/) | `https://www.okx.com` + `x-simulated-trading: 1` | `test/fixtures/responses/okx/` |
+The **live evidence** column is the venue's entry in `priv/authority/rest-read-contracts.json`: its provider-owned authority pins, its operation branches, and the credentials the lane needs to call them. A venue's coverage is what its cases prove against its own host — 427 across the eleven venues — and nothing is stored in this repo that could answer for it instead.
+
+| Venue | Official docs | Testnet/demo host | Live contract cases | Credential env vars |
+|---|---|---|---|---|
+| Alpaca | [Trading API](https://docs.alpaca.markets/) | `https://paper-api.alpaca.markets` | 16 | `ALPACA_API_KEY` / `ALPACA_API_SECRET` |
+| Binance | [Spot API](https://developers.binance.com/en/docs/products/spot) | `https://testnet.binance.vision` | 26 | `BINANCE_TESTNET_API_KEY` / `BINANCE_TESTNET_API_SECRET` |
+| Binance COIN-M | [COIN-M futures](https://developers.binance.com/en/docs/products/derivatives-trading-coin-futures) | `https://demo-dapi.binance.com` | 32 | `BINANCE_FUTURES_TEST_API_KEY` / `BINANCE_FUTURES_TEST_API_SECRET` |
+| Binance USD-M | [USD-M futures](https://developers.binance.com/en/docs/products/derivatives-trading-usds-futures) | `https://demo-fapi.binance.com` | 65 | same pair as COIN-M — one account, two wallets |
+| Bybit | [V5 API](https://bybit-exchange.github.io/docs/v5/intro) | `https://api-testnet.bybit.com` | 91 | `BYBIT_TESTNET_API_KEY` / `BYBIT_TESTNET_API_SECRET` |
+| Coinbase Exchange | [Exchange REST API](https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products) | production public only | 3 | none — public-only |
+| Deribit | [API v2](https://docs.deribit.com/) | `https://test.deribit.com` | 41 | `DERIBIT_TESTNET_API_KEY` / `DERIBIT_TESTNET_API_SECRET` |
+| Derive | [API reference](https://docs.derive.xyz/) | `https://api-demo.lyra.finance` | 24 | `DERIVE_TESTNET_API_KEY` / `DERIVE_TESTNET_API_SECRET` |
+| Hyperliquid | [API reference](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api) | `https://api.hyperliquid-testnet.xyz` | 30 | `HYPERLIQUID_TESTNET_API_KEY` / `HYPERLIQUID_TESTNET_API_SECRET` |
+| Lighter | [API reference](https://apidocs.lighter.xyz/) | `https://testnet.zklighter.elliot.ai` | 15 | `LIGHTER_TESTNET_API_KEY_INDEX` / `LIGHTER_TESTNET_ACCOUNT_INDEX` / `LIGHTER_TESTNET_API_PRIVATE_KEY` |
+| OKX | [API v5](https://www.okx.com/docs-v5/en/) | `https://www.okx.com` + `x-simulated-trading: 1` | 84 | `OKX_INTL_API_KEY` / `OKX_INTL_API_SECRET` / `OKX_INTL_PASSPHRASE` |
 
 Artifact **freshness**, **expressiveness** and **scope** are separate axes. A maintained Postman collection can be current but untyped; a frozen OpenAPI can be richly typed but stale. A manifest pin proves which bytes were reviewed, not that the artifact is complete.
 
@@ -181,32 +192,39 @@ Artifact **freshness**, **expressiveness** and **scope** are separate axes. A ma
 
 For cross-family reviewers (codex / cursor / grok) and any dispatch run.
 
-- **`mix check.dispatch`** — the dispatch-scale gate: `precommit`, `ccxt.oracle_gate`, `ccxt.check_lighter_signer`, `ccxt.claude_check`, `ccxt.agents_md --check`, `ccxt.authority_check` (offline), `ccxt.error_authority`, the domain-boundary guard, `ex_dna --max-clones 0`, `reach.check --arch --smells --strict`. No dialyzer (a cold worktree cold-builds the PLT for minutes).
-- **`mix precommit`** — lean local commit gate (format / compile --warnings-as-errors / credo --strict / doctor --raise / sobelow --skip / offline `test.json`).
+- **`mix check.dispatch`** — the dispatch-scale gate: `precommit`, `ccxt.authority_check` (offline), `ccxt.error_authority`, `ccxt.check_lighter_signer`, `ccxt.claude_check`, `ccxt.agents_md --check`, `ex_dna --max-clones 0`, `reach.check --arch --smells --strict`. No dialyzer (a cold worktree cold-builds the PLT for minutes).
+- **`mix precommit`** — format / compile --warnings-as-errors / credo --strict / doctor --raise / sobelow --skip / `test.json`. It carries no `--exclude`: the suite is provider-live, so this step calls real venues and needs the testnet credentials exported.
 - **`mix precommit.full`** — adds `deps.audit` + dialyzer (local pre-PR).
-- **`mix ci`** — `check.dispatch` + `deps.audit` + dialyzer.
+- **`mix ci`** — `check.dispatch` + the full `ccxt.verify_rest_read_contracts` lane + `test.json --cover --cover-threshold 80` + `deps.audit` + dialyzer.
 
-🚨 **None of these four makes a live venue call.** They are offline-plus-replay:
-they prove the code compiles, our own invariants hold, and our recordings still
-parse. **A green `check.dispatch` is not evidence for any external-semantic
-acceptance criterion** — approving a venue-facing task on it alone is approving on
-the strength of a replay, which `critical-rules.md` § LIVE E2E FIRST forbids. That
-evidence comes from the live lanes under *Running tests*, run with the provisioned
-testnet credentials, which are present in the environment — an offline verdict is
-a choice here, never a constraint.
+🚨 **There is no hosted CI, and nothing runs on a schedule.** Every gate here is
+executed by a person or a harness run on this host. The live surface is proven by
+running `mix ccxt.verify_rest_read_contracts` — and `mix ccxt.verify_ws_first_frame`
+for streams — so a lane nobody ran proves nothing, and "the build is green" is only
+a claim until it names which command was run and where.
 
-`--cover` is omitted from all four, so **no gate enforces the tiers** in
-`critical-rules.md` § RAISE COVERAGE BEFORE MUTATING — run `mix test.json --cover`
-yourself before mutating a module. Measured on the offline suite 2026-08-23:
-89.84% overall, with three critical-tier modules under the 95% bar —
-`Bourse.Dispatch` 89.2%, `Bourse.WS.Auth` 92.9%, `Bourse.Signing` 94.1%. Raise the
-module you are about to change, in the change that touches it.
+🚨 **`check.dispatch` reaches venues but does not cover them.** Its `precommit`
+step runs the provider-live suite, so a green there is real evidence for whatever
+that suite asserted — and it is not the whole REST-read surface: the 427-case
+contract lane runs under `mix ci`, or `mix ccxt.verify_rest_read_contracts` on
+its own. Approving a
+venue-facing acceptance criterion means naming the lane that exercised it, not the
+gate that happened to pass.
+
+`--cover` stays out of `precommit` and `check.dispatch` (`:cover` instruments every
+loaded beam — a multi-GB spike on a cold tree), so **`mix ci` is the only gate that
+enforces the tiers** in `critical-rules.md` § RAISE COVERAGE BEFORE MUTATING. Its
+threshold is the 80% standard floor; the 95% critical tier (money, signing, crypto,
+low-level encoders) is judged per module against that run. Measure the module you
+are about to change with `mix test.json --cover`, and raise it in the change that
+touches it.
 
 | Check | Command | Notes |
 |-------|---------|-------|
 | Compile | `mix compile --warnings-as-errors` | silent finish = success |
-| Tests | `mix test.json --quiet` | **emits JSON by design** — parse it for real failures; the envelope is **not** a build error. Read `summary.result` / `summary.failed`. 🚨 **Excludes every live tag by default** (725 of 4,722 cases on 2026-08-23) — a green run says nothing about any venue. |
-| Replay regression gate | `mix ccxt.oracle_gate` | Re-runs registered recordings, accepted-request goldens and recorded exchange errors. Detects drift in **our** parsing. It is not an oracle for venue behavior and cannot verify a method — read the task name as historical, not as a claim. |
+| Tests | `mix test.json --quiet` | **emits JSON by design** — parse it for real failures; the envelope is **not** a build error. Read `summary.result` / `summary.failed`. 🚨 **Provider-live**: it calls real venues and raises at startup on a missing credential pair. |
+| REST-read contracts | `mix ccxt.verify_rest_read_contracts` | Runs all 427 provider-live contract cases and fails when `executed < denominator`, so a shrinking live surface cannot pass as green. |
+| WS first frame | `mix ccxt.verify_ws_first_frame` | Classified public WebSocket first data frame per venue. |
 | Dialyzer | `mix dialyzer.json --quiet` | **emits JSON by design**. Plain `mix dialyzer` is the authoritative fallback when the JSON encoder can't serialize a warning shape. |
 | Lint | `mix credo --strict` | |
 | Security | `mix sobelow` | honors `.sobelow-skips` (hash-based), **not** inline comments |
@@ -216,47 +234,25 @@ module you are about to change, in the change that touches it.
 | CLAUDE claims | `mix ccxt.claude_check` | modules / `mix ccxt.*` tasks / repo paths named in gated CLAUDE.md regions, plus the signing pattern list and `Application` children, vs the tree. Unlisted tree surfaces are not failures. |
 | AGENTS freshness | `mix ccxt.agents_md --check` | re-renders CLAUDE.md + the pinned `@`-imports (`priv/agents_includes/`) and fails on drift. Regenerate with `mix ccxt.agents_md`. |
 
-**Venue promotion** — adding an eleventh venue is a graded promotion, never a config flag:
-
-```bash
-mix ccxt.promote_venue --prepare --reference REF --candidate CANDIDATE --report REPORT
-mix ccxt.promote_venue --check   --candidate CANDIDATE --report REPORT [--reference REF]
-```
-
-`REF` is a pinned CCXT reference document — supply it from the workbench corpus; this repo carries only a 16-venue slice. The task creates and grades a candidate, and never adds runtime support on its own. Its evidence report uses one binary vocabulary: `verified` requires provider-owned semantics *plus* manifest-registered reality for every critical slot; everything else is `unverified`. `--check` re-derives the method inventory from the reference, byte-verified against `report.reference.sha256`.
+**Adding a venue** is authoring plus live proof, never a config flag: author its complete document under `priv/specs/json/output/authored/`, list it in `priv/specs/json/runtime_support.json`, add its provider-owned entry — authority-source pins, operation branches, arguments, success and error meanings — to `priv/authority/rest-read-contracts.json`, and get every one of its cases green against the venue's own host. `Bourse.Test.RestReadContracts` refuses an inventory that does not cover every runtime venue, or whose branches drift from the callable client surface, so the two cannot separate.
 
 **Do not reject a run because `mix test.json` / `mix dialyzer.json` printed JSON** — that is the intended output format, not a failure.
 
 ## Running tests
 
 ```bash
-mix test.json --quiet --failed                       # default iteration
-mix ccxt.oracle_gate                                 # manifest-registered reality oracle
-mix ccxt.verify_rest_read_contracts                  # all 427 provider-live REST-read contracts
-mix test.json --quiet --include network              # integration probes (testnet env required)
+mix test.json --quiet --failed                       # default iteration — calls real venues
+mix ccxt.verify_rest_read_contracts                  # all 427 provider-live REST-read contract cases
+mix test.json --quiet --include dangerous            # add the mutating probes
 mix ccxt.classify_signing                            # signing classification report
-mix ccxt.verify_live_drift                           # recordings vs live venue drift
 mix ccxt.verify_ws_first_frame                       # classified public WS first data frame per venue
-mix ccxt.aggregate_live_lane                         # merge live-lane surface reports into one artifact
 ```
 
-> 🚨 **`mix test.json` silently excludes every live tag by default, and that default is the gate.** A green run with no `--include` covers offline unit + signing tests only — it is not a statement about any venue. `mix ccxt.verify_rest_read_contracts` is the complete REST-read lane: it includes all network cases explicitly and reports denominator, executed count and failures. Tags: `integration`, `network` (testnet REST probes), `rest_read_contract`, `dangerous` (raw POST/PUT/DELETE), `invalid_creds`, `option_readiness`, `known_defect`, `native`.
+> 🚨 **A bare `mix test.json` calls real venues, and a missing credential is a RED.** `test/test_helper.exs` raises with the venue name and the variables to export; `ExUnit.start/1` excludes `:dangerous` and nothing else, so the network and contract cases run by default. There is no `--exclude` that makes this suite offline, and no offline suite to fall back to. Tags in use: `integration`, `network` (testnet REST probes), `rest_read_contract`, `dangerous` (mutating probes — raw POST/PUT/DELETE), `invalid_creds`, `native`. Only `:dangerous` is opt-in.
 
-> 🚨 **Known standing violation — do not read the gates as compliant.** The
-> provider-live REST-read lane runs in **no** automated schedule: absent from
-> `precommit`, `check.dispatch` and `ci`, absent from every GitHub workflow, and
-> explicitly excluded from the weekly host lane (`ops/live-drift.sh` carries
-> `--exclude rest_read_contract`). Its denominator was also cut from 890 to 416
-> branches when sandbox-unhosted product surfaces were dropped — ledgered as a
-> single aggregate entry in `docs/prod-verification-ledger.md`, so the removed
-> rows are not individually recoverable. Until workbench tasks 668 -> 670 flip the
-> canonical gate, **the only thing between a venue change and a green build is
-> someone running the live lane by hand.** Run it before calling a venue-facing
-> task done, and say in the delivery that you ran it.
+> 🚨 **The complete REST-read surface runs in `mix ci`, not in `precommit`.** `mix ccxt.verify_rest_read_contracts` reports denominator, executed count and failures, and fails when `executed < denominator`. Its denominator is scoped to the provider product prefixes each venue hosts on its sandbox; a branch we cannot reach with our keys is ledgered in `docs/prod-verification-ledger.md` as unverified rather than quietly dropped. Run it before calling a venue-facing task done, and say in the delivery that you ran it.
 
-> **⚠️ `:known_defect` quarantine tag — governed, must only shrink.** A test may carry it ONLY when its assertion states the CORRECT expectation, the product is wrong, and the tag comment names the tracking issue. Never weaken an assertion to avoid the tag, and never use it to park a red whose root cause is untracked.
-
-**REST-read contracts:** `priv/authority/rest-read-contracts.json` owns the provider-source pins, operation/branch denominator, arguments, and success/error meanings for all eleven venues. `test/bourse/rest_read_contract_live_test.exs` generates only ExUnit shells; `Bourse.Test.RestReadContractScenario` performs every real call and assertion. The raw endpoint probes remain transport-level coverage for request mechanics and write surfaces.
+**REST-read contracts:** `priv/authority/rest-read-contracts.json` owns the provider-source pins, operation/branch denominator, arguments, and success/error meanings for all eleven venues. `Bourse.Test.RestReadContracts` loads and validates it — schema, provider-owned basis, authority-pin match against each venue's manifest, case-ID uniqueness, and no drift between the inventory and the callable client surface. `Bourse.Test.Generator.RestReadContract` emits mechanical ExUnit shells, `test/bourse/rest_read_contract_live_test.exs` defines one module per venue from them, and `Bourse.Test.RestReadContractScenario` performs every real call and assertion. The raw endpoint probes remain transport-level coverage for request mechanics and write surfaces.
 
 **`Bourse.Testnet` is not an application child.** It is a sandbox-only ETS credential registry that consumers must not boot; `test/test_helper.exs` starts it explicitly via `start_link/1`.
 
@@ -282,9 +278,8 @@ Loaded via `Bourse.Testnet.register_all_from_env/1` in `test_helper.exs`. Env co
 ## Do NOT edit (generated) / DO author (frozen specs)
 
 - `lib/bourse/exchanges/*.ex` — generated at compile time; never hand-edit (fix the generator).
-- `priv/specs/json/output/authored/<venue>.json` — **the complete hand-owned runtime documents** (eleven venues, schema version `3`). These you DO edit, by authoring per the loop in `docs/authored-specs.md`, then proving with a live venue call. `mix ccxt.oracle_gate` must stay green for already-registered goldens; it is not the proof for a new slice.
+- `priv/specs/json/output/authored/<venue>.json` — **the complete hand-owned runtime documents** (eleven venues, schema version `3`). These you DO edit, by authoring per the loop in `docs/authored-specs.md`, then proving each claim with a live call against the venue's own host.
 - `priv/specs/json/output/<venue>.json` — frozen CCXT-derived **reference** siblings (the 16-venue slice), pinned by `reference_corpus.json`. Never loaded at runtime, never shipped in the Hex package; read-only authoring/test input (e.g. the test-only `markets.symbols_index` used by integration symbol selection).
-- `priv/reference_cache/` — vendored market/currency slice for `Bourse.ReplayExchange`. Compatibility reference only; the one module that reads it. Neither the cache nor its reader is packaged.
 
 ## Architecture
 
@@ -315,8 +310,7 @@ Bourse.fetch_ticker(exchange, "BTC/USDT")     # Unified API
 | `Bourse.Dispatch` | Runtime dispatcher: path interpolation, base URL resolution (4 patterns), signing, HTTP delegation. |
 | `Bourse.HTTP` | Req wrapper — manual query encoding, safe retry GET/HEAD only, telemetry, circuit breaker. |
 | `Bourse.RateLimiter` | Per-credential weighted GenServer, sliding window. Key `{exchange, api_key \| :public}`. |
-| `Bourse.ReplayExchange` | **Repo-internal.** Offline replay exchange from `priv/reference_cache/`. The **only** module reading the vendored slice. |
-| `Bourse.RecordedResponseFixtures` | **Repo-internal.** Capture support and path resolution for the committed reality evidence. |
+| `Bourse.LiveLane.FirstFrame` | **Repo-internal.** Probes each venue's public WebSocket and classifies its first data frame; `mix ccxt.verify_ws_first_frame` drives it. |
 | `Bourse.Application` | Supervises `Bourse.RateLimiter` + `Bourse.RateLimiter.State` + `Bourse.Signing.Lighter.Supervisor` + `Bourse.WS.Broadcast` + `Bourse.WS.ConnectionOwner.Supervisor`. |
 
 **Unified response types:** 7 original (`Ticker`, `Trade`, `Order`, `Balance`, `Market`, `OHLCV`, `Fee`), 9 tier-1 core (`OrderBook`, `Position`, `Currency`, `Transaction`, `LedgerEntry`, `FundingRate`, `DepositAddress`, `TransferEntry`, `TradingFee`), 9 tier-2 derivatives, 9 tier-3 analytics.
@@ -361,9 +355,9 @@ The `docs/option_readiness/` JSON snapshots stay in this repo as frozen evidence
 
 ## Repo-internal tooling inside `lib/`
 
-The oracle / recording / replay / drift cluster — `Bourse.ExchangeAcceptanceFixtures`, `Bourse.PublicAcceptedRequests`, `Bourse.OracleProvenance`, `Bourse.OracleLabel`, `Bourse.ReplayExchange`, `Bourse.RecordedResponseFixtures`, `Bourse.LiveDrift`, `Bourse.Spec.Promotion` — lives in `lib/` because the `mix ccxt.*` tasks compile in `:dev`, where `elixirc_paths/1` does not carry `test/support`. It is **not** client surface: `@unpackaged_prefixes` in `mix.exs` keeps every one of them out of the tarball and out of hexdocs.
+`Bourse.LiveLane.FirstFrame` and its bootstrap live in `lib/` because the `mix ccxt.*` tasks compile in `:dev`, where `elixirc_paths/1` does not carry `test/support`. They are **not** client surface: `@unpackaged_prefixes` in `mix.exs` keeps them out of the tarball, and `document_module?/2` keeps them and every `mix ccxt.*` task but `ccxt.build_lighter_signer` out of hexdocs.
 
-**Anything you add to that cluster inherits the exclusion — add its prefix.** These modules read `test/fixtures/**` and `priv/reference_cache/`, which are never packaged, and they may use `:dev`/`:test`-only deps. A shipped copy fails twice over: on missing files at runtime, and at the consumer's *compile* — the original case was `Req.Plug`, which exists only from req 0.7 and only behind the `only: [:dev, :test]` `:plug` dep, so consumers resolving `~> 0.6.1` got an undefined-module warning out of two fixture modules. `test/mix_project_test.exs` gates both halves: the package file list, and an AST scan asserting no shipped module names a dependency a consumer may not have.
+**Anything you add to that cluster inherits the exclusion — add its prefix.** These modules may use `:dev`/`:test`-only deps, and a shipped copy fails at the *consumer's* compile rather than ours: the original case was `Req.Plug`, which exists only from req 0.7 and only behind the `only: [:dev, :test]` `:plug` dep, so consumers resolving `~> 0.6.1` got an undefined-module warning out of two repo-internal modules.
 
 ## Git commit configuration
 

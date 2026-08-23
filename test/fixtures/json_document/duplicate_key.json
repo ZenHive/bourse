@@ -1,7 +1,0 @@
-{
-  "methods": {
-    "fetchTicker": [
-      {"body": {"price": "1"}, "body": {"price": "2"}}
-    ]
-  }
-}

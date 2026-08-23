@@ -1,35 +1,17 @@
 alias Mix.Tasks.Ccxt.BuildLighterSigner
 
-# Integration tests hit live exchange sandboxes and require credentials.
-# They never run by accident — include with `mix test --include integration`.
-# Network/invalid_creds (T67) hit live exchanges; run with `mix test --include network`.
-# rest_read_contract is the provider-live REST-read lane — run with
-# `mix ccxt.verify_rest_read_contracts`, not the default suite.
-# known_defect marks a test whose assertion is CORRECT but which fails against a
-# real, filed product defect — quarantined so the gate stays honest without
-# ratifying the bug. Each one names its tracking task inline. Run the set with
-# `mix test --include known_defect`; the list must shrink, never grow silently.
+# This suite is provider-live. There is no default tag exclusion and no offline
+# substitute: a venue we cannot reach, or a credential we do not hold, is a RED
+# with actionable setup text — never a silent skip. `critical-rules.md`
+# § LIVE E2E FIRST is the standing rule; `:dangerous` is the one opt-in gate,
+# because a mutating probe must be requested deliberately.
 if failures_manifest_path = System.get_env("BOURSE_FIXTURE_FAILURES_MANIFEST_PATH") do
   Application.put_env(:ex_unit, :failures_manifest_path, failures_manifest_path)
 end
 
-# Stub-driven tests exercise the real retry path against `Req.Test` transport
-# errors and 503s, and were paying production exponential backoff to do it —
-# over half the suite's wall clock was `Process.sleep`. Zero keeps the retry
-# code path (attempt counts, melt decisions, telemetry) fully exercised while
-# removing the sleep. Tests that assert real backoff behavior pass their own
-# `:retry_delay` per call, which overrides this.
-Application.put_env(:bourse, :retry_delay, 0)
-
-# The default offline suite includes the exchange-acceptance oracle gate, which
-# replays Lighter's signed accepted-request golden by rebuilding a zk-Schnorr
-# signature through the native helper. Build the helper up front when the Go/C
-# toolchain is present so the replay has it — `precommit` runs this suite before
-# `check.dispatch`'s dedicated `ccxt.check_lighter_signer` step builds it, so a
-# cold worktree would otherwise fail the gate. Idempotent: only builds when the
-# binary is absent; when the toolchain is unavailable the replay fails loudly.
-# Exact executable name — a wildcard would also match build artifacts
-# (coverage .gcno/.gcda files) and skip the rebuild with no executable present.
+# The native Lighter signer is required by the zk-signing path. Build it up front
+# when the Go/C toolchain is present; idempotent, and a missing toolchain lets the
+# signing tests fail loudly rather than silently not running.
 lighter_target = BuildLighterSigner.host_target()
 
 lighter_binary_present? =
@@ -45,51 +27,33 @@ if not lighter_binary_present? do
   end
 end
 
-ExUnit.start(
-  exclude: [
-    :integration,
-    :dangerous,
-    :network,
-    :invalid_creds,
-    :known_defect,
-    :native
-  ]
-)
+ExUnit.start(exclude: [:dangerous])
 
 # The sandbox credential registry is not an application child (a consumer must
 # not boot a test-only ETS registry), so the suite starts it itself. Linked to
 # the test_helper process, it lives for the whole run.
 {:ok, _testnet} = Bourse.Testnet.start_link([])
 
-# Register testnet credentials for any exchange whose env vars are set.
-# Provider-live contract and raw private probes flunk with actionable setup
-# instructions for exchanges whose credentials have not been registered.
-#
-# Add a supported venue here only after its owned spec exposes a real sandbox
-# host/flag.
-Bourse.Testnet.register_all_from_env([
-  {:bybit, testnet: true},
-  {:binance, testnet: true},
-  {:binance, :futures, testnet: true},
-  {:deribit, testnet: true},
+# Every venue below MUST register. `Bourse.Testnet.register/3` answers `:skipped`
+# when its env vars are absent — that is a legitimate library answer, but for this
+# suite it is a setup failure, so it is raised here instead of quietly shrinking
+# the live surface. Venues whose credentials follow the {EXCHANGE}_TESTNET_*
+# convention:
+env_registrations = [
+  {:bybit, [testnet: true]},
+  {:binance, [testnet: true]},
+  {:binance, :futures, [testnet: true]},
+  {:deribit, [testnet: true]},
   # Task 210 — Derive testnet (X-Lyra* session-key auth; wallet = api_key)
-  {:derive, testnet: true},
+  {:derive, [testnet: true]},
   # Task 339 — Hyperliquid testnet (EVM wallet: api_key=address, secret=private key)
-  {:hyperliquid, testnet: true}
-])
+  {:hyperliquid, [testnet: true]}
+]
 
-# Venues whose credentials don't follow the {EXCHANGE}_TESTNET_* convention.
-# Each register/3 call skips silently when its env vars are absent.
-
-# Alpaca paper-trading keys are the plain ALPACA_API_KEY/SECRET pair.
-Bourse.Testnet.register(:alpaca, :default,
-  api_key: System.get_env("ALPACA_API_KEY"),
-  secret: System.get_env("ALPACA_API_SECRET"),
-  sandbox: true
-)
-
-# The binancecoinm/binanceusdm demo hosts authenticate with the shared
-# BINANCE_FUTURES_TEST(NET) pair (one demo account, two wallets).
+# Venues whose credentials don't follow that convention. Alpaca paper-trading
+# uses the plain pair; binancecoinm/binanceusdm share one demo account across two
+# wallets; OKX uses the international demo trio; Lighter uses zk key/account
+# indices plus a 40-byte hex signing key.
 binance_futures_key =
   System.get_env("BINANCE_FUTURES_TESTNET_API_KEY") ||
     System.get_env("BINANCE_FUTURES_TEST_API_KEY")
@@ -98,27 +62,59 @@ binance_futures_secret =
   System.get_env("BINANCE_FUTURES_TESTNET_API_SECRET") ||
     System.get_env("BINANCE_FUTURES_TEST_API_SECRET")
 
-for exchange <- [:binanceusdm, :binancecoinm] do
-  Bourse.Testnet.register(exchange, :default,
-    api_key: binance_futures_key,
-    secret: binance_futures_secret,
-    sandbox: true
-  )
+explicit_registrations =
+  [
+    {:alpaca,
+     [
+       api_key: System.get_env("ALPACA_API_KEY"),
+       secret: System.get_env("ALPACA_API_SECRET"),
+       sandbox: true
+     ]},
+    {:okx,
+     [
+       api_key: System.get_env("OKX_INTL_API_KEY"),
+       secret: System.get_env("OKX_INTL_API_SECRET"),
+       password: System.get_env("OKX_INTL_PASSPHRASE"),
+       sandbox: true
+     ]},
+    {:lighter,
+     [
+       api_key: System.get_env("LIGHTER_TESTNET_API_KEY_INDEX"),
+       uid: System.get_env("LIGHTER_TESTNET_ACCOUNT_INDEX"),
+       secret: System.get_env("LIGHTER_TESTNET_API_PRIVATE_KEY"),
+       sandbox: true
+     ]}
+  ] ++
+    for exchange <- [:binanceusdm, :binancecoinm] do
+      {exchange, [api_key: binance_futures_key, secret: binance_futures_secret, sandbox: true]}
+    end
+
+registration_results =
+  Enum.map(env_registrations, fn
+    {exchange, opts} ->
+      {exchange, :default, Bourse.Testnet.register_from_env(exchange, :default, opts)}
+
+    {exchange, sandbox_key, opts} ->
+      {exchange, sandbox_key, Bourse.Testnet.register_from_env(exchange, sandbox_key, opts)}
+  end) ++
+    Enum.map(explicit_registrations, fn {exchange, opts} ->
+      {exchange, :default, Bourse.Testnet.register(exchange, :default, opts)}
+    end)
+
+unregistered =
+  for {exchange, sandbox_key, result} <- registration_results, result != :ok do
+    "  #{exchange}/#{sandbox_key} -> #{inspect(result)}"
+  end
+
+if unregistered != [] do
+  raise """
+  Provider-live credentials are missing; this suite has no offline mode.
+
+  #{Enum.join(unregistered, "\n")}
+
+  Every venue above needs its testnet/demo credentials exported before the suite
+  can make a statement about it. The per-venue variable names and signup URLs are
+  in CLAUDE.md § Venue authority index. Running without them would report a green
+  that covers nothing, which is the exact failure this suite exists to prevent.
+  """
 end
-
-# OKX international demo trio (www.okx.com + x-simulated-trading: 1).
-Bourse.Testnet.register(:okx, :default,
-  api_key: System.get_env("OKX_INTL_API_KEY"),
-  secret: System.get_env("OKX_INTL_API_SECRET"),
-  password: System.get_env("OKX_INTL_PASSPHRASE"),
-  sandbox: true
-)
-
-# Lighter zk credentials: api_key = key index, uid = account index,
-# secret = 40-byte hex API signing key.
-Bourse.Testnet.register(:lighter, :default,
-  api_key: System.get_env("LIGHTER_TESTNET_API_KEY_INDEX"),
-  uid: System.get_env("LIGHTER_TESTNET_ACCOUNT_INDEX"),
-  secret: System.get_env("LIGHTER_TESTNET_API_PRIVATE_KEY"),
-  sandbox: true
-)

@@ -13,7 +13,7 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
   alias Bourse.OrderList
   alias Bourse.Position
   alias Bourse.Test.CircuitBreakerControl
-  alias Bourse.Test.FixtureGateIsolation
+  alias Bourse.Test.LiveGateIsolation
 
   @binance_eapi_exchange_info_url "https://eapi.binance.com/eapi/v1/exchangeInfo"
   @usdm_lifecycle_symbol "BTC/USDT:USDT"
@@ -54,9 +54,9 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
   @moduletag :network
 
   setup do
-    FixtureGateIsolation.isolate!("binance")
-    FixtureGateIsolation.isolate!("binancecoinm")
-    FixtureGateIsolation.isolate!("binanceusdm")
+    LiveGateIsolation.isolate!("binance")
+    LiveGateIsolation.isolate!("binancecoinm")
+    LiveGateIsolation.isolate!("binanceusdm")
     :ok
   end
 

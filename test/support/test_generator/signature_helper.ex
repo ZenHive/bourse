@@ -88,9 +88,10 @@ defmodule Bourse.Test.Generator.SignatureHelper do
     end
 
     sig = pairs["sig"]
+    sig_length = String.length(sig)
 
-    assert String.length(sig) == @signature_lengths.sha256.hex,
-           "Expected sig 64-char hex, got #{String.length(sig)}: #{sig}"
+    assert sig_length == @signature_lengths.sha256.hex,
+           "Expected sig 64-char hex, got #{sig_length}: #{sig}"
 
     assert String.match?(sig, ~r/^[0-9a-f]+$/),
            "Expected sig lowercase hex, got: #{sig}"
@@ -403,9 +404,10 @@ defmodule Bourse.Test.Generator.SignatureHelper do
            "Hex signature should be hex-only, got: #{signature}"
 
     expected = hex_length(algorithm)
+    actual = String.length(signature)
 
-    assert String.length(signature) == expected,
-           "Expected #{algorithm} hex length #{expected}, got #{String.length(signature)}"
+    assert actual == expected,
+           "Expected #{algorithm} hex length #{expected}, got #{actual}"
 
     :ok
   end
@@ -456,8 +458,7 @@ defmodule Bourse.Test.Generator.SignatureHelper do
     req = if has_auth_source?(r, "timestamp"), do: req ++ [:timestamp_header], else: req
     req = if has_auth_source?(r, "nonce"), do: req ++ [:nonce_header], else: req
     loc = recipe_timestamp_location(signing) || get_in(r, ["signature_placement", "location"])
-    req = if loc == "header", do: req ++ [:signature_header], else: req
-    req
+    if loc == "header", do: req ++ [:signature_header], else: req
   end
 
   defp has_auth_source?(nil, _), do: false

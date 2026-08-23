@@ -31,6 +31,44 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   source is missing, so a Deribit `reduce_only` is no longer dropped.
 - Direction-bearing `endpoint_selection` cannot carry a silent `default`.
 
+### Removed
+
+- The mock/fixture/replay test lane is gone: `test/fixtures/` and
+  `priv/reference_cache/`, the `ccxt.oracle_gate` / `ccxt.promote_venue` /
+  `ccxt.record_fixtures` / `ccxt.record_accepted_requests{,.bulk}` /
+  `ccxt.capture_provider_operations` / `ccxt.capture_deribit_mutations` /
+  `ccxt.verify_live_drift` Mix tasks, and the modules that backed them
+  (`Bourse.RecordedResponseFixtures`, `Bourse.ReplayExchange`,
+  `Bourse.OracleProvenance`, `Bourse.OracleLabel`,
+  `Bourse.ExchangeAcceptanceFixtures`, `Bourse.PublicAcceptedRequests`,
+  `Bourse.Spec.Promotion`, `Bourse.LiveDrift`) along with the test files that
+  asserted venue behaviour against them. The GitHub-shaped reporting
+  apparatus that sat on top of it is gone too: the `Bourse.LiveLane`
+  aggregator module, the `mix ccxt.aggregate_live_lane` task, and
+  `ops/live-drift.sh` with the rest of the `ops/` directory —
+  `test/mix/tasks/ccxt_live_lane_test.exs` and the aggregation assertions in
+  the renamed `test/bourse/ws_first_frame_test.exs` (formerly
+  `live_lane_test.exs`) are gone with it. `Bourse.LiveLane.FirstFrame` and
+  `Bourse.LiveLane.Bootstrap` survive under that namespace as the classified
+  public WebSocket first-frame check (`mix ccxt.verify_ws_first_frame`),
+  with no parent aggregator left to read `GITHUB_RUN_ID` or assemble a
+  per-run report. All four GitHub Actions workflows (`ci.yml`,
+  `integration.yml`, `lighter-signer.yml`, `live-drift.yml`) are removed;
+  there is no GitHub Actions CI, no scheduled lane, and no cron. The suite
+  is provider-live only: `test/test_helper.exs` raises when a venue's
+  testnet credentials are absent instead of falling back to a fixture,
+  `:dangerous` is the only default tag exclusion, and
+  `test/bourse/no_faked_provider_oracle_test.exs` is a repo-wide guard
+  forbidding `Req.Test`, `Bypass`, `Mox`, `plug: {`, fixture paths, and
+  `@tag :skip` anywhere under `test/`. `mix ci` now runs `check.dispatch`,
+  the provider-live `ccxt.verify_rest_read_contracts` REST-read contract
+  lane, the full suite under an 80% coverage gate, `deps.audit`, and
+  dialyzer; `check.dispatch` lost its `ccxt.oracle_gate` step and
+  `mix precommit` lost its `--exclude integration` filter. Every surviving
+  check — `mix ci`, `mix check.dispatch`, `mix precommit`,
+  `mix precommit.full` — runs on this host, by a person or a harness run;
+  none of it runs on a schedule.
+
 ## [0.7.0] - 2026-08-22
 
 ### Added

@@ -41,6 +41,7 @@ defmodule Bourse.Test.Generator.InvalidCredsProbe do
   """
 
   alias Bourse.Registry
+  alias Bourse.Test.Generator.TagAtoms
 
   # Unified methods that (a) take no required positional params beyond the
   # exchange and (b) are private on every exchange that exposes them.
@@ -95,8 +96,8 @@ defmodule Bourse.Test.Generator.InvalidCredsProbe do
   end
 
   defp build_test(exchange_id, method) do
-    tag_atom = String.to_atom("exchange_#{exchange_id}")
-    id_atom = String.to_atom(exchange_id)
+    tag_atom = TagAtoms.exchange_tag!(exchange_id)
+    id_atom = String.to_existing_atom(exchange_id)
 
     quote do
       @tag :invalid_creds
@@ -108,6 +109,7 @@ defmodule Bourse.Test.Generator.InvalidCredsProbe do
           try do
             Bourse.Exchange.new!(unquote(id_atom), credentials: creds)
           rescue
+            # reach:disable-next-line bare_rescue -- Exchange.new! never raises in normal operation; any exception here IS the test failure (flunk formats it), so narrowing the rescue would defeat the diagnostic
             err ->
               flunk("""
               #{unquote(exchange_id)}: Exchange.new! raised — not an auth probe failure:

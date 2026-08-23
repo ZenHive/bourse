@@ -464,7 +464,8 @@ kline array (task 449 post-land sweep). Outcome: CONFIRM venue; the shipped
   of an open question (and the task-449 promotion gate no longer flags binance).
 - *Evidence sources:* live testnet `Bourse.fetch_ohlcv` (bare array observed); binance
   per-venue fixture replay gate green on the edited spec at the time (that gate is since
-  retired — the reality oracle in `check.dispatch` is `mix ccxt.oracle_gate`).
+  retired — `check.dispatch` no longer carries an oracle step; the provider-live oracle
+  is `mix ccxt.verify_rest_read_contracts`).
 - *Implementation:* post-449 orchestrator sweep (this entry).
 
 ## 2026-07-22 — response 4.5.65 currencies adjudication (Task 442)

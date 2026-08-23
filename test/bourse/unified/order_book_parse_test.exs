@@ -11,9 +11,6 @@ defmodule Bourse.Unified.OrderBookParseTest do
   alias Bourse.OrderBook
   alias Bourse.Unified.ReadParse
 
-  @hyperliquid_l2_book_path Path.expand("../../fixtures/responses/hyperliquid/fetch_order_book.json", __DIR__)
-  @external_resource @hyperliquid_l2_book_path
-
   @supported_first_class_captures [
     # Live public API captures from 2026-07-25.
     {"deribit", "BTC/USD:BTC",
@@ -200,17 +197,6 @@ defmodule Bourse.Unified.OrderBookParseTest do
     assert OrderBook.best_bid(book) == 29_861.0
     assert OrderBook.best_ask(book) == 29_971.81
     assert OrderBook.spread(book) == 29_971.81 - 29_861.0
-  end
-
-  test "captured Hyperliquid l2Book object levels become bids and asks" do
-    body = @hyperliquid_l2_book_path |> File.read!() |> Jason.decode!()
-
-    assert {:ok, %OrderBook{} = book} =
-             parse(Exchange.new!("hyperliquid"), body, %{"symbol" => "BTC/USDC:USDC"})
-
-    assert book.bids == [[63_948.0, 0.02431], [63_945.0, 0.00802], [63_932.0, 0.04988]]
-    assert book.asks == [[63_955.0, 0.00026], [63_968.0, 0.01675], [63_977.0, 0.001]]
-    assert :ok = assert_order_book_struct(book, "BTC/USDC:USDC")
   end
 
   test "unsorted input is sorted (bids desc, asks asc) and the book is never crossed" do
