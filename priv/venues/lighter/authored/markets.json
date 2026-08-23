@@ -1,0 +1,212 @@
+{
+  "symbol_patterns": {
+    "spot": {
+      "case": "upper",
+      "date_format": null,
+      "pattern": "no_separator_upper",
+      "prefix": null,
+      "separator": "",
+      "suffix": null
+    },
+    "swap": {
+      "case": "upper",
+      "date_format": null,
+      "pattern": "implicit",
+      "prefix": null,
+      "separator": "",
+      "suffix": null
+    }
+  },
+  "currencies": {
+    "AAVE": {
+      "active": true,
+      "code": "AAVE",
+      "deposit": false,
+      "fees": {},
+      "id": "7",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "AAVE",
+      "networks": {},
+      "precision": 1e-08,
+      "type": "crypto",
+      "withdraw": false
+    },
+    "AZTEC": {
+      "active": true,
+      "code": "AZTEC",
+      "deposit": false,
+      "fees": {},
+      "id": "10",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "AZTEC",
+      "networks": {},
+      "precision": 1e-08,
+      "type": "crypto",
+      "withdraw": false
+    },
+    "ETH": {
+      "active": true,
+      "code": "ETH",
+      "deposit": false,
+      "fees": {},
+      "id": "1",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "ETH",
+      "networks": {},
+      "precision": 1e-08,
+      "type": "crypto",
+      "withdraw": false
+    },
+    "LDO": {
+      "active": true,
+      "code": "LDO",
+      "deposit": false,
+      "fees": {},
+      "id": "9",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "LDO",
+      "networks": {},
+      "precision": 1e-08,
+      "type": "crypto",
+      "withdraw": false
+    },
+    "LINK": {
+      "active": true,
+      "code": "LINK",
+      "deposit": false,
+      "fees": {},
+      "id": "5",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "LINK",
+      "networks": {},
+      "precision": 1e-08,
+      "type": "crypto",
+      "withdraw": false
+    },
+    "LIT": {
+      "active": true,
+      "code": "LIT",
+      "deposit": false,
+      "fees": {},
+      "id": "2",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "LIT",
+      "networks": {},
+      "precision": 1e-08,
+      "type": "crypto",
+      "withdraw": false
+    },
+    "SKY": {
+      "active": true,
+      "code": "SKY",
+      "deposit": false,
+      "fees": {},
+      "id": "8",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "SKY",
+      "networks": {},
+      "precision": 1e-08,
+      "type": "crypto",
+      "withdraw": false
+    },
+    "UNI": {
+      "active": true,
+      "code": "UNI",
+      "deposit": false,
+      "fees": {},
+      "id": "6",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "UNI",
+      "networks": {},
+      "precision": 1e-08,
+      "type": "crypto",
+      "withdraw": false
+    },
+    "USDC": {
+      "active": true,
+      "code": "USDC",
+      "deposit": true,
+      "fees": {},
+      "id": "3",
+      "limits": {
+        "deposit": {
+          "min": 1
+        },
+        "withdraw": {
+          "min": 1
+        }
+      },
+      "name": "USDC",
+      "networks": {},
+      "precision": 1e-06,
+      "type": "crypto",
+      "withdraw": true
+    }
+  },
+  "patterns": {
+    "currency_aliases": {},
+    "spot": {
+      "anomalies": [],
+      "anomaly_count": 0,
+      "case": null,
+      "examples": [],
+      "id_structure": "numeric",
+      "sample_count": 0,
+      "separator": null,
+      "suffix": null
+    },
+    "swap": {
+      "anomalies": [],
+      "anomaly_count": 0,
+      "case": null,
+      "examples": [
+        {
+          "baseId": "ETH",
+          "id": "0",
+          "quoteId": "USDC",
+          "symbol": "ETH/USDC:USDC"
+        },
+        {
+          "baseId": "BTC",
+          "id": "1",
+          "quoteId": "USDC",
+          "symbol": "BTC/USDC:USDC"
+        },
+        {
+          "baseId": "SOL",
+          "id": "2",
+          "quoteId": "USDC",
+          "symbol": "SOL/USDC:USDC"
+        }
+      ],
+      "id_structure": "numeric",
+      "sample_count": 3,
+      "separator": null,
+      "suffix": null
+    }
+  }
+}

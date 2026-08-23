@@ -1,0 +1,2185 @@
+{
+  "schema_version": 3,
+  "authored": true,
+  "frozen": true,
+  "hand_owned": true,
+  "exchange": {
+    "alias": false,
+    "certified": true,
+    "country": [],
+    "id": "binance",
+    "name": "Binance",
+    "pro": true,
+    "referral": {
+      "discount": 0.1,
+      "url": "https://accounts.binance.com/register?ref=CCXTCOM"
+    },
+    "version": null
+  },
+  "urls": {
+    "api": {
+      "ws": {
+        "private": "wss://stream.binance.com:9443/ws",
+        "public": "wss://stream.binance.com:9443/ws",
+        "sandbox_private": "wss://stream.testnet.binance.vision/ws",
+        "sandbox_public": "wss://stream.testnet.binance.vision/ws"
+      }
+    },
+    "api_management": "https://www.binance.com/en/usercenter/settings/api-management",
+    "doc": [
+      "https://developers.binance.com/en"
+    ],
+    "fees": "https://www.binance.com/en/fee/schedule",
+    "logo": "https://github.com/user-attachments/assets/e9419b93-ccb0-46aa-9bff-c883f096274b",
+    "www": "https://www.binance.com"
+  },
+  "testnet": {
+    "pattern": "separate_host",
+    "sandbox_flag_field": "sandboxMode",
+    "unresolved_reason": null,
+    "urls": {
+      "dapiPrivate": "https://demo-dapi.binance.com/dapi/v1",
+      "dapiPrivateV2": "https://demo-dapi.binance.com/dapi/v2",
+      "dapiPublic": "https://demo-dapi.binance.com/dapi/v1",
+      "fapiPrivate": "https://demo-fapi.binance.com/fapi/v1",
+      "fapiPrivateV2": "https://demo-fapi.binance.com/fapi/v2",
+      "fapiPrivateV3": "https://demo-fapi.binance.com/fapi/v3",
+      "fapiPublic": "https://demo-fapi.binance.com/fapi/v1",
+      "fapiPublicV2": "https://demo-fapi.binance.com/fapi/v2",
+      "fapiPublicV3": "https://demo-fapi.binance.com/fapi/v3",
+      "private": "https://testnet.binance.vision/api/v3",
+      "public": "https://testnet.binance.vision/api/v3",
+      "v1": "https://testnet.binance.vision/api/v1"
+    }
+  },
+  "auth": {
+    "authenticated_sections": [
+      "dapiPrivate",
+      "dapiPrivateV2",
+      "eapiPrivate",
+      "fapiPrivate",
+      "fapiPrivateV2",
+      "fapiPrivateV3",
+      "papi",
+      "papiV2",
+      "private",
+      "sapi",
+      "sapiV2",
+      "sapiV3",
+      "sapiV4"
+    ],
+    "signing_config": {
+      "api_key_header": "X-MBX-APIKEY",
+      "auto_recv_window": true,
+      "recv_window": 10000,
+      "recv_window_key": "recvWindow",
+      "signature_encoding": "hex",
+      "signature_header": "signature"
+    },
+    "signing_pattern": "hmac_sha256_query",
+    "sign_recipe": {
+      "dapiPrivate": {
+        "auth_headers": [
+          {
+            "name": "X-MBX-APIKEY",
+            "source": "api_key"
+          }
+        ],
+        "canonical_string": {
+          "*": {
+            "components": [
+              {
+                "encoder": "urlencodeJsonArray",
+                "key_order": "insertion",
+                "replacements": null,
+                "source": "query"
+              }
+            ],
+            "encoding": "url_encoded",
+            "family": "hmac_simple"
+          }
+        },
+        "crypto_op": {
+          "algo": "hmac_sha256",
+          "key_encoding": "utf8"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "patch_count": 0,
+        "pre_sign_transforms": [
+          {
+            "op": "hex_encode",
+            "target": "signature"
+          },
+          {
+            "op": "url_encode",
+            "target": "signature"
+          }
+        ],
+        "signature_placement": {
+          "key": "signature",
+          "location": "query"
+        },
+        "timestamp": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": null
+      },
+      "dapiPrivateV2": {
+        "auth_headers": [
+          {
+            "name": "X-MBX-APIKEY",
+            "source": "api_key"
+          }
+        ],
+        "canonical_string": {
+          "*": {
+            "components": [
+              {
+                "encoder": "urlencodeJsonArray",
+                "key_order": "insertion",
+                "replacements": null,
+                "source": "query"
+              }
+            ],
+            "encoding": "url_encoded",
+            "family": "hmac_simple"
+          }
+        },
+        "crypto_op": {
+          "algo": "hmac_sha256",
+          "key_encoding": "utf8"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "patch_count": 0,
+        "pre_sign_transforms": [
+          {
+            "op": "hex_encode",
+            "target": "signature"
+          },
+          {
+            "op": "url_encode",
+            "target": "signature"
+          }
+        ],
+        "signature_placement": {
+          "key": "signature",
+          "location": "query"
+        },
+        "timestamp": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": null
+      },
+      "eapiPrivate": {
+        "auth_headers": [
+          {
+            "name": "X-MBX-APIKEY",
+            "source": "api_key"
+          }
+        ],
+        "canonical_string": {
+          "*": {
+            "components": [
+              {
+                "encoder": "urlencodeJsonArray",
+                "key_order": "insertion",
+                "replacements": null,
+                "source": "query"
+              }
+            ],
+            "encoding": "url_encoded",
+            "family": "hmac_simple"
+          }
+        },
+        "crypto_op": {
+          "algo": "hmac_sha256",
+          "key_encoding": "utf8"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "patch_count": 0,
+        "pre_sign_transforms": [
+          {
+            "op": "hex_encode",
+            "target": "signature"
+          },
+          {
+            "op": "url_encode",
+            "target": "signature"
+          }
+        ],
+        "signature_placement": {
+          "key": "signature",
+          "location": "query"
+        },
+        "timestamp": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": null
+      },
+      "fapiPrivate": {
+        "auth_headers": [
+          {
+            "name": "X-MBX-APIKEY",
+            "source": "api_key"
+          }
+        ],
+        "canonical_string": {
+          "*": {
+            "components": [
+              {
+                "encoder": "urlencodeJsonArray",
+                "key_order": "insertion",
+                "replacements": null,
+                "source": "query"
+              }
+            ],
+            "encoding": "url_encoded",
+            "family": "hmac_simple"
+          }
+        },
+        "crypto_op": {
+          "algo": "hmac_sha256",
+          "key_encoding": "utf8"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "patch_count": 0,
+        "pre_sign_transforms": [
+          {
+            "op": "hex_encode",
+            "target": "signature"
+          },
+          {
+            "op": "url_encode",
+            "target": "signature"
+          }
+        ],
+        "signature_placement": {
+          "key": "signature",
+          "location": "query"
+        },
+        "timestamp": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": null
+      },
+      "fapiPrivateV2": {
+        "auth_headers": [
+          {
+            "name": "X-MBX-APIKEY",
+            "source": "api_key"
+          }
+        ],
+        "canonical_string": {
+          "*": {
+            "components": [
+              {
+                "encoder": "urlencodeJsonArray",
+                "key_order": "insertion",
+                "replacements": null,
+                "source": "query"
+              }
+            ],
+            "encoding": "url_encoded",
+            "family": "hmac_simple"
+          }
+        },
+        "crypto_op": {
+          "algo": "hmac_sha256",
+          "key_encoding": "utf8"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "patch_count": 0,
+        "pre_sign_transforms": [
+          {
+            "op": "hex_encode",
+            "target": "signature"
+          },
+          {
+            "op": "url_encode",
+            "target": "signature"
+          }
+        ],
+        "signature_placement": {
+          "key": "signature",
+          "location": "query"
+        },
+        "timestamp": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": null
+      },
+      "fapiPrivateV3": {
+        "auth_headers": [
+          {
+            "name": "X-MBX-APIKEY",
+            "source": "api_key"
+          }
+        ],
+        "canonical_string": {
+          "*": {
+            "components": [
+              {
+                "encoder": "urlencodeJsonArray",
+                "key_order": "insertion",
+                "replacements": null,
+                "source": "query"
+              }
+            ],
+            "encoding": "url_encoded",
+            "family": "hmac_simple"
+          }
+        },
+        "crypto_op": {
+          "algo": "hmac_sha256",
+          "key_encoding": "utf8"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "patch_count": 0,
+        "pre_sign_transforms": [
+          {
+            "op": "hex_encode",
+            "target": "signature"
+          },
+          {
+            "op": "url_encode",
+            "target": "signature"
+          }
+        ],
+        "signature_placement": {
+          "key": "signature",
+          "location": "query"
+        },
+        "timestamp": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": null
+      },
+      "papi": {
+        "auth_headers": [
+          {
+            "name": "X-MBX-APIKEY",
+            "source": "api_key"
+          }
+        ],
+        "canonical_string": {
+          "*": {
+            "components": [
+              {
+                "encoder": "urlencodeJsonArray",
+                "key_order": "insertion",
+                "replacements": null,
+                "source": "query"
+              }
+            ],
+            "encoding": "url_encoded",
+            "family": "hmac_simple"
+          }
+        },
+        "crypto_op": {
+          "algo": "hmac_sha256",
+          "key_encoding": "utf8"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "patch_count": 0,
+        "pre_sign_transforms": [
+          {
+            "op": "hex_encode",
+            "target": "signature"
+          },
+          {
+            "op": "url_encode",
+            "target": "signature"
+          }
+        ],
+        "signature_placement": {
+          "key": "signature",
+          "location": "query"
+        },
+        "timestamp": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": null
+      },
+      "papiV2": {
+        "auth_headers": [
+          {
+            "name": "X-MBX-APIKEY",
+            "source": "api_key"
+          }
+        ],
+        "canonical_string": {
+          "*": {
+            "components": [
+              {
+                "encoder": "urlencodeJsonArray",
+                "key_order": "insertion",
+                "replacements": null,
+                "source": "query"
+              }
+            ],
+            "encoding": "url_encoded",
+            "family": "hmac_simple"
+          }
+        },
+        "crypto_op": {
+          "algo": "hmac_sha256",
+          "key_encoding": "utf8"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "patch_count": 0,
+        "pre_sign_transforms": [
+          {
+            "op": "hex_encode",
+            "target": "signature"
+          },
+          {
+            "op": "url_encode",
+            "target": "signature"
+          }
+        ],
+        "signature_placement": {
+          "key": "signature",
+          "location": "query"
+        },
+        "timestamp": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": null
+      },
+      "private": {
+        "auth_headers": [
+          {
+            "name": "X-MBX-APIKEY",
+            "source": "api_key"
+          }
+        ],
+        "canonical_string": {
+          "*": {
+            "components": [
+              {
+                "encoder": "urlencodeJsonArray",
+                "key_order": "insertion",
+                "replacements": null,
+                "source": "query"
+              }
+            ],
+            "encoding": "url_encoded",
+            "family": "hmac_simple"
+          }
+        },
+        "crypto_op": {
+          "algo": "hmac_sha256",
+          "key_encoding": "utf8"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "patch_count": 0,
+        "pre_sign_transforms": [
+          {
+            "op": "hex_encode",
+            "target": "signature"
+          },
+          {
+            "op": "url_encode",
+            "target": "signature"
+          }
+        ],
+        "signature_placement": {
+          "key": "signature",
+          "location": "query"
+        },
+        "timestamp": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": null
+      },
+      "sapi": {
+        "auth_headers": [
+          {
+            "name": "X-MBX-APIKEY",
+            "source": "api_key"
+          }
+        ],
+        "canonical_string": {
+          "*": {
+            "components": [
+              {
+                "encoder": "urlencodeCommaSeparatedArray",
+                "key_order": "insertion",
+                "path_equals": "/asset/dust",
+                "replacements": null,
+                "source": "query"
+              },
+              {
+                "encoder": "urlencodeJsonArray",
+                "key_order": "insertion",
+                "unless_path_equals": "/asset/dust",
+                "replacements": null,
+                "source": "query"
+              }
+            ],
+            "encoding": "url_encoded",
+            "family": "hmac_simple"
+          }
+        },
+        "crypto_op": {
+          "algo": "hmac_sha256",
+          "key_encoding": "utf8"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "patch_count": 0,
+        "pre_sign_transforms": [
+          {
+            "op": "hex_encode",
+            "target": "signature"
+          },
+          {
+            "op": "url_encode",
+            "target": "signature"
+          }
+        ],
+        "signature_placement": {
+          "key": "signature",
+          "location": "query"
+        },
+        "timestamp": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": null
+      },
+      "sapiV2": {
+        "auth_headers": [
+          {
+            "name": "X-MBX-APIKEY",
+            "source": "api_key"
+          }
+        ],
+        "canonical_string": {
+          "*": {
+            "components": [
+              {
+                "encoder": "urlencodeJsonArray",
+                "key_order": "insertion",
+                "replacements": null,
+                "source": "query"
+              }
+            ],
+            "encoding": "url_encoded",
+            "family": "hmac_simple"
+          }
+        },
+        "crypto_op": {
+          "algo": "hmac_sha256",
+          "key_encoding": "utf8"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "patch_count": 0,
+        "pre_sign_transforms": [
+          {
+            "op": "hex_encode",
+            "target": "signature"
+          },
+          {
+            "op": "url_encode",
+            "target": "signature"
+          }
+        ],
+        "signature_placement": {
+          "key": "signature",
+          "location": "query"
+        },
+        "timestamp": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": null
+      },
+      "sapiV3": {
+        "auth_headers": [
+          {
+            "name": "X-MBX-APIKEY",
+            "source": "api_key"
+          }
+        ],
+        "canonical_string": {
+          "*": {
+            "components": [
+              {
+                "encoder": "urlencodeJsonArray",
+                "key_order": "insertion",
+                "replacements": null,
+                "source": "query"
+              }
+            ],
+            "encoding": "url_encoded",
+            "family": "hmac_simple"
+          }
+        },
+        "crypto_op": {
+          "algo": "hmac_sha256",
+          "key_encoding": "utf8"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "patch_count": 0,
+        "pre_sign_transforms": [
+          {
+            "op": "hex_encode",
+            "target": "signature"
+          },
+          {
+            "op": "url_encode",
+            "target": "signature"
+          }
+        ],
+        "signature_placement": {
+          "key": "signature",
+          "location": "query"
+        },
+        "timestamp": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": null
+      },
+      "sapiV4": {
+        "auth_headers": [
+          {
+            "name": "X-MBX-APIKEY",
+            "source": "api_key"
+          }
+        ],
+        "canonical_string": {
+          "*": {
+            "components": [
+              {
+                "encoder": "urlencodeJsonArray",
+                "key_order": "insertion",
+                "replacements": null,
+                "source": "query"
+              }
+            ],
+            "encoding": "url_encoded",
+            "family": "hmac_simple"
+          }
+        },
+        "crypto_op": {
+          "algo": "hmac_sha256",
+          "key_encoding": "utf8"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "patch_count": 0,
+        "pre_sign_transforms": [
+          {
+            "op": "hex_encode",
+            "target": "signature"
+          },
+          {
+            "op": "url_encode",
+            "target": "signature"
+          }
+        ],
+        "signature_placement": {
+          "key": "signature",
+          "location": "query"
+        },
+        "timestamp": {
+          "format": "integer",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": null
+      }
+    }
+  },
+  "config": {
+    "credentials": {
+      "accountId": false,
+      "apiKey": true,
+      "login": false,
+      "password": false,
+      "privateKey": false,
+      "secret": true,
+      "token": false,
+      "twofa": false,
+      "uid": false,
+      "walletAddress": false
+    },
+    "default_family": "spot",
+    "flags": {
+      "dex": false
+    },
+    "limits": {
+      "amount": {
+        "max": null,
+        "min": null
+      },
+      "cost": {
+        "max": null,
+        "min": null
+      },
+      "leverage": {
+        "max": null,
+        "min": null
+      },
+      "price": {
+        "max": null,
+        "min": null
+      }
+    },
+    "rate_limit_meta": {
+      "enableRateLimit": true,
+      "timeout": 10000
+    },
+    "routing": {
+      "accountsByType": {
+        "cross": "MARGIN",
+        "delivery": "CMFUTURE",
+        "funding": "FUNDING",
+        "future": "UMFUTURE",
+        "inverse": "CMFUTURE",
+        "linear": "UMFUTURE",
+        "main": "MAIN",
+        "margin": "MARGIN",
+        "option": "OPTION",
+        "spot": "MAIN",
+        "swap": "UMFUTURE"
+      },
+      "networks": {
+        "ACA": "ACA",
+        "ADA": "ADA",
+        "ALGO": "ALGO",
+        "APT": "APT",
+        "ARBONE": "ARBITRUM",
+        "ASTR": "ASTR",
+        "AVAXC": "AVAXC",
+        "BASE": "BASE",
+        "BEP2": "BNB",
+        "BEP20": "BSC",
+        "BSC": "BSC",
+        "CELO": "CELO",
+        "CFX": "CFX",
+        "EGLD": "EGLD",
+        "EOS": "EOS",
+        "ERC20": "ETH",
+        "ETH": "ETH",
+        "HBAR": "HBAR",
+        "KAVA": "KAVA",
+        "KLAY": "KLAY",
+        "MATIC": "MATIC",
+        "METIS": "METIS",
+        "NEAR": "NEAR",
+        "ONT": "ONT",
+        "OP": "OPTIMISM",
+        "OPTIMISM": "OPTIMISM",
+        "OSMO": "OSMO",
+        "RSK": "RSK",
+        "RUNE": "RUNE",
+        "SCROLL": "SCROLL",
+        "SCRT": "SCRT",
+        "SEI": "SEI",
+        "SOL": "SOL",
+        "SPL": "SOL",
+        "STX": "STX",
+        "SUI": "SUI",
+        "TON": "TON",
+        "TRC20": "TRX",
+        "TRX": "TRX",
+        "XLM": "XLM",
+        "XTZ": "XTZ",
+        "ZKSYNCERA": "ZKSYNCERA"
+      },
+      "timeInForce": null
+    },
+    "status": {
+      "eta": null,
+      "info": null,
+      "status": "ok",
+      "updated": null,
+      "url": null
+    }
+  },
+  "fees": {
+    "funding": {
+      "deposit": {},
+      "percentage": "__undefined",
+      "tierBased": "__undefined",
+      "withdraw": {}
+    },
+    "inverse": {
+      "trading": {
+        "feeSide": "base",
+        "maker": 0.0001,
+        "percentage": true,
+        "taker": 0.0005,
+        "tierBased": true,
+        "tiers": {
+          "maker": [
+            [
+              0,
+              0.0001
+            ],
+            [
+              250,
+              8e-05
+            ],
+            [
+              2500,
+              5e-05
+            ],
+            [
+              7500,
+              3e-06
+            ],
+            [
+              22500,
+              0
+            ],
+            [
+              50000,
+              -5e-05
+            ],
+            [
+              100000,
+              -6e-05
+            ],
+            [
+              200000,
+              -7e-05
+            ],
+            [
+              400000,
+              -8e-05
+            ],
+            [
+              750000,
+              -9e-05
+            ]
+          ],
+          "taker": [
+            [
+              0,
+              0.0005
+            ],
+            [
+              250,
+              0.00045
+            ],
+            [
+              2500,
+              0.0004
+            ],
+            [
+              7500,
+              0.0003
+            ],
+            [
+              22500,
+              0.00025
+            ],
+            [
+              50000,
+              0.00024
+            ],
+            [
+              100000,
+              0.00024
+            ],
+            [
+              200000,
+              0.00024
+            ],
+            [
+              400000,
+              0.00024
+            ],
+            [
+              750000,
+              0.00024
+            ]
+          ]
+        }
+      }
+    },
+    "linear": {
+      "trading": {
+        "feeSide": "quote",
+        "maker": 0.0002,
+        "percentage": true,
+        "taker": 0.0005,
+        "tierBased": true,
+        "tiers": {
+          "maker": [
+            [
+              0,
+              0.0002
+            ],
+            [
+              250,
+              0.00016
+            ],
+            [
+              2500,
+              0.00014
+            ],
+            [
+              7500,
+              0.00012
+            ],
+            [
+              22500,
+              0.0001
+            ],
+            [
+              50000,
+              8e-05
+            ],
+            [
+              100000,
+              6e-05
+            ],
+            [
+              200000,
+              4e-05
+            ],
+            [
+              400000,
+              2e-05
+            ],
+            [
+              750000,
+              0
+            ]
+          ],
+          "taker": [
+            [
+              0,
+              0.0004
+            ],
+            [
+              250,
+              0.0004
+            ],
+            [
+              2500,
+              0.00035
+            ],
+            [
+              7500,
+              0.00032
+            ],
+            [
+              22500,
+              0.0003
+            ],
+            [
+              50000,
+              0.00027
+            ],
+            [
+              100000,
+              0.00025
+            ],
+            [
+              200000,
+              0.00022
+            ],
+            [
+              400000,
+              0.0002
+            ],
+            [
+              750000,
+              0.00017
+            ]
+          ]
+        }
+      }
+    },
+    "option": {},
+    "static_market_fees": true,
+    "trading": {
+      "feeSide": "get",
+      "maker": 0.001,
+      "percentage": true,
+      "taker": 0.001,
+      "tierBased": false
+    }
+  },
+  "websocket": {
+    "auth": {
+      "authenticate_defined": true,
+      "credentials": [
+        "apiKey",
+        "secret"
+      ],
+      "mechanism": "sign_in_message",
+      "message": {
+        "keys": [
+          "id",
+          "method",
+          "params"
+        ],
+        "method": "userDataStream.subscribe.signature",
+        "op": null
+      },
+      "resolved_from": "self",
+      "source": "venue_websocket_api",
+      "unresolved_reason": null
+    },
+    "dispatch": {
+      "discriminators": [
+        "e",
+        "method"
+      ],
+      "entries": [
+        {
+          "channel": "depthUpdate",
+          "handler": "handleOrderBook"
+        },
+        {
+          "channel": "trade",
+          "handler": "handleTrade"
+        },
+        {
+          "channel": "aggTrade",
+          "handler": "handleTrade"
+        },
+        {
+          "channel": "kline",
+          "handler": "handleOHLCV"
+        },
+        {
+          "channel": "markPrice_kline",
+          "handler": "handleOHLCV"
+        },
+        {
+          "channel": "indexPrice_kline",
+          "handler": "handleOHLCV"
+        },
+        {
+          "channel": "1hTicker@arr",
+          "handler": "handleTickers"
+        },
+        {
+          "channel": "4hTicker@arr",
+          "handler": "handleTickers"
+        },
+        {
+          "channel": "1dTicker@arr",
+          "handler": "handleTickers"
+        },
+        {
+          "channel": "24hrTicker@arr",
+          "handler": "handleTickers"
+        },
+        {
+          "channel": "24hrMiniTicker@arr",
+          "handler": "handleTickers"
+        },
+        {
+          "channel": "1hTicker",
+          "handler": "handleTickers"
+        },
+        {
+          "channel": "4hTicker",
+          "handler": "handleTickers"
+        },
+        {
+          "channel": "1dTicker",
+          "handler": "handleTickers"
+        },
+        {
+          "channel": "24hrTicker",
+          "handler": "handleTickers"
+        },
+        {
+          "channel": "24hrMiniTicker",
+          "handler": "handleTickers"
+        },
+        {
+          "channel": "markPriceUpdate",
+          "handler": "handleMarkPrices"
+        },
+        {
+          "channel": "markPriceUpdate@arr",
+          "handler": "handleMarkPrices"
+        },
+        {
+          "channel": "bookTicker",
+          "handler": "handleBidsAsks"
+        },
+        {
+          "channel": "outboundAccountPosition",
+          "handler": "handleBalance"
+        },
+        {
+          "channel": "balanceUpdate",
+          "handler": "handleBalance"
+        },
+        {
+          "channel": "ACCOUNT_UPDATE",
+          "handler": "handleAcountUpdate"
+        },
+        {
+          "channel": "executionReport",
+          "handler": "handleOrderUpdate"
+        },
+        {
+          "channel": "ORDER_TRADE_UPDATE",
+          "handler": "handleOrderUpdate"
+        },
+        {
+          "channel": "ALGO_UPDATE",
+          "handler": "handleOrderUpdate"
+        },
+        {
+          "channel": "forceOrder",
+          "handler": "handleLiquidation"
+        },
+        {
+          "channel": "eventStreamTerminated",
+          "handler": "handleEventStreamTerminated"
+        },
+        {
+          "channel": "externalLockUpdate",
+          "handler": "handleBalance"
+        }
+      ],
+      "handle_message_defined": true,
+      "kind": "routed",
+      "resolved_from": "self",
+      "source": "pro_handle_message",
+      "unresolved": [],
+      "unresolved_reason": null
+    },
+    "heartbeat": {
+      "has_pong_handler": false,
+      "keep_alive_ms": 180000,
+      "keep_alive_resolved_from": "self",
+      "max_ping_pong_misses": 2,
+      "ping_kind": "native_frame",
+      "ping_payload": null,
+      "ping_payload_kind": null,
+      "source": "pro_describe",
+      "unresolved_reason": null
+    },
+    "ohlcv_semantics": {
+      "cache_limit_default": 1000,
+      "cache_limit_field": "OHLCVLimit",
+      "cache_type": "ArrayCacheByTimestamp",
+      "closed_signal": null,
+      "ohlcv_defined": true,
+      "resolved_from": "self",
+      "source": "pro_handle_ohlcv",
+      "timeframe_key": "i",
+      "unresolved": [
+        {
+          "reason": "closed_signal_not_classifiable"
+        }
+      ],
+      "unresolved_reason": null,
+      "update_model": "replace_latest_then_append"
+    },
+    "orderbook_semantics": {
+      "apply_mode": "incremental",
+      "checksum": {
+        "algorithm": null,
+        "field": null,
+        "present": false
+      },
+      "discriminator": {
+        "delta_values": [],
+        "field": null,
+        "snapshot_values": []
+      },
+      "handle_orderbook_defined": true,
+      "resolved_from": "self",
+      "sequence_fields": [
+        "U",
+        "nonce",
+        "pu",
+        "u"
+      ],
+      "source": "pro_handle_orderbook",
+      "unresolved_reason": null
+    },
+    "subscribe": {
+      "args_key": "params",
+      "channels": {
+        "watchMultiTickerHelper": [
+          "{symbol}@ticker"
+        ],
+        "watchOHLCVForSymbols": [
+          "{symbol}@kline_1m"
+        ],
+        "watchOrderBook": [
+          "{symbol}@depth20@100ms"
+        ],
+        "watchOrderBookForSymbols": [
+          "{symbol}@depth20@100ms"
+        ],
+        "watchTicker": [
+          "{symbol}@miniTicker"
+        ],
+        "watchTickers": [
+          "{symbol}@miniTicker"
+        ],
+        "watchTrades": [
+          "{symbol}@trade"
+        ],
+        "watchTradesForSymbols": [
+          "{symbol}@trade"
+        ]
+      },
+      "discriminant": "method",
+      "envelope_keys": [
+        "method",
+        "params",
+        "id"
+      ],
+      "mechanism": "json_message",
+      "resolved_from": "self",
+      "source": "pro_watch",
+      "subscribe_op": "SUBSCRIBE",
+      "unresolved_reason": null,
+      "unsubscribe_op": "UNSUBSCRIBE"
+    },
+    "trades_semantics": {
+      "cache_limit_default": 1000,
+      "cache_limit_field": "tradesLimit",
+      "cache_type": "ArrayCache",
+      "dedup_key": null,
+      "my_trades": {
+        "cache_limit_default": 1000,
+        "cache_limit_field": "tradesLimit",
+        "cache_type": "ArrayCacheBySymbolById",
+        "dedup_key": "order",
+        "defined": true
+      },
+      "resolved_from": "self",
+      "source": "pro_handle_trades",
+      "trades_defined": true,
+      "unresolved": [
+        {
+          "reason": "dedup_key_not_classifiable"
+        }
+      ],
+      "unresolved_reason": null,
+      "update_model": "append"
+    },
+    "urls": {
+      "private": "wss://ws-api.binance.com:443/ws-api/v3",
+      "public": "wss://stream.binance.com:9443/ws",
+      "sandbox_private": "wss://ws-api.testnet.binance.vision/ws-api/v3",
+      "sandbox_public": "wss://stream.testnet.binance.vision/ws",
+      "unresolved_reason": null
+    }
+  },
+  "emulated_methods": [
+    {
+      "name": "fetchCanceledAndClosedOrders",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "fetchCanceledOrders",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "fetchClosedOrders",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "fetchDepositWithdrawFee",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "fetchFundingInterval",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "fetchIsolatedBorrowRate",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "fetchLeverage",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "fetchMarketLeverageTiers",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "fetchTradingLimits",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "fetchTransactionFee",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    }
+  ],
+  "capabilities": {
+    "features": {
+      "forDerivatives": {
+        "createOrder": {
+          "attachedStopLossTakeProfit": "__undefined",
+          "hedged": true,
+          "iceberg": false,
+          "leverage": false,
+          "marginMode": false,
+          "marketBuyByCost": true,
+          "marketBuyRequiresPrice": false,
+          "selfTradePrevention": true,
+          "stopLossPrice": true,
+          "takeProfitPrice": true,
+          "timeInForce": {
+            "FOK": true,
+            "GTD": true,
+            "IOC": true,
+            "PO": true
+          },
+          "trailing": true,
+          "triggerPrice": true,
+          "triggerPriceType": {
+            "index": false,
+            "last": true,
+            "mark": true
+          }
+        },
+        "createOrders": {
+          "max": 5
+        },
+        "fetchClosedOrders": {
+          "daysBack": 90,
+          "daysBackCanceled": 3,
+          "limit": 1000,
+          "marginMode": true,
+          "symbolRequired": true,
+          "trailing": false,
+          "trigger": false,
+          "untilDays": 7
+        },
+        "fetchMyTrades": {
+          "daysBack": "__undefined",
+          "limit": 1000,
+          "marginMode": false,
+          "symbolRequired": true,
+          "untilDays": 7
+        },
+        "fetchOHLCV": {
+          "limit": 500
+        },
+        "fetchOpenOrders": {
+          "limit": 500,
+          "marginMode": true,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": false
+        },
+        "fetchOrder": {
+          "marginMode": false,
+          "symbolRequired": true,
+          "trailing": false,
+          "trigger": false
+        },
+        "fetchOrders": {
+          "daysBack": 90,
+          "limit": 1000,
+          "marginMode": true,
+          "symbolRequired": true,
+          "trailing": false,
+          "trigger": false,
+          "untilDays": 7
+        },
+        "sandbox": true
+      },
+      "future": {
+        "inverse": {
+          "extends": "forDerivatives"
+        },
+        "linear": {
+          "extends": "forDerivatives"
+        }
+      },
+      "spot": {
+        "createOrder": {
+          "attachedStopLossTakeProfit": "__undefined",
+          "hedged": true,
+          "icebergAmount": true,
+          "leverage": false,
+          "marginMode": true,
+          "marketBuyByCost": true,
+          "marketBuyRequiresPrice": false,
+          "selfTradePrevention": {
+            "EXPIRE_BOTH": true,
+            "EXPIRE_MAKER": true,
+            "EXPIRE_TAKER": true,
+            "NONE": true
+          },
+          "stopLossPrice": true,
+          "takeProfitPrice": true,
+          "timeInForce": {
+            "FOK": true,
+            "GTD": false,
+            "IOC": true,
+            "PO": true
+          },
+          "trailing": false,
+          "triggerDirection": false,
+          "triggerPrice": true,
+          "triggerPriceType": "__undefined"
+        },
+        "createOrders": "__undefined",
+        "fetchClosedOrders": {
+          "daysBack": "__undefined",
+          "daysBackCanceled": "__undefined",
+          "limit": 1000,
+          "marginMode": true,
+          "symbolRequired": true,
+          "trailing": false,
+          "trigger": false,
+          "untilDays": 10000
+        },
+        "fetchCurrencies": {
+          "private": true
+        },
+        "fetchMyTrades": {
+          "daysBack": "__undefined",
+          "limit": 1000,
+          "marginMode": false,
+          "symbolRequired": true,
+          "untilDays": 1
+        },
+        "fetchOHLCV": {
+          "limit": 1000
+        },
+        "fetchOpenOrders": {
+          "limit": "__undefined",
+          "marginMode": true,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": false
+        },
+        "fetchOrder": {
+          "marginMode": true,
+          "symbolRequired": true,
+          "trailing": false,
+          "trigger": false
+        },
+        "fetchOrders": {
+          "daysBack": "__undefined",
+          "limit": 1000,
+          "marginMode": true,
+          "symbolRequired": true,
+          "trailing": false,
+          "trigger": false,
+          "untilDays": 10000
+        },
+        "sandbox": true
+      },
+      "swap": {
+        "inverse": {
+          "extends": "forDerivatives"
+        },
+        "linear": {
+          "extends": "forDerivatives"
+        }
+      }
+    },
+    "timeframes": {
+      "12h": "12h",
+      "15m": "15m",
+      "1M": "1M",
+      "1d": "1d",
+      "1h": "1h",
+      "1m": "1m",
+      "1s": "1s",
+      "1w": "1w",
+      "2h": "2h",
+      "30m": "30m",
+      "3d": "3d",
+      "3m": "3m",
+      "4h": "4h",
+      "5m": "5m",
+      "6h": "6h",
+      "8h": "8h"
+    },
+    "unsupported_raw_endpoints": {},
+    "has_extras": {
+      "closeAllPositions": false,
+      "closePosition": false,
+      "createDepositAddress": false,
+      "createLimitBuyOrder": true,
+      "createLimitOrder": true,
+      "createLimitSellOrder": true,
+      "createMarketBuyOrder": true,
+      "createMarketOrder": true,
+      "createMarketOrderWs": true,
+      "createMarketSellOrder": true,
+      "createOrderWithTakeProfitAndStopLoss": false,
+      "createPostOnlyOrder": true,
+      "createReduceOnlyOrder": true,
+      "createStopLimitOrder": true,
+      "createStopLossOrder": true,
+      "createStopMarketOrder": false,
+      "createStopOrder": true,
+      "createTakeProfitOrder": true,
+      "createTrailingPercentOrder": true,
+      "createTriggerOrder": true,
+      "fetchBorrowRateHistories": false,
+      "fetchClosedOrder": false,
+      "fetchCrossBorrowRates": false,
+      "fetchCurrenciesWs": "emulated",
+      "fetchDeposit": false,
+      "fetchDepositAddresses": false,
+      "fetchDepositAddressesByNetwork": false,
+      "fetchDepositWithdrawFee": "emulated",
+      "fetchDepositsWithdrawals": false,
+      "fetchFundingInterval": "emulated",
+      "fetchIndexOHLCV": true,
+      "fetchL2OrderBook": true,
+      "fetchL3OrderBook": false,
+      "fetchLeverage": "emulated",
+      "fetchLiquidations": false,
+      "fetchLongShortRatio": false,
+      "fetchMarkOHLCV": true,
+      "fetchMarketLeverageTiers": "emulated",
+      "fetchOptionChain": false,
+      "fetchOrderBooks": false,
+      "fetchPositionADLRank": true,
+      "fetchPositionHistory": false,
+      "fetchPositionsHistory": false,
+      "fetchPremiumIndexOHLCV": true,
+      "fetchTransactionFee": "emulated",
+      "fetchTransactions": false,
+      "fetchTransfer": false,
+      "fetchUnderlyingAssets": false,
+      "fetchVolatilityHistory": false,
+      "fetchWithdrawAddresses": false,
+      "fetchWithdrawal": false,
+      "fetchWithdrawalWhitelist": false,
+      "future": true,
+      "margin": true,
+      "option": true,
+      "privateAPI": true,
+      "publicAPI": true,
+      "sandbox": true,
+      "setMargin": false,
+      "signIn": false,
+      "spot": true,
+      "swap": true
+    }
+  },
+  "rate_limits": {
+    "buckets": {
+      "buckets": [
+        {
+          "algorithm": "leakyBucket",
+          "axes": [
+            "request"
+          ],
+          "cost_default": 1,
+          "max_size": 1,
+          "rate_limit_ms": 50,
+          "refill_per_sec": 20,
+          "rolling_window_ms": 60000
+        }
+      ],
+      "source": "describe",
+      "unresolved_reason": null
+    },
+    "endpoint_cost_binding": {
+      "axes": [
+        "request"
+      ],
+      "bucket_index": 0
+    }
+  },
+  "parse_helpers": {
+    "createOrderRequest": [
+      "parseToNumeric"
+    ],
+    "describe": [
+      "parseNumber"
+    ],
+    "futuresTransfer": [
+      "parseTransfer"
+    ],
+    "modifyMarginHelper": [
+      "parseMarginModification"
+    ],
+    "parseAccountPosition": [
+      "parseNumber"
+    ],
+    "parseAccountPositions": [
+      "parseAccountPosition"
+    ],
+    "parseBalanceCustom": [
+      "parseBalanceHelper"
+    ],
+    "parseCurrenciesCustom": [
+      "parseCurrency"
+    ],
+    "parseCurrency": [
+      "parseNumber"
+    ],
+    "parseDustTrade": [
+      "parseNumber"
+    ],
+    "parseLedgerEntry": [
+      "parseLedgerEntryType",
+      "parseNumber"
+    ],
+    "parseMarket": [
+      "parseNumber",
+      "parsePrecision",
+      "parseToNumeric"
+    ],
+    "parseOptionPosition": [
+      "parseNumber"
+    ],
+    "parseOrder": [
+      "parseNumber",
+      "parseOrderStatus",
+      "parseOrderTypeByMarket"
+    ],
+    "parsePositionRisk": [
+      "parseNumber"
+    ],
+    "parseSettlements": [
+      "parseSettlement"
+    ],
+    "parseTickersForRolling": [
+      "parseTicker"
+    ],
+    "parseTrade": [
+      "parseDustTrade"
+    ],
+    "parseTransaction": [
+      "parseTransactionStatusByType"
+    ],
+    "parseTransfer": [
+      "parseTransferStatus"
+    ]
+  },
+  "request_extras": {
+    "endpoint_overrides": {
+      "cancelOrder": {
+        "algoOrder": {
+          "_omit": [
+            "orderId"
+          ],
+          "algoId": {
+            "source": "id",
+            "source_class": "unified_param"
+          }
+        }
+      },
+      "fetchOpenOrder": {
+        "algoOrder": {
+          "_omit": [
+            "orderId"
+          ],
+          "algoId": {
+            "source": "id",
+            "source_class": "unified_param"
+          }
+        }
+      },
+      "fetchOrder": {
+        "algoOrder": {
+          "_omit": [
+            "orderId"
+          ],
+          "algoId": {
+            "source": "id",
+            "source_class": "unified_param"
+          }
+        }
+      },
+      "createOrder": {
+        "algoOrder": {
+          "algoType": {
+            "kind": "literal",
+            "value": "CONDITIONAL"
+          },
+          "triggerPrice": {
+            "fallback_sources": [
+              "stop_loss_price",
+              "take_profit_price"
+            ],
+            "source": "trigger_price",
+            "source_class": "optional"
+          },
+          "type": {
+            "cases": [
+              {
+                "value": "TAKE_PROFIT_MARKET",
+                "when": {
+                  "stop_loss_price": "absent",
+                  "take_profit_price": "present",
+                  "type": "market"
+                }
+              },
+              {
+                "value": "TAKE_PROFIT",
+                "when": {
+                  "stop_loss_price": "absent",
+                  "take_profit_price": "present",
+                  "type": "limit"
+                }
+              },
+              {
+                "value": "TAKE_PROFIT_MARKET",
+                "when": {
+                  "type": "take_profit_market"
+                }
+              },
+              {
+                "value": "TAKE_PROFIT",
+                "when": {
+                  "type": "take_profit"
+                }
+              },
+              {
+                "value": "STOP_MARKET",
+                "when": {
+                  "take_profit_price": "absent",
+                  "type": "market"
+                }
+              },
+              {
+                "value": "STOP",
+                "when": {
+                  "take_profit_price": "absent",
+                  "type": "limit"
+                }
+              },
+              {
+                "value": "STOP_MARKET",
+                "when": {
+                  "type": "stop_market"
+                }
+              },
+              {
+                "value": "STOP",
+                "when": {
+                  "type": "stop"
+                }
+              }
+            ],
+            "kind": "conditional",
+            "source": "type",
+            "source_class": "unified_param",
+            "transform": "uppercase"
+          }
+        }
+      }
+    },
+    "futuresTransfer": {
+      "amount": {
+        "kind": "unresolved",
+        "reason": "identifier_reference",
+        "source": "amount",
+        "source_class": "optional",
+        "value": null
+      },
+      "asset": {
+        "kind": "unresolved",
+        "reason": "identifier_reference",
+        "source": "code",
+        "source_class": "optional",
+        "value": null
+      },
+      "type": {
+        "kind": "unresolved",
+        "reason": "identifier_reference",
+        "source": "type",
+        "source_class": "optional",
+        "value": null
+      }
+    },
+    "modifyMarginHelper": {
+      "amount": {
+        "kind": "unresolved",
+        "reason": "identifier_reference",
+        "value": null
+      },
+      "symbol": {
+        "kind": "unresolved",
+        "reason": "identifier_reference",
+        "value": null
+      },
+      "type": {
+        "kind": "unresolved",
+        "reason": "identifier_reference",
+        "value": null
+      }
+    },
+    "redeemGiftCode": {
+      "code": {
+        "kind": "unresolved",
+        "reason": "identifier_reference",
+        "value": null
+      }
+    },
+    "verifyGiftCode": {
+      "referenceNo": {
+        "kind": "unresolved",
+        "reason": "identifier_reference",
+        "source": "id",
+        "source_class": "optional",
+        "value": null
+      }
+    }
+  },
+  "descriptor_extras": {},
+  "classification_extras": {},
+  "error_handlers": [
+    {
+      "exception_class": "DDoSProtection",
+      "predicate_kind": "http_status_eq",
+      "predicate_limbs": [
+        {
+          "kind": "http_status_eq",
+          "raw": "(code === 418) || (code === 429)",
+          "values": [
+            "418",
+            "429"
+          ]
+        }
+      ],
+      "predicate_raw": "(code === 418) || (code === 429)",
+      "predicate_values": [
+        "418",
+        "429"
+      ]
+    },
+    {
+      "exception_class": "InvalidOrder",
+      "predicate_kind": "body_contains",
+      "predicate_limbs": [
+        {
+          "kind": "http_status_range",
+          "raw": "code >= 400",
+          "values": [
+            "400"
+          ]
+        },
+        {
+          "kind": "body_contains",
+          "raw": "body.indexOf('Price * QTY is zero or less') >= 0",
+          "values": [
+            "Price * QTY is zero or less"
+          ]
+        }
+      ],
+      "predicate_raw": "code >= 400 && body.indexOf('Price * QTY is zero or less') >= 0",
+      "predicate_values": [
+        "Price * QTY is zero or less"
+      ]
+    },
+    {
+      "exception_class": "InvalidOrder",
+      "predicate_kind": "body_contains",
+      "predicate_limbs": [
+        {
+          "kind": "http_status_range",
+          "raw": "code >= 400",
+          "values": [
+            "400"
+          ]
+        },
+        {
+          "kind": "body_contains",
+          "raw": "body.indexOf('LOT_SIZE') >= 0",
+          "values": [
+            "LOT_SIZE"
+          ]
+        }
+      ],
+      "predicate_raw": "code >= 400 && body.indexOf('LOT_SIZE') >= 0",
+      "predicate_values": [
+        "LOT_SIZE"
+      ]
+    },
+    {
+      "exception_class": "InvalidOrder",
+      "predicate_kind": "body_contains",
+      "predicate_limbs": [
+        {
+          "kind": "http_status_range",
+          "raw": "code >= 400",
+          "values": [
+            "400"
+          ]
+        },
+        {
+          "kind": "body_contains",
+          "raw": "body.indexOf('PRICE_FILTER') >= 0",
+          "values": [
+            "PRICE_FILTER"
+          ]
+        }
+      ],
+      "predicate_raw": "code >= 400 && body.indexOf('PRICE_FILTER') >= 0",
+      "predicate_values": [
+        "PRICE_FILTER"
+      ]
+    },
+    {
+      "exception_class": "DDoSProtection",
+      "predicate_kind": "other",
+      "predicate_limbs": [
+        {
+          "kind": "identifier_check",
+          "raw": "error !== undefined",
+          "values": null
+        },
+        {
+          "kind": "identifier_check",
+          "raw": "(error === '-2015')",
+          "values": null
+        },
+        {
+          "kind": "other",
+          "raw": "this.options['hasAlreadyAuthenticatedSuccessfully']",
+          "values": null
+        }
+      ],
+      "predicate_raw": "error !== undefined && (error === '-2015') && this.options['hasAlreadyAuthenticatedSuccessfully']",
+      "predicate_values": null
+    },
+    {
+      "exception_class": "MarginModeAlreadySet",
+      "predicate_kind": "identifier_check",
+      "predicate_limbs": [
+        {
+          "kind": "identifier_check",
+          "raw": "error !== undefined",
+          "values": null
+        },
+        {
+          "kind": "identifier_check",
+          "raw": "message === 'No need to change margin type.'",
+          "values": null
+        }
+      ],
+      "predicate_raw": "error !== undefined && message === 'No need to change margin type.'",
+      "predicate_values": null
+    },
+    {
+      "exception_class": "ExchangeError",
+      "predicate_kind": "identifier_check",
+      "predicate_limbs": [
+        {
+          "kind": "identifier_check",
+          "raw": "error !== undefined",
+          "values": null
+        }
+      ],
+      "predicate_raw": "error !== undefined",
+      "predicate_values": null
+    },
+    {
+      "exception_class": "ExchangeError",
+      "predicate_kind": "other",
+      "predicate_limbs": [
+        {
+          "kind": "other",
+          "raw": "!success",
+          "values": null
+        }
+      ],
+      "predicate_raw": "!success",
+      "predicate_values": null
+    }
+  ],
+  "signing_handlers": {
+    "branches": [
+      {
+        "is_else": false,
+        "matches": {},
+        "predicate_raw": "!(api in urls['api'])",
+        "source_span": {
+          "end": 632369,
+          "start": 632245
+        }
+      },
+      {
+        "is_else": false,
+        "matches": {
+          "path": [
+            "historicalTrades"
+          ]
+        },
+        "predicate_raw": "path === 'historicalTrades'",
+        "source_span": {
+          "end": 632769,
+          "start": 632479
+        }
+      },
+      {
+        "is_else": false,
+        "matches": {},
+        "predicate_raw": "userDataStream",
+        "source_span": {
+          "end": 633441,
+          "start": 632916
+        }
+      },
+      {
+        "is_else": false,
+        "matches": {
+          "api": [
+            "dapiPrivate",
+            "dapiPrivateV2",
+            "eapiPrivate",
+            "fapiPrivate",
+            "fapiPrivateV2",
+            "fapiPrivateV3",
+            "papi",
+            "papiV2",
+            "private",
+            "sapi",
+            "sapiV2",
+            "sapiV3",
+            "sapiV4"
+          ]
+        },
+        "predicate_raw": "(api === 'private') || (api === 'eapiPrivate') || (api === 'sapi' && path !== 'system/status') || (api === 'sapiV2') || (api === 'sapiV3') || (api === 'sapiV4') || (api === 'dapiPrivate') || (api === 'dapiPrivateV2') || (api === 'fapiPrivate') || (api === 'fapiPrivateV2') || (api === 'fapiPrivateV3') || (api === 'papiV2' || api === 'papi' && path !== 'ping')",
+        "source_span": {
+          "end": 640030,
+          "start": 633813
+        }
+      },
+      {
+        "is_else": true,
+        "matches": {},
+        "predicate_raw": null,
+        "source_span": {
+          "end": 640162,
+          "start": 640036
+        }
+      }
+    ],
+    "sections": [
+      "dapiPrivate",
+      "dapiPrivateV2",
+      "eapiPrivate",
+      "fapiPrivate",
+      "fapiPrivateV2",
+      "fapiPrivateV3",
+      "papi",
+      "papiV2",
+      "private",
+      "sapi",
+      "sapiV2",
+      "sapiV3",
+      "sapiV4"
+    ]
+  },
+  "has_endpoint_selection": true
+}

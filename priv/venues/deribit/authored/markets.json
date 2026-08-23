@@ -1,0 +1,414 @@
+{
+  "symbol_patterns": {
+    "future": {
+      "case": "upper",
+      "date_format": "ddmmmyy",
+      "pattern": "future_ddmmmyy",
+      "prefix": null,
+      "separator": "_",
+      "suffix": null
+    },
+    "option": {
+      "case": "upper",
+      "date_format": null,
+      "pattern": "option_ddmmmyy",
+      "prefix": null,
+      "separator": "_",
+      "suffix": null
+    },
+    "spot": {
+      "case": "upper",
+      "date_format": null,
+      "pattern": "underscore_upper",
+      "prefix": null,
+      "separator": "_",
+      "suffix": null
+    },
+    "swap": {
+      "case": "upper",
+      "date_format": null,
+      "pattern": "suffix_perpetual",
+      "prefix": null,
+      "separator": "_",
+      "suffix": "-PERPETUAL"
+    }
+  },
+  "option_quantity": {
+    "canonical_unit": "base",
+    "contract_size": {
+      "field": "contract_size",
+      "kind": "field"
+    },
+    "wire_field": "amount",
+    "wire_unit": "base"
+  },
+  "greeks_conventions": {
+    "delta": {
+      "supported": true,
+      "native_field": "greeks.delta",
+      "denomination": "underlying",
+      "unit": "ratio",
+      "bump_size": 1.0,
+      "time_basis": null
+    },
+    "gamma": {
+      "supported": true,
+      "native_field": "greeks.gamma",
+      "denomination": "delta",
+      "unit": "delta_per_underlying_unit",
+      "bump_size": 1.0,
+      "time_basis": null
+    },
+    "vega": {
+      "supported": true,
+      "native_field": "greeks.vega",
+      "denomination": "option_premium",
+      "unit": "premium_per_vol_point",
+      "bump_size": 0.01,
+      "time_basis": null
+    },
+    "theta": {
+      "supported": true,
+      "native_field": "greeks.theta",
+      "denomination": "option_premium",
+      "unit": "premium_per_day",
+      "bump_size": 1.0,
+      "time_basis": "calendar_day"
+    },
+    "rho": {
+      "supported": true,
+      "native_field": "greeks.rho",
+      "denomination": "option_premium",
+      "unit": "premium_per_interest_point",
+      "bump_size": 0.01,
+      "time_basis": null
+    }
+  },
+  "currencies": {
+    "BNB": {
+      "code": "BNB",
+      "fee": 0.0001,
+      "fees": {},
+      "id": "BNB",
+      "limits": {
+        "amount": {},
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "Binance Coin",
+      "networks": {},
+      "type": "crypto"
+    },
+    "BTC": {
+      "code": "BTC",
+      "fee": 1e-05,
+      "fees": {},
+      "id": "BTC",
+      "limits": {
+        "amount": {},
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "Bitcoin",
+      "networks": {},
+      "type": "crypto"
+    },
+    "BUIDL": {
+      "code": "BUIDL",
+      "fee": 0.010195,
+      "fees": {},
+      "id": "BUIDL",
+      "limits": {
+        "amount": {},
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "BUIDL",
+      "networks": {},
+      "type": "crypto"
+    },
+    "ETH": {
+      "code": "ETH",
+      "fee": 0.001,
+      "fees": {},
+      "id": "ETH",
+      "limits": {
+        "amount": {},
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "Ethereum",
+      "networks": {},
+      "type": "crypto"
+    },
+    "EURR": {
+      "code": "EURR",
+      "fee": 0.0006,
+      "fees": {},
+      "id": "EURR",
+      "limits": {
+        "amount": {},
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "StablR Euro",
+      "networks": {},
+      "type": "crypto"
+    },
+    "MATIC": {
+      "code": "MATIC",
+      "fee": 0.128713,
+      "fees": {},
+      "id": "MATIC",
+      "limits": {
+        "amount": {},
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "Matic Ethereum Token",
+      "networks": {},
+      "type": "crypto"
+    },
+    "PAXG": {
+      "code": "PAXG",
+      "fee": 0.0001,
+      "fees": {},
+      "id": "PAXG",
+      "limits": {
+        "amount": {},
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "Pax Gold",
+      "networks": {},
+      "type": "crypto"
+    },
+    "SOL": {
+      "code": "SOL",
+      "fee": 0.00068931,
+      "fees": {},
+      "id": "SOL",
+      "limits": {
+        "amount": {},
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "Solana",
+      "networks": {},
+      "type": "crypto"
+    },
+    "STETH": {
+      "code": "STETH",
+      "fee": 0.0001,
+      "fees": {},
+      "id": "STETH",
+      "limits": {
+        "amount": {},
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "Staked ETH",
+      "networks": {},
+      "type": "crypto"
+    },
+    "USDC": {
+      "code": "USDC",
+      "fee": 5,
+      "fees": {},
+      "id": "USDC",
+      "limits": {
+        "amount": {},
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "USD Coin",
+      "networks": {},
+      "type": "crypto"
+    },
+    "USDE": {
+      "code": "USDE",
+      "fee": 0.010875,
+      "fees": {},
+      "id": "USDE",
+      "limits": {
+        "amount": {},
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "Ethena USDe",
+      "networks": {},
+      "type": "crypto"
+    },
+    "USDT": {
+      "code": "USDT",
+      "fee": 2,
+      "fees": {},
+      "id": "USDT",
+      "limits": {
+        "amount": {},
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "Tether",
+      "networks": {},
+      "type": "crypto"
+    },
+    "USYC": {
+      "code": "USYC",
+      "fee": 0.009039,
+      "fees": {},
+      "id": "USYC",
+      "limits": {
+        "amount": {},
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "USYC",
+      "networks": {},
+      "type": "crypto"
+    },
+    "XRP": {
+      "code": "XRP",
+      "fee": 0.0001,
+      "fees": {},
+      "id": "XRP",
+      "limits": {
+        "amount": {},
+        "deposit": {},
+        "withdraw": {}
+      },
+      "name": "XRP",
+      "networks": {},
+      "type": "crypto"
+    }
+  },
+  "patterns": {
+    "currency_aliases": {
+      "BCHSV": "BSV",
+      "XBT": "BTC"
+    },
+    "future": {
+      "anomalies": [],
+      "anomaly_count": 0,
+      "case": "upper",
+      "examples": [
+        {
+          "baseId": "AVAX",
+          "id": "AVAX_USDC-22JUN26",
+          "quoteId": "USDC",
+          "symbol": "AVAX/USDC:USDC-260622"
+        },
+        {
+          "baseId": "BTC",
+          "id": "BTC-22JUN26",
+          "quoteId": "USD",
+          "symbol": "BTC/USD:BTC-260622"
+        },
+        {
+          "baseId": "BTC",
+          "id": "BTC_USDC-22JUN26",
+          "quoteId": "USDC",
+          "symbol": "BTC/USDC:USDC-260622"
+        }
+      ],
+      "id_structure": null,
+      "sample_count": 227,
+      "separator": "_",
+      "suffix": null
+    },
+    "option": {
+      "anomalies": [],
+      "anomaly_count": 0,
+      "case": "upper",
+      "examples": [
+        {
+          "baseId": "AVAX",
+          "id": "AVAX_USDC-22JUN26-5d5-C",
+          "quoteId": "USDC",
+          "symbol": "AVAX/USDC:USDC-260622-5.5-C"
+        },
+        {
+          "baseId": "AVAX",
+          "id": "AVAX_USDC-22JUN26-5d5-P",
+          "quoteId": "USDC",
+          "symbol": "AVAX/USDC:USDC-260622-5.5-P"
+        },
+        {
+          "baseId": "AVAX",
+          "id": "AVAX_USDC-22JUN26-5d6-C",
+          "quoteId": "USDC",
+          "symbol": "AVAX/USDC:USDC-260622-5.6-C"
+        }
+      ],
+      "id_structure": null,
+      "pattern": "option_ddmmmyy",
+      "sample_count": 4266,
+      "separator": "_",
+      "suffix": null
+    },
+    "spot": {
+      "anomalies": [],
+      "anomaly_count": 0,
+      "case": "upper",
+      "examples": [
+        {
+          "baseId": "BNB",
+          "id": "BNB_USDC",
+          "quoteId": "USDC",
+          "symbol": "BNB/USDC"
+        },
+        {
+          "baseId": "BTC",
+          "id": "BTC_USDC",
+          "quoteId": "USDC",
+          "symbol": "BTC/USDC"
+        },
+        {
+          "baseId": "BTC",
+          "id": "BTC_USDE",
+          "quoteId": "USDE",
+          "symbol": "BTC/USDE"
+        }
+      ],
+      "id_structure": "baseId_quoteId",
+      "sample_count": 18,
+      "separator": "_",
+      "suffix": null
+    },
+    "swap": {
+      "anomalies": [
+        "BTC-PERPETUAL",
+        "ETH-PERPETUAL"
+      ],
+      "anomaly_count": 2,
+      "case": "upper",
+      "examples": [
+        {
+          "baseId": "ADA",
+          "id": "ADA_USDC-PERPETUAL",
+          "quoteId": "USDC",
+          "symbol": "ADA/USDC:USDC"
+        },
+        {
+          "baseId": "ALGO",
+          "id": "ALGO_USDC-PERPETUAL",
+          "quoteId": "USDC",
+          "symbol": "ALGO/USDC:USDC"
+        },
+        {
+          "baseId": "AVAX",
+          "id": "AVAX_USDC-PERPETUAL",
+          "quoteId": "USDC",
+          "symbol": "AVAX/USDC:USDC"
+        }
+      ],
+      "id_structure": "baseId_quoteId",
+      "sample_count": 21,
+      "separator": "_",
+      "suffix": "-PERPETUAL"
+    }
+  },
+  "precision": {
+    "mode": "tick_size"
+  }
+}

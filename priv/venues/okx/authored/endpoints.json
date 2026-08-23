@@ -1,0 +1,4816 @@
+{
+  "addMargin": {
+    "unified": [
+      "privatePostAccountPositionMarginBalance"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "add margin",
+      "errors": null,
+      "name": "addMargin",
+      "params_doc": {
+        "amount": "amount of margin to add",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a [margin structure]{@link https://docs.ccxt.com/?id=margin-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": null,
+            "name": "amount",
+            "optional": false,
+            "type": "number"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<MarginModification>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "amt": {
+          "kind": "reference",
+          "source": "amount",
+          "source_class": "unified_param"
+        },
+        "instId": {
+          "kind": "reference",
+          "source": "symbol",
+          "source_class": "unified_param"
+        },
+        "posSide": {
+          "kind": "reference",
+          "source": "posSide",
+          "source_class": "native_passthrough"
+        },
+        "type": {
+          "kind": "literal",
+          "value": "add"
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "borrowCrossMargin": {
+    "unified": [
+      "privatePostAccountBorrowRepay"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "amt": {
+          "kind": "reference",
+          "reason": "dynamic_construction",
+          "source": "amount",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "ccy": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "code",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "side": {
+          "kind": "literal",
+          "reason": null,
+          "value": "borrow"
+        }
+      }
+    },
+    "parse": [
+      "parseMarginLoan"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "cancelAllOrdersAfter": {
+    "unified": [
+      "privatePostTradeCancelAllAfter"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "timeOut": {
+          "kind": "unresolved",
+          "reason": "conditional_value",
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "default": "trade/cancel-all-after"
+      }
+    },
+    "parse": [
+      "parseToInt"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "cancelOrder": {
+    "unified": [
+      "privatePostTradeCancelAlgos",
+      "privatePostTradeCancelBatchOrders",
+      "privatePostTradeCancelOrder"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "optional",
+          "value": null
+        },
+        "ordId": {
+          "kind": "reference",
+          "source": "id",
+          "source_class": "unified_param"
+        }
+      },
+      "endpoint_selection": {
+        "cases": [
+          {
+            "path": "trade/cancel-algos",
+            "when": {
+              "stop": true
+            }
+          },
+          {
+            "path": "trade/cancel-algos",
+            "when": {
+              "trailing": true
+            }
+          },
+          {
+            "path": "trade/cancel-algos",
+            "when": {
+              "trigger": true
+            }
+          }
+        ],
+        "consume": [
+          "stop",
+          "trailing",
+          "trigger"
+        ],
+        "default": "trade/cancel-order"
+      }
+    },
+    "parse": [
+      "parseOrder"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "cancelOrders": {
+    "unified": [
+      "privatePostTradeCancelAlgos",
+      "privatePostTradeCancelBatchOrders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "endpoint_selection": {
+        "cases": [
+          {
+            "path": "trade/cancel-algos",
+            "when": {
+              "stop": true
+            }
+          },
+          {
+            "path": "trade/cancel-algos",
+            "when": {
+              "trailing": true
+            }
+          },
+          {
+            "path": "trade/cancel-algos",
+            "when": {
+              "trigger": true
+            }
+          }
+        ],
+        "consume": [
+          "stop",
+          "trailing",
+          "trigger"
+        ],
+        "default": "trade/cancel-batch-orders"
+      }
+    },
+    "parse": [
+      "parseIds",
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "cancelOrdersForSymbols": {
+    "unified": [
+      "privatePostTradeCancelAlgos",
+      "privatePostTradeCancelBatchOrders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "endpoint_selection": {
+        "cases": [
+          {
+            "path": "trade/cancel-algos",
+            "when": {
+              "stop": true
+            }
+          },
+          {
+            "path": "trade/cancel-algos",
+            "when": {
+              "trailing": true
+            }
+          },
+          {
+            "path": "trade/cancel-algos",
+            "when": {
+              "trigger": true
+            }
+          }
+        ],
+        "consume": [
+          "stop",
+          "trailing",
+          "trigger"
+        ],
+        "default": "trade/cancel-batch-orders"
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "closePosition": {
+    "unified": [
+      "privatePostTradeClosePosition"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "closes open positions for a market",
+      "errors": null,
+      "name": "closePosition",
+      "params_doc": {
+        "params": "extra parameters specific to the okx api endpoint",
+        "params.autoCxl": "whether any pending orders for closing out needs to be automatically canceled when close position via a market order. false or true, the default is false",
+        "params.clientOrderId": "a unique identifier for the order",
+        "params.code": "*required in the case of closing cross MARGIN position for Single-currency margin* margin currency  EXCHANGE SPECIFIC PARAMETERS",
+        "params.marginMode": "'cross' or 'isolated', default is 'cross;",
+        "params.tag": "order tag a combination of case-sensitive alphanumerics, all numbers, or all letters of up to 16 characters",
+        "side": "'buy' or 'sell', leave as undefined in net mode",
+        "symbol": "Unified CCXT market symbol"
+      },
+      "returns": {
+        "description": "[A list of position structures]{@link https://docs.ccxt.com/?id=position-structure}",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "undefined",
+            "name": "side",
+            "optional": true,
+            "type": "OrderSide"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Order>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "mgnMode": {
+          "default": "cross",
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "margin_mode",
+          "source_class": "optional",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOrder"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "createConvertTrade": {
+    "unified": [
+      "privatePostAssetConvertTrade"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "convert from one currency to another",
+      "errors": null,
+      "name": "createConvertTrade",
+      "params_doc": {
+        "amount": "how much you want to trade in units of the from currency",
+        "fromCode": "the currency that you want to sell and convert from",
+        "id": "the id of the trade that you want to make",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "toCode": "the currency that you want to buy and convert into"
+      },
+      "returns": {
+        "description": "a [conversion structure]{@link https://docs.ccxt.com/?id=conversion-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "id",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": null,
+            "name": "fromCode",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": null,
+            "name": "toCode",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "undefined",
+            "name": "amount",
+            "optional": true,
+            "type": "Num"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Conversion>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "baseCcy": {
+          "kind": "reference",
+          "reason": null,
+          "source": "from_code",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "quoteCcy": {
+          "kind": "reference",
+          "reason": null,
+          "source": "to_code",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "quoteId": {
+          "kind": "reference",
+          "reason": null,
+          "source": "id",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "side": {
+          "kind": "literal",
+          "reason": null,
+          "value": "sell"
+        },
+        "sz": {
+          "kind": "reference",
+          "reason": null,
+          "source": "amount",
+          "source_class": "unified_param",
+          "transform": "string",
+          "value": null
+        },
+        "szCcy": {
+          "kind": "reference",
+          "reason": null,
+          "source": "from_code",
+          "source_class": "unified_param",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseConversion"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "createMarketBuyOrderWithCost": {
+    "unified": [
+      "privatePostTradeBatchOrders",
+      "privatePostTradeOrder",
+      "privatePostTradeOrderAlgo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "endpoint_selection": {
+        "default": "trade/order"
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "createMarketSellOrderWithCost": {
+    "unified": [
+      "privatePostTradeBatchOrders",
+      "privatePostTradeOrder",
+      "privatePostTradeOrderAlgo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "endpoint_selection": {
+        "default": "trade/order"
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "createOrder": {
+    "unified": [
+      "privatePostTradeBatchOrders",
+      "privatePostTradeOrder",
+      "privatePostTradeOrderAlgo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "endpoint_selection": {
+        "cases": [
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "stopPrice": "present"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "triggerPrice": "present"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "takeProfitPrice": "present"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "stopLossPrice": "present"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "trailingPercent": "present"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "trailingPrice": "present"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "trailingAmount": "present"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "ordType": "conditional"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "ordType": "trigger"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "ordType": "move_order_stop"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "ordType": "oco"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "type": "conditional"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "type": "trigger"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "type": "move_order_stop"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "type": "oco"
+            }
+          }
+        ],
+        "default": "trade/order"
+      }
+    },
+    "parse": [
+      "parseOrder"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "createOrderWithTakeProfitAndStopLoss": {
+    "unified": [
+      "privatePostTradeOrder"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "endpoint_selection": {
+        "default": "trade/order"
+      }
+    }
+  },
+  "createOrders": {
+    "unified": [
+      "privatePostTradeBatchOrders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "editOrder": {
+    "unified": [
+      "privatePostTradeAmendAlgos",
+      "privatePostTradeAmendOrder"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "endpoint_selection": {
+        "cases": [
+          {
+            "path": "trade/amend-algos",
+            "when": {
+              "algoId": "present"
+            }
+          },
+          {
+            "path": "trade/amend-algos",
+            "when": {
+              "newTriggerPx": "present"
+            }
+          },
+          {
+            "path": "trade/amend-algos",
+            "when": {
+              "newCallbackRatio": "present"
+            }
+          },
+          {
+            "path": "trade/amend-algos",
+            "when": {
+              "newCallbackSpread": "present"
+            }
+          },
+          {
+            "path": "trade/amend-algos",
+            "when": {
+              "newActivePx": "present"
+            }
+          },
+          {
+            "path": "trade/amend-algos",
+            "when": {
+              "type": "conditional"
+            }
+          },
+          {
+            "path": "trade/amend-algos",
+            "when": {
+              "type": "trigger"
+            }
+          },
+          {
+            "path": "trade/amend-algos",
+            "when": {
+              "type": "move_order_stop"
+            }
+          },
+          {
+            "path": "trade/amend-algos",
+            "when": {
+              "type": "oco"
+            }
+          },
+          {
+            "path": "trade/amend-algos",
+            "when": {
+              "ordType": "conditional"
+            }
+          },
+          {
+            "path": "trade/amend-algos",
+            "when": {
+              "ordType": "trigger"
+            }
+          },
+          {
+            "path": "trade/amend-algos",
+            "when": {
+              "ordType": "move_order_stop"
+            }
+          },
+          {
+            "path": "trade/amend-algos",
+            "when": {
+              "ordType": "oco"
+            }
+          }
+        ],
+        "default": "trade/amend-order"
+      }
+    },
+    "parse": [
+      "parseOrder"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "editOrders": {
+    "unified": [
+      "privatePostTradeAmendBatchOrders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "endpoint_selection": {
+        "default": "trade/amend-batch-orders"
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ]
+  },
+  "fetchAccounts": {
+    "unified": [
+      "privateGetAccountConfig"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch all the accounts associated with a profile",
+      "errors": null,
+      "name": "fetchAccounts",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint"
+      },
+      "returns": {
+        "description": "a dictionary of [account structures]{@link https://docs.ccxt.com/?id=account-structure} indexed by the account type",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Account[]>"
+      },
+      "unresolved_reason": null
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchAllGreeks": {
+    "unified": [
+      "publicGetPublicOptSummary"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches all option contracts greeks, financial metrics used to measure the factors that affect the price of an options contract",
+      "errors": null,
+      "name": "fetchAllGreeks",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.instFamily": "Instrument family, either uly or instFamily is required",
+        "params.uly": "Underlying, either uly or instFamily is required",
+        "symbols": "unified symbols of the markets to fetch greeks for, all markets are returned if not assigned"
+      },
+      "returns": {
+        "description": "a [greeks structure]{@link https://docs.ccxt.com/?id=greeks-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbols",
+            "optional": true,
+            "type": "Strings"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Greeks[]>"
+      },
+      "unresolved_reason": null
+    },
+    "parse": [
+      "parseAllGreeks"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchBalance": {
+    "unified": [
+      "privateGetAccountBalance",
+      "privateGetAssetBalances"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "query for balance and get the amount of funds available for trading or funds locked in orders",
+      "errors": null,
+      "name": "fetchBalance",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.type": "wallet type, ['funding' or 'trading'] default is 'trading'"
+      },
+      "returns": {
+        "description": "a [balance structure]{@link https://docs.ccxt.com/?id=balance-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Balances>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [
+          "type"
+        ],
+        "default": "private_get_account_balance",
+        "rules": [
+          {
+            "endpoint": "private_get_asset_balances",
+            "when": {
+              "type": "funding"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseBalanceByType"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchBorrowInterest": {
+    "unified": [
+      "privateGetAccountInterestAccrued"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch the interest owed b the user for borrowing currency for margin trading",
+      "errors": null,
+      "name": "fetchBorrowInterest",
+      "params_doc": {
+        "code": "the unified currency code for the currency of the interest",
+        "limit": "the number of [borrow interest structures]{@link https://docs.ccxt.com/?id=borrow-interest-structure} to retrieve",
+        "params": "exchange specific parameters",
+        "params.marginMode": "'cross' or 'isolated'",
+        "params.type": "Loan type 1 - VIP loans 2 - Market loans *Default is Market loans*",
+        "since": "timestamp in ms of the earliest time to receive interest records for",
+        "symbol": "the market symbol of an isolated margin market, if undefined, the interest for cross margin markets is returned"
+      },
+      "returns": {
+        "description": "An list of [borrow interest structures]{@link https://docs.ccxt.com/?id=borrow-interest-structure}",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "code",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<BorrowInterest[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "ccy": {
+          "kind": "reference",
+          "reason": null,
+          "source": "code",
+          "source_class": "optional",
+          "value": null
+        },
+        "mgnMode": {
+          "kind": "literal",
+          "reason": null,
+          "value": "cross"
+        }
+      }
+    },
+    "parse": [
+      "parseBorrowInterests"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchBorrowRateHistories": {
+    "unified": [
+      "publicGetFinanceSavingsLendingRateHistory"
+    ],
+    "has": true,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseBorrowRateHistories"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchBorrowRateHistory": {
+    "unified": [
+      "publicGetFinanceSavingsLendingRateHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "ccy": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseBorrowRateHistory"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCanceledOrders": {
+    "unified": [
+      "privateGetTradeOrdersAlgoHistory",
+      "privateGetTradeOrdersHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "reference",
+          "source": "symbol",
+          "source_class": "optional"
+        }
+      },
+      "endpoint_selection": {
+        "cases": [
+          {
+            "path": "trade/orders-algo-history",
+            "when": {
+              "stop": true
+            }
+          },
+          {
+            "path": "trade/orders-algo-history",
+            "when": {
+              "trailing": true
+            }
+          },
+          {
+            "path": "trade/orders-algo-history",
+            "when": {
+              "trigger": true
+            }
+          },
+          {
+            "path": "trade/orders-algo-history",
+            "when": {
+              "ordType": "conditional"
+            }
+          },
+          {
+            "path": "trade/orders-algo-history",
+            "when": {
+              "ordType": "oco"
+            }
+          },
+          {
+            "path": "trade/orders-algo-history",
+            "when": {
+              "ordType": "trigger"
+            }
+          },
+          {
+            "path": "trade/orders-algo-history",
+            "when": {
+              "ordType": "move_order_stop"
+            }
+          }
+        ],
+        "consume": [
+          "stop",
+          "trailing",
+          "trigger"
+        ],
+        "default": "trade/orders-history"
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchClosedOrders": {
+    "unified": [
+      "privateGetTradeOrdersAlgoHistory",
+      "privateGetTradeOrdersHistory",
+      "privateGetTradeOrdersHistoryArchive"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches information on multiple closed orders made by the user",
+      "errors": null,
+      "name": "fetchClosedOrders",
+      "params_doc": {
+        "limit": "the maximum number of order structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.algoId": "Algo ID \"'433845797218942976'\"",
+        "params.method": "method to be used, either 'privateGetTradeOrdersHistory', 'privateGetTradeOrdersHistoryArchive' or 'privateGetTradeOrdersAlgoHistory' default is 'privateGetTradeOrdersHistory'",
+        "params.ordType": "\"conditional\", \"oco\", \"trigger\", \"move_order_stop\", \"iceberg\", or \"twap\"",
+        "params.paginate": "default false, when true will automatically paginate by calling this endpoint multiple times. See in the docs all the [availble parameters](https://github.com/ccxt/ccxt/wiki/Manual#pagination-params)",
+        "params.trailing": "set to true if you want to fetch trailing orders",
+        "params.trigger": "True if fetching trigger or conditional orders",
+        "params.until": "timestamp in ms to fetch orders for",
+        "since": "the earliest time in ms to fetch orders for",
+        "symbol": "unified market symbol of the market orders were made in"
+      },
+      "returns": {
+        "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+        "type": "Order[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Order[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "reference",
+          "source": "symbol",
+          "source_class": "optional"
+        }
+      },
+      "endpoint_selection": {
+        "cases": [
+          {
+            "path": "trade/orders-history-archive",
+            "when": {
+              "method": "privateGetTradeOrdersHistoryArchive"
+            }
+          },
+          {
+            "path": "trade/orders-algo-history",
+            "when": {
+              "stop": true
+            }
+          },
+          {
+            "path": "trade/orders-algo-history",
+            "when": {
+              "trailing": true
+            }
+          },
+          {
+            "path": "trade/orders-algo-history",
+            "when": {
+              "trigger": true
+            }
+          },
+          {
+            "path": "trade/orders-algo-history",
+            "when": {
+              "ordType": "conditional"
+            }
+          },
+          {
+            "path": "trade/orders-algo-history",
+            "when": {
+              "ordType": "oco"
+            }
+          },
+          {
+            "path": "trade/orders-algo-history",
+            "when": {
+              "ordType": "trigger"
+            }
+          },
+          {
+            "path": "trade/orders-algo-history",
+            "when": {
+              "ordType": "move_order_stop"
+            }
+          }
+        ],
+        "consume": [
+          "method",
+          "stop",
+          "trailing",
+          "trigger"
+        ],
+        "default": "trade/orders-history"
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchConvertCurrencies": {
+    "unified": [
+      "privateGetAssetConvertCurrencies"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches all available currencies that can be converted",
+      "errors": null,
+      "name": "fetchConvertCurrencies",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint"
+      },
+      "returns": {
+        "description": "an associative dictionary of currencies",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Currencies>"
+      },
+      "unresolved_reason": null
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchConvertQuote": {
+    "unified": [
+      "privatePostAssetConvertEstimateQuote"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch a quote for converting from one currency to another",
+      "errors": null,
+      "name": "fetchConvertQuote",
+      "params_doc": {
+        "amount": "how much you want to trade in units of the from currency",
+        "fromCode": "the currency that you want to sell and convert from",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "toCode": "the currency that you want to buy and convert into"
+      },
+      "returns": {
+        "description": "a [conversion structure]{@link https://docs.ccxt.com/?id=conversion-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "fromCode",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": null,
+            "name": "toCode",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "undefined",
+            "name": "amount",
+            "optional": true,
+            "type": "Num"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Conversion>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "baseCcy": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        },
+        "quoteCcy": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        },
+        "rfqSz": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        },
+        "rfqSzCcy": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        },
+        "side": {
+          "kind": "literal",
+          "reason": null,
+          "value": "sell"
+        }
+      }
+    },
+    "parse": [
+      "parseConversion"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchConvertTrade": {
+    "unified": [
+      "privateGetAssetConvertHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch the data for a conversion trade",
+      "errors": null,
+      "name": "fetchConvertTrade",
+      "params_doc": {
+        "code": "the unified currency code of the conversion trade",
+        "id": "the id of the trade that you want to fetch",
+        "params": "extra parameters specific to the exchange API endpoint"
+      },
+      "returns": {
+        "description": "a [conversion structure]{@link https://docs.ccxt.com/?id=conversion-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "id",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "undefined",
+            "name": "code",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Conversion>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "clTReqId": {
+          "kind": "reference",
+          "reason": null,
+          "source": "id",
+          "source_class": "unified_param",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseConversion"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchConvertTradeHistory": {
+    "unified": [
+      "privateGetAssetConvertHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch the users history of conversion trades",
+      "errors": null,
+      "name": "fetchConvertTradeHistory",
+      "params_doc": {
+        "code": "the unified currency code",
+        "limit": "the maximum number of conversion structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.until": "timestamp in ms of the latest conversion to fetch",
+        "since": "the earliest time in ms to fetch conversions for"
+      },
+      "returns": {
+        "description": "a list of [conversion structures]{@link https://docs.ccxt.com/?id=conversion-structure}",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "code",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Conversion[]>"
+      },
+      "unresolved_reason": null
+    },
+    "parse": [
+      "parseConversions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCrossBorrowRate": {
+    "unified": [
+      "privateGetAccountInterestRate"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch the rate of interest to borrow a currency for margin trading",
+      "errors": null,
+      "name": "fetchCrossBorrowRate",
+      "params_doc": {
+        "code": "unified currency code",
+        "params": "extra parameters specific to the exchange API endpoint"
+      },
+      "returns": {
+        "description": "a [borrow rate structure]{@link https://docs.ccxt.com/?id=borrow-rate-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "code",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<CrossBorrowRate>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "ccy": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseBorrowRate"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCrossBorrowRates": {
+    "unified": [
+      "privateGetAccountInterestRate"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch the borrow interest rates of all currencies",
+      "errors": null,
+      "name": "fetchCrossBorrowRates",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint"
+      },
+      "returns": {
+        "description": "a list of [borrow rate structures]{@link https://docs.ccxt.com/?id=borrow-rate-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<CrossBorrowRates>"
+      },
+      "unresolved_reason": null
+    },
+    "parse": [
+      "parseBorrowRate"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCurrencies": {
+    "unified": [
+      "privateGetAssetCurrencies"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches all available currencies on an exchange",
+      "errors": null,
+      "name": "fetchCurrencies",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint"
+      },
+      "returns": {
+        "description": "an associative dictionary of currencies",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Currencies>"
+      },
+      "unresolved_reason": null
+    },
+    "parse": [
+      "parseCurrencies"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDeposit": {
+    "unified": [
+      "privateGetAssetDepositHistory"
+    ],
+    "has": true,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "name": "fetchDeposit",
+      "description": "fetch a deposit",
+      "async": true,
+      "signature": {
+        "return_type": "Promise<Transaction>",
+        "params": []
+      },
+      "returns": {
+        "description": "a transaction structure",
+        "type": "object"
+      }
+    },
+    "request": {
+      "defaults": {
+        "depId": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "id",
+          "source_class": "unified_param",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTransaction"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDepositAddress": {
+    "unified": [
+      "privateGetAssetDepositAddress"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch the deposit address for a currency associated with this account",
+      "errors": null,
+      "name": "fetchDepositAddress",
+      "params_doc": {
+        "code": "unified currency code",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.network": "the network name for the deposit address"
+      },
+      "returns": {
+        "description": "an [address structure]{@link https://docs.ccxt.com/?id=address-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "code",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<DepositAddress>"
+      },
+      "unresolved_reason": null
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDepositAddressesByNetwork": {
+    "unified": [
+      "privateGetAssetDepositAddress"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch a dictionary of addresses for a currency, indexed by network",
+      "errors": null,
+      "name": "fetchDepositAddressesByNetwork",
+      "params_doc": {
+        "code": "unified currency code of the currency for the deposit address",
+        "params": "extra parameters specific to the exchange API endpoint"
+      },
+      "returns": {
+        "description": "a dictionary of [address structures]{@link https://docs.ccxt.com/?id=address-structure} indexed by the network",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "code",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<DepositAddress[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "ccy": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "code",
+          "source_class": "unified_param",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseDepositAddresses"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDepositWithdrawFees": {
+    "unified": [
+      "privateGetAssetCurrencies"
+    ],
+    "has": true,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseDepositWithdrawFees"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDeposits": {
+    "unified": [
+      "privateGetAssetDepositHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch all deposits made to an account",
+      "errors": null,
+      "name": "fetchDeposits",
+      "params_doc": {
+        "code": "unified currency code",
+        "limit": "the maximum number of deposits structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.paginate": "default false, when true will automatically paginate by calling this endpoint multiple times. See in the docs all the [availble parameters](https://github.com/ccxt/ccxt/wiki/Manual#pagination-params)",
+        "params.until": "the latest time in ms to fetch entries for",
+        "since": "the earliest time in ms to fetch deposits for"
+      },
+      "returns": {
+        "description": "a list of [transaction structures]{@link https://docs.ccxt.com/?id=transaction-structure}",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "code",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Transaction[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "after": {
+          "kind": "reference",
+          "source": "until",
+          "source_class": "optional",
+          "transform": "increment"
+        },
+        "before": {
+          "kind": "reference",
+          "source": "since",
+          "source_class": "optional",
+          "transform": "decrement"
+        },
+        "ccy": {
+          "kind": "reference",
+          "source": "code",
+          "source_class": "optional"
+        }
+      }
+    },
+    "parse": [
+      "parseTransactions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingHistory": {
+    "unified": [
+      "privateGetAccountBillsArchive"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "8"
+        }
+      }
+    },
+    "parse": [
+      "parseNumber"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingInterval": {
+    "unified": [
+      "publicGetPublicFundingRate"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch the current funding rate interval",
+      "errors": null,
+      "name": "fetchFundingInterval",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a [funding rate structure]{@link https://docs.ccxt.com/?id=funding-rate-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<FundingRate>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingRate": {
+    "unified": [
+      "publicGetPublicFundingRate"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch the current funding rate",
+      "errors": null,
+      "name": "fetchFundingRate",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a [funding rate structure]{@link https://docs.ccxt.com/?id=funding-rate-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<FundingRate>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseFundingRate"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingRateHistory": {
+    "unified": [
+      "publicGetPublicFundingRateHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingRates": {
+    "unified": [
+      "publicGetPublicFundingRate"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches the current funding rates for multiple symbols",
+      "errors": null,
+      "name": "fetchFundingRates",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbols": "unified market symbols"
+      },
+      "returns": {
+        "description": "a dictionary of [funding rates structure]{@link https://docs.ccxt.com/?id=funding-rates-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbols",
+            "optional": true,
+            "type": "Strings"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<FundingRates>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "literal",
+          "reason": null,
+          "value": "ANY"
+        }
+      }
+    },
+    "parse": [
+      "parseFundingRates"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchGreeks": {
+    "unified": [
+      "publicGetPublicOptSummary"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches an option contracts greeks, financial metrics used to measure the factors that affect the price of an options contract",
+      "errors": null,
+      "name": "fetchGreeks",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbol": "unified symbol of the market to fetch greeks for"
+      },
+      "returns": {
+        "description": "a [greeks structure]{@link https://docs.ccxt.com/?id=greeks-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Greeks>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "expTime": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        },
+        "instFamily": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "uly": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseGreeks"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchLedger": {
+    "unified": [
+      "privateGetAccountBills",
+      "privateGetAccountBillsArchive",
+      "privateGetAssetBills"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch the history of changes, actions done by the user or operations that altered balance of the user",
+      "errors": null,
+      "name": "fetchLedger",
+      "params_doc": {
+        "code": "unified currency code, default is undefined",
+        "limit": "max number of ledger entries to return, default is undefined",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.marginMode": "'cross' or 'isolated'",
+        "params.paginate": "default false, when true will automatically paginate by calling this endpoint multiple times. See in the docs all the [available parameters](https://github.com/ccxt/ccxt/wiki/Manual#pagination-params)",
+        "params.until": "the latest time in ms to fetch entries for",
+        "since": "timestamp in ms of the earliest ledger entry, default is undefined"
+      },
+      "returns": {
+        "description": "a [ledger structure]{@link https://docs.ccxt.com/?id=ledger-entry-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "code",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<LedgerEntry[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "ccy": {
+          "kind": "reference",
+          "source": "code",
+          "source_class": "optional"
+        }
+      },
+      "endpoint_selection": {
+        "consume": [
+          "type",
+          "method"
+        ],
+        "default": "private_get_account_bills",
+        "rules": [
+          {
+            "endpoint": "private_get_account_bills_archive",
+            "when": {
+              "method": "privateGetAccountBillsArchive"
+            }
+          },
+          {
+            "endpoint": "private_get_asset_bills",
+            "when": {
+              "method": "privateGetAssetBills"
+            }
+          },
+          {
+            "endpoint": "private_get_account_bills_archive",
+            "when": {
+              "type": "archive"
+            }
+          },
+          {
+            "endpoint": "private_get_asset_bills",
+            "when": {
+              "type": "funding"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseLedger"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchLeverage": {
+    "unified": [
+      "privateGetAccountLeverageInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch the set leverage for a market",
+      "errors": null,
+      "name": "fetchLeverage",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.marginMode": "'cross' or 'isolated'",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a [leverage structure]{@link https://docs.ccxt.com/?id=leverage-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Leverage>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "mgnMode": {
+          "kind": "literal",
+          "reason": null,
+          "value": "cross"
+        }
+      }
+    },
+    "parse": [
+      "parseLeverage"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchLongShortRatioHistory": {
+    "unified": [
+      "publicGetRubikStatContractsLongShortAccountRatioContract"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches the long short ratio history for a unified market symbol",
+      "errors": null,
+      "name": "fetchLongShortRatioHistory",
+      "params_doc": {
+        "limit": "the maximum number of long short ratio structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.until": "timestamp in ms of the latest ratio to fetch",
+        "since": "the earliest time in ms to fetch ratios for",
+        "symbol": "unified symbol of the market to fetch the long short ratio for",
+        "timeframe": "the period for the ratio"
+      },
+      "returns": {
+        "description": "an array of [long short ratio structures]{@link https://docs.ccxt.com/?id=long-short-ratio-structure}",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "timeframe",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<LongShortRatio[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseLongShortRatioHistory"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMarginAdjustmentHistory": {
+    "unified": [
+      "privateGetAccountBills",
+      "privateGetAccountBillsArchive"
+    ],
+    "has": true,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches the history of margin added or reduced from contract isolated positions",
+      "errors": null,
+      "name": "fetchMarginAdjustmentHistory",
+      "params_doc": {
+        "limit": "the maximum number of entries to retrieve",
+        "params": "extra parameters specific to the exchange api endpoint",
+        "params.auto": "true if fetching auto margin increases",
+        "since": "the earliest time in ms to fetch margin adjustment history for",
+        "symbol": "not used by okx fetchMarginAdjustmentHistory",
+        "type": "\"add\" or \"reduce\""
+      },
+      "returns": {
+        "description": "a list of [margin structures]{@link https://docs.ccxt.com/?id=margin-loan-structure}",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "type",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Num"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Num"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<MarginModification[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "mgnMode": {
+          "kind": "literal",
+          "reason": null,
+          "value": "isolated"
+        },
+        "subType": {
+          "cases": [
+            {
+              "value": "160",
+              "when": {
+                "type": "add"
+              }
+            },
+            {
+              "value": "161",
+              "when": {
+                "type": "reduce"
+              }
+            }
+          ],
+          "kind": "conditional",
+          "reason": "identifier_reference",
+          "source": "type",
+          "source_class": "optional",
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "consume": [
+          "type"
+        ],
+        "default": "private_get_account_bills",
+        "rules": [
+          {
+            "endpoint": "private_get_account_bills_archive",
+            "when": {
+              "type": "archive"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseMarginModifications"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMarkPrice": {
+    "unified": [
+      "publicGetPublicMarkPrice"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches mark price for the market",
+      "errors": null,
+      "name": "fetchMarkPrice",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbol": "unified symbol of the market to fetch the ticker for"
+      },
+      "returns": {
+        "description": "a dictionary of [ticker structures]{@link https://docs.ccxt.com/?id=ticker-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Ticker>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTicker"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMarkPrices": {
+    "unified": [
+      "publicGetPublicMarkPrice"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches price tickers for multiple markets, statistical information calculated over the past 24 hours for each market",
+      "errors": null,
+      "name": "fetchMarkPrices",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbols": "unified symbols of the markets to fetch the ticker for, all market tickers are returned if not assigned"
+      },
+      "returns": {
+        "description": "a dictionary of [ticker structures]{@link https://docs.ccxt.com/?id=ticker-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbols",
+            "optional": true,
+            "type": "Strings"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Tickers>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instType": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTickers"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMarketLeverageTiers": {
+    "unified": [
+      "publicGetPublicPositionTiers"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "retrieve information on the maximum leverage, and maintenance margin for trades of varying trade sizes for a single market",
+      "errors": null,
+      "name": "fetchMarketLeverageTiers",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.marginMode": "'cross' or 'isolated'",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a [leverage tiers structure]{@link https://docs.ccxt.com/?id=leverage-tiers-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<LeverageTier[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instType": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "tdMode": {
+          "kind": "literal",
+          "reason": null,
+          "value": "cross"
+        },
+        "uly": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseMarketLeverageTiers"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMarkets": {
+    "unified": [
+      "publicGetPublicInstruments"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "retrieves data on all markets for okx",
+      "errors": null,
+      "name": "fetchMarkets",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint"
+      },
+      "returns": {
+        "description": "an array of objects representing market data",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Market[]>"
+      },
+      "unresolved_reason": null
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMarketsByType": {
+    "unified": [
+      "publicGetPublicInstruments"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "name": "fetchMarketsByType",
+      "description": "fetch markets filtered by type",
+      "async": true,
+      "signature": {
+        "return_type": "Promise<Market[]>",
+        "params": []
+      },
+      "returns": {
+        "description": "a list of market structures",
+        "type": "object[]"
+      }
+    },
+    "request": {
+      "defaults": {
+        "instType": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseMarkets"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMyTrades": {
+    "unified": [
+      "privateGetTradeFills"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "parse": [
+      "parseTrades"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOHLCV": {
+    "unified": [
+      "publicGetMarketCandles",
+      "publicGetMarketHistoryCandles",
+      "publicGetMarketHistoryIndexCandles",
+      "publicGetMarketHistoryMarkPriceCandles",
+      "publicGetMarketIndexCandles",
+      "publicGetMarketMarkPriceCandles"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches historical candlestick data containing the open, high, low, and close price, and the volume of a market",
+      "errors": null,
+      "name": "fetchOHLCV",
+      "params_doc": {
+        "limit": "the maximum amount of candles to fetch",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.paginate": "default false, when true will automatically paginate by calling this endpoint multiple times. See in the docs all the [availble parameters](https://github.com/ccxt/ccxt/wiki/Manual#pagination-params)",
+        "params.price": "\"mark\" or \"index\" for mark price and index price candles",
+        "params.type": "\"Candles\" or \"HistoryCandles\", default is \"Candles\" for recent candles, \"HistoryCandles\" for older candles",
+        "params.until": "timestamp in ms of the latest candle to fetch",
+        "since": "timestamp in ms of the earliest candle to fetch",
+        "symbol": "unified symbol of the market to fetch OHLCV data for",
+        "timeframe": "the length of time each candle represents"
+      },
+      "returns": {
+        "description": "A list of candles ordered as timestamp, open, high, low, close, volume",
+        "type": "int[][]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "'1m'",
+            "name": "timeframe",
+            "optional": true,
+            "type": "string"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<OHLCV[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "bar": {
+          "default": "1m",
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "timeframe",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "instId": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "limit": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "cases": [
+          {
+            "path": "market/history-index-candles",
+            "when": {
+              "type": "HistoryIndexCandles"
+            }
+          },
+          {
+            "path": "market/history-mark-price-candles",
+            "when": {
+              "type": "HistoryMarkPriceCandles"
+            }
+          },
+          {
+            "path": "market/index-candles",
+            "when": {
+              "type": "IndexCandles"
+            }
+          },
+          {
+            "path": "market/mark-price-candles",
+            "when": {
+              "type": "MarkPriceCandles"
+            }
+          },
+          {
+            "path": "market/history-index-candles",
+            "when": {
+              "price": "index",
+              "since": "present"
+            }
+          },
+          {
+            "path": "market/history-mark-price-candles",
+            "when": {
+              "price": "mark",
+              "since": "present"
+            }
+          },
+          {
+            "path": "market/index-candles",
+            "when": {
+              "price": "index"
+            }
+          },
+          {
+            "path": "market/mark-price-candles",
+            "when": {
+              "price": "mark"
+            }
+          },
+          {
+            "path": "market/history-candles",
+            "when": {
+              "type": "HistoryCandles"
+            }
+          },
+          {
+            "path": "market/history-candles",
+            "when": {
+              "since": "present"
+            }
+          }
+        ],
+        "consume": [
+          "type",
+          "price",
+          "method"
+        ],
+        "default": "market/candles"
+      }
+    },
+    "parse": [
+      "parseOHLCVs",
+      "parseTimeframe"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOpenInterest": {
+    "unified": [
+      "publicGetPublicOpenInterest"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "instType": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "uly": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOpenInterest"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOpenInterestHistory": {
+    "unified": [
+      "publicGetRubikStatContractsOpenInterestVolume",
+      "publicGetRubikStatOptionOpenInterestVolume"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "name": "fetchOpenInterestHistory",
+      "signature": {
+        "params": [],
+        "return_type": "Promise<OpenInterest[]>"
+      }
+    },
+    "request": {
+      "defaults": {
+        "ccy": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "period": {
+          "default": "1d",
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "timeframe",
+          "source_class": "optional",
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "by_market_type": {
+          "option": "public_get_rubik_stat_option_open_interest_volume"
+        },
+        "default": "public_get_rubik_stat_contracts_open_interest_volume"
+      }
+    },
+    "parse": [
+      "parseOpenInterestsHistory"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOpenInterests": {
+    "unified": [
+      "publicGetPublicOpenInterest"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "Retrieves the open interests of some currencies",
+      "errors": null,
+      "name": "fetchOpenInterests",
+      "params_doc": {
+        "params": "exchange specific parameters",
+        "params.instFamily": "Instrument family, Applicable to FUTURES/SWAP/OPTION, if instType is 'OPTION', either uly or instFamily is required",
+        "params.instType": "Instrument type, options: 'SWAP', 'FUTURES', 'OPTION', default to 'SWAP'",
+        "params.uly": "Underlying, Applicable to FUTURES/SWAP/OPTION, if instType is 'OPTION', either uly or instFamily is required",
+        "symbols": "Unified CCXT market symbols"
+      },
+      "returns": {
+        "description": "an dictionary of [open interest structures]{@link https://docs.ccxt.com/?id=open-interest-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbols",
+            "optional": true,
+            "type": "Strings"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<OpenInterests>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instType": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOpenInterests"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOpenOrders": {
+    "unified": [
+      "privateGetTradeOrdersAlgoPending",
+      "privateGetTradeOrdersPending"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch all unfilled currently open orders",
+      "errors": null,
+      "name": "fetchOpenOrders",
+      "params_doc": {
+        "limit": "the maximum number of  open orders structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.algoId": "Algo ID \"'433845797218942976'\"",
+        "params.ordType": "\"conditional\", \"oco\", \"trigger\", \"move_order_stop\", \"iceberg\", or \"twap\"",
+        "params.paginate": "default false, when true will automatically paginate by calling this endpoint multiple times. See in the docs all the [availble parameters](https://github.com/ccxt/ccxt/wiki/Manual#pagination-params)",
+        "params.trailing": "set to true if you want to fetch trailing orders",
+        "params.trigger": "True if fetching trigger or conditional orders",
+        "since": "the earliest time in ms to fetch open orders for",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+        "type": "Order[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Order[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "reference",
+          "source": "symbol",
+          "source_class": "optional"
+        }
+      },
+      "endpoint_selection": {
+        "cases": [
+          {
+            "path": "trade/orders-algo-pending",
+            "when": {
+              "stop": true
+            }
+          },
+          {
+            "path": "trade/orders-algo-pending",
+            "when": {
+              "trailing": true
+            }
+          },
+          {
+            "path": "trade/orders-algo-pending",
+            "when": {
+              "trigger": true
+            }
+          },
+          {
+            "path": "trade/orders-algo-pending",
+            "when": {
+              "ordType": "conditional"
+            }
+          },
+          {
+            "path": "trade/orders-algo-pending",
+            "when": {
+              "ordType": "oco"
+            }
+          },
+          {
+            "path": "trade/orders-algo-pending",
+            "when": {
+              "ordType": "trigger"
+            }
+          },
+          {
+            "path": "trade/orders-algo-pending",
+            "when": {
+              "ordType": "move_order_stop"
+            }
+          }
+        ],
+        "consume": [
+          "stop",
+          "trailing",
+          "trigger"
+        ],
+        "default": "trade/orders-pending"
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOption": {
+    "unified": [
+      "publicGetMarketTicker"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches option data that is commonly found in an option chain",
+      "errors": null,
+      "name": "fetchOption",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "an [option chain structure]{@link https://docs.ccxt.com/?id=option-chain-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Option>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOption"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOptionChain": {
+    "unified": [
+      "publicGetMarketTickers"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches data for an underlying asset that is commonly found in an option chain",
+      "errors": null,
+      "name": "fetchOptionChain",
+      "params_doc": {
+        "code": "base currency to fetch an option chain for",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.uly": "the underlying asset, can be obtained from fetchUnderlyingAssets ()"
+      },
+      "returns": {
+        "description": "a list of [option chain structures]{@link https://docs.ccxt.com/?id=option-chain-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "code",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<OptionChain>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instType": {
+          "kind": "literal",
+          "reason": null,
+          "value": "OPTION"
+        },
+        "uly": {
+          "kind": "reference",
+          "reason": "dynamic_construction",
+          "source": "symbol",
+          "source_class": "unified_param",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOptionChain"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOrder": {
+    "unified": [
+      "privateGetTradeOrder",
+      "privateGetTradeOrderAlgo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "optional",
+          "value": null
+        },
+        "ordId": {
+          "kind": "reference",
+          "source": "id",
+          "source_class": "unified_param"
+        }
+      },
+      "endpoint_selection": {
+        "cases": [
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "stop": true
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "trailing": true
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "trigger": true
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "ordType": "conditional"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "ordType": "oco"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "ordType": "trigger"
+            }
+          },
+          {
+            "path": "trade/order-algo",
+            "when": {
+              "ordType": "move_order_stop"
+            }
+          }
+        ],
+        "consume": [
+          "stop",
+          "trailing",
+          "trigger"
+        ],
+        "default": "trade/order"
+      }
+    },
+    "parse": [
+      "parseOrder"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOrderBook": {
+    "unified": [
+      "publicGetMarketBooks",
+      "publicGetMarketBooksFull"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches information on open orders with bid (buy) and ask (sell) prices, volumes and other data",
+      "errors": null,
+      "name": "fetchOrderBook",
+      "params_doc": {
+        "limit": "the maximum amount of order book entries to return",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.method": "'publicGetMarketBooksFull' or 'publicGetMarketBooks' default is 'publicGetMarketBooks'",
+        "symbol": "unified symbol of the market to fetch the order book for"
+      },
+      "returns": {
+        "description": "A dictionary of [order book structures]{@link https://docs.ccxt.com/?id=order-book-structure} indexed by market symbols",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<OrderBook>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "unified_param",
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "consume": [
+          "method"
+        ],
+        "default": "public_get_market_books",
+        "rules": [
+          {
+            "endpoint": "public_get_market_books_full",
+            "when": {
+              "method": "publicGetMarketBooksFull"
+            }
+          },
+          {
+            "endpoint": "public_get_market_books_full",
+            "when": {
+              "method": "books-full"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseOrderBook"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOrderTrades": {
+    "unified": [
+      "privateGetTradeFillsHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPosition": {
+    "unified": [
+      "privateGetAccountPositions"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "unified_param",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parsePosition"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPositionMode": {
+    "unified": [
+      "privateGetAccountConfig"
+    ],
+    "has": true,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPositions": {
+    "unified": [
+      "privateGetAccountPositions",
+      "privateGetAccountPositionsHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch all open positions",
+      "errors": null,
+      "name": "fetchPositions",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.instType": "MARGIN, SWAP, FUTURES, OPTION",
+        "symbols": "list of unified market symbols"
+      },
+      "returns": {
+        "description": "a list of [position structure]{@link https://docs.ccxt.com/?id=position-structure}",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbols",
+            "optional": true,
+            "type": "Strings"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Position[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [
+          "type"
+        ],
+        "default": "private_get_account_positions",
+        "rules": [
+          {
+            "endpoint": "private_get_account_positions_history",
+            "when": {
+              "type": "history"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parsePosition"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPositionsForSymbol": {
+    "unified": [
+      "privateGetAccountPositions",
+      "privateGetAccountPositionsHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "name": "fetchPositionsForSymbol",
+      "description": "fetch positions for a symbol",
+      "async": true,
+      "signature": {
+        "return_type": "Promise<Position[]>",
+        "params": []
+      },
+      "returns": {
+        "description": "a list of position structures",
+        "type": "object[]"
+      }
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [
+          "type"
+        ],
+        "default": "private_get_account_positions",
+        "rules": [
+          {
+            "endpoint": "private_get_account_positions_history",
+            "when": {
+              "type": "history"
+            }
+          }
+        ]
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPositionsHistory": {
+    "unified": [
+      "privateGetAccountPositionsHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches historical positions",
+      "errors": null,
+      "name": "fetchPositionsHistory",
+      "params_doc": {
+        "limit": "the maximum amount of records to fetch, default=100, max=100",
+        "params": "extra parameters specific to the exchange api endpoint",
+        "params.after": "timestamp in ms of the latest position to fetch based on the last update time of the position",
+        "params.before": "timestamp in ms of the earliest position to fetch based on the last update time of the position",
+        "params.instType": "margin, swap, futures or option",
+        "params.marginMode": "\"cross\" or \"isolated\"  EXCHANGE SPECIFIC PARAMETERS",
+        "params.posId": "position id, there is attribute expiration, the posid will be expired if it is more than 30 days after the last full close position, then position will use new posid",
+        "params.type": "the type of latest close position 1: close position partially, 2：close all, 3：liquidation, 4：partial liquidation; 5：adl, is it is the latest type if there are several types for the same position",
+        "since": "timestamp in ms of the earliest position to fetch",
+        "symbols": "unified market symbols"
+      },
+      "returns": {
+        "description": "a list of [position structures]{@link https://docs.ccxt.com/?id=position-structure}",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbols",
+            "optional": true,
+            "type": "Strings"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Position[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "limit": {
+          "default": 100,
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "limit",
+          "source_class": "optional",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parsePositions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchSettlementHistory": {
+    "unified": [
+      "publicGetPublicDeliveryExerciseHistory"
+    ],
+    "has": true,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "instType": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        },
+        "uly": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseSettlements"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchStatus": {
+    "unified": [
+      "publicGetSystemStatus"
+    ],
+    "has": true,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTicker": {
+    "unified": [
+      "publicGetMarketTicker"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches a price ticker, a statistical calculation with the information calculated over the past 24 hours for a specific market",
+      "errors": null,
+      "name": "fetchTicker",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbol": "unified symbol of the market to fetch the ticker for"
+      },
+      "returns": {
+        "description": "a [ticker structure]{@link https://docs.ccxt.com/?id=ticker-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Ticker>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTicker"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTickers": {
+    "unified": [
+      "publicGetMarketTickers"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches price tickers for multiple markets, statistical information calculated over the past 24 hours for each market",
+      "errors": null,
+      "name": "fetchTickers",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbols": "unified symbols of the markets to fetch the ticker for, all market tickers are returned if not assigned"
+      },
+      "returns": {
+        "description": "a dictionary of [ticker structures]{@link https://docs.ccxt.com/?id=ticker-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbols",
+            "optional": true,
+            "type": "Strings"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Tickers>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instType": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTickers"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTime": {
+    "unified": [
+      "publicGetPublicTime"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches the current integer timestamp in milliseconds from the exchange server",
+      "errors": null,
+      "name": "fetchTime",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint"
+      },
+      "returns": {
+        "description": "the current integer timestamp in milliseconds from the exchange server",
+        "type": "int"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Int>"
+      },
+      "unresolved_reason": null
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTrades": {
+    "unified": [
+      "publicGetMarketHistoryTrades",
+      "publicGetMarketTrades",
+      "publicGetPublicOptionTrades"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "get the list of most recent trades for a particular symbol",
+      "errors": null,
+      "name": "fetchTrades",
+      "params_doc": {
+        "limit": "the maximum amount of trades to fetch",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.method": "'publicGetMarketTrades' or 'publicGetMarketHistoryTrades' default is 'publicGetMarketTrades'",
+        "params.paginate": "*only applies to publicGetMarketHistoryTrades* default false, when true will automatically paginate by calling this endpoint multiple times",
+        "since": "timestamp in ms of the earliest trade to fetch",
+        "symbol": "unified symbol of the market to fetch trades for"
+      },
+      "returns": {
+        "description": "a list of [trade structures]{@link https://docs.ccxt.com/?id=public-trades}",
+        "type": "Trade[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Trade[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "unified_param",
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "consume": [
+          "method"
+        ],
+        "default": "public_get_market_trades",
+        "rules": [
+          {
+            "endpoint": "public_get_market_history_trades",
+            "when": {
+              "method": "publicGetMarketHistoryTrades"
+            }
+          },
+          {
+            "endpoint": "public_get_public_option_trades",
+            "when": {
+              "market_type": "option"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseTrades"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTradingFee": {
+    "unified": [
+      "privateGetAccountTradeFee"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch the trading fees for a market",
+      "errors": null,
+      "name": "fetchTradingFee",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a [fee structure]{@link https://docs.ccxt.com/?id=fee-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<TradingFeeInterface>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "instType": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTradingFee"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTransfer": {
+    "unified": [
+      "privateGetAssetTransferState"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": null,
+      "errors": null,
+      "name": "fetchTransfer",
+      "params_doc": null,
+      "returns": null,
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "id",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "undefined",
+            "name": "code",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<TransferEntry>"
+      },
+      "unresolved_reason": "no_jsdoc"
+    },
+    "request": {
+      "defaults": {
+        "_omit": [
+          "code"
+        ],
+        "transId": {
+          "kind": "reference",
+          "reason": null,
+          "source": "id",
+          "source_class": "unified_param",
+          "transform": "string",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTransfer"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTransfers": {
+    "unified": [
+      "privateGetAccountBillsArchive"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch a history of internal transfers made on an account",
+      "errors": null,
+      "name": "fetchTransfers",
+      "params_doc": {
+        "code": "unified currency code of the currency transferred",
+        "limit": "the maximum number of transfers structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "since": "the earliest time in ms to fetch transfers for"
+      },
+      "returns": {
+        "description": "a list of [transfer structures]{@link https://docs.ccxt.com/?id=transfer-structure}",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "code",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<TransferEntry[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "1"
+        }
+      }
+    },
+    "parse": [
+      "parseTransfers"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchUnderlyingAssets": {
+    "unified": [
+      "publicGetPublicUnderlying"
+    ],
+    "has": true,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "instType": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchWithdrawal": {
+    "unified": [
+      "privateGetAssetWithdrawalHistory"
+    ],
+    "has": true,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "name": "fetchWithdrawal",
+      "description": "fetch a withdrawal",
+      "async": true,
+      "signature": {
+        "return_type": "Promise<Transaction>",
+        "params": []
+      },
+      "returns": {
+        "description": "a transaction structure",
+        "type": "object"
+      }
+    },
+    "request": {
+      "defaults": {
+        "wdId": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "id",
+          "source_class": "unified_param",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTransaction"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchWithdrawals": {
+    "unified": [
+      "privateGetAssetWithdrawalHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch all withdrawals made from an account",
+      "errors": null,
+      "name": "fetchWithdrawals",
+      "params_doc": {
+        "code": "unified currency code",
+        "limit": "the maximum number of withdrawals structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.paginate": "default false, when true will automatically paginate by calling this endpoint multiple times. See in the docs all the [availble parameters](https://github.com/ccxt/ccxt/wiki/Manual#pagination-params)",
+        "params.until": "the latest time in ms to fetch entries for",
+        "since": "the earliest time in ms to fetch withdrawals for"
+      },
+      "returns": {
+        "description": "a list of [transaction structures]{@link https://docs.ccxt.com/?id=transaction-structure}",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "code",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Transaction[]>"
+      },
+      "unresolved_reason": null
+    },
+    "parse": [
+      "parseTransactions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "reduceMargin": {
+    "unified": [
+      "privatePostAccountPositionMarginBalance"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "remove margin from a position",
+      "errors": null,
+      "name": "reduceMargin",
+      "params_doc": {
+        "amount": "the amount of margin to remove",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a [margin structure]{@link https://docs.ccxt.com/?id=margin-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": null,
+            "name": "amount",
+            "optional": false,
+            "type": "number"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<MarginModification>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "amt": {
+          "kind": "reference",
+          "source": "amount",
+          "source_class": "unified_param"
+        },
+        "instId": {
+          "kind": "reference",
+          "source": "symbol",
+          "source_class": "unified_param"
+        },
+        "posSide": {
+          "kind": "reference",
+          "source": "posSide",
+          "source_class": "native_passthrough"
+        },
+        "type": {
+          "kind": "literal",
+          "value": "reduce"
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "repayCrossMargin": {
+    "unified": [
+      "privatePostAccountBorrowRepay"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "amt": {
+          "kind": "reference",
+          "reason": "dynamic_construction",
+          "source": "amount",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "ccy": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "code",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "ordId": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "id",
+          "source_class": "optional",
+          "value": null
+        },
+        "side": {
+          "kind": "literal",
+          "reason": null,
+          "value": "repay"
+        }
+      }
+    },
+    "parse": [
+      "parseMarginLoan"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "setLeverage": {
+    "unified": [
+      "privatePostAccountSetLeverage"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "lever": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "leverage",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "mgnMode": {
+          "default": "cross",
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "margin_mode",
+          "source_class": "optional",
+          "value": null
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "setMarginMode": {
+    "unified": [
+      "privatePostAccountSetLeverage"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "instId": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "lever": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "leverage",
+          "source_class": "optional",
+          "value": null
+        },
+        "mgnMode": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "margin_mode",
+          "source_class": "unified_param",
+          "value": null
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "setPositionMode": {
+    "unified": [
+      "privatePostAccountSetPositionMode"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "posMode": {
+          "cases": [
+            {
+              "value": "long_short_mode",
+              "when": {
+                "hedge_mode": true
+              }
+            },
+            {
+              "value": "net_mode",
+              "when": {
+                "hedge_mode": false
+              }
+            }
+          ],
+          "kind": "conditional",
+          "reason": "identifier_reference",
+          "source": "hedge_mode",
+          "source_class": "unified_param",
+          "value": null
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "transfer": {
+    "unified": [
+      "privatePostAssetTransfer"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "transfer currency internally between wallets on the same account",
+      "errors": null,
+      "name": "transfer",
+      "params_doc": {
+        "amount": "amount to transfer",
+        "code": "unified currency code",
+        "fromAccount": "account to transfer from",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "toAccount": "account to transfer to"
+      },
+      "returns": {
+        "description": "a [transfer structure]{@link https://docs.ccxt.com/?id=transfer-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "code",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": null,
+            "name": "amount",
+            "optional": false,
+            "type": "number"
+          },
+          {
+            "default": null,
+            "name": "fromAccount",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": null,
+            "name": "toAccount",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<TransferEntry>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "amt": {
+          "kind": "reference",
+          "reason": null,
+          "source": "amount",
+          "source_class": "unified_param",
+          "transform": "string",
+          "value": null
+        },
+        "ccy": {
+          "kind": "reference",
+          "reason": null,
+          "source": "code",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "from": {
+          "kind": "reference",
+          "reason": null,
+          "source": "from_account",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "to": {
+          "kind": "reference",
+          "reason": null,
+          "source": "to_account",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "0"
+        }
+      }
+    },
+    "parse": [
+      "parseTransfer"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "withdraw": {
+    "unified": [
+      "privateGetAssetCurrencies",
+      "privatePostAssetWithdrawal"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "make a withdrawal",
+      "errors": null,
+      "name": "withdraw",
+      "params_doc": {
+        "address": "the address to withdraw to",
+        "amount": "the amount to withdraw",
+        "code": "unified currency code",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "tag": null
+      },
+      "returns": {
+        "description": "a [transaction structure]{@link https://docs.ccxt.com/?id=transaction-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "code",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": null,
+            "name": "amount",
+            "optional": false,
+            "type": "number"
+          },
+          {
+            "default": null,
+            "name": "address",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "undefined",
+            "name": "tag",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Transaction>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "amt": {
+          "kind": "reference",
+          "reason": "dynamic_construction",
+          "source": "amount",
+          "source_class": "unified_param",
+          "transform": "string",
+          "value": null
+        },
+        "ccy": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "code",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "dest": {
+          "kind": "literal",
+          "reason": null,
+          "value": "4"
+        },
+        "toAddr": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "address",
+          "source_class": "unified_param",
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "default": "asset/withdrawal"
+      }
+    },
+    "parse": [
+      "parseTransaction"
+    ],
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  }
+}

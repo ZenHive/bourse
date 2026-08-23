@@ -1,0 +1,761 @@
+{
+  "url_templates": {
+    "private": {
+      "api_param": "private",
+      "http_method": "GET",
+      "resolved_url": "https://mainnet.zklighter.elliot.ai/api/v1/accountLimits",
+      "sample_path": "accountLimits",
+      "url_prefix": "https://mainnet.zklighter.elliot.ai/api/v1/"
+    },
+    "public": {
+      "api_param": "public",
+      "http_method": "GET",
+      "resolved_url": "https://mainnet.zklighter.elliot.ai/api/v1/account",
+      "sample_path": "account",
+      "url_prefix": "https://mainnet.zklighter.elliot.ai/api/v1/"
+    },
+    "root": {
+      "api_param": "root",
+      "http_method": "GET",
+      "resolved_url": "https://mainnet.zklighter.elliot.ai",
+      "sample_path": "",
+      "url_prefix": "https://mainnet.zklighter.elliot.ai"
+    }
+  },
+  "describe": {
+    "alias": false,
+    "certified": false,
+    "countries": [],
+    "currencies": {},
+    "dex": true,
+    "enableRateLimit": true,
+    "exceptions": {
+      "broad": {
+        "invalid signature": "AuthenticationError"
+      },
+      "exact": {
+        "20001": "__function:BadRequest",
+        "29500": "__function:AuthenticationError"
+      }
+    },
+    "features": {
+      "default": {
+        "createOrder": {
+          "iceberg": false,
+          "leverage": false,
+          "marketBuyByCost": false,
+          "marketBuyRequiresPrice": false,
+          "selfTradePrevention": false,
+          "timeInForce": {
+            "FOK": true,
+            "GTD": false,
+            "IOC": true,
+            "PO": true
+          },
+          "trailing": false
+        },
+        "sandbox": true
+      }
+    },
+    "fees": {
+      "funding": {
+        "deposit": {},
+        "percentage": "__undefined",
+        "tierBased": "__undefined",
+        "withdraw": {}
+      },
+      "maker": 0,
+      "taker": 0,
+      "trading": {
+        "maker": "__undefined",
+        "percentage": "__undefined",
+        "taker": "__undefined",
+        "tierBased": "__undefined"
+      }
+    },
+    "hostname": "zklighter.elliot.ai",
+    "id": "lighter",
+    "limits": {
+      "amount": {
+        "max": "__undefined",
+        "min": "__undefined"
+      },
+      "cost": {
+        "max": "__undefined",
+        "min": "__undefined"
+      },
+      "leverage": {
+        "max": "__undefined",
+        "min": "__undefined"
+      },
+      "price": {
+        "max": "__undefined",
+        "min": "__undefined"
+      }
+    },
+    "markets": "__undefined",
+    "name": "Lighter",
+    "options": {
+      "accountIndex": "__undefined",
+      "apiKeyIndex": "__undefined",
+      "authDeadlineExpiry": 28800,
+      "authDeadlineMinimumRemaining": 60,
+      "builderFee": true,
+      "chainId": 304,
+      "defaultType": "swap",
+      "integratorAccountIndex": 718718,
+      "integratorMakerFee": 1000,
+      "integratorTakerFee": 1000,
+      "libraryPath": "__undefined",
+      "lighterPrivateKey": "__undefined",
+      "wasmExecPath": "__undefined"
+    },
+    "paddingMode": 5,
+    "pro": true,
+    "quoteJsonNumbers": false,
+    "rateLimit": 1000,
+    "rateLimiterAlgorithm": "leakyBucket",
+    "requiredCredentials": {
+      "accountId": false,
+      "apiKey": true,
+      "login": false,
+      "password": false,
+      "privateKey": true,
+      "secret": true,
+      "token": false,
+      "twofa": false,
+      "uid": true,
+      "walletAddress": false
+    },
+    "rollingWindowSize": 60000,
+    "status": {
+      "eta": "__undefined",
+      "info": "__undefined",
+      "status": "ok",
+      "updated": "__undefined",
+      "url": "__undefined"
+    },
+    "timeframes": {
+      "12h": "12h",
+      "15m": "15m",
+      "1d": "1d",
+      "1h": "1h",
+      "1m": "1m",
+      "1w": "1w",
+      "30m": "30m",
+      "4h": "4h",
+      "5m": "5m"
+    },
+    "timeout": 10000,
+    "urls": {
+      "api": {
+        "private": "https://mainnet.{hostname}",
+        "public": "https://mainnet.{hostname}",
+        "root": "https://mainnet.{hostname}"
+      },
+      "api_management": null,
+      "doc": "https://apidocs.lighter.xyz/",
+      "fees": "https://docs.lighter.xyz/perpetual-futures/fees",
+      "logo": "https://github.com/user-attachments/assets/ff1aaf96-bffb-4545-a750-5eba716e75d0",
+      "referral": {
+        "discount": 0.1,
+        "url": "app.lighter.xyz/?referral=715955W9"
+      },
+      "test": {
+        "private": "https://testnet.{hostname}",
+        "public": "https://testnet.{hostname}",
+        "root": "https://testnet.{hostname}"
+      },
+      "www": "https://lighter.xyz/"
+    },
+    "version": "v1"
+  },
+  "request_shape": {
+    "private": {
+      "body_encoding": null,
+      "content_type": null,
+      "endpoints": [
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "accountActiveOrders"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "accountInactiveOrders"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "accountLimits"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "accountMetadata"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "accountTxs"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "deposit/history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "export"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "l1Metadata"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "liquidations"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "pnl"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "positionFunding"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "publicPoolsMetadata"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "referral/points"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "trades"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "transfer/history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "transferFeeInfo"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "withdraw/history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "changeAccountTier"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "notification/ack"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "sendTx"
+        }
+      ],
+      "patch_count": 0,
+      "unresolved_reason": null
+    },
+    "public": {
+      "body_encoding": "none",
+      "content_type": null,
+      "endpoints": [
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "account"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "accountsByL1Address"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "announcement"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "apikeys"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "assetDetails"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "block"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "blocks"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "blockTxs"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "candles"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "currentHeight"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "exchangeStats"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "fastbridge/info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "funding-rates"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "fundings"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "nextNonce"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "orderBookDetails"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "orderBookOrders"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "orderBooks"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "recentTrades"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "tx"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "txFromL1TxHash"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "txs"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "withdrawalDelay"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "sendTx"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "sendTxBatch"
+        }
+      ],
+      "patch_count": 0,
+      "unresolved_reason": null
+    },
+    "root": {
+      "body_encoding": "none",
+      "content_type": null,
+      "endpoints": [
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": ""
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "info"
+        }
+      ],
+      "patch_count": 0,
+      "unresolved_reason": null
+    }
+  },
+  "endpoints": {
+    "private.get.accountActiveOrders": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.accountInactiveOrders": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.accountLimits": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.accountMetadata": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.accountTxs": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.deposit/history": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.export": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.l1Metadata": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.liquidations": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.pnl": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.positionFunding": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.publicPoolsMetadata": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.referral/points": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.trades": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.transfer/history": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.transferFeeInfo": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.withdraw/history": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.changeAccountTier": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.notification/ack": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.sendTx": {
+      "api": 1
+    },
+    "public.get.account": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.accountsByL1Address": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.announcement": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.apikeys": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.assetDetails": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.block": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.blockTxs": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.blocks": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.candles": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.currentHeight": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.exchangeStats": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.fastbridge/info": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.funding-rates": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.fundings": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.nextNonce": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.orderBookDetails": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.orderBookOrders": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.orderBooks": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.recentTrades": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.tx": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.txFromL1TxHash": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.txs": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.withdrawalDelay": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.sendTx": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.sendTxBatch": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "root.get.": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "root.get.info": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    }
+  }
+}

@@ -1,0 +1,8336 @@
+{
+  "contract_unit": {
+    "linear": {
+      "kind": "constant",
+      "value": 1
+    },
+    "quantity_unit": "base"
+  },
+  "symbol_patterns": {
+    "future": {
+      "case": "upper",
+      "date_format": "ddmmmyy",
+      "pattern": "future_ddmmmyy",
+      "prefix": null,
+      "separator": "",
+      "suffix": null
+    },
+    "option": {
+      "case": "upper",
+      "date_format": "ddmmmyy",
+      "pattern": "option_with_settle",
+      "prefix": null,
+      "separator": "",
+      "suffix": null
+    },
+    "spot": {
+      "case": "upper",
+      "date_format": null,
+      "pattern": "no_separator_upper",
+      "prefix": null,
+      "separator": "",
+      "suffix": null
+    },
+    "swap": {
+      "case": "upper",
+      "date_format": null,
+      "pattern": "implicit",
+      "prefix": null,
+      "separator": "",
+      "suffix": null
+    }
+  },
+  "option_quantity": {
+    "canonical_unit": "base",
+    "contract_size": null,
+    "wire_field": "qty",
+    "wire_unit": "base"
+  },
+  "greeks_conventions": {
+    "delta": {
+      "supported": true,
+      "native_field": "delta",
+      "denomination": "underlying",
+      "unit": "ratio",
+      "bump_size": 1.0,
+      "time_basis": null
+    },
+    "gamma": {
+      "supported": true,
+      "native_field": "gamma",
+      "denomination": "delta",
+      "unit": "delta_per_underlying_unit",
+      "bump_size": 1.0,
+      "time_basis": null
+    },
+    "vega": {
+      "supported": true,
+      "native_field": "vega",
+      "denomination": "option_premium",
+      "unit": "premium_per_vol_point",
+      "bump_size": 0.01,
+      "time_basis": null
+    },
+    "theta": {
+      "supported": true,
+      "native_field": "theta",
+      "denomination": "option_premium",
+      "unit": "premium_per_day",
+      "bump_size": 1.0,
+      "time_basis": "calendar_day"
+    },
+    "rho": {
+      "supported": false,
+      "native_field": null
+    }
+  },
+  "currencies": {
+    "0G": {
+      "code": "0G",
+      "fees": {},
+      "id": "0G",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "1000000BABYDOGE": {
+      "code": "1000000BABYDOGE",
+      "fees": {},
+      "id": "1000000BABYDOGE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 100
+    },
+    "1000000MOG": {
+      "code": "1000000MOG",
+      "fees": {},
+      "id": "1000000MOG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "10000NEX": {
+      "code": "10000NEX",
+      "fees": {},
+      "id": "10000NEX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "10000SATS": {
+      "code": "10000SATS",
+      "fees": {},
+      "id": "10000SATS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 100
+    },
+    "1000BONK": {
+      "code": "1000BONK",
+      "fees": {},
+      "id": "1000BONK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "1000BTT": {
+      "code": "1000BTT",
+      "fees": {},
+      "id": "1000BTT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 100
+    },
+    "1000CAT": {
+      "code": "1000CAT",
+      "fees": {},
+      "id": "1000CAT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "1000FLOKI": {
+      "code": "1000FLOKI",
+      "fees": {},
+      "id": "1000FLOKI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "1000LUNC": {
+      "code": "1000LUNC",
+      "fees": {},
+      "id": "1000LUNC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "1000NEIROCTO": {
+      "code": "1000NEIROCTO",
+      "fees": {},
+      "id": "1000NEIROCTO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "1000PEPE": {
+      "code": "1000PEPE",
+      "fees": {},
+      "id": "1000PEPE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 100
+    },
+    "1000RATS": {
+      "code": "1000RATS",
+      "fees": {},
+      "id": "1000RATS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "1000TAG": {
+      "code": "1000TAG",
+      "fees": {},
+      "id": "1000TAG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "1000TOSHI": {
+      "code": "1000TOSHI",
+      "fees": {},
+      "id": "1000TOSHI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "1000TURBO": {
+      "code": "1000TURBO",
+      "fees": {},
+      "id": "1000TURBO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "1000XEC": {
+      "code": "1000XEC",
+      "fees": {},
+      "id": "1000XEC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "1INCH": {
+      "code": "1INCH",
+      "fees": {},
+      "id": "1INCH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "2Z": {
+      "code": "2Z",
+      "fees": {},
+      "id": "2Z",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "4": {
+      "code": "4",
+      "fees": {},
+      "id": "4",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "A": {
+      "code": "A",
+      "fees": {},
+      "id": "A",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "A8": {
+      "code": "A8",
+      "fees": {},
+      "id": "A8",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "AAOI": {
+      "code": "AAOI",
+      "fees": {},
+      "id": "AAOI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AAPL": {
+      "code": "AAPL",
+      "fees": {},
+      "id": "AAPL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AAPLX": {
+      "code": "AAPLX",
+      "fees": {},
+      "id": "AAPLX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "AAVE": {
+      "code": "AAVE",
+      "fees": {},
+      "id": "AAVE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.0001
+    },
+    "ACE": {
+      "code": "ACE",
+      "fees": {},
+      "id": "ACE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ACH": {
+      "code": "ACH",
+      "fees": {},
+      "id": "ACH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ACS": {
+      "code": "ACS",
+      "fees": {},
+      "id": "ACS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ACT": {
+      "code": "ACT",
+      "fees": {},
+      "id": "ACT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ACU": {
+      "code": "ACU",
+      "fees": {},
+      "id": "ACU",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ACX": {
+      "code": "ACX",
+      "fees": {},
+      "id": "ACX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ADA": {
+      "code": "ADA",
+      "fees": {},
+      "id": "ADA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AED": {
+      "code": "AED",
+      "fees": {},
+      "id": "AED",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "AEDZ": {
+      "code": "AEDZ",
+      "fees": {},
+      "id": "AEDZ",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "AERGO": {
+      "code": "AERGO",
+      "fees": {},
+      "id": "AERGO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "AERO": {
+      "code": "AERO",
+      "fees": {},
+      "id": "AERO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AEVO": {
+      "code": "AEVO",
+      "fees": {},
+      "id": "AEVO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AFC": {
+      "code": "AFC",
+      "fees": {},
+      "id": "AFC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AGI": {
+      "code": "AGI",
+      "fees": {},
+      "id": "AGI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AGLD": {
+      "code": "AGLD",
+      "fees": {},
+      "id": "AGLD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AIGENSYN": {
+      "code": "AIGENSYN",
+      "fees": {},
+      "id": "AIGENSYN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "AIO": {
+      "code": "AIO",
+      "fees": {},
+      "id": "AIO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "AIOZ": {
+      "code": "AIOZ",
+      "fees": {},
+      "id": "AIOZ",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AIXBT": {
+      "code": "AIXBT",
+      "fees": {},
+      "id": "AIXBT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "AKE": {
+      "code": "AKE",
+      "fees": {},
+      "id": "AKE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 100
+    },
+    "AKT": {
+      "code": "AKT",
+      "fees": {},
+      "id": "AKT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ALCH": {
+      "code": "ALCH",
+      "fees": {},
+      "id": "ALCH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ALGO": {
+      "code": "ALGO",
+      "fees": {},
+      "id": "ALGO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ALICE": {
+      "code": "ALICE",
+      "fees": {},
+      "id": "ALICE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ALLO": {
+      "code": "ALLO",
+      "fees": {},
+      "id": "ALLO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ALPINE": {
+      "code": "ALPINE",
+      "fees": {},
+      "id": "ALPINE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ALT": {
+      "code": "ALT",
+      "fees": {},
+      "id": "ALT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "AMAT": {
+      "code": "AMAT",
+      "fees": {},
+      "id": "AMAT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AMDSTOCK": {
+      "code": "AMDSTOCK",
+      "fees": {},
+      "id": "AMDSTOCK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AMZN": {
+      "code": "AMZN",
+      "fees": {},
+      "id": "AMZN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AMZNX": {
+      "code": "AMZNX",
+      "fees": {},
+      "id": "AMZNX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "ANIME": {
+      "code": "ANIME",
+      "fees": {},
+      "id": "ANIME",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ANKR": {
+      "code": "ANKR",
+      "fees": {},
+      "id": "ANKR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "AO": {
+      "code": "AO",
+      "fees": {},
+      "id": "AO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "APE": {
+      "code": "APE",
+      "fees": {},
+      "id": "APE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "APEX": {
+      "code": "APEX",
+      "fees": {},
+      "id": "APEX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "API3": {
+      "code": "API3",
+      "fees": {},
+      "id": "API3",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "APR": {
+      "code": "APR",
+      "fees": {},
+      "id": "APR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "APT": {
+      "code": "APT",
+      "fees": {},
+      "id": "APT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AR": {
+      "code": "AR",
+      "fees": {},
+      "id": "AR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ARB": {
+      "code": "ARB",
+      "fees": {},
+      "id": "ARB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ARC": {
+      "code": "ARC",
+      "fees": {},
+      "id": "ARC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ARIA": {
+      "code": "ARIA",
+      "fees": {},
+      "id": "ARIA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ARK": {
+      "code": "ARK",
+      "fees": {},
+      "id": "ARK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ARKM": {
+      "code": "ARKM",
+      "fees": {},
+      "id": "ARKM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ARM": {
+      "code": "ARM",
+      "fees": {},
+      "id": "ARM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ARPA": {
+      "code": "ARPA",
+      "fees": {},
+      "id": "ARPA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "ARTY": {
+      "code": "ARTY",
+      "fees": {},
+      "id": "ARTY",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ASP": {
+      "code": "ASP",
+      "fees": {},
+      "id": "ASP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ASR": {
+      "code": "ASR",
+      "fees": {},
+      "id": "ASR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ASTER": {
+      "code": "ASTER",
+      "fees": {},
+      "id": "ASTER",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ASTR": {
+      "code": "ASTR",
+      "fees": {},
+      "id": "ASTR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ASTS": {
+      "code": "ASTS",
+      "fees": {},
+      "id": "ASTS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AT": {
+      "code": "AT",
+      "fees": {},
+      "id": "AT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ATH": {
+      "code": "ATH",
+      "fees": {},
+      "id": "ATH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ATOM": {
+      "code": "ATOM",
+      "fees": {},
+      "id": "ATOM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AUCTION": {
+      "code": "AUCTION",
+      "fees": {},
+      "id": "AUCTION",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "AURORA": {
+      "code": "AURORA",
+      "fees": {},
+      "id": "AURORA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AVA": {
+      "code": "AVA",
+      "fees": {},
+      "id": "AVA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AVAAI": {
+      "code": "AVAAI",
+      "fees": {},
+      "id": "AVAAI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "AVAIL": {
+      "code": "AVAIL",
+      "fees": {},
+      "id": "AVAIL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "AVAX": {
+      "code": "AVAX",
+      "fees": {},
+      "id": "AVAX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "AVGO": {
+      "code": "AVGO",
+      "fees": {},
+      "id": "AVGO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AVL": {
+      "code": "AVL",
+      "fees": {},
+      "id": "AVL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "AVNT": {
+      "code": "AVNT",
+      "fees": {},
+      "id": "AVNT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "AWE": {
+      "code": "AWE",
+      "fees": {},
+      "id": "AWE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "AXL": {
+      "code": "AXL",
+      "fees": {},
+      "id": "AXL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AXS": {
+      "code": "AXS",
+      "fees": {},
+      "id": "AXS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AXTI": {
+      "code": "AXTI",
+      "fees": {},
+      "id": "AXTI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "AZTEC": {
+      "code": "AZTEC",
+      "fees": {},
+      "id": "AZTEC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "B": {
+      "code": "B",
+      "fees": {},
+      "id": "B",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "B2": {
+      "code": "B2",
+      "fees": {},
+      "id": "B2",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "B3": {
+      "code": "B3",
+      "fees": {},
+      "id": "B3",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "BABA": {
+      "code": "BABA",
+      "fees": {},
+      "id": "BABA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "BABY": {
+      "code": "BABY",
+      "fees": {},
+      "id": "BABY",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "BABY1": {
+      "code": "BABY1",
+      "fees": {},
+      "id": "BABY1",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "BABYDOGE": {
+      "code": "BABYDOGE",
+      "fees": {},
+      "id": "BABYDOGE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "BAN": {
+      "code": "BAN",
+      "fees": {},
+      "id": "BAN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "BANANA": {
+      "code": "BANANA",
+      "fees": {},
+      "id": "BANANA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "BANANAS31": {
+      "code": "BANANAS31",
+      "fees": {},
+      "id": "BANANAS31",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 100
+    },
+    "BAND": {
+      "code": "BAND",
+      "fees": {},
+      "id": "BAND",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "BANK": {
+      "code": "BANK",
+      "fees": {},
+      "id": "BANK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "BARD": {
+      "code": "BARD",
+      "fees": {},
+      "id": "BARD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "BASED": {
+      "code": "BASED",
+      "fees": {},
+      "id": "BASED",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "BAT": {
+      "code": "BAT",
+      "fees": {},
+      "id": "BAT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "BB": {
+      "code": "BB",
+      "fees": {},
+      "id": "BB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "BBSOL": {
+      "code": "BBSOL",
+      "fees": {},
+      "id": "BBSOL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.0001
+    },
+    "BCH": {
+      "code": "BCH",
+      "fees": {},
+      "id": "BCH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.0001
+    },
+    "BE": {
+      "code": "BE",
+      "fees": {},
+      "id": "BE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "BEAM": {
+      "code": "BEAM",
+      "fees": {},
+      "id": "BEAM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "BEAT": {
+      "code": "BEAT",
+      "fees": {},
+      "id": "BEAT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "BEL": {
+      "code": "BEL",
+      "fees": {},
+      "id": "BEL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "BERA": {
+      "code": "BERA",
+      "fees": {},
+      "id": "BERA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "BICO": {
+      "code": "BICO",
+      "fees": {},
+      "id": "BICO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "BIGTIME": {
+      "code": "BIGTIME",
+      "fees": {},
+      "id": "BIGTIME",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "BILL": {
+      "code": "BILL",
+      "fees": {},
+      "id": "BILL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "BIO": {
+      "code": "BIO",
+      "fees": {},
+      "id": "BIO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "BIRB": {
+      "code": "BIRB",
+      "fees": {},
+      "id": "BIRB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "BLAST": {
+      "code": "BLAST",
+      "fees": {},
+      "id": "BLAST",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "BLEND": {
+      "code": "BLEND",
+      "fees": {},
+      "id": "BLEND",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "BLESS": {
+      "code": "BLESS",
+      "fees": {},
+      "id": "BLESS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "BLUAI": {
+      "code": "BLUAI",
+      "fees": {},
+      "id": "BLUAI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "BLUR": {
+      "code": "BLUR",
+      "fees": {},
+      "id": "BLUR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "BMNR": {
+      "code": "BMNR",
+      "fees": {},
+      "id": "BMNR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "BMT": {
+      "code": "BMT",
+      "fees": {},
+      "id": "BMT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "BNB": {
+      "code": "BNB",
+      "fees": {},
+      "id": "BNB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.0001
+    },
+    "BNT": {
+      "code": "BNT",
+      "fees": {},
+      "id": "BNT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "BOBA": {
+      "code": "BOBA",
+      "fees": {},
+      "id": "BOBA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "BOBBOB": {
+      "code": "BOBBOB",
+      "fees": {},
+      "id": "BOBBOB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "BOME": {
+      "code": "BOME",
+      "fees": {},
+      "id": "BOME",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "BONK": {
+      "code": "BONK",
+      "fees": {},
+      "id": "BONK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "BP": {
+      "code": "BP",
+      "fees": {},
+      "id": "BP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "BR": {
+      "code": "BR",
+      "fees": {},
+      "id": "BR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "BRETT": {
+      "code": "BRETT",
+      "fees": {},
+      "id": "BRETT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "BREV": {
+      "code": "BREV",
+      "fees": {},
+      "id": "BREV",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "BRL": {
+      "code": "BRL",
+      "fees": {},
+      "id": "BRL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.0001
+    },
+    "BROCCOLI": {
+      "code": "BROCCOLI",
+      "fees": {},
+      "id": "BROCCOLI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "BSB": {
+      "code": "BSB",
+      "fees": {},
+      "id": "BSB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "BSV": {
+      "code": "BSV",
+      "fees": {},
+      "id": "BSV",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "BTC": {
+      "code": "BTC",
+      "fees": {},
+      "id": "BTC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-09
+    },
+    "BTR": {
+      "code": "BTR",
+      "fees": {},
+      "id": "BTR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "BTT": {
+      "code": "BTT",
+      "fees": {},
+      "id": "BTT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "BTW": {
+      "code": "BTW",
+      "fees": {},
+      "id": "BTW",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "BZ": {
+      "code": "BZ",
+      "fees": {},
+      "id": "BZ",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "C": {
+      "code": "C",
+      "fees": {},
+      "id": "C",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "C98": {
+      "code": "C98",
+      "fees": {},
+      "id": "C98",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CAKE": {
+      "code": "CAKE",
+      "fees": {},
+      "id": "CAKE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "CAMP": {
+      "code": "CAMP",
+      "fees": {},
+      "id": "CAMP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "CARV": {
+      "code": "CARV",
+      "fees": {},
+      "id": "CARV",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CAT": {
+      "code": "CAT",
+      "fees": {},
+      "id": "CAT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "CATI": {
+      "code": "CATI",
+      "fees": {},
+      "id": "CATI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CBK": {
+      "code": "CBK",
+      "fees": {},
+      "id": "CBK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CBRS": {
+      "code": "CBRS",
+      "fees": {},
+      "id": "CBRS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CC": {
+      "code": "CC",
+      "fees": {},
+      "id": "CC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "CELO": {
+      "code": "CELO",
+      "fees": {},
+      "id": "CELO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CETUS": {
+      "code": "CETUS",
+      "fees": {},
+      "id": "CETUS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "CFG": {
+      "code": "CFG",
+      "fees": {},
+      "id": "CFG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "CFX": {
+      "code": "CFX",
+      "fees": {},
+      "id": "CFX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "CGPT": {
+      "code": "CGPT",
+      "fees": {},
+      "id": "CGPT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CHILLGUY": {
+      "code": "CHILLGUY",
+      "fees": {},
+      "id": "CHILLGUY",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "CHIP": {
+      "code": "CHIP",
+      "fees": {},
+      "id": "CHIP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "CHR": {
+      "code": "CHR",
+      "fees": {},
+      "id": "CHR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "CHZ": {
+      "code": "CHZ",
+      "fees": {},
+      "id": "CHZ",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CITY": {
+      "code": "CITY",
+      "fees": {},
+      "id": "CITY",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CKB": {
+      "code": "CKB",
+      "fees": {},
+      "id": "CKB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "CL": {
+      "code": "CL",
+      "fees": {},
+      "id": "CL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CLANKER": {
+      "code": "CLANKER",
+      "fees": {},
+      "id": "CLANKER",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CLO": {
+      "code": "CLO",
+      "fees": {},
+      "id": "CLO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "CLOUD": {
+      "code": "CLOUD",
+      "fees": {},
+      "id": "CLOUD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "COAI": {
+      "code": "COAI",
+      "fees": {},
+      "id": "COAI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "COHR": {
+      "code": "COHR",
+      "fees": {},
+      "id": "COHR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "COIN": {
+      "code": "COIN",
+      "fees": {},
+      "id": "COIN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "COINX": {
+      "code": "COINX",
+      "fees": {},
+      "id": "COINX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "COMP": {
+      "code": "COMP",
+      "fees": {},
+      "id": "COMP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "COOK": {
+      "code": "COOK",
+      "fees": {},
+      "id": "COOK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "COOKIE": {
+      "code": "COOKIE",
+      "fees": {},
+      "id": "COOKIE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CORE": {
+      "code": "CORE",
+      "fees": {},
+      "id": "CORE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CORN": {
+      "code": "CORN",
+      "fees": {},
+      "id": "CORN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "COTI": {
+      "code": "COTI",
+      "fees": {},
+      "id": "COTI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "COW": {
+      "code": "COW",
+      "fees": {},
+      "id": "COW",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "CPOOL": {
+      "code": "CPOOL",
+      "fees": {},
+      "id": "CPOOL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CRCL": {
+      "code": "CRCL",
+      "fees": {},
+      "id": "CRCL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CRCLX": {
+      "code": "CRCLX",
+      "fees": {},
+      "id": "CRCLX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "CRO": {
+      "code": "CRO",
+      "fees": {},
+      "id": "CRO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "CROSS": {
+      "code": "CROSS",
+      "fees": {},
+      "id": "CROSS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "CRV": {
+      "code": "CRV",
+      "fees": {},
+      "id": "CRV",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "CRWV": {
+      "code": "CRWV",
+      "fees": {},
+      "id": "CRWV",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CSCO": {
+      "code": "CSCO",
+      "fees": {},
+      "id": "CSCO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CSPR": {
+      "code": "CSPR",
+      "fees": {},
+      "id": "CSPR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "CTA": {
+      "code": "CTA",
+      "fees": {},
+      "id": "CTA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CTC": {
+      "code": "CTC",
+      "fees": {},
+      "id": "CTC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CTR": {
+      "code": "CTR",
+      "fees": {},
+      "id": "CTR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "CUDIS": {
+      "code": "CUDIS",
+      "fees": {},
+      "id": "CUDIS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "CVC": {
+      "code": "CVC",
+      "fees": {},
+      "id": "CVC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "CVX": {
+      "code": "CVX",
+      "fees": {},
+      "id": "CVX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CYBER": {
+      "code": "CYBER",
+      "fees": {},
+      "id": "CYBER",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "CYS": {
+      "code": "CYS",
+      "fees": {},
+      "id": "CYS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "DASH": {
+      "code": "DASH",
+      "fees": {},
+      "id": "DASH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "DBR": {
+      "code": "DBR",
+      "fees": {},
+      "id": "DBR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "DEEP": {
+      "code": "DEEP",
+      "fees": {},
+      "id": "DEEP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "DEGEN": {
+      "code": "DEGEN",
+      "fees": {},
+      "id": "DEGEN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "DELL": {
+      "code": "DELL",
+      "fees": {},
+      "id": "DELL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "DEXE": {
+      "code": "DEXE",
+      "fees": {},
+      "id": "DEXE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "DIA": {
+      "code": "DIA",
+      "fees": {},
+      "id": "DIA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "DIAM": {
+      "code": "DIAM",
+      "fees": {},
+      "id": "DIAM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "DOGE": {
+      "code": "DOGE",
+      "fees": {},
+      "id": "DOGE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "DOGS": {
+      "code": "DOGS",
+      "fees": {},
+      "id": "DOGS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "DOLO": {
+      "code": "DOLO",
+      "fees": {},
+      "id": "DOLO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "DOOD": {
+      "code": "DOOD",
+      "fees": {},
+      "id": "DOOD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "DOT": {
+      "code": "DOT",
+      "fees": {},
+      "id": "DOT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "DRAM": {
+      "code": "DRAM",
+      "fees": {},
+      "id": "DRAM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "DRIFT": {
+      "code": "DRIFT",
+      "fees": {},
+      "id": "DRIFT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "DUSK": {
+      "code": "DUSK",
+      "fees": {},
+      "id": "DUSK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "DYDX": {
+      "code": "DYDX",
+      "fees": {},
+      "id": "DYDX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "DYM": {
+      "code": "DYM",
+      "fees": {},
+      "id": "DYM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "EAT": {
+      "code": "EAT",
+      "fees": {},
+      "id": "EAT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "EDEN": {
+      "code": "EDEN",
+      "fees": {},
+      "id": "EDEN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "EDGE": {
+      "code": "EDGE",
+      "fees": {},
+      "id": "EDGE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "EDU": {
+      "code": "EDU",
+      "fees": {},
+      "id": "EDU",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "EGLD": {
+      "code": "EGLD",
+      "fees": {},
+      "id": "EGLD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "EIGEN": {
+      "code": "EIGEN",
+      "fees": {},
+      "id": "EIGEN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ELIZAOS": {
+      "code": "ELIZAOS",
+      "fees": {},
+      "id": "ELIZAOS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ELSA": {
+      "code": "ELSA",
+      "fees": {},
+      "id": "ELSA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ENA": {
+      "code": "ENA",
+      "fees": {},
+      "id": "ENA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ENJ": {
+      "code": "ENJ",
+      "fees": {},
+      "id": "ENJ",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ENS": {
+      "code": "ENS",
+      "fees": {},
+      "id": "ENS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "ENSO": {
+      "code": "ENSO",
+      "fees": {},
+      "id": "ENSO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "EPIC": {
+      "code": "EPIC",
+      "fees": {},
+      "id": "EPIC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ERA": {
+      "code": "ERA",
+      "fees": {},
+      "id": "ERA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ES": {
+      "code": "ES",
+      "fees": {},
+      "id": "ES",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ESE": {
+      "code": "ESE",
+      "fees": {},
+      "id": "ESE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ESP": {
+      "code": "ESP",
+      "fees": {},
+      "id": "ESP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "ESPORTS": {
+      "code": "ESPORTS",
+      "fees": {},
+      "id": "ESPORTS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ETC": {
+      "code": "ETC",
+      "fees": {},
+      "id": "ETC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "ETH": {
+      "code": "ETH",
+      "fees": {},
+      "id": "ETH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-05
+    },
+    "ETHBTC": {
+      "code": "ETHBTC",
+      "fees": {},
+      "id": "ETHBTC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "ETHFI": {
+      "code": "ETHFI",
+      "fees": {},
+      "id": "ETHFI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ETHW": {
+      "code": "ETHW",
+      "fees": {},
+      "id": "ETHW",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "EUL": {
+      "code": "EUL",
+      "fees": {},
+      "id": "EUL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "EUR": {
+      "code": "EUR",
+      "fees": {},
+      "id": "EUR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-09
+    },
+    "EVAA": {
+      "code": "EVAA",
+      "fees": {},
+      "id": "EVAA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "EWJ": {
+      "code": "EWJ",
+      "fees": {},
+      "id": "EWJ",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "EWT": {
+      "code": "EWT",
+      "fees": {},
+      "id": "EWT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "EWY": {
+      "code": "EWY",
+      "fees": {},
+      "id": "EWY",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "F": {
+      "code": "F",
+      "fees": {},
+      "id": "F",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "FARTCOIN": {
+      "code": "FARTCOIN",
+      "fees": {},
+      "id": "FARTCOIN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "FET": {
+      "code": "FET",
+      "fees": {},
+      "id": "FET",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "FF": {
+      "code": "FF",
+      "fees": {},
+      "id": "FF",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "FHE": {
+      "code": "FHE",
+      "fees": {},
+      "id": "FHE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "FIDA": {
+      "code": "FIDA",
+      "fees": {},
+      "id": "FIDA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "FIGHT": {
+      "code": "FIGHT",
+      "fees": {},
+      "id": "FIGHT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "FIL": {
+      "code": "FIL",
+      "fees": {},
+      "id": "FIL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "FLIP": {
+      "code": "FLIP",
+      "fees": {},
+      "id": "FLIP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "FLNC": {
+      "code": "FLNC",
+      "fees": {},
+      "id": "FLNC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "FLOCK": {
+      "code": "FLOCK",
+      "fees": {},
+      "id": "FLOCK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "FLOKI": {
+      "code": "FLOKI",
+      "fees": {},
+      "id": "FLOKI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "FLOW": {
+      "code": "FLOW",
+      "fees": {},
+      "id": "FLOW",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "FLR": {
+      "code": "FLR",
+      "fees": {},
+      "id": "FLR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "FLUID": {
+      "code": "FLUID",
+      "fees": {},
+      "id": "FLUID",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "FLUX": {
+      "code": "FLUX",
+      "fees": {},
+      "id": "FLUX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "FOGO": {
+      "code": "FOGO",
+      "fees": {},
+      "id": "FOGO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "FOLKS": {
+      "code": "FOLKS",
+      "fees": {},
+      "id": "FOLKS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "FORM": {
+      "code": "FORM",
+      "fees": {},
+      "id": "FORM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "FORT": {
+      "code": "FORT",
+      "fees": {},
+      "id": "FORT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "FRAX": {
+      "code": "FRAX",
+      "fees": {},
+      "id": "FRAX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "FTT": {
+      "code": "FTT",
+      "fees": {},
+      "id": "FTT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "FUEL": {
+      "code": "FUEL",
+      "fees": {},
+      "id": "FUEL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "G": {
+      "code": "G",
+      "fees": {},
+      "id": "G",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "GAIB": {
+      "code": "GAIB",
+      "fees": {},
+      "id": "GAIB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "GALA": {
+      "code": "GALA",
+      "fees": {},
+      "id": "GALA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "GAS": {
+      "code": "GAS",
+      "fees": {},
+      "id": "GAS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "GBP": {
+      "code": "GBP",
+      "fees": {},
+      "id": "GBP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.0001
+    },
+    "GENIUS": {
+      "code": "GENIUS",
+      "fees": {},
+      "id": "GENIUS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "GIGA": {
+      "code": "GIGA",
+      "fees": {},
+      "id": "GIGA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "GIGGLE": {
+      "code": "GIGGLE",
+      "fees": {},
+      "id": "GIGGLE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "GLM": {
+      "code": "GLM",
+      "fees": {},
+      "id": "GLM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "GLMR": {
+      "code": "GLMR",
+      "fees": {},
+      "id": "GLMR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "GMT": {
+      "code": "GMT",
+      "fees": {},
+      "id": "GMT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "GMX": {
+      "code": "GMX",
+      "fees": {},
+      "id": "GMX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "GOAT": {
+      "code": "GOAT",
+      "fees": {},
+      "id": "GOAT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "GODS": {
+      "code": "GODS",
+      "fees": {},
+      "id": "GODS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "GOOGL": {
+      "code": "GOOGL",
+      "fees": {},
+      "id": "GOOGL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "GOOGLX": {
+      "code": "GOOGLX",
+      "fees": {},
+      "id": "GOOGLX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "GPS": {
+      "code": "GPS",
+      "fees": {},
+      "id": "GPS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "GRASS": {
+      "code": "GRASS",
+      "fees": {},
+      "id": "GRASS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "GRIFFAIN": {
+      "code": "GRIFFAIN",
+      "fees": {},
+      "id": "GRIFFAIN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "GRT": {
+      "code": "GRT",
+      "fees": {},
+      "id": "GRT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "GTAI": {
+      "code": "GTAI",
+      "fees": {},
+      "id": "GTAI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "GUN": {
+      "code": "GUN",
+      "fees": {},
+      "id": "GUN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "GWEI": {
+      "code": "GWEI",
+      "fees": {},
+      "id": "GWEI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "H": {
+      "code": "H",
+      "fees": {},
+      "id": "H",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "HAEDAL": {
+      "code": "HAEDAL",
+      "fees": {},
+      "id": "HAEDAL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "HANA": {
+      "code": "HANA",
+      "fees": {},
+      "id": "HANA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "HBAR": {
+      "code": "HBAR",
+      "fees": {},
+      "id": "HBAR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "HEI": {
+      "code": "HEI",
+      "fees": {},
+      "id": "HEI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "HEMI": {
+      "code": "HEMI",
+      "fees": {},
+      "id": "HEMI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "HFT": {
+      "code": "HFT",
+      "fees": {},
+      "id": "HFT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "HIGH": {
+      "code": "HIGH",
+      "fees": {},
+      "id": "HIGH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "HIVE": {
+      "code": "HIVE",
+      "fees": {},
+      "id": "HIVE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "HMSTR": {
+      "code": "HMSTR",
+      "fees": {},
+      "id": "HMSTR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "HNT": {
+      "code": "HNT",
+      "fees": {},
+      "id": "HNT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "HOLO": {
+      "code": "HOLO",
+      "fees": {},
+      "id": "HOLO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "HOME": {
+      "code": "HOME",
+      "fees": {},
+      "id": "HOME",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "HOOD": {
+      "code": "HOOD",
+      "fees": {},
+      "id": "HOOD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "HOODX": {
+      "code": "HOODX",
+      "fees": {},
+      "id": "HOODX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "HPOS10I": {
+      "code": "HPOS10I",
+      "fees": {},
+      "id": "HPOS10I",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "HTX": {
+      "code": "HTX",
+      "fees": {},
+      "id": "HTX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "HUMA": {
+      "code": "HUMA",
+      "fees": {},
+      "id": "HUMA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "HYPE": {
+      "code": "HYPE",
+      "fees": {},
+      "id": "HYPE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "HYPER": {
+      "code": "HYPER",
+      "fees": {},
+      "id": "HYPER",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "HYUNDAI": {
+      "code": "HYUNDAI",
+      "fees": {},
+      "id": "HYUNDAI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "IBM": {
+      "code": "IBM",
+      "fees": {},
+      "id": "IBM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ICNT": {
+      "code": "ICNT",
+      "fees": {},
+      "id": "ICNT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ICP": {
+      "code": "ICP",
+      "fees": {},
+      "id": "ICP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ICX": {
+      "code": "ICX",
+      "fees": {},
+      "id": "ICX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ID": {
+      "code": "ID",
+      "fees": {},
+      "id": "ID",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ILV": {
+      "code": "ILV",
+      "fees": {},
+      "id": "ILV",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "IMU": {
+      "code": "IMU",
+      "fees": {},
+      "id": "IMU",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "IMX": {
+      "code": "IMX",
+      "fees": {},
+      "id": "IMX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "IN": {
+      "code": "IN",
+      "fees": {},
+      "id": "IN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "INIT": {
+      "code": "INIT",
+      "fees": {},
+      "id": "INIT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "INJ": {
+      "code": "INJ",
+      "fees": {},
+      "id": "INJ",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "INTC": {
+      "code": "INTC",
+      "fees": {},
+      "id": "INTC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "INTER": {
+      "code": "INTER",
+      "fees": {},
+      "id": "INTER",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "INX": {
+      "code": "INX",
+      "fees": {},
+      "id": "INX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "IO": {
+      "code": "IO",
+      "fees": {},
+      "id": "IO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "IOST": {
+      "code": "IOST",
+      "fees": {},
+      "id": "IOST",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "IOTA": {
+      "code": "IOTA",
+      "fees": {},
+      "id": "IOTA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "IOTX": {
+      "code": "IOTX",
+      "fees": {},
+      "id": "IOTX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "IP": {
+      "code": "IP",
+      "fees": {},
+      "id": "IP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "IREN": {
+      "code": "IREN",
+      "fees": {},
+      "id": "IREN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "IRYS": {
+      "code": "IRYS",
+      "fees": {},
+      "id": "IRYS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "IWM": {
+      "code": "IWM",
+      "fees": {},
+      "id": "IWM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "JASMY": {
+      "code": "JASMY",
+      "fees": {},
+      "id": "JASMY",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "JCT": {
+      "code": "JCT",
+      "fees": {},
+      "id": "JCT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 100
+    },
+    "JELLYJELLY": {
+      "code": "JELLYJELLY",
+      "fees": {},
+      "id": "JELLYJELLY",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "JST": {
+      "code": "JST",
+      "fees": {},
+      "id": "JST",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "JTO": {
+      "code": "JTO",
+      "fees": {},
+      "id": "JTO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "JUP": {
+      "code": "JUP",
+      "fees": {},
+      "id": "JUP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "JUV": {
+      "code": "JUV",
+      "fees": {},
+      "id": "JUV",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "KAIA": {
+      "code": "KAIA",
+      "fees": {},
+      "id": "KAIA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "KAITO": {
+      "code": "KAITO",
+      "fees": {},
+      "id": "KAITO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "KAS": {
+      "code": "KAS",
+      "fees": {},
+      "id": "KAS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "KAT": {
+      "code": "KAT",
+      "fees": {},
+      "id": "KAT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "KAVA": {
+      "code": "KAVA",
+      "fees": {},
+      "id": "KAVA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "KCS": {
+      "code": "KCS",
+      "fees": {},
+      "id": "KCS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "KERNEL": {
+      "code": "KERNEL",
+      "fees": {},
+      "id": "KERNEL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "KGEN": {
+      "code": "KGEN",
+      "fees": {},
+      "id": "KGEN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "KILO": {
+      "code": "KILO",
+      "fees": {},
+      "id": "KILO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "KITE": {
+      "code": "KITE",
+      "fees": {},
+      "id": "KITE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "KMNO": {
+      "code": "KMNO",
+      "fees": {},
+      "id": "KMNO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "KNC": {
+      "code": "KNC",
+      "fees": {},
+      "id": "KNC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "KSM": {
+      "code": "KSM",
+      "fees": {},
+      "id": "KSM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "KUB": {
+      "code": "KUB",
+      "fees": {},
+      "id": "KUB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "L3": {
+      "code": "L3",
+      "fees": {},
+      "id": "L3",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "LA": {
+      "code": "LA",
+      "fees": {},
+      "id": "LA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "LAB": {
+      "code": "LAB",
+      "fees": {},
+      "id": "LAB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "LAVA": {
+      "code": "LAVA",
+      "fees": {},
+      "id": "LAVA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "LAYER": {
+      "code": "LAYER",
+      "fees": {},
+      "id": "LAYER",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "LBTC": {
+      "code": "LBTC",
+      "fees": {},
+      "id": "LBTC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-06
+    },
+    "LDO": {
+      "code": "LDO",
+      "fees": {},
+      "id": "LDO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "LIGHT": {
+      "code": "LIGHT",
+      "fees": {},
+      "id": "LIGHT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "LINEA": {
+      "code": "LINEA",
+      "fees": {},
+      "id": "LINEA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "LINK": {
+      "code": "LINK",
+      "fees": {},
+      "id": "LINK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "LIT": {
+      "code": "LIT",
+      "fees": {},
+      "id": "LIT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "LITE": {
+      "code": "LITE",
+      "fees": {},
+      "id": "LITE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "LLY": {
+      "code": "LLY",
+      "fees": {},
+      "id": "LLY",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "LMWR": {
+      "code": "LMWR",
+      "fees": {},
+      "id": "LMWR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "LPT": {
+      "code": "LPT",
+      "fees": {},
+      "id": "LPT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "LQTY": {
+      "code": "LQTY",
+      "fees": {},
+      "id": "LQTY",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "LRC": {
+      "code": "LRC",
+      "fees": {},
+      "id": "LRC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "LSK": {
+      "code": "LSK",
+      "fees": {},
+      "id": "LSK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "LTC": {
+      "code": "LTC",
+      "fees": {},
+      "id": "LTC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-05
+    },
+    "LUMIA": {
+      "code": "LUMIA",
+      "fees": {},
+      "id": "LUMIA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "LUNA": {
+      "code": "LUNA",
+      "fees": {},
+      "id": "LUNA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "LUNA2": {
+      "code": "LUNA2",
+      "fees": {},
+      "id": "LUNA2",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "LUNC": {
+      "code": "LUNC",
+      "fees": {},
+      "id": "LUNC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "LYN": {
+      "code": "LYN",
+      "fees": {},
+      "id": "LYN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "M": {
+      "code": "M",
+      "fees": {},
+      "id": "M",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "MAGIC": {
+      "code": "MAGIC",
+      "fees": {},
+      "id": "MAGIC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MAGMA": {
+      "code": "MAGMA",
+      "fees": {},
+      "id": "MAGMA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "MAJOR": {
+      "code": "MAJOR",
+      "fees": {},
+      "id": "MAJOR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "MANA": {
+      "code": "MANA",
+      "fees": {},
+      "id": "MANA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MANTA": {
+      "code": "MANTA",
+      "fees": {},
+      "id": "MANTA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MANTRA": {
+      "code": "MANTRA",
+      "fees": {},
+      "id": "MANTRA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "MASK": {
+      "code": "MASK",
+      "fees": {},
+      "id": "MASK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MAV": {
+      "code": "MAV",
+      "fees": {},
+      "id": "MAV",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "MAVIA": {
+      "code": "MAVIA",
+      "fees": {},
+      "id": "MAVIA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MBOX": {
+      "code": "MBOX",
+      "fees": {},
+      "id": "MBOX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MBX": {
+      "code": "MBX",
+      "fees": {},
+      "id": "MBX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MCDX": {
+      "code": "MCDX",
+      "fees": {},
+      "id": "MCDX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "MCRT": {
+      "code": "MCRT",
+      "fees": {},
+      "id": "MCRT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ME": {
+      "code": "ME",
+      "fees": {},
+      "id": "ME",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MEE": {
+      "code": "MEE",
+      "fees": {},
+      "id": "MEE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "MEGA": {
+      "code": "MEGA",
+      "fees": {},
+      "id": "MEGA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "MELANIA": {
+      "code": "MELANIA",
+      "fees": {},
+      "id": "MELANIA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "MEME": {
+      "code": "MEME",
+      "fees": {},
+      "id": "MEME",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "MERL": {
+      "code": "MERL",
+      "fees": {},
+      "id": "MERL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MET": {
+      "code": "MET",
+      "fees": {},
+      "id": "MET",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "META": {
+      "code": "META",
+      "fees": {},
+      "id": "META",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "METAX": {
+      "code": "METAX",
+      "fees": {},
+      "id": "METAX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "METH": {
+      "code": "METH",
+      "fees": {},
+      "id": "METH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-05
+    },
+    "METIS": {
+      "code": "METIS",
+      "fees": {},
+      "id": "METIS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MEW": {
+      "code": "MEW",
+      "fees": {},
+      "id": "MEW",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "MINA": {
+      "code": "MINA",
+      "fees": {},
+      "id": "MINA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MIRA": {
+      "code": "MIRA",
+      "fees": {},
+      "id": "MIRA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "MITO": {
+      "code": "MITO",
+      "fees": {},
+      "id": "MITO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "MLN": {
+      "code": "MLN",
+      "fees": {},
+      "id": "MLN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "MMT": {
+      "code": "MMT",
+      "fees": {},
+      "id": "MMT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "MNT": {
+      "code": "MNT",
+      "fees": {},
+      "id": "MNT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-09
+    },
+    "MOCA": {
+      "code": "MOCA",
+      "fees": {},
+      "id": "MOCA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MOG": {
+      "code": "MOG",
+      "fees": {},
+      "id": "MOG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "MON": {
+      "code": "MON",
+      "fees": {},
+      "id": "MON",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "MOODENG": {
+      "code": "MOODENG",
+      "fees": {},
+      "id": "MOODENG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "MORPHO": {
+      "code": "MORPHO",
+      "fees": {},
+      "id": "MORPHO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "MOVE": {
+      "code": "MOVE",
+      "fees": {},
+      "id": "MOVE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "MOVR": {
+      "code": "MOVR",
+      "fees": {},
+      "id": "MOVR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MPLX": {
+      "code": "MPLX",
+      "fees": {},
+      "id": "MPLX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MRVL": {
+      "code": "MRVL",
+      "fees": {},
+      "id": "MRVL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MSFT": {
+      "code": "MSFT",
+      "fees": {},
+      "id": "MSFT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MSTR": {
+      "code": "MSTR",
+      "fees": {},
+      "id": "MSTR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MTL": {
+      "code": "MTL",
+      "fees": {},
+      "id": "MTL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "MU": {
+      "code": "MU",
+      "fees": {},
+      "id": "MU",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MUBARAK": {
+      "code": "MUBARAK",
+      "fees": {},
+      "id": "MUBARAK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "MVL": {
+      "code": "MVL",
+      "fees": {},
+      "id": "MVL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "MX": {
+      "code": "MX",
+      "fees": {},
+      "id": "MX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "MYX": {
+      "code": "MYX",
+      "fees": {},
+      "id": "MYX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "NAKA": {
+      "code": "NAKA",
+      "fees": {},
+      "id": "NAKA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "NAORIS": {
+      "code": "NAORIS",
+      "fees": {},
+      "id": "NAORIS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "NAVX": {
+      "code": "NAVX",
+      "fees": {},
+      "id": "NAVX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "NBIS": {
+      "code": "NBIS",
+      "fees": {},
+      "id": "NBIS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "NEAR": {
+      "code": "NEAR",
+      "fees": {},
+      "id": "NEAR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "NEIROCTO": {
+      "code": "NEIROCTO",
+      "fees": {},
+      "id": "NEIROCTO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "NEO": {
+      "code": "NEO",
+      "fees": {},
+      "id": "NEO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "NEON": {
+      "code": "NEON",
+      "fees": {},
+      "id": "NEON",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "NEWT": {
+      "code": "NEWT",
+      "fees": {},
+      "id": "NEWT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "NEXO": {
+      "code": "NEXO",
+      "fees": {},
+      "id": "NEXO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "NFT": {
+      "code": "NFT",
+      "fees": {},
+      "id": "NFT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "NIGHT": {
+      "code": "NIGHT",
+      "fees": {},
+      "id": "NIGHT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "NIL": {
+      "code": "NIL",
+      "fees": {},
+      "id": "NIL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "NMR": {
+      "code": "NMR",
+      "fees": {},
+      "id": "NMR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "NOKIA": {
+      "code": "NOKIA",
+      "fees": {},
+      "id": "NOKIA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "NOM": {
+      "code": "NOM",
+      "fees": {},
+      "id": "NOM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "NOT": {
+      "code": "NOT",
+      "fees": {},
+      "id": "NOT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "NOW": {
+      "code": "NOW",
+      "fees": {},
+      "id": "NOW",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "NS": {
+      "code": "NS",
+      "fees": {},
+      "id": "NS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "NVDA": {
+      "code": "NVDA",
+      "fees": {},
+      "id": "NVDA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "NVDAX": {
+      "code": "NVDAX",
+      "fees": {},
+      "id": "NVDAX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "NXPC": {
+      "code": "NXPC",
+      "fees": {},
+      "id": "NXPC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "NYM": {
+      "code": "NYM",
+      "fees": {},
+      "id": "NYM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "OBT": {
+      "code": "OBT",
+      "fees": {},
+      "id": "OBT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "OG": {
+      "code": "OG",
+      "fees": {},
+      "id": "OG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "OGN": {
+      "code": "OGN",
+      "fees": {},
+      "id": "OGN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "OKB": {
+      "code": "OKB",
+      "fees": {},
+      "id": "OKB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "OL": {
+      "code": "OL",
+      "fees": {},
+      "id": "OL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ONDO": {
+      "code": "ONDO",
+      "fees": {},
+      "id": "ONDO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ONDS": {
+      "code": "ONDS",
+      "fees": {},
+      "id": "ONDS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ONG": {
+      "code": "ONG",
+      "fees": {},
+      "id": "ONG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ONT": {
+      "code": "ONT",
+      "fees": {},
+      "id": "ONT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "OP": {
+      "code": "OP",
+      "fees": {},
+      "id": "OP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "OPEN": {
+      "code": "OPEN",
+      "fees": {},
+      "id": "OPEN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "OPG": {
+      "code": "OPG",
+      "fees": {},
+      "id": "OPG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "OPN": {
+      "code": "OPN",
+      "fees": {},
+      "id": "OPN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ORCA": {
+      "code": "ORCA",
+      "fees": {},
+      "id": "ORCA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ORCL": {
+      "code": "ORCL",
+      "fees": {},
+      "id": "ORCL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ORDER": {
+      "code": "ORDER",
+      "fees": {},
+      "id": "ORDER",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ORDI": {
+      "code": "ORDI",
+      "fees": {},
+      "id": "ORDI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "PAAL": {
+      "code": "PAAL",
+      "fees": {},
+      "id": "PAAL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "PARTI": {
+      "code": "PARTI",
+      "fees": {},
+      "id": "PARTI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "PAXG": {
+      "code": "PAXG",
+      "fees": {},
+      "id": "PAXG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "PEAQ": {
+      "code": "PEAQ",
+      "fees": {},
+      "id": "PEAQ",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "PENDLE": {
+      "code": "PENDLE",
+      "fees": {},
+      "id": "PENDLE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "PENGU": {
+      "code": "PENGU",
+      "fees": {},
+      "id": "PENGU",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "PENGUIN": {
+      "code": "PENGUIN",
+      "fees": {},
+      "id": "PENGUIN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "PEOPLE": {
+      "code": "PEOPLE",
+      "fees": {},
+      "id": "PEOPLE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "PEPE": {
+      "code": "PEPE",
+      "fees": {},
+      "id": "PEPE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "PHA": {
+      "code": "PHA",
+      "fees": {},
+      "id": "PHA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "PHAROS": {
+      "code": "PHAROS",
+      "fees": {},
+      "id": "PHAROS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "PIEVERSE": {
+      "code": "PIEVERSE",
+      "fees": {},
+      "id": "PIEVERSE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "PIPPIN": {
+      "code": "PIPPIN",
+      "fees": {},
+      "id": "PIPPIN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "PIRATE": {
+      "code": "PIRATE",
+      "fees": {},
+      "id": "PIRATE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "PIXEL": {
+      "code": "PIXEL",
+      "fees": {},
+      "id": "PIXEL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "PLAYSOUT": {
+      "code": "PLAYSOUT",
+      "fees": {},
+      "id": "PLAYSOUT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "PLN": {
+      "code": "PLN",
+      "fees": {},
+      "id": "PLN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "PLTR": {
+      "code": "PLTR",
+      "fees": {},
+      "id": "PLTR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "PLUME": {
+      "code": "PLUME",
+      "fees": {},
+      "id": "PLUME",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "PNUT": {
+      "code": "PNUT",
+      "fees": {},
+      "id": "PNUT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "POL": {
+      "code": "POL",
+      "fees": {},
+      "id": "POL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "POLYX": {
+      "code": "POLYX",
+      "fees": {},
+      "id": "POLYX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "PONKE": {
+      "code": "PONKE",
+      "fees": {},
+      "id": "PONKE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "POPCAT": {
+      "code": "POPCAT",
+      "fees": {},
+      "id": "POPCAT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "PORTAL": {
+      "code": "PORTAL",
+      "fees": {},
+      "id": "PORTAL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "POWER": {
+      "code": "POWER",
+      "fees": {},
+      "id": "POWER",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "POWR": {
+      "code": "POWR",
+      "fees": {},
+      "id": "POWR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "PRCL": {
+      "code": "PRCL",
+      "fees": {},
+      "id": "PRCL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "PRIME": {
+      "code": "PRIME",
+      "fees": {},
+      "id": "PRIME",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "PRL": {
+      "code": "PRL",
+      "fees": {},
+      "id": "PRL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "PROMPT": {
+      "code": "PROMPT",
+      "fees": {},
+      "id": "PROMPT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "PROVE": {
+      "code": "PROVE",
+      "fees": {},
+      "id": "PROVE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "PSG": {
+      "code": "PSG",
+      "fees": {},
+      "id": "PSG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "PTB": {
+      "code": "PTB",
+      "fees": {},
+      "id": "PTB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "PUFF": {
+      "code": "PUFF",
+      "fees": {},
+      "id": "PUFF",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "PUFFER": {
+      "code": "PUFFER",
+      "fees": {},
+      "id": "PUFFER",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "PUMP": {
+      "code": "PUMP",
+      "fees": {},
+      "id": "PUMP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "PUMPBTC": {
+      "code": "PUMPBTC",
+      "fees": {},
+      "id": "PUMPBTC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "PUMPFUN": {
+      "code": "PUMPFUN",
+      "fees": {},
+      "id": "PUMPFUN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 100
+    },
+    "PUNDIX": {
+      "code": "PUNDIX",
+      "fees": {},
+      "id": "PUNDIX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "PYBOBO": {
+      "code": "PYBOBO",
+      "fees": {},
+      "id": "PYBOBO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "PYTH": {
+      "code": "PYTH",
+      "fees": {},
+      "id": "PYTH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "PYUSD": {
+      "code": "PYUSD",
+      "fees": {},
+      "id": "PYUSD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "Q": {
+      "code": "Q",
+      "fees": {},
+      "id": "Q",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "QCOM": {
+      "code": "QCOM",
+      "fees": {},
+      "id": "QCOM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "QNT": {
+      "code": "QNT",
+      "fees": {},
+      "id": "QNT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "QNTX": {
+      "code": "QNTX",
+      "fees": {},
+      "id": "QNTX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "QQQ": {
+      "code": "QQQ",
+      "fees": {},
+      "id": "QQQ",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "QTUM": {
+      "code": "QTUM",
+      "fees": {},
+      "id": "QTUM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "RARE": {
+      "code": "RARE",
+      "fees": {},
+      "id": "RARE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "RATS": {
+      "code": "RATS",
+      "fees": {},
+      "id": "RATS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "RAVE": {
+      "code": "RAVE",
+      "fees": {},
+      "id": "RAVE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "RAYDIUM": {
+      "code": "RAYDIUM",
+      "fees": {},
+      "id": "RAYDIUM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "RE": {
+      "code": "RE",
+      "fees": {},
+      "id": "RE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "RECALL": {
+      "code": "RECALL",
+      "fees": {},
+      "id": "RECALL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "RED": {
+      "code": "RED",
+      "fees": {},
+      "id": "RED",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "RENDER": {
+      "code": "RENDER",
+      "fees": {},
+      "id": "RENDER",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "RESOLV": {
+      "code": "RESOLV",
+      "fees": {},
+      "id": "RESOLV",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "REZ": {
+      "code": "REZ",
+      "fees": {},
+      "id": "REZ",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "RIVER": {
+      "code": "RIVER",
+      "fees": {},
+      "id": "RIVER",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "RKLB": {
+      "code": "RKLB",
+      "fees": {},
+      "id": "RKLB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "RLC": {
+      "code": "RLC",
+      "fees": {},
+      "id": "RLC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "RLUSD": {
+      "code": "RLUSD",
+      "fees": {},
+      "id": "RLUSD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.0001
+    },
+    "ROAM": {
+      "code": "ROAM",
+      "fees": {},
+      "id": "ROAM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ROBO": {
+      "code": "ROBO",
+      "fees": {},
+      "id": "ROBO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "RONIN": {
+      "code": "RONIN",
+      "fees": {},
+      "id": "RONIN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ROSE": {
+      "code": "ROSE",
+      "fees": {},
+      "id": "ROSE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "RPL": {
+      "code": "RPL",
+      "fees": {},
+      "id": "RPL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "RSR": {
+      "code": "RSR",
+      "fees": {},
+      "id": "RSR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "RUNE": {
+      "code": "RUNE",
+      "fees": {},
+      "id": "RUNE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "RVN": {
+      "code": "RVN",
+      "fees": {},
+      "id": "RVN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "S": {
+      "code": "S",
+      "fees": {},
+      "id": "S",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SAFE": {
+      "code": "SAFE",
+      "fees": {},
+      "id": "SAFE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SAGA": {
+      "code": "SAGA",
+      "fees": {},
+      "id": "SAGA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SAHARA": {
+      "code": "SAHARA",
+      "fees": {},
+      "id": "SAHARA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SAMSUNG": {
+      "code": "SAMSUNG",
+      "fees": {},
+      "id": "SAMSUNG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SAND": {
+      "code": "SAND",
+      "fees": {},
+      "id": "SAND",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SAPIEN": {
+      "code": "SAPIEN",
+      "fees": {},
+      "id": "SAPIEN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "SAROS": {
+      "code": "SAROS",
+      "fees": {},
+      "id": "SAROS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SATS": {
+      "code": "SATS",
+      "fees": {},
+      "id": "SATS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "SC": {
+      "code": "SC",
+      "fees": {},
+      "id": "SC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SCA": {
+      "code": "SCA",
+      "fees": {},
+      "id": "SCA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SCOR": {
+      "code": "SCOR",
+      "fees": {},
+      "id": "SCOR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SCR": {
+      "code": "SCR",
+      "fees": {},
+      "id": "SCR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SCRT": {
+      "code": "SCRT",
+      "fees": {},
+      "id": "SCRT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SD": {
+      "code": "SD",
+      "fees": {},
+      "id": "SD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SEI": {
+      "code": "SEI",
+      "fees": {},
+      "id": "SEI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SENT": {
+      "code": "SENT",
+      "fees": {},
+      "id": "SENT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SHELL": {
+      "code": "SHELL",
+      "fees": {},
+      "id": "SHELL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "SHIB": {
+      "code": "SHIB",
+      "fees": {},
+      "id": "SHIB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "SHIB1000": {
+      "code": "SHIB1000",
+      "fees": {},
+      "id": "SHIB1000",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "SIGN": {
+      "code": "SIGN",
+      "fees": {},
+      "id": "SIGN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "SIREN": {
+      "code": "SIREN",
+      "fees": {},
+      "id": "SIREN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "SKHYNIX": {
+      "code": "SKHYNIX",
+      "fees": {},
+      "id": "SKHYNIX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "SKL": {
+      "code": "SKL",
+      "fees": {},
+      "id": "SKL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "SKR": {
+      "code": "SKR",
+      "fees": {},
+      "id": "SKR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SKY": {
+      "code": "SKY",
+      "fees": {},
+      "id": "SKY",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SKYAI1": {
+      "code": "SKYAI1",
+      "fees": {},
+      "id": "SKYAI1",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "SLP": {
+      "code": "SLP",
+      "fees": {},
+      "id": "SLP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "SLX": {
+      "code": "SLX",
+      "fees": {},
+      "id": "SLX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "SNDK": {
+      "code": "SNDK",
+      "fees": {},
+      "id": "SNDK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SNT": {
+      "code": "SNT",
+      "fees": {},
+      "id": "SNT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "SNX": {
+      "code": "SNX",
+      "fees": {},
+      "id": "SNX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SOL": {
+      "code": "SOL",
+      "fees": {},
+      "id": "SOL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.0001
+    },
+    "SOLAYER": {
+      "code": "SOLAYER",
+      "fees": {},
+      "id": "SOLAYER",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "SOLV": {
+      "code": "SOLV",
+      "fees": {},
+      "id": "SOLV",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SOMI": {
+      "code": "SOMI",
+      "fees": {},
+      "id": "SOMI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SONIC": {
+      "code": "SONIC",
+      "fees": {},
+      "id": "SONIC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SOON": {
+      "code": "SOON",
+      "fees": {},
+      "id": "SOON",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "SOPH": {
+      "code": "SOPH",
+      "fees": {},
+      "id": "SOPH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "SOSO": {
+      "code": "SOSO",
+      "fees": {},
+      "id": "SOSO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SOXL": {
+      "code": "SOXL",
+      "fees": {},
+      "id": "SOXL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SPACE": {
+      "code": "SPACE",
+      "fees": {},
+      "id": "SPACE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "SPCX": {
+      "code": "SPCX",
+      "fees": {},
+      "id": "SPCX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SPCXX": {
+      "code": "SPCXX",
+      "fees": {},
+      "id": "SPCXX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SPELL": {
+      "code": "SPELL",
+      "fees": {},
+      "id": "SPELL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "SPK": {
+      "code": "SPK",
+      "fees": {},
+      "id": "SPK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SPORTFUN": {
+      "code": "SPORTFUN",
+      "fees": {},
+      "id": "SPORTFUN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "SPX": {
+      "code": "SPX",
+      "fees": {},
+      "id": "SPX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SPY": {
+      "code": "SPY",
+      "fees": {},
+      "id": "SPY",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SQD": {
+      "code": "SQD",
+      "fees": {},
+      "id": "SQD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SSV": {
+      "code": "SSV",
+      "fees": {},
+      "id": "SSV",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "STABLE": {
+      "code": "STABLE",
+      "fees": {},
+      "id": "STABLE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "STBL": {
+      "code": "STBL",
+      "fees": {},
+      "id": "STBL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "STEEM": {
+      "code": "STEEM",
+      "fees": {},
+      "id": "STEEM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "STETH": {
+      "code": "STETH",
+      "fees": {},
+      "id": "STETH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-05
+    },
+    "STG": {
+      "code": "STG",
+      "fees": {},
+      "id": "STG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "STO": {
+      "code": "STO",
+      "fees": {},
+      "id": "STO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "STORJ": {
+      "code": "STORJ",
+      "fees": {},
+      "id": "STORJ",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "STREAM": {
+      "code": "STREAM",
+      "fees": {},
+      "id": "STREAM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "STRK": {
+      "code": "STRK",
+      "fees": {},
+      "id": "STRK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "STX": {
+      "code": "STX",
+      "fees": {},
+      "id": "STX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SUI": {
+      "code": "SUI",
+      "fees": {},
+      "id": "SUI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SUN": {
+      "code": "SUN",
+      "fees": {},
+      "id": "SUN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SUNDOG": {
+      "code": "SUNDOG",
+      "fees": {},
+      "id": "SUNDOG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SUPER": {
+      "code": "SUPER",
+      "fees": {},
+      "id": "SUPER",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "SUPRA": {
+      "code": "SUPRA",
+      "fees": {},
+      "id": "SUPRA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "SUSHI": {
+      "code": "SUSHI",
+      "fees": {},
+      "id": "SUSHI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "SVL": {
+      "code": "SVL",
+      "fees": {},
+      "id": "SVL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "SWARMS": {
+      "code": "SWARMS",
+      "fees": {},
+      "id": "SWARMS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "SWELL": {
+      "code": "SWELL",
+      "fees": {},
+      "id": "SWELL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "SXT": {
+      "code": "SXT",
+      "fees": {},
+      "id": "SXT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SYND": {
+      "code": "SYND",
+      "fees": {},
+      "id": "SYND",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "SYRUP": {
+      "code": "SYRUP",
+      "fees": {},
+      "id": "SYRUP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "T": {
+      "code": "T",
+      "fees": {},
+      "id": "T",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "TA": {
+      "code": "TA",
+      "fees": {},
+      "id": "TA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "TAC": {
+      "code": "TAC",
+      "fees": {},
+      "id": "TAC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "TAI": {
+      "code": "TAI",
+      "fees": {},
+      "id": "TAI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "TAIKO": {
+      "code": "TAIKO",
+      "fees": {},
+      "id": "TAIKO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "TAO": {
+      "code": "TAO",
+      "fees": {},
+      "id": "TAO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "TEL": {
+      "code": "TEL",
+      "fees": {},
+      "id": "TEL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "THE": {
+      "code": "THE",
+      "fees": {},
+      "id": "THE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "THETA": {
+      "code": "THETA",
+      "fees": {},
+      "id": "THETA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "TIA": {
+      "code": "TIA",
+      "fees": {},
+      "id": "TIA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "TLM": {
+      "code": "TLM",
+      "fees": {},
+      "id": "TLM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "TNSR": {
+      "code": "TNSR",
+      "fees": {},
+      "id": "TNSR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "TOKEN": {
+      "code": "TOKEN",
+      "fees": {},
+      "id": "TOKEN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "TOSHI": {
+      "code": "TOSHI",
+      "fees": {},
+      "id": "TOSHI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "TOWNS": {
+      "code": "TOWNS",
+      "fees": {},
+      "id": "TOWNS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "TRB": {
+      "code": "TRB",
+      "fees": {},
+      "id": "TRB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "TREE": {
+      "code": "TREE",
+      "fees": {},
+      "id": "TREE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "TRIA": {
+      "code": "TRIA",
+      "fees": {},
+      "id": "TRIA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "TRUMP": {
+      "code": "TRUMP",
+      "fees": {},
+      "id": "TRUMP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "TRUST": {
+      "code": "TRUST",
+      "fees": {},
+      "id": "TRUST",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "TRUTH": {
+      "code": "TRUTH",
+      "fees": {},
+      "id": "TRUTH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "TRX": {
+      "code": "TRX",
+      "fees": {},
+      "id": "TRX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "TRY": {
+      "code": "TRY",
+      "fees": {},
+      "id": "TRY",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "TSLA": {
+      "code": "TSLA",
+      "fees": {},
+      "id": "TSLA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "TSLAX": {
+      "code": "TSLAX",
+      "fees": {},
+      "id": "TSLAX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "TSM": {
+      "code": "TSM",
+      "fees": {},
+      "id": "TSM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "TSTBSC": {
+      "code": "TSTBSC",
+      "fees": {},
+      "id": "TSTBSC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "TURTLE": {
+      "code": "TURTLE",
+      "fees": {},
+      "id": "TURTLE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "TUSD": {
+      "code": "TUSD",
+      "fees": {},
+      "id": "TUSD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "TUT": {
+      "code": "TUT",
+      "fees": {},
+      "id": "TUT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "TWT": {
+      "code": "TWT",
+      "fees": {},
+      "id": "TWT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "U": {
+      "code": "U",
+      "fees": {},
+      "id": "U",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "UAI": {
+      "code": "UAI",
+      "fees": {},
+      "id": "UAI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "UB": {
+      "code": "UB",
+      "fees": {},
+      "id": "UB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "UMA": {
+      "code": "UMA",
+      "fees": {},
+      "id": "UMA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "UNI": {
+      "code": "UNI",
+      "fees": {},
+      "id": "UNI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "US": {
+      "code": "US",
+      "fees": {},
+      "id": "US",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "USAT": {
+      "code": "USAT",
+      "fees": {},
+      "id": "USAT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "USD": {
+      "code": "USD",
+      "fees": {},
+      "id": "USD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-05
+    },
+    "USD1": {
+      "code": "USD1",
+      "fees": {},
+      "id": "USD1",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.0001
+    },
+    "USDC": {
+      "code": "USDC",
+      "fees": {},
+      "id": "USDC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-09
+    },
+    "USDE": {
+      "code": "USDE",
+      "fees": {},
+      "id": "USDE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.0001
+    },
+    "USDS": {
+      "code": "USDS",
+      "fees": {},
+      "id": "USDS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "USDT": {
+      "code": "USDT",
+      "fees": {},
+      "id": "USDT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-13
+    },
+    "USDTB": {
+      "code": "USDTB",
+      "fees": {},
+      "id": "USDTB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "USDY": {
+      "code": "USDY",
+      "fees": {},
+      "id": "USDY",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "USELESS": {
+      "code": "USELESS",
+      "fees": {},
+      "id": "USELESS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "USTC": {
+      "code": "USTC",
+      "fees": {},
+      "id": "USTC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "USUAL": {
+      "code": "USUAL",
+      "fees": {},
+      "id": "USUAL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "VANA": {
+      "code": "VANA",
+      "fees": {},
+      "id": "VANA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "VANRY": {
+      "code": "VANRY",
+      "fees": {},
+      "id": "VANRY",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "VELO": {
+      "code": "VELO",
+      "fees": {},
+      "id": "VELO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "VELODROME": {
+      "code": "VELODROME",
+      "fees": {},
+      "id": "VELODROME",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "VELVET": {
+      "code": "VELVET",
+      "fees": {},
+      "id": "VELVET",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "VET": {
+      "code": "VET",
+      "fees": {},
+      "id": "VET",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "VIC": {
+      "code": "VIC",
+      "fees": {},
+      "id": "VIC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "VINE": {
+      "code": "VINE",
+      "fees": {},
+      "id": "VINE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "VIRTUAL": {
+      "code": "VIRTUAL",
+      "fees": {},
+      "id": "VIRTUAL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "VOOI": {
+      "code": "VOOI",
+      "fees": {},
+      "id": "VOOI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "VTHO": {
+      "code": "VTHO",
+      "fees": {},
+      "id": "VTHO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "VVV": {
+      "code": "VVV",
+      "fees": {},
+      "id": "VVV",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "W": {
+      "code": "W",
+      "fees": {},
+      "id": "W",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "WAL": {
+      "code": "WAL",
+      "fees": {},
+      "id": "WAL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "WAVES": {
+      "code": "WAVES",
+      "fees": {},
+      "id": "WAVES",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "WAXP": {
+      "code": "WAXP",
+      "fees": {},
+      "id": "WAXP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "WBTC": {
+      "code": "WBTC",
+      "fees": {},
+      "id": "WBTC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-06
+    },
+    "WCT": {
+      "code": "WCT",
+      "fees": {},
+      "id": "WCT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "WDC": {
+      "code": "WDC",
+      "fees": {},
+      "id": "WDC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "WEMIX": {
+      "code": "WEMIX",
+      "fees": {},
+      "id": "WEMIX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "WET": {
+      "code": "WET",
+      "fees": {},
+      "id": "WET",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "WHITEWHALE": {
+      "code": "WHITEWHALE",
+      "fees": {},
+      "id": "WHITEWHALE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "WIF": {
+      "code": "WIF",
+      "fees": {},
+      "id": "WIF",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "WLD": {
+      "code": "WLD",
+      "fees": {},
+      "id": "WLD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "WLFI": {
+      "code": "WLFI",
+      "fees": {},
+      "id": "WLFI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "WOO": {
+      "code": "WOO",
+      "fees": {},
+      "id": "WOO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "XAG": {
+      "code": "XAG",
+      "fees": {},
+      "id": "XAG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "XAI": {
+      "code": "XAI",
+      "fees": {},
+      "id": "XAI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "XAN": {
+      "code": "XAN",
+      "fees": {},
+      "id": "XAN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "XAU": {
+      "code": "XAU",
+      "fees": {},
+      "id": "XAU",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "XAUT": {
+      "code": "XAUT",
+      "fees": {},
+      "id": "XAUT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-05
+    },
+    "XAVA": {
+      "code": "XAVA",
+      "fees": {},
+      "id": "XAVA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "XCN": {
+      "code": "XCN",
+      "fees": {},
+      "id": "XCN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "XDC": {
+      "code": "XDC",
+      "fees": {},
+      "id": "XDC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "XLM": {
+      "code": "XLM",
+      "fees": {},
+      "id": "XLM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "XMR": {
+      "code": "XMR",
+      "fees": {},
+      "id": "XMR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "XNY": {
+      "code": "XNY",
+      "fees": {},
+      "id": "XNY",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 10
+    },
+    "XPIN": {
+      "code": "XPIN",
+      "fees": {},
+      "id": "XPIN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 100
+    },
+    "XPL": {
+      "code": "XPL",
+      "fees": {},
+      "id": "XPL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "XRP": {
+      "code": "XRP",
+      "fees": {},
+      "id": "XRP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "XTER": {
+      "code": "XTER",
+      "fees": {},
+      "id": "XTER",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "XTZ": {
+      "code": "XTZ",
+      "fees": {},
+      "id": "XTZ",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "XUSD": {
+      "code": "XUSD",
+      "fees": {},
+      "id": "XUSD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "XVG": {
+      "code": "XVG",
+      "fees": {},
+      "id": "XVG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 100
+    },
+    "XVS": {
+      "code": "XVS",
+      "fees": {},
+      "id": "XVS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "YB": {
+      "code": "YB",
+      "fees": {},
+      "id": "YB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "YFI": {
+      "code": "YFI",
+      "fees": {},
+      "id": "YFI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-05
+    },
+    "YGG": {
+      "code": "YGG",
+      "fees": {},
+      "id": "YGG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ZAMA": {
+      "code": "ZAMA",
+      "fees": {},
+      "id": "ZAMA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ZBCN": {
+      "code": "ZBCN",
+      "fees": {},
+      "id": "ZBCN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 100
+    },
+    "ZBT": {
+      "code": "ZBT",
+      "fees": {},
+      "id": "ZBT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ZEC": {
+      "code": "ZEC",
+      "fees": {},
+      "id": "ZEC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ZEN": {
+      "code": "ZEN",
+      "fees": {},
+      "id": "ZEN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "ZENT": {
+      "code": "ZENT",
+      "fees": {},
+      "id": "ZENT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ZEREBRO": {
+      "code": "ZEREBRO",
+      "fees": {},
+      "id": "ZEREBRO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ZEST": {
+      "code": "ZEST",
+      "fees": {},
+      "id": "ZEST",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ZETA": {
+      "code": "ZETA",
+      "fees": {},
+      "id": "ZETA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ZEX": {
+      "code": "ZEX",
+      "fees": {},
+      "id": "ZEX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ZIG": {
+      "code": "ZIG",
+      "fees": {},
+      "id": "ZIG",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ZIL": {
+      "code": "ZIL",
+      "fees": {},
+      "id": "ZIL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ZK": {
+      "code": "ZK",
+      "fees": {},
+      "id": "ZK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ZKC": {
+      "code": "ZKC",
+      "fees": {},
+      "id": "ZKC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ZKJ": {
+      "code": "ZKJ",
+      "fees": {},
+      "id": "ZKJ",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ZKP": {
+      "code": "ZKP",
+      "fees": {},
+      "id": "ZKP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.1
+    },
+    "ZORA": {
+      "code": "ZORA",
+      "fees": {},
+      "id": "ZORA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ZRC": {
+      "code": "ZRC",
+      "fees": {},
+      "id": "ZRC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1
+    },
+    "ZRO": {
+      "code": "ZRO",
+      "fees": {},
+      "id": "ZRO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    },
+    "ZRX": {
+      "code": "ZRX",
+      "fees": {},
+      "id": "ZRX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.01
+    }
+  },
+  "patterns": {
+    "currency_aliases": {
+      "BCHSV": "BSV",
+      "XBT": "BTC"
+    },
+    "future": {
+      "anomalies": [],
+      "anomaly_count": 0,
+      "case": "upper",
+      "examples": [
+        {
+          "baseId": "BTC",
+          "id": "BTCUSDT-03JUL26",
+          "quoteId": "USDT",
+          "symbol": "BTC/USDT:USDT-260703"
+        },
+        {
+          "baseId": "BTC",
+          "id": "BTCUSDT-10JUL26",
+          "quoteId": "USDT",
+          "symbol": "BTC/USDT:USDT-260710"
+        },
+        {
+          "baseId": "BTC",
+          "id": "BTCUSDT-25DEC26",
+          "quoteId": "USDT",
+          "symbol": "BTC/USDT:USDT-261225"
+        }
+      ],
+      "id_structure": "baseId_quoteId",
+      "sample_count": 42,
+      "separator": "",
+      "suffix": null
+    },
+    "option": {
+      "anomalies": [],
+      "anomaly_count": 0,
+      "case": "upper",
+      "examples": [
+        {
+          "baseId": "BTC",
+          "id": "BTC-26MAR27-67000-P-USDT",
+          "quoteId": "USDT",
+          "symbol": "BTC/USDT:USDT-270326-67000-P"
+        },
+        {
+          "baseId": "BTC",
+          "id": "BTC-26MAR27-67000-C-USDT",
+          "quoteId": "USDT",
+          "symbol": "BTC/USDT:USDT-270326-67000-C"
+        },
+        {
+          "baseId": "BTC",
+          "id": "BTC-26MAR27-65000-P-USDT",
+          "quoteId": "USDT",
+          "symbol": "BTC/USDT:USDT-270326-65000-P"
+        }
+      ],
+      "id_structure": "base_expiry_strike_type_settle",
+      "sample_count": 1946,
+      "separator": null,
+      "suffix": null
+    },
+    "spot": {
+      "anomalies": [],
+      "anomaly_count": 0,
+      "case": "upper",
+      "examples": [
+        {
+          "baseId": "BTC",
+          "id": "BTCUSDT",
+          "quoteId": "USDT",
+          "symbol": "BTC/USDT"
+        },
+        {
+          "baseId": "ETH",
+          "id": "ETHUSDT",
+          "quoteId": "USDT",
+          "symbol": "ETH/USDT"
+        },
+        {
+          "baseId": "XRP",
+          "id": "XRPUSDT",
+          "quoteId": "USDT",
+          "symbol": "XRP/USDT"
+        }
+      ],
+      "id_structure": "baseId_quoteId",
+      "sample_count": 602,
+      "separator": "",
+      "suffix": null
+    },
+    "swap": {
+      "anomalies": [
+        "1000BONKPERP",
+        "1000NEIROCTOPERP",
+        "1000PEPEPERP",
+        "AAVEPERP",
+        "AEVOPERP",
+        "ARBPERP",
+        "ASTERPERP",
+        "AVNTPERP",
+        "BCHPERP",
+        "BNBPERP",
+        "BTCPERP",
+        "CRVPERP",
+        "DOGEPERP",
+        "DOTPERP",
+        "EIGENPERP",
+        "ENAPERP",
+        "ETCPERP",
+        "ETHFIPERP",
+        "ETHPERP",
+        "FARTCOINPERP",
+        "FILPERP",
+        "HBARPERP",
+        "HPERP",
+        "HYPEPERP",
+        "ICNTPERP",
+        "ICPPERP",
+        "INJPERP",
+        "IPPERP",
+        "KASPERP",
+        "LINKPERP",
+        "LTCPERP",
+        "MERLPERP",
+        "MNTPERP",
+        "MOODENGPERP",
+        "NIGHTPERP",
+        "NOTPERP",
+        "ONDOPERP",
+        "OPPERP",
+        "ORDIPERP",
+        "PAXGPERP",
+        "PENDLEPERP",
+        "PENGUPERP",
+        "PNUTPERP",
+        "POLPERP",
+        "POPCATPERP",
+        "PUMPFUNPERP",
+        "RESOLVPERP",
+        "SAHARAPERP",
+        "SEIPERP",
+        "SHIB1000PERP"
+      ],
+      "anomaly_count": 69,
+      "case": "upper",
+      "examples": [
+        {
+          "baseId": "0G",
+          "id": "0GUSDT",
+          "quoteId": "USDT",
+          "symbol": "0G/USDT:USDT"
+        },
+        {
+          "baseId": "1000000BABYDOGE",
+          "id": "1000000BABYDOGEUSDT",
+          "quoteId": "USDT",
+          "symbol": "1000000BABYDOGE/USDT:USDT"
+        },
+        {
+          "baseId": "1000000MOG",
+          "id": "1000000MOGUSDT",
+          "quoteId": "USDT",
+          "symbol": "1000000MOG/USDT:USDT"
+        }
+      ],
+      "id_structure": "baseId_quoteId",
+      "sample_count": 675,
+      "separator": "",
+      "suffix": null
+    }
+  }
+}

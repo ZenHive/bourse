@@ -267,7 +267,7 @@ defmodule Bourse.Exchange do
   def build_module_body(data, opts \\ []) do
     %{
       exchange_id: exchange_id,
-      spec_file: spec_file,
+      spec_files: spec_files,
       escaped_lean: escaped_lean,
       escaped_endpoints: escaped_endpoints,
       escaped_unified: escaped_unified,
@@ -282,12 +282,13 @@ defmodule Bourse.Exchange do
     namespace = "/#{exchange_id}"
     moduledoc_ast = build_moduledoc_ast(opts)
     introspection = build_introspection_ast(data)
+    resource_ast = Enum.map(spec_files, &external_resource_ast/1)
 
     quote do
       use Descripex, namespace: unquote(namespace)
 
       unquote_splicing(moduledoc_ast)
-      @external_resource unquote(spec_file)
+      unquote_splicing(resource_ast)
 
       @bourse_spec unquote(escaped_lean)
       @bourse_endpoint_configs unquote(escaped_endpoints)
@@ -316,6 +317,12 @@ defmodule Bourse.Exchange do
       unquote_splicing(introspection)
       unquote_splicing(endpoint_functions)
       unquote_splicing(parse_functions)
+    end
+  end
+
+  defp external_resource_ast(path) do
+    quote do
+      @external_resource unquote(path)
     end
   end
 
@@ -475,7 +482,7 @@ defmodule Bourse.Exchange do
     %{
       exchange_id: exchange_id,
       exchange_name: spec["exchange"]["name"],
-      spec_file: Bourse.Spec.spec_path(spec_id),
+      spec_files: Bourse.Spec.source_files(spec_id),
       signing_pattern: signing_pattern,
       escaped_lean: Macro.escape(lean),
       escaped_endpoints: Macro.escape(endpoint_configs),

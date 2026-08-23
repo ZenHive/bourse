@@ -1,0 +1,1437 @@
+{
+  "fetchGreeks": {
+    "unified": [
+      "publicPostGetTicker"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches option greeks from Derive nested option_pricing on get_ticker",
+      "errors": null,
+      "name": "fetchGreeks",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbol": "unified symbol of the market to fetch greeks for"
+      },
+      "returns": {
+        "description": "a greeks structure",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Greeks>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instrument_name": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "unified_param",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseGreeks"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "cancelAllOrders": {
+    "unified": [
+      "privatePostCancelAll",
+      "privatePostCancelByInstrument"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "subaccount_id": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "consume": [],
+        "default": "private_post_cancel_all",
+        "rules": [
+          {
+            "endpoint": "private_post_cancel_by_instrument",
+            "when": {
+              "instrument_name": "present"
+            }
+          }
+        ]
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "cancelOrder": {
+    "unified": [
+      "privatePostCancel",
+      "privatePostCancelByLabel",
+      "privatePostCancelTriggerOrder"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "instrument_name": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "optional",
+          "value": null
+        },
+        "order_id": {
+          "kind": "reference",
+          "source": "id",
+          "source_class": "unified_param"
+        },
+        "subaccount_id": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "subaccount_id",
+          "source_class": "optional",
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "consume": [],
+        "default": "private_post_cancel",
+        "rules": [
+          {
+            "endpoint": "private_post_cancel_by_label",
+            "when": {
+              "label": "present"
+            }
+          },
+          {
+            "endpoint": "private_post_cancel_trigger_order",
+            "when": {
+              "trigger": "present"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseOrder"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "createOrder": {
+    "unified": [
+      "privatePostOrder",
+      "privatePostOrderDebug"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "amount": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "direction": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "instrument_name": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "limit_price": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "max_fee": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "nonce": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "order_type": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "referral_code": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        },
+        "signature_expiry_sec": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "signer": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "subaccount_id": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "consume": [
+          "debug"
+        ],
+        "default": "private_post_order",
+        "rules": [
+          {
+            "endpoint": "private_post_order_debug",
+            "when": {
+              "debug": true
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseOrder",
+      "parseToNumeric",
+      "parseUnits"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "editOrder": {
+    "unified": [
+      "privatePostReplace"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "amount": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "direction": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "instrument_name": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "limit_price": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "max_fee": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "nonce": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "order_id_to_cancel": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "order_type": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "signature_expiry_sec": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "signer": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "subaccount_id": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOrder",
+      "parseToNumeric",
+      "parseUnits"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchBalance": {
+    "unified": [
+      "privatePostGetAllPortfolios"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "query for balance and get the amount of funds available for trading or funds locked in orders",
+      "errors": null,
+      "name": "fetchBalance",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint"
+      },
+      "returns": {
+        "description": "a [balance structure]{@link https://docs.ccxt.com/?id=balance-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Balances>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "wallet": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "api_key",
+          "source_class": "credential",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseBalance"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCanceledOrders": {
+    "unified": [
+      "privatePostGetOrders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "request": {
+      "defaults": {
+        "subaccount_id": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchClosedOrders": {
+    "unified": [
+      "privatePostGetOrders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches information on multiple orders made by the user",
+      "errors": null,
+      "name": "fetchClosedOrders",
+      "params_doc": {
+        "limit": "the maximum number of order structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.paginate": "set to true if you want to fetch orders with pagination",
+        "since": "the earliest time in ms to fetch orders for",
+        "symbol": "unified market symbol of the market orders were made in"
+      },
+      "returns": {
+        "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+        "type": "Order[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Order[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "subaccount_id": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCurrencies": {
+    "unified": [
+      "publicGetGetAllCurrencies"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches all available currencies on an exchange",
+      "errors": null,
+      "name": "fetchCurrencies",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint"
+      },
+      "returns": {
+        "description": "an associative dictionary of currencies",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Currencies>"
+      },
+      "unresolved_reason": null
+    },
+    "parse": [
+      "parseCurrencies"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDeposits": {
+    "unified": [
+      "privatePostGetDepositHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch all deposits made to an account",
+      "errors": null,
+      "name": "fetchDeposits",
+      "params_doc": {
+        "code": "unified currency code",
+        "limit": "the maximum number of deposits structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.subaccount_id": "*required* the subaccount id",
+        "since": "the earliest time in ms to fetch deposits for"
+      },
+      "returns": {
+        "description": "a list of [transaction structures]{@link https://docs.ccxt.com/?id=transaction-structure}",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "code",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Transaction[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "subaccount_id": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "subaccount_id",
+          "source_class": "optional",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTransactions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingHistory": {
+    "unified": [
+      "privatePostGetFundingHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "subaccount_id": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseIncomes"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingRate": {
+    "unified": [
+      "publicPostGetFundingRateHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch the current funding rate",
+      "errors": null,
+      "name": "fetchFundingRate",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a [funding rate structure]{@link https://docs.ccxt.com/?id=funding-rate-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<FundingRate>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instrument_name": {
+          "kind": "reference",
+          "source": "symbol",
+          "source_class": "unified_param"
+        }
+      }
+    },
+    "parse": [
+      "parseFundingRate"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingRateHistory": {
+    "unified": [
+      "publicPostGetFundingRateHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "instrument_name": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "unified_param",
+          "value": null
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMarkets": {
+    "unified": [
+      "publicPostGetAllInstruments"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "retrieves data on all markets for bybit",
+      "errors": null,
+      "name": "fetchMarkets",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint"
+      },
+      "returns": {
+        "description": "an array of objects representing market data",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Market[]>"
+      },
+      "unresolved_reason": null
+    },
+    "parse": [
+      "parseMarkets"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMyTrades": {
+    "unified": [
+      "privatePostGetTradeHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "request": {
+      "defaults": {
+        "subaccount_id": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTrades"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOpenOrders": {
+    "unified": [
+      "privatePostGetOrders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches information on multiple orders made by the user",
+      "errors": null,
+      "name": "fetchOpenOrders",
+      "params_doc": {
+        "limit": "the maximum number of order structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.paginate": "set to true if you want to fetch orders with pagination",
+        "since": "the earliest time in ms to fetch orders for",
+        "symbol": "unified market symbol of the market orders were made in"
+      },
+      "returns": {
+        "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+        "type": "Order[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Order[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "status": {
+          "kind": "literal",
+          "reason": null,
+          "value": "open"
+        },
+        "subaccount_id": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOptionMarkets": {
+    "unified": [
+      "publicPostGetAllInstruments"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": null,
+      "errors": null,
+      "name": "fetchOptionMarkets",
+      "params_doc": null,
+      "returns": null,
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Market[]>"
+      },
+      "unresolved_reason": "no_jsdoc"
+    },
+    "request": {
+      "defaults": {
+        "expired": {
+          "kind": "literal",
+          "reason": null,
+          "value": false
+        },
+        "instrument_type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "option"
+        }
+      }
+    },
+    "parse": [
+      "parseMarkets"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOrderTrades": {
+    "unified": [
+      "privatePostGetTradeHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "order_id": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "id",
+          "source_class": "unified_param",
+          "value": null
+        },
+        "subaccount_id": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "subaccount_id",
+          "source_class": "optional",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTrades"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOrders": {
+    "unified": [
+      "privatePostGetOrders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches information on multiple orders made by the user",
+      "errors": null,
+      "name": "fetchOrders",
+      "params_doc": {
+        "limit": "the maximum number of order structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.paginate": "set to true if you want to fetch orders with pagination",
+        "params.subaccount_id": "*required* the subaccount id",
+        "params.trigger": "whether the order is a trigger/algo order",
+        "since": "the earliest time in ms to fetch orders for",
+        "symbol": "unified market symbol of the market orders were made in"
+      },
+      "returns": {
+        "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+        "type": "Order[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Order[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "subaccount_id": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPositions": {
+    "unified": [
+      "privatePostGetPositions"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch all open positions",
+      "errors": null,
+      "name": "fetchPositions",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.subaccount_id": "*required* the subaccount id",
+        "symbols": "not used by kraken fetchPositions ()"
+      },
+      "returns": {
+        "description": "a list of [position structure]{@link https://docs.ccxt.com/?id=position-structure}",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbols",
+            "optional": true,
+            "type": "Strings"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Position[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "subaccount_id": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parsePositions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchSpotMarkets": {
+    "unified": [
+      "publicPostGetAllInstruments"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": null,
+      "errors": null,
+      "name": "fetchSpotMarkets",
+      "params_doc": null,
+      "returns": null,
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Market[]>"
+      },
+      "unresolved_reason": "no_jsdoc"
+    },
+    "request": {
+      "defaults": {
+        "expired": {
+          "kind": "literal",
+          "reason": null,
+          "value": false
+        },
+        "instrument_type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "erc20"
+        }
+      }
+    },
+    "parse": [
+      "parseMarkets"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchSwapMarkets": {
+    "unified": [
+      "publicPostGetAllInstruments"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": null,
+      "errors": null,
+      "name": "fetchSwapMarkets",
+      "params_doc": null,
+      "returns": null,
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Market[]>"
+      },
+      "unresolved_reason": "no_jsdoc"
+    },
+    "request": {
+      "defaults": {
+        "expired": {
+          "kind": "literal",
+          "reason": null,
+          "value": false
+        },
+        "instrument_type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "perp"
+        }
+      }
+    },
+    "parse": [
+      "parseMarkets"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTicker": {
+    "unified": [
+      "publicPostGetTicker"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches a price ticker, a statistical calculation with the information calculated over the past 24 hours for a specific market",
+      "errors": null,
+      "name": "fetchTicker",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbol": "unified symbol of the market to fetch the ticker for"
+      },
+      "returns": {
+        "description": "a [ticker structure]{@link https://docs.ccxt.com/?id=ticker-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Ticker>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "instrument_name": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "unified_param",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTicker"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTime": {
+    "unified": [
+      "publicPostGetTime"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTrades": {
+    "unified": [
+      "publicPostGetTradeHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "get the list of most recent trades for a particular symbol",
+      "errors": null,
+      "name": "fetchTrades",
+      "params_doc": {
+        "limit": "the maximum amount of trades to fetch",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.until": "the latest time in ms to fetch trades for",
+        "since": "timestamp in ms of the earliest trade to fetch",
+        "symbol": "unified symbol of the market to fetch trades for"
+      },
+      "returns": {
+        "description": "a list of [trade structures]{@link https://docs.ccxt.com/?id=public-trades}",
+        "type": "Trade[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Trade[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "from_timestamp": {
+          "source": "since",
+          "source_class": "optional"
+        },
+        "instrument_name": {
+          "kind": "reference",
+          "source": "symbol",
+          "source_class": "unified_param"
+        },
+        "page_size": {
+          "source": "limit",
+          "source_class": "optional"
+        },
+        "to_timestamp": {
+          "source": "until",
+          "source_class": "optional"
+        }
+      }
+    },
+    "parse": [
+      "parseTrades"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTransfers": {
+    "unified": [
+      "privatePostGetErc20TransferHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches ERC-20 transfer history for a Derive subaccount",
+      "errors": null,
+      "name": "fetchTransfers",
+      "params_doc": {
+        "code": "unified currency code used to filter parsed transfer entries",
+        "limit": "maximum number of parsed transfer entries to return",
+        "params": "extra parameters specific to Derive",
+        "params.subaccount_id": "Derive subaccount id",
+        "params.until": "latest transfer timestamp in milliseconds",
+        "since": "earliest transfer timestamp in milliseconds"
+      },
+      "returns": {
+        "description": "a list of unified transfer entries",
+        "type": "TransferEntry[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "code",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<TransferEntry[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "_omit": [
+          "code",
+          "limit"
+        ],
+        "end_timestamp": {
+          "source": "until",
+          "source_class": "optional"
+        },
+        "start_timestamp": {
+          "source": "since",
+          "source_class": "optional"
+        },
+        "subaccount_id": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "subaccount_id",
+          "source_class": "optional",
+          "value": null
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchWithdrawals": {
+    "unified": [
+      "privatePostGetWithdrawalHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch all withdrawals made from an account",
+      "errors": null,
+      "name": "fetchWithdrawals",
+      "params_doc": {
+        "code": "unified currency code",
+        "limit": "the maximum number of withdrawals structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.subaccount_id": "*required* the subaccount id",
+        "since": "the earliest time in ms to fetch withdrawals for"
+      },
+      "returns": {
+        "description": "a list of [transaction structures]{@link https://docs.ccxt.com/?id=transaction-structure}",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "code",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Transaction[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "subaccount_id": {
+          "kind": "reference",
+          "reason": "identifier_reference",
+          "source": "subaccount_id",
+          "source_class": "optional",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTransactions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  }
+}

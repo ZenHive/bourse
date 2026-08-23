@@ -1,0 +1,2337 @@
+{
+  "field_maps": {
+    "_unresolved_reason": null,
+    "account": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "code": null,
+        "id": {
+          "coercion": "safeString",
+          "key": "uid"
+        },
+        "info": null,
+        "type": {
+          "coercion": "safeString",
+          "key": "acctLv"
+        }
+      }
+    },
+    "balance": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "datetime": null,
+        "debt": null,
+        "free": {
+          "coercion": "safeNumber",
+          "collection_key": "details",
+          "index_coercion": "safeCurrencyCode",
+          "index_key": "ccy",
+          "kind": "keyed_collection",
+          "value_key": "availEq",
+          "value_key2": "availBal"
+        },
+        "info": null,
+        "timestamp": null,
+        "total": {
+          "coercion": "safeNumber",
+          "collection_key": "details",
+          "fallback_keys": [
+            "bal"
+          ],
+          "index_coercion": "safeCurrencyCode",
+          "index_key": "ccy",
+          "kind": "keyed_collection",
+          "value_key": "eq",
+          "value_key2": "cashBal"
+        },
+        "used": {
+          "coercion": "safeNumber",
+          "collection_key": "details",
+          "index_coercion": "safeCurrencyCode",
+          "index_key": "ccy",
+          "kind": "keyed_collection",
+          "value_key": "frozenBal",
+          "when_keys_absent": [
+            "availEq"
+          ]
+        }
+      }
+    },
+    "borrow_interest": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "amountBorrowed": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "liab"
+        },
+        "currency": {
+          "coercion": "safeCurrencyCode",
+          "format": null,
+          "key": "ccy"
+        },
+        "datetime": null,
+        "info": null,
+        "interest": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "interest"
+        },
+        "interestRate": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "interestRate"
+        },
+        "marginMode": {
+          "coercion": "safeString",
+          "enum_map": null,
+          "format": null,
+          "key": "mgnMode"
+        },
+        "symbol": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "symbol"
+        },
+        "timestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "ts"
+        }
+      }
+    },
+    "borrow_rate": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "currency": {
+          "coercion": "safeCurrencyCode",
+          "format": null,
+          "key": "ccy"
+        },
+        "datetime": {
+          "coercion": "iso8601",
+          "format": "ms",
+          "key": "ts"
+        },
+        "info": null,
+        "period": null,
+        "rate": {
+          "coercion": "safeNumber2",
+          "fallback_keys": [
+            "rate"
+          ],
+          "format": null,
+          "key": "interestRate"
+        },
+        "timestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "ts"
+        }
+      }
+    },
+    "conversion": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "datetime": null,
+        "fee": null,
+        "fromAmount": {
+          "coercion": "safeNumber",
+          "fallback_keys": [
+            "baseSz"
+          ],
+          "key": "fromSz"
+        },
+        "fromCurrency": {
+          "coercion": "safeCurrencyCode",
+          "key": "fromCcy"
+        },
+        "id": {
+          "coercion": "safeString",
+          "fallback_keys": [
+            "quoteId",
+            "clTReqId"
+          ],
+          "key": "tradeId"
+        },
+        "info": null,
+        "price": {
+          "coercion": "safeNumber",
+          "fallback_keys": [
+            "fillPx"
+          ],
+          "key": "px"
+        },
+        "timestamp": {
+          "coercion": "safeInteger",
+          "fallback_keys": [
+            "fillTime",
+            "cTime"
+          ],
+          "format": "ms",
+          "key": "ts"
+        },
+        "toAmount": {
+          "coercion": "safeNumber",
+          "fallback_keys": [
+            "quoteSz"
+          ],
+          "key": "toSz"
+        },
+        "toCurrency": {
+          "coercion": "safeCurrencyCode",
+          "key": "toCcy"
+        }
+      }
+    },
+    "currency": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "active": {
+          "active_requires_both": true,
+          "collection_key": "chains",
+          "deposit_key": "canDep",
+          "field": "active",
+          "kind": "currency_network_summary",
+          "withdraw_key": "canWd"
+        },
+        "code": null,
+        "deposit": {
+          "collection_key": "chains",
+          "deposit_key": "canDep",
+          "field": "deposit",
+          "kind": "currency_network_summary"
+        },
+        "fee": {
+          "collection_key": "chains",
+          "fee_enabled_key": "canWd",
+          "fee_key": "fee",
+          "field": "fee",
+          "kind": "currency_network_summary"
+        },
+        "id": {
+          "coercion": "safeString",
+          "key": "ccy"
+        },
+        "info": null,
+        "limits": {
+          "collection_key": "chains",
+          "field": "limits",
+          "kind": "currency_network_summary",
+          "withdraw_max_key": "maxWd",
+          "withdraw_min_key": "minWd"
+        },
+        "name": {
+          "coercion": "safeString",
+          "fallback_keys": [
+            "ccy"
+          ],
+          "key": "name"
+        },
+        "networks": {
+          "active_requires_both": true,
+          "collection_key": "chains",
+          "currency_key": "ccy",
+          "deposit_key": "canDep",
+          "fee_key": "fee",
+          "include_deposit_limits": false,
+          "kind": "currency_networks",
+          "network_aliases": {
+            "BTC-Aptos": "APT",
+            "BTC-Bitcoin": "BTC",
+            "BTC-Lightning": "BTCLIGHTNING",
+            "BTC-SUI": "SUI",
+            "BTC-Solana": "SOL",
+            "BTC-X Layer": "X Layer",
+            "BTCK-OKTC": "OKTC",
+            "ETH-Arbitrum One": "ARBONE",
+            "ETH-Base": "BASE",
+            "ETH-ERC20": "ETH",
+            "ETH-Linea": "LINEA",
+            "ETH-Optimism": "OP",
+            "ETH-Starknet": "Starknet",
+            "ETH-Unichain": "Unichain",
+            "ETH-X Layer": "X Layer",
+            "ETH-X Layer (WETH)": "X Layer (WETH)",
+            "ETH-zkSync Era": "ZKSYNCERA",
+            "ETHK-OKTC": "OKTC",
+            "POL-ERC20": "ERC20",
+            "POL-Polygon": "MATIC",
+            "USDT-Aptos": "APT",
+            "USDT-Arbitrum One": "ARBONE",
+            "USDT-Avalanche C-Chain": "AVAXC",
+            "USDT-BERACHAIN (USDT0)": "BERACHAIN (USDT0)",
+            "USDT-ERC20": "ERC20",
+            "USDT-Monad (USDT0)": "Monad (USDT0)",
+            "USDT-OKTC": "OKTC",
+            "USDT-Optimism": "OP",
+            "USDT-Optimism (USDT0)": "Optimism (USDT0)",
+            "USDT-Plasma": "Plasma",
+            "USDT-Polygon": "MATIC",
+            "USDT-Solana": "SOL",
+            "USDT-TON": "TON",
+            "USDT-TRC20": "TRC20",
+            "USDT-Unichain (USDT0)": "Unichain (USDT0)",
+            "USDT-X Layer": "X Layer",
+            "USDT-X Layer (USDT0)": "X Layer (USDT0)"
+          },
+          "network_key": "chain",
+          "precision_key": "wdTickSz",
+          "withdraw_key": "canWd",
+          "withdraw_max_key": "maxWd",
+          "withdraw_min_key": "minWd"
+        },
+        "precision": {
+          "collection_key": "chains",
+          "field": "precision",
+          "kind": "currency_network_summary",
+          "precision_enabled_key": "canWd",
+          "precision_key": "wdTickSz"
+        },
+        "type": {
+          "default": "crypto"
+        },
+        "withdraw": {
+          "collection_key": "chains",
+          "field": "withdraw",
+          "kind": "currency_network_summary",
+          "withdraw_key": "canWd"
+        }
+      },
+      "group_by": {
+        "collection_key": "chains",
+        "key": "ccy"
+      }
+    },
+    "deposit_address": {
+      "_unresolved_reason": null,
+      "default_networks": {
+        "BTC": "BTC",
+        "ETH": "ERC20",
+        "USDT": "TRC20"
+      },
+      "extras": [],
+      "field_map": {
+        "address": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "addr"
+        },
+        "currency": null,
+        "info": null,
+        "network": {
+          "currency_key": "ccy",
+          "kind": "network_code",
+          "network_aliases": {
+            "BTC-Aptos": "APT",
+            "BTC-Bitcoin": "BTC",
+            "BTC-Lightning": "BTCLIGHTNING",
+            "BTC-SUI": "SUI",
+            "BTC-Solana": "SOL",
+            "BTC-X Layer": "X Layer",
+            "BTCK-OKTC": "OKTC",
+            "ETH-Arbitrum One": "ARBONE",
+            "ETH-Base": "BASE",
+            "ETH-ERC20": "ETH",
+            "ETH-Linea": "LINEA",
+            "ETH-Optimism": "OP",
+            "ETH-Starknet": "Starknet",
+            "ETH-Unichain": "Unichain",
+            "ETH-X Layer": "X Layer",
+            "ETH-X Layer (WETH)": "X Layer (WETH)",
+            "ETH-zkSync Era": "ZKSYNCERA",
+            "ETHK-OKTC": "OKTC",
+            "POL-ERC20": "ERC20",
+            "POL-Polygon": "MATIC",
+            "USDT-Aptos": "APT",
+            "USDT-Arbitrum One": "ARBONE",
+            "USDT-Avalanche C-Chain": "AVAXC",
+            "USDT-BERACHAIN (USDT0)": "BERACHAIN (USDT0)",
+            "USDT-ERC20": "ERC20",
+            "USDT-Monad (USDT0)": "Monad (USDT0)",
+            "USDT-OKTC": "OKTC",
+            "USDT-Optimism": "OP",
+            "USDT-Optimism (USDT0)": "Optimism (USDT0)",
+            "USDT-Plasma": "Plasma",
+            "USDT-Polygon": "MATIC",
+            "USDT-Solana": "SOL",
+            "USDT-TON": "TON",
+            "USDT-TRC20": "TRC20",
+            "USDT-Unichain (USDT0)": "Unichain (USDT0)",
+            "USDT-X Layer": "X Layer",
+            "USDT-X Layer (USDT0)": "X Layer (USDT0)"
+          },
+          "network_key": "chain"
+        },
+        "tag": {
+          "coercion": "safeString",
+          "fallback_keys": [
+            "pmtId",
+            "memo",
+            "addrEx.comment"
+          ],
+          "key": "tag"
+        }
+      },
+      "row_filter": {
+        "equals": true,
+        "key": "selected"
+      }
+    },
+    "funding_history": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "amount": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "balChg"
+        },
+        "code": {
+          "coercion": "safeCurrencyCode",
+          "format": null,
+          "key": "ccy"
+        },
+        "datetime": {
+          "coercion": "iso8601",
+          "format": "ms",
+          "key": "ts"
+        },
+        "id": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "billId"
+        },
+        "info": null,
+        "rate": null,
+        "symbol": null,
+        "timestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "ts"
+        }
+      }
+    },
+    "funding_rate": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "datetime": null,
+        "estimatedSettlePrice": null,
+        "fundingDatetime": null,
+        "fundingRate": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "fundingRate"
+        },
+        "fundingTimestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "fundingTime"
+        },
+        "indexPrice": null,
+        "info": null,
+        "interestRate": null,
+        "interval": {
+          "coercion": "safeInteger",
+          "format": "funding_interval_milliseconds",
+          "kind": "computed",
+          "op": "sub",
+          "operands": [
+            "nextFundingTime",
+            "fundingTime"
+          ]
+        },
+        "markPrice": null,
+        "nextFundingDatetime": null,
+        "nextFundingRate": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "nextFundingRate"
+        },
+        "nextFundingTimestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "nextFundingTime"
+        },
+        "previousFundingDatetime": null,
+        "previousFundingRate": null,
+        "previousFundingTimestamp": null,
+        "symbol": null,
+        "timestamp": null
+      }
+    },
+    "funding_rate_history": null,
+    "greeks": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "askImpliedVolatility": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "askVol"
+        },
+        "askPrice": null,
+        "askSize": null,
+        "bidImpliedVolatility": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "bidVol"
+        },
+        "bidPrice": null,
+        "bidSize": null,
+        "datetime": null,
+        "delta": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "deltaBS"
+        },
+        "gamma": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "gammaBS"
+        },
+        "info": null,
+        "lastPrice": null,
+        "markImpliedVolatility": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "markVol"
+        },
+        "markPrice": null,
+        "rho": null,
+        "symbol": null,
+        "theta": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "thetaBS"
+        },
+        "timestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "ts"
+        },
+        "underlyingPrice": null,
+        "vega": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "vegaBS"
+        }
+      }
+    },
+    "income": null,
+    "ledger_entry": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "account": null,
+        "after": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "bal"
+        },
+        "amount": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "balChg"
+        },
+        "before": {
+          "coercion": "safeNumber",
+          "kind": "computed",
+          "op": "sub",
+          "operands": [
+            "bal",
+            "balChg"
+          ]
+        },
+        "currency": {
+          "coercion": "safeCurrencyCode",
+          "format": null,
+          "key": "ccy"
+        },
+        "datetime": null,
+        "direction": {
+          "fallback_keys": [],
+          "key": "balChg",
+          "kind": "sign_direction",
+          "negative": "out",
+          "positive": "in",
+          "zero": null
+        },
+        "fee": {
+          "sub_field_map": {
+            "cost": {
+              "coercion": "safeNumber",
+              "key": "fee"
+            },
+            "currency": {
+              "coercion": "safeCurrencyCode",
+              "key": "ccy"
+            }
+          }
+        },
+        "id": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "billId"
+        },
+        "info": null,
+        "referenceAccount": null,
+        "referenceId": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "ordId"
+        },
+        "status": {
+          "default": "ok"
+        },
+        "timestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "ts"
+        },
+        "type": {
+          "coercion": "safeString",
+          "enum_map": {
+            "1": "transfer",
+            "10": "overloss_recovery",
+            "11": "conversion",
+            "12": "transfer",
+            "13": "ddh",
+            "14": "trade",
+            "15": "quick_margin",
+            "16": "borrowing",
+            "2": "trade",
+            "20": "conversion",
+            "250": "profit_share_payment",
+            "251": "profit_share_refund",
+            "27": "conversion",
+            "28": "conversion",
+            "29": "one_click_repay",
+            "3": "settlement",
+            "30": "trade",
+            "32": "move_position",
+            "33": "loans",
+            "34": "settlement",
+            "35": "transfer",
+            "37": "corporate_action",
+            "38": "usdg_rewards",
+            "4": "conversion",
+            "5": "liquidation",
+            "6": "transfer",
+            "7": "interest",
+            "8": "funding_fee",
+            "9": "adl"
+          },
+          "enum_passthrough": true,
+          "format": null,
+          "key": "type"
+        }
+      },
+      "route_field_maps": {
+        "account/bills": {},
+        "account/bills-archive": {},
+        "asset/bills": {
+          "type": {
+            "coercion": "safeString",
+            "enum_map": {
+              "1": "deposit",
+              "130": "transfer",
+              "131": "transfer",
+              "2": "withdrawal",
+              "20": "transfer",
+              "21": "transfer",
+              "22": "transfer",
+              "23": "transfer"
+            },
+            "enum_passthrough": true,
+            "format": null,
+            "key": "type"
+          }
+        }
+      }
+    },
+    "leverage": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "info": null,
+        "longLeverage": {
+          "coercion": "safeInteger",
+          "key": "lever"
+        },
+        "marginMode": {
+          "coercion": "safeStringLower",
+          "key": "mgnMode"
+        },
+        "shortLeverage": {
+          "coercion": "safeInteger",
+          "key": "lever"
+        },
+        "symbol": {
+          "coercion": "safeString",
+          "key": "instId"
+        }
+      }
+    },
+    "leverage_tiers": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "currency": null,
+        "info": null,
+        "maintenanceMarginRate": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "mmr"
+        },
+        "maxLeverage": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "maxLever"
+        },
+        "maxNotional": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "maxSz"
+        },
+        "minNotional": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "minSz"
+        },
+        "symbol": null,
+        "tier": {
+          "coercion": "safeInteger",
+          "format": null,
+          "key": "tier"
+        }
+      }
+    },
+    "liquidation": null,
+    "long_short_ratio": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "datetime": {
+          "coercion": "iso8601",
+          "fallback_keys": [
+            "timestamp"
+          ],
+          "format": "ms",
+          "key": "ts"
+        },
+        "info": null,
+        "longShortRatio": {
+          "coercion": "safeNumber",
+          "fallback_keys": [
+            "ratio"
+          ],
+          "format": null,
+          "key": "longShortRatio"
+        },
+        "symbol": null,
+        "timeframe": null,
+        "timestamp": {
+          "coercion": "safeInteger",
+          "fallback_keys": [
+            "timestamp"
+          ],
+          "format": "ms",
+          "key": "ts"
+        }
+      }
+    },
+    "margin_mode": null,
+    "market": {
+      "_unresolved_reason": null,
+      "extras": [
+        {
+          "coercion": "safeInteger",
+          "key": "instIdCode",
+          "unified_key": "instIdCode"
+        }
+      ],
+      "field_map": {
+        "active": {
+          "coercion": "safeBool",
+          "enum_map": {
+            "live": true,
+            "preopen": false,
+            "suspend": false,
+            "test": false
+          },
+          "key": "state"
+        },
+        "base": {
+          "coercion": "safeCurrencyCode",
+          "fallback_keys": [
+            "ctValCcy"
+          ],
+          "format": null,
+          "key": "baseCcy"
+        },
+        "baseId": {
+          "coercion": "safeString",
+          "fallback_keys": [
+            "ctValCcy"
+          ],
+          "format": null,
+          "key": "baseCcy"
+        },
+        "contract": {
+          "coercion": "safeBool",
+          "enum_map": {
+            "FUTURES": true,
+            "MARGIN": false,
+            "OPTION": true,
+            "SPOT": false,
+            "SWAP": true
+          },
+          "key": "instType"
+        },
+        "contractSize": {
+          "coercion": "safeNumber",
+          "key": "ctVal"
+        },
+        "created": {
+          "coercion": "safeInteger2",
+          "format": null,
+          "key": "contTdSwTime"
+        },
+        "expiry": {
+          "coercion": "safeInteger",
+          "format": null,
+          "key": "expTime"
+        },
+        "expiryDatetime": null,
+        "future": {
+          "coercion": "safeBool",
+          "enum_map": {
+            "FUTURES": true,
+            "MARGIN": false,
+            "OPTION": false,
+            "SPOT": false,
+            "SWAP": false
+          },
+          "key": "instType"
+        },
+        "id": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "instId"
+        },
+        "info": null,
+        "inverse": {
+          "coercion": "safeBool",
+          "enum_map": {
+            "inverse": true,
+            "linear": false
+          },
+          "key": "ctType"
+        },
+        "limits": {
+          "sub_field_map": {
+            "amount": {
+              "sub_field_map": {
+                "max": null,
+                "min": {
+                  "coercion": "safeNumber",
+                  "format": null,
+                  "key": "minSz"
+                }
+              }
+            },
+            "cost": {
+              "sub_field_map": {
+                "max": {
+                  "coercion": null,
+                  "format": null,
+                  "key": null,
+                  "unresolved_reason": "nested_market_field_not_derived"
+                },
+                "min": null
+              }
+            },
+            "leverage": {
+              "sub_field_map": {
+                "max": {
+                  "coercion": "parseNumber(safeString)",
+                  "fallback_keys": [
+                    "1"
+                  ],
+                  "format": null,
+                  "key": "lever"
+                },
+                "min": {
+                  "coercion": null,
+                  "format": null,
+                  "key": null,
+                  "unresolved_reason": "nested_market_field_not_derived"
+                }
+              }
+            },
+            "price": {
+              "sub_field_map": {
+                "max": null,
+                "min": null
+              }
+            }
+          }
+        },
+        "linear": {
+          "coercion": "safeBool",
+          "enum_map": {
+            "inverse": false,
+            "linear": true
+          },
+          "key": "ctType"
+        },
+        "maker": null,
+        "margin": {
+          "coercion": "safeBool",
+          "enum_map": {
+            "FUTURES": false,
+            "MARGIN": true,
+            "OPTION": false,
+            "SPOT": false,
+            "SWAP": false
+          },
+          "key": "instType"
+        },
+        "nativeAmountStep": null,
+        "nativeQuantityField": null,
+        "nativeQuantityUnit": null,
+        "option": {
+          "coercion": "safeBool",
+          "enum_map": {
+            "FUTURES": false,
+            "MARGIN": false,
+            "OPTION": true,
+            "SPOT": false,
+            "SWAP": false
+          },
+          "key": "instType"
+        },
+        "optionType": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "optType"
+        },
+        "percentage": null,
+        "precision": {
+          "sub_field_map": {
+            "amount": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "lotSz"
+            },
+            "price": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "tickSz"
+            }
+          }
+        },
+        "quantityUnit": null,
+        "quote": {
+          "coercion": "safeCurrencyCode",
+          "fallback_keys": [
+            "settleCcy"
+          ],
+          "format": null,
+          "key": "quoteCcy"
+        },
+        "quoteId": {
+          "coercion": "safeString",
+          "fallback_keys": [
+            "settleCcy"
+          ],
+          "format": null,
+          "key": "quoteCcy"
+        },
+        "settle": {
+          "coercion": "safeCurrencyCode",
+          "format": null,
+          "key": "settleCcy"
+        },
+        "settleId": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "settleCcy"
+        },
+        "spot": {
+          "coercion": "safeBool",
+          "enum_map": {
+            "FUTURES": false,
+            "MARGIN": false,
+            "OPTION": false,
+            "SPOT": true,
+            "SWAP": false
+          },
+          "key": "instType"
+        },
+        "strike": {
+          "coercion": "safeNumber",
+          "key": "stk"
+        },
+        "subType": null,
+        "swap": {
+          "coercion": "safeBool",
+          "enum_map": {
+            "FUTURES": false,
+            "MARGIN": false,
+            "OPTION": false,
+            "SPOT": false,
+            "SWAP": true
+          },
+          "key": "instType"
+        },
+        "symbol": null,
+        "taker": null,
+        "tierBased": null,
+        "type": {
+          "coercion": "safeString",
+          "enum_map": {
+            "FUTURES": "future",
+            "MARGIN": "margin",
+            "OPTION": "option",
+            "SPOT": "spot",
+            "SWAP": "swap"
+          },
+          "key": "instType"
+        }
+      }
+    },
+    "ohlcv": {
+      "_unresolved_reason": null,
+      "branches": [
+        {
+          "_unresolved_reason": null,
+          "field_map": {
+            "close": {
+              "coercion": "safeNumber",
+              "format": null,
+              "index": 4,
+              "key": null
+            },
+            "high": {
+              "coercion": "safeNumber",
+              "format": null,
+              "index": 2,
+              "key": null
+            },
+            "low": {
+              "coercion": "safeNumber",
+              "format": null,
+              "index": 3,
+              "key": null
+            },
+            "open": {
+              "coercion": "safeNumber",
+              "format": null,
+              "index": 1,
+              "key": null
+            },
+            "timestamp": {
+              "coercion": "safeInteger",
+              "format": "ms",
+              "index": 0,
+              "key": null
+            },
+            "volume": {
+              "discriminator": "market.spot",
+              "false": {
+                "coercion": "safeNumber",
+                "index": 6
+              },
+              "kind": "discriminated",
+              "true": {
+                "coercion": "safeNumber",
+                "index": 5
+              }
+            }
+          },
+          "guard": {
+            "input_shape": "array",
+            "kind": "always"
+          },
+          "shape": "array"
+        }
+      ],
+      "extras": []
+    },
+    "open_interest": {
+      "_unresolved_reason": null,
+      "branches": [
+        {
+          "field_map": {
+            "baseVolume": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "oiCcy"
+            },
+            "datetime": {
+              "coercion": "iso8601",
+              "format": "ms",
+              "key": "ts"
+            },
+            "info": null,
+            "openInterestAmount": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "oi"
+            },
+            "openInterestValue": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "oiUsd"
+            },
+            "quoteVolume": null,
+            "symbol": null,
+            "timestamp": {
+              "coercion": "safeInteger",
+              "format": "ms",
+              "key": "ts"
+            }
+          },
+          "guard": {
+            "input_shape": "object",
+            "kind": "always"
+          },
+          "shape": "object"
+        },
+        {
+          "field_map": {
+            "baseVolume": {
+              "discriminator": "market.option",
+              "false": null,
+              "kind": "discriminated",
+              "true": {
+                "coercion": "safeNumber",
+                "index": 2
+              }
+            },
+            "datetime": {
+              "coercion": "iso8601",
+              "format": "ms",
+              "index": 0,
+              "key": null
+            },
+            "info": null,
+            "openInterestAmount": {
+              "discriminator": "market.option",
+              "false": null,
+              "kind": "discriminated",
+              "true": {
+                "coercion": "safeNumber",
+                "index": 1
+              }
+            },
+            "openInterestValue": {
+              "discriminator": "market.option",
+              "false": {
+                "coercion": "safeNumber",
+                "index": 1
+              },
+              "kind": "discriminated",
+              "true": null
+            },
+            "quoteVolume": {
+              "discriminator": "market.option",
+              "false": {
+                "coercion": "safeNumber",
+                "index": 2
+              },
+              "kind": "discriminated",
+              "true": null
+            },
+            "symbol": {
+              "kind": "native_symbol"
+            },
+            "timestamp": {
+              "coercion": "safeInteger",
+              "format": "ms",
+              "index": 0,
+              "key": null
+            }
+          },
+          "guard": {
+            "input_shape": "array",
+            "kind": "always"
+          },
+          "shape": "array"
+        }
+      ],
+      "extras": []
+    },
+    "option": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "askPrice": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "askPx"
+        },
+        "baseVolume": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "volCcy24h"
+        },
+        "bidPrice": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "bidPx"
+        },
+        "change": null,
+        "currency": null,
+        "datetime": null,
+        "impliedVolatility": null,
+        "info": null,
+        "lastPrice": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "last"
+        },
+        "markPrice": null,
+        "midPrice": null,
+        "openInterest": null,
+        "percentage": null,
+        "quoteVolume": null,
+        "symbol": null,
+        "timestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "ts"
+        },
+        "underlyingPrice": null
+      }
+    },
+    "option_position": null,
+    "order": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "amount": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "sz"
+        },
+        "average": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "avgPx"
+        },
+        "clientOrderId": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "clOrdId"
+        },
+        "cost": {
+          "coercion": "safeNumber",
+          "kind": "computed",
+          "op": "mul",
+          "operands": [
+            "accFillSz",
+            {
+              "fallback_keys": [
+                "px",
+                "ordPx"
+              ],
+              "key": "avgPx"
+            }
+          ]
+        },
+        "datetime": null,
+        "fee": {
+          "omit_if_empty": true,
+          "sub_field_map": {
+            "cost": {
+              "coercion": "safeNumber",
+              "key": "fee",
+              "scale": -1
+            },
+            "currency": {
+              "coercion": "safeString",
+              "key": "feeCcy"
+            }
+          }
+        },
+        "fees": {
+          "omit_if_empty": true,
+          "sub_field_map": {
+            "cost": {
+              "coercion": "safeNumber",
+              "key": "fee",
+              "scale": -1
+            },
+            "currency": {
+              "coercion": "safeString",
+              "key": "feeCcy"
+            }
+          },
+          "wrap_list": true
+        },
+        "filled": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "accFillSz"
+        },
+        "id": {
+          "coercion": "safeString2",
+          "format": null,
+          "key": "algoId",
+          "key2": "ordId"
+        },
+        "info": null,
+        "lastTradeTimestamp": {
+          "coercion": "safeInteger",
+          "format": null,
+          "key": "fillTime"
+        },
+        "lastUpdateTimestamp": {
+          "coercion": "safeInteger",
+          "format": null,
+          "key": "uTime"
+        },
+        "postOnly": {
+          "coercion": "safeBool",
+          "enum_map": {
+            "post_only": true
+          },
+          "key": "ordType"
+        },
+        "price": {
+          "coercion": "safeNumber2",
+          "fallback_keys": [
+            "avgPx"
+          ],
+          "format": null,
+          "key": "px",
+          "key2": "ordPx"
+        },
+        "reduceOnly": {
+          "coercion": "safeBool",
+          "format": null,
+          "key": "reduceOnly"
+        },
+        "remaining": {
+          "coercion": "safeNumber",
+          "kind": "computed",
+          "op": "sub",
+          "operands": [
+            "sz",
+            "accFillSz"
+          ]
+        },
+        "side": {
+          "coercion": "safeString",
+          "enum_map": null,
+          "format": null,
+          "key": "side"
+        },
+        "status": {
+          "coercion": "safeString",
+          "enum_map": {
+            "canceled": "canceled",
+            "effective": "closed",
+            "filled": "closed",
+            "live": "open",
+            "mmp_canceled": "canceled",
+            "order_failed": "canceled",
+            "partially_filled": "open"
+          },
+          "format": null,
+          "key": "state"
+        },
+        "stopLossPrice": {
+          "coercion": "safeNumber2",
+          "format": null,
+          "key": "slTriggerPx"
+        },
+        "symbol": null,
+        "takeProfitPrice": {
+          "coercion": "safeNumber2",
+          "format": null,
+          "key": "tpTriggerPx"
+        },
+        "timeInForce": {
+          "coercion": "safeString",
+          "enum_map": {
+            "elp": "GTC",
+            "fok": "FOK",
+            "ioc": "IOC",
+            "limit": "GTC",
+            "market": "IOC",
+            "mmp": "GTC",
+            "mmp_and_post_only": "PO",
+            "op_fok": "FOK",
+            "optimal_limit_ioc": "IOC",
+            "post_only": "PO"
+          },
+          "key": "ordType"
+        },
+        "timestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "cTime"
+        },
+        "trades": null,
+        "triggerPrice": null,
+        "type": {
+          "coercion": "safeString",
+          "enum_map": {
+            "elp": "limit",
+            "fok": "limit",
+            "ioc": "limit",
+            "limit": "limit",
+            "market": "market",
+            "mmp": "limit",
+            "mmp_and_post_only": "limit",
+            "op_fok": "limit",
+            "optimal_limit_ioc": "market",
+            "post_only": "limit"
+          },
+          "enum_passthrough": true,
+          "format": null,
+          "key": "ordType"
+        }
+      }
+    },
+    "position": {
+      "_unresolved_reason": null,
+      "branches": [
+        {
+          "field_map": {
+            "collateral": null,
+            "contractSize": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "_bourse_contract_size"
+            },
+            "contracts": null,
+            "datetime": {
+              "coercion": "iso8601",
+              "format": "ms",
+              "key": "cTime"
+            },
+            "entryPrice": {
+              "coercion": "safeNumber",
+              "fallback_keys": [
+                "avgPx"
+              ],
+              "format": null,
+              "key": "openAvgPx"
+            },
+            "hedged": {
+              "coercion": "safeBool",
+              "key": "_bourse_hedged"
+            },
+            "id": {
+              "coercion": "safeString",
+              "format": null,
+              "key": "posId"
+            },
+            "info": null,
+            "initialMargin": null,
+            "initialMarginPercentage": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "_bourse_im_pct"
+            },
+            "lastPrice": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "closeAvgPx"
+            },
+            "lastUpdateTimestamp": {
+              "coercion": "safeInteger",
+              "format": "ms",
+              "key": "uTime"
+            },
+            "leverage": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "lever"
+            },
+            "liquidationPrice": null,
+            "maintenanceMargin": null,
+            "maintenanceMarginPercentage": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "_bourse_mm_pct"
+            },
+            "marginMode": {
+              "coercion": "safeString",
+              "format": null,
+              "key": "mgnMode"
+            },
+            "marginRatio": null,
+            "markPrice": null,
+            "notional": null,
+            "percentage": null,
+            "realizedPnl": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "realizedPnl"
+            },
+            "side": {
+              "coercion": "safeString",
+              "format": null,
+              "key": "_bourse_side"
+            },
+            "stopLossPrice": null,
+            "symbol": {
+              "key": "instId",
+              "kind": "native_symbol"
+            },
+            "takeProfitPrice": null,
+            "timestamp": {
+              "coercion": "safeInteger",
+              "format": "ms",
+              "key": "cTime"
+            },
+            "unrealizedPnl": null
+          },
+          "guard": {
+            "has_key": "openAvgPx"
+          }
+        },
+        {
+          "field_map": {
+            "collateral": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "_bourse_collateral"
+            },
+            "contractSize": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "_bourse_contract_size"
+            },
+            "contracts": {
+              "coercion": "safeNumber",
+              "key": "pos",
+              "kind": "absolute"
+            },
+            "datetime": {
+              "coercion": "iso8601",
+              "format": "ms",
+              "key": "cTime"
+            },
+            "entryPrice": {
+              "coercion": "safeNumber",
+              "fallback_keys": [
+                "openAvgPx"
+              ],
+              "format": null,
+              "key": "avgPx"
+            },
+            "hedged": {
+              "coercion": "safeBool",
+              "key": "_bourse_hedged"
+            },
+            "id": {
+              "coercion": "safeString",
+              "format": null,
+              "key": "posId"
+            },
+            "info": null,
+            "initialMargin": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "_bourse_im"
+            },
+            "initialMarginPercentage": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "_bourse_im_pct"
+            },
+            "lastPrice": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "closeAvgPx"
+            },
+            "lastUpdateTimestamp": {
+              "coercion": "safeInteger",
+              "format": "ms",
+              "key": "uTime"
+            },
+            "leverage": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "lever"
+            },
+            "liquidationPrice": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "liqPx",
+              "zero_as_nil": true
+            },
+            "maintenanceMargin": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "mmr"
+            },
+            "maintenanceMarginPercentage": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "_bourse_mm_pct"
+            },
+            "marginMode": {
+              "coercion": "safeString",
+              "format": null,
+              "key": "mgnMode"
+            },
+            "marginRatio": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "_bourse_margin_ratio"
+            },
+            "markPrice": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "markPx"
+            },
+            "notional": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "_bourse_notional"
+            },
+            "percentage": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "_bourse_percentage"
+            },
+            "realizedPnl": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "realizedPnl"
+            },
+            "side": {
+              "coercion": "safeString",
+              "format": null,
+              "key": "_bourse_side"
+            },
+            "stopLossPrice": null,
+            "symbol": {
+              "key": "instId",
+              "kind": "native_symbol"
+            },
+            "takeProfitPrice": null,
+            "timestamp": {
+              "coercion": "safeInteger",
+              "format": "ms",
+              "key": "cTime"
+            },
+            "unrealizedPnl": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "upl"
+            }
+          },
+          "guard": {
+            "kind": "always"
+          }
+        }
+      ],
+      "extras": []
+    },
+    "settlement": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "datetime": null,
+        "info": null,
+        "price": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "px"
+        },
+        "symbol": null,
+        "timestamp": null
+      }
+    },
+    "ticker": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "ask": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "askPx"
+        },
+        "askVolume": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "askSz"
+        },
+        "average": {
+          "coercion": "safeNumber",
+          "kind": "computed",
+          "op": "average",
+          "operands": [
+            "last",
+            "open24h"
+          ]
+        },
+        "baseVolume": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "vol24h"
+        },
+        "bid": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "bidPx"
+        },
+        "bidVolume": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "bidSz"
+        },
+        "change": {
+          "coercion": "safeNumber",
+          "kind": "computed",
+          "op": "sub",
+          "operands": [
+            "last",
+            "open24h"
+          ]
+        },
+        "close": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "last"
+        },
+        "datetime": null,
+        "high": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "high24h"
+        },
+        "indexPrice": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "idxPx"
+        },
+        "info": null,
+        "last": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "last"
+        },
+        "low": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "low24h"
+        },
+        "markPrice": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "markPx"
+        },
+        "open": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "open24h"
+        },
+        "percentage": {
+          "coercion": "safeNumber",
+          "kind": "computed",
+          "op": "percent_change",
+          "operands": [
+            "last",
+            "open24h"
+          ]
+        },
+        "previousClose": null,
+        "quoteVolume": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "volCcy24h"
+        },
+        "symbol": null,
+        "timestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "ts"
+        },
+        "vwap": {
+          "else": null,
+          "guard": {
+            "field": "instType",
+            "in": [
+              "SPOT",
+              "MARGIN"
+            ]
+          },
+          "kind": "when",
+          "then": {
+            "coercion": "safeNumber",
+            "kind": "computed",
+            "op": "div",
+            "operands": [
+              "volCcy24h",
+              "vol24h"
+            ]
+          }
+        }
+      }
+    },
+    "trade": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "amount": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "fillSz",
+          "key2": "sz"
+        },
+        "cost": {
+          "coercion": "safeNumber",
+          "kind": "computed",
+          "op": "mul",
+          "operands": [
+            {
+              "fallback_keys": [
+                "fillSz"
+              ],
+              "key": "sz"
+            },
+            {
+              "fallback_keys": [
+                "fillPx"
+              ],
+              "key": "px"
+            }
+          ]
+        },
+        "clientOrderId": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "clOrdId"
+        },
+        "datetime": null,
+        "fee": {
+          "omit_if_empty": true,
+          "sub_field_map": {
+            "cost": {
+              "coercion": "safeNumber",
+              "key": "fee",
+              "scale": -1
+            },
+            "currency": {
+              "coercion": "safeString",
+              "key": "feeCcy"
+            }
+          }
+        },
+        "fees": {
+          "omit_if_empty": true,
+          "sub_field_map": {
+            "cost": {
+              "coercion": "safeNumber",
+              "key": "fee",
+              "scale": -1
+            },
+            "currency": {
+              "coercion": "safeString",
+              "key": "feeCcy"
+            }
+          },
+          "wrap_list": true
+        },
+        "id": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "tradeId"
+        },
+        "info": null,
+        "order": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "ordId"
+        },
+        "price": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "fillPx",
+          "key2": "px"
+        },
+        "side": {
+          "coercion": "safeString",
+          "enum_map": null,
+          "format": null,
+          "key": "side"
+        },
+        "symbol": null,
+        "takerOrMaker": {
+          "coercion": "safeString",
+          "enum_map": {
+            "M": "maker",
+            "T": "taker"
+          },
+          "format": null,
+          "key": "execType"
+        },
+        "timestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "ts"
+        },
+        "type": null
+      }
+    },
+    "trading_fee": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "info": null,
+        "maker": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "maker",
+          "key2": "makerU",
+          "scale": -1
+        },
+        "percentage": null,
+        "symbol": null,
+        "taker": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "taker",
+          "key2": "takerU",
+          "scale": -1
+        },
+        "tierBased": null
+      }
+    },
+    "trading_fees": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "info": null,
+        "maker": null,
+        "percentage": null,
+        "symbol": null,
+        "taker": null,
+        "tierBased": null
+      }
+    },
+    "transaction": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "address": null,
+        "addressFrom": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "from"
+        },
+        "addressTo": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "to"
+        },
+        "amount": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "amt"
+        },
+        "currency": null,
+        "datetime": null,
+        "fee": null,
+        "id": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "depId"
+        },
+        "info": null,
+        "network": null,
+        "status": null,
+        "tag": {
+          "coercion": "safeString2",
+          "format": null,
+          "key": "tag"
+        },
+        "tagFrom": null,
+        "tagTo": {
+          "coercion": "safeString2",
+          "format": null,
+          "key": "tag"
+        },
+        "timestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "ts"
+        },
+        "txid": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "txId"
+        },
+        "type": null,
+        "updated": null
+      }
+    },
+    "transfer": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "amount": {
+          "coercion": "safeNumber",
+          "fallback_keys": [
+            "amt"
+          ],
+          "format": null,
+          "key": "balChg"
+        },
+        "currency": {
+          "coercion": "safeCurrencyCode",
+          "format": null,
+          "key": "ccy"
+        },
+        "datetime": null,
+        "fromAccount": {
+          "coercion": "safeString",
+          "enum_map": {
+            "18": "trading",
+            "6": "funding"
+          },
+          "format": null,
+          "key": "from"
+        },
+        "id": {
+          "coercion": "safeString2",
+          "fallback_keys": [
+            "billId"
+          ],
+          "format": null,
+          "key": "transId"
+        },
+        "info": null,
+        "status": {
+          "coercion": "safeString",
+          "enum_map": {
+            "success": "ok"
+          },
+          "format": null,
+          "key": "state"
+        },
+        "timestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "ts"
+        },
+        "toAccount": {
+          "coercion": "safeString",
+          "enum_map": {
+            "18": "trading",
+            "6": "funding"
+          },
+          "format": null,
+          "key": "to"
+        }
+      }
+    }
+  },
+  "response_envelopes": {
+    "_unresolved_reason": null,
+    "account": {
+      "fetchAccounts": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "balance": {
+      "fetchBalance": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "borrow_interest": {
+      "fetchBorrowInterest": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "borrow_rate": {
+      "fetchBorrowRate": {
+        "default": null,
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchBorrowRateHistory": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchBorrowRates": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchCrossBorrowRate": {
+        "default": null,
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchCrossBorrowRates": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "conversion": {
+      "fetchConvertTrade": {
+        "default": null,
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchConvertTradeHistory": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "currency": {
+      "fetchConvertCurrencies": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchCurrencies": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "deposit_address": {
+      "fetchDepositAddressesByNetwork": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "funding_history": {
+      "fetchFundingHistory": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "greeks": {
+      "fetchAllGreeks": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchGreeks": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "leverage": {
+      "fetchLeverage": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "long_short_ratio": {
+      "fetchLongShortRatio": {
+        "default": null,
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchLongShortRatioHistory": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "market": {
+      "fetchMarkets": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchMarketsByType": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "ohlcv": {
+      "fetchOHLCV": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data",
+        "order": "newest_first"
+      }
+    },
+    "open_interest": {
+      "fetchOpenInterest": {
+        "default": null,
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchOpenInterestHistory": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchOpenInterests": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "option": {
+      "fetchOption": {
+        "default": null,
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchOptionChain": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "order": {
+      "fetchCanceledOrders": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchClosedOrders": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchOpenOrders": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchOrder": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "position": {
+      "fetchPosition": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchPositions": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchPositionsHistory": {
+        "default": null,
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "ticker": {
+      "fetchMarkPrice": {
+        "default": null,
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchMarkPrices": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchTicker": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchTickers": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "time": {
+      "fetchTime": {
+        "default": null,
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "trade": {
+      "fetchMyTrades": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchTrades": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "trading_fee": {
+      "fetchTradingFee": {
+        "default": null,
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "transaction": {
+      "fetchDeposit": {
+        "default": null,
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchDeposits": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchWithdrawal": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchWithdrawals": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    },
+    "transfer": {
+      "fetchTransfer": {
+        "default": null,
+        "fallback_keys": [],
+        "key": "data"
+      },
+      "fetchTransfers": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "data"
+      }
+    }
+  }
+}

@@ -1,0 +1,561 @@
+{
+  "class_hierarchy": {
+    "ancestors": {
+      "AccountNotEnabled": [
+        "PermissionDenied",
+        "AuthenticationError",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "AccountSuspended": [
+        "AuthenticationError",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "AddressPending": [
+        "InvalidAddress",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "ArgumentsRequired": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "AuthenticationError": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "BadRequest": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "BadResponse": [
+        "OperationFailed",
+        "BaseError"
+      ],
+      "BadSymbol": [
+        "BadRequest",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "BaseError": [],
+      "CancelPending": [
+        "OperationFailed",
+        "BaseError"
+      ],
+      "ChecksumError": [
+        "InvalidNonce",
+        "NetworkError",
+        "OperationFailed",
+        "BaseError"
+      ],
+      "ContractUnavailable": [
+        "InvalidOrder",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "DDoSProtection": [
+        "NetworkError",
+        "OperationFailed",
+        "BaseError"
+      ],
+      "DuplicateOrderId": [
+        "InvalidOrder",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "ExchangeClosedByUser": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "ExchangeError": [
+        "BaseError"
+      ],
+      "ExchangeNotAvailable": [
+        "NetworkError",
+        "OperationFailed",
+        "BaseError"
+      ],
+      "InsufficientFunds": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "InvalidAddress": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "InvalidNonce": [
+        "NetworkError",
+        "OperationFailed",
+        "BaseError"
+      ],
+      "InvalidOrder": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "InvalidProxySettings": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "ManualInteractionNeeded": [
+        "OperationRejected",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "MarginModeAlreadySet": [
+        "NoChange",
+        "OperationRejected",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "MarketClosed": [
+        "OperationRejected",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "NetworkError": [
+        "OperationFailed",
+        "BaseError"
+      ],
+      "NoChange": [
+        "OperationRejected",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "NotSupported": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "NullResponse": [
+        "BadResponse",
+        "OperationFailed",
+        "BaseError"
+      ],
+      "OnMaintenance": [
+        "ExchangeNotAvailable",
+        "NetworkError",
+        "OperationFailed",
+        "BaseError"
+      ],
+      "OperationFailed": [
+        "BaseError"
+      ],
+      "OperationRejected": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "OrderImmediatelyFillable": [
+        "InvalidOrder",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "OrderNotCached": [
+        "InvalidOrder",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "OrderNotFillable": [
+        "InvalidOrder",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "OrderNotFound": [
+        "InvalidOrder",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "PermissionDenied": [
+        "AuthenticationError",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "RateLimitExceeded": [
+        "NetworkError",
+        "OperationFailed",
+        "BaseError"
+      ],
+      "RequestTimeout": [
+        "NetworkError",
+        "OperationFailed",
+        "BaseError"
+      ],
+      "RestrictedLocation": [
+        "OperationRejected",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "UnsubscribeError": [
+        "BaseError"
+      ]
+    },
+    "flat_parents": {
+      "AccountNotEnabled": "PermissionDenied",
+      "AccountSuspended": "AuthenticationError",
+      "AddressPending": "InvalidAddress",
+      "ArgumentsRequired": "ExchangeError",
+      "AuthenticationError": "ExchangeError",
+      "BadRequest": "ExchangeError",
+      "BadResponse": "OperationFailed",
+      "BadSymbol": "BadRequest",
+      "BaseError": null,
+      "CancelPending": "OperationFailed",
+      "ChecksumError": "InvalidNonce",
+      "ContractUnavailable": "InvalidOrder",
+      "DDoSProtection": "NetworkError",
+      "DuplicateOrderId": "InvalidOrder",
+      "ExchangeClosedByUser": "ExchangeError",
+      "ExchangeError": "BaseError",
+      "ExchangeNotAvailable": "NetworkError",
+      "InsufficientFunds": "ExchangeError",
+      "InvalidAddress": "ExchangeError",
+      "InvalidNonce": "NetworkError",
+      "InvalidOrder": "ExchangeError",
+      "InvalidProxySettings": "ExchangeError",
+      "ManualInteractionNeeded": "OperationRejected",
+      "MarginModeAlreadySet": "NoChange",
+      "MarketClosed": "OperationRejected",
+      "NetworkError": "OperationFailed",
+      "NoChange": "OperationRejected",
+      "NotSupported": "ExchangeError",
+      "NullResponse": "BadResponse",
+      "OnMaintenance": "ExchangeNotAvailable",
+      "OperationFailed": "BaseError",
+      "OperationRejected": "ExchangeError",
+      "OrderImmediatelyFillable": "InvalidOrder",
+      "OrderNotCached": "InvalidOrder",
+      "OrderNotFillable": "InvalidOrder",
+      "OrderNotFound": "InvalidOrder",
+      "PermissionDenied": "AuthenticationError",
+      "RateLimitExceeded": "NetworkError",
+      "RequestTimeout": "NetworkError",
+      "RestrictedLocation": "OperationRejected",
+      "UnsubscribeError": "BaseError"
+    },
+    "tree": {
+      "BaseError": {
+        "ExchangeError": {
+          "ArgumentsRequired": {},
+          "AuthenticationError": {
+            "AccountSuspended": {},
+            "PermissionDenied": {
+              "AccountNotEnabled": {}
+            }
+          },
+          "BadRequest": {
+            "BadSymbol": {}
+          },
+          "ExchangeClosedByUser": {},
+          "InsufficientFunds": {},
+          "InvalidAddress": {
+            "AddressPending": {}
+          },
+          "InvalidOrder": {
+            "ContractUnavailable": {},
+            "DuplicateOrderId": {},
+            "OrderImmediatelyFillable": {},
+            "OrderNotCached": {},
+            "OrderNotFillable": {},
+            "OrderNotFound": {}
+          },
+          "InvalidProxySettings": {},
+          "NotSupported": {},
+          "OperationRejected": {
+            "ManualInteractionNeeded": {},
+            "MarketClosed": {},
+            "NoChange": {
+              "MarginModeAlreadySet": {}
+            },
+            "RestrictedLocation": {}
+          }
+        },
+        "OperationFailed": {
+          "BadResponse": {
+            "NullResponse": {}
+          },
+          "CancelPending": {},
+          "NetworkError": {
+            "DDoSProtection": {},
+            "ExchangeNotAvailable": {
+              "OnMaintenance": {}
+            },
+            "InvalidNonce": {
+              "ChecksumError": {}
+            },
+            "RateLimitExceeded": {},
+            "RequestTimeout": {}
+          }
+        },
+        "UnsubscribeError": {}
+      }
+    }
+  },
+  "handle_errors": {
+    "exception_scopes": {},
+    "runtime_body_checks": [
+      {
+        "field": "status",
+        "field2": "",
+        "roles": [
+          "status_sentinel"
+        ],
+        "sentinel_values": [
+          {
+            "operator": "===",
+            "value": "err"
+          },
+          {
+            "operator": "===",
+            "value": "unknownOid"
+          }
+        ]
+      }
+    ],
+    "runtime_code_fields": [
+      "code",
+      "ret_code",
+      "retCode",
+      "error_code"
+    ],
+    "error_code_fields": [
+      {
+        "field": "status",
+        "field2": "",
+        "method": "safeString",
+        "object": "response",
+        "object_path": null,
+        "roles": [
+          "status_sentinel"
+        ],
+        "sentinel_values": [
+          {
+            "operator": "===",
+            "value": "err"
+          },
+          {
+            "operator": "===",
+            "value": "unknownOid"
+          }
+        ]
+      },
+      {
+        "field": "error",
+        "field2": null,
+        "method": "safeString",
+        "object": "response",
+        "object_path": null,
+        "roles": [],
+        "sentinel_values": null
+      },
+      {
+        "field": "error",
+        "field2": null,
+        "method": "safeString",
+        "object": null,
+        "object_path": null,
+        "roles": [],
+        "sentinel_values": null
+      },
+      {
+        "field": "error",
+        "field2": null,
+        "method": "safeString",
+        "object": "errorStatus",
+        "object_path": [
+          "response",
+          "response",
+          "data",
+          "status"
+        ],
+        "roles": [],
+        "sentinel_values": null
+      },
+      {
+        "field": "response",
+        "field2": null,
+        "method": "safeString",
+        "object": "response",
+        "object_path": null,
+        "roles": [],
+        "sentinel_values": null
+      }
+    ],
+    "exceptions": {
+      "exact": {
+        "unknownOid": "OrderNotFound"
+      }
+    }
+  },
+  "retry_classification": {
+    "auth": [
+      "AuthenticationError"
+    ],
+    "network": [
+      "RequestTimeout"
+    ],
+    "non_retryable": [
+      "ExchangeError",
+      "InsufficientFunds",
+      "InvalidOrder",
+      "OrderNotFound"
+    ],
+    "rate_limit": [
+      "DDoSProtection",
+      "RateLimitExceeded"
+    ],
+    "server_busy": [
+      "ExchangeNotAvailable"
+    ]
+  },
+  "status_map": {
+    "400": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "401": [
+      {
+        "class": "AuthenticationError",
+        "source": "http_exceptions"
+      }
+    ],
+    "403": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "404": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "405": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "407": [
+      {
+        "class": "AuthenticationError",
+        "source": "http_exceptions"
+      }
+    ],
+    "408": [
+      {
+        "class": "RequestTimeout",
+        "source": "http_exceptions"
+      }
+    ],
+    "409": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "410": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "418": [
+      {
+        "class": "DDoSProtection",
+        "source": "http_exceptions"
+      }
+    ],
+    "422": [
+      {
+        "class": "ExchangeError",
+        "source": "http_exceptions"
+      }
+    ],
+    "429": [
+      {
+        "class": "RateLimitExceeded",
+        "source": "http_exceptions"
+      }
+    ],
+    "451": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "500": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "501": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "502": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "503": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "504": [
+      {
+        "class": "RequestTimeout",
+        "source": "http_exceptions"
+      }
+    ],
+    "511": [
+      {
+        "class": "AuthenticationError",
+        "source": "http_exceptions"
+      }
+    ],
+    "520": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "521": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "522": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "525": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "526": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "530": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ]
+  }
+}

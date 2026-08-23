@@ -1,0 +1,1914 @@
+{
+  "url_templates": {
+    "private": {
+      "api_param": "private",
+      "http_method": "POST",
+      "resolved_url": null,
+      "sample_path": "get_account",
+      "url_prefix": null
+    },
+    "public": {
+      "api_param": "public",
+      "http_method": "GET",
+      "resolved_url": "https://api.lyra.finance/public/get_all_currencies",
+      "sample_path": "get_all_currencies",
+      "url_prefix": "https://api.lyra.finance/public/"
+    }
+  },
+  "describe": {
+    "alias": false,
+    "certified": false,
+    "commonCurrencies": {
+      "BCHSV": "BSV",
+      "XBT": "BTC"
+    },
+    "countries": [],
+    "currencies": {},
+    "dex": true,
+    "enableRateLimit": true,
+    "exceptions": {
+      "broad": {},
+      "exact": {
+        "-32000": "__function:RateLimitExceeded",
+        "-32100": "__function:RateLimitExceeded",
+        "-32600": "__function:BadRequest",
+        "-32601": "__function:BadRequest",
+        "-32602": "__function:InvalidOrder",
+        "-32603": "__function:InvalidOrder",
+        "-32700": "__function:BadRequest",
+        "10000": "__function:BadRequest",
+        "10001": "__function:BadRequest",
+        "10002": "__function:BadRequest",
+        "10003": "__function:BadRequest",
+        "10004": "__function:InvalidOrder",
+        "10005": "__function:BadRequest",
+        "10006": "__function:BadRequest",
+        "10007": "__function:BadRequest",
+        "10008": "__function:BadRequest",
+        "10009": "__function:BadRequest",
+        "10010": "__function:InvalidOrder",
+        "10011": "__function:InsufficientFunds",
+        "10012": "__function:InsufficientFunds",
+        "10013": "__function:ExchangeError",
+        "10014": "__function:ExchangeError",
+        "11000": "__function:InsufficientFunds",
+        "11002": "__function:InvalidOrder",
+        "11003": "__function:InvalidOrder",
+        "11004": "__function:InvalidOrder",
+        "11005": "__function:InvalidOrder",
+        "11006": "__function:OrderNotFound",
+        "11007": "__function:InvalidOrder",
+        "11008": "__function:InvalidOrder",
+        "11009": "__function:InvalidOrder",
+        "11010": "__function:InvalidOrder",
+        "11011": "__function:InvalidOrder",
+        "11012": "__function:InvalidOrder",
+        "11013": "__function:InvalidOrder",
+        "11014": "__function:InvalidOrder",
+        "11015": "__function:InvalidOrder",
+        "11016": "__function:InvalidOrder",
+        "11017": "__function:InvalidOrder",
+        "11018": "__function:InvalidOrder",
+        "11019": "__function:InvalidOrder",
+        "11020": "__function:InsufficientFunds",
+        "11021": "__function:InvalidOrder",
+        "11022": "__function:InvalidOrder",
+        "11023": "__function:InvalidOrder",
+        "11024": "__function:InvalidOrder",
+        "11025": "__function:InvalidOrder",
+        "11026": "__function:BadRequest",
+        "11027": "__function:InvalidOrder",
+        "11028": "__function:InvalidOrder",
+        "11050": "__function:InvalidOrder",
+        "11051": "__function:InvalidOrder",
+        "11052": "__function:InvalidOrder",
+        "11053": "__function:InvalidOrder",
+        "11054": "__function:InvalidOrder",
+        "11055": "__function:InvalidOrder",
+        "11100": "__function:InvalidOrder",
+        "11101": "__function:InvalidOrder",
+        "11102": "__function:InvalidOrder",
+        "11103": "__function:InvalidOrder",
+        "11104": "__function:InvalidOrder",
+        "11105": "__function:InvalidOrder",
+        "11106": "__function:InvalidOrder",
+        "11107": "__function:InvalidOrder",
+        "11200": "__function:InvalidOrder",
+        "11201": "__function:InvalidOrder",
+        "11202": "__function:InvalidOrder",
+        "11203": "__function:InvalidOrder",
+        "12000": "__function:InvalidOrder",
+        "12001": "__function:InvalidOrder",
+        "12002": "__function:BadRequest",
+        "12003": "__function:BadRequest",
+        "13000": "__function:BadRequest",
+        "14000": "__function:BadRequest",
+        "14001": "__function:InvalidOrder",
+        "14002": "__function:BadRequest",
+        "14008": "__function:BadRequest",
+        "14009": "__function:BadRequest",
+        "14010": "__function:BadRequest",
+        "14011": "__function:BadRequest",
+        "14012": "__function:BadRequest",
+        "14013": "__function:BadRequest",
+        "14014": "__function:InvalidOrder",
+        "14015": "__function:BadRequest",
+        "14016": "__function:BadRequest",
+        "14017": "__function:BadRequest",
+        "14018": "__function:BadRequest",
+        "14019": "__function:BadRequest",
+        "14020": "__function:BadRequest",
+        "14021": "__function:BadRequest",
+        "14022": "__function:AuthenticationError",
+        "14023": "__function:InvalidOrder",
+        "14024": "__function:BadRequest",
+        "14025": "__function:BadRequest",
+        "14026": "__function:BadRequest",
+        "14027": "__function:AuthenticationError",
+        "14028": "__function:BadRequest",
+        "14029": "__function:AuthenticationError",
+        "14030": "__function:BadRequest",
+        "14031": "__function:AuthenticationError",
+        "14032": "__function:BadRequest",
+        "16000": "__function:AuthenticationError",
+        "16001": "__function:AuthenticationError",
+        "16100": "__function:AuthenticationError",
+        "17000": "__function:BadRequest",
+        "17001": "__function:BadRequest",
+        "17002": "__function:BadRequest",
+        "17003": "__function:BadRequest",
+        "17004": "__function:BadRequest",
+        "17005": "__function:BadRequest",
+        "17006": "__function:BadRequest",
+        "17007": "__function:BadRequest",
+        "18000": "__function:BadRequest",
+        "18001": "__function:BadRequest",
+        "18002": "__function:BadRequest",
+        "18003": "__function:BadRequest",
+        "18004": "__function:BadRequest",
+        "18005": "__function:BadRequest",
+        "18006": "__function:BadRequest",
+        "18007": "__function:BadRequest",
+        "19000": "__function:BadRequest",
+        "9000": "__function:InvalidOrder"
+      }
+    },
+    "fees": {
+      "funding": {
+        "deposit": {},
+        "percentage": "__undefined",
+        "tierBased": "__undefined",
+        "withdraw": {}
+      },
+      "trading": {
+        "maker": "__undefined",
+        "percentage": "__undefined",
+        "taker": "__undefined",
+        "tierBased": "__undefined"
+      }
+    },
+    "has": {
+      "CORS": "__undefined",
+      "addMargin": false,
+      "borrowCrossMargin": false,
+      "borrowIsolatedMargin": false,
+      "borrowMargin": "__undefined",
+      "cancelAllOrders": true,
+      "cancelAllOrdersAfter": false,
+      "cancelAllOrdersWs": "__undefined",
+      "cancelOrder": true,
+      "cancelOrderWithClientOrderId": "__undefined",
+      "cancelOrderWs": "__undefined",
+      "cancelOrders": false,
+      "cancelOrdersForSymbols": false,
+      "cancelOrdersWithClientOrderId": "__undefined",
+      "cancelOrdersWs": "__undefined",
+      "closeAllPositions": false,
+      "closePosition": false,
+      "createDepositAddress": "__undefined",
+      "createLimitBuyOrder": "__undefined",
+      "createLimitBuyOrderWs": "__undefined",
+      "createLimitOrder": true,
+      "createLimitOrderWs": "__undefined",
+      "createLimitSellOrder": "__undefined",
+      "createLimitSellOrderWs": "__undefined",
+      "createMarketBuyOrder": "__undefined",
+      "createMarketBuyOrderWithCost": false,
+      "createMarketBuyOrderWithCostWs": "__undefined",
+      "createMarketBuyOrderWs": "__undefined",
+      "createMarketOrder": true,
+      "createMarketOrderWithCost": false,
+      "createMarketOrderWithCostWs": "__undefined",
+      "createMarketOrderWs": true,
+      "createMarketSellOrder": "__undefined",
+      "createMarketSellOrderWithCost": false,
+      "createMarketSellOrderWithCostWs": "__undefined",
+      "createMarketSellOrderWs": "__undefined",
+      "createOrder": true,
+      "createOrderWithTakeProfitAndStopLoss": "__undefined",
+      "createOrderWithTakeProfitAndStopLossWs": "__undefined",
+      "createOrderWs": "__undefined",
+      "createOrders": false,
+      "createPostOnlyOrder": "__undefined",
+      "createPostOnlyOrderWs": "__undefined",
+      "createReduceOnlyOrder": false,
+      "createReduceOnlyOrderWs": "__undefined",
+      "createStopLimitOrder": "__undefined",
+      "createStopLimitOrderWs": "__undefined",
+      "createStopLossOrder": "__undefined",
+      "createStopLossOrderWs": "__undefined",
+      "createStopMarketOrder": "__undefined",
+      "createStopMarketOrderWs": "__undefined",
+      "createStopOrder": false,
+      "createStopOrderWs": "__undefined",
+      "createTakeProfitOrder": "__undefined",
+      "createTakeProfitOrderWs": "__undefined",
+      "createTrailingAmountOrder": "__undefined",
+      "createTrailingAmountOrderWs": "__undefined",
+      "createTrailingPercentOrder": "__undefined",
+      "createTrailingPercentOrderWs": "__undefined",
+      "createTriggerOrder": false,
+      "createTriggerOrderWs": "__undefined",
+      "deposit": "__undefined",
+      "editOrder": true,
+      "editOrderWithClientOrderId": "__undefined",
+      "editOrderWs": "__undefined",
+      "editOrders": "__undefined",
+      "fetchADLRank": "__undefined",
+      "fetchAccounts": false,
+      "fetchBalance": true,
+      "fetchBalanceWs": "__undefined",
+      "fetchBidsAsks": "__undefined",
+      "fetchBorrowInterest": false,
+      "fetchBorrowRate": "__undefined",
+      "fetchBorrowRateHistories": false,
+      "fetchBorrowRateHistory": false,
+      "fetchBorrowRates": "__undefined",
+      "fetchBorrowRatesPerSymbol": "__undefined",
+      "fetchCanceledAndClosedOrders": false,
+      "fetchCanceledOrders": true,
+      "fetchClosedOrder": "__undefined",
+      "fetchClosedOrders": true,
+      "fetchClosedOrdersWs": "__undefined",
+      "fetchConvertCurrencies": "__undefined",
+      "fetchConvertQuote": "__undefined",
+      "fetchConvertTrade": "__undefined",
+      "fetchConvertTradeHistory": "__undefined",
+      "fetchCrossBorrowRate": false,
+      "fetchCrossBorrowRates": false,
+      "fetchCurrencies": true,
+      "fetchCurrenciesWs": "emulated",
+      "fetchDeposit": "__undefined",
+      "fetchDepositAddress": false,
+      "fetchDepositAddresses": false,
+      "fetchDepositAddressesByNetwork": "__undefined",
+      "fetchDepositWithdrawFee": "emulated",
+      "fetchDepositWithdrawFees": false,
+      "fetchDeposits": true,
+      "fetchDepositsWithdrawals": "__undefined",
+      "fetchDepositsWs": "__undefined",
+      "fetchFundingHistory": true,
+      "fetchFundingInterval": "__undefined",
+      "fetchFundingIntervals": "__undefined",
+      "fetchFundingRate": true,
+      "fetchFundingRateHistory": true,
+      "fetchFundingRates": false,
+      "fetchGreeks": true,
+      "fetchIndexOHLCV": false,
+      "fetchIsolatedBorrowRate": false,
+      "fetchIsolatedBorrowRates": false,
+      "fetchIsolatedPositions": "__undefined",
+      "fetchL2OrderBook": true,
+      "fetchL3OrderBook": "__undefined",
+      "fetchLastPrices": "__undefined",
+      "fetchLedger": true,
+      "fetchLedgerEntry": "__undefined",
+      "fetchLeverage": false,
+      "fetchLeverageTiers": false,
+      "fetchLeverages": "__undefined",
+      "fetchLiquidations": false,
+      "fetchLongShortRatio": "__undefined",
+      "fetchLongShortRatioHistory": "__undefined",
+      "fetchMarginAdjustmentHistory": "__undefined",
+      "fetchMarginMode": "__undefined",
+      "fetchMarginModes": "__undefined",
+      "fetchMarkOHLCV": false,
+      "fetchMarkPrices": "__undefined",
+      "fetchMarketLeverageTiers": false,
+      "fetchMarkets": true,
+      "fetchMarketsWs": "__undefined",
+      "fetchMyLiquidations": false,
+      "fetchMySettlementHistory": "__undefined",
+      "fetchMyTrades": true,
+      "fetchMyTradesWs": "__undefined",
+      "fetchOHLCV": false,
+      "fetchOHLCVWs": "__undefined",
+      "fetchOpenInterest": false,
+      "fetchOpenInterestHistory": false,
+      "fetchOpenInterests": false,
+      "fetchOpenOrder": "__undefined",
+      "fetchOpenOrders": true,
+      "fetchOpenOrdersWs": "__undefined",
+      "fetchOption": "__undefined",
+      "fetchOptionChain": "__undefined",
+      "fetchOrder": false,
+      "fetchOrderBook": false,
+      "fetchOrderBookWs": "__undefined",
+      "fetchOrderBooks": "__undefined",
+      "fetchOrderTrades": true,
+      "fetchOrderWithClientOrderId": "__undefined",
+      "fetchOrderWs": "__undefined",
+      "fetchOrders": true,
+      "fetchOrdersByStatus": "__undefined",
+      "fetchOrdersWs": "__undefined",
+      "fetchPosition": false,
+      "fetchPositionADLRank": "__undefined",
+      "fetchPositionHistory": "__undefined",
+      "fetchPositionMode": false,
+      "fetchPositionWs": "__undefined",
+      "fetchPositions": true,
+      "fetchPositionsADLRank": "__undefined",
+      "fetchPositionsForSymbol": "__undefined",
+      "fetchPositionsForSymbolWs": "__undefined",
+      "fetchPositionsHistory": "__undefined",
+      "fetchPositionsRisk": false,
+      "fetchPositionsWs": "__undefined",
+      "fetchPremiumIndexOHLCV": false,
+      "fetchSettlementHistory": "__undefined",
+      "fetchStatus": "__undefined",
+      "fetchTicker": true,
+      "fetchTickerWs": "__undefined",
+      "fetchTickers": false,
+      "fetchTickersWs": "__undefined",
+      "fetchTime": true,
+      "fetchTrades": true,
+      "fetchTradesWs": "__undefined",
+      "fetchTradingFee": false,
+      "fetchTradingFees": false,
+      "fetchTradingFeesWs": "__undefined",
+      "fetchTradingLimits": "__undefined",
+      "fetchTransactionFee": "__undefined",
+      "fetchTransactionFees": "__undefined",
+      "fetchTransactions": "__undefined",
+      "fetchTransfer": false,
+      "fetchTransfers": false,
+      "fetchUnderlyingAssets": "__undefined",
+      "fetchVolatilityHistory": "__undefined",
+      "fetchWithdrawAddresses": "__undefined",
+      "fetchWithdrawal": false,
+      "fetchWithdrawalWhitelist": "__undefined",
+      "fetchWithdrawals": true,
+      "fetchWithdrawalsWs": "__undefined",
+      "future": false,
+      "margin": false,
+      "option": false,
+      "privateAPI": true,
+      "publicAPI": true,
+      "reduceMargin": false,
+      "repayCrossMargin": false,
+      "repayIsolatedMargin": false,
+      "sandbox": true,
+      "setLeverage": false,
+      "setMargin": "__undefined",
+      "setMarginMode": false,
+      "setPositionMode": false,
+      "signIn": "__undefined",
+      "spot": false,
+      "swap": false,
+      "transfer": false,
+      "unWatchMyTrades": "__undefined",
+      "unWatchOHLCV": "__undefined",
+      "unWatchOHLCVForSymbols": "__undefined",
+      "unWatchOrderBook": "__undefined",
+      "unWatchOrderBookForSymbols": "__undefined",
+      "unWatchOrders": "__undefined",
+      "unWatchPositions": "__undefined",
+      "unWatchTicker": "__undefined",
+      "unWatchTickers": "__undefined",
+      "unWatchTrades": "__undefined",
+      "unWatchTradesForSymbols": "__undefined",
+      "watchBalance": "__undefined",
+      "watchBidsAsks": "__undefined",
+      "watchLiquidations": "__undefined",
+      "watchLiquidationsForSymbols": "__undefined",
+      "watchMyLiquidations": "__undefined",
+      "watchMyLiquidationsForSymbols": "__undefined",
+      "watchMyTrades": "__undefined",
+      "watchOHLCV": "__undefined",
+      "watchOHLCVForSymbols": "__undefined",
+      "watchOrderBook": "__undefined",
+      "watchOrderBookForSymbols": "__undefined",
+      "watchOrders": "__undefined",
+      "watchOrdersForSymbols": "__undefined",
+      "watchPosition": "__undefined",
+      "watchPositions": "__undefined",
+      "watchStatus": "__undefined",
+      "watchTicker": "__undefined",
+      "watchTickers": "__undefined",
+      "watchTrades": "__undefined",
+      "watchTradesForSymbols": "__undefined",
+      "withdraw": false,
+      "ws": "__undefined"
+    },
+    "hostname": "derive.xyz",
+    "httpExceptions": {
+      "400": "__function:ExchangeNotAvailable",
+      "401": "__function:AuthenticationError",
+      "403": "__function:ExchangeNotAvailable",
+      "404": "__function:ExchangeNotAvailable",
+      "405": "__function:ExchangeNotAvailable",
+      "407": "__function:AuthenticationError",
+      "408": "__function:RequestTimeout",
+      "409": "__function:ExchangeNotAvailable",
+      "410": "__function:ExchangeNotAvailable",
+      "418": "__function:DDoSProtection",
+      "422": "__function:ExchangeError",
+      "429": "__function:RateLimitExceeded",
+      "451": "__function:ExchangeNotAvailable",
+      "500": "__function:ExchangeNotAvailable",
+      "501": "__function:ExchangeNotAvailable",
+      "502": "__function:ExchangeNotAvailable",
+      "503": "__function:ExchangeNotAvailable",
+      "504": "__function:RequestTimeout",
+      "511": "__function:AuthenticationError",
+      "520": "__function:ExchangeNotAvailable",
+      "521": "__function:ExchangeNotAvailable",
+      "522": "__function:ExchangeNotAvailable",
+      "525": "__function:ExchangeNotAvailable",
+      "526": "__function:ExchangeNotAvailable",
+      "530": "__function:ExchangeNotAvailable"
+    },
+    "id": "derive",
+    "limits": {
+      "amount": {
+        "max": "__undefined",
+        "min": "__undefined"
+      },
+      "cost": {
+        "max": "__undefined",
+        "min": "__undefined"
+      },
+      "leverage": {
+        "max": "__undefined",
+        "min": "__undefined"
+      },
+      "price": {
+        "max": "__undefined",
+        "min": "__undefined"
+      }
+    },
+    "markets": "__undefined",
+    "name": "derive",
+    "options": {
+      "deriveWalletAddress": "",
+      "id": "0x0ad42b8e602c2d3d475ae52d678cf63d84ab2749"
+    },
+    "paddingMode": 5,
+    "precisionMode": 4,
+    "pro": true,
+    "rateLimit": 50,
+    "rateLimiterAlgorithm": "leakyBucket",
+    "requiredCredentials": {
+      "accountId": false,
+      "apiKey": false,
+      "login": false,
+      "password": false,
+      "privateKey": true,
+      "secret": false,
+      "token": false,
+      "twofa": false,
+      "uid": false,
+      "walletAddress": true
+    },
+    "rollingWindowSize": 60000,
+    "status": {
+      "eta": "__undefined",
+      "info": "__undefined",
+      "status": "ok",
+      "updated": "__undefined",
+      "url": "__undefined"
+    },
+    "timeframes": {
+      "12h": "12h",
+      "15m": "15m",
+      "1M": "1M",
+      "1d": "1d",
+      "1h": "1h",
+      "1m": "1m",
+      "1w": "1w",
+      "2h": "2h",
+      "30m": "30m",
+      "3d": "3d",
+      "3m": "3m",
+      "4h": "4h",
+      "5m": "5m",
+      "8h": "8h"
+    },
+    "timeout": 10000,
+    "urls": {
+      "api": {
+        "private": "https://api.lyra.finance/private",
+        "public": "https://api.lyra.finance/public"
+      },
+      "api_management": "__undefined",
+      "doc": "https://docs.derive.xyz/docs/",
+      "fees": "https://docs.derive.xyz/reference/fees-1/",
+      "logo": "https://github.com/user-attachments/assets/f835b95f-033a-43dd-b6bb-24e698fc498c",
+      "referral": "https://www.derive.xyz/invite/3VB0B",
+      "test": {
+        "private": "https://api-demo.lyra.finance/private",
+        "public": "https://api-demo.lyra.finance/public"
+      },
+      "www": "https://www.derive.xyz/"
+    },
+    "version": "v1"
+  },
+  "request_shape": {
+    "private": {
+      "body_encoding": "json",
+      "content_type": "application/json",
+      "endpoints": [
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "cancel"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "cancel_all"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "cancel_batch_quotes"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "cancel_batch_rfqs"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "cancel_by_instrument"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "cancel_by_label"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "cancel_by_nonce"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "cancel_quote"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "cancel_rfq"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "cancel_trigger_order"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "change_subaccount_label"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "create_subaccount"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "deposit"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "edit_session_key"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "execute_quote"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "expired_and_cancelled_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_account"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_all_portfolios"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_collaterals"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_deposit_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_erc20_transfer_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_funding_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_interest_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_invite_code"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_liquidation_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_liquidator_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_margin"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_mmp_config"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_notificationsv"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_open_orders"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_option_settlement_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_order"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_order_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_orders"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_positions"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_quotes"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_rfqs"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_subaccount"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_subaccount_value_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_subaccounts"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_trade_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_withdrawal_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "liquidate"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "order"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "order_debug"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "poll_quotes"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "poll_rfqs"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "register_invite"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "register_scoped_session_key"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "replace"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "reset_mmp"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "rfq_get_best_quote"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "send_quote"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "send_rfq"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "session_keys"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "set_cancel_on_disconnect"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "set_mmp_config"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "transfer_erc20"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "transfer_position"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "transfer_positions"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "update_notifications"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "withdraw"
+        }
+      ],
+      "patch_count": 0,
+      "unresolved_reason": null
+    },
+    "public": {
+      "body_encoding": "json",
+      "content_type": "application/json",
+      "endpoints": [
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "get_all_currencies"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "build_register_session_key_tx"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "create_subaccount_debug"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "deposit_debug"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "deregister_session_key"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "estimate_integrator_points"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "execute_quote_debug"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_all_currencies"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_all_instruments"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_all_points"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_bridge_balances"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_currency"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_descendant_tree"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_ethena_participants"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_etherfi_effective_balances"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_funding_rate_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_instrument"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_instruments"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_interest_rate_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_invite_code"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_kelp_effective_balances"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_latest_signed_feeds"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_liquidation_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_live_incidents"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_maker_program_scores"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_maker_programs"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_margin"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_option_settlement_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_option_settlement_prices"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_points"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_points_leaderboard"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_spot_feed_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_spot_feed_history_candles"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_swell_percent_points"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_ticker"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_time"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_trade_history"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_transaction"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_tree_roots"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_vault_assets"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_vault_balances"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_vault_share"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "get_vault_statistics"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "login"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "margin_watch"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "register_invite"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "register_session_key"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "send_quote_debug"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "statistics"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "validate_invite_code"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "withdraw_debug"
+        }
+      ],
+      "patch_count": 0,
+      "unresolved_reason": null
+    }
+  },
+  "endpoints": {
+    "private.post": {
+      "api": [
+        "get_account",
+        "create_subaccount",
+        "get_subaccount",
+        "get_subaccounts",
+        "get_all_portfolios",
+        "change_subaccount_label",
+        "get_notificationsv",
+        "update_notifications",
+        "deposit",
+        "withdraw",
+        "transfer_erc20",
+        "transfer_position",
+        "transfer_positions",
+        "order",
+        "replace",
+        "order_debug",
+        "get_order",
+        "get_orders",
+        "get_open_orders",
+        "cancel",
+        "cancel_by_label",
+        "cancel_by_nonce",
+        "cancel_by_instrument",
+        "cancel_all",
+        "cancel_trigger_order",
+        "get_order_history",
+        "get_trade_history",
+        "get_deposit_history",
+        "get_withdrawal_history",
+        "send_rfq",
+        "cancel_rfq",
+        "cancel_batch_rfqs",
+        "get_rfqs",
+        "poll_rfqs",
+        "send_quote",
+        "cancel_quote",
+        "cancel_batch_quotes",
+        "get_quotes",
+        "poll_quotes",
+        "execute_quote",
+        "rfq_get_best_quote",
+        "get_margin",
+        "get_collaterals",
+        "get_positions",
+        "get_option_settlement_history",
+        "get_subaccount_value_history",
+        "expired_and_cancelled_history",
+        "get_funding_history",
+        "get_interest_history",
+        "get_erc20_transfer_history",
+        "get_liquidation_history",
+        "liquidate",
+        "get_liquidator_history",
+        "session_keys",
+        "edit_session_key",
+        "register_scoped_session_key",
+        "get_mmp_config",
+        "set_mmp_config",
+        "reset_mmp",
+        "set_cancel_on_disconnect",
+        "get_invite_code",
+        "register_invite"
+      ]
+    },
+    "public.get": {
+      "api": [
+        "get_all_currencies"
+      ]
+    },
+    "public.post": {
+      "api": [
+        "build_register_session_key_tx",
+        "register_session_key",
+        "deregister_session_key",
+        "login",
+        "statistics",
+        "get_all_currencies",
+        "get_currency",
+        "get_instrument",
+        "get_all_instruments",
+        "get_instruments",
+        "get_ticker",
+        "get_latest_signed_feeds",
+        "get_option_settlement_prices",
+        "get_spot_feed_history",
+        "get_spot_feed_history_candles",
+        "get_funding_rate_history",
+        "get_trade_history",
+        "get_option_settlement_history",
+        "get_liquidation_history",
+        "get_interest_rate_history",
+        "get_transaction",
+        "get_margin",
+        "margin_watch",
+        "validate_invite_code",
+        "get_points",
+        "get_all_points",
+        "get_points_leaderboard",
+        "get_descendant_tree",
+        "get_tree_roots",
+        "get_swell_percent_points",
+        "get_vault_assets",
+        "get_etherfi_effective_balances",
+        "get_kelp_effective_balances",
+        "get_bridge_balances",
+        "get_ethena_participants",
+        "get_vault_share",
+        "get_vault_statistics",
+        "get_vault_balances",
+        "estimate_integrator_points",
+        "create_subaccount_debug",
+        "deposit_debug",
+        "withdraw_debug",
+        "send_quote_debug",
+        "execute_quote_debug",
+        "get_invite_code",
+        "register_invite",
+        "get_time",
+        "get_live_incidents",
+        "get_maker_programs",
+        "get_maker_program_scores"
+      ]
+    },
+    "private.post.cancel": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.cancel_all": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.cancel_batch_quotes": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.cancel_batch_rfqs": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.cancel_by_instrument": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.cancel_by_label": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.cancel_by_nonce": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.cancel_quote": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.cancel_rfq": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.cancel_trigger_order": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.change_subaccount_label": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.create_subaccount": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.deposit": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.edit_session_key": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.execute_quote": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.expired_and_cancelled_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_account": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_all_portfolios": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_collaterals": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_deposit_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_erc20_transfer_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_funding_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_interest_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_invite_code": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_liquidation_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_liquidator_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_margin": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_mmp_config": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_notificationsv": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_open_orders": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_option_settlement_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_order": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_order_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_orders": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_positions": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_quotes": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_rfqs": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_subaccount": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_subaccount_value_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_subaccounts": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_trade_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.get_withdrawal_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.liquidate": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.order": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.order_debug": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.poll_quotes": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.poll_rfqs": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.register_invite": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.register_scoped_session_key": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.replace": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.reset_mmp": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.rfq_get_best_quote": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.send_quote": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.send_rfq": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.session_keys": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.set_cancel_on_disconnect": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.set_mmp_config": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.transfer_erc20": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.transfer_position": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.transfer_positions": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.update_notifications": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.withdraw": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.get_all_currencies": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.build_register_session_key_tx": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.create_subaccount_debug": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.deposit_debug": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.deregister_session_key": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.estimate_integrator_points": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.execute_quote_debug": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_all_currencies": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_all_instruments": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_all_points": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_bridge_balances": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_currency": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_descendant_tree": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_ethena_participants": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_etherfi_effective_balances": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_funding_rate_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_instrument": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_instruments": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_interest_rate_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_invite_code": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_kelp_effective_balances": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_latest_signed_feeds": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_liquidation_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_live_incidents": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_maker_program_scores": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_maker_programs": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_margin": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_option_settlement_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_option_settlement_prices": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_points": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_points_leaderboard": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_spot_feed_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_spot_feed_history_candles": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_swell_percent_points": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_ticker": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_time": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_trade_history": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_transaction": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_tree_roots": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_vault_assets": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_vault_balances": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_vault_share": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.get_vault_statistics": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.login": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.margin_watch": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.register_invite": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.register_session_key": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.send_quote_debug": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.statistics": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.validate_invite_code": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.post.withdraw_debug": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    }
+  }
+}

@@ -1,0 +1,2853 @@
+{
+  "fetchTradingFee": {
+    "unified": [
+      "dapiPrivateGetCommissionRate"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "$ref": "binance_family#fetchTradingFee"
+    },
+    "parse": [
+      "parseTradingFee"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMarginAdjustmentHistory": {
+    "unified": [
+      "dapiPrivateGetPositionMarginHistory"
+    ],
+    "has": true,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchMarginAdjustmentHistory"
+    },
+    "parse": [
+      "parseMarginModifications"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchSettlementHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseSettlements"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchBorrowRateHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseBorrowRateHistory"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "spot": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "editContractOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseOrder"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "setPositionMode": {
+    "unified": [
+      "dapiPrivatePostPositionSideDual"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "dualSidePosition": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "hedge_mode",
+          "source_class": "unified_param",
+          "transform": "string",
+          "value": null
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "createMarketOrderWithCost": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchTransactions": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchLiquidations": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createMarketBuyOrderWithCost": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "setMarginMode": {
+    "unified": [
+      "dapiPrivatePostMarginType"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "marginType": {
+          "cases": [
+            {
+              "value": "CROSSED",
+              "when": {
+                "margin_mode": "cross"
+              }
+            },
+            {
+              "value": "ISOLATED",
+              "when": {
+                "margin_mode": "isolated"
+              }
+            }
+          ],
+          "kind": "conditional",
+          "source": "margin_mode",
+          "source_class": "unified_param"
+        },
+        "symbol": {
+          "source": "symbol",
+          "source_class": "unified_param"
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchOrderBook": {
+    "unified": [
+      "dapiPublicGetDepth"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchOrderBook"
+    },
+    "request": {
+      "defaults": {
+        "symbol": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOrderBook"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTransfer": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createStopOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchAllGreeks": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchAllGreeks"
+    },
+    "parse": [
+      "parseAllGreeks"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingHistory": {
+    "unified": [
+      "dapiPrivateGetIncome"
+    ],
+    "has": true,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseIncomes"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPositionMode": {
+    "unified": [
+      "dapiPrivateGetPositionSideDual"
+    ],
+    "has": true,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createReduceOnlyOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchFundingRate": {
+    "unified": [
+      "dapiPublicGetPremiumIndex"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchFundingRate"
+    },
+    "request": {
+      "defaults": {
+        "symbol": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseFundingRate"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "setLeverage": {
+    "unified": [
+      "dapiPrivatePostLeverage"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "leverage": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "symbol": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchIndexOHLCV": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createConvertTrade": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#createConvertTrade"
+    },
+    "parse": [
+      "parseConversion"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchGreeks": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchGreeks"
+    },
+    "parse": [
+      "parseGreeks"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPositionsRisk": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parsePositionRisk"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTransactionFee": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createMarketSellOrderWithCost": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "addMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#addMargin"
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "repayIsolatedMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseMarginLoan"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "editOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchWithdrawalWhitelist": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchMarginMode": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchMarginMode"
+    },
+    "parse": [
+      "parseMarginMode"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMyDustTrades": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseTrades"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createTriggerOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchIsolatedBorrowRate": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchIsolatedBorrowRate"
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchL3OrderBook": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createPostOnlyOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "repayCrossMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseMarginLoan"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchADLRank": {
+    "unified": [
+      "dapiPrivateGetAdlQuantile"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "$ref": "binance_family#fetchADLRank"
+    },
+    "parse": [
+      "parseADLRank"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTime": {
+    "unified": [
+      "dapiPublicGetTime"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchTime"
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "fapiPublic_get_time",
+        "rules": [
+          {
+            "endpoint": "dapiPublic_get_time",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "dapiPublic_get_time",
+            "when": {
+              "market_family": "future"
+            }
+          },
+          {
+            "endpoint": "public_get_time",
+            "when": {
+              "market_family": "spot"
+            }
+          },
+          {
+            "endpoint": "public_get_time",
+            "when": {
+              "market_type": "spot"
+            }
+          }
+        ]
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDepositWithdrawFees": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseDepositWithdrawFees"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "closeAllPositions": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchMarkOHLCV": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "borrowCrossMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseMarginLoan"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchPositionsADLRank": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchPositionsADLRank"
+    },
+    "parse": [
+      "parseADLRanks"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOrders": {
+    "unified": [
+      "dapiPrivateGetAllOrders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "$ref": "binance_family#fetchOrders"
+    },
+    "request": {
+      "defaults": {
+        "endTime": {
+          "source": "until",
+          "source_class": "optional"
+        },
+        "startTime": {
+          "source": "since",
+          "source_class": "optional"
+        }
+      },
+      "endpoint_selection": {
+        "consume": [
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "fapiPrivate_get_allorders",
+        "rules": [
+          {
+            "endpoint": "dapiPrivate_get_allorders",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "dapiPrivate_get_allorders",
+            "when": {
+              "market_family": "future"
+            }
+          },
+          {
+            "endpoint": "private_get_allorders",
+            "when": {
+              "market_family": "spot"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDeposits": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchDeposits"
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [
+          "type"
+        ],
+        "default": "sapi_get_capital_deposit_hisrec",
+        "rules": [
+          {
+            "endpoint": "sapi_get_fiat_orders",
+            "when": {
+              "type": "fiat"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseTransactions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOrderTrades": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "future": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchOrderBooks": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchLedgerEntry": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchLedgerEntry"
+    },
+    "parse": [
+      "parseLedgerEntry"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMarketLeverageTiers": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchConvertTrade": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchConvertTrade"
+    },
+    "parse": [
+      "parseConversion"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPositions": {
+    "unified": [
+      "dapiPrivateGetPositionRisk"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "$ref": "binance_family#fetchPositions"
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "fapiPrivateV3_get_positionrisk",
+        "rules": [
+          {
+            "endpoint": "dapiPrivate_get_positionrisk",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "dapiPrivate_get_positionrisk",
+            "when": {
+              "market_family": "future"
+            }
+          },
+          {
+            "endpoint": "eapiPrivate_get_position",
+            "when": {
+              "market_family": "option"
+            }
+          }
+        ]
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingRates": {
+    "unified": [
+      "dapiPublicGetPremiumIndex"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchFundingRates"
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "fapiPublic_get_premiumindex",
+        "rules": [
+          {
+            "endpoint": "dapiPublic_get_premiumindex",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "dapiPublic_get_premiumindex",
+            "when": {
+              "market_family": "future"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseFundingRates"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createStopLossOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchDepositAddress": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchDepositAddress"
+    },
+    "parse": [
+      "parseDepositAddress"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchBorrowInterest": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchBorrowInterest"
+    },
+    "parse": [
+      "parseBorrowInterests"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchStatus": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createDepositAddress": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchDepositsWithdrawals": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchPositionsHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchConvertTradeHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchConvertTradeHistory"
+    },
+    "parse": [
+      "parseConversions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchClosedOrders": {
+    "unified": [
+      "dapiPrivateGetAllOrders"
+    ],
+    "has": "emulated",
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "$ref": "binance_family#fetchClosedOrders"
+    },
+    "request": {
+      "defaults": {
+        "endTime": {
+          "source": "until",
+          "source_class": "optional"
+        },
+        "startTime": {
+          "source": "since",
+          "source_class": "optional"
+        }
+      },
+      "endpoint_selection": {
+        "consume": [
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "fapiPrivate_get_allorders",
+        "rules": [
+          {
+            "endpoint": "dapiPrivate_get_allorders",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "dapiPrivate_get_allorders",
+            "when": {
+              "market_family": "future"
+            }
+          },
+          {
+            "endpoint": "private_get_allorders",
+            "when": {
+              "market_family": "spot"
+            }
+          }
+        ]
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMarginModes": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchMarginModes"
+    },
+    "parse": [
+      "parseMarginModes"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchLastPrices": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseLastPrices"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "setMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchLongShortRatioHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchLongShortRatioHistory"
+    },
+    "parse": [
+      "parseLongShortRatioHistory"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOptionPositions": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseOptionPosition"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOpenInterest": {
+    "unified": [
+      "dapiPublicGetOpenInterest"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "parse": [
+      "parseOpenInterest",
+      "parseOpenInterestsHistory"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDepositAddresses": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchTransfers": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchTransfers"
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [],
+        "default": "sapi_get_asset_transfer",
+        "rules": []
+      }
+    },
+    "parse": [
+      "parseTransfers"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchBorrowRateHistories": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchLongShortRatio": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchCurrenciesWs": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "cancelAllOrders": {
+    "unified": [
+      "dapiPrivateDeleteAlgoOpenOrders",
+      "dapiPrivateDeleteAllOpenOrders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "symbol": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "optional",
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "book_routes": [
+          {
+            "endpoints": [
+              "dapiPrivate_delete_allopenorders",
+              "dapiPrivate_delete_algoopenorders"
+            ],
+            "mode": "broadcast",
+            "when": {
+              "market_family": "inverse"
+            }
+          }
+        ],
+        "consume": [
+          "subType",
+          "sub_type"
+        ],
+        "default": "dapiPrivate_delete_allopenorders",
+        "rules": []
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "withdraw": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#withdraw"
+    },
+    "parse": [
+      "parseTransaction"
+    ],
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "fetchMarkPrice": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchMarkPrice"
+    },
+    "parse": [
+      "parseTicker"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createMarketBuyOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchPositionHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "editOrders": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "createStopMarketOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchPositionADLRank": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchPositionADLRank"
+    }
+  },
+  "fetchLeverage": {
+    "unified": [
+      "dapiPrivateGetAccount"
+    ],
+    "has": "emulated",
+    "mapping_complete": true,
+    "verification": "unverified"
+  },
+  "sandbox": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchMarkets": {
+    "unified": [
+      "dapiPublicGetExchangeInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "$ref": "binance_family#fetchMarkets"
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "fapiPublic_get_exchangeinfo",
+        "rules": [
+          {
+            "endpoint": "public_get_exchangeinfo",
+            "when": {
+              "market_family": "spot"
+            }
+          },
+          {
+            "endpoint": "dapiPublic_get_exchangeinfo",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "eapiPublic_get_exchangeinfo",
+            "when": {
+              "market_family": "option"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseMarket"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchClosedOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchWithdrawal": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchOHLCV": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchOHLCV"
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [
+          "price",
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "fapiPublic_get_klines",
+        "rules": [
+          {
+            "endpoint": "dapiPublic_get_indexpriceklines",
+            "when": {
+              "market_family": "inverse",
+              "price": "index"
+            }
+          },
+          {
+            "endpoint": "dapiPublic_get_markpriceklines",
+            "when": {
+              "market_family": "inverse",
+              "price": "mark"
+            }
+          },
+          {
+            "endpoint": "dapiPublic_get_premiumindexklines",
+            "when": {
+              "market_family": "inverse",
+              "price": "premiumIndex"
+            }
+          },
+          {
+            "endpoint": "fapiPublic_get_indexpriceklines",
+            "when": {
+              "market_family": "linear",
+              "price": "index"
+            }
+          },
+          {
+            "endpoint": "fapiPublic_get_markpriceklines",
+            "when": {
+              "market_family": "linear",
+              "price": "mark"
+            }
+          },
+          {
+            "endpoint": "fapiPublic_get_premiumindexklines",
+            "when": {
+              "market_family": "linear",
+              "price": "premiumIndex"
+            }
+          },
+          {
+            "endpoint": "eapiPublic_get_klines",
+            "when": {
+              "market_family": "option"
+            }
+          },
+          {
+            "endpoint": "dapiPublic_get_klines",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "public_get_klines",
+            "when": {
+              "market_family": "spot"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseOHLCVs",
+      "parseTimeframe"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "swap": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchBidsAsks": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseTickers"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "cancelOrder": {
+    "unified": [
+      "dapiPrivateDeleteAlgoOrder",
+      "dapiPrivateDeleteOrder"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "orderId": {
+          "source": "id",
+          "source_class": "unified_param"
+        },
+        "symbol": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "optional",
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "book_routes": [
+          {
+            "endpoints": [
+              "dapiPrivate_delete_order",
+              "dapiPrivate_delete_algoorder"
+            ],
+            "mode": "first_success",
+            "when": {
+              "market_family": "inverse"
+            }
+          }
+        ],
+        "consume": [
+          "subType",
+          "sub_type"
+        ],
+        "default": "dapiPrivate_delete_order",
+        "rules": [
+          {
+            "endpoint": "private_delete_order",
+            "when": {
+              "market_family": "spot"
+            }
+          },
+          {
+            "endpoint": "dapiPrivate_delete_order",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "eapiPrivate_delete_order",
+            "when": {
+              "market_family": "option"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseOrder"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchFundingInterval": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchOpenOrders": {
+    "unified": [
+      "dapiPrivateGetOpenAlgoOrders",
+      "dapiPrivateGetOpenOrders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "$ref": "binance_family#fetchOpenOrders"
+    },
+    "request": {
+      "defaults": {
+        "_omit": [
+          "since",
+          "until"
+        ]
+      },
+      "endpoint_selection": {
+        "book_routes": [
+          {
+            "endpoints": [
+              "dapiPrivate_get_openorders",
+              "dapiPrivate_get_openalgoorders"
+            ],
+            "mode": "merge",
+            "when": {
+              "market_family": "inverse"
+            }
+          }
+        ],
+        "consume": [
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "dapiPrivate_get_openorders",
+        "rules": [
+          {
+            "endpoint": "dapiPrivate_get_openorders",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "dapiPrivate_get_openorders",
+            "when": {
+              "market_family": "future"
+            }
+          },
+          {
+            "endpoint": "eapiPrivate_get_openorders",
+            "when": {
+              "market_family": "option"
+            }
+          },
+          {
+            "endpoint": "private_get_openorders",
+            "when": {
+              "market_family": "spot"
+            }
+          },
+          {
+            "endpoint": "private_get_openorders",
+            "when": {
+              "market_type": "spot"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchWithdrawals": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchWithdrawals"
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [
+          "type"
+        ],
+        "default": "sapi_get_capital_withdraw_history",
+        "rules": [
+          {
+            "endpoint": "sapi_get_fiat_orders",
+            "when": {
+              "type": "fiat"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseTransactions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDepositWithdrawFee": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchCanceledAndClosedOrders": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchCanceledAndClosedOrders"
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCrossBorrowRates": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchFundingRateHistory": {
+    "unified": [
+      "dapiPublicGetFundingRate"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "endTime": {
+          "source": "until",
+          "source_class": "optional"
+        },
+        "startTime": {
+          "source": "since",
+          "source_class": "optional"
+        }
+      }
+    },
+    "parse": [
+      "parseFundingRateHistories"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCurrencies": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchCurrencies"
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [],
+        "default": "sapi_get_capital_config_getall",
+        "rules": []
+      }
+    },
+    "parse": [
+      "parseCurrenciesCustom"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchConvertCurrencies": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchConvertCurrencies"
+    },
+    "parse": [
+      "parseNumber",
+      "parsePrecision"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchLedger": {
+    "unified": [
+      "dapiPrivateGetIncome"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "$ref": "binance_family#fetchLedger"
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "fapiPrivate_get_income",
+        "rules": [
+          {
+            "endpoint": "dapiPrivate_get_income",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "dapiPrivate_get_income",
+            "when": {
+              "market_family": "future"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseLedger"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOption": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchOption"
+    },
+    "parse": [
+      "parseOption"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "transfer": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#transfer"
+    },
+    "parse": [
+      "parseTransfer"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchMyTrades": {
+    "unified": [
+      "dapiPrivateGetUserTrades"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "request": {
+      "defaults": {
+        "endTime": {
+          "source": "until",
+          "source_class": "optional"
+        },
+        "startTime": {
+          "source": "since",
+          "source_class": "optional"
+        }
+      },
+      "endpoint_selection": {
+        "consume": [
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "fapiPrivate_get_usertrades",
+        "rules": [
+          {
+            "endpoint": "dapiPrivate_get_usertrades",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "dapiPrivate_get_usertrades",
+            "when": {
+              "market_family": "future"
+            }
+          },
+          {
+            "endpoint": "private_get_mytrades",
+            "when": {
+              "market_family": "spot"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseTrades"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOpenOrder": {
+    "unified": [
+      "dapiPrivateGetAlgoOrder",
+      "dapiPrivateGetOpenOrder"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "orderId": {
+          "source": "id",
+          "source_class": "unified_param"
+        },
+        "symbol": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "optional",
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "book_routes": [
+          {
+            "endpoints": [
+              "dapiPrivate_get_openorder",
+              "dapiPrivate_get_algoorder"
+            ],
+            "mode": "first_success",
+            "when": {
+              "market_family": "inverse"
+            }
+          }
+        ],
+        "consume": [
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "dapiPrivate_get_openorder",
+        "rules": []
+      }
+    },
+    "parse": [
+      "parseOrder"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPremiumIndexOHLCV": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createOrder": {
+    "unified": [
+      "dapiPrivatePostAlgoOrder",
+      "dapiPrivatePostOrder"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "quantity": {
+          "source": "amount",
+          "source_class": "unified_param"
+        },
+        "reduceOnly": {
+          "source": "reduce_only",
+          "source_class": "optional"
+        },
+        "side": {
+          "source": "side",
+          "source_class": "unified_param",
+          "transform": "uppercase"
+        },
+        "timeInForce": {
+          "fallback_sources": [
+            "timeInForce"
+          ],
+          "source": "time_in_force",
+          "source_class": "optional",
+          "transform": "uppercase"
+        },
+        "type": {
+          "source": "type",
+          "source_class": "unified_param",
+          "transform": "uppercase"
+        }
+      },
+      "endpoint_selection": {
+        "consume": [
+          "subType",
+          "sub_type"
+        ],
+        "default": "dapiPrivate_post_order",
+        "rules": [
+          {
+            "endpoint": "dapiPrivate_post_algoorder",
+            "when": {
+              "market_family": "inverse",
+              "trigger_price": "present"
+            }
+          },
+          {
+            "endpoint": "dapiPrivate_post_algoorder",
+            "when": {
+              "market_family": "inverse",
+              "stop_loss_price": "present",
+              "take_profit_price": "absent"
+            }
+          },
+          {
+            "endpoint": "dapiPrivate_post_algoorder",
+            "when": {
+              "market_family": "inverse",
+              "stop_loss_price": "absent",
+              "take_profit_price": "present"
+            }
+          },
+          {
+            "endpoint": "private_post_order",
+            "when": {
+              "market_family": "spot"
+            }
+          },
+          {
+            "endpoint": "dapiPrivate_post_order",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "eapiPrivate_post_order",
+            "when": {
+              "market_family": "option"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseOrder"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchTransactionFees": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTrades": {
+    "unified": [
+      "dapiPublicGetAggTrades"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchTrades"
+    },
+    "request": {
+      "defaults": {
+        "endTime": {
+          "source": "until",
+          "source_class": "optional"
+        },
+        "startTime": {
+          "source": "since",
+          "source_class": "optional"
+        },
+        "symbol": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "consume": [
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "fapiPublic_get_aggtrades",
+        "rules": [
+          {
+            "endpoint": "eapiPublic_get_trades",
+            "when": {
+              "market_family": "option"
+            }
+          },
+          {
+            "endpoint": "dapiPublic_get_aggtrades",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "public_get_aggtrades",
+            "when": {
+              "market_family": "spot"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseTrades"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCanceledOrders": {
+    "unified": [
+      "dapiPrivateGetAllOrders"
+    ],
+    "has": "emulated",
+    "mapping_complete": true,
+    "verification": "verified",
+    "request": {
+      "defaults": {
+        "endTime": {
+          "source": "until",
+          "source_class": "optional"
+        },
+        "startTime": {
+          "source": "since",
+          "source_class": "optional"
+        }
+      },
+      "endpoint_selection": {
+        "consume": [
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "fapiPrivate_get_allorders",
+        "rules": [
+          {
+            "endpoint": "dapiPrivate_get_allorders",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "dapiPrivate_get_allorders",
+            "when": {
+              "market_family": "future"
+            }
+          },
+          {
+            "endpoint": "private_get_allorders",
+            "when": {
+              "market_family": "spot"
+            }
+          }
+        ]
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "privateAPI": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createOrderWithTakeProfitAndStopLoss": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchL2OrderBook": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "margin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchConvertQuote": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchConvertQuote"
+    },
+    "parse": [
+      "parseConversion"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createTakeProfitOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchAccountPositions": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseAccountPositions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createLimitBuyOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchPosition": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseOptionPosition"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMySettlementHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseSettlements"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchLeverageTiers": {
+    "unified": [
+      "dapiPrivateV2GetLeverageBracket"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "$ref": "binance_family#fetchLeverageTiers"
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "fapiPrivate_get_leveragebracket",
+        "rules": [
+          {
+            "endpoint": "dapiPrivateV2_get_leveragebracket",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "dapiPrivateV2_get_leveragebracket",
+            "when": {
+              "market_family": "future"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseLeverageTiers"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingIntervals": {
+    "unified": [
+      "dapiPublicGetFundingInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchFundingIntervals"
+    },
+    "parse": [
+      "parseFundingRates"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createTrailingPercentOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createLimitSellOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createStopLimitOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "closePosition": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "reduceMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#reduceMargin"
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchIsolatedBorrowRates": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchIsolatedBorrowRates"
+    },
+    "parse": [
+      "parseIsolatedBorrowRates"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "cancelOrders": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchTicker": {
+    "unified": [
+      "dapiPublicGetTicker24hr"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "$ref": "binance_family#fetchTicker"
+    },
+    "request": {
+      "defaults": {
+        "symbol": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "consume": [
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "fapiPublic_get_ticker_24hr",
+        "rules": [
+          {
+            "endpoint": "eapiPublic_get_ticker",
+            "when": {
+              "market_family": "option"
+            }
+          },
+          {
+            "endpoint": "dapiPublic_get_ticker_24hr",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "public_get_ticker_24hr",
+            "when": {
+              "market_family": "spot"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseTicker"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchVolatilityHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createMarketOrderWs": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchCrossBorrowRate": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchCrossBorrowRate"
+    },
+    "parse": [
+      "parseBorrowRate"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTickers": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchTickers"
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "fapiPublic_get_ticker_24hr",
+        "rules": [
+          {
+            "endpoint": "eapiPublic_get_ticker",
+            "when": {
+              "market_family": "option"
+            }
+          },
+          {
+            "endpoint": "dapiPublic_get_ticker_24hr",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "dapiPublic_get_ticker_24hr",
+            "when": {
+              "market_family": "future"
+            }
+          },
+          {
+            "endpoint": "public_get_ticker",
+            "when": {
+              "market_family": "spot"
+            }
+          },
+          {
+            "endpoint": "public_get_ticker_24hr",
+            "when": {
+              "market_type": "spot"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseTickers",
+      "parseTickersForRolling"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createLimitOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "editSpotOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseOrder"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchMarkPrices": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchMarkPrices"
+    },
+    "parse": [
+      "parseTickers"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTradingLimits": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchBalance": {
+    "unified": [
+      "dapiPrivateGetAccount"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "$ref": "binance_family#fetchBalance"
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [
+          "type",
+          "subType",
+          "sub_type",
+          "marginMode",
+          "portfolioMargin"
+        ],
+        "default": "fapiPrivateV3_get_account",
+        "rules": [
+          {
+            "endpoint": "private_get_account",
+            "when": {
+              "type": "spot"
+            }
+          },
+          {
+            "endpoint": "papi_get_balance",
+            "when": {
+              "portfolioMargin": true
+            }
+          },
+          {
+            "endpoint": "sapi_get_margin_isolated_account",
+            "when": {
+              "marginMode": "isolated"
+            }
+          },
+          {
+            "endpoint": "sapi_post_asset_get_funding_asset",
+            "when": {
+              "type": "funding"
+            }
+          },
+          {
+            "endpoint": "sapi_get_lending_union_account",
+            "when": {
+              "type": "savings"
+            }
+          },
+          {
+            "endpoint": "sapi_get_margin_account",
+            "when": {
+              "type": "margin"
+            }
+          },
+          {
+            "endpoint": "dapiPrivate_get_account",
+            "when": {
+              "subType": "inverse",
+              "type": "swap"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseBalanceCustom"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMyLiquidations": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseLiquidations"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "borrowIsolatedMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseMarginLoan"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "createOrders": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "createMarketOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchDeposit": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchLeverages": {
+    "unified": [
+      "dapiPrivateGetAccount"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "$ref": "binance_family#fetchLeverages"
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [
+          "symbol"
+        ],
+        "default": "dapiPrivate_get_account",
+        "rules": []
+      }
+    },
+    "parse": [
+      "parseLeverages"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOptionChain": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "publicAPI": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchWithdrawAddresses": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createGiftCode": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchDepositAddressesByNetwork": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "signIn": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createMarketSellOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchTradingFees": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "descriptor": {
+      "$ref": "binance_family#fetchTradingFees"
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [
+          "type",
+          "subType",
+          "sub_type"
+        ],
+        "default": "fapiPrivate_get_accountconfig",
+        "rules": [
+          {
+            "endpoint": "dapiPrivate_get_account",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "dapiPrivate_get_account",
+            "when": {
+              "market_family": "future"
+            }
+          },
+          {
+            "endpoint": "sapi_get_asset_tradefee",
+            "when": {
+              "market_family": "spot"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseTradingFee"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOrder": {
+    "unified": [
+      "dapiPrivateGetAlgoOrder",
+      "dapiPrivateGetOrder"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "orderId": {
+          "source": "id",
+          "source_class": "unified_param"
+        },
+        "symbol": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "symbol",
+          "source_class": "optional",
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "book_routes": [
+          {
+            "endpoints": [
+              "dapiPrivate_get_order",
+              "dapiPrivate_get_algoorder"
+            ],
+            "mode": "first_success",
+            "when": {
+              "market_family": "inverse"
+            }
+          }
+        ],
+        "consume": [
+          "subType",
+          "sub_type"
+        ],
+        "default": "fapiPrivate_get_order",
+        "rules": [
+          {
+            "endpoint": "private_get_order",
+            "when": {
+              "market_family": "spot"
+            }
+          },
+          {
+            "endpoint": "dapiPrivate_get_order",
+            "when": {
+              "market_family": "inverse"
+            }
+          },
+          {
+            "endpoint": "eapiPrivate_get_order",
+            "when": {
+              "market_family": "option"
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseOrder"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOpenInterestHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "parse": [
+      "parseOpenInterestsHistory",
+      "parseTimeframe"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchUnderlyingAssets": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  }
+}

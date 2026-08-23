@@ -1,0 +1,5429 @@
+{
+  "url_templates": {
+    "private": {
+      "api_param": "private",
+      "http_method": "GET",
+      "resolved_url": null,
+      "sample_path": "v5/market/instruments-info",
+      "url_prefix": null
+    },
+    "public": {
+      "api_param": "public",
+      "http_method": "GET",
+      "resolved_url": "https://api.bybit.com/spot/v3/public/symbols",
+      "sample_path": "spot/v3/public/symbols",
+      "url_prefix": "https://api.bybit.com/"
+    }
+  },
+  "describe": {
+    "alias": false,
+    "certified": true,
+    "commonCurrencies": {
+      "BCHSV": "BSV",
+      "XBT": "BTC"
+    },
+    "countries": [
+      "VG"
+    ],
+    "currencies": {},
+    "dex": false,
+    "enableRateLimit": true,
+    "exceptions": {
+      "broad": {
+        "Not supported symbols": "__function:BadSymbol",
+        "Request timeout": "__function:RequestTimeout",
+        "invalid api_key": "__function:AuthenticationError",
+        "new_oc": "__function:InsufficientFunds",
+        "oc_diff": "__function:InsufficientFunds",
+        "openapi sign params error!": "__function:AuthenticationError",
+        "unknown orderInfo": "__function:OrderNotFound"
+      },
+      "exact": {
+        "-10009": "__function:BadRequest",
+        "-1004": "__function:BadRequest",
+        "-1021": "__function:BadRequest",
+        "-1103": "__function:BadRequest",
+        "-1140": "__function:InvalidOrder",
+        "-1197": "__function:InvalidOrder",
+        "-2013": "__function:InvalidOrder",
+        "-2015": "__function:AuthenticationError",
+        "-6017": "__function:BadRequest",
+        "-6025": "__function:BadRequest",
+        "-6029": "__function:BadRequest",
+        "10001": "__function:BadRequest",
+        "10002": "__function:InvalidNonce",
+        "100028": "__function:PermissionDenied",
+        "10003": "__function:AuthenticationError",
+        "10004": "__function:AuthenticationError",
+        "10005": "__function:PermissionDenied",
+        "10006": "__function:RateLimitExceeded",
+        "10007": "__function:AuthenticationError",
+        "10008": "__function:AccountSuspended",
+        "10009": "__function:AuthenticationError",
+        "10010": "__function:PermissionDenied",
+        "10014": "__function:BadRequest",
+        "10016": "__function:ExchangeError",
+        "10017": "__function:BadRequest",
+        "10018": "__function:RateLimitExceeded",
+        "10020": "__function:PermissionDenied",
+        "10024": "__function:PermissionDenied",
+        "10027": "__function:PermissionDenied",
+        "10028": "__function:PermissionDenied",
+        "10029": "__function:PermissionDenied",
+        "110001": "__function:OrderNotFound",
+        "110003": "__function:InvalidOrder",
+        "110004": "__function:InsufficientFunds",
+        "110005": "__function:InvalidOrder",
+        "110006": "__function:InsufficientFunds",
+        "110007": "__function:InsufficientFunds",
+        "110008": "__function:InvalidOrder",
+        "110009": "__function:InvalidOrder",
+        "110010": "__function:InvalidOrder",
+        "110011": "__function:InvalidOrder",
+        "110012": "__function:InsufficientFunds",
+        "110013": "__function:BadRequest",
+        "110014": "__function:InsufficientFunds",
+        "110015": "__function:BadRequest",
+        "110016": "__function:InvalidOrder",
+        "110017": "__function:InvalidOrder",
+        "110018": "__function:BadRequest",
+        "110019": "__function:InvalidOrder",
+        "110020": "__function:InvalidOrder",
+        "110021": "__function:InvalidOrder",
+        "110022": "__function:InvalidOrder",
+        "110023": "__function:InvalidOrder",
+        "110024": "__function:BadRequest",
+        "110025": "__function:NoChange",
+        "110026": "__function:MarginModeAlreadySet",
+        "110027": "__function:NoChange",
+        "110028": "__function:BadRequest",
+        "110029": "__function:BadRequest",
+        "110030": "__function:InvalidOrder",
+        "110031": "__function:InvalidOrder",
+        "110032": "__function:InvalidOrder",
+        "110033": "__function:InvalidOrder",
+        "110034": "__function:InvalidOrder",
+        "110035": "__function:InvalidOrder",
+        "110036": "__function:InvalidOrder",
+        "110037": "__function:InvalidOrder",
+        "110038": "__function:InvalidOrder",
+        "110039": "__function:InvalidOrder",
+        "110040": "__function:InvalidOrder",
+        "110041": "__function:InvalidOrder",
+        "110042": "__function:InvalidOrder",
+        "110043": "__function:BadRequest",
+        "110044": "__function:InsufficientFunds",
+        "110045": "__function:InsufficientFunds",
+        "110046": "__function:BadRequest",
+        "110047": "__function:BadRequest",
+        "110048": "__function:BadRequest",
+        "110049": "__function:BadRequest",
+        "110050": "__function:BadRequest",
+        "110051": "__function:InsufficientFunds",
+        "110052": "__function:InsufficientFunds",
+        "110053": "__function:InsufficientFunds",
+        "110054": "__function:InvalidOrder",
+        "110055": "__function:InvalidOrder",
+        "110056": "__function:InvalidOrder",
+        "110057": "__function:InvalidOrder",
+        "110058": "__function:InvalidOrder",
+        "110059": "__function:InvalidOrder",
+        "110060": "__function:BadRequest",
+        "110061": "__function:BadRequest",
+        "110062": "__function:BadRequest",
+        "110063": "__function:ExchangeError",
+        "110064": "__function:InvalidOrder",
+        "110065": "__function:PermissionDenied",
+        "110066": "__function:ExchangeError",
+        "110067": "__function:PermissionDenied",
+        "110068": "__function:PermissionDenied",
+        "110069": "__function:PermissionDenied",
+        "110070": "__function:InvalidOrder",
+        "110071": "__function:ExchangeError",
+        "110072": "__function:InvalidOrder",
+        "110073": "__function:ExchangeError",
+        "110092": "__function:InvalidOrder",
+        "110093": "__function:InvalidOrder",
+        "110094": "__function:InvalidOrder",
+        "12137": "__function:InvalidOrder",
+        "12141": "__function:BadRequest",
+        "12201": "__function:BadRequest",
+        "130006": "__function:InvalidOrder",
+        "130021": "__function:InsufficientFunds",
+        "130074": "__function:InvalidOrder",
+        "131001": "__function:InsufficientFunds",
+        "131002": "__function:BadRequest",
+        "131003": "__function:ExchangeError",
+        "131004": "__function:AuthenticationError",
+        "131084": "__function:ExchangeError",
+        "131085": "__function:InsufficientFunds",
+        "131086": "__function:BadRequest",
+        "131088": "__function:BadRequest",
+        "131089": "__function:BadRequest",
+        "131090": "__function:ExchangeError",
+        "131091": "__function:ExchangeError",
+        "131092": "__function:ExchangeError",
+        "131093": "__function:ExchangeError",
+        "131094": "__function:BadRequest",
+        "131095": "__function:BadRequest",
+        "131096": "__function:BadRequest",
+        "131097": "__function:ExchangeError",
+        "131098": "__function:ExchangeError",
+        "131099": "__function:ExchangeError",
+        "131200": "__function:ExchangeError",
+        "131201": "__function:ExchangeError",
+        "131202": "__function:BadRequest",
+        "131203": "__function:BadRequest",
+        "131204": "__function:BadRequest",
+        "131205": "__function:BadRequest",
+        "131206": "__function:ExchangeError",
+        "131207": "__function:BadRequest",
+        "131208": "__function:ExchangeError",
+        "131209": "__function:BadRequest",
+        "131210": "__function:BadRequest",
+        "131211": "__function:BadRequest",
+        "131212": "__function:InsufficientFunds",
+        "131213": "__function:BadRequest",
+        "131214": "__function:BadRequest",
+        "131215": "__function:BadRequest",
+        "131216": "__function:ExchangeError",
+        "131217": "__function:ExchangeError",
+        "131231": "__function:NotSupported",
+        "131232": "__function:NotSupported",
+        "140001": "__function:OrderNotFound",
+        "140003": "__function:InvalidOrder",
+        "140004": "__function:InsufficientFunds",
+        "140005": "__function:InvalidOrder",
+        "140006": "__function:InsufficientFunds",
+        "140007": "__function:InsufficientFunds",
+        "140008": "__function:InvalidOrder",
+        "140009": "__function:InvalidOrder",
+        "140010": "__function:InvalidOrder",
+        "140011": "__function:InvalidOrder",
+        "140012": "__function:InsufficientFunds",
+        "140013": "__function:BadRequest",
+        "140014": "__function:InsufficientFunds",
+        "140015": "__function:InvalidOrder",
+        "140016": "__function:InvalidOrder",
+        "140017": "__function:InvalidOrder",
+        "140018": "__function:BadRequest",
+        "140019": "__function:InvalidOrder",
+        "140020": "__function:InvalidOrder",
+        "140021": "__function:InvalidOrder",
+        "140022": "__function:InvalidOrder",
+        "140023": "__function:InvalidOrder",
+        "140024": "__function:BadRequest",
+        "140025": "__function:BadRequest",
+        "140026": "__function:BadRequest",
+        "140027": "__function:BadRequest",
+        "140028": "__function:InvalidOrder",
+        "140029": "__function:BadRequest",
+        "140030": "__function:InvalidOrder",
+        "140031": "__function:BadRequest",
+        "140032": "__function:InvalidOrder",
+        "140033": "__function:InvalidOrder",
+        "140034": "__function:InvalidOrder",
+        "140035": "__function:InvalidOrder",
+        "140036": "__function:BadRequest",
+        "140037": "__function:InvalidOrder",
+        "140038": "__function:BadRequest",
+        "140039": "__function:BadRequest",
+        "140040": "__function:InvalidOrder",
+        "140041": "__function:InvalidOrder",
+        "140042": "__function:InvalidOrder",
+        "140043": "__function:BadRequest",
+        "140044": "__function:InsufficientFunds",
+        "140045": "__function:InsufficientFunds",
+        "140046": "__function:BadRequest",
+        "140047": "__function:BadRequest",
+        "140048": "__function:BadRequest",
+        "140049": "__function:BadRequest",
+        "140050": "__function:InvalidOrder",
+        "140051": "__function:InsufficientFunds",
+        "140052": "__function:InsufficientFunds",
+        "140053": "__function:InsufficientFunds",
+        "140054": "__function:InvalidOrder",
+        "140055": "__function:InvalidOrder",
+        "140056": "__function:InvalidOrder",
+        "140057": "__function:InvalidOrder",
+        "140058": "__function:InvalidOrder",
+        "140059": "__function:InvalidOrder",
+        "140060": "__function:BadRequest",
+        "140061": "__function:BadRequest",
+        "140062": "__function:BadRequest",
+        "140063": "__function:ExchangeError",
+        "140064": "__function:InvalidOrder",
+        "140065": "__function:PermissionDenied",
+        "140066": "__function:ExchangeError",
+        "140067": "__function:PermissionDenied",
+        "140068": "__function:PermissionDenied",
+        "140069": "__function:PermissionDenied",
+        "140070": "__function:InvalidOrder",
+        "170001": "__function:ExchangeError",
+        "170005": "__function:InvalidOrder",
+        "170007": "__function:RequestTimeout",
+        "170010": "__function:InvalidOrder",
+        "170011": "__function:InvalidOrder",
+        "170019": "__function:InvalidOrder",
+        "170031": "__function:ExchangeError",
+        "170032": "__function:ExchangeError",
+        "170033": "__function:InsufficientFunds",
+        "170034": "__function:InsufficientFunds",
+        "170035": "__function:BadRequest",
+        "170036": "__function:BadRequest",
+        "170037": "__function:BadRequest",
+        "170105": "__function:BadRequest",
+        "170115": "__function:InvalidOrder",
+        "170116": "__function:InvalidOrder",
+        "170117": "__function:InvalidOrder",
+        "170121": "__function:InvalidOrder",
+        "170124": "__function:InvalidOrder",
+        "170130": "__function:BadRequest",
+        "170131": "__function:InsufficientFunds",
+        "170132": "__function:InvalidOrder",
+        "170133": "__function:InvalidOrder",
+        "170134": "__function:InvalidOrder",
+        "170135": "__function:InvalidOrder",
+        "170136": "__function:InvalidOrder",
+        "170137": "__function:InvalidOrder",
+        "170139": "__function:InvalidOrder",
+        "170140": "__function:InvalidOrder",
+        "170141": "__function:InvalidOrder",
+        "170142": "__function:InvalidOrder",
+        "170143": "__function:InvalidOrder",
+        "170144": "__function:InvalidOrder",
+        "170145": "__function:InvalidOrder",
+        "170146": "__function:InvalidOrder",
+        "170147": "__function:InvalidOrder",
+        "170148": "__function:InvalidOrder",
+        "170149": "__function:ExchangeError",
+        "170150": "__function:ExchangeError",
+        "170151": "__function:InvalidOrder",
+        "170157": "__function:InvalidOrder",
+        "170159": "__function:InvalidOrder",
+        "170190": "__function:InvalidOrder",
+        "170191": "__function:InvalidOrder",
+        "170192": "__function:InvalidOrder",
+        "170193": "__function:InvalidOrder",
+        "170194": "__function:InvalidOrder",
+        "170195": "__function:InvalidOrder",
+        "170196": "__function:InvalidOrder",
+        "170197": "__function:InvalidOrder",
+        "170198": "__function:InvalidOrder",
+        "170199": "__function:InvalidOrder",
+        "170200": "__function:InvalidOrder",
+        "170201": "__function:PermissionDenied",
+        "170202": "__function:InvalidOrder",
+        "170203": "__function:InvalidOrder",
+        "170204": "__function:InvalidOrder",
+        "170206": "__function:InvalidOrder",
+        "170209": "__function:RestrictedLocation",
+        "170210": "__function:InvalidOrder",
+        "170213": "__function:OrderNotFound",
+        "170217": "__function:InvalidOrder",
+        "170218": "__function:InvalidOrder",
+        "170221": "__function:BadRequest",
+        "170222": "__function:RateLimitExceeded",
+        "170223": "__function:InsufficientFunds",
+        "170224": "__function:PermissionDenied",
+        "170226": "__function:InsufficientFunds",
+        "170227": "__function:ExchangeError",
+        "170228": "__function:InvalidOrder",
+        "170229": "__function:InvalidOrder",
+        "170234": "__function:ExchangeError",
+        "170241": "__function:ManualInteractionNeeded",
+        "170371": "__function:InvalidOrder",
+        "170372": "__function:InvalidOrder",
+        "175000": "__function:InvalidOrder",
+        "175001": "__function:InvalidOrder",
+        "175002": "__function:InvalidOrder",
+        "175003": "__function:InsufficientFunds",
+        "175004": "__function:InvalidOrder",
+        "175005": "__function:InvalidOrder",
+        "175006": "__function:InsufficientFunds",
+        "175007": "__function:InvalidOrder",
+        "175008": "__function:InvalidOrder",
+        "175009": "__function:InvalidOrder",
+        "175010": "__function:PermissionDenied",
+        "175012": "__function:InvalidOrder",
+        "175013": "__function:InvalidOrder",
+        "175014": "__function:InvalidOrder",
+        "175015": "__function:InvalidOrder",
+        "175016": "__function:InvalidOrder",
+        "175017": "__function:InvalidOrder",
+        "175027": "__function:ExchangeError",
+        "176002": "__function:BadRequest",
+        "176003": "__function:BadRequest",
+        "176004": "__function:BadRequest",
+        "176005": "__function:BadRequest",
+        "176006": "__function:BadRequest",
+        "176007": "__function:BadRequest",
+        "176008": "__function:BadRequest",
+        "176009": "__function:BadRequest",
+        "176010": "__function:BadRequest",
+        "176011": "__function:BadRequest",
+        "176012": "__function:BadRequest",
+        "176013": "__function:BadRequest",
+        "176014": "__function:BadRequest",
+        "176015": "__function:InsufficientFunds",
+        "176016": "__function:BadRequest",
+        "176017": "__function:BadRequest",
+        "176018": "__function:BadRequest",
+        "176019": "__function:BadRequest",
+        "176020": "__function:BadRequest",
+        "176021": "__function:BadRequest",
+        "176022": "__function:BadRequest",
+        "176023": "__function:BadRequest",
+        "176024": "__function:BadRequest",
+        "176025": "__function:BadRequest",
+        "176026": "__function:BadRequest",
+        "176027": "__function:BadRequest",
+        "176028": "__function:BadRequest",
+        "176029": "__function:BadRequest",
+        "176030": "__function:BadRequest",
+        "176031": "__function:BadRequest",
+        "176034": "__function:BadRequest",
+        "176035": "__function:PermissionDenied",
+        "176036": "__function:PermissionDenied",
+        "176037": "__function:PermissionDenied",
+        "176038": "__function:BadRequest",
+        "176039": "__function:BadRequest",
+        "176040": "__function:BadRequest",
+        "180023": "__function:OnMaintenance",
+        "181000": "__function:BadRequest",
+        "181001": "__function:BadRequest",
+        "181002": "__function:InvalidOrder",
+        "181003": "__function:InvalidOrder",
+        "181004": "__function:InvalidOrder",
+        "181017": "__function:BadRequest",
+        "182000": "__function:InvalidOrder",
+        "20001": "__function:OrderNotFound",
+        "20003": "__function:InvalidOrder",
+        "20004": "__function:InvalidOrder",
+        "20005": "__function:InvalidOrder",
+        "20006": "__function:InvalidOrder",
+        "20007": "__function:InvalidOrder",
+        "20008": "__function:InvalidOrder",
+        "20009": "__function:InvalidOrder",
+        "20010": "__function:InvalidOrder",
+        "20011": "__function:InvalidOrder",
+        "20012": "__function:InvalidOrder",
+        "20013": "__function:InvalidOrder",
+        "20014": "__function:InvalidOrder",
+        "20015": "__function:InvalidOrder",
+        "20016": "__function:InvalidOrder",
+        "20017": "__function:InvalidOrder",
+        "20018": "__function:InvalidOrder",
+        "20019": "__function:InvalidOrder",
+        "20020": "__function:InvalidOrder",
+        "20021": "__function:InvalidOrder",
+        "20022": "__function:BadRequest",
+        "20023": "__function:BadRequest",
+        "20031": "__function:BadRequest",
+        "20070": "__function:BadRequest",
+        "20071": "__function:BadRequest",
+        "20084": "__function:BadRequest",
+        "30001": "__function:BadRequest",
+        "30003": "__function:InvalidOrder",
+        "30004": "__function:InvalidOrder",
+        "30005": "__function:InvalidOrder",
+        "30007": "__function:InvalidOrder",
+        "30008": "__function:InvalidOrder",
+        "30009": "__function:ExchangeError",
+        "30010": "__function:InsufficientFunds",
+        "30011": "__function:PermissionDenied",
+        "30012": "__function:PermissionDenied",
+        "30013": "__function:PermissionDenied",
+        "30014": "__function:InvalidOrder",
+        "30015": "__function:InvalidOrder",
+        "30016": "__function:ExchangeError",
+        "30017": "__function:InvalidOrder",
+        "30018": "__function:InvalidOrder",
+        "30019": "__function:InvalidOrder",
+        "30020": "__function:InvalidOrder",
+        "30021": "__function:InvalidOrder",
+        "30022": "__function:InvalidOrder",
+        "30023": "__function:InvalidOrder",
+        "30024": "__function:InvalidOrder",
+        "30025": "__function:InvalidOrder",
+        "30026": "__function:InvalidOrder",
+        "30027": "__function:InvalidOrder",
+        "30028": "__function:InvalidOrder",
+        "30029": "__function:InvalidOrder",
+        "30030": "__function:InvalidOrder",
+        "30031": "__function:InsufficientFunds",
+        "30032": "__function:InvalidOrder",
+        "30033": "__function:RateLimitExceeded",
+        "30034": "__function:OrderNotFound",
+        "30035": "__function:RateLimitExceeded",
+        "30036": "__function:ExchangeError",
+        "30037": "__function:InvalidOrder",
+        "30041": "__function:ExchangeError",
+        "30042": "__function:InsufficientFunds",
+        "30043": "__function:InvalidOrder",
+        "30044": "__function:InvalidOrder",
+        "30045": "__function:InvalidOrder",
+        "30049": "__function:InsufficientFunds",
+        "30050": "__function:ExchangeError",
+        "30051": "__function:ExchangeError",
+        "30052": "__function:ExchangeError",
+        "30054": "__function:ExchangeError",
+        "30057": "__function:ExchangeError",
+        "30063": "__function:ExchangeError",
+        "30067": "__function:InsufficientFunds",
+        "30068": "__function:ExchangeError",
+        "30074": "__function:InvalidOrder",
+        "30075": "__function:InvalidOrder",
+        "30078": "__function:ExchangeError",
+        "3100116": "__function:BadRequest",
+        "3100198": "__function:BadRequest",
+        "3200300": "__function:InsufficientFunds",
+        "33004": "__function:AuthenticationError",
+        "3400045": "__function:ExchangeError",
+        "340099": "__function:ExchangeError",
+        "34026": "__function:ExchangeError",
+        "34036": "__function:BadRequest",
+        "35015": "__function:BadRequest",
+        "5004": "__function:ExchangeError",
+        "7001": "__function:BadRequest"
+      }
+    },
+    "features": {
+      "default": {
+        "createOrder": {
+          "attachedStopLossTakeProfit": {
+            "price": true,
+            "triggerPriceType": {
+              "index": true,
+              "last": true,
+              "mark": true
+            }
+          },
+          "hedged": true,
+          "iceberg": false,
+          "leverage": false,
+          "marginMode": false,
+          "marketBuyByCost": true,
+          "marketBuyRequiresPrice": false,
+          "selfTradePrevention": true,
+          "stopLossPrice": true,
+          "takeProfitPrice": true,
+          "timeInForce": {
+            "FOK": true,
+            "GTD": false,
+            "IOC": true,
+            "PO": true
+          },
+          "trailing": true,
+          "triggerDirection": true,
+          "triggerPrice": true,
+          "triggerPriceType": {
+            "index": true,
+            "last": true,
+            "mark": true
+          }
+        },
+        "createOrders": {
+          "max": 10
+        },
+        "editOrders": {
+          "max": 10
+        },
+        "fetchClosedOrders": {
+          "daysBack": 730,
+          "daysBackCanceled": 1,
+          "limit": 50,
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": true,
+          "untilDays": 7
+        },
+        "fetchMyTrades": {
+          "daysBack": 730,
+          "limit": 100,
+          "marginMode": false,
+          "symbolRequired": false,
+          "untilDays": 7
+        },
+        "fetchOHLCV": {
+          "limit": 1000
+        },
+        "fetchOpenOrders": {
+          "limit": 50,
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": true
+        },
+        "fetchOrder": {
+          "marginMode": false,
+          "symbolRequired": true,
+          "trailing": false,
+          "trigger": true
+        },
+        "fetchOrders": "__undefined",
+        "sandbox": true
+      },
+      "future": {
+        "inverse": {
+          "extends": "default"
+        },
+        "linear": {
+          "extends": "default"
+        }
+      },
+      "spot": {
+        "createOrder": {
+          "attachedStopLossTakeProfit": {
+            "price": true,
+            "triggerPriceType": "__undefined"
+          },
+          "marketBuyRequiresPrice": true,
+          "triggerDirection": false,
+          "triggerPriceType": "__undefined"
+        },
+        "extends": "default",
+        "fetchCurrencies": {
+          "private": true
+        }
+      },
+      "swap": {
+        "inverse": {
+          "extends": "default"
+        },
+        "linear": {
+          "extends": "default"
+        }
+      }
+    },
+    "fees": {
+      "funding": {
+        "deposit": {},
+        "percentage": false,
+        "tierBased": false,
+        "withdraw": {}
+      },
+      "trading": {
+        "feeSide": "get",
+        "maker": 0.0001,
+        "percentage": true,
+        "taker": 0.00075,
+        "tierBased": true
+      }
+    },
+    "has": {
+      "CORS": true,
+      "addMargin": "__undefined",
+      "borrowCrossMargin": true,
+      "borrowIsolatedMargin": "__undefined",
+      "borrowMargin": "__undefined",
+      "cancelAllOrders": true,
+      "cancelAllOrdersAfter": true,
+      "cancelAllOrdersWs": "__undefined",
+      "cancelOrder": true,
+      "cancelOrderWithClientOrderId": "__undefined",
+      "cancelOrderWs": "__undefined",
+      "cancelOrders": true,
+      "cancelOrdersForSymbols": true,
+      "cancelOrdersWithClientOrderId": "__undefined",
+      "cancelOrdersWs": "__undefined",
+      "closeAllPositions": false,
+      "closePosition": false,
+      "createConvertTrade": true,
+      "createDepositAddress": "__undefined",
+      "createLimitBuyOrder": "__undefined",
+      "createLimitBuyOrderWs": "__undefined",
+      "createLimitOrder": true,
+      "createLimitOrderWs": "__undefined",
+      "createLimitSellOrder": "__undefined",
+      "createLimitSellOrderWs": "__undefined",
+      "createMarketBuyOrder": "__undefined",
+      "createMarketBuyOrderWithCost": true,
+      "createMarketBuyOrderWithCostWs": "__undefined",
+      "createMarketBuyOrderWs": "__undefined",
+      "createMarketOrder": true,
+      "createMarketOrderWithCost": "__undefined",
+      "createMarketOrderWithCostWs": "__undefined",
+      "createMarketOrderWs": true,
+      "createMarketSellOrder": "__undefined",
+      "createMarketSellOrderWithCost": true,
+      "createMarketSellOrderWithCostWs": "__undefined",
+      "createMarketSellOrderWs": "__undefined",
+      "createOrder": true,
+      "createOrderWithTakeProfitAndStopLoss": true,
+      "createOrderWithTakeProfitAndStopLossWs": "__undefined",
+      "createOrderWs": "__undefined",
+      "createOrders": true,
+      "createPostOnlyOrder": true,
+      "createPostOnlyOrderWs": "__undefined",
+      "createReduceOnlyOrder": true,
+      "createReduceOnlyOrderWs": "__undefined",
+      "createStopLimitOrder": true,
+      "createStopLimitOrderWs": "__undefined",
+      "createStopLossOrder": true,
+      "createStopLossOrderWs": "__undefined",
+      "createStopMarketOrder": true,
+      "createStopMarketOrderWs": "__undefined",
+      "createStopOrder": true,
+      "createStopOrderWs": "__undefined",
+      "createTakeProfitOrder": true,
+      "createTakeProfitOrderWs": "__undefined",
+      "createTrailingAmountOrder": true,
+      "createTrailingAmountOrderWs": "__undefined",
+      "createTrailingPercentOrder": "__undefined",
+      "createTrailingPercentOrderWs": "__undefined",
+      "createTriggerOrder": true,
+      "createTriggerOrderWs": "__undefined",
+      "deposit": "__undefined",
+      "editOrder": true,
+      "editOrderWithClientOrderId": "__undefined",
+      "editOrderWs": "__undefined",
+      "editOrders": true,
+      "fetchADLRank": "__undefined",
+      "fetchAccounts": "__undefined",
+      "fetchAllGreeks": true,
+      "fetchBalance": true,
+      "fetchBalanceWs": "__undefined",
+      "fetchBidsAsks": "emulated",
+      "fetchBorrowInterest": false,
+      "fetchBorrowRate": "__undefined",
+      "fetchBorrowRateHistories": false,
+      "fetchBorrowRateHistory": false,
+      "fetchBorrowRates": "__undefined",
+      "fetchBorrowRatesPerSymbol": "__undefined",
+      "fetchCanceledAndClosedOrders": true,
+      "fetchCanceledOrders": true,
+      "fetchClosedOrder": true,
+      "fetchClosedOrders": true,
+      "fetchClosedOrdersWs": "__undefined",
+      "fetchConvertCurrencies": true,
+      "fetchConvertQuote": true,
+      "fetchConvertTrade": true,
+      "fetchConvertTradeHistory": true,
+      "fetchCrossBorrowRate": true,
+      "fetchCrossBorrowRates": false,
+      "fetchCurrencies": true,
+      "fetchCurrenciesWs": "emulated",
+      "fetchDeposit": false,
+      "fetchDepositAddress": true,
+      "fetchDepositAddresses": false,
+      "fetchDepositAddressesByNetwork": true,
+      "fetchDepositWithdrawFee": "emulated",
+      "fetchDepositWithdrawFees": true,
+      "fetchDeposits": true,
+      "fetchDepositsWithdrawals": "__undefined",
+      "fetchDepositsWs": "__undefined",
+      "fetchFundingHistory": true,
+      "fetchFundingInterval": "__undefined",
+      "fetchFundingIntervals": "__undefined",
+      "fetchFundingRate": "emulated",
+      "fetchFundingRateHistory": true,
+      "fetchFundingRates": true,
+      "fetchGreeks": true,
+      "fetchIndexOHLCV": true,
+      "fetchIsolatedBorrowRate": false,
+      "fetchIsolatedBorrowRates": false,
+      "fetchIsolatedPositions": "__undefined",
+      "fetchL2OrderBook": true,
+      "fetchL3OrderBook": "__undefined",
+      "fetchLastPrices": "__undefined",
+      "fetchLedger": true,
+      "fetchLedgerEntry": "__undefined",
+      "fetchLeverage": true,
+      "fetchLeverageTiers": true,
+      "fetchLeverages": "__undefined",
+      "fetchLiquidations": "__undefined",
+      "fetchLongShortRatio": false,
+      "fetchLongShortRatioHistory": true,
+      "fetchMarginAdjustmentHistory": false,
+      "fetchMarginMode": true,
+      "fetchMarginModes": "__undefined",
+      "fetchMarkOHLCV": true,
+      "fetchMarkPrices": "__undefined",
+      "fetchMarketLeverageTiers": true,
+      "fetchMarkets": true,
+      "fetchMarketsWs": "__undefined",
+      "fetchMyLiquidations": true,
+      "fetchMySettlementHistory": true,
+      "fetchMyTrades": true,
+      "fetchMyTradesWs": "__undefined",
+      "fetchOHLCV": true,
+      "fetchOHLCVWs": "__undefined",
+      "fetchOpenInterest": true,
+      "fetchOpenInterestHistory": true,
+      "fetchOpenInterests": "__undefined",
+      "fetchOpenOrder": true,
+      "fetchOpenOrders": true,
+      "fetchOpenOrdersWs": "__undefined",
+      "fetchOption": true,
+      "fetchOptionChain": true,
+      "fetchOrder": true,
+      "fetchOrderBook": true,
+      "fetchOrderBookWs": "__undefined",
+      "fetchOrderBooks": "__undefined",
+      "fetchOrderTrades": true,
+      "fetchOrderWithClientOrderId": "__undefined",
+      "fetchOrderWs": "__undefined",
+      "fetchOrders": false,
+      "fetchOrdersByStatus": "__undefined",
+      "fetchOrdersWs": "__undefined",
+      "fetchPosition": true,
+      "fetchPositionADLRank": true,
+      "fetchPositionHistory": "emulated",
+      "fetchPositionMode": "__undefined",
+      "fetchPositionWs": "__undefined",
+      "fetchPositions": true,
+      "fetchPositionsADLRank": true,
+      "fetchPositionsForSymbol": "__undefined",
+      "fetchPositionsForSymbolWs": "__undefined",
+      "fetchPositionsHistory": true,
+      "fetchPositionsRisk": "__undefined",
+      "fetchPositionsWs": "__undefined",
+      "fetchPremiumIndexOHLCV": true,
+      "fetchSettlementHistory": true,
+      "fetchStatus": true,
+      "fetchTicker": true,
+      "fetchTickerWs": "__undefined",
+      "fetchTickers": true,
+      "fetchTickersWs": "__undefined",
+      "fetchTime": true,
+      "fetchTrades": true,
+      "fetchTradesWs": "__undefined",
+      "fetchTradingFee": true,
+      "fetchTradingFees": true,
+      "fetchTradingFeesWs": "__undefined",
+      "fetchTradingLimits": "__undefined",
+      "fetchTransactionFee": "__undefined",
+      "fetchTransactionFees": "__undefined",
+      "fetchTransactions": false,
+      "fetchTransfer": "__undefined",
+      "fetchTransfers": true,
+      "fetchUnderlyingAssets": false,
+      "fetchVolatilityHistory": true,
+      "fetchWithdrawAddresses": "__undefined",
+      "fetchWithdrawal": "__undefined",
+      "fetchWithdrawalWhitelist": "__undefined",
+      "fetchWithdrawals": true,
+      "fetchWithdrawalsWs": "__undefined",
+      "future": true,
+      "margin": true,
+      "option": true,
+      "privateAPI": true,
+      "publicAPI": true,
+      "reduceMargin": "__undefined",
+      "repayCrossMargin": true,
+      "repayIsolatedMargin": "__undefined",
+      "sandbox": true,
+      "setLeverage": true,
+      "setMargin": "__undefined",
+      "setMarginMode": true,
+      "setPositionMode": true,
+      "signIn": "__undefined",
+      "spot": true,
+      "swap": true,
+      "transfer": true,
+      "unWatchMyTrades": "__undefined",
+      "unWatchOHLCV": "__undefined",
+      "unWatchOHLCVForSymbols": "__undefined",
+      "unWatchOrderBook": "__undefined",
+      "unWatchOrderBookForSymbols": "__undefined",
+      "unWatchOrders": "__undefined",
+      "unWatchPositions": "__undefined",
+      "unWatchTicker": "__undefined",
+      "unWatchTickers": "__undefined",
+      "unWatchTrades": "__undefined",
+      "unWatchTradesForSymbols": "__undefined",
+      "watchBalance": "__undefined",
+      "watchBidsAsks": "__undefined",
+      "watchLiquidations": "__undefined",
+      "watchLiquidationsForSymbols": "__undefined",
+      "watchMyLiquidations": "__undefined",
+      "watchMyLiquidationsForSymbols": "__undefined",
+      "watchMyTrades": "__undefined",
+      "watchOHLCV": "__undefined",
+      "watchOHLCVForSymbols": "__undefined",
+      "watchOrderBook": "__undefined",
+      "watchOrderBookForSymbols": "__undefined",
+      "watchOrders": "__undefined",
+      "watchOrdersForSymbols": "__undefined",
+      "watchPosition": "__undefined",
+      "watchPositions": "__undefined",
+      "watchStatus": "__undefined",
+      "watchTicker": "__undefined",
+      "watchTickers": "__undefined",
+      "watchTrades": "__undefined",
+      "watchTradesForSymbols": "__undefined",
+      "withdraw": true,
+      "ws": "__undefined"
+    },
+    "hostname": "bybit.com",
+    "httpExceptions": {
+      "400": "__function:ExchangeNotAvailable",
+      "401": "__function:AuthenticationError",
+      "403": "__function:RateLimitExceeded",
+      "404": "__function:ExchangeNotAvailable",
+      "405": "__function:ExchangeNotAvailable",
+      "407": "__function:AuthenticationError",
+      "408": "__function:RequestTimeout",
+      "409": "__function:ExchangeNotAvailable",
+      "410": "__function:ExchangeNotAvailable",
+      "418": "__function:DDoSProtection",
+      "422": "__function:ExchangeError",
+      "429": "__function:RateLimitExceeded",
+      "451": "__function:ExchangeNotAvailable",
+      "500": "__function:ExchangeNotAvailable",
+      "501": "__function:ExchangeNotAvailable",
+      "502": "__function:ExchangeNotAvailable",
+      "503": "__function:ExchangeNotAvailable",
+      "504": "__function:RequestTimeout",
+      "511": "__function:AuthenticationError",
+      "520": "__function:ExchangeNotAvailable",
+      "521": "__function:ExchangeNotAvailable",
+      "522": "__function:ExchangeNotAvailable",
+      "525": "__function:ExchangeNotAvailable",
+      "526": "__function:ExchangeNotAvailable",
+      "530": "__function:ExchangeNotAvailable"
+    },
+    "id": "bybit",
+    "limits": {
+      "amount": {
+        "max": "__undefined",
+        "min": "__undefined"
+      },
+      "cost": {
+        "max": "__undefined",
+        "min": "__undefined"
+      },
+      "leverage": {
+        "max": "__undefined",
+        "min": "__undefined"
+      },
+      "price": {
+        "max": "__undefined",
+        "min": "__undefined"
+      }
+    },
+    "markets": "__undefined",
+    "name": "Bybit",
+    "options": {
+      "accountsById": {
+        "CONTRACT": "contract",
+        "FUND": "fund",
+        "INVESTMENT": "investment",
+        "MARGIN": "spot",
+        "OPTION": "option",
+        "SPOT": "spot",
+        "UNIFIED": "unified"
+      },
+      "accountsByType": {
+        "contract": "CONTRACT",
+        "fund": "FUND",
+        "funding": "FUND",
+        "future": "CONTRACT",
+        "investment": "INVESTMENT",
+        "margin": "SPOT",
+        "option": "OPTION",
+        "spot": "SPOT",
+        "swap": "CONTRACT",
+        "unified": "UNIFIED"
+      },
+      "adjustForTimeDifference": false,
+      "brokerId": "CCXT",
+      "code": "BTC",
+      "createMarketBuyOrderRequiresPrice": false,
+      "createUnifiedMarginAccount": false,
+      "defaultNetwork": "ERC20",
+      "defaultNetworks": {
+        "USDT": "TRC20"
+      },
+      "defaultSettle": "USDT",
+      "defaultSubType": "linear",
+      "defaultType": "swap",
+      "enableDemoTrading": false,
+      "enableUnifiedAccount": "__undefined",
+      "enableUnifiedMargin": "__undefined",
+      "fetchMarkets": {
+        "options": [
+          "BTC",
+          "ETH",
+          "SOL",
+          "XRP",
+          "MNT",
+          "DOGE"
+        ],
+        "types": [
+          "spot",
+          "linear",
+          "inverse",
+          "option"
+        ]
+      },
+      "intervals": {
+        "15m": "15min",
+        "1d": "1d",
+        "1h": "1h",
+        "30m": "30min",
+        "4h": "4h",
+        "5m": "5min"
+      },
+      "loadAllOptions": false,
+      "loadExpiredOptions": false,
+      "networks": {
+        "ACA": "ACA",
+        "ADA": "ADA",
+        "ALGO": "ALGO",
+        "APT": "APTOS",
+        "AR": "AR",
+        "ARBONE": "ARBI",
+        "ATOM": "ATOM",
+        "AVAXC": "CAVAX",
+        "AVAXX": "XAVAX",
+        "BCH": "BCH",
+        "BEP2": "BNB",
+        "BEP20": "BSC",
+        "BSC": "BSC",
+        "BTC": "BTC",
+        "CHZ": "CHZ",
+        "DCR": "DCR",
+        "DGB": "DGB",
+        "DOGE": "DOGE",
+        "DOT": "DOT",
+        "EGLD": "EGLD",
+        "EOS": "EOS",
+        "ERC20": "ETH",
+        "ETC": "ETC",
+        "ETH": "ETH",
+        "ETHF": "ETHF",
+        "ETHW": "ETHW",
+        "FIL": "FIL",
+        "FLOW": "FLOW",
+        "FTM": "FTM",
+        "GLMR": "GLMR",
+        "HBAR": "HBAR",
+        "HNT": "HNT",
+        "ICP": "ICP",
+        "ICX": "ICX",
+        "KDA": "KDA",
+        "KLAY": "KLAY",
+        "KMA": "KMA",
+        "KSM": "KSM",
+        "LTC": "LTC",
+        "MATIC": "MATIC",
+        "MINA": "MINA",
+        "MOVR": "MOVR",
+        "NEAR": "NEAR",
+        "NEM": "NEM",
+        "OASIS": "ROSE",
+        "OASYS": "OAS",
+        "OMNI": "OMNI",
+        "ONE": "ONE",
+        "OP": "OP",
+        "OPTIMISM": "OP",
+        "POKT": "POKT",
+        "QTUM": "QTUM",
+        "RVN": "RVN",
+        "SC": "SC",
+        "SCRT": "SCRT",
+        "SOL": "SOL",
+        "STEP": "FITFI",
+        "STX": "STX",
+        "THETA": "THETA",
+        "TON": "TON",
+        "TRC20": "TRX",
+        "TRX": "TRX",
+        "WAVES": "WAVES",
+        "WAX": "WAXP",
+        "XDC": "XDC",
+        "XEC": "XEC",
+        "XLM": "XLM",
+        "XRP": "XRP",
+        "XTZ": "XTZ",
+        "XYM": "XYM",
+        "ZEN": "ZEN",
+        "ZIL": "ZIL",
+        "ZKSYNC": "ZKSYNC"
+      },
+      "networksById": {
+        "BSC": "BEP20",
+        "ETH": "ERC20",
+        "OP": "OP",
+        "TRX": "TRC20"
+      },
+      "recvWindow": 5000,
+      "timeDifference": 0,
+      "unifiedMarginStatus": "__undefined",
+      "useMarkPriceForPositionCollateral": false,
+      "usePrivateInstrumentsInfo": false
+    },
+    "paddingMode": 5,
+    "precisionMode": 4,
+    "pro": true,
+    "rateLimit": 20,
+    "rateLimiterAlgorithm": "leakyBucket",
+    "requiredCredentials": {
+      "accountId": false,
+      "apiKey": true,
+      "login": false,
+      "password": false,
+      "privateKey": false,
+      "secret": true,
+      "token": false,
+      "twofa": false,
+      "uid": false,
+      "walletAddress": false
+    },
+    "rollingWindowSize": 5000,
+    "status": {
+      "eta": "__undefined",
+      "info": "__undefined",
+      "status": "ok",
+      "updated": "__undefined",
+      "url": "__undefined"
+    },
+    "timeframes": {
+      "12h": "720",
+      "15m": "15",
+      "1M": "M",
+      "1d": "D",
+      "1h": "60",
+      "1m": "1",
+      "1w": "W",
+      "2h": "120",
+      "30m": "30",
+      "3m": "3",
+      "4h": "240",
+      "5m": "5",
+      "6h": "360"
+    },
+    "timeout": 10000,
+    "urls": {
+      "api": {
+        "futures": "https://api.{hostname}",
+        "private": "https://api.{hostname}",
+        "public": "https://api.{hostname}",
+        "spot": "https://api.{hostname}",
+        "v2": "https://api.{hostname}"
+      },
+      "api_management": "__undefined",
+      "demotrading": {
+        "futures": "https://api-demo.{hostname}",
+        "private": "https://api-demo.{hostname}",
+        "public": "https://api-demo.{hostname}",
+        "spot": "https://api-demo.{hostname}",
+        "v2": "https://api-demo.{hostname}"
+      },
+      "doc": [
+        "https://bybit-exchange.github.io/docs/inverse/",
+        "https://bybit-exchange.github.io/docs/linear/",
+        "https://github.com/bybit-exchange"
+      ],
+      "fees": "https://help.bybit.com/hc/en-us/articles/360039261154",
+      "logo": "https://github.com/user-attachments/assets/97a5d0b3-de10-423d-90e1-6620960025ed",
+      "referral": "https://www.bybit.com/invite?ref=XDK12WP",
+      "test": {
+        "futures": "https://api-testnet.{hostname}",
+        "private": "https://api-testnet.{hostname}",
+        "public": "https://api-testnet.{hostname}",
+        "spot": "https://api-testnet.{hostname}",
+        "v2": "https://api-testnet.{hostname}"
+      },
+      "www": "https://www.bybit.com"
+    },
+    "userAgent": "__undefined",
+    "version": "v5"
+  },
+  "request_shape": {
+    "private": {
+      "body_encoding": null,
+      "content_type": null,
+      "endpoints": [
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "asset/v3/private/coin-info/query"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "asset/v3/private/deposit/address/query"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "asset/v3/private/deposit/record/query"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "asset/v3/private/transfer/account-coin/balance/query"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "asset/v3/private/transfer/account-coins/balance/query"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "asset/v3/private/transfer/asset-info/query"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "asset/v3/private/transfer/inter-transfer/list/query"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "asset/v3/private/transfer/sub-member-transfer/list/query"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "asset/v3/private/transfer/sub-member/list/query"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "asset/v3/private/transfer/transfer-coin/list/query"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "asset/v3/private/transfer/universal-transfer/list/query"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "asset/v3/private/withdraw/record/query"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "asset/v3/public/deposit/allowed-deposit-list/query"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "contract/v3/private/account/fee-rate"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "contract/v3/private/account/wallet/balance"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "contract/v3/private/account/wallet/fund-records"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "contract/v3/private/copytrading/order/list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "contract/v3/private/copytrading/position/list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "contract/v3/private/copytrading/wallet/balance"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "contract/v3/private/execution/list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "contract/v3/private/order/list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "contract/v3/private/order/unfilled-orders"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "contract/v3/private/position/closed-pnl"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "contract/v3/private/position/limit-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "contract/v3/private/position/list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "unified/v3/private/account/borrow-history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "unified/v3/private/account/borrow-rate"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "unified/v3/private/account/info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "unified/v3/private/account/transaction-log"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "unified/v3/private/account/wallet/balance"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "unified/v3/private/delivery-record"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "unified/v3/private/execution/list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "unified/v3/private/order/list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "unified/v3/private/order/unfilled-orders"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "unified/v3/private/position/list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "unified/v3/private/settlement-record"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "user/v3/private/frozen-sub-member"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "user/v3/private/get-member-type"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "user/v3/private/query-api"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "user/v3/private/query-sub-members"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v2/private/wallet/fund/records"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/account/borrow-history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/account/collateral-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/account/contract-transaction-log"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/account/fee-rate"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/account/info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/account/instruments-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/account/mmp-state"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/account/smp-group"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/account/transaction-log"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/account/wallet-balance"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/account/withdrawal"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/affiliate/aff-user-list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/coin-greeks"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/coin/query-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/convert/small-balance-history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/convert/small-balance-list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/delivery-record"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/deposit/query-address"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/deposit/query-allowed-list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/deposit/query-internal-record"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/deposit/query-record"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/deposit/query-sub-member-address"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/deposit/query-sub-member-record"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/exchange/convert-result-query"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/exchange/order-record"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/exchange/query-coin-list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/exchange/query-convert-history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/settlement-record"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/transfer/query-account-coin-balance"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/transfer/query-account-coins-balance"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/transfer/query-asset-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/transfer/query-inter-transfer-list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/transfer/query-sub-member-list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/transfer/query-transfer-coin-list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/transfer/query-universal-transfer-list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/withdraw/query-address"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/withdraw/query-record"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/withdraw/vasp/list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/asset/withdraw/withdrawable-amount"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/broker/account-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/broker/asset/query-sub-member-deposit-record"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/broker/earning-record"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/broker/earnings-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-common/adjustment-history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-common/max-collateral-amount"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-common/position"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-fixed/borrow-contract-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-fixed/borrow-order-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-fixed/renew-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-fixed/repayment-history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-fixed/supply-contract-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-fixed/supply-order-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-flexible/borrow-history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-flexible/ongoing-coin"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-flexible/repayment-history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan/adjustment-history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan/borrow-history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan/borrowable-collateralisable-number"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan/max-collateral-amount"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan/ongoing-orders"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan/repayment-history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/earn/hourly-yield"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/earn/order"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/earn/position"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/earn/product"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/earn/yield"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/execution/list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/fiat/balance-query"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/fiat/query-coin-list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/fiat/query-trade-history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/fiat/reference-price"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/fiat/trade-query"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/ins-loan/ensure-tokens-convert"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/ins-loan/loan-order"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/ins-loan/ltv-convert"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/ins-loan/product-infos"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/ins-loan/repaid-history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/lending/account"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/lending/history-order"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/lending/info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/instruments-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/order/history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/order/realtime"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/order/spot-borrow-check"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/position/closed-pnl"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/position/list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/position/move-history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/pre-upgrade/account/transaction-log"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/pre-upgrade/asset/delivery-record"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/pre-upgrade/asset/settlement-record"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/pre-upgrade/execution/list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/pre-upgrade/order/history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/pre-upgrade/position/closed-pnl"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-cross-margin-trade/account"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-cross-margin-trade/loan-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-cross-margin-trade/orders"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-cross-margin-trade/repay-history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-lever-token/order-record"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-margin-trade/coinstate"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-margin-trade/get-auto-repay-mode"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-margin-trade/interest-rate-history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-margin-trade/max-borrowable"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-margin-trade/position-tiers"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-margin-trade/repayment-available-amount"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-margin-trade/state"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/user/aff-customer-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/user/del-submember"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/user/get-member-type"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/user/query-api"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/user/query-sub-members"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/user/sub-apikeys"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/user/submembers"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "asset/v3/private/transfer/inter-transfer"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "asset/v3/private/transfer/sub-member-transfer"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "asset/v3/private/transfer/transfer-sub-member-save"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "asset/v3/private/transfer/universal-transfer"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "asset/v3/private/withdraw/cancel"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "asset/v3/private/withdraw/create"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/account/setMarginMode"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/copytrading/order/cancel"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/copytrading/order/close"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/copytrading/order/create"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/copytrading/order/trading-stop"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/copytrading/position/close"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/copytrading/position/set-leverage"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/copytrading/wallet/transfer"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/order/cancel"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/order/cancel-all"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/order/create"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/order/replace"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/position/set-auto-add-margin"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/position/set-leverage"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/position/set-risk-limit"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/position/switch-isolated"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/position/switch-mode"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/position/switch-tpsl-mode"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "contract/v3/private/position/trading-stop"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "fht/compliance/tax/v3/private/create"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "fht/compliance/tax/v3/private/registertime"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "fht/compliance/tax/v3/private/status"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "fht/compliance/tax/v3/private/url"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "unified/v3/private/account/setMarginMode"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "unified/v3/private/account/upgrade-unified-account"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "unified/v3/private/order/cancel"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "unified/v3/private/order/cancel-all"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "unified/v3/private/order/cancel-batch"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "unified/v3/private/order/create"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "unified/v3/private/order/create-batch"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "unified/v3/private/order/replace"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "unified/v3/private/order/replace-batch"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "unified/v3/private/position/set-leverage"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "unified/v3/private/position/set-risk-limit"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "unified/v3/private/position/tpsl/switch-mode"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "unified/v3/private/position/trading-stop"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "user/v3/private/create-sub-api"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "user/v3/private/create-sub-member"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "user/v3/private/delete-api"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "user/v3/private/delete-sub-api"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "user/v3/private/update-api"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "user/v3/private/update-sub-api"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/account/borrow"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/account/demo-apply-money"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/account/mmp-modify"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/account/mmp-reset"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/account/no-convert-repay"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/account/quick-repayment"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/account/repay"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/account/set-collateral-switch"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/account/set-collateral-switch-batch"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/account/set-hedging-mode"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/account/set-limit-px-action"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/account/set-margin-mode"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/account/upgrade-to-uta"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/asset/covert/get-quote"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/asset/covert/small-balance-execute"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/asset/deposit/deposit-to-account"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/asset/exchange/convert-execute"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/asset/exchange/quote-apply"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/asset/transfer/inter-transfer"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/asset/transfer/save-transfer-sub-member"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/asset/transfer/universal-transfer"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/asset/withdraw/cancel"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/asset/withdraw/create"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/broker/award/distribute-award"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/broker/award/distribution-record"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/broker/award/info"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-common/adjust-ltv"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-common/max-loan"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-fixed/borrow"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-fixed/borrow-order-cancel"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-fixed/fully-repay"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-fixed/renew"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-fixed/repay-collateral"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-fixed/supply"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-fixed/supply-order-cancel"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-flexible/borrow"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-flexible/repay"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-flexible/repay-collateral"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/crypto-loan/adjust-ltv"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/crypto-loan/borrow"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/crypto-loan/repay"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/earn/place-order"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/fiat/quote-apply"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/fiat/trade-execute"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/ins-loan/association-uid"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/ins-loan/repay-loan"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/lending/purchase"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/lending/redeem"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/lending/redeem-cancel"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/order/amend"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/order/amend-batch"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/order/cancel"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/order/cancel-all"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/order/cancel-batch"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/order/pre-check"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/order/create"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/order/create-batch"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/order/disconnected-cancel-all"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/position/add-margin"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/position/confirm-pending-mmr"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/position/move-positions"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/position/set-auto-add-margin"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/position/set-leverage"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/position/set-risk-limit"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/position/set-tpsl-mode"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/position/switch-isolated"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/position/switch-mode"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/position/trading-stop"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/spot-cross-margin-trade/loan"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/spot-cross-margin-trade/repay"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/spot-cross-margin-trade/switch"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/spot-lever-token/purchase"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/spot-lever-token/redeem"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/spot-margin-trade/set-auto-repay-mode"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/spot-margin-trade/set-leverage"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/spot-margin-trade/switch-mode"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/user/create-sub-api"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/user/create-sub-member"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/user/delete-api"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/user/delete-sub-api"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/user/frozen-sub-member"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/user/update-api"
+        },
+        {
+          "http_verb": "POST",
+          "path_params": [],
+          "path_template": "v5/user/update-sub-api"
+        }
+      ],
+      "patch_count": 0,
+      "unresolved_reason": "ambiguous_body"
+    },
+    "public": {
+      "body_encoding": "none",
+      "content_type": null,
+      "endpoints": [
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "contract/v3/public/copytrading/symbol/list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "derivatives/v3/public/delivery-price"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "derivatives/v3/public/funding/history-funding-rate"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "derivatives/v3/public/index-price-kline"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "derivatives/v3/public/instruments-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "derivatives/v3/public/insurance"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "derivatives/v3/public/kline"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "derivatives/v3/public/mark-price-kline"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "derivatives/v3/public/open-interest"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "derivatives/v3/public/order-book/L2"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "derivatives/v3/public/recent-trade"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "derivatives/v3/public/risk-limit/list"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "derivatives/v3/public/tickers"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "spot/v3/public/infos"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "spot/v3/public/margin-ensure-tokens"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "spot/v3/public/margin-product-infos"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "spot/v3/public/quote/depth"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "spot/v3/public/quote/depth/merged"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "spot/v3/public/quote/kline"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "spot/v3/public/quote/ticker/24hr"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "spot/v3/public/quote/ticker/bookTicker"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "spot/v3/public/quote/ticker/price"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "spot/v3/public/quote/trades"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "spot/v3/public/server-time"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "spot/v3/public/symbols"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v3/public/time"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/announcements/index"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-common/collateral-data"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-common/loanable-data"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-fixed/borrow-order-quote"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan-fixed/supply-order-quote"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan/collateral-data"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/crypto-loan/loanable-data"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/earn/product"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/ins-loan/ensure-tokens-convert"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/ins-loan/product-infos"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/account-ratio"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/delivery-price"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/funding/history"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/historical-volatility"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/index-price-kline"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/instruments-info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/insurance"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/kline"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/mark-price-kline"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/open-interest"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/orderbook"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/premium-index-price-kline"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/recent-trade"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/risk-limit"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/tickers"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/market/time"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-cross-margin-trade/borrow-token"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-cross-margin-trade/data"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-cross-margin-trade/pledge-token"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-lever-token/info"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-lever-token/reference"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-margin-trade/collateral"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [],
+          "path_template": "v5/spot-margin-trade/data"
+        }
+      ],
+      "patch_count": 0,
+      "unresolved_reason": null
+    }
+  },
+  "endpoints": {
+    "private.get.asset/v3/private/coin-info/query": {
+      "api": 25,
+      "rate_limit": {
+        "axes": {},
+        "cost": 25
+      }
+    },
+    "private.get.asset/v3/private/deposit/address/query": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.asset/v3/private/deposit/record/query": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.asset/v3/private/transfer/account-coin/balance/query": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.get.asset/v3/private/transfer/account-coins/balance/query": {
+      "api": 25,
+      "rate_limit": {
+        "axes": {},
+        "cost": 25
+      }
+    },
+    "private.get.asset/v3/private/transfer/asset-info/query": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.get.asset/v3/private/transfer/inter-transfer/list/query": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.get.asset/v3/private/transfer/sub-member-transfer/list/query": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.get.asset/v3/private/transfer/sub-member/list/query": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.get.asset/v3/private/transfer/transfer-coin/list/query": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.get.asset/v3/private/transfer/universal-transfer/list/query": {
+      "api": 25,
+      "rate_limit": {
+        "axes": {},
+        "cost": 25
+      }
+    },
+    "private.get.asset/v3/private/withdraw/record/query": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.asset/v3/public/deposit/allowed-deposit-list/query": {
+      "api": 0.17,
+      "rate_limit": {
+        "axes": {},
+        "cost": 0.17
+      }
+    },
+    "private.get.contract/v3/private/account/fee-rate": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.contract/v3/private/account/wallet/balance": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.contract/v3/private/account/wallet/fund-records": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.contract/v3/private/copytrading/order/list": {
+      "api": 30,
+      "rate_limit": {
+        "axes": {},
+        "cost": 30
+      }
+    },
+    "private.get.contract/v3/private/copytrading/position/list": {
+      "api": 40,
+      "rate_limit": {
+        "axes": {},
+        "cost": 40
+      }
+    },
+    "private.get.contract/v3/private/copytrading/wallet/balance": {
+      "api": 25,
+      "rate_limit": {
+        "axes": {},
+        "cost": 25
+      }
+    },
+    "private.get.contract/v3/private/execution/list": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.contract/v3/private/order/list": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.contract/v3/private/order/unfilled-orders": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.contract/v3/private/position/closed-pnl": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.contract/v3/private/position/limit-info": {
+      "api": 25,
+      "rate_limit": {
+        "axes": {},
+        "cost": 25
+      }
+    },
+    "private.get.contract/v3/private/position/list": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.spot/v3/private/account": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.get.spot/v3/private/cross-margin-account": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.spot/v3/private/cross-margin-loan-info": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.spot/v3/private/cross-margin-orders": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.spot/v3/private/cross-margin-repay-history": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.spot/v3/private/history-orders": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.get.spot/v3/private/margin-loan-infos": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.spot/v3/private/margin-ltv": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.spot/v3/private/margin-repaid-infos": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.spot/v3/private/my-trades": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.get.spot/v3/private/open-orders": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.get.spot/v3/private/order": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.get.spot/v3/private/record": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.get.spot/v3/private/reference": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.get.unified/v3/private/account/borrow-history": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.unified/v3/private/account/borrow-rate": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.unified/v3/private/account/info": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.unified/v3/private/account/transaction-log": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.unified/v3/private/account/wallet/balance": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.unified/v3/private/delivery-record": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.unified/v3/private/execution/list": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.unified/v3/private/order/list": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.unified/v3/private/order/unfilled-orders": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.unified/v3/private/position/list": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.unified/v3/private/settlement-record": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.user/v3/private/frozen-sub-member": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.user/v3/private/get-member-type": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.user/v3/private/query-api": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.user/v3/private/query-sub-members": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v2/private/wallet/fund/records": {
+      "api": 25,
+      "rate_limit": {
+        "axes": {},
+        "cost": 25
+      }
+    },
+    "private.get.v5/account/borrow-history": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.v5/account/collateral-info": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.v5/account/contract-transaction-log": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.v5/account/fee-rate": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/account/info": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/account/instruments-info": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.v5/account/mmp-state": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/account/smp-group": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.v5/account/transaction-log": {
+      "api": 1.66,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1.66
+      }
+    },
+    "private.get.v5/account/wallet-balance": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.v5/account/withdrawal": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/affiliate/aff-user-list": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/asset/coin-greeks": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.v5/asset/coin/query-info": {
+      "api": 28,
+      "rate_limit": {
+        "axes": {},
+        "cost": 28
+      }
+    },
+    "private.get.v5/asset/convert/small-balance-history": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/asset/convert/small-balance-list": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/asset/delivery-record": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/asset/deposit/query-address": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/asset/deposit/query-allowed-list": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/asset/deposit/query-internal-record": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/asset/deposit/query-record": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/asset/deposit/query-sub-member-address": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/asset/deposit/query-sub-member-record": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/asset/exchange/convert-result-query": {
+      "api": 0.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 0.5
+      }
+    },
+    "private.get.v5/asset/exchange/order-record": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/asset/exchange/query-coin-list": {
+      "api": 0.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 0.5
+      }
+    },
+    "private.get.v5/asset/exchange/query-convert-history": {
+      "api": 0.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 0.5
+      }
+    },
+    "private.get.v5/asset/settlement-record": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/asset/transfer/query-account-coin-balance": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.get.v5/asset/transfer/query-account-coins-balance": {
+      "api": 25,
+      "rate_limit": {
+        "axes": {},
+        "cost": 25
+      }
+    },
+    "private.get.v5/asset/transfer/query-asset-info": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.get.v5/asset/transfer/query-inter-transfer-list": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.get.v5/asset/transfer/query-sub-member-list": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.get.v5/asset/transfer/query-transfer-coin-list": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.get.v5/asset/transfer/query-universal-transfer-list": {
+      "api": 25,
+      "rate_limit": {
+        "axes": {},
+        "cost": 25
+      }
+    },
+    "private.get.v5/asset/withdraw/query-address": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/asset/withdraw/query-record": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/asset/withdraw/vasp/list": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/asset/withdraw/withdrawable-amount": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/broker/account-info": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/broker/asset/query-sub-member-deposit-record": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/broker/earning-record": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/broker/earnings-info": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/crypto-loan-common/adjustment-history": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/crypto-loan-common/max-collateral-amount": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/crypto-loan-common/position": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/crypto-loan-fixed/borrow-contract-info": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/crypto-loan-fixed/borrow-order-info": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/crypto-loan-fixed/renew-info": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/crypto-loan-fixed/repayment-history": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/crypto-loan-fixed/supply-contract-info": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/crypto-loan-fixed/supply-order-info": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/crypto-loan-flexible/borrow-history": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/crypto-loan-flexible/ongoing-coin": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/crypto-loan-flexible/repayment-history": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.get.v5/crypto-loan/adjustment-history": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/crypto-loan/borrow-history": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/crypto-loan/borrowable-collateralisable-number": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/crypto-loan/max-collateral-amount": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/crypto-loan/ongoing-orders": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/crypto-loan/repayment-history": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/earn/hourly-yield": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/earn/order": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/earn/position": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/earn/product": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/earn/yield": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/execution/list": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/fiat/balance-query": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/fiat/query-coin-list": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/fiat/query-trade-history": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/fiat/reference-price": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/fiat/trade-query": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/ins-loan/ensure-tokens-convert": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/ins-loan/loan-order": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/ins-loan/ltv-convert": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/ins-loan/product-infos": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/ins-loan/repaid-history": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/lending/account": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/lending/history-order": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/lending/info": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/market/instruments-info": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/order/history": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/order/realtime": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/order/spot-borrow-check": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.v5/position/closed-pnl": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/position/list": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/position/move-history": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/pre-upgrade/account/transaction-log": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/pre-upgrade/asset/delivery-record": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/pre-upgrade/asset/settlement-record": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/pre-upgrade/execution/list": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/pre-upgrade/order/history": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/pre-upgrade/position/closed-pnl": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/spot-cross-margin-trade/account": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.v5/spot-cross-margin-trade/loan-info": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.v5/spot-cross-margin-trade/orders": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.v5/spot-cross-margin-trade/repay-history": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.v5/spot-lever-token/order-record": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.get.v5/spot-margin-trade/coinstate": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/spot-margin-trade/get-auto-repay-mode": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/spot-margin-trade/interest-rate-history": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/spot-margin-trade/max-borrowable": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/spot-margin-trade/position-tiers": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/spot-margin-trade/repayment-available-amount": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/spot-margin-trade/state": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/user/aff-customer-info": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/user/del-submember": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/user/get-member-type": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/user/query-api": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/user/query-sub-members": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/user/sub-apikeys": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.get.v5/user/submembers": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.asset/v3/private/transfer/inter-transfer": {
+      "api": 150,
+      "rate_limit": {
+        "axes": {},
+        "cost": 150
+      }
+    },
+    "private.post.asset/v3/private/transfer/sub-member-transfer": {
+      "api": 150,
+      "rate_limit": {
+        "axes": {},
+        "cost": 150
+      }
+    },
+    "private.post.asset/v3/private/transfer/transfer-sub-member-save": {
+      "api": 150,
+      "rate_limit": {
+        "axes": {},
+        "cost": 150
+      }
+    },
+    "private.post.asset/v3/private/transfer/universal-transfer": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.asset/v3/private/withdraw/cancel": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.asset/v3/private/withdraw/create": {
+      "api": 300,
+      "rate_limit": {
+        "axes": {},
+        "cost": 300
+      }
+    },
+    "private.post.contract/v3/private/account/setMarginMode": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.contract/v3/private/copytrading/order/cancel": {
+      "api": 30,
+      "rate_limit": {
+        "axes": {},
+        "cost": 30
+      }
+    },
+    "private.post.contract/v3/private/copytrading/order/close": {
+      "api": 30,
+      "rate_limit": {
+        "axes": {},
+        "cost": 30
+      }
+    },
+    "private.post.contract/v3/private/copytrading/order/create": {
+      "api": 30,
+      "rate_limit": {
+        "axes": {},
+        "cost": 30
+      }
+    },
+    "private.post.contract/v3/private/copytrading/order/trading-stop": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.contract/v3/private/copytrading/position/close": {
+      "api": 40,
+      "rate_limit": {
+        "axes": {},
+        "cost": 40
+      }
+    },
+    "private.post.contract/v3/private/copytrading/position/set-leverage": {
+      "api": 40,
+      "rate_limit": {
+        "axes": {},
+        "cost": 40
+      }
+    },
+    "private.post.contract/v3/private/copytrading/wallet/transfer": {
+      "api": 25,
+      "rate_limit": {
+        "axes": {},
+        "cost": 25
+      }
+    },
+    "private.post.contract/v3/private/order/cancel": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.contract/v3/private/order/cancel-all": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.contract/v3/private/order/create": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.contract/v3/private/order/replace": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.contract/v3/private/position/set-auto-add-margin": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.contract/v3/private/position/set-leverage": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.contract/v3/private/position/set-risk-limit": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.contract/v3/private/position/switch-isolated": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.contract/v3/private/position/switch-mode": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.contract/v3/private/position/switch-tpsl-mode": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.contract/v3/private/position/trading-stop": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.fht/compliance/tax/v3/private/create": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.fht/compliance/tax/v3/private/registertime": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.fht/compliance/tax/v3/private/status": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.fht/compliance/tax/v3/private/url": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.spot/v3/private/cancel-order": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.spot/v3/private/cancel-orders": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.spot/v3/private/cancel-orders-by-ids": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.spot/v3/private/cross-margin-loan": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.spot/v3/private/cross-margin-repay": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.spot/v3/private/order": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.spot/v3/private/purchase": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.spot/v3/private/redeem": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.unified/v3/private/account/setMarginMode": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.unified/v3/private/account/upgrade-unified-account": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.unified/v3/private/order/cancel": {
+      "api": 30,
+      "rate_limit": {
+        "axes": {},
+        "cost": 30
+      }
+    },
+    "private.post.unified/v3/private/order/cancel-all": {
+      "api": 30,
+      "rate_limit": {
+        "axes": {},
+        "cost": 30
+      }
+    },
+    "private.post.unified/v3/private/order/cancel-batch": {
+      "api": 30,
+      "rate_limit": {
+        "axes": {},
+        "cost": 30
+      }
+    },
+    "private.post.unified/v3/private/order/create": {
+      "api": 30,
+      "rate_limit": {
+        "axes": {},
+        "cost": 30
+      }
+    },
+    "private.post.unified/v3/private/order/create-batch": {
+      "api": 30,
+      "rate_limit": {
+        "axes": {},
+        "cost": 30
+      }
+    },
+    "private.post.unified/v3/private/order/replace": {
+      "api": 30,
+      "rate_limit": {
+        "axes": {},
+        "cost": 30
+      }
+    },
+    "private.post.unified/v3/private/order/replace-batch": {
+      "api": 30,
+      "rate_limit": {
+        "axes": {},
+        "cost": 30
+      }
+    },
+    "private.post.unified/v3/private/position/set-leverage": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.unified/v3/private/position/set-risk-limit": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.unified/v3/private/position/tpsl/switch-mode": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.unified/v3/private/position/trading-stop": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.user/v3/private/create-sub-api": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.user/v3/private/create-sub-member": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.user/v3/private/delete-api": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.user/v3/private/delete-sub-api": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.user/v3/private/update-api": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.user/v3/private/update-sub-api": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.v5/account/borrow": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/account/demo-apply-money": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/account/mmp-modify": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/account/mmp-reset": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/account/no-convert-repay": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/account/quick-repayment": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/account/repay": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/account/set-collateral-switch": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/account/set-collateral-switch-batch": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/account/set-hedging-mode": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/account/set-limit-px-action": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/account/set-margin-mode": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/account/upgrade-to-uta": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/asset/covert/get-quote": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.v5/asset/covert/small-balance-execute": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.v5/asset/deposit/deposit-to-account": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/asset/exchange/convert-execute": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.v5/asset/exchange/quote-apply": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "private.post.v5/asset/transfer/inter-transfer": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.v5/asset/transfer/save-transfer-sub-member": {
+      "api": 150,
+      "rate_limit": {
+        "axes": {},
+        "cost": 150
+      }
+    },
+    "private.post.v5/asset/transfer/universal-transfer": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.v5/asset/withdraw/cancel": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.v5/asset/withdraw/create": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.v5/broker/award/distribute-award": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/broker/award/distribution-record": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/broker/award/info": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/crypto-loan-common/adjust-ltv": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.v5/crypto-loan-common/max-loan": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.v5/crypto-loan-fixed/borrow": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.v5/crypto-loan-fixed/borrow-order-cancel": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.v5/crypto-loan-fixed/fully-repay": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.v5/crypto-loan-fixed/renew": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.v5/crypto-loan-fixed/repay-collateral": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.v5/crypto-loan-fixed/supply": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.v5/crypto-loan-fixed/supply-order-cancel": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.v5/crypto-loan-flexible/borrow": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.v5/crypto-loan-flexible/repay": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.v5/crypto-loan-flexible/repay-collateral": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.v5/crypto-loan/adjust-ltv": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/crypto-loan/borrow": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/crypto-loan/repay": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/earn/place-order": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/fiat/quote-apply": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.v5/fiat/trade-execute": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.v5/ins-loan/association-uid": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/ins-loan/repay-loan": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/lending/purchase": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/lending/redeem": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/lending/redeem-cancel": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/order/amend": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/order/amend-batch": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/order/cancel": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.v5/order/cancel-all": {
+      "api": 50,
+      "rate_limit": {
+        "axes": {},
+        "cost": 50
+      }
+    },
+    "private.post.v5/order/cancel-batch": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/order/pre-check": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.v5/order/create": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.v5/order/create-batch": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/order/disconnected-cancel-all": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/position/add-margin": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/position/confirm-pending-mmr": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/position/move-positions": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/position/set-auto-add-margin": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/position/set-leverage": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/position/set-risk-limit": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/position/set-tpsl-mode": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/position/switch-isolated": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/position/switch-mode": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/position/trading-stop": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/spot-cross-margin-trade/loan": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.v5/spot-cross-margin-trade/repay": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.v5/spot-cross-margin-trade/switch": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.v5/spot-lever-token/purchase": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.v5/spot-lever-token/redeem": {
+      "api": 2.5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 2.5
+      }
+    },
+    "private.post.v5/spot-margin-trade/set-auto-repay-mode": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/spot-margin-trade/set-leverage": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/spot-margin-trade/switch-mode": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "private.post.v5/user/create-sub-api": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.v5/user/create-sub-member": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.v5/user/delete-api": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.v5/user/delete-sub-api": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.v5/user/frozen-sub-member": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.v5/user/update-api": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "private.post.v5/user/update-sub-api": {
+      "api": 10,
+      "rate_limit": {
+        "axes": {},
+        "cost": 10
+      }
+    },
+    "public.get.contract/v3/public/copytrading/symbol/list": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.derivatives/v3/public/delivery-price": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.derivatives/v3/public/funding/history-funding-rate": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.derivatives/v3/public/index-price-kline": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.derivatives/v3/public/instruments-info": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.derivatives/v3/public/insurance": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.derivatives/v3/public/kline": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.derivatives/v3/public/mark-price-kline": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.derivatives/v3/public/open-interest": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.derivatives/v3/public/order-book/L2": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.derivatives/v3/public/recent-trade": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.derivatives/v3/public/risk-limit/list": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.derivatives/v3/public/tickers": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.spot/v3/public/infos": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.spot/v3/public/margin-ensure-tokens": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.spot/v3/public/margin-product-infos": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.spot/v3/public/quote/depth": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.spot/v3/public/quote/depth/merged": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.spot/v3/public/quote/kline": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.spot/v3/public/quote/ticker/24hr": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.spot/v3/public/quote/ticker/bookTicker": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.spot/v3/public/quote/ticker/price": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.spot/v3/public/quote/trades": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.spot/v3/public/server-time": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.spot/v3/public/symbols": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.v3/public/time": {
+      "api": 1,
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.v5/announcements/index": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/crypto-loan-common/collateral-data": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/crypto-loan-common/loanable-data": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/crypto-loan-fixed/borrow-order-quote": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/crypto-loan-fixed/supply-order-quote": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/crypto-loan/collateral-data": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/crypto-loan/loanable-data": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/earn/product": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/ins-loan/ensure-tokens-convert": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/ins-loan/product-infos": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/market/account-ratio": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/market/delivery-price": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/market/funding/history": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/market/historical-volatility": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/market/index-price-kline": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/market/instruments-info": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/market/insurance": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/market/kline": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/market/mark-price-kline": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/market/open-interest": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/market/orderbook": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/market/premium-index-price-kline": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/market/recent-trade": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/market/risk-limit": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/market/tickers": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/market/time": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/spot-cross-margin-trade/borrow-token": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/spot-cross-margin-trade/data": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/spot-cross-margin-trade/pledge-token": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/spot-lever-token/info": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/spot-lever-token/reference": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/spot-margin-trade/collateral": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/spot-margin-trade/data": {
+      "api": 5,
+      "rate_limit": {
+        "axes": {},
+        "cost": 5
+      }
+    },
+    "public.get.v5/system/status": {
+      "api": 5
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "currencies": null,
+  "patterns": {
+    "spot": {
+      "separator": "-",
+      "type": "spot"
+    }
+  },
+  "symbol_patterns": {
+    "spot": {
+      "case": "upper",
+      "date_format": null,
+      "pattern": "dash_upper",
+      "prefix": null,
+      "separator": "-",
+      "suffix": null
+    }
+  }
+}

@@ -1,0 +1,6185 @@
+{
+  "symbol_patterns": {
+    "spot": {
+      "case": "upper",
+      "date_format": null,
+      "pattern": "no_separator_upper",
+      "prefix": null,
+      "separator": "",
+      "suffix": null
+    },
+    "swap": {
+      "case": "upper",
+      "date_format": null,
+      "pattern": "implicit",
+      "prefix": null,
+      "separator": "",
+      "suffix": null
+    }
+  },
+  "currencies": {
+    "AAPL": {
+      "code": "AAPL",
+      "fees": {},
+      "id": "413",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "AAPL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "AAVE0": {
+      "code": "AAVE0",
+      "fees": {},
+      "id": "346",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "AAVE0",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "ADHD": {
+      "code": "ADHD",
+      "fees": {},
+      "id": "46",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ADHD",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "AIR": {
+      "code": "AIR",
+      "fees": {},
+      "id": "225",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "AIR",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "AMZN": {
+      "code": "AMZN",
+      "fees": {},
+      "id": "421",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "AMZN",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "ANGY": {
+      "code": "ANGY",
+      "fees": {},
+      "id": "81",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ANGY",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "ANIME": {
+      "code": "ANIME",
+      "fees": {},
+      "id": "167",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ANIME",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "ANON": {
+      "code": "ANON",
+      "fees": {},
+      "id": "218",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ANON",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "ANSEM": {
+      "code": "ANSEM",
+      "fees": {},
+      "id": "19",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ANSEM",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "ANT": {
+      "code": "ANT",
+      "fees": {},
+      "id": "62",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ANT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "ANZ": {
+      "code": "ANZ",
+      "fees": {},
+      "id": "170",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ANZ",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "APEXHL": {
+      "code": "APEXHL",
+      "fees": {},
+      "id": "387",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "APEXHL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "APU": {
+      "code": "APU",
+      "fees": {},
+      "id": "207",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "APU",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "ARI": {
+      "code": "ARI",
+      "fees": {},
+      "id": "58",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ARI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "ASF": {
+      "code": "ASF",
+      "fees": {},
+      "id": "278",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ASF",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "ASI": {
+      "code": "ASI",
+      "fees": {},
+      "id": "40",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ASI",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "ATEHUN": {
+      "code": "ATEHUN",
+      "fees": {},
+      "id": "64",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ATEHUN",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "AURA": {
+      "code": "AURA",
+      "fees": {},
+      "id": "334",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "AURA",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "AUTIST": {
+      "code": "AUTIST",
+      "fees": {},
+      "id": "136",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "AUTIST",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "AVAX0": {
+      "code": "AVAX0",
+      "fees": {},
+      "id": "347",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "AVAX0",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "AVGO": {
+      "code": "AVGO",
+      "fees": {},
+      "id": "431",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "AVGO",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "AXL": {
+      "code": "AXL",
+      "fees": {},
+      "id": "388",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "AXL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "AZTEC": {
+      "code": "AZTEC",
+      "fees": {},
+      "id": "442",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "AZTEC",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "AZUR": {
+      "code": "AZUR",
+      "fees": {},
+      "id": "140",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "AZUR",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "B": {
+      "code": "B",
+      "fees": {},
+      "id": "238",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "B",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BAGS": {
+      "code": "BAGS",
+      "fees": {},
+      "id": "18",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BAGS",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "BALT": {
+      "code": "BALT",
+      "fees": {},
+      "id": "327",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BALT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BAPE": {
+      "code": "BAPE",
+      "fees": {},
+      "id": "270",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BAPE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BASED": {
+      "code": "BASED",
+      "fees": {},
+      "id": "339",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BASED",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "BAYC": {
+      "code": "BAYC",
+      "fees": {},
+      "id": "330",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BAYC",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BEAT": {
+      "code": "BEAT",
+      "fees": {},
+      "id": "279",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BEAT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BEATS": {
+      "code": "BEATS",
+      "fees": {},
+      "id": "176",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BEATS",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BERA": {
+      "code": "BERA",
+      "fees": {},
+      "id": "80",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BERA",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "BERRIE": {
+      "code": "BERRIE",
+      "fees": {},
+      "id": "324",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BERRIE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BID": {
+      "code": "BID",
+      "fees": {},
+      "id": "37",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BID",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "BIGBEN": {
+      "code": "BIGBEN",
+      "fees": {},
+      "id": "23",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BIGBEN",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BLND": {
+      "code": "BLND",
+      "fees": {},
+      "id": "287",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BLND",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BLOB": {
+      "code": "BLOB",
+      "fees": {},
+      "id": "396",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BLOB",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "BLUAI": {
+      "code": "BLUAI",
+      "fees": {},
+      "id": "314",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BLUAI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BNB0": {
+      "code": "BNB0",
+      "fees": {},
+      "id": "436",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BNB0",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BNB1": {
+      "code": "BNB1",
+      "fees": {},
+      "id": "414",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BNB1",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "BORG": {
+      "code": "BORG",
+      "fees": {},
+      "id": "244",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BORG",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BOUNCE": {
+      "code": "BOUNCE",
+      "fees": {},
+      "id": "391",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BOUNCE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BOZO": {
+      "code": "BOZO",
+      "fees": {},
+      "id": "113",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BOZO",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "BRIDGE": {
+      "code": "BRIDGE",
+      "fees": {},
+      "id": "73",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BRIDGE",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "BRLA": {
+      "code": "BRLA",
+      "fees": {},
+      "id": "434",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BRLA",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BUBZ": {
+      "code": "BUBZ",
+      "fees": {},
+      "id": "158",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BUBZ",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BUDDY": {
+      "code": "BUDDY",
+      "fees": {},
+      "id": "222",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BUDDY",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BULL": {
+      "code": "BULL",
+      "fees": {},
+      "id": "336",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BULL",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "BUSSY": {
+      "code": "BUSSY",
+      "fees": {},
+      "id": "125",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BUSSY",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "BZEC": {
+      "code": "BZEC",
+      "fees": {},
+      "id": "389",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "BZEC",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "CAPPY": {
+      "code": "CAPPY",
+      "fees": {},
+      "id": "8",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CAPPY",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "CASH": {
+      "code": "CASH",
+      "fees": {},
+      "id": "355",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CASH",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "CAT": {
+      "code": "CAT",
+      "fees": {},
+      "id": "48",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CAT",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "CATBAL": {
+      "code": "CATBAL",
+      "fees": {},
+      "id": "76",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CATBAL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "CATH": {
+      "code": "CATH",
+      "fees": {},
+      "id": "250",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CATH",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "CATNIP": {
+      "code": "CATNIP",
+      "fees": {},
+      "id": "28",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CATNIP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "CBD": {
+      "code": "CBD",
+      "fees": {},
+      "id": "57",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CBD",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "CEXY": {
+      "code": "CEXY",
+      "fees": {},
+      "id": "397",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CEXY",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "CFX0": {
+      "code": "CFX0",
+      "fees": {},
+      "id": "441",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CFX0",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "CHECK": {
+      "code": "CHECK",
+      "fees": {},
+      "id": "427",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CHECK",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "CHEF": {
+      "code": "CHEF",
+      "fees": {},
+      "id": "139",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CHEF",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "CHINA": {
+      "code": "CHINA",
+      "fees": {},
+      "id": "100",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CHINA",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "CINDY": {
+      "code": "CINDY",
+      "fees": {},
+      "id": "99",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CINDY",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "COIN": {
+      "code": "COIN",
+      "fees": {},
+      "id": "258",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "COIN",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "COKE": {
+      "code": "COKE",
+      "fees": {},
+      "id": "54",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "COKE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "COOK": {
+      "code": "COOK",
+      "fees": {},
+      "id": "242",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "COOK",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "COPE": {
+      "code": "COPE",
+      "fees": {},
+      "id": "147",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "COPE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "COZY": {
+      "code": "COZY",
+      "fees": {},
+      "id": "66",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "COZY",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "CRCL": {
+      "code": "CRCL",
+      "fees": {},
+      "id": "409",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CRCL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "CRCT": {
+      "code": "CRCT",
+      "fees": {},
+      "id": "363",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CRCT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "CREAM": {
+      "code": "CREAM",
+      "fees": {},
+      "id": "166",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CREAM",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "CRX": {
+      "code": "CRX",
+      "fees": {},
+      "id": "455",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CRX",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "CZ": {
+      "code": "CZ",
+      "fees": {},
+      "id": "17",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "CZ",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "DBLN": {
+      "code": "DBLN",
+      "fees": {},
+      "id": "332",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "DBLN",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "DBR": {
+      "code": "DBR",
+      "fees": {},
+      "id": "185",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "DBR",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "DEFI": {
+      "code": "DEFI",
+      "fees": {},
+      "id": "275",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "DEFI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "DEFIN": {
+      "code": "DEFIN",
+      "fees": {},
+      "id": "206",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "DEFIN",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "DEPIN": {
+      "code": "DEPIN",
+      "fees": {},
+      "id": "174",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "DEPIN",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "DEXARI": {
+      "code": "DEXARI",
+      "fees": {},
+      "id": "337",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "DEXARI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "DHYPE": {
+      "code": "DHYPE",
+      "fees": {},
+      "id": "230",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "DHYPE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "DIABLO": {
+      "code": "DIABLO",
+      "fees": {},
+      "id": "271",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "DIABLO",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "DIME": {
+      "code": "DIME",
+      "fees": {},
+      "id": "445",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "DIME",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "DNDX": {
+      "code": "DNDX",
+      "fees": {},
+      "id": "290",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "DNDX",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "DOG": {
+      "code": "DOG",
+      "fees": {},
+      "id": "82",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "DOG",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "DRIVE": {
+      "code": "DRIVE",
+      "fees": {},
+      "id": "195",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "DRIVE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "DROP": {
+      "code": "DROP",
+      "fees": {},
+      "id": "56",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "DROP",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "DURIAN": {
+      "code": "DURIAN",
+      "fees": {},
+      "id": "362",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "DURIAN",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "DUSD": {
+      "code": "DUSD",
+      "fees": {},
+      "id": "309",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "DUSD",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "EARTH": {
+      "code": "EARTH",
+      "fees": {},
+      "id": "141",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "EARTH",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "EBISU": {
+      "code": "EBISU",
+      "fees": {},
+      "id": "274",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "EBISU",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "EDA": {
+      "code": "EDA",
+      "fees": {},
+      "id": "231",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "EDA",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "EDGE": {
+      "code": "EDGE",
+      "fees": {},
+      "id": "200",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "EDGE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "END": {
+      "code": "END",
+      "fees": {},
+      "id": "276",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "END",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "ETHC": {
+      "code": "ETHC",
+      "fees": {},
+      "id": "169",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ETHC",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "EUR": {
+      "code": "EUR",
+      "fees": {},
+      "id": "88",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "EUR",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "EX": {
+      "code": "EX",
+      "fees": {},
+      "id": "316",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "EX",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "EXP": {
+      "code": "EXP",
+      "fees": {},
+      "id": "233",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "EXP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "FAN": {
+      "code": "FAN",
+      "fees": {},
+      "id": "145",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FAN",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "FARM": {
+      "code": "FARM",
+      "fees": {},
+      "id": "161",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FARM",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "FARMED": {
+      "code": "FARMED",
+      "fees": {},
+      "id": "32",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FARMED",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "FATCAT": {
+      "code": "FATCAT",
+      "fees": {},
+      "id": "126",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FATCAT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "FEIT": {
+      "code": "FEIT",
+      "fees": {},
+      "id": "132",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FEIT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "FELIX": {
+      "code": "FELIX",
+      "fees": {},
+      "id": "117",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FELIX",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "FEUSD": {
+      "code": "FEUSD",
+      "fees": {},
+      "id": "241",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FEUSD",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "FI": {
+      "code": "FI",
+      "fees": {},
+      "id": "284",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "FITTED": {
+      "code": "FITTED",
+      "fees": {},
+      "id": "315",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FITTED",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "FLASK": {
+      "code": "FLASK",
+      "fees": {},
+      "id": "162",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FLASK",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "FLOW": {
+      "code": "FLOW",
+      "fees": {},
+      "id": "370",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FLOW",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "FLR": {
+      "code": "FLR",
+      "fees": {},
+      "id": "351",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FLR",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "FLY": {
+      "code": "FLY",
+      "fees": {},
+      "id": "187",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FLY",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "FRAC": {
+      "code": "FRAC",
+      "fees": {},
+      "id": "63",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FRAC",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "FRCT": {
+      "code": "FRCT",
+      "fees": {},
+      "id": "65",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FRCT",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "FRIED": {
+      "code": "FRIED",
+      "fees": {},
+      "id": "102",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FRIED",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "FRUDO": {
+      "code": "FRUDO",
+      "fees": {},
+      "id": "134",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FRUDO",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "FUCKY": {
+      "code": "FUCKY",
+      "fees": {},
+      "id": "16",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FUCKY",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "FUN": {
+      "code": "FUN",
+      "fees": {},
+      "id": "21",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FUN",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "FUND": {
+      "code": "FUND",
+      "fees": {},
+      "id": "232",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FUND",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "FUNT": {
+      "code": "FUNT",
+      "fees": {},
+      "id": "478",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FUNT",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "FXRP": {
+      "code": "FXRP",
+      "fees": {},
+      "id": "367",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "FXRP",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "G": {
+      "code": "G",
+      "fees": {},
+      "id": "110",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "G",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "GAME": {
+      "code": "GAME",
+      "fees": {},
+      "id": "171",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "GAME",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "GEN": {
+      "code": "GEN",
+      "fees": {},
+      "id": "201",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "GEN",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "GENESY": {
+      "code": "GENESY",
+      "fees": {},
+      "id": "156",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "GENESY",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "GG": {
+      "code": "GG",
+      "fees": {},
+      "id": "181",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "GG",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "GIGA": {
+      "code": "GIGA",
+      "fees": {},
+      "id": "116",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "GIGA",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "GLD": {
+      "code": "GLD",
+      "fees": {},
+      "id": "432",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "GLD",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "GMEOW": {
+      "code": "GMEOW",
+      "fees": {},
+      "id": "11",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "GMEOW",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "GNC": {
+      "code": "GNC",
+      "fees": {},
+      "id": "423",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "GNC",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "GOD": {
+      "code": "GOD",
+      "fees": {},
+      "id": "165",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "GOD",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "GOOGL": {
+      "code": "GOOGL",
+      "fees": {},
+      "id": "412",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "GOOGL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "GPT": {
+      "code": "GPT",
+      "fees": {},
+      "id": "35",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "GPT",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "GUESS": {
+      "code": "GUESS",
+      "fees": {},
+      "id": "74",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "GUESS",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "GUP": {
+      "code": "GUP",
+      "fees": {},
+      "id": "34",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "GUP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "H": {
+      "code": "H",
+      "fees": {},
+      "id": "109",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "H",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "HANA": {
+      "code": "HANA",
+      "fees": {},
+      "id": "212",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HANA",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HAPPY": {
+      "code": "HAPPY",
+      "fees": {},
+      "id": "29",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HAPPY",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HAR": {
+      "code": "HAR",
+      "fees": {},
+      "id": "205",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HAR",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HBNB": {
+      "code": "HBNB",
+      "fees": {},
+      "id": "381",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HBNB",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HBOOST": {
+      "code": "HBOOST",
+      "fees": {},
+      "id": "31",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HBOOST",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "HEAD": {
+      "code": "HEAD",
+      "fees": {},
+      "id": "199",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HEAD",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HETU": {
+      "code": "HETU",
+      "fees": {},
+      "id": "180",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HETU",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HFUN": {
+      "code": "HFUN",
+      "fees": {},
+      "id": "2",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HFUN",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HGOD": {
+      "code": "HGOD",
+      "fees": {},
+      "id": "137",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HGOD",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HIP": {
+      "code": "HIP",
+      "fees": {},
+      "id": "236",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HIP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HIPPO": {
+      "code": "HIPPO",
+      "fees": {},
+      "id": "211",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HIPPO",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "HMT": {
+      "code": "HMT",
+      "fees": {},
+      "id": "405",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HMT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HODL": {
+      "code": "HODL",
+      "fees": {},
+      "id": "38",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HODL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HOLD": {
+      "code": "HOLD",
+      "fees": {},
+      "id": "153",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HOLD",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HOLY": {
+      "code": "HOLY",
+      "fees": {},
+      "id": "294",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HOLY",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "HOOD": {
+      "code": "HOOD",
+      "fees": {},
+      "id": "415",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HOOD",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "HOP": {
+      "code": "HOP",
+      "fees": {},
+      "id": "144",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HOP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HOPE": {
+      "code": "HOPE",
+      "fees": {},
+      "id": "122",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HOPE",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "HORSY": {
+      "code": "HORSY",
+      "fees": {},
+      "id": "220",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HORSY",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HPENGU": {
+      "code": "HPENGU",
+      "fees": {},
+      "id": "292",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HPENGU",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HPEPE": {
+      "code": "HPEPE",
+      "fees": {},
+      "id": "49",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HPEPE",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "HPL": {
+      "code": "HPL",
+      "fees": {},
+      "id": "120",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HPL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HPUMP": {
+      "code": "HPUMP",
+      "fees": {},
+      "id": "93",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HPUMP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HPYH": {
+      "code": "HPYH",
+      "fees": {},
+      "id": "148",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HPYH",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HQ": {
+      "code": "HQ",
+      "fees": {},
+      "id": "87",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HQ",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "HREKT": {
+      "code": "HREKT",
+      "fees": {},
+      "id": "317",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HREKT",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "HSEI": {
+      "code": "HSEI",
+      "fees": {},
+      "id": "437",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HSEI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HTAO": {
+      "code": "HTAO",
+      "fees": {},
+      "id": "452",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HTAO",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HUSD": {
+      "code": "HUSD",
+      "fees": {},
+      "id": "229",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HUSD",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "HUSDE": {
+      "code": "HUSDE",
+      "fees": {},
+      "id": "329",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HUSDE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HWAVE": {
+      "code": "HWAVE",
+      "fees": {},
+      "id": "301",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HWAVE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HWHLP": {
+      "code": "HWHLP",
+      "fees": {},
+      "id": "305",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HWHLP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HWHYPE": {
+      "code": "HWHYPE",
+      "fees": {},
+      "id": "310",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HWHYPE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HWTR": {
+      "code": "HWTR",
+      "fees": {},
+      "id": "189",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HWTR",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HY": {
+      "code": "HY",
+      "fees": {},
+      "id": "298",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HY",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HYBR": {
+      "code": "HYBR",
+      "fees": {},
+      "id": "394",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HYBR",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HYENA": {
+      "code": "HYENA",
+      "fees": {},
+      "id": "168",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HYENA",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HYFI": {
+      "code": "HYFI",
+      "fees": {},
+      "id": "160",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HYFI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "HYPE": {
+      "code": "HYPE",
+      "fees": {},
+      "id": "150",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "HYPE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "ILIENS": {
+      "code": "ILIENS",
+      "fees": {},
+      "id": "15",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ILIENS",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "IRL": {
+      "code": "IRL",
+      "fees": {},
+      "id": "96",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "IRL",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "ISLAND": {
+      "code": "ISLAND",
+      "fees": {},
+      "id": "183",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ISLAND",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "IXRP": {
+      "code": "IXRP",
+      "fees": {},
+      "id": "357",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "IXRP",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "IZEC": {
+      "code": "IZEC",
+      "fees": {},
+      "id": "376",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "IZEC",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "JEET": {
+      "code": "JEET",
+      "fees": {},
+      "id": "55",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "JEET",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "JEFE": {
+      "code": "JEFE",
+      "fees": {},
+      "id": "70",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "JEFE",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "JEFF": {
+      "code": "JEFF",
+      "fees": {},
+      "id": "5",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "JEFF",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "JOFF": {
+      "code": "JOFF",
+      "fees": {},
+      "id": "296",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "JOFF",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "JPEG": {
+      "code": "JPEG",
+      "fees": {},
+      "id": "196",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "JPEG",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "JUNO": {
+      "code": "JUNO",
+      "fees": {},
+      "id": "444",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "JUNO",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "K": {
+      "code": "K",
+      "fees": {},
+      "id": "226",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "K",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "KEI": {
+      "code": "KEI",
+      "fees": {},
+      "id": "335",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "KEI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "KHYPE": {
+      "code": "KHYPE",
+      "fees": {},
+      "id": "121",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "KHYPE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "KING": {
+      "code": "KING",
+      "fees": {},
+      "id": "60",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "KING",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "KITE": {
+      "code": "KITE",
+      "fees": {},
+      "id": "457",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "KITE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "KITTEN": {
+      "code": "KITTEN",
+      "fees": {},
+      "id": "247",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "KITTEN",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "KITTY": {
+      "code": "KITTY",
+      "fees": {},
+      "id": "256",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "KITTY",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "KNTQ": {
+      "code": "KNTQ",
+      "fees": {},
+      "id": "124",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "KNTQ",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "KOBE": {
+      "code": "KOBE",
+      "fees": {},
+      "id": "24",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "KOBE",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "L": {
+      "code": "L",
+      "fees": {},
+      "id": "108",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "L",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "LADY": {
+      "code": "LADY",
+      "fees": {},
+      "id": "47",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LADY",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "LAMA": {
+      "code": "LAMA",
+      "fees": {},
+      "id": "450",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LAMA",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "LATINA": {
+      "code": "LATINA",
+      "fees": {},
+      "id": "223",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LATINA",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "LAUNCH": {
+      "code": "LAUNCH",
+      "fees": {},
+      "id": "95",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LAUNCH",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "LBS": {
+      "code": "LBS",
+      "fees": {},
+      "id": "273",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LBS",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "LEAP": {
+      "code": "LEAP",
+      "fees": {},
+      "id": "41",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LEAP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "LEND": {
+      "code": "LEND",
+      "fees": {},
+      "id": "249",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LEND",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "LICK": {
+      "code": "LICK",
+      "fees": {},
+      "id": "3",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LICK",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "LICKO": {
+      "code": "LICKO",
+      "fees": {},
+      "id": "307",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LICKO",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "LIM": {
+      "code": "LIM",
+      "fees": {},
+      "id": "228",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LIM",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "LINK0": {
+      "code": "LINK0",
+      "fees": {},
+      "id": "341",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LINK0",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "LIQD": {
+      "code": "LIQD",
+      "fees": {},
+      "id": "178",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LIQD",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "LIQUID": {
+      "code": "LIQUID",
+      "fees": {},
+      "id": "138",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LIQUID",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "LMTS": {
+      "code": "LMTS",
+      "fees": {},
+      "id": "446",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LMTS",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "LOOP": {
+      "code": "LOOP",
+      "fees": {},
+      "id": "263",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LOOP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "LOOT": {
+      "code": "LOOT",
+      "fees": {},
+      "id": "215",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LOOT",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "LORA": {
+      "code": "LORA",
+      "fees": {},
+      "id": "75",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LORA",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "LQNA": {
+      "code": "LQNA",
+      "fees": {},
+      "id": "129",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LQNA",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "LTHREE": {
+      "code": "LTHREE",
+      "fees": {},
+      "id": "264",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LTHREE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "LUCKY": {
+      "code": "LUCKY",
+      "fees": {},
+      "id": "143",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LUCKY",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "LUMI": {
+      "code": "LUMI",
+      "fees": {},
+      "id": "216",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "LUMI",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "MAGA": {
+      "code": "MAGA",
+      "fees": {},
+      "id": "51",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MAGA",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "MAK": {
+      "code": "MAK",
+      "fees": {},
+      "id": "390",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MAK",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "MANLET": {
+      "code": "MANLET",
+      "fees": {},
+      "id": "4",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MANLET",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "MAWARI": {
+      "code": "MAWARI",
+      "fees": {},
+      "id": "379",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MAWARI",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "MAX": {
+      "code": "MAX",
+      "fees": {},
+      "id": "734",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MAX",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "MAXI": {
+      "code": "MAXI",
+      "fees": {},
+      "id": "84",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MAXI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "MBAPPE": {
+      "code": "MBAPPE",
+      "fees": {},
+      "id": "50",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MBAPPE",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "MEOW": {
+      "code": "MEOW",
+      "fees": {},
+      "id": "61",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MEOW",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "META": {
+      "code": "META",
+      "fees": {},
+      "id": "422",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "META",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "MGW": {
+      "code": "MGW",
+      "fees": {},
+      "id": "641",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MGW",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "MHYPE": {
+      "code": "MHYPE",
+      "fees": {},
+      "id": "369",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MHYPE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "MMOVE": {
+      "code": "MMOVE",
+      "fees": {},
+      "id": "395",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MMOVE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "MOCA": {
+      "code": "MOCA",
+      "fees": {},
+      "id": "208",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MOCA",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "MOG": {
+      "code": "MOG",
+      "fees": {},
+      "id": "52",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MOG",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "MON": {
+      "code": "MON",
+      "fees": {},
+      "id": "164",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MON",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "MONAD": {
+      "code": "MONAD",
+      "fees": {},
+      "id": "112",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MONAD",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "MONEY": {
+      "code": "MONEY",
+      "fees": {},
+      "id": "311",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MONEY",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "MOON": {
+      "code": "MOON",
+      "fees": {},
+      "id": "83",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MOON",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "MORE": {
+      "code": "MORE",
+      "fees": {},
+      "id": "214",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MORE",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "MSFT": {
+      "code": "MSFT",
+      "fees": {},
+      "id": "429",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MSFT",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "MSTR": {
+      "code": "MSTR",
+      "fees": {},
+      "id": "417",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MSTR",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "MU": {
+      "code": "MU",
+      "fees": {},
+      "id": "435",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MU",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "MUNCH": {
+      "code": "MUNCH",
+      "fees": {},
+      "id": "146",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "MUNCH",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "NASDAQ": {
+      "code": "NASDAQ",
+      "fees": {},
+      "id": "130",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "NASDAQ",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "NATIVE": {
+      "code": "NATIVE",
+      "fees": {},
+      "id": "359",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "NATIVE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "NBT": {
+      "code": "NBT",
+      "fees": {},
+      "id": "382",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "NBT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "NEIRO": {
+      "code": "NEIRO",
+      "fees": {},
+      "id": "78",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "NEIRO",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "NEKO": {
+      "code": "NEKO",
+      "fees": {},
+      "id": "190",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "NEKO",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "NEST": {
+      "code": "NEST",
+      "fees": {},
+      "id": "399",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "NEST",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "NET": {
+      "code": "NET",
+      "fees": {},
+      "id": "262",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "NET",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "NEURAL": {
+      "code": "NEURAL",
+      "fees": {},
+      "id": "193",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "NEURAL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "NFT": {
+      "code": "NFT",
+      "fees": {},
+      "id": "69",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "NFT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "NIGGO": {
+      "code": "NIGGO",
+      "fees": {},
+      "id": "142",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "NIGGO",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "NMTD": {
+      "code": "NMTD",
+      "fees": {},
+      "id": "92",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "NMTD",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "NOCEX": {
+      "code": "NOCEX",
+      "fees": {},
+      "id": "105",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "NOCEX",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "NQ": {
+      "code": "NQ",
+      "fees": {},
+      "id": "286",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "NQ",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "NVDA": {
+      "code": "NVDA",
+      "fees": {},
+      "id": "408",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "NVDA",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "NYAN": {
+      "code": "NYAN",
+      "fees": {},
+      "id": "428",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "NYAN",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "OG": {
+      "code": "OG",
+      "fees": {},
+      "id": "353",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "OG",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "OKI": {
+      "code": "OKI",
+      "fees": {},
+      "id": "243",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "OKI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "OMNIX": {
+      "code": "OMNIX",
+      "fees": {},
+      "id": "53",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "OMNIX",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "ONEAR": {
+      "code": "ONEAR",
+      "fees": {},
+      "id": "513",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ONEAR",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "ONLYUP": {
+      "code": "ONLYUP",
+      "fees": {},
+      "id": "252",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ONLYUP",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "OPENAI": {
+      "code": "OPENAI",
+      "fees": {},
+      "id": "418",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "OPENAI",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "ORA": {
+      "code": "ORA",
+      "fees": {},
+      "id": "177",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ORA",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "ORCL": {
+      "code": "ORCL",
+      "fees": {},
+      "id": "430",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ORCL",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "OTTI": {
+      "code": "OTTI",
+      "fees": {},
+      "id": "219",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "OTTI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "PAIN": {
+      "code": "PAIN",
+      "fees": {},
+      "id": "85",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PAIN",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "PAIR": {
+      "code": "PAIR",
+      "fees": {},
+      "id": "293",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PAIR",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "PANDA": {
+      "code": "PANDA",
+      "fees": {},
+      "id": "36",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PANDA",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "PB": {
+      "code": "PB",
+      "fees": {},
+      "id": "386",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PB",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "PEAR": {
+      "code": "PEAR",
+      "fees": {},
+      "id": "71",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PEAR",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "PEG": {
+      "code": "PEG",
+      "fees": {},
+      "id": "192",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PEG",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "PENIS": {
+      "code": "PENIS",
+      "fees": {},
+      "id": "272",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PENIS",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "PEPE": {
+      "code": "PEPE",
+      "fees": {},
+      "id": "12",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PEPE",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "PEPE0": {
+      "code": "PEPE0",
+      "fees": {},
+      "id": "349",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PEPE0",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "PERP": {
+      "code": "PERP",
+      "fees": {},
+      "id": "289",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PERP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "PEUR": {
+      "code": "PEUR",
+      "fees": {},
+      "id": "406",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PEUR",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "PICKL": {
+      "code": "PICKL",
+      "fees": {},
+      "id": "103",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PICKL",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "PIE": {
+      "code": "PIE",
+      "fees": {},
+      "id": "194",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PIE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "PIGEON": {
+      "code": "PIGEON",
+      "fees": {},
+      "id": "94",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PIGEON",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "PILL": {
+      "code": "PILL",
+      "fees": {},
+      "id": "45",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PILL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "PIP": {
+      "code": "PIP",
+      "fees": {},
+      "id": "127",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PIP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "PKMN": {
+      "code": "PKMN",
+      "fees": {},
+      "id": "342",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PKMN",
+      "networks": {},
+      "precision": "0.0000000001",
+      "type": "crypto"
+    },
+    "PLAY": {
+      "code": "PLAY",
+      "fees": {},
+      "id": "261",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PLAY",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "PLUME": {
+      "code": "PLUME",
+      "fees": {},
+      "id": "227",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PLUME",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "POINTS": {
+      "code": "POINTS",
+      "fees": {},
+      "id": "9",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "POINTS",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "POP": {
+      "code": "POP",
+      "fees": {},
+      "id": "68",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "POP",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "PRFI": {
+      "code": "PRFI",
+      "fees": {},
+      "id": "202",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PRFI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "PUMP": {
+      "code": "PUMP",
+      "fees": {},
+      "id": "26",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PUMP",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "PUP": {
+      "code": "PUP",
+      "fees": {},
+      "id": "356",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PUP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "PURR": {
+      "code": "PURR",
+      "fees": {},
+      "id": "1",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PURR",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "PURRO": {
+      "code": "PURRO",
+      "fees": {},
+      "id": "255",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PURRO",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "PURRPS": {
+      "code": "PURRPS",
+      "fees": {},
+      "id": "33",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PURRPS",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "PVP": {
+      "code": "PVP",
+      "fees": {},
+      "id": "43",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "PVP",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "QONE": {
+      "code": "QONE",
+      "fees": {},
+      "id": "401",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "QONE",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "QQQ": {
+      "code": "QQQ",
+      "fees": {},
+      "id": "426",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "QQQ",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "QQQM": {
+      "code": "QQQM",
+      "fees": {},
+      "id": "453",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "QQQM",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "QUANT": {
+      "code": "QUANT",
+      "fees": {},
+      "id": "251",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "QUANT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "RAGE": {
+      "code": "RAGE",
+      "fees": {},
+      "id": "39",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RAGE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "RAM": {
+      "code": "RAM",
+      "fees": {},
+      "id": "400",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RAM",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "RANK": {
+      "code": "RANK",
+      "fees": {},
+      "id": "107",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RANK",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "RAT": {
+      "code": "RAT",
+      "fees": {},
+      "id": "253",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RAT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "RED": {
+      "code": "RED",
+      "fees": {},
+      "id": "354",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RED",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "REGARD": {
+      "code": "REGARD",
+      "fees": {},
+      "id": "89",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "REGARD",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "REI": {
+      "code": "REI",
+      "fees": {},
+      "id": "203",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "REI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "REKT": {
+      "code": "REKT",
+      "fees": {},
+      "id": "91",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "REKT",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "RETARD": {
+      "code": "RETARD",
+      "fees": {},
+      "id": "152",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RETARD",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "REX": {
+      "code": "REX",
+      "fees": {},
+      "id": "340",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "REX",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "RICH": {
+      "code": "RICH",
+      "fees": {},
+      "id": "72",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RICH",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "RIFT": {
+      "code": "RIFT",
+      "fees": {},
+      "id": "172",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RIFT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "RIP": {
+      "code": "RIP",
+      "fees": {},
+      "id": "114",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RIP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "RISE": {
+      "code": "RISE",
+      "fees": {},
+      "id": "97",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RISE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "RISK": {
+      "code": "RISK",
+      "fees": {},
+      "id": "260",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RISK",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "RIVER": {
+      "code": "RIVER",
+      "fees": {},
+      "id": "447",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RIVER",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "RLUSD": {
+      "code": "RLUSD",
+      "fees": {},
+      "id": "392",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RLUSD",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "ROUTE": {
+      "code": "ROUTE",
+      "fees": {},
+      "id": "175",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ROUTE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "RUB": {
+      "code": "RUB",
+      "fees": {},
+      "id": "277",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RUB",
+      "networks": {},
+      "precision": "0.0000000001",
+      "type": "crypto"
+    },
+    "RUBT": {
+      "code": "RUBT",
+      "fees": {},
+      "id": "425",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RUBT",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "RUG": {
+      "code": "RUG",
+      "fees": {},
+      "id": "14",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RUG",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "RYSK": {
+      "code": "RYSK",
+      "fees": {},
+      "id": "333",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RYSK",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "RZR": {
+      "code": "RZR",
+      "fees": {},
+      "id": "348",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "RZR",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "SCAM": {
+      "code": "SCAM",
+      "fees": {},
+      "id": "111",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SCAM",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SCHIZO": {
+      "code": "SCHIZO",
+      "fees": {},
+      "id": "27",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SCHIZO",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SDEX": {
+      "code": "SDEX",
+      "fees": {},
+      "id": "350",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SDEX",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SEDA": {
+      "code": "SEDA",
+      "fees": {},
+      "id": "374",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SEDA",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SELL": {
+      "code": "SELL",
+      "fees": {},
+      "id": "30",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SELL",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "SENT": {
+      "code": "SENT",
+      "fees": {},
+      "id": "186",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SENT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SENTI": {
+      "code": "SENTI",
+      "fees": {},
+      "id": "234",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SENTI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SFC": {
+      "code": "SFC",
+      "fees": {},
+      "id": "366",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SFC",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SHEEP": {
+      "code": "SHEEP",
+      "fees": {},
+      "id": "159",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SHEEP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SHOE": {
+      "code": "SHOE",
+      "fees": {},
+      "id": "123",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SHOE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SHREK": {
+      "code": "SHREK",
+      "fees": {},
+      "id": "104",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SHREK",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SIGN": {
+      "code": "SIGN",
+      "fees": {},
+      "id": "245",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SIGN",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SING": {
+      "code": "SING",
+      "fees": {},
+      "id": "295",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SING",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SIPHER": {
+      "code": "SIPHER",
+      "fees": {},
+      "id": "184",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SIPHER",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SIX": {
+      "code": "SIX",
+      "fees": {},
+      "id": "6",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SIX",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SLAY": {
+      "code": "SLAY",
+      "fees": {},
+      "id": "237",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SLAY",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "SLV": {
+      "code": "SLV",
+      "fees": {},
+      "id": "411",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SLV",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SOLV": {
+      "code": "SOLV",
+      "fees": {},
+      "id": "157",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SOLV",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SOON": {
+      "code": "SOON",
+      "fees": {},
+      "id": "410",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SOON",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SOSA": {
+      "code": "SOSA",
+      "fees": {},
+      "id": "393",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SOSA",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SOVRN": {
+      "code": "SOVRN",
+      "fees": {},
+      "id": "163",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SOVRN",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SPACE": {
+      "code": "SPACE",
+      "fees": {},
+      "id": "424",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SPACE",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "SPACEX": {
+      "code": "SPACEX",
+      "fees": {},
+      "id": "416",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SPACEX",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SPCX": {
+      "code": "SPCX",
+      "fees": {},
+      "id": "480",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SPCX",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "SPCXD": {
+      "code": "SPCXD",
+      "fees": {},
+      "id": "610",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SPCXD",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SPH": {
+      "code": "SPH",
+      "fees": {},
+      "id": "118",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SPH",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SPR": {
+      "code": "SPR",
+      "fees": {},
+      "id": "210",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SPR",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SPY": {
+      "code": "SPY",
+      "fees": {},
+      "id": "420",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SPY",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "SSR": {
+      "code": "SSR",
+      "fees": {},
+      "id": "306",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SSR",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "SSS": {
+      "code": "SSS",
+      "fees": {},
+      "id": "188",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SSS",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "STABLE": {
+      "code": "STABLE",
+      "fees": {},
+      "id": "398",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "STABLE",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "STACK": {
+      "code": "STACK",
+      "fees": {},
+      "id": "101",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "STACK",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "STAKE": {
+      "code": "STAKE",
+      "fees": {},
+      "id": "285",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "STAKE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "STAR": {
+      "code": "STAR",
+      "fees": {},
+      "id": "154",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "STAR",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "STEEL": {
+      "code": "STEEL",
+      "fees": {},
+      "id": "151",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "STEEL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "STHYPE": {
+      "code": "STHYPE",
+      "fees": {},
+      "id": "119",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "STHYPE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "STLOOP": {
+      "code": "STLOOP",
+      "fees": {},
+      "id": "304",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "STLOOP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "STORM": {
+      "code": "STORM",
+      "fees": {},
+      "id": "259",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "STORM",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "STRD": {
+      "code": "STRD",
+      "fees": {},
+      "id": "345",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "STRD",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "STRICT": {
+      "code": "STRICT",
+      "fees": {},
+      "id": "133",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "STRICT",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "SUCKY": {
+      "code": "SUCKY",
+      "fees": {},
+      "id": "22",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SUCKY",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "SWAP": {
+      "code": "SWAP",
+      "fees": {},
+      "id": "213",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SWAP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SWELL": {
+      "code": "SWELL",
+      "fees": {},
+      "id": "173",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SWELL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SYLVI": {
+      "code": "SYLVI",
+      "fees": {},
+      "id": "131",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SYLVI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "SYND": {
+      "code": "SYND",
+      "fees": {},
+      "id": "385",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "SYND",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "TANSSI": {
+      "code": "TANSSI",
+      "fees": {},
+      "id": "372",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TANSSI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "TAO1": {
+      "code": "TAO1",
+      "fees": {},
+      "id": "449",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TAO1",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "TATE": {
+      "code": "TATE",
+      "fees": {},
+      "id": "20",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TATE",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "TEST": {
+      "code": "TEST",
+      "fees": {},
+      "id": "59",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TEST",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "TGE": {
+      "code": "TGE",
+      "fees": {},
+      "id": "198",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TGE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "THBILL": {
+      "code": "THBILL",
+      "fees": {},
+      "id": "323",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "THBILL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "THLP": {
+      "code": "THLP",
+      "fees": {},
+      "id": "308",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "THLP",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "TILT": {
+      "code": "TILT",
+      "fees": {},
+      "id": "209",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TILT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "TIME": {
+      "code": "TIME",
+      "fees": {},
+      "id": "79",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TIME",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "TJIF": {
+      "code": "TJIF",
+      "fees": {},
+      "id": "77",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TJIF",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "TOSHI": {
+      "code": "TOSHI",
+      "fees": {},
+      "id": "328",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TOSHI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "TRADE": {
+      "code": "TRADE",
+      "fees": {},
+      "id": "281",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TRADE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "TREAD": {
+      "code": "TREAD",
+      "fees": {},
+      "id": "512",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TREAD",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "TREE": {
+      "code": "TREE",
+      "fees": {},
+      "id": "283",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TREE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "TREND": {
+      "code": "TREND",
+      "fees": {},
+      "id": "257",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TREND",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "TRUMP": {
+      "code": "TRUMP",
+      "fees": {},
+      "id": "10",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TRUMP",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "TRX0": {
+      "code": "TRX0",
+      "fees": {},
+      "id": "344",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TRX0",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "TRX1": {
+      "code": "TRX1",
+      "fees": {},
+      "id": "454",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TRX1",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "TSLA": {
+      "code": "TSLA",
+      "fees": {},
+      "id": "407",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "TSLA",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "UAVAX": {
+      "code": "UAVAX",
+      "fees": {},
+      "id": "451",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UAVAX",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "UBONK": {
+      "code": "UBONK",
+      "fees": {},
+      "id": "320",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UBONK",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "UBTC": {
+      "code": "UBTC",
+      "fees": {},
+      "id": "197",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UBTC",
+      "networks": {},
+      "precision": "0.0000000001",
+      "type": "crypto"
+    },
+    "UDOGE": {
+      "code": "UDOGE",
+      "fees": {},
+      "id": "365",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UDOGE",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "UDZ": {
+      "code": "UDZ",
+      "fees": {},
+      "id": "361",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UDZ",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "UENA": {
+      "code": "UENA",
+      "fees": {},
+      "id": "338",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UENA",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "UETH": {
+      "code": "UETH",
+      "fees": {},
+      "id": "221",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UETH",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "UFART": {
+      "code": "UFART",
+      "fees": {},
+      "id": "269",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UFART",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "UMEGA": {
+      "code": "UMEGA",
+      "fees": {},
+      "id": "403",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UMEGA",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "UMOG": {
+      "code": "UMOG",
+      "fees": {},
+      "id": "326",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UMOG",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "UMON": {
+      "code": "UMON",
+      "fees": {},
+      "id": "383",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UMON",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "UNIT": {
+      "code": "UNIT",
+      "fees": {},
+      "id": "191",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UNIT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "UP": {
+      "code": "UP",
+      "fees": {},
+      "id": "115",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UP",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "UPHL": {
+      "code": "UPHL",
+      "fees": {},
+      "id": "364",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UPHL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "UPUMP": {
+      "code": "UPUMP",
+      "fees": {},
+      "id": "299",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UPUMP",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "URBIT": {
+      "code": "URBIT",
+      "fees": {},
+      "id": "282",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "URBIT",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "US": {
+      "code": "US",
+      "fees": {},
+      "id": "402",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "US",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "USDC": {
+      "code": "USDC",
+      "fees": {},
+      "id": "0",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "USDC",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "USDE": {
+      "code": "USDE",
+      "fees": {},
+      "id": "235",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "USDE",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "USDG": {
+      "code": "USDG",
+      "fees": {},
+      "id": "352",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "USDG",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "USDH": {
+      "code": "USDH",
+      "fees": {},
+      "id": "360",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "USDH",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "USDHL": {
+      "code": "USDHL",
+      "fees": {},
+      "id": "291",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "USDHL",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "USDN": {
+      "code": "USDN",
+      "fees": {},
+      "id": "377",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "USDN",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "USDT0": {
+      "code": "USDT0",
+      "fees": {},
+      "id": "268",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "USDT0",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "USDUC": {
+      "code": "USDUC",
+      "fees": {},
+      "id": "384",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "USDUC",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "USDV": {
+      "code": "USDV",
+      "fees": {},
+      "id": "448",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "USDV",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "USDXL": {
+      "code": "USDXL",
+      "fees": {},
+      "id": "239",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "USDXL",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "USDY": {
+      "code": "USDY",
+      "fees": {},
+      "id": "303",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "USDY",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "USH": {
+      "code": "USH",
+      "fees": {},
+      "id": "240",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "USH",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "USOL": {
+      "code": "USOL",
+      "fees": {},
+      "id": "254",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "USOL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "USPYX": {
+      "code": "USPYX",
+      "fees": {},
+      "id": "312",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "USPYX",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "USR": {
+      "code": "USR",
+      "fees": {},
+      "id": "248",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "USR",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "UUUSPX": {
+      "code": "UUUSPX",
+      "fees": {},
+      "id": "319",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UUUSPX",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "UVIRT": {
+      "code": "UVIRT",
+      "fees": {},
+      "id": "443",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UVIRT",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "UWLD": {
+      "code": "UWLD",
+      "fees": {},
+      "id": "358",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UWLD",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "UXPL": {
+      "code": "UXPL",
+      "fees": {},
+      "id": "343",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UXPL",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "UZEC": {
+      "code": "UZEC",
+      "fees": {},
+      "id": "419",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "UZEC",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "VAL": {
+      "code": "VAL",
+      "fees": {},
+      "id": "280",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "VAL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "VAPOR": {
+      "code": "VAPOR",
+      "fees": {},
+      "id": "42",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "VAPOR",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "VAULT": {
+      "code": "VAULT",
+      "fees": {},
+      "id": "106",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "VAULT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "VDO": {
+      "code": "VDO",
+      "fees": {},
+      "id": "86",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "VDO",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "VEGAS": {
+      "code": "VEGAS",
+      "fees": {},
+      "id": "25",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "VEGAS",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "VIZN": {
+      "code": "VIZN",
+      "fees": {},
+      "id": "135",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "VIZN",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "VNTLS": {
+      "code": "VNTLS",
+      "fees": {},
+      "id": "371",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "VNTLS",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "VOL": {
+      "code": "VOL",
+      "fees": {},
+      "id": "321",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "VOL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "VORTX": {
+      "code": "VORTX",
+      "fees": {},
+      "id": "204",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "VORTX",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "VSN": {
+      "code": "VSN",
+      "fees": {},
+      "id": "325",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "VSN",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "VULT": {
+      "code": "VULT",
+      "fees": {},
+      "id": "378",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "VULT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "WAGMI": {
+      "code": "WAGMI",
+      "fees": {},
+      "id": "7",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WAGMI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "WAR": {
+      "code": "WAR",
+      "fees": {},
+      "id": "288",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WAR",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "WARS": {
+      "code": "WARS",
+      "fees": {},
+      "id": "479",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WARS",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "WASH": {
+      "code": "WASH",
+      "fees": {},
+      "id": "67",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WASH",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "WATAR": {
+      "code": "WATAR",
+      "fees": {},
+      "id": "155",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WATAR",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "WAVE": {
+      "code": "WAVE",
+      "fees": {},
+      "id": "266",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WAVE",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "WBRL": {
+      "code": "WBRL",
+      "fees": {},
+      "id": "481",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WBRL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "WELL": {
+      "code": "WELL",
+      "fees": {},
+      "id": "265",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WELL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "WHLP": {
+      "code": "WHLP",
+      "fees": {},
+      "id": "302",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WHLP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "WHYPI": {
+      "code": "WHYPI",
+      "fees": {},
+      "id": "217",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WHYPI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "WILD": {
+      "code": "WILD",
+      "fees": {},
+      "id": "322",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WILD",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "WLFI": {
+      "code": "WLFI",
+      "fees": {},
+      "id": "224",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WLFI",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "WMNT": {
+      "code": "WMNT",
+      "fees": {},
+      "id": "246",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WMNT",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "WOOL": {
+      "code": "WOOL",
+      "fees": {},
+      "id": "182",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WOOL",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "WOULD": {
+      "code": "WOULD",
+      "fees": {},
+      "id": "318",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WOULD",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "WOW": {
+      "code": "WOW",
+      "fees": {},
+      "id": "98",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WOW",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "WOWBIT": {
+      "code": "WOWBIT",
+      "fees": {},
+      "id": "440",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WOWBIT",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "WQWQ": {
+      "code": "WQWQ",
+      "fees": {},
+      "id": "313",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WQWQ",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "WUSDN": {
+      "code": "WUSDN",
+      "fees": {},
+      "id": "375",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WUSDN",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "WWB": {
+      "code": "WWB",
+      "fees": {},
+      "id": "439",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WWB",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "WXRP": {
+      "code": "WXRP",
+      "fees": {},
+      "id": "368",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "WXRP",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "X": {
+      "code": "X",
+      "fees": {},
+      "id": "44",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "X",
+      "networks": {},
+      "precision": "0.0000001",
+      "type": "crypto"
+    },
+    "XAUM": {
+      "code": "XAUM",
+      "fees": {},
+      "id": "456",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "XAUM",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "XAUT0": {
+      "code": "XAUT0",
+      "fees": {},
+      "id": "297",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "XAUT0",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "XBG": {
+      "code": "XBG",
+      "fees": {},
+      "id": "179",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "XBG",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "XDC": {
+      "code": "XDC",
+      "fees": {},
+      "id": "380",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "XDC",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "XION": {
+      "code": "XION",
+      "fees": {},
+      "id": "373",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "XION",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "XMR1": {
+      "code": "XMR1",
+      "fees": {},
+      "id": "404",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "XMR1",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "XP": {
+      "code": "XP",
+      "fees": {},
+      "id": "300",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "XP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "XRP1": {
+      "code": "XRP1",
+      "fees": {},
+      "id": "438",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "XRP1",
+      "networks": {},
+      "precision": "0.000000001",
+      "type": "crypto"
+    },
+    "XULIAN": {
+      "code": "XULIAN",
+      "fees": {},
+      "id": "13",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "XULIAN",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "YAP": {
+      "code": "YAP",
+      "fees": {},
+      "id": "149",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "YAP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "YEETI": {
+      "code": "YEETI",
+      "fees": {},
+      "id": "128",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "YEETI",
+      "networks": {},
+      "precision": "0.00001",
+      "type": "crypto"
+    },
+    "YUM": {
+      "code": "YUM",
+      "fees": {},
+      "id": "90",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "YUM",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "YUMA": {
+      "code": "YUMA",
+      "fees": {},
+      "id": "331",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "YUMA",
+      "networks": {},
+      "precision": "0.000001",
+      "type": "crypto"
+    },
+    "ZAMA": {
+      "code": "ZAMA",
+      "fees": {},
+      "id": "433",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ZAMA",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    },
+    "ZAP": {
+      "code": "ZAP",
+      "fees": {},
+      "id": "267",
+      "limits": {
+        "amount": {},
+        "withdraw": {}
+      },
+      "name": "ZAP",
+      "networks": {},
+      "precision": "0.00000001",
+      "type": "crypto"
+    }
+  },
+  "patterns": {
+    "currency_aliases": {
+      "BCHSV": "BSV",
+      "HPENGU": "PENGU",
+      "UBONK": "BONK",
+      "UBTC": "BTC",
+      "UDZ": "2Z",
+      "UETH": "ETH",
+      "UFART": "FARTCOIN",
+      "UPUMP": "PUMP",
+      "USDT0": "USDT",
+      "USOL": "SOL",
+      "UUUSPX": "SPX",
+      "UXPL": "XPL",
+      "XAUT0": "XAUT",
+      "XBT": "BTC"
+    },
+    "spot": {
+      "anomalies": [
+        "PURR/USDC"
+      ],
+      "anomaly_count": 1,
+      "case": null,
+      "examples": [
+        {
+          "baseId": "10000",
+          "id": "PURR/USDC",
+          "quoteId": "USDC",
+          "symbol": "PURR/USDC"
+        },
+        {
+          "baseId": "10001",
+          "id": "@1",
+          "quoteId": "USDC",
+          "symbol": "HFUN/USDC"
+        },
+        {
+          "baseId": "10002",
+          "id": "@2",
+          "quoteId": "USDC",
+          "symbol": "LICK/USDC"
+        }
+      ],
+      "id_structure": "numeric",
+      "sample_count": 299,
+      "separator": null,
+      "suffix": null
+    },
+    "swap": {
+      "anomalies": [],
+      "anomaly_count": 0,
+      "case": null,
+      "examples": [
+        {
+          "baseId": "0",
+          "id": "0",
+          "quoteId": "USDC",
+          "symbol": "BTC/USDC:USDC"
+        },
+        {
+          "baseId": "1",
+          "id": "1",
+          "quoteId": "USDC",
+          "symbol": "ETH/USDC:USDC"
+        },
+        {
+          "baseId": "2",
+          "id": "2",
+          "quoteId": "USDC",
+          "symbol": "ATOM/USDC:USDC"
+        }
+      ],
+      "id_structure": "baseId_only",
+      "sample_count": 425,
+      "separator": null,
+      "suffix": null
+    }
+  },
+  "spot_currency_mapping": {
+    "HPENGU": "PENGU",
+    "UBONK": "BONK",
+    "UBTC": "BTC",
+    "UDZ": "2Z",
+    "UETH": "ETH",
+    "UFART": "FARTCOIN",
+    "UPUMP": "PUMP",
+    "USDT0": "USDT",
+    "USOL": "SOL",
+    "UUUSPX": "SPX",
+    "UXPL": "XPL",
+    "XAUT0": "XAUT"
+  }
+}

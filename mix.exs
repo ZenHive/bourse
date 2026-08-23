@@ -107,7 +107,14 @@ defmodule Bourse.MixProject do
 
   defp package do
     runtime_specs =
-      Enum.map(@runtime_venues, &"priv/venues/#{&1}/authored/spec.json")
+      Enum.flat_map(@runtime_venues, fn venue ->
+        Enum.map(
+          ~w(venue.json markets.json errors.json normalization.json endpoints.json raw.json),
+          &"priv/venues/#{venue}/authored/#{&1}"
+        )
+      end)
+
+    shared_descriptors = ["priv/venues/_shared/binance_family/descriptors.json"]
 
     [
       licenses: ["MIT"],
@@ -122,7 +129,7 @@ defmodule Bourse.MixProject do
         client_lib_files() ++
           ~w(lib/bourse.ex lib/mix/tasks/ccxt.build_lighter_signer.ex) ++
           ~w(native/lighter_signer mix.exs README.md LICENSE NOTICE) ++
-          [@runtime_manifest, @capability_surface | runtime_specs]
+          [@runtime_manifest, @capability_surface] ++ runtime_specs ++ shared_descriptors
     ]
   end
 

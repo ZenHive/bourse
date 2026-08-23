@@ -1,0 +1,2178 @@
+{
+  "addMargin": {
+    "unified": [
+      "privatePostExchange"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "add margin",
+      "errors": null,
+      "name": "addMargin",
+      "params_doc": {
+        "amount": "amount of margin to add",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.subAccountAddress": "sub account user address",
+        "params.vaultAddress": "the vault address",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a [margin structure]{@link https://docs.ccxt.com/?id=margin-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": null,
+            "name": "amount",
+            "optional": false,
+            "type": "number"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<MarginModification>"
+      },
+      "unresolved_reason": null
+    },
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "cancelAllOrdersAfter": {
+    "unified": [
+      "privatePostExchange",
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "nonce": {
+          "kind": "omit",
+          "reason": null,
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "consume": [],
+        "default": "private_post_exchange",
+        "rules": []
+      }
+    },
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "cancelOrder": {
+    "unified": [
+      "privatePostExchange",
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "endpoint_selection": {
+        "consume": [],
+        "default": "private_post_exchange",
+        "rules": []
+      }
+    },
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "cancelOrders": {
+    "unified": [
+      "privatePostExchange",
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "endpoint_selection": {
+        "consume": [],
+        "default": "private_post_exchange",
+        "rules": []
+      }
+    },
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "cancelOrdersForSymbols": {
+    "unified": [
+      "privatePostExchange",
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "nonce": {
+          "kind": "omit",
+          "reason": null,
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "consume": [],
+        "default": "private_post_exchange",
+        "rules": []
+      }
+    },
+    "parse": [
+      "parseToNumeric"
+    ],
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "cancelTwapOrder": {
+    "unified": [
+      "privatePostExchange"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "action": {
+          "kind": "omit",
+          "reason": null,
+          "value": null
+        },
+        "nonce": {
+          "kind": "omit",
+          "reason": null,
+          "value": null
+        },
+        "signature": {
+          "kind": "omit",
+          "reason": null,
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOrder",
+      "parseToInt",
+      "parseToNumeric"
+    ],
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "createOrder": {
+    "unified": [
+      "privatePostExchange",
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "endpoint_selection": {
+        "consume": [],
+        "default": "private_post_exchange",
+        "rules": []
+      }
+    },
+    "parse": [
+      "parseCreateEditOrderArgs"
+    ],
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "createOrderWithTakeProfitAndStopLoss": {
+    "unified": [
+      "privatePostExchange",
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "name": "createOrderWithTakeProfitAndStopLoss",
+      "signature": {
+        "params": [],
+        "return_type": "Promise<Order>"
+      }
+    },
+    "request": {
+      "endpoint_selection": {
+        "consume": [],
+        "default": "private_post_exchange",
+        "rules": []
+      }
+    }
+  },
+  "createOrders": {
+    "unified": [
+      "privatePostExchange",
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "endpoint_selection": {
+        "consume": [],
+        "default": "private_post_exchange",
+        "rules": []
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "createSubAccount": {
+    "unified": [
+      "privatePostExchange"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "nonce": {
+          "kind": "omit",
+          "reason": null,
+          "value": null
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "createTwapOrder": {
+    "unified": [
+      "privatePostExchange",
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "create a trade order that is executed as a TWAP order over a specified duration.",
+      "errors": null,
+      "name": "createTwapOrder",
+      "params_doc": {
+        "amount": "how much of currency you want to trade in units of base currency",
+        "duration": "the duration of the TWAP order in milliseconds",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.expiresAfter": "time in ms after which the twap order expires",
+        "params.randomize": "whether to randomize the time intervals of the TWAP order slices (default is false, meaning equal intervals)",
+        "params.reduceOnly": "true or false whether the order is reduce-only",
+        "params.vaultAddress": "the vault address for order",
+        "side": "'buy' or 'sell'",
+        "symbol": "unified symbol of the market to create an order in"
+      },
+      "returns": {
+        "description": "an [order structure]{@link https://docs.ccxt.com/?id=order-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": null,
+            "name": "side",
+            "optional": false,
+            "type": "OrderSide"
+          },
+          {
+            "default": null,
+            "name": "amount",
+            "optional": false,
+            "type": "number"
+          },
+          {
+            "default": null,
+            "name": "duration",
+            "optional": false,
+            "type": "number"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Order>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "action": {
+          "kind": "omit",
+          "reason": null,
+          "value": null
+        },
+        "nonce": {
+          "kind": "omit",
+          "reason": null,
+          "value": null
+        },
+        "signature": {
+          "kind": "omit",
+          "reason": null,
+          "value": null
+        }
+      },
+      "endpoint_selection": {
+        "consume": [],
+        "default": "private_post_exchange",
+        "rules": []
+      }
+    },
+    "parse": [
+      "parseOrder",
+      "parseToInt"
+    ],
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "createVault": {
+    "unified": [
+      "privatePostExchange"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "nonce": {
+          "kind": "omit",
+          "reason": null,
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseToInt"
+    ],
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "editOrder": {
+    "unified": [
+      "privatePostExchange",
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "endpoint_selection": {
+        "consume": [],
+        "default": "private_post_exchange",
+        "rules": []
+      }
+    },
+    "parse": [
+      "parseCreateEditOrderArgs"
+    ],
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "editOrders": {
+    "unified": [
+      "privatePostExchange",
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "endpoint_selection": {
+        "consume": [],
+        "default": "private_post_exchange",
+        "rules": []
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "fetchBalance": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "query for balance and get the amount of funds available for trading or funds locked in orders",
+      "errors": null,
+      "name": "fetchBalance",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.dex": "for hip3 markets, the dex name, eg: 'xyz'",
+        "params.enableUnifiedMargin": "enable unified margin, CCXT tries to auto-detects this value but you can override it",
+        "params.marginMode": "'cross' or 'isolated', for margin trading, uses this.options.defaultMarginMode if not passed, defaults to undefined/None/null",
+        "params.subAccountAddress": "sub account user address",
+        "params.type": "wallet type, ['spot', 'swap'], defaults to swap",
+        "params.user": "user address, will default to this.walletAddress if not provided"
+      },
+      "returns": {
+        "description": "a [balance structure]{@link https://docs.ccxt.com/?id=balance-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Balances>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "unresolved",
+          "reason": "conditional_value",
+          "value": null
+        },
+        "user": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "api_key",
+          "source_class": "credential",
+          "value": null
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCanceledAndClosedOrders": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch all closed and canceled orders",
+      "errors": null,
+      "name": "fetchCanceledAndClosedOrders",
+      "params_doc": {
+        "limit": "the maximum number of open orders structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.user": "user address, will default to this.walletAddress if not provided",
+        "since": "the earliest time in ms to fetch open orders for",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+        "type": "Order[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Order[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "_delegate": "fetchOrders"
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCanceledOrders": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch all canceled orders",
+      "errors": null,
+      "name": "fetchCanceledOrders",
+      "params_doc": {
+        "limit": "the maximum number of open orders structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.user": "user address, will default to this.walletAddress if not provided",
+        "since": "the earliest time in ms to fetch open orders for",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+        "type": "Order[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Order[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "_delegate": "fetchOrders"
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchClosedOrders": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch all unfilled currently closed orders",
+      "errors": null,
+      "name": "fetchClosedOrders",
+      "params_doc": {
+        "limit": "the maximum number of open orders structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.user": "user address, will default to this.walletAddress if not provided",
+        "since": "the earliest time in ms to fetch open orders for",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+        "type": "Order[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Order[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "_delegate": "fetchOrders"
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCurrencies": {
+    "unified": [
+      "privatePostExchange",
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches all available currencies on an exchange",
+      "errors": null,
+      "name": "fetchCurrencies",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint"
+      },
+      "returns": {
+        "description": "an associative dictionary of currencies",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Currencies>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "spotMeta"
+        }
+      },
+      "endpoint_selection": {
+        "consume": [],
+        "default": "public_post_info",
+        "rules": []
+      }
+    },
+    "parse": [
+      "parseCurrencies"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDeposits": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "userNonFundingLedgerUpdates"
+        },
+        "user": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "api_key",
+          "source_class": "credential",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTransactions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingHistory": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "userFunding"
+        },
+        "user": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "api_key",
+          "source_class": "credential",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseIncomes"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingRateHistory": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "_omit": [
+          "limit"
+        ],
+        "coin": {
+          "kind": "unresolved",
+          "reason": "conditional_value",
+          "value": null
+        },
+        "endTime": {
+          "source": "until",
+          "source_class": "optional"
+        },
+        "startTime": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        },
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "fundingHistory"
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingRates": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "retrieves data on all swap markets for hyperliquid",
+      "errors": null,
+      "name": "fetchFundingRates",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbols": "list of unified market symbols"
+      },
+      "returns": {
+        "description": "an array of objects representing market data",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbols",
+            "optional": true,
+            "type": "Strings"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<FundingRates>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "metaAndAssetCtxs"
+        }
+      }
+    },
+    "parse": [
+      "parseFundingRates"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchLedger": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch the history of changes, actions done by the user or operations that altered the balance of the user",
+      "errors": null,
+      "name": "fetchLedger",
+      "params_doc": {
+        "code": "unified currency code",
+        "limit": "max number of ledger entries to return",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.subAccountAddress": "sub account user address",
+        "params.until": "timestamp in ms of the latest ledger entry",
+        "since": "timestamp in ms of the earliest ledger entry"
+      },
+      "returns": {
+        "description": "a [ledger structure]{@link https://docs.ccxt.com/?id=ledger-entry-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "code",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<LedgerEntry[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "userNonFundingLedgerUpdates"
+        },
+        "user": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "api_key",
+          "source_class": "credential",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseLedger"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMarkets": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "retrieves data on all markets for hyperliquid",
+      "errors": null,
+      "name": "fetchMarkets",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint"
+      },
+      "returns": {
+        "description": "an array of objects representing market data",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Market[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "metaAndAssetCtxs"
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMyTrades": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "request": {
+      "defaults": {
+        "startTime": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        },
+        "type": {
+          "kind": "unresolved",
+          "reason": "conditional_value",
+          "value": null
+        },
+        "user": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "api_key",
+          "source_class": "credential",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTrades"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOHLCV": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches historical candlestick data containing the open, high, low, and close price, and the volume of a market",
+      "errors": null,
+      "name": "fetchOHLCV",
+      "params_doc": {
+        "limit": "the maximum amount of candles to fetch",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.until": "timestamp in ms of the latest candle to fetch",
+        "since": "timestamp in ms of the earliest candle to fetch",
+        "symbol": "unified symbol of the market to fetch OHLCV data for",
+        "timeframe": "the length of time each candle represents, support '1m', '15m', '1h', '1d'"
+      },
+      "returns": {
+        "description": "A list of candles ordered as timestamp, open, high, low, close, volume",
+        "type": "int[][]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "'1m'",
+            "name": "timeframe",
+            "optional": true,
+            "type": "string"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<OHLCV[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "req": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        },
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "candleSnapshot"
+        }
+      }
+    },
+    "parse": [
+      "parseOHLCVs",
+      "parseTimeframe"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOpenInterest": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOpenInterests": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "metaAndAssetCtxs"
+        }
+      }
+    },
+    "parse": [
+      "parseOpenInterests"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOpenOrders": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch all unfilled currently open orders",
+      "errors": null,
+      "name": "fetchOpenOrders",
+      "params_doc": {
+        "limit": "the maximum number of open orders structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.dex": "perp dex name. default is null",
+        "params.method": "'openOrders' or 'frontendOpenOrders' default is 'frontendOpenOrders'",
+        "params.subAccountAddress": "sub account user address",
+        "params.user": "user address, will default to this.walletAddress if not provided",
+        "since": "the earliest time in ms to fetch open orders for",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+        "type": "Order[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Order[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "unresolved",
+          "reason": "conditional_value",
+          "value": null
+        },
+        "user": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "api_key",
+          "source_class": "credential",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOrder": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "oid": {
+          "source": "id",
+          "source_class": "unified_param",
+          "transform": "integer"
+        },
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "orderStatus"
+        },
+        "user": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "api_key",
+          "source_class": "credential",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOrder",
+      "parseToNumeric"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOrderBook": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches information on open orders with bid (buy) and ask (sell) prices, volumes and other data",
+      "errors": null,
+      "name": "fetchOrderBook",
+      "params_doc": {
+        "limit": "the maximum amount of order book entries to return",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "symbol": "unified symbol of the market to fetch the order book for"
+      },
+      "returns": {
+        "description": "A dictionary of [order book structures]{@link https://docs.ccxt.com/?id=order-book-structure} indexed by market symbols",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<OrderBook>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "coin": {
+          "kind": "unresolved",
+          "reason": "conditional_value",
+          "value": null
+        },
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "l2Book"
+        }
+      }
+    },
+    "parse": [
+      "parseOrderBook"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOrders": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch all orders",
+      "errors": null,
+      "name": "fetchOrders",
+      "params_doc": {
+        "limit": "the maximum number of open orders structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.dex": "perp dex name. default is null",
+        "params.subAccountAddress": "sub account user address",
+        "params.user": "user address, will default to this.walletAddress if not provided",
+        "since": "the earliest time in ms to fetch open orders for",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+        "type": "Order[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Order[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "historicalOrders"
+        },
+        "user": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "api_key",
+          "source_class": "credential",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPosition": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPositions": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch all open positions",
+      "errors": null,
+      "name": "fetchPositions",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.dex": "perp dex name, eg: XYZ",
+        "params.subAccountAddress": "sub account user address",
+        "params.user": "user address, will default to this.walletAddress if not provided",
+        "symbols": "list of unified market symbols"
+      },
+      "returns": {
+        "description": "a list of [position structure]{@link https://docs.ccxt.com/?id=position-structure}",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbols",
+            "optional": true,
+            "type": "Strings"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Position[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "clearinghouseState"
+        },
+        "user": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "api_key",
+          "source_class": "credential",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parsePosition"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchSpotMarkets": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "retrieves data on all spot markets for hyperliquid",
+      "errors": null,
+      "name": "fetchSpotMarkets",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint"
+      },
+      "returns": {
+        "description": "an array of objects representing market data",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Market[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "spotMetaAndAssetCtxs"
+        }
+      }
+    },
+    "parse": [
+      "parseNumber",
+      "parsePrecision"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchStatus": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "exchangeStatus"
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchSwapMarkets": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "retrieves data on all swap markets for hyperliquid",
+      "errors": null,
+      "name": "fetchSwapMarkets",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint"
+      },
+      "returns": {
+        "description": "an array of objects representing market data",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Market[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "metaAndAssetCtxs"
+        }
+      }
+    },
+    "parse": [
+      "parseMarkets"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTickers": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetches price tickers for multiple markets, statistical information calculated over the past 24 hours for each market",
+      "errors": null,
+      "name": "fetchTickers",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.hip3": "set to true to fetch hip3 markets only",
+        "params.type": "'spot' or 'swap', by default fetches both",
+        "symbols": "unified symbols of the markets to fetch the ticker for, all market tickers are returned if not assigned"
+      },
+      "returns": {
+        "description": "a dictionary of [ticker structures]{@link https://docs.ccxt.com/?id=ticker-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbols",
+            "optional": true,
+            "type": "Strings"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Tickers>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "metaAndAssetCtxs"
+        }
+      }
+    },
+    "parse": [
+      "parseTicker"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTime": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "exchangeStatus"
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTrades": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "user": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTrades"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTradingFee": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch the trading fees for a market",
+      "errors": null,
+      "name": "fetchTradingFee",
+      "params_doc": {
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.subAccountAddress": "sub account user address",
+        "params.user": "user address, will default to this.walletAddress if not provided",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a [fee structure]{@link https://docs.ccxt.com/?id=fee-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<TradingFeeInterface>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "userFees"
+        },
+        "user": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "api_key",
+          "source_class": "credential",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTradingFee"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchWithdrawals": {
+    "unified": [
+      "publicPostInfo"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "fetch all withdrawals made from an account",
+      "errors": null,
+      "name": "fetchWithdrawals",
+      "params_doc": {
+        "code": "unified currency code",
+        "limit": "the maximum number of withdrawals structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.subAccountAddress": "sub account user address",
+        "params.until": "the latest time in ms to fetch withdrawals for",
+        "params.vaultAddress": "vault address",
+        "since": "the earliest time in ms to fetch withdrawals for"
+      },
+      "returns": {
+        "description": "a list of [transaction structures]{@link https://docs.ccxt.com/?id=transaction-structure}",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "code",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Transaction[]>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "type": {
+          "kind": "literal",
+          "reason": null,
+          "value": "userNonFundingLedgerUpdates"
+        },
+        "user": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "source": "api_key",
+          "source_class": "credential",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTransactions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "reduceMargin": {
+    "unified": [
+      "privatePostExchange"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "remove margin from a position",
+      "errors": null,
+      "name": "reduceMargin",
+      "params_doc": {
+        "amount": "the amount of margin to remove",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.subAccountAddress": "sub account user address",
+        "params.vaultAddress": "the vault address",
+        "symbol": "unified market symbol"
+      },
+      "returns": {
+        "description": "a [margin structure]{@link https://docs.ccxt.com/?id=margin-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": null,
+            "name": "amount",
+            "optional": false,
+            "type": "number"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<MarginModification>"
+      },
+      "unresolved_reason": null
+    },
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "setLeverage": {
+    "unified": [
+      "privatePostExchange"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "action": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "nonce": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "signature": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseToInt"
+    ],
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "setMarginMode": {
+    "unified": [
+      "privatePostExchange"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "request": {
+      "defaults": {
+        "action": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "nonce": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        },
+        "signature": {
+          "kind": "unresolved",
+          "reason": "identifier_reference",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseToInt"
+    ],
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "transfer": {
+    "unified": [
+      "privatePostExchange"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "transfer currency internally between wallets on the same account",
+      "errors": null,
+      "name": "transfer",
+      "params_doc": {
+        "amount": "amount to transfer",
+        "code": "unified currency code",
+        "fromAccount": "account to transfer from *spot, swap*",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.vaultAddress": "the vault address for order",
+        "toAccount": "account to transfer to *swap, spot or address*"
+      },
+      "returns": {
+        "description": "a [transfer structure]{@link https://docs.ccxt.com/?id=transfer-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "code",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": null,
+            "name": "amount",
+            "optional": false,
+            "type": "number"
+          },
+          {
+            "default": null,
+            "name": "fromAccount",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": null,
+            "name": "toAccount",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<TransferEntry>"
+      },
+      "unresolved_reason": null
+    },
+    "parse": [
+      "parseToInt",
+      "parseTransfer"
+    ],
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "withdraw": {
+    "unified": [
+      "privatePostExchange"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "async": true,
+      "description": "make a withdrawal (only support USDC)",
+      "errors": null,
+      "name": "withdraw",
+      "params_doc": {
+        "address": "the address to withdraw to",
+        "amount": "the amount to withdraw",
+        "code": "unified currency code",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "params.vaultAddress": "vault address withdraw from",
+        "tag": null
+      },
+      "returns": {
+        "description": "a [transaction structure]{@link https://docs.ccxt.com/?id=transaction-structure}",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "code",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": null,
+            "name": "amount",
+            "optional": false,
+            "type": "number"
+          },
+          {
+            "default": null,
+            "name": "address",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "undefined",
+            "name": "tag",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Transaction>"
+      },
+      "unresolved_reason": null
+    },
+    "request": {
+      "defaults": {
+        "action": {
+          "kind": "omit",
+          "reason": null,
+          "value": null
+        },
+        "nonce": {
+          "kind": "omit",
+          "reason": null,
+          "value": null
+        },
+        "signature": {
+          "kind": "omit",
+          "reason": null,
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTransaction"
+    ],
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  }
+}

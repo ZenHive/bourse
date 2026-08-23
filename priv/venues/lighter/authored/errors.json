@@ -1,0 +1,74 @@
+{
+  "class_hierarchy": {
+    "ancestors": {},
+    "flat_parents": {},
+    "tree": {}
+  },
+  "handle_errors": {
+    "exception_scopes": {},
+    "runtime_body_checks": [
+      {
+        "field": "code",
+        "field2": null,
+        "roles": [
+          "error_code",
+          "status_sentinel"
+        ],
+        "sentinel_values": [
+          {
+            "operator": "!==",
+            "value": "0"
+          },
+          {
+            "operator": "!==",
+            "value": "200"
+          }
+        ]
+      }
+    ],
+    "runtime_code_fields": [
+      "code"
+    ],
+    "error_code_fields": [
+      {
+        "field": "code",
+        "field2": null,
+        "object": "response",
+        "object_path": null,
+        "roles": [
+          "error_code",
+          "status_sentinel"
+        ],
+        "sentinel_values": [
+          {
+            "operator": "!==",
+            "value": "0"
+          },
+          {
+            "operator": "!==",
+            "value": "200"
+          }
+        ]
+      },
+      {
+        "field": "message",
+        "field2": null,
+        "object": "response",
+        "object_path": null,
+        "roles": [
+          "error_message"
+        ],
+        "sentinel_values": null
+      }
+    ],
+    "exceptions": {
+      "broad": {
+        "invalid signature": "AuthenticationError"
+      },
+      "exact": {
+        "20001": "__function:BadRequest",
+        "29500": "__function:AuthenticationError"
+      }
+    }
+  }
+}

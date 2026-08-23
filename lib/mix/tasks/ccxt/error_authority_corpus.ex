@@ -85,7 +85,7 @@ defmodule Mix.Tasks.Ccxt.ErrorAuthorityCorpus do
   end
 
   defp load_spec!(root, venue) do
-    Bourse.JsonDocument.decode_file!(Path.join([root, venue, "authored", "spec.json"]))
+    Bourse.Spec.load_from_root!(root, venue)
   end
 
   defp exact_mappings(spec) do

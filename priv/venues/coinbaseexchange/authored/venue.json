@@ -1,0 +1,265 @@
+{
+  "schema_version": 3,
+  "authored": true,
+  "frozen": true,
+  "hand_owned": true,
+  "exchange": {
+    "alias": false,
+    "certified": false,
+    "country": [
+      "US"
+    ],
+    "id": "coinbaseexchange",
+    "name": "Coinbase Exchange",
+    "pro": true,
+    "referral": null,
+    "version": null
+  },
+  "urls": {
+    "api": {
+      "ws": {
+        "private": null,
+        "public": null,
+        "sandbox_private": null,
+        "sandbox_public": null
+      }
+    },
+    "api_management": null,
+    "doc": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products",
+    "fees": null,
+    "logo": null,
+    "www": "https://exchange.coinbase.com"
+  },
+  "testnet": {},
+  "auth": {
+    "authenticated_sections": [],
+    "sign_recipe": {},
+    "signing_config": {},
+    "signing_pattern": null
+  },
+  "config": {
+    "credentials": {
+      "accountId": false,
+      "apiKey": false,
+      "login": false,
+      "password": false,
+      "privateKey": false,
+      "secret": false,
+      "token": false,
+      "twofa": false,
+      "uid": false,
+      "walletAddress": false
+    },
+    "flags": {
+      "dex": false
+    },
+    "limits": {
+      "amount": {
+        "max": null,
+        "min": null
+      },
+      "cost": {
+        "max": null,
+        "min": null
+      },
+      "leverage": {
+        "max": null,
+        "min": null
+      },
+      "price": {
+        "max": null,
+        "min": null
+      }
+    },
+    "rate_limit_meta": {
+      "enableRateLimit": true,
+      "timeout": 10000
+    },
+    "routing": {
+      "accountsByType": null,
+      "networks": {},
+      "timeInForce": null
+    },
+    "status": {
+      "eta": null,
+      "info": null,
+      "status": "ok",
+      "updated": null,
+      "url": null
+    }
+  },
+  "fees": {
+    "static_market_fees": false
+  },
+  "websocket": {
+    "auth": {
+      "reason": "REST-only public market-data contract",
+      "supported": false
+    },
+    "dispatch": {
+      "reason": "REST-only public market-data contract",
+      "supported": false
+    },
+    "heartbeat": {
+      "reason": "REST-only public market-data contract",
+      "supported": false
+    },
+    "ohlcv_semantics": {
+      "reason": "REST-only public market-data contract",
+      "supported": false
+    },
+    "orderbook_semantics": {
+      "reason": "REST-only public market-data contract",
+      "supported": false
+    },
+    "subscribe": {
+      "reason": "REST-only public market-data contract",
+      "supported": false
+    },
+    "trades_semantics": {
+      "reason": "REST-only public market-data contract",
+      "supported": false
+    },
+    "urls": {
+      "private": null,
+      "public": null,
+      "sandbox_private": null,
+      "sandbox_public": null
+    }
+  },
+  "emulated_methods": [],
+  "capabilities": {
+    "features": {
+      "default": {
+        "createOrder": {
+          "attachedStopLossTakeProfit": "__undefined",
+          "hedged": false,
+          "iceberg": true,
+          "leverage": false,
+          "marginMode": true,
+          "marketBuyByCost": false,
+          "marketBuyRequiresPrice": false,
+          "selfTradePrevention": false,
+          "stopLossPrice": false,
+          "takeProfitPrice": false,
+          "timeInForce": {
+            "FOK": true,
+            "GTD": true,
+            "IOC": true,
+            "PO": true
+          },
+          "trailing": false,
+          "triggerDirection": false,
+          "triggerPrice": true,
+          "triggerPriceType": "__undefined"
+        },
+        "createOrders": "__undefined",
+        "fetchClosedOrders": {
+          "daysBack": 100000,
+          "daysBackCanceled": 1,
+          "limit": 100,
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": false,
+          "untilDays": 100000
+        },
+        "fetchMyTrades": {
+          "daysBack": 100000,
+          "limit": 100,
+          "marginMode": false,
+          "symbolRequired": true,
+          "untilDays": 100000
+        },
+        "fetchOHLCV": {
+          "limit": 300
+        },
+        "fetchOpenOrders": {
+          "limit": 100,
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": false
+        },
+        "fetchOrder": {
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": false
+        },
+        "fetchOrders": {
+          "daysBack": 100000,
+          "limit": 100,
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": false,
+          "untilDays": 100000
+        },
+        "sandbox": true
+      },
+      "future": {
+        "inverse": "__undefined",
+        "linear": "__undefined"
+      },
+      "spot": {
+        "extends": "default"
+      },
+      "swap": {
+        "inverse": "__undefined",
+        "linear": "__undefined"
+      }
+    },
+    "timeframes": {
+      "15m": 900,
+      "1d": 86400,
+      "1h": 3600,
+      "1m": 60,
+      "5m": 300,
+      "6h": 21600
+    },
+    "unsupported_raw_endpoints": {},
+    "has_extras": {}
+  },
+  "rate_limits": {
+    "buckets": {
+      "buckets": [
+        {
+          "algorithm": "leakyBucket",
+          "axes": [
+            "request"
+          ],
+          "cost_default": 1,
+          "max_size": 10,
+          "rate_limit_ms": 100,
+          "refill_per_sec": 10,
+          "rolling_window_ms": 1000
+        }
+      ],
+      "source": "provider_public_rate_limit",
+      "unresolved_reason": null
+    },
+    "endpoint_cost_binding": {
+      "axes": [
+        "request"
+      ],
+      "bucket_index": 0
+    }
+  },
+  "parse_helpers": {},
+  "request_extras": {},
+  "descriptor_extras": {},
+  "classification_extras": {},
+  "error_handlers": [
+    {
+      "exception_class": "BadRequest",
+      "field": "message",
+      "predicate_kind": "field_present"
+    }
+  ],
+  "signing_handlers": {
+    "mechanism": null,
+    "sections": []
+  },
+  "has_endpoint_selection": true
+}

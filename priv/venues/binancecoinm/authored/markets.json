@@ -1,0 +1,418 @@
+{
+  "symbol_patterns": {
+    "future": {
+      "case": "upper",
+      "date_format": "yymmdd",
+      "pattern": "future_yymmdd",
+      "prefix": null,
+      "separator": "",
+      "suffix": null
+    },
+    "swap": {
+      "case": "upper",
+      "date_format": null,
+      "pattern": "suffix_swap",
+      "prefix": null,
+      "separator": "",
+      "suffix": "_PERP"
+    }
+  },
+  "currencies": {
+    "AAVE": {
+      "code": "AAVE",
+      "fees": {},
+      "id": "AAVE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "ADA": {
+      "code": "ADA",
+      "fees": {},
+      "id": "ADA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "APE": {
+      "code": "APE",
+      "fees": {},
+      "id": "APE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "AVAX": {
+      "code": "AVAX",
+      "fees": {},
+      "id": "AVAX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "BCH": {
+      "code": "BCH",
+      "fees": {},
+      "id": "BCH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "BNB": {
+      "code": "BNB",
+      "fees": {},
+      "id": "BNB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "BNFCR": {
+      "code": "BNFCR",
+      "fees": {},
+      "id": "BNFCR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 0.001
+    },
+    "BTC": {
+      "code": "BTC",
+      "fees": {},
+      "id": "BTC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "DOGE": {
+      "code": "DOGE",
+      "fees": {},
+      "id": "DOGE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "DOT": {
+      "code": "DOT",
+      "fees": {},
+      "id": "DOT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "ETC": {
+      "code": "ETC",
+      "fees": {},
+      "id": "ETC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "ETH": {
+      "code": "ETH",
+      "fees": {},
+      "id": "ETH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "FIL": {
+      "code": "FIL",
+      "fees": {},
+      "id": "FIL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "GALA": {
+      "code": "GALA",
+      "fees": {},
+      "id": "GALA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "ICX": {
+      "code": "ICX",
+      "fees": {},
+      "id": "ICX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "KNC": {
+      "code": "KNC",
+      "fees": {},
+      "id": "KNC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "LINK": {
+      "code": "LINK",
+      "fees": {},
+      "id": "LINK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "LTC": {
+      "code": "LTC",
+      "fees": {},
+      "id": "LTC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "NEAR": {
+      "code": "NEAR",
+      "fees": {},
+      "id": "NEAR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "ROSE": {
+      "code": "ROSE",
+      "fees": {},
+      "id": "ROSE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "SOL": {
+      "code": "SOL",
+      "fees": {},
+      "id": "SOL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "SUI": {
+      "code": "SUI",
+      "fees": {},
+      "id": "SUI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "TRX": {
+      "code": "TRX",
+      "fees": {},
+      "id": "TRX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "UNI": {
+      "code": "UNI",
+      "fees": {},
+      "id": "UNI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "USD": {
+      "code": "USD",
+      "fees": {},
+      "id": "USD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "VET": {
+      "code": "VET",
+      "fees": {},
+      "id": "VET",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "XLM": {
+      "code": "XLM",
+      "fees": {},
+      "id": "XLM",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "XRP": {
+      "code": "XRP",
+      "fees": {},
+      "id": "XRP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "XTZ": {
+      "code": "XTZ",
+      "fees": {},
+      "id": "XTZ",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    },
+    "ZIL": {
+      "code": "ZIL",
+      "fees": {},
+      "id": "ZIL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {},
+      "precision": 1e-08
+    }
+  },
+  "patterns": {
+    "currency_aliases": {
+      "BCC": "BCC",
+      "BCHSV": "BSV",
+      "XBT": "BTC",
+      "YOYO": "YOYOW"
+    },
+    "future": {
+      "anomalies": [],
+      "anomaly_count": 0,
+      "case": "upper",
+      "examples": [
+        {
+          "baseId": "BTC",
+          "id": "BTCUSD_260626",
+          "quoteId": "USD",
+          "symbol": "BTC/USD:BTC-260626"
+        },
+        {
+          "baseId": "ETH",
+          "id": "ETHUSD_260626",
+          "quoteId": "USD",
+          "symbol": "ETH/USD:ETH-260626"
+        },
+        {
+          "baseId": "XRP",
+          "id": "XRPUSD_260626",
+          "quoteId": "USD",
+          "symbol": "XRP/USD:XRP-260626"
+        }
+      ],
+      "id_structure": "baseId_quoteId",
+      "sample_count": 10,
+      "separator": "",
+      "suffix": null
+    },
+    "swap": {
+      "anomalies": [],
+      "anomaly_count": 0,
+      "case": "upper",
+      "examples": [
+        {
+          "baseId": "BTC",
+          "id": "BTCUSD_PERP",
+          "quoteId": "USD",
+          "symbol": "BTC/USD:BTC"
+        },
+        {
+          "baseId": "ETH",
+          "id": "ETHUSD_PERP",
+          "quoteId": "USD",
+          "symbol": "ETH/USD:ETH"
+        },
+        {
+          "baseId": "LINK",
+          "id": "LINKUSD_PERP",
+          "quoteId": "USD",
+          "symbol": "LINK/USD:LINK"
+        }
+      ],
+      "id_structure": "baseId_quoteId",
+      "sample_count": 28,
+      "separator": "",
+      "suffix": "_PERP"
+    }
+  }
+}

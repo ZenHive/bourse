@@ -1,0 +1,138 @@
+{
+  "field_maps": {
+    "ohlcv": {
+      "_unresolved_reason": null,
+      "branches": [
+        {
+          "_unresolved_reason": null,
+          "field_map": {
+            "close": {
+              "coercion": "safeNumber2",
+              "format": null,
+              "index": 4,
+              "key": null
+            },
+            "high": {
+              "coercion": "safeNumber2",
+              "format": null,
+              "index": 2,
+              "key": null
+            },
+            "low": {
+              "coercion": "safeNumber2",
+              "format": null,
+              "index": 1,
+              "key": null
+            },
+            "open": {
+              "coercion": "safeNumber2",
+              "format": null,
+              "index": 3,
+              "key": null
+            },
+            "timestamp": {
+              "coercion": "safeTimestamp",
+              "format": "s",
+              "index": 0,
+              "key": null
+            },
+            "volume": {
+              "coercion": "safeNumber2",
+              "format": null,
+              "index": 5,
+              "key": null
+            }
+          },
+          "guard": {
+            "input_shape": "array",
+            "kind": "always"
+          },
+          "shape": "array"
+        }
+      ],
+      "extras": []
+    },
+    "ticker": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "ask": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "ask"
+        },
+        "askVolume": null,
+        "average": null,
+        "baseVolume": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "volume"
+        },
+        "bid": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "bid"
+        },
+        "bidVolume": null,
+        "change": null,
+        "close": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "price"
+        },
+        "datetime": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "time"
+        },
+        "high": null,
+        "indexPrice": null,
+        "info": null,
+        "last": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "price"
+        },
+        "low": null,
+        "markPrice": null,
+        "open": null,
+        "percentage": null,
+        "previousClose": null,
+        "quoteVolume": null,
+        "symbol": null,
+        "timestamp": {
+          "coercion": "parse8601",
+          "format": null,
+          "key": "time"
+        },
+        "vwap": null
+      }
+    }
+  },
+  "response_envelopes": {
+    "ohlcv": {
+      "fetchOHLCV": {
+        "default": [],
+        "fallback_keys": [],
+        "key": null,
+        "order": "newest_first",
+        "row_columns": [
+          "timestamp",
+          "low",
+          "high",
+          "open",
+          "close",
+          "volume"
+        ],
+        "timestamp_unit": "seconds"
+      }
+    },
+    "ticker": {
+      "fetchTicker": {
+        "default": null,
+        "fallback_keys": [],
+        "key": null
+      }
+    }
+  }
+}

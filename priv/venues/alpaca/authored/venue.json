@@ -1,0 +1,510 @@
+{
+  "schema_version": 3,
+  "authored": true,
+  "frozen": true,
+  "hand_owned": true,
+  "exchange": {
+    "alias": false,
+    "certified": false,
+    "country": [
+      "US"
+    ],
+    "id": "alpaca",
+    "name": "Alpaca",
+    "pro": true,
+    "referral": null,
+    "version": null
+  },
+  "urls": {
+    "api": {
+      "ws": {
+        "private": null,
+        "public": "wss://stream.data.alpaca.markets/v2/iex",
+        "sandbox_private": null,
+        "sandbox_public": "wss://stream.data.alpaca.markets/v2/test"
+      }
+    },
+    "api_management": "__undefined",
+    "doc": "https://alpaca.markets/docs/",
+    "fees": "https://docs.alpaca.markets/us/docs/regulatory-fees",
+    "logo": "https://github.com/user-attachments/assets/e9476df8-a450-4c3e-ab9a-1a7794219e1b",
+    "www": "https://alpaca.markets"
+  },
+  "testnet": {
+    "pattern": "separate_host",
+    "sandbox_flag_field": null,
+    "unresolved_reason": null,
+    "urls": {
+      "market": "https://data.alpaca.markets",
+      "trader": "https://paper-api.alpaca.markets"
+    }
+  },
+  "auth": {
+    "authenticated_sections": [
+      "market.private",
+      "trader.private"
+    ],
+    "signing_config": {
+      "api_key_header": "APCA-API-KEY-ID",
+      "secret_header": "APCA-API-SECRET-KEY"
+    },
+    "signing_pattern": "api_key_secret_headers",
+    "sign_recipe": {
+      "market.private": {
+        "auth_headers": [
+          {
+            "name": "APCA-API-KEY-ID",
+            "source": "api_key"
+          },
+          {
+            "name": "APCA-API-SECRET-KEY",
+            "source": "secret"
+          }
+        ],
+        "canonical_string": null,
+        "crypto_op": {
+          "algo": "none",
+          "reason": "sign() uses exchange-specific authentication without a derivable HMAC operation"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": null,
+        "patch_count": 0,
+        "pre_sign_transforms": [],
+        "signature_placement": null,
+        "timestamp": null,
+        "unresolved_reason": null
+      },
+      "trader.private": {
+        "auth_headers": [
+          {
+            "name": "APCA-API-KEY-ID",
+            "source": "api_key"
+          },
+          {
+            "name": "APCA-API-SECRET-KEY",
+            "source": "secret"
+          }
+        ],
+        "canonical_string": null,
+        "crypto_op": {
+          "algo": "none",
+          "reason": "sign() uses exchange-specific authentication without a derivable HMAC operation"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": null,
+        "patch_count": 0,
+        "pre_sign_transforms": [],
+        "signature_placement": null,
+        "timestamp": null,
+        "unresolved_reason": null
+      }
+    }
+  },
+  "config": {
+    "credentials": {
+      "accountId": false,
+      "apiKey": true,
+      "login": false,
+      "password": false,
+      "privateKey": false,
+      "secret": true,
+      "token": false,
+      "twofa": false,
+      "uid": false,
+      "walletAddress": false
+    },
+    "flags": {
+      "dex": false
+    },
+    "limits": {
+      "amount": {
+        "max": null,
+        "min": null
+      },
+      "cost": {
+        "max": null,
+        "min": null
+      },
+      "leverage": {
+        "max": null,
+        "min": null
+      },
+      "price": {
+        "max": null,
+        "min": null
+      }
+    },
+    "rate_limit_meta": {
+      "enableRateLimit": true,
+      "timeout": 10000
+    },
+    "routing": {
+      "accountsByType": null,
+      "networks": null,
+      "timeInForce": null
+    },
+    "status": {
+      "eta": null,
+      "info": null,
+      "status": "ok",
+      "updated": null,
+      "url": null
+    }
+  },
+  "fees": {
+    "funding": {
+      "deposit": {},
+      "percentage": "__undefined",
+      "tierBased": "__undefined",
+      "withdraw": {}
+    },
+    "static_market_fees": false,
+    "trading": {
+      "maker": 0,
+      "percentage": true,
+      "taker": 0,
+      "tierBased": false,
+      "tiers": {
+        "maker": [],
+        "taker": []
+      }
+    }
+  },
+  "websocket": {
+    "auth": {
+      "authenticate_defined": true,
+      "credentials": [
+        "apiKey",
+        "secret"
+      ],
+      "mechanism": "sign_in_message",
+      "message": {
+        "keys": [
+          "action",
+          "key",
+          "secret"
+        ],
+        "method": null,
+        "op": "auth"
+      },
+      "resolved_from": "self",
+      "source": "provider_websocket_contract",
+      "unresolved_reason": null
+    },
+    "dispatch": {
+      "reason": "Unified WebSocket event normalization is not authored",
+      "supported": false
+    },
+    "heartbeat": {
+      "reason": "No venue-specific heartbeat semantics are authored",
+      "supported": false
+    },
+    "ohlcv_semantics": {
+      "reason": "REST-only authored contract",
+      "supported": false
+    },
+    "orderbook_semantics": {
+      "reason": "REST-only authored contract",
+      "supported": false
+    },
+    "subscribe": {
+      "args_key": null,
+      "channels": {
+        "watchTrades": [
+          "trades:{symbol}"
+        ]
+      },
+      "discriminant": "action",
+      "envelope_keys": [
+        "action",
+        "<channel>"
+      ],
+      "mechanism": "json_message",
+      "resolved_from": "self",
+      "source": "provider_websocket_contract",
+      "subscribe_op": "subscribe",
+      "unresolved_reason": null,
+      "unsubscribe_op": "unsubscribe"
+    },
+    "trades_semantics": {
+      "reason": "REST-only authored contract",
+      "supported": false
+    },
+    "urls": {
+      "private": null,
+      "public": "wss://stream.data.alpaca.markets/v2/iex",
+      "sandbox_private": null,
+      "sandbox_public": "wss://stream.data.alpaca.markets/v2/test",
+      "unresolved_reason": null
+    }
+  },
+  "emulated_methods": [],
+  "capabilities": {
+    "features": {
+      "future": {
+        "inverse": "__undefined",
+        "linear": "__undefined"
+      },
+      "spot": {
+        "createOrder": {
+          "attachedStopLossTakeProfit": {
+            "price": true,
+            "triggerPriceType": {
+              "index": true,
+              "last": true,
+              "mark": true
+            }
+          },
+          "hedged": false,
+          "iceberg": false,
+          "leverage": false,
+          "marginMode": false,
+          "marketBuyByCost": false,
+          "marketBuyRequiresPrice": false,
+          "selfTradePrevention": false,
+          "stopLossPrice": false,
+          "takeProfitPrice": false,
+          "timeInForce": {
+            "FOK": true,
+            "GTD": false,
+            "IOC": true,
+            "PO": true
+          },
+          "trailing": true,
+          "triggerDirection": false,
+          "triggerPrice": true,
+          "triggerPriceType": "__undefined"
+        },
+        "createOrders": "__undefined",
+        "fetchClosedOrders": {
+          "daysBack": 100000,
+          "daysBackCanceled": "__undefined",
+          "limit": 500,
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": false,
+          "untilDays": 100000
+        },
+        "fetchMyTrades": {
+          "daysBack": 100000,
+          "limit": 100,
+          "marginMode": false,
+          "symbolRequired": false,
+          "untilDays": 100000
+        },
+        "fetchOHLCV": {
+          "limit": 1000
+        },
+        "fetchOpenOrders": {
+          "limit": 500,
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": false
+        },
+        "fetchOrder": {
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": false
+        },
+        "fetchOrders": {
+          "daysBack": 100000,
+          "limit": 500,
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": false,
+          "untilDays": 100000
+        },
+        "sandbox": true
+      },
+      "swap": {
+        "inverse": "__undefined",
+        "linear": "__undefined"
+      }
+    },
+    "timeframes": {
+      "12h": "12H",
+      "15m": "15min",
+      "1M": "1M",
+      "1d": "1D",
+      "1h": "1H",
+      "1m": "1min",
+      "1w": "1W",
+      "2h": "2H",
+      "30m": "30min",
+      "3d": "3D",
+      "3m": "3min",
+      "4h": "4H",
+      "5m": "5min",
+      "6h": "6H",
+      "8h": "8H"
+    },
+    "unsupported_raw_endpoints": {},
+    "has_extras": {}
+  },
+  "rate_limits": {
+    "buckets": {
+      "buckets": [
+        {
+          "algorithm": "leakyBucket",
+          "axes": [
+            "request"
+          ],
+          "cost_default": 1,
+          "max_size": 1,
+          "rate_limit_ms": 333,
+          "refill_per_sec": 3.003003003003003,
+          "rolling_window_ms": 60000
+        }
+      ],
+      "source": "describe",
+      "unresolved_reason": null
+    },
+    "endpoint_cost_binding": {
+      "axes": [
+        "request"
+      ],
+      "bucket_index": 0
+    }
+  },
+  "parse_helpers": {},
+  "request_extras": {
+    "endpoint_overrides": {
+      "fetchOHLCV": {
+        "v1beta3/crypto/{loc}/bars": {
+          "loc": {
+            "kind": "literal",
+            "value": "us"
+          },
+          "symbols": {
+            "source": "symbol",
+            "source_class": "unified_param"
+          }
+        },
+        "v2/stocks/{symbol}/bars": {
+          "_omit": [
+            "since"
+          ],
+          "end": {
+            "kind": "reference",
+            "source": "until",
+            "source_class": "optional",
+            "transform": "milliseconds_to_rfc3339"
+          },
+          "feed": {
+            "kind": "literal",
+            "value": "iex"
+          },
+          "limit": {
+            "kind": "reference",
+            "source": "limit",
+            "source_class": "optional"
+          },
+          "loc": {
+            "kind": "omit"
+          },
+          "start": {
+            "default_limit": 1000,
+            "default_lookback_ms": 5184000000,
+            "default_timeframe_ms": 60000,
+            "kind": "computed",
+            "operation": "time_window_start",
+            "since_source": "since",
+            "timeframe_source": "timeframe",
+            "transform": "milliseconds_to_rfc3339"
+          },
+          "symbol": {
+            "retain_source": true,
+            "source": "symbol",
+            "source_class": "unified_param"
+          },
+          "symbols": {
+            "kind": "omit"
+          }
+        }
+      },
+      "fetchTrades": {
+        "v2/stocks/{symbol}/trades": {
+          "_omit": [
+            "since"
+          ],
+          "end": {
+            "kind": "reference",
+            "source": "until",
+            "source_class": "optional",
+            "transform": "milliseconds_to_rfc3339"
+          },
+          "feed": {
+            "kind": "literal",
+            "value": "iex"
+          },
+          "limit": {
+            "kind": "reference",
+            "source": "limit",
+            "source_class": "optional"
+          },
+          "start": {
+            "default_limit": 1000,
+            "default_lookback_ms": 5184000000,
+            "default_timeframe_ms": 60000,
+            "kind": "computed",
+            "operation": "time_window_start",
+            "since_source": "since",
+            "timeframe_source": "timeframe",
+            "transform": "milliseconds_to_rfc3339"
+          },
+          "symbol": {
+            "retain_source": true,
+            "source": "symbol",
+            "source_class": "unified_param"
+          }
+        }
+      },
+      "fetchTicker": {
+        "v1beta3/crypto/{loc}/snapshots": {
+          "loc": {
+            "kind": "literal",
+            "value": "us"
+          },
+          "symbols": {
+            "source": "symbol",
+            "source_class": "unified_param"
+          }
+        },
+        "v2/stocks/{symbol}/snapshot": {
+          "feed": {
+            "kind": "literal",
+            "value": "iex"
+          },
+          "symbol": {
+            "retain_source": true,
+            "source": "symbol",
+            "source_class": "unified_param"
+          }
+        }
+      }
+    }
+  },
+  "descriptor_extras": {},
+  "classification_extras": {},
+  "error_handlers": [
+    {
+      "exception_class": "ExchangeError",
+      "field": "message",
+      "predicate_kind": "field_present"
+    }
+  ],
+  "signing_handlers": {
+    "mechanism": "api_key_secret_headers",
+    "sections": [
+      "market.private",
+      "trader.private"
+    ]
+  },
+  "has_endpoint_selection": true
+}

@@ -1,0 +1,300 @@
+{
+  "schema_version": 3,
+  "authored": true,
+  "frozen": true,
+  "hand_owned": true,
+  "exchange": {
+    "alias": false,
+    "certified": false,
+    "country": [],
+    "id": "lighter",
+    "name": "Lighter",
+    "pro": true,
+    "referral": {
+      "discount": 0.1,
+      "url": "app.lighter.xyz/?referral=715955W9"
+    },
+    "version": "v1"
+  },
+  "urls": {
+    "api": {
+      "ws": {
+        "private": "wss://mainnet.zklighter.elliot.ai/stream",
+        "public": "wss://mainnet.zklighter.elliot.ai/stream",
+        "sandbox_private": "wss://testnet.zklighter.elliot.ai/stream",
+        "sandbox_public": "wss://testnet.zklighter.elliot.ai/stream"
+      }
+    },
+    "api_management": "__undefined",
+    "doc": "https://apidocs.lighter.xyz/",
+    "fees": "https://docs.lighter.xyz/perpetual-futures/fees",
+    "logo": "https://github.com/user-attachments/assets/ff1aaf96-bffb-4545-a750-5eba716e75d0",
+    "www": "https://lighter.xyz/"
+  },
+  "testnet": {
+    "pattern": "separate_host",
+    "sandbox_flag_field": null,
+    "unresolved_reason": null,
+    "urls": {
+      "private": "https://testnet.zklighter.elliot.ai",
+      "public": "https://testnet.zklighter.elliot.ai",
+      "root": "https://testnet.zklighter.elliot.ai"
+    }
+  },
+  "auth": {
+    "authenticated_sections": [
+      "private"
+    ],
+    "signing_config": {},
+    "signing_pattern": "lighter",
+    "sign_recipe": {
+      "private": {
+        "auth_headers": null,
+        "canonical_string": null,
+        "crypto_op": null,
+        "custom_signing_details": {
+          "primitives": [
+            "official_lighter_go_signer"
+          ],
+          "signals": [
+            "createAuthToken",
+            "signCreateOrder",
+            "signCancelOrder"
+          ]
+        },
+        "custom_signing_scheme": "zk_schnorr",
+        "nonce": null,
+        "patch_count": 0,
+        "pre_sign_transforms": null,
+        "signature_placement": null,
+        "timestamp": null,
+        "unresolved_reason": "custom_signing_family"
+      }
+    }
+  },
+  "config": {
+    "credentials": {
+      "accountId": false,
+      "apiKey": true,
+      "login": false,
+      "password": false,
+      "privateKey": true,
+      "secret": true,
+      "token": false,
+      "twofa": false,
+      "uid": true,
+      "walletAddress": false
+    },
+    "flags": {
+      "dex": true,
+      "quoteJsonNumbers": false
+    },
+    "limits": {
+      "amount": {
+        "max": null,
+        "min": null
+      },
+      "cost": {
+        "max": null,
+        "min": null
+      },
+      "leverage": {
+        "max": null,
+        "min": null
+      },
+      "price": {
+        "max": null,
+        "min": null
+      }
+    },
+    "rate_limit_meta": {
+      "enableRateLimit": true,
+      "timeout": 10000
+    },
+    "routing": {
+      "accountsByType": null,
+      "networks": null,
+      "timeInForce": null
+    },
+    "status": {
+      "eta": null,
+      "info": null,
+      "status": "ok",
+      "updated": null,
+      "url": null
+    }
+  },
+  "fees": {
+    "funding": {
+      "deposit": {},
+      "percentage": "__undefined",
+      "tierBased": "__undefined",
+      "withdraw": {}
+    },
+    "static_market_fees": false,
+    "maker": 0,
+    "taker": 0,
+    "trading": {
+      "maker": "__undefined",
+      "percentage": "__undefined",
+      "taker": "__undefined",
+      "tierBased": "__undefined"
+    }
+  },
+  "websocket": {
+    "auth": {
+      "authenticate_defined": false,
+      "credentials": [],
+      "mechanism": "none",
+      "message": null,
+      "resolved_from": "self",
+      "source": "provider_websocket_contract",
+      "unresolved_reason": "no_ws_auth"
+    },
+    "dispatch": {
+      "reason": "Unified WebSocket event normalization is not authored",
+      "supported": false
+    },
+    "heartbeat": {
+      "reason": "No venue-specific heartbeat semantics are authored",
+      "supported": false
+    },
+    "ohlcv_semantics": {
+      "reason": "not_live_verified",
+      "supported": false
+    },
+    "orderbook_semantics": {
+      "reason": "not_live_verified",
+      "supported": false
+    },
+    "subscribe": {
+      "args_key": "channel",
+      "channels": {
+        "watchOrderBook": {
+          "_unresolved_reason": "provider_requires_numeric_market_index"
+        },
+        "watchTicker": {
+          "_unresolved_reason": "provider_requires_numeric_market_index"
+        },
+        "watchTrades": {
+          "_unresolved_reason": "provider_requires_numeric_market_index"
+        }
+      },
+      "discriminant": "type",
+      "envelope_keys": [
+        "type",
+        "channel"
+      ],
+      "mechanism": "json_message",
+      "resolved_from": "self",
+      "source": "provider_websocket_contract",
+      "subscribe_op": "subscribe",
+      "unresolved_reason": null,
+      "unsubscribe_op": "unsubscribe"
+    },
+    "trades_semantics": {
+      "reason": "not_live_verified",
+      "supported": false
+    },
+    "urls": {
+      "private": null,
+      "public": "wss://mainnet.zklighter.elliot.ai/stream",
+      "sandbox_private": null,
+      "sandbox_public": "wss://testnet.zklighter.elliot.ai/stream",
+      "unresolved_reason": null
+    }
+  },
+  "emulated_methods": [],
+  "capabilities": {
+    "features": {
+      "default": {
+        "createOrder": {
+          "iceberg": false,
+          "leverage": false,
+          "marketBuyByCost": false,
+          "marketBuyRequiresPrice": false,
+          "selfTradePrevention": false,
+          "timeInForce": {
+            "FOK": true,
+            "GTD": false,
+            "IOC": true,
+            "PO": true
+          },
+          "trailing": false
+        },
+        "sandbox": true
+      }
+    },
+    "timeframes": {
+      "12h": "12h",
+      "15m": "15m",
+      "1d": "1d",
+      "1h": "1h",
+      "1m": "1m",
+      "1w": "1w",
+      "30m": "30m",
+      "4h": "4h",
+      "5m": "5m"
+    },
+    "unsupported_raw_endpoints": {},
+    "has_extras": {}
+  },
+  "rate_limits": {
+    "buckets": {
+      "buckets": [
+        {
+          "algorithm": "leakyBucket",
+          "axes": [
+            "request"
+          ],
+          "cost_default": 1,
+          "max_size": 1,
+          "rate_limit_ms": 1000,
+          "refill_per_sec": 1,
+          "rolling_window_ms": 60000
+        }
+      ],
+      "source": "describe",
+      "unresolved_reason": null
+    },
+    "endpoint_cost_binding": {
+      "axes": [
+        "request"
+      ],
+      "bucket_index": 0
+    }
+  },
+  "parse_helpers": {},
+  "request_extras": {},
+  "descriptor_extras": {},
+  "classification_extras": {
+    "publicPostSendTx": {
+      "on_chain": true,
+      "transactional": true
+    },
+    "privatePostSendTx": {
+      "on_chain": true,
+      "transactional": true
+    },
+    "publicPostSendTxBatch": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "error_handlers": [
+    {
+      "field": "code",
+      "success_values": [
+        0,
+        200
+      ]
+    }
+  ],
+  "signing_handlers": {
+    "scheme": "first_party_lighter_helper",
+    "sections": [
+      "private"
+    ]
+  },
+  "has_endpoint_selection": false
+}

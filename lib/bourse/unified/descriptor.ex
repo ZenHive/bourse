@@ -17,10 +17,10 @@ defmodule Bourse.Unified.Descriptor do
   # Recompile this module whenever a first-class spec changes. `@merged_descriptors`
   # is frozen from these files at compile time; without the resource link an
   # authored descriptor (e.g. a newly added unified method's return_type) would
-  # silently fail to route until an unrelated clean rebuild. The generated
-  # exchange modules track their spec the same way (`Spec.spec_path/1`).
-  for id <- @runtime_venues do
-    @external_resource Spec.spec_path(id)
+  # silently fail to route until an unrelated clean rebuild. Generated exchange
+  # modules track their split spec files the same way (`Spec.source_files/1`).
+  for id <- @runtime_venues, file <- Spec.source_files(id) do
+    @external_resource file
   end
 
   @base_errors [:not_supported, :authentication_error, :invalid_nonce, :rate_limit_exceeded, :network_error]

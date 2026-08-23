@@ -1,0 +1,53 @@
+{
+  "handle_errors": {
+    "error_code_fields": [
+      {
+        "field": "message",
+        "field2": null,
+        "method": "safeString",
+        "object": "response",
+        "object_path": null,
+        "roles": [
+          "error_code",
+          "error_message"
+        ],
+        "sentinel_values": null
+      }
+    ],
+    "exception_scopes": {},
+    "exceptions": {
+      "broad": {},
+      "exact": {
+        "Unsupported granularity": "__function:BadRequest"
+      }
+    },
+    "runtime_body_checks": [
+      {
+        "field": "message",
+        "field2": null,
+        "roles": [
+          "error_code"
+        ],
+        "sentinel_values": []
+      }
+    ],
+    "runtime_code_fields": [
+      "message"
+    ]
+  },
+  "retry_classification": {
+    "auth": [],
+    "non_retryable": [
+      "BadRequest",
+      "BadSymbol"
+    ],
+    "rate_limit": [
+      "RateLimitExceeded"
+    ]
+  },
+  "status_map": {
+    "400": "BadRequest",
+    "404": "BadSymbol",
+    "429": "RateLimitExceeded"
+  }
+}

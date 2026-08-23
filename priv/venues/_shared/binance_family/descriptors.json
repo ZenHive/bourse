@@ -1,0 +1,2081 @@
+{
+  "addMargin": {
+    "async": true,
+    "description": "add margin",
+    "errors": null,
+    "name": "addMargin",
+    "params_doc": {
+      "amount": "amount of margin to add",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "symbol": "unified market symbol"
+    },
+    "returns": {
+      "description": "a [margin structure]{@link https://docs.ccxt.com/?id=margin-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "symbol",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "name": "amount",
+          "optional": false,
+          "type": "number"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<MarginModification>"
+    },
+    "unresolved_reason": null
+  },
+  "createConvertTrade": {
+    "async": true,
+    "description": "convert from one currency to another",
+    "errors": null,
+    "name": "createConvertTrade",
+    "params_doc": {
+      "amount": "how much you want to trade in units of the from currency",
+      "fromCode": "the currency that you want to sell and convert from",
+      "id": "the id of the trade that you want to make",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "toCode": "the currency that you want to buy and convert into"
+    },
+    "returns": {
+      "description": "a [conversion structure]{@link https://docs.ccxt.com/?id=conversion-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "id",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "name": "fromCode",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "name": "toCode",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "undefined",
+          "name": "amount",
+          "optional": true,
+          "type": "Num"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Conversion>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchADLRank": {
+    "async": true,
+    "description": "fetches the auto deleveraging rank and risk percentage for a symbol",
+    "errors": null,
+    "name": "fetchADLRank",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "symbol": "unified symbol of the market to fetch the auto deleveraging rank for"
+    },
+    "returns": {
+      "description": "an [auto de leverage structure]{@link https://docs.ccxt.com/?id=auto-de-leverage-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "symbol",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<ADL>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchAccountPositions": {
+    "name": "fetchAccountPositions",
+    "description": "fetch account positions",
+    "async": true,
+    "signature": {
+      "return_type": "Promise<Position[]>",
+      "params": []
+    },
+    "returns": {
+      "description": "a list of position structures",
+      "type": "object[]"
+    }
+  },
+  "fetchAllGreeks": {
+    "async": true,
+    "description": "fetches all option contracts greeks, financial metrics used to measure the factors that affect the price of an options contract",
+    "errors": null,
+    "name": "fetchAllGreeks",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "symbols": "unified symbols of the markets to fetch greeks for, all markets are returned if not assigned"
+    },
+    "returns": {
+      "description": "a [greeks structure]{@link https://docs.ccxt.com/?id=greeks-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "symbols",
+          "optional": true,
+          "type": "Strings"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Greeks[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchBalance": {
+    "async": true,
+    "description": "query for balance and get the amount of funds available for trading or funds locked in orders",
+    "errors": null,
+    "name": "fetchBalance",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.marginMode": "'cross' or 'isolated', for margin trading, uses this.options.defaultMarginMode if not passed, defaults to undefined/None/null",
+      "params.portfolioMargin": "set to true if you would like to fetch the balance for a portfolio margin account",
+      "params.subType": "'linear' or 'inverse'",
+      "params.symbols": "unified market symbols, only used in isolated margin mode",
+      "params.type": "'future', 'delivery', 'savings', 'funding', or 'spot' or 'papi'"
+    },
+    "returns": {
+      "description": "a [balance structure]{@link https://docs.ccxt.com/?id=balance-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Balances>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchBorrowInterest": {
+    "async": true,
+    "description": "fetch the interest owed by the user for borrowing currency for margin trading",
+    "errors": null,
+    "name": "fetchBorrowInterest",
+    "params_doc": {
+      "code": "unified currency code",
+      "limit": "the maximum number of structures to retrieve",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.portfolioMargin": "set to true if you would like to fetch the borrow interest in a portfolio margin account",
+      "since": "the earliest time in ms to fetch borrrow interest for",
+      "symbol": "unified market symbol when fetch interest in isolated markets"
+    },
+    "returns": {
+      "description": "a list of [borrow interest structures]{@link https://docs.ccxt.com/?id=borrow-interest-structure}",
+      "type": "object[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "code",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "undefined",
+          "name": "symbol",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "undefined",
+          "name": "since",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "undefined",
+          "name": "limit",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<BorrowInterest[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchCanceledAndClosedOrders": {
+    "async": true,
+    "description": "fetches information on multiple canceled orders made by the user",
+    "errors": null,
+    "name": "fetchCanceledAndClosedOrders",
+    "params_doc": {
+      "limit": "the maximum number of order structures to retrieve",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.paginate": "default false, when true will automatically paginate by calling this endpoint multiple times. See in the docs all the [available parameters](https://github.com/ccxt/ccxt/wiki/Manual#pagination-params)",
+      "params.portfolioMargin": "set to true if you would like to fetch orders in a portfolio margin account",
+      "params.trigger": "set to true if you would like to fetch portfolio margin account trigger or conditional orders",
+      "since": "the earliest time in ms to fetch orders for",
+      "symbol": "unified market symbol of the market the orders were made in"
+    },
+    "returns": {
+      "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+      "type": "object[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "symbol",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "undefined",
+          "name": "since",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "undefined",
+          "name": "limit",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Order[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchClosedOrders": {
+    "async": true,
+    "description": "fetches information on multiple closed orders made by the user",
+    "errors": null,
+    "name": "fetchClosedOrders",
+    "params_doc": {
+      "limit": "the maximum number of order structures to retrieve",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.paginate": "default false, when true will automatically paginate by calling this endpoint multiple times. See in the docs all the [available parameters](https://github.com/ccxt/ccxt/wiki/Manual#pagination-params)",
+      "params.portfolioMargin": "set to true if you would like to fetch orders in a portfolio margin account",
+      "params.trigger": "set to true if you would like to fetch portfolio margin account trigger or conditional orders",
+      "since": "the earliest time in ms to fetch orders for",
+      "symbol": "unified market symbol of the market orders were made in"
+    },
+    "returns": {
+      "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+      "type": "Order[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "symbol",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "undefined",
+          "name": "since",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "undefined",
+          "name": "limit",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Order[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchConvertCurrencies": {
+    "async": true,
+    "description": "fetches all available currencies that can be converted",
+    "errors": null,
+    "name": "fetchConvertCurrencies",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint"
+    },
+    "returns": {
+      "description": "an associative dictionary of currencies",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Currencies>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchConvertQuote": {
+    "async": true,
+    "description": "fetch a quote for converting from one currency to another",
+    "errors": null,
+    "name": "fetchConvertQuote",
+    "params_doc": {
+      "amount": "how much you want to trade in units of the from currency",
+      "fromCode": "the currency that you want to sell and convert from",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.walletType": "either 'SPOT' or 'FUNDING', the default is 'SPOT'",
+      "toCode": "the currency that you want to buy and convert into"
+    },
+    "returns": {
+      "description": "a [conversion structure]{@link https://docs.ccxt.com/?id=conversion-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "fromCode",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "name": "toCode",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "undefined",
+          "name": "amount",
+          "optional": true,
+          "type": "Num"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Conversion>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchConvertTrade": {
+    "async": true,
+    "description": "fetch the data for a conversion trade",
+    "errors": null,
+    "name": "fetchConvertTrade",
+    "params_doc": {
+      "code": "the unified currency code of the conversion trade",
+      "id": "the id of the trade that you want to fetch",
+      "params": "extra parameters specific to the exchange API endpoint"
+    },
+    "returns": {
+      "description": "a [conversion structure]{@link https://docs.ccxt.com/?id=conversion-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "id",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "undefined",
+          "name": "code",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Conversion>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchConvertTradeHistory": {
+    "async": true,
+    "description": "fetch the users history of conversion trades",
+    "errors": null,
+    "name": "fetchConvertTradeHistory",
+    "params_doc": {
+      "code": "the unified currency code",
+      "limit": "the maximum number of conversion structures to retrieve",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.until": "timestamp in ms of the latest conversion to fetch",
+      "since": "the earliest time in ms to fetch conversions for"
+    },
+    "returns": {
+      "description": "a list of [conversion structures]{@link https://docs.ccxt.com/?id=conversion-structure}",
+      "type": "object[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "code",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "undefined",
+          "name": "since",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "undefined",
+          "name": "limit",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Conversion[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchCrossBorrowRate": {
+    "async": true,
+    "description": "fetch the rate of interest to borrow a currency for margin trading",
+    "errors": null,
+    "name": "fetchCrossBorrowRate",
+    "params_doc": {
+      "code": "unified currency code",
+      "params": "extra parameters specific to the exchange API endpoint"
+    },
+    "returns": {
+      "description": "a [borrow rate structure]{@link https://docs.ccxt.com/?id=borrow-rate-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "code",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<CrossBorrowRate>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchCurrencies": {
+    "async": true,
+    "description": "fetches all available currencies on an exchange",
+    "errors": null,
+    "name": "fetchCurrencies",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint"
+    },
+    "returns": {
+      "description": "an associative dictionary of currencies",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Currencies>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchDepositAddress": {
+    "async": true,
+    "description": "fetch the deposit address for a currency associated with this account",
+    "errors": null,
+    "name": "fetchDepositAddress",
+    "params_doc": {
+      "code": "unified currency code",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.network": "network for fetch deposit address"
+    },
+    "returns": {
+      "description": "an [address structure]{@link https://docs.ccxt.com/?id=address-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "code",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<DepositAddress>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchDeposits": {
+    "async": true,
+    "description": "fetch all deposits made to an account",
+    "errors": null,
+    "name": "fetchDeposits",
+    "params_doc": {
+      "code": "unified currency code",
+      "limit": "the maximum number of deposits structures to retrieve",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.fiat": "if true, only fiat deposits will be returned",
+      "params.paginate": "default false, when true will automatically paginate by calling this endpoint multiple times. See in the docs all the [available parameters](https://github.com/ccxt/ccxt/wiki/Manual#pagination-params)",
+      "params.until": "the latest time in ms to fetch entries for",
+      "since": "the earliest time in ms to fetch deposits for"
+    },
+    "returns": {
+      "description": "a list of [transaction structures]{@link https://docs.ccxt.com/?id=transaction-structure}",
+      "type": "object[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "code",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "undefined",
+          "name": "since",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "undefined",
+          "name": "limit",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Transaction[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchFundingIntervals": {
+    "async": true,
+    "description": "fetch the funding rate interval for multiple markets",
+    "errors": null,
+    "name": "fetchFundingIntervals",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.subType": "\"linear\" or \"inverse\"",
+      "symbols": "list of unified market symbols"
+    },
+    "returns": {
+      "description": "a list of [funding rate structures]{@link https://docs.ccxt.com/?id=funding-rate-structure}",
+      "type": "object[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "symbols",
+          "optional": true,
+          "type": "Strings"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<FundingRates>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchFundingRate": {
+    "async": true,
+    "description": "fetch the current funding rate",
+    "errors": null,
+    "name": "fetchFundingRate",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "symbol": "unified market symbol"
+    },
+    "returns": {
+      "description": "a [funding rate structure]{@link https://docs.ccxt.com/?id=funding-rate-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "symbol",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<FundingRate>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchFundingRates": {
+    "async": true,
+    "description": "fetch the funding rate for multiple markets",
+    "errors": null,
+    "name": "fetchFundingRates",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.subType": "\"linear\" or \"inverse\"",
+      "symbols": "list of unified market symbols"
+    },
+    "returns": {
+      "description": "a list of [funding rate structures]{@link https://docs.ccxt.com/?id=funding-rates-structure}, indexed by market symbols",
+      "type": "object[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "symbols",
+          "optional": true,
+          "type": "Strings"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<FundingRates>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchGreeks": {
+    "async": true,
+    "description": "fetches an option contracts greeks, financial metrics used to measure the factors that affect the price of an options contract",
+    "errors": null,
+    "name": "fetchGreeks",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "symbol": "unified symbol of the market to fetch greeks for"
+    },
+    "returns": {
+      "description": "a [greeks structure]{@link https://docs.ccxt.com/?id=greeks-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "symbol",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Greeks>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchIsolatedBorrowRate": {
+    "async": true,
+    "description": "fetch the rate of interest to borrow a currency for margin trading",
+    "errors": null,
+    "name": "fetchIsolatedBorrowRate",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint  EXCHANGE SPECIFIC PARAMETERS",
+      "params.vipLevel": "user's current specific margin data will be returned if viplevel is omitted",
+      "symbol": "unified market symbol"
+    },
+    "returns": {
+      "description": "an [isolated borrow rate structure]{@link https://docs.ccxt.com/?id=isolated-borrow-rate-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "symbol",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<IsolatedBorrowRate>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchIsolatedBorrowRates": {
+    "async": true,
+    "description": "fetch the borrow interest rates of all currencies",
+    "errors": null,
+    "name": "fetchIsolatedBorrowRates",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.symbol": "unified market symbol  EXCHANGE SPECIFIC PARAMETERS",
+      "params.vipLevel": "user's current specific margin data will be returned if viplevel is omitted"
+    },
+    "returns": {
+      "description": "a [borrow rate structure]{@link https://docs.ccxt.com/?id=borrow-rate-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<IsolatedBorrowRates>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchLastPrices": {
+    "name": "fetchLastPrices",
+    "description": "fetch the last price for multiple symbols",
+    "async": true,
+    "signature": {
+      "return_type": "Promise<LastPrice[]>",
+      "params": []
+    },
+    "returns": {
+      "description": "a list of last price structures",
+      "type": "object[]"
+    }
+  },
+  "fetchLedger": {
+    "async": true,
+    "description": "fetch the history of changes, actions done by the user or operations that altered the balance of the user",
+    "errors": null,
+    "name": "fetchLedger",
+    "params_doc": {
+      "code": "unified currency code",
+      "limit": "max number of ledger entries to return",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.paginate": "default false, when true will automatically paginate by calling this endpoint multiple times. See in the docs all the [available parameters](https://github.com/ccxt/ccxt/wiki/Manual#pagination-params)",
+      "params.portfolioMargin": "set to true if you would like to fetch the ledger for a portfolio margin account",
+      "params.subType": "\"linear\" or \"inverse\"",
+      "params.until": "timestamp in ms of the latest ledger entry",
+      "since": "timestamp in ms of the earliest ledger entry"
+    },
+    "returns": {
+      "description": "a [ledger structure]{@link https://docs.ccxt.com/?id=ledger-entry-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "code",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "undefined",
+          "name": "since",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "undefined",
+          "name": "limit",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<LedgerEntry[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchLedgerEntry": {
+    "async": true,
+    "description": "fetch the history of changes, actions done by the user or operations that altered the balance of the user",
+    "errors": null,
+    "name": "fetchLedgerEntry",
+    "params_doc": {
+      "code": "unified currency code",
+      "id": "the identification number of the ledger entry",
+      "params": "extra parameters specific to the exchange API endpoint"
+    },
+    "returns": {
+      "description": "a [ledger structure]{@link https://docs.ccxt.com/?id=ledger-entry-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "id",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "undefined",
+          "name": "code",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<LedgerEntry>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchLeverageTiers": {
+    "async": true,
+    "description": "retrieve information on the maximum leverage, and maintenance margin for trades of varying trade sizes",
+    "errors": null,
+    "name": "fetchLeverageTiers",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.portfolioMargin": "set to true if you would like to fetch the leverage tiers for a portfolio margin account",
+      "params.subType": "\"linear\" or \"inverse\"",
+      "symbols": "list of unified market symbols"
+    },
+    "returns": {
+      "description": "a dictionary of [leverage tiers structures]{@link https://docs.ccxt.com/?id=leverage-tiers-structure}, indexed by market symbols",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "symbols",
+          "optional": true,
+          "type": "Strings"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<LeverageTiers>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchLeverages": {
+    "async": true,
+    "description": "fetch the set leverage for all markets",
+    "errors": null,
+    "name": "fetchLeverages",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.subType": "\"linear\" or \"inverse\"",
+      "symbols": "a list of unified market symbols"
+    },
+    "returns": {
+      "description": "a list of [leverage structures]{@link https://docs.ccxt.com/?id=leverage-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "symbols",
+          "optional": true,
+          "type": "Strings"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Leverages>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchLongShortRatioHistory": {
+    "async": true,
+    "description": "fetches the long short ratio history for a unified market symbol",
+    "errors": null,
+    "name": "fetchLongShortRatioHistory",
+    "params_doc": {
+      "limit": "the maximum number of long short ratio structures to retrieve",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.until": "timestamp in ms of the latest ratio to fetch",
+      "since": "the earliest time in ms to fetch ratios for",
+      "symbol": "unified symbol of the market to fetch the long short ratio for",
+      "timeframe": "the period for the ratio, default is 24 hours"
+    },
+    "returns": {
+      "description": "an array of [long short ratio structures]{@link https://docs.ccxt.com/?id=long-short-ratio-structure}",
+      "type": "object[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "symbol",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "undefined",
+          "name": "timeframe",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "undefined",
+          "name": "since",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "undefined",
+          "name": "limit",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<LongShortRatio[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchMarginAdjustmentHistory": {
+    "async": true,
+    "description": "fetches the history of margin added or reduced from contract isolated positions",
+    "errors": null,
+    "name": "fetchMarginAdjustmentHistory",
+    "params_doc": {
+      "limit": "the maximum amount of changes to fetch",
+      "params": "extra parameters specific to the exchange api endpoint",
+      "params.until": "timestamp in ms of the latest change to fetch",
+      "since": "timestamp in ms of the earliest change to fetch",
+      "symbol": "unified market symbol",
+      "type": "\"add\" or \"reduce\""
+    },
+    "returns": {
+      "description": "a list of [margin structures]{@link https://docs.ccxt.com/?id=margin-loan-structure}",
+      "type": "object[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "symbol",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "undefined",
+          "name": "type",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "undefined",
+          "name": "since",
+          "optional": true,
+          "type": "Num"
+        },
+        {
+          "default": "undefined",
+          "name": "limit",
+          "optional": true,
+          "type": "Num"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<MarginModification[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchMarginMode": {
+    "async": true,
+    "description": "fetches the margin mode of a specific symbol",
+    "errors": null,
+    "name": "fetchMarginMode",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.subType": "\"linear\" or \"inverse\"",
+      "symbol": "unified symbol of the market the order was made in"
+    },
+    "returns": {
+      "description": "a [margin mode structure]{@link https://docs.ccxt.com/?id=margin-mode-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "symbol",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<MarginMode>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchMarginModes": {
+    "async": true,
+    "description": "fetches margin modes (\"isolated\" or \"cross\") that the market for the symbol in in, with symbol=undefined all markets for a subType (linear/inverse) are returned",
+    "errors": null,
+    "name": "fetchMarginModes",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.subType": "\"linear\" or \"inverse\"",
+      "symbols": "unified market symbols"
+    },
+    "returns": {
+      "description": "a list of [margin mode structures]{@link https://docs.ccxt.com/?id=margin-mode-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "symbols",
+          "optional": true,
+          "type": "Strings"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<MarginModes>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchMarkPrice": {
+    "async": true,
+    "description": "fetches mark price for the market",
+    "errors": null,
+    "name": "fetchMarkPrice",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.subType": "\"linear\" or \"inverse\"",
+      "symbol": "unified symbol of the market to fetch the ticker for"
+    },
+    "returns": {
+      "description": "a dictionary of [ticker structures]{@link https://docs.ccxt.com/?id=ticker-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "symbol",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Ticker>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchMarkPrices": {
+    "async": true,
+    "description": "fetches mark prices for multiple markets",
+    "errors": null,
+    "name": "fetchMarkPrices",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.subType": "\"linear\" or \"inverse\"",
+      "symbols": "unified symbols of the markets to fetch the ticker for, all market tickers are returned if not assigned"
+    },
+    "returns": {
+      "description": "a dictionary of [ticker structures]{@link https://docs.ccxt.com/?id=ticker-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "symbols",
+          "optional": true,
+          "type": "Strings"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Tickers>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchMarkets": {
+    "async": true,
+    "description": "retrieves data on all markets for binance",
+    "errors": null,
+    "name": "fetchMarkets",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint"
+    },
+    "returns": {
+      "description": "an array of objects representing market data",
+      "type": "object[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Market[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchMyDustTrades": {
+    "name": "fetchMyDustTrades",
+    "description": "fetch dust conversion trades",
+    "async": true,
+    "signature": {
+      "return_type": "Promise<Trade[]>",
+      "params": []
+    },
+    "returns": {
+      "description": "a list of trade structures",
+      "type": "object[]"
+    }
+  },
+  "fetchOHLCV": {
+    "async": true,
+    "description": "fetches historical candlestick data containing the open, high, low, and close price, and the volume of a market",
+    "errors": null,
+    "name": "fetchOHLCV",
+    "params_doc": {
+      "limit": "the maximum amount of candles to fetch",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.paginate": "default false, when true will automatically paginate by calling this endpoint multiple times. See in the docs all the [available parameters](https://github.com/ccxt/ccxt/wiki/Manual#pagination-params)",
+      "params.price": "\"mark\" or \"index\" for mark price and index price candles",
+      "params.until": "timestamp in ms of the latest candle to fetch",
+      "since": "timestamp in ms of the earliest candle to fetch",
+      "symbol": "unified symbol of the market to fetch OHLCV data for",
+      "timeframe": "the length of time each candle represents"
+    },
+    "returns": {
+      "description": "A list of candles ordered as timestamp, open, high, low, close, volume",
+      "type": "int[][]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "symbol",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "'1m'",
+          "name": "timeframe",
+          "optional": true,
+          "type": "string"
+        },
+        {
+          "default": "undefined",
+          "name": "since",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "undefined",
+          "name": "limit",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<OHLCV[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchOpenOrders": {
+    "async": true,
+    "description": "fetch all unfilled currently open orders",
+    "errors": null,
+    "name": "fetchOpenOrders",
+    "params_doc": {
+      "limit": "the maximum number of open orders structures to retrieve",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.marginMode": "'cross' or 'isolated', for spot margin trading",
+      "params.portfolioMargin": "set to true if you would like to fetch open orders in the portfolio margin account",
+      "params.subType": "\"linear\" or \"inverse\"",
+      "params.trigger": "set to true if you would like to fetch portfolio margin account conditional orders",
+      "since": "the earliest time in ms to fetch open orders for",
+      "symbol": "unified market symbol"
+    },
+    "returns": {
+      "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+      "type": "Order[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "symbol",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "undefined",
+          "name": "since",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "undefined",
+          "name": "limit",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Order[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchOption": {
+    "async": true,
+    "description": "fetches option data that is commonly found in an option chain",
+    "errors": null,
+    "name": "fetchOption",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "symbol": "unified market symbol"
+    },
+    "returns": {
+      "description": "an [option chain structure]{@link https://docs.ccxt.com/?id=option-chain-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "symbol",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Option>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchOptionPositions": {
+    "name": "fetchOptionPositions",
+    "description": "fetch option positions",
+    "async": true,
+    "signature": {
+      "return_type": "Promise<Position[]>",
+      "params": []
+    },
+    "returns": {
+      "description": "a list of position structures",
+      "type": "object[]"
+    }
+  },
+  "fetchOrderBook": {
+    "async": true,
+    "description": "fetches information on open orders with bid (buy) and ask (sell) prices, volumes and other data",
+    "errors": null,
+    "name": "fetchOrderBook",
+    "params_doc": {
+      "limit": "the maximum amount of order book entries to return",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.rpi": "*future only* set to true to use the RPI endpoint",
+      "symbol": "unified symbol of the market to fetch the order book for"
+    },
+    "returns": {
+      "description": "A dictionary of [order book structures]{@link https://docs.ccxt.com/?id=order-book-structure} indexed by market symbols",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "symbol",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "undefined",
+          "name": "limit",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<OrderBook>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchOrders": {
+    "async": true,
+    "description": "fetches information on multiple orders made by the user",
+    "errors": null,
+    "name": "fetchOrders",
+    "params_doc": {
+      "limit": "the maximum number of order structures to retrieve",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.marginMode": "'cross' or 'isolated', for spot margin trading",
+      "params.paginate": "default false, when true will automatically paginate by calling this endpoint multiple times. See in the docs all the [available parameters](https://github.com/ccxt/ccxt/wiki/Manual#pagination-params)",
+      "params.portfolioMargin": "set to true if you would like to fetch orders in a portfolio margin account",
+      "params.trigger": "set to true if you would like to fetch portfolio margin account trigger or conditional orders",
+      "params.until": "the latest time in ms to fetch orders for",
+      "since": "the earliest time in ms to fetch orders for",
+      "symbol": "unified market symbol of the market orders were made in"
+    },
+    "returns": {
+      "description": "a list of [order structures]{@link https://docs.ccxt.com/?id=order-structure}",
+      "type": "Order[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "symbol",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "undefined",
+          "name": "since",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "undefined",
+          "name": "limit",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Order[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchPositionADLRank": {
+    "name": "fetchPositionADLRank",
+    "returns": {
+      "description": "an [auto de leverage structure](https://docs.ccxt.com/?id=auto-de-leverage-structure)",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "name": "symbol",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<ADL>"
+    }
+  },
+  "fetchPositions": {
+    "async": true,
+    "description": "fetch all open positions",
+    "errors": null,
+    "name": "fetchPositions",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.method": "method name to call, \"positionRisk\", \"account\" or \"option\", default is \"positionRisk\"",
+      "params.params": "extra parameters specific to the exchange API endpoint",
+      "params.useV2": "set to true if you want to use the obsolete endpoint, where some more additional fields were provided",
+      "symbols": "list of unified market symbols"
+    },
+    "returns": {
+      "description": "a list of [position structure]{@link https://docs.ccxt.com/?id=position-structure}",
+      "type": "object[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "symbols",
+          "optional": true,
+          "type": "Strings"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Position[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchPositionsADLRank": {
+    "async": true,
+    "description": "fetches the auto deleveraging rank and risk percentage for a list of symbols that have open positions",
+    "errors": null,
+    "name": "fetchPositionsADLRank",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.portfolioMargin": "set to true for the portfolio margin account",
+      "symbols": "list of unified market symbols"
+    },
+    "returns": {
+      "description": "an array of [auto de leverage structure]{@link https://docs.ccxt.com/?id=auto-de-leverage-structure}",
+      "type": "object[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "symbols",
+          "optional": true,
+          "type": "Strings"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<ADL[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchPositionsRisk": {
+    "name": "fetchPositionsRisk",
+    "description": "fetch positions risk",
+    "async": true,
+    "signature": {
+      "return_type": "Promise<Position[]>",
+      "params": []
+    },
+    "returns": {
+      "description": "a list of position structures",
+      "type": "object[]"
+    }
+  },
+  "fetchTicker": {
+    "async": true,
+    "description": "fetches a price ticker, a statistical calculation with the information calculated over the past 24 hours for a specific market",
+    "errors": null,
+    "name": "fetchTicker",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.rolling": "(spot only) default false, if true, uses the rolling 24 hour ticker endpoint /api/v3/ticker",
+      "symbol": "unified symbol of the market to fetch the ticker for"
+    },
+    "returns": {
+      "description": "a [ticker structure]{@link https://docs.ccxt.com/?id=ticker-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "symbol",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Ticker>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchTickers": {
+    "async": true,
+    "description": "fetches price tickers for multiple markets, statistical information calculated over the past 24 hours for each market",
+    "errors": null,
+    "name": "fetchTickers",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.subType": "\"linear\" or \"inverse\"",
+      "params.type": "'spot', 'option', use params[\"subType\"] for swap and future markets",
+      "symbols": "unified symbols of the markets to fetch the ticker for, all market tickers are returned if not assigned"
+    },
+    "returns": {
+      "description": "a dictionary of [ticker structures]{@link https://docs.ccxt.com/?id=ticker-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "symbols",
+          "optional": true,
+          "type": "Strings"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Tickers>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchTime": {
+    "async": true,
+    "description": "fetches the current integer timestamp in milliseconds from the exchange server",
+    "errors": null,
+    "name": "fetchTime",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.subType": "\"linear\" or \"inverse\""
+    },
+    "returns": {
+      "description": "the current integer timestamp in milliseconds from the exchange server",
+      "type": "int"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Int>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchTrades": {
+    "async": true,
+    "description": "get the list of most recent trades for a particular symbol Default fetchTradesMethod",
+    "errors": null,
+    "name": "fetchTrades",
+    "params_doc": {
+      "limit": "default 500, max 1000",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.fetchTradesMethod": "'publicGetAggTrades' (spot default), 'fapiPublicGetAggTrades' (swap default), 'dapiPublicGetAggTrades' (future default), 'eapiPublicGetTrades' (option default), 'publicGetTrades', 'fapiPublicGetTrades', 'dapiPublicGetTrades', 'publicGetHistoricalTrades', 'fapiPublicGetHistoricalTrades', 'dapiPublicGetHistoricalTrades', 'eapiPublicGetHistoricalTrades'",
+      "params.fromId": "trade id to fetch from, default gets most recent trades, not used when fetchTradesMethod is 'publicGetTrades', 'fapiPublicGetTrades', 'dapiPublicGetTrades', or 'eapiPublicGetTrades'",
+      "params.paginate": "default false, when true will automatically paginate by calling this endpoint multiple times. See in the docs all the [availble parameters](https://github.com/ccxt/ccxt/wiki/Manual#pagination-params)  EXCHANGE SPECIFIC PARAMETERS",
+      "params.until": "only used when fetchTradesMethod is 'publicGetAggTrades', 'fapiPublicGetAggTrades', or 'dapiPublicGetAggTrades'",
+      "since": "only used when fetchTradesMethod is 'publicGetAggTrades', 'fapiPublicGetAggTrades', or 'dapiPublicGetAggTrades'",
+      "symbol": "unified symbol of the market to fetch trades for"
+    },
+    "returns": {
+      "description": "a list of [trade structures]{@link https://docs.ccxt.com/?id=public-trades}",
+      "type": "Trade[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "symbol",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "undefined",
+          "name": "since",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "undefined",
+          "name": "limit",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Trade[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchTradingFee": {
+    "async": true,
+    "description": "fetch the trading fees for a market",
+    "errors": null,
+    "name": "fetchTradingFee",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.portfolioMargin": "set to true if you would like to fetch trading fees in a portfolio margin account",
+      "params.subType": "\"linear\" or \"inverse\"",
+      "symbol": "unified market symbol"
+    },
+    "returns": {
+      "description": "a [fee structure]{@link https://docs.ccxt.com/?id=fee-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "symbol",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<TradingFeeInterface>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchTradingFees": {
+    "async": true,
+    "description": "fetch the trading fees for multiple markets",
+    "errors": null,
+    "name": "fetchTradingFees",
+    "params_doc": {
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.subType": "\"linear\" or \"inverse\""
+    },
+    "returns": {
+      "description": "a dictionary of [fee structures]{@link https://docs.ccxt.com/?id=fee-structure} indexed by market symbols",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<TradingFees>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchTransfers": {
+    "async": true,
+    "description": "fetch a history of internal transfers made on an account",
+    "errors": null,
+    "name": "fetchTransfers",
+    "params_doc": {
+      "code": "unified currency code of the currency transferred",
+      "limit": "the maximum number of transfers structures to retrieve",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.internal": "default false, when true will fetch pay trade history",
+      "params.paginate": "default false, when true will automatically paginate by calling this endpoint multiple times. See in the docs all the [available parameters](https://github.com/ccxt/ccxt/wiki/Manual#pagination-params)",
+      "params.until": "the latest time in ms to fetch transfers for",
+      "since": "the earliest time in ms to fetch transfers for"
+    },
+    "returns": {
+      "description": "a list of [transfer structures]{@link https://docs.ccxt.com/?id=transfer-structure}",
+      "type": "object[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "code",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "undefined",
+          "name": "since",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "undefined",
+          "name": "limit",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<TransferEntry[]>"
+    },
+    "unresolved_reason": null
+  },
+  "fetchWithdrawals": {
+    "async": true,
+    "description": "fetch all withdrawals made from an account",
+    "errors": null,
+    "name": "fetchWithdrawals",
+    "params_doc": {
+      "code": "unified currency code",
+      "limit": "the maximum number of withdrawals structures to retrieve",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.fiat": "if true, only fiat withdrawals will be returned",
+      "params.paginate": "default false, when true will automatically paginate by calling this endpoint multiple times. See in the docs all the [available parameters](https://github.com/ccxt/ccxt/wiki/Manual#pagination-params)",
+      "params.until": "the latest time in ms to fetch withdrawals for",
+      "since": "the earliest time in ms to fetch withdrawals for"
+    },
+    "returns": {
+      "description": "a list of [transaction structures]{@link https://docs.ccxt.com/?id=transaction-structure}",
+      "type": "object[]"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": "undefined",
+          "name": "code",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "undefined",
+          "name": "since",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "undefined",
+          "name": "limit",
+          "optional": true,
+          "type": "Int"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Transaction[]>"
+    },
+    "unresolved_reason": null
+  },
+  "reduceMargin": {
+    "async": true,
+    "description": "remove margin from a position",
+    "errors": null,
+    "name": "reduceMargin",
+    "params_doc": {
+      "amount": "the amount of margin to remove",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "symbol": "unified market symbol"
+    },
+    "returns": {
+      "description": "a [margin structure]{@link https://docs.ccxt.com/?id=margin-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "symbol",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "name": "amount",
+          "optional": false,
+          "type": "number"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<MarginModification>"
+    },
+    "unresolved_reason": null
+  },
+  "transfer": {
+    "async": true,
+    "description": "transfer currency internally between wallets on the same account",
+    "errors": null,
+    "name": "transfer",
+    "params_doc": {
+      "amount": "amount to transfer",
+      "code": "unified currency code",
+      "fromAccount": "account to transfer from",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "params.symbol": "the unified symbol, required for isolated margin transfers",
+      "params.type": "exchange specific transfer type",
+      "toAccount": "account to transfer to"
+    },
+    "returns": {
+      "description": "a [transfer structure]{@link https://docs.ccxt.com/?id=transfer-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "code",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "name": "amount",
+          "optional": false,
+          "type": "number"
+        },
+        {
+          "default": null,
+          "name": "fromAccount",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "name": "toAccount",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<TransferEntry>"
+    },
+    "unresolved_reason": null
+  },
+  "withdraw": {
+    "async": true,
+    "description": "make a withdrawal",
+    "errors": null,
+    "name": "withdraw",
+    "params_doc": {
+      "address": "the address to withdraw to",
+      "amount": "the amount to withdraw",
+      "code": "unified currency code",
+      "params": "extra parameters specific to the exchange API endpoint",
+      "tag": null
+    },
+    "returns": {
+      "description": "a [transaction structure]{@link https://docs.ccxt.com/?id=transaction-structure}",
+      "type": "object"
+    },
+    "signature": {
+      "params": [
+        {
+          "default": null,
+          "name": "code",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "name": "amount",
+          "optional": false,
+          "type": "number"
+        },
+        {
+          "default": null,
+          "name": "address",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "default": "undefined",
+          "name": "tag",
+          "optional": true,
+          "type": "Str"
+        },
+        {
+          "default": "{}",
+          "name": "params",
+          "optional": true,
+          "type": null
+        }
+      ],
+      "return_type": "Promise<Transaction>"
+    },
+    "unresolved_reason": null
+  }
+}

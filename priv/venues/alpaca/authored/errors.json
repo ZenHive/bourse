@@ -1,0 +1,63 @@
+{
+  "handle_errors": {
+    "exception_scopes": {},
+    "runtime_body_checks": [
+      {
+        "field": "code",
+        "field2": null,
+        "roles": [
+          "error_code"
+        ],
+        "sentinel_values": []
+      }
+    ],
+    "runtime_code_fields": [
+      "code"
+    ],
+    "error_code_fields": [
+      {
+        "field": "code",
+        "field2": null,
+        "method": "safeString",
+        "object": "response",
+        "object_path": null,
+        "roles": [
+          "error_code"
+        ],
+        "sentinel_values": null
+      },
+      {
+        "field": "message",
+        "field2": null,
+        "method": "safeString",
+        "object": "response",
+        "object_path": null,
+        "roles": [
+          "error_message"
+        ],
+        "sentinel_values": null
+      }
+    ]
+  },
+  "retry_classification": {
+    "auth": [
+      "AuthenticationError",
+      "PermissionDenied"
+    ],
+    "non_retryable": [
+      "BadRequest",
+      "InvalidOrder",
+      "OrderNotFound"
+    ],
+    "rate_limit": [
+      "RateLimitExceeded"
+    ]
+  },
+  "status_map": {
+    "401": "AuthenticationError",
+    "403": "PermissionDenied",
+    "404": "OrderNotFound",
+    "422": "BadRequest",
+    "429": "RateLimitExceeded"
+  }
+}

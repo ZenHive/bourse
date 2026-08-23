@@ -1,0 +1,543 @@
+{
+  "schema_version": 3,
+  "authored": true,
+  "frozen": true,
+  "hand_owned": true,
+  "exchange": {
+    "alias": false,
+    "certified": false,
+    "country": [],
+    "id": "derive",
+    "name": "derive",
+    "pro": true,
+    "referral": {
+      "discount": 0,
+      "url": "https://www.derive.xyz/invite/3VB0B"
+    },
+    "version": "v1"
+  },
+  "urls": {
+    "api": {
+      "ws": {
+        "private": "wss://api.lyra.finance/ws",
+        "public": "wss://api.lyra.finance/ws",
+        "sandbox_private": "wss://api-demo.lyra.finance/ws",
+        "sandbox_public": "wss://api-demo.lyra.finance/ws"
+      }
+    },
+    "api_management": "__undefined",
+    "doc": "https://docs.derive.xyz/docs/",
+    "fees": "https://docs.derive.xyz/reference/fees-1/",
+    "logo": "https://github.com/user-attachments/assets/f835b95f-033a-43dd-b6bb-24e698fc498c",
+    "www": "https://www.derive.xyz/"
+  },
+  "testnet": {
+    "pattern": "separate_host",
+    "sandbox_flag_field": null,
+    "unresolved_reason": null,
+    "urls": {
+      "private": "https://api-demo.lyra.finance/private",
+      "public": "https://api-demo.lyra.finance/public"
+    }
+  },
+  "auth": {
+    "authenticated_sections": [
+      "private"
+    ],
+    "signing_config": {},
+    "signing_pattern": "derive",
+    "sign_recipe": {
+      "private": {
+        "auth_headers": [
+          {
+            "name": "X-LyraWallet",
+            "source": "api_key"
+          },
+          {
+            "name": "X-LyraTimestamp",
+            "source": "timestamp"
+          },
+          {
+            "name": "X-LyraSignature",
+            "source": "signature"
+          }
+        ],
+        "canonical_string": null,
+        "crypto_op": {
+          "algo": "custom",
+          "reason": "EIP-191 personal_sign of timestamp for REST headers; EIP-712 order body signature additive"
+        },
+        "custom_signing_details": {
+          "order_auth": {
+            "placement": "body.signature",
+            "precondition": false,
+            "scheme": "eip712_fixed_domain"
+          },
+          "primitives": [
+            "keccak",
+            "secp256k1",
+            "eip191",
+            "eip712"
+          ],
+          "rest_auth": {
+            "signature_header": "X-LyraSignature",
+            "signature_message": "timestamp_ms_string",
+            "signature_scheme": "eip191_personal_sign",
+            "signer": "credentials.secret (registered session key)",
+            "timestamp_header": "X-LyraTimestamp",
+            "timestamp_unit": "ms",
+            "wallet_header": "X-LyraWallet",
+            "wallet_source": "credentials.api_key"
+          },
+          "signals": [
+            "signMessage",
+            "signOrder",
+            "X-LyraWallet",
+            "X-LyraTimestamp",
+            "X-LyraSignature"
+          ]
+        },
+        "custom_signing_scheme": "eip191_headers_plus_eip712_order",
+        "nonce": null,
+        "patch_count": 0,
+        "pre_sign_transforms": null,
+        "signature_placement": {
+          "key": "X-LyraSignature",
+          "location": "header"
+        },
+        "timestamp": {
+          "format": "string",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": "custom_signing_family"
+      }
+    }
+  },
+  "config": {
+    "credentials": {
+      "accountId": false,
+      "apiKey": false,
+      "login": false,
+      "password": false,
+      "privateKey": true,
+      "secret": false,
+      "token": false,
+      "twofa": false,
+      "uid": false,
+      "walletAddress": true
+    },
+    "flags": {
+      "dex": true
+    },
+    "limits": {
+      "amount": {
+        "max": null,
+        "min": null
+      },
+      "cost": {
+        "max": null,
+        "min": null
+      },
+      "leverage": {
+        "max": null,
+        "min": null
+      },
+      "price": {
+        "max": null,
+        "min": null
+      }
+    },
+    "rate_limit_meta": {
+      "enableRateLimit": true,
+      "timeout": 10000
+    },
+    "routing": {
+      "accountsByType": null,
+      "networks": null,
+      "timeInForce": null
+    },
+    "status": {
+      "eta": null,
+      "info": null,
+      "status": "ok",
+      "updated": null,
+      "url": null
+    }
+  },
+  "fees": {
+    "funding": {
+      "deposit": {},
+      "percentage": "__undefined",
+      "tierBased": "__undefined",
+      "withdraw": {}
+    },
+    "static_market_fees": false,
+    "trading": {
+      "maker": "__undefined",
+      "percentage": "__undefined",
+      "taker": "__undefined",
+      "tierBased": "__undefined"
+    }
+  },
+  "websocket": {
+    "auth": {
+      "authenticate_defined": true,
+      "credentials": [
+        "privateKey"
+      ],
+      "mechanism": "sign_in_message",
+      "message": {
+        "keys": [
+          "id",
+          "method",
+          "params"
+        ],
+        "method": "public/login",
+        "op": null
+      },
+      "resolved_from": "self",
+      "source": "pro_authenticate",
+      "unresolved_reason": null
+    },
+    "dispatch": {
+      "discriminators": [],
+      "entries": [
+        {
+          "channel": "orderbook",
+          "handler": "handleOrderBook"
+        },
+        {
+          "channel": "ticker",
+          "handler": "handleTicker"
+        },
+        {
+          "channel": "trades",
+          "handler": "handleTrade"
+        },
+        {
+          "channel": "orders",
+          "handler": "handleOrder"
+        },
+        {
+          "channel": "mytrades",
+          "handler": "handleMyTrade"
+        },
+        {
+          "channel": "public/login",
+          "handler": "handleAuth"
+        },
+        {
+          "channel": "unsubscribe",
+          "handler": "handleUnSubscribe"
+        }
+      ],
+      "handle_message_defined": true,
+      "kind": "routed",
+      "resolved_from": "self",
+      "source": "pro_handle_message",
+      "unresolved": [],
+      "unresolved_reason": null
+    },
+    "heartbeat": {
+      "has_pong_handler": false,
+      "keep_alive_ms": 9000,
+      "keep_alive_resolved_from": "self",
+      "max_ping_pong_misses": 2,
+      "ping_kind": "native_frame",
+      "ping_payload": null,
+      "ping_payload_kind": null,
+      "source": "pro_describe",
+      "unresolved_reason": null
+    },
+    "ohlcv_semantics": {
+      "cache_limit_default": null,
+      "cache_limit_field": null,
+      "cache_type": null,
+      "closed_signal": null,
+      "ohlcv_defined": false,
+      "resolved_from": null,
+      "source": "none",
+      "timeframe_key": null,
+      "unresolved": [],
+      "unresolved_reason": "no_ws_ohlcv",
+      "update_model": "none"
+    },
+    "orderbook_semantics": {
+      "apply_mode": "replace",
+      "checksum": {
+        "algorithm": null,
+        "field": null,
+        "present": false
+      },
+      "discriminator": {
+        "delta_values": [],
+        "field": null,
+        "snapshot_values": []
+      },
+      "handle_orderbook_defined": true,
+      "resolved_from": "self",
+      "sequence_fields": [],
+      "source": "pro_handle_orderbook",
+      "unresolved_reason": null
+    },
+    "subscribe": {
+      "args_key": "id",
+      "channels": {
+        "watchMyTrades": [
+          ":{symbol}"
+        ],
+        "watchOrders": [
+          ":{symbol}"
+        ],
+        "watchTicker": [
+          "ticker.{symbol}.100"
+        ],
+        "watchTrades": [
+          "trades.{symbol}"
+        ]
+      },
+      "discriminant": "method",
+      "envelope_keys": [
+        "id",
+        "method"
+      ],
+      "mechanism": "json_message",
+      "resolved_from": "self",
+      "source": "pro_watch",
+      "subscribe_op": "subscribe",
+      "unresolved_reason": null,
+      "unsubscribe_op": "unsubscribe"
+    },
+    "trades_semantics": {
+      "cache_limit_default": 1000,
+      "cache_limit_field": "tradesLimit",
+      "cache_type": "ArrayCache",
+      "dedup_key": null,
+      "my_trades": {
+        "cache_limit_default": 1000,
+        "cache_limit_field": "tradesLimit",
+        "cache_type": "ArrayCacheBySymbolById",
+        "dedup_key": null,
+        "defined": true
+      },
+      "resolved_from": "self",
+      "source": "pro_handle_trades",
+      "trades_defined": true,
+      "unresolved": [
+        {
+          "reason": "dedup_key_not_classifiable"
+        }
+      ],
+      "unresolved_reason": null,
+      "update_model": "append"
+    },
+    "urls": {
+      "private": "wss://api.lyra.finance/ws",
+      "public": "wss://api.lyra.finance/ws",
+      "sandbox_private": "wss://api-demo.lyra.finance/ws",
+      "sandbox_public": "wss://api-demo.lyra.finance/ws",
+      "unresolved_reason": null
+    }
+  },
+  "emulated_methods": [
+    {
+      "name": "fetchDepositWithdrawFee",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    }
+  ],
+  "capabilities": {
+    "features": null,
+    "timeframes": {
+      "12h": "12h",
+      "15m": "15m",
+      "1M": "1M",
+      "1d": "1d",
+      "1h": "1h",
+      "1m": "1m",
+      "1w": "1w",
+      "2h": "2h",
+      "30m": "30m",
+      "3d": "3d",
+      "3m": "3m",
+      "4h": "4h",
+      "5m": "5m",
+      "8h": "8h"
+    },
+    "unsupported_raw_endpoints": {
+      "fetchBorrowInterest": {
+        "carve": "C-T549c",
+        "endpoints": [
+          "privatePostGetInterestHistory"
+        ]
+      },
+      "fetchLiquidations": {
+        "carve": "C-T549a",
+        "endpoints": [
+          "publicPostGetLiquidationHistory",
+          "privatePostGetLiquidationHistory",
+          "privatePostGetLiquidatorHistory"
+        ]
+      },
+      "fetchSettlementHistory": {
+        "carve": "C-T549d",
+        "endpoints": [
+          "publicPostGetOptionSettlementHistory",
+          "privatePostGetOptionSettlementHistory"
+        ]
+      }
+    },
+    "has_extras": {
+      "addMargin": false,
+      "borrowCrossMargin": false,
+      "borrowIsolatedMargin": false,
+      "cancelAllOrdersAfter": false,
+      "cancelOrders": false,
+      "cancelOrdersForSymbols": false,
+      "closeAllPositions": false,
+      "closePosition": false,
+      "createLimitOrder": true,
+      "createMarketBuyOrderWithCost": false,
+      "createMarketOrder": true,
+      "createMarketOrderWithCost": false,
+      "createMarketOrderWs": true,
+      "createMarketSellOrderWithCost": false,
+      "createOrders": false,
+      "createReduceOnlyOrder": false,
+      "createStopOrder": false,
+      "createTriggerOrder": false,
+      "fetchAccounts": false,
+      "fetchBorrowInterest": false,
+      "fetchBorrowRateHistories": false,
+      "fetchBorrowRateHistory": false,
+      "fetchCanceledAndClosedOrders": false,
+      "fetchCrossBorrowRate": false,
+      "fetchCrossBorrowRates": false,
+      "fetchCurrenciesWs": "emulated",
+      "fetchDepositAddress": false,
+      "fetchDepositAddresses": false,
+      "fetchDepositWithdrawFee": "emulated",
+      "fetchDepositWithdrawFees": false,
+      "fetchFundingRates": false,
+      "fetchIndexOHLCV": false,
+      "fetchIsolatedBorrowRate": false,
+      "fetchIsolatedBorrowRates": false,
+      "fetchL2OrderBook": true,
+      "fetchLedger": true,
+      "fetchLeverage": false,
+      "fetchLeverageTiers": false,
+      "fetchLiquidations": false,
+      "fetchMarkOHLCV": false,
+      "fetchMarketLeverageTiers": false,
+      "fetchMyLiquidations": false,
+      "fetchOHLCV": false,
+      "fetchOpenInterest": false,
+      "fetchOpenInterestHistory": false,
+      "fetchOpenInterests": false,
+      "fetchOrder": false,
+      "fetchOrderBook": false,
+      "fetchPosition": false,
+      "fetchPositionMode": false,
+      "fetchPositionsRisk": false,
+      "fetchPremiumIndexOHLCV": false,
+      "fetchSettlementHistory": false,
+      "fetchTickers": false,
+      "fetchTradingFee": false,
+      "fetchTradingFees": false,
+      "fetchTransfer": false,
+      "fetchWithdrawal": false,
+      "future": false,
+      "margin": false,
+      "option": true,
+      "privateAPI": true,
+      "publicAPI": true,
+      "reduceMargin": false,
+      "repayCrossMargin": false,
+      "repayIsolatedMargin": false,
+      "sandbox": true,
+      "setLeverage": false,
+      "setMarginMode": false,
+      "setPositionMode": false,
+      "spot": false,
+      "swap": false,
+      "transfer": false,
+      "withdraw": false
+    }
+  },
+  "rate_limits": {
+    "buckets": {
+      "buckets": [
+        {
+          "algorithm": "leakyBucket",
+          "axes": [
+            "request"
+          ],
+          "cost_default": 1,
+          "max_size": 1,
+          "rate_limit_ms": 50,
+          "refill_per_sec": 20,
+          "rolling_window_ms": 60000
+        }
+      ],
+      "source": "describe",
+      "unresolved_reason": null
+    },
+    "endpoint_cost_binding": {
+      "axes": [
+        "request"
+      ],
+      "bucket_index": 0
+    }
+  },
+  "parse_helpers": {
+    "parseOrder": [
+      "parseOrderStatus",
+      "parseTimeInForce"
+    ],
+    "parsePosition": [
+      "parseNumber"
+    ],
+    "parseTransaction": [
+      "parseTransactionStatus"
+    ]
+  },
+  "request_extras": {},
+  "descriptor_extras": {},
+  "classification_extras": {},
+  "error_handlers": [
+    {
+      "exception_class": "ExchangeError",
+      "predicate_kind": "identifier_check",
+      "predicate_limbs": [
+        {
+          "kind": "identifier_check",
+          "raw": "error !== undefined",
+          "values": null
+        }
+      ],
+      "predicate_raw": "error !== undefined",
+      "predicate_values": null
+    }
+  ],
+  "signing_handlers": {
+    "branches": [
+      {
+        "is_else": false,
+        "matches": {
+          "method": [
+            "POST"
+          ]
+        },
+        "predicate_raw": "method === 'POST'",
+        "source_span": {
+          "end": 129381,
+          "start": 128849
+        }
+      }
+    ],
+    "sections": []
+  },
+  "has_endpoint_selection": true
+}

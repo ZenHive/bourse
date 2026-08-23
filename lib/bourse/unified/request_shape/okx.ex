@@ -3,7 +3,7 @@ defmodule Bourse.Unified.RequestShape.OKX do
   # OKX request mechanics that the generic authored-entry machinery cannot express:
   # instrument-type derivation, option-family derivation, transfer account ids and
   # order-book depth. Pure renames/defaults live in the authored spec's
-  # `endpoints.request.defaults` instead (see `priv/venues/okx/authored/spec.json`).
+  # `endpoints.request.defaults` instead (see `priv/venues/okx/authored/endpoints.json`).
 
   alias Bourse.Error
   alias Bourse.Exchange

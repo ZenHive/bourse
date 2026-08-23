@@ -21,12 +21,14 @@ defmodule Bourse.Spec do
   when `bourse` deliberately migrates its compile-time contract; upstream
   extractor versions and provenance metadata are not part of that contract.
 
-  Every supported venue loads one complete hand-owned document from
-  `priv/venues/<venue>/authored/spec.json`. Meaningful `null` and empty values are
-  preserved byte-for-byte from that document.
+  Every supported venue loads one complete hand-owned document from the
+  endpoint-major files under `priv/venues/<venue>/authored/`. `Disk.assemble!/2`
+  rotates those files back into the facet-major map this module validates.
+  Meaningful `null` and empty values are preserved byte-for-byte.
   """
 
   alias Bourse.JsonDocument
+  alias Bourse.Spec.Disk
   alias Bourse.Spec.Schema
 
   @spec_root "priv/venues"
@@ -94,8 +96,8 @@ defmodule Bourse.Spec do
 
     if supported?(exchange_id) do
       exchange_id
-      |> owned_spec_path()
-      |> decode_file!()
+      |> authored_dir()
+      |> Disk.assemble!(spec_root: spec_root())
       |> require_owned_marker!(exchange_id)
       |> validate_schema!(exchange_id)
     else
@@ -160,7 +162,7 @@ defmodule Bourse.Spec do
   ## Examples
 
       Bourse.Spec.spec_path("bybit")
-      #=> "/path/to/priv/venues/bybit/authored/spec.json"
+      #=> "/path/to/priv/venues/bybit/authored/venue.json"
 
   """
   @spec spec_path(String.t()) :: String.t()
@@ -179,8 +181,34 @@ defmodule Bourse.Spec do
     validate_id!(exchange_id)
 
     if supported?(exchange_id) do
-      Path.join([spec_root(), exchange_id, "authored", "spec.json"])
+      Path.join(authored_dir(exchange_id), "venue.json")
     end
+  end
+
+  @doc "Absolute directory of one venue's authored split files."
+  @spec authored_dir(String.t()) :: String.t()
+  def authored_dir(exchange_id) when is_binary(exchange_id) do
+    Disk.authored_dir(spec_root(), exchange_id)
+  end
+
+  @doc """
+  JSON files that must trigger recompilation for a venue, including shared
+  descriptor files referenced by `$ref`.
+  """
+  @spec source_files(String.t()) :: [String.t()]
+  def source_files(exchange_id) when is_binary(exchange_id) do
+    validate_id!(exchange_id)
+    Disk.source_files(spec_root(), exchange_id)
+  end
+
+  @doc "Assembles a venue spec from an alternate venues root (tests and mix tasks)."
+  @spec load_from_root!(String.t(), String.t()) :: map()
+  def load_from_root!(root, exchange_id) when is_binary(root) and is_binary(exchange_id) do
+    validate_id!(exchange_id)
+
+    exchange_id
+    |> then(&Disk.authored_dir(root, &1))
+    |> Disk.assemble!(spec_root: root)
   end
 
   @doc """

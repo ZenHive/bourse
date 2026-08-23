@@ -1,0 +1,738 @@
+{
+  "contract_unit": {
+    "linear": {
+      "kind": "constant",
+      "value": 1
+    },
+    "quantity_unit": "base"
+  },
+  "symbol_patterns": {
+    "option": {
+      "case": "upper",
+      "date_format": "yyyymmdd",
+      "pattern": "option_base_yyyymmdd",
+      "prefix": null,
+      "separator": "",
+      "suffix": null
+    },
+    "spot": {
+      "case": "upper",
+      "date_format": null,
+      "pattern": "dash_upper",
+      "prefix": null,
+      "separator": "-",
+      "suffix": null
+    },
+    "swap": {
+      "case": "upper",
+      "date_format": null,
+      "pattern": "suffix_perp",
+      "prefix": null,
+      "separator": "-",
+      "suffix": "-PERP"
+    }
+  },
+  "option_quantity": {
+    "canonical_unit": "base",
+    "contract_size": null,
+    "wire_field": "amount",
+    "wire_unit": "base"
+  },
+  "greeks_conventions": {
+    "delta": {
+      "supported": true,
+      "native_field": "option_pricing.delta",
+      "denomination": "underlying",
+      "unit": "ratio",
+      "bump_size": 1.0,
+      "time_basis": null
+    },
+    "gamma": {
+      "supported": true,
+      "native_field": "option_pricing.gamma",
+      "denomination": "delta",
+      "unit": "delta_per_underlying_unit",
+      "bump_size": 1.0,
+      "time_basis": null
+    },
+    "vega": {
+      "supported": true,
+      "native_field": "option_pricing.vega",
+      "denomination": "option_premium",
+      "unit": "premium_per_vol_point",
+      "bump_size": 0.01,
+      "time_basis": null
+    },
+    "theta": {
+      "supported": true,
+      "native_field": "option_pricing.theta",
+      "denomination": "option_premium",
+      "unit": "premium_per_day",
+      "bump_size": 1.0,
+      "time_basis": "calendar_day"
+    },
+    "rho": {
+      "supported": true,
+      "native_field": "option_pricing.rho",
+      "denomination": "option_premium",
+      "unit": "premium_per_interest_point",
+      "bump_size": 0.01,
+      "time_basis": null
+    }
+  },
+  "currencies": {
+    "AAVE": {
+      "code": "AAVE",
+      "fees": {},
+      "id": "AAVE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "ADA": {
+      "code": "ADA",
+      "fees": {},
+      "id": "ADA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "ARB": {
+      "code": "ARB",
+      "fees": {},
+      "id": "ARB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "AVAX": {
+      "code": "AVAX",
+      "fees": {},
+      "id": "AVAX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "BITCOIN": {
+      "code": "BITCOIN",
+      "fees": {},
+      "id": "BITCOIN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "BNB": {
+      "code": "BNB",
+      "fees": {},
+      "id": "BNB",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "BTC": {
+      "code": "BTC",
+      "fees": {},
+      "id": "BTC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "CBADA": {
+      "code": "CBADA",
+      "fees": {},
+      "id": "CBADA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "CBBTC": {
+      "code": "CBBTC",
+      "fees": {},
+      "id": "CBBTC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "CC": {
+      "code": "CC",
+      "fees": {},
+      "id": "CC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "DAI": {
+      "code": "DAI",
+      "fees": {},
+      "id": "DAI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "DEGEN": {
+      "code": "DEGEN",
+      "fees": {},
+      "id": "DEGEN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "DOGE": {
+      "code": "DOGE",
+      "fees": {},
+      "id": "DOGE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "DRV": {
+      "code": "DRV",
+      "fees": {},
+      "id": "DRV",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "EBTC": {
+      "code": "EBTC",
+      "fees": {},
+      "id": "EBTC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "EIGEN": {
+      "code": "EIGEN",
+      "fees": {},
+      "id": "EIGEN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "ENA": {
+      "code": "ENA",
+      "fees": {},
+      "id": "ENA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "ETH": {
+      "code": "ETH",
+      "fees": {},
+      "id": "ETH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "FXUSDC": {
+      "code": "FXUSDC",
+      "fees": {},
+      "id": "FXUSDC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "HYPE": {
+      "code": "HYPE",
+      "fees": {},
+      "id": "HYPE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "JITOSOL": {
+      "code": "JITOSOL",
+      "fees": {},
+      "id": "JITOSOL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "KHYPE": {
+      "code": "KHYPE",
+      "fees": {},
+      "id": "KHYPE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "LBTC": {
+      "code": "LBTC",
+      "fees": {},
+      "id": "LBTC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "LINK": {
+      "code": "LINK",
+      "fees": {},
+      "id": "LINK",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "MUSD": {
+      "code": "MUSD",
+      "fees": {},
+      "id": "MUSD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "NEAR": {
+      "code": "NEAR",
+      "fees": {},
+      "id": "NEAR",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "OLAS": {
+      "code": "OLAS",
+      "fees": {},
+      "id": "OLAS",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "OP": {
+      "code": "OP",
+      "fees": {},
+      "id": "OP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "PEPE": {
+      "code": "PEPE",
+      "fees": {},
+      "id": "PEPE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "PUFETH": {
+      "code": "PUFETH",
+      "fees": {},
+      "id": "PUFETH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "RSETH": {
+      "code": "RSETH",
+      "fees": {},
+      "id": "RSETH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "RSWETH": {
+      "code": "RSWETH",
+      "fees": {},
+      "id": "RSWETH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "SDAI": {
+      "code": "SDAI",
+      "fees": {},
+      "id": "SDAI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "SEI": {
+      "code": "SEI",
+      "fees": {},
+      "id": "SEI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "SFP": {
+      "code": "SFP",
+      "fees": {},
+      "id": "SFP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "SNX": {
+      "code": "SNX",
+      "fees": {},
+      "id": "SNX",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "SOL": {
+      "code": "SOL",
+      "fees": {},
+      "id": "SOL",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "SOLVBTC": {
+      "code": "SOLVBTC",
+      "fees": {},
+      "id": "SOLVBTC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "SOLVBTCBBN": {
+      "code": "SOLVBTCBBN",
+      "fees": {},
+      "id": "SOLVBTCBBN",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "SUI": {
+      "code": "SUI",
+      "fees": {},
+      "id": "SUI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "SUSDE": {
+      "code": "SUSDE",
+      "fees": {},
+      "id": "SUSDE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "TAO": {
+      "code": "TAO",
+      "fees": {},
+      "id": "TAO",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "TIA": {
+      "code": "TIA",
+      "fees": {},
+      "id": "TIA",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "TRUMP": {
+      "code": "TRUMP",
+      "fees": {},
+      "id": "TRUMP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "UNI": {
+      "code": "UNI",
+      "fees": {},
+      "id": "UNI",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "USDC": {
+      "code": "USDC",
+      "fees": {},
+      "id": "USDC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "USDE": {
+      "code": "USDE",
+      "fees": {},
+      "id": "USDE",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "USDH": {
+      "code": "USDH",
+      "fees": {},
+      "id": "USDH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "USDT": {
+      "code": "USDT",
+      "fees": {},
+      "id": "USDT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "WEETH": {
+      "code": "WEETH",
+      "fees": {},
+      "id": "WEETH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "WIF": {
+      "code": "WIF",
+      "fees": {},
+      "id": "WIF",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "WLD": {
+      "code": "WLD",
+      "fees": {},
+      "id": "WLD",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "WSTETH": {
+      "code": "WSTETH",
+      "fees": {},
+      "id": "WSTETH",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "XAUT": {
+      "code": "XAUT",
+      "fees": {},
+      "id": "XAUT",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "XRP": {
+      "code": "XRP",
+      "fees": {},
+      "id": "XRP",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    },
+    "ZEC": {
+      "code": "ZEC",
+      "fees": {},
+      "id": "ZEC",
+      "limits": {
+        "deposit": {},
+        "withdraw": {}
+      },
+      "networks": {}
+    }
+  },
+  "patterns": {
+    "currency_aliases": {
+      "BCHSV": "BSV",
+      "XBT": "BTC"
+    },
+    "option": {
+      "anomalies": [],
+      "anomaly_count": 0,
+      "case": "upper",
+      "examples": [
+        {
+          "baseId": "ZEC",
+          "id": "ZEC-20260925-800-P",
+          "quoteId": "USDC",
+          "symbol": "ZEC/USDC:USDC-260925-800-P"
+        },
+        {
+          "baseId": "ZEC",
+          "id": "ZEC-20260925-800-C",
+          "quoteId": "USDC",
+          "symbol": "ZEC/USDC:USDC-260925-800-C"
+        },
+        {
+          "baseId": "ZEC",
+          "id": "ZEC-20260925-700-P",
+          "quoteId": "USDC",
+          "symbol": "ZEC/USDC:USDC-260925-700-P"
+        }
+      ],
+      "id_structure": "base_expiry_strike_type",
+      "sample_count": 100,
+      "separator": null,
+      "suffix": null
+    },
+    "spot": {
+      "anomalies": [],
+      "anomaly_count": 0,
+      "case": "upper",
+      "examples": [
+        {
+          "baseId": "WSTETH",
+          "id": "WSTETH-USDC",
+          "quoteId": "USDC",
+          "symbol": "WSTETH/USDC"
+        },
+        {
+          "baseId": "WEETH",
+          "id": "WEETH-USDC",
+          "quoteId": "USDC",
+          "symbol": "WEETH/USDC"
+        },
+        {
+          "baseId": "USDT",
+          "id": "USDT-USDC",
+          "quoteId": "USDC",
+          "symbol": "USDT/USDC"
+        }
+      ],
+      "id_structure": "baseId_quoteId",
+      "sample_count": 20,
+      "separator": "-",
+      "suffix": null
+    },
+    "swap": {
+      "anomalies": [],
+      "anomaly_count": 0,
+      "case": "upper",
+      "examples": [
+        {
+          "baseId": "BTC",
+          "id": "BTC-PERP",
+          "quoteId": "USD",
+          "symbol": "BTC/USD:USDC"
+        },
+        {
+          "baseId": "ETH",
+          "id": "ETH-PERP",
+          "quoteId": "USD",
+          "symbol": "ETH/USD:USDC"
+        },
+        {
+          "baseId": "ZEC",
+          "id": "ZEC-PERP",
+          "quoteId": "USD",
+          "symbol": "ZEC/USD:USDC"
+        }
+      ],
+      "id_structure": "baseId_quoteId",
+      "sample_count": 16,
+      "separator": "-",
+      "suffix": "-PERP"
+    }
+  }
+}

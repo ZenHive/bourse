@@ -1,0 +1,1292 @@
+{
+  "schema_version": 3,
+  "authored": true,
+  "frozen": true,
+  "hand_owned": true,
+  "exchange": {
+    "alias": false,
+    "certified": true,
+    "country": [
+      "VG"
+    ],
+    "id": "bybit",
+    "name": "Bybit",
+    "pro": true,
+    "referral": {
+      "discount": 0,
+      "url": "https://www.bybit.com/invite?ref=XDK12WP"
+    },
+    "version": "v5"
+  },
+  "urls": {
+    "api": {
+      "ws": {
+        "private": "wss://stream.bybit.com/v5/private",
+        "public": "wss://stream.bybit.com/v5/public/linear",
+        "sandbox_private": "wss://stream-testnet.bybit.com/v5/private",
+        "sandbox_public": "wss://stream-testnet.bybit.com/v5/public/linear"
+      }
+    },
+    "api_management": "__undefined",
+    "doc": [
+      "https://bybit-exchange.github.io/docs/inverse/",
+      "https://bybit-exchange.github.io/docs/linear/",
+      "https://github.com/bybit-exchange"
+    ],
+    "fees": "https://help.bybit.com/hc/en-us/articles/360039261154",
+    "logo": "https://github.com/user-attachments/assets/97a5d0b3-de10-423d-90e1-6620960025ed",
+    "www": "https://www.bybit.com"
+  },
+  "testnet": {
+    "pattern": "separate_host",
+    "sandbox_flag_field": null,
+    "unresolved_reason": null,
+    "urls": {
+      "futures": "https://api-testnet.bybit.com",
+      "private": "https://api-testnet.bybit.com",
+      "public": "https://api-testnet.bybit.com",
+      "spot": "https://api-testnet.bybit.com",
+      "v2": "https://api-testnet.bybit.com"
+    }
+  },
+  "auth": {
+    "authenticated_sections": [
+      "private"
+    ],
+    "signing_config": {
+      "api_key_header": "X-BAPI-API-KEY",
+      "recv_window": 10000,
+      "recv_window_header": "X-BAPI-RECV-WINDOW",
+      "signature_encoding": "hex",
+      "signature_header": "X-BAPI-SIGN",
+      "timestamp_header": "X-BAPI-TIMESTAMP"
+    },
+    "signing_pattern": "hmac_sha256_headers",
+    "sign_recipe": {
+      "private": {
+        "auth_headers": null,
+        "branch_family": {
+          "branches": [
+            {
+              "auth_headers": [
+                {
+                  "name": "X-BAPI-API-KEY",
+                  "source": "api_key"
+                },
+                {
+                  "name": "X-BAPI-TIMESTAMP",
+                  "source": "timestamp"
+                },
+                {
+                  "name": "X-BAPI-RECV-WINDOW",
+                  "source": "recv_window"
+                }
+              ],
+              "canonical_string": {
+                "GET": {
+                  "components": [
+                    {
+                      "source": "timestamp"
+                    },
+                    {
+                      "source": "api_key"
+                    },
+                    {
+                      "source": "recv_window"
+                    },
+                    {
+                      "encoder": "rawencode",
+                      "key_order": "insertion",
+                      "replacements": null,
+                      "source": "query"
+                    }
+                  ],
+                  "encoding": "url_encoded",
+                  "family": "hmac_simple"
+                },
+                "POST": {
+                  "components": [
+                    {
+                      "source": "timestamp"
+                    },
+                    {
+                      "source": "api_key"
+                    },
+                    {
+                      "source": "recv_window"
+                    },
+                    {
+                      "source": "body"
+                    }
+                  ],
+                  "encoding": "json",
+                  "family": "hmac_with_body"
+                }
+              },
+              "key": "v5",
+              "match": {
+                "path_contains": "v5"
+              },
+              "signature_placement": {
+                "key": "X-BAPI-SIGN",
+                "location": "header"
+              },
+              "status": "derived"
+            },
+            {
+              "auth_headers": [
+                {
+                  "name": "X-BAPI-API-KEY",
+                  "source": "api_key"
+                },
+                {
+                  "name": "X-BAPI-TIMESTAMP",
+                  "source": "timestamp"
+                }
+              ],
+              "canonical_string": {
+                "*": {
+                  "components": [
+                    {
+                      "source": "timestamp"
+                    },
+                    {
+                      "source": "api_key"
+                    },
+                    {
+                      "source": "body"
+                    }
+                  ],
+                  "encoding": "json",
+                  "family": "hmac_with_body"
+                }
+              },
+              "key": "openapi",
+              "match": {
+                "path_contains": "openapi"
+              },
+              "signature_placement": {
+                "key": "X-BAPI-SIGN",
+                "location": "header"
+              },
+              "status": "derived"
+            },
+            {
+              "auth_headers": [
+                {
+                  "name": "X-BAPI-API-KEY",
+                  "source": "api_key"
+                },
+                {
+                  "name": "X-BAPI-TIMESTAMP",
+                  "source": "timestamp"
+                },
+                {
+                  "name": "X-BAPI-RECV-WINDOW",
+                  "source": "recv_window"
+                },
+                {
+                  "name": "X-BAPI-SIGN-TYPE",
+                  "source": "literal",
+                  "value": "2"
+                }
+              ],
+              "canonical_string": {
+                "GET": {
+                  "components": [
+                    {
+                      "source": "timestamp"
+                    },
+                    {
+                      "source": "api_key"
+                    },
+                    {
+                      "source": "recv_window"
+                    },
+                    {
+                      "encoder": "rawencode",
+                      "key_order": "insertion",
+                      "replacements": null,
+                      "source": "query"
+                    }
+                  ],
+                  "encoding": "url_encoded",
+                  "family": "hmac_simple"
+                },
+                "POST": {
+                  "components": [
+                    {
+                      "source": "timestamp"
+                    },
+                    {
+                      "source": "api_key"
+                    },
+                    {
+                      "source": "recv_window"
+                    },
+                    {
+                      "source": "body"
+                    }
+                  ],
+                  "encoding": "json",
+                  "family": "hmac_with_body"
+                }
+              },
+              "key": "unified_v3",
+              "match": {
+                "path_contains": "unified/v3"
+              },
+              "signature_placement": {
+                "key": "X-BAPI-SIGN",
+                "location": "header"
+              },
+              "status": "derived"
+            },
+            {
+              "auth_headers": [
+                {
+                  "name": "X-BAPI-API-KEY",
+                  "source": "api_key"
+                },
+                {
+                  "name": "X-BAPI-TIMESTAMP",
+                  "source": "timestamp"
+                },
+                {
+                  "name": "X-BAPI-RECV-WINDOW",
+                  "source": "recv_window"
+                },
+                {
+                  "name": "X-BAPI-SIGN-TYPE",
+                  "source": "literal",
+                  "value": "2"
+                }
+              ],
+              "canonical_string": {
+                "GET": {
+                  "components": [
+                    {
+                      "source": "timestamp"
+                    },
+                    {
+                      "source": "api_key"
+                    },
+                    {
+                      "source": "recv_window"
+                    },
+                    {
+                      "encoder": "rawencode",
+                      "key_order": "insertion",
+                      "replacements": null,
+                      "source": "query"
+                    }
+                  ],
+                  "encoding": "url_encoded",
+                  "family": "hmac_simple"
+                },
+                "POST": {
+                  "components": [
+                    {
+                      "source": "timestamp"
+                    },
+                    {
+                      "source": "api_key"
+                    },
+                    {
+                      "source": "recv_window"
+                    },
+                    {
+                      "source": "body"
+                    }
+                  ],
+                  "encoding": "json",
+                  "family": "hmac_with_body"
+                }
+              },
+              "key": "contract_v3",
+              "match": {
+                "path_contains": "contract/v3"
+              },
+              "signature_placement": {
+                "key": "X-BAPI-SIGN",
+                "location": "header"
+              },
+              "status": "derived"
+            },
+            {
+              "canonical_string": {
+                "*": {
+                  "components": [
+                    {
+                      "encoder": "rawencode",
+                      "key_order": "sorted",
+                      "replacements": null,
+                      "source": "query"
+                    }
+                  ],
+                  "encoding": "url_encoded",
+                  "family": "hmac_simple"
+                }
+              },
+              "key": "legacy_else",
+              "match": {
+                "otherwise": true
+              },
+              "query_params": [
+                {
+                  "name": "api_key",
+                  "source": "api_key"
+                },
+                {
+                  "name": "recv_window",
+                  "source": "recv_window"
+                },
+                {
+                  "name": "timestamp",
+                  "source": "timestamp"
+                }
+              ],
+              "signature_placement": {
+                "by_method": {
+                  "POST": {
+                    "default_encoder": {
+                      "op": "json_encode"
+                    },
+                    "encoders": [
+                      {
+                        "op": "urlencode",
+                        "path_contains": "spot"
+                      }
+                    ],
+                    "location": "signed_params_body"
+                  }
+                },
+                "key": "sign",
+                "location": "query"
+              },
+              "status": "derived"
+            }
+          ],
+          "discriminator": "path_substring"
+        },
+        "canonical_string": null,
+        "crypto_op": {
+          "algo": "hmac_sha256",
+          "key_encoding": "utf8"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": {
+          "format": "string",
+          "source": "timestamp_ms"
+        },
+        "patch_count": 0,
+        "pre_sign_transforms": [
+          {
+            "op": "hex_encode",
+            "target": "signature"
+          },
+          {
+            "op": "json_encode",
+            "target": "body"
+          }
+        ],
+        "signature_placement": null,
+        "timestamp": {
+          "format": "string",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": null
+      }
+    }
+  },
+  "config": {
+    "credentials": {
+      "accountId": false,
+      "apiKey": true,
+      "login": false,
+      "password": false,
+      "privateKey": false,
+      "secret": true,
+      "token": false,
+      "twofa": false,
+      "uid": false,
+      "walletAddress": false
+    },
+    "default_family": "linear",
+    "flags": {
+      "dex": false
+    },
+    "limits": {
+      "amount": {
+        "max": null,
+        "min": null
+      },
+      "cost": {
+        "max": null,
+        "min": null
+      },
+      "leverage": {
+        "max": null,
+        "min": null
+      },
+      "price": {
+        "max": null,
+        "min": null
+      }
+    },
+    "rate_limit_meta": {
+      "enableRateLimit": true,
+      "timeout": 10000
+    },
+    "routing": {
+      "accountsByType": {
+        "contract": "CONTRACT",
+        "fund": "FUND",
+        "funding": "FUND",
+        "future": "CONTRACT",
+        "investment": "INVESTMENT",
+        "margin": "SPOT",
+        "option": "OPTION",
+        "spot": "SPOT",
+        "swap": "CONTRACT",
+        "unified": "UNIFIED"
+      },
+      "networks": {
+        "ACA": "ACA",
+        "ADA": "ADA",
+        "ALGO": "ALGO",
+        "APT": "APTOS",
+        "AR": "AR",
+        "ARBONE": "ARBI",
+        "ATOM": "ATOM",
+        "AVAXC": "CAVAX",
+        "AVAXX": "XAVAX",
+        "BCH": "BCH",
+        "BEP2": "BNB",
+        "BEP20": "BSC",
+        "BSC": "BSC",
+        "BTC": "BTC",
+        "CHZ": "CHZ",
+        "DCR": "DCR",
+        "DGB": "DGB",
+        "DOGE": "DOGE",
+        "DOT": "DOT",
+        "EGLD": "EGLD",
+        "EOS": "EOS",
+        "ERC20": "ETH",
+        "ETC": "ETC",
+        "ETH": "ETH",
+        "ETHF": "ETHF",
+        "ETHW": "ETHW",
+        "FIL": "FIL",
+        "FLOW": "FLOW",
+        "FTM": "FTM",
+        "GLMR": "GLMR",
+        "HBAR": "HBAR",
+        "HNT": "HNT",
+        "ICP": "ICP",
+        "ICX": "ICX",
+        "KDA": "KDA",
+        "KLAY": "KLAY",
+        "KMA": "KMA",
+        "KSM": "KSM",
+        "LTC": "LTC",
+        "MATIC": "MATIC",
+        "MINA": "MINA",
+        "MOVR": "MOVR",
+        "NEAR": "NEAR",
+        "NEM": "NEM",
+        "OASIS": "ROSE",
+        "OASYS": "OAS",
+        "OMNI": "OMNI",
+        "ONE": "ONE",
+        "OP": "OP",
+        "OPTIMISM": "OP",
+        "POKT": "POKT",
+        "QTUM": "QTUM",
+        "RVN": "RVN",
+        "SC": "SC",
+        "SCRT": "SCRT",
+        "SOL": "SOL",
+        "STEP": "FITFI",
+        "STX": "STX",
+        "THETA": "THETA",
+        "TON": "TON",
+        "TRC20": "TRX",
+        "TRX": "TRX",
+        "WAVES": "WAVES",
+        "WAX": "WAXP",
+        "XDC": "XDC",
+        "XEC": "XEC",
+        "XLM": "XLM",
+        "XRP": "XRP",
+        "XTZ": "XTZ",
+        "XYM": "XYM",
+        "ZEN": "ZEN",
+        "ZIL": "ZIL",
+        "ZKSYNC": "ZKSYNC"
+      },
+      "timeInForce": null
+    },
+    "status": {
+      "eta": null,
+      "info": null,
+      "status": "ok",
+      "updated": null,
+      "url": null
+    }
+  },
+  "fees": {
+    "funding": {
+      "deposit": {},
+      "percentage": false,
+      "tierBased": false,
+      "withdraw": {}
+    },
+    "static_market_fees": false,
+    "trading": {
+      "feeSide": "get",
+      "maker": 0.0001,
+      "percentage": true,
+      "taker": 0.00075,
+      "tierBased": true
+    }
+  },
+  "websocket": {
+    "auth": {
+      "authenticate_defined": true,
+      "credentials": [
+        "apiKey",
+        "secret"
+      ],
+      "mechanism": "sign_in_message",
+      "message": {
+        "keys": [
+          "op",
+          "args"
+        ],
+        "method": null,
+        "op": "auth"
+      },
+      "resolved_from": "self",
+      "source": "pro_authenticate",
+      "unresolved_reason": null
+    },
+    "dispatch": {
+      "discriminators": [
+        "event",
+        "op",
+        "ret_msg",
+        "topic",
+        "type"
+      ],
+      "entries": [
+        {
+          "channel": "orderbook",
+          "handler": "handleOrderBook"
+        },
+        {
+          "channel": "kline",
+          "handler": "handleOHLCV"
+        },
+        {
+          "channel": "order",
+          "handler": "handleOrder"
+        },
+        {
+          "channel": "stopOrder",
+          "handler": "handleOrder"
+        },
+        {
+          "channel": "ticker",
+          "handler": "handleTicker"
+        },
+        {
+          "channel": "trade",
+          "handler": "handleTrades"
+        },
+        {
+          "channel": "publicTrade",
+          "handler": "handleTrades"
+        },
+        {
+          "channel": "depth",
+          "handler": "handleOrderBook"
+        },
+        {
+          "channel": "wallet",
+          "handler": "handleBalance"
+        },
+        {
+          "channel": "outboundAccountInfo",
+          "handler": "handleBalance"
+        },
+        {
+          "channel": "execution",
+          "handler": "handleMyTrades"
+        },
+        {
+          "channel": "execution.fast",
+          "handler": "handleMyTrades"
+        },
+        {
+          "channel": "ticketInfo",
+          "handler": "handleMyTrades"
+        },
+        {
+          "channel": "user.openapi.perp.trade",
+          "handler": "handleMyTrades"
+        },
+        {
+          "channel": "position",
+          "handler": "handlePositions"
+        },
+        {
+          "channel": "liquidation",
+          "handler": "handleLiquidation"
+        },
+        {
+          "channel": "allLiquidation",
+          "handler": "handleLiquidation"
+        },
+        {
+          "channel": "pong",
+          "handler": "handlePong"
+        },
+        {
+          "channel": "order.create",
+          "handler": "handleOrderWs"
+        },
+        {
+          "channel": "order.amend",
+          "handler": "handleOrderWs"
+        },
+        {
+          "channel": "order.cancel",
+          "handler": "handleOrderWs"
+        },
+        {
+          "channel": "auth",
+          "handler": "handleAuthenticate"
+        },
+        {
+          "channel": "unsubscribe",
+          "handler": "handleUnSubscribe"
+        },
+        {
+          "channel": "sub",
+          "handler": "handleSubscriptionStatus"
+        },
+        {
+          "channel": "subscribe",
+          "handler": "handleSubscriptionStatus"
+        },
+        {
+          "channel": "AUTH_RESP",
+          "handler": "handleAuthenticate"
+        }
+      ],
+      "handle_message_defined": true,
+      "kind": "routed",
+      "resolved_from": "self",
+      "source": "pro_handle_message",
+      "unresolved": [],
+      "unresolved_reason": null
+    },
+    "heartbeat": {
+      "has_pong_handler": true,
+      "keep_alive_ms": 18000,
+      "keep_alive_resolved_from": "self",
+      "max_ping_pong_misses": 2,
+      "ping_kind": "json_message",
+      "ping_payload": {
+        "op": "ping"
+      },
+      "ping_payload_kind": "partial",
+      "source": "pro_describe",
+      "unresolved_reason": null
+    },
+    "ohlcv_semantics": {
+      "cache_limit_default": 1000,
+      "cache_limit_field": "OHLCVLimit",
+      "cache_type": "ArrayCacheByTimestamp",
+      "closed_signal": null,
+      "ohlcv_defined": true,
+      "resolved_from": "self",
+      "source": "pro_handle_ohlcv",
+      "timeframe_key": null,
+      "unresolved": [
+        {
+          "reason": "timeframe_key_not_classifiable"
+        },
+        {
+          "reason": "closed_signal_not_classifiable"
+        }
+      ],
+      "unresolved_reason": null,
+      "update_model": "replace_latest_then_append"
+    },
+    "orderbook_semantics": {
+      "apply_mode": "both",
+      "checksum": {
+        "algorithm": null,
+        "field": null,
+        "present": false
+      },
+      "discriminator": {
+        "delta_values": [],
+        "field": "type",
+        "snapshot_values": [
+          "snapshot"
+        ]
+      },
+      "handle_orderbook_defined": true,
+      "resolved_from": "self",
+      "sequence_fields": [],
+      "source": "pro_handle_orderbook",
+      "unresolved_reason": null
+    },
+    "subscribe": {
+      "args_key": "args",
+      "channels": {
+        "watchLiquidations": [
+          "liquidations::{symbol}"
+        ],
+        "watchMyTrades": [
+          ":{symbol}"
+        ],
+        "watchOHLCVForSymbols": [
+          "kline.{timeframe}.{symbol}",
+          "ohlcv::{symbol}::{timeframe}"
+        ],
+        "watchOrderBookForSymbols": [
+          "orderbook:{symbol}"
+        ],
+        "watchOrders": [
+          ":{symbol}"
+        ],
+        "watchTicker": [
+          ".{symbol}",
+          "ticker:{symbol}",
+          "tickers"
+        ],
+        "watchTickers": [
+          "tickers"
+        ],
+        "watchTradesForSymbols": [
+          "publicTrade.{symbol}",
+          "trade:{symbol}"
+        ]
+      },
+      "discriminant": "op",
+      "envelope_keys": [
+        "op",
+        "req_id",
+        "args"
+      ],
+      "mechanism": "json_message",
+      "resolved_from": "self",
+      "source": "pro_watch",
+      "subscribe_op": "subscribe",
+      "unresolved_reason": null,
+      "unsubscribe_op": "unsubscribe"
+    },
+    "trades_semantics": {
+      "cache_limit_default": 1000,
+      "cache_limit_field": "tradesLimit",
+      "cache_type": "ArrayCache",
+      "dedup_key": null,
+      "my_trades": {
+        "cache_limit_default": 1000,
+        "cache_limit_field": "tradesLimit",
+        "cache_type": "ArrayCacheBySymbolById",
+        "dedup_key": null,
+        "defined": true
+      },
+      "resolved_from": "self",
+      "source": "pro_handle_trades",
+      "trades_defined": true,
+      "unresolved": [
+        {
+          "reason": "dedup_key_not_classifiable"
+        }
+      ],
+      "unresolved_reason": null,
+      "update_model": "append"
+    },
+    "urls": {
+      "private": "wss://stream.{hostname}/v5/private",
+      "public": "wss://stream.{hostname}/v5/public/linear",
+      "sandbox_private": "wss://stream-testnet.{hostname}/v5/private",
+      "sandbox_public": "wss://stream-testnet.{hostname}/v5/public/linear",
+      "unresolved_reason": null
+    }
+  },
+  "emulated_methods": [
+    {
+      "name": "fetchBidsAsks",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "fetchDepositWithdrawFee",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "fetchFundingRate",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "fetchPositionHistory",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    }
+  ],
+  "capabilities": {
+    "features": {
+      "default": {
+        "createOrder": {
+          "attachedStopLossTakeProfit": {
+            "price": true,
+            "triggerPriceType": {
+              "index": true,
+              "last": true,
+              "mark": true
+            }
+          },
+          "hedged": true,
+          "iceberg": false,
+          "leverage": false,
+          "marginMode": false,
+          "marketBuyByCost": true,
+          "marketBuyRequiresPrice": false,
+          "selfTradePrevention": true,
+          "stopLossPrice": true,
+          "takeProfitPrice": true,
+          "timeInForce": {
+            "FOK": true,
+            "GTD": false,
+            "IOC": true,
+            "PO": true
+          },
+          "trailing": true,
+          "triggerDirection": true,
+          "triggerPrice": true,
+          "triggerPriceType": {
+            "index": true,
+            "last": true,
+            "mark": true
+          }
+        },
+        "createOrders": {
+          "max": 10
+        },
+        "editOrders": {
+          "max": 10
+        },
+        "fetchClosedOrders": {
+          "daysBack": 730,
+          "daysBackCanceled": 1,
+          "limit": 50,
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": true,
+          "untilDays": 7
+        },
+        "fetchMyTrades": {
+          "daysBack": 730,
+          "limit": 100,
+          "marginMode": false,
+          "symbolRequired": false,
+          "untilDays": 7
+        },
+        "fetchOHLCV": {
+          "limit": 1000
+        },
+        "fetchOpenOrders": {
+          "limit": 50,
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": false,
+          "trigger": true
+        },
+        "fetchOrder": {
+          "marginMode": false,
+          "symbolRequired": true,
+          "trailing": false,
+          "trigger": true
+        },
+        "fetchOrders": "__undefined",
+        "sandbox": true
+      },
+      "future": {
+        "inverse": {
+          "extends": "default"
+        },
+        "linear": {
+          "extends": "default"
+        }
+      },
+      "spot": {
+        "createOrder": {
+          "attachedStopLossTakeProfit": {
+            "price": true,
+            "triggerPriceType": "__undefined"
+          },
+          "marketBuyRequiresPrice": true,
+          "triggerDirection": false,
+          "triggerPriceType": "__undefined"
+        },
+        "extends": "default",
+        "fetchCurrencies": {
+          "private": true
+        }
+      },
+      "swap": {
+        "inverse": {
+          "extends": "default"
+        },
+        "linear": {
+          "extends": "default"
+        }
+      }
+    },
+    "timeframes": {
+      "12h": "720",
+      "15m": "15",
+      "1M": "M",
+      "1d": "D",
+      "1h": "60",
+      "1m": "1",
+      "1w": "W",
+      "2h": "120",
+      "30m": "30",
+      "3m": "3",
+      "4h": "240",
+      "5m": "5",
+      "6h": "360"
+    },
+    "unsupported_raw_endpoints": {},
+    "has_extras": {
+      "CORS": true,
+      "closeAllPositions": false,
+      "closePosition": false,
+      "createLimitOrder": true,
+      "createMarketOrder": true,
+      "createMarketOrderWs": true,
+      "createOrderWithTakeProfitAndStopLoss": true,
+      "createPostOnlyOrder": true,
+      "createReduceOnlyOrder": true,
+      "createStopLimitOrder": true,
+      "createStopLossOrder": true,
+      "createStopMarketOrder": true,
+      "createStopOrder": true,
+      "createTakeProfitOrder": true,
+      "createTrailingAmountOrder": true,
+      "createTriggerOrder": true,
+      "fetchBorrowInterest": false,
+      "fetchBorrowRateHistories": false,
+      "fetchCrossBorrowRates": false,
+      "fetchCurrenciesWs": "emulated",
+      "fetchDeposit": false,
+      "fetchDepositAddresses": false,
+      "fetchDepositWithdrawFee": "emulated",
+      "fetchFundingRate": "emulated",
+      "fetchIndexOHLCV": true,
+      "fetchIsolatedBorrowRate": false,
+      "fetchIsolatedBorrowRates": false,
+      "fetchL2OrderBook": true,
+      "fetchLongShortRatio": false,
+      "fetchMarginAdjustmentHistory": false,
+      "fetchMarkOHLCV": true,
+      "fetchOrders": false,
+      "fetchPositionHistory": "emulated",
+      "fetchPremiumIndexOHLCV": true,
+      "fetchTransactions": false,
+      "fetchUnderlyingAssets": false,
+      "future": true,
+      "margin": true,
+      "option": true,
+      "privateAPI": true,
+      "publicAPI": true,
+      "sandbox": true,
+      "spot": true,
+      "swap": true
+    }
+  },
+  "rate_limits": {
+    "buckets": {
+      "buckets": [
+        {
+          "algorithm": "leakyBucket",
+          "axes": [
+            "request"
+          ],
+          "cost_default": 1,
+          "max_size": 1,
+          "rate_limit_ms": 20,
+          "refill_per_sec": 50,
+          "rolling_window_ms": 5000
+        }
+      ],
+      "source": "describe",
+      "unresolved_reason": null
+    },
+    "endpoint_cost_binding": {
+      "axes": [
+        "request"
+      ],
+      "bucket_index": 0
+    }
+  },
+  "parse_helpers": {
+    "createExpiredOptionMarket": [
+      "parseNumber"
+    ],
+    "fetchBorrowInterest": [
+      "parseBorrowInterests"
+    ],
+    "parseCurrency": [
+      "parseNumber",
+      "parsePrecision"
+    ],
+    "parseFundingRate": [
+      "parseToInt"
+    ],
+    "parseLedgerEntry": [
+      "parseLedgerEntryType",
+      "parseToNumeric"
+    ],
+    "parseLeverageTiers": [
+      "parseMarketLeverageTiers"
+    ],
+    "parseLiquidation": [
+      "parseNumber"
+    ],
+    "parseLongShortRatio": [
+      "parseToNumeric"
+    ],
+    "parseMarginMode": [
+      "parseMarginModeType"
+    ],
+    "parseMarketLeverageTiers": [
+      "parseNumber"
+    ],
+    "parseOrder": [
+      "parseOrderStatus",
+      "parseTimeInForce"
+    ],
+    "parsePosition": [
+      "parseNumber"
+    ],
+    "parseSettlements": [
+      "parseSettlement"
+    ],
+    "parseTransaction": [
+      "parseTransactionStatus"
+    ],
+    "parseTransfer": [
+      "parseTransferStatus"
+    ]
+  },
+  "request_extras": {
+    "getLeverageTiersPaginated": {
+      "category": {
+        "kind": "computed",
+        "operation": "market_category",
+        "required": true
+      }
+    }
+  },
+  "descriptor_extras": {
+    "fetchBorrowInterest": {
+      "async": true,
+      "description": "fetch the interest owed by the user for borrowing currency for margin trading",
+      "errors": null,
+      "name": "fetchBorrowInterest",
+      "params_doc": {
+        "code": "unified currency code",
+        "limit": "the maximum number of structures to retrieve",
+        "params": "extra parameters specific to the exchange API endpoint",
+        "since": "the earliest time in ms to fetch borrrow interest for",
+        "symbol": "unified market symbol when fetch interest in isolated markets"
+      },
+      "returns": {
+        "description": "a list of [borrow interest structures]{@link https://docs.ccxt.com/?id=borrow-interest-structure}",
+        "type": "object[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "code",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<BorrowInterest[]>"
+      },
+      "unresolved_reason": null
+    },
+    "fetchFundingRate": {
+      "async": true,
+      "description": "fetch the current funding rate",
+      "name": "fetchFundingRate",
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<FundingRate>"
+      }
+    },
+    "fetchOrders": {
+      "async": true,
+      "description": null,
+      "errors": null,
+      "name": "fetchOrders",
+      "params_doc": null,
+      "returns": null,
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Order[]>"
+      },
+      "unresolved_reason": "no_jsdoc"
+    }
+  },
+  "classification_extras": {},
+  "error_handlers": [
+    {
+      "exception_class": "ExchangeError",
+      "predicate_kind": "identifier_check",
+      "predicate_limbs": [
+        {
+          "kind": "identifier_check",
+          "raw": "errorCode !== '0'",
+          "values": null
+        }
+      ],
+      "predicate_raw": "errorCode !== '0'",
+      "predicate_values": null
+    }
+  ],
+  "signing_handlers": {
+    "branches": [
+      {
+        "is_else": false,
+        "matches": {
+          "api": [
+            "public"
+          ]
+        },
+        "predicate_raw": "api === 'public'",
+        "source_span": {
+          "end": 482881,
+          "start": 482755
+        }
+      },
+      {
+        "is_else": false,
+        "matches": {
+          "api": [
+            "private"
+          ]
+        },
+        "predicate_raw": "api === 'private'",
+        "source_span": {
+          "end": 487061,
+          "start": 482910
+        }
+      },
+      {
+        "is_else": false,
+        "matches": {
+          "method": [
+            "POST"
+          ]
+        },
+        "predicate_raw": "method === 'POST'",
+        "source_span": {
+          "end": 487280,
+          "start": 487093
+        }
+      }
+    ],
+    "sections": [
+      "private",
+      "public"
+    ]
+  },
+  "has_endpoint_selection": true
+}

@@ -1,0 +1,1022 @@
+{
+  "schema_version": 3,
+  "authored": true,
+  "frozen": true,
+  "hand_owned": true,
+  "exchange": {
+    "alias": false,
+    "certified": true,
+    "country": [
+      "CN",
+      "US"
+    ],
+    "id": "okx",
+    "name": "OKX",
+    "pro": true,
+    "referral": {
+      "discount": 0.2,
+      "url": "https://www.okx.com/join/CCXTCOM"
+    },
+    "version": "v5"
+  },
+  "urls": {
+    "api": {
+      "ws": {
+        "private": "wss://ws.okx.com:8443/ws/v5",
+        "public": "wss://ws.okx.com:8443/ws/v5",
+        "sandbox_private": "wss://wspap.okx.com:8443/ws/v5",
+        "sandbox_public": "wss://wspap.okx.com:8443/ws/v5"
+      }
+    },
+    "api_management": "__undefined",
+    "doc": "https://www.okx.com/docs-v5/en/",
+    "fees": "https://www.okx.com/pages/products/fees.html",
+    "logo": "https://user-images.githubusercontent.com/1294454/152485636-38b19e4a-bece-4dec-979a-5982859ffc04.jpg",
+    "www": "https://www.okx.com"
+  },
+  "testnet": {
+    "pattern": "separate_host",
+    "sandbox_flag_field": "sandboxMode",
+    "sandbox_headers": {
+      "x-simulated-trading": "1"
+    },
+    "unresolved_reason": null,
+    "urls": {
+      "rest": "https://{hostname}"
+    }
+  },
+  "auth": {
+    "authenticated_sections": [
+      "private"
+    ],
+    "signing_config": {
+      "api_key_header": "OK-ACCESS-KEY",
+      "passphrase_header": "OK-ACCESS-PASSPHRASE",
+      "signature_encoding": "base64",
+      "signature_header": "OK-ACCESS-SIGN",
+      "timestamp_header": "OK-ACCESS-TIMESTAMP"
+    },
+    "signing_pattern": "hmac_sha256_iso_passphrase",
+    "sign_recipe": {
+      "private": {
+        "auth_headers": [
+          {
+            "name": "OK-ACCESS-KEY",
+            "source": "api_key"
+          },
+          {
+            "name": "OK-ACCESS-PASSPHRASE",
+            "source": "passphrase"
+          },
+          {
+            "name": "OK-ACCESS-TIMESTAMP",
+            "source": "timestamp"
+          }
+        ],
+        "canonical_string": {
+          "GET": {
+            "components": [
+              {
+                "source": "timestamp"
+              },
+              {
+                "source": "method"
+              },
+              {
+                "source": "path"
+              },
+              {
+                "include_when": "query_non_empty",
+                "source": "literal",
+                "value": "?"
+              },
+              {
+                "encoder": "urlencode",
+                "key_order": "insertion",
+                "replacements": null,
+                "source": "query"
+              }
+            ],
+            "encoding": "url_encoded",
+            "family": "hmac_simple"
+          },
+          "POST": {
+            "components": [
+              {
+                "source": "timestamp"
+              },
+              {
+                "source": "method"
+              },
+              {
+                "source": "path"
+              },
+              {
+                "source": "body"
+              }
+            ],
+            "encoding": "url_encoded",
+            "family": "hmac_with_body"
+          }
+        },
+        "crypto_op": {
+          "algo": "hmac_sha256",
+          "key_encoding": "utf8"
+        },
+        "custom_signing_details": null,
+        "custom_signing_scheme": null,
+        "nonce": {
+          "format": "iso8601",
+          "source": "timestamp_ms"
+        },
+        "patch_count": 0,
+        "pre_sign_transforms": [
+          {
+            "op": "base64_encode",
+            "target": "signature"
+          },
+          {
+            "op": "json_encode",
+            "target": "body"
+          }
+        ],
+        "signature_placement": {
+          "key": "OK-ACCESS-SIGN",
+          "location": "header"
+        },
+        "timestamp": {
+          "format": "iso8601",
+          "source": "timestamp_ms"
+        },
+        "unresolved_reason": null
+      }
+    }
+  },
+  "config": {
+    "credentials": {
+      "accountId": false,
+      "apiKey": true,
+      "login": false,
+      "password": true,
+      "privateKey": false,
+      "secret": true,
+      "token": false,
+      "twofa": false,
+      "uid": false,
+      "walletAddress": false
+    },
+    "flags": {
+      "dex": false
+    },
+    "limits": {
+      "amount": {
+        "max": null,
+        "min": null
+      },
+      "cost": {
+        "max": null,
+        "min": null
+      },
+      "leverage": {
+        "max": null,
+        "min": null
+      },
+      "price": {
+        "max": null,
+        "min": null
+      }
+    },
+    "rate_limit_meta": {
+      "enableRateLimit": true,
+      "timeout": 10000
+    },
+    "routing": {
+      "accountsByType": {
+        "funding": "6",
+        "future": "18",
+        "futures": "18",
+        "margin": "18",
+        "option": "18",
+        "spot": "18",
+        "swap": "18",
+        "trading": "18"
+      },
+      "networks": {
+        "ACA": "Acala",
+        "ADA": "Cardano",
+        "ALGO": "Algorand",
+        "APT": "Aptos",
+        "AR": "Arweave",
+        "ARBONE": "Arbitrum One",
+        "ASTR": "Astar",
+        "ATOM": "Cosmos",
+        "AVAXC": "Avalanche C-Chain",
+        "AVAXX": "Avalanche X-Chain",
+        "BASE": "Base",
+        "BCH": "BitcoinCash",
+        "BEP20": "BSC",
+        "BRC20": "BRC20",
+        "BSC": "BSC",
+        "BSV": "Bitcoin SV",
+        "BTC": "Bitcoin",
+        "BTCLIGHTNING": "Lightning",
+        "CELO": "CELO",
+        "CFX": "Conflux",
+        "CORE": "CORE",
+        "CRC20": "Crypto",
+        "CSPR": "Casper",
+        "DGB": "Digibyte",
+        "DOGE": "Dogecoin",
+        "DOT": "Polkadot",
+        "EGLD": "Elrond",
+        "EOS": "EOS",
+        "ERC20": "ERC20",
+        "ETC": "Ethereum Classic",
+        "ETH": "ERC20",
+        "ETHW": "EthereumPow",
+        "FIL": "Filecoin",
+        "GLRM": "Moonbeam",
+        "HBAR": "Hedera",
+        "ICP": "Dfinity",
+        "ICX": "ICON",
+        "IOST": "IOST",
+        "IOTA": "MIOTA",
+        "KLAY": "Klaytn",
+        "KSM": "Kusama",
+        "LAT": "PlatON",
+        "LINEA": "Linea",
+        "LSK": "Lisk",
+        "LTC": "Litecoin",
+        "MATIC": "Polygon",
+        "METIS": "Metis",
+        "MINA": "Mina",
+        "MOVR": "Moonriver",
+        "NANO": "Nano",
+        "NEAR": "NEAR",
+        "NULS": "NULS",
+        "OASYS": "OASYS",
+        "ONE": "Harmony",
+        "ONT": "Ontology",
+        "OPTIMISM": "Optimism",
+        "RVN": "Ravencoin",
+        "SC": "Siacoin",
+        "SCROLL": "Scroll",
+        "SOL": "Solana",
+        "STX": "l-Stacks",
+        "SUI": "SUI",
+        "THETA": "Theta",
+        "TON": "TON",
+        "TRC20": "TRC20",
+        "TRX": "TRC20",
+        "WAX": "Wax",
+        "XCH": "Chia",
+        "XLM": "Stellar Lumens",
+        "XRP": "Ripple",
+        "XTZ": "Tezos",
+        "ZIL": "Zilliqa",
+        "ZKSYNCERA": "zkSync Era"
+      },
+      "timeInForce": null
+    },
+    "status": {
+      "eta": null,
+      "info": null,
+      "status": "ok",
+      "updated": null,
+      "url": null
+    }
+  },
+  "fees": {
+    "funding": {
+      "deposit": {},
+      "percentage": "__undefined",
+      "tierBased": "__undefined",
+      "withdraw": {}
+    },
+    "future": {
+      "maker": 0.0002,
+      "taker": 0.0005
+    },
+    "spot": {
+      "maker": 0.001,
+      "taker": 0.0015
+    },
+    "static_market_fees": false,
+    "swap": {
+      "maker": 0.0002,
+      "taker": 0.0005
+    },
+    "trading": {
+      "maker": 0.001,
+      "percentage": "__undefined",
+      "taker": 0.0015,
+      "tierBased": "__undefined"
+    }
+  },
+  "websocket": {
+    "auth": {
+      "authenticate_defined": true,
+      "credentials": [
+        "apiKey",
+        "password",
+        "secret"
+      ],
+      "mechanism": "sign_in_message",
+      "message": {
+        "keys": [
+          "op",
+          "args"
+        ],
+        "method": null,
+        "op": "login"
+      },
+      "resolved_from": "self",
+      "source": "pro_authenticate",
+      "unresolved_reason": null
+    },
+    "dispatch": {
+      "discriminators": [
+        "channel",
+        "event",
+        "op"
+      ],
+      "entries": [
+        {
+          "channel": "bbo-tbt",
+          "handler": "handleOrderBook"
+        },
+        {
+          "channel": "books",
+          "handler": "handleOrderBook"
+        },
+        {
+          "channel": "books5",
+          "handler": "handleOrderBook"
+        },
+        {
+          "channel": "books50-l2-tbt",
+          "handler": "handleOrderBook"
+        },
+        {
+          "channel": "books-l2-tbt",
+          "handler": "handleOrderBook"
+        },
+        {
+          "channel": "tickers",
+          "handler": "handleTicker"
+        },
+        {
+          "channel": "mark-price",
+          "handler": "handleTicker"
+        },
+        {
+          "channel": "positions",
+          "handler": "handlePositions"
+        },
+        {
+          "channel": "index-tickers",
+          "handler": "handleTicker"
+        },
+        {
+          "channel": "sprd-tickers",
+          "handler": "handleTicker"
+        },
+        {
+          "channel": "block-tickers",
+          "handler": "handleTicker"
+        },
+        {
+          "channel": "trades",
+          "handler": "handleTrades"
+        },
+        {
+          "channel": "trades-all",
+          "handler": "handleTrades"
+        },
+        {
+          "channel": "account",
+          "handler": "handleBalance"
+        },
+        {
+          "channel": "funding-rate",
+          "handler": "handleFundingRate"
+        },
+        {
+          "channel": "orders",
+          "handler": "handleOrders"
+        },
+        {
+          "channel": "orders-algo",
+          "handler": "handleOrders"
+        },
+        {
+          "channel": "liquidation-orders",
+          "handler": "handleLiquidation"
+        },
+        {
+          "channel": "balance_and_position",
+          "handler": "handleBalanceAndPosition"
+        },
+        {
+          "channel": "login",
+          "handler": "handleAuthenticate"
+        },
+        {
+          "channel": "subscribe",
+          "handler": "handleSubscriptionStatus"
+        },
+        {
+          "channel": "unsubscribe",
+          "handler": "handleUnsubscription"
+        },
+        {
+          "channel": "order",
+          "handler": "handlePlaceOrders"
+        },
+        {
+          "channel": "batch-orders",
+          "handler": "handlePlaceOrders"
+        },
+        {
+          "channel": "amend-order",
+          "handler": "handlePlaceOrders"
+        },
+        {
+          "channel": "batch-amend-orders",
+          "handler": "handlePlaceOrders"
+        },
+        {
+          "channel": "cancel-order",
+          "handler": "handlePlaceOrders"
+        },
+        {
+          "channel": "mass-cancel",
+          "handler": "handleCancelAllOrders"
+        },
+        {
+          "channel": "pong",
+          "handler": "handlePong"
+        }
+      ],
+      "handle_message_defined": true,
+      "kind": "routed",
+      "resolved_from": "self",
+      "source": "pro_handle_message",
+      "unresolved": [],
+      "unresolved_reason": null
+    },
+    "heartbeat": {
+      "has_pong_handler": true,
+      "keep_alive_ms": 18000,
+      "keep_alive_resolved_from": "self",
+      "max_ping_pong_misses": 2,
+      "ping_kind": "string_message",
+      "ping_payload": "ping",
+      "ping_payload_kind": "literal",
+      "source": "pro_describe",
+      "unresolved_reason": null
+    },
+    "ohlcv_semantics": {
+      "cache_limit_default": 1000,
+      "cache_limit_field": "OHLCVLimit",
+      "cache_type": "ArrayCacheByTimestamp",
+      "closed_signal": null,
+      "ohlcv_defined": true,
+      "resolved_from": "self",
+      "source": "pro_handle_ohlcv",
+      "timeframe_key": null,
+      "unresolved": [
+        {
+          "reason": "timeframe_key_not_classifiable"
+        },
+        {
+          "reason": "closed_signal_not_classifiable"
+        }
+      ],
+      "unresolved_reason": null,
+      "update_model": "replace_latest_then_append"
+    },
+    "orderbook_semantics": {
+      "apply_mode": "both",
+      "checksum": {
+        "algorithm": null,
+        "field": null,
+        "present": false
+      },
+      "discriminator": {
+        "delta_values": [
+          "update"
+        ],
+        "field": "action",
+        "snapshot_values": [
+          "snapshot"
+        ]
+      },
+      "handle_orderbook_defined": true,
+      "resolved_from": "self",
+      "sequence_fields": [
+        "prevSeqId",
+        "seqId"
+      ],
+      "source": "pro_handle_orderbook",
+      "unresolved_reason": null
+    },
+    "subscribe": {
+      "args_key": "args",
+      "channels": {
+        "watchBidsAsks": [
+          "tickers"
+        ],
+        "watchMarkPrice": [
+          "mark-price"
+        ],
+        "watchMarkPrices": [
+          "mark-price"
+        ],
+        "watchMyTrades": [
+          "ANY"
+        ],
+        "watchOHLCV": [
+          "candle{timeframe}"
+        ],
+        "watchOHLCVForSymbols": [
+          "candle{timeframe}"
+        ],
+        "watchOrders": [
+          "ANY"
+        ],
+        "watchPositions": [
+          "ANY",
+          "positions"
+        ],
+        "watchTicker": [
+          "tickers"
+        ],
+        "watchTickers": [
+          "tickers"
+        ],
+        "watchTradesForSymbols": [
+          "trades"
+        ]
+      },
+      "discriminant": "op",
+      "envelope_keys": [
+        "op",
+        "args"
+      ],
+      "mechanism": "json_message",
+      "resolved_from": "self",
+      "source": "pro_watch",
+      "subscribe_op": "subscribe",
+      "unresolved_reason": null,
+      "unsubscribe_op": "unsubscribe"
+    },
+    "trades_semantics": {
+      "cache_limit_default": 1000,
+      "cache_limit_field": "tradesLimit",
+      "cache_type": "ArrayCache",
+      "dedup_key": null,
+      "my_trades": {
+        "cache_limit_default": 1000,
+        "cache_limit_field": "tradesLimit",
+        "cache_type": "ArrayCacheBySymbolById",
+        "dedup_key": null,
+        "defined": true
+      },
+      "resolved_from": "self",
+      "source": "pro_handle_trades",
+      "trades_defined": true,
+      "unresolved": [
+        {
+          "reason": "dedup_key_not_classifiable"
+        }
+      ],
+      "unresolved_reason": null,
+      "update_model": "append"
+    },
+    "urls": {
+      "private": "wss://ws.okx.com:8443/ws/v5/private",
+      "public": "wss://ws.okx.com:8443/ws/v5/public",
+      "sandbox_private": "wss://wspap.okx.com:8443/ws/v5/private",
+      "sandbox_public": "wss://wspap.okx.com:8443/ws/v5/public",
+      "unresolved_reason": null
+    }
+  },
+  "emulated_methods": [
+    {
+      "name": "fetchDepositWithdrawFee",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "fetchPositionHistory",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "watchLiquidations",
+      "scope": "ws",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "watchMyLiquidations",
+      "scope": "ws",
+      "reasons": [
+        "has_emulated"
+      ]
+    }
+  ],
+  "capabilities": {
+    "features": {
+      "default": {
+        "createOrder": {
+          "attachedStopLossTakeProfit": {
+            "price": true,
+            "triggerPriceType": {
+              "index": true,
+              "last": true,
+              "mark": true
+            }
+          },
+          "hedged": true,
+          "iceberg": true,
+          "leverage": false,
+          "marginMode": true,
+          "marketBuyByCost": true,
+          "marketBuyRequiresPrice": false,
+          "selfTradePrevention": true,
+          "stopLossPrice": true,
+          "takeProfitPrice": true,
+          "timeInForce": {
+            "FOK": true,
+            "GTD": false,
+            "IOC": true,
+            "PO": true
+          },
+          "trailing": true,
+          "triggerDirection": false,
+          "triggerPrice": true,
+          "triggerPriceType": {
+            "index": true,
+            "last": true,
+            "mark": true
+          }
+        },
+        "createOrders": {
+          "max": 20
+        },
+        "fetchClosedOrders": {
+          "daysBack": 90,
+          "daysBackCanceled": 0.08333333333333333,
+          "limit": 100,
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": true,
+          "trigger": true,
+          "untilDays": "__undefined"
+        },
+        "fetchMyTrades": {
+          "daysBack": 90,
+          "limit": 100,
+          "marginMode": false,
+          "symbolRequired": false,
+          "untilDays": 10000
+        },
+        "fetchOHLCV": {
+          "index": 100,
+          "limit": 300,
+          "mark": 100
+        },
+        "fetchOpenOrders": {
+          "limit": 100,
+          "marginMode": false,
+          "symbolRequired": false,
+          "trailing": true,
+          "trigger": true
+        },
+        "fetchOrder": {
+          "marginMode": false,
+          "symbolRequired": true,
+          "trailing": true,
+          "trigger": true
+        },
+        "fetchOrders": "__undefined",
+        "sandbox": true
+      },
+      "future": {
+        "inverse": {
+          "extends": "default"
+        },
+        "linear": {
+          "extends": "default"
+        }
+      },
+      "spot": {
+        "extends": "default",
+        "fetchCurrencies": {
+          "private": true
+        }
+      },
+      "swap": {
+        "inverse": {
+          "extends": "default"
+        },
+        "linear": {
+          "extends": "default"
+        }
+      }
+    },
+    "timeframes": {
+      "12h": "12H",
+      "15m": "15m",
+      "1M": "1M",
+      "1d": "1D",
+      "1h": "1H",
+      "1m": "1m",
+      "1w": "1W",
+      "2h": "2H",
+      "30m": "30m",
+      "3M": "3M",
+      "3m": "3m",
+      "4h": "4H",
+      "5m": "5m",
+      "6h": "6H"
+    },
+    "unsupported_raw_endpoints": {},
+    "has_extras": {
+      "cancelAllOrders": false,
+      "closeAllPositions": false,
+      "createDepositAddress": false,
+      "createLimitOrder": true,
+      "createMarketOrder": true,
+      "createMarketOrderWs": true,
+      "createPostOnlyOrder": true,
+      "createReduceOnlyOrder": true,
+      "createStopLimitOrder": true,
+      "createStopLossOrder": true,
+      "createStopMarketOrder": true,
+      "createStopOrder": true,
+      "createTakeProfitOrder": true,
+      "createTrailingPercentOrder": true,
+      "createTriggerOrder": true,
+      "fetchCurrenciesWs": "emulated",
+      "fetchDepositAddresses": false,
+      "fetchDepositWithdrawFee": "emulated",
+      "fetchDepositsWithdrawals": false,
+      "fetchFundingIntervals": false,
+      "fetchIndexOHLCV": true,
+      "fetchIsolatedBorrowRate": false,
+      "fetchIsolatedBorrowRates": false,
+      "fetchL2OrderBook": true,
+      "fetchL3OrderBook": false,
+      "fetchLeverageTiers": false,
+      "fetchLongShortRatio": false,
+      "fetchMarkOHLCV": true,
+      "fetchMySettlementHistory": false,
+      "fetchOrderBooks": false,
+      "fetchOrders": false,
+      "fetchPositionHistory": "emulated",
+      "fetchPositionsRisk": false,
+      "fetchPremiumIndexOHLCV": false,
+      "fetchTradingFees": false,
+      "fetchTradingLimits": false,
+      "fetchTransactionFee": false,
+      "fetchTransactionFees": false,
+      "fetchTransactions": false,
+      "fetchVolatilityHistory": false,
+      "fetchWithdrawalWhitelist": false,
+      "future": true,
+      "margin": true,
+      "option": true,
+      "privateAPI": true,
+      "publicAPI": true,
+      "sandbox": true,
+      "setMargin": false,
+      "signIn": false,
+      "spot": true,
+      "swap": true
+    }
+  },
+  "rate_limits": {
+    "buckets": {
+      "buckets": [
+        {
+          "algorithm": "leakyBucket",
+          "axes": [
+            "request"
+          ],
+          "cost_default": 1,
+          "max_size": 1,
+          "rate_limit_ms": 110.00000000000001,
+          "refill_per_sec": 9.09090909090909,
+          "rolling_window_ms": null
+        }
+      ],
+      "source": "describe",
+      "unresolved_reason": null
+    },
+    "endpoint_cost_binding": {
+      "axes": [
+        "request"
+      ],
+      "bucket_index": 0
+    }
+  },
+  "parse_helpers": {
+    "createExpiredOptionMarket": [
+      "parseNumber"
+    ],
+    "createOrderRequest": [
+      "parseNumber"
+    ],
+    "describe": [
+      "parseNumber"
+    ],
+    "modifyMarginHelper": [
+      "parseMarginModification"
+    ],
+    "parseBalanceByType": [
+      "parseFundingBalance",
+      "parseTradingBalance"
+    ],
+    "parseBorrowRateHistories": [
+      "parseBorrowRate"
+    ],
+    "parseCurrency": [
+      "parseNumber",
+      "parsePrecision"
+    ],
+    "parseFundingRate": [
+      "parseFundingInterval",
+      "parseNumber"
+    ],
+    "parseLedgerEntry": [
+      "parseLedgerEntryType",
+      "parseNumber"
+    ],
+    "parseMarginModification": [
+      "parseNumber"
+    ],
+    "parseMarket": [
+      "parseNumber"
+    ],
+    "parseOrder": [
+      "parseNumber",
+      "parseOrderStatus"
+    ],
+    "parsePosition": [
+      "parseNumber"
+    ],
+    "parseSettlements": [
+      "parseSettlement"
+    ],
+    "parseTradingFee": [
+      "parseNumber"
+    ],
+    "parseTransaction": [
+      "parseTransactionStatus"
+    ],
+    "parseTransfer": [
+      "parseNumber",
+      "parseTransferStatus"
+    ]
+  },
+  "request_extras": {
+    "modifyMarginHelper": {
+      "amt": {
+        "kind": "reference",
+        "reason": "identifier_reference",
+        "source": "amount",
+        "source_class": "optional",
+        "value": null
+      },
+      "instId": {
+        "kind": "reference",
+        "reason": "identifier_reference",
+        "source": "symbol",
+        "source_class": "optional",
+        "value": null
+      },
+      "posSide": {
+        "kind": "reference",
+        "reason": "identifier_reference",
+        "source": "posSide",
+        "source_class": "native_passthrough",
+        "value": null
+      },
+      "type": {
+        "kind": "reference",
+        "reason": "identifier_reference",
+        "source": "type",
+        "source_class": "optional",
+        "value": null
+      }
+    }
+  },
+  "descriptor_extras": {
+    "modifyMarginHelper": {
+      "async": true,
+      "description": null,
+      "errors": null,
+      "name": "modifyMarginHelper",
+      "params_doc": null,
+      "returns": null,
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": null,
+            "name": "amount",
+            "optional": false,
+            "type": null
+          },
+          {
+            "default": null,
+            "name": "type",
+            "optional": false,
+            "type": null
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<MarginModification>"
+      },
+      "unresolved_reason": "no_jsdoc"
+    }
+  },
+  "classification_extras": {},
+  "error_handlers": [
+    {
+      "exception_class": "ExchangeError",
+      "predicate_kind": "other",
+      "predicate_limbs": [
+        {
+          "kind": "http_status_range",
+          "raw": "(code !== '0')",
+          "values": [
+            "0"
+          ]
+        },
+        {
+          "kind": "http_status_range",
+          "raw": "(code !== '2')",
+          "values": [
+            "2"
+          ]
+        }
+      ],
+      "predicate_raw": "(code !== '0') && (code !== '2')",
+      "predicate_values": null
+    }
+  ],
+  "signing_handlers": {
+    "branches": [
+      {
+        "is_else": false,
+        "matches": {
+          "api": [
+            "public"
+          ]
+        },
+        "predicate_raw": "api === 'public'",
+        "source_span": {
+          "end": 332426,
+          "start": 332302
+        }
+      },
+      {
+        "is_else": false,
+        "matches": {
+          "api": [
+            "private"
+          ]
+        },
+        "predicate_raw": "api === 'private'",
+        "source_span": {
+          "end": 334723,
+          "start": 332455
+        }
+      }
+    ],
+    "sections": [
+      "private",
+      "public"
+    ]
+  },
+  "has_endpoint_selection": true
+}

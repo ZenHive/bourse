@@ -1,0 +1,1085 @@
+{
+  "class_hierarchy": {
+    "ancestors": {
+      "ArgumentsRequired": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "InvalidNonce": [
+        "NetworkError",
+        "OperationFailed",
+        "BaseError"
+      ],
+      "UnsubscribeError": [
+        "BaseError"
+      ],
+      "ExchangeError": [
+        "BaseError"
+      ],
+      "NotSupported": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "ExchangeClosedByUser": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "ChecksumError": [
+        "InvalidNonce",
+        "NetworkError",
+        "OperationFailed",
+        "BaseError"
+      ],
+      "AddressPending": [
+        "InvalidAddress",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "BadRequest": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "OperationRejected": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "BaseError": [],
+      "InvalidAddress": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "RateLimitExceeded": [
+        "NetworkError",
+        "OperationFailed",
+        "BaseError"
+      ],
+      "OrderNotFound": [
+        "InvalidOrder",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "MarketClosed": [
+        "OperationRejected",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "BadResponse": [
+        "OperationFailed",
+        "BaseError"
+      ],
+      "BadSymbol": [
+        "BadRequest",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "CancelPending": [
+        "OperationFailed",
+        "BaseError"
+      ],
+      "AccountSuspended": [
+        "AuthenticationError",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "InsufficientFunds": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "OrderNotCached": [
+        "InvalidOrder",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "PermissionDenied": [
+        "AuthenticationError",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "DDoSProtection": [
+        "NetworkError",
+        "OperationFailed",
+        "BaseError"
+      ],
+      "ManualInteractionNeeded": [
+        "OperationRejected",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "NoChange": [
+        "OperationRejected",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "OnMaintenance": [
+        "ExchangeNotAvailable",
+        "NetworkError",
+        "OperationFailed",
+        "BaseError"
+      ],
+      "InvalidOrder": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "RequestTimeout": [
+        "NetworkError",
+        "OperationFailed",
+        "BaseError"
+      ],
+      "MarginModeAlreadySet": [
+        "NoChange",
+        "OperationRejected",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "AuthenticationError": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "InvalidProxySettings": [
+        "ExchangeError",
+        "BaseError"
+      ],
+      "NetworkError": [
+        "OperationFailed",
+        "BaseError"
+      ],
+      "ContractUnavailable": [
+        "InvalidOrder",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "OrderNotFillable": [
+        "InvalidOrder",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "OperationFailed": [
+        "BaseError"
+      ],
+      "NullResponse": [
+        "BadResponse",
+        "OperationFailed",
+        "BaseError"
+      ],
+      "RestrictedLocation": [
+        "OperationRejected",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "DuplicateOrderId": [
+        "InvalidOrder",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "ExchangeNotAvailable": [
+        "NetworkError",
+        "OperationFailed",
+        "BaseError"
+      ],
+      "OrderImmediatelyFillable": [
+        "InvalidOrder",
+        "ExchangeError",
+        "BaseError"
+      ],
+      "AccountNotEnabled": [
+        "PermissionDenied",
+        "AuthenticationError",
+        "ExchangeError",
+        "BaseError"
+      ]
+    },
+    "flat_parents": {
+      "ArgumentsRequired": "ExchangeError",
+      "InvalidNonce": "NetworkError",
+      "UnsubscribeError": "BaseError",
+      "ExchangeError": "BaseError",
+      "NotSupported": "ExchangeError",
+      "ExchangeClosedByUser": "ExchangeError",
+      "ChecksumError": "InvalidNonce",
+      "AddressPending": "InvalidAddress",
+      "BadRequest": "ExchangeError",
+      "OperationRejected": "ExchangeError",
+      "BaseError": null,
+      "InvalidAddress": "ExchangeError",
+      "RateLimitExceeded": "NetworkError",
+      "OrderNotFound": "InvalidOrder",
+      "MarketClosed": "OperationRejected",
+      "BadResponse": "OperationFailed",
+      "BadSymbol": "BadRequest",
+      "CancelPending": "OperationFailed",
+      "AccountSuspended": "AuthenticationError",
+      "InsufficientFunds": "ExchangeError",
+      "OrderNotCached": "InvalidOrder",
+      "PermissionDenied": "AuthenticationError",
+      "DDoSProtection": "NetworkError",
+      "ManualInteractionNeeded": "OperationRejected",
+      "NoChange": "OperationRejected",
+      "OnMaintenance": "ExchangeNotAvailable",
+      "InvalidOrder": "ExchangeError",
+      "RequestTimeout": "NetworkError",
+      "MarginModeAlreadySet": "NoChange",
+      "AuthenticationError": "ExchangeError",
+      "InvalidProxySettings": "ExchangeError",
+      "NetworkError": "OperationFailed",
+      "ContractUnavailable": "InvalidOrder",
+      "OrderNotFillable": "InvalidOrder",
+      "OperationFailed": "BaseError",
+      "NullResponse": "BadResponse",
+      "RestrictedLocation": "OperationRejected",
+      "DuplicateOrderId": "InvalidOrder",
+      "ExchangeNotAvailable": "NetworkError",
+      "OrderImmediatelyFillable": "InvalidOrder",
+      "AccountNotEnabled": "PermissionDenied"
+    },
+    "tree": {
+      "BaseError": {
+        "ExchangeError": {
+          "ArgumentsRequired": {},
+          "AuthenticationError": {
+            "AccountSuspended": {},
+            "PermissionDenied": {
+              "AccountNotEnabled": {}
+            }
+          },
+          "BadRequest": {
+            "BadSymbol": {}
+          },
+          "ExchangeClosedByUser": {},
+          "InsufficientFunds": {},
+          "InvalidAddress": {
+            "AddressPending": {}
+          },
+          "InvalidOrder": {
+            "ContractUnavailable": {},
+            "DuplicateOrderId": {},
+            "OrderImmediatelyFillable": {},
+            "OrderNotCached": {},
+            "OrderNotFillable": {},
+            "OrderNotFound": {}
+          },
+          "InvalidProxySettings": {},
+          "NotSupported": {},
+          "OperationRejected": {
+            "ManualInteractionNeeded": {},
+            "MarketClosed": {},
+            "NoChange": {
+              "MarginModeAlreadySet": {}
+            },
+            "RestrictedLocation": {}
+          }
+        },
+        "OperationFailed": {
+          "BadResponse": {
+            "NullResponse": {}
+          },
+          "CancelPending": {},
+          "NetworkError": {
+            "DDoSProtection": {},
+            "ExchangeNotAvailable": {
+              "OnMaintenance": {}
+            },
+            "InvalidNonce": {
+              "ChecksumError": {}
+            },
+            "RateLimitExceeded": {},
+            "RequestTimeout": {}
+          }
+        },
+        "UnsubscribeError": {}
+      }
+    }
+  },
+  "handle_errors": {
+    "exception_scopes": {
+      "dapiData": "inverse",
+      "dapiPrivate": "inverse",
+      "dapiPrivateV2": "inverse",
+      "dapiPublic": "inverse",
+      "eapiPrivate": "option",
+      "eapiPublic": "option",
+      "fapiData": "linear",
+      "fapiPrivate": "linear",
+      "fapiPrivateV2": "linear",
+      "fapiPrivateV3": "linear",
+      "fapiPublic": "linear",
+      "fapiPublicV2": "linear",
+      "fapiPublicV3": "linear",
+      "papi": "portfolioMargin",
+      "papiV2": "portfolioMargin",
+      "private": "spot",
+      "public": "spot",
+      "sapi": "spot",
+      "sapiV2": "spot",
+      "sapiV3": "spot",
+      "sapiV4": "spot",
+      "v1": "spot"
+    },
+    "runtime_body_checks": [
+      {
+        "field": "code",
+        "field2": null,
+        "roles": [
+          "error_code",
+          "status_sentinel"
+        ],
+        "sentinel_values": [
+          {
+            "operator": "===",
+            "value": "-2015"
+          },
+          {
+            "operator": "===",
+            "value": "200"
+          }
+        ]
+      }
+    ],
+    "runtime_code_fields": [
+      "code"
+    ],
+    "error_code_fields": [
+      {
+        "field": "msg",
+        "field2": null,
+        "method": "safeString",
+        "object": "response",
+        "object_path": null,
+        "roles": [],
+        "sentinel_values": null
+      },
+      {
+        "field": "msg",
+        "field2": null,
+        "method": "safeString",
+        "object": "response",
+        "object_path": null,
+        "roles": [
+          "error_code",
+          "error_message",
+          "status_sentinel"
+        ],
+        "sentinel_values": [
+          {
+            "operator": "===",
+            "value": "No need to change margin type."
+          }
+        ]
+      },
+      {
+        "field": "code",
+        "field2": null,
+        "method": "safeString",
+        "object": "response",
+        "object_path": null,
+        "roles": [
+          "error_code",
+          "status_sentinel"
+        ],
+        "sentinel_values": [
+          {
+            "operator": "===",
+            "value": "-2015"
+          },
+          {
+            "operator": "===",
+            "value": "200"
+          }
+        ]
+      },
+      {
+        "field": "code",
+        "field2": null,
+        "method": "safeString",
+        "object": "element",
+        "object_path": null,
+        "roles": [
+          "error_code"
+        ],
+        "sentinel_values": null
+      }
+    ],
+    "exceptions": {
+      "broad": {},
+      "exact": {
+        "-1130": "BadRequest",
+        "-4084": "BadRequest",
+        "-4067": "OperationRejected",
+        "-1120": "BadRequest",
+        "-4018": "BadRequest",
+        "-4010": "BadRequest",
+        "-4046": "OperationRejected",
+        "-1119": "BadRequest",
+        "-4057": "AuthenticationError",
+        "-4003": "BadRequest",
+        "-4024": "BadRequest",
+        "-4053": "BadRequest",
+        "-1112": "OperationFailed",
+        "-1010": "OperationFailed",
+        "-4083": "OperationRejected",
+        "-4059": "OperationRejected",
+        "-1013": "BadRequest",
+        "-4033": "BadRequest",
+        "-1016": "OnMaintenance",
+        "-4056": "AuthenticationError",
+        "-4082": "BadRequest",
+        "-4142": "OrderImmediatelyFillable",
+        "-4020": "BadRequest",
+        "-4021": "BadRequest",
+        "-2010": "InvalidOrder",
+        "-4104": "BadRequest",
+        "-1022": "AuthenticationError",
+        "-1100": "BadRequest",
+        "-4022": "BadRequest",
+        "-4030": "BadRequest",
+        "-1125": "AuthenticationError",
+        "-4045": "OperationRejected",
+        "-2013": "OrderNotFound",
+        "-4006": "BadRequest",
+        "-1007": "RequestTimeout",
+        "-1105": "BadRequest",
+        "-4023": "BadRequest",
+        "-1114": "BadRequest",
+        "-4047": "OperationRejected",
+        "-4139": "BadRequest",
+        "-4017": "BadRequest",
+        "-4058": "BadRequest",
+        "-4052": "OperationRejected",
+        "-4002": "BadRequest",
+        "-4015": "BadRequest",
+        "-4013": "BadRequest",
+        "-2015": "AuthenticationError",
+        "-1111": "BadRequest",
+        "-1002": "AuthenticationError",
+        "-1106": "BadRequest",
+        "-4009": "BadRequest",
+        "-4060": "BadRequest",
+        "-1101": "BadRequest",
+        "-4048": "OperationRejected",
+        "-1116": "BadRequest",
+        "-2011": "OrderNotFound",
+        "-1121": "BadSymbol",
+        "-1108": "BadSymbol",
+        "-1000": "OperationFailed",
+        "-1001": "OperationFailed",
+        "-4004": "BadRequest",
+        "-4031": "BadRequest",
+        "-4050": "InsufficientFunds",
+        "-4051": "InsufficientFunds",
+        "-4032": "OperationRejected",
+        "-4028": "BadRequest",
+        "-1102": "BadRequest",
+        "-1021": "InvalidNonce",
+        "-1020": "BadRequest",
+        "-4029": "BadRequest",
+        "-1103": "BadRequest",
+        "-1104": "BadRequest",
+        "-1127": "BadRequest",
+        "-4014": "BadRequest",
+        "-4007": "BadRequest",
+        "-4001": "BadRequest",
+        "-4068": "OperationRejected",
+        "-4000": "InvalidOrder",
+        "-2014": "AuthenticationError",
+        "-4019": "OperationRejected",
+        "-4061": "OperationRejected",
+        "-4135": "BadRequest",
+        "-4026": "BadRequest",
+        "-4138": "BadRequest",
+        "-4055": "BadRequest",
+        "-4027": "BadRequest",
+        "-4025": "BadRequest",
+        "-4137": "BadRequest",
+        "-1117": "BadRequest",
+        "-1006": "OperationFailed",
+        "-4008": "BadRequest",
+        "-1003": "RateLimitExceeded",
+        "-4049": "BadRequest",
+        "-1004": "OperationRejected",
+        "-4012": "BadRequest",
+        "-1115": "BadRequest",
+        "-1118": "BadRequest",
+        "-4011": "BadRequest",
+        "-1014": "InvalidOrder",
+        "-1128": "BadRequest",
+        "-4005": "BadRequest",
+        "-4016": "BadRequest",
+        "-4086": "BadRequest",
+        "-4062": "BadRequest",
+        "-1015": "RateLimitExceeded",
+        "-4044": "BadRequest",
+        "-4054": "OperationRejected"
+      },
+      "inverse": {
+        "exact": {
+          "-4154": "BadRequest",
+          "-2027": "OperationRejected",
+          "-1005": "PermissionDenied",
+          "-2023": "OperationFailed",
+          "-4196": "BadRequest",
+          "-2018": "InsufficientFunds",
+          "-4198": "OperationRejected",
+          "-4197": "OperationRejected",
+          "-4088": "BadRequest",
+          "-1023": "BadRequest",
+          "-4194": "PermissionDenied",
+          "-2022": "InvalidOrder",
+          "-2016": "OperationRejected",
+          "-4089": "PermissionDenied",
+          "-2021": "OrderImmediatelyFillable",
+          "-4151": "BadRequest",
+          "-4192": "PermissionDenied",
+          "-2026": "InvalidOrder",
+          "-4195": "PermissionDenied",
+          "-1109": "AuthenticationError",
+          "-4087": "BadSymbol",
+          "-4188": "BadRequest",
+          "-4178": "BadRequest",
+          "-4112": "OperationRejected",
+          "-2024": "BadRequest",
+          "-4113": "OperationRejected",
+          "-4201": "PermissionDenied",
+          "-4202": "OperationRejected",
+          "-2028": "OperationRejected",
+          "-4155": "BadRequest",
+          "-2019": "InsufficientFunds",
+          "-4110": "BadRequest",
+          "-4200": "PermissionDenied",
+          "-2025": "OperationRejected",
+          "-2020": "OperationFailed",
+          "-1110": "BadSymbol",
+          "-1113": "BadRequest",
+          "-1128": "BadRequest",
+          "-4199": "BadRequest",
+          "-4086": "BadRequest",
+          "-4152": "BadRequest",
+          "-4090": "PermissionDenied",
+          "-4111": "BadRequest",
+          "-1011": "PermissionDenied",
+          "-4150": "OperationRejected",
+          "-1136": "BadRequest"
+        }
+      },
+      "linear": {
+        "exact": {
+          "-1005": "PermissionDenied",
+          "-1008": "OperationFailed",
+          "-1011": "PermissionDenied",
+          "-1023": "BadRequest",
+          "-1109": "PermissionDenied",
+          "-1110": "BadRequest",
+          "-1113": "BadRequest",
+          "-1136": "BadRequest",
+          "-2016": "OperationRejected",
+          "-2018": "InsufficientFunds",
+          "-2019": "InsufficientFunds",
+          "-2020": "OperationFailed",
+          "-2021": "OrderImmediatelyFillable",
+          "-2022": "InvalidOrder",
+          "-2023": "OperationFailed",
+          "-2024": "InsufficientFunds",
+          "-2025": "OperationRejected",
+          "-2026": "InvalidOrder",
+          "-2027": "OperationRejected",
+          "-2028": "OperationRejected",
+          "-4087": "PermissionDenied",
+          "-4088": "PermissionDenied",
+          "-4192": "PermissionDenied",
+          "-4202": "PermissionDenied"
+        }
+      },
+      "option": {
+        "exact": {
+          "-4084": "ExchangeError",
+          "-4067": "ExchangeError",
+          "-4018": "ExchangeError",
+          "-4010": "ExchangeError",
+          "-4046": "ExchangeError",
+          "-2027": "InsufficientFunds",
+          "-4057": "ExchangeError",
+          "-4024": "ExchangeError",
+          "-4053": "ExchangeError",
+          "-1112": "ExchangeError",
+          "-1010": "ExchangeError",
+          "-4083": "ExchangeError",
+          "-4059": "ExchangeError",
+          "-1008": "RateLimitExceeded",
+          "-1013": "ExchangeError",
+          "-4033": "ExchangeError",
+          "-4056": "ExchangeError",
+          "-4082": "ExchangeError",
+          "-4142": "ExchangeError",
+          "-4020": "ExchangeError",
+          "-4021": "ExchangeError",
+          "-2018": "InsufficientFunds",
+          "-4104": "ExchangeError",
+          "-4088": "ExchangeError",
+          "-4022": "ExchangeError",
+          "-4045": "ExchangeError",
+          "-4006": "ExchangeError",
+          "-1007": "ExchangeError",
+          "-4120": "ExchangeError",
+          "-4089": "ExchangeError",
+          "-4023": "ExchangeError",
+          "-1114": "ExchangeError",
+          "-4047": "ExchangeError",
+          "-4139": "ExchangeError",
+          "-4017": "ExchangeError",
+          "-4058": "ExchangeError",
+          "-4052": "ExchangeError",
+          "-4015": "ExchangeError",
+          "-4087": "ExchangeError",
+          "-4009": "ExchangeError",
+          "-4112": "ExchangeError",
+          "-4060": "ExchangeError",
+          "-4048": "ExchangeError",
+          "-2011": "ExchangeError",
+          "-1108": "ExchangeError",
+          "-4031": "ExchangeError",
+          "-4050": "ExchangeError",
+          "-4051": "ExchangeError",
+          "-4032": "ExchangeError",
+          "-4028": "ExchangeError",
+          "-4113": "ExchangeError",
+          "-4014": "ExchangeError",
+          "-4007": "ExchangeError",
+          "-4068": "ExchangeError",
+          "-4019": "ExchangeError",
+          "-4061": "ExchangeError",
+          "-4135": "ExchangeError",
+          "-4026": "ExchangeError",
+          "-4138": "ExchangeError",
+          "-4027": "ExchangeError",
+          "-4025": "ExchangeError",
+          "-4137": "ExchangeError",
+          "-4110": "ExchangeError",
+          "-1006": "ExchangeError",
+          "-4008": "ExchangeError",
+          "-1003": "ExchangeError",
+          "-4049": "ExchangeError",
+          "-1004": "ExchangeError",
+          "-4012": "ExchangeError",
+          "-4011": "ExchangeError",
+          "-1128": "BadSymbol",
+          "-4016": "ExchangeError",
+          "-4086": "ExchangeError",
+          "-4062": "ExchangeError",
+          "-4150": "ExchangeError",
+          "-4044": "ExchangeError",
+          "-4054": "ExchangeError"
+        }
+      },
+      "portfolioMargin": {
+        "exact": {
+          "-1130": "BadRequest",
+          "-4084": "NotSupported",
+          "-4067": "BadRequest",
+          "-1120": "BadRequest",
+          "-4018": "BadRequest",
+          "-4010": "BadRequest",
+          "-4046": "BadRequest",
+          "-2027": "OperationRejected",
+          "-1119": "BadRequest",
+          "-4057": "PermissionDenied",
+          "-4003": "BadRequest",
+          "-4024": "BadRequest",
+          "-4053": "BadRequest",
+          "-1112": "BadRequest",
+          "-1010": "ExchangeError",
+          "-4083": "BadRequest",
+          "-1005": "PermissionDenied",
+          "-4059": "BadRequest",
+          "-2023": "OperationFailed",
+          "-1008": "OperationFailed",
+          "-1013": "ExchangeError",
+          "-4033": "BadRequest",
+          "-1016": "NotSupported",
+          "-4056": "PermissionDenied",
+          "-4082": "BadRequest",
+          "-4142": "OrderImmediatelyFillable",
+          "-4020": "BadRequest",
+          "-4021": "BadRequest",
+          "-2018": "OperationFailed",
+          "-2010": "InvalidOrder",
+          "-4104": "BadRequest",
+          "-1022": "BadRequest",
+          "-4088": "PermissionDenied",
+          "-1100": "BadRequest",
+          "-1023": "BadRequest",
+          "-4022": "BadRequest",
+          "-4030": "BadRequest",
+          "-2022": "InvalidOrder",
+          "-1125": "BadRequest",
+          "-2016": "OperationFailed",
+          "-4045": "BadRequest",
+          "-2013": "OrderNotFound",
+          "-4006": "BadRequest",
+          "-1007": "BadResponse",
+          "-1105": "BadRequest",
+          "-2021": "OrderImmediatelyFillable",
+          "-4023": "BadRequest",
+          "-1114": "BadRequest",
+          "-4047": "BadRequest",
+          "-4139": "BadRequest",
+          "-4017": "BadRequest",
+          "-4058": "BadRequest",
+          "-4052": "BadRequest",
+          "-2026": "InvalidOrder",
+          "-1109": "BadRequest",
+          "-4002": "BadRequest",
+          "-4015": "BadRequest",
+          "-4013": "BadRequest",
+          "-2015": "OperationRejected",
+          "-1111": "BadRequest",
+          "-4087": "PermissionDenied",
+          "-1002": "PermissionDenied",
+          "-1106": "BadRequest",
+          "-4009": "BadRequest",
+          "-4060": "BadRequest",
+          "-1101": "BadRequest",
+          "-4048": "BadRequest",
+          "-1116": "BadRequest",
+          "-2011": "OperationRejected",
+          "-2024": "OperationRejected",
+          "-1121": "BadSymbol",
+          "-1108": "BadRequest",
+          "-1000": "OperationFailed",
+          "-1001": "ExchangeError",
+          "-4004": "BadRequest",
+          "-4031": "BadRequest",
+          "-4050": "BadRequest",
+          "-4051": "BadRequest",
+          "-4032": "BadRequest",
+          "-4028": "BadRequest",
+          "-1102": "BadRequest",
+          "-1021": "BadRequest",
+          "-1020": "NotSupported",
+          "-4029": "BadRequest",
+          "-1103": "BadRequest",
+          "-1104": "BadRequest",
+          "-2028": "OperationRejected",
+          "-1127": "BadRequest",
+          "-4014": "BadRequest",
+          "-4007": "BadRequest",
+          "-4001": "BadRequest",
+          "-4068": "BadRequest",
+          "-4000": "BadRequest",
+          "-2014": "OperationRejected",
+          "-4019": "BadRequest",
+          "-4061": "InvalidOrder",
+          "-4135": "BadRequest",
+          "-4026": "BadRequest",
+          "-4138": "BadRequest",
+          "-4055": "BadRequest",
+          "-4027": "BadRequest",
+          "-4025": "BadRequest",
+          "-4137": "BadRequest",
+          "-1117": "BadRequest",
+          "-2019": "OperationFailed",
+          "-2025": "OperationRejected",
+          "-1006": "BadResponse",
+          "-4008": "BadRequest",
+          "-1003": "RateLimitExceeded",
+          "-4049": "BadRequest",
+          "-1004": "BadRequest",
+          "-2020": "OrderNotFillable",
+          "-4012": "BadRequest",
+          "-1115": "BadRequest",
+          "-1118": "BadRequest",
+          "-1110": "BadSymbol",
+          "-1113": "BadRequest",
+          "-4011": "BadRequest",
+          "-1014": "InvalidOrder",
+          "-1128": "BadRequest",
+          "-4005": "BadRequest",
+          "-4016": "BadRequest",
+          "-4086": "BadRequest",
+          "-4062": "BadRequest",
+          "-1015": "InvalidOrder",
+          "-1011": "PermissionDenied",
+          "-4044": "BadRequest",
+          "-4054": "BadRequest",
+          "-1136": "BadRequest"
+        }
+      },
+      "spot": {
+        "exact": {
+          "-4084": "ExchangeError",
+          "-4067": "ExchangeError",
+          "-4018": "BadSymbol",
+          "-4010": "PermissionDenied",
+          "-4046": "AuthenticationError",
+          "-4057": "ExchangeError",
+          "-4003": "BadRequest",
+          "-4024": "InsufficientFunds",
+          "-4053": "ExchangeError",
+          "-4083": "ExchangeError",
+          "-4059": "ExchangeError",
+          "-1008": "OperationFailed",
+          "-4033": "BadRequest",
+          "-4056": "ExchangeError",
+          "-4082": "ExchangeError",
+          "-4142": "ExchangeError",
+          "-4020": "ExchangeError",
+          "-4021": "BadRequest",
+          "-4104": "ExchangeError",
+          "-4088": "ExchangeError",
+          "-4022": "BadRequest",
+          "-4030": "BadResponse",
+          "-2022": "BadResponse",
+          "-2016": "OperationRejected",
+          "-4045": "OperationFailed",
+          "-4006": "BadRequest",
+          "-4120": "ExchangeError",
+          "-4089": "ExchangeError",
+          "-2021": "BadResponse",
+          "-4023": "OperationRejected",
+          "-4047": "BadRequest",
+          "-4139": "ExchangeError",
+          "-4017": "PermissionDenied",
+          "-4058": "ExchangeError",
+          "-4052": "ExchangeError",
+          "-2026": "InvalidOrder",
+          "-4002": "BadRequest",
+          "-4015": "PermissionDenied",
+          "-4013": "AuthenticationError",
+          "-4087": "ExchangeError",
+          "-4009": "ExchangeError",
+          "-4112": "ExchangeError",
+          "-4060": "OperationFailed",
+          "-4048": "ExchangeError",
+          "-1108": "BadRequest",
+          "-4004": "AuthenticationError",
+          "-4031": "OperationFailed",
+          "-4050": "ExchangeError",
+          "-4051": "ExchangeError",
+          "-4032": "OperationRejected",
+          "-4028": "BadRequest",
+          "-4113": "ExchangeError",
+          "-4029": "BadRequest",
+          "-4014": "OperationRejected",
+          "-4007": "PermissionDenied",
+          "-4001": "BadRequest",
+          "-4068": "ExchangeError",
+          "-4000": "ExchangeError",
+          "-4019": "BadRequest",
+          "-4061": "ExchangeError",
+          "-4135": "ExchangeError",
+          "-4026": "InsufficientFunds",
+          "-4138": "ExchangeError",
+          "-4055": "ExchangeError",
+          "-4027": "OperationFailed",
+          "-4025": "InsufficientFunds",
+          "-4137": "ExchangeError",
+          "-4110": "ExchangeError",
+          "-4008": "PermissionDenied",
+          "-4049": "ExchangeError",
+          "-1004": "OperationFailed",
+          "-4012": "PermissionDenied",
+          "-4011": "BadRequest",
+          "-4005": "RateLimitExceeded",
+          "-4016": "PermissionDenied",
+          "-4086": "ExchangeError",
+          "-4062": "ExchangeError",
+          "-4150": "ExchangeError",
+          "-4044": "PermissionDenied",
+          "-4054": "ExchangeError"
+        }
+      }
+    }
+  },
+  "retry_classification": {
+    "auth": [
+      "AccountSuspended",
+      "AuthenticationError",
+      "PermissionDenied"
+    ],
+    "network": [
+      "InvalidNonce",
+      "RequestTimeout"
+    ],
+    "non_retryable": [
+      "BadRequest",
+      "BadSymbol",
+      "ExchangeError",
+      "InsufficientFunds",
+      "InvalidOrder",
+      "MarginModeAlreadySet",
+      "MarketClosed",
+      "NotSupported",
+      "OperationFailed",
+      "OperationRejected",
+      "OrderImmediatelyFillable",
+      "OrderNotFillable",
+      "OrderNotFound"
+    ],
+    "rate_limit": [
+      "DDoSProtection",
+      "RateLimitExceeded"
+    ],
+    "server_busy": [
+      "BadResponse",
+      "ExchangeNotAvailable",
+      "OnMaintenance"
+    ]
+  },
+  "status_map": {
+    "400": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "401": [
+      {
+        "class": "AuthenticationError",
+        "source": "http_exceptions"
+      }
+    ],
+    "403": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "404": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "405": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "407": [
+      {
+        "class": "AuthenticationError",
+        "source": "http_exceptions"
+      }
+    ],
+    "408": [
+      {
+        "class": "RequestTimeout",
+        "source": "http_exceptions"
+      }
+    ],
+    "409": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "410": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "418": [
+      {
+        "class": "DDoSProtection",
+        "source": "http_exceptions"
+      },
+      {
+        "class": "DDoSProtection",
+        "source": "throw_dispatch_predicate"
+      }
+    ],
+    "422": [
+      {
+        "class": "ExchangeError",
+        "source": "http_exceptions"
+      }
+    ],
+    "429": [
+      {
+        "class": "DDoSProtection",
+        "source": "throw_dispatch_predicate"
+      },
+      {
+        "class": "RateLimitExceeded",
+        "source": "http_exceptions"
+      }
+    ],
+    "451": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "500": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "501": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "502": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "503": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "504": [
+      {
+        "class": "RequestTimeout",
+        "source": "http_exceptions"
+      }
+    ],
+    "511": [
+      {
+        "class": "AuthenticationError",
+        "source": "http_exceptions"
+      }
+    ],
+    "520": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "521": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "522": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "525": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "526": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ],
+    "530": [
+      {
+        "class": "ExchangeNotAvailable",
+        "source": "http_exceptions"
+      }
+    ]
+  }
+}

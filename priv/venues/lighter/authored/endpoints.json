@@ -1,0 +1,1457 @@
+{
+  "fetchTradingFee": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchBorrowRateHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "spot": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "setPositionMode": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createMarketOrderWithCost": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchLiquidations": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createMarketBuyOrderWithCost": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "setMarginMode": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOrderBook": {
+    "unified": [
+      "publicGetOrderBookOrders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "name": "fetchOrderBook",
+      "provider_operation_id": "orderBookOrders",
+      "signature": {
+        "return_type": "Promise<OrderBook>"
+      }
+    },
+    "request": {
+      "defaults": {
+        "limit": {
+          "kind": "literal",
+          "reason": null,
+          "value": 100
+        },
+        "market_id": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOrderBook"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTransfer": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createStopOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchAllGreeks": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPositionMode": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createReduceOnlyOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingRate": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "setLeverage": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchIndexOHLCV": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchGreeks": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPositionsRisk": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createMarketSellOrderWithCost": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "addMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "repayIsolatedMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "editOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMarginMode": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createTriggerOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchIsolatedBorrowRate": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createPostOnlyOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "repayCrossMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTime": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDepositWithdrawFees": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "closeAllPositions": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMarkOHLCV": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "borrowCrossMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOrders": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDeposits": {
+    "unified": [
+      "privateGetDepositHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "name": "fetchDeposits",
+      "provider_operation_id": "deposit_history",
+      "signature": {
+        "return_type": "Promise<Transaction[]>"
+      }
+    },
+    "parse": [
+      "parseTransactions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOrderTrades": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "option": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "future": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMarketLeverageTiers": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPositions": {
+    "unified": [
+      "publicGetAccount"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "name": "fetchPositions",
+      "provider_operation_id": "account",
+      "signature": {
+        "return_type": "Promise<Position[]>"
+      }
+    },
+    "parse": [
+      "parsePositions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingRates": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDepositAddress": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchBorrowInterest": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchStatus": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchClosedOrders": {
+    "unified": [
+      "privateGetAccountInactiveOrders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "name": "fetchClosedOrders",
+      "provider_operation_id": "accountInactiveOrders",
+      "signature": {
+        "return_type": "Promise<Order[]>"
+      }
+    },
+    "request": {
+      "defaults": {
+        "limit": {
+          "kind": "literal",
+          "reason": null,
+          "value": 100
+        },
+        "market_id": {
+          "kind": "unresolved",
+          "optional": true,
+          "reason": "dynamic_construction",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "setMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOpenInterest": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDepositAddresses": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTransfers": {
+    "unified": [
+      "privateGetTransferHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "name": "fetchTransfers",
+      "provider_operation_id": "transfer_history",
+      "signature": {
+        "return_type": "Promise<TransferEntry[]>"
+      }
+    },
+    "parse": [
+      "parseTransfers"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchBorrowRateHistories": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCurrenciesWs": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "cancelAllOrders": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "withdraw": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchLeverage": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "sandbox": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "borrowMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMarkets": {
+    "unified": [
+      "publicGetOrderBookDetails"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "name": "fetchMarkets",
+      "provider_operation_id": "orderBookDetails",
+      "signature": {
+        "return_type": "Promise<Market[]>"
+      }
+    },
+    "parse": [
+      "parseMarkets"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchWithdrawal": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOHLCV": {
+    "unified": [
+      "publicGetCandles"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "name": "fetchOHLCV",
+      "provider_operation_id": "candles",
+      "signature": {
+        "return_type": "Promise<OHLCV[]>"
+      }
+    },
+    "request": {
+      "defaults": {
+        "_omit": [
+          "limit",
+          "since"
+        ],
+        "count_back": {
+          "kind": "literal",
+          "reason": null,
+          "value": 0
+        },
+        "end_timestamp": {
+          "default_limit": 100,
+          "default_timeframe_ms": 3600000,
+          "kind": "computed",
+          "limit_source": "limit",
+          "operation": "time_window_end",
+          "timeframe_source": "timeframe"
+        },
+        "market_id": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        },
+        "resolution": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        },
+        "start_timestamp": {
+          "default_limit": 100,
+          "default_timeframe_ms": 3600000,
+          "kind": "computed",
+          "limit_source": "limit",
+          "operation": "time_window_start",
+          "timeframe_source": "timeframe"
+        }
+      }
+    },
+    "parse": [
+      "parseOHLCVs"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "swap": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createSubAccount": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchBorrowRates": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "cancelOrder": {
+    "unified": [
+      "privatePostSendTx"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "name": "cancelOrder",
+      "provider_operation_id": "sendTx",
+      "signature": {
+        "return_type": "Promise<Order>"
+      }
+    },
+    "request": {
+      "defaults": {
+        "__bourse_lighter_transaction_operation": {
+          "kind": "literal",
+          "reason": null,
+          "value": "cancel_order"
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "fetchOpenInterests": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOpenOrders": {
+    "unified": [
+      "privateGetAccountActiveOrders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "name": "fetchOpenOrders",
+      "provider_operation_id": "accountActiveOrders",
+      "signature": {
+        "return_type": "Promise<Order[]>"
+      }
+    },
+    "request": {
+      "defaults": {
+        "market_id": {
+          "kind": "unresolved",
+          "optional": true,
+          "reason": "dynamic_construction",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchWithdrawals": {
+    "unified": [
+      "privateGetWithdrawHistory"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "name": "fetchWithdrawals",
+      "provider_operation_id": "withdraw_history",
+      "signature": {
+        "return_type": "Promise<Transaction[]>"
+      }
+    },
+    "parse": [
+      "parseTransactions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDepositWithdrawFee": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCanceledAndClosedOrders": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCrossBorrowRates": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingRateHistory": {
+    "unified": [
+      "publicGetFundings"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "description": "Uses Lighter's venue-native /api/v1/fundings history; /api/v1/funding-rates is the separate cross-exchange reference feed.",
+      "name": "fetchFundingRateHistory",
+      "provider_operation_id": "fundings",
+      "signature": {
+        "return_type": "Promise<FundingRateHistory[]>"
+      }
+    },
+    "request": {
+      "defaults": {
+        "_omit": [
+          "limit",
+          "since",
+          "until"
+        ],
+        "count_back": {
+          "kind": "literal",
+          "reason": null,
+          "value": 0
+        },
+        "end_timestamp": {
+          "default_limit": 100,
+          "default_timeframe_ms": 3600000,
+          "kind": "computed",
+          "limit_source": "limit",
+          "operation": "time_window_end",
+          "timeframe_source": "timeframe"
+        },
+        "market_id": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        },
+        "resolution": {
+          "kind": "literal",
+          "reason": null,
+          "value": "1h"
+        },
+        "start_timestamp": {
+          "default_limit": 100,
+          "default_timeframe_ms": 3600000,
+          "kind": "computed",
+          "limit_source": "limit",
+          "operation": "time_window_start",
+          "timeframe_source": "timeframe"
+        }
+      }
+    },
+    "parse": [
+      "parseFundingRate"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCurrencies": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchLedger": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOption": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "transfer": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMyTrades": {
+    "unified": [
+      "privateGetTrades"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "name": "fetchMyTrades",
+      "provider_operation_id": "trades",
+      "signature": {
+        "return_type": "Promise<Trade[]>"
+      }
+    },
+    "request": {
+      "defaults": {
+        "limit": {
+          "kind": "literal",
+          "reason": null,
+          "value": 100
+        },
+        "sort_by": {
+          "kind": "literal",
+          "reason": null,
+          "value": "timestamp"
+        }
+      }
+    },
+    "parse": [
+      "parseTrades"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPremiumIndexOHLCV": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createOrder": {
+    "unified": [
+      "privatePostSendTx"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "name": "createOrder",
+      "provider_operation_id": "sendTx",
+      "signature": {
+        "return_type": "Promise<Order>"
+      }
+    },
+    "request": {
+      "defaults": {
+        "__bourse_lighter_transaction_operation": {
+          "kind": "literal",
+          "reason": null,
+          "value": "create_order"
+        }
+      }
+    },
+    "transaction_classification": {
+      "on_chain": true,
+      "transactional": true
+    }
+  },
+  "fetchTrades": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCanceledOrders": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchBorrowRate": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchBorrowRatesPerSymbol": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "privateAPI": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchL2OrderBook": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "margin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "cancelOrdersForSymbols": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchPosition": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchLeverageTiers": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "closePosition": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "reduceMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchIsolatedBorrowRates": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "cancelOrders": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTicker": {
+    "unified": [
+      "publicGetOrderBookDetails"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "name": "fetchTicker",
+      "provider_operation_id": "orderBookDetails",
+      "signature": {
+        "return_type": "Promise<Ticker>"
+      }
+    },
+    "request": {
+      "defaults": {
+        "market_id": {
+          "kind": "unresolved",
+          "reason": "dynamic_construction",
+          "value": null
+        }
+      }
+    },
+    "parse": [
+      "parseTicker"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchVolatilityHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createMarketOrderWs": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchCrossBorrowRate": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTickers": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createLimitOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchBalance": {
+    "unified": [
+      "publicGetAccount"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "name": "fetchBalance",
+      "provider_operation_id": "account",
+      "signature": {
+        "return_type": "Promise<Balances>"
+      }
+    },
+    "parse": [
+      "parseBalance"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMyLiquidations": {
+    "unified": [
+      "privateGetLiquidations"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "name": "fetchMyLiquidations",
+      "provider_operation_id": "liquidations",
+      "signature": {
+        "return_type": "Promise<Liquidation[]>"
+      }
+    },
+    "request": {
+      "defaults": {
+        "limit": {
+          "kind": "literal",
+          "reason": null,
+          "value": 100
+        }
+      }
+    },
+    "parse": [
+      "parseLiquidations"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "borrowIsolatedMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createOrders": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "createMarketOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOptionChain": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "publicAPI": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchAccounts": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "cancelAllOrdersAfter": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchTradingFees": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOpenInterestHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  }
+}

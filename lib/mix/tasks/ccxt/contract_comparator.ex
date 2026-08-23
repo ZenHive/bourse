@@ -46,7 +46,7 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
     |> AuthorityCorpus.load!()
     |> Enum.filter(&(is_nil(venue_filter) or &1["venue"] == venue_filter))
     |> Enum.map(fn manifest ->
-      authored = Bourse.JsonDocument.decode_file!(Path.join([spec_root, manifest["venue"], "authored", "spec.json"]))
+      authored = Bourse.Spec.load_from_root!(spec_root, manifest["venue"])
       venue_facts = Enum.filter(facts, &(&1["venue"] == manifest["venue"]))
       report = compare_venue!(manifest, authored, artifact_root, venue_facts)
       validate_committed_baseline!(report, authority_root)

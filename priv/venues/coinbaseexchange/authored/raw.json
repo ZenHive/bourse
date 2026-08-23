@@ -1,0 +1,103 @@
+{
+  "url_templates": {
+    "public": {
+      "api_param": "public",
+      "http_method": "GET",
+      "resolved_url": "https://api.exchange.coinbase.com/products/ETH-USD/candles",
+      "sample_path": "products/ETH-USD/candles",
+      "url_prefix": "https://api.exchange.coinbase.com/"
+    }
+  },
+  "describe": {
+    "certified": false,
+    "countries": [
+      "US"
+    ],
+    "enableRateLimit": true,
+    "exceptions": {
+      "broad": {},
+      "exact": {}
+    },
+    "hostname": "exchange.coinbase.com",
+    "id": "coinbaseexchange",
+    "name": "Coinbase Exchange",
+    "pro": true,
+    "rateLimit": 100,
+    "requiredCredentials": {
+      "accountId": false,
+      "apiKey": false,
+      "login": false,
+      "password": false,
+      "privateKey": false,
+      "secret": false,
+      "token": false,
+      "twofa": false,
+      "uid": false,
+      "walletAddress": false
+    },
+    "timeframes": {
+      "15m": 900,
+      "1d": 86400,
+      "1h": 3600,
+      "1m": 60,
+      "5m": 300,
+      "6h": 21600
+    },
+    "urls": {
+      "api": {
+        "public": "https://api.exchange.coinbase.com"
+      },
+      "doc": "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products",
+      "www": "https://exchange.coinbase.com"
+    },
+    "version": null
+  },
+  "request_shape": {
+    "public": {
+      "body_encoding": "none",
+      "content_type": null,
+      "endpoints": [
+        {
+          "http_verb": "GET",
+          "path_params": [
+            {
+              "name": "id",
+              "source": "params"
+            }
+          ],
+          "path_template": "products/{id}/candles"
+        },
+        {
+          "http_verb": "GET",
+          "path_params": [
+            {
+              "name": "id",
+              "source": "params"
+            }
+          ],
+          "path_template": "products/{id}/ticker"
+        }
+      ]
+    }
+  },
+  "endpoints": {
+    "public.get": {
+      "api": [
+        "products/{id}/candles",
+        "products/{id}/ticker"
+      ]
+    },
+    "public.get.products/{id}/candles": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    },
+    "public.get.products/{id}/ticker": {
+      "rate_limit": {
+        "axes": {},
+        "cost": 1
+      }
+    }
+  }
+}

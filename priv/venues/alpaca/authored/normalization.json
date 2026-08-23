@@ -1,0 +1,660 @@
+{
+  "field_maps": {
+    "balance": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "datetime": null,
+        "debt": null,
+        "free": {
+          "coercion": "safeNumber",
+          "collection_key": "_account",
+          "index_coercion": "safeCurrencyCode",
+          "index_key": "currency",
+          "kind": "keyed_collection",
+          "value_key": "cash"
+        },
+        "info": null,
+        "timestamp": null,
+        "total": {
+          "coercion": "safeNumber",
+          "collection_key": "_account",
+          "index_coercion": "safeCurrencyCode",
+          "index_key": "currency",
+          "kind": "keyed_collection",
+          "value_key": "equity"
+        },
+        "used": {
+          "coercion": "safeNumber",
+          "collection_key": "_account",
+          "index_coercion": "safeCurrencyCode",
+          "index_key": "currency",
+          "kind": "keyed_collection",
+          "value_key": "initial_margin"
+        }
+      }
+    },
+    "market": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "active": {
+          "enum_map": {
+            "active": true,
+            "inactive": false
+          },
+          "key": "status"
+        },
+        "base": {
+          "coercion": "safeCurrencyCode",
+          "key": "symbol"
+        },
+        "baseId": {
+          "coercion": "safeString",
+          "key": "symbol"
+        },
+        "contract": {
+          "enum_map": {
+            "us_equity": false
+          },
+          "key": "class"
+        },
+        "id": {
+          "coercion": "safeString",
+          "key": "symbol"
+        },
+        "info": null,
+        "limits": {
+          "sub_field_map": {
+            "amount": {
+              "sub_field_map": {
+                "max": null,
+                "min": {
+                  "coercion": "safeNumber",
+                  "key": "min_order_size"
+                }
+              }
+            },
+            "cost": {
+              "sub_field_map": {
+                "max": null,
+                "min": null
+              }
+            },
+            "leverage": {
+              "sub_field_map": {
+                "max": null,
+                "min": null
+              }
+            },
+            "price": {
+              "sub_field_map": {
+                "max": null,
+                "min": null
+              }
+            }
+          }
+        },
+        "margin": {
+          "coercion": "safeBool",
+          "key": "marginable"
+        },
+        "option": {
+          "enum_map": {
+            "us_equity": false
+          },
+          "key": "class"
+        },
+        "precision": {
+          "sub_field_map": {
+            "amount": {
+              "coercion": "safeNumber",
+              "key": "min_trade_increment"
+            },
+            "price": {
+              "coercion": "safeNumber",
+              "key": "price_increment"
+            }
+          }
+        },
+        "quote": {
+          "coercion": "safeCurrencyCode",
+          "default": "USD",
+          "key": "currency"
+        },
+        "quoteId": {
+          "coercion": "safeString",
+          "default": "USD",
+          "key": "currency"
+        },
+        "spot": {
+          "enum_map": {
+            "us_equity": true
+          },
+          "key": "class"
+        },
+        "symbol": {
+          "coercion": "safeString",
+          "key": "symbol"
+        },
+        "type": {
+          "coercion": "safeString",
+          "enum_map": {
+            "us_equity": "spot"
+          },
+          "key": "class"
+        }
+      }
+    },
+    "ohlcv": {
+      "_unresolved_reason": null,
+      "branches": [
+        {
+          "_unresolved_reason": null,
+          "field_map": {
+            "close": {
+              "coercion": "safeNumber",
+              "format": null,
+              "index": null,
+              "key": "c"
+            },
+            "high": {
+              "coercion": "safeNumber",
+              "format": null,
+              "index": null,
+              "key": "h"
+            },
+            "low": {
+              "coercion": "safeNumber",
+              "format": null,
+              "index": null,
+              "key": "l"
+            },
+            "open": {
+              "coercion": "safeNumber",
+              "format": null,
+              "index": null,
+              "key": "o"
+            },
+            "timestamp": null,
+            "volume": {
+              "coercion": "safeNumber",
+              "format": null,
+              "index": null,
+              "key": "v"
+            }
+          },
+          "guard": {
+            "input_shape": "object",
+            "kind": "always"
+          },
+          "shape": "array"
+        }
+      ],
+      "extras": []
+    },
+    "order": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "amount": {
+          "coercion": "safeNumber",
+          "key": "qty"
+        },
+        "average": {
+          "coercion": "safeNumber",
+          "key": "filled_avg_price"
+        },
+        "clientOrderId": {
+          "coercion": "safeString",
+          "key": "client_order_id"
+        },
+        "cost": {
+          "coercion": "safeNumber",
+          "kind": "computed",
+          "op": "mul",
+          "operands": [
+            "filled_qty",
+            "filled_avg_price"
+          ]
+        },
+        "datetime": {
+          "coercion": "safeString",
+          "key": "submitted_at"
+        },
+        "filled": {
+          "coercion": "safeNumber",
+          "key": "filled_qty"
+        },
+        "id": {
+          "coercion": "safeString",
+          "key": "id"
+        },
+        "info": null,
+        "price": {
+          "coercion": "safeNumber",
+          "key": "limit_price"
+        },
+        "remaining": {
+          "coercion": "safeNumber",
+          "kind": "computed",
+          "op": "sub",
+          "operands": [
+            "qty",
+            "filled_qty"
+          ]
+        },
+        "side": {
+          "coercion": "safeStringLower",
+          "key": "side"
+        },
+        "status": {
+          "coercion": "safeString",
+          "enum_map": {
+            "accepted": "open",
+            "accepted_for_bidding": "open",
+            "calculated": "closed",
+            "canceled": "canceled",
+            "done_for_day": "closed",
+            "expired": "canceled",
+            "filled": "closed",
+            "held": "open",
+            "new": "open",
+            "partially_filled": "open",
+            "pending_cancel": "open",
+            "pending_new": "open",
+            "pending_replace": "open",
+            "rejected": "rejected",
+            "replaced": "canceled",
+            "stopped": "open",
+            "suspended": "rejected"
+          },
+          "key": "status"
+        },
+        "symbol": {
+          "coercion": "safeString",
+          "key": "symbol"
+        },
+        "timeInForce": {
+          "coercion": "safeString",
+          "enum_map": {
+            "cls": "CLS",
+            "day": "DAY",
+            "fok": "FOK",
+            "gtc": "GTC",
+            "ioc": "IOC",
+            "opg": "OPG"
+          },
+          "key": "time_in_force"
+        },
+        "timestamp": {
+          "coercion": "parse8601",
+          "key": "submitted_at"
+        },
+        "triggerPrice": {
+          "coercion": "safeNumber",
+          "key": "stop_price"
+        },
+        "type": {
+          "coercion": "safeStringLower",
+          "key": "type"
+        }
+      }
+    },
+    "position": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "contracts": {
+          "coercion": "safeNumber",
+          "key": "qty",
+          "kind": "absolute"
+        },
+        "entryPrice": {
+          "coercion": "safeNumber",
+          "key": "avg_entry_price"
+        },
+        "id": {
+          "coercion": "safeString",
+          "key": "asset_id"
+        },
+        "info": null,
+        "lastPrice": {
+          "coercion": "safeNumber",
+          "key": "current_price"
+        },
+        "markPrice": {
+          "coercion": "safeNumber",
+          "key": "current_price"
+        },
+        "notional": {
+          "coercion": "safeNumber",
+          "key": "market_value",
+          "kind": "absolute"
+        },
+        "percentage": {
+          "coercion": "safeNumber",
+          "key": "unrealized_plpc",
+          "scale": 100
+        },
+        "side": {
+          "coercion": "safeStringLower",
+          "enum_map": {
+            "long": "long",
+            "short": "short"
+          },
+          "key": "side"
+        },
+        "symbol": {
+          "coercion": "safeString",
+          "key": "symbol"
+        },
+        "unrealizedPnl": {
+          "coercion": "safeNumber",
+          "key": "unrealized_pl"
+        }
+      }
+    },
+    "ticker": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "ask": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "ask"
+        },
+        "askVolume": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "askVolume"
+        },
+        "baseVolume": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "baseVolume"
+        },
+        "bid": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "bid"
+        },
+        "bidVolume": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "bidVolume"
+        },
+        "close": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "close"
+        },
+        "datetime": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "datetime"
+        },
+        "high": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "high"
+        },
+        "last": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "last"
+        },
+        "low": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "low"
+        },
+        "open": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "open"
+        },
+        "previousClose": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "previousClose"
+        },
+        "symbol": {
+          "kind": "native_symbol"
+        },
+        "timestamp": {
+          "coercion": "parse8601",
+          "format": null,
+          "key": "timestamp"
+        },
+        "vwap": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "vwap"
+        }
+      }
+    },
+    "trade": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "amount": {
+          "coercion": "safeNumber",
+          "fallback_keys": [
+            "s"
+          ],
+          "key": "qty"
+        },
+        "cost": {
+          "coercion": "safeNumber",
+          "kind": "computed",
+          "op": "mul",
+          "operands": [
+            {
+              "fallback_keys": [
+                "p"
+              ],
+              "key": "price"
+            },
+            {
+              "fallback_keys": [
+                "s"
+              ],
+              "key": "qty"
+            }
+          ]
+        },
+        "datetime": {
+          "coercion": "safeString",
+          "fallback_keys": [
+            "t"
+          ],
+          "key": "transaction_time"
+        },
+        "fee": null,
+        "id": {
+          "coercion": "safeString",
+          "fallback_keys": [
+            "i"
+          ],
+          "key": "id"
+        },
+        "info": null,
+        "order": {
+          "coercion": "safeString",
+          "key": "order_id"
+        },
+        "price": {
+          "coercion": "safeNumber",
+          "fallback_keys": [
+            "p"
+          ],
+          "key": "price"
+        },
+        "side": {
+          "coercion": "safeStringLower",
+          "key": "side"
+        },
+        "symbol": {
+          "coercion": "safeString",
+          "key": "symbol"
+        },
+        "takerOrMaker": null,
+        "timestamp": {
+          "coercion": "parse8601",
+          "fallback_keys": [
+            "t"
+          ],
+          "key": "transaction_time"
+        },
+        "type": null
+      }
+    }
+  },
+  "response_envelopes": {
+    "balance": {
+      "fetchBalance": {
+        "default": {},
+        "fallback_keys": [],
+        "key": null
+      }
+    },
+    "market": {
+      "fetchMarkets": {
+        "default": [],
+        "fallback_keys": [],
+        "key": null
+      }
+    },
+    "ohlcv": {
+      "fetchOHLCV": {
+        "default": {},
+        "fallback_keys": [],
+        "key": "bars"
+      }
+    },
+    "order": {
+      "cancelOrder": {
+        "default": {},
+        "fallback_keys": [],
+        "key": null
+      },
+      "createOrder": {
+        "default": {},
+        "fallback_keys": [],
+        "key": null
+      },
+      "fetchClosedOrders": {
+        "default": [],
+        "fallback_keys": [],
+        "key": null
+      },
+      "fetchOpenOrders": {
+        "default": [],
+        "fallback_keys": [],
+        "key": null
+      },
+      "fetchOrder": {
+        "default": {},
+        "fallback_keys": [],
+        "key": null
+      },
+      "fetchOrders": {
+        "default": [],
+        "fallback_keys": [],
+        "key": null
+      }
+    },
+    "position": {
+      "fetchPositions": {
+        "default": [],
+        "fallback_keys": [],
+        "key": null
+      }
+    },
+    "ticker": {
+      "fetchTicker": {
+        "transform": {
+          "fields": {
+            "ask": [
+              "latestQuote",
+              "ap"
+            ],
+            "askVolume": [
+              "latestQuote",
+              "as"
+            ],
+            "baseVolume": [
+              "dailyBar",
+              "v"
+            ],
+            "bid": [
+              "latestQuote",
+              "bp"
+            ],
+            "bidVolume": [
+              "latestQuote",
+              "bs"
+            ],
+            "close": [
+              "dailyBar",
+              "c"
+            ],
+            "datetime": [
+              "latestQuote",
+              "t"
+            ],
+            "high": [
+              "dailyBar",
+              "h"
+            ],
+            "last": [
+              "latestTrade",
+              "p"
+            ],
+            "low": [
+              "dailyBar",
+              "l"
+            ],
+            "open": [
+              "dailyBar",
+              "o"
+            ],
+            "previousClose": [
+              "prevDailyBar",
+              "c"
+            ],
+            "timestamp": [
+              "latestQuote",
+              "t"
+            ],
+            "vwap": [
+              "dailyBar",
+              "vw"
+            ]
+          },
+          "kind": "merge_fields"
+        }
+      }
+    },
+    "time": {
+      "fetchTime": {
+        "default": {},
+        "fallback_keys": [],
+        "key": null
+      }
+    },
+    "trade": {
+      "fetchMyTrades": {
+        "default": [],
+        "fallback_keys": [],
+        "key": null
+      },
+      "fetchTrades": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "trades"
+      }
+    }
+  }
+}

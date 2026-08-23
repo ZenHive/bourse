@@ -1,0 +1,1330 @@
+{
+  "fetchTradingFee": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchMarginAdjustmentHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchSettlementHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchBorrowRateHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "spot": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "setPositionMode": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createMarketOrderWithCost": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchTransactions": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchLiquidations": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createMarketBuyOrderWithCost": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "setMarginMode": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchOrderBook": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createStopOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchL1OrderBook": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchFundingHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchPositionMode": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createReduceOnlyOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchFundingRate": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "setLeverage": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchIndexOHLCV": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchGreeks": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchPositionsRisk": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createMarketSellOrderWithCost": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "addMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "repayIsolatedMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "editOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchMarginMode": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createTriggerOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchIsolatedBorrowRate": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "repayCrossMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchTime": {
+    "unified": [
+      "traderPrivateGetV2Clock"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "description": "Fetch Alpaca market clock time.",
+      "name": "fetchTime",
+      "returns": {
+        "description": "Clock timestamp in milliseconds.",
+        "type": "int"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Int>"
+      }
+    },
+    "parse": [
+      "parse8601"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "closeAllPositions": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchMarkOHLCV": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "borrowCrossMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchOrders": {
+    "unified": [
+      "traderPrivateGetV2Orders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "description": "Fetch paper orders.",
+      "name": "fetchOrders",
+      "returns": {
+        "description": "Unified paper orders.",
+        "type": "Order[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Order[]>"
+      }
+    },
+    "request": {
+      "defaults": {
+        "status": {
+          "kind": "literal",
+          "value": "all"
+        }
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchDeposits": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "option": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "future": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchMarketLeverageTiers": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchPositions": {
+    "unified": [
+      "traderPrivateGetV2Positions"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "description": "Fetch open stock positions.",
+      "name": "fetchPositions",
+      "returns": {
+        "description": "Unified equity positions.",
+        "type": "Position[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbols",
+            "optional": true,
+            "type": "Strings"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Position[]>"
+      }
+    },
+    "parse": [
+      "parsePositions"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchFundingRates": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchDepositAddress": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createOrderWithTakeProfitAndStopLossWs": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchBorrowInterest": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchStatus": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchDepositsWithdrawals": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchPositionsHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchClosedOrders": {
+    "unified": [
+      "traderPrivateGetV2Orders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "description": "Fetch closed paper orders.",
+      "name": "fetchClosedOrders",
+      "returns": {
+        "description": "Unified closed paper orders.",
+        "type": "Order[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Order[]>"
+      }
+    },
+    "request": {
+      "defaults": {
+        "status": {
+          "kind": "literal",
+          "value": "closed"
+        }
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMarginModes": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "setMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchLongShortRatioHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchOpenInterest": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchTransfers": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchBorrowRateHistories": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchLongShortRatio": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchCurrenciesWs": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "CORS": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "cancelAllOrders": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "withdraw": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createMarketBuyOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchPositionHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchLeverage": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "sandbox": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "borrowMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchMarkets": {
+    "unified": [
+      "traderPrivateGetV2Assets"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "description": "Fetch active US-equity assets and their equity-specific metadata.",
+      "name": "fetchMarkets",
+      "returns": {
+        "description": "Unified equity assets.",
+        "type": "Market[]"
+      },
+      "signature": {
+        "return_type": "Promise<Market[]>"
+      }
+    },
+    "request": {
+      "defaults": {
+        "asset_class": {
+          "kind": "literal",
+          "value": "us_equity"
+        },
+        "status": {
+          "kind": "literal",
+          "value": "active"
+        }
+      }
+    },
+    "parse": [
+      "parseMarkets"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOHLCV": {
+    "unified": [
+      "marketPrivateGetV2StocksSymbolBars",
+      "marketPublicGetV1beta3CryptoLocBars",
+      "marketPublicGetV1beta3CryptoLocLatestBars"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "name": "fetchOHLCV",
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "'1m'",
+            "name": "timeframe",
+            "optional": true,
+            "type": "string"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<OHLCV[]>"
+      }
+    },
+    "request": {
+      "endpoint_selection": {
+        "default": "v1beta3/crypto/{loc}/bars",
+        "rules": [
+          {
+            "endpoint": "v2/stocks/{symbol}/bars",
+            "when": {
+              "symbol_has_slash": false
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseOHLCVs"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "swap": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchBorrowRates": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchBidsAsks": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "cancelOrder": {
+    "unified": [
+      "traderPrivateDeleteV2OrdersOrderId"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "description": "Cancel an Alpaca paper order by id.",
+      "name": "cancelOrder",
+      "returns": {
+        "description": "Canceled-order acknowledgement.",
+        "type": "Order"
+      }
+    },
+    "request": {
+      "defaults": {
+        "order_id": {
+          "kind": "reference",
+          "source": "id",
+          "source_class": "unified_param"
+        }
+      }
+    },
+    "parse": [
+      "parseOrder"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchFundingInterval": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchOpenInterests": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchOpenOrders": {
+    "unified": [
+      "traderPrivateGetV2Orders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "description": "Fetch open paper orders.",
+      "name": "fetchOpenOrders",
+      "returns": {
+        "description": "Unified open paper orders.",
+        "type": "Order[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Order[]>"
+      }
+    },
+    "request": {
+      "defaults": {
+        "status": {
+          "kind": "literal",
+          "value": "open"
+        }
+      }
+    },
+    "parse": [
+      "parseOrders"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchWithdrawals": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchCrossBorrowRates": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchFundingRateHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchCurrencies": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchOption": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "transfer": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchMyTrades": {
+    "unified": [
+      "traderPrivateGetV2AccountActivitiesActivityType"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "description": "Fetch paper-account fills from Alpaca account activities.",
+      "name": "fetchMyTrades",
+      "returns": {
+        "description": "Unified fills from GET /v2/account/activities/FILL.",
+        "type": "Trade[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "undefined",
+            "name": "symbol",
+            "optional": true,
+            "type": "Str"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Trade[]>"
+      }
+    },
+    "request": {
+      "defaults": {
+        "_omit": [
+          "limit",
+          "since",
+          "symbol"
+        ],
+        "activity_type": {
+          "kind": "literal",
+          "value": "FILL"
+        },
+        "after": {
+          "kind": "reference",
+          "source": "since",
+          "source_class": "optional",
+          "transform": "milliseconds_to_rfc3339"
+        },
+        "page_size": {
+          "kind": "reference",
+          "source": "limit",
+          "source_class": "optional"
+        },
+        "until": {
+          "kind": "reference",
+          "source": "until",
+          "source_class": "optional",
+          "transform": "milliseconds_to_rfc3339"
+        }
+      }
+    },
+    "parse": [
+      "parseTrades"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOpenOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchPremiumIndexOHLCV": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createOrder": {
+    "unified": [
+      "traderPrivatePostV2Orders"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "description": "Create an order through Alpaca paper trading.",
+      "name": "createOrder",
+      "returns": {
+        "description": "Unified accepted paper order.",
+        "type": "Order"
+      }
+    },
+    "request": {
+      "defaults": {
+        "extended_hours": {
+          "kind": "literal",
+          "value": false
+        },
+        "limit_price": {
+          "kind": "reference",
+          "source": "price",
+          "source_class": "optional"
+        },
+        "qty": {
+          "kind": "reference",
+          "source": "amount",
+          "source_class": "unified_param"
+        },
+        "side": {
+          "kind": "reference",
+          "retain_source": true,
+          "source": "side",
+          "source_class": "unified_param"
+        },
+        "symbol": {
+          "kind": "reference",
+          "retain_source": true,
+          "source": "symbol",
+          "source_class": "unified_param"
+        },
+        "time_in_force": {
+          "kind": "literal",
+          "value": "day"
+        },
+        "type": {
+          "kind": "reference",
+          "retain_source": true,
+          "source": "type",
+          "source_class": "unified_param"
+        }
+      }
+    },
+    "parse": [
+      "parseOrder"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": true
+    }
+  },
+  "fetchTransactionFees": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchTrades": {
+    "unified": [
+      "marketPrivateGetV2StocksSymbolTrades"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "description": "Fetch public US-equity trade prints from Alpaca market data.",
+      "name": "fetchTrades",
+      "returns": {
+        "description": "Unified public stock prints from GET /v2/stocks/{symbol}/trades.",
+        "type": "Trade[]"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "undefined",
+            "name": "since",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "undefined",
+            "name": "limit",
+            "optional": true,
+            "type": "Int"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Trade[]>"
+      }
+    },
+    "parse": [
+      "parseTrades"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchBorrowRate": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchBorrowRatesPerSymbol": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchIsolatedPositions": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "privateAPI": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createOrderWithTakeProfitAndStopLoss": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchL2OrderBook": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "margin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchPosition": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchMySettlementHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchLeverageTiers": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchFundingIntervals": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "closePosition": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "reduceMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchIsolatedBorrowRates": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchTicker": {
+    "unified": [
+      "marketPrivateGetV2StocksSymbolSnapshot",
+      "marketPublicGetV1beta3CryptoLocSnapshots"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "name": "fetchTicker",
+      "signature": {
+        "params": [
+          {
+            "default": null,
+            "name": "symbol",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Ticker>"
+      }
+    },
+    "request": {
+      "endpoint_selection": {
+        "default": "v1beta3/crypto/{loc}/snapshots",
+        "rules": [
+          {
+            "endpoint": "v2/stocks/{symbol}/snapshot",
+            "when": {
+              "symbol_has_slash": false
+            }
+          }
+        ]
+      }
+    },
+    "parse": [
+      "parseTicker"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchVolatilityHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createMarketOrderWs": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchCrossBorrowRate": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchTickers": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createLimitOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchMarkPrices": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchBalance": {
+    "unified": [
+      "traderPrivateGetV2Account"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "description": "Fetch the Alpaca trading account as a USD equity balance.",
+      "name": "fetchBalance",
+      "returns": {
+        "description": "Unified Balance with the raw account retained in info.",
+        "type": "object"
+      },
+      "signature": {
+        "params": [
+          {
+            "default": "{}",
+            "name": "params",
+            "optional": true,
+            "type": null
+          }
+        ],
+        "return_type": "Promise<Balances>"
+      }
+    },
+    "parse": [
+      "parseBalance"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchMyLiquidations": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "borrowIsolatedMargin": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchPositionsForSymbol": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "createMarketOrder": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchLeverages": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchOptionChain": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "publicAPI": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchDepositAddressesByNetwork": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchTradingFees": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  },
+  "fetchOrder": {
+    "unified": [
+      "traderPrivateGetV2OrdersOrderId"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "descriptor": {
+      "description": "Fetch one paper order by id.",
+      "name": "fetchOrder",
+      "returns": {
+        "description": "Unified paper order.",
+        "type": "Order"
+      }
+    },
+    "request": {
+      "defaults": {
+        "order_id": {
+          "kind": "reference",
+          "source": "id",
+          "source_class": "unified_param"
+        }
+      }
+    },
+    "parse": [
+      "parseOrder"
+    ],
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
+  "fetchOpenInterestHistory": {
+    "unified": [],
+    "has": false,
+    "mapping_complete": false,
+    "verification": "unverified"
+  }
+}

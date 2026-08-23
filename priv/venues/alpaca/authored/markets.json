@@ -1,0 +1,15 @@
+{
+  "symbol_patterns": {},
+  "currencies": null,
+  "patterns": {
+    "crypto": {
+      "separator": "/",
+      "type": "spot"
+    },
+    "equity": {
+      "quote": "USD",
+      "separator": "",
+      "type": "spot"
+    }
+  }
+}
