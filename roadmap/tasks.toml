@@ -22751,7 +22751,7 @@ id = "671"
 phase = 16
 bundle = "live_e2e"
 milestone = "v1_2"
-status = "in_progress"
+status = "done"
 title = "Make the provider-live REST-read contract compact and green"
 scores = { d = 9, b = 10, u = 10 }
 depends_on = [667]
@@ -22769,9 +22769,12 @@ The provider-live-only boundary established by source commit 1995bde remains int
 
 Routing trigger: live external-system semantics, public API contract repair and a repo-wide test invariant. Do not dispatch task 668 until this task is reviewer-approved and confirmed landed on origin/main.
 """
+implemented = "148 red contract cases adjudicated to 42 honest reds at denominator 409: venue-scoped parse/spec fixes across all eleven venues, bybit helper-endpoint carve (C-T671a/b), okx conversion carve (C-T671c/d), hyperliquid closed-orders dedup fix, state population via testnet orders (all cleaned up); 28 remaining reds ledgered in docs/prod-verification-ledger.md, 14 state-dependent (BUGS.md 2026-08-23). Full lane: denominator=409 executed=409."
+delivered_by = "claude inline + sonnet/opus subagents"
 created_at = "2026-08-23"
 started_at = "2026-08-23"
 scored_at = "2026-08-23"
+done_at = "2026-08-23"
 
 [[task]]
 id = "672"
