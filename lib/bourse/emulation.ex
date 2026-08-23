@@ -19,7 +19,7 @@ defmodule Bourse.Emulation do
 
   alias Bourse.Error
   alias Bourse.Exchange
-  alias Bourse.Extract.EmulatedMethods
+  alias Bourse.Spec.EmulatedMethods
   alias Bourse.Unified
   alias Bourse.Unified.ReadParse
 

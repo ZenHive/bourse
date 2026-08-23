@@ -12,7 +12,7 @@ defmodule Bourse.Test.RestReadContracts do
   alias Bourse.Unified
   alias Bourse.UnifiedMethod
 
-  @policy_path "priv/venues/rest-read-contracts-policy.json"
+  @policy_path "priv/venues/rest_read_contracts_policy.json"
   @external_resource @policy_path
   @runtime_venues ~w(
     alpaca
@@ -41,7 +41,7 @@ defmodule Bourse.Test.RestReadContracts do
   Returns the provider-owned REST-read inventory.
 
   The inventory is stored venue-first: shared policy keys in
-  `priv/venues/rest-read-contracts-policy.json`, one contract per venue under
+  `priv/venues/rest_read_contracts_policy.json`, one contract per venue under
   `priv/venues/<venue>/authority/rest_read_contract.json`. They are merged here into
   the single document every validation below reads.
   """

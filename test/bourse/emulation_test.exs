@@ -3,8 +3,8 @@ defmodule Bourse.EmulationTest do
 
   alias Bourse.Emulation
   alias Bourse.Exchange
-  alias Bourse.Extract.EmulatedMethods
   alias Bourse.Spec
+  alias Bourse.Spec.EmulatedMethods
 
   @emulation_path "lib/bourse/emulation.ex"
   @external_resource @emulation_path

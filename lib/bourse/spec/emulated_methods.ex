@@ -1,4 +1,4 @@
-defmodule Bourse.Extract.EmulatedMethods do
+defmodule Bourse.Spec.EmulatedMethods do
   @moduledoc """
   Reads explicit emulated-method declarations from the owned runtime specs.
   """

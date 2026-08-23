@@ -3,7 +3,7 @@ defmodule Bourse.EmulationStrategiesTest do
 
   alias Bourse.Emulation
   alias Bourse.Exchange
-  alias Bourse.Extract.EmulatedMethods
+  alias Bourse.Spec.EmulatedMethods
 
   @symbol "BTC/USDT"
   @swap_symbol "BTC/USDT:USDT"
