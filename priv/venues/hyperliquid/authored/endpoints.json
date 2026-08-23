@@ -696,12 +696,11 @@
   },
   "fetchCurrencies": {
     "unified": [
-      "privatePostExchange",
       "publicPostInfo"
     ],
     "has": true,
     "mapping_complete": true,
-    "verification": "unverified",
+    "verification": "verified",
     "descriptor": {
       "async": true,
       "description": "fetches all available currencies on an exchange",
@@ -785,8 +784,8 @@
       "publicPostInfo"
     ],
     "has": true,
-    "mapping_complete": false,
-    "verification": "unverified",
+    "mapping_complete": true,
+    "verification": "verified",
     "request": {
       "defaults": {
         "type": {

@@ -67,6 +67,9 @@ defmodule Bourse.Emulation do
       order: "used locally as an optional embedded trade source",
       trades: "used locally as optional trade rows or identifiers"
     },
+    {:handle_fetch_open_interest, :fetch_open_interests} => %{
+      symbol: "used locally to select one entry from the delegated result"
+    },
     {:handle_fetch_position, :fetch_positions} => %{
       symbol: "translated to the delegated plural symbols selector"
     },
@@ -251,6 +254,7 @@ defmodule Bourse.Emulation do
     fetch_order: :handle_fetch_order,
     fetch_order_trades: :handle_fetch_order_trades,
     fetch_my_trades: :handle_fetch_my_trades,
+    fetch_open_interest: :handle_fetch_open_interest,
     fetch_position: :handle_fetch_position,
     fetch_position_history: :handle_fetch_position_history,
     fetch_leverage: :handle_fetch_leverage,
@@ -322,6 +326,9 @@ defmodule Bourse.Emulation do
 
   defp dispatch_handler(exchange, exchange_module, :fetch_my_trades, params, opts),
     do: handle_fetch_my_trades(exchange, exchange_module, params, opts)
+
+  defp dispatch_handler(exchange, exchange_module, :fetch_open_interest, params, opts),
+    do: handle_fetch_open_interest(exchange, exchange_module, params, opts)
 
   defp dispatch_handler(exchange, exchange_module, :fetch_position, params, opts),
     do: handle_fetch_position(exchange, exchange_module, params, opts)
@@ -448,6 +455,28 @@ defmodule Bourse.Emulation do
              opts
            ) do
       require_symbol_result(fees, symbol, exchange, "fetchTradingFee() returned no data for")
+    end
+  end
+
+  @doc false
+  # Emulates fetchOpenInterest by selecting a symbol entry from fetchOpenInterests.
+  # Hyperliquid has no single-symbol open-interest query — official docs
+  # (metaAndAssetCtxs, https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint/perpetuals)
+  # return open interest for every listed asset and state single-symbol
+  # filtering is client-side only.
+  @spec handle_fetch_open_interest(Exchange.t(), module(), map(), keyword()) :: dispatch_result()
+  defp handle_fetch_open_interest(exchange, exchange_module, params, opts) do
+    symbol = extract_param(params, :symbol)
+
+    with {:ok, entries} <-
+           call_method(
+             exchange,
+             exchange_module,
+             :fetch_open_interests,
+             delegated_params(params, :handle_fetch_open_interest, :fetch_open_interests),
+             opts
+           ) do
+      require_symbol_result(entries, symbol, exchange, "fetchOpenInterest() returned no data for")
     end
   end
 

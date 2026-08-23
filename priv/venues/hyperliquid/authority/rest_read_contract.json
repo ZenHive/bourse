@@ -178,19 +178,6 @@
       "method": "fetchCurrencies",
       "branches": [
         {
-          "provider_operation": "privatePostExchange",
-          "http_method": "POST",
-          "path": "exchange",
-          "authenticated": true,
-          "market_kind": "linear",
-          "options": [
-            {
-              "name": "user",
-              "strategy": "credential_api_key"
-            }
-          ]
-        },
-        {
           "provider_operation": "publicPostInfo",
           "http_method": "POST",
           "path": "info",
@@ -925,7 +912,8 @@
       "success": {
         "representation": "raw",
         "provider_meaning_keys": [
-          "status"
+          "specialStatuses",
+          "time"
         ]
       },
       "authority_source_ids": [

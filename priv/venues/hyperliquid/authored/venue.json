@@ -367,6 +367,20 @@
       "reasons": [
         "authored_delegate"
       ]
+    },
+    {
+      "name": "fetchPosition",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    },
+    {
+      "name": "fetchOpenInterest",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
     }
   ],
   "capabilities": {

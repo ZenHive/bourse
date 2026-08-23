@@ -183,6 +183,39 @@
         }
       }
     },
+    "funding_history": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "amount": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "delta.usdc"
+        },
+        "code": {
+          "coercion": "safeCurrencyCode",
+          "default": "USDC"
+        },
+        "datetime": null,
+        "id": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "hash"
+        },
+        "info": null,
+        "rate": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "delta.fundingRate"
+        },
+        "symbol": null,
+        "timestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "time"
+        }
+      }
+    },
     "greeks": null,
     "income": null,
     "ledger_entry": {
