@@ -22751,7 +22751,7 @@ id = "671"
 phase = 16
 bundle = "live_e2e"
 milestone = "v1_2"
-status = "in_progress"
+status = "pending"
 title = "Make the provider-live REST-read contract compact and green"
 scores = { d = 9, b = 10, u = 10 }
 depends_on = [667]
