@@ -171,12 +171,43 @@ defmodule Bourse.Test.RestReadContractScenario do
   defp case_options(contract_case, context, resolved) do
     options =
       Enum.map(contract_case["options"], fn option ->
-        {String.to_existing_atom(option["name"]), option_value!(option, contract_case, context)}
+        {option_atom!(option["name"], contract_case), option_value!(option, contract_case, context)}
       end)
 
     options
     |> Keyword.put(:endpoint_index, contract_case["endpoint_index"])
     |> maybe_put_resolved_symbol(resolved)
+  end
+
+  # The closed set of inventoried option names. Venue-specific keys such as
+  # :baseCoin exist nowhere in compiled code, so String.to_existing_atom/1
+  # rejects valid cases; an open String.to_atom/1 is not acceptable either.
+  # A new inventory option name must be added here, or the case fails loudly.
+  @option_atoms %{
+    "account_index" => :account_index,
+    "auth_deadline" => :auth_deadline,
+    "baseCoin" => :baseCoin,
+    "category" => :category,
+    "code" => :code,
+    "currency" => :currency,
+    "instFamily" => :instFamily,
+    "instType" => :instType,
+    "limit" => :limit,
+    "loc" => :loc,
+    "pair" => :pair,
+    "start_timestamp" => :start_timestamp,
+    "startTime" => :startTime,
+    "subaccount_id" => :subaccount_id,
+    "symbol" => :symbol,
+    "user" => :user
+  }
+
+  defp option_atom!(name, contract_case) do
+    @option_atoms[name] ||
+      flunk(
+        "#{contract_case["id"]}: inventory option #{inspect(name)} is not in the scenario's " <>
+          "@option_atoms map; add it to Bourse.Test.RestReadContractScenario"
+      )
   end
 
   defp option_value!(%{"strategy" => "market_symbol"}, contract_case, context), do: market_symbol!(context, contract_case)
