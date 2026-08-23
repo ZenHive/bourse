@@ -136,7 +136,7 @@ cannot establish current provider semantics.
 host and the manual GitHub fallback. The host syncs the target branch before each
 run, invokes `bash ops/live-drift.sh artifacts`, and sends a successful healthcheck
 ping only when that command exits zero. The script always runs every surface —
-online authority drift, REST live-drift, the `:network` / `:capability_live`
+online authority drift, REST live-drift, the `:network`
 corpus (including `test/bourse/ws/auth_live_smoke_test.exs`), the listen-key
 auth-smoke file on `:dangerous`, and the classified WebSocket first-frame
 matrix — then exits nonzero if any return code is nonzero. Silence after a

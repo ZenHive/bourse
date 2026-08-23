@@ -51,7 +51,6 @@ ExUnit.start(
     :dangerous,
     :network,
     :invalid_creds,
-    :capability_live,
     :known_defect,
     :native
   ]

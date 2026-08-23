@@ -2,9 +2,9 @@ defmodule Bourse.LiveLane do
   @moduledoc """
   Aggregates the scheduled live lane into one durable per-run artifact.
 
-  Surfaces: online authority check, REST live-drift, the `:network` /
-  `:capability_live` corpus (including WebSocket auth smoke), listen-key
-  mutation probes, and the classified WebSocket first-frame matrix.
+  Surfaces: online authority check, REST live-drift, the `:network`
+  corpus (including WebSocket auth smoke), listen-key mutation probes,
+  and the classified WebSocket first-frame matrix.
   """
 
   alias Bourse.LiveLane.FirstFrame
@@ -27,8 +27,8 @@ defmodule Bourse.LiveLane do
           required(:venues) => [map()]
         }
 
-  @corpus_include ~w(network capability_live)
-  @corpus_exclude ~w(dangerous raw public_probe unified_integration invalid_creds symbol_public_probe rest_read_contract)
+  @corpus_include ~w(network)
+  @corpus_exclude ~w(dangerous raw unified_integration invalid_creds rest_read_contract)
 
   @doc "ExUnit include tags the scheduled live corpus runs with."
   @spec corpus_include() :: [String.t()]

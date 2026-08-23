@@ -90,12 +90,12 @@ defmodule Bourse.Signing do
     }
   end
 
-  # Telemetry wrapper for sign duration (single event; signing is fast sync op).
   defp hmac_recipe_sign(pattern, request, credentials, config) do
     exchange = Map.get(config, :exchange)
     timed_sign(&HmacRecipe.sign/3, request, credentials, config, pattern, exchange)
   end
 
+  # Telemetry wrapper for sign duration (single event; signing is fast sync op).
   defp timed_sign(fun, request, credentials, config, pattern, exchange) when is_function(fun, 3) do
     request = normalize_request(request)
     start_time = System.monotonic_time()

@@ -798,7 +798,7 @@ mix ccxt.verify_ws_first_frame                       # classified public WS firs
 mix ccxt.aggregate_live_lane                         # merge live-lane surface reports into one artifact
 ```
 
-> **⚠️ `mix test.json` silently excludes most integration tests by default.** A green run with no `--include` tags covers offline unit + signing tests only. `mix ccxt.verify_rest_read_contracts` is the complete REST-read lane: it explicitly includes all network cases and reports denominator, executed count, and failures. Tags: `integration`, `network` (testnet REST probes), `rest_read_contract`, `dangerous` (raw POST/PUT/DELETE), `invalid_creds`, `capability_live`, `option_readiness`, `known_defect`, `native`.
+> **⚠️ `mix test.json` silently excludes most integration tests by default.** A green run with no `--include` tags covers offline unit + signing tests only. `mix ccxt.verify_rest_read_contracts` is the complete REST-read lane: it explicitly includes all network cases and reports denominator, executed count, and failures. Tags: `integration`, `network` (testnet REST probes), `rest_read_contract`, `dangerous` (raw POST/PUT/DELETE), `invalid_creds`, `option_readiness`, `known_defect`, `native`.
 
 > **⚠️ `:known_defect` quarantine tag — governed, must only shrink.** A test may carry it ONLY when its assertion states the CORRECT expectation, the product is wrong, and the tag comment names the tracking issue. Never weaken an assertion to avoid the tag, and never use it to park a red whose root cause is untracked.
 

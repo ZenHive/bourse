@@ -69,16 +69,16 @@ defmodule Bourse.LiveLaneTest do
   end
 
   test "the scheduled corpus includes the WebSocket auth smoke and the files the lane actually runs" do
-    assert LiveLane.corpus_include() == ~w(network capability_live)
+    assert LiveLane.corpus_include() == ~w(network)
 
     assert LiveLane.corpus_exclude() ==
-             ~w(dangerous raw public_probe unified_integration invalid_creds symbol_public_probe rest_read_contract)
+             ~w(dangerous raw unified_integration invalid_creds rest_read_contract)
 
     lane = File.read!("ops/live-drift.sh")
     assert lane =~ "test/bourse/ws/auth_live_smoke_test.exs"
     assert lane =~ "--all"
     assert lane =~ "--include network"
-    assert lane =~ "--include capability_live"
+    refute lane =~ "--include capability_live"
     refute lane =~ "--include integration"
     assert lane =~ "--exclude dangerous"
     assert lane =~ "--exclude rest_read_contract"

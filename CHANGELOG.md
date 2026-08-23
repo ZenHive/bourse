@@ -7,6 +7,19 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added
+
+- `mix ccxt.verify_rest_read_contracts` is the provider-live REST-read lane.
+  It inventories 427 sandbox-native branches across the eleven runtime venues
+  and hits the venue host for each one. Product surfaces the provisioned
+  sandboxes do not host remain on the prod-verification ledger.
+
+### Changed
+
+- HMAC patterns require an authored `sign_recipe`. The leftover per-pattern
+  HMAC executor modules are gone; a call without a recipe raises
+  `ArgumentError` instead of falling through to those executors.
+
 ### Fixed
 
 - Deribit option positions derive premium notional as
@@ -14,6 +27,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   a positive contract size, and label it with the option settlement currency.
   Without loaded market units the notional remains nil rather than assuming a
   contract size.
+- Request shaping keeps a caller-supplied native key when the authored unified
+  source is missing, so a Deribit `reduce_only` is no longer dropped.
+- Direction-bearing `endpoint_selection` cannot carry a silent `default`.
 
 ## [0.7.0] - 2026-08-22
 

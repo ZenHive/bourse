@@ -21,17 +21,15 @@ mix ccxt.verify_live_drift --report "${live_drift_report}" || live_drift_rc=$?
 # Generated probe suites compile when `:network` is included; the excludes keep
 # them from executing. `:dangerous` stays out of the corpus so the weekly lane
 # does not place orders except the listen-key file targeted below.
+# REST-read contracts have their own runner (`mix ccxt.verify_rest_read_contracts`).
 corpus_rc=0
 mix test.json --quiet \
   --all \
   --include network \
-  --include capability_live \
   --exclude dangerous \
   --exclude raw \
-  --exclude public_probe \
   --exclude unified_integration \
   --exclude invalid_creds \
-  --exclude symbol_public_probe \
   --exclude rest_read_contract \
   --output "${corpus_report}" || corpus_rc=$?
 
