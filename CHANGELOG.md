@@ -19,14 +19,16 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - The bybit testnet credential is an AI sub-account issued through Bybit's
   `ai-agent` OAuth flow, and it is writable — the previous testnet key was
   read-only (10024 on any signed create). With it the venue's REST-read
-  contract lane moves 63 → 75 green of 78: the order-identity cases are
+  contract lane moves 63 → 77 green of 78: the order-identity cases are
   re-pinned `category=linear` and fed by a real filled round-trip, the
   conversion field map and envelopes are authored and live-proven end to
   end (a tiny executed testnet convert populated the history the
-  convert-status read resolves), and the coins-balance branch supplies its
-  mandatory `coin` filter. The three remaining reds are ledgered: the two
-  deposit-address reads answer "Not Support Sub Account" (a master-account
-  surface), and delivery records need a contract held through expiry.
+  convert-status read resolves), the coins-balance branch supplies its
+  mandatory `coin` filter, and the lane credential is the testnet
+  main-account key — deposit-address reads answer "Not Support Sub
+  Account" on any sub-account key. The one remaining red is ledgered:
+  delivery records need a contract held through expiry, and that state is
+  seeded (a dated future held through its 2026-08-28 delivery).
   CLAUDE.md records the flow's sharp edges: the success page's "Access
   Token" is an authorization code, its exchange response carries no `result`
   wrapper, and a funded sub-account still needs a FUND → UNIFIED transfer
@@ -61,6 +63,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `/v5/asset/transfer/query-account-coins-balance` — the endpoint rejects
   `accountType=UNIFIED` without one, so that branch could never succeed on a
   unified account.
+- The bybit and okx `fetchDepositAddressesByNetwork` contract cases assert
+  the client's actual return contract — a network-keyed map, not a list.
 - Direction-bearing `endpoint_selection` cannot carry a silent `default`.
 
 ### Removed

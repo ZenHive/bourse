@@ -139,8 +139,10 @@ deposit addresses only to the master account, so the blocker is the credential c
 earlier 10024 regulatory text was the transient provisioning wall in front of the same
 endpoint). The account-state reds below also closed the same day: the order-identity cases
 were re-pinned `category=linear` and fed by a real filled round-trip, and a tiny executed
-convert turned `fetchConvertTrade:0` green; the lane now runs 75/78 green (3 honest reds,
-all ledgered).
+convert turned `fetchConvertTrade:0` green. Later the same day the operator minted a testnet
+**main-account** key; with the lane pointed at it both deposit-address cases are green too
+(the sub-account boundary was the whole blocker), and the lane runs **77/78** — the last red
+is the delivery record, seeded with a dated future that delivers on 2026-08-28.
 
 **The call:** `mix ccxt.verify_rest_read_contracts --venue bybit` (78 cases, 64 green) with
 `BYBIT_TESTNET_API_KEY/_SECRET` pointing at a Bybit **AI sub-account** credential

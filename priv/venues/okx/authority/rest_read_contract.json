@@ -816,7 +816,7 @@
       ],
       "success": {
         "representation": "parsed",
-        "collection": "list",
+        "collection": "map",
         "module": "Bourse.DepositAddress",
         "required_fields": [
           "currency",

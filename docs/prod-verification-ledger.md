@@ -718,22 +718,6 @@ Entry template:
   the authored map given an explicit confirmed scale (or confirmed raw), and C-T546i amended to
   tier 1.
 
-### bybit — deposit-address reads (task 671, filed 2026-08-23)
-
-- Authored slices: bybit runtime branch `privateGetV5AssetDepositQueryAddress`
-  (cases `fetchDepositAddress:0`, `fetchDepositAddressesByNetwork:0`)
-- Blocked by: the credential class. Under the trade-capable AI sub-account key the venue
-  answers *"Not Support Sub Account"* on `GET /v5/asset/deposit/query-address` — bybit
-  serves sub-account deposit addresses only to the master account (via
-  `query-sub-member-address`), which no key of this class can sign for. The earlier 10024
-  regulatory text (and the pre-provisioning key's identical answer) was the same endpoint
-  behind the transient region wall; the durable blocker is the sub-account boundary. Demo
-  answers `10032`.
-- The open question stands regardless of which wall answers first.
-- The open question: the deposit-address chain/tag envelope for this account class.
-- Exact call: same lane, from a jurisdiction where Bybit serves deposit addresses.
-- Expected evidence: retCode 0 with per-chain address rows matching the authored map.
-
 ### bybit — spot-category order rows are unexercised while the cases pin `category=linear` (task 671, filed 2026-08-24)
 
 - Authored slices: bybit order-identity cases `fetchClosedOrder:0`, `fetchOpenOrder:0`,
@@ -761,9 +745,13 @@ Entry template:
   future (`BTCUSDU26`) delivers at 1790323200000 (2026-09-25); the nearest linear delivery
   is 2026-08-28. No delivery record can be manufactured in-session.
 - The open question: delivery-record semantics against a real settled row.
-- Exact call: hold a dated inverse future or an option through its expiry on testnet, then
+- Exact call: hold a dated future or an option through its expiry on testnet, then
   `mix ccxt.verify_rest_read_contracts --venue bybit`.
 - Expected evidence: a raw payload carrying `deliveryPrice` and `deliveryRpl`.
+- Update (2026-08-24): state is seeded — the testnet main account holds 60
+  `DOGEUSDT-28AUG26` (market-filled, `avgPrice 0.09205`), deliberately left open through
+  delivery on 2026-08-28. Re-run the venue lane after that date; this is the venue's last
+  red case (77/78 green on 2026-08-24).
 
 ### okx — funding-account and savings surfaces are disabled in demo trading (task 671, filed 2026-08-23)
 
