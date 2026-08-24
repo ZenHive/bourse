@@ -3,6 +3,7 @@ defmodule Bourse.Journeys.Trader.BybitTest do
 
   alias Bourse.Error
   alias Bourse.Order
+  alias Bourse.WS
 
   @moduletag :exchange_bybit
 
@@ -12,6 +13,11 @@ defmodule Bourse.Journeys.Trader.BybitTest do
   # BTCUSDT linear quotes in 0.1 USDT ticks; resting bid sits 10% under market.
   @price_decimals 1
   @resting_ratio 0.9
+
+  # bybit's private order stream is one flat topic for the whole account; the
+  # authored `watchOrders` template is symbol-shaped and does not name it.
+  @order_topic "order"
+  @frame_timeout_ms 20_000
 
   describe "a trader's day" do
     test "survey the market, place a resting limit buy, track it, cancel it" do
@@ -88,6 +94,72 @@ defmodule Bourse.Journeys.Trader.BybitTest do
     end
   end
 
+  describe "a trader watching the private order stream" do
+    test "the order's own lifecycle arrives on the stream, place and cancel" do
+      exchange = sandbox_exchange!(@venue)
+
+      {:ok, ws} = WS.connect(exchange, :private)
+
+      try do
+        # connect/3 ran the handshake; an unauthenticated socket would be
+        # accepted by bybit and then deliver nothing at all.
+        assert %{pattern: :direct_hmac_expiry} = ws.auth
+        assert :ok = WS.subscribe(ws, [@order_topic])
+
+        {:ok, book} = Bourse.fetch_order_book(exchange, @symbol)
+        assert [[best_bid, _bid_size] | _] = book.bids
+        price = Float.round(best_bid * @resting_ratio, @price_decimals)
+        client_order_id = unique_client_order_id("trader-bybit-ws")
+
+        {:ok, placed} =
+          Bourse.create_order(exchange, @symbol, "limit", "buy", @amount,
+            price: price,
+            clientOrderId: client_order_id
+          )
+
+        assert is_binary(placed.id) and placed.id != ""
+
+        try do
+          # Observed live 2026-08-24: topic "order", data[0] carries
+          # orderStatus "New", rejectReason "EC_NoError", cancelType "UNKNOWN".
+          placed_event = await_order_event!(placed.id, "New")
+
+          assert placed_event["symbol"] == "BTCUSDT"
+          assert placed_event["category"] == "linear"
+          assert placed_event["side"] == "Buy"
+          assert placed_event["orderType"] == "Limit"
+          assert placed_event["timeInForce"] == "GTC"
+          assert placed_event["orderLinkId"] == client_order_id
+          assert placed_event["rejectReason"] == "EC_NoError"
+          assert placed_event["cancelType"] == "UNKNOWN"
+
+          assert {event_price, ""} = Float.parse(placed_event["price"])
+          assert_in_delta event_price, price, 0.05
+          assert {event_qty, ""} = Float.parse(placed_event["qty"])
+          assert_in_delta event_qty, @amount, 1.0e-9
+
+          {:ok, canceled} = Bourse.cancel_order(exchange, placed.id, symbol: @symbol)
+          assert canceled.id == placed.id
+
+          # Observed live 2026-08-24: the same order id returns with
+          # orderStatus "Cancelled", cancelType "CancelByUser" and
+          # rejectReason "EC_PerCancelRequest" — the venue names who cancelled.
+          cancel_event = await_order_event!(placed.id, "Cancelled")
+
+          assert cancel_event["orderLinkId"] == client_order_id
+          assert cancel_event["cancelType"] == "CancelByUser"
+          assert cancel_event["rejectReason"] == "EC_PerCancelRequest"
+          assert cancel_event["leavesQty"] == "0"
+          assert cancel_event["cumExecQty"] == "0"
+        after
+          release_order!(exchange, placed.id, @symbol)
+        end
+      after
+        WS.close(ws)
+      end
+    end
+  end
+
   describe "orders the venue rejects" do
     test "an amount below the instrument minimum is refused with bybit's own error" do
       exchange = sandbox_exchange!(@venue)
@@ -101,6 +173,36 @@ defmodule Bourse.Journeys.Trader.BybitTest do
       assert error.type == :bad_request
       assert error.code == 10_001
       assert error.message =~ "minimum limit"
+    end
+  end
+
+  # bybit's private order push carries an `"id"`, and zen_websocket hands any
+  # id-bearing frame that correlates to no in-flight request to the caller as
+  # `{:websocket_unmatched_response, _}` rather than `{:websocket_message, _}`.
+  # One frame can batch several of the account's orders, so the matching entry
+  # is picked out of `data` instead of assumed to be at its head.
+  defp await_order_event!(order_id, status) do
+    await_order_event!(order_id, status, System.monotonic_time(:millisecond) + @frame_timeout_ms)
+  end
+
+  defp await_order_event!(order_id, status, deadline) do
+    left = deadline - System.monotonic_time(:millisecond)
+
+    if left <= 0 do
+      flunk("no #{status} order frame for #{order_id} within #{@frame_timeout_ms}ms")
+    else
+      receive do
+        {:websocket_unmatched_response, %{"topic" => @order_topic, "data" => data}} when is_list(data) ->
+          case Enum.find(data, &(&1["orderId"] == order_id and &1["orderStatus"] == status)) do
+            nil -> await_order_event!(order_id, status, deadline)
+            event -> event
+          end
+
+        _other ->
+          await_order_event!(order_id, status, deadline)
+      after
+        left -> flunk("no #{status} order frame for #{order_id} within #{@frame_timeout_ms}ms")
+      end
     end
   end
 

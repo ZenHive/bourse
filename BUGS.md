@@ -71,6 +71,38 @@ roadmap.
 
 ---
 
+## 2026-08-24 — bybit `watchOrders` channel template is `":{symbol}"` — `Bourse.WS.watch_orders/2` cannot reach the venue's real private order topic
+
+**Status:** 🆕 reported (found live while building the trader WS journey, 2026-08-24; the
+journey subscribes the raw `"order"` topic directly and is green, so nothing user-facing is
+blocked — the defect is that the unified `watch_orders/2` path cannot do the same)
+
+**The call:** `Bourse.WS.watch_orders(ws, ...)` on a bybit private connection — the unified
+way a consumer would ask for the account's order stream.
+
+**Observed:** the authored channel template for bybit `watchOrders`
+(`priv/venues/bybit/authored/venue.json`) is the degenerate string `":{symbol}"`. With no
+symbol, `Channels.build/4` errors `:missing_symbol`; with a symbol it interpolates to a
+symbol-suffixed topic that bybit does not serve. The venue's real private order topic is the
+flat, account-wide `"order"` (verified live 2026-08-24 on the testnet: subscribing `"order"`
+delivers the account's order events — `orderStatus "New"` on place, `"Cancelled"` /
+`cancelType "CancelByUser"` on cancel; see
+`test/live/journeys/trader/bybit_test.exs`, the private-stream describe block).
+
+**Expected:** `watch_orders/2` on bybit subscribes `"order"` and delivers the account's
+order events without the caller needing to know the venue topic string.
+
+**Repro:** `{:ok, ws} = Bourse.WS.connect(exchange, :private); Bourse.WS.watch_orders(ws)`
+→ `:missing_symbol` from channel build, while a direct
+`Bourse.WS.subscribe(ws, ["order"])` streams events immediately.
+
+**Consumer impact:** any consumer following the unified WS surface gets an error where the
+venue works fine; the workaround (raw topic string) requires venue knowledge the unified
+layer exists to encapsulate. Related sharp edge recorded with the journey: bybit's private
+pushes carry an `"id"` field, so zen_websocket's correlator hands them to the owner as
+`{:websocket_unmatched_response, frame}`, never `{:websocket_message, _}` — a fix to the
+channel template should keep that delivery shape in mind.
+
 ## 2026-08-24 — `Bourse.Symbol.reverse_aliases/1` is not injective on hyperliquid's authored alias map — one currency is silently dropped
 
 **Status:** 🆕 reported (mutation-testing testability survey, 2026-08-24 — see the provenance
