@@ -1,10 +1,15 @@
 defmodule Bourse.Test.RestReadContracts do
   @moduledoc """
-  Loads and validates the provider-owned REST-read contract inventory.
+  Loads and validates the REST-read execution inventory.
 
-  The inventory is the denominator. Runtime endpoint metadata is consulted only
-  by `validate!/0` to make a drift between the independent contract and the
-  callable client surface fail loudly.
+  The inventory mirrors the client's callable REST-read surface: every runtime
+  read branch under each venue's provider product prefixes appears exactly
+  once, and `validate!/0` keeps that mirror locked so a new read branch cannot
+  ship without a live execution. What the lane proves is that our client can
+  call every one of its read branches against the venue's live host and parse
+  what comes back; the meaning of each field and error is pinned per venue to
+  provider-owned authority sources. Role-based semantic coverage lives in the
+  journey suites under `test/live/journeys/`.
   """
 
   alias Bourse.JsonDocument
@@ -38,7 +43,7 @@ defmodule Bourse.Test.RestReadContracts do
         }
 
   @doc """
-  Returns the provider-owned REST-read inventory.
+  Returns the REST-read execution inventory.
 
   The inventory is stored venue-first: shared policy keys in
   `priv/venues/rest_read_contracts_policy.json`, one contract per venue under
@@ -61,7 +66,7 @@ defmodule Bourse.Test.RestReadContracts do
   @spec inventory_path() :: String.t()
   def inventory_path, do: @policy_path
 
-  @doc "Returns one venue's provider-owned REST-read contract path."
+  @doc "Returns one venue's REST-read contract path."
   @spec venue_contract_path(String.t()) :: String.t()
   def venue_contract_path(venue) when is_binary(venue) do
     Path.join(["priv/venues", venue, "authority", "rest_read_contract.json"])
@@ -104,9 +109,13 @@ defmodule Bourse.Test.RestReadContracts do
   @spec validate!() :: :ok
   def validate! do
     document = inventory()
-    ensure!(document["schema_version"] == 1, "unsupported REST-read inventory schema")
-    ensure!(document["inventory_basis"] == "provider_owned_contracts", "inventory is not provider-owned")
-    ensure!(document["runtime_specs_are_not_authority"] == true, "runtime specs must not be inventory authority")
+    ensure!(document["schema_version"] == 2, "unsupported REST-read inventory schema")
+
+    ensure!(
+      document["inventory_basis"] == "client_read_surface",
+      "inventory basis must name the client read surface it mirrors"
+    )
+
     ensure!(venues() == @runtime_venues, "REST-read inventory must cover all eleven runtime venues")
     validate_sources!(document)
     validate_cases!()

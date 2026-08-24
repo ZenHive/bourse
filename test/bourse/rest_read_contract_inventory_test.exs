@@ -18,7 +18,7 @@ defmodule Bourse.RestReadContractInventoryTest do
     "okx" => 84
   }
 
-  test "provider-owned inventory covers every supported REST-read branch" do
+  test "the execution inventory mirrors every supported REST-read branch" do
     assert :ok = RestReadContracts.validate!()
 
     actual_counts =

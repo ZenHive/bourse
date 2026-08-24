@@ -1,7 +1,6 @@
 {
-  "schema_version": 1,
-  "inventory_basis": "provider_owned_contracts",
-  "runtime_specs_are_not_authority": true,
+  "schema_version": 2,
+  "inventory_basis": "client_read_surface",
   "observed_at": "2026-08-23",
-  "inventory_policy": "provider product prefixes are the live denominator; runtime metadata is compared only for drift on those prefixes"
+  "inventory_policy": "every runtime REST-read branch under the provider product prefixes executes once against the venue's live host; per-venue contract files pin the provider-owned authority sources their field and error meanings were read from"
 }
