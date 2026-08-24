@@ -209,8 +209,10 @@ defmodule Bourse.MixProject do
       # each resolve "could not measure" into a definite verdict — see
       # upstream_repos/_ours/muex/quirks.md. Two are in Oeditus/muex#21, two are
       # fork-only, and the fifth (@behaviour read as a behaviour definition, so
-      # every implementing file is skipped) is fixed nowhere yet — run muex with
-      # --no-filter or the whole signing surface goes unmeasured at exit 0.
+      # every implementing file is skipped) is fixed nowhere yet — and --no-filter
+      # alone does not close the hole: the optimizer (default on) can reduce the
+      # mutation set to 0 and still exit 0. Run muex with --no-filter --no-optimize
+      # or the whole signing surface goes unmeasured at exit 0.
       {:muex, github: "e-fu/muex", branch: "integration/all-fixes", only: [:dev, :test], runtime: false},
       {:reach, "~> 2.8.1", only: [:dev, :test], runtime: false},
       # reach references Boxart.Render.* unconditionally; boxart is
