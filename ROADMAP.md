@@ -910,7 +910,7 @@ Four-venue option trading program (deribit, bybit, okx-international, derive): o
 | Task 509 `[P]` | ✅ | 🎁 **options_execution** · 🚀 **v1_0** · Pin live testnet margin-impact evidence for deribit, bybit and derive candidate plans [D:4/B:6/U:3 → Eff:1.12?] 📋 |
 | Task 510 `[P]` | ✅ | 🎁 **options_execution** · 🚀 **v1_0** · 🐛 Dialyzer-clean the options-wave modules [D:3/B:6/U:6 → Eff:2.0?] 🎯 |
 | Task 511 | ✅ | 🎁 **options_execution** · 🐛 Authored order-state completeness: map Deribit speed_bumped and close the unmapped-status class [D:6/B:8/U:7 → Eff:1.25?] 📋 |
-| Task 512 | ⛔ | 🎁 **options_execution** · OptionProposal: base-currency numeraire risk targets + covered-call preflight mode [D:6/B:7/U:6 → Eff:1.08] 📋 |
-| Task 513 | ✅ | 🎁 **options_execution** · OptionReadiness: expose orthogonal short-side lifecycle capability [D:4/B:7/U:6 → Eff:1.62] 🚀 |
+| Task 512 | ⛔ | 🎁 **options_execution** · OptionProposal: base-currency numeraire risk targets + covered-call preflight mode [D:6/B:7/U:6 → Eff:1.08?] 📋 |
+| Task 513 | ✅ | 🎁 **options_execution** · OptionReadiness: expose orthogonal short-side lifecycle capability [D:4/B:7/U:6 → Eff:1.62?] 🚀 |
 | Task 602 `[P]` | ⛔ | 🎁 **options_execution** · Expose account-level portfolio-margin summaries in Bourse.PortfolioRisk [D:5/B:7/U:5 → Eff:1.2] 📋 |
 <!-- TASKS:END -->

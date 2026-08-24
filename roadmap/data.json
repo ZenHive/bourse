@@ -30345,7 +30345,7 @@
       "phase": 16,
       "bundle": "live_e2e",
       "milestone": "v1_2",
-      "status": "pending",
+      "status": "superseded",
       "title": "Replace REST write tests with real sandbox state-transition lifecycles",
       "scores": {
         "d": 10,
@@ -30395,7 +30395,7 @@
       "phase": 16,
       "bundle": "live_e2e",
       "milestone": "v1_2",
-      "status": "pending",
+      "status": "superseded",
       "title": "Replace WebSocket semantic tests with live stream lifecycles",
       "scores": {
         "d": 8,
@@ -30643,6 +30643,387 @@
       "body": "The repo's own doctrine demotes CCXT to disposable reference material, yet every Mix task still carries the ccxt. prefix (ccxt.verify_rest_read_contracts, ccxt.claude_check, ccxt.agents_md, ...). That naming steers every reader back toward CCXT-as-identity. Rename the whole namespace to bourse.* in one cut, no deprecation shims: rename the task modules under lib/mix/tasks/ (Mix.Tasks.Ccxt.* -> Mix.Tasks.Bourse.*, file names included), and update every reference — mix.exs aliases (check.dispatch, ci, precommit chains), CLAUDE.md incl. the Toolchain section, test/README.md, test/live/README.md, docs/, priv/venues/README.md, and any test that shells or names a ccxt.* task. Behavior must not change: logic byte-identical apart from module/task names and doc strings naming the command.\n\nThis deliberately does NOT touch legitimate CCXT-as-reference language (test/reference_slice/, the ccxt_authority_language test and its allowlist, carve registers, historical BUGS.md/roadmap entries).\n\nRouting trigger: repo-wide check-infrastructure rename across ~55 files including the gates themselves. depends_on 671 because the reviewer's gate (mix check.dispatch) must be green on the base tree before a rename of that gate can be honestly graded.\n\nNote for the orchestrator at landing: verify the harness project registry check_command for bourse still resolves (it names mix check.dispatch, an alias — expected unaffected), and confirm no ~/.claude hook or marketplace script shells a mix ccxt.* task by name.\n",
       "created_at": "2026-08-23",
       "scored_at": "2026-08-23",
+      "cross_repo": []
+    },
+    {
+      "id": "674",
+      "phase": 16,
+      "bundle": "live_e2e",
+      "milestone": "v1_2",
+      "status": "pending",
+      "title": "Live trader journey for alpaca: REST round-trip, private-stream leg, error probes",
+      "scores": {
+        "d": 4,
+        "b": 7,
+        "u": 7
+      },
+      "eff": 1.75,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "cursor",
+      "model": "cursor-grok-4.6-high",
+      "acceptance_criteria": [
+        "test/live/journeys/trader/alpaca_test.exs mirrors the bybit exemplar's structure: survey the market (market row, ticker, order book, balance with cross-field invariants), place a resting limit order with a wall-clock-unique clientOrderId, poll it open, assert side/type/price/amount echo, find it in fetch_open_orders, cancel it, poll it gone, cleanup via release_order! in an after block",
+        "Every asserted error code/message was first observed live against the paper host and is pinned with a dated observation comment; Alpaca's own API docs are the semantic authority",
+        "An in-flow rejection test asserts the venue's own error for an order the venue refuses (for example an amount below the instrument minimum), observed live",
+        "test/live/errors/alpaca_test.exs carries at least one generic bad-input probe (unknown order id) asserting the live-observed error type and message, runs in the default suite, and duplicates neither the contract lane's invalid-symbol cases nor the invalid-credentials suite",
+        "Where alpaca's private stream is wired, a describe block observes the placed order's event on the live stream mirroring the bybit private-stream block; if the stream leg is unreachable with our paper credentials, the case is recorded in docs/prod-verification-ledger.md instead of silently dropped",
+        "mix test.json --quiet --include dangerous test/live/journeys/trader/alpaca_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes",
+        "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"
+      ],
+      "out_of_scope": [
+        "option_seller and market_maker roles",
+        "equity instruments whose market hours would make the journey time-of-day dependent",
+        "changes to the REST-read contract lane"
+      ],
+      "touches": [
+        "test/live/journeys/trader/alpaca_test.exs",
+        "test/live/errors/alpaca_test.exs"
+      ],
+      "body": "Mirror the bybit trader-journey exemplar (test/live/journeys/trader/bybit_test.exs, landed in 82af62f, including its private-stream describe block) for alpaca's paper environment. Live-probe first, then pin: run the flow against paper-api.alpaca.markets before writing any assertion. Test orders with cleanup are explicitly allowed on the paper host; never point anything at the live-money host.\n\nVenue notes: ALPACA_API_KEY/SECRET, sandbox: true resolves the paper host. Pick a 24/7-tradable crypto pair from the loaded markets, not an equity, so the journey does not depend on exchange hours.\n\nSupersedes the alpaca slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.\n",
+      "created_at": "2026-08-24",
+      "scored_at": "2026-08-24",
+      "cross_repo": []
+    },
+    {
+      "id": "675",
+      "phase": 16,
+      "bundle": "live_e2e",
+      "milestone": "v1_2",
+      "status": "pending",
+      "title": "Live trader journey for binance spot: REST round-trip, private-stream leg, error probes",
+      "scores": {
+        "d": 4,
+        "b": 7,
+        "u": 7
+      },
+      "eff": 1.75,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "grok",
+      "model": "grok-4.6",
+      "acceptance_criteria": [
+        "test/live/journeys/trader/binance_test.exs mirrors the bybit exemplar's structure: survey (market row, ticker, order book, balance invariants), resting limit order with wall-clock-unique clientOrderId, poll open, echo assertions, fetch_open_orders membership, cancel, poll gone, cleanup via release_order! in an after block",
+        "Every asserted error code/message was first observed live against testnet.binance.vision and is pinned with a dated observation comment; Binance's own spot API docs are the semantic authority",
+        "An in-flow rejection test asserts the venue's own error for a refused order (for example below the instrument minimum), observed live",
+        "test/live/errors/binance_test.exs carries at least one generic bad-input probe (unknown order id) asserting the live-observed error, runs in the default suite, and duplicates neither the contract lane's invalid-symbol cases nor the invalid-credentials suite",
+        "The private-stream leg observes the placed order's own event on the live stream mirroring the bybit private-stream block; note that binance spot retired listen keys — the private section runs over the WebSocket API host via the signed userDataStream.subscribe.signature frame; if the leg is unreachable with our testnet credentials, it is recorded in docs/prod-verification-ledger.md instead of silently dropped",
+        "mix test.json --quiet --include dangerous test/live/journeys/trader/binance_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes",
+        "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"
+      ],
+      "out_of_scope": [
+        "option_seller and market_maker roles",
+        "USD-M and COIN-M futures (their own tasks)",
+        "changes to the REST-read contract lane"
+      ],
+      "touches": [
+        "test/live/journeys/trader/binance_test.exs",
+        "test/live/errors/binance_test.exs"
+      ],
+      "body": "Mirror the bybit trader-journey exemplar (test/live/journeys/trader/bybit_test.exs, landed in 82af62f, including its private-stream describe block) for binance spot on testnet.binance.vision. Live-probe first, then pin. Test orders with cleanup are explicitly allowed on the testnet.\n\nVenue notes: BINANCE_TESTNET_API_KEY/SECRET. Sharp edge for the stream leg: a subscribe.signature subscription outlives the socket that made it, so an unauthenticated differential leg must run first if one is added.\n\nSupersedes the binance-spot slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.\n",
+      "created_at": "2026-08-24",
+      "scored_at": "2026-08-24",
+      "cross_repo": []
+    },
+    {
+      "id": "676",
+      "phase": 16,
+      "bundle": "live_e2e",
+      "milestone": "v1_2",
+      "status": "pending",
+      "title": "Live trader journey for binanceusdm: REST round-trip, listen-key stream leg, error probes",
+      "scores": {
+        "d": 4,
+        "b": 7,
+        "u": 7
+      },
+      "eff": 1.75,
+      "dep_layer": 0,
+      "unlocks": 1,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "grok",
+      "model": "grok-4.6",
+      "acceptance_criteria": [
+        "test/live/journeys/trader/binanceusdm_test.exs mirrors the bybit exemplar's structure: survey, resting limit order with wall-clock-unique clientOrderId, poll open, echo assertions, fetch_open_orders membership, cancel, poll gone, cleanup via release_order! in an after block",
+        "Every asserted error code/message was first observed live against demo-fapi.binance.com and is pinned with a dated observation comment; Binance's own USD-M futures docs are the semantic authority",
+        "An in-flow rejection test asserts the venue's own error for a refused order (for example -2019 for an oversized order, or below-minimum), observed live",
+        "test/live/errors/binanceusdm_test.exs carries at least one generic bad-input probe (unknown order id) asserting the live-observed error, runs in the default suite, and duplicates neither the contract lane's invalid-symbol cases nor the invalid-credentials suite",
+        "The listen-key stream leg observes the placed order's own ORDER_TRADE_UPDATE on demo-fstream, mirroring the bybit private-stream block; success is a real event about our order id, never a :connected status (a wrong listen key connects and stays silent)",
+        "mix test.json --quiet --include dangerous test/live/journeys/trader/binanceusdm_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes",
+        "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"
+      ],
+      "out_of_scope": [
+        "option_seller and market_maker roles",
+        "COIN-M (its own task, serialized behind this one — same demo account)",
+        "changes to the REST-read contract lane"
+      ],
+      "touches": [
+        "test/live/journeys/trader/binanceusdm_test.exs",
+        "test/live/errors/binanceusdm_test.exs"
+      ],
+      "body": "Mirror the bybit trader-journey exemplar (test/live/journeys/trader/bybit_test.exs, landed in 82af62f, including its private-stream describe block) for binance USD-M futures on demo-fapi.binance.com. Live-probe first, then pin. Test orders with cleanup are explicitly allowed on the demo account.\n\nVenue notes: BINANCE_FUTURES_TEST_API_KEY/SECRET (shared with COIN-M — one account, two wallets). The account runs One-way mode (verified live 2026-08-10), so orders need no positionSide. USD-M's PUT listenKey returns {}; the private stream lives on demo-fstream and its key comes from fapiPrivate endpoints — the COIN-M half's key connects and stays silent, same failure shape as a bogus key.\n\nSupersedes the binanceusdm slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.\n",
+      "created_at": "2026-08-24",
+      "scored_at": "2026-08-24",
+      "cross_repo": []
+    },
+    {
+      "id": "677",
+      "phase": 16,
+      "bundle": "live_e2e",
+      "milestone": "v1_2",
+      "status": "pending",
+      "title": "Live trader journey for binancecoinm: inverse REST round-trip, listen-key stream leg, error probes",
+      "scores": {
+        "d": 5,
+        "b": 7,
+        "u": 7
+      },
+      "eff": 1.4,
+      "dep_layer": 1,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [
+        "676"
+      ],
+      "assignee": "codex",
+      "model": "gpt-5.6-sol",
+      "acceptance_criteria": [
+        "test/live/journeys/trader/binancecoinm_test.exs mirrors the bybit exemplar's structure on the inverse BTCUSD_PERP contract: survey, resting limit order with wall-clock-unique clientOrderId, poll open, echo assertions, fetch_open_orders membership, cancel, poll gone, cleanup via release_order! in an after block",
+        "Every asserted error code/message was first observed live against demo-dapi.binance.com and is pinned with a dated observation comment; Binance's own COIN-M futures docs are the semantic authority",
+        "An in-flow rejection test asserts the venue's own error for a refused order, observed live",
+        "test/live/errors/binancecoinm_test.exs carries at least one generic bad-input probe (unknown order id) asserting the live-observed error, runs in the default suite, and duplicates neither the contract lane's invalid-symbol cases nor the invalid-credentials suite",
+        "The listen-key stream leg observes the placed order's own ORDER_TRADE_UPDATE on demo-dstream, mirroring the bybit private-stream block; success is a real event about our order id, never a :connected status",
+        "If the COIN-M wallet holds no margin, the journey fails loudly naming the operator remediation (the UI faucet credits USD-M only; COIN-M is re-funded through the UI) — it never skips or converts the funding gap into a pass",
+        "mix test.json --quiet --include dangerous test/live/journeys/trader/binancecoinm_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes",
+        "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"
+      ],
+      "out_of_scope": [
+        "option_seller and market_maker roles",
+        "USD-M (its own task)",
+        "changes to the REST-read contract lane"
+      ],
+      "touches": [
+        "test/live/journeys/trader/binancecoinm_test.exs",
+        "test/live/errors/binancecoinm_test.exs"
+      ],
+      "body": "Mirror the bybit trader-journey exemplar (test/live/journeys/trader/bybit_test.exs, landed in 82af62f, including its private-stream describe block) for binance COIN-M futures on demo-dapi.binance.com. Live-probe first, then pin. Test orders with cleanup are explicitly allowed on the demo account.\n\nVenue notes: same BINANCE_FUTURES_TEST_API_KEY/SECRET pair as USD-M — one account, two separate wallets, so this task is serialized behind the USD-M journey (never run both against the account in parallel). BTCUSD_PERP is inverse at 100 USD notional per contract; COIN-M's PUT listenKey returns the key in the body; the private stream lives on demo-dstream with keys from dapiPrivate endpoints. DELETE /dapi/v1/allOpenOrders returns code 200 even with nothing resting — a safe idempotent cleanup hook.\n\nSupersedes the binancecoinm slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.\n",
+      "created_at": "2026-08-24",
+      "scored_at": "2026-08-24",
+      "cross_repo": []
+    },
+    {
+      "id": "678",
+      "phase": 16,
+      "bundle": "live_e2e",
+      "milestone": "v1_2",
+      "status": "pending",
+      "title": "Live trader journey for deribit: REST round-trip, private-stream leg, error probes",
+      "scores": {
+        "d": 4,
+        "b": 7,
+        "u": 7
+      },
+      "eff": 1.75,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "cursor",
+      "model": "cursor-grok-4.6-high",
+      "acceptance_criteria": [
+        "test/live/journeys/trader/deribit_test.exs mirrors the bybit exemplar's structure on a liquid perpetual: survey, resting limit order with wall-clock-unique clientOrderId, poll open, echo assertions, fetch_open_orders membership, cancel, poll gone, cleanup via release_order! in an after block",
+        "Every asserted error code/message was first observed live against test.deribit.com and is pinned with a dated observation comment; Deribit's own API v2 docs are the semantic authority",
+        "An in-flow rejection test asserts the venue's own error for a refused order (for example below the instrument minimum), observed live",
+        "test/live/errors/deribit_test.exs carries at least one generic bad-input probe (unknown order id) asserting the live-observed error, runs in the default suite, and duplicates neither the contract lane's invalid-symbol cases nor the invalid-credentials suite",
+        "A private-stream describe block observes the placed order's own event on the live private stream, mirroring the bybit private-stream block; if the leg is unreachable with our testnet credentials, it is recorded in docs/prod-verification-ledger.md instead of silently dropped",
+        "mix test.json --quiet --include dangerous test/live/journeys/trader/deribit_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes",
+        "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"
+      ],
+      "out_of_scope": [
+        "option_seller and market_maker roles (deribit is a prime option_seller candidate — separate task once the trader wave lands)",
+        "changes to the REST-read contract lane"
+      ],
+      "touches": [
+        "test/live/journeys/trader/deribit_test.exs",
+        "test/live/errors/deribit_test.exs"
+      ],
+      "body": "Mirror the bybit trader-journey exemplar (test/live/journeys/trader/bybit_test.exs, landed in 82af62f, including its private-stream describe block) for deribit on test.deribit.com. Live-probe first, then pin. Test orders with cleanup are explicitly allowed on the testnet.\n\nVenue notes: DERIBIT_TESTNET_API_KEY/SECRET; pick the liquid perpetual from the loaded markets and mind that deribit instruments are inverse/settled differently than bybit linear — assert what the venue's own docs define, not the bybit shape.\n\nSupersedes the deribit slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.\n",
+      "created_at": "2026-08-24",
+      "scored_at": "2026-08-24",
+      "cross_repo": []
+    },
+    {
+      "id": "679",
+      "phase": 16,
+      "bundle": "live_e2e",
+      "milestone": "v1_2",
+      "status": "pending",
+      "title": "Live trader journey for okx: REST round-trip, private-stream leg, error probes",
+      "scores": {
+        "d": 4,
+        "b": 7,
+        "u": 7
+      },
+      "eff": 1.75,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "cursor",
+      "model": "cursor-grok-4.6-high",
+      "acceptance_criteria": [
+        "test/live/journeys/trader/okx_test.exs mirrors the bybit exemplar's structure: survey, resting limit order with wall-clock-unique clientOrderId, poll open, echo assertions, fetch_open_orders membership, cancel, poll gone, cleanup via release_order! in an after block",
+        "Every asserted error code/message was first observed live against the okx demo (www.okx.com with x-simulated-trading) and is pinned with a dated observation comment; OKX's own API v5 docs are the semantic authority",
+        "An in-flow rejection test asserts the venue's own error for a refused order, observed live; if the rejection arrives inside a batch envelope, the assertion reads the real per-order sCode/sMsg from data[0], not the outer code-1 wrapper",
+        "test/live/errors/okx_test.exs carries at least one generic bad-input probe (unknown order id) asserting the live-observed error, runs in the default suite, and duplicates neither the contract lane's invalid-symbol cases nor the invalid-credentials suite",
+        "A private-stream describe block observes the placed order's own event on the live private stream, mirroring the bybit private-stream block; if the leg is unreachable with our demo credentials, it is recorded in docs/prod-verification-ledger.md instead of silently dropped",
+        "mix test.json --quiet --include dangerous test/live/journeys/trader/okx_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes",
+        "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"
+      ],
+      "out_of_scope": [
+        "option_seller and market_maker roles",
+        "changes to the REST-read contract lane"
+      ],
+      "touches": [
+        "test/live/journeys/trader/okx_test.exs",
+        "test/live/errors/okx_test.exs"
+      ],
+      "body": "Mirror the bybit trader-journey exemplar (test/live/journeys/trader/bybit_test.exs, landed in 82af62f, including its private-stream describe block) for okx's international demo. Live-probe first, then pin. Test orders with cleanup are explicitly allowed on the demo.\n\nVenue notes: OKX_INTL_API_KEY/_API_SECRET/_PASSPHRASE; sandbox: true supplies both the host and the x-simulated-trading header. Never use my.okx.com or OKX_TESTNET_* variables. A linear or spot pair with real demo liquidity is the right instrument; demo option books are not.\n\nSupersedes the okx slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.\n",
+      "created_at": "2026-08-24",
+      "scored_at": "2026-08-24",
+      "cross_repo": []
+    },
+    {
+      "id": "680",
+      "phase": 16,
+      "bundle": "live_e2e",
+      "milestone": "v1_2",
+      "status": "pending",
+      "title": "Live trader journey for hyperliquid: REST round-trip, private-stream leg, error probes",
+      "scores": {
+        "d": 5,
+        "b": 7,
+        "u": 7
+      },
+      "eff": 1.4,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "grok",
+      "model": "grok-4.6",
+      "acceptance_criteria": [
+        "test/live/journeys/trader/hyperliquid_test.exs mirrors the bybit exemplar's structure: survey, resting limit order with wall-clock-unique client identifier where the venue supports one, poll open, echo assertions, fetch_open_orders membership, cancel, poll gone, cleanup via release_order! in an after block",
+        "Every asserted error was first observed live against api.hyperliquid-testnet.xyz and is pinned with a dated observation comment; Hyperliquid's own API docs are the semantic authority",
+        "An in-flow rejection test asserts the venue's own error for a refused order, observed live",
+        "test/live/errors/hyperliquid_test.exs carries at least one generic bad-input probe (unknown order id) asserting the live-observed error, runs in the default suite, and duplicates neither the contract lane's invalid-symbol cases nor the invalid-credentials suite",
+        "A private-stream describe block observes the placed order's own event on the live stream (hyperliquid private subscriptions are scoped by address, no auth handshake), mirroring the bybit private-stream block; if the leg is unreachable, it is recorded in docs/prod-verification-ledger.md instead of silently dropped",
+        "If the testnet wallet holds no margin, the journey fails loudly naming the drip remediation (POST /info claimDrip, re-claimable every 4h) — it never skips",
+        "mix test.json --quiet --include dangerous test/live/journeys/trader/hyperliquid_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes",
+        "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"
+      ],
+      "out_of_scope": [
+        "option_seller and market_maker roles",
+        "changes to the REST-read contract lane",
+        "mainnet Bridge2 deposits"
+      ],
+      "touches": [
+        "test/live/journeys/trader/hyperliquid_test.exs",
+        "test/live/errors/hyperliquid_test.exs"
+      ],
+      "body": "Mirror the bybit trader-journey exemplar (test/live/journeys/trader/bybit_test.exs, landed in 82af62f, including its private-stream describe block) for hyperliquid's testnet. Live-probe first, then pin. Test orders with cleanup are explicitly allowed on the testnet.\n\nVenue notes: DEX — HYPERLIQUID_TESTNET_API_KEY is the wallet address, _API_SECRET its private key; signing is the :hyperliquid pattern. Price/size precision on hyperliquid is instrument-specific and strict; take it from the loaded markets, not from bybit's shape.\n\nSupersedes the hyperliquid slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders on a DEX signing path) and parallel throughput across venues.\n",
+      "created_at": "2026-08-24",
+      "scored_at": "2026-08-24",
+      "cross_repo": []
+    },
+    {
+      "id": "681",
+      "phase": 16,
+      "bundle": "live_e2e",
+      "milestone": "v1_2",
+      "status": "pending",
+      "title": "Live trader journey for lighter: zk-signed limit-order round-trip, stream leg, error probes",
+      "scores": {
+        "d": 6,
+        "b": 7,
+        "u": 7
+      },
+      "eff": 1.17,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "codex",
+      "model": "gpt-5.6-sol",
+      "acceptance_criteria": [
+        "test/live/journeys/trader/lighter_test.exs mirrors the bybit exemplar's structure with lighter's own write contract: survey, resting limit order (limit is the only supported type) carrying a caller-supplied nonce from public_get_nextnonce and a client_order_index, poll open, echo assertions, open-orders membership, cancel, poll gone, cleanup in an after block",
+        "Every asserted error was first observed live against testnet.zklighter.elliot.ai and is pinned with a dated observation comment; Lighter's own API docs are the semantic authority",
+        "An in-flow rejection test asserts the venue's own error for a refused order, observed live",
+        "test/live/errors/lighter_test.exs carries at least one generic bad-input probe (unknown order id or equivalent) asserting the live-observed error, runs in the default suite, and duplicates neither the contract lane's cases nor the invalid-credentials suite",
+        "A stream describe block observes the placed order's own event on the live stream, mirroring the bybit private-stream block; if the leg is unreachable with our testnet key, it is recorded in docs/prod-verification-ledger.md instead of silently dropped",
+        "mix test.json --quiet --include dangerous test/live/journeys/trader/lighter_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes",
+        "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"
+      ],
+      "out_of_scope": [
+        "option_seller and market_maker roles",
+        "changes to the zk signer or its supervised helper",
+        "changes to the REST-read contract lane"
+      ],
+      "touches": [
+        "test/live/journeys/trader/lighter_test.exs",
+        "test/live/errors/lighter_test.exs"
+      ],
+      "body": "Mirror the bybit trader-journey exemplar (test/live/journeys/trader/bybit_test.exs, landed in 82af62f, including its private-stream describe block) for lighter's zk testnet. Live-probe first, then pin. Test orders with cleanup are explicitly allowed on the testnet.\n\nVenue notes: DEX — LIGHTER_TESTNET_API_KEY_INDEX / _ACCOUNT_INDEX / _API_PRIVATE_KEY; zk-Schnorr signing runs through the supervised first-party helper, sandbox: true selects testnet host AND chain id 300 (the chain id is inside the signed payload). Private reads need an auth_deadline and account_index; writes need the nonce and client_order_index — the unified layer may or may not surface these, discover live and assert what the venue actually requires.\n\nSupersedes the lighter slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real orders on a zk signing path) and parallel throughput across venues.\n",
+      "created_at": "2026-08-24",
+      "scored_at": "2026-08-24",
+      "cross_repo": []
+    },
+    {
+      "id": "682",
+      "phase": 16,
+      "bundle": "live_e2e",
+      "milestone": "v1_2",
+      "status": "pending",
+      "title": "Live trader journey for derive: session-key-signed round-trip, ledgered stream gap, error probes",
+      "scores": {
+        "d": 7,
+        "b": 7,
+        "u": 7
+      },
+      "eff": 1.0,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "codex",
+      "model": "gpt-5.6-sol",
+      "acceptance_criteria": [
+        "test/live/journeys/trader/derive_test.exs mirrors the bybit exemplar's structure with derive's own order contract: survey, resting limit order signed with sign_order over the eight-field tuple (max_fee at or above the dynamic floor, signer/nonce/signature_expiry_sec supplied), poll open, echo assertions, open-orders membership, cancel, poll gone, cleanup in an after block",
+        "Every asserted error was first observed live against api-demo.lyra.finance and is pinned with a dated observation comment; Derive's own API reference is the semantic authority",
+        "An in-flow rejection test asserts a venue-owned rejection observed live (for example error 11023 naming the exact max_fee minimum when the fee is below the floor)",
+        "test/live/errors/derive_test.exs carries at least one generic bad-input probe (unknown order id) asserting the live-observed error, runs in the default suite, and duplicates neither the contract lane's cases nor the invalid-credentials suite",
+        "The private-stream leg is resolved honestly: derive authors no auth_pattern for its private WS section although the venue has a WS login, so either the leg observes a real order event through whatever the venue actually offers our session key, or the gap is recorded in docs/prod-verification-ledger.md with the evidence — never a silent skip and never an assertion on :connected",
+        "mix test.json --quiet --include dangerous test/live/journeys/trader/derive_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes",
+        "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"
+      ],
+      "out_of_scope": [
+        "option_seller and market_maker roles (derive options come with the option_seller wave)",
+        "wiring a WS auth_pattern for derive (its own decision if the venue contract demands it)",
+        "changes to the REST-read contract lane"
+      ],
+      "touches": [
+        "test/live/journeys/trader/derive_test.exs",
+        "test/live/errors/derive_test.exs",
+        "docs/prod-verification-ledger.md"
+      ],
+      "body": "Mirror the bybit trader-journey exemplar (test/live/journeys/trader/bybit_test.exs, landed in 82af62f, including its private-stream describe block) for derive's demo environment. Live-probe first, then pin. Test orders with cleanup are explicitly allowed on the demo.\n\nVenue notes: DERIVE_TESTNET_API_KEY is the smart-contract wallet (what X-LyraWallet carries), _API_SECRET a registered Admin session key's private key. The edge proxy verifies auth before the app — a wrong signer gets HTML 403 with no JSON. Order endpoints carry body_encoding json, so sign the order tuple yourself via sign_order(order, private_key:, testnet: true) and put the signature string in params; max_fee has a dynamic floor (~1.5 USDC, error 11023 names the exact minimum) and is part of the signed hash, so re-sign after adjusting.\n\nSupersedes the derive slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: signing/money surface plus live external-system evidence.\n",
+      "created_at": "2026-08-24",
+      "scored_at": "2026-08-24",
       "cross_repo": []
     }
   ]
