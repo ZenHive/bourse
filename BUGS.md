@@ -71,6 +71,47 @@ roadmap.
 
 ---
 
+## 2026-08-24 — bybit: two contract cases are unreachable with an AI-subaccount testnet credential
+
+**Status:** 🆕 reported
+
+**The call:** `mix ccxt.verify_rest_read_contracts --venue bybit` (78 cases, 64 green) with
+`BYBIT_TESTNET_API_KEY/_SECRET` pointing at a Bybit **AI sub-account** credential
+(`sub_member_id 107065959`), issued through the OAuth `ai-agent` flow against
+`api2-testnet.bybit.com` because the testnet web UI's own "create API key" dialog has been
+erroring for weeks.
+
+**Observed — two distinct defects:**
+
+1. `bybit:fetchBalance:2:privateGetV5AssetTransferQueryAccountCoinsBalance` fails with
+   `[bybit] bad_request: request parameter err: Limit the query to 1 to 10 coins for account
+   UNIFIED`. The case calls `GET /v5/asset/transfer/query-account-coins-balance` with
+   `accountType=UNIFIED` and no `coin` filter; Bybit rejects that combination outright. The
+   same call with `accountType=FUND` and no filter returns `retCode 0`, so the branch is
+   only wrong for UNIFIED. Reproduced directly:
+   `Bourse.Bybit.private_get_v5_asset_transfer_query_account_coins_balance(ex, %{"accountType" => "UNIFIED"})`.
+
+2. `bybit:fetchDepositAddress:0` and `bybit:fetchDepositAddressesByNetwork:0` fail with
+   `[bybit] permission_denied: Dear User, The product or service you are trying to access ...`
+   on `GET /v5/asset/deposit/query-address`. This is not a transient state problem: the AI
+   sub-account authorization scope excludes deposits and withdrawals by construction, so no
+   credential of this class can ever make those two branches green.
+
+**Expected:** (1) the UNIFIED branch supplies a `coin` list (1–10 coins) or uses
+`/v5/account/wallet-balance` for the unfiltered case. (2) the two deposit-address branches are
+ledgered in `docs/prod-verification-ledger.md` as unreachable under an AI-subaccount credential,
+naming the credential class — not silently dropped from the denominator.
+
+**Impact:** the venue's lane cannot reach 78/78 with this credential class, and the reason
+differs per case — (1) is a spec defect the venue would reject for any caller, (2) is a
+permanent scope boundary. Conflating them hides the first behind the second.
+
+**Note on the remaining reds (not defects):** the other 12 failures on that run are live
+account-state preconditions on a freshly created sub-account — five `fetchClosedOrders`-derived
+cases, three convert-history cases, `fetchMySettlementHistory`, `fetchPositionADLRank`. They are
+the class already filed on 2026-08-23 ("fourteen cases across five venues are green only while
+live account state exists"), reproduced here on a new account.
+
 ## 2026-08-23 — contract lane: fourteen cases across five venues are green only while live account state exists
 
 **Status:** 🆕 reported (task 671 state-population pass)

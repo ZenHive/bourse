@@ -16,6 +16,15 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+- The bybit testnet credential is an AI sub-account issued through Bybit's
+  `ai-agent` OAuth flow, and it is writable — the previous testnet key was
+  read-only (10024 on any signed create). The venue's REST-read contract lane
+  moves 63 → 64 green of 78; the two deposit-address branches are unreachable
+  under this credential class by scope, and the remainder are live account
+  state on a fresh sub-account. CLAUDE.md records the flow's sharp edges: the
+  success page's "Access Token" is an authorization code, its exchange
+  response carries no `result` wrapper, and a funded sub-account still needs
+  a FUND → UNIFIED transfer plus a collateral switch before any order clears.
 - The bybit account-classification helpers (`/v5/account/info`, `/v5/user/query-api`)
   are carved out of six unified read methods, and the retired
   `/v5/spot-cross-margin-trade/account` branch is dropped from `fetchBalance` —
