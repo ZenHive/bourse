@@ -101,7 +101,13 @@
           "path": "v5/asset/transfer/query-account-coins-balance",
           "authenticated": true,
           "market_kind": "spot",
-          "options": []
+          "options": [
+            {
+              "name": "code",
+              "strategy": "literal",
+              "value": "BTC,USDT"
+            }
+          ]
         },
         {
           "provider_operation": "privateGetV5UserQueryApi",
@@ -301,7 +307,7 @@
           "http_method": "GET",
           "path": "v5/order/history",
           "authenticated": true,
-          "market_kind": "spot",
+          "market_kind": "linear",
           "options": [
             {
               "name": "category",
@@ -403,7 +409,7 @@
       "arguments": [],
       "success": {
         "representation": "parsed",
-        "collection": "single",
+        "collection": "map",
         "module": "Bourse.Currency",
         "required_fields": [
           "code"
@@ -439,17 +445,17 @@
         {
           "name": "from_code",
           "strategy": "literal",
-          "value": "USDC"
+          "value": "BTC"
         },
         {
           "name": "to_code",
           "strategy": "literal",
-          "value": "BTC"
+          "value": "USDT"
         },
         {
           "name": "amount",
           "strategy": "literal",
-          "value": 1
+          "value": 0.0002
         }
       ],
       "success": {
@@ -1753,7 +1759,7 @@
           "http_method": "GET",
           "path": "v5/order/realtime",
           "authenticated": true,
-          "market_kind": "spot",
+          "market_kind": "linear",
           "options": [
             {
               "name": "category",
@@ -1978,7 +1984,7 @@
           "http_method": "GET",
           "path": "v5/order/history",
           "authenticated": true,
-          "market_kind": "spot",
+          "market_kind": "linear",
           "options": [
             {
               "name": "category",
@@ -1991,7 +1997,7 @@
           "http_method": "GET",
           "path": "v5/order/realtime",
           "authenticated": true,
-          "market_kind": "spot",
+          "market_kind": "linear",
           "options": [
             {
               "name": "category",
@@ -2075,7 +2081,7 @@
           "http_method": "GET",
           "path": "v5/order/history",
           "authenticated": true,
-          "market_kind": "spot",
+          "market_kind": "linear",
           "options": [
             {
               "name": "category",
@@ -2119,7 +2125,7 @@
           "http_method": "GET",
           "path": "v5/execution/list",
           "authenticated": true,
-          "market_kind": "spot",
+          "market_kind": "linear",
           "options": [
             {
               "name": "limit",

@@ -271,6 +271,14 @@ Entry template:
   responses, author the conversion map, assert those exact parsed meanings, and remove only
   the three Bybit task-550 coverage cells.
 
+- Update (2026-08-24): largely closed. The re-provisioned BYBIT_TESTNET key carries
+  `Exchange: ["ExchangeHistory"]`; `bybit:normalization.field_maps.conversion` is now
+  authored and live-proven — `fetchConvertCurrencies` parses 8 currency rows
+  (`result.coins`), `fetchConvertQuote` parses a real BTC→USDT quote (`result`), and
+  `fetchConvertTradeHistory` extracts `result.list` (empty, allowed). Residual: convert
+  *trade* rows remain unobserved because `convert-execute` is regulatory-blocked — tracked
+  in the 2026-08-24 spot/convert entry below.
+
 ### binanceusdm — conversion and currency read field maps on sandbox (task 567, filed 2026-08-08)
 - Authored slices: `binanceusdm:normalization.field_maps.conversion` and
   `binanceusdm:normalization.field_maps.currency` (intentionally absent while the five
@@ -590,6 +598,9 @@ Entry template:
 - The open question: does Bybit prod actually accept and *filter by* `coin=USDT` on `/v5/asset/transfer/query-inter-transfer-list`, echo `quoteTxId` on convert-trade lookup — and does `POST /v5/asset/exchange/convert-execute` accept a real (fresh, unexpired) `quoteTxId` as its only body field?
 - Exact call: `Bourse.fetch_transfers(ex, code: "USDT", params: %{"limit" => 5})`, `Bourse.fetch_convert_trade(ex, "<real quoteTxId>")`, and `Bourse.fetch_convert_quote(ex, "USDT", "BTC", 10)` → `Bourse.create_convert_trade(ex, quote.id, "USDT", "BTC", 10)` against `api.bybit.com` (tiny amount; convert is a swap, not an order — venue-final).
 - Expected evidence: `retCode 0`; transfer rows all `coin == "USDT"`; convert lookup echoes the requested `quoteTxId`; convert-execute returns `retCode 0` with the same `quoteTxId` echoed (or a quote-expired business error — either proves the binding is read by the venue).
+- Update (2026-08-24): testnet cannot answer the convert-execute half — `POST
+  /v5/asset/exchange/convert-execute` is 10024 regulatory-blocked there even on the
+  trade-capable key, so this stays a production-only question.
 
 ### binance — capital deposit/withdraw transaction histories and apply acknowledgement (task 335, filed 2026-07-18)
 - Authored slices: `binance:normalization.field_maps.transaction`
@@ -735,25 +746,6 @@ Entry template:
   the authored map given an explicit confirmed scale (or confirmed raw), and C-T546i amended to
   tier 1.
 
-### bybit — asset / margin / convert / fee-rate / ledger / transfer reads (task 671, filed 2026-08-23)
-
-- Authored slices: bybit runtime branches `privateGetV5AssetTransferQueryAccountCoinsBalance`,
-  `privateGetV5SpotMarginTradeInterestRateHistory`, `privateGetV5AssetExchangeQueryCoinList`,
-  `privatePostV5AssetExchangeQuoteApply`, `privateGetV5AssetExchangeConvertResultQuery`,
-  `privateGetV5AssetExchangeQueryConvertHistory`, `privateGetV5AccountContractTransactionLog`,
-  `privateGetV5AccountFeeRate`, `privateGetV5AssetTransferQueryInterTransferList`
-- Blocked by: the BYBIT_TESTNET key holds only `Derivatives: ["DerivativesTrade"]`
-  (observed via `/v5/user/query-api`, 2026-08-23) — every other permission list is empty, so
-  these reads answer `permission_denied`. The BYBIT_DEMO key holds the missing scopes but
-  `api-demo.bybit.com` answers `10032 "Demo trading are not supported."` on all of them, and
-  `/v5/account/fee-rate` answers `10001` with an empty message. Demo is not a workaround.
-- The open question: the wallet/convert/fee-rate response envelopes and whether the authored
-  maps normalize every returned variant.
-- Exact call: with a testnet key granted Wallet + Exchange + Spot + ContractTrade scopes, run
-  `mix ccxt.verify_rest_read_contracts --venue bybit`.
-- Expected evidence: retCode 0 bodies for all nine branches, parsed against the inventoried
-  success meanings.
-
 ### bybit — deposit-address reads (task 671, filed 2026-08-23)
 
 - Authored slices: bybit runtime branch `privateGetV5AssetDepositQueryAddress`
@@ -761,27 +753,45 @@ Entry template:
 - Blocked by: jurisdiction, not key scope — testnet answers *"The product or service you are
   seeking to access is not available to you due to regulatory restrictions"*; demo answers
   `10032`. No key on this account unlocks it.
+- Update (2026-08-24): unchanged under the trade-capable AI sub-account key — the same
+  10024 text answers both deposit-address reads, confirming the jurisdiction diagnosis.
 - The open question: the deposit-address chain/tag envelope for this account class.
 - Exact call: same lane, from a jurisdiction where Bybit serves deposit addresses.
 - Expected evidence: retCode 0 with per-chain address rows matching the authored map.
 
-### bybit — order-identity and delivery reads need account state a read-only key cannot create (task 671, filed 2026-08-23)
+### bybit — spot-category order identity and convert execution are region-blocked (task 671, filed 2026-08-24)
 
-- Authored slices: bybit cases `fetchClosedOrder:0`, `fetchOpenOrder:0`, `fetchOrder:0/1/2/3`,
-  `fetchOrderClassic:0/1/2`, `fetchOrderTrades:0`, `fetchMySettlementHistory:0`
-- Blocked by: `/v5/order/history` and `/v5/order/realtime` return zero rows in every category,
-  and the testnet key is read-only (business error 10024 on any signed create) — the account
-  state cannot be produced through our own keys. `/v5/asset/delivery-record` is reachable
-  (retCode 0) but empty for `inverse`, `linear` and `option`.
-- The open question: order-detail and delivery-record semantics against real rows.
-- Exact call: with a trade-enabled testnet key, one spot round-trip order plus one position
-  held through a delivery, then `mix ccxt.verify_rest_read_contracts --venue bybit`.
-- Expected evidence: the eleven cases resolve their resource ids and assert their success
-  meanings against non-empty provider rows.
-- Update (2026-08-23): the operator attempted to provision a trade-enabled testnet key and the
-  platform refused with the same business error 10024 ("not available to you due to regulatory
-  restrictions") at key creation — bybit blocks the global platform (testnet included) for the
-  operator's region, so a trade-capable key is not obtainable at all, not merely not configured.
+- Authored slices: bybit order-identity cases `fetchClosedOrder:0`, `fetchOpenOrder:0`,
+  `fetchOrder:0/1`, `fetchOrderClassic:0`, `fetchOrderTrades:0` under `category=spot`
+  (inventoried under `category=linear` since 2026-08-24, where they are green); case
+  `fetchConvertTrade:0` (`privateGetV5AssetExchangeConvertResultQuery`).
+- Blocked by: jurisdiction, not key scope. The trade-enabled BYBIT_TESTNET key
+  (`readOnly: 0`, `Spot: ["SpotTrade"]`, `Exchange: ["ExchangeHistory"]`) answers business
+  error 10024 "not available to you due to regulatory restrictions" on every spot create
+  (market sell, market buy, limit buy) and on `POST /v5/asset/exchange/convert-execute`
+  (`retCode 10024`, `result.config.endpointExec: "KYC_PROMPT_TOAST"`). Linear derivatives
+  creates on the same key are accepted seconds apart — which is why the order-identity
+  cases are inventoried under `category=linear` and green there. Convert history stays
+  empty (`retCode 0, list: []`) because no conversion can ever execute.
+- The open question: whether spot-category order rows and convert-trade rows carry the same
+  field meanings the linear rows prove, and the populated convert-status envelope at
+  `result.result`.
+- Exact call: from a jurisdiction where bybit serves spot trading, one spot round-trip plus
+  one executed convert, then `mix ccxt.verify_rest_read_contracts --venue bybit`.
+- Expected evidence: `retCode 0` spot order/execution rows, and a convert-status body
+  echoing `exchangeTxId`, `fromCoin`/`toCoin`, `convertRate` and `createdAt`.
+
+### bybit — delivery/settlement records need a contract held through expiry (task 671, filed 2026-08-24)
+
+- Authored slices: bybit case `fetchMySettlementHistory:0` (`privateGetV5AssetDeliveryRecord`)
+- Blocked by: `/v5/asset/delivery-record` answers `retCode 0` with an empty list in all
+  three categories (`inverse`, `linear`, `option`) on 2026-08-24. The nearest inverse dated
+  future (`BTCUSDU26`) delivers at 1790323200000 (2026-09-25); the nearest linear delivery
+  is 2026-08-28. No delivery record can be manufactured in-session.
+- The open question: delivery-record semantics against a real settled row.
+- Exact call: hold a dated inverse future or an option through its expiry on testnet, then
+  `mix ccxt.verify_rest_read_contracts --venue bybit`.
+- Expected evidence: a raw payload carrying `deliveryPrice` and `deliveryRpl`.
 
 ### okx — funding-account and savings surfaces are disabled in demo trading (task 671, filed 2026-08-23)
 

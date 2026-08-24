@@ -130,6 +130,50 @@
         }
       }
     },
+    "conversion": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "datetime": null,
+        "fee": null,
+        "fromAmount": {
+          "coercion": "safeNumber",
+          "key": "fromAmount"
+        },
+        "fromCurrency": {
+          "coercion": "safeCurrencyCode",
+          "key": "fromCoin"
+        },
+        "id": {
+          "coercion": "safeString",
+          "fallback_keys": [
+            "quoteTxId"
+          ],
+          "key": "exchangeTxId"
+        },
+        "info": null,
+        "price": {
+          "coercion": "safeNumber",
+          "fallback_keys": [
+            "exchangeRate"
+          ],
+          "key": "convertRate"
+        },
+        "timestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "createdAt"
+        },
+        "toAmount": {
+          "coercion": "safeNumber",
+          "key": "toAmount"
+        },
+        "toCurrency": {
+          "coercion": "safeCurrencyCode",
+          "key": "toCoin"
+        }
+      }
+    },
     "currency": {
       "_unresolved_reason": null,
       "extras": [],
@@ -161,6 +205,9 @@
         },
         "name": {
           "coercion": "safeString",
+          "fallback_keys": [
+            "fullName"
+          ],
           "key": "name"
         },
         "networks": {
@@ -2169,7 +2216,29 @@
         "key": "result.list"
       }
     },
+    "conversion": {
+      "fetchConvertQuote": {
+        "default": null,
+        "fallback_keys": [],
+        "key": "result"
+      },
+      "fetchConvertTrade": {
+        "default": null,
+        "fallback_keys": [],
+        "key": "result.result"
+      },
+      "fetchConvertTradeHistory": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "result.list"
+      }
+    },
     "currency": {
+      "fetchConvertCurrencies": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "result.coins"
+      },
       "fetchCurrencies": {
         "default": [],
         "fallback_keys": [],

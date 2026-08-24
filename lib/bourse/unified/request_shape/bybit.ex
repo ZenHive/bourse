@@ -671,6 +671,11 @@ defmodule Bourse.Unified.RequestShape.Bybit do
     history_request(params, "fetchLongShortRatioHistory", exchange)
   end
 
+  # `coin` is mandatory when `accountType=UNIFIED` on
+  # `/v5/asset/transfer/query-account-coins-balance` and accepts at most ten
+  # comma-separated coins; omitting it there answers "Limit the query to 1 to 10
+  # coins for account UNIFIED".
+  # https://bybit-exchange.github.io/docs/v5/asset/balance/all-balance
   defp balance_request(params, exchange) do
     type = params["type"] || get_in(exchange.options, ["fetchBalance", "defaultType"])
 
@@ -683,7 +688,7 @@ defmodule Bourse.Unified.RequestShape.Bybit do
             else: "UNIFIED"
           )
 
-    %{"accountType" => account}
+    clean(%{"accountType" => account, "coin" => params["coin"] || params["code"]})
   end
 
   defp withdraw_request(params, exchange) do

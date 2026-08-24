@@ -18,13 +18,18 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - The bybit testnet credential is an AI sub-account issued through Bybit's
   `ai-agent` OAuth flow, and it is writable — the previous testnet key was
-  read-only (10024 on any signed create). The venue's REST-read contract lane
-  moves 63 → 64 green of 78; the two deposit-address branches are unreachable
-  under this credential class by scope, and the remainder are live account
-  state on a fresh sub-account. CLAUDE.md records the flow's sharp edges: the
-  success page's "Access Token" is an authorization code, its exchange
-  response carries no `result` wrapper, and a funded sub-account still needs
-  a FUND → UNIFIED transfer plus a collateral switch before any order clears.
+  read-only (10024 on any signed create). With it the venue's REST-read
+  contract lane moves 63 → 74 green of 78: the order-identity cases are
+  re-pinned `category=linear` (spot creates stay 10024 regulatory-blocked
+  even on the writable key) and fed by a real filled round-trip, the
+  conversion field map and envelopes are authored and live-proven, and the
+  coins-balance branch supplies its mandatory `coin` filter. The four
+  remaining reds are ledgered: convert execution and deposit addresses are
+  region-blocked, and delivery records need a contract held through expiry.
+  CLAUDE.md records the flow's sharp edges: the success page's "Access
+  Token" is an authorization code, its exchange response carries no `result`
+  wrapper, and a funded sub-account still needs a FUND → UNIFIED transfer
+  plus a collateral switch before any order clears.
 - The bybit account-classification helpers (`/v5/account/info`, `/v5/user/query-api`)
   are carved out of six unified read methods, and the retired
   `/v5/spot-cross-margin-trade/account` branch is dropped from `fetchBalance` —
@@ -51,6 +56,10 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   contract size.
 - Request shaping keeps a caller-supplied native key when the authored unified
   source is missing, so a Deribit `reduce_only` is no longer dropped.
+- Bybit `fetchBalance` passes the `coin` filter to
+  `/v5/asset/transfer/query-account-coins-balance` — the endpoint rejects
+  `accountType=UNIFIED` without one, so that branch could never succeed on a
+  unified account.
 - Direction-bearing `endpoint_selection` cannot carry a silent `default`.
 
 ### Removed

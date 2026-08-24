@@ -71,9 +71,73 @@ roadmap.
 
 ---
 
+## 2026-08-24 — bybit: intermittent `invalid_nonce` on signed reads — the client signs before it throttles, and the authored `recv_window` never reaches the wire
+
+**Status:** 🆕 reported (surfaced by the task-671 bybit lane; cross-venue client machinery, untouched by the venue-scoped fix pass)
+
+**The call:** `mix ccxt.verify_rest_read_contracts --venue bybit` — `fetchTradingFee:0`,
+`fetchTradingFees:0` and `fetchBorrowRateHistory:0` fail non-deterministically with
+
+```
+invalid_nonce: invalid request, please check your server timestamp or recv_window param:
+req_timestamp[1787543676760], server_timestamp[1787543687242], recv_window[5000]
+```
+
+**Observed — two distinct defects, both cross-venue:**
+
+1. **Sign-then-throttle ordering.** `Bourse.Dispatch.call/4` runs `Signing.sign/4` (which
+   stamps the timestamp) and only then `HTTP.signed_request`, where
+   `Shaping.maybe_rate_limit/3` blocks inside `do_signed_request/5`. The observed staleness
+   gap is 10.5 s of queue wait; measured clock skew against `/v5/market/time` is only
+   78–214 ms, so this is our own rate-limiter queue, not the host clock. The `resigner`
+   hook fires only on Req *retries*, never on the initial throttled attempt.
+2. **Authored `recv_window` is ignored.** `priv/venues/bybit/authored/venue.json` declares
+   `"recv_window": 10000`, but `HmacRecipe` reads the global
+   `Bourse.Defaults.recv_window_ms()` (5000) — the error message confirms
+   `recv_window[5000]` on the wire.
+
+**Expected:** the timestamp is stamped *after* the rate-limiter releases the request (or the
+initial attempt re-signs post-throttle), and the venue's authored `recv_window` reaches the
+signed payload.
+
+**Impact:** latency-sensitive false reds on any HMAC venue under queue pressure — a 78-case
+lane run showed 3 nonce failures, a 14-case focused run showed 0. Retry (`:invalid_nonce` is
+retryable since task 604) usually heals it, which is why it flakes instead of failing hard.
+
+## 2026-08-24 — bybit `fetchBalance` coins-balance branch parses to an empty `%Bourse.Balance{}` — the envelope is pinned to the wallet-balance shape
+
+**Status:** 🆕 reported (task-671 bybit pass — deliberately not fixed venue-scoped: the fix
+touches `fetchBalance` envelope authoring for `type: funding` across venues)
+
+**The call:** `Bourse.fetch_balance(ex, type: "funding", params: %{"coin" => "BTC,USDT"})`
+(bybit, testnet) → routed to `GET /v5/asset/transfer/query-account-coins-balance`.
+
+**Observed:** `retCode 0` with populated rows, but the parsed `%Bourse.Balance{}` carries
+`free/used/total/debt == %{}`. The authored `balance` response envelope is pinned to
+`result.list` (the `/v5/account/wallet-balance` shape with nested `coin[]`), while this
+endpoint answers `result.balance[]` flat — so extraction finds nothing. The contract case
+still passes because its `any_fields` check treats `%{}` as non-nil, which is vacuous — and
+equally vacuous for the already-green branches 0 (`account/info`) and 3 (`user/query-api`),
+which are classification helpers, not balance carriers.
+
+**Expected:** a second authored balance envelope/map for the coins-balance shape
+(`result.balance[]`, flat `walletBalance`/`transferBalance` fields), and a contract assertion
+that distinguishes "parsed a balance" from "parsed nothing".
+
+**Impact:** consumers reading funding-account balances through bybit get an empty struct with
+`{:ok, …}` — silently wrong, the worst kind.
+
 ## 2026-08-24 — bybit: two contract cases are unreachable with an AI-subaccount testnet credential
 
-**Status:** 🆕 reported
+**Status:** ✅ resolved (same day) — (1) fixed as a client bug: `balance_request/2` in
+`Bourse.Unified.RequestShape.Bybit` now passes the `coin` filter (mandatory for
+`accountType=UNIFIED` per https://bybit-exchange.github.io/docs/v5/asset/balance/all-balance),
+and the contract case supplies `code: "BTC,USDT"` — live `retCode 0` with rows for both coins.
+(2) confirmed permanent and ledgered in `docs/prod-verification-ledger.md` — the same 10024
+regulatory text answers under the re-provisioned trade-capable key, so it is jurisdiction, not
+key scope. The account-state reds below also closed the same day: with the writable key the
+order-identity cases were re-pinned `category=linear` (spot creates are 10024-blocked) and fed
+by a real filled round-trip; the lane now runs 74/78 green (4 honest reds, all ledgered).
 
 **The call:** `mix ccxt.verify_rest_read_contracts --venue bybit` (78 cases, 64 green) with
 `BYBIT_TESTNET_API_KEY/_SECRET` pointing at a Bybit **AI sub-account** credential
