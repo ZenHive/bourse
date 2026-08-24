@@ -2,6 +2,7 @@ defmodule Bourse.Signing.EIP712Test do
   @moduledoc "Field-encoding and error-path coverage for the EIP-712 encoder."
   use ExUnit.Case, async: true
 
+  alias Bourse.Signing.Crypto
   alias Bourse.Signing.EIP712
 
   # A synthetic type exercising every supported atomic field encoder.
@@ -41,6 +42,17 @@ defmodule Bourse.Signing.EIP712Test do
     }
 
     assert byte_size(EIP712.hash_struct("AllTypes", @types, message)) == 32
+  end
+
+  test "a raw 32-byte bytes32 binary encodes identically to its hex string" do
+    # Nested struct hashes reach bytes32 fields as raw keccak output, never as hex.
+    raw = Crypto.keccak256("nested struct hash")
+    hex = "0x" <> Base.encode16(raw, case: :lower)
+
+    assert byte_size(raw) == 32
+
+    assert EIP712.hash_struct("AllTypes", @types, base_message(%{"h" => raw})) ==
+             EIP712.hash_struct("AllTypes", @types, base_message(%{"h" => hex}))
   end
 
   test "domain_separator only includes present fields, in canonical order" do

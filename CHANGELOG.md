@@ -9,6 +9,17 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- Mutation testing as a hand-run audit, not a gate: `:muex` is a `:dev`/`:test`
+  dependency pinned to our fork (hex 0.8.2 carries five defects that each
+  resolve "could not measure" into a definite verdict, and a run with nothing
+  left to measure exits 0). A first pass over the offline surface closed eight
+  behaviours the suite only appeared to cover — the digest-size and key guards
+  of `Bourse.Signing.Crypto.sign_hash/2`, the raw 32-byte `bytes32` passthrough
+  in `Bourse.Signing.Eip712` (what a nested struct hash actually arrives as),
+  and five in `Bourse.Error`: `message/1` with and without an exchange, the
+  `recoverable?/1` catch-all, and the direct `__function:` class mapping, whose
+  one existing test healed the mutant through the ancestor path.
+
 - `mix ccxt.verify_rest_read_contracts` is the provider-live REST-read lane.
   It inventories 409 sandbox-native branches across the eleven runtime venues
   and hits the venue host for each one. Product surfaces the provisioned

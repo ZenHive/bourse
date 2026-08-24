@@ -207,6 +207,21 @@ defmodule Bourse.ErrorTest do
     end
   end
 
+  describe "message/1" do
+    test "prefixes the exchange id when one is set" do
+      error = Error.insufficient_funds(exchange: "bybit", message: "not enough USDT")
+
+      assert Exception.message(error) == "[bybit] insufficient_funds: not enough USDT"
+    end
+
+    test "omits the prefix when exchange is nil" do
+      error = Error.insufficient_funds(message: "not enough USDT")
+
+      assert error.exchange == nil
+      assert Exception.message(error) == "insufficient_funds: not enough USDT"
+    end
+  end
+
   # ===========================================================================
   # Recoverability
   # ===========================================================================
@@ -257,6 +272,10 @@ defmodule Bourse.ErrorTest do
 
     test "returns nil for exchange_error" do
       assert Error.recoverable?(:exchange_error) == nil
+    end
+
+    test "returns nil for a type outside the declared error_type set" do
+      assert Error.recoverable?(:not_a_real_error_type) == nil
     end
   end
 
@@ -451,5 +470,22 @@ defmodule Bourse.ErrorTest do
       assert Error.from_spec_class("TotallyUnknown", %{}) == :exchange_error
       assert Error.from_spec_class("UnsubscribeError", %{"UnsubscribeError" => ["BaseError"]}) == :exchange_error
     end
+
+    test "strips the __function: prefix on the direct mapping path, without ancestors" do
+      assert Error.from_spec_class("__function:InsufficientFunds", %{}) == :insufficient_funds
+      assert Error.from_spec_class("__function:AuthenticationError", %{}) == :authentication_error
+    end
+
+    test "rejects a non-binary class name" do
+      assert_raise FunctionClauseError, fn -> Error.from_spec_class(untyped(:insufficient_funds), %{}) end
+    end
+
+    test "rejects a non-map ancestors argument" do
+      assert_raise FunctionClauseError, fn -> Error.from_spec_class("InsufficientFunds", untyped(nil)) end
+    end
   end
+
+  # Hides the value from compile-time type inference so the runtime guard, not the
+  # type checker, is what rejects it.
+  defp untyped(value), do: Enum.random([value])
 end

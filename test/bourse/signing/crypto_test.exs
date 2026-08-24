@@ -56,5 +56,25 @@ defmodule Bourse.Signing.CryptoTest do
         Crypto.sign_hash(digest, <<0::256>>)
       end
     end
+
+    test "rejects a binary digest that is not exactly 32 bytes" do
+      short = :binary.copy(<<0xAA>>, 31)
+
+      assert_raise FunctionClauseError, fn ->
+        Crypto.sign_hash(short, @key)
+      end
+    end
+
+    test "rejects a non-binary private key" do
+      digest = Crypto.keccak256("message")
+
+      assert_raise FunctionClauseError, fn ->
+        Crypto.sign_hash(digest, untyped(:not_a_binary_key))
+      end
+    end
   end
+
+  # Hides the value from compile-time type inference so the runtime guard, not the
+  # type checker, is what rejects it.
+  defp untyped(value), do: Enum.random([value])
 end
