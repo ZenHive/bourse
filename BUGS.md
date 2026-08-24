@@ -133,11 +133,14 @@ that distinguishes "parsed a balance" from "parsed nothing".
 `Bourse.Unified.RequestShape.Bybit` now passes the `coin` filter (mandatory for
 `accountType=UNIFIED` per https://bybit-exchange.github.io/docs/v5/asset/balance/all-balance),
 and the contract case supplies `code: "BTC,USDT"` — live `retCode 0` with rows for both coins.
-(2) confirmed permanent and ledgered in `docs/prod-verification-ledger.md` — the same 10024
-regulatory text answers under the re-provisioned trade-capable key, so it is jurisdiction, not
-key scope. The account-state reds below also closed the same day: with the writable key the
-order-identity cases were re-pinned `category=linear` (spot creates are 10024-blocked) and fed
-by a real filled round-trip; the lane now runs 74/78 green (4 honest reds, all ledgered).
+(2) confirmed permanent and ledgered in `docs/prod-verification-ledger.md` — under the
+re-provisioned trade-capable key the answer is *"Not Support Sub Account"*: bybit serves
+deposit addresses only to the master account, so the blocker is the credential class (the
+earlier 10024 regulatory text was the transient provisioning wall in front of the same
+endpoint). The account-state reds below also closed the same day: the order-identity cases
+were re-pinned `category=linear` and fed by a real filled round-trip, and a tiny executed
+convert turned `fetchConvertTrade:0` green; the lane now runs 75/78 green (3 honest reds,
+all ledgered).
 
 **The call:** `mix ccxt.verify_rest_read_contracts --venue bybit` (78 cases, 64 green) with
 `BYBIT_TESTNET_API_KEY/_SECRET` pointing at a Bybit **AI sub-account** credential

@@ -19,13 +19,14 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - The bybit testnet credential is an AI sub-account issued through Bybit's
   `ai-agent` OAuth flow, and it is writable — the previous testnet key was
   read-only (10024 on any signed create). With it the venue's REST-read
-  contract lane moves 63 → 74 green of 78: the order-identity cases are
-  re-pinned `category=linear` (spot creates stay 10024 regulatory-blocked
-  even on the writable key) and fed by a real filled round-trip, the
-  conversion field map and envelopes are authored and live-proven, and the
-  coins-balance branch supplies its mandatory `coin` filter. The four
-  remaining reds are ledgered: convert execution and deposit addresses are
-  region-blocked, and delivery records need a contract held through expiry.
+  contract lane moves 63 → 75 green of 78: the order-identity cases are
+  re-pinned `category=linear` and fed by a real filled round-trip, the
+  conversion field map and envelopes are authored and live-proven end to
+  end (a tiny executed testnet convert populated the history the
+  convert-status read resolves), and the coins-balance branch supplies its
+  mandatory `coin` filter. The three remaining reds are ledgered: the two
+  deposit-address reads answer "Not Support Sub Account" (a master-account
+  surface), and delivery records need a contract held through expiry.
   CLAUDE.md records the flow's sharp edges: the success page's "Access
   Token" is an authorization code, its exchange response carries no `result`
   wrapper, and a funded sub-account still needs a FUND → UNIFIED transfer

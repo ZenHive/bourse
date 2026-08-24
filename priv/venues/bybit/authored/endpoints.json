@@ -1638,7 +1638,7 @@
     ],
     "has": true,
     "mapping_complete": true,
-    "verification": "unverified",
+    "verification": "verified",
     "descriptor": {
       "async": true,
       "description": "fetch the data for a conversion trade",
@@ -1715,7 +1715,7 @@
     ],
     "has": true,
     "mapping_complete": true,
-    "verification": "unverified",
+    "verification": "verified",
     "descriptor": {
       "async": true,
       "description": "fetch the users history of conversion trades",
