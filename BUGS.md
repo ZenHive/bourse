@@ -71,6 +71,173 @@ roadmap.
 
 ---
 
+## 2026-08-24 — `Bourse.Symbol.reverse_aliases/1` is not injective on hyperliquid's authored alias map — one currency is silently dropped
+
+**Status:** 🆕 reported (mutation-testing testability survey, 2026-08-24 — see the provenance
+note on the test-gap entry below; the finding came from reading `lib/bourse/symbol.ex`, and the
+numbers here were re-measured against the authored data with `mix run`)
+
+**The call:** `Bourse.Symbol.reverse_aliases(aliases)` where `aliases` is a venue's authored
+`markets.patterns.currency_aliases` — public API, meant to invert exchange→unified into
+unified→exchange for `apply_alias/2`.
+
+**Observed:** `priv/venues/hyperliquid/authored/markets.json` maps **two** keys onto `"BTC"` —
+`"XBT" => "BTC"` and `"UBTC" => "BTC"`. `reverse_aliases/1` is `Map.new(aliases, fn {k, v} -> {v, k} end)`
+(`lib/bourse/symbol.ex:318-320`), so the collision is discarded without a word: a 14-entry map
+comes back with **13** entries, and `rev["BTC"]` is `"XBT"`. Which key survives is decided by map
+iteration order, which Elixir does not specify — the code makes no choice, it just keeps whatever
+comes last. The round trip is therefore not the identity:
+
+```elixir
+hl = Jason.decode!(File.read!("priv/venues/hyperliquid/authored/markets.json"))["patterns"]["currency_aliases"]
+map_size(hl)                                          #=> 14
+rev = Bourse.Symbol.reverse_aliases(hl)
+map_size(rev)                                         #=> 13
+Map.get(rev, "BTC")                                   #=> "XBT"
+
+"UBTC" |> Bourse.Symbol.apply_alias(hl) |> Bourse.Symbol.apply_alias(rev)   #=> "XBT"   (expected "UBTC")
+"XBT"  |> Bourse.Symbol.apply_alias(hl) |> Bourse.Symbol.apply_alias(rev)   #=> "XBT"   (correct, by luck)
+```
+
+**Expected:** either the inversion refuses a non-injective map (or names the collision), or the
+venue's authored map carries a designated canonical exchange code per unified code, so that
+`apply_alias/2 |> apply_alias(reverse_aliases(…))` is the identity on every key the venue
+authored. Hyperliquid's `"UBTC"` is a real, traded market prefix — it is not a duplicate to
+throw away.
+
+**Scope, measured:** eight of the eleven venues author a non-empty `currency_aliases`
+(binance / binancecoinm / binanceusdm 4 entries, bybit / deribit / derive 2, okx 3,
+hyperliquid 14; alpaca, coinbaseexchange author none and lighter authors `{}`). Only
+hyperliquid's map has colliding values — the other seven invert losslessly today, so this is a
+latent trap for the rest and a live wrong answer for hyperliquid.
+
+**Impact:** consumer-only — `reverse_aliases/1` has **zero callers in `lib/`** (grep across the
+tree finds only its own `@doc`/`@spec`/`def`), so nothing in this client is wrong because of it.
+A consumer that builds a unified→exchange map from the venue's own alias slice to construct
+hyperliquid ids gets `"BTC" => "XBT"`, which is not the code hyperliquid uses for that market,
+and gets no error saying so.
+
+## 2026-08-24 — `Bourse.Symbol.normalize/3`'s `:aliases` option rewrites the whole symbol, not currencies — real venue aliases corrupt real market ids
+
+**Status:** 🆕 reported (mutation-testing testability survey, 2026-08-24 — provenance note on the
+test-gap entry below; measured against authored alias maps and the frozen reference slice's
+market ids)
+
+**The call:** `Bourse.Symbol.normalize(exchange_id, %{separator: "", case: :upper}, aliases: venue_aliases)`
+— the documented `:aliases` option (`lib/bourse/symbol.ex:138`).
+
+**Observed:** `apply_currency_aliases/2` (`lib/bourse/symbol.ex:569-573`) reduces over the alias
+map with `String.replace(acc, from, to)` on the *whole* symbol string. The replacement is not
+anchored to a currency boundary, so an alias key that happens to be a substring of a different
+currency is rewritten too:
+
+```elixir
+bin = Jason.decode!(File.read!("priv/venues/binance/authored/markets.json"))["patterns"]["currency_aliases"]
+#=> %{"BCC" => "BCC", "BCHSV" => "BSV", "XBT" => "BTC", "YOYO" => "YOYOW"}
+
+Bourse.Symbol.normalize("AIXBTUSDT", %{separator: "", case: :upper}, aliases: bin)
+#=> "AIBTC/USDT"      # expected "AIXBT/USDT" — AIXBT is a market of its own, not XBT
+Bourse.Symbol.normalize("AIXBTUSDT", %{separator: "", case: :upper})
+#=> "AIXBT/USDT"      # correct without the option
+
+okx = Jason.decode!(File.read!("priv/venues/okx/authored/markets.json"))["patterns"]["currency_aliases"]
+#=> %{"AE" => "AET", "BCHSV" => "BSV", "XBT" => "BTC"}
+Bourse.Symbol.normalize("AEVO-USDT", %{separator: "-", case: :upper}, aliases: okx)
+#=> "AETVO/USDT"      # expected "AEVO/USDT"
+```
+
+Sweeping every alias key against the market ids in `test/reference_slice/<venue>.json` (frozen
+CCXT-derived test input, so treat the id list as indicative rather than authoritative) counts the
+boundary-crossing hits: okx 43 symbols (`AE` inside `AEVO`, `AERGO`, `AERO`, `ADA/EUR`, …),
+binance 40 (`XBT` inside `AIXBT`, and inside every `…X/BTC` pair such as `AVAX/BTC`, `CFX/BTC`),
+bybit 3, binanceusdm 1, hyperliquid 1 — all of them `AIXBT` or the `X`+`BTC` seam. binancecoinm,
+deribit and derive: none.
+
+A second, weaker problem sits on top of the same three lines: `Enum.reduce` iterates a **map**,
+whose order Elixir does not specify, so a chained replacement (one alias's output containing
+another alias's key) would resolve order-dependently. **Unverified** — sweeping the eight
+authored alias maps found no key that is a substring of another key or of another key's value,
+so no real-data instance of the chaining hazard exists today. Reported as a latent hazard only.
+
+**Expected:** aliases apply per currency after splitting (the same `Map.get/3` the reverse path
+already uses), not as a substring rewrite over the raw id.
+
+**Impact:** consumer-only, and confined to this one option. No caller in `lib/` passes
+`:aliases` — the single in-tree caller of `normalize/3` is
+`lib/bourse/unified/request_shape.ex:928`, which passes no opts, and the client's own
+exchange→unified path (`Bourse.Symbol.from_exchange_id/3` → `apply_reverse_alias/2`) does the
+correct per-currency lookup: `Bourse.Symbol.from_exchange_id("AIXBTUSDT", ex, :spot)` returns
+`"AIXBT/USDT"`. So a consumer following the documented option gets a *worse* answer than one
+using the client's own conversion, with no error — a symbol that names a different market.
+
+## 2026-08-24 — `Bourse.Symbol`: three untested surfaces where the code and the docs already disagree
+
+**Status:** 📋 noted (not defects — test gaps, filed so the evidence is not lost)
+
+**Provenance for all three, and for the two entries above:** a mutation-testing *testability*
+survey of the offline-testable surface, run 2026-08-24. `Bourse.Symbol` **was not itself
+mutation-tested** — it surfaced in the survey as a large, offline, thinly-tested module, and the
+findings below come from reading `lib/bourse/symbol.ex` and re-measuring the claims with
+`mix run` against the authored specs. No production code and no test was changed.
+
+**1. The single-digit expiry day (1st–9th) is never exercised.** `convert_date/3`'s
+`:yymmdd -> :ddmmmyy` clause (`symbol.ex:401-405`) emits the day unpadded, and
+`pad_ddmmmyy_day/1` (`symbol.ex:1479-1483`, with the comment recording the venue split at
+`:1477-1478`) re-pads it for exactly one caller — the bybit
+linear-future branch of `apply_future_ddmmmyy/2` (`symbol.ex:973`), whose comment records the
+split: bybit pads (`04SEP26`), deribit's live ids do not (`4SEP26`). Both behaviours ride on a
+day in 1–9, and no `.exs` test in the repo supplies one. The `DDMMMYY` literals in `test/**/*.exs`
+are `31JUL26` (12×), `31JAN25` (6×), `18JUL26` (4×), `28AUG26` (3×), `22JUN26` (2×), `26JUN26`,
+`08AUG26`; the `YYMMDD` literals are `-250131-`, `-260731-`, `-260723-`, `-260814-`, `-260116-`,
+`-270625-`, `-260622-`, `-260807-`. The only single-digit day in the suite is the `08AUG26` /
+`-260807-` pair at `test/bourse/unified/option_quantity_test.exs:323` — an already-padded
+**option** market-id fixture, and `pad_ddmmmyy_day/1` is reachable only from the **future**
+branch. No `.exs` file references `convert_date` or `pad_ddmmmyy` at all. Live values for the
+record: `convert_date("260807", :yymmdd, :ddmmmyy) #=> "7AUG26"`, and the padded form the bybit
+branch would produce is `"07AUG26"` — a mutation that deletes either the padding clause or its
+`day in ?1..?9` guard is invisible to the suite.
+
+**2. `convert_date/3` promises an `ArgumentError` it does not raise on two paths.** The `@doc`
+at `symbol.ex:385-387` states: *"Supported formats: `:yymmdd`, `:ddmmmyy`, `:yyyymmdd`. Raises
+`ArgumentError` naming both formats and the input when the pair is unsupported **or the input
+does not match the declared source format**."* The `:ddmmmyy -> :yymmdd` clause honours that (it
+regex-matches and raises). The two clauses at `symbol.ex:422-423` validate neither length nor
+digit-ness and silently return garbage:
+
+```elixir
+Bourse.Symbol.convert_date("BANANA",     :yyyymmdd, :yymmdd)   #=> "NANA"
+Bourse.Symbol.convert_date("nonsense",   :yymmdd,   :yyyymmdd) #=> "20nonsense"
+Bourse.Symbol.convert_date("2026-03-27", :yyyymmdd, :yymmdd)   #=> "26-03-27"
+```
+
+The `:yymmdd -> :ddmmmyy` clause is only accidentally stricter — it raises from
+`String.to_integer/1` or `Map.fetch!/2`, not from a check it performs. No test pins any of this,
+so the doc and the code can keep disagreeing.
+
+**3. `split_no_separator/2` ignores `get_quote_currencies/1` and its `extra` parameter
+entirely.** `split_no_separator/2` (`symbol.ex:1450-1461`) comprehends over the hardcoded module
+attribute `@sorted_quote_currencies` (`symbol.ex:54-55`, the 13 default quotes). It is the
+splitter for the whole exchange→unified path — `reverse_spot/3` (`:1051`), `reverse_swap/3`
+(`:1084`), and the option branches (`:1194`, `:1219`) — i.e. everything reached from the public
+`Bourse.Symbol.from_exchange_id/3`. `get_quote_currencies/1` (`symbol.ex:369-376`), which exists
+to extend that list, has exactly one caller in the tree: `find_and_split/2` (`symbol.ex:583`),
+on the `normalize/3` side. So the venue-extensible quote list is reachable only through
+`normalize/3`'s `:quote_currencies` option and never through `from_exchange_id/3`, which has no
+such knob:
+
+```elixir
+{:ok, ex} = Bourse.Exchange.new("binance")
+Bourse.Symbol.from_exchange_id("BTCTRY", ex, :spot)   #=> "BTCTRY"    (unsplit — TRY is a real binance quote)
+Bourse.Symbol.from_exchange_id("BTCUSDT", ex, :spot)  #=> "BTC/USDT"
+
+Bourse.Symbol.normalize("BTCTRY", %{separator: "", case: :upper}, quote_currencies: ["TRY"])
+#=> "BTC/TRY"
+```
+
+No test covers either half of that asymmetry (`grep` finds no `.exs` reference to
+`get_quote_currencies` or `quote_currencies:`), so nothing fails if the `extra` branch is
+mutated away.
+
 ## 2026-08-24 — bybit: intermittent `invalid_nonce` on signed reads — the client signs before it throttles, and the authored `recv_window` never reaches the wire
 
 **Status:** 🆕 reported (surfaced by the task-671 bybit lane; cross-venue client machinery, untouched by the venue-scoped fix pass)
