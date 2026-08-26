@@ -205,15 +205,23 @@ defmodule Bourse.MixProject do
       # reach 2.8.1 pins ex_ast ~> 0.12.0; override verified against mix reach.check
       {:ex_ast, "~> 0.13.0", only: [:dev, :test], runtime: false, override: true},
       {:ex_slop, "~> 0.4.2", only: [:dev, :test], runtime: false},
-      # Mutation testing. Pinned to our fork: hex 0.8.2 carries five defects that
-      # each resolve "could not measure" into a definite verdict — see
-      # upstream_repos/_ours/muex/quirks.md. Two are in Oeditus/muex#21, two are
-      # fork-only, and the fifth (@behaviour read as a behaviour definition, so
-      # every implementing file is skipped) is fixed nowhere yet — and --no-filter
-      # alone does not close the hole: the optimizer (default on) can reduce the
-      # mutation set to 0 and still exit 0. Run muex with --no-filter --no-optimize
-      # or the whole signing surface goes unmeasured at exit 0.
-      {:muex, github: "e-fu/muex", branch: "integration/all-fixes", only: [:dev, :test], runtime: false},
+      # Mutation testing, hand-run audit only — never a gate. hex 0.9.0 carries
+      # every fix our fork held, and the fork branch is deleted, so the old git
+      # pin no longer resolves. The @behaviour misread is gone: measured against
+      # this lib/ on 0.9.0, "Behaviour definition" skips 28 -> 1, and the one
+      # left (ws/auth/behaviour.ex) is a real behaviour — the signing and WS-auth
+      # modules are measurable again. Still run `--no-filter --no-optimize`: a
+      # module with >= 3 @callback plus its own logic is filtered out regardless,
+      # and the optimizer can reduce the mutation set to 0 and still exit 0.
+      # 🚨 A single run is NOT evidence — verdicts flicker even at
+      # --concurrency 1, always toward false green. Repeat a measurement before
+      # quoting a score, and re-baseline rather than reading a drop against the
+      # pre-0.9.0 numbers as a regression: those were taken with the broken
+      # filter and with StatementDeletion never applied. Under a narrow
+      # --test-paths the sandbox fixture path is a symlink into this checkout,
+      # so a test writing inside test/ would mutate real files — today every
+      # writing test targets System.tmp_dir!(); keep it that way.
+      {:muex, "~> 0.9.0", only: [:dev, :test], runtime: false},
       {:reach, "~> 2.8.1", only: [:dev, :test], runtime: false},
       # reach references Boxart.Render.* unconditionally; boxart is
       # `optional: true` in reach's hex manifest, so we pull it in here.
