@@ -71,6 +71,61 @@ roadmap.
 
 ---
 
+## 2026-08-27 — `HmacRecipe`'s canonical-string fallback ladders silently pick a block instead of failing; no test reaches past their first rung
+
+**Status:** 🆕 reported (measured, not consumer-reported — mutation testing on
+`lib/bourse/signing/hmac_recipe.ex`, muex 0.9.1, 2366 mutants, 421 survivors)
+
+**The call:** any signed request whose authored `canonical_string` slice does not carry the
+exact key the ladder looks for first.
+
+**Observed:** two fallback ladders resolve which canonical-string block signs a request:
+
+```elixir
+# get_unfiltered_components/2, hmac_recipe.ex:270
+cs[method] || cs["*"] || cs |> Map.values() |> List.first() || cs
+
+# get_canonical_block/1, hmac_recipe.ex:722
+cs["POST"] || cs["GET"] || cs["*"] || cs |> Map.values() |> List.first() || cs
+```
+
+Every mutation of the `||` operators from the second rung onward **survives** — no test in
+`test/bourse/signing`, `test/bourse/signing_test.exs` or `test/bourse/ws/auth` (274 tests)
+distinguishes them. The same holds for the permissive defaults in `path_predicate?/4`
+(`hmac_recipe.ex:302`): clauses 1 (`nil -> true`) and 3 (`_ -> true`) can each be deleted
+without reddening the suite, and the `unfiltered != []` comparison at `:259` survives
+inversion.
+
+**Expected:** either the later rungs are reachable and pinned by a test, or they do not exist.
+
+**Why this is a design report rather than a coverage report:** the eleven authored documents
+are a closed set, and every one of them apparently authors the key the first rung reads.
+`Map.values() |> List.first()` then means "if the recipe is not the shape we expect, sign with
+whichever block the map happens to yield first" — an ordering-dependent guess in the module
+that produces signatures. That is the shape CLAUDE.md's `path_params` note argues against:
+the fix for a slot that must never drift is a raising clause, not a pre-built fallback that
+reads the wrong place quietly. Mitigating: a wrong canonical block yields a wrong signature,
+which the venue rejects — the failure is loud at the wire, not silent in our numbers.
+
+**Consumer impact:** none observed today; no venue currently authors a recipe that reaches
+past the first rung. The report is that the code carries three untested branches whose only
+job is to guess when an authored slice is malformed.
+
+**Repro:**
+
+```
+mix muex --files lib/bourse/signing/hmac_recipe.ex \
+  --test-paths test/bourse/signing,test/bourse/signing_test.exs,test/bourse/ws/auth \
+  --timeout 60000 --no-filter --no-optimize --fail-at 0
+```
+
+Score 78.91 % (1575 killed / 421 survived / 370 invalid / 0 timeout). Verdicts were
+reproducible here: two byte-identical runs over `lib/bourse/signing/eip712.ex` (398 mutants)
+returned identical counts **and** identical survivor lists, so the upstream flicker warning
+did not reproduce on this surface. The 370 invalids are a muex artifact, not code: they
+survive the 0.9.1 map-update fix unchanged, so a second invalid-producing cause is still
+open upstream and silently removes ~16 % of mutants from the denominator.
+
 ## 2026-08-27 — `spec_disk_test` pins pre-rotation spec hashes, so every legitimate authored-spec edit reds the suite
 
 **Status:** 🆕 reported (found while scoping a mutation-testing run; `main` is red on a clean
