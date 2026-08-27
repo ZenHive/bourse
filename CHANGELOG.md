@@ -10,7 +10,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 
 - Mutation testing as a hand-run audit, not a gate: `:muex` is a `:dev`/`:test`
-  dependency on hex `~> 0.9.0`, which carries every fix our fork branch held
+  dependency on hex `~> 0.9.1`, which carries every fix our fork branch held
   (that branch is deleted, so the previous git pin no longer resolves). The
   `@behaviour`-read-as-behaviour-definition defect — which skipped every
   implementing file — is fixed: measured against this `lib/`, "Behaviour
@@ -20,7 +20,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   filtered out, and the optimizer can still reduce the mutation set to 0 and
   exit 0, so the run stays `--no-filter --no-optimize`; and verdicts flicker
   between identical serial runs, always toward false green, so one run is not
-  evidence. The pre-0.9.0 scores below were taken with the broken filter and
+  evidence. 0.9.1 removes a third: through 0.9.0 a mutation of `%{s | k: v}`
+  emitted an AST no parser produces, so the mutant landed as `:invalid` and
+  left the denominator silently — 36 hits across 15 of 15 inspected files
+  here, which is why an invalid-heavy run taken on <= 0.9.0 is not comparable
+  to one taken after. The pre-0.9.0 scores below were taken with the broken filter and
   with `StatementDeletion` never applied — expect a re-baseline to read lower,
   which is the removed defect, not a regression. A first pass over the offline
   surface closed eight behaviours the suite only appeared to cover — the digest-size and key guards
