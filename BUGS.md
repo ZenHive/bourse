@@ -71,6 +71,48 @@ roadmap.
 
 ---
 
+## 2026-08-27 — `spec_disk_test` pins pre-rotation spec hashes, so every legitimate authored-spec edit reds the suite
+
+**Status:** 🆕 reported (found while scoping a mutation-testing run; `main` is red on a clean
+tree as of `e71e714`)
+
+**The call:** `mix test.json --quiet test/bourse` on a clean checkout.
+
+**Observed:** `test/bourse/spec_disk_test.exs:63` — "assembled maps match the recorded
+original hashes for all eleven venues" — fails for bybit:
+
+```
+left:  [{"bybit",
+         "01870382452ab401675afb4f96713186c60e1f6e6381ffa032a1714096980fa5",
+         "e048a0d6eae4de899f3a111e9b9bafcc9311a630e68fd1674d0e6bf58ad92f69"}]
+right: []
+```
+
+**Expected:** green on a clean tree, or a red that names a real defect.
+
+**Why it fires:** the hashes in `priv/venues/_shared/binance_family/rotation_report.json` are
+the SHA-256 of the facet-major maps as they stood *before* `spec.json` was deleted — a
+one-time migration artifact, per the test's own moduledoc ("recorded before `spec.json` was
+deleted"). bybit's authored document has since been edited three times on purpose:
+`443968c` (carve the account-classification helpers), `9e05b17` (order identity on linear,
+convert map, coin filter), `dca6a8c` (convert executed live). Each edit necessarily changes
+the assembled map, so the pin cannot hold. The other ten venues still match because nothing
+edited them since the rotation.
+
+**The design question underneath:** the pin proved *the rotation was lossless*. That
+guarantee expired with the first legitimate authored edit. Re-recording the hash after every
+spec change does not restore it — the new hash is produced by the same loader it is meant to
+check, so it degrades to a change-detector that reds on normal work. The durable invariant is
+the file's *other* test ("every runtime venue is split endpoint-major and has no leftover
+`spec.json`"), which is unaffected. Deciding whether to re-scope, re-record, or retire the
+hash test is an owner call, not a mechanical fix — which is why this is filed rather than
+patched.
+
+**Consumer impact:** none at runtime. The cost is to the gates: `mix precommit` and
+`mix ci` cannot go green on a clean tree, and any tool that runs the suite per-iteration
+reads a permanent red. It blocked a mutation-testing run outright — a test that fails on
+unmutated code marks every mutant as killed, so the score would have read 100 %.
+
 ## 2026-08-24 — bybit `watchOrders` channel template is `":{symbol}"` — `Bourse.WS.watch_orders/2` cannot reach the venue's real private order topic
 
 **Status:** 🆕 reported (found live while building the trader WS journey, 2026-08-24; the
