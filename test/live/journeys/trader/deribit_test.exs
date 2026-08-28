@@ -61,13 +61,19 @@ defmodule Bourse.Journeys.Trader.DeribitTest do
 
       price = resting_price(best_bid, tick)
 
+      client_order_id = unique_client_order_id("trader-deribit")
+
       {:ok, placed} =
         Bourse.create_order(exchange, @symbol, "limit", "buy", @amount,
           price: price,
-          clientOrderId: unique_client_order_id("trader-deribit")
+          clientOrderId: client_order_id
         )
 
       assert is_binary(placed.id) and placed.id != ""
+      # Deribit echoes clientOrderId back as `label`; assert the round-trip
+      # against the generated value, not against `placed` (both would be nil
+      # if the venue ever stopped echoing it).
+      assert placed.client_order_id == client_order_id
 
       try do
         # Deribit authors no fetchOpenOrder; private/get_order_state is fetch_order.
@@ -83,7 +89,7 @@ defmodule Bourse.Journeys.Trader.DeribitTest do
 
         assert order.side == "buy"
         assert order.type == "limit"
-        assert order.client_order_id == placed.client_order_id
+        assert order.client_order_id == client_order_id
         assert_in_delta order.price, price, tick / 2
         assert_in_delta order.amount, @amount, 1.0e-9
 
