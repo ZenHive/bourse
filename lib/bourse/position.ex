@@ -14,9 +14,10 @@ defmodule Bourse.Position do
     * `contracts` - Number of contracts
     * `contract_size` - Size of one contract
     * `notional` - Absolute position value denominated by `notional_currency`.
-      On an option it is the mark-to-market premium value, not strike/index
-      exposure: that is the cash value common to the venues' option-value
-      fields and does not pretend unlike exposures are additive.
+      On an option it is mark-to-market premium value, not strike or index
+      exposure: OKX `optVal`, Bybit `positionValue`, and Deribit
+      `contracts * contract_size * mark_price` are that cash value, and
+      unlike exposures are not additive.
     * `notional_currency` - Unified currency code that denominates `notional`.
       Populated whenever `notional` is populated on the unified read path.
     * `base_quantity` - Absolute position size in the base currency. Populated

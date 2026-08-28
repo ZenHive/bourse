@@ -1,6 +1,8 @@
 # OKX carve register
 
 Provider authority: [`priv/venues/okx/authority/manifest.json`](../../priv/venues/okx/authority/manifest.json).
+Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
+parses the `rate-unit` markers and unit tables below against the public structs.
 
 ## 2026-08-28 — option position value (Task 666)
 
@@ -12,16 +14,17 @@ inverse-perpetual arithmetic.**
   [OKX position contract](https://www.okx.com/docs-v5/en/#trading-account-rest-api-get-positions)
 - *Our carve:* an option row reads absolute `optVal` in its settlement currency
   only after its market supplies `contract_size`. It never enters the inverse
-  swap formula. Missing market units leave `notional` nil.
-- *Live evidence:* unavailable in this run; the credentialed demo option gate
-  flunks unless the account holds a populated option position.
+  swap formula `contracts * ctVal / markPx`. Missing market units leave
+  `notional` nil. SWAP / FUTURES rows are unchanged: linear copies
+  `notionalUsd`, inverse still uses `contracts * ctVal / markPx`.
+- *Live evidence:* recorded in this review's completion note after a live
+  demo probe; an empty option book on the credentialed demo account is not
+  treated as a green substitute for a populated row.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T666a","date":"2026-08-28","semantic_source":{"kind":"provider_owned","reference":"OKX v5 Get positions optVal and notionalUsd fields"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":null,"known_gap_reason":"No populated OKX demo option position was available in this run"}
+{"carve_id":"C-T666a","date":"2026-08-28","semantic_source":{"kind":"provider_owned","reference":"OKX v5 Get positions optVal (Option Value, OPTION only) and notionalUsd (USD notional exposure)"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":null,"known_gap_reason":"Live demo OPTION positions were empty at review; probe recorded in the harness verdict"}
 -->
-Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
-parses the `rate-unit` markers and unit tables below against the public structs.
-from `priv/venues/okx/authority/manifest.json` artifact `api-v5-docs` — makes those cursors exclusive.
+
 ## 2026-08-12 — rate-unit confrontation (Task 594)
 **C-T594j — OKX's authored rate-like slots name their venue units (task 594).
 Outcome: CONFIRM provider arithmetic; retain one history-position gap.**

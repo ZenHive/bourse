@@ -3442,7 +3442,7 @@ defmodule Bourse.Unified.ReadParse do
   # instrument cannot acquire a value whose contract unit we never resolved.
   defp okx_position_notional(%{"instType" => "OPTION"} = row, _contracts_abs, contract_size, _mark, _inverse?)
        when is_binary(contract_size) do
-    non_empty_string(Map.get(row, "optVal"))
+    decimal_abs(non_empty_string(Map.get(row, "optVal")))
   end
 
   defp okx_position_notional(%{"instType" => "OPTION"}, _contracts_abs, _contract_size, _mark, _inverse?), do: nil
@@ -4209,6 +4209,13 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   defp annotate_bybit_position_row(other, _inverse?), do: other
+
+  # Option rows publish premium as `positionValue` (carve C-T666b). They must not
+  # take the inverse-perpetual size/markPrice path even when the request symbol
+  # looks coin-margined.
+  defp bybit_position_notional(%{"category" => "option"} = row, _inverse?) do
+    decimal_abs(non_empty_string(Map.get(row, "positionValue")))
+  end
 
   defp bybit_position_notional(row, true) do
     size = non_empty_string(Map.get(row, "size")) || non_empty_string(Map.get(row, "qty"))

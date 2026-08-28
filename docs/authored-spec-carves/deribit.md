@@ -3,6 +3,46 @@
 Provider authority: [`priv/venues/deribit/authority/manifest.json`](../../priv/venues/deribit/authority/manifest.json).
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
+
+## 2026-08-28 — option premium notional shared rule (Task 666)
+
+**C-T666c — Deribit's Task 664 premium derivation satisfies the shared option
+`notional` rule. Outcome: CONFIRM C-T664; do not re-derive.**
+
+The unified option `notional` is mark-to-market premium value in
+`notional_currency`. Deribit still computes
+`abs(contracts) * contract_size * abs(mark_price)` in the option's settlement
+currency when loaded markets supply `contract_size`, and leaves `notional` nil
+without that input. That is the same cash-value rule OKX (`optVal`) and Bybit
+(`positionValue`) now satisfy. Future rows are unchanged.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T666c","date":"2026-08-28","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions option size/mark_price and public/get_contract_size base-coin unit for options"},"observed_evidence":{"kind":"live_venue","reference":"Task 664 live pin in test/live/deribit/deribit_authored_integration_test.exs (dangerous): option premium notional with loaded markets, nil without"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
+## 2026-08-22 — option premium notional (Task 664)
+
+**C-T664 — Deribit option `notional` is the settlement-currency premium
+`abs(contracts) × contract_size × abs(mark_price)`, never a guessed contract
+size (task 664). Outcome: DIVERGE from mapping option `size` onto quote
+notional.**
+
+- *Exchange semantics:* [`private/get_positions`](https://docs.deribit.com/api-reference/account-management/private-get_positions)
+  + [`public/get_contract_size`](https://docs.deribit.com/api-reference/market-data/public-get_contract_size).
+  Option `size` is a contract count; option `mark_price` is premium per unit of
+  underlying in settlement currency. The venue does not publish a quote notional
+  for options.
+- *Our carve:* `Bourse.Unified.DeribitPositionUnits` derives the premium only when
+  loaded markets supply a positive `contract_size`. Missing `contract_size`
+  leaves `notional` nil rather than substituting 1.0. `notional_currency` is the
+  option's settlement code.
+- *Live evidence:* `test/live/deribit/deribit_authored_integration_test.exs`
+  opens an option and a future on one account and asserts the arithmetic.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T664","date":"2026-08-22","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions option size/mark_price contract and public/get_contract_size base-coin unit for options"},"observed_evidence":{"kind":"live_venue","reference":"test/live/deribit/deribit_authored_integration_test.exs dangerous option+future position unit pin"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-08-18 — unified client_order_id round-trip (Task 622)
 **C-T622 — Deribit `label` is the client identifier on both the request and the
 private order/fill echo (task 622). Outcome: CONFIRM provider contract.**

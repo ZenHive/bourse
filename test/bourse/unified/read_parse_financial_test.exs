@@ -828,6 +828,159 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
   end
 
   # ---------------------------------------------------------------------------
+  # Option notional is premium value (Task 666)
+  # ---------------------------------------------------------------------------
+
+  describe "option position notional is premium value" do
+    test "every venue that populates option notional also names notional_currency" do
+      {bybit_row, inverse_notional} = parse_bybit_option_position()
+      assert bybit_row.notional == 50.0
+      assert bybit_row.notional_currency == "USDC"
+      refute_in_delta bybit_row.notional, inverse_notional, 1.0e-9
+
+      {okx_row, inverse_notional, usd_notional} = parse_okx_option_position()
+      assert_in_delta okx_row.notional, 0.0000001084604966, 1.0e-18
+      assert okx_row.notional_currency == "BTC"
+      refute_in_delta okx_row.notional, inverse_notional, 1.0e-9
+      refute_in_delta okx_row.notional, usd_notional, 1.0e-9
+
+      deribit =
+        "deribit"
+        |> Exchange.new!()
+        |> Exchange.put_markets([%Bourse.Market{id: "BTC-31JUL26-65000-C", contract_size: 1.0}])
+
+      option = %Bourse.Position{
+        contracts: 0.1,
+        mark_price: 0.00701189,
+        symbol: "BTC/USD:BTC-260731-65000-C",
+        info: %{"instrument_name" => "BTC-31JUL26-65000-C", "kind" => "option"}
+      }
+
+      assert {:ok, %Bourse.Position{notional: deribit_notional, notional_currency: "BTC"} = deribit_row} =
+               DeribitPositionUnits.reconcile({:ok, option}, deribit)
+
+      assert_in_delta deribit_notional, 0.000701189, 1.0e-12
+
+      Enum.each([bybit_row, okx_row, deribit_row], fn %Bourse.Position{notional: notional, notional_currency: currency} ->
+        assert is_number(notional)
+        assert is_binary(currency) and currency != ""
+      end))
+    end
+
+    test "okx option notional is nil without loaded contract size rather than inverse arithmetic" do
+      {_row, inverse_notional, _usd} = parse_okx_option_position()
+      assert inverse_notional > 1
+
+      unloaded = Exchange.new!("okx")
+
+      assert {:ok, [%Bourse.Position{notional: nil, notional_currency: nil}]} =
+               parse_positions(unloaded, Bourse.Okx, okx_option_body(), %{})
+    end
+
+    test "okx option notional takes the absolute published optVal" do
+      body = put_in(okx_option_body(), ["data", Access.at(0), "optVal"], "-0.0000001084604966")
+      {row, _inverse, _usd} = parse_okx_option_position(body)
+      assert_in_delta row.notional, 0.0000001084604966, 1.0e-18
+    end
+
+    test "bybit option notional stays positionValue even when the request symbol looks inverse" do
+      bybit = Exchange.new!("bybit")
+
+      assert {:ok, [%Bourse.Position{notional: 50.0, notional_currency: "USDC"}]} =
+               parse_positions(
+                 bybit,
+                 Bourse.Bybit,
+                 bybit_option_body(),
+                 %{"symbol" => "BTC/USD:BTC-250131-100000-C"}
+               )
+    end
+
+    test "bybit option notional stays populated without load_markets" do
+      {row, _inverse} = parse_bybit_option_position()
+      assert row.notional == 50.0
+      assert row.notional_currency == "USDC"
+    end
+
+    test "okx linear and inverse swap notionals keep their perpetual formulas" do
+      linear = Exchange.new!("okx")
+
+      linear_body = %{
+        "code" => "0",
+        "data" => [
+          %{
+            "instId" => "BTC-USDT-SWAP",
+            "instType" => "SWAP",
+            "markPx" => "50000",
+            "notionalUsd" => "500.12",
+            "optVal" => "",
+            "pos" => "1",
+            "posSide" => "net"
+          }
+        ]
+      }
+
+      assert {:ok, [%Bourse.Position{notional: 500.12, notional_currency: "USD"}]} =
+               parse_positions(linear, Bourse.Okx, linear_body, %{})
+
+      inverse =
+        "okx"
+        |> Exchange.new!()
+        |> Exchange.put_markets([
+          %Bourse.Market{
+            id: "BTC-USD-SWAP",
+            symbol: "BTC/USD:BTC",
+            base: "BTC",
+            quote: "USD",
+            settle: "BTC",
+            type: "swap",
+            inverse: true,
+            contract: true,
+            contract_size: 100
+          }
+        ])
+
+      inverse_body = %{
+        "code" => "0",
+        "data" => [
+          %{
+            "instId" => "BTC-USD-SWAP",
+            "instType" => "SWAP",
+            "markPx" => "50000",
+            "notionalUsd" => "100",
+            "optVal" => "0.0000001084604966",
+            "pos" => "1",
+            "posSide" => "net"
+          }
+        ]
+      }
+
+      # 1 * 100 / 50000 = 0.002; must not copy notionalUsd or optVal
+      assert {:ok, [%Bourse.Position{notional: 0.002, notional_currency: "BTC"}]} =
+               parse_positions(inverse, Bourse.Okx, inverse_body, %{})
+    end
+
+    test "bybit linear and inverse swap notionals keep their perpetual formulas" do
+      bybit = Exchange.new!("bybit")
+
+      assert {:ok, [%Bourse.Position{notional: 5000.0, notional_currency: "USDT"}]} =
+               parse_positions(
+                 bybit,
+                 Bourse.Bybit,
+                 bybit_position_body("linear", linear_open_row()),
+                 %{"symbol" => "BTC/USDT:USDT"}
+               )
+
+      assert {:ok, [%Bourse.Position{notional: 0.002, notional_currency: "BTC"}]} =
+               parse_positions(
+                 bybit,
+                 Bourse.Bybit,
+                 bybit_position_body("inverse", inverse_open_row()),
+                 %{"symbol" => "BTC/USD:BTC"}
+               )
+    end
+  end
+
+  # ---------------------------------------------------------------------------
   # Adjacent ReadParse branches (coverage lift toward ≥95%)
   # ---------------------------------------------------------------------------
 
@@ -1572,109 +1725,6 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
                  :parse_position,
                  true
                )
-    end
-
-    test "option positions share premium-value semantics and always name their currency" do
-      bybit = Exchange.new!("bybit")
-
-      body = %{
-        "retCode" => 0,
-        "result" => %{
-          "category" => "option",
-          "list" => [
-            %{
-              "avgPrice" => "500",
-              "createdTime" => "1784189372501",
-              "markPrice" => "510",
-              "positionValue" => "50",
-              "side" => "Buy",
-              "size" => "0.1",
-              "symbol" => "BTC-31JAN25-100000-C",
-              "unrealisedPnl" => "1",
-              "updatedTime" => "1784189372501",
-              "positionIM" => "10",
-              "positionMM" => "1",
-              "liqPrice" => "",
-              "bustPrice" => ""
-            }
-          ]
-        }
-      }
-
-      assert {:ok,
-              [
-                %Bourse.Position{
-                  symbol: "BTC/USDC:USDC-250131-100000-C",
-                  notional: 50.0,
-                  notional_currency: "USDC"
-                }
-              ]} =
-               bybit
-               |> ReadParse.parse(
-                 Bourse.Bybit,
-                 :fetch_positions,
-                 "fetchPositions",
-                 body,
-                 %{"symbol" => "BTC/USDC:USDC-250131-100000-C"},
-                 :parse_position,
-                 true
-               )
-               |> DeribitPositionUnits.reconcile(bybit)
-
-      okx =
-        "okx"
-        |> Exchange.new!()
-        |> Exchange.put_markets([
-          %Bourse.Market{
-            id: "BTC-USD-260925-65000-C",
-            symbol: "BTC/USD:BTC-260925-65000-C",
-            base: "BTC",
-            quote: "USD",
-            settle: "BTC",
-            type: "option",
-            option: true,
-            inverse: true,
-            contract: true,
-            contract_size: 0.01,
-            quantity_unit: "base",
-            native_quantity_unit: "base",
-            native_amount_step: 0.01,
-            precision: %{"amount" => 0.01}
-          }
-        ])
-
-      okx_body = %{
-        "code" => "0",
-        "data" => [
-          %{
-            "instId" => "BTC-USD-260925-65000-C",
-            "instType" => "OPTION",
-            "markPx" => "0.00001668",
-            "notionalUsd" => "649.947",
-            "optVal" => "0.0000001084604966",
-            "pos" => "1",
-            "posSide" => "net"
-          }
-        ]
-      }
-
-      assert {:ok,
-              [
-                %Bourse.Position{
-                  notional: 1.084604966e-7,
-                  notional_currency: "BTC"
-                }
-              ]} =
-               okx
-               |> ReadParse.parse(Bourse.Okx, :fetch_positions, "fetchPositions", okx_body, %{}, :parse_position, true)
-               |> DeribitPositionUnits.reconcile(okx)
-
-      unloaded_okx = Exchange.new!("okx")
-
-      assert {:ok, [%Bourse.Position{notional: nil, notional_currency: nil}]} =
-               unloaded_okx
-               |> ReadParse.parse(Bourse.Okx, :fetch_positions, "fetchPositions", okx_body, %{}, :parse_position, true)
-               |> DeribitPositionUnits.reconcile(unloaded_okx)
     end
 
     test "margin loan backfills currency from request and leaves amount nil without request amount" do

@@ -11,14 +11,18 @@ Outcome: CONFIRM the provider field.**
 
 Bybit's `GET /v5/position/list` contract applies `positionValue` to the
 `option` category and identifies it as position value. The unified option row
-therefore preserves its absolute value and labels it with the parsed settlement
-currency; no perpetual arithmetic is applied.
+therefore preserves its absolute value and labels it with the parsed quote
+(settlement) currency; the inverse-perpetual `size / markPrice` path is not
+applied to `category=option` rows.
 [Bybit position contract](https://bybit-exchange.github.io/docs/v5/position)
 
+Linear and inverse SWAP rows are unchanged: linear copies `positionValue`,
+inverse remains `size / markPrice` (C-T641).
+
 <!-- carve-evidence-status
-{"carve_id":"C-T666b","date":"2026-08-28","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 Get Position Info positionValue field"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":null,"known_gap_reason":"No populated Bybit testnet option position was available in this run"}
+{"carve_id":"C-T666b","date":"2026-08-28","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 Get Position Info positionValue field on category=option"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":null,"known_gap_reason":"Live testnet option positions were empty at review; probe recorded in the harness verdict"}
 -->
-  ([pinned authority manifest](../../priv/venues/bybit/authority/manifest.json), artifact
+
 ## 2026-08-12 — rate-unit confrontation (Task 594)
 **C-T594e — Bybit's authored rate-like slots name their venue units (task 594).
 Outcome: CONFIRM provider arithmetic where available; retain one position-history gap.**
