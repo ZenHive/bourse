@@ -621,7 +621,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   raised `:epipe`. The helper now puts `stdin`/`stdout` in binary mode before
   reading its first frame. The build itself was also broken on that platform:
   `:erlang.system_info(:system_architecture)` answers `"win32"` there — the OS,
-  not the CPU — so `mix bourse.build_lighter_signer` now resolves the Windows
+  not the CPU — so `mix ccxt.build_lighter_signer` now resolves the Windows
   architecture from the environment instead.
 
 - `Bourse.WS.connect(exchange, :private)` returned an open but unauthenticated
