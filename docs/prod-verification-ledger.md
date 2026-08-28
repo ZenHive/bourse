@@ -855,3 +855,18 @@ Entry template:
 - Exact call: after an operator-approved withdrawal from the testnet wallet, call
   `Bourse.fetch_withdrawals(ex)`.
 - Expected evidence: a populated row matching the withdrawal's id, currency, amount and status.
+
+### lighter — authenticated order stream and zk-signed trader journey (task 681, filed 2026-08-28)
+
+- Blocked slice: the `account_all_orders/{ACCOUNT_ID}` private stream leg documented by
+  Lighter; the REST journey remains authored in `test/live/journeys/trader/lighter_test.exs`.
+- Blocked by: the configured testnet account answers code 29404 `not found` on the public
+  account lookup before an order can be placed. The execution image also shipped without Go
+  or a packaged signer helper; a temporary local Go toolchain built the first-party helper and
+  isolated the remaining failure to the testnet account rather than zk signing.
+- Exact call: refresh `LIGHTER_TESTNET_API_KEY_INDEX`, `LIGHTER_TESTNET_ACCOUNT_INDEX`, and
+  `LIGHTER_TESTNET_API_PRIVATE_KEY`, then run
+  `mix test.json --quiet --include dangerous test/live/journeys/trader/lighter_test.exs`.
+- Expected evidence: the resting order's `client_order_index` appears in an
+  `update/account_all_orders` frame before cancellation; the same order disappears from the
+  live open-order read after cancellation.
