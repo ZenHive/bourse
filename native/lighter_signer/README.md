@@ -26,7 +26,9 @@ does not compile `csrc/helper.c` or send Port frames.
 The helper never receives an L1 private key. Elixir produces the EIP-191
 signature and passes the finished `0x` string as an input parameter. Derive
 the 40-byte zk public key from an API private key with
-`go run ./cmd/derive_pubkey <hex>` from this directory.
+`LIGHTER_SIGNER_API_PRIVATE_KEY=<hex> go run ./cmd/derive_pubkey` from this
+directory. That program takes the key from the environment and rejects it on
+argv: `/proc/<pid>/cmdline` is world-readable, `/proc/<pid>/environ` is not.
 
 `test/bourse/signing/lighter_native_test.exs` runs the built executable through
 the BEAM Port boundary. It covers initialization, every supported operation,

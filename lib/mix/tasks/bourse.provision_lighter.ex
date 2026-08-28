@@ -285,9 +285,11 @@ defmodule Mix.Tasks.Bourse.ProvisionLighter do
     source_dir = BuildLighterSigner.source_dir()
     go = System.find_executable("go") || Mix.raise(go_missing_text())
 
-    case System.cmd(go, ["run", "./cmd/derive_pubkey", api_private_key],
+    # Through the environment, not argv — `/proc/<pid>/cmdline` is world-readable.
+    case System.cmd(go, ["run", "./cmd/derive_pubkey"],
            cd: source_dir,
-           stderr_to_stdout: true
+           stderr_to_stdout: true,
+           env: [{"LIGHTER_SIGNER_API_PRIVATE_KEY", api_private_key}]
          ) do
       {output, 0} -> accept_derived_pub_key!(output)
       {output, status} -> Mix.raise("derive_pubkey failed with status #{status}:\n#{output}")

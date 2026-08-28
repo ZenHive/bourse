@@ -125,12 +125,36 @@ defmodule Bourse.Signing.LighterNativeTest do
     source_dir = BuildLighterSigner.source_dir()
 
     assert {output, 0} =
-             System.cmd(go, ["run", "./cmd/derive_pubkey", @private_key],
+             System.cmd(go, ["run", "./cmd/derive_pubkey"],
                cd: source_dir,
-               stderr_to_stdout: true
+               stderr_to_stdout: true,
+               env: [{"LIGHTER_SIGNER_API_PRIVATE_KEY", @private_key}]
              )
 
     assert String.trim(output) == @expected_public_key
+  end
+
+  test "derive_pubkey refuses the key on argv and fails loudly without the environment" do
+    go = System.find_executable("go") || flunk("go is required for native Lighter tests")
+    source_dir = BuildLighterSigner.source_dir()
+
+    assert {argv_output, 1} =
+             System.cmd(go, ["run", "./cmd/derive_pubkey", @private_key],
+               cd: source_dir,
+               stderr_to_stdout: true,
+               env: [{"LIGHTER_SIGNER_API_PRIVATE_KEY", @private_key}]
+             )
+
+    assert argv_output =~ "usage:"
+
+    assert {missing_output, 1} =
+             System.cmd(go, ["run", "./cmd/derive_pubkey"],
+               cd: source_dir,
+               stderr_to_stdout: true,
+               env: [{"LIGHTER_SIGNER_API_PRIVATE_KEY", nil}]
+             )
+
+    assert missing_output =~ "LIGHTER_SIGNER_API_PRIVATE_KEY"
   end
 
   test "C helper rejects malformed frames and parser boundary violations" do
@@ -278,7 +302,30 @@ defmodule Bourse.Signing.LighterNativeTest do
       {:update_margin, 8, <<0::16, 0::signed-64, 0, 2, 0::signed-64>>},
       {:transfer, 9, invalid_transfer_frame()},
       {:change_pub_key, 10, invalid_change_pub_key_frame()}
+    ] ++ invalid_change_pub_key_frames()
+  end
+
+  # The C helper re-validates the ChangePubKey payload the Elixir encoder can
+  # never emit, so each branch of that validation needs a hand-built frame.
+  defp invalid_change_pub_key_frames do
+    valid_sig = "0x" <> String.duplicate("ab", 65)
+
+    [
+      # 80 characters, none of them hex — valid_hex/2 rejects the public key.
+      {:change_pub_key, 10, change_pub_key_frame(String.duplicate("zz", 40), valid_sig)},
+      # Neither the bare 80 nor the 0x-prefixed 82 accepted length.
+      {:change_pub_key, 10, change_pub_key_frame(String.duplicate("a", 81), valid_sig)},
+      # The 0x-prefixed public-key branch, rejected on a short L1 signature.
+      {:change_pub_key, 10, change_pub_key_frame("0x" <> @expected_public_key, "0x" <> String.duplicate("ab", 40))},
+      # Correct length, wrong prefix byte.
+      {:change_pub_key, 10, change_pub_key_frame(@expected_public_key, "1x" <> String.duplicate("ab", 65))},
+      # Correct length and prefix, non-hex body.
+      {:change_pub_key, 10, change_pub_key_frame(@expected_public_key, "0x" <> String.duplicate("zz", 65))}
     ]
+  end
+
+  defp change_pub_key_frame(pub_key, l1_signature) do
+    <<byte_size(pub_key)::16, pub_key::binary, byte_size(l1_signature)::16, l1_signature::binary, 0, 12::signed-64>>
   end
 
   defp invalid_transfer_frame do
