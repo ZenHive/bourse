@@ -21,8 +21,26 @@ defmodule Mix.Tasks.Bourse.VerifyRestReadContracts do
 
   alias Bourse.LiveLane.Ledger
 
-  @default_output_path "/tmp/bourse-rest-read-contracts.json"
   @live_root "test/live"
+
+  @doc """
+  Default report path, scoped to the checkout that runs the lane.
+
+  Several worktrees of this repo run their lanes concurrently on one host. A
+  single shared `/tmp` name lets one checkout's report be read back as another's
+  — observed 2026-08-28: two concurrent lanes reported `executed=818` against a
+  409-case inventory and the lane reddened as "shrank" with no defect behind it.
+  Same hazard, same remedy as `Bourse.LiveLane.Ledger.hits_path/1`.
+  """
+  @spec default_output_path() :: String.t()
+  def default_output_path, do: default_output_path(File.cwd!())
+
+  @doc "Default report path scoped to an explicit checkout root."
+  @spec default_output_path(String.t()) :: String.t()
+  def default_output_path(root) when is_binary(root) do
+    scope = :sha256 |> :crypto.hash(root) |> Base.encode16(case: :lower) |> binary_part(0, 12)
+    Path.join(System.tmp_dir!(), "bourse-rest-read-contracts-#{scope}.json")
+  end
 
   @impl true
   def run(args) do
@@ -96,7 +114,7 @@ defmodule Mix.Tasks.Bourse.VerifyRestReadContracts do
   defp options!(args) do
     case OptionParser.parse(args, strict: [output: :string, venue: :string]) do
       {parsed, [], []} ->
-        output = Keyword.get(parsed, :output, @default_output_path)
+        output = Keyword.get(parsed, :output, default_output_path())
         venue = Keyword.get(parsed, :venue)
 
         if is_binary(output) and output != "" do
@@ -203,9 +221,7 @@ defmodule Mix.Tasks.Bourse.VerifyRestReadContracts do
 
     Enum.reject(
       [
-        if(summary.executed != summary.denominator,
-          do: "lane shrank: executed=#{summary.executed} denominator=#{summary.denominator}"
-        ),
+        if(summary.executed != summary.denominator, do: inventory_mismatch(summary)),
         if(classification.genuine != [], do: "#{length(classification.genuine)} genuine failure(s)"),
         if(unaccounted != 0,
           do:
@@ -216,6 +232,17 @@ defmodule Mix.Tasks.Bourse.VerifyRestReadContracts do
       &is_nil/1
     )
   end
+
+  # "shrank" is only true one way. A report carrying MORE rows than the
+  # inventory is a collided or stale report, not a lost branch, and naming it
+  # "shrank" sends the reader hunting for a deleted case that still exists.
+  defp inventory_mismatch(%{executed: executed, denominator: denominator}) when executed < denominator,
+    do: "lane shrank: executed=#{executed} denominator=#{denominator}"
+
+  defp inventory_mismatch(%{executed: executed, denominator: denominator}),
+    do:
+      "report does not match this inventory: executed=#{executed} denominator=#{denominator} " <>
+        "(a report with more rows than cases is a stale or collided report, not a shrunken lane)"
 
   defp read_hits do
     case File.read(Ledger.hits_path()) do

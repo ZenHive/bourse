@@ -68,6 +68,25 @@ defmodule Mix.Tasks.Bourse.VerifyRestReadContractsTest do
     assert Enum.any?(reasons, &(&1 =~ "1 genuine failure(s)"))
   end
 
+  test "a report with more rows than cases reds as collided, never as shrunken" do
+    summary = %{denominator: 409, executed: 818, failures: 0, result: "passed"}
+    classification = %{ledgered: [], genuine: [], report_rows: 0}
+
+    assert [reason] = VerifyRestReadContracts.lane_failures(summary, classification)
+    assert reason =~ "executed=818 denominator=409"
+    assert reason =~ "stale or collided report"
+    refute reason =~ "shrank"
+  end
+
+  test "the default report path is scoped per checkout so concurrent worktrees cannot collide" do
+    a = VerifyRestReadContracts.default_output_path("/checkout/a")
+    b = VerifyRestReadContracts.default_output_path("/checkout/b")
+
+    refute a == b
+    assert a == VerifyRestReadContracts.default_output_path("/checkout/a")
+    assert Path.basename(a) =~ ~r/^bourse-rest-read-contracts-[0-9a-f]{12}\.json$/
+  end
+
   test "summarize! rejects a malformed report" do
     assert_raise Mix.Error, ~r/no summary/, fn ->
       VerifyRestReadContracts.summarize!(%{}, 427)

@@ -29,6 +29,8 @@ defmodule Bourse.LiveLane.Ledger do
     @moduledoc false
     defexception [:entry, :contract_id]
 
+    @type t :: %__MODULE__{entry: map(), contract_id: String.t()}
+
     @impl Exception
     def message(%__MODULE__{entry: entry, contract_id: id}) do
       "ledgered #{entry["class"]}: #{id} — #{entry["summary"]}"

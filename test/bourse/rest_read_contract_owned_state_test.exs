@@ -11,7 +11,15 @@ defmodule Bourse.Test.RestReadContractOwnedStateTest do
       assert RestReadContractOwnedState.ownable_source?(source)
     end
 
-    for source <- ["fetchClosedOrders", "fetchDeposits", "fetchWithdrawals", "fetchTransfers"] do
+    for source <- [
+          "fetchClosedOrders",
+          "fetchDeposits",
+          "fetchWithdrawals",
+          "fetchTransfers",
+          "fetchOrderLists",
+          "fetchConvertTradeHistory",
+          "fetchBalance"
+        ] do
       refute RestReadContractOwnedState.ownable_source?(source)
 
       assert :unownable =
