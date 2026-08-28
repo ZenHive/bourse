@@ -22917,7 +22917,7 @@ id = "676"
 phase = 16
 bundle = "live_e2e"
 milestone = "v1_2"
-status = "in_progress"
+status = "done"
 title = "Live trader journey for binanceusdm: REST round-trip, listen-key stream leg, error probes"
 scores = { d = 4, b = 7, u = 7 }
 acceptance_criteria = ["test/live/journeys/trader/binanceusdm_test.exs mirrors the bybit exemplar's structure: survey, resting limit order with wall-clock-unique clientOrderId, poll open, echo assertions, fetch_open_orders membership, cancel, poll gone, cleanup via release_order! in an after block", "Every asserted error code/message was first observed live against demo-fapi.binance.com and is pinned with a dated observation comment; Binance's own USD-M futures docs are the semantic authority", "An in-flow rejection test asserts the venue's own error for a refused order (for example -2019 for an oversized order, or below-minimum), observed live", "test/live/errors/binanceusdm_test.exs carries at least one generic bad-input probe (unknown order id) asserting the live-observed error, runs in the default suite, and duplicates neither the contract lane's invalid-symbol cases nor the invalid-credentials suite", "The listen-key stream leg observes the placed order's own ORDER_TRADE_UPDATE on demo-fstream, mirroring the bybit private-stream block; success is a real event about our order id, never a :connected status (a wrong listen key connects and stays silent)", "mix test.json --quiet --include dangerous test/live/journeys/trader/binanceusdm_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes", "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"]
@@ -22932,9 +22932,16 @@ Venue notes: BINANCE_FUTURES_TEST_API_KEY/SECRET (shared with COIN-M — one acc
 
 Supersedes the binanceusdm slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.
 """
+implemented = "Landed by grok via merge-train; reviewer-approved (run run-1787886035979-6e49d4c5, 4378536e0b878c6c0d5e6dadd719d2e390ba5dde)."
+delivered_by = "grok"
+verified = true
+verified_by = "cursor"
+verification_ref = "harness-run:run-1787886035979-6e49d4c5"
 created_at = "2026-08-24"
 started_at = "2026-08-28"
 scored_at = "2026-08-24"
+done_at = "2026-08-28"
+shipped_in = "4378536e0b878c6c0d5e6dadd719d2e390ba5dde"
 
 [[task]]
 id = "677"
