@@ -23159,7 +23159,7 @@ scored_at = "2026-08-28"
 id = "684"
 phase = 16
 bundle = "live_e2e"
-status = "in_progress"
+status = "done"
 title = "Provision a Lighter testnet account from the repo: add ChangePubKey to the native signer and an end-to-end provisioning task"
 scores = { d = 6, b = 5, u = 5 }
 acceptance_criteria = [
@@ -23209,6 +23209,13 @@ Authority: Lighter's own API and the pinned lighter-go source are the contract. 
 
 The operator asked for this task directly after the manual recovery.
 """
+implemented = "Landed by cursor via merge-train; reviewer-approved (run run-1787923483453-24dfe812, e6ef7ea35d42b966532a7db22c7b5166d0cbd13b)."
+delivered_by = "cursor"
+verified = true
+verified_by = "claude"
+verification_ref = "harness-run:run-1787923483453-24dfe812"
 created_at = "2026-08-28"
 started_at = "2026-08-28"
 scored_at = "2026-08-28"
+done_at = "2026-08-28"
+shipped_in = "e6ef7ea35d42b966532a7db22c7b5166d0cbd13b"
