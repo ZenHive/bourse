@@ -23413,7 +23413,7 @@ scored_at = "2026-08-28"
 id = "688"
 phase = 16
 bundle = "live_triage"
-status = "pending"
+status = "in_progress"
 title = "Bourse.Symbol quietly returns a different market: non-injective inversion, unanchored alias rewriting, and unparsed dated ids"
 scores = { d = 6, b = 7, u = 7 }
 markers = ["bug"]
@@ -23461,6 +23461,7 @@ mutation-tested; the findings come from reading the module and re-measuring ever
 with mix run against the authored specs. Re-measure rather than trusting the numbers here.
 """
 created_at = "2026-08-28"
+started_at = "2026-08-28"
 scored_at = "2026-08-28"
 
 [[task]]
