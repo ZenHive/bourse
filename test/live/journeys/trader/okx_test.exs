@@ -15,9 +15,10 @@ defmodule Bourse.Journeys.Trader.OkxTest do
   @price_decimals 1
   @resting_ratio 0.9
 
-  # OKX's private orders channel requires instType; the authored watchOrders
-  # template is `%{"channel" => "orders"}` and does not name it. `ANY` is the
-  # account-wide form (www.okx.com/docs-v5).
+  # OKX's private orders channel is `{channel: "orders", instType: ...}`. The
+  # authored `websocket.subscribe.channels.watchOrders` template is `["ANY"]` —
+  # the instType value alone, with no channel name — so the journey names the
+  # whole arg itself. `ANY` is the account-wide instType (www.okx.com/docs-v5).
   @order_channel %{"channel" => "orders", "instType" => "ANY"}
   @frame_timeout_ms 20_000
 

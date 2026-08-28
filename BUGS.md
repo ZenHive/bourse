@@ -71,6 +71,37 @@ roadmap.
 
 ---
 
+## 2026-08-28 — `Bourse.TestnetTest` wipes the shared credential registry, so later live tests in a full run fail as "No credentials registered"
+
+**Status:** 🆕 measured live (task 679 review, `mix check.dispatch` on this worktree) — not consumer-reported.
+
+`test/bourse/testnet_test.exs` mutates the process-global `Bourse.Testnet` registry that
+`test/test_helper.exs` populates once per VM: its `setup` calls `Testnet.clear/0`, and the
+`"when the registry is not running"` describe block `GenServer.stop`s the registry and
+restarts it **empty** in `on_exit`. Nothing re-registers the env credentials afterwards, so
+every live test that runs later in the same VM sees an empty registry.
+
+**Observed** in one `mix check.dispatch` run (2877 tests): 42 tests failed on the first pass
+with `No credentials registered for <venue>. Set <VENUE>_TESTNET_API_KEY ...` /
+`Missing testnet credentials for <venue>` and then passed on the `mix test.json` auto-retry,
+including `Bourse.LiveErrors.{Alpaca,Derive,Hyperliquid,Okx}Test`,
+`Bourse.BinanceAuthoredIntegrationTest`, `Bourse.BybitAccountAnalyticsIntegrationTest`,
+`Bourse.{Deribit,Derive}AuthoredIntegrationTest`, `Bourse.WS.AuthLiveSmokeTest` and ten
+`Bourse.RestReadContracts.*Test` `setup_all` blocks. The same files are green when run on
+their own with the identical environment.
+
+**Consequence:** the credential-missing RED that `test_helper.exs` is designed to raise
+loudly becomes a *false* red mid-run, and it is indistinguishable from a genuinely missing
+credential pair. Auto-retry masks it into a `flaky` bucket rather than a failure, so a full
+run's redness gets read as "environmental" without anyone locating the mechanism.
+
+**Not fixed here** (out of task 679's scope): the fix is to make the registry mutation
+test-local — restore the `test_helper.exs` registrations in an `on_exit` of that module, or
+give `Bourse.Testnet` an isolated table for that suite — not something to change from a
+venue-journey review.
+
+---
+
 ## 2026-08-28 — OKX already-canceled cancel classifies as `:exchange_error` code `"1"`, not `:order_not_found` 51400
 
 **Status:** 🆕 measured live (task 679 trader journey) — not consumer-reported.
