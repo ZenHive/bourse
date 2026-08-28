@@ -71,6 +71,46 @@ roadmap.
 
 ---
 
+## 2026-08-28 — bybit `fetch_positions_history`: one dated-contract row fails the WHOLE call with `missing_position_notional_currency`
+
+**Status:** 🆕 measured live (orchestrator, landed-base `mix ci` on `000034a`) — not consumer-reported.
+
+The contract case `bybit:fetchPositionsHistory:0:privateGetV5PositionClosedPnl` fails with
+
+```
+{:missing_position_notional_currency, %{exchange: "bybit", symbol: "DOGEUSDT-28AUG26"}}
+```
+
+**This is the one red in the 33-failure landed-base run that the classification table above
+does not account for.** It is not empty state and not a ledgered demo restriction.
+
+**Root cause — the symbol never got normalized, and the guard halts the batch.**
+`Bourse.Unified.DeribitPositionUnits.notional_currency/2` resolves bybit's unit via
+`Symbol.parse_extended(position.symbol)`. The row carries bybit's **raw venue id**
+`DOGEUSDT-28AUG26` (a dated linear future), not the unified form. Verified locally:
+
+- `Symbol.parse_extended("DOGEUSDT-28AUG26")` -> `{:error, :invalid_format}`
+- `Symbol.parse_extended("DOGE/USDT:USDT-260828")` -> `{:ok, %ParsedSymbol{quote: "USDT", ...}}`
+
+`put_notional_currency/2` then refuses to ship a populated `notional` with a nil currency —
+correct in isolation — but `put_notional_currencies/2` folds with `reduce_while` and `:halt`s
+on the first error. **One unparseable row therefore fails the entire call**: a consumer gets
+`{:error, ...}` instead of the position history, including every row that parsed fine.
+
+**Not caused by the task 664/666 wave.** Task 666 added only a `%{"category" => "option"}`
+clause to `bybit_position_notional/2`; `DOGEUSDT-28AUG26` is a dated **linear** contract and
+does not take that path. This is a latent defect newly exposed by account state — the testnet
+account acquired a closed position on a dated contract (expiring the day of the run).
+
+**Two separable defects, worth keeping apart:**
+
+1. *Symbol coverage:* bybit dated-futures ids do not normalize, so the unit cannot be resolved.
+2. *Blast radius:* one bad row discards a whole successful multi-row read. Whether the guard
+   should halt the batch or degrade that row is a carve decision — but silently returning an
+   error for an account that merely holds a dated contract is not defensible either way.
+
+---
+
 ## 2026-08-28 — the client's rate limiter grants a 545-deep burst on OKX, then stalls the next call for a full 60 s
 
 **Status:** 🆕 measured live + proven arithmetically (orchestrator, investigating a reported
