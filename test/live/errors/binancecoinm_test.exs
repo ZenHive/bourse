@@ -7,6 +7,11 @@ defmodule Bourse.LiveErrors.BinancecoinmTest do
   @moduletag :network
   @moduletag :exchange_binancecoinm
 
+  # Deliberate bad-input probes, one venue per file. Invalid-symbol reads are
+  # already pinned by the REST-read contract lane (rest_read_contract.json
+  # error_cases) and invalid-credential probes have their own suite — this
+  # file carries only errors neither of those exercises.
+
   @symbol "BTC/USD:BTC"
   @unknown_order_id "999999999999999"
 
@@ -19,7 +24,8 @@ defmodule Bourse.LiveErrors.BinancecoinmTest do
 
     # Observed live 2026-08-28: GET /dapi/v1/openOrder with a never-seen
     # orderId answers -2013, "Order does not exist."
-    # Authority: Binance COIN-M error code -2013 NO_SUCH_ORDER.
+    # Authority: Binance COIN-M error codes —2013 NO_SUCH_ORDER
+    # (https://developers.binance.com/docs/derivatives/coin-margined-futures/error-code).
     assert error.type == :order_not_found
     assert error.code == -2013
     assert error.message == "Order does not exist."

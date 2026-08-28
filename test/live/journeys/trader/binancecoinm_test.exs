@@ -15,6 +15,7 @@ defmodule Bourse.Journeys.Trader.BinancecoinmTest do
   @resting_ratio 0.9
   @margin_exceeding_amount 100
   @frame_timeout_ms 20_000
+  @margin_remediation "binancecoinm demo BTC wallet has no free margin; re-fund COIN-M through the Binance demo UI (the faucet credits USD-M only)"
 
   describe "a trader's day" do
     test "survey the market, place a resting limit buy, track it, cancel it" do
@@ -53,14 +54,8 @@ defmodule Bourse.Journeys.Trader.BinancecoinmTest do
 
       price = Float.round(best_bid * @resting_ratio, @price_decimals)
 
-      {:ok, placed} =
-        Bourse.create_order(exchange, @symbol, "limit", "buy", @amount,
-          price: price,
-          timeInForce: "GTC",
-          newClientOrderId: unique_client_order_id("tbcoinm")
-        )
-
-      assert is_binary(placed.id) and placed.id != ""
+      placed =
+        create_resting_buy!(exchange, price, unique_client_order_id("tbcoinm"))
 
       try do
         order =
@@ -105,28 +100,24 @@ defmodule Bourse.Journeys.Trader.BinancecoinmTest do
       try do
         # connect/3 obtains a dapiPrivate listen key and puts the body-returned
         # key in the demo-dstream path. Connectivity alone proves no delivery.
-        assert %{pattern: :listen_key} = ws.auth
+        assert %{pattern: :listen_key, meta: %{listen_key: listen_key}} = ws.auth
+        assert is_binary(listen_key) and listen_key != ""
         assert ws.url =~ "demo-dstream.binance.com"
-        assert ws.url =~ "/ws/"
+        assert String.ends_with?(ws.url, "/" <> listen_key)
+        refute ws.url =~ "listenKey="
 
         {:ok, book} = Bourse.fetch_order_book(exchange, @symbol)
         assert [[best_bid, _bid_size] | _] = book.bids
         price = Float.round(best_bid * @resting_ratio, @price_decimals)
         client_order_id = unique_client_order_id("tbcws")
 
-        {:ok, placed} =
-          Bourse.create_order(exchange, @symbol, "limit", "buy", @amount,
-            price: price,
-            timeInForce: "GTC",
-            newClientOrderId: client_order_id
-          )
-
-        assert is_binary(placed.id) and placed.id != ""
+        placed = create_resting_buy!(exchange, price, client_order_id)
 
         try do
           # Observed live 2026-08-28 on demo-dstream: e is
           # ORDER_TRADE_UPDATE; o.X/x are NEW, o.ps is BOTH, and o.c echoes
-          # newClientOrderId. Authority: Binance COIN-M Event Order Update.
+          # newClientOrderId. Authority: Binance COIN-M Event Order Update
+          # (https://developers.binance.com/docs/derivatives/coin-margined-futures/user-data-streams).
           placed_event = await_order_event!(placed.id, "NEW")
 
           assert placed_event["s"] == "BTCUSD_PERP"
@@ -177,7 +168,8 @@ defmodule Bourse.Journeys.Trader.BinancecoinmTest do
 
       # Observed live 2026-08-28: POST /dapi/v1/order for 100 valid
       # BTCUSD_PERP contracts answers -2019, "Margin is insufficient."
-      # Authority: Binance COIN-M error code -2019 MARGIN_NOT_SUFFICIEN.
+      # Authority: Binance COIN-M error codes —2019 MARGIN_NOT_SUFFICIEN
+      # (https://developers.binance.com/docs/derivatives/coin-margined-futures/error-code).
       case result do
         {:ok, %Order{id: id}} ->
           release_order!(exchange, id, @symbol)
@@ -220,8 +212,24 @@ defmodule Bourse.Journeys.Trader.BinancecoinmTest do
     end
   end
 
+  defp create_resting_buy!(exchange, price, client_order_id) do
+    case Bourse.create_order(exchange, @symbol, "limit", "buy", @amount,
+           price: price,
+           timeInForce: "GTC",
+           newClientOrderId: client_order_id
+         ) do
+      {:ok, %Order{id: id} = placed} when is_binary(id) and id != "" ->
+        placed
+
+      {:error, %Error{type: :insufficient_funds} = error} ->
+        flunk("#{@margin_remediation} (#{inspect(error)})")
+
+      other ->
+        flunk("create_order failed: #{inspect(other)}")
+    end
+  end
+
   defp assert_coinm_margin!(balance) do
-    assert (balance.free["BTC"] || 0) > 0,
-           "binancecoinm demo BTC wallet has no free margin; re-fund COIN-M through the Binance demo UI (the faucet credits USD-M only)"
+    assert (balance.free["BTC"] || 0) > 0, @margin_remediation
   end
 end
