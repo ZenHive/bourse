@@ -94,6 +94,15 @@ defmodule Bourse.Journeys.Trader.OkxTest do
           {:ok, open} = Bourse.fetch_open_orders(exchange, symbol: @symbol)
           if Enum.any?(open, &(&1.id == placed.id)), do: :retry, else: {:ok, :gone}
         end)
+
+        # Observed live 2026-08-28 after a successful cancel of a resting
+        # BTC-USDT-SWAP limit: HTTP 200, outer code "1" / "All operations
+        # failed", data[0] sCode "51400". Classification reads sCode.
+        # Authority: OKX API v5 51400 (https://www.okx.com/docs-v5/en/#error-code).
+        assert {:error, %Error{type: :order_not_found, code: "51400"} = already_gone} =
+                 Bourse.cancel_order(exchange, canceled.id, symbol: @symbol)
+
+        assert hd(already_gone.raw["data"])["sCode"] == "51400"
       after
         release_order!(exchange, placed.id, @symbol)
       end

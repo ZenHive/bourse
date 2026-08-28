@@ -1094,7 +1094,7 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
     # the venue missing-order codes rather than "missing instrument precision".
     assert {:ok, exchange} = Bourse.load_markets(demo_exchange())
 
-    assert {:error, %Error{raw: %{"data" => [%{"sCode" => "51400"} | _]}}} =
+    assert {:error, %Error{type: :order_not_found, code: "51400", raw: %{"data" => [%{"sCode" => "51400"} | _]}}} =
              Bourse.cancel_order(exchange, @missing_algo_id, symbol: "BTC/USDT:USDT", stop: true)
 
     LiveGateIsolation.isolate!("okx")

@@ -89,13 +89,15 @@ defmodule Bourse.WS.SpecConfigTest do
       assert config.subscription_pattern == :method_params_subscribe
     end
 
-    test "a private WS URL is never paired with a nil auth_pattern" do
+    test "every venue's private connect either has an auth_pattern or errors at URL resolution" do
       for id <- @ws_venues do
         config = Config.for_exchange(id)
 
         if config.private_url || config.private_url_sandbox do
           assert config.auth_pattern,
                  "#{id} authors a private WS URL without an auth_pattern — connect/3 would have no handshake to run"
+        else
+          assert {:error, :no_url_configured} = Bourse.WS.connect(Exchange.new!(id), :private)
         end
       end
     end
