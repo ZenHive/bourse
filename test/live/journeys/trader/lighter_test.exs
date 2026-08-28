@@ -13,12 +13,14 @@ defmodule Bourse.Journeys.Trader.LighterTest do
   @resting_ratio "0.99"
   @maximum_client_order_index 2_000_000_000
 
-  # Lighter's account_all_orders stream is unreachable with the configured
-  # testnet key (docs/prod-verification-ledger.md, task 681). Observed live
-  # 2026-08-28 against wss://testnet.zklighter.elliot.ai/stream:
-  # `WS.connect(:private)` → `:no_url_configured`; public subscribe without
-  # `auth` → code 20001 "auth field is required"; subscribe with a signed
-  # auth token → code 20013 "invalid auth: couldnt find account".
+  # This journey has no private-stream leg because the authored slice carries no
+  # WebSocket URL for lighter at all: `base_urls` holds only "private"/"public"/
+  # "root" REST hosts, and `WS.connect(exchange, :private)` answers
+  # `{:error, :no_url_configured}` (re-measured live 2026-08-28). That is a gap in
+  # our spec, not a venue or credential limit — an earlier note here blamed the
+  # testnet key, citing a 20013 "couldnt find account" that came from an
+  # unprovisioned account (index 354). The account is provisioned now (index 153),
+  # so that reason no longer describes anything; the missing URL still does.
 
   describe "a trader's day" do
     test "survey the market, place a resting limit buy, track it, cancel it" do
@@ -93,7 +95,12 @@ defmodule Bourse.Journeys.Trader.LighterTest do
   end
 
   describe "orders the venue rejects" do
-    test "sendTx refuses an order when the testnet account is not found" do
+    # Both codes were first observed live on testnet.zklighter.elliot.ai on
+    # 2026-08-28 against a provisioned account (index 153). They supersede an
+    # earlier pin of 21100 "account not found", which described an unprovisioned
+    # account rather than the order — every create failed that check first, so no
+    # in-flow rejection could be isolated behind it.
+    test "sendTx refuses an amount below the market minimum" do
       exchange = sandbox_exchange!(@venue)
       on_exit(fn -> terminate_lighter_helper(exchange) end)
 
@@ -101,13 +108,13 @@ defmodule Bourse.Journeys.Trader.LighterTest do
       {:ok, book} = Bourse.fetch_order_book(exchange, market.symbol)
       [[best_bid, _] | _] = book.bids
 
-      # Observed live 2026-08-28 on testnet.zklighter.elliot.ai: sendTx
-      # rejects every create for this configured account with code 21100
-      # "account not found" (publicGetAccount is 29404 "not found" first).
-      # A below-minimum amount could not be isolated — the account check
-      # wins. Re-pin against a recognized account once credentials refresh.
+      # One precision step below the venue minimum: on the price/amount grid, so
+      # our own precision guard passes it through and the venue is what rejects.
+      below_minimum = market.limits["amount"]["min"] - precision!(market, "amount")
+      assert below_minimum > 0
+
       assert {:error, %Error{} = error} =
-               Bourse.create_order(exchange, market.symbol, "limit", "buy", @amount,
+               Bourse.create_order(exchange, market.symbol, "limit", "buy", below_minimum,
                  price: resting_price(best_bid, market),
                  client_order_index: unique_client_order_index(),
                  nonce: next_nonce!(exchange),
@@ -116,8 +123,32 @@ defmodule Bourse.Journeys.Trader.LighterTest do
 
       assert error.type == :exchange_error
       assert error.http_status == 400
-      assert error.code == 21_100
-      assert error.message == "account not found"
+      assert error.code == 21_706
+      assert error.message == "invalid order base or quote amount"
+    end
+
+    test "sendTx refuses a replayed nonce" do
+      exchange = sandbox_exchange!(@venue)
+      on_exit(fn -> terminate_lighter_helper(exchange) end)
+
+      market = Enum.find(exchange.markets, &(&1.base == "BTC" and &1.type == "swap"))
+      {:ok, book} = Bourse.fetch_order_book(exchange, market.symbol)
+      [[best_bid, _] | _] = book.bids
+
+      # Nonce 1 was consumed by the account's own ChangePubKey registration, so it
+      # can never be current again — a replay the venue must refuse.
+      assert {:error, %Error{} = error} =
+               Bourse.create_order(exchange, market.symbol, "limit", "buy", @amount,
+                 price: resting_price(best_bid, market),
+                 client_order_index: unique_client_order_index(),
+                 nonce: 1,
+                 timeInForce: "PO"
+               )
+
+      assert error.type == :exchange_error
+      assert error.http_status == 400
+      assert error.code == 21_104
+      assert error.message == "invalid nonce"
     end
   end
 

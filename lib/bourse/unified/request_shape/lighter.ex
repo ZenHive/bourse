@@ -11,7 +11,14 @@ defmodule Bourse.Unified.RequestShape.Lighter do
   @default_order_expiry -1
   @order_type_limit 0
   @account_methods ~w(fetchBalance fetchPositions)
-  @private_account_methods ~w(fetchDeposits fetchMyLiquidations fetchMyTrades fetchTransfers fetchWithdrawals)
+  # Every private read is account-scoped in the QUERY STRING, not only in the auth
+  # token the signer builds from the same credential. Omitting account_index answers
+  # a bare 20001 "invalid param " that names nothing — observed live 2026-08-28 on
+  # testnet.zklighter.elliot.ai, where `accountActiveOrders?market_id=1` returns that
+  # message while `accountActiveOrders?account_index=153` reaches the auth check.
+  # A method missing from this list is therefore broken for every caller, silently.
+  @private_account_methods ~w(fetchClosedOrders fetchDeposits fetchMyLiquidations fetchMyTrades
+                              fetchOpenOrders fetchTransfers fetchWithdrawals)
   @time_in_force %{
     "GTC" => 1,
     "IOC" => 0,
