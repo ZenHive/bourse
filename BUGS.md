@@ -71,6 +71,70 @@ roadmap.
 
 ---
 
+## 2026-08-28 — deribit `fetch_option_chain/2`: an underlying with a live linear book answers `{:ok, %{}}`, and `implied_volatility` is `nil` on every leg
+
+**Status:** 🆕 reported (consumer: `trading_dashboard`, bourse 0.7.0, live Deribit public API,
+2026-08-28 ~00:50 UTC; no credentials — all endpoints public)
+
+**The call:** `Bourse.fetch_option_chain(exchange, currency)` against `deribit`.
+
+**Defect 1 — an underlying whose book is USDC-settled answers with an empty success.**
+
+```elixir
+{:ok, ex} = Bourse.exchange(:deribit)
+Bourse.fetch_option_chain(ex, "SOL")   # => {:ok, %{}}
+Bourse.fetch_option_chain(ex, "USDC")  # => 3_626 legs; 682 of them carry currency: "SOL"
+```
+
+Deribit lists altcoin options as USDC-margined linear contracts named
+`SOL_USDC-25DEC26-115-P` and indexes them under `currency=USDC`, not `currency=SOL`.
+Measured on the returned chain: **SOL 682 instruments, 431 with open interest,
+1_331_780 SOL total OI**, `info["mark_iv"]` present on all 682. The same book carries
+XRP 500, HYPE 446, TRX 306, AVAX 284 — and BTC 752 / ETH 656 as their linear duplicates.
+
+The venue's own `get_instruments?currency=SOL&kind=option` also returns `[]`, so bourse
+relays the venue faithfully. But the unified method takes an **underlying**, and this
+underlying has a book — bourse itself proves it knows the mapping, because every leg it
+returns from the USDC call is already tagged `currency: "SOL"`.
+
+**Expected.** Either resolve `"SOL"` to the settlement currency that carries its book, or
+return `{:error, %Bourse.Error{type: :not_supported}}` — which the docstring's Errors
+section already promises. `{:ok, %{}}` is indistinguishable from "this venue lists no
+options on this underlying", so the consumer records a live market as absent and cannot
+tell the two apart. Silent-empty is the false-green shape; a wrong answer that looks like
+a clean answer.
+
+**Defect 2 — the normalized `implied_volatility` field is never populated.**
+
+```elixir
+{:ok, btc} = Bourse.fetch_option_chain(ex, "BTC")
+map_size(btc)                                                       # 1070
+Enum.count(Map.values(btc), &(&1.implied_volatility != nil))        # 0
+Enum.count(Map.values(btc), &(get_in(&1.info, ["mark_iv"]) != nil)) # 1070
+```
+
+`%Bourse.OptionData{}` declares the field, Deribit supplies a value on every leg, and the
+struct field is `nil` throughout — inverse book and linear book alike (682/682 SOL legs
+also carry `info["mark_iv"]` while the struct field is nil). The normalization exists and
+does not fill.
+
+**Consumer impact (trading_dashboard).** The macro panel's crypto-positioning block —
+skew, ATM IV, gamma flip, zero gamma — does not use `fetch_option_chain` at all. It calls
+`public_get_get_book_summary_by_currency` through the implicit API and reads raw rows,
+precisely because the raw payload carries `mark_iv` and the normalized struct does not
+(`lib/trading_dashboard/macro/crypto.ex:800`). Defect 1 is what led a trader session to
+conclude from `{:ok, %{}}` that Deribit runs no SOL options market at all; the correction
+cost a full re-probe of the venue. No local workaround is needed — passing `"USDC"` and
+filtering on `.currency` reaches everything — but the empty-success shape is what made the
+wrong reading look verified.
+
+**Not a bourse defect, recorded here so the next reader does not re-derive it:** the linear
+instrument name also fails `ZenQuant.Options.Deribit.parse_option/1`
+(`{:error, :invalid_format}` on `SOL_USDC-25DEC26-115-P`, `{:ok, …}` on
+`BTC-25SEP26-90000-C`). That belongs to zen_quant and is filed there.
+
+---
+
 ## 2026-08-27 — `HmacRecipe`'s canonical-string fallback ladders silently pick a block instead of failing; no test reaches past their first rung
 
 **Status:** 🆕 reported (measured, not consumer-reported — mutation testing on
