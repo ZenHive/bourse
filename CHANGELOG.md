@@ -73,6 +73,15 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- Symbol normalization applies venue aliases to split currencies rather than
+  rewriting substrings in raw market ids, rejects ambiguous reverse alias maps,
+  parses Bybit's native dated-future ids (including digit-prefixed bases), and
+  uses venue-authored currencies when splitting no-separator ids.
+- Private WebSocket connects no longer return an unauthenticated socket when a
+  private section lacks an auth pattern. Derive now authenticates with its
+  EIP-191 `public/login` handshake, Bybit watches its account-wide order topic,
+  and OKX batch refusals are classified from the per-order `sCode` / `sMsg`
+  instead of the outer batch envelope.
 - The provider-live REST-read lane went from 148 red cases to a fully
   adjudicated surface (task 671): venue-scoped dict-shape and positional-row
   parse repairs (binance family, okx, alpaca, bybit), the okx conversion
