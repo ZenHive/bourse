@@ -22589,7 +22589,7 @@ id = "665"
 phase = 14
 bundle = "live_triage"
 milestone = "v1_1"
-status = "in_progress"
+status = "done"
 title = 'A side that is not exactly "buy" or "sell" still becomes a direction on every batch write path'
 scores = { d = 3, b = 7, u = 6 }
 markers = ["bug", "security", "parallel"]
@@ -22603,9 +22603,16 @@ Task 663 made an uninterpretable `side` a hard `{:error, %Bourse.Error{type: :in
 
 The invariant this task establishes is the whole class, not the batch instance: NO unified write entry point may turn a side it cannot interpret into a direction. That includes the last-resort layer — `Bourse.Unified.RequestShape.Hyperliquid.buy_side?/1` (lines 276-277) maps every non-binary value to `false`, i.e. silently to SELL. Task 663's boundary makes that unreachable from `Unified.call/3` for positional sides, but it is still a live footgun for batch entries and for any direct RequestShape caller. Make the refusal structural rather than enumerated, so a method added later cannot re-open the hole by declaring its side inside a nested map.
 """
+implemented = "Landed by grok via merge-train; reviewer-approved (run run-1787877698120-e139c635, b4732f8edf79bb2bf85cc7f6e7e6942644d212c8)."
+delivered_by = "grok"
+verified = true
+verified_by = "cursor"
+verification_ref = "harness-run:run-1787877698120-e139c635"
 created_at = "2026-08-22"
 started_at = "2026-08-28"
 scored_at = "2026-08-22"
+done_at = "2026-08-28"
+shipped_in = "b4732f8edf79bb2bf85cc7f6e7e6942644d212c8"
 
 [[task]]
 id = "666"

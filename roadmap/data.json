@@ -30196,7 +30196,7 @@
       "phase": 14,
       "bundle": "live_triage",
       "milestone": "v1_1",
-      "status": "in_progress",
+      "status": "done",
       "title": "A side that is not exactly \"buy\" or \"sell\" still becomes a direction on every batch write path",
       "scores": {
         "d": 3,
@@ -30233,10 +30233,17 @@
         "lib/bourse/order/sanity.ex",
         "test/bourse"
       ],
+      "shipped_in": "b4732f8edf79bb2bf85cc7f6e7e6942644d212c8",
       "body": "Task 663 made an uninterpretable `side` a hard `{:error, %Bourse.Error{type: :invalid_parameters}}` before dispatch — but only for the positional-side methods. The guard is derived from the method table: `lib/bourse/unified.ex:524` builds `@side_methods` from `:side in params`, and every batch write declares `[:orders]` instead (`create_orders`, `create_spot_orders`, `create_contract_orders`, `create_uta_orders`, `edit_orders` — verified in the method table at lines 254-293). So a nested `side: :sell` inside an `orders[]` entry never reaches `validate_side_param/2` and still falls through to whatever the venue shape does with an unrecognized value.\n\nThe invariant this task establishes is the whole class, not the batch instance: NO unified write entry point may turn a side it cannot interpret into a direction. That includes the last-resort layer — `Bourse.Unified.RequestShape.Hyperliquid.buy_side?/1` (lines 276-277) maps every non-binary value to `false`, i.e. silently to SELL. Task 663's boundary makes that unreachable from `Unified.call/3` for positional sides, but it is still a live footgun for batch entries and for any direct RequestShape caller. Make the refusal structural rather than enumerated, so a method added later cannot re-open the hole by declaring its side inside a nested map.\n",
       "created_at": "2026-08-22",
       "started_at": "2026-08-28",
+      "done_at": "2026-08-28",
       "scored_at": "2026-08-22",
+      "implemented": "Landed by grok via merge-train; reviewer-approved (run run-1787877698120-e139c635, b4732f8edf79bb2bf85cc7f6e7e6942644d212c8).",
+      "delivered_by": "grok",
+      "verified": true,
+      "verified_by": "cursor",
+      "verification_ref": "harness-run:run-1787877698120-e139c635",
       "cross_repo": []
     },
     {
