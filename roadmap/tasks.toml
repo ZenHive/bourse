@@ -23159,12 +23159,9 @@ scored_at = "2026-08-28"
 id = "684"
 phase = 16
 bundle = "live_e2e"
-status = "pending"
+status = "in_progress"
 title = "Provision a Lighter testnet account from the repo: add ChangePubKey to the native signer and an end-to-end provisioning task"
 scores = { d = 6, b = 5, u = 5 }
-assignee = "cursor"
-model = "cursor-grok-4.6-high"
-touches = ["native/lighter_signer/csrc/helper.c", "native/lighter_signer/golden_test.go", "lib/bourse/signing/lighter.ex", "test/bourse/signing/lighter_native_test.exs", "mix.exs"]
 acceptance_criteria = [
   "The native helper exposes a ChangePubKey operation (Lighter L2 tx type 8) alongside the existing opcodes, and native/lighter_signer/golden_test.go pins a vector for it against the same pinned elliottech/lighter-go revision the other vectors use",
   "The L1 private key is never passed to the helper and never crosses the Port boundary: the helper accepts the already-computed L1 signature string as an input parameter, and a test asserts the key does not appear in any frame sent to the helper",
@@ -23185,6 +23182,9 @@ out_of_scope = [
   "The remaining empty-sandbox-state failures in the lighter live lane (no candles, no positions, no fundings on a fresh account) - those are a separate question about seeding market and account state",
   "Adding further L2 transaction types beyond ChangePubKey"
 ]
+touches = ["native/lighter_signer/csrc/helper.c", "native/lighter_signer/golden_test.go", "lib/bourse/signing/lighter.ex", "test/bourse/signing/lighter_native_test.exs", "mix.exs"]
+assignee = "cursor"
+model = "cursor-grok-4.6-high"
 body = """
 Design decided with the operator on 2026-08-28 - build to this shape, do not re-open it.
 
@@ -23210,4 +23210,5 @@ Authority: Lighter's own API and the pinned lighter-go source are the contract. 
 The operator asked for this task directly after the manual recovery.
 """
 created_at = "2026-08-28"
+started_at = "2026-08-28"
 scored_at = "2026-08-28"
