@@ -23422,7 +23422,7 @@ shipped_in = "5853c25ff0b300137362ba30b4d54511170df24b"
 id = "688"
 phase = 16
 bundle = "live_triage"
-status = "in_progress"
+status = "done"
 title = "Bourse.Symbol quietly returns a different market: non-injective inversion, unanchored alias rewriting, and unparsed dated ids"
 scores = { d = 6, b = 7, u = 7 }
 markers = ["bug"]
@@ -23469,16 +23469,16 @@ Provenance: a mutation-testing testability survey run 2026-08-24. Bourse.Symbol 
 mutation-tested; the findings come from reading the module and re-measuring every claim above
 with mix run against the authored specs. Re-measure rather than trusting the numbers here.
 """
-implemented = "Landed by codex via merge-train; reviewer-approved (run run-1787940039280-60a87e3f, 64f078ec0a8a3ebc6d51aeb838b9abcd60160c99)."
+implemented = "Landed by codex via merge-train; reviewer-approved (run run-1787943634158-bce8a61a, 5c50af93499582ce4d3ad8a0e28064f2b2e579ab)."
 delivered_by = "codex"
 verified = true
 verified_by = "cursor"
-verification_ref = "harness-run:run-1787940039280-60a87e3f"
+verification_ref = "harness-run:run-1787943634158-bce8a61a"
 created_at = "2026-08-28"
 started_at = "2026-08-28"
 scored_at = "2026-08-28"
 done_at = "2026-08-28"
-shipped_in = "64f078ec0a8a3ebc6d51aeb838b9abcd60160c99"
+shipped_in = "5c50af93499582ce4d3ad8a0e28064f2b2e579ab"
 
 [[task]]
 id = "689"
