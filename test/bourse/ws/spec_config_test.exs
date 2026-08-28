@@ -2,10 +2,28 @@ defmodule Bourse.WS.SpecConfigTest do
   use ExUnit.Case, async: true
 
   alias Bourse.Exchange
+  alias Bourse.WS
   alias Bourse.WS.Config
   alias Bourse.WS.Subscription
+  alias ZenWebsocket.Client
 
   @ws_venues ~w(alpaca binance binancecoinm binanceusdm bybit deribit derive hyperliquid lighter okx)
+
+  defmodule Transport do
+    @moduledoc false
+    use GenServer
+
+    @spec start() :: GenServer.on_start()
+    def start, do: GenServer.start(__MODULE__, :ok)
+
+    @impl true
+    def init(:ok), do: {:ok, :ok}
+
+    @impl true
+    def handle_call(:get_state, _from, state), do: {:reply, :connected, state}
+
+    def handle_call({:send_message, _message}, _from, state), do: {:reply, :ok, state}
+  end
 
   describe "build/1" do
     test "configured venues and registered divergences partition runtime support" do
@@ -97,7 +115,29 @@ defmodule Bourse.WS.SpecConfigTest do
           assert config.auth_pattern,
                  "#{id} authors a private WS URL without an auth_pattern — connect/3 would have no handshake to run"
         else
-          assert {:error, :no_url_configured} = Bourse.WS.connect(Exchange.new!(id), :private)
+          assert {:error, :no_url_configured} = WS.connect(Exchange.new!(id), :private)
+        end
+      end
+    end
+
+    test "every venue's private connect either carries a non-nil ws.auth or returns an error" do
+      connect_fun = fn _url, _opts ->
+        {:ok, pid} = Transport.start()
+        {:ok, %Client{server_pid: pid, state: :connected}}
+      end
+
+      for id <- Enum.sort(@ws_venues ++ Map.keys(Config.registered_divergences())) do
+        case WS.connect(Exchange.new!(id), :private, connect_fun: connect_fun) do
+          {:ok, ws} ->
+            try do
+              assert ws.auth,
+                     "#{id} private connect returned an open unauthenticated socket"
+            after
+              WS.close(ws)
+            end
+
+          {:error, _reason} ->
+            :ok
         end
       end
     end
@@ -112,7 +152,7 @@ defmodule Bourse.WS.SpecConfigTest do
       assert config.auth_pattern == nil
       assert is_nil(config.private_url)
       assert is_nil(config.private_url_sandbox)
-      assert {:error, :no_url_configured} = Bourse.WS.connect(Exchange.new!("hyperliquid"), :private)
+      assert {:error, :no_url_configured} = WS.connect(Exchange.new!("hyperliquid"), :private)
     end
 
     test "derive uses registered :method_params_subscribe and build_subscribe returns frames" do
