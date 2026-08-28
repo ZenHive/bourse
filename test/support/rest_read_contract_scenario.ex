@@ -486,12 +486,20 @@ defmodule Bourse.Test.RestReadContractScenario do
        ) do
     keys = contract_case["success"]["provider_meaning_keys"]
 
+    refute all_collections_empty?(payload),
+           "#{contract_case["id"]}: provider returned no rows. Populate the sandbox account so this " <>
+             "read has data, or ledger the branch in docs/prod-verification-ledger.md"
+
     assert contains_meaning?(payload, keys),
            "#{contract_case["id"]}: raw provider payload contains none of the semantic keys #{inspect(keys)}"
   end
 
   defp assert_meaning!(%{"success" => %{"representation" => "nested_map"}} = contract_case, value, _resolved) do
     keys = contract_case["success"]["provider_meaning_keys"]
+
+    refute all_collections_empty?(value),
+           "#{contract_case["id"]}: provider returned no rows. Populate the sandbox account so this " <>
+             "read has data, or ledger the branch in docs/prod-verification-ledger.md"
 
     assert contains_meaning?(value, keys),
            "#{contract_case["id"]}: provider map contains none of the semantic keys #{inspect(keys)}"
@@ -579,6 +587,27 @@ defmodule Bourse.Test.RestReadContractScenario do
 
   defp contains_meaning?(value, keys) when is_list(value), do: Enum.any?(value, &contains_meaning?(&1, keys))
   defp contains_meaning?(_value, _keys), do: false
+
+  # A venue that answers 200 with an empty collection is reporting "no rows", not a
+  # shape mismatch. Without this split both conditions raise "contains none of the
+  # semantic keys", which reads as carve divergence and sends the reader hunting for
+  # a parse defect that is not there (BUGS.md, bybit fetchMySettlementHistory).
+  defp all_collections_empty?(value) do
+    case collect_lists(value, []) do
+      [] -> false
+      lists -> Enum.all?(lists, &(&1 == []))
+    end
+  end
+
+  defp collect_lists(value, acc) when is_map(value) do
+    Enum.reduce(value, acc, fn {_key, child}, inner -> collect_lists(child, inner) end)
+  end
+
+  defp collect_lists(value, acc) when is_list(value) do
+    Enum.reduce(value, [value | acc], fn child, inner -> collect_lists(child, inner) end)
+  end
+
+  defp collect_lists(_value, acc), do: acc
 
   defp key_match?(key, keys) do
     normalized = String.downcase(key)
