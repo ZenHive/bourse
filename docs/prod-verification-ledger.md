@@ -883,3 +883,26 @@ Entry template:
 - Expected evidence: the resting order's `client_order_index` appears in an
   `update/account_all_orders` frame before cancellation; the same order disappears
   from the live open-order read after cancellation.
+
+### alpaca — private trade_updates stream (task 674, filed 2026-08-28)
+
+- Authored slices: omit — this is a live journey stream leg, not an authored field-map
+- Blocked by: the private WebSocket URL is not authored, so the paper account's
+  order events cannot be observed through `Bourse.WS`. Live 2026-08-28 against
+  `paper-api.alpaca.markets`: `Bourse.WS.connect(ex, :private)` →
+  `:no_url_configured` (authored `websocket.urls.private` and `sandbox_private`
+  are null). Alpaca serves account events on
+  `wss://paper-api.alpaca.markets/stream` after an `authenticate` handshake and
+  a `listen` for `trade_updates`
+  (https://docs.alpaca.markets/us/docs/websocket-streaming). The REST trader
+  journey stays in `test/live/journeys/trader/alpaca_test.exs`.
+- The open question: does a resting paper crypto limit order's id appear in a
+  `trade_updates` frame (`event` `new` / `pending_new`) before cancel, and a
+  `canceled` event after cancel?
+- Exact call: author `websocket.urls.sandbox_private` to
+  `wss://paper-api.alpaca.markets/stream`, wire the authenticate/listen dialect,
+  then run
+  `mix test.json --quiet --include dangerous test/live/journeys/trader/alpaca_test.exs`
+  and subscribe to `trade_updates` on that paper stream.
+- Expected evidence: the resting order's id appears in a `trade_updates` frame
+  before cancellation; a `canceled` event arrives after `DELETE /v2/orders/{id}`.
