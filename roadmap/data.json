@@ -31326,7 +31326,7 @@
       "id": "687",
       "phase": 16,
       "bundle": "live_triage",
-      "status": "in_progress",
+      "status": "done",
       "title": "The gates report green without running and red without a defect, so reviewers have learned to dismiss them",
       "scores": {
         "d": 6,
@@ -31363,17 +31363,17 @@
         "priv/venues/_shared/binance_family/rotation_report.json",
         "docs/prod-verification-ledger.md"
       ],
-      "shipped_in": "e83f1fae17072c661d61f4d6d3854a3dee361eab",
+      "shipped_in": "1eaced0f726638a1be42d9eff10949426763b3bf",
       "body": "Four measured instances of gates that carry no honest signal, and one measured consequence that\nis worse than any of them.\n\nmix bourse.check_lighter_signer prints Lighter native verification NOT RUN: missing go and exits\n0, so mix check.dispatch records a passing step. The helper directory is a gitignored build\nartifact, so on a host without Go the signer is genuinely unavailable and the gate says nothing.\n\nThe provider-live suite cannot tell a deliberately-red ledgered case from a genuine failure. A\nfull run on main sits at roughly 46 to 48 failures whose independent classification is: about\ntwelve lighter helper_unavailable, about six lighter account errors, six okx 50038 deliberately\nkept in the denominator because dropping them is the green lie CLAUDE.md forbids, about thirteen\nbranches that only execute when live account state exists, one hardcoded threshold against a\ndrained wallet, and about five that warranted real investigation. Four of those five adjudicated\nto empty account state; the fifth was the okx transfer id defect, and it took six reviews to find.\n\nThe measured consequence: across six harness reviews in one day, every reviewer labelled the\nentire cluster environmental or pre-existing, reproduced two or three of its causes, and approved\nover the rest. That is the gate training its own users to ignore it, and it is the reason this\ntask exists rather than four separate patches.\n\nspec_disk_test pins the SHA-256 of the assembled maps as they stood before spec.json was deleted.\nbybit's authored document has been edited three times on purpose since, so the pin cannot hold and\nmain is red on a clean tree. The guarantee the pin gave (the rotation was lossless) expired with\nthe first legitimate authored edit; re-recording restores nothing, because the new hash is\nproduced by the same loader it is meant to check. This is an owner decision, which is why it was\nfiled rather than patched.\n\nFourteen contract cases across five venues resolve their arguments from live account state and go\nred once that state is cleaned up or ages out. Deribit is the sharpest instance: a filled\nround-trip made two cases green, and 2.5 hours later fetchClosedOrders returned zero rows even\nwith include_old, because the venue windows filled orders out of its history. That state cannot be\nmade durable by hand.\n\nTask 670 owns the larger flip to provider-live-only and the deletion of fixture oracles. This task\ndoes not delete anything; it makes the signal honest so 670 lands on a gate someone believes.\n\nAuthority for the per-case adjudications is the venue: probe the demo host before reclassifying a\nred. A ledgered case is ledgered because a live call could not reach it, and the ledger records why\nit is unverified without discharging it.\n",
       "created_at": "2026-08-28",
       "started_at": "2026-08-28",
       "done_at": "2026-08-28",
       "scored_at": "2026-08-28",
-      "implemented": "Landed by grok via merge-train; reviewer-approved (run run-1787940039273-f101ab42, e83f1fae17072c661d61f4d6d3854a3dee361eab).",
+      "implemented": "Landed by grok via merge-train; reviewer-approved (run run-1787947246606-1ff66ee9, 1eaced0f726638a1be42d9eff10949426763b3bf).",
       "delivered_by": "grok",
       "verified": true,
-      "verified_by": "cursor",
-      "verification_ref": "harness-run:run-1787940039273-f101ab42",
+      "verified_by": "claude",
+      "verification_ref": "harness-run:run-1787947246606-1ff66ee9",
       "cross_repo": []
     },
     {
