@@ -1772,7 +1772,7 @@
         {
           "name": "id",
           "strategy": "resource",
-          "source_method": "fetchClosedOrders",
+          "source_method": "fetchOpenOrders",
           "field": "id",
           "collection": false
         }
@@ -1991,7 +1991,38 @@
               "strategy": "market_type"
             }
           ]
-        },
+        }
+      ],
+      "arguments": [
+        {
+          "name": "id",
+          "strategy": "resource",
+          "source_method": "fetchClosedOrders",
+          "field": "id",
+          "collection": false
+        }
+      ],
+      "success": {
+        "representation": "parsed",
+        "collection": "single",
+        "module": "Bourse.Order",
+        "required_fields": [
+          "id"
+        ],
+        "any_fields": [
+          "symbol",
+          "status",
+          "type",
+          "side"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
+      "method": "fetchOrder",
+      "branches": [
         {
           "provider_operation": "privateGetV5OrderRealtime",
           "http_method": "GET",
@@ -2010,7 +2041,7 @@
         {
           "name": "id",
           "strategy": "resource",
-          "source_method": "fetchClosedOrders",
+          "source_method": "fetchOpenOrders",
           "field": "id",
           "collection": false
         }

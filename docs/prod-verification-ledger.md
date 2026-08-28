@@ -753,6 +753,28 @@ Entry template:
   delivery on 2026-08-28. Re-run the venue lane after that date; this is the venue's last
   red case (77/78 green on 2026-08-24).
 
+### bybit — fetchOpenOrder / fetchOrder realtime branch need a currently-open order (task 671, filed 2026-08-28)
+
+- Authored slices: bybit cases `fetchOpenOrder:0` and `fetchOrder:1` — sourced from
+  `fetchOpenOrders` since 2026-08-28 (previously sourced from `fetchClosedOrders`, which
+  the entry above records as green on 2026-08-24 off the sole `DOGEUSDT-28AUG26` market
+  fill). By 2026-08-28, four days later, that same fill answered `order_not_found`
+  against `GET /v5/order/realtime` even though `GET /v5/order/history` still serves it —
+  the id had aged out of realtime's cache.
+- Blocked by: the account holds no currently open/unfilled linear order. Bybit's own docs
+  cap `/v5/order/realtime`'s closed-order lookup at the 500 most recent rows per category
+  and note the cache is cleared on service restarts, so a closed order is not a durable id
+  source for this endpoint. The fix couples each realtime-branch case's id to what the
+  endpoint actually guarantees — a live open order via `fetchOpenOrders` — instead of a
+  closed one that may or may not still be cached; that is a correct, structurally-fixed
+  coupling, but it can only be exercised once the account holds a resting order.
+- The open question: whether `fetchOpenOrder` and `fetchOrder`'s realtime branch parse the
+  same required/any fields once a real open order exists.
+- Exact call: place (or wait for) a resting linear limit order on the testnet main-account
+  key, then `mix ccxt.verify_rest_read_contracts --venue bybit`.
+- Expected evidence: `fetchOpenOrder:0` and `fetchOrder:1` both green against a real open
+  order id sourced from `fetchOpenOrders`.
+
 ### okx — funding-account and savings surfaces are disabled in demo trading (task 671, filed 2026-08-23)
 
 - Authored slices: okx cases `fetchCurrencies:0`, `fetchDepositWithdrawFees:0`,

@@ -144,13 +144,15 @@ defmodule Bourse.BybitAuthoredIntegrationTest do
     credentials = require_credentials!(:bybit, url: "https://api-testnet.bybit.com")
     exchange = build_exchange(:bybit, credentials: credentials, sandbox: true)
 
-    assert {:error, %Error{type: :permission_denied, code: code, message: message}} =
+    assert {:error, %Error{type: :exchange_error, code: code, message: message}} =
              Bourse.create_convert_trade(exchange, "invalid-quote-tx-id-347", "USDT", "BTC", 1)
 
-    # The provisioned testnet key lacks the Exchange permission, so Bybit rejects
-    # this POST with its business-level permission response before any conversion
+    # Anchor observed 2026-08-28: the testnet key rotated 2026-08-24 carries the
+    # Exchange permission, so this POST now clears auth and reaches Bybit's
+    # business-level quote validation, which rejects the fabricated quoteTxId
+    # with retCode 700008 "quote fail: price time out" before any conversion
     # can execute.
-    assert code in [10_005, "10005"]
+    assert code in [700_008, "700008"]
     assert is_binary(message) and message != ""
   end
 
