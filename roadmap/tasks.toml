@@ -23224,7 +23224,7 @@ shipped_in = "e6ef7ea35d42b966532a7db22c7b5166d0cbd13b"
 id = "685"
 phase = 16
 bundle = "live_triage"
-status = "pending"
+status = "in_progress"
 title = "Silent substitution is the class: a slice that does not fit must fail loudly, never resolve to a plausible wrong value"
 scores = { d = 7, b = 8, u = 8 }
 markers = ["bug"]
@@ -23289,6 +23289,7 @@ it returned. Do not ship (c): declaring the pair unreachable discards an identif
 publish and leaves the field nil for no gain.
 """
 created_at = "2026-08-28"
+started_at = "2026-08-28"
 scored_at = "2026-08-28"
 
 [[task]]
