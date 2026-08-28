@@ -23009,7 +23009,7 @@ id = "681"
 phase = 16
 bundle = "live_e2e"
 milestone = "v1_2"
-status = "in_progress"
+status = "done"
 title = "Live trader journey for lighter: zk-signed limit-order round-trip, stream leg, error probes"
 scores = { d = 6, b = 7, u = 7 }
 acceptance_criteria = ["test/live/journeys/trader/lighter_test.exs mirrors the bybit exemplar's structure with lighter's own write contract: survey, resting limit order (limit is the only supported type) carrying a caller-supplied nonce from public_get_nextnonce and a client_order_index, poll open, echo assertions, open-orders membership, cancel, poll gone, cleanup in an after block", "Every asserted error was first observed live against testnet.zklighter.elliot.ai and is pinned with a dated observation comment; Lighter's own API docs are the semantic authority", "An in-flow rejection test asserts the venue's own error for a refused order, observed live", "test/live/errors/lighter_test.exs carries at least one generic bad-input probe (unknown order id or equivalent) asserting the live-observed error, runs in the default suite, and duplicates neither the contract lane's cases nor the invalid-credentials suite", "A stream describe block observes the placed order's own event on the live stream, mirroring the bybit private-stream block; if the leg is unreachable with our testnet key, it is recorded in docs/prod-verification-ledger.md instead of silently dropped", "mix test.json --quiet --include dangerous test/live/journeys/trader/lighter_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes", "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"]
@@ -23024,9 +23024,16 @@ Venue notes: DEX — LIGHTER_TESTNET_API_KEY_INDEX / _ACCOUNT_INDEX / _API_PRIVA
 
 Supersedes the lighter slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real orders on a zk signing path) and parallel throughput across venues.
 """
+implemented = "Landed by codex via merge-train; reviewer-approved (run run-1787878849303-bd01a1ca, 320b683c051312b5dc05960829d5fc8fed7101bc)."
+delivered_by = "codex"
+verified = true
+verified_by = "cursor"
+verification_ref = "harness-run:run-1787878849303-bd01a1ca"
 created_at = "2026-08-24"
 started_at = "2026-08-28"
 scored_at = "2026-08-24"
+done_at = "2026-08-28"
+shipped_in = "320b683c051312b5dc05960829d5fc8fed7101bc"
 
 [[task]]
 id = "682"
