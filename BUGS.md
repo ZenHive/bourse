@@ -265,7 +265,7 @@ Measured consequence: across six harness reviews in one day, every reviewer labe
 cluster "environmental / pre-existing", reproduced two or three of its causes, and approved over
 the rest. That is the gate training its own users to ignore it.
 
-**Worth investigating individually** (not yet adjudicated):
+**All five adjudicated live on 2026-08-28 — one real defect, four empty state:**
 
 - ~~`bybit:fetchMySettlementHistory`~~ — **adjudicated 2026-08-28: empty account state, not carve divergence.** Probed live on the testnet main-account key: `GET /v5/asset/delivery-record` with `limit=10` answers `status 200, retCode 0, retMsg "OK", result.list == []` for **all three** categories (`inverse`, `linear`, `option`). The account has never settled a position, so there are no rows — the `deliveryPrice`/`deliveryRpl` keys are absent because the payload is empty, not because the carve is wrong. Closing this needs a settled position on the testnet account.
 
@@ -280,7 +280,7 @@ the rest. That is the gate training its own users to ignore it.
   the summary singled this case out as the strongest carve-divergence suspect in the whole
   suite, and it was empty state.
 - ~~`lighter:fetchOHLCV: provider returned no rows`~~ — **adjudicated 2026-08-28: not a client defect, do not re-investigate.** Probed live against `testnet.zklighter.elliot.ai`: `publicGetCandles` with `market_id=1` (and `0`), `resolution="1h"`, a 24h `start_timestamp`/`end_timestamp` window and `count_back=0` answers HTTP 200 with `%{"code" => 200, "r" => "1h", "c" => []}`. The venue **echoes the resolution back**, and a parameterless call is rejected as `bad_request` — so the request is well-formed and understood; the testnet simply carries no candle history for the probed markets. Note this holds *despite* `priv/venues/lighter/authored/endpoints.json` marking `market_id` and `resolution` as `{"kind": "unresolved", "reason": "dynamic_construction"}`, which is what made this look like a parameter bug.
-- `hyperliquid:fetchPosition: expected Bourse.Position, got nil` and `binanceusdm:fetchPositionADLRank: expected ADLRank, got nil` — ambiguous between empty state and a parse gap.
+- ~~`hyperliquid:fetchPosition` and `binanceusdm:fetchPositionADLRank`~~ — **adjudicated 2026-08-28: empty account state, not a parse gap.** `Bourse.fetch_positions/1` returns `{:ok, []}` live on both accounts (hyperliquid testnet, binanceusdm demo), so there is no position for `fetchPosition` to return and nothing for the venue to ADL-rank. Both close by opening a position on the respective sandbox account.
 - **`okx:fetchTransfer`** — **CONFIRMED A REAL DEFECT, 2026-08-28. Own entry below.**
 
 ---
