@@ -22813,7 +22813,7 @@ shipped_in = "01347bd"
 id = "673"
 phase = 16
 bundle = "polish"
-status = "in_progress"
+status = "done"
 title = "Rename the mix ccxt.* task namespace to mix bourse.* — CCXT is a reference, not the project"
 scores = { d = 3, b = 5, u = 5 }
 depends_on = [671]
@@ -22831,9 +22831,16 @@ Routing trigger: repo-wide check-infrastructure rename across ~55 files includin
 
 Note for the orchestrator at landing: verify the harness project registry check_command for bourse still resolves (it names mix check.dispatch, an alias — expected unaffected), and confirm no ~/.claude hook or marketplace script shells a mix ccxt.* task by name.
 """
+implemented = "Landed by grok via merge-train; reviewer-approved (run run-1787877698121-7a279e21, df21958c1c8c4bd4f42130c85e1cb8d0c545e4c5)."
+delivered_by = "grok"
+verified = true
+verified_by = "cursor"
+verification_ref = "harness-run:run-1787877698121-7a279e21"
 created_at = "2026-08-23"
 started_at = "2026-08-28"
 scored_at = "2026-08-23"
+done_at = "2026-08-28"
+shipped_in = "df21958c1c8c4bd4f42130c85e1cb8d0c545e4c5"
 
 [[task]]
 id = "674"
