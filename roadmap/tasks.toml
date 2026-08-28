@@ -22886,7 +22886,7 @@ id = "675"
 phase = 16
 bundle = "live_e2e"
 milestone = "v1_2"
-status = "in_progress"
+status = "done"
 title = "Live trader journey for binance spot: REST round-trip, private-stream leg, error probes"
 scores = { d = 4, b = 7, u = 7 }
 acceptance_criteria = ["test/live/journeys/trader/binance_test.exs mirrors the bybit exemplar's structure: survey (market row, ticker, order book, balance invariants), resting limit order with wall-clock-unique clientOrderId, poll open, echo assertions, fetch_open_orders membership, cancel, poll gone, cleanup via release_order! in an after block", "Every asserted error code/message was first observed live against testnet.binance.vision and is pinned with a dated observation comment; Binance's own spot API docs are the semantic authority", "An in-flow rejection test asserts the venue's own error for a refused order (for example below the instrument minimum), observed live", "test/live/errors/binance_test.exs carries at least one generic bad-input probe (unknown order id) asserting the live-observed error, runs in the default suite, and duplicates neither the contract lane's invalid-symbol cases nor the invalid-credentials suite", "The private-stream leg observes the placed order's own event on the live stream mirroring the bybit private-stream block; note that binance spot retired listen keys — the private section runs over the WebSocket API host via the signed userDataStream.subscribe.signature frame; if the leg is unreachable with our testnet credentials, it is recorded in docs/prod-verification-ledger.md instead of silently dropped", "mix test.json --quiet --include dangerous test/live/journeys/trader/binance_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes", "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"]
@@ -22901,9 +22901,16 @@ Venue notes: BINANCE_TESTNET_API_KEY/SECRET. Sharp edge for the stream leg: a su
 
 Supersedes the binance-spot slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.
 """
+implemented = "Landed by grok via merge-train; reviewer-approved (run run-1787882432736-2958f409, a30214d881ecc66223f289b3ff8fc24fe5464901)."
+delivered_by = "grok"
+verified = true
+verified_by = "claude"
+verification_ref = "harness-run:run-1787882432736-2958f409"
 created_at = "2026-08-24"
 started_at = "2026-08-28"
 scored_at = "2026-08-24"
+done_at = "2026-08-28"
+shipped_in = "a30214d881ecc66223f289b3ff8fc24fe5464901"
 
 [[task]]
 id = "676"

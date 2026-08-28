@@ -30717,7 +30717,7 @@
       "phase": 16,
       "bundle": "live_e2e",
       "milestone": "v1_2",
-      "status": "in_progress",
+      "status": "done",
       "title": "Live trader journey for binance spot: REST round-trip, private-stream leg, error probes",
       "scores": {
         "d": 4,
@@ -30749,10 +30749,17 @@
         "test/live/journeys/trader/binance_test.exs",
         "test/live/errors/binance_test.exs"
       ],
+      "shipped_in": "a30214d881ecc66223f289b3ff8fc24fe5464901",
       "body": "Mirror the bybit trader-journey exemplar (test/live/journeys/trader/bybit_test.exs, landed in 82af62f, including its private-stream describe block) for binance spot on testnet.binance.vision. Live-probe first, then pin. Test orders with cleanup are explicitly allowed on the testnet.\n\nVenue notes: BINANCE_TESTNET_API_KEY/SECRET. Sharp edge for the stream leg: a subscribe.signature subscription outlives the socket that made it, so an unauthenticated differential leg must run first if one is added.\n\nSupersedes the binance-spot slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.\n",
       "created_at": "2026-08-24",
       "started_at": "2026-08-28",
+      "done_at": "2026-08-28",
       "scored_at": "2026-08-24",
+      "implemented": "Landed by grok via merge-train; reviewer-approved (run run-1787882432736-2958f409, a30214d881ecc66223f289b3ff8fc24fe5464901).",
+      "delivered_by": "grok",
+      "verified": true,
+      "verified_by": "claude",
+      "verification_ref": "harness-run:run-1787882432736-2958f409",
       "cross_repo": []
     },
     {
