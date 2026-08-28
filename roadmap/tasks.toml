@@ -23548,7 +23548,7 @@ scored_at = "2026-08-28"
 id = "690"
 phase = 16
 bundle = "ws_unified"
-status = "in_progress"
+status = "done"
 title = "The transport reports success it did not achieve: an unauthenticated private socket, an unreachable order topic, and a batch code that masks the real rejection"
 scores = { d = 6, b = 8, u = 8 }
 markers = ["bug"]
@@ -23597,6 +23597,13 @@ Authority throughout: the venues. Derive's own login route, bybit's published pr
 okx's documented error codes. Read one success and one relevant error live per instance before
 changing a slice, and pin both.
 """
+implemented = "Landed by grok via merge-train; reviewer-approved (run run-1787932841791-7b5c27be, f20eb64d81dd5fcd35cd011f4e5975c56cd56e25)."
+delivered_by = "grok"
+verified = true
+verified_by = "cursor"
+verification_ref = "harness-run:run-1787932841791-7b5c27be"
 created_at = "2026-08-28"
 started_at = "2026-08-28"
 scored_at = "2026-08-28"
+done_at = "2026-08-28"
+shipped_in = "f20eb64d81dd5fcd35cd011f4e5975c56cd56e25"
