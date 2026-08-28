@@ -735,10 +735,10 @@ Runtime support is a **closed set**. `Bourse.Exchanges` and `Bourse.Registry` re
 `../bourse_workbench` was the CCXT-era authoring workbench this repo was extracted from. Dissolved 2026-08-23: the roadmap moved here; the rest — the 110-venue CCXT extraction corpus, the corpus-wide audits, the venue_compare/ws_sweep scripts — is archived in the code-archive on the mac mini (`/Volumes/RAID1-2TB/Master/Dev/code-archive/`). Everything routes here now:
 
 - Roadmap and task scoring: `roadmap/tasks.toml` in this repo — one rmap, `project = "bourse"`. Do **not** stand up a second rmap anywhere else.
-- Consumer bugs: `BUGS.md` here; triage into scored tasks also happens here and writes a dated note back into the entry.
+- Reported and measured bugs: `BUGS.md` here — whoever found them; triage into scored tasks also happens here and writes a dated note back into the entry.
 - Corpus-wide CCXT questions (all 110 venues) are retired with the archive — this repo carries a 16-venue reference slice and cannot answer them, and nothing active needs to.
 
-#### 🚨 The roadmap admits reported defects — quality work against the API surface has no end
+#### 🚨 The operator routes findings into the roadmap — quality work against the API surface has no end
 
 Eleven venues times ~240 unified methods is an effectively unbounded surface. A live
 measurement, a reviewer proposal or a coverage sweep will *always* find one more true
@@ -748,19 +748,26 @@ this project — 103 tasks filed against 101 landed across fourteen days, and fi
 tasks created in one day (647–661), several of them grandchildren of a single stack
 trace.
 
-**A finding enters the roadmap only when a consumer reported the defect.**
-Everything else — a drift you measured live, a reviewer's `proposed_tasks`, an
-uncovered branch, a carve you would author differently — goes into `BUGS.md` with its
-evidence and stops there. `BUGS.md` is the durable record; the roadmap is the work
-queue, and they are not the same list.
+**A finding enters the roadmap when the operator routes it there — and only then.**
+Provenance is not the gate: an operator measurement, a consumer report and a drift you
+hit mid-task are the same kind of evidence, and the operator is a first-class signal for
+this repo — `critical-rules.md` § NO PSEUDO-RIGOROUS HEDGING forbids discounting a
+finding for want of an outside reporter. What is not automatic is the *destination*.
+An unrouted finding — a live drift, a reviewer's `proposed_tasks`, an uncovered branch,
+a carve you would author differently — goes into `BUGS.md` with its evidence and waits
+there. `BUGS.md` is the durable record; the roadmap is the work queue, and they are not
+the same list.
 
 - ✅ DO: append the measurement to `BUGS.md` with the exact call, the observed value and the expected one. That preserves the finding at zero dispatch cost.
 - ✅ DO: fix it inline and say so when it is bounded and local. A finding you can close in minutes never needed a task.
+- ✅ DO: carry the routing question to the operator — name the mechanism class, its `BUGS.md` entries and what one task would cover. Filing past that decision and burying the finding are the same failure with opposite signs.
 - ❌ DO NOT: file because a finding is genuine, evidenced and cross-session. Those are the floor, not the bar — they admit everything.
 - ❌ DO NOT: promote a reviewer proposal on the strength of its shape. Proposals arrive pre-scored and dispatch-ready; that is a rendering choice, not a routing decision.
+- ❌ DO NOT: file one task per instance when the instances share a mechanism. One class, one task — the instance-shaped carve is what makes the backlog outrun the landings.
 
-**Security and data-loss defects are filed on discovery** regardless of who found
-them, sanitized per `critical-rules.md` § NEVER BROADCAST AN UNPATCHED VULNERABILITY.
+**Security and data-loss defects are filed on discovery** — the standing exception to
+the routing gate, regardless of who found them, sanitized per `critical-rules.md`
+§ NEVER BROADCAST AN UNPATCHED VULNERABILITY.
 
 This tightens the portfolio-wide Default-DECLINE bar in `harness-workflow.md`, which
 governs whether a proposal is *worth* filing. Here the question is prior: whether the

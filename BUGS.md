@@ -104,10 +104,10 @@ roadmap.
 >    socket, bybit's `watchOrders` template pointing at a topic the venue does not serve, and
 >    okx's outer batch `code "1"` masking the real `sCode`.
 >
-> Only two open entries are consumer-reported (deribit `fetch_option_chain`, deribit
-> `fetch_account_facts` margin figures); under the roadmap-admission rule above, the rest stay
-> here unless the operator routes them deliberately. Several — classes 1, 3 and parts of 6 —
-> are small enough to be inline fixes rather than filings.
+> Every entry is real evidence regardless of who measured it; what decides the destination is
+> the operator's routing call, one class at a time (`CLAUDE.md` § The operator routes findings
+> into the roadmap). Several — classes 1, 3 and parts of 6 — are small enough to be inline fixes
+> rather than filings.
 
 ---
 
