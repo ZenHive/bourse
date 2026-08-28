@@ -30767,7 +30767,7 @@
       "phase": 16,
       "bundle": "live_e2e",
       "milestone": "v1_2",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Live trader journey for binanceusdm: REST round-trip, listen-key stream leg, error probes",
       "scores": {
         "d": 4,
@@ -30801,6 +30801,7 @@
       ],
       "body": "Mirror the bybit trader-journey exemplar (test/live/journeys/trader/bybit_test.exs, landed in 82af62f, including its private-stream describe block) for binance USD-M futures on demo-fapi.binance.com. Live-probe first, then pin. Test orders with cleanup are explicitly allowed on the demo account.\n\nVenue notes: BINANCE_FUTURES_TEST_API_KEY/SECRET (shared with COIN-M — one account, two wallets). The account runs One-way mode (verified live 2026-08-10), so orders need no positionSide. USD-M's PUT listenKey returns {}; the private stream lives on demo-fstream and its key comes from fapiPrivate endpoints — the COIN-M half's key connects and stays silent, same failure shape as a bogus key.\n\nSupersedes the binanceusdm slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.\n",
       "created_at": "2026-08-24",
+      "started_at": "2026-08-28",
       "scored_at": "2026-08-24",
       "cross_repo": []
     },
