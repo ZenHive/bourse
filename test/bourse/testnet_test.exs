@@ -1,11 +1,18 @@
 defmodule Bourse.TestnetTest do
   use Bourse.Test.Case, async: false
 
+  alias Bourse.Test.TestnetSnapshot
   alias Bourse.Testnet
 
   @moduletag trace_messages: true
 
   setup do
+    # The registry is process-global and test_helper.exs populated it once at boot.
+    # Clearing it without restoring strands every credential-consuming test that
+    # runs later in this seed order. See Bourse.Test.TestnetSnapshot.
+    snapshot = TestnetSnapshot.capture()
+    on_exit(fn -> TestnetSnapshot.restore(snapshot) end)
+
     Testnet.clear()
     :ok
   end

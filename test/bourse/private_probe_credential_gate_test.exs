@@ -2,23 +2,17 @@ defmodule Bourse.PrivateProbeCredentialGateTest do
   use ExUnit.Case, async: false
 
   alias Bourse.Test.Generator.RawEndpointProbe
+  alias Bourse.Test.TestnetSnapshot
   alias Bourse.Testnet
 
-  @env_registered_exchanges [
-    {:bybit, testnet: true},
-    {:binance, testnet: true},
-    {:binance, :futures, testnet: true},
-    {:deribit, testnet: true}
-  ]
-
   setup do
+    # Restore whatever test_helper.exs registered, not a hand-listed subset:
+    # the previous on_exit put back four venues and left the other seven
+    # unregistered for the rest of the run. See Bourse.Test.TestnetSnapshot.
+    snapshot = TestnetSnapshot.capture()
+    on_exit(fn -> TestnetSnapshot.restore(snapshot) end)
+
     Testnet.clear()
-
-    on_exit(fn ->
-      Testnet.clear()
-      Testnet.register_all_from_env(@env_registered_exchanges)
-    end)
-
     :ok
   end
 
