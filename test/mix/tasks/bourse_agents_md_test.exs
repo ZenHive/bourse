@@ -1,7 +1,7 @@
-defmodule Mix.Tasks.Ccxt.AgentsMdTest do
+defmodule Mix.Tasks.Bourse.AgentsMdTest do
   use ExUnit.Case, async: true
 
-  alias Mix.Tasks.Ccxt.AgentsMd
+  alias Mix.Tasks.Bourse.AgentsMd
 
   describe "render/3" do
     test "inlines pinned external imports and leaves surrounding prose" do
@@ -29,7 +29,7 @@ defmodule Mix.Tasks.Ccxt.AgentsMdTest do
                  root
                )
 
-      assert rendered =~ "<!-- Auto-generated from CLAUDE.md by mix ccxt.agents_md"
+      assert rendered =~ "<!-- Auto-generated from CLAUDE.md by mix bourse.agents_md"
       assert rendered =~ "<!-- @-import: ~/rules.md -->"
       assert rendered =~ "rule one"
       assert rendered =~ "# Top"
@@ -83,7 +83,7 @@ defmodule Mix.Tasks.Ccxt.AgentsMdTest do
 
       assert reason =~ "STALE"
       assert reason =~ "drifted"
-      assert reason =~ "mix ccxt.agents_md"
+      assert reason =~ "mix bourse.agents_md"
     end
 
     test "fails when AGENTS.md is missing" do

@@ -1,10 +1,10 @@
-defmodule Mix.Tasks.Ccxt.ErrorAuthorityTest do
+defmodule Mix.Tasks.Bourse.ErrorAuthorityTest do
   use ExUnit.Case, async: false
 
   alias Bourse.Spec.Disk
-  alias Mix.Tasks.Ccxt.AuthorityCorpus
-  alias Mix.Tasks.Ccxt.ErrorAuthority
-  alias Mix.Tasks.Ccxt.ErrorAuthorityCorpus
+  alias Mix.Tasks.Bourse.AuthorityCorpus
+  alias Mix.Tasks.Bourse.ErrorAuthority
+  alias Mix.Tasks.Bourse.ErrorAuthorityCorpus
 
   @authority_root "priv/venues"
   @spec_root "priv/venues"

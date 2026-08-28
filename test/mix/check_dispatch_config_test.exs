@@ -2,7 +2,7 @@ defmodule Bourse.CheckDispatchConfigTest do
   use ExUnit.Case, async: true
 
   @reach_command "cmd env MIX_ENV=dev mix reach.check --arch --smells --strict --path lib"
-  @authority_commands ["ccxt.authority_check", "ccxt.error_authority"]
+  @authority_commands ["bourse.authority_check", "bourse.error_authority"]
 
   defp alias_steps(name) do
     Bourse.MixProject.project()
@@ -28,7 +28,22 @@ defmodule Bourse.CheckDispatchConfigTest do
   end
 
   test "ci runs the full provider-live REST-read contract lane" do
-    assert "ccxt.verify_rest_read_contracts" in alias_steps(:ci)
+    assert "bourse.verify_rest_read_contracts" in alias_steps(:ci)
+  end
+
+  test "check aliases name Mix tasks under bourse.*, not ccxt.*" do
+    steps = Enum.flat_map([:precommit, :"check.dispatch", :"precommit.full", :ci], &alias_steps/1)
+
+    refute Enum.any?(steps, &String.starts_with?(&1, "ccxt."))
+
+    assert Enum.filter(steps, &String.starts_with?(&1, "bourse.")) == [
+             "bourse.authority_check",
+             "bourse.error_authority",
+             "bourse.check_lighter_signer",
+             "bourse.claude_check",
+             "bourse.agents_md --check",
+             "bourse.verify_rest_read_contracts"
+           ]
   end
 
   test "check.dispatch pins Reach to the lib source tree" do

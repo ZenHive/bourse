@@ -23,7 +23,7 @@ the consuming Mix project before making private Lighter calls or assembling a
 release:
 
 ```bash
-mix ccxt.build_lighter_signer
+mix bourse.build_lighter_signer
 ```
 
 Public Lighter market-data calls do not require the helper. The package does
@@ -201,12 +201,12 @@ Bourse.Bybit.__unified_endpoints__()  # Unified-method → endpoint-config mappi
 
 This section is for work inside the source repository. The authoring and audit
 Mix tasks named below are repo-internal and are not part of the published
-package; only `mix ccxt.build_lighter_signer` ships to consumers.
+package; only `mix bourse.build_lighter_signer` ships to consumers.
 
 For a supported venue, author the owned spec or normalization slice against the
 provider's API behavior and provider-owned documentation, then add the branch it
 covers to `priv/venues/<venue>/authority/rest_read_contract.json` and keep
-`mix ccxt.verify_rest_read_contracts` green — that lane calls the venue's own
+`mix bourse.verify_rest_read_contracts` green — that lane calls the venue's own
 host, so a claim is graded by the provider, not by a stored response. CCXT and
 ccxt-distill are a pinned third-party extraction; they do not establish venue
 semantics.
@@ -227,7 +227,7 @@ absent, so there is no offline run.
 ```bash
 mix deps.get
 mix test.json --quiet
-mix ccxt.verify_rest_read_contracts
+mix bourse.verify_rest_read_contracts
 mix dialyzer.json --quiet
 mix credo --strict --format json
 ```

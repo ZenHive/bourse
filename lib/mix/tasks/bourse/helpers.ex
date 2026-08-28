@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Ccxt.Helpers do
+defmodule Mix.Tasks.Bourse.Helpers do
   @moduledoc false
 
   alias Bourse.WS.Config
@@ -13,7 +13,7 @@ defmodule Mix.Tasks.Ccxt.Helpers do
           ws_auth: atom() | nil
         }
 
-  @doc "Builds per-exchange metadata rows for ccxt.exchanges and ccxt.classify."
+  @doc "Builds per-exchange metadata rows for bourse.exchanges and bourse.classify."
   @spec exchange_rows() :: [exchange_row()]
   def exchange_rows do
     Bourse.Spec.exchanges()

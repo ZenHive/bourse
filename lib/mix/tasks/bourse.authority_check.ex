@@ -1,16 +1,16 @@
-defmodule Mix.Tasks.Ccxt.AuthorityCheck do
+defmodule Mix.Tasks.Bourse.AuthorityCheck do
   @shortdoc "Validates venue authority provenance and optionally checks upstream drift"
 
   @moduledoc """
   Validates the first-class venue authority manifests without network access.
 
-      mix ccxt.authority_check
+      mix bourse.authority_check
 
   Opt into a live upstream drift check, or materialize the pinned reference-only
   artifacts outside `priv/venues/<venue>/authority/` for inspection:
 
-      mix ccxt.authority_check --online
-      mix ccxt.authority_check --fetch /tmp/ccxt-authority
+      mix bourse.authority_check --online
+      mix bourse.authority_check --fetch /tmp/bourse-authority
 
   The default command is offline. `--online` and `--fetch` are explicit network
   operations and are not part of the offline test suite.
@@ -18,7 +18,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheck do
 
   use Mix.Task
 
-  alias Mix.Tasks.Ccxt.AuthorityCorpus
+  alias Mix.Tasks.Bourse.AuthorityCorpus
 
   @default_root "priv/venues"
   @curl_timeout_seconds 120

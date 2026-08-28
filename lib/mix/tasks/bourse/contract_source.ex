@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Ccxt.ContractSource do
+defmodule Mix.Tasks.Bourse.ContractSource do
   @moduledoc """
   Normalizes mechanical operation facts from pinned provider artifacts.
 
@@ -6,7 +6,7 @@ defmodule Mix.Tasks.Ccxt.ContractSource do
   does not infer provider semantics from names, examples, or neighboring fields.
   """
 
-  alias Mix.Tasks.Ccxt.AuthorityCorpus
+  alias Mix.Tasks.Bourse.AuthorityCorpus
 
   @http_methods ~w(get post put patch delete head options trace)
   @surface_digest_kinds ~w(openapi-json openapi-yaml asyncapi-json)

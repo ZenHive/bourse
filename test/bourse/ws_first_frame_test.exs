@@ -355,12 +355,12 @@ defmodule Bourse.WSFirstFrameTest do
   end
 
   test "the first-frame mix target boots app.config and never starts the complete application" do
-    source = File.read!("lib/mix/tasks/ccxt.verify_ws_first_frame.ex")
+    source = File.read!("lib/mix/tasks/bourse.verify_ws_first_frame.ex")
     assert source =~ ~s|Mix.Task.run("app.config")|
     refute source =~ ~s|Mix.Task.run("app.start")|
     refute source =~ "Application.ensure_all_started(:bourse)"
 
-    refute File.read!("mix.exs") =~ ~s("ccxt.verify_ws_first_frame")
+    refute File.read!("mix.exs") =~ ~s("bourse.verify_ws_first_frame")
   end
 
   defp run_classified(subscribe) do

@@ -5,7 +5,7 @@ defmodule Bourse.SigningTest do
   alias Bourse.Signing.HmacRecipe
   alias Bourse.Signing.Request
   alias Bourse.Signing.SignedRequest
-  alias Mix.Tasks.Ccxt.Helpers
+  alias Mix.Tasks.Bourse.Helpers
 
   describe "hmac_sha256/2" do
     test "produces correct HMAC-SHA256 digest" do

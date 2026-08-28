@@ -263,7 +263,7 @@ defmodule Bourse.Dispatch do
   # Signer failures carry fixed atom pairs, never key material, so naming them
   # tells an operator whether to build the helper, fix credentials, or retry.
   defp signing_failure_reason({:lighter_signing, :helper_unavailable}) do
-    "lighter_signing/helper_unavailable; run mix ccxt.build_lighter_signer"
+    "lighter_signing/helper_unavailable; run mix bourse.build_lighter_signer"
   end
 
   defp signing_failure_reason({family, reason}) when is_atom(family) and is_atom(reason) do

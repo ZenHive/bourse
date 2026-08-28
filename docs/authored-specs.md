@@ -229,7 +229,7 @@ or incomplete create/fetch/cancel evidence for a trading venue; on skipped or cr
 tests; without the carve and authority artifacts; on schema failures; or with any critical slot
 lacking a live success and a relevant live error against the venue's own host. Those calls are
 inventoried in `priv/venues/<venue>/authority/rest_read_contract.json` and run by
-`mix ccxt.verify_rest_read_contracts`, so the venue carries reality provenance whether or not a
+`mix bourse.verify_rest_read_contracts`, so the venue carries reality provenance whether or not a
 third-party reference for it exists. A written owned document is still not a supported venue:
 the named venue delivery must separately add it to `Bourse.Spec`, the registry, and the
 compiled set.
@@ -247,7 +247,7 @@ We build the client ourselves, by our own rules, but those rules answer to the e
 If author and grader share the same third-party interpretation, both can converge on the same
 wrong belief. A live venue call is the grader for every claim, new or old — a stored response
 can only tell us our own parsing changed, and it says so silently and forever once the venue
-moves. `mix ccxt.verify_rest_read_contracts` therefore re-asks the venue rather than replaying
+moves. `mix bourse.verify_rest_read_contracts` therefore re-asks the venue rather than replaying
 an answer, and its runner fails when executed cases fall below the inventoried denominator, so
 a shrinking live surface cannot pass as green. CCXT-derived data can help discover or compare
 behavior, but cannot make a claim verified.
@@ -343,7 +343,7 @@ The authoring order is real call → understand → inventory the branch → ass
 venue. Live calls discover the venue's current response and error shapes, and the same live
 calls grade the slice afterwards: `priv/venues/<venue>/authority/rest_read_contract.json` names every
 supported read operation and provider-defined semantic branch, and
-`mix ccxt.verify_rest_read_contracts` executes them against the venues' own hosts, reporting
+`mix bourse.verify_rest_read_contracts` executes them against the venues' own hosts, reporting
 denominator, executed and failures. Drift is not something a periodic re-capture detects
 later; the gate meets it on the next run. Nothing runs on a schedule: the lane proves the
 surface only when a person or a harness run executes it on this host.

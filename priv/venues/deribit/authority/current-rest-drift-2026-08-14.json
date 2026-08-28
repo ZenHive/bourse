@@ -46,7 +46,7 @@
     {
       "surface": "provider_operation_capture",
       "effect": "blocked",
-      "detail": "mix ccxt.contract_compare refuses the observed bytes against the pinned manifest hash, so no new exact-revision inventory can be produced. test/fixtures/provider_operations/_manifest.json therefore cannot gain operations beyond the ones task 556 registered while the pin stands."
+      "detail": "mix bourse.contract_compare refuses the observed bytes against the pinned manifest hash, so no new exact-revision inventory can be produced. test/fixtures/provider_operations/_manifest.json therefore cannot gain operations beyond the ones task 556 registered while the pin stands."
     },
     {
       "surface": "mutation_adjudication",

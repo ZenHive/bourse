@@ -1,11 +1,11 @@
-defmodule Mix.Tasks.Ccxt.BuildLighterSigner do
+defmodule Mix.Tasks.Bourse.BuildLighterSigner do
   @shortdoc "Builds the pinned official Lighter signer and Port helper"
 
   @moduledoc """
   Builds the official Lighter Go C-shared library and its generated header,
   then links the isolated Port helper for the current release target.
 
-      mix ccxt.build_lighter_signer
+      mix bourse.build_lighter_signer
 
   The Go module pins the exact lighter-go revision selected by Task 198.
   """

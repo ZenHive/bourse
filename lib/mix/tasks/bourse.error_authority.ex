@@ -1,16 +1,16 @@
-defmodule Mix.Tasks.Ccxt.ErrorAuthority do
+defmodule Mix.Tasks.Bourse.ErrorAuthority do
   @shortdoc "Checks authored error mappings against official venue enumerations"
 
   @moduledoc """
   Validates first-class venue error mappings and reports provider-documented
   identifiers that intentionally fall back to `Bourse.Error.exchange_error`.
 
-      mix ccxt.error_authority
+      mix bourse.error_authority
   """
 
   use Mix.Task
 
-  alias Mix.Tasks.Ccxt.ErrorAuthorityCorpus
+  alias Mix.Tasks.Bourse.ErrorAuthorityCorpus
 
   @impl Mix.Task
   @spec run([String.t()]) :: :ok

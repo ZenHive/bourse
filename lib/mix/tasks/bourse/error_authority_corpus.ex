@@ -1,9 +1,9 @@
-defmodule Mix.Tasks.Ccxt.ErrorAuthorityCorpus do
+defmodule Mix.Tasks.Bourse.ErrorAuthorityCorpus do
   @moduledoc """
   Validates authored first-class error mappings against exchange-owned enumerations.
   """
 
-  alias Mix.Tasks.Ccxt.AuthorityCorpus
+  alias Mix.Tasks.Bourse.AuthorityCorpus
 
   @authority_root "priv/venues"
   @spec_root "priv/venues"

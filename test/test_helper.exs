@@ -1,4 +1,4 @@
-alias Mix.Tasks.Ccxt.BuildLighterSigner
+alias Mix.Tasks.Bourse.BuildLighterSigner
 
 # This suite is provider-live. There is no default tag exclusion and no offline
 # substitute: a venue we cannot reach, or a credential we do not hold, is a RED
@@ -21,8 +21,8 @@ lighter_binary_present? =
   |> File.regular?()
 
 if not lighter_binary_present? do
-  case Mix.Tasks.Ccxt.CheckLighterSigner.toolchain(&System.find_executable/1) do
-    {:ok, _names} -> Mix.Task.run("ccxt.build_lighter_signer")
+  case Mix.Tasks.Bourse.CheckLighterSigner.toolchain(&System.find_executable/1) do
+    {:ok, _names} -> Mix.Task.run("bourse.build_lighter_signer")
     {:error, _missing} -> :ok
   end
 end

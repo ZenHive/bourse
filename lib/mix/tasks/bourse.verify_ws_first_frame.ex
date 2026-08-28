@@ -1,10 +1,10 @@
-defmodule Mix.Tasks.Ccxt.VerifyWsFirstFrame do
+defmodule Mix.Tasks.Bourse.VerifyWsFirstFrame do
   @shortdoc "Probe every WebSocket venue for a classified first data frame"
 
   @moduledoc """
   Runs the classified public WebSocket first-frame matrix.
 
-      mix ccxt.verify_ws_first_frame --report artifacts/ws-first-frame-report.json
+      mix bourse.verify_ws_first_frame --report artifacts/ws-first-frame-report.json
 
   A subscribe acknowledgement is not coverage. Connecting and then receiving
   nothing within the bounded wait fails and names the venue and channel.
@@ -47,7 +47,7 @@ defmodule Mix.Tasks.Ccxt.VerifyWsFirstFrame do
     case OptionParser.parse(args, strict: [report: :string]) do
       {[report: path], [], []} when is_binary(path) and path != "" -> path
       {[], [], []} -> @default_report_path
-      _other -> raise Mix.Error, "usage: mix ccxt.verify_ws_first_frame [--report PATH]"
+      _other -> raise Mix.Error, "usage: mix bourse.verify_ws_first_frame [--report PATH]"
     end
   end
 

@@ -1,9 +1,9 @@
-defmodule Mix.Tasks.Ccxt.ClassifySigningTest do
+defmodule Mix.Tasks.Bourse.ClassifySigningTest do
   use ExUnit.Case, async: false
 
   import ExUnit.CaptureIO
 
-  alias Mix.Tasks.Ccxt.ClassifySigning
+  alias Mix.Tasks.Bourse.ClassifySigning
 
   test "prints signing summary and details" do
     output = capture_io(fn -> ClassifySigning.run([]) end)

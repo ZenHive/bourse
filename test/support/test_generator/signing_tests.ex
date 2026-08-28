@@ -18,7 +18,7 @@ defmodule Bourse.Test.Generator.SigningTests do
   skipped — they sign action/order
   payloads rather than HTTP query/header requests (and `:lighter` also requires
   an external helper process plus a real zk-Schnorr key), so they are covered by
-  their dedicated parity tests (run `mix ccxt.classify_signing` for the pattern
+  their dedicated parity tests (run `mix bourse.classify_signing` for the pattern
   list).
 
   All tests run offline with dummy credentials, tagged `:signing`.

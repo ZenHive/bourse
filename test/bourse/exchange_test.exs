@@ -6,7 +6,7 @@ defmodule Bourse.ExchangeTest do
   alias Bourse.HTTP.Errors
   alias Bourse.Order.Sanity
   alias Bourse.Spec
-  alias Mix.Tasks.Ccxt.Helpers
+  alias Mix.Tasks.Bourse.Helpers
 
   describe "new/2 basic construction" do
     test "creates exchange with just an ID (public-only)" do

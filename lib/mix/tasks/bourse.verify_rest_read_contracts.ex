@@ -1,12 +1,12 @@
-defmodule Mix.Tasks.Ccxt.VerifyRestReadContracts do
+defmodule Mix.Tasks.Bourse.VerifyRestReadContracts do
   @shortdoc "Run every provider-live REST-read contract"
 
   @moduledoc """
   Runs the provider-live REST-read contract inventory.
 
-      mix ccxt.verify_rest_read_contracts
-      mix ccxt.verify_rest_read_contracts --venue deribit
-      mix ccxt.verify_rest_read_contracts --output /tmp/rest-read-contracts.json
+      mix bourse.verify_rest_read_contracts
+      mix bourse.verify_rest_read_contracts --venue deribit
+      mix bourse.verify_rest_read_contracts --output /tmp/rest-read-contracts.json
 
   Without `--venue` it runs every venue's contract file under `test/live/` and
   measures the full inventory denominator. With `--venue` it runs only that
@@ -95,7 +95,7 @@ defmodule Mix.Tasks.Ccxt.VerifyRestReadContracts do
     end
   end
 
-  defp usage!, do: raise(Mix.Error, "usage: mix ccxt.verify_rest_read_contracts [--venue VENUE] [--output PATH]")
+  defp usage!, do: raise(Mix.Error, "usage: mix bourse.verify_rest_read_contracts [--venue VENUE] [--output PATH]")
 
   defp validate_venue!(nil), do: nil
 

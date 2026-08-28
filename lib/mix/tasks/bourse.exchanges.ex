@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Ccxt.Exchanges do
+defmodule Mix.Tasks.Bourse.Exchanges do
   @shortdoc "List compiled exchanges with module and pattern metadata"
 
   @moduledoc """
@@ -9,14 +9,14 @@ defmodule Mix.Tasks.Ccxt.Exchanges do
 
   ## Usage
 
-      mix ccxt.exchanges
-      mix ccxt.exchanges --json
+      mix bourse.exchanges
+      mix bourse.exchanges --json
 
   """
 
   use Mix.Task
 
-  alias Mix.Tasks.Ccxt.Helpers
+  alias Mix.Tasks.Bourse.Helpers
 
   @impl true
   def run(args) do

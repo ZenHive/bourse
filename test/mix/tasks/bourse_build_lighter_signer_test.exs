@@ -1,7 +1,7 @@
-defmodule Mix.Tasks.Ccxt.BuildLighterSignerTest do
+defmodule Mix.Tasks.Bourse.BuildLighterSignerTest do
   use ExUnit.Case, async: false
 
-  alias Mix.Tasks.Ccxt.BuildLighterSigner
+  alias Mix.Tasks.Bourse.BuildLighterSigner
 
   test "source and output paths are independent of the consuming project working directory" do
     project_root = File.cwd!()

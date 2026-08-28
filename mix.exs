@@ -31,12 +31,12 @@ defmodule Bourse.MixProject do
       # `docs/authored-specs.md` is deliberately absent: it is the maintainer
       # authoring loop, and every one of its links points at something hexdocs
       # withholds — the eleven carve registers under `docs/authored-spec-carves/`
-      # and the repo-internal `mix ccxt.*` tasks. Rendered here it produced ten
+      # and the repo-internal `mix bourse.*` tasks. Rendered here it produced ten
       # broken links; README links it on GitHub instead, where they resolve.
       extras: ["README.md", "CHANGELOG.md", "CONTRIBUTING.md"],
       source_url_pattern: "#{@source_url}/blob/main/%{path}#L%{line}",
       description: "Unified and raw REST APIs for eleven complete provider-authored exchange integrations.",
-      # Docs mirror the package: only `ccxt.build_lighter_signer` ships, so the
+      # Docs mirror the package: only `bourse.build_lighter_signer` ships, so the
       # repo-internal tasks must not appear on hexdocs as tasks consumers can run.
       # `filter_modules` is a KEEP predicate — true documents the module.
       filter_modules: &__MODULE__.document_module?/2,
@@ -81,7 +81,7 @@ defmodule Bourse.MixProject do
 
   Drops everything `package/0` deliberately leaves out of the tarball, so
   hexdocs never advertises a module or task a consumer does not receive: the
-  `mix ccxt.*` tasks (all but `ccxt.build_lighter_signer`, the one
+  `mix bourse.*` tasks (all but `bourse.build_lighter_signer`, the one
   consumer-facing build step) and the repo-internal tooling named by
   `@unpackaged_prefixes`.
   """
@@ -93,8 +93,8 @@ defmodule Bourse.MixProject do
   end
 
   defp documented_task?(name) do
-    not String.starts_with?(name, "Mix.Tasks.Ccxt.") or
-      name == "Mix.Tasks.Ccxt.BuildLighterSigner"
+    not String.starts_with?(name, "Mix.Tasks.Bourse.") or
+      name == "Mix.Tasks.Bourse.BuildLighterSigner"
   end
 
   defp unpackaged_module?(name) do
@@ -123,11 +123,11 @@ defmodule Bourse.MixProject do
       # Lighter build reads paths that are deliberately unpackaged
       # (`priv/venues/*/authority/**`, the roadmap and docs roots), so shipping them would
       # put `mix help` entries in consumer projects that fail on a missing file.
-      # `ccxt.build_lighter_signer` is the one consumer-facing task — README
+      # `bourse.build_lighter_signer` is the one consumer-facing task — README
       # documents it as the prerequisite for private Lighter calls.
       files:
         client_lib_files() ++
-          ~w(lib/bourse.ex lib/mix/tasks/ccxt.build_lighter_signer.ex) ++
+          ~w(lib/bourse.ex lib/mix/tasks/bourse.build_lighter_signer.ex) ++
           ~w(native/lighter_signer mix.exs README.md LICENSE NOTICE) ++
           [@runtime_manifest, @capability_surface] ++ runtime_specs ++ shared_descriptors
     ]
@@ -165,7 +165,7 @@ defmodule Bourse.MixProject do
       preferred_envs: [
         "test.json": :test,
         "dialyzer.json": :dev,
-        "ccxt.verify_rest_read_contracts": :test
+        "bourse.verify_rest_read_contracts": :test
       ]
     ]
   end
@@ -292,15 +292,15 @@ defmodule Bourse.MixProject do
         "precommit",
         # Cheap, network-free provider-authority structure/hash and exact-error
         # consistency checks. Remote freshness is `--online`, run by hand.
-        "ccxt.authority_check",
-        "ccxt.error_authority",
-        "ccxt.check_lighter_signer",
+        "bourse.authority_check",
+        "bourse.error_authority",
+        "bourse.check_lighter_signer",
         # CLAUDE.md's mechanical claims (modules, mix tasks, repo paths, and the
         # Signing / Application rows of the Key modules table) vs the tree, plus
         # AGENTS.md freshness — the reviewer reads AGENTS.md, not CLAUDE.md,
         # so a stale render makes it grade against rules we already changed.
-        "ccxt.claude_check",
-        "ccxt.agents_md --check",
+        "bourse.claude_check",
+        "bourse.agents_md --check",
         "ex_dna --max-clones 0",
         # `--strict` fails the gate on smell findings — no baseline/suppression;
         # findings are fixed, not grandfathered. Reach derives architecture
@@ -325,7 +325,7 @@ defmodule Bourse.MixProject do
         # The complete provider-live REST-read lane. It reports
         # denominator/executed/failures and fails when executed < denominator, so
         # a shrinking live surface cannot pass as green.
-        "ccxt.verify_rest_read_contracts",
+        "bourse.verify_rest_read_contracts",
         # `critical-rules.md` § RAISE COVERAGE BEFORE MUTATING sets the floor at
         # 80% standard. The critical tier (95% — money, signing, crypto, low-level
         # encoders) is judged per module against this run, not by a global number.

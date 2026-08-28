@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "_doc": "Pinned external @-import sources for AGENTS.md generation (task 471). Each CLAUDE.md @~/.claude/includes/* line must resolve here \u2014 never via $HOME. Update a pin by replacing the file and refreshing sha256/bytes, then run mix ccxt.agents_md.",
+  "_doc": "Pinned external @-import sources for AGENTS.md generation (task 471). Each CLAUDE.md @~/.claude/includes/* line must resolve here \u2014 never via $HOME. Update a pin by replacing the file and refreshing sha256/bytes, then run mix bourse.agents_md.",
   "max_depth": 5,
   "includes": {
     "~/.claude/includes/critical-rules.md": {

@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Ccxt.ContractComparator do
+defmodule Mix.Tasks.Bourse.ContractComparator do
   @moduledoc """
   Compares pinned provider-contract inventories with complete authored specs.
 
@@ -7,8 +7,8 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
   edits specs, or turns a syntactic difference into a semantic decision.
   """
 
-  alias Mix.Tasks.Ccxt.AuthorityCorpus
-  alias Mix.Tasks.Ccxt.ContractSource
+  alias Mix.Tasks.Bourse.AuthorityCorpus
+  alias Mix.Tasks.Bourse.ContractSource
 
   @authority_root "priv/venues"
   @spec_root "priv/venues"
@@ -584,7 +584,7 @@ defmodule Mix.Tasks.Ccxt.ContractComparator do
       "#{path}: evidence verified cannot be declared here. This task compares pinned " <>
         "provider artifacts against authored specs; it never calls a venue, so it can " <>
         "establish no observed behaviour. Verification is earned only by the " <>
-        "provider-live contract lane (mix ccxt.verify_rest_read_contracts)."
+        "provider-live contract lane (mix bourse.verify_rest_read_contracts)."
     )
   end
 

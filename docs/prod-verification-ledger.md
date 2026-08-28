@@ -733,7 +733,7 @@ Entry template:
   linear rows prove.
 - Exact call: a small spot round-trip on testnet, then either re-pin one order-identity
   case to `category=spot` or add spot branches, then
-  `mix ccxt.verify_rest_read_contracts --venue bybit`.
+  `mix bourse.verify_rest_read_contracts --venue bybit`.
 - Expected evidence: `retCode 0` spot order/execution rows asserted against the same
   success meanings the linear branches prove.
 
@@ -746,7 +746,7 @@ Entry template:
   is 2026-08-28. No delivery record can be manufactured in-session.
 - The open question: delivery-record semantics against a real settled row.
 - Exact call: hold a dated future or an option through its expiry on testnet, then
-  `mix ccxt.verify_rest_read_contracts --venue bybit`.
+  `mix bourse.verify_rest_read_contracts --venue bybit`.
 - Expected evidence: a raw payload carrying `deliveryPrice` and `deliveryRpl`.
 - Update (2026-08-24): state is seeded — the testnet main account holds 60
   `DOGEUSDT-28AUG26` (market-filled, `avgPrice 0.09205`), deliberately left open through
@@ -771,7 +771,7 @@ Entry template:
 - The open question: whether `fetchOpenOrder` and `fetchOrder`'s realtime branch parse the
   same required/any fields once a real open order exists.
 - Exact call: place (or wait for) a resting linear limit order on the testnet main-account
-  key, then `mix ccxt.verify_rest_read_contracts --venue bybit`.
+  key, then `mix bourse.verify_rest_read_contracts --venue bybit`.
 - Expected evidence: `fetchOpenOrder:0` and `fetchOrder:1` both green against a real open
   order id sourced from `fetchOpenOrders`.
 
@@ -788,7 +788,7 @@ Entry template:
   redemption functions are excluded from demo.
 - The open question: the funding-account and savings envelopes on production.
 - Exact call: production OKX key (demo keys answer 50101 on live), then
-  `mix ccxt.verify_rest_read_contracts --venue okx`.
+  `mix bourse.verify_rest_read_contracts --venue okx`.
 - Expected evidence: code 0 bodies parsed against the six cases' success meanings.
 
 ### okx — deposit/withdrawal history rows cannot exist on a demo account (task 671, filed 2026-08-23)

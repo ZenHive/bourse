@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Ccxt.ContractCompare do
+defmodule Mix.Tasks.Bourse.ContractCompare do
   @shortdoc "Compares pinned provider contracts with authored venue specs"
 
   @moduledoc """
@@ -8,8 +8,8 @@ defmodule Mix.Tasks.Ccxt.ContractCompare do
   controls. This task performs no network access and verifies every available
   artifact against its manifest before parsing it.
 
-      mix ccxt.authority_check --fetch /tmp/bourse-authority
-      mix ccxt.contract_compare --artifacts /tmp/bourse-authority --output /tmp/bourse-contracts
+      mix bourse.authority_check --fetch /tmp/bourse-authority
+      mix bourse.contract_compare --artifacts /tmp/bourse-authority --output /tmp/bourse-contracts
 
   Missing or non-machine-readable sources produce explicit capability-limited
   reports. `--venue` narrows output to one supported venue. `--facts` supplies
@@ -18,12 +18,12 @@ defmodule Mix.Tasks.Ccxt.ContractCompare do
   A comparison of pinned bytes against authored specs calls no venue and so
   observes no behaviour. A `--facts` entry declaring `evidence: "verified"` is
   refused: that axis is advanced only by the provider-live contract lane
-  (`mix ccxt.verify_rest_read_contracts`).
+  (`mix bourse.verify_rest_read_contracts`).
   """
 
   use Mix.Task
 
-  alias Mix.Tasks.Ccxt.ContractComparator
+  alias Mix.Tasks.Bourse.ContractComparator
 
   @switches [
     artifacts: :string,

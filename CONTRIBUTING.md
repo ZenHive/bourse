@@ -56,7 +56,7 @@ construction, the rate limiter, WebSocket dialect parsing, types.
 ```bash
 mix test.json --quiet                        # the suite (provider-live)
 mix test.json --quiet --failed               # iterate on failures
-mix ccxt.verify_rest_read_contracts          # the full REST-read contract lane
+mix bourse.verify_rest_read_contracts          # the full REST-read contract lane
 mix dialyzer.json --quiet
 mix credo --strict --format json
 mix ci                                       # everything, incl. the coverage gate
@@ -71,7 +71,7 @@ Full flag reference: see the `ex-unit-json` and `dialyzer-json` sections in `CLA
 
 - [ ] Code follows existing module/function naming and the conventions documented in `CLAUDE.md`.
 - [ ] New behavior has tests. A claim about what a venue returns is made by a live call to that venue; a claim about our own mechanics may be offline. Tests fail loudly — no silent `assert true` branches on errors, no mock or replay standing in for the provider (`test/bourse/no_faked_provider_oracle_test.exs` fails the suite on `Req.Test`, `Bypass`, `Mox`, `plug: {`, a fixture path, or `@tag :skip`).
-- [ ] `mix ci` passes locally — it carries `mix test.json`, `mix ccxt.verify_rest_read_contracts`, dialyzer, `mix credo --strict` and the 80% coverage gate.
+- [ ] `mix ci` passes locally — it carries `mix test.json`, `mix bourse.verify_rest_read_contracts`, dialyzer, `mix credo --strict` and the 80% coverage gate.
 - [ ] `CHANGELOG.md` updated under `## [Unreleased]` with what was done and key decisions (no test counts or file-count stats).
 - [ ] `CLAUDE.md` updated only if architecture, conventions, or the module inventory changed.
 - [ ] If a discovery surfaced new work, open an issue — the task roadmap lives in

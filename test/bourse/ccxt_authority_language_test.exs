@@ -10,19 +10,19 @@ defmodule Bourse.CcxtAuthorityLanguageTest do
   # Mix-task references are allowed token-scoped: the named tokens are stripped
   # from the line, and the residual line must carry no CCXT reference at all.
   # A line-wide substring allowlist would let authority language ride along on
-  # any line that merely mentions a `mix ccxt.*` task.
-  @mix_task_tokens ~r{(?:Mix\.Tasks\.Ccxt[A-Za-z.]*|mix ccxt(?:\.[A-Za-z0-9_*.]+)?|ccxt\.[a-z][A-Za-z0-9_.]*|ccxt-authority|test/mix/tasks/ccxt_[a-z0-9_.]+)}i
+  # any line that merely mentions a `mix bourse.*` task.
+  @mix_task_tokens ~r{(?:Mix\.Tasks\.Bourse[A-Za-z.]*|mix bourse(?:\.[A-Za-z0-9_*.]+)?|bourse\.[a-z][A-Za-z0-9_.]*|test/mix/tasks/bourse_[a-z0-9_.]+)}i
 
   @allowlist [
     {~r{^lib/mix/tasks/}, {:tokens, @mix_task_tokens}},
-    {~r{^lib/mix/tasks/ccxt/reference_corpus\.ex$}, ~r{CCXT reference corpus}i},
+    {~r{^lib/mix/tasks/bourse/reference_corpus\.ex$}, ~r{CCXT reference corpus}i},
     {~r{^lib/bourse\.ex$}, ~r{CCXT corpus is authoring and compatibility}i},
     {~r{^lib/bourse/error\.ex$}, ~r{CCXT compatibility exception class}i},
     {~r{^lib/bourse/exchange\.ex$}, ~r{reference specs encode CCXT}i},
     {~r{^lib/bourse/multi\.ex$}, ~r{ccxt_client_bak}i},
-    {~r{^lib/bourse/spec\.ex$}, ~r{(?:CCXT-derived documents|Mix\.Tasks\.Ccxt)}i},
-    {~r{^lib/bourse/spec/schema\.ex$}, ~r{Mix\.Tasks\.Ccxt}i},
-    {~r{^lib/bourse/unified\.ex$}, ~r{(?:mix ccxt\.|CCXT compatibility mapping)}i},
+    {~r{^lib/bourse/spec\.ex$}, ~r{CCXT-derived documents}i},
+    {~r{^lib/bourse/spec/schema\.ex$}, ~r{Mix\.Tasks\.Bourse}i},
+    {~r{^lib/bourse/unified\.ex$}, ~r{CCXT compatibility mapping}i},
     {~r{^lib/bourse/unified/read_parse\.ex$}, ~r{CCXT-projected reference bulk}i},
     {~r{^lib/bourse/unified/request_shape/hyperliquid\.ex$}, ~r{diverges from CCXT}i},
     {~r{^lib/bourse/ws/subscription\.ex$}, ~r{ccxt_client_bak}i}

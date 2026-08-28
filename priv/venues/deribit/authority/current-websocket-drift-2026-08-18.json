@@ -69,7 +69,7 @@
     "etag_disqualified_as_pin_key": {
       "observation": "On this same refetch both upcoming artifacts served byte-identical documents under new ETags: upcoming-openapi kept sha256 788ae5db... and 1438672 bytes while its ETag moved from W/\"5e8b26e0df446ae0b6b213d91184f49b\" to W/\"QCggKABm3LEi7g4f\", and upcoming-asyncapi kept sha256 8fb075b8... and 609774 bytes while its ETag moved from W/\"2863755d34671127f41d92e5de11f775\" to W/\"BC1C2b7GgspzdS5u\".",
       "consequence": "The ETag changed for documents whose content did not, and the ETag format itself changed from a 32-character hexadecimal form to a 16-character opaque form, which indicates a provider-side serving change rather than a contract change. An ETag-keyed gate would therefore have raised two false drift alarms on this refetch. The ETag remains recorded as descriptive provenance and is not the integrity key.",
-      "gate_behaviour_confirmed": "mix ccxt.authority_check --online exited 0 with all four Deribit specification artifacts reported as upstream unchanged, confirming the gate compares sha256 and not the ETag half of the composite pin."
+      "gate_behaviour_confirmed": "mix bourse.authority_check --online exited 0 with all four Deribit specification artifacts reported as upstream unchanged, confirming the gate compares sha256 and not the ETag half of the composite pin."
     }
   },
   "continuity": {

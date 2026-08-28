@@ -1,11 +1,11 @@
-defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
+defmodule Mix.Tasks.Bourse.AuthorityCheckTest do
   use ExUnit.Case, async: false
 
-  alias Mix.Tasks.Ccxt.AuthorityCheck
-  alias Mix.Tasks.Ccxt.AuthorityCorpus
+  alias Mix.Tasks.Bourse.AuthorityCheck
+  alias Mix.Tasks.Bourse.AuthorityCorpus
 
   @root "priv/venues"
-  @canonical_key_set_digest_source "lib/mix/tasks/ccxt/authority_corpus.ex"
+  @canonical_key_set_digest_source "lib/mix/tasks/bourse/authority_corpus.ex"
 
   test "committed corpus covers every first-class venue with reference-only licensing" do
     manifests = AuthorityCorpus.load!(@root)
@@ -476,7 +476,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCheckTest do
           Path.join(System.tmp_dir!(), "ccxt-authority-out"),
           # A sibling whose path merely shares the root's prefix is not inside it.
           root <> "-out",
-          "/tmp/ccxt-authority"
+          "/tmp/bourse-authority"
         ] do
       assert :ok = AuthorityCheck.ensure_external_destination!(destination, root)
     end

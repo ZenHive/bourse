@@ -11,7 +11,7 @@ defmodule Bourse.MaintenanceErrorClassificationTest do
   alias Bourse.Error
   alias Bourse.Exchange
   alias Bourse.HTTP.Errors
-  alias Mix.Tasks.Ccxt.AuthorityCorpus
+  alias Mix.Tasks.Bourse.AuthorityCorpus
 
   # Documented identifiers from priv/venues/<venue>/authority/errors.json (maintenance_adjudication).
   # Runtime type is :exchange_not_available (from_spec_class("OnMaintenance")).

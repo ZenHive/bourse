@@ -1,7 +1,7 @@
-defmodule Mix.Tasks.Ccxt.VerifyRestReadContractsTest do
+defmodule Mix.Tasks.Bourse.VerifyRestReadContractsTest do
   use ExUnit.Case, async: true
 
-  alias Mix.Tasks.Ccxt.VerifyRestReadContracts
+  alias Mix.Tasks.Bourse.VerifyRestReadContracts
 
   test "summarize! reports a fully executed inventory" do
     report = %{

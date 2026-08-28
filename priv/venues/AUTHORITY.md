@@ -24,7 +24,7 @@ verifies them before use.
 Each venue's `errors.json` is a committed normalization of the official error
 enumeration: identifiers and concise meanings, without the upstream document's
 presentation. Its manifest entry pins both the normalized file and the official
-source artifact. `mix ccxt.error_authority` validates authored exact mappings
+source artifact. `mix bourse.error_authority` validates authored exact mappings
 and reports dropped, retired, and provider-only identifiers. Maintenance-state
 routing is recorded in each corpus's `maintenance_adjudication` field and
 summarized in `docs/error-maintenance-adjudication.md` (task 490): documented
@@ -34,12 +34,12 @@ venues with no such code record that finding instead of inventing a sentinel.
 ## Checks
 
 ```sh
-mix ccxt.authority_check                    # offline manifest/local-hash validation
-mix ccxt.error_authority                    # offline error-enumeration adjudication
-mix ccxt.authority_check --online           # explicit network drift check
-scripts/fetch_authority.sh /tmp/ccxt-authority
-mix ccxt.contract_compare --artifacts /tmp/ccxt-authority --output /tmp/contract-reports
-mix ccxt.verify_rest_read_contracts         # provider-live REST-read contract lane
+mix bourse.authority_check                    # offline manifest/local-hash validation
+mix bourse.error_authority                    # offline error-enumeration adjudication
+mix bourse.authority_check --online           # explicit network drift check
+scripts/fetch_authority.sh /tmp/bourse-authority
+mix bourse.contract_compare --artifacts /tmp/bourse-authority --output /tmp/contract-reports
+mix bourse.verify_rest_read_contracts         # provider-live REST-read contract lane
 ```
 
 The offline command validates manifest structure and any locally vendored bytes; it
@@ -50,7 +50,7 @@ roles are prose/docs for drift policy: a mismatch emits an `AUTHORITY_DRIFT` rep
 line and passes only when `freshness.status` is `drift_detected` and `checked_at` is
 no more than 30 days old. Nothing runs the check on a schedule — the window only
 prevents an acknowledgment from becoming permanent, and a person has to run
-`mix ccxt.authority_check --online` for it to mean anything. A missing or older
+`mix bourse.authority_check --online` for it to mean anything. A missing or older
 acknowledgment blocks again.
 
 `checked_at` is the date a prose/docs mismatch was acknowledged, not an automatic
@@ -79,7 +79,7 @@ Full-byte retention of the pinned corpus is declined. The numbers as of
 entire pinned corpus (including Bybit's 12.6 MB docs archive, the two Binance
 futures `llms-full` files at ~7.9 MB each, and OKX's 5.2 MB HTML snapshot) is
 about 52 MB. Vendoring that would make the authority tree a content store, which
-`mix ccxt.authority_check --fetch` deliberately keeps outside `priv/venues/<venue>/authority/`.
+`mix bourse.authority_check --fetch` deliberately keeps outside `priv/venues/<venue>/authority/`.
 
 What *is* retained, by class:
 
@@ -88,7 +88,7 @@ What *is* retained, by class:
 | `typed_openapi`, `typed_asyncapi` | `surface-digests/<artifact-id>.json` — sorted channel / path / operation key sets, key-set hashes, and per-entity hashes | a few KB per pin (the 2026-08-18 deribit current AsyncAPI digest is tens of KB, not 610300 bytes) | which named channels, paths, or operations entered, left, or changed identity |
 | untyped Postman, prose, HTML, `llms.txt`, source archives | nothing beyond the pin | zero | only that the hash moved. Name the delta by refetching the live document and confronting the authored slice; the previous page is gone once the provider republishes |
 
-A missing digest does not fail `mix ccxt.authority_check`. `reference_only`
+A missing digest does not fail `mix bourse.authority_check`. `reference_only`
 artifacts stay valid without one, so the change is additive: existing pins and
 drift reports keep working. When a digest *is* present, the offline check
 requires `source.sha256` / `source.bytes` to match the manifest pin.
@@ -116,13 +116,13 @@ authored surface survived, not what the provider gained.
 `false`. Such artifacts remain useful discovery or historical references, but they
 cannot establish current provider semantics.
 
-`ccxt.contract_compare` performs no network access. It verifies each available
+`bourse.contract_compare` performs no network access. It verifies each available
 artifact against this corpus, writes one deterministic report per venue, and
 states an explicit source-capability limit for missing, prose-only, partial, or
 untyped inputs. Its differences are findings for later provider confrontation,
 not implementation or deletion decisions.
 
-`mix ccxt.verify_rest_read_contracts` is the provider-live oracle: it runs the
+`mix bourse.verify_rest_read_contracts` is the provider-live oracle: it runs the
 complete REST-read contract inventory against the venue's own host.
 
 ## Selected sources

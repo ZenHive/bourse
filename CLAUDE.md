@@ -41,7 +41,7 @@ without it. The three pins were refreshed in `6065613` and are byte-identical to
 `~/.claude/includes/` as of that commit. **Re-pin before trusting a reviewer
 verdict on a rules question**: copy
 `~/.claude/includes/*.md` over `priv/agents_includes/`, refresh `sha256`/`bytes`
-in its `manifest.json`, run `mix ccxt.agents_md`.
+in its `manifest.json`, run `mix bourse.agents_md`.
 
 ## What this repository is
 
@@ -185,21 +185,21 @@ Artifact **freshness**, **expressiveness** and **scope** are separate axes. A ma
 
 For cross-family reviewers (codex / cursor / grok) and any dispatch run.
 
-- **`mix check.dispatch`** — the dispatch-scale gate: `precommit`, `ccxt.authority_check` (offline), `ccxt.error_authority`, `ccxt.check_lighter_signer`, `ccxt.claude_check`, `ccxt.agents_md --check`, `ex_dna --max-clones 0`, `reach.check --arch --smells --strict --path lib` (under `MIX_ENV=dev`; the `--path lib` pin is load-bearing — arch sources come from the Mix env, smell sources from `--path`). No dialyzer (a cold worktree cold-builds the PLT for minutes).
+- **`mix check.dispatch`** — the dispatch-scale gate: `precommit`, `bourse.authority_check` (offline), `bourse.error_authority`, `bourse.check_lighter_signer`, `bourse.claude_check`, `bourse.agents_md --check`, `ex_dna --max-clones 0`, `reach.check --arch --smells --strict --path lib` (under `MIX_ENV=dev`; the `--path lib` pin is load-bearing — arch sources come from the Mix env, smell sources from `--path`). No dialyzer (a cold worktree cold-builds the PLT for minutes).
 - **`mix precommit`** — format / compile --warnings-as-errors / `credo --strict --ignore TagTODO,TagFIXME` / doctor --raise / sobelow --skip / `test.json`. It carries no `--exclude`: the suite is provider-live, so this step calls real venues and needs the testnet credentials exported.
 - **`mix precommit.full`** — adds `deps.audit` + dialyzer (local pre-PR).
-- **`mix ci`** — `check.dispatch` + the full `ccxt.verify_rest_read_contracts` lane + `test.json --cover --cover-threshold 80 --output /tmp/bourse-ci-cover.json` + `deps.audit` (an alias carrying `--ignore-advisory-ids`) + dialyzer.
+- **`mix ci`** — `check.dispatch` + the full `bourse.verify_rest_read_contracts` lane + `test.json --cover --cover-threshold 80 --output /tmp/bourse-ci-cover.json` + `deps.audit` (an alias carrying `--ignore-advisory-ids`) + dialyzer.
 
 🚨 **There is no hosted CI, and nothing runs on a schedule.** Every gate here is
 executed by a person or a harness run on this host. The live surface is proven by
-running `mix ccxt.verify_rest_read_contracts` — and `mix ccxt.verify_ws_first_frame`
+running `mix bourse.verify_rest_read_contracts` — and `mix bourse.verify_ws_first_frame`
 for streams — so a lane nobody ran proves nothing, and "the build is green" is only
 a claim until it names which command was run and where.
 
 🚨 **`check.dispatch` reaches venues but does not cover them.** Its `precommit`
 step runs the provider-live suite, so a green there is real evidence for whatever
 that suite asserted — and it is not the whole REST-read surface: the 409-case
-contract lane runs under `mix ci`, or `mix ccxt.verify_rest_read_contracts` on
+contract lane runs under `mix ci`, or `mix bourse.verify_rest_read_contracts` on
 its own. Approving a
 venue-facing acceptance criterion means naming the lane that exercised it, not the
 gate that happened to pass.
@@ -216,16 +216,16 @@ touches it.
 |-------|---------|-------|
 | Compile | `mix compile --warnings-as-errors` | silent finish = success |
 | Tests | `mix test.json --quiet` | **emits JSON by design** — parse it for real failures; the envelope is **not** a build error. Read `summary.result` / `summary.failed`. 🚨 **Provider-live**: it calls real venues and raises at startup on a missing credential pair. |
-| REST-read contracts | `mix ccxt.verify_rest_read_contracts` | Runs all 409 provider-live contract cases and fails when `executed < denominator`, so a shrinking live surface cannot pass as green. |
-| WS first frame | `mix ccxt.verify_ws_first_frame` | Classified public WebSocket first data frame per venue. |
+| REST-read contracts | `mix bourse.verify_rest_read_contracts` | Runs all 409 provider-live contract cases and fails when `executed < denominator`, so a shrinking live surface cannot pass as green. |
+| WS first frame | `mix bourse.verify_ws_first_frame` | Classified public WebSocket first data frame per venue. |
 | Dialyzer | `mix dialyzer.json --quiet` | **emits JSON by design**. Plain `mix dialyzer` is the authoritative fallback when the JSON encoder can't serialize a warning shape. |
 | Lint | `mix credo --strict` | |
 | Security | `mix sobelow` | honors `.sobelow-skips` (hash-based), **not** inline comments |
 | Docs | `mix doctor` | |
-| Authority corpus | `mix ccxt.authority_check [--online]` | validates the pinned corpus offline; `--online` checks mutable upstreams for drift |
-| Error mappings | `mix ccxt.error_authority` | reconciles provider-documented error codes with authored mappings |
-| CLAUDE claims | `mix ccxt.claude_check` | modules / `mix ccxt.*` tasks / repo paths named in gated CLAUDE.md regions, plus the `Bourse.Signing` and `Bourse.Application` rows of the *Key modules* table, vs the tree. Both row gates are inert unless the row exists — a dropped row silently disables its check. Unlisted tree surfaces are not failures. |
-| AGENTS freshness | `mix ccxt.agents_md --check` | re-renders CLAUDE.md + the pinned `@`-imports (`priv/agents_includes/`) and fails on drift. Regenerate with `mix ccxt.agents_md`. |
+| Authority corpus | `mix bourse.authority_check [--online]` | validates the pinned corpus offline; `--online` checks mutable upstreams for drift |
+| Error mappings | `mix bourse.error_authority` | reconciles provider-documented error codes with authored mappings |
+| CLAUDE claims | `mix bourse.claude_check` | modules / `mix bourse.*` tasks / repo paths named in gated CLAUDE.md regions, plus the `Bourse.Signing` and `Bourse.Application` rows of the *Key modules* table, vs the tree. Both row gates are inert unless the row exists — a dropped row silently disables its check. Unlisted tree surfaces are not failures. |
+| AGENTS freshness | `mix bourse.agents_md --check` | re-renders CLAUDE.md + the pinned `@`-imports (`priv/agents_includes/`) and fails on drift. Regenerate with `mix bourse.agents_md`. |
 
 **Adding a venue** is authoring plus live proof, never a config flag: author its complete document under `priv/venues/<venue>/authored/`, list it in `priv/venues/runtime_support.json`, add its provider-owned entry — authority-source pins, operation branches, arguments, success and error meanings — to `priv/venues/<venue>/authority/rest_read_contract.json`, and get every one of its cases green against the venue's own host. `Bourse.Test.RestReadContracts` refuses an inventory that does not cover every runtime venue, or whose branches drift from the callable client surface, so the two cannot separate.
 
@@ -236,17 +236,17 @@ touches it.
 ```bash
 mix test.json --quiet --failed                       # default iteration — calls real venues
 mix test.json --quiet test/live/deribit              # everything deribit, contract cases included
-mix ccxt.verify_rest_read_contracts                  # all 409 provider-live REST-read contract cases
-mix ccxt.verify_rest_read_contracts --venue deribit  # one venue's cases against its own denominator
+mix bourse.verify_rest_read_contracts                  # all 409 provider-live REST-read contract cases
+mix bourse.verify_rest_read_contracts --venue deribit  # one venue's cases against its own denominator
 mix test.json --quiet --include dangerous            # add the mutating probes + journeys
 mix test.json --quiet --include dangerous test/live/journeys   # role journeys only (place real sandbox orders)
-mix ccxt.classify_signing                            # signing classification report
-mix ccxt.verify_ws_first_frame                       # classified public WS first data frame per venue
+mix bourse.classify_signing                            # signing classification report
+mix bourse.verify_ws_first_frame                       # classified public WS first data frame per venue
 ```
 
 > 🚨 **A bare `mix test.json` calls real venues, and a missing credential is a RED.** `test/test_helper.exs` raises with the venue name and the variables to export; `ExUnit.start/1` excludes `:dangerous` and nothing else, so the network and contract cases run by default. There is no `--exclude` that makes this suite offline, and no offline suite to fall back to. Tags in use include `integration`, `network` (testnet REST probes), `rest_read_contract`, `dangerous` (mutating probes — raw POST/PUT/DELETE), `invalid_creds`, `native`, plus selection tags for `--only` filtering (`venue`, `exchange_<venue>`, `private`, `public`, `raw`, `ws_canary`, `ws_auth_smoke`, `unified_integration`, `time_window_live`). Only `:dangerous` is opt-in.
 
-> 🚨 **The complete REST-read surface runs in `mix ci`, not in `precommit`.** `mix ccxt.verify_rest_read_contracts` reports denominator, executed count and failures, and fails when `executed < denominator`. Its denominator is scoped to the provider product prefixes each venue hosts on its sandbox; a branch we cannot reach with our keys is ledgered in `docs/prod-verification-ledger.md` as unverified rather than quietly dropped. Run it before calling a venue-facing task done, and say in the delivery that you ran it.
+> 🚨 **The complete REST-read surface runs in `mix ci`, not in `precommit`.** `mix bourse.verify_rest_read_contracts` reports denominator, executed count and failures, and fails when `executed < denominator`. Its denominator is scoped to the provider product prefixes each venue hosts on its sandbox; a branch we cannot reach with our keys is ledgered in `docs/prod-verification-ledger.md` as unverified rather than quietly dropped. Run it before calling a venue-facing task done, and say in the delivery that you ran it.
 
 **REST-read contracts — the execution lane:** `priv/venues/<venue>/authority/rest_read_contract.json` owns the provider-source pins, operation/branch denominator, arguments, and success/error meanings for all eleven venues. **Its inventory deliberately mirrors the client's callable read surface** (`inventory_basis: client_read_surface`): what the lane proves is that every runtime REST-read branch executes once against the venue's live host and parses — breadth, with the mirror lock guaranteeing a new read branch cannot ship unexercised. It does not claim an inventory independent of the client; role-based **semantic** depth is the journey lane below. `Bourse.Test.RestReadContracts` loads and validates it — schema, authority-pin match against each venue's manifest, case-ID uniqueness, and the runtime mirror lock. `Bourse.Test.Generator.RestReadContract` emits mechanical ExUnit shells, `test/live/<venue>/rest_read_contract_test.exs` defines one module per venue from them, and `Bourse.Test.RestReadContractScenario` performs every real call and assertion. The raw endpoint probes remain transport-level coverage for request mechanics and write surfaces.
 
@@ -316,13 +316,13 @@ Bourse.fetch_ticker(exchange, "BTC/USDT")     # Unified API
 | `Bourse.Dispatch` | Runtime dispatcher: path interpolation, base URL resolution (4 patterns), signing, HTTP delegation. |
 | `Bourse.HTTP` | Req wrapper — manual query encoding, safe retry GET/HEAD only, telemetry, circuit breaker. |
 | `Bourse.RateLimiter` | Per-credential weighted GenServer, sliding window. Key `{exchange, api_key \| :public}`. |
-| `Bourse.LiveLane.FirstFrame` | **Repo-internal.** Probes each venue's public WebSocket and classifies its first data frame; `mix ccxt.verify_ws_first_frame` drives it. |
+| `Bourse.LiveLane.FirstFrame` | **Repo-internal.** Probes each venue's public WebSocket and classifies its first data frame; `mix bourse.verify_ws_first_frame` drives it. |
 | `Bourse.Signing` | Dispatches 8 patterns: `:hmac_sha256_query`, `:hmac_sha256_headers`, `:hmac_sha256_iso_passphrase`, `:api_key_secret_headers`, `:deribit`, `:hyperliquid`, `:derive`, `:lighter`. |
 | `Bourse.Application` | Supervises `Bourse.RateLimiter` + `Bourse.RateLimiter.State` + `Bourse.Signing.Lighter.Supervisor` + `Bourse.WS.Broadcast` + `Bourse.WS.ConnectionOwner.Supervisor`. |
 
 **Unified response types:** 7 original (`Ticker`, `Trade`, `Order`, `Balance`, `Market`, `OHLCV`, `Fee`), 9 tier-1 core (`OrderBook`, `Position`, `Currency`, `Transaction`, `LedgerEntry`, `FundingRate`, `DepositAddress`, `TransferEntry`, `TradingFee`), 9 tier-2 derivatives, 9 tier-3 analytics.
 
-**Signing:** the pattern set is the `Bourse.Signing` row above, and `mix ccxt.claude_check` set-compares it against the `def sign/4` clause heads — a pattern added in code without editing that row fails the gate. `:api_key_secret_headers` is Alpaca's. Per-pattern detail lives in the module's `@moduledoc`.
+**Signing:** the pattern set is the `Bourse.Signing` row above, and `mix bourse.claude_check` set-compares it against the `def sign/4` clause heads — a pattern added in code without editing that row fails the gate. `:api_key_secret_headers` is Alpaca's. Per-pattern detail lives in the module's `@moduledoc`.
 
 **WebSocket:** `Bourse.WS` wraps `ZenWebsocket.Client`. **10 of the eleven venues are configured and confirmed streaming live** (alpaca, binance, binancecoinm, binanceusdm, bybit, deribit, derive, hyperliquid, lighter, okx); Coinbase Exchange is the registered config divergence and `connect/3` answers `{:error, :websocket_not_configured}` for it, distinct from `:unsupported_exchange` for a venue outside runtime support. `subscribe/3` returns `:ok | {:error, term()}` and surfaces venue rejections as `{:error, {:subscription_rejected, frame}}`.
 
@@ -360,7 +360,7 @@ The trading domain — OptionProposal, OptionReadiness, OptionSaga, PortfolioRis
 
 ## Repo-internal tooling inside `lib/`
 
-`Bourse.LiveLane.FirstFrame` and its bootstrap live in `lib/` because the `mix ccxt.*` tasks compile in `:dev`, where `elixirc_paths/1` does not carry `test/support`. They are **not** client surface: `@unpackaged_prefixes` in `mix.exs` keeps them out of the tarball, and `document_module?/2` keeps them and every `mix ccxt.*` task but `ccxt.build_lighter_signer` out of hexdocs.
+`Bourse.LiveLane.FirstFrame` and its bootstrap live in `lib/` because the `mix bourse.*` tasks compile in `:dev`, where `elixirc_paths/1` does not carry `test/support`. They are **not** client surface: `@unpackaged_prefixes` in `mix.exs` keeps them out of the tarball, and `document_module?/2` keeps them and every `mix bourse.*` task but `bourse.build_lighter_signer` out of hexdocs.
 
 **Anything you add to that cluster inherits the exclusion — add its prefix.** These modules may use `:dev`/`:test`-only deps, and a shipped copy fails at the *consumer's* compile rather than ours: the original case was `Req.Plug`, which exists only from req 0.7 and only behind the `only: [:dev, :test]` `:plug` dep, so consumers resolving `~> 0.6.1` got an undefined-module warning out of two repo-internal modules.
 

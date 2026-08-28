@@ -1,7 +1,7 @@
-defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
+defmodule Mix.Tasks.Bourse.ClaudeCheckTest do
   use ExUnit.Case, async: true
 
-  alias Mix.Tasks.Ccxt.ClaudeCheck
+  alias Mix.Tasks.Bourse.ClaudeCheck
 
   describe "extract_regions/1" do
     test "returns only the gated headings" do
@@ -11,18 +11,18 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
       ### The workbench is dissolved
       | Deribit | `priv/venues/deribit/authority/manifest.json` |
       ### Venue authority index
-      mix ccxt.oracle_gate
+      mix bourse.oracle_gate
       ### Key modules
       | `Bourse.Signing` | routing 1 patterns. Patterns: `:custom`. |
       ## Toolchain & check commands
       | Tests | `mix test.json --quiet` |
       ## Running tests
       ```bash
-      mix ccxt.classify_signing
+      mix bourse.classify_signing
       test/bourse/deleted_test.exs
       ```
       ## Do NOT edit
-      mix ccxt.authority_check
+      mix bourse.authority_check
       ## The trading domain layer
       `Bourse.PortfolioRisk`
       ## Critical design decisions
@@ -105,18 +105,18 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
       | `Bourse.Signing` | routing 1 patterns. Patterns: `:custom`. Authoritative table lives in the module's `@moduledoc`. |
       | `Bourse.Application` | Supervises `Bourse.RateLimiter` + `Bourse.Testnet`. |
       ## Toolchain & check commands
-      | X | `mix ccxt.oracle_gate` |
-      | Y | `mix ccxt.does_not_exist` |
-      | Z | `Mix.Tasks.Ccxt.AlsoMissing` |
+      | X | `mix bourse.oracle_gate` |
+      | Y | `mix bourse.does_not_exist` |
+      | Z | `Mix.Tasks.Bourse.AlsoMissing` |
       ## Running tests
       ```bash
-      mix ccxt.classify_signing
+      mix bourse.classify_signing
       test/bourse/missing_file.exs
       test/bourse/present_file.exs
       ```
       `ccxt-distill/fixtures/signing/*.json`
       ## Do NOT edit
-      mix ccxt.authority_missing
+      mix bourse.authority_missing
       `scripts/missing_authority.sh`
       ## The trading domain layer
       ok
@@ -141,15 +141,15 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
         """
       )
 
-      write!(root, "lib/mix/tasks/ccxt.oracle_gate.ex", """
-      defmodule Mix.Tasks.Ccxt.OracleGate do
+      write!(root, "lib/mix/tasks/bourse.oracle_gate.ex", """
+      defmodule Mix.Tasks.Bourse.OracleGate do
         use Mix.Task
         def run(_), do: :ok
       end
       """)
 
-      write!(root, "lib/mix/tasks/ccxt.classify_signing.ex", """
-      defmodule Mix.Tasks.Ccxt.ClassifySigning do
+      write!(root, "lib/mix/tasks/bourse.classify_signing.ex", """
+      defmodule Mix.Tasks.Bourse.ClassifySigning do
         use Mix.Task
         def run(_), do: :ok
       end
@@ -175,10 +175,10 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
 
       assert "Bourse.MissingModule" in refs
       assert "Bourse.Test.Generator.MissingGen" in refs
-      assert "mix ccxt.does_not_exist" in refs
-      assert "mix ccxt.authority_missing" in refs
+      assert "mix bourse.does_not_exist" in refs
+      assert "mix bourse.authority_missing" in refs
       assert "priv/venues/nope/authority/manifest.json" in refs
-      assert "Mix.Tasks.Ccxt.AlsoMissing" in refs
+      assert "Mix.Tasks.Bourse.AlsoMissing" in refs
       assert "scripts/missing_authority.sh" in refs
       assert "test/bourse/missing_file.exs" in refs
       assert "ccxt-distill/fixtures/signing" in refs
@@ -186,8 +186,8 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
       # Present surface must not be reported.
       refute "Bourse.Present" in refs
       refute "Bourse.Test.Generator.PresentGen" in refs
-      refute "mix ccxt.oracle_gate" in refs
-      refute "mix ccxt.classify_signing" in refs
+      refute "mix bourse.oracle_gate" in refs
+      refute "mix bourse.classify_signing" in refs
       refute "test/bourse/present_file.exs" in refs
       # Wildcard modules are not concrete claims.
       refute Enum.any?(refs, &String.contains?(&1, "Subscription"))
@@ -421,7 +421,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheckTest do
       ### The workbench is dissolved
       x
       ### Venue authority index
-      There is no `mix ccxt.sync` task and no distill-resolution helper surface.
+      There is no `mix bourse.sync` task and no distill-resolution helper surface.
       ### Key modules
       | `Bourse.Signing` | routing 1 patterns. Patterns: `:custom`. Authoritative table lives in the module's `@moduledoc`. |
       | `Bourse.Application` | Supervises `Bourse.RateLimiter`. |

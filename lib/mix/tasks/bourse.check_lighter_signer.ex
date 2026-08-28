@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Ccxt.CheckLighterSigner do
+defmodule Mix.Tasks.Bourse.CheckLighterSigner do
   @shortdoc "Builds and verifies the Lighter native signer when its toolchain is available"
 
   @moduledoc """
@@ -10,7 +10,7 @@ defmodule Mix.Tasks.Ccxt.CheckLighterSigner do
 
   use Mix.Task
 
-  alias Mix.Tasks.Ccxt.BuildLighterSigner
+  alias Mix.Tasks.Bourse.BuildLighterSigner
 
   @project_root Path.expand("../../..", __DIR__)
   @source_dir Path.join(@project_root, "native/lighter_signer")
@@ -34,7 +34,7 @@ defmodule Mix.Tasks.Ccxt.CheckLighterSigner do
         build_args = if coverage?, do: ["--coverage"], else: []
 
         clear_coverage_data()
-        Mix.Task.run("ccxt.build_lighter_signer", build_args)
+        Mix.Task.run("bourse.build_lighter_signer", build_args)
         run!("go", ["test", "./..."], @source_dir)
         run_native_tests!()
         if coverage?, do: check_c_coverage!()

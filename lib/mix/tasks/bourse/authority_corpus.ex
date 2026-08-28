@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
+defmodule Mix.Tasks.Bourse.AuthorityCorpus do
   @moduledoc """
   Validates the first-class venue authority manifests and local artifact hashes.
   """
@@ -27,7 +27,7 @@ defmodule Mix.Tasks.Ccxt.AuthorityCorpus do
   # document. Governed, must only shrink: an entry is admissible only when the
   # provider genuinely publishes nothing, and every exact code the venue authors is
   # instead pinned by a live tagged integration test. Enforced by
-  # `test/mix/tasks/ccxt_error_authority_test.exs`.
+  # `test/mix/tasks/bourse_error_authority_test.exs`.
   @error_enumeration_exemptions %{
     "lighter" =>
       "Lighter publishes no error-code enumeration (confirmed 2026-07-23, task 451): the pinned " <>

@@ -25,6 +25,6 @@ Runtime note: `Bourse.Error.from_spec_class("OnMaintenance")` resolves to `:exch
 ## Verification
 
 ```sh
-mix ccxt.error_authority
+mix bourse.error_authority
 mix test.json --quiet test/bourse/maintenance_error_classification_test.exs
 ```

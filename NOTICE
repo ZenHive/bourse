@@ -49,5 +49,5 @@ lighter-go
 
 `native/lighter_signer` builds against the official Lighter Go signing library
 (https://github.com/elliottech/lighter-go) and its transitive Go dependencies.
-Their sources are not vendored here; `mix ccxt.build_lighter_signer` fetches them
+Their sources are not vendored here; `mix bourse.build_lighter_signer` fetches them
 through the Go module proxy at build time, and each carries its own license.

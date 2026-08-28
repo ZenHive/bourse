@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Ccxt.ClaudeCheck do
+defmodule Mix.Tasks.Bourse.ClaudeCheck do
   @shortdoc "Gates CLAUDE.md mechanical claims against the tree"
 
   @moduledoc """
@@ -6,8 +6,8 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheck do
   exist, or when counted claims (signing patterns, Application children) drift
   from their machine-readable sources.
 
-      mix ccxt.claude_check
-      mix ccxt.claude_check --claude path/to/CLAUDE.md --root .
+      mix bourse.claude_check
+      mix bourse.claude_check --claude path/to/CLAUDE.md --root .
 
   A step of `mix check.dispatch`, which `mix ci` then calls, alongside the
   AGENTS.md freshness gate. Pure filesystem / source parsing — safe for cold
@@ -36,8 +36,8 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheck do
      must resolve to a `defmodule` under `lib/` or `test/support/`. Generator
      table short names under the Test Support heading expand to
      `Bourse.Test.Generator.<Name>`.
-  2. **Mix tasks** — `mix ccxt.<task>` tokens and backticked
-     `Mix.Tasks.Ccxt.*` names must resolve to a matching task module under
+  2. **Mix tasks** — `mix bourse.<task>` tokens and backticked
+     `Mix.Tasks.Bourse.*` names must resolve to a matching task module under
      `lib/mix/tasks/`.
   3. **Paths** — repo-relative file/dir paths in backticks or fenced command
      blocks must exist. Globs (`foo/*.json`) require the parent directory.
@@ -88,8 +88,8 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheck do
   ]
 
   @module_pattern ~r/`(Bourse(?:\.[A-Za-z0-9_]+)+)(\.\*)?`/
-  @mix_ccxt_task_pattern ~r/\bmix\s+(ccxt\.[a-z0-9_.]+)\b/
-  @mix_task_module_pattern ~r/`(Mix\.Tasks\.Ccxt(?:\.[A-Za-z0-9_]+)+)`/
+  @mix_bourse_task_pattern ~r/\bmix\s+(bourse\.[a-z0-9_.]+)\b/
+  @mix_task_module_pattern ~r/`(Mix\.Tasks\.Bourse(?:\.[A-Za-z0-9_]+)+)`/
   @backtick_pattern ~r/`([^`\n]+)`/
   @generator_short_pattern ~r/^\| `([A-Z][A-Za-z0-9.]+)` /m
   @signing_count_pattern ~r/\b(\d+)\s+patterns\b/
@@ -202,7 +202,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheck do
     end
   end
 
-  @doc "Indexes Mix.Tasks.Ccxt.* task names as `ccxt.foo_bar` strings."
+  @doc "Indexes Mix.Tasks.Bourse.* task names as `bourse.foo_bar` strings."
   @spec index_mix_tasks(Path.t()) :: MapSet.t(String.t())
   def index_mix_tasks(root) do
     for path <- Path.wildcard(Path.join(root, "lib/mix/tasks/**/*.{ex,exs}")),
@@ -364,7 +364,7 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheck do
   end
 
   defp extract_mix_bourse_tasks(body) do
-    @mix_ccxt_task_pattern
+    @mix_bourse_task_pattern
     |> Regex.scan(body, return: :index)
     |> Enum.flat_map(&mix_task_at_index(body, &1))
     |> Enum.uniq()
@@ -377,12 +377,12 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheck do
 
     cond do
       negated_at?(body, start_idx) -> []
-      match = Regex.run(@mix_ccxt_task_pattern, full, capture: :all_but_first) -> match
+      match = Regex.run(@mix_bourse_task_pattern, full, capture: :all_but_first) -> match
       true -> []
     end
   end
 
-  # "There is no mix ccxt.sync task" / "formerly removed mix ccxt.X" are not claims.
+  # "There is no mix bourse.sync task" / "formerly removed mix bourse.X" are not claims.
   defp negated_at?(body, start_idx) do
     window_start = max(0, start_idx - 48)
     window = binary_part(body, window_start, start_idx - window_start)
@@ -665,16 +665,16 @@ defmodule Mix.Tasks.Ccxt.ClaudeCheck do
     parts = String.split(rest, ".")
 
     case parts do
-      ["Ccxt"] ->
-        ["ccxt"]
+      ["Bourse"] ->
+        ["bourse"]
 
-      ["Ccxt" | nested] ->
-        # Mix.Tasks.Ccxt.ClaudeCheck → ccxt.claude_check
-        # Mix.Tasks.Ccxt.Helpers → not a mix task entry point we care about for
-        # `mix ccxt.*` docs, but still indexable.
+      ["Bourse" | nested] ->
+        # Mix.Tasks.Bourse.ClaudeCheck → bourse.claude_check
+        # Mix.Tasks.Bourse.Helpers → not a mix task entry point we care about for
+        # `mix bourse.*` docs, but still indexable.
         snake = Enum.map_join(nested, ".", &Macro.underscore/1)
 
-        ["ccxt." <> snake]
+        ["bourse." <> snake]
 
       _ ->
         []

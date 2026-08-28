@@ -1,13 +1,13 @@
-defmodule Mix.Tasks.Ccxt.AgentsMd do
+defmodule Mix.Tasks.Bourse.AgentsMd do
   @shortdoc "Generates and freshness-checks AGENTS.md from CLAUDE.md"
 
   @moduledoc """
   Generates `AGENTS.md` by recursively inlining CLAUDE.md `@`-imports, and
   fails when the committed file has drifted.
 
-      mix ccxt.agents_md            # write AGENTS.md
-      mix ccxt.agents_md --check    # exit non-zero if AGENTS.md is stale/missing
-      mix ccxt.agents_md --dry-run  # print rendered output, write nothing
+      mix bourse.agents_md            # write AGENTS.md
+      mix bourse.agents_md --check    # exit non-zero if AGENTS.md is stale/missing
+      mix bourse.agents_md --dry-run  # print rendered output, write nothing
 
   Wired into `mix check.dispatch` so every cross-family reviewer validates the
   rules document it is about to consume. Pure filesystem work — safe for cold
@@ -35,7 +35,7 @@ defmodule Mix.Tasks.Ccxt.AgentsMd do
   @default_agents "AGENTS.md"
   @default_manifest "priv/agents_includes/manifest.json"
   @default_root "."
-  @header "<!-- Auto-generated from CLAUDE.md by mix ccxt.agents_md — do not edit manually -->\n\n"
+  @header "<!-- Auto-generated from CLAUDE.md by mix bourse.agents_md — do not edit manually -->\n\n"
   @import_line ~r/^@([^\s]+)\s*$/
   @switches [
     check: :boolean,
@@ -113,10 +113,10 @@ defmodule Mix.Tasks.Ccxt.AgentsMd do
       {:ok, _existing} ->
         {:error,
          "STALE: #{agents_path} has drifted from CLAUDE.md (+ pinned @-imports) — " <>
-           "run `mix ccxt.agents_md`"}
+           "run `mix bourse.agents_md`"}
 
       {:error, :enoent} ->
-        {:error, "STALE: #{agents_path} is missing — run `mix ccxt.agents_md`"}
+        {:error, "STALE: #{agents_path} is missing — run `mix bourse.agents_md`"}
 
       {:error, reason} ->
         {:error, "cannot read #{agents_path}: #{:file.format_error(reason)}"}

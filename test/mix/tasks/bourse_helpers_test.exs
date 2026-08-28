@@ -1,7 +1,7 @@
-defmodule Mix.Tasks.Ccxt.HelpersTest do
+defmodule Mix.Tasks.Bourse.HelpersTest do
   use ExUnit.Case, async: true
 
-  alias Mix.Tasks.Ccxt.Helpers
+  alias Mix.Tasks.Bourse.Helpers
 
   describe "exchange_rows/0" do
     test "returns one row per manifest exchange with signing pattern" do

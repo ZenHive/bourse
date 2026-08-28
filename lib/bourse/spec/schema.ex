@@ -88,7 +88,7 @@ defmodule Bourse.Spec.Schema do
     ~w(errors handle_errors throw_dispatches)
     # errors.handle_errors.exceptions is deliberately NOT forbidden. The owned
     # documents carry provider-authoritative classifications consumed by
-    # Mix.Tasks.Ccxt.ErrorAuthorityCorpus (for example Bybit 180023).
+    # Mix.Tasks.Bourse.ErrorAuthorityCorpus (for example Bybit 180023).
   ]
 
   @support_values [true, false, "emulated"]

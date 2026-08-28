@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Ccxt.ClassifySigning do
+defmodule Mix.Tasks.Bourse.ClassifySigning do
   @shortdoc "Report signing pattern classification for all exchanges"
 
   @moduledoc """
@@ -9,13 +9,13 @@ defmodule Mix.Tasks.Ccxt.ClassifySigning do
 
   ## Usage
 
-      mix ccxt.classify_signing
+      mix bourse.classify_signing
 
   """
 
   use Mix.Task
 
-  alias Mix.Tasks.Ccxt.Helpers
+  alias Mix.Tasks.Bourse.Helpers
 
   @impl true
   def run(_args) do

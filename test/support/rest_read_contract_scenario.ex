@@ -109,7 +109,7 @@ defmodule Bourse.Test.RestReadContractScenario do
     """
     Missing provider-live credentials for #{venue}.
 
-    Set these environment variables and re-run `mix ccxt.verify_rest_read_contracts`:
+    Set these environment variables and re-run `mix bourse.verify_rest_read_contracts`:
     #{exports}
 
     Get credentials at: #{credentials["url"]}
@@ -462,7 +462,7 @@ defmodule Bourse.Test.RestReadContractScenario do
   defp unexercised_message(contract_case) do
     "#{contract_case["id"]}: provider account/market state did not exercise the read. " <>
       "Populate the sandbox account or market so this branch returns a non-empty result, " <>
-      "then re-run `mix ccxt.verify_rest_read_contracts`."
+      "then re-run `mix bourse.verify_rest_read_contracts`."
   end
 
   defp assert_scalar!(contract_case, value, "integer") do

@@ -1,7 +1,7 @@
-defmodule Mix.Tasks.Ccxt.CheckLighterSignerTest do
+defmodule Mix.Tasks.Bourse.CheckLighterSignerTest do
   use ExUnit.Case, async: true
 
-  alias Mix.Tasks.Ccxt.CheckLighterSigner
+  alias Mix.Tasks.Bourse.CheckLighterSigner
 
   test "toolchain detection names missing executables without running native checks" do
     assert {:error, missing} = CheckLighterSigner.toolchain(fn _name -> nil end)
