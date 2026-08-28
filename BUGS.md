@@ -69,6 +69,46 @@ roadmap.
 > **Not re-tested:** `fetch_markets` on lighter (entry below) — lighter is WIP upstream;
 > left as-is pending the maintainer's lighter update.
 
+> **Class carve of the open entries (2026-08-28, orchestrator).** All 24 open entries were
+> read end to end and grouped by *mechanism*, because a per-entry reading produces
+> instance-shaped tasks. Worked evidence that this is the failing mode here: 658 -> 660
+> ("still ... after the 658 pass-through") -> 661, three tasks on one symbol class, plus the
+> bybit dated-contract entry below as a fourth instance still open. Same shape at 664 (the
+> instance) -> 666 ("derived per venue with no shared rule" — the class, filed *after* the
+> instance shipped). The six classes, with the entries each covers:
+>
+> 1. **Raten statt scheitern (Substitutionsklasse)** — the code silently substitutes a guess
+>    where the authored slice or the payload does not fit: OKX `fallback_keys` yielding a
+>    `billId` instead of `nil`; the spec loader dropping alpaca's unrecognised
+>    `errors.status_map` shape; `HmacRecipe`'s canonical-string ladders picking a block by map
+>    order; the `notional_currency` guard `:halt`ing a whole fold on one bad row. Deliverable
+>    is the manifest-wide gate, not four patches.
+> 2. **Der unified Read gibt weniger zurück als der Payload** — field never fills (binance
+>    `updateTime`, binancecoinm ADL list collapsed, bybit funding-balance envelope, deribit
+>    `implied_volatility`) and route never reaches the venue (okx/binanceusdm algo branches,
+>    bybit classification helpers in the balance indices, deribit's USDC-settled option book,
+>    the missing numeric slot in `fetch_account_facts`). Natural seam if the diff is too large
+>    to review: field-fills-not / route-hits-not — never per venue, which collides in
+>    `lib/bourse/unified/read_parse.ex` (6 191 lines, the shared surface of all of them).
+> 3. **Die Gates lügen** — `bourse.check_lighter_signer` exits 0 printing "NOT RUN"; the live
+>    suite cannot distinguish a ledgered deliberate red from a genuine failure (incl. the raw
+>    branch reporting "none of the semantic keys" when it means zero rows); `spec_disk_test`
+>    pins pre-rotation hashes and reds on a clean tree; fourteen contract cases are green only
+>    while hand-made account state exists.
+> 4. **`Bourse.Symbol`** — non-injective `reverse_aliases/1`, the `:aliases` substring rewrite,
+>    dated-future ids, and the three surfaces where the docs and the code already disagree.
+> 5. **Request-Pacing und Signaturreihenfolge** — burst depth, the unbounded ~60 s pre-request
+>    sleep, sign-before-throttle, and the ignored authored `recv_window`. Stays alone: needs a
+>    model decision and live proof on all eleven venues.
+> 6. **Transport-Ehrlichkeit** — `WS.connect/3` returning an open unauthenticated private
+>    socket, bybit's `watchOrders` template pointing at a topic the venue does not serve, and
+>    okx's outer batch `code "1"` masking the real `sCode`.
+>
+> Only two open entries are consumer-reported (deribit `fetch_option_chain`, deribit
+> `fetch_account_facts` margin figures); under the roadmap-admission rule above, the rest stay
+> here unless the operator routes them deliberately. Several — classes 1, 3 and parts of 6 —
+> are small enough to be inline fixes rather than filings.
+
 ---
 
 ## 2026-08-28 — bybit `fetch_positions_history`: one dated-contract row fails the WHOLE call with `missing_position_notional_currency`
