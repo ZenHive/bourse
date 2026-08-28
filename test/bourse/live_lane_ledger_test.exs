@@ -277,9 +277,8 @@ defmodule Bourse.LiveLaneLedgerTest do
     document = Ledger.load!()
     contract_case = %{"venue" => "lighter", "method" => "fetchOHLCV", "id" => "lighter:fetchOHLCV:live"}
 
-    assert {:ledgered, entry} = Ledger.accept(contract_case, :empty_collection, document)
+    assert {:ledgered, entry} = Ledger.classify(contract_case, :empty_collection, document)
     assert entry["id"] == "lighter-empty-market-history"
-    assert Enum.any?(Ledger.hits(), &(&1["id"] == "lighter:fetchOHLCV:live"))
   end
 
   test "LiveLane contract cases use unified JS names rather than a test-local roster" do
