@@ -58,10 +58,11 @@ defmodule Bourse do
   raised) until markets are loaded with `Bourse.load_markets/1`, since the limits
   it checks live in market metadata.
 
-  Order `side` is separate and unconditional: every unified write that takes a
-  side accepts only the wire strings `"buy"` and `"sell"`. The atom forms
-  `:buy` and `:sell` are rejected rather than coerced, so a direction cannot
-  silently flip when a venue's endpoint selection matches strings only. An
+  Order `side` is separate and unconditional: every unified write that carries a
+  side — including a nested `side` inside an `orders` entry — accepts only the
+  wire strings `"buy"` and `"sell"`. The atom forms `:buy` and `:sell` are
+  rejected rather than coerced, so a direction cannot silently flip when a
+  venue's endpoint selection or request shape matches strings only. An
   uninterpretable side returns `{:error, %Bourse.Error{type: :invalid_parameters}}`
   before any HTTP request is issued; this does not depend on `sanity: true` or
   loaded markets.

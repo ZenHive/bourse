@@ -18,6 +18,7 @@ defmodule Bourse.Unified.RequestShape.Hyperliquid do
   alias Bourse.Error
   alias Bourse.Exchange
   alias Bourse.Symbol
+  alias Bourse.Unified.RequestShape
 
   @default_builder "0x6530512a6c89c7cfcebc3ba7fcd9ada5f30827a6"
 
@@ -190,7 +191,7 @@ defmodule Bourse.Unified.RequestShape.Hyperliquid do
 
   defp build_limit_order_row(order, exchange) do
     symbol = Map.fetch!(order, "symbol")
-    side = order |> Map.fetch!("side") |> to_string() |> String.downcase()
+    buy? = buy_side?(Map.fetch!(order, "side"))
     type = order |> Map.get("type", "limit") |> to_string() |> String.downcase()
     amount = Map.fetch!(order, "amount")
     price = Map.get(order, "price")
@@ -199,7 +200,7 @@ defmodule Bourse.Unified.RequestShape.Hyperliquid do
 
     row = %{
       "a" => asset_index(exchange, symbol),
-      "b" => side in ["buy", "b"],
+      "b" => buy?,
       "p" => number_string(price),
       "s" => number_string(amount),
       "r" => reduce_only?,
@@ -244,11 +245,13 @@ defmodule Bourse.Unified.RequestShape.Hyperliquid do
     if Enum.any?(required, &is_nil/1) do
       params
     else
+      buy? = buy_side?(params["side"])
+
       action = %{
         "type" => "twapOrder",
         "twap" => %{
           "a" => asset_index(exchange, params["symbol"]),
-          "b" => buy_side?(params["side"]),
+          "b" => buy?,
           "s" => number_string(params["amount"]),
           "r" => truthy?(params["reduceOnly"] || params["reduce_only"]),
           "m" => duration_minutes!(params["duration"]),
@@ -273,8 +276,15 @@ defmodule Bourse.Unified.RequestShape.Hyperliquid do
     end
   end
 
-  defp buy_side?(side) when is_binary(side), do: String.downcase(side) in ["buy", "b"]
-  defp buy_side?(_side), do: false
+  defp buy_side?(side) when is_binary(side) do
+    case String.downcase(side) do
+      allowed when allowed in ["buy", "b"] -> true
+      allowed when allowed in ["sell", "s"] -> false
+      _ -> RequestShape.refuse_uninterpretable_side!(side)
+    end
+  end
+
+  defp buy_side?(side), do: RequestShape.refuse_uninterpretable_side!(side)
 
   defp duration_minutes!(duration) when is_integer(duration), do: div(duration, 60_000)
   defp duration_minutes!(duration) when is_float(duration), do: duration |> Kernel./(60_000) |> Float.floor() |> trunc()

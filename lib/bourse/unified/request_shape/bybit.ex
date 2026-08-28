@@ -4,6 +4,7 @@ defmodule Bourse.Unified.RequestShape.Bybit do
   alias Bourse.Error
   alias Bourse.Exchange
   alias Bourse.Symbol
+  alias Bourse.Unified.RequestShape
 
   @month_ms 30 * 24 * 60 * 60 * 1000
   @three_hours_ms 3 * 60 * 60 * 1000
@@ -261,10 +262,12 @@ defmodule Bourse.Unified.RequestShape.Bybit do
   defp put_hedged(request, _params, _category, _side), do: request
 
   defp position_index("buy"), do: 1
-  defp position_index(_side), do: 2
+  defp position_index("sell"), do: 2
+  defp position_index(side), do: RequestShape.refuse_uninterpretable_side!(side)
 
   defp opposite("buy"), do: "sell"
-  defp opposite(_side), do: "buy"
+  defp opposite("sell"), do: "buy"
+  defp opposite(side), do: RequestShape.refuse_uninterpretable_side!(side)
 
   defp trading_stop?(params, category) do
     category != "spot" and

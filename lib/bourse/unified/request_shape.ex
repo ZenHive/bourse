@@ -6,6 +6,7 @@ defmodule Bourse.Unified.RequestShape do
 
   alias Bourse.Error
   alias Bourse.Exchange
+  alias Bourse.Order.Sanity
   alias Bourse.Spec
   alias Bourse.Symbol
   alias Bourse.Timestamp
@@ -69,6 +70,17 @@ defmodule Bourse.Unified.RequestShape do
   end
 
   def apply(params, _exchange, _js_name, _opts), do: params
+
+  @doc false
+  @spec refuse_uninterpretable_side!(term()) :: no_return()
+  def refuse_uninterpretable_side!(side) do
+    {:error, message} = Sanity.check_side(side)
+
+    raise Error.invalid_parameters(
+            message: message,
+            raw: %{"accepted" => ["buy", "sell"], "reason" => "invalid_side", "side" => inspect(side)}
+          )
+  end
 
   defp apply_shape_builder(params, shape, js_name, exchange, opts, context) do
     entries = request_entries(shape, js_name, Keyword.get(opts, :endpoint_path))

@@ -7,6 +7,7 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
   alias Bourse.Credentials
   alias Bourse.Error
   alias Bourse.MarginModification
+  alias Bourse.Order
   alias Bourse.Test.LiveGateIsolation
   alias Bourse.Unified.ReadParse
 
@@ -150,7 +151,7 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
     assert is_number(strike)
     assert option_type in ["call", "put"]
 
-    assert {:ok, %Bourse.Order{id: order_id}} =
+    assert {:ok, %Order{id: order_id}} =
              Bourse.create_order(exchange, market.symbol, "limit", "buy", canonical_step,
                price: market.precision["price"],
                tdMode: "isolated",
@@ -158,10 +159,10 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
              )
 
     try do
-      assert {:ok, %Bourse.Order{amount: ^canonical_step, filled: 0, remaining: ^canonical_step}} =
+      assert {:ok, %Order{amount: ^canonical_step, filled: 0, remaining: ^canonical_step}} =
                Bourse.fetch_order(exchange, order_id, symbol: market.symbol)
     after
-      assert {:ok, %Bourse.Order{id: ^order_id}} =
+      assert {:ok, %Order{id: ^order_id}} =
                Bourse.cancel_order(exchange, order_id, symbol: market.symbol)
     end
 
@@ -669,9 +670,6 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
     assert is_binary(message) and message != ""
   end
 
-  # Task 342 — non-convert identifier_reference renames against the demo API.
-  # Write-shaped calls use deliberate invalid params only; never a valid withdrawal.
-
   test "demo set_leverage surfaces the venue maximum-leverage error" do
     exchange =
       build_exchange(:okx,
@@ -680,6 +678,8 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
         hostname: @okx_demo_host
       )
 
+    # Task 342 — non-convert identifier_reference renames against the demo API.
+    # Write-shaped calls use deliberate invalid params only; never a valid withdrawal.
     assert {:error, %Error{code: code, raw: %{"code" => raw_code}}} =
              Bourse.set_leverage(exchange, 999, "BTC/USDT:USDT")
 
@@ -840,7 +840,7 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
         assert code not in [nil, "0"], "expected a business validation code, got: #{inspect(raw)}"
         assert String.starts_with?(code, "51"), "unexpected market-with-cost result: #{inspect(raw)}"
 
-      {:ok, %Bourse.Order{id: id}} when is_binary(id) and id != "" ->
+      {:ok, %Order{id: id}} when is_binary(id) and id != "" ->
         cleanup = Bourse.cancel_order(exchange, id, symbol: "BTC/USDT")
         flunk("market-with-cost unexpectedly rested; cleanup result: #{inspect(cleanup)}")
 
@@ -885,10 +885,6 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
     assert is_binary(row["sMsg"]) and row["sMsg"] != ""
   end
 
-  # Task 385 — unified create_order / fetch_my_trades request builds on international demo.
-  # Pre-fix: create_order → 50002 Incorrect json data format (batch-orders + unified keys);
-  # fetch_my_trades → 50014 instType empty (fills-history). Post-fix: never those codes.
-
   test "demo unified create_order is never malformed-body 50002; cancel when resting" do
     assert {:ok, exchange} = Bourse.load_markets(demo_exchange())
 
@@ -901,7 +897,7 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
       |> Float.round(@order_probe_price_decimal_places)
 
     case Bourse.create_order(exchange, "BTC/USDT", "limit", "buy", 0.0001, price: price) do
-      {:ok, %Bourse.Order{id: ord_id}} when is_binary(ord_id) and ord_id != "" ->
+      {:ok, %Order{id: ord_id}} when is_binary(ord_id) and ord_id != "" ->
         # Venue accepted the place (code 0 + ordId). Always cancel in the same eval.
         _ = Bourse.cancel_order(exchange, ord_id, symbol: "BTC/USDT")
 
@@ -919,8 +915,12 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
 
     # Swap path: same malformed-body ban; business errors (incl. 51155) allowed.
     case Bourse.create_order(exchange, "BTC/USDT:USDT", "limit", "buy", 1, price: price) do
-      {:ok, %Bourse.Order{id: ord_id}} when is_binary(ord_id) and ord_id != "" ->
+      {:ok, %Order{id: ord_id}} when is_binary(ord_id) and ord_id != "" ->
         _ = Bourse.cancel_order(exchange, ord_id, symbol: "BTC/USDT:USDT")
+
+      # Task 385 — unified create_order / fetch_my_trades request builds on international demo.
+      # Pre-fix: create_order → 50002 Incorrect json data format (batch-orders + unified keys);
+      # fetch_my_trades → 50014 instType empty (fills-history). Post-fix: never those codes.
 
       {:error, %Error{code: code, message: message, raw: raw}} ->
         refute to_string(code) == "50002"
@@ -952,7 +952,7 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
            %{symbol: "BTC/USDT", type: "limit", side: "buy", amount: 0.0001, price: price}
          ]) do
       {:ok, orders} when is_list(orders) ->
-        for %Bourse.Order{id: id} <- orders, is_binary(id) and id != "" do
+        for %Order{id: id} <- orders, is_binary(id) and id != "" do
           _ = Bourse.cancel_order(exchange, id, symbol: "BTC/USDT")
         end
 
@@ -1039,10 +1039,6 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
     assert is_number(rate) and rate > 0
   end
 
-  # Task 362 — residual non-order account / convert request semantics on international demo.
-  # Reads are success-path; mutating families use deliberate invalid params only
-  # (never a valid irreversible transfer / withdrawal / key change).
-
   test "demo fetch_borrow_interest and fetch_margin_adjustment_history succeed as safe reads" do
     exchange =
       build_exchange(:okx,
@@ -1103,6 +1099,10 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
 
     LiveGateIsolation.isolate!("okx")
 
+    # Task 362 — residual non-order account / convert request semantics on international demo.
+    # Reads are success-path; mutating families use deliberate invalid params only
+    # (never a valid irreversible transfer / withdrawal / key change).
+
     assert {:error, %Error{raw: %{"data" => [%{"sCode" => "51527"} | _]}}} =
              Bourse.edit_order(exchange, @missing_algo_id, "BTC/USDT:USDT", "conditional", "buy",
                amount: @algo_probe_size,
@@ -1136,10 +1136,11 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
     assert is_binary(message) and message != ""
   end
 
-  # An unrecognised side must ride to the venue verbatim. Dropping it would send no
-  # posSide at all, which a net-mode account accepts — silently closing a position the
-  # caller never asked to close. Observed live 2026-07-18: 51000 "Parameter posSide error".
-  test "demo close_position forwards an unrecognised side and OKX rejects it by name" do
+  # An uninterpretable close_position side must not become a direction. Dropping it
+  # would send no posSide, which a net-mode account accepts — silently closing a
+  # position the caller never asked to close. The unified boundary refuses it
+  # client-side (task 665) rather than forwarding a typo as posSide.
+  test "demo close_position refuses an uninterpretable side before any HTTP request" do
     exchange =
       build_exchange(:okx,
         credentials: demo_credentials!(),
@@ -1147,11 +1148,12 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
         hostname: @okx_demo_host
       )
 
-    assert {:error, %Error{code: code, message: message}} =
+    assert {:error, %Error{type: :invalid_parameters} = error} =
              Bourse.close_position(exchange, "BTC/USDT:USDT", side: "shrot")
 
-    assert to_string(code) == "51000"
-    assert message =~ "posSide"
+    assert error.message =~ ~s(Invalid side: "shrot")
+    assert error.message =~ ~s(Accepted forms: "buy" or "sell")
+    assert error.raw["reason"] == "invalid_side"
   end
 
   # Task 364 — populated position semantics need a real open row.
@@ -1168,7 +1170,7 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
     # Idempotent pre-cleanup if a prior run left a resting position.
     _ = Bourse.close_position(exchange, "BTC/USDT:USDT")
 
-    assert {:ok, %Bourse.Order{id: order_id}} =
+    assert {:ok, %Order{id: order_id}} =
              Bourse.create_order(exchange, "BTC/USDT:USDT", "market", "buy", 1)
 
     assert is_binary(order_id) and order_id != ""

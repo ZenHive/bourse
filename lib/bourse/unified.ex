@@ -521,7 +521,6 @@ defmodule Bourse.Unified do
   @js_names Map.new(@method_defs, fn {name, js_name, _params} -> {name, js_name} end)
   @js_to_method Map.new(@method_defs, fn {name, js_name, _params} -> {js_name, name} end)
   @required_params_by_method Map.new(@method_defs, fn {name, _js_name, params} -> {name, params} end)
-  @side_methods for {name, _js_name, params} <- @method_defs, :side in params, do: name
   @parse_types_by_return_type FieldMaps.parse_types()
                               |> Map.new(fn parse_type ->
                                 type_name = parse_type |> FieldMaps.struct_for() |> Module.split() |> List.last()
@@ -1874,25 +1873,27 @@ defmodule Bourse.Unified do
   envelope) and otherwise detonate in the signer. A keyword list in a
   required positional slot names the positional convention.
 
-  Methods that take a `side` also refuse any value other than the wire
-  strings `"buy"` and `"sell"` (including `:buy` / `:sell`). Direction is
-  never defaulted from an uninterpretable caller value.
+  Any `"side"` / `:side` field — top-level or nested inside an `orders`
+  entry — is refused unless it is the wire string `"buy"` or `"sell"`
+  (including `:buy` / `:sell`). Direction is never defaulted from an
+  uninterpretable caller value, and the walk does not depend on the method
+  table naming `:side` as a positional argument.
   """
   @spec validate_param_values(map(), atom()) :: {:ok, map()} | {:error, Error.t()}
   def validate_param_values(params, method) when is_map(params) and is_atom(method) do
-    with :ok <- validate_side_param(params, method) do
+    with :ok <- validate_side_param(params) do
       validate_wire_param_values(params, method)
     end
   end
 
-  defp validate_side_param(params, method) when method in @side_methods and is_map_key(params, "side") do
-    side = Map.get(params, "side")
-
-    case Sanity.check_side(side) do
+  defp validate_side_param(params) do
+    case first_invalid_side(params) do
       :ok ->
         :ok
 
-      {:error, message} ->
+      {:invalid, side} ->
+        {:error, message} = Sanity.check_side(side)
+
         {:error,
          Error.invalid_parameters(
            message: message,
@@ -1901,7 +1902,44 @@ defmodule Bourse.Unified do
     end
   end
 
-  defp validate_side_param(_params, _method), do: :ok
+  defp first_invalid_side(%{__struct__: _}), do: :ok
+
+  defp first_invalid_side(map) when is_map(map) do
+    case invalid_side_on_map(map) do
+      :ok -> first_invalid_side_in(Map.values(map))
+      other -> other
+    end
+  end
+
+  defp first_invalid_side(list) when is_list(list) do
+    if keyword_param?(list), do: :ok, else: first_invalid_side_in(list)
+  end
+
+  defp first_invalid_side(_value), do: :ok
+
+  defp first_invalid_side_in(values) do
+    Enum.reduce_while(values, :ok, fn value, :ok ->
+      case first_invalid_side(value) do
+        :ok -> {:cont, :ok}
+        other -> {:halt, other}
+      end
+    end)
+  end
+
+  defp invalid_side_on_map(map) do
+    map
+    |> present_sides()
+    |> Enum.reduce_while(:ok, fn side, :ok ->
+      case Sanity.check_side(side) do
+        :ok -> {:cont, :ok}
+        {:error, _} -> {:halt, {:invalid, side}}
+      end
+    end)
+  end
+
+  defp present_sides(map) do
+    for key <- ["side", :side], is_map_key(map, key), do: Map.fetch!(map, key)
+  end
 
   defp validate_wire_param_values(params, method) do
     case Enum.find(params, fn {_key, value} -> not wire_encodable?(value) end) do

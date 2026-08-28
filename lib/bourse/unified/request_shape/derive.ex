@@ -13,6 +13,7 @@ defmodule Bourse.Unified.RequestShape.Derive do
   alias Bourse.Exchange
   alias Bourse.Market
   alias Bourse.Signing.Derive, as: DeriveSigning
+  alias Bourse.Unified.RequestShape
 
   @action_typehash "4d7a9f27c403ff9c0f19bce61d76d82f9aa29f8d6d4b0c5474607d9770d1af17"
   @sandbox_trade_module "0x87F2863866D85E3192a35A73b388BD625D83f2be"
@@ -65,7 +66,7 @@ defmodule Bourse.Unified.RequestShape.Derive do
     amount = number_string(Map.fetch!(params, "amount"))
     price = number_string(Map.fetch!(params, "price"))
     max_fee = number_string(Map.fetch!(params, "max_fee"))
-    side = params |> Map.fetch!("side") |> String.downcase()
+    side = buy_or_sell!(Map.fetch!(params, "side"))
     # Derive wants a numeric subaccount_id, and the wire value must be the one that
     # was signed — coerce once and reuse for both the trade hash and the body.
     subaccount_id = integer!(Map.fetch!(params, "subaccount_id"))
@@ -178,6 +179,15 @@ defmodule Bourse.Unified.RequestShape.Derive do
   defp number_string(value) when is_float(value), do: Float.to_string(value)
   defp integer!(value) when is_integer(value), do: value
   defp integer!(value) when is_binary(value), do: String.to_integer(value)
+
+  defp buy_or_sell!(side) when is_binary(side) do
+    case String.downcase(side) do
+      normalized when normalized in ["buy", "sell"] -> normalized
+      _ -> RequestShape.refuse_uninterpretable_side!(side)
+    end
+  end
+
+  defp buy_or_sell!(side), do: RequestShape.refuse_uninterpretable_side!(side)
 
   defp signature_expiry(%{"signature_expiry_sec" => value}, _nonce) when is_integer(value), do: value
 

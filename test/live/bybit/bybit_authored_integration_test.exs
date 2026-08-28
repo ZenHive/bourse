@@ -6,6 +6,7 @@ defmodule Bourse.BybitAuthoredIntegrationTest do
   alias Bourse.Balance
   alias Bourse.Credentials
   alias Bourse.Error
+  alias Bourse.Order
   alias Bourse.Trade
 
   @milliseconds_per_hour 60 * 60 * 1000
@@ -44,6 +45,68 @@ defmodule Bourse.BybitAuthoredIntegrationTest do
 
     assert status in ["ok", "maintenance"]
     assert Enum.all?(events, &(is_map(&1) and &1["state"] in ["scheduled", "ongoing", "completed", "canceled"]))
+  end
+
+  @tag :dangerous
+  test "two-entry create_orders with string sides in both directions places both orders" do
+    credentials = require_credentials!(:bybit, url: "https://api-testnet.bybit.com")
+    base = build_exchange(:bybit, credentials: credentials, sandbox: true)
+    assert {:ok, exchange} = Bourse.load_markets(base)
+
+    assert {:ok, %Bourse.Ticker{ask: ask, bid: bid}} = Bourse.fetch_ticker(exchange, "BTC/USDT:USDT")
+    buy_price = Float.round(bid * 0.9, 1)
+    sell_price = Float.round(ask * 1.1, 1)
+
+    {:ok, open_before} = Bourse.fetch_open_orders(exchange, symbol: "BTC/USDT:USDT")
+    before_ids = MapSet.new(open_before, & &1.id)
+
+    assert {:ok, placed} =
+             Bourse.create_orders(
+               exchange,
+               [
+                 %{
+                   "amount" => 0.001,
+                   "price" => buy_price,
+                   "side" => "buy",
+                   "symbol" => "BTC/USDT:USDT",
+                   "type" => "limit"
+                 },
+                 %{
+                   "amount" => 0.001,
+                   "price" => sell_price,
+                   "side" => "sell",
+                   "symbol" => "BTC/USDT:USDT",
+                   "type" => "limit"
+                 }
+               ],
+               category: "linear"
+             )
+
+    placed_ids =
+      Enum.map(placed, fn
+        %Order{id: id} when is_binary(id) and id != "" -> id
+        other -> flunk("create_orders returned a non-order row: #{inspect(other)}")
+      end)
+
+    try do
+      assert length(placed_ids) == 2
+
+      {:ok, open_after} = Bourse.fetch_open_orders(exchange, symbol: "BTC/USDT:USDT")
+      after_by_id = Map.new(open_after, &{&1.id, &1})
+      placed_set = MapSet.new(placed_ids)
+
+      assert MapSet.subset?(placed_set, MapSet.new(Map.keys(after_by_id))),
+             "placed #{inspect(placed_ids)} missing from open orders #{inspect(Enum.map(open_after, & &1.id))}"
+
+      refute MapSet.subset?(placed_set, before_ids)
+
+      sides = placed_ids |> Enum.map(&after_by_id[&1].side) |> Enum.sort()
+      assert sides == ["buy", "sell"]
+    after
+      for id <- placed_ids do
+        _ = Bourse.cancel_order(exchange, id, symbol: "BTC/USDT:USDT")
+      end
+    end
   end
 
   test "signed unified wallet balance parses coin rows" do

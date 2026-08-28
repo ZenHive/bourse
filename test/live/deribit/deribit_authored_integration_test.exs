@@ -10,6 +10,7 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
   alias Bourse.Position
   alias Bourse.Test.LiveGateIsolation
   alias Bourse.Trade
+  alias Bourse.Unified
 
   @moduletag :integration
   @moduletag :network
@@ -97,6 +98,54 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
     end
   end
 
+  test "batch writes refuse a nested uninterpretable side before any order is placed" do
+    credentials = require_credentials!(:deribit, url: @deribit_testnet_url)
+    exchange = build_exchange(:deribit, credentials: credentials, sandbox: true)
+    assert exchange.markets == nil
+
+    {:ok, open_before} = Bourse.fetch_open_orders(exchange)
+    before_ids = MapSet.new(open_before, & &1.id)
+
+    orders = [%{amount: 10, price: 1, side: :sell, symbol: "BTC/USD:BTC", type: "limit"}]
+
+    for {method, _js_name, required, _description} <- Unified.method_defs(), :orders in required do
+      assert {:error, %Error{type: :invalid_parameters} = error} = apply(Bourse, method, [exchange, orders]),
+             "#{method} did not refuse a nested atom side before dispatch"
+
+      assert error.message =~ "Invalid side: :sell"
+      assert error.message =~ ~s(Accepted forms: "buy" or "sell")
+      assert error.raw["reason"] == "invalid_side"
+    end
+
+    {:ok, open_after} = Bourse.fetch_open_orders(exchange)
+    assert MapSet.new(open_after, & &1.id) == before_ids
+
+    valid =
+      Bourse.create_orders(exchange, [
+        %{"amount" => 10, "price" => 1, "side" => "buy", "symbol" => "BTC/USD:BTC", "type" => "limit"},
+        %{"amount" => 10, "price" => 1, "side" => "sell", "symbol" => "BTC/USD:BTC", "type" => "limit"}
+      ])
+
+    case valid do
+      {:error, %Error{type: :invalid_parameters, raw: %{"reason" => "invalid_side"}}} ->
+        flunk("string-side batch was refused as invalid_side")
+
+      {:error, %Error{type: :not_supported}} ->
+        :ok
+
+      {:ok, orders} ->
+        for %Order{id: id} <- List.wrap(orders), is_binary(id) and id != "" do
+          _ = Bourse.cancel_order(exchange, id, symbol: "BTC/USD:BTC")
+        end
+
+      other ->
+        flunk("string-side batch failed after the side gate: #{inspect(other)}")
+    end
+
+    {:ok, open_valid} = Bourse.fetch_open_orders(exchange)
+    assert MapSet.new(open_valid, & &1.id) == before_ids
+  end
+
   @tag :dangerous
   test "stop_market create_order with trigger index_price reaches Deribit trigger-price validation" do
     credentials = require_credentials!(:deribit, url: @deribit_testnet_url)
@@ -111,7 +160,7 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
       "type" => "stop_market"
     }
 
-    assert {:ok, [shaped]} = Bourse.Unified.request_param_shapes(exchange, :create_order, params)
+    assert {:ok, [shaped]} = Unified.request_param_shapes(exchange, :create_order, params)
     assert shaped["trigger"] == "index_price"
     assert shaped["trigger_price"] == 1
     assert shaped["type"] == "stop_market"

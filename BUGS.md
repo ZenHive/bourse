@@ -918,8 +918,10 @@ is quoted in the base currency per contract.
 > restores it. Live testnet confirmation on BTC-PERPETUAL: the atom call was refused with no order
 > placed; the string buy (`115028667016`) and the `reduce_only: true` sell (`115028668271`)
 > both went through in the right direction, positions empty afterwards.
-> **Still open, filed separately:** the batch write paths (`create_orders` and siblings) take
-> `:orders` and never enter that clause, so a nested atom side is not yet refused.
+> **Still open, filed separately (closed by task 665):** the batch write paths (`create_orders`
+> and siblings) took `:orders` and never entered that clause, so a nested atom side was not
+> refused. Task 665 walks every nested `"side"` / `:side` at the unified boundary and refuses
+> RequestShape catch-alls that mapped an unmatched value to a direction.
 
 **Reporter:** `trading_dashboard` (task 225 payload observation, live Deribit testnet).
 
