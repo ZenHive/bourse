@@ -2850,13 +2850,7 @@
           "path": "asset/transfer-state",
           "authenticated": true,
           "market_kind": "spot",
-          "options": [
-            {
-              "name": "instType",
-              "strategy": "literal",
-              "value": "SPOT"
-            }
-          ]
+          "options": []
         }
       ],
       "arguments": [
@@ -2904,11 +2898,6 @@
               "name": "limit",
               "strategy": "literal",
               "value": 10
-            },
-            {
-              "name": "instType",
-              "strategy": "literal",
-              "value": "SPOT"
             }
           ]
         }
@@ -2926,8 +2915,7 @@
           "amount",
           "status",
           "timestamp"
-        ],
-        "empty_collection": "allowed"
+        ]
       },
       "authority_source_ids": [
         "api-v5-docs"

@@ -794,6 +794,17 @@ Entry template:
   remains unreachable is only the contract case's resource strategy: no read surface
   (`asset/bills`, `account/bills`, `account/bills-archive`) exposes a `transId` (rows carry
   `billId` only, re-probed live), so `source_method: fetchTransfers` can never resolve one.
+- Update (2026-08-28): the `fetchTransfers:0` branch of this same lane was independently
+  zeroing itself (both `account/bills-archive` calls carried a stray `instType: "SPOT"`
+  literal; type-1 transfer bills carry an empty `instType`/`instId`, live-confirmed:
+  `fetch_transfers(ex)` → 7 rows, `fetch_transfers(ex, instType: "SPOT")` → `[]`). Removing
+  that literal from both the `fetchTransfers` and `fetchTransfer` branches (the latter's copy
+  was leaking into `fetchTransfer:0`'s resource-strategy lookup and forcing the same `[]`) makes
+  the resource strategy resolve a real `billId` again. `fetchTransfer:0` now fails with the exact
+  documented reason instead of a misleading `provider account state has no id from
+  fetchTransfers`: `[okx] exchange_error: transId is incorrect or transId does not match with
+  'type'` (live, 2026-08-28) — the same 58129 confirmed above, now reached honestly rather than
+  masked by an unrelated filtering bug. The transId/billId gap itself is unchanged.
 
 ### hyperliquid — deposit-history rows require a real bridge/CCTP transaction (task 671, filed 2026-08-23)
 
