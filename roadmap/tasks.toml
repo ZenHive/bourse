@@ -23026,7 +23026,7 @@ id = "682"
 phase = 16
 bundle = "live_e2e"
 milestone = "v1_2"
-status = "pending"
+status = "in_progress"
 title = "Live trader journey for derive: session-key-signed round-trip, ledgered stream gap, error probes"
 scores = { d = 7, b = 7, u = 7 }
 acceptance_criteria = ["test/live/journeys/trader/derive_test.exs mirrors the bybit exemplar's structure with derive's own order contract: survey, resting limit order signed with sign_order over the eight-field tuple (max_fee at or above the dynamic floor, signer/nonce/signature_expiry_sec supplied), poll open, echo assertions, open-orders membership, cancel, poll gone, cleanup in an after block", "Every asserted error was first observed live against api-demo.lyra.finance and is pinned with a dated observation comment; Derive's own API reference is the semantic authority", "An in-flow rejection test asserts a venue-owned rejection observed live (for example error 11023 naming the exact max_fee minimum when the fee is below the floor)", "test/live/errors/derive_test.exs carries at least one generic bad-input probe (unknown order id) asserting the live-observed error, runs in the default suite, and duplicates neither the contract lane's cases nor the invalid-credentials suite", "The private-stream leg is resolved honestly: derive authors no auth_pattern for its private WS section although the venue has a WS login, so either the leg observes a real order event through whatever the venue actually offers our session key, or the gap is recorded in docs/prod-verification-ledger.md with the evidence — never a silent skip and never an assertion on :connected", "mix test.json --quiet --include dangerous test/live/journeys/trader/derive_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes", "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"]
@@ -23042,4 +23042,5 @@ Venue notes: DERIVE_TESTNET_API_KEY is the smart-contract wallet (what X-LyraWal
 Supersedes the derive slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: signing/money surface plus live external-system evidence.
 """
 created_at = "2026-08-24"
+started_at = "2026-08-28"
 scored_at = "2026-08-24"

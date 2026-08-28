@@ -30991,7 +30991,7 @@
       "phase": 16,
       "bundle": "live_e2e",
       "milestone": "v1_2",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Live trader journey for derive: session-key-signed round-trip, ledgered stream gap, error probes",
       "scores": {
         "d": 7,
@@ -31026,6 +31026,7 @@
       ],
       "body": "Mirror the bybit trader-journey exemplar (test/live/journeys/trader/bybit_test.exs, landed in 82af62f, including its private-stream describe block) for derive's demo environment. Live-probe first, then pin. Test orders with cleanup are explicitly allowed on the demo.\n\nVenue notes: DERIVE_TESTNET_API_KEY is the smart-contract wallet (what X-LyraWallet carries), _API_SECRET a registered Admin session key's private key. The edge proxy verifies auth before the app — a wrong signer gets HTML 403 with no JSON. Order endpoints carry body_encoding json, so sign the order tuple yourself via sign_order(order, private_key:, testnet: true) and put the signature string in params; max_fee has a dynamic floor (~1.5 USDC, error 11023 names the exact minimum) and is part of the signed hash, so re-sign after adjusting.\n\nSupersedes the derive slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: signing/money surface plus live external-system evidence.\n",
       "created_at": "2026-08-24",
+      "started_at": "2026-08-28",
       "scored_at": "2026-08-24",
       "cross_repo": []
     }
