@@ -156,10 +156,18 @@ defmodule Bourse.Spec.Disk do
       verification: %{}
     }
 
-    Enum.reduce(endpoints, seed, &add_method(&1, &2, spec_root))
+    shared = load_referenced_descriptors(endpoints, spec_root)
+    Enum.reduce(endpoints, seed, &add_method(&1, &2, spec_root, shared))
   end
 
-  defp add_method({method, obj}, acc, spec_root) do
+  defp load_referenced_descriptors(endpoints, spec_root) do
+    endpoints
+    |> Enum.flat_map(&shared_descriptor_path(&1, spec_root))
+    |> Enum.uniq()
+    |> Map.new(fn path -> {path, JsonDocument.decode_file!(path)} end)
+  end
+
+  defp add_method({method, obj}, acc, spec_root, shared) do
     request = obj["request"] || %{}
 
     acc
@@ -167,7 +175,7 @@ defmodule Bourse.Spec.Disk do
     |> maybe_put(:has, method, obj["has"], Map.has_key?(obj, "has"))
     |> put_field(:mapping_complete, method, Map.fetch!(obj, "mapping_complete"))
     |> put_field(:verification, method, Map.fetch!(obj, "verification"))
-    |> Map.update!(:descriptors, &put_descriptor(&1, method, obj["descriptor"], spec_root))
+    |> Map.update!(:descriptors, &put_descriptor(&1, method, obj["descriptor"], spec_root, shared))
     |> maybe_put(:defaults, method, request["defaults"], Map.has_key?(request, "defaults"))
     |> maybe_put(:selection, method, request["endpoint_selection"], Map.has_key?(request, "endpoint_selection"))
     |> maybe_put(:parse, method, obj["parse"], Map.has_key?(obj, "parse"))
@@ -184,23 +192,23 @@ defmodule Bourse.Spec.Disk do
   defp maybe_put(acc, _bucket, _method, _value, false), do: acc
   defp maybe_put(acc, bucket, method, value, true), do: put_field(acc, bucket, method, value)
 
-  defp put_descriptor(descriptors, _method, nil, _spec_root), do: descriptors
+  defp put_descriptor(descriptors, _method, nil, _spec_root, _shared), do: descriptors
 
-  defp put_descriptor(descriptors, method, %{"$ref" => ref}, spec_root) do
-    Map.put(descriptors, method, resolve_ref!(ref, spec_root))
+  defp put_descriptor(descriptors, method, %{"$ref" => ref}, spec_root, shared) do
+    Map.put(descriptors, method, resolve_ref!(ref, spec_root, shared))
   end
 
-  defp put_descriptor(descriptors, method, descriptor, _spec_root) do
+  defp put_descriptor(descriptors, method, descriptor, _spec_root, _shared) do
     Map.put(descriptors, method, descriptor)
   end
 
-  defp resolve_ref!(ref, spec_root) when is_binary(ref) do
+  defp resolve_ref!(ref, spec_root, shared) when is_binary(ref) do
     case String.split(ref, "#", parts: 2) do
       [family, key] ->
         path = Path.join([shared_root(spec_root), family, "descriptors.json"])
-        shared = JsonDocument.decode_file!(path)
+        file = Map.get_lazy(shared, path, fn -> JsonDocument.decode_file!(path) end)
 
-        case Map.fetch(shared, key) do
+        case Map.fetch(file, key) do
           {:ok, descriptor} -> descriptor
           :error -> raise ArgumentError, "shared descriptor #{inspect(ref)} is missing from #{path}"
         end

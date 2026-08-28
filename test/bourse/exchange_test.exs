@@ -313,23 +313,25 @@ defmodule Bourse.ExchangeTest do
     end
 
     test "every authored error code is reachable by classification in its declared scope" do
-      for venue <- Spec.exchanges(),
-          spec = Spec.load!(venue),
-          exceptions = get_in(spec, ["errors", "handle_errors", "exceptions"]) || %{},
-          {submap, scope, code} <- authored_exception_codes(exceptions) do
+      for venue <- Spec.exchanges() do
+        spec = Spec.load!(venue)
         exchange = Exchange.new!(venue)
-        scoped_exchange = Exchange.with_error_scope(exchange, scope)
+        exceptions = get_in(spec, ["errors", "handle_errors", "exceptions"]) || %{}
 
-        assert Map.has_key?(scoped_exchange.error_codes, code),
-               "#{venue} exceptions.#{submap} code #{code} is unreachable"
+        for {submap, scope, code} <- authored_exception_codes(exceptions) do
+          scoped_exchange = Exchange.with_error_scope(exchange, scope)
 
-        field = List.first(scoped_exchange.error_code_fields) || "code"
-        body = %{field => code, "msg" => "authored exception reachability probe"}
-        expected_type = scoped_exchange.error_codes[code]
+          assert Map.has_key?(scoped_exchange.error_codes, code),
+                 "#{venue} exceptions.#{submap} code #{code} is unreachable"
 
-        assert {:error, %Error{type: ^expected_type}} =
-                 Errors.classify_response(:get, 400, %{}, body, scoped_exchange),
-               "#{venue} exceptions.#{submap} code #{code} did not classify"
+          field = List.first(scoped_exchange.error_code_fields) || "code"
+          body = %{field => code, "msg" => "authored exception reachability probe"}
+          expected_type = scoped_exchange.error_codes[code]
+
+          assert {:error, %Error{type: ^expected_type}} =
+                   Errors.classify_response(:get, 400, %{}, body, scoped_exchange),
+                 "#{venue} exceptions.#{submap} code #{code} did not classify"
+        end
       end
     end
 

@@ -100,13 +100,24 @@ defmodule Bourse.SpecDiskTest do
   test "binance-family descriptors are hoisted and resolved at assemble time" do
     on_disk = JsonDocument.decode_file!("priv/venues/binance/authored/endpoints.json")
     assert %{"$ref" => "binance_family#addMargin"} = on_disk["addMargin"]["descriptor"]
+    shared = JsonDocument.decode_file!("priv/venues/_shared/binance_family/descriptors.json")
 
     assembled = Spec.load!("binance")
     descriptor = assembled["endpoints"]["descriptors"]["addMargin"]
     refute Map.has_key?(descriptor, "$ref")
     assert descriptor["name"] == "addMargin"
+    assert descriptor == shared["addMargin"]
 
-    shared = JsonDocument.decode_file!("priv/venues/_shared/binance_family/descriptors.json")
+    for {method, obj} <- on_disk do
+      case obj["descriptor"] do
+        %{"$ref" => "binance_family#" <> key} ->
+          assert assembled["endpoints"]["descriptors"][method] == shared[key]
+
+        _other ->
+          :ok
+      end
+    end
+
     assert map_size(shared) == @report["shared_descriptor_keys"]
 
     for venue <- @binance_family do
