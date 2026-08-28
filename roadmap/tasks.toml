@@ -23422,7 +23422,7 @@ shipped_in = "bf099e99889b0bf14c574b2c92abde4b82417538"
 id = "688"
 phase = 16
 bundle = "live_triage"
-status = "in_progress"
+status = "blocked"
 title = "Bourse.Symbol quietly returns a different market: non-injective inversion, unanchored alias rewriting, and unparsed dated ids"
 scores = { d = 6, b = 7, u = 7 }
 markers = ["bug"]
@@ -23431,6 +23431,7 @@ out_of_scope = ["The blast-radius half of the bybit positions-history defect, wh
 touches = ["lib/bourse/symbol.ex", "priv/venues/hyperliquid/authored/markets.json", "priv/venues/bybit/authored/markets.json", "test/bourse/symbol_test.exs"]
 assignee = "codex"
 model = "gpt-5.6-sol"
+blocked_reason = 'land conflict retained for repair (task 688, run run-1787958051916-bb4fd4bb, branch harness/run-1787958051916-bb4fd4bb); resolver already attempted and the branch still conflicted. resolver witness: agent spawned: cursor model=cursor-grok-4.6-xhigh; rebase continue failed: "Rebasing (2/2)\rAuto-merging .sobelow-skips\nCONFLICT (content): Merge conflict in .sobelow-skips\nerror: could not apply 672ca6a... harness: reviewer fixes — restore ledger File.write sobelow skip\nhint: Resolve all conflicts manually, mark them as resolved with\nhint: \"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\nhint: You can instead skip this commit: run \"git rebase --skip\".\nhint: To abort and get back to the state before \"git rebase\", run \"git rebase --abort\".\nCould not apply 672ca6a... harness: reviewer fixes — restore ledger File.write sobelow skip\n". Repair: rebase the retained branch onto the target branch, resolve all conflict markers while keeping both reviewed intents, commit the resolved branch, move harness/run-1787958051916-bb4fd4bb to that commit if you used a scratch branch, then run dispatch-reland run-1787958051916-bb4fd4bb.'
 body = """
 Four findings on one module, three of them cases where the client hands back a symbol naming a
 different market than the caller asked about, with no error.
