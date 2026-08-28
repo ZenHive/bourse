@@ -31161,7 +31161,7 @@
       "id": "684",
       "phase": 16,
       "bundle": "live_e2e",
-      "status": "in_progress",
+      "status": "pending",
       "title": "Provision a Lighter testnet account from the repo: add ChangePubKey to the native signer and an end-to-end provisioning task",
       "scores": {
         "d": 6,
