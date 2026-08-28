@@ -168,7 +168,7 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
 
     invalid_native_size = native_step / 2
 
-    assert {:error, %Error{code: "1", raw: %{"data" => [error_row | _]}}} =
+    assert {:error, %Error{type: :invalid_order, code: "51121", raw: %{"data" => [error_row | _]}}} =
              Bourse.Okx.private_post_trade_order(exchange, %{
                "instId" => market.id,
                "tdMode" => "isolated",
@@ -869,7 +869,7 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
 
     client_order_id = "t363#{System.unique_integer([:positive])}"
 
-    assert {:error, %Error{code: "1", raw: %{"data" => [row | _]}}} =
+    assert {:error, %Error{type: :bad_request, code: "51000", raw: %{"data" => [row | _]}}} =
              Bourse.Okx.private_post_trade_order(exchange, %{
                "instId" => "BTC-USDT",
                "tdMode" => "cash",

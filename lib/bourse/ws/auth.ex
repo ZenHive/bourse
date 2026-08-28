@@ -14,6 +14,7 @@ defmodule Bourse.WS.Auth do
   | `:direct_hmac_expiry` | bybit, bitmex, htx family | `GET/realtime{expires}` HMAC-SHA256 |
   | `:iso_passphrase` | okx family, kucoin family | Requires `credentials.password` |
   | `:jsonrpc_linebreak` | deribit | JSON-RPC `public/auth`, returns `{:ok, %{ttl_ms: _}}` |
+  | `:eip191_jsonrpc_login` | derive | EIP-191 of the ms timestamp, JSON-RPC `public/login` |
   | `:sha384_nonce` | bitfinex | `AUTH{nonce}` HMAC-SHA384 |
   | `:sha512_newline` | gate, gateio | Gate `spot.login` HMAC-SHA512 |
   | `:listen_key` | binance USD-M / COIN-M | REST pre-auth, key travels in the WS URL |
@@ -49,6 +50,7 @@ defmodule Bourse.WS.Auth do
   alias Bourse.Credentials
   alias Bourse.WS.Auth.ActionKeySecret
   alias Bourse.WS.Auth.DirectHmacExpiry
+  alias Bourse.WS.Auth.Eip191JsonrpcLogin
   alias Bourse.WS.Auth.InlineSubscribe
   alias Bourse.WS.Auth.IsoPassphrase
   alias Bourse.WS.Auth.JsonrpcLinebreak
@@ -61,6 +63,7 @@ defmodule Bourse.WS.Auth do
   @type pattern ::
           :action_key_secret
           | :direct_hmac_expiry
+          | :eip191_jsonrpc_login
           | :iso_passphrase
           | :jsonrpc_linebreak
           | :sha384_nonce
@@ -78,6 +81,7 @@ defmodule Bourse.WS.Auth do
   @patterns [
     :action_key_secret,
     :direct_hmac_expiry,
+    :eip191_jsonrpc_login,
     :iso_passphrase,
     :jsonrpc_linebreak,
     :sha384_nonce,
@@ -107,6 +111,9 @@ defmodule Bourse.WS.Auth do
 
   def pre_auth(:iso_passphrase, credentials, config, opts), do: IsoPassphrase.pre_auth(credentials, config, opts)
 
+  def pre_auth(:eip191_jsonrpc_login, credentials, config, opts),
+    do: Eip191JsonrpcLogin.pre_auth(credentials, config, opts)
+
   def pre_auth(:jsonrpc_linebreak, credentials, config, opts), do: JsonrpcLinebreak.pre_auth(credentials, config, opts)
 
   def pre_auth(:sha384_nonce, credentials, config, opts), do: Sha384Nonce.pre_auth(credentials, config, opts)
@@ -132,6 +139,9 @@ defmodule Bourse.WS.Auth do
 
   def build_auth_message(:iso_passphrase, credentials, config, opts),
     do: IsoPassphrase.build_auth_message(credentials, config, opts)
+
+  def build_auth_message(:eip191_jsonrpc_login, credentials, config, opts),
+    do: Eip191JsonrpcLogin.build_auth_message(credentials, config, opts)
 
   def build_auth_message(:jsonrpc_linebreak, credentials, config, opts),
     do: JsonrpcLinebreak.build_auth_message(credentials, config, opts)
@@ -195,6 +205,9 @@ defmodule Bourse.WS.Auth do
 
   def handle_auth_response(:iso_passphrase, response, state), do: IsoPassphrase.handle_auth_response(response, state)
 
+  def handle_auth_response(:eip191_jsonrpc_login, response, state),
+    do: Eip191JsonrpcLogin.handle_auth_response(response, state)
+
   def handle_auth_response(:jsonrpc_linebreak, response, state),
     do: JsonrpcLinebreak.handle_auth_response(response, state)
 
@@ -228,6 +241,7 @@ defmodule Bourse.WS.Auth do
   @spec module_for_pattern(pattern()) :: module() | nil
   def module_for_pattern(:action_key_secret), do: ActionKeySecret
   def module_for_pattern(:direct_hmac_expiry), do: DirectHmacExpiry
+  def module_for_pattern(:eip191_jsonrpc_login), do: Eip191JsonrpcLogin
   def module_for_pattern(:iso_passphrase), do: IsoPassphrase
   def module_for_pattern(:jsonrpc_linebreak), do: JsonrpcLinebreak
   def module_for_pattern(:sha384_nonce), do: Sha384Nonce

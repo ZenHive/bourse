@@ -112,8 +112,9 @@ defmodule Bourse.WS.FacadeTest do
     assert_receive {:transport_sent, _}
     assert {:ok, _} = WS.watch_trades(public_ws, "BTC/USDT", ack_timeout_ms: 0)
     assert_receive {:transport_sent, _}
-    assert {:ok, _} = WS.watch_orders(private_ws, symbol: "BTC/USDT", ack_timeout_ms: 0)
-    assert_receive {:transport_sent, _}
+    assert {:ok, _} = WS.watch_orders(private_ws, ack_timeout_ms: 0)
+    assert_receive {:transport_sent, payload}
+    assert Jason.decode!(payload) == %{"op" => "subscribe", "args" => ["order"]}
     assert :ok = WS.subscribe(public_ws, ["tickers.BTCUSDT"], %{ack_timeout_ms: 0})
     assert_receive {:transport_sent, _}
   end

@@ -152,8 +152,9 @@ defmodule Bourse.LiveLane.FirstFrame do
     %{
       venue: "derive",
       surface: "ws_private",
-      reason: "no authored auth_pattern; private section has no handshake and no scheduled first-frame channel",
-      tracking: "CLAUDE.md WebSocket derive auth_pattern gap — task 650"
+      reason:
+        "private order channel is idle without account events; differential handshake is covered by auth_live_smoke",
+      tracking: "test/live/ws/auth_live_smoke_test.exs — task 690"
     },
     %{
       venue: "okx",

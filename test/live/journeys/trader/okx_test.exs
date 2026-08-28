@@ -183,11 +183,13 @@ defmodule Bourse.Journeys.Trader.OkxTest do
       # /api/v5/trade/order with sz "0.001" (BTC-USDT-SWAP lotSz/minSz 0.01)
       # answers envelope code "1", "All operations failed"; the per-order
       # outcome is data[0] sCode "51121", sMsg "Order quantity must be a
-      # multiple of the lot size." Authority: OKX API v5 51121
+      # multiple of the lot size." Classification reads sCode, not the outer
+      # envelope. Authority: OKX API v5 51121
       # (https://www.okx.com/docs-v5/en/#error-code).
       row = hd(error.raw["data"])
-      assert error.code == "1"
-      assert error.message == "All operations failed"
+      assert error.type == :invalid_order
+      assert error.code == "51121"
+      assert error.message == "Order quantity must be a multiple of the lot size."
       assert row["sCode"] == "51121"
       assert row["sMsg"] == "Order quantity must be a multiple of the lot size."
     end

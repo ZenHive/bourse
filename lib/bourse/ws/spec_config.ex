@@ -170,7 +170,7 @@ defmodule Bourse.WS.SpecConfig do
       # :method_params has no module_for_pattern clause and falls through to nil.
       subscription_pattern: :method_params_subscribe,
       subscription_config: %{channel_key: "channels"},
-      auth_pattern: nil,
+      auth_pattern: :eip191_jsonrpc_login,
       auth_config: %{}
     },
     "hyperliquid" => %{
@@ -330,7 +330,7 @@ defmodule Bourse.WS.SpecConfig do
         {:ws_api_signature, hand_config}
 
       %{"method" => "public/login"} ->
-        if hand_pattern, do: {hand_pattern, hand_config}, else: :keep_hand
+        {:eip191_jsonrpc_login, hand_config}
 
       _ ->
         if hand_pattern, do: {hand_pattern, hand_config}, else: :keep_hand

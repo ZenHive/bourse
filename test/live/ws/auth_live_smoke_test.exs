@@ -190,6 +190,35 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
                private_subscribe(exchange, channels, authenticate: false)
     end
 
+    @tag venue: "derive"
+    test "derive private subscribe is accepted only on the authenticated connection" do
+      creds = require_credentials!(:derive, url: "https://docs.derive.xyz/reference/public-login")
+      exchange = Exchange.new!(:derive, credentials: creds, sandbox: true, options: %{"subaccount_id" => 144_422})
+      channels = ["144422.orders"]
+
+      {:ok, authed} = WS.connect(exchange, :private)
+      assert %{pattern: :eip191_jsonrpc_login} = authed.auth
+
+      try do
+        assert :ok = WS.subscribe(authed, channels, ack_timeout_ms: 8_000)
+      after
+        WS.close(authed)
+      end
+
+      {:ok, unauth} = WS.connect(exchange, :private, authenticate: false)
+      assert is_nil(unauth.auth)
+
+      try do
+        assert {:error, {:subscription_rejected, unauthorized}} =
+                 WS.subscribe(unauth, channels, ack_timeout_ms: 8_000)
+
+        assert get_in(unauthorized, ["error", "code"]) == 13_000
+        assert get_in(unauthorized, ["error", "data"]) =~ "14022"
+      after
+        WS.close(unauth)
+      end
+    end
+
     @tag venue: "bybit"
     test "a bad secret fails the connection with the venue's reason" do
       creds = require_credentials!(:bybit, url: "https://testnet.bybit.com")

@@ -138,11 +138,22 @@ defmodule Bourse.HTTP.Errors do
         :ok
 
       true ->
-        case evaluate_status_sentinels(body, exchange) do
-          :success -> :ok
-          {:error, code} -> {:error, code}
-          :unknown -> detect_error_from_code_fields(body, exchange)
-        end
+        detect_non_jsonrpc_body_error(body, exchange)
+    end
+  end
+
+  defp detect_non_jsonrpc_body_error(body, exchange) do
+    case batch_item_error_code(body) do
+      nil -> detect_sentinel_or_code_field_error(body, exchange)
+      scode -> {:error, scode}
+    end
+  end
+
+  defp detect_sentinel_or_code_field_error(body, exchange) do
+    case evaluate_status_sentinels(body, exchange) do
+      :success -> :ok
+      {:error, code} -> {:error, code}
+      :unknown -> detect_error_from_code_fields(body, exchange)
     end
   end
 
@@ -262,8 +273,21 @@ defmodule Bourse.HTTP.Errors do
   # Tries nested error.code (map only — scalar "error" strings must not crash Access)
   # then exchange-configured error code field names in priority order.
   defp extract_error_code(body, fields) do
-    nested_error_code(body) || Enum.find_value(fields, &extract_field_value(body, &1))
+    batch_item_error_code(body) || nested_error_code(body) || Enum.find_value(fields, &extract_field_value(body, &1))
   end
+
+  # OKX batch refusals answer HTTP 200 with outer code "1" / "All operations
+  # failed"; the real per-order outcome is data[i].sCode. Only rewrite that
+  # envelope — partial-success code "2" and top-level business codes stay as-is.
+  defp batch_item_error_code(%{"code" => outer, "data" => data})
+       when is_list(data) and data != [] and outer in [1, "1"] do
+    Enum.find_value(data, fn
+      %{"sCode" => s_code} -> if error_code?(s_code), do: s_code
+      _row -> nil
+    end)
+  end
+
+  defp batch_item_error_code(_body), do: nil
 
   # Gateway envelopes use a scalar top-level "error" (e.g. "Not Found"). Digging
   # with get_in(body, ["error", "code"]) raises FunctionClauseError in Access.get/3.
@@ -424,7 +448,18 @@ defmodule Bourse.HTTP.Errors do
   # ===========================================================================
 
   # Safely extracts error message from response body, handling various formats
-  defp extract_message(body) when is_map(body) do
+  defp extract_message(%{"code" => outer, "data" => data} = body) when is_list(data) and outer in [1, "1"] do
+    case Enum.find(data, &batch_error_row?/1) do
+      %{"sMsg" => msg} when is_binary(msg) and msg != "" -> msg
+      _other -> extract_top_level_message(body)
+    end
+  end
+
+  defp extract_message(body) when is_map(body), do: extract_top_level_message(body)
+  defp extract_message(body) when is_binary(body), do: body
+  defp extract_message(_), do: "Unknown error"
+
+  defp extract_top_level_message(body) when is_map(body) do
     case body["message"] || body["msg"] || body["retMsg"] || body["error"] || body["response"] ||
            body["status"] do
       nil -> "Unknown error"
@@ -433,8 +468,8 @@ defmodule Bourse.HTTP.Errors do
     end
   end
 
-  defp extract_message(body) when is_binary(body), do: body
-  defp extract_message(_), do: "Unknown error"
+  defp batch_error_row?(%{"sCode" => s_code}), do: error_code?(s_code)
+  defp batch_error_row?(_row), do: false
 
   # ===========================================================================
   # Retry-After Extraction

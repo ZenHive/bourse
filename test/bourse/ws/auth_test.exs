@@ -5,6 +5,7 @@ defmodule Bourse.WS.AuthTest do
   alias Bourse.WS.Auth
   alias Bourse.WS.Auth.ActionKeySecret
   alias Bourse.WS.Auth.DirectHmacExpiry
+  alias Bourse.WS.Auth.Eip191JsonrpcLogin
   alias Bourse.WS.Auth.InlineSubscribe
   alias Bourse.WS.Auth.IsoPassphrase
   alias Bourse.WS.Auth.JsonrpcLinebreak
@@ -17,11 +18,12 @@ defmodule Bourse.WS.AuthTest do
   @creds %Credentials{api_key: "test_key", secret: "test_secret"}
 
   describe "patterns/0" do
-    test "lists exactly the ten behaviour-implementing atoms (excludes :expiry)" do
+    test "lists exactly the eleven behaviour-implementing atoms (excludes :expiry)" do
       assert Enum.sort(Auth.patterns()) ==
                Enum.sort([
                  :action_key_secret,
                  :direct_hmac_expiry,
+                 :eip191_jsonrpc_login,
                  :inline_subscribe,
                  :iso_passphrase,
                  :jsonrpc_linebreak,
@@ -38,6 +40,7 @@ defmodule Bourse.WS.AuthTest do
     test "maps each pattern atom to its module" do
       assert Auth.module_for_pattern(:action_key_secret) == ActionKeySecret
       assert Auth.module_for_pattern(:direct_hmac_expiry) == DirectHmacExpiry
+      assert Auth.module_for_pattern(:eip191_jsonrpc_login) == Eip191JsonrpcLogin
       assert Auth.module_for_pattern(:inline_subscribe) == InlineSubscribe
       assert Auth.module_for_pattern(:iso_passphrase) == IsoPassphrase
       assert Auth.module_for_pattern(:jsonrpc_linebreak) == JsonrpcLinebreak
@@ -96,6 +99,7 @@ defmodule Bourse.WS.AuthTest do
       for pattern <- [
             :action_key_secret,
             :direct_hmac_expiry,
+            :eip191_jsonrpc_login,
             :iso_passphrase,
             :jsonrpc_linebreak,
             :sha384_nonce,
@@ -118,6 +122,7 @@ defmodule Bourse.WS.AuthTest do
       for pattern <- [
             :action_key_secret,
             :direct_hmac_expiry,
+            :eip191_jsonrpc_login,
             :iso_passphrase,
             :jsonrpc_linebreak,
             :sha384_nonce,
@@ -181,6 +186,11 @@ defmodule Bourse.WS.AuthTest do
       assert :ok = Auth.handle_auth_response(:listen_key, %{}, %{})
       assert :ok = Auth.handle_auth_response(:rest_token, %{}, %{})
       assert :ok = Auth.handle_auth_response(:inline_subscribe, %{}, %{})
+    end
+
+    test "eip191_jsonrpc_login returns subaccounts from a list result" do
+      assert {:ok, %{subaccounts: [144_422]}} =
+               Auth.handle_auth_response(:eip191_jsonrpc_login, %{"result" => [144_422]}, %{})
     end
 
     test "jsonrpc_linebreak extracts ttl_ms from expires_in" do

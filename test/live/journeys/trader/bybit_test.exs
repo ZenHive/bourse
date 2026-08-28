@@ -4,6 +4,7 @@ defmodule Bourse.Journeys.Trader.BybitTest do
   alias Bourse.Error
   alias Bourse.Order
   alias Bourse.WS
+  alias Bourse.WS.Handle
 
   @moduletag :exchange_bybit
 
@@ -14,8 +15,7 @@ defmodule Bourse.Journeys.Trader.BybitTest do
   @price_decimals 1
   @resting_ratio 0.9
 
-  # bybit's private order stream is one flat topic for the whole account; the
-  # authored `watchOrders` template is symbol-shaped and does not name it.
+  # bybit's private order stream is one flat account-wide topic.
   @order_topic "order"
   @frame_timeout_ms 20_000
 
@@ -104,7 +104,7 @@ defmodule Bourse.Journeys.Trader.BybitTest do
         # connect/3 ran the handshake; an unauthenticated socket would be
         # accepted by bybit and then deliver nothing at all.
         assert %{pattern: :direct_hmac_expiry} = ws.auth
-        assert :ok = WS.subscribe(ws, [@order_topic])
+        assert {:ok, %Handle{channels: [@order_topic]}} = WS.watch_orders(ws)
 
         {:ok, book} = Bourse.fetch_order_book(exchange, @symbol)
         assert [[best_bid, _bid_size] | _] = book.bids

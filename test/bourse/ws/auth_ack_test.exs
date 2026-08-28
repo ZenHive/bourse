@@ -40,6 +40,9 @@ defmodule Bourse.WS.AuthAckTest do
     assert :auth_response =
              AuthAck.classify(:jsonrpc_linebreak, %{"error" => %{"code" => 13_009}})
 
+    assert :auth_response = AuthAck.classify(:eip191_jsonrpc_login, %{"result" => [144_422]})
+    assert :auth_response = AuthAck.classify(:eip191_jsonrpc_login, %{"error" => %{"code" => 14_022}})
+
     assert :auth_response = AuthAck.classify(:ws_api_signature, %{"id" => "1", "status" => 200})
     assert :auth_response = AuthAck.classify(:ws_api_signature, %{"id" => "1", "status" => 401})
   end
@@ -56,6 +59,8 @@ defmodule Bourse.WS.AuthAckTest do
     assert :not_auth = AuthAck.classify(:iso_passphrase, %{"event" => "subscribe"})
     assert :not_auth = AuthAck.classify(:jsonrpc_linebreak, %{"result" => ["a.channel"]})
     assert :not_auth = AuthAck.classify(:jsonrpc_linebreak, %{"error" => nil})
+    assert :not_auth = AuthAck.classify(:eip191_jsonrpc_login, %{"result" => %{"access_token" => "tok"}})
+    assert :not_auth = AuthAck.classify(:eip191_jsonrpc_login, %{"error" => nil})
 
     # Binance's private WS-API host wraps user data in `event`; only its request
     # replies carry a `status`.
@@ -74,6 +79,7 @@ defmodule Bourse.WS.AuthAckTest do
     frame_based = [
       :action_key_secret,
       :direct_hmac_expiry,
+      :eip191_jsonrpc_login,
       :iso_passphrase,
       :jsonrpc_linebreak,
       :sha384_nonce,

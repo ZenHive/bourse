@@ -501,7 +501,7 @@ the rest. That is the gate training its own users to ignore it.
 
 ## 2026-08-28 — OKX already-canceled cancel classifies as `:exchange_error` code `"1"`, not `:order_not_found` 51400
 
-**Status:** 🆕 measured live (task 679 trader journey) — not consumer-reported. · **Tracked:** task 690 (2026-08-28).
+**Status:** ✅ fixed 2026-08-28 (task 690) — batch refusals type from `data[0].sCode`. Repro kept below as the evidence trail.
 
 `POST /api/v5/trade/cancel-order` for an order that is already canceled (or filled, or
 missing) answers HTTP 200 with a batch envelope: outer `code` `"1"`, `msg` `"All operations
@@ -517,15 +517,15 @@ therefore missed the already-gone case until it grew an explicit `sCode 51400` c
 successful cancel of a resting `BTC-USDT-SWAP` limit (ordId `3871666065072578560`).
 Authority: OKX API v5 51400 (https://www.okx.com/docs-v5/en/#error-code).
 
-**Not fixed here.** Using `data[0].sCode` when the outer code is `"1"` would retype every
-OKX batch refusal (including the 51121 lot-size rejection the journey pins). That is a
-classification change, not a journey-lane patch.
+**Fixed in task 690.** Outer code `"1"` with `data[].sCode` present classifies from the
+per-order code: 51400 → `:order_not_found`, 51121 → `:invalid_order`. The outer envelope
+is still on `raw`.
 
 ---
 
 ## 2026-08-28 — `Bourse.WS.connect/3` swallows `:no_auth_pattern` and hands back an open **unauthenticated** private socket
 
-**Status:** 🆕 measured live (orchestrator, harness wave 665/673/681/682) — not consumer-reported. · **Tracked:** task 690 (2026-08-28).
+**Status:** ✅ fixed 2026-08-28 (task 690) — derive authors `:eip191_jsonrpc_login`; `connect/3` no longer maps `:no_auth_pattern` to ok. Repro kept below as the evidence trail.
 
 `lib/bourse/ws.ex:247` maps the missing-handshake case straight to success:
 
@@ -559,9 +559,10 @@ socket that is connected and permanently silent. The repro is in
 `test/live/journeys/trader/derive_test.exs` (landed `87572cd`), which now asserts
 `is_nil(ws.auth)` rather than reading `:connected` as success.
 
-**Not fixed here.** Either `connect/3` refuses a `:private` section with no `auth_pattern`,
-or derive authors its `auth_pattern` so the venue's `public/login` runs as the handshake.
-Both are behaviour changes outside the wave that surfaced this.
+**Fixed in task 690.** Derive authors `:eip191_jsonrpc_login` so `public/login` runs as the
+handshake. `maybe_authenticate/5` no longer maps `:no_auth_pattern` to `{:ok, ws}` — a
+private section without a pattern closes the socket. Hyperliquid's `nil` pattern stays
+correct (no private URL; address-scoped public subscriptions).
 
 ---
 
@@ -805,9 +806,8 @@ unmutated code marks every mutant as killed, so the score would have read 100 %.
 
 ## 2026-08-24 — bybit `watchOrders` channel template is `":{symbol}"` — `Bourse.WS.watch_orders/2` cannot reach the venue's real private order topic
 
-**Status:** 🆕 reported (found live while building the trader WS journey, 2026-08-24; the
-journey subscribes the raw `"order"` topic directly and is green, so nothing user-facing is
-blocked — the defect is that the unified `watch_orders/2` path cannot do the same) · **Tracked:** task 690 (2026-08-28).
+**Status:** ✅ fixed 2026-08-28 (task 690) — authored template is the account-wide `"order"`
+topic; `watch_orders/2` no longer needs a symbol. Repro kept below as the evidence trail.
 
 **The call:** `Bourse.WS.watch_orders(ws, ...)` on a bybit private connection — the unified
 way a consumer would ask for the account's order stream.
@@ -828,12 +828,10 @@ order events without the caller needing to know the venue topic string.
 → `:missing_symbol` from channel build, while a direct
 `Bourse.WS.subscribe(ws, ["order"])` streams events immediately.
 
-**Consumer impact:** any consumer following the unified WS surface gets an error where the
-venue works fine; the workaround (raw topic string) requires venue knowledge the unified
-layer exists to encapsulate. Related sharp edge recorded with the journey: bybit's private
-pushes carry an `"id"` field, so zen_websocket's correlator hands them to the owner as
-`{:websocket_unmatched_response, frame}`, never `{:websocket_message, _}` — a fix to the
-channel template should keep that delivery shape in mind.
+**Fixed in task 690.** The authored `watchOrders` template is `"order"`. `watch_orders/2`
+subscribes that topic without a symbol. Bybit private pushes still arrive as
+`{:websocket_unmatched_response, frame}` because they carry an `"id"`; that delivery
+shape is documented on `watch_orders/2` and pinned by the trader journey.
 
 ## 2026-08-24 — `Bourse.Symbol.reverse_aliases/1` is not injective on hyperliquid's authored alias map — one currency is silently dropped
 

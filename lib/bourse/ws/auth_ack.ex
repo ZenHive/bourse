@@ -41,6 +41,11 @@ defmodule Bourse.WS.AuthAck do
   def classify(:jsonrpc_linebreak, %{"result" => %{"access_token" => _}}), do: :auth_response
   def classify(:jsonrpc_linebreak, %{"error" => error}) when not is_nil(error), do: :auth_response
 
+  # Derive's public/login is the same JSON-RPC correlation shape; a successful
+  # result is the session's subaccount id list, not an access_token.
+  def classify(:eip191_jsonrpc_login, %{"result" => result}) when is_list(result), do: :auth_response
+  def classify(:eip191_jsonrpc_login, %{"error" => error}) when not is_nil(error), do: :auth_response
+
   # Binance's WS API answers every request with a `status`, and its private host
   # carries nothing else that does — user data arrives wrapped in `event`. Also
   # normally correlated by request id; this is the unmatched path.

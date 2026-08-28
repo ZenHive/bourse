@@ -24,7 +24,8 @@ defmodule Bourse.WS.ChannelsTest do
       {"derive", :watch_trades, %{symbol: "BTC/USDT"}, "trades.BTC-USDT"},
       {"hyperliquid", :watch_order_book, %{symbol: "BTC/USDT"}, "orderbook:BTCUSDT"},
       {"hyperliquid", :watch_trades, %{symbol: "BTC/USDT"}, "trade:BTCUSDT"},
-      {"hyperliquid", :watch_orders, %{}, "orderUpdates"}
+      {"hyperliquid", :watch_orders, %{}, "orderUpdates"},
+      {"bybit", :watch_orders, %{}, "order"}
     ]
 
     for {exchange_id, method, params, expected} <- @cases do
@@ -44,8 +45,15 @@ defmodule Bourse.WS.ChannelsTest do
     end
 
     test "symbol-only templates require a symbol" do
-      exchange = Exchange.new!("bybit")
+      exchange = Exchange.new!("derive")
       assert {:error, :missing_symbol} = Channels.build(exchange, :watch_orders, %{}, [])
+    end
+
+    test "bybit watch_orders stays the account-wide topic even when a symbol is supplied" do
+      exchange = Exchange.new!("bybit")
+
+      assert {:ok, "order"} =
+               Channels.build(exchange, :watch_orders, %{symbol: "BTC/USDT:USDT"}, [])
     end
 
     test "missing templates fall back to channel pass-through opt" do

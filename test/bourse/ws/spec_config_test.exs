@@ -82,11 +82,35 @@ defmodule Bourse.WS.SpecConfigTest do
              } = config.auth_config
     end
 
-    test "derive auth stays nil — no WS auth pattern for privateKey login" do
+    test "derive authors :eip191_jsonrpc_login so public/login runs as the handshake" do
       config = Config.for_exchange("derive")
-      assert config.auth_pattern == nil
+      assert config.auth_pattern == :eip191_jsonrpc_login
       # Registered atom (MethodParams); bare :method_params has no module clause.
       assert config.subscription_pattern == :method_params_subscribe
+    end
+
+    test "a private WS URL is never paired with a nil auth_pattern" do
+      for id <- @ws_venues do
+        config = Config.for_exchange(id)
+
+        if config.private_url || config.private_url_sandbox do
+          assert config.auth_pattern,
+                 "#{id} authors a private WS URL without an auth_pattern — connect/3 would have no handshake to run"
+        end
+      end
+    end
+
+    test "connect/3 does not map :no_auth_pattern to an open socket" do
+      source = File.read!("lib/bourse/ws.ex")
+      refute source =~ ~r/\{:error, :no_auth_pattern\}\s*->\s*\{:ok, ws\}/
+    end
+
+    test "hyperliquid's nil auth_pattern is correct — private data is address-scoped on the public socket" do
+      config = Config.for_exchange("hyperliquid")
+      assert config.auth_pattern == nil
+      assert is_nil(config.private_url)
+      assert is_nil(config.private_url_sandbox)
+      assert {:error, :no_url_configured} = Bourse.WS.connect(Exchange.new!("hyperliquid"), :private)
     end
 
     test "derive uses registered :method_params_subscribe and build_subscribe returns frames" do

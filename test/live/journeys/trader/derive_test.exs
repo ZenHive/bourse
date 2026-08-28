@@ -104,14 +104,11 @@ defmodule Bourse.Journeys.Trader.DeriveTest do
   end
 
   describe "a trader watching the private order stream" do
-    test "the order's own lifecycle arrives on the stream, place and cancel" do
+    test "an unauthenticated private subscribe is rejected rather than silently empty" do
       exchange = derive_exchange!()
-      {:ok, ws} = WS.connect(exchange, :private)
+      {:ok, ws} = WS.connect(exchange, :private, authenticate: false)
 
       try do
-        # connect/3 does not handshake: auth_pattern is nil, so :no_auth_pattern
-        # is swallowed and an unauthenticated socket is returned. :connected is
-        # not evidence the stream will deliver order events.
         assert is_nil(ws.auth)
 
         # Observed live 2026-08-28 against wss://api-demo.lyra.finance/ws:
@@ -123,26 +120,17 @@ defmodule Bourse.Journeys.Trader.DeriveTest do
 
         assert get_in(unauthorized, ["error", "code"]) == 13_000
         assert get_in(unauthorized, ["error", "data"]) =~ "14022"
+      after
+        WS.close(ws)
+      end
+    end
 
-        # Venue-owned login (https://docs.derive.xyz/reference/public-login), not
-        # a wired auth_pattern: EIP-191 of the millisecond timestamp with the
-        # registered Admin session key, wallet = X-LyraWallet.
-        timestamp = Integer.to_string(System.system_time(:millisecond))
+    test "the order's own lifecycle arrives on the stream, place and cancel" do
+      exchange = derive_exchange!()
+      {:ok, ws} = WS.connect(exchange, :private)
 
-        signature =
-          DeriveSigning.sign_message(timestamp, private_key: exchange.credentials.secret)
-
-        assert {:ok, %{"result" => subaccounts}} =
-                 WS.send_message(ws, %{
-                   "id" => 1,
-                   "method" => "public/login",
-                   "params" => %{
-                     "wallet" => exchange.credentials.api_key,
-                     "timestamp" => timestamp,
-                     "signature" => signature
-                   }
-                 })
-
+      try do
+        assert %{pattern: :eip191_jsonrpc_login, meta: %{subaccounts: subaccounts}} = ws.auth
         assert @subaccount_id in subaccounts
         assert :ok = WS.subscribe(ws, [@order_channel], ack_timeout_ms: 8_000)
 

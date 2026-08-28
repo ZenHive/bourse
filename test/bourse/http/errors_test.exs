@@ -573,22 +573,58 @@ defmodule Bourse.HTTP.ErrorsTest do
   end
 
   describe "task 255 error detail fidelity" do
-    test "okx batch-error envelope retains data[] per-item sCode/sMsg in raw", %{exchange: exchange} do
+    test "okx batch-error envelope types from data[].sCode, not the outer code", %{exchange: exchange} do
       body = %{
         "code" => "1",
-        "msg" => "",
+        "msg" => "All operations failed",
         "data" => [
           %{"algoId" => "a1", "sCode" => "51400", "sMsg" => "Cancellation failed as order is already canceled"},
           %{"algoId" => "a2", "sCode" => "0", "sMsg" => ""}
         ]
       }
 
-      assert {:error, %Error{code: "1", raw: ^body} = err} =
+      assert {:error, %Error{code: "51400", raw: ^body} = err} =
                Errors.classify_response(:post, 200, %{}, body, exchange)
 
+      assert err.message == "Cancellation failed as order is already canceled"
       assert is_list(err.raw["data"])
       assert hd(err.raw["data"])["sCode"] == "51400"
-      assert hd(err.raw["data"])["sMsg"] =~ "Cancellation failed"
+    end
+
+    test "okx batch 51400 classifies as order_not_found on the live error map" do
+      exchange = Exchange.new!("okx")
+
+      body = %{
+        "code" => "1",
+        "msg" => "All operations failed",
+        "data" => [
+          %{
+            "sCode" => "51400",
+            "sMsg" => "Order cancellation failed as the order has been filled, canceled or does not exist."
+          }
+        ]
+      }
+
+      assert {:error, %Error{type: :order_not_found, code: "51400"} = err} =
+               Errors.classify_response(:post, 200, %{}, body, exchange)
+
+      assert err.message =~ "does not exist"
+    end
+
+    test "okx batch 51121 classifies as invalid_order on the live error map" do
+      exchange = Exchange.new!("okx")
+
+      body = %{
+        "code" => "1",
+        "msg" => "All operations failed",
+        "data" => [
+          %{"sCode" => "51121", "sMsg" => "Order quantity must be a multiple of the lot size."}
+        ]
+      }
+
+      assert {:error,
+              %Error{type: :invalid_order, code: "51121", message: "Order quantity must be a multiple of the lot size."}} =
+               Errors.classify_response(:post, 200, %{}, body, exchange)
     end
 
     test "non-JSON error body text is retained as message and raw", %{exchange: exchange} do

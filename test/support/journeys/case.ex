@@ -67,10 +67,6 @@ defmodule Bourse.Test.Journeys.Case do
       {:ok, %Order{}} -> :ok
       {:error, %Error{type: :order_not_found}} -> :ok
       {:error, %Error{type: :invalid_order}} -> :ok
-      # OKX already-canceled/filled cancel is a batch envelope: outer code "1",
-      # per-order sCode 51400. Authored mapping of 51400 is OrderNotFound, but
-      # classification keys the outer code, so the typed match above misses.
-      {:error, %Error{raw: %{"data" => [%{"sCode" => "51400"}]}}} -> :ok
       {:error, error} -> flunk("cleanup for order #{id} failed: #{inspect(error)}")
     end
   end

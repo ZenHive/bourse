@@ -109,11 +109,12 @@ defmodule Bourse.WS do
   @typedoc """
   What the venue disclosed about the accepted handshake.
 
-  `nil` on a public connection, and on a private one that connected without a
-  handshake. Present, it names the pattern that succeeded and carries the
-  pattern's own metadata — a `ttl_ms` where the venue discloses one, the listen
-  key session where the credential lives in the URL. `Bourse.WS.Adapter` reads
-  it to schedule renewal without re-running the handshake to find out.
+  `nil` on a public connection, and on a private one opened with
+  `authenticate: false`. Present, it names the pattern that succeeded and
+  carries the pattern's own metadata — a `ttl_ms` where the venue discloses
+  one, the listen key session where the credential lives in the URL, the
+  derive subaccount list after `public/login`. `Bourse.WS.Adapter` reads it
+  to schedule renewal without re-running the handshake to find out.
   """
   @type auth_info :: %{pattern: Auth.pattern(), meta: map()}
 
@@ -150,9 +151,11 @@ defmodule Bourse.WS do
   unauthenticated private connection is never returned, because the failure it
   produces later is a silently empty stream rather than an error.
 
-  Venues whose authored spec carries no `auth_pattern` connect without a
-  handshake: there is no frame to send. Hyperliquid is the real case — its
-  private subscriptions are scoped by address rather than by a login.
+  A `:private` section whose authored spec declares no `auth_pattern` is an
+  error (`:no_auth_pattern`): the socket is closed rather than returned. The
+  one runtime venue with a `nil` pattern *and* a working private stream is
+  hyperliquid, and it has no private URL — its private subscriptions are
+  scoped by address on the public socket, which is a different condition.
 
   Pass `authenticate: false` to skip the handshake and drive it yourself with
   `authenticate/2`; the connection is then unauthenticated until you do.
@@ -243,9 +246,6 @@ defmodule Bourse.WS do
       case authenticate(ws, opts) do
         {:ok, meta} ->
           {:ok, %{ws | auth: %{pattern: pattern_of(ws), meta: meta}}}
-
-        {:error, :no_auth_pattern} ->
-          {:ok, ws}
 
         {:error, reason} ->
           close(ws)
@@ -535,7 +535,15 @@ defmodule Bourse.WS do
   Subscribes to private order updates.
 
   Requires a `:private` connection (`Bourse.WS.connect(exchange, :private)`).
-  Optional `symbol:` in opts scopes the stream when templates require it.
+  Optional `symbol:` in opts scopes the stream when the venue's template
+  interpolates a symbol. Bybit's order stream is the account-wide `order`
+  topic and does not need one.
+
+  Bybit private order pushes carry an `"id"` field, so zen_websocket's
+  correlator delivers them as `{:websocket_unmatched_response, frame}`
+  rather than `{:websocket_message, frame}` — no in-flight request matches
+  that id. Callers of `watch_orders/2` must handle both tags; the bybit
+  trader journey pins this.
   """
   @spec watch_orders(t(), keyword()) :: {:ok, Handle.t()} | {:error, term()}
   def watch_orders(%__MODULE__{} = ws, opts \\ []) do

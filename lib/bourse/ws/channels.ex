@@ -225,7 +225,7 @@ defmodule Bourse.WS.Channels do
     with :ok <- require_symbol_for_template(template, params),
          {:ok, market_id} <- market_id(exchange, params) do
       interpolated = interpolate(template, market_id, params, opts)
-      channel = combine_with_symbol(interpolated, template, market_id, exchange)
+      channel = combine_with_symbol(interpolated, template, market_id, exchange, method)
       wrap_channel(exchange, method, channel, market_id)
     end
   end
@@ -337,28 +337,33 @@ defmodule Bourse.WS.Channels do
 
   defp object_channel_templates?(_), do: false
 
-  @spec combine_with_symbol(String.t(), String.t(), String.t() | nil, Exchange.t()) :: String.t()
-  defp combine_with_symbol(channel, template, market_id, exchange) do
+  @spec combine_with_symbol(String.t(), String.t(), String.t() | nil, Exchange.t(), atom()) :: String.t()
+  defp combine_with_symbol(channel, template, market_id, exchange, method) do
     settings = subscription_settings(exchange)
-    {pattern, _sub_config} = settings
 
     cond do
-      template in ["ANY"] or String.contains?(template, "{symbol}") ->
-        channel
-
-      pattern in @no_symbol_append_patterns ->
+      skip_symbol_append?(template, method, settings) ->
         channel
 
       is_binary(market_id) and market_id != "" ->
-        {separator, position} = symbol_placement(settings)
-
-        case position do
-          :prefix -> market_id <> separator <> channel
-          :suffix -> channel <> separator <> market_id
-        end
+        append_symbol(channel, market_id, settings)
 
       true ->
         channel
+    end
+  end
+
+  defp skip_symbol_append?(template, method, {pattern, _sub_config}) do
+    template in ["ANY"] or String.contains?(template, "{symbol}") or method in @private_methods or
+      pattern in @no_symbol_append_patterns
+  end
+
+  defp append_symbol(channel, market_id, settings) do
+    {separator, position} = symbol_placement(settings)
+
+    case position do
+      :prefix -> market_id <> separator <> channel
+      :suffix -> channel <> separator <> market_id
     end
   end
 
