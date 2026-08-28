@@ -11,19 +11,24 @@ defmodule Bourse.Test.RestReadContractOwnedState do
   alias Bourse.Test.Journeys.Case, as: Journey
 
   @resting_ratio 0.9
+  @resting_sources ["fetchOpenOrders", "fetchOrders"]
+  @canceled_sources ["fetchCanceledOrders"]
+
+  @doc "Whether the scenario can manufacture a sandbox row for this resource source."
+  @spec ownable_source?(String.t()) :: boolean()
+  def ownable_source?(source) when is_binary(source) do
+    source in @resting_sources or source in @canceled_sources
+  end
 
   @doc "Creates the live row a resource argument needs, or `:unownable`."
   @spec ensure(map(), map(), map()) :: {:ok, term()} | :unownable | {:error, term()}
   def ensure(argument, contract_case, context) do
-    case argument["source_method"] do
-      source when source in ["fetchOpenOrders", "fetchOrders"] ->
-        own_resting_order(argument, contract_case, context)
+    source = argument["source_method"]
 
-      "fetchCanceledOrders" ->
-        own_canceled_order(argument, contract_case, context)
-
-      _other ->
-        :unownable
+    cond do
+      source in @resting_sources -> own_resting_order(argument, contract_case, context)
+      source in @canceled_sources -> own_canceled_order(argument, contract_case, context)
+      true -> :unownable
     end
   end
 

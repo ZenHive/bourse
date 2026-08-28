@@ -3,11 +3,17 @@ defmodule Bourse.Test.RestReadContractOwnedStateTest do
 
   alias Bourse.Test.RestReadContractOwnedState
 
-  test "fill history and deposit sources are unownable" do
+  test "open and canceled order sources are ownable; history windows are not" do
     context = %{exchange: nil, markets: [], venue: "example", venue_contract: %{}}
     contract_case = %{"id" => "example:fetchOrder:0:x", "market_kind" => "spot"}
 
+    for source <- ["fetchOpenOrders", "fetchOrders", "fetchCanceledOrders"] do
+      assert RestReadContractOwnedState.ownable_source?(source)
+    end
+
     for source <- ["fetchClosedOrders", "fetchDeposits", "fetchWithdrawals", "fetchTransfers"] do
+      refute RestReadContractOwnedState.ownable_source?(source)
+
       assert :unownable =
                RestReadContractOwnedState.ensure(
                  %{"source_method" => source, "field" => "id"},
