@@ -22965,7 +22965,7 @@ id = "678"
 phase = 16
 bundle = "live_e2e"
 milestone = "v1_2"
-status = "pending"
+status = "in_progress"
 title = "Live trader journey for deribit: REST round-trip, private-stream leg, error probes"
 scores = { d = 4, b = 7, u = 7 }
 acceptance_criteria = ["test/live/journeys/trader/deribit_test.exs mirrors the bybit exemplar's structure on a liquid perpetual: survey, resting limit order with wall-clock-unique clientOrderId, poll open, echo assertions, fetch_open_orders membership, cancel, poll gone, cleanup via release_order! in an after block", "Every asserted error code/message was first observed live against test.deribit.com and is pinned with a dated observation comment; Deribit's own API v2 docs are the semantic authority", "An in-flow rejection test asserts the venue's own error for a refused order (for example below the instrument minimum), observed live", "test/live/errors/deribit_test.exs carries at least one generic bad-input probe (unknown order id) asserting the live-observed error, runs in the default suite, and duplicates neither the contract lane's invalid-symbol cases nor the invalid-credentials suite", "A private-stream describe block observes the placed order's own event on the live private stream, mirroring the bybit private-stream block; if the leg is unreachable with our testnet credentials, it is recorded in docs/prod-verification-ledger.md instead of silently dropped", "mix test.json --quiet --include dangerous test/live/journeys/trader/deribit_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes", "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"]
@@ -22981,6 +22981,7 @@ Venue notes: DERIBIT_TESTNET_API_KEY/SECRET; pick the liquid perpetual from the 
 Supersedes the deribit slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.
 """
 created_at = "2026-08-24"
+started_at = "2026-08-28"
 scored_at = "2026-08-24"
 
 [[task]]
