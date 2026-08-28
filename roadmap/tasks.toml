@@ -23003,7 +23003,7 @@ id = "680"
 phase = 16
 bundle = "live_e2e"
 milestone = "v1_2"
-status = "in_progress"
+status = "done"
 title = "Live trader journey for hyperliquid: REST round-trip, private-stream leg, error probes"
 scores = { d = 5, b = 7, u = 7 }
 acceptance_criteria = ["test/live/journeys/trader/hyperliquid_test.exs mirrors the bybit exemplar's structure: survey, resting limit order with wall-clock-unique client identifier where the venue supports one, poll open, echo assertions, fetch_open_orders membership, cancel, poll gone, cleanup via release_order! in an after block", "Every asserted error was first observed live against api.hyperliquid-testnet.xyz and is pinned with a dated observation comment; Hyperliquid's own API docs are the semantic authority", "An in-flow rejection test asserts the venue's own error for a refused order, observed live", "test/live/errors/hyperliquid_test.exs carries at least one generic bad-input probe (unknown order id) asserting the live-observed error, runs in the default suite, and duplicates neither the contract lane's invalid-symbol cases nor the invalid-credentials suite", "A private-stream describe block observes the placed order's own event on the live stream (hyperliquid private subscriptions are scoped by address, no auth handshake), mirroring the bybit private-stream block; if the leg is unreachable, it is recorded in docs/prod-verification-ledger.md instead of silently dropped", "If the testnet wallet holds no margin, the journey fails loudly naming the drip remediation (POST /info claimDrip, re-claimable every 4h) — it never skips", "mix test.json --quiet --include dangerous test/live/journeys/trader/hyperliquid_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes", "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"]
@@ -23018,9 +23018,16 @@ Venue notes: DEX — HYPERLIQUID_TESTNET_API_KEY is the wallet address, _API_SEC
 
 Supersedes the hyperliquid slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders on a DEX signing path) and parallel throughput across venues.
 """
+implemented = "Landed by grok via merge-train; reviewer-approved (run run-1787882432737-e3cc412b, 0b45a52f4c1239601630b4204ed819732c638f61)."
+delivered_by = "grok"
+verified = true
+verified_by = "cursor"
+verification_ref = "harness-run:run-1787882432737-e3cc412b"
 created_at = "2026-08-24"
 started_at = "2026-08-28"
 scored_at = "2026-08-24"
+done_at = "2026-08-28"
+shipped_in = "0b45a52f4c1239601630b4204ed819732c638f61"
 
 [[task]]
 id = "681"
