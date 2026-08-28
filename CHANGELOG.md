@@ -34,7 +34,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `recoverable?/1` catch-all, and the direct `__function:` class mapping, whose
   one existing test healed the mutant through the ancestor path.
 
-- `mix ccxt.verify_rest_read_contracts` is the provider-live REST-read lane.
+- `mix bourse.verify_rest_read_contracts` is the provider-live REST-read lane.
   It inventories 409 sandbox-native branches across the eleven runtime venues
   and hits the venue host for each one. Product surfaces the provisioned
   sandboxes do not host remain on the prod-verification ledger.
@@ -122,7 +122,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   the renamed `test/bourse/ws_first_frame_test.exs` (formerly
   `live_lane_test.exs`) are gone with it. `Bourse.LiveLane.FirstFrame` and
   `Bourse.LiveLane.Bootstrap` survive under that namespace as the classified
-  public WebSocket first-frame check (`mix ccxt.verify_ws_first_frame`),
+  public WebSocket first-frame check (`mix bourse.verify_ws_first_frame`),
   with no parent aggregator left to read `GITHUB_RUN_ID` or assemble a
   per-run report. All four GitHub Actions workflows (`ci.yml`,
   `integration.yml`, `lighter-signer.yml`, `live-drift.yml`) are removed;
@@ -621,7 +621,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   raised `:epipe`. The helper now puts `stdin`/`stdout` in binary mode before
   reading its first frame. The build itself was also broken on that platform:
   `:erlang.system_info(:system_architecture)` answers `"win32"` there — the OS,
-  not the CPU — so `mix ccxt.build_lighter_signer` now resolves the Windows
+  not the CPU — so `mix bourse.build_lighter_signer` now resolves the Windows
   architecture from the environment instead.
 
 - `Bourse.WS.connect(exchange, :private)` returned an open but unauthenticated
