@@ -864,7 +864,7 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
       Enum.each([bybit_row, okx_row, deribit_row], fn %Bourse.Position{notional: notional, notional_currency: currency} ->
         assert is_number(notional)
         assert is_binary(currency) and currency != ""
-      end))
+      end)
     end
 
     test "okx option notional is nil without loaded contract size rather than inverse arithmetic" do
@@ -886,13 +886,23 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
     test "bybit option notional stays positionValue even when the request symbol looks inverse" do
       bybit = Exchange.new!("bybit")
 
-      assert {:ok, [%Bourse.Position{notional: 50.0, notional_currency: "USDC"}]} =
-               parse_positions(
-                 bybit,
+      # fetchPositions would drop a non-matching symbol; fetchPosition stamps the
+      # request market and still sets inverse? from it. category=option must copy
+      # positionValue rather than size/markPrice.
+      assert {:ok, %Bourse.Position{notional: 50.0} = row} =
+               bybit
+               |> ReadParse.parse(
                  Bourse.Bybit,
+                 :fetch_position,
+                 "fetchPosition",
                  bybit_option_body(),
-                 %{"symbol" => "BTC/USD:BTC-250131-100000-C"}
+                 %{"symbol" => "BTC/USD:BTC-250131-100000-C"},
+                 :parse_position,
+                 false
                )
+               |> DeribitPositionUnits.reconcile(bybit)
+
+      refute_in_delta row.notional, 0.1 / 510.0, 1.0e-9
     end
 
     test "bybit option notional stays populated without load_markets" do
@@ -2644,6 +2654,109 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
   # ---------------------------------------------------------------------------
   # Fixtures
   # ---------------------------------------------------------------------------
+
+  defp parse_positions(exchange, module, body, params) do
+    exchange
+    |> ReadParse.parse(module, :fetch_positions, "fetchPositions", body, params, :parse_position, true)
+    |> DeribitPositionUnits.reconcile(exchange)
+  end
+
+  defp bybit_option_body do
+    %{
+      "retCode" => 0,
+      "result" => %{
+        "category" => "option",
+        "list" => [
+          %{
+            "avgPrice" => "500",
+            "bustPrice" => "",
+            "createdTime" => "1784189372501",
+            "liqPrice" => "",
+            "markPrice" => "510",
+            "positionIM" => "10",
+            "positionMM" => "1",
+            "positionValue" => "50",
+            "side" => "Buy",
+            "size" => "0.1",
+            "symbol" => "BTC-31JAN25-100000-C",
+            "unrealisedPnl" => "1",
+            "updatedTime" => "1784189372501"
+          }
+        ]
+      }
+    }
+  end
+
+  defp parse_bybit_option_position do
+    bybit = Exchange.new!("bybit")
+
+    {:ok, [row]} =
+      parse_positions(
+        bybit,
+        Bourse.Bybit,
+        bybit_option_body(),
+        %{"symbol" => "BTC/USDC:USDC-250131-100000-C"}
+      )
+
+    # Inverse-perp formula size/markPrice must not win on category=option.
+    {row, 0.1 / 510.0}
+  end
+
+  defp okx_option_market do
+    %Bourse.Market{
+      id: "BTC-USD-260925-65000-C",
+      symbol: "BTC/USD:BTC-260925-65000-C",
+      base: "BTC",
+      quote: "USD",
+      settle: "BTC",
+      type: "option",
+      option: true,
+      inverse: true,
+      contract: true,
+      contract_size: 0.01,
+      quantity_unit: "base",
+      native_quantity_unit: "base",
+      native_amount_step: 0.01,
+      precision: %{"amount" => 0.01}
+    }
+  end
+
+  defp okx_option_body do
+    %{
+      "code" => "0",
+      "data" => [
+        %{
+          "instId" => "BTC-USD-260925-65000-C",
+          "instType" => "OPTION",
+          "markPx" => "0.00001668",
+          "notionalUsd" => "649.947",
+          "optVal" => "0.0000001084604966",
+          "pos" => "1",
+          "posSide" => "net"
+        }
+      ]
+    }
+  end
+
+  defp parse_okx_option_position(body \\ okx_option_body()) do
+    okx =
+      "okx"
+      |> Exchange.new!()
+      |> Exchange.put_markets([okx_option_market()])
+
+    {:ok, [row]} = parse_positions(okx, Bourse.Okx, body, %{})
+    option = hd(body["data"])
+    contracts = parse_decimal_string(option["pos"])
+    mark = parse_decimal_string(option["markPx"])
+    usd = parse_decimal_string(option["notionalUsd"])
+    inverse = contracts * okx_option_market().contract_size / mark
+    {row, inverse, usd}
+  end
+
+  defp parse_decimal_string(value) when is_binary(value) do
+    {number, ""} = Float.parse(value)
+    number
+  end
 
   defp bybit_position_body(category, row, opts \\ []) do
     time = Keyword.get(opts, :time, 1_700_000_000_000)
