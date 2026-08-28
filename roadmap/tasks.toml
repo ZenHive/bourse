@@ -23274,8 +23274,19 @@ alpaca on paper-api.alpaca.markets, bybit on api-testnet.bybit.com with the main
 The provider docs define what each field means; no third-party client can settle a carve here.
 Read one success and one relevant error from each venue before changing the slice, and pin both.
 
-Open decision the operator owns, answer it before building: for the OKX transfer id, which of
-the three carves above ships. Ask rather than pick silently, then fold the answer into this task.
+Carve decision, taken 2026-08-28 rather than left open, because this project dispatches
+unattended and a question in a task body reaches no one: ship (a) unless a live probe disproves
+its premise. TransferEntry.id carries the billId, declared directly under its own key rather than
+reached through a fallback, and documented as a bills-archive identifier. fetch_transfer/2 takes a
+transId, which OKX issues only in the POST /api/v5/asset/transfer response, and it rejects a
+bills-archive id with a named error instead of forwarding it for the venue to refuse.
+
+The premise to test first, because it is the only thing that could change the answer: that no OKX
+listing route returns a transId. Probe the funding-account bill routes and any transfer-history
+route the venue documents before implementing. If one of them does return a transId, ship (b)
+instead - move fetchTransfers to that source - and say in the delivery which route it was and what
+it returned. Do not ship (c): declaring the pair unreachable discards an identifier the venue does
+publish and leaves the field nil for no gain.
 """
 created_at = "2026-08-28"
 scored_at = "2026-08-28"
@@ -23497,11 +23508,24 @@ This is the one class that stays alone rather than folding into another: the fix
 decision about how an authored bucket becomes a limiter, it touches all eleven venues, and it
 needs live proof per venue.
 
-Open decision the operator owns, answer it before building: what shape replaces the fixed window.
-The authored bucket already carries the right fields, and whatever is chosen must bound burst
-depth so the client stops earning 429s, bound the worst-case pre-request sleep well below the
-caller timeout, and keep endpoints whose cost exceeds one bucket slot limited rather than exempt.
-Name the candidate shapes with their trade-offs, ask, then fold the answer into this task.
+Model decision, taken 2026-08-28 rather than left open, because this project dispatches
+unattended: replace the fixed-window substitution with the bucket the venues actually author. Read
+max_size as capacity and refill_per_sec as the drain rate, and admit a request when the bucket
+holds its cost. That bounds burst depth by construction, which is the whole defect.
+
+An endpoint whose cost exceeds capacity is not exempt and is not clamped away: it waits until the
+bucket has accrued its cost, so the worst case is cost divided by refill_per_sec - for okx's
+heaviest endpoint at cost 20 and 9.09 per second, about 2.2 s, against the 60 s the current shape
+produces. skip_record must not survive this change in any form; a test drives an over-capacity
+cost on every venue and asserts it is limited.
+
+Give the pre-request wait a named upper bound and make exceeding it a returned error naming the
+venue and the wait, never a longer silent sleep. A caller that cannot bound a blocking call has no
+way to tell a slow venue from a hung client, and that is how this presented in the first place.
+
+If the live per-venue proof shows a venue whose authored bucket cannot be executed this way, say
+which venue and what its authored fields are, and stop rather than reintroducing a fixed window
+for it.
 
 Premise worth keeping straight: this is not the cause of the two okx contract-lane reds it was
 found while investigating. Measured across seven runs on 2026-08-28, fetchDeposit takes 66 to 78 ms
