@@ -30918,7 +30918,7 @@
       "phase": 16,
       "bundle": "live_e2e",
       "milestone": "v1_2",
-      "status": "in_progress",
+      "status": "done",
       "title": "Live trader journey for okx: REST round-trip, private-stream leg, error probes",
       "scores": {
         "d": 4,
@@ -30949,10 +30949,17 @@
         "test/live/journeys/trader/okx_test.exs",
         "test/live/errors/okx_test.exs"
       ],
+      "shipped_in": "21f12286602abe5cae28f14022b0e756e31ad986",
       "body": "Mirror the bybit trader-journey exemplar (test/live/journeys/trader/bybit_test.exs, landed in 82af62f, including its private-stream describe block) for okx's international demo. Live-probe first, then pin. Test orders with cleanup are explicitly allowed on the demo.\n\nVenue notes: OKX_INTL_API_KEY/_API_SECRET/_PASSPHRASE; sandbox: true supplies both the host and the x-simulated-trading header. Never use my.okx.com or OKX_TESTNET_* variables. A linear or spot pair with real demo liquidity is the right instrument; demo option books are not.\n\nSupersedes the okx slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.\n",
       "created_at": "2026-08-24",
       "started_at": "2026-08-28",
+      "done_at": "2026-08-28",
       "scored_at": "2026-08-24",
+      "implemented": "Landed by cursor via merge-train; reviewer-approved (run run-1787886035984-ea54a6a8, 21f12286602abe5cae28f14022b0e756e31ad986).",
+      "delivered_by": "cursor",
+      "verified": true,
+      "verified_by": "claude",
+      "verification_ref": "harness-run:run-1787886035984-ea54a6a8",
       "cross_repo": []
     },
     {

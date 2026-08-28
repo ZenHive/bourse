@@ -23010,7 +23010,7 @@ id = "679"
 phase = 16
 bundle = "live_e2e"
 milestone = "v1_2"
-status = "in_progress"
+status = "done"
 title = "Live trader journey for okx: REST round-trip, private-stream leg, error probes"
 scores = { d = 4, b = 7, u = 7 }
 acceptance_criteria = ["test/live/journeys/trader/okx_test.exs mirrors the bybit exemplar's structure: survey, resting limit order with wall-clock-unique clientOrderId, poll open, echo assertions, fetch_open_orders membership, cancel, poll gone, cleanup via release_order! in an after block", "Every asserted error code/message was first observed live against the okx demo (www.okx.com with x-simulated-trading) and is pinned with a dated observation comment; OKX's own API v5 docs are the semantic authority", "An in-flow rejection test asserts the venue's own error for a refused order, observed live; if the rejection arrives inside a batch envelope, the assertion reads the real per-order sCode/sMsg from data[0], not the outer code-1 wrapper", "test/live/errors/okx_test.exs carries at least one generic bad-input probe (unknown order id) asserting the live-observed error, runs in the default suite, and duplicates neither the contract lane's invalid-symbol cases nor the invalid-credentials suite", "A private-stream describe block observes the placed order's own event on the live private stream, mirroring the bybit private-stream block; if the leg is unreachable with our demo credentials, it is recorded in docs/prod-verification-ledger.md instead of silently dropped", "mix test.json --quiet --include dangerous test/live/journeys/trader/okx_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes", "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"]
@@ -23025,9 +23025,16 @@ Venue notes: OKX_INTL_API_KEY/_API_SECRET/_PASSPHRASE; sandbox: true supplies bo
 
 Supersedes the okx slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.
 """
+implemented = "Landed by cursor via merge-train; reviewer-approved (run run-1787886035984-ea54a6a8, 21f12286602abe5cae28f14022b0e756e31ad986)."
+delivered_by = "cursor"
+verified = true
+verified_by = "claude"
+verification_ref = "harness-run:run-1787886035984-ea54a6a8"
 created_at = "2026-08-24"
 started_at = "2026-08-28"
 scored_at = "2026-08-24"
+done_at = "2026-08-28"
+shipped_in = "21f12286602abe5cae28f14022b0e756e31ad986"
 
 [[task]]
 id = "680"
