@@ -2,7 +2,7 @@
   "schema_version": 2,
   "project": "bourse",
   "default_branch": "main",
-  "vision": "An Elixir exchange client with ten explicitly supported venues (alpaca, binance, binancecoinm, binanceusdm, bybit, deribit, derive, hyperliquid, lighter, okx), each backed by one complete owned runtime spec and live public/private evidence. CCXT is a versioned authoring and compatibility reference, never a runtime source or support claim.",
+  "vision": "An Elixir exchange client with eleven explicitly supported venues (alpaca, binance, binancecoinm, binanceusdm, bybit, coinbaseexchange, deribit, derive, hyperliquid, lighter, okx), each backed by one complete owned runtime spec and live evidence against the venue's own host — private where the venue is credentialed, public-only for coinbaseexchange. CCXT is a versioned authoring and compatibility reference, never a runtime source or support claim.",
   "phases": {
     "1": {
       "name": "Foundation",

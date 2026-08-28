@@ -1,6 +1,6 @@
 # bourse Roadmap
 
-**Vision:** `bourse` — an Elixir client for **ten supported venues** (`alpaca`, `binance`, `binancecoinm`, `binanceusdm`, `bybit`, `deribit`, `derive`, `hyperliquid`, `lighter`, `okx`), generated from **one complete hand-authored JSON spec per venue** via macros. Every interpretive slice (signing, request shape, response normalization, symbol/error semantics) is **authored against the exchange-owned API contract and verified live against the venue's own testnet/demo host** — every case in the REST-read contract inventory (`priv/authority/rest-read-contracts.json`) is executed for real by `mix ccxt.verify_rest_read_contracts`. CCXT JS is unverified authoring reference material, never the oracle (see [docs/authored-specs.md](docs/authored-specs.md)). The one reality is the exchange APIs themselves. Runtime support is a closed manifest (`priv/specs/json/runtime_support.json`); adding an eleventh venue is a promotion, not a config flag.
+**Vision:** `bourse` — an Elixir client for **eleven supported venues** (`alpaca`, `binance`, `binancecoinm`, `binanceusdm`, `bybit`, `coinbaseexchange`, `deribit`, `derive`, `hyperliquid`, `lighter`, `okx`), generated from **one complete hand-authored JSON spec per venue** via macros. Every interpretive slice (signing, request shape, response normalization, symbol/error semantics) is **authored against the exchange-owned API contract and verified live against the venue's own testnet/demo host** (Coinbase Exchange is public-only, against its production public host) — every case in the REST-read contract inventory (`priv/venues/<venue>/authority/rest_read_contract.json`) is executed for real by `mix bourse.verify_rest_read_contracts`. CCXT JS is unverified authoring reference material, never the oracle (see [docs/authored-specs.md](docs/authored-specs.md)). The one reality is the exchange APIs themselves. Runtime support is a closed manifest (`priv/venues/runtime_support.json`); adding a twelfth venue is a promotion, not a config flag.
 
 **Design spec:** [2026-04-03-ccxt-client-roadmap-design.md](docs/superpowers/specs/2026-04-03-ccxt-client-roadmap-design.md) (historical — predates the authored-specs pivot and the ten-venue cutover)
 
@@ -25,7 +25,7 @@ What to rely on today and how to discover the rest. All snippets in this section
 
 ### Supported Venues (closed runtime set)
 
-Exactly ten venues compile — one generated module per entry in `priv/specs/json/runtime_support.json`. There is **no compile-time selection knob**; constructing any other exchange fails with `unsupported_exchange`. The former ~100-exchange long tail lives on only as a reference corpus (`priv/specs/json/reference_corpus.json`) for authoring/audit tooling — never loaded at runtime, never shipped in the Hex package.
+Exactly eleven venues compile — one generated module per entry in `priv/venues/runtime_support.json`. There is **no compile-time selection knob**; constructing any other exchange fails with `unsupported_exchange`. The former ~100-exchange long tail lives on only as a pinned 16-venue reference slice (`test/reference_slice/reference_corpus.json`) for authoring/audit tooling — never loaded at runtime, never shipped in the Hex package.
 
 ```elixir
 Bourse.Registry.exchanges()
