@@ -71,6 +71,40 @@ roadmap.
 
 ---
 
+## 2026-08-28 — Lighter's differential auth test never built a bad signature, so it pinned the wrong rejection code
+
+**Status:** ✅ fixed 2026-08-28 — test construction corrected; both codes now pinned from live calls.
+
+`test/live/lighter/lighter_signing_integration_test.exs:16` is named "rejects an unauthorized
+signing key" but constructed its negative leg by incrementing `account_index` while keeping the
+correct key. That is not a signature failure — it is an unregistered `(account, key_index)`
+binding, and Lighter answers it with a different code. The test therefore asserted `29500
+"invalid signature"` against a call that can only produce `20013`, and had no coverage of the
+case its name describes.
+
+Measured live against `testnet.zklighter.elliot.ai` (account 153, key index 3):
+
+| Leg | Response |
+|---|---|
+| correct key, own account 153 | `200` |
+| **corrupted key (one nibble flipped), own account 153** | **`29500 "internal server error: invalid signature"`** |
+| correct key, account 154 (does not exist) | `20013 "invalid auth: couldnt find account"` |
+| correct key, account 152 (**exists**) | `20013 "invalid auth: couldnt find account"` |
+
+**Venue semantics worth keeping:** `20013 "couldnt find account"` is about the *key-to-account
+binding*, not the account's existence — account 152 demonstrably exists and still returns it. The
+message is misleading; do not read it as "this index is unallocated". `29500` is the genuine
+signature rejection, and reaching it requires corrupting the signing key itself.
+
+**Fix:** the test now runs three legs — success, corrupted key → `29500`, foreign account →
+`20013` — so the name matches the assertion and both provider errors are pinned from observed
+calls rather than one guessed code.
+
+**Note on how it stayed hidden:** the account index in `~/.secrets` had drifted from the
+provisioned account, so the whole lighter lane was failing on `29404`/auth errors and this test's
+red was indistinguishable from the rest. It surfaced only once the credentials were corrected and
+the lane dropped from 15 failures to 6.
+
 ## 2026-08-28 — `Bourse.TestnetTest` wipes the shared credential registry, so later live tests in a full run fail as "No credentials registered"
 
 **Status:** ✅ fixed 2026-08-28 in `90b384e` — `Bourse.Test.TestnetSnapshot` (`test/support/`)

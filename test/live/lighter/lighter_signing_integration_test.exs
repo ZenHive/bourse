@@ -24,6 +24,24 @@ defmodule Bourse.LighterSigningIntegrationTest do
         options: %{account_index: account_index}
       )
 
+    # Same account and key index, one nibble of the API private key flipped: length
+    # and scalar range are preserved, so the helper still produces a signature and
+    # the venue is what refuses it.
+    unauthorized_credentials = %{credentials | secret: flip_one_nibble(credentials.secret)}
+    unauthorized = %{exchange | credentials: unauthorized_credentials}
+
+    # A real account this key was never registered against. Lighter answers for the
+    # *binding*, not the account's existence — 152 exists on testnet and returns the
+    # same code as an index that does not (both observed live 2026-08-28).
+    foreign_account_index = account_index + 1
+    foreign = %{exchange | options: Map.put(exchange.options, :account_index, foreign_account_index)}
+
+    on_exit(fn ->
+      assert :ok = LighterSigning.terminate_helper(credentials, helper_config(exchange))
+      assert :ok = LighterSigning.terminate_helper(unauthorized_credentials, helper_config(unauthorized))
+      assert :ok = LighterSigning.terminate_helper(credentials, helper_config(foreign))
+    end)
+
     auth_deadline = System.system_time(:second) + @auth_lifetime_seconds
 
     assert {:ok, %{status: 200, body: %{"code" => 200} = body}} =
@@ -34,26 +52,31 @@ defmodule Bourse.LighterSigningIntegrationTest do
 
     assert is_binary(body["user_tier"])
 
-    mismatched_account_index = account_index + 1
-    mismatched = %{exchange | options: Map.put(exchange.options, :account_index, mismatched_account_index)}
-
-    on_exit(fn ->
-      assert :ok = LighterSigning.terminate_helper(credentials, helper_config(exchange))
-      assert :ok = LighterSigning.terminate_helper(credentials, helper_config(mismatched))
-    end)
-
     assert {:error,
             %Error{
               type: :authentication_error,
               code: 29_500,
-              raw: %{"code" => 29_500, "message" => message}
+              raw: %{"code" => 29_500, "message" => signature_message}
             }} =
-             Bourse.Lighter.private_get_accountlimits(mismatched, %{
-               "account_index" => mismatched_account_index,
+             Bourse.Lighter.private_get_accountlimits(unauthorized, %{
+               "account_index" => account_index,
                "auth_deadline" => auth_deadline
              })
 
-    assert message =~ "invalid signature"
+    assert signature_message =~ "invalid signature"
+
+    assert {:error,
+            %Error{
+              type: :authentication_error,
+              code: 20_013,
+              raw: %{"code" => 20_013, "message" => binding_message}
+            }} =
+             Bourse.Lighter.private_get_accountlimits(foreign, %{
+               "account_index" => foreign_account_index,
+               "auth_deadline" => auth_deadline
+             })
+
+    assert binding_message =~ "couldnt find account"
   end
 
   test "testnet accepts unified order reads with and without a market scope" do
@@ -119,6 +142,12 @@ defmodule Bourse.LighterSigningIntegrationTest do
       value when is_binary(value) -> String.trim(value) != ""
       nil -> false
     end
+  end
+
+  # Keeps the hex length and stays far inside the scalar range, so the signer still
+  # signs and only the venue can reject the result.
+  defp flip_one_nibble(<<head::binary-40, nibble::binary-1, tail::binary>>) do
+    head <> if(nibble == "a", do: "b", else: "a") <> tail
   end
 
   defp helper_config(exchange) do
