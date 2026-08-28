@@ -1912,7 +1912,11 @@ defmodule Bourse.Unified do
   end
 
   defp first_invalid_side(list) when is_list(list) do
-    if keyword_param?(list), do: :ok, else: first_invalid_side_in(list)
+    if keyword_param?(list) do
+      first_invalid_side(Map.new(list))
+    else
+      first_invalid_side_in(list)
+    end
   end
 
   defp first_invalid_side(_value), do: :ok

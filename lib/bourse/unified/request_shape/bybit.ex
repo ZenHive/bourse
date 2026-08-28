@@ -183,8 +183,9 @@ defmodule Bourse.Unified.RequestShape.Bybit do
 
   defp attached_trigger_direction("buy", nil), do: 2
   defp attached_trigger_direction("buy", _stop_loss), do: 1
-  defp attached_trigger_direction(_side, nil), do: 1
-  defp attached_trigger_direction(_side, _stop_loss), do: 2
+  defp attached_trigger_direction("sell", nil), do: 1
+  defp attached_trigger_direction("sell", _stop_loss), do: 2
+  defp attached_trigger_direction(side, _stop_loss), do: RequestShape.refuse_uninterpretable_side!(side)
 
   defp trigger_direction(_direction, "spot"), do: nil
   defp trigger_direction(direction, _category) when direction in [1, "1", "ascending", "above"], do: 1

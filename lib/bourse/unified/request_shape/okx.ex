@@ -8,6 +8,7 @@ defmodule Bourse.Unified.RequestShape.OKX do
   alias Bourse.Error
   alias Bourse.Exchange
   alias Bourse.Symbol
+  alias Bourse.Unified.RequestShape
 
   # OKX `market/books` returns top-of-book when `sz` is omitted; request 100 levels.
   @default_order_book_depth 100
@@ -1246,10 +1247,10 @@ defmodule Bourse.Unified.RequestShape.OKX do
   defp put_margin_sub_type(params), do: params
 
   # Unified closePosition second arg is Bourse's buy/sell side; OKX close-position
-  # wants posSide long/short. An absent side is net mode and omits posSide; any
-  # other value rides through verbatim so OKX answers with its own 51000
-  # "Parameter posSide error" rather than this client silently closing without a
-  # posSide (which net-mode accounts would accept).
+  # wants posSide long/short. An absent side is net mode and omits posSide. An
+  # uninterpretable side is refused here rather than forwarded as posSide (a
+  # net-mode account would accept a missing posSide and close a position the
+  # caller never named).
   defp put_close_pos_side(params) do
     {side, params} = Map.pop(params, "side")
 
@@ -1257,7 +1258,7 @@ defmodule Bourse.Unified.RequestShape.OKX do
       nil -> params
       "buy" -> Map.put_new(params, "posSide", "long")
       "sell" -> Map.put_new(params, "posSide", "short")
-      other -> Map.put_new(params, "posSide", other)
+      other -> RequestShape.refuse_uninterpretable_side!(other)
     end
   end
 

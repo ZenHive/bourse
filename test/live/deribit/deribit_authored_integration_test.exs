@@ -106,6 +106,17 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
     {:ok, open_before} = Bourse.fetch_open_orders(exchange)
     before_ids = MapSet.new(open_before, & &1.id)
 
+    for side <- [:sell, "hold", 1] do
+      orders = [%{amount: 10, price: 1, side: side, symbol: "BTC/USD:BTC", type: "limit"}]
+
+      assert {:error, %Error{type: :invalid_parameters} = error} = Bourse.create_orders(exchange, orders),
+             "create_orders accepted #{inspect(side)}"
+
+      assert error.message =~ "Invalid side: #{inspect(side)}"
+      assert error.message =~ ~s(Accepted forms: "buy" or "sell")
+      assert error.raw["reason"] == "invalid_side"
+    end
+
     orders = [%{amount: 10, price: 1, side: :sell, symbol: "BTC/USD:BTC", type: "limit"}]
 
     for {method, _js_name, required, _description} <- Unified.method_defs(), :orders in required do
