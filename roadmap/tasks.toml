@@ -23224,7 +23224,7 @@ shipped_in = "e6ef7ea35d42b966532a7db22c7b5166d0cbd13b"
 id = "685"
 phase = 16
 bundle = "live_triage"
-status = "in_progress"
+status = "pending"
 title = "Silent substitution is the class: a slice that does not fit must fail loudly, never resolve to a plausible wrong value"
 scores = { d = 7, b = 8, u = 8 }
 markers = ["bug"]
