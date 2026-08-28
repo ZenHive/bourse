@@ -73,7 +73,31 @@ roadmap.
 
 ## 2026-08-28 — `Bourse.TestnetTest` wipes the shared credential registry, so later live tests in a full run fail as "No credentials registered"
 
-**Status:** 🆕 measured live (task 679 review, `mix check.dispatch` on this worktree) — not consumer-reported.
+**Status:** ✅ fixed 2026-08-28 in `90b384e` — `Bourse.Test.TestnetSnapshot` (`test/support/`)
+captures the registry before a wipe and restores it in `on_exit`, used by both wiping modules.
+Measured before/after on the same tree: **19 flaky → 1**, and zero credential-shaped flakes
+remain (the survivor is `okx:fetchPosition`, an empty-account case). Report kept below as the
+evidence trail, with two corrections the original entry did not have:
+
+> **There was a second wipe site,** and it was the worse one:
+> `test/bourse/private_probe_credential_gate_test.exs` cleared the registry and restored only
+> **four** venues from a hand-written list (`bybit`, `binance`, `binance/:futures`, `deribit`),
+> leaving the other seven unregistered for the rest of the run — which is why the flakes
+> clustered on alpaca / derive / hyperliquid / okx / binanceusdm / binancecoinm. The fix
+> restores whatever `test_helper.exs` actually registered, so it stays correct as venues are
+> added; the hand-written list is gone.
+>
+> **The wipe was hiding a genuine red.** With the registry restored,
+> `Bourse.TimeWindowIntegrationTest` "binanceusdm fetch_my_trades honors since and until"
+> stopped flaking and now fails for its real reason:
+> `needs 4 distinct live timestamps; got [1787496365915, 1787496713519]` — the demo account
+> holds two trades and the window assertion needs four. That is sandbox state, not a
+> credential or naming problem: the earlier reading that
+> `BINANCEUSDM_TESTNET_API_KEY` "is never provisioned" is wrong — `test/test_helper.exs`
+> registers binanceusdm from the shared `BINANCE_FUTURES_TEST_*` pair exactly as CLAUDE.md
+> documents.
+
+**Original report (task 679 review, `mix check.dispatch`):**
 
 `test/bourse/testnet_test.exs` mutates the process-global `Bourse.Testnet` registry that
 `test/test_helper.exs` populates once per VM: its `setup` calls `Testnet.clear/0`, and the
@@ -99,6 +123,97 @@ run's redness gets read as "environmental" without anyone locating the mechanism
 test-local — restore the `test_helper.exs` registrations in an `on_exit` of that module, or
 give `Bourse.Testnet` an isolated table for that suite — not something to change from a
 venue-journey review.
+
+---
+
+## 2026-08-28 — alpaca's authored `errors.status_map` is silently dropped by the spec loader, so the venue has no HTTP-status error classification
+
+**Status:** 🆕 measured live (orchestrator triage of the task 674 reviewer's finding) — not consumer-reported.
+
+`priv/venues/alpaca/authored/errors.json` declares `status_map` as bare strings:
+
+```json
+{"403": "PermissionDenied", "404": "OrderNotFound", "422": "BadRequest", "429": "RateLimitExceeded"}
+```
+
+but `Bourse.Exchange.build_status_map/2` only matches the
+`{status, [%{"class" => class} | _]}` shape every other venue authors, and falls through to
+`[]` otherwise. Measured: `Bourse.Exchange.new("alpaca")` yields `status_map == %{}` and
+`http_exceptions == %{}`.
+
+**Consumer impact:** alpaca 404/422/429 are typed only when the numeric provider code happens
+to be one of the six entries in `error_codes`; otherwise they arrive as generic
+`exchange_error`. A consumer matching on `:order_not_found` for alpaca never matches.
+
+**This is the silent-carve class:** internally consistent, fully green, and wrong — the loader
+reads a shape the venue's authored file does not use, and nothing fails.
+
+**The fix is the class, not the instance.** Rotating alpaca's `status_map` to the shape the
+loader consumes leaves the next venue free to ship the same silently-dropped map. `Bourse.Spec.Schema`
+(or a manifest-wide test) should raise when any venue's `errors.status_map` entry is not the
+shape `build_status_map/2` reads. Note that fixing it **changes the unified type of alpaca 403s**,
+so `test/live/journeys/trader/alpaca_test.exs`'s rejection assertion must be re-observed live and
+re-pinned in the same change. Also reconcile the hard `401`/`403` short-circuit in
+`Bourse.HTTP.Errors.normalize_error/3`, which outranks any authored map today.
+
+---
+
+## 2026-08-28 — binance `fetch_balance` drops the venue's `updateTime`; `Balance.timestamp` and `datetime` come back `nil`
+
+**Status:** 🆕 measured live (orchestrator triage of the task 675 reviewer's finding) — not consumer-reported.
+
+Exact call, against `testnet.binance.vision`:
+
+```elixir
+creds = Bourse.Credentials.new!(api_key: System.get_env("BINANCE_TESTNET_API_KEY"),
+                                secret:  System.get_env("BINANCE_TESTNET_API_SECRET"))
+{:ok, ex} = Bourse.Exchange.new("binance", credentials: creds, sandbox: true)
+{:ok, bal} = Bourse.fetch_balance(ex)
+```
+
+Observed: `bal.timestamp == nil` and `bal.datetime == nil`, while `bal.info` carries
+`"updateTime" => 1787885674508`.
+
+Expected: `priv/venues/binance/authored/normalization.json`'s balance branch (guarded by
+`has_key "balances"`) declares `timestamp` as `{coercion: safeInteger, format: ms, key: "updateTime"}`,
+and `GET /api/v3/account` documents `updateTime` as a required field. The venue supplies it and
+the authored slice asks for it, so the value is lost between payload and struct.
+
+**Why it stayed invisible:** `test/live/journeys/trader/binance_test.exs` omits the bybit
+exemplar's `assert_recent_timestamp!(balance.timestamp)` precisely because of this gap. That
+omission was correct judgment by its author, but it means no test fails on it. Check the
+sibling binance-family venues (`binanceusdm`, `binancecoinm` — same field-map shape over
+`"assets"`) in the same change.
+
+---
+
+## 2026-08-28 — the provider-live suite cannot distinguish a deliberately-red ledgered case from a genuine failure, so reviewers dismiss the whole result
+
+**Status:** 🆕 measured (orchestrator, across six harness reviews and two full local runs) — not consumer-reported.
+
+A full `mix test.json` on `main` confirms ~46–48 failures. Independently classified:
+
+| Class | n | Nature |
+|---|---|---|
+| Lighter native signer `helper_unavailable` / `:enoent` | ~12 | host toolchain — `go` absent, so `priv/native/lighter_signer/` (gitignored build artifact) is never built |
+| Lighter account `29404 not found` | ~6 | operator credential — see the Lighter entry below |
+| OKX `50038 "unavailable in demo trading"` | 6 | **deliberately red**: ledgered under tasks 311 / 389 / 441 and deliberately kept in the denominator, because dropping the row is the "green lie" CLAUDE.md forbids |
+| "provider account state has no id from `fetchOpenOrders`" / "did not exercise the read" | ~13 | contract branches that only execute when a resting order / open position / deposit exists; nothing populates that state |
+| `binancecoinm` `balance.total["BTC"] >= 0.01` vs `0.00999833` | 1 | hardcoded threshold against a drained wallet |
+| suspicious, warrant real investigation | ~5 | see below |
+
+**The defect is not the red count — much of it is by design.** It is that the summary carries
+no way to tell "deliberately unverified, ledgered, expected red" apart from "actually broken".
+Measured consequence: across six harness reviews in one day, every reviewer labelled the entire
+cluster "environmental / pre-existing", reproduced two or three of its causes, and approved over
+the rest. That is the gate training its own users to ignore it.
+
+**Worth investigating individually** (not yet adjudicated):
+
+- `bybit:fetchMySettlementHistory` — *"raw provider payload contains none of the semantic keys `["deliveryPrice", …]`"*. The venue answered; none of the expected keys are present. That is carve divergence, not empty state.
+- `lighter:fetchOHLCV: provider returned no rows` and `lighter.fetch_ohlcv returned no rows` — `publicGetCandles` is a **public** endpoint, so the dead account is not an explanation; suspect wrong resolution / market-id parameters.
+- `hyperliquid:fetchPosition: expected Bourse.Position, got nil` and `binanceusdm:fetchPositionADLRank: expected ADLRank, got nil` — ambiguous between empty state and a parse gap.
+- `okx:fetchTransfer: transId is incorrect or transId does not match` — the argument the case supplies is rejected by the venue; fixture problem or real param shaping.
 
 ---
 
