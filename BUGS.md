@@ -71,6 +71,122 @@ roadmap.
 
 ---
 
+## 2026-08-28 — `Bourse.WS.connect/3` swallows `:no_auth_pattern` and hands back an open **unauthenticated** private socket
+
+**Status:** 🆕 measured live (orchestrator, harness wave 665/673/681/682) — not consumer-reported.
+
+`lib/bourse/ws.ex:247` maps the missing-handshake case straight to success:
+
+```elixir
+{:error, :no_auth_pattern} ->
+  {:ok, ws}
+```
+
+So for any venue whose authored spec declares no `auth_pattern` — **derive** is the live
+instance — `WS.connect(exchange, :private)` returns `{:ok, ws}` with `ws.auth == nil` and
+`state == :connected`. The caller has an open socket on the private section that will never
+deliver private events: exactly the "silently empty stream" failure the same paragraph in
+`CLAUDE.md` warns about.
+
+**CLAUDE.md is wrong about this today.** Its WebSocket section states derive's unwired auth
+surface "**fails loudly rather than silently**". It does not fail at all.
+
+**Observed live 2026-08-28** against `wss://api-demo.lyra.finance/ws` (evidence produced by
+the cross-family reviewer on harness run `run-1787878849306-7a0d7ae9`, task 682, and
+re-read on the landed tree):
+
+- `WS.connect(exchange, :private)` → `{:ok, ws}`, `ws.auth == nil`, `state == :connected`
+- `WS.subscribe(ws, ["144422.orders"])` before login → `{:error, {:subscription_rejected, _}}`,
+  envelope code `13000` wrapping `14022` "Subscription to a private channel failed"
+- venue-owned `public/login` (EIP-191 over the ms timestamp, Admin session key, wallet =
+  `X-LyraWallet`) → `{"result" => [144422]}`; the same subscribe then returns `:ok` and
+  delivers `order_status` `open` → `cancelled`
+
+**Consumer impact:** a consumer that treats `{:ok, ws}` as "private stream ready" gets a
+socket that is connected and permanently silent. The repro is in
+`test/live/journeys/trader/derive_test.exs` (landed `87572cd`), which now asserts
+`is_nil(ws.auth)` rather than reading `:connected` as success.
+
+**Not fixed here.** Either `connect/3` refuses a `:private` section with no `auth_pattern`,
+or derive authors its `auth_pattern` so the venue's `public/login` runs as the handshake.
+Both are behaviour changes outside the wave that surfaced this.
+
+---
+
+## 2026-08-28 — `mix bourse.check_lighter_signer` exits 0 while reporting "NOT RUN" — a gate that is green without running
+
+**Status:** 🆕 measured (orchestrator) — not consumer-reported.
+
+With `go` absent from `PATH` the task prints
+
+```
+Lighter native verification NOT RUN: missing go.
+The lighter-signer workflow remains the mandatory native gate.
+```
+
+and **exits 0**, so `mix check.dispatch` records it as a passing step. `priv/native/lighter_signer/*/`
+is gitignored (`.gitignore:13`) — the helper is a build artifact of
+`mix bourse.build_lighter_signer`, which needs Go — so on a host without Go the directory
+does not exist and the signer is genuinely unavailable.
+
+**Why this matters beyond the one task:** four independent harness reviewers in the
+2026-08-28 wave each read this "pass" and none noticed the Lighter toolchain was simply
+missing; they attributed the resulting `{:lighter_signing, :helper_unavailable}` / `:enoent`
+reds to three mutually inconsistent causes across runs 673, 682 and 681. A gate that cannot
+run must be RED with actionable setup text (`critical-rules.md` § NEVER HIDE TEST FAILURES),
+not `:ok`.
+
+---
+
+## 2026-08-28 — Lighter testnet credentials point at an account the venue does not know (29404), so the trader journey's round-trip cannot be proven
+
+**Status:** 🆕 operator action — credential refresh, not a code defect.
+
+Reproduced live against `testnet.zklighter.elliot.ai` on harness run
+`run-1787878849303-bd01a1ca` (task 681):
+
+- `publicGetAccount` → HTTP 400, code **29404** "not found"
+- `sendTx` create → code **21100** "account not found"
+- private REST reads → code **20013** "couldnt find account"
+- `account_all_orders` with a helper-minted auth token → **20013**
+- `WS.connect(:private)` → `:no_url_configured`
+
+`LIGHTER_TESTNET_API_KEY_INDEX` / `LIGHTER_TESTNET_ACCOUNT_INDEX` /
+`LIGHTER_TESTNET_API_PRIVATE_KEY` need to point at a recognized testnet account before
+`test/live/journeys/trader/lighter_test.exs` can go green. The journey is authored and
+flunks loudly with that setup text; it is `:dangerous`-tagged, so the red is only visible
+under `--include dangerous`.
+
+---
+
+## 2026-08-28 — `mix check.dispatch` is structurally red on `main`: a pre-existing `reach.check` smell makes "check.dispatch passes" unsatisfiable as an acceptance criterion
+
+**Status:** 🆕 measured (orchestrator) — one-line fix, not yet applied.
+
+On landed `main` (`5923baf`), offline and independent of any task:
+
+```
+$ MIX_ENV=dev mix reach.check --arch --smells --strict --path lib
+Architecture Policy OK
+broad map contract
+  lib/bourse/spec/disk.ex:68
+    Bourse.Spec.Disk.assemble_maps/2 parameter 1 declares map() but uses strict access
+    within the fixed key set "endpoints.json", "errors.json", "markets.json",
+    "normalization.json", "raw.json", "venue.json"; declare the shape explicitly
+** (Mix) Smell check failed: 1 finding(s)
+```
+
+`check.dispatch` never reaches this step today because `precommit`'s provider-live
+`test.json` exits first — so the smell is latent, and would surface the moment the live
+suite goes green.
+
+**Why it is worth recording rather than shrugging at:** tasks are being written with
+"`mix check.dispatch` passes" as an acceptance criterion (task 665 is the landed instance).
+That criterion cannot be met while this stands, which trains every reviewer to approve
+around the gate instead of reading it.
+
+---
+
 ## 2026-08-28 — deribit `fetch_option_chain/2`: an underlying with a live linear book answers `{:ok, %{}}`, and `implied_volatility` is `nil` on every leg
 
 **Status:** 🆕 reported (consumer: `trading_dashboard`, bourse 0.7.0, live Deribit public API,
