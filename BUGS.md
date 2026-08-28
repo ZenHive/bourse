@@ -210,7 +210,18 @@ the rest. That is the gate training its own users to ignore it.
 
 **Worth investigating individually** (not yet adjudicated):
 
-- `bybit:fetchMySettlementHistory` — *"raw provider payload contains none of the semantic keys `["deliveryPrice", …]`"*. The venue answered; none of the expected keys are present. That is carve divergence, not empty state.
+- ~~`bybit:fetchMySettlementHistory`~~ — **adjudicated 2026-08-28: empty account state, not carve divergence.** Probed live on the testnet main-account key: `GET /v5/asset/delivery-record` with `limit=10` answers `status 200, retCode 0, retMsg "OK", result.list == []` for **all three** categories (`inverse`, `linear`, `option`). The account has never settled a position, so there are no rows — the `deliveryPrice`/`deliveryRpl` keys are absent because the payload is empty, not because the carve is wrong. Closing this needs a settled position on the testnet account.
+
+  **The lane's own diagnostics caused this misreading, and that part is a real defect.** For a
+  `representation: raw` case, `Bourse.Test.RestReadContractScenario` reports
+  *"raw provider payload contains none of the semantic keys [...]"* — wording that describes a
+  shape mismatch — when the actual condition is zero rows. Every other empty-state case in the
+  lane says so plainly (*"provider account state has no id from fetchOpenOrders"*,
+  *"did not exercise the read. Populate the sandbox account"*). The raw branch should
+  distinguish "provider returned no rows" from "rows present but none carry the semantic keys";
+  as written it invites exactly the misclassification recorded here — an orchestrator reading
+  the summary singled this case out as the strongest carve-divergence suspect in the whole
+  suite, and it was empty state.
 - ~~`lighter:fetchOHLCV: provider returned no rows`~~ — **adjudicated 2026-08-28: not a client defect, do not re-investigate.** Probed live against `testnet.zklighter.elliot.ai`: `publicGetCandles` with `market_id=1` (and `0`), `resolution="1h"`, a 24h `start_timestamp`/`end_timestamp` window and `count_back=0` answers HTTP 200 with `%{"code" => 200, "r" => "1h", "c" => []}`. The venue **echoes the resolution back**, and a parameterless call is rejected as `bad_request` — so the request is well-formed and understood; the testnet simply carries no candle history for the probed markets. Note this holds *despite* `priv/venues/lighter/authored/endpoints.json` marking `market_id` and `resolution` as `{"kind": "unresolved", "reason": "dynamic_construction"}`, which is what made this look like a parameter bug.
 - `hyperliquid:fetchPosition: expected Bourse.Position, got nil` and `binanceusdm:fetchPositionADLRank: expected ADLRank, got nil` — ambiguous between empty state and a parse gap.
 - `okx:fetchTransfer: transId is incorrect or transId does not match` — the argument the case supplies is rejected by the venue; fixture problem or real param shaping.
