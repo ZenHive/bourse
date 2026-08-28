@@ -3,3 +3,4 @@ DOS.StringToAtom: Unsafe `String.to_atom`,lib/bourse/unified/descriptor.ex:197,4
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/bourse/unified/descriptor.ex:236,560577D
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/bourse/unified_method.ex:113,564942F
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/bourse/json_document.ex:19,2AB9AE4
+Traversal.FileModule: Directory Traversal in `File.write!`,lib/bourse/live_lane/ledger.ex:296,33CBCB4
