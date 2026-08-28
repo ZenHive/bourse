@@ -53,7 +53,12 @@ defmodule Mix.Tasks.Bourse.VerifyRestReadContracts do
         Mix.shell().error(command_output)
 
         raise Mix.Error,
-              "provider-live REST-read contracts failed — #{Enum.join(reasons, "; ")}; report: #{output_path}"
+              IO.iodata_to_binary([
+                "provider-live REST-read contracts failed — ",
+                Enum.join(reasons, "; "),
+                "; report: ",
+                output_path
+              ])
     end
 
     :ok

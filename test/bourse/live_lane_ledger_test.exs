@@ -4,6 +4,7 @@ defmodule Bourse.LiveLaneLedgerTest do
   alias Bourse.Error
   alias Bourse.LiveLane.Ledger
   alias Bourse.RawResponse
+  alias Bourse.Test.LiveLane
   alias Bourse.Test.RestReadContractScenario
 
   test "the ledger file is the classification source for okx 50038 demo-unavailable" do
@@ -227,5 +228,74 @@ defmodule Bourse.LiveLaneLedgerTest do
     classified = Ledger.classify_report_failures(tests, document)
     assert classified.ledgered == []
     assert hd(classified.genuine)["name"] =~ "fetchOrder"
+  end
+
+  test "sparse history on a ledgered method is state-dependent, a window-boundary miss is genuine" do
+    document = Ledger.load!()
+
+    sparse_case = %{
+      "venue" => "binanceusdm",
+      "method" => "fetchMyTrades",
+      "id" => "binanceusdm:fetchMyTrades:time_window"
+    }
+
+    assert {:ledgered, entry} = Ledger.classify(sparse_case, :sparse_history, document)
+    assert entry["class"] == "ledgered_state_dependent"
+    assert entry["id"] == "binanceusdm-my-trades-window"
+
+    assert {:ledgered, _} = Ledger.classify(sparse_case, :empty_collection, document)
+
+    deribit_case = %{
+      "venue" => "deribit",
+      "method" => "fetchTrades",
+      "id" => "deribit:fetchTrades:time_window"
+    }
+
+    assert {:ledgered, deribit_entry} = Ledger.classify(deribit_case, :sparse_history, document)
+    assert deribit_entry["id"] == "deribit-public-trades-window"
+
+    tests = [
+      %{
+        "name" => "test binanceusdm:fetchMyTrades:0:privateGetUserTrades",
+        "state" => "failed",
+        "message" => "binanceusdm.fetch_my_trades needs 4 distinct live timestamps; got [1, 2]"
+      },
+      %{
+        "name" => "test binanceusdm:fetchMyTrades:0:privateGetUserTrades",
+        "state" => "failed",
+        "message" =>
+          "binanceusdm.fetch_my_trades returned the latest page instead of the since boundary: requested 1, first 9"
+      }
+    ]
+
+    classified = Ledger.classify_report_failures(tests, document)
+    assert hd(classified.ledgered)["class"] == "ledgered_state_dependent"
+    assert hd(classified.genuine)["message"] =~ "latest page instead of the since boundary"
+  end
+
+  test "lighter empty market history still classifies from the ledger file" do
+    document = Ledger.load!()
+    contract_case = %{"venue" => "lighter", "method" => "fetchOHLCV", "id" => "lighter:fetchOHLCV:live"}
+
+    assert {:ledgered, entry} = Ledger.accept(contract_case, :empty_collection, document)
+    assert entry["id"] == "lighter-empty-market-history"
+    assert Enum.any?(Ledger.hits(), &(&1["id"] == "lighter:fetchOHLCV:live"))
+  end
+
+  test "LiveLane contract cases use unified JS names rather than a test-local roster" do
+    assert LiveLane.contract_case(:binanceusdm, :fetch_my_trades) == %{
+             "venue" => "binanceusdm",
+             "method" => "fetchMyTrades",
+             "id" => "binanceusdm:fetchMyTrades:live"
+           }
+  end
+
+  test "LiveLane flunks an empty collection the ledger does not cover" do
+    error =
+      assert_raise ExUnit.AssertionError, fn ->
+        LiveLane.accept_or_flunk!("bybit", "fetchTicker", :empty_collection, "genuine empty ticker")
+      end
+
+    assert error.message =~ "genuine empty ticker"
   end
 end

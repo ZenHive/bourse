@@ -18,7 +18,11 @@ defmodule Bourse.LiveLane.Ledger do
     "provider account state",
     "did not exercise",
     "no id from",
-    "provider returned no rows"
+    "provider returned no rows",
+    "returned no rows"
+  ]
+  @sparse_message_needles [
+    "distinct live timestamps"
   ]
 
   defmodule ErrorConfirmed do
@@ -53,6 +57,24 @@ defmodule Bourse.LiveLane.Ledger do
   def hits_path(root) when is_binary(root) do
     scope = :sha256 |> :crypto.hash(root) |> Base.encode16(case: :lower) |> binary_part(0, 12)
     Path.join(System.tmp_dir!(), "bourse-ledger-hits-#{scope}.json")
+  end
+
+  @doc "Records a ledgered live outcome, or returns `:genuine`."
+  @spec accept(map(), term(), map() | nil) :: {:ledgered, map()} | :genuine
+  def accept(contract_case, observed, document \\ nil) do
+    case classify(contract_case, observed, document) do
+      {:ledgered, entry} = classified ->
+        record(%{
+          "id" => contract_case["id"],
+          "class" => entry["class"],
+          "summary" => entry["summary"]
+        })
+
+        classified
+
+      :genuine ->
+        :genuine
+    end
   end
 
   @doc "Classifies one observed live outcome against the ledger document."
@@ -199,11 +221,17 @@ defmodule Bourse.LiveLane.Ledger do
   defp match_observed?(entry, {:empty_resource, _source}), do: empty_match?(entry)
   defp match_observed?(entry, :empty_payload), do: empty_match?(entry)
   defp match_observed?(entry, :empty_collection), do: empty_match?(entry)
+  defp match_observed?(entry, :sparse_history), do: sparse_match?(entry)
   defp match_observed?(_entry, _observed), do: false
 
   defp empty_match?(entry) do
     match = entry["match"] || %{}
     match["empty_resource"] == true or match["empty_payload"] == true or match["empty_collection"] == true
+  end
+
+  defp sparse_match?(entry) do
+    match = entry["match"] || %{}
+    match["sparse_history"] == true
   end
 
   # An empty-resource / empty-payload row must not swallow an unrelated provider
@@ -228,8 +256,8 @@ defmodule Bourse.LiveLane.Ledger do
       is_binary(match["code"]) and String.contains?(message, to_string(match["code"])) ->
         message_contains?(match, message)
 
-      empty_match?(entry) ->
-        Enum.any?(@empty_message_needles, &String.contains?(message, &1))
+      empty_match?(entry) or sparse_match?(entry) ->
+        needles_match?(entry, message)
 
       true ->
         message_contains?(match, message)
@@ -237,6 +265,11 @@ defmodule Bourse.LiveLane.Ledger do
   end
 
   defp message_matches?(_entry, _message), do: false
+
+  defp needles_match?(entry, message) do
+    (empty_match?(entry) and Enum.any?(@empty_message_needles, &String.contains?(message, &1))) or
+      (sparse_match?(entry) and Enum.any?(@sparse_message_needles, &String.contains?(message, &1)))
+  end
 
   defp failure_message(%{"message" => message}) when is_binary(message), do: message
 

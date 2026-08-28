@@ -900,7 +900,7 @@ Artifact **freshness**, **expressiveness** and **scope** are separate axes. A ma
 
 For cross-family reviewers (codex / cursor / grok) and any dispatch run.
 
-- **`mix check.dispatch`** — the dispatch-scale gate: `precommit`, `bourse.authority_check` (offline), `bourse.error_authority`, `bourse.check_lighter_signer`, `bourse.claude_check`, `bourse.agents_md --check`, `ex_dna --max-clones 0`, `reach.check --arch --smells --strict --path lib` (under `MIX_ENV=dev`; the `--path lib` pin is load-bearing — arch sources come from the Mix env, smell sources from `--path`). No dialyzer (a cold worktree cold-builds the PLT for minutes).
+- **`mix check.dispatch`** — the dispatch-scale gate: `precommit`, `bourse.authority_check` (offline), `bourse.error_authority`, `bourse.check_lighter_signer`, `bourse.claude_check`, `bourse.agents_md --check`, `ex_dna --max-clones 0`, `reach.check --arch --smells --strict --path lib` (under `MIX_ENV=dev`; the `--path lib` pin is load-bearing — arch sources come from the Mix env, smell sources from `--path`). No dialyzer (a cold worktree cold-builds the PLT for minutes). `bourse.check_lighter_signer` is red when Go or a C compiler is missing — the helper is a gitignored build artifact, so a skipped pass here is a lie.
 - **`mix precommit`** — format / compile --warnings-as-errors / `credo --strict --ignore TagTODO,TagFIXME` / doctor --raise / sobelow --skip / `test.json`. It carries no `--exclude`: the suite is provider-live, so this step calls real venues and needs the testnet credentials exported.
 - **`mix precommit.full`** — adds `deps.audit` + dialyzer (local pre-PR).
 - **`mix ci`** — `check.dispatch` + the full `bourse.verify_rest_read_contracts` lane + `test.json --cover --cover-threshold 80 --output /tmp/bourse-ci-cover.json` + `deps.audit` (an alias carrying `--ignore-advisory-ids`) + dialyzer.
@@ -930,8 +930,8 @@ touches it.
 | Check | Command | Notes |
 |-------|---------|-------|
 | Compile | `mix compile --warnings-as-errors` | silent finish = success |
-| Tests | `mix test.json --quiet` | **emits JSON by design** — parse it for real failures; the envelope is **not** a build error. Read `summary.result` / `summary.failed`. 🚨 **Provider-live**: it calls real venues and raises at startup on a missing credential pair. |
-| REST-read contracts | `mix bourse.verify_rest_read_contracts` | Runs all 409 provider-live contract cases and fails when `executed < denominator`, so a shrinking live surface cannot pass as green. |
+| Tests | `mix test.json --quiet` | **emits JSON by design** — parse it for real failures; the envelope is **not** a build error. Read `summary.result` / `summary.failed`. 🚨 **Provider-live**: it calls real venues and raises at startup on a missing credential pair. After the run, stderr prints a live-suite classification from `docs/prod-verification-ledger.md` (ledgered demo-unavailable / state-dependent / unreachable vs genuine failures) — do not treat the six okx 50038 rows as defects. |
+| REST-read contracts | `mix bourse.verify_rest_read_contracts` | Runs all 409 provider-live contract cases and fails when `executed < denominator`, so a shrinking live surface cannot pass as green. Ledgered reds stay in the denominator and are named in the classification summary; only genuine failures fail the lane. |
 | WS first frame | `mix bourse.verify_ws_first_frame` | Classified public WebSocket first data frame per venue. |
 | Dialyzer | `mix dialyzer.json --quiet` | **emits JSON by design**. Plain `mix dialyzer` is the authoritative fallback when the JSON encoder can't serialize a warning shape. |
 | Lint | `mix credo --strict` | |

@@ -325,8 +325,9 @@ defmodule Bourse.MixProject do
         "check.dispatch",
         # The complete provider-live REST-read lane. It reports
         # denominator/executed/failures and fails when executed < denominator, so
-        # a shrinking live surface cannot pass as green.
-        "bourse.verify_rest_read_contracts",
+        # a shrinking live surface cannot pass as green. Alias steps ignore
+        # `preferred_envs`, and the inventory module lives in `test/support`.
+        "cmd env MIX_ENV=test mix bourse.verify_rest_read_contracts",
         # `critical-rules.md` § RAISE COVERAGE BEFORE MUTATING sets the floor at
         # 80% standard. The critical tier (95% — money, signing, crypto, low-level
         # encoders) is judged per module against this run, not by a global number.

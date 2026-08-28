@@ -28,7 +28,10 @@ defmodule Bourse.CheckDispatchConfigTest do
   end
 
   test "ci runs the full provider-live REST-read contract lane" do
-    assert "bourse.verify_rest_read_contracts" in alias_steps(:ci)
+    assert Enum.any?(
+             alias_steps(:ci),
+             &(&1 =~ "cmd env MIX_ENV=test mix bourse.verify_rest_read_contracts")
+           )
   end
 
   test "check aliases name Mix tasks under bourse.*, not ccxt.*" do
@@ -41,8 +44,7 @@ defmodule Bourse.CheckDispatchConfigTest do
              "bourse.error_authority",
              "bourse.check_lighter_signer",
              "bourse.claude_check",
-             "bourse.agents_md --check",
-             "bourse.verify_rest_read_contracts"
+             "bourse.agents_md --check"
            ]
   end
 

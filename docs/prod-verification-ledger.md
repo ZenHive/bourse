@@ -135,9 +135,32 @@ test code. Edit the fence when adding a ledgered case.
       "venue": "lighter",
       "methods": ["fetchOHLCV", "fetchFundingRateHistory"],
       "match": {
-        "empty_collection": true
+        "empty_collection": true,
+        "sparse_history": true
       },
       "summary": "lighter testnet carries no candle or funding history for the probed markets"
+    },
+    {
+      "id": "binanceusdm-my-trades-window",
+      "class": "ledgered_state_dependent",
+      "venue": "binanceusdm",
+      "methods": ["fetchMyTrades"],
+      "match": {
+        "empty_collection": true,
+        "sparse_history": true
+      },
+      "summary": "USD-M demo wallet does not hold four distinct fills for the time-window probe"
+    },
+    {
+      "id": "deribit-public-trades-window",
+      "class": "ledgered_state_dependent",
+      "venue": "deribit",
+      "methods": ["fetchTrades"],
+      "match": {
+        "empty_collection": true,
+        "sparse_history": true
+      },
+      "summary": "Deribit public tape does not always hold four distinct timestamps for the time-window probe"
     },
     {
       "id": "okx-empty-position",

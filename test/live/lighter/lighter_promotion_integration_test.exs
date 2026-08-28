@@ -10,6 +10,7 @@ defmodule Bourse.LighterPromotionIntegrationTest do
   alias Bourse.Order
   alias Bourse.OrderBook
   alias Bourse.Signing.Lighter, as: LighterSigning
+  alias Bourse.Test.LiveLane
   alias Bourse.Ticker
 
   @moduletag :integration
@@ -66,7 +67,10 @@ defmodule Bourse.LighterPromotionIntegrationTest do
     assert match?([[_price, _amount | _] | _], asks)
 
     assert {:ok, candles} = Bourse.fetch_ohlcv(exchange, symbol, "1m", limit: 2)
-    assert match?([[_timestamp, _open, _high, _low, _close, _volume] | _], candles)
+
+    accept_empty_or_populated!(candles, "fetchOHLCV", "lighter fetch_ohlcv returned no rows", fn rows ->
+      assert match?([[_timestamp, _open, _high, _low, _close, _volume] | _], rows)
+    end)
 
     assert {:error,
             %Error{
@@ -125,11 +129,23 @@ defmodule Bourse.LighterPromotionIntegrationTest do
     assert {:ok, liquidations} = Bourse.fetch_my_liquidations(exchange)
     assert Enum.all?(liquidations, &match?(%Bourse.Liquidation{}, &1))
 
-    assert {:ok, [%Bourse.FundingRateHistory{symbol: symbol} | _] = funding_history} =
-             Bourse.fetch_funding_rate_history(exchange, market.symbol, limit: 10)
+    case Bourse.fetch_funding_rate_history(exchange, market.symbol, limit: 10) do
+      {:ok, []} ->
+        LiveLane.accept_or_flunk!(
+          "lighter",
+          "fetchFundingRateHistory",
+          :empty_collection,
+          "lighter fetch_funding_rate_history returned no rows",
+          "promotion"
+        )
 
-    assert symbol == market.symbol
-    assert Enum.all?(funding_history, &match?(%Bourse.FundingRateHistory{}, &1))
+      {:ok, [%Bourse.FundingRateHistory{symbol: symbol} | _] = funding_history} ->
+        assert symbol == market.symbol
+        assert Enum.all?(funding_history, &match?(%Bourse.FundingRateHistory{}, &1))
+
+      other ->
+        flunk("lighter fetch_funding_rate_history failed: #{inspect(other)}")
+    end
   end
 
   @tag :dangerous
@@ -407,6 +423,14 @@ defmodule Bourse.LighterPromotionIntegrationTest do
   defp decimal!(value) do
     assert {:ok, decimal} = Decimal.cast(value)
     decimal
+  end
+
+  defp accept_empty_or_populated!([], method, message, _populated_fun) do
+    LiveLane.accept_or_flunk!("lighter", method, :empty_collection, message, "promotion")
+  end
+
+  defp accept_empty_or_populated!(rows, _method, _message, populated_fun) do
+    populated_fun.(rows)
   end
 
   defp next_nonce!(exchange, credentials) do

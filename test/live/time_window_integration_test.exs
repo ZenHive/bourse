@@ -442,6 +442,7 @@ defmodule Bourse.TimeWindowIntegrationTest do
 
   import Bourse.IntegrationHelper, only: [build_exchange: 2, require_credentials!: 2]
 
+  alias Bourse.Test.LiveLane
   alias Bourse.Test.TimeWindowProbeMatrix
 
   @moduletag :integration
@@ -462,13 +463,35 @@ defmodule Bourse.TimeWindowIntegrationTest do
 
   defp assert_honored_window(probe) do
     exchange = build_probe_exchange(probe)
-    discovery = probe_call!(probe, exchange, limit: @discovery_limit)
+
+    case probe_rows(probe, exchange, limit: @discovery_limit) do
+      {:ok, []} ->
+        accept_unexercised!(probe, :empty_collection, empty_rows_message(probe, limit: @discovery_limit))
+
+      {:ok, discovery} ->
+        assert_window_from_discovery(probe, exchange, discovery)
+
+      {:error, error} ->
+        flunk("#{probe.venue}.#{probe.method} failed for [limit: #{@discovery_limit}]: #{inspect(error)}")
+    end
+  end
+
+  defp assert_window_from_discovery(probe, exchange, discovery) do
     discovered_timestamps = timestamps!(probe, discovery)
 
-    assert length(discovered_timestamps) >= @minimum_distinct_timestamps,
-           "#{probe.venue}.#{probe.method} needs #{@minimum_distinct_timestamps} distinct live timestamps; " <>
-             "got #{inspect(discovered_timestamps)}"
+    if length(discovered_timestamps) >= @minimum_distinct_timestamps do
+      assert_window_bounds(probe, exchange, discovered_timestamps)
+    else
+      accept_unexercised!(
+        probe,
+        :sparse_history,
+        "#{probe.venue}.#{probe.method} needs #{@minimum_distinct_timestamps} distinct live timestamps; " <>
+          "got #{inspect(discovered_timestamps)}"
+      )
+    end
+  end
 
+  defp assert_window_bounds(probe, exchange, discovered_timestamps) do
     since_boundary = Enum.at(discovered_timestamps, div(length(discovered_timestamps), 3))
     until_boundary = Enum.at(discovered_timestamps, div(length(discovered_timestamps) * 2, 3))
     requested_since = max(since_boundary - @boundary_pad_ms, 0)
@@ -495,6 +518,10 @@ defmodule Bourse.TimeWindowIntegrationTest do
              "requested #{requested_until}, last #{last_timestamp}"
   end
 
+  defp accept_unexercised!(probe, observed, message) do
+    LiveLane.accept_or_flunk!(probe.venue, probe.method, observed, message, "time_window")
+  end
+
   defp build_probe_exchange(%{venue: venue, credentials: true, exchange_opts: exchange_opts}) do
     credentials = require_credentials!(venue, credential_options(venue))
     build_exchange(venue, Keyword.put(exchange_opts, :credentials, credentials))
@@ -510,13 +537,20 @@ defmodule Bourse.TimeWindowIntegrationTest do
   defp credential_options(_venue), do: []
 
   defp probe_call!(probe, exchange, window_opts) do
-    opts = Keyword.merge(probe.opts, window_opts)
-
-    case apply(Bourse, probe.method, [exchange | probe.args] ++ [opts]) do
+    case probe_rows(probe, exchange, window_opts) do
       {:ok, [_ | _] = rows} -> rows
-      {:ok, []} -> flunk("#{probe.venue}.#{probe.method} returned no rows for #{inspect(window_opts)}")
+      {:ok, []} -> flunk(empty_rows_message(probe, window_opts))
       {:error, error} -> flunk("#{probe.venue}.#{probe.method} failed for #{inspect(window_opts)}: #{inspect(error)}")
     end
+  end
+
+  defp probe_rows(probe, exchange, window_opts) do
+    opts = Keyword.merge(probe.opts, window_opts)
+    apply(Bourse, probe.method, [exchange | probe.args] ++ [opts])
+  end
+
+  defp empty_rows_message(probe, window_opts) do
+    "#{probe.venue}.#{probe.method} returned no rows for #{inspect(window_opts)}"
   end
 
   defp timestamps!(probe, rows) do
