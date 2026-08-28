@@ -126,6 +126,63 @@ venue-journey review.
 
 ---
 
+## 2026-08-28 — OKX `TransferEntry.id` is a `billId`, so `fetch_transfer/2` can never resolve an id that `fetch_transfers/1` returned
+
+**Status:** 🆕 confirmed live (orchestrator) — not consumer-reported. **This is a real client
+defect**, unlike the rest of the 2026-08-28 contract-lane reds, which adjudicated to empty
+sandbox state or host toolchain.
+
+`fetchTransfers` reads `privateGetAccountBillsArchive` (correctly filtered to `type: "1"`,
+the transfer bill type). Probed live against the OKX demo:
+
+```
+ROW billId="3858573567752257536" transId=nil type="1" subType="11"   # transfer out
+ROW billId="3858546950631964672" transId=nil type="1" subType="12"   # transfer in
+ROW billId="3766881906966519808" transId=nil type="1" subType="11"
+```
+
+**Genuine transfer rows carry no `transId` at all** — `account/bills-archive` does not return
+one. But `priv/venues/okx/authored/normalization.json`'s transfer field map declares
+
+```json
+"id": {"coercion": "safeString2", "key": "transId", "fallback_keys": ["billId"]}
+```
+
+so the parse silently falls back to `billId` and yields a plausible-looking 19-digit id.
+`fetchTransfer` then calls `privateGetAssetTransferState`, which only accepts a real
+`transId`, and rejects it:
+
+```
+transfer-state <- billId, type=1   -> {"51000", "Parameter transId error"}
+transfer-state <- billId           -> {"58129", "transId is incorrect or transId does not match with ‘type’"}
+```
+
+**Consumer impact:** the obvious composition — list transfers, then fetch one by its id —
+fails for every row on OKX. `Bourse.fetch_transfer/2` is unusable with ids this client itself
+produced.
+
+**Why it stayed invisible:** `fallback_keys` turns a missing field into a *wrong* value rather
+than `nil`. A nil id would have failed loudly at the first consumer; a billId looks like an id
+all the way to the venue's rejection.
+
+**The fix needs a carve decision, not a key swap.** Either (a) `TransferEntry.id` carries the
+`billId` and is documented as a bills-archive identifier, with `fetchTransfer` sourcing its
+`transId` elsewhere (the transfer-creating `POST /api/v5/asset/transfer` response is the only
+place OKX issues one); or (b) `fetchTransfers` moves to a source that returns `transId`; or
+(c) `fetchTransfer` is declared unreachable from a `fetchTransfers` id and ledgered. Whichever
+is chosen, **drop the `billId` fallback** — an id that cannot be fed back into the venue must
+be `nil`, not a different identifier. Audit the other venues' `id` field maps for the same
+`fallback_keys` shape.
+
+**Credit where the lane earned it:** this was found only because the REST-read contract case
+chains `strategy: resource` — `fetchTransfer` sources its argument from `fetchTransfers`, so
+the two methods are forced to compose. It surfaced as a red in every run of the 2026-08-28
+wave and six consecutive harness reviewers classified the cluster it sat in as
+"environmental / pre-existing" without probing it. The lane was right and the summary reading
+was wrong.
+
+---
+
 ## 2026-08-28 — alpaca's authored `errors.status_map` is silently dropped by the spec loader, so the venue has no HTTP-status error classification
 
 **Status:** 🆕 measured live (orchestrator triage of the task 674 reviewer's finding) — not consumer-reported.
@@ -224,7 +281,7 @@ the rest. That is the gate training its own users to ignore it.
   suite, and it was empty state.
 - ~~`lighter:fetchOHLCV: provider returned no rows`~~ — **adjudicated 2026-08-28: not a client defect, do not re-investigate.** Probed live against `testnet.zklighter.elliot.ai`: `publicGetCandles` with `market_id=1` (and `0`), `resolution="1h"`, a 24h `start_timestamp`/`end_timestamp` window and `count_back=0` answers HTTP 200 with `%{"code" => 200, "r" => "1h", "c" => []}`. The venue **echoes the resolution back**, and a parameterless call is rejected as `bad_request` — so the request is well-formed and understood; the testnet simply carries no candle history for the probed markets. Note this holds *despite* `priv/venues/lighter/authored/endpoints.json` marking `market_id` and `resolution` as `{"kind": "unresolved", "reason": "dynamic_construction"}`, which is what made this look like a parameter bug.
 - `hyperliquid:fetchPosition: expected Bourse.Position, got nil` and `binanceusdm:fetchPositionADLRank: expected ADLRank, got nil` — ambiguous between empty state and a parse gap.
-- `okx:fetchTransfer: transId is incorrect or transId does not match` — the argument the case supplies is rejected by the venue; fixture problem or real param shaping.
+- **`okx:fetchTransfer`** — **CONFIRMED A REAL DEFECT, 2026-08-28. Own entry below.**
 
 ---
 
