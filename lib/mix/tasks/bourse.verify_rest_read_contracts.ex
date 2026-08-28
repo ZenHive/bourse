@@ -32,6 +32,7 @@ defmodule Mix.Tasks.Bourse.VerifyRestReadContracts do
     venue = validate_venue!(venue)
     denominator = denominator(venue)
     File.mkdir_p!(Path.dirname(output_path))
+    File.rm(Ledger.hits_path())
 
     {command_output, _exit_status} =
       System.cmd(mix_executable!(), test_args(output_path, venue),
@@ -44,12 +45,16 @@ defmodule Mix.Tasks.Bourse.VerifyRestReadContracts do
     classification = classify_failures(report)
     print_summary(summary, output_path, classification)
 
-    shrinking? = summary.executed != summary.denominator
-    genuine? = classification.genuine != []
+    case lane_failures(summary, classification) do
+      [] ->
+        :ok
 
-    if shrinking? or genuine? do
-      Mix.shell().error(command_output)
-      raise Mix.Error, "provider-live REST-read contracts failed; report: #{output_path}"
+      reasons ->
+        Mix.shell().error(command_output)
+
+        raise Mix.Error,
+              "provider-live REST-read contracts failed — " <>
+                Enum.join(reasons, "; ") <> "; report: #{output_path}"
     end
 
     :ok
@@ -173,7 +178,39 @@ defmodule Mix.Tasks.Bourse.VerifyRestReadContracts do
   defp classify_failures(report) do
     failed = report |> Map.get("tests", []) |> Enum.filter(&(&1["state"] == "failed"))
     classified = Ledger.classify_report_failures(failed, Ledger.load!())
-    %{classified | ledgered: read_hits() ++ classified.ledgered}
+
+    classified
+    |> Map.put(:report_rows, length(failed))
+    |> Map.put(:ledgered, read_hits() ++ classified.ledgered)
+  end
+
+  @doc """
+  Reasons the classified lane must red; `[]` means every red was ledgered.
+
+  `summary.failures` counts failed + invalid + skipped + excluded, but only the
+  `failed` rows carry a message the ledger can classify. Anything the report did
+  not itemise as a failed row — a `setup_all` crash marking a whole venue
+  `invalid`, a skipped case, a tag filter excluding one — is unclassifiable and
+  reds the lane instead of passing as "no genuine failures".
+  """
+  @spec lane_failures(map(), map()) :: [String.t()]
+  def lane_failures(summary, classification) do
+    unaccounted = summary.failures - classification.report_rows
+
+    Enum.reject(
+      [
+        if(summary.executed != summary.denominator,
+          do: "lane shrank: executed=#{summary.executed} denominator=#{summary.denominator}"
+        ),
+        if(classification.genuine != [], do: "#{length(classification.genuine)} genuine failure(s)"),
+        if(unaccounted != 0,
+          do:
+            "#{unaccounted} failure(s) the report did not itemise as failed rows " <>
+              "(invalid/skipped/excluded), so the ledger could not classify them"
+        )
+      ],
+      &is_nil/1
+    )
   end
 
   defp read_hits do

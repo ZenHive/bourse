@@ -579,6 +579,9 @@ defmodule Bourse.Test.RestReadContractScenario do
 
   defp assert_provider_meaning_keys!(contract_case, value, keys) do
     cond do
+      contains_meaning?(value, keys) ->
+        :ok
+
       all_collections_empty?(value) and contract_case["success"]["empty_collection"] == "allowed" ->
         :ok
 
@@ -596,9 +599,10 @@ defmodule Bourse.Test.RestReadContractScenario do
         end
 
       true ->
-        assert contains_meaning?(value, keys),
-               "#{contract_case["id"]}: rows are present but none of them carry the semantic keys #{inspect(keys)}. " <>
-                 "This is a shape/carve mismatch, not empty account state."
+        flunk(
+          "#{contract_case["id"]}: rows are present but none of them carry the semantic keys #{inspect(keys)}. " <>
+            "This is a shape/carve mismatch, not empty account state."
+        )
     end
   end
 

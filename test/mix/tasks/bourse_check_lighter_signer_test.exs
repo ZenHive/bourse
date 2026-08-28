@@ -20,7 +20,22 @@ defmodule Mix.Tasks.Bourse.CheckLighterSignerTest do
     assert message =~ "cannot run: missing go"
     assert message =~ "mix bourse.build_lighter_signer"
     assert message =~ "C compiler"
-    assert CheckLighterSigner.cannot_run_exit_status() == 1
+  end
+
+  test "mix exits non-zero on the cannot-run path, so check.dispatch records a failing step" do
+    # Observes the real Mix.Error -> System.halt mapping rather than echoing the
+    # constant: without this, "the gate is red without Go" is an untested claim.
+    {output, status} =
+      System.cmd(
+        System.find_executable("mix"),
+        ["run", "--no-start", "-e", "Mix.Tasks.Bourse.CheckLighterSigner.run_with(fn _name -> nil end)"],
+        env: [{"MIX_ENV", "test"}],
+        stderr_to_stdout: true
+      )
+
+    assert status == CheckLighterSigner.cannot_run_exit_status()
+    assert status != 0
+    assert output =~ "Lighter native verification cannot run"
   end
 
   test "toolchain detection accepts resolved Go and C executables" do

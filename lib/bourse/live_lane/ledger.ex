@@ -10,13 +10,15 @@ defmodule Bourse.LiveLane.Ledger do
 
   @begin_marker "<!-- live-suite-classification:begin -->"
   @end_marker "<!-- live-suite-classification:end -->"
-  @hits_path "/tmp/bourse-ledger-hits.json"
+  # Needles must appear ONLY in the scenario's empty-state flunks. "empty account
+  # state" and "empty collection" are deliberately absent: the shape/carve
+  # mismatch message ends "...not empty account state", so either needle would
+  # ledger a genuine carve defect as state-dependent.
   @empty_message_needles [
     "provider account state",
     "did not exercise",
     "no id from",
-    "provider returned no rows",
-    "expected"
+    "provider returned no rows"
   ]
 
   defmodule ErrorConfirmed do
@@ -38,7 +40,20 @@ defmodule Bourse.LiveLane.Ledger do
 
   @doc "Path the suite writes ledgered hits to for the REST-read mix task."
   @spec hits_path() :: String.t()
-  def hits_path, do: @hits_path
+  def hits_path, do: hits_path(File.cwd!())
+
+  @doc """
+  Hits path scoped to a checkout root.
+
+  Several worktrees of this repo run their lanes concurrently on one host, so a
+  single shared `/tmp` name would let one run's hits be read as another's and
+  report a classification the lane never produced.
+  """
+  @spec hits_path(String.t()) :: String.t()
+  def hits_path(root) when is_binary(root) do
+    scope = :sha256 |> :crypto.hash(root) |> Base.encode16(case: :lower) |> binary_part(0, 12)
+    Path.join(System.tmp_dir!(), "bourse-ledger-hits-#{scope}.json")
+  end
 
   @doc "Classifies one observed live outcome against the ledger document."
   @spec classify(map(), term(), map() | nil) :: {:ledgered, map()} | :genuine
@@ -176,7 +191,9 @@ defmodule Bourse.LiveLane.Ledger do
 
   defp match_observed?(entry, {:error, %Error{} = error}) do
     match = entry["match"] || %{}
-    codes_match?(match["code"], error.code) and message_contains?(match, error.message)
+
+    error_selector?(match) and codes_match?(match["code"], error.code) and
+      message_contains?(match, error.message)
   end
 
   defp match_observed?(entry, {:empty_resource, _source}), do: empty_match?(entry)
@@ -187,6 +204,12 @@ defmodule Bourse.LiveLane.Ledger do
   defp empty_match?(entry) do
     match = entry["match"] || %{}
     match["empty_resource"] == true or match["empty_payload"] == true or match["empty_collection"] == true
+  end
+
+  # An empty-resource / empty-payload row must not swallow an unrelated provider
+  # error: `code` and `message_contains` absent used to wildcard-match every Error.
+  defp error_selector?(match) do
+    is_binary(match["code"]) or is_binary(match["message_contains"])
   end
 
   defp codes_match?(nil, _code), do: true
@@ -237,7 +260,7 @@ defmodule Bourse.LiveLane.Ledger do
   end
 
   defp persist_hits!(recorded) do
-    File.write!(@hits_path, Jason.encode!(recorded))
+    File.write!(hits_path(), Jason.encode!(recorded))
   end
 
   defp decode_document!(contents, path) do

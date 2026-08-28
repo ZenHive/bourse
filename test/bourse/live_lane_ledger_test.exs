@@ -124,4 +124,108 @@ defmodule Bourse.LiveLaneLedgerTest do
     assert missing_error.message =~ "shape/carve mismatch, not empty account state"
     refute missing_error.message =~ "provider returned no rows"
   end
+
+  test "a meaning key plus an empty nested list is not empty account state" do
+    contract_case = %{
+      "id" => "example:fetchStatus:0:publicGetStatus",
+      "method" => "fetchStatus",
+      "venue" => "example",
+      "success" => %{
+        "representation" => "raw",
+        "provider_meaning_keys" => ["status"]
+      }
+    }
+
+    value =
+      RawResponse.new(
+        %{"status" => "ok", "incidents" => []},
+        "example",
+        "fetchStatus",
+        :unverified
+      )
+
+    assert :ok = RestReadContractScenario.assert_live_value!(contract_case, value)
+  end
+
+  test "an empty-resource ledger row does not swallow an unrelated provider error" do
+    document = Ledger.load!()
+
+    error = %Error{
+      type: :exchange_error,
+      code: "10001",
+      message: "Unmatched request"
+    }
+
+    contract_case = %{
+      "venue" => "deribit",
+      "method" => "fetchOrder",
+      "id" => "deribit:fetchOrder:0:x"
+    }
+
+    assert :genuine = Ledger.classify(contract_case, {:error, error}, document)
+  end
+
+  test "the hits path is scoped per checkout so concurrent worktrees cannot cross-read" do
+    a = Ledger.hits_path("/data/worktrees/bourse/run-a")
+    b = Ledger.hits_path("/data/worktrees/bourse/run-b")
+
+    assert a != b
+    assert Path.dirname(a) == System.tmp_dir!()
+    assert Ledger.hits_path("/data/worktrees/bourse/run-a") == a
+  end
+
+  test "a shape/carve mismatch on a state-dependent method stays genuine" do
+    document = Ledger.load!()
+
+    tests = [
+      %{
+        "name" => "test okx:fetchOrder:0:privateGetTradeOrder",
+        "state" => "failed",
+        "message" =>
+          "okx:fetchOrder:0:privateGetTradeOrder: rows are present but none of them carry " <>
+            "the semantic keys [\"ordId\"]. This is a shape/carve mismatch, not empty account state."
+      }
+    ]
+
+    classified = Ledger.classify_report_failures(tests, document)
+
+    assert classified.ledgered == []
+    assert hd(classified.genuine)["name"] =~ "fetchOrder"
+  end
+
+  test "the empty-state flunks the scenario emits are still ledgered by message" do
+    document = Ledger.load!()
+
+    tests =
+      for message <- [
+            "okx:fetchOrder:0:x: provider account state has no id from fetchClosedOrders",
+            "okx:fetchOrder:0:x: provider account/market state did not exercise the read.",
+            "okx:fetchOrder:0:x: provider returned no rows (empty collection). This is empty " <>
+              "account state, not a missing-key carve."
+          ] do
+        %{"name" => "test okx:fetchOrder:0:x", "state" => "failed", "message" => message}
+      end
+
+    classified = Ledger.classify_report_failures(tests, document)
+
+    assert classified.genuine == []
+    assert length(classified.ledgered) == 3
+    assert Enum.all?(classified.ledgered, &(&1["class"] == "ledgered_state_dependent"))
+  end
+
+  test "a generic expected-true assertion on a ledgered method stays genuine" do
+    document = Ledger.load!()
+
+    tests = [
+      %{
+        "name" => "test deribit:fetchOrder:0:privateGetGetOrderState",
+        "state" => "failed",
+        "message" => "Assertion with == failed, expected true, got false"
+      }
+    ]
+
+    classified = Ledger.classify_report_failures(tests, document)
+    assert classified.ledgered == []
+    assert hd(classified.genuine)["name"] =~ "fetchOrder"
+  end
 end

@@ -37,7 +37,12 @@ defmodule Bourse.Test.RestReadContractOwnedState do
   end
 
   defp own_canceled_order(argument, contract_case, context) do
+    # Register cleanup before cancelling: a cancel that raises would otherwise
+    # leave the order resting on the sandbox forever. A second cancel of an
+    # already-cancelled order answers `order_not_found`, which `release_order!`
+    # treats as success.
     with {:ok, placed} <- place_resting_order(contract_case, context),
+         :ok <- register_cleanup!(context.exchange, placed),
          :ok <- cancel_now(context.exchange, placed) do
       field = field_from(placed, argument["field"])
 
@@ -82,6 +87,8 @@ defmodule Bourse.Test.RestReadContractOwnedState do
     ExUnit.Callbacks.on_exit(fn ->
       Journey.release_order!(exchange, id, symbol)
     end)
+
+    :ok
   end
 
   defp min_amount(%{limits: %{"amount" => %{"min" => min}}}) when is_number(min) and min > 0, do: min
