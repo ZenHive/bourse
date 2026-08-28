@@ -23356,7 +23356,7 @@ scored_at = "2026-08-28"
 id = "687"
 phase = 16
 bundle = "live_triage"
-status = "in_progress"
+status = "done"
 title = "The gates report green without running and red without a defect, so reviewers have learned to dismiss them"
 scores = { d = 6, b = 8, u = 8 }
 markers = ["bug"]
@@ -23406,9 +23406,16 @@ Authority for the per-case adjudications is the venue: probe the demo host befor
 red. A ledgered case is ledgered because a live call could not reach it, and the ledger records why
 it is unverified without discharging it.
 """
+implemented = "Landed by grok via merge-train; reviewer-approved (run run-1787932841788-4b99d9f8, 5853c25ff0b300137362ba30b4d54511170df24b)."
+delivered_by = "grok"
+verified = true
+verified_by = "claude"
+verification_ref = "harness-run:run-1787932841788-4b99d9f8"
 created_at = "2026-08-28"
 started_at = "2026-08-28"
 scored_at = "2026-08-28"
+done_at = "2026-08-28"
+shipped_in = "5853c25ff0b300137362ba30b4d54511170df24b"
 
 [[task]]
 id = "688"
