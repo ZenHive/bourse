@@ -30920,7 +30920,7 @@
       "phase": 16,
       "bundle": "live_e2e",
       "milestone": "v1_2",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Live trader journey for hyperliquid: REST round-trip, private-stream leg, error probes",
       "scores": {
         "d": 5,
@@ -30955,6 +30955,7 @@
       ],
       "body": "Mirror the bybit trader-journey exemplar (test/live/journeys/trader/bybit_test.exs, landed in 82af62f, including its private-stream describe block) for hyperliquid's testnet. Live-probe first, then pin. Test orders with cleanup are explicitly allowed on the testnet.\n\nVenue notes: DEX — HYPERLIQUID_TESTNET_API_KEY is the wallet address, _API_SECRET its private key; signing is the :hyperliquid pattern. Price/size precision on hyperliquid is instrument-specific and strict; take it from the loaded markets, not from bybit's shape.\n\nSupersedes the hyperliquid slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders on a DEX signing path) and parallel throughput across venues.\n",
       "created_at": "2026-08-24",
+      "started_at": "2026-08-28",
       "scored_at": "2026-08-24",
       "cross_repo": []
     },
