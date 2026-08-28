@@ -7,6 +7,12 @@ defmodule Bourse.LiveErrors.DeriveTest do
   @moduletag :network
   @moduletag :exchange_derive
 
+  # Deliberate bad-input probes, one venue per file. Invalid-symbol reads are
+  # already pinned by the REST-read contract lane (rest_read_contract.json
+  # error_cases) and invalid-credential probes have their own suite — this
+  # file carries only errors neither of those exercises. fetchOrder is not
+  # offered on derive, so the unknown-id probe is cancel_order.
+
   @symbol "BTC/USD:USDC"
   @subaccount_id 144_422
   @unknown_order_id "00000000-dead-beef-0000-000000000000"

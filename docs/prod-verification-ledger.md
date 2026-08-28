@@ -24,24 +24,6 @@ Entry template:
 
 ## Open
 
-### derive — private order WebSocket lifecycle (task 682, filed 2026-08-28)
-
-- Authored slices: `derive:websocket.auth`, `derive:websocket.dispatch.orders`
-- Blocked by: Bourse deliberately authors no Derive `auth_pattern`, so
-  `Bourse.WS.connect(exchange, :private)` returns `{:error, :no_auth_pattern}` before a
-  private subscription can be made. This is not evidence of a live order event.
-- The open question: whether the provisioned Admin session key receives its own create and
-  cancel events after `public/login` and an `orders.{subaccount_id}` subscription.
-- Evidence: Derive's provider-owned contract defines `public/login` with a `privateKey`, the
-  `orders` private channel, and error 14022 for a private channel on an unauthorized socket;
-  `priv/venues/derive/authored/venue.json` preserves those facts while the runtime config in
-  `lib/bourse/ws/spec_config.ex` honestly keeps `auth_pattern: nil`.
-- Exact call: implement no runtime wiring here; with a provider-conformant raw WS probe, sign
-  `public/login` using the registered demo Admin session key, subscribe to
-  `orders.144422`, then place and cancel one signed resting `BTC-PERP` order.
-- Expected evidence: authenticated subscription acknowledgement plus provider order frames
-  for both the order's open and cancelled states, correlated by `order_id`.
-
 ### eleven venues — sandbox-unhosted REST-read product surfaces (task 667, filed 2026-08-23)
 
 - Authored slices: runtime `fetch*` branches whose provider operation is not on the venue's
