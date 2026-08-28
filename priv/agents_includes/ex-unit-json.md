@@ -2,6 +2,8 @@
 
 AI-friendly JSON test output. Use instead of `mix test`. Default shows only failures.
 
+**`{:ex_unit_json, "~> 0.6"}` — pinned to 0.6.1**
+
 ### Install
 
 ```elixir
@@ -153,3 +155,8 @@ config :ex_unit_json, enforce_failed: true
 ```
 
 Blocks full test runs when failures exist unless `--failed` or a focused filter is used.
+
+### Does NOT cover
+
+- `AGENTS.md` — removed from the published package and hexdocs as of 0.6.1; it was internal contributor workflow material. The file remains in the GitHub repo (`ZenHive/ex_unit_json`) for cross-family reviewers.
+- Umbrella-specific merge behaviour beyond what the flags table documents (see CHANGELOG 0.5.1 for the full list of umbrella fixes).

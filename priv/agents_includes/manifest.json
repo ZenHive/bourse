@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "_doc": "Pinned external @-import sources for AGENTS.md generation (task 471). Each CLAUDE.md @~/.claude/includes/* line must resolve here \u2014 never via $HOME. Update a pin by replacing the file and refreshing sha256/bytes, then run mix bourse.agents_md.",
+  "_doc": "Pinned external @-import sources for AGENTS.md generation (task 471). Each CLAUDE.md @~/.claude/includes/* line must resolve here — never via $HOME. Update a pin by replacing the file and refreshing sha256/bytes, then run mix bourse.agents_md.",
   "max_depth": 5,
   "includes": {
     "~/.claude/includes/critical-rules.md": {
@@ -10,13 +10,13 @@
     },
     "~/.claude/includes/harness-workflow.md": {
       "path": "priv/agents_includes/harness-workflow.md",
-      "sha256": "a562311f4064a7d63ee6d0ef1300a452d3a9bda70c0d819db86519d1c8fa9ca3",
-      "bytes": 44488
+      "sha256": "f48aee2ca23a0d796dc7c9ba54002d8149c8b9bb36704beb16817ba5eaa1105e",
+      "bytes": 47738
     },
     "~/.claude/includes/ex-unit-json.md": {
       "path": "priv/agents_includes/ex-unit-json.md",
-      "sha256": "c09d6aa08054bb763e813a537d2bffd1b0802031f0918dfe65771f625a5d6d78",
-      "bytes": 9348
+      "sha256": "1f4a7e7480a06eb38582ccca8d48caee1beaaf81444fe5db5ccd548040fdffe8",
+      "bytes": 9769
     }
   }
 }
