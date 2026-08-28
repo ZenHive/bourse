@@ -219,6 +219,22 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
       end
     end
 
+    @tag venue: "derive"
+    test "a wrong signer fails the connection with the venue's reason" do
+      creds = require_credentials!(:derive, url: "https://docs.derive.xyz/reference/public-login")
+      # Valid secp256k1 key that is not a registered Admin session key for this wallet.
+      wrong = %{creds | secret: "0x1111111111111111111111111111111111111111111111111111111111111111"}
+      exchange = Exchange.new!(:derive, credentials: wrong, sandbox: true)
+
+      # Observed live 2026-08-28 against wss://api-demo.lyra.finance/ws:
+      # public/login with an unregistered signer answers JSON-RPC error
+      # 403 "Unauthorized or Forbidden" — not nginx's HTML 403, which is
+      # the REST edge-proxy surface. The socket is closed; this is not an
+      # open unauthenticated connection.
+      assert {:error, {:auth_failed, %{"code" => 403, "message" => "Unauthorized or Forbidden"}}} =
+               WS.connect(exchange, :private)
+    end
+
     @tag venue: "bybit"
     test "a bad secret fails the connection with the venue's reason" do
       creds = require_credentials!(:bybit, url: "https://testnet.bybit.com")

@@ -70,6 +70,14 @@ defmodule Bourse.WS.Auth.Eip191JsonrpcLoginTest do
                Eip191JsonrpcLogin.handle_auth_response(response, %{})
     end
 
+    test "unregistered signer is auth_failed from the venue's JSON-RPC 403" do
+      # Observed live 2026-08-28 on wss://api-demo.lyra.finance/ws public/login.
+      response = %{"error" => %{"code" => 403, "data" => nil, "message" => "Unauthorized or Forbidden"}}
+
+      assert {:error, {:auth_failed, %{"code" => 403, "message" => "Unauthorized or Forbidden"}}} =
+               Eip191JsonrpcLogin.handle_auth_response(response, %{})
+    end
+
     test "rejects an unrecognised frame" do
       assert {:error, {:auth_failed, %{"foo" => 1}}} =
                Eip191JsonrpcLogin.handle_auth_response(%{"foo" => 1}, %{})
