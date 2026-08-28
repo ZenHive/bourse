@@ -160,6 +160,9 @@ defmodule Bourse.Spec.Disk do
     Enum.reduce(endpoints, seed, &add_method(&1, &2, spec_root, shared))
   end
 
+  # Every path `resolve_ref!/3` can build is derived from these same endpoints, so
+  # a miss here means the precomputation and the resolver disagree. `Map.fetch!`
+  # makes that a loud raise instead of a silent per-ref re-read of the file.
   defp load_referenced_descriptors(endpoints, spec_root) do
     endpoints
     |> Enum.flat_map(&shared_descriptor_path(&1, spec_root))
@@ -206,9 +209,8 @@ defmodule Bourse.Spec.Disk do
     case String.split(ref, "#", parts: 2) do
       [family, key] ->
         path = Path.join([shared_root(spec_root), family, "descriptors.json"])
-        file = Map.get_lazy(shared, path, fn -> JsonDocument.decode_file!(path) end)
 
-        case Map.fetch(file, key) do
+        case Map.fetch(Map.fetch!(shared, path), key) do
           {:ok, descriptor} -> descriptor
           :error -> raise ArgumentError, "shared descriptor #{inspect(ref)} is missing from #{path}"
         end
