@@ -30666,7 +30666,7 @@
       "phase": 16,
       "bundle": "live_e2e",
       "milestone": "v1_2",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Live trader journey for alpaca: REST round-trip, private-stream leg, error probes",
       "scores": {
         "d": 4,
@@ -30700,6 +30700,7 @@
       ],
       "body": "Mirror the bybit trader-journey exemplar (test/live/journeys/trader/bybit_test.exs, landed in 82af62f, including its private-stream describe block) for alpaca's paper environment. Live-probe first, then pin: run the flow against paper-api.alpaca.markets before writing any assertion. Test orders with cleanup are explicitly allowed on the paper host; never point anything at the live-money host.\n\nVenue notes: ALPACA_API_KEY/SECRET, sandbox: true resolves the paper host. Pick a 24/7-tradable crypto pair from the loaded markets, not an equity, so the journey does not depend on exchange hours.\n\nSupersedes the alpaca slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.\n",
       "created_at": "2026-08-24",
+      "started_at": "2026-08-28",
       "scored_at": "2026-08-24",
       "cross_repo": []
     },

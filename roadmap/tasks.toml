@@ -22854,7 +22854,7 @@ id = "674"
 phase = 16
 bundle = "live_e2e"
 milestone = "v1_2"
-status = "pending"
+status = "in_progress"
 title = "Live trader journey for alpaca: REST round-trip, private-stream leg, error probes"
 scores = { d = 4, b = 7, u = 7 }
 acceptance_criteria = ["test/live/journeys/trader/alpaca_test.exs mirrors the bybit exemplar's structure: survey the market (market row, ticker, order book, balance with cross-field invariants), place a resting limit order with a wall-clock-unique clientOrderId, poll it open, assert side/type/price/amount echo, find it in fetch_open_orders, cancel it, poll it gone, cleanup via release_order! in an after block", "Every asserted error code/message was first observed live against the paper host and is pinned with a dated observation comment; Alpaca's own API docs are the semantic authority", "An in-flow rejection test asserts the venue's own error for an order the venue refuses (for example an amount below the instrument minimum), observed live", "test/live/errors/alpaca_test.exs carries at least one generic bad-input probe (unknown order id) asserting the live-observed error type and message, runs in the default suite, and duplicates neither the contract lane's invalid-symbol cases nor the invalid-credentials suite", "Where alpaca's private stream is wired, a describe block observes the placed order's event on the live stream mirroring the bybit private-stream block; if the stream leg is unreachable with our paper credentials, the case is recorded in docs/prod-verification-ledger.md instead of silently dropped", "mix test.json --quiet --include dangerous test/live/journeys/trader/alpaca_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes", "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"]
@@ -22870,6 +22870,7 @@ Venue notes: ALPACA_API_KEY/SECRET, sandbox: true resolves the paper host. Pick 
 Supersedes the alpaca slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.
 """
 created_at = "2026-08-24"
+started_at = "2026-08-28"
 scored_at = "2026-08-24"
 
 [[task]]
