@@ -10,8 +10,8 @@
     },
     "~/.claude/includes/harness-workflow.md": {
       "path": "priv/agents_includes/harness-workflow.md",
-      "sha256": "f48aee2ca23a0d796dc7c9ba54002d8149c8b9bb36704beb16817ba5eaa1105e",
-      "bytes": 47738
+      "sha256": "7c6dd88c578dd77fe79e504d43075116acae73ead7376f97641b954deb2c4b16",
+      "bytes": 48938
     },
     "~/.claude/includes/ex-unit-json.md": {
       "path": "priv/agents_includes/ex-unit-json.md",
