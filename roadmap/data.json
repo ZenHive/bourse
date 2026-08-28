@@ -31219,7 +31219,7 @@
       "id": "685",
       "phase": 16,
       "bundle": "live_triage",
-      "status": "pending",
+      "status": "blocked",
       "title": "Silent substitution is the class: a slice that does not fit must fail loudly, never resolve to a plausible wrong value",
       "scores": {
         "d": 7,
@@ -31265,6 +31265,7 @@
       "created_at": "2026-08-28",
       "started_at": "2026-08-28",
       "scored_at": "2026-08-28",
+      "blocked_reason": "land-cap exhausted after reflex_halt x2 (task 685, last run run-1787938095655-2dbbba0e)",
       "cross_repo": []
     },
     {

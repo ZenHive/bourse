@@ -23224,7 +23224,7 @@ shipped_in = "e6ef7ea35d42b966532a7db22c7b5166d0cbd13b"
 id = "685"
 phase = 16
 bundle = "live_triage"
-status = "pending"
+status = "blocked"
 title = "Silent substitution is the class: a slice that does not fit must fail loudly, never resolve to a plausible wrong value"
 scores = { d = 7, b = 8, u = 8 }
 markers = ["bug"]
@@ -23233,6 +23233,7 @@ out_of_scope = ["Normalizing bybit dated-future symbol ids, which is the Bourse.
 touches = ["lib/bourse/exchange.ex", "lib/bourse/spec/schema.ex", "lib/bourse/signing/hmac_recipe.ex", "lib/bourse/unified/read_parse.ex", "lib/bourse/unified/deribit_position_units.ex", "priv/venues/okx/authored/normalization.json", "priv/venues/alpaca/authored/errors.json", "test/bourse", "test/live/okx", "test/live/journeys/trader/alpaca_test.exs"]
 assignee = "codex"
 model = "gpt-5.6-sol"
+blocked_reason = "land-cap exhausted after reflex_halt x2 (task 685, last run run-1787938095655-2dbbba0e)"
 body = """
 Four live instances of one mechanism: when the authored slice or the provider payload does
 not fit what the code expects, the code substitutes a guess instead of failing. Each was
