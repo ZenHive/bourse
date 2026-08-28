@@ -13,9 +13,13 @@ defmodule Bourse.BybitAuthoredIntegrationTest do
     exchange = build_exchange(:bybit, sandbox: true)
     assert {:ok, loaded} = Bourse.load_markets(exchange)
 
-    dated_future = Enum.find(loaded.markets, &(&1.type == "future" and is_binary(&1.id)))
-    assert %Bourse.Market{id: native_id} = dated_future
-    assert native_id =~ ~r/^[A-Z0-9]+-\d{2}[A-Z]{3}\d{2}$/
+    dated_future =
+      Enum.find(loaded.markets, fn market ->
+        is_binary(market.id) and Regex.match?(~r/^[A-Z0-9]+-\d{1,2}[A-Z]{3}\d{2}$/, market.id)
+      end)
+
+    assert %Bourse.Market{id: native_id} = dated_future,
+           "bybit testnet catalog had no dated future id; cannot prove parse_extended against a live id"
 
     assert {:ok, parsed} = Bourse.Symbol.parse_extended(native_id)
     assert parsed.expiry =~ ~r/^\d{6}$/

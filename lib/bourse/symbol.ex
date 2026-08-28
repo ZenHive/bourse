@@ -57,6 +57,9 @@ defmodule Bourse.Symbol do
   # KrakenFutures contract prefixes
   @known_contract_prefixes ["PI_", "PF_", "FI_", "FF_", "PV_"]
 
+  # Bybit dated futures: BASEQUOTE-DDMMMYY. Digit-capable base covers 1000PEPEUSDT-28AUG26.
+  @bybit_dated_future ~r/^([A-Z0-9]+?)(USDT|USDC|USD)-(\d{1,2}[A-Z]{3}\d{2})$/
+
   # Month abbreviations for date conversion
   @month_abbrevs %{
     1 => "JAN",
@@ -135,7 +138,8 @@ defmodule Bourse.Symbol do
   - `symbol` - The exchange-specific symbol (e.g., "BTCUSDT")
   - `format` - Map with `:separator` and `:case` keys
   - `opts` - Keyword options:
-    - `:aliases` - Currency alias map (e.g., `%{"XBT" => "BTC"}`)
+    - `:aliases` - Currency alias map applied to each currency after splitting
+      (e.g., `%{"XBT" => "BTC"}`). Not a substring rewrite of the raw id.
     - `:quote_currencies` - Custom list of known quote currencies for no-separator splitting
 
   ## Returns
@@ -254,11 +258,17 @@ defmodule Bourse.Symbol do
   ad-hoc map (`base`, `quote`, `settle`, `expiry`, `strike`, `option_type`).
   Dot-access and map-pattern matching (`%{base: b}`) both work on the struct.
 
+  Venue-native Bybit dated linear/inverse ids (`BASEQUOTE-DDMMMYY`) also parse:
+  position rows carry that form rather than the unified symbol.
+
       Bourse.Symbol.parse_extended("BTC/USDT:USDT-260327")
       #=> {:ok, %Bourse.Symbol.ParsedSymbol{base: "BTC", quote: "USDT", settle: "USDT", expiry: "260327", strike: nil, option_type: nil}}
 
       Bourse.Symbol.parse_extended("BTC/USD:BTC-260112-84000-C")
       #=> {:ok, %Bourse.Symbol.ParsedSymbol{base: "BTC", quote: "USD", settle: "BTC", expiry: "260112", strike: "84000", option_type: "C"}}
+
+      Bourse.Symbol.parse_extended("DOGEUSDT-28AUG26")
+      #=> {:ok, %Bourse.Symbol.ParsedSymbol{base: "DOGE", quote: "USDT", settle: "USDT", expiry: "260828", strike: nil, option_type: nil}}
   """
   @spec parse_extended(String.t()) :: {:ok, parsed_extended()} | {:error, :invalid_format}
   def parse_extended(symbol) when is_binary(symbol) do
@@ -324,19 +334,15 @@ defmodule Bourse.Symbol do
   """
   @spec reverse_aliases(map()) :: map()
   def reverse_aliases(aliases) when is_map(aliases) do
-    Enum.reduce(aliases, %{}, fn {exchange_code, unified_code}, reversed ->
-      case Map.fetch(reversed, unified_code) do
-        :error ->
-          Map.put(reversed, unified_code, exchange_code)
+    aliases
+    |> Enum.group_by(fn {_exchange, unified} -> unified end, fn {exchange, _unified} -> exchange end)
+    |> Map.new(fn
+      {unified, [exchange]} ->
+        {unified, exchange}
 
-        {:ok, ^exchange_code} ->
-          reversed
-
-        {:ok, other_exchange_code} ->
-          raise ArgumentError,
-                "cannot reverse non-injective aliases: #{inspect(unified_code)} is mapped from " <>
-                  "#{inspect(Enum.sort([other_exchange_code, exchange_code]))}"
-      end
+      {unified, exchanges} ->
+        raise ArgumentError,
+              "cannot reverse non-injective aliases: #{inspect(unified)} is mapped from #{inspect(Enum.sort(exchanges))}"
     end)
   end
 
@@ -405,7 +411,8 @@ defmodule Bourse.Symbol do
 
   Supported formats: `:yymmdd`, `:ddmmmyy`, `:yyyymmdd`.
   Raises `ArgumentError` naming both formats and the input when the pair is
-  unsupported or the input does not match the declared source format.
+  unsupported. Raises `ArgumentError` naming the input and source format when
+  the input does not match the declared source format.
 
       Bourse.Symbol.convert_date("260327", :yymmdd, :ddmmmyy)
       #=> "27MAR26"
@@ -552,17 +559,17 @@ defmodule Bourse.Symbol do
     end
   end
 
-  # Bybit dated linear futures use BASEQUOTE-DDMMMYY. This is the same authored
-  # future_ddmmmyy grammar handled by from_exchange_id/3, exposed here because
-  # provider position rows carry the native id rather than a unified symbol.
+  # Bybit dated futures use BASEQUOTE-DDMMMYY — the same grammar as
+  # parse_bybit_future/2, with a digit-capable base so 1000PEPEUSDT-28AUG26
+  # matches. Exposed here because position rows carry the native id.
   defp parse_native_ddmmmyy_future(symbol) do
-    with [_, pair, date] <- Regex.run(~r/^([A-Z0-9]+)-(\d{1,2}[A-Z]{3}\d{2})$/, symbol),
-         split when split != pair <- find_and_split(pair, nil),
-         [base, quote_currency] <- String.split(split, "/", parts: 2) do
-      expiry = convert_date(date, :ddmmmyy, :yymmdd)
-      parse_extended_pair("#{base}/#{quote_currency}", "#{quote_currency}-#{expiry}")
-    else
-      _other -> :error
+    case Regex.run(@bybit_dated_future, symbol) do
+      [_, base, quote_currency, date] ->
+        expiry = convert_date(date, :ddmmmyy, :yymmdd)
+        parse_extended_pair("#{base}/#{quote_currency}", "#{quote_currency}-#{expiry}")
+
+      _other ->
+        :error
     end
   end
 
@@ -813,6 +820,11 @@ defmodule Bourse.Symbol do
   This is the public-API counterpart of carve C27: combo native ids are not a
   special-cased branch here; they take the identity path because the single-leg
   grammar cannot represent them.
+
+  No-separator splitting extends `get_quote_currencies/1` with the venue's
+  `common_currencies` keys and values, so authored aliases are quote candidates.
+  `normalize/3` can pass an explicit `:quote_currencies` list; this function
+  does not take that option.
 
   ## Parameters
 
@@ -1219,7 +1231,7 @@ defmodule Bourse.Symbol do
 
   # Bybit: BTCUSDT-16JAN26 → BTC/USDT:USDT-260116
   defp parse_bybit_future(id, aliases) do
-    ~r/^([A-Z]+)(USDT|USDC|USD)-(\d{1,2}[A-Z]{3}\d{2})$/
+    @bybit_dated_future
     |> Regex.run(id)
     |> build_quote_settled_ddmmmyy_future(aliases)
   end
