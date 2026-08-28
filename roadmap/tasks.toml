@@ -22619,7 +22619,7 @@ id = "666"
 phase = 14
 bundle = "live_triage"
 milestone = "v1_1"
-status = "pending"
+status = "in_progress"
 title = "Option position notional is derived per venue with no shared rule, so the same field carries a different unit on each one"
 scores = { d = 4, b = 6, u = 3 }
 markers = ["bug", "parallel"]
@@ -22638,6 +22638,7 @@ Task 664 gave deribit option positions a real `notional` derived from the venue'
 Three venues, three units, one field name. Decide the unified contract for what `notional` MEANS on an option row, name the authority for each venue from that venue's own documentation, and make every venue either satisfy it or state per venue why it cannot. The deliverable is the shared rule plus a cross-venue test that holds it, not a third per-venue patch.
 """
 created_at = "2026-08-22"
+started_at = "2026-08-28"
 scored_at = "2026-08-22"
 
 [[task]]

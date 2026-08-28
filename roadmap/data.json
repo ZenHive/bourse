@@ -30251,7 +30251,7 @@
       "phase": 14,
       "bundle": "live_triage",
       "milestone": "v1_1",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Option position notional is derived per venue with no shared rule, so the same field carries a different unit on each one",
       "scores": {
         "d": 4,
@@ -30292,6 +30292,7 @@
       ],
       "body": "Task 664 gave deribit option positions a real `notional` derived from the venue's own contract (`contracts * contract_size * mark_price`, in the settlement currency, carve `C-T664`). The audit it ran surfaced that the other option-carrying venues do not share a rule — each arrives at `notional` by a different route, and at least one of them produces a unit nobody chose:\n\n- okx coin-margined options (`BTC-USD-...-C`) match `okx_inverse_inst_id?/1` (`lib/bourse/unified/read_parse.ex:3371`), so an option row takes the INVERSE PERPETUAL formula `contracts * ctVal / markPx` against a premium-denominated `markPx`. On an okx option row that is a different figure from either published field (observed `notionalUsd` 649.947 vs `optVal` 0.0000001084604966; re-confirm against a live okx demo option position). Without loaded markets it is nil for lack of `contract_size`.\n- bybit option rows read `_bourse_notional` from the published `positionValue`.\n- deribit now derives from the premium per task 664.\n\nThree venues, three units, one field name. Decide the unified contract for what `notional` MEANS on an option row, name the authority for each venue from that venue's own documentation, and make every venue either satisfy it or state per venue why it cannot. The deliverable is the shared rule plus a cross-venue test that holds it, not a third per-venue patch.\n",
       "created_at": "2026-08-22",
+      "started_at": "2026-08-28",
       "scored_at": "2026-08-22",
       "cross_repo": []
     },
