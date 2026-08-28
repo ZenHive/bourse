@@ -22955,9 +22955,10 @@ id = "677"
 phase = 16
 bundle = "live_e2e"
 milestone = "v1_2"
-status = "pending"
+status = "in_progress"
 title = "Live trader journey for binancecoinm: inverse REST round-trip, listen-key stream leg, error probes"
 scores = { d = 5, b = 7, u = 7 }
+depends_on = ["676"]
 acceptance_criteria = ["test/live/journeys/trader/binancecoinm_test.exs mirrors the bybit exemplar's structure on the inverse BTCUSD_PERP contract: survey, resting limit order with wall-clock-unique clientOrderId, poll open, echo assertions, fetch_open_orders membership, cancel, poll gone, cleanup via release_order! in an after block", "Every asserted error code/message was first observed live against demo-dapi.binance.com and is pinned with a dated observation comment; Binance's own COIN-M futures docs are the semantic authority", "An in-flow rejection test asserts the venue's own error for a refused order, observed live", "test/live/errors/binancecoinm_test.exs carries at least one generic bad-input probe (unknown order id) asserting the live-observed error, runs in the default suite, and duplicates neither the contract lane's invalid-symbol cases nor the invalid-credentials suite", "The listen-key stream leg observes the placed order's own ORDER_TRADE_UPDATE on demo-dstream, mirroring the bybit private-stream block; success is a real event about our order id, never a :connected status", "If the COIN-M wallet holds no margin, the journey fails loudly naming the operator remediation (the UI faucet credits USD-M only; COIN-M is re-funded through the UI) — it never skips or converts the funding gap into a pass", "mix test.json --quiet --include dangerous test/live/journeys/trader/binancecoinm_test.exs is green, the errors file is green in the default run, the no-faked-provider guard stays green, and mix check.dispatch passes", "No new shared helper modules beside Bourse.Test.Journeys.Case; flow logic stays inside the venue file"]
 out_of_scope = ["option_seller and market_maker roles", "USD-M (its own task)", "changes to the REST-read contract lane"]
 touches = ["test/live/journeys/trader/binancecoinm_test.exs", "test/live/errors/binancecoinm_test.exs"]
@@ -22971,8 +22972,8 @@ Venue notes: same BINANCE_FUTURES_TEST_API_KEY/SECRET pair as USD-M — one acco
 Supersedes the binancecoinm slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.
 """
 created_at = "2026-08-24"
+started_at = "2026-08-28"
 scored_at = "2026-08-24"
-depends_on = ["676"]
 
 [[task]]
 id = "678"
