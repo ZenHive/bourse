@@ -4,6 +4,7 @@ defmodule Bourse.Journeys.Trader.LighterTest do
   alias Bourse.Error
   alias Bourse.Market
   alias Bourse.Order
+  alias Bourse.Signing.Lighter, as: LighterSigning
 
   @moduletag :exchange_lighter
 
@@ -12,9 +13,18 @@ defmodule Bourse.Journeys.Trader.LighterTest do
   @resting_ratio "0.99"
   @maximum_client_order_index 2_000_000_000
 
+  # Lighter's account_all_orders stream is unreachable with the configured
+  # testnet key (docs/prod-verification-ledger.md, task 681). Observed live
+  # 2026-08-28 against wss://testnet.zklighter.elliot.ai/stream:
+  # `WS.connect(:private)` → `:no_url_configured`; public subscribe without
+  # `auth` → code 20001 "auth field is required"; subscribe with a signed
+  # auth token → code 20013 "invalid auth: couldnt find account".
+
   describe "a trader's day" do
     test "survey the market, place a resting limit buy, track it, cancel it" do
       exchange = sandbox_exchange!(@venue)
+      on_exit(fn -> terminate_lighter_helper(exchange) end)
+
       assert %Market{} = market = Enum.find(exchange.markets, &(&1.base == "BTC" and &1.type == "swap"))
       assert market.active
       assert market.contract and market.linear and market.settle == "USDC"
@@ -22,8 +32,10 @@ defmodule Bourse.Journeys.Trader.LighterTest do
 
       {:ok, ticker} = Bourse.fetch_ticker(exchange, market.symbol)
       assert ticker.symbol == market.symbol
-      assert ticker.bid > 0 and ticker.ask > 0 and ticker.bid <= ticker.ask
-      assert_recent_timestamp!(ticker.timestamp)
+      # Observed live 2026-08-28: ticker carries last/mark/index; bid, ask,
+      # and timestamp are nil. The book is the spread authority.
+      assert is_number(ticker.last) and ticker.last > 0
+      assert is_number(ticker.mark_price) and ticker.mark_price > 0
 
       {:ok, book} = Bourse.fetch_order_book(exchange, market.symbol)
       assert [[best_bid, bid_size] | _] = book.bids
@@ -31,8 +43,7 @@ defmodule Bourse.Journeys.Trader.LighterTest do
       assert best_bid <= best_ask
       assert bid_size > 0 and ask_size > 0
 
-      {:ok, balance} = Bourse.fetch_balance(exchange)
-      assert map_size(balance.total) > 0
+      balance = fetch_balance!(exchange)
 
       for {currency, total} <- balance.total, is_number(total) do
         free = balance.free[currency] || 0.0
@@ -82,25 +93,49 @@ defmodule Bourse.Journeys.Trader.LighterTest do
   end
 
   describe "orders the venue rejects" do
-    test "an order for an account the venue no longer recognizes is refused" do
+    test "sendTx refuses an order when the testnet account is not found" do
       exchange = sandbox_exchange!(@venue)
+      on_exit(fn -> terminate_lighter_helper(exchange) end)
+
       market = Enum.find(exchange.markets, &(&1.base == "BTC" and &1.type == "swap"))
       {:ok, book} = Bourse.fetch_order_book(exchange, market.symbol)
       [[best_bid, _] | _] = book.bids
 
+      # Observed live 2026-08-28 on testnet.zklighter.elliot.ai: sendTx
+      # rejects every create for this configured account with code 21100
+      # "account not found" (publicGetAccount is 29404 "not found" first).
+      # A below-minimum amount could not be isolated — the account check
+      # wins. Re-pin against a recognized account once credentials refresh.
       assert {:error, %Error{} = error} =
-               Bourse.create_order(exchange, market.symbol, "limit", "buy", 1_000_000.0,
+               Bourse.create_order(exchange, market.symbol, "limit", "buy", @amount,
                  price: resting_price(best_bid, market),
                  client_order_index: unique_client_order_index(),
-                 nonce: next_nonce!(exchange)
+                 nonce: next_nonce!(exchange),
+                 timeInForce: "PO"
                )
 
-      # Observed live 2026-08-28: sendTx rejects this configured testnet
-      # account with code 21100 and "account not found".
       assert error.type == :exchange_error
       assert error.http_status == 400
       assert error.code == 21_100
       assert error.message == "account not found"
+    end
+  end
+
+  defp fetch_balance!(exchange) do
+    case Bourse.fetch_balance(exchange) do
+      {:ok, balance} ->
+        assert map_size(balance.total) > 0
+        balance
+
+      {:error, %Error{code: 29_404, message: message}} ->
+        flunk("""
+        Lighter testnet account is not found (code 29404: #{message}).
+        Refresh LIGHTER_TESTNET_API_KEY_INDEX, LIGHTER_TESTNET_ACCOUNT_INDEX, \
+        and LIGHTER_TESTNET_API_PRIVATE_KEY, then re-run this journey.
+        """)
+
+      {:error, error} ->
+        flunk("fetch_balance failed: #{inspect(error)}")
     end
   end
 
@@ -167,6 +202,17 @@ defmodule Bourse.Journeys.Trader.LighterTest do
           {:error, error} -> flunk("cleanup for order #{id} failed: #{inspect(error)}")
         end
     end
+  end
+
+  defp terminate_lighter_helper(exchange) do
+    config =
+      (exchange.signing_config || %{})
+      |> Map.put(:base_url, exchange.base_urls["private"])
+      |> Map.put(:testnet, exchange.sandbox)
+      |> Map.put(:exchange_options, exchange.options || %{})
+
+    _ = LighterSigning.terminate_helper(exchange.credentials, config)
+    :ok
   end
 
   defp credential_integer!(value) when is_integer(value), do: value

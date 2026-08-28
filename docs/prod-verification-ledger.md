@@ -856,17 +856,30 @@ Entry template:
   `Bourse.fetch_withdrawals(ex)`.
 - Expected evidence: a populated row matching the withdrawal's id, currency, amount and status.
 
-### lighter — authenticated order stream and zk-signed trader journey (task 681, filed 2026-08-28)
+### lighter — authenticated order stream (task 681, filed 2026-08-28)
 
-- Blocked slice: the `account_all_orders/{ACCOUNT_ID}` private stream leg documented by
-  Lighter; the REST journey remains authored in `test/live/journeys/trader/lighter_test.exs`.
-- Blocked by: the configured testnet account answers code 29404 `not found` on the public
-  account lookup before an order can be placed. The execution image also shipped without Go
-  or a packaged signer helper; a temporary local Go toolchain built the first-party helper and
-  isolated the remaining failure to the testnet account rather than zk signing.
-- Exact call: refresh `LIGHTER_TESTNET_API_KEY_INDEX`, `LIGHTER_TESTNET_ACCOUNT_INDEX`, and
-  `LIGHTER_TESTNET_API_PRIVATE_KEY`, then run
-  `mix test.json --quiet --include dangerous test/live/journeys/trader/lighter_test.exs`.
+- Authored slices: omit — this is a live journey stream leg, not an authored field-map
+- Blocked by: the configured Lighter testnet account is not recognized, so the
+  documented `account_all_orders/{ACCOUNT_ID}` channel cannot observe a placed
+  order. Live 2026-08-28 against `testnet.zklighter.elliot.ai` /
+  `wss://testnet.zklighter.elliot.ai/stream`: `publicGetAccount` → code 29404
+  `"not found"`; signed `sendTx` create → code 21100 `"account not found"`;
+  private REST reads → code 20013 `"invalid auth: couldnt find account"`;
+  `Bourse.WS.connect(ex, :private)` → `:no_url_configured` (authored
+  `websocket.urls.private` is null; Lighter serves account channels on the
+  public stream); public subscribe without `auth` → code 20001 `"auth field is
+  required"`; subscribe with a helper-minted auth token → code 20013 `"invalid
+  auth: couldnt find account"`. The REST trader journey stays in
+  `test/live/journeys/trader/lighter_test.exs` and fails loudly on 29404 until
+  credentials are refreshed.
+- The open question: does a resting zk-signed limit order's `client_order_index`
+  appear in an `update/account_all_orders` frame before cancel, and disappear
+  from the live open-order read after cancel?
+- Exact call: refresh `LIGHTER_TESTNET_API_KEY_INDEX`, `LIGHTER_TESTNET_ACCOUNT_INDEX`,
+  and `LIGHTER_TESTNET_API_PRIVATE_KEY`, then run
+  `mix test.json --quiet --include dangerous test/live/journeys/trader/lighter_test.exs`
+  and subscribe on the public stream to `account_all_orders/{ACCOUNT_ID}` with
+  the signed `auth` token required by https://apidocs.lighter.xyz/docs/websocket-reference
 - Expected evidence: the resting order's `client_order_index` appears in an
-  `update/account_all_orders` frame before cancellation; the same order disappears from the
-  live open-order read after cancellation.
+  `update/account_all_orders` frame before cancellation; the same order disappears
+  from the live open-order read after cancellation.
