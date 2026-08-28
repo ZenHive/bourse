@@ -152,15 +152,15 @@ defmodule Bourse.Symbol do
     # Apply case normalization to uppercase
     symbol = if sym_case == :lower, do: String.upcase(symbol), else: symbol
 
-    # Apply currency aliases (exchange code → unified code)
-    symbol = apply_currency_aliases(symbol, aliases)
-
     # Split by separator
-    case sep do
-      "" -> find_and_split(symbol, quote_currencies)
-      "/" -> symbol
-      _ -> String.replace(symbol, sep, "/")
-    end
+    normalized =
+      case sep do
+        "" -> find_and_split(symbol, quote_currencies)
+        "/" -> symbol
+        _ -> String.replace(symbol, sep, "/")
+      end
+
+    apply_currency_aliases(normalized, aliases)
   end
 
   # ===========================================================================
@@ -262,10 +262,16 @@ defmodule Bourse.Symbol do
   """
   @spec parse_extended(String.t()) :: {:ok, parsed_extended()} | {:error, :invalid_format}
   def parse_extended(symbol) when is_binary(symbol) do
-    case String.split(symbol, ":") do
-      [pair] -> parse_extended_pair(pair, nil)
-      [pair, settle_and_rest] -> parse_extended_pair(pair, settle_and_rest)
-      _ -> {:error, :invalid_format}
+    case parse_native_ddmmmyy_future(symbol) do
+      {:ok, _parsed} = result ->
+        result
+
+      :error ->
+        case String.split(symbol, ":") do
+          [pair] -> parse_extended_pair(pair, nil)
+          [pair, settle_and_rest] -> parse_extended_pair(pair, settle_and_rest)
+          _ -> {:error, :invalid_format}
+        end
     end
   end
 
@@ -310,13 +316,28 @@ defmodule Bourse.Symbol do
 
   @doc """
   Inverts an alias map for reverse lookups (unified → exchange code).
+  Raises `ArgumentError` when multiple exchange codes map to the same unified
+  code, because no map inversion can preserve both authored codes.
 
       Bourse.Symbol.reverse_aliases(%{"XBT" => "BTC", "ZEUR" => "EUR"})
       #=> %{"BTC" => "XBT", "EUR" => "ZEUR"}
   """
   @spec reverse_aliases(map()) :: map()
   def reverse_aliases(aliases) when is_map(aliases) do
-    Map.new(aliases, fn {k, v} -> {v, k} end)
+    Enum.reduce(aliases, %{}, fn {exchange_code, unified_code}, reversed ->
+      case Map.fetch(reversed, unified_code) do
+        :error ->
+          Map.put(reversed, unified_code, exchange_code)
+
+        {:ok, ^exchange_code} ->
+          reversed
+
+        {:ok, other_exchange_code} ->
+          raise ArgumentError,
+                "cannot reverse non-injective aliases: #{inspect(unified_code)} is mapped from " <>
+                  "#{inspect(Enum.sort([other_exchange_code, exchange_code]))}"
+      end
+    end)
   end
 
   # ===========================================================================
@@ -396,15 +417,20 @@ defmodule Bourse.Symbol do
       #=> "20260327"
   """
   @spec convert_date(String.t(), atom(), atom()) :: String.t()
-  def convert_date(date_str, format, format), do: date_str
+  def convert_date(date_str, format, format) do
+    validate_date!(date_str, format)
+    date_str
+  end
 
-  def convert_date(<<yy::binary-2, mm::binary-2, dd::binary-2>>, :yymmdd, :ddmmmyy) do
+  def convert_date(<<yy::binary-2, mm::binary-2, dd::binary-2>> = date_str, :yymmdd, :ddmmmyy) do
+    validate_date!(date_str, :yymmdd)
     month = String.to_integer(mm)
     day = String.to_integer(dd)
     "#{day}#{Map.fetch!(@month_abbrevs, month)}#{yy}"
   end
 
   def convert_date(date_str, :ddmmmyy, :yymmdd) do
+    validate_date!(date_str, :ddmmmyy)
     date_upper = String.upcase(date_str)
 
     case Regex.run(~r/^(\d{1,2})([A-Z]{3})(\d{2})$/, date_upper) do
@@ -419,8 +445,15 @@ defmodule Bourse.Symbol do
     end
   end
 
-  def convert_date(<<_century::binary-2, rest::binary>>, :yyyymmdd, :yymmdd), do: rest
-  def convert_date(date_str, :yymmdd, :yyyymmdd), do: "20#{date_str}"
+  def convert_date(<<_century::binary-2, rest::binary>> = date_str, :yyyymmdd, :yymmdd) do
+    validate_date!(date_str, :yyyymmdd)
+    rest
+  end
+
+  def convert_date(date_str, :yymmdd, :yyyymmdd) do
+    validate_date!(date_str, :yymmdd)
+    "20#{date_str}"
+  end
 
   def convert_date(date_str, :yyyymmdd, :ddmmmyy) do
     date_str |> convert_date(:yyyymmdd, :yymmdd) |> convert_date(:yymmdd, :ddmmmyy)
@@ -519,6 +552,20 @@ defmodule Bourse.Symbol do
     end
   end
 
+  # Bybit dated linear futures use BASEQUOTE-DDMMMYY. This is the same authored
+  # future_ddmmmyy grammar handled by from_exchange_id/3, exposed here because
+  # provider position rows carry the native id rather than a unified symbol.
+  defp parse_native_ddmmmyy_future(symbol) do
+    with [_, pair, date] <- Regex.run(~r/^([A-Z0-9]+)-(\d{1,2}[A-Z]{3}\d{2})$/, symbol),
+         split when split != pair <- find_and_split(pair, nil),
+         [base, quote_currency] <- String.split(split, "/", parts: 2) do
+      expiry = convert_date(date, :ddmmmyy, :yymmdd)
+      parse_extended_pair("#{base}/#{quote_currency}", "#{quote_currency}-#{expiry}")
+    else
+      _other -> :error
+    end
+  end
+
   # Parses "USDT" or "USDT-260327" or "BTC-260112-84000-C"
   defp parse_derivative_suffix(base, quote_currency, settle_and_rest) do
     parts = String.split(settle_and_rest, "-")
@@ -569,9 +616,13 @@ defmodule Bourse.Symbol do
   defp apply_currency_aliases(symbol, aliases) when map_size(aliases) == 0, do: symbol
 
   defp apply_currency_aliases(symbol, aliases) do
-    Enum.reduce(aliases, symbol, fn {from, to}, acc ->
-      String.replace(acc, from, to)
-    end)
+    case String.split(symbol, "/", parts: 2) do
+      [base, quote_currency] ->
+        "#{apply_alias(base, aliases)}/#{apply_alias(quote_currency, aliases)}"
+
+      [_unsplit] ->
+        symbol
+    end
   end
 
   # ===========================================================================
@@ -1448,8 +1499,10 @@ defmodule Bourse.Symbol do
 
   # No-separator splitting with alias-aware best-match selection
   defp split_no_separator(symbol, aliases) do
+    quote_currencies = get_quote_currencies(Map.keys(aliases) ++ Map.values(aliases))
+
     all_matches =
-      for q <- @sorted_quote_currencies, String.ends_with?(symbol, q) do
+      for q <- quote_currencies, String.ends_with?(symbol, q) do
         {String.replace_suffix(symbol, q, ""), q}
       end
 
@@ -1473,6 +1526,73 @@ defmodule Bourse.Symbol do
 
   defp pad_two(n) when n < 10, do: "0#{n}"
   defp pad_two(n), do: "#{n}"
+
+  defp validate_date!(date_str, :yymmdd) do
+    case Regex.run(~r/^(\d{2})(\d{2})(\d{2})$/, date_str) do
+      [_, year, month, day] ->
+        validate_calendar_date!(
+          date_str,
+          2000 + String.to_integer(year),
+          String.to_integer(month),
+          String.to_integer(day),
+          :yymmdd
+        )
+
+      _other ->
+        raise_invalid_date!(date_str, :yymmdd)
+    end
+  end
+
+  defp validate_date!(date_str, :yyyymmdd) do
+    case Regex.run(~r/^(\d{4})(\d{2})(\d{2})$/, date_str) do
+      [_, year, month, day] ->
+        validate_calendar_date!(
+          date_str,
+          String.to_integer(year),
+          String.to_integer(month),
+          String.to_integer(day),
+          :yyyymmdd
+        )
+
+      _other ->
+        raise_invalid_date!(date_str, :yyyymmdd)
+    end
+  end
+
+  defp validate_date!(date_str, :ddmmmyy) do
+    case Regex.run(~r/^(\d{1,2})([A-Za-z]{3})(\d{2})$/, date_str) do
+      [_, day, month, year] ->
+        month_number = Map.get(@month_numbers, String.upcase(month))
+
+        if month_number do
+          validate_calendar_date!(
+            date_str,
+            2000 + String.to_integer(year),
+            month_number,
+            String.to_integer(day),
+            :ddmmmyy
+          )
+        else
+          raise_invalid_date!(date_str, :ddmmmyy)
+        end
+
+      _other ->
+        raise_invalid_date!(date_str, :ddmmmyy)
+    end
+  end
+
+  defp validate_date!(date_str, format), do: raise_invalid_date!(date_str, format)
+
+  defp validate_calendar_date!(date_str, year, month, day, format) do
+    case Date.new(year, month, day) do
+      {:ok, _date} -> :ok
+      {:error, _reason} -> raise_invalid_date!(date_str, format)
+    end
+  end
+
+  defp raise_invalid_date!(date_str, format) do
+    raise ArgumentError, "#{inspect(date_str)} does not match declared source format #{inspect(format)}"
+  end
 
   # Bybit linear future ids pad the day (`04SEP26`). Do not use this on
   # Deribit — its live ids keep convert_date/3's unpadded width (`4SEP26`).
