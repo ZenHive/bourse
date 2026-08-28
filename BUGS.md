@@ -71,6 +71,30 @@ roadmap.
 
 ---
 
+## 2026-08-28 — OKX already-canceled cancel classifies as `:exchange_error` code `"1"`, not `:order_not_found` 51400
+
+**Status:** 🆕 measured live (task 679 trader journey) — not consumer-reported.
+
+`POST /api/v5/trade/cancel-order` for an order that is already canceled (or filled, or
+missing) answers HTTP 200 with a batch envelope: outer `code` `"1"`, `msg` `"All operations
+failed"`, and the per-order outcome only in `data[0]` (`sCode` `"51400"`, `sMsg` `"Order
+cancellation failed as the order has been filled, canceled or does not exist."`).
+
+Authored mapping of `51400` is `OrderNotFound` (`priv/venues/okx/authored/raw.json`).
+Classification keys `runtime_code_fields: ["code"]`, so the typed error is
+`%Error{type: :exchange_error, code: "1"}`. `Bourse.Test.Journeys.Case.release_order!/3`
+therefore missed the already-gone case until it grew an explicit `sCode 51400` clause.
+
+**Observed live 2026-08-28** on `www.okx.com` with `x-simulated-trading: 1`, after a
+successful cancel of a resting `BTC-USDT-SWAP` limit (ordId `3871666065072578560`).
+Authority: OKX API v5 51400 (https://www.okx.com/docs-v5/en/#error-code).
+
+**Not fixed here.** Using `data[0].sCode` when the outer code is `"1"` would retype every
+OKX batch refusal (including the 51121 lot-size rejection the journey pins). That is a
+classification change, not a journey-lane patch.
+
+---
+
 ## 2026-08-28 — `Bourse.WS.connect/3` swallows `:no_auth_pattern` and hands back an open **unauthenticated** private socket
 
 **Status:** 🆕 measured live (orchestrator, harness wave 665/673/681/682) — not consumer-reported.
