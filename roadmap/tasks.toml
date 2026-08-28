@@ -22955,7 +22955,7 @@ id = "677"
 phase = 16
 bundle = "live_e2e"
 milestone = "v1_2"
-status = "in_progress"
+status = "done"
 title = "Live trader journey for binancecoinm: inverse REST round-trip, listen-key stream leg, error probes"
 scores = { d = 5, b = 7, u = 7 }
 depends_on = ["676"]
@@ -22971,9 +22971,16 @@ Venue notes: same BINANCE_FUTURES_TEST_API_KEY/SECRET pair as USD-M — one acco
 
 Supersedes the binancecoinm slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.
 """
+implemented = "Landed by codex via merge-train; reviewer-approved (run run-1787889600110-556ff322, ea50bf6908aec1400b8bf97583ed2253b9936b35)."
+delivered_by = "codex"
+verified = true
+verified_by = "cursor"
+verification_ref = "harness-run:run-1787889600110-556ff322"
 created_at = "2026-08-24"
 started_at = "2026-08-28"
 scored_at = "2026-08-24"
+done_at = "2026-08-28"
+shipped_in = "ea50bf6908aec1400b8bf97583ed2253b9936b35"
 
 [[task]]
 id = "678"

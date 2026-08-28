@@ -30824,7 +30824,7 @@
       "phase": 16,
       "bundle": "live_e2e",
       "milestone": "v1_2",
-      "status": "in_progress",
+      "status": "done",
       "title": "Live trader journey for binancecoinm: inverse REST round-trip, listen-key stream leg, error probes",
       "scores": {
         "d": 5,
@@ -30859,10 +30859,17 @@
         "test/live/journeys/trader/binancecoinm_test.exs",
         "test/live/errors/binancecoinm_test.exs"
       ],
+      "shipped_in": "ea50bf6908aec1400b8bf97583ed2253b9936b35",
       "body": "Mirror the bybit trader-journey exemplar (test/live/journeys/trader/bybit_test.exs, landed in 82af62f, including its private-stream describe block) for binance COIN-M futures on demo-dapi.binance.com. Live-probe first, then pin. Test orders with cleanup are explicitly allowed on the demo account.\n\nVenue notes: same BINANCE_FUTURES_TEST_API_KEY/SECRET pair as USD-M — one account, two separate wallets, so this task is serialized behind the USD-M journey (never run both against the account in parallel). BTCUSD_PERP is inverse at 100 USD notional per contract; COIN-M's PUT listenKey returns the key in the body; the private stream lives on demo-dstream with keys from dapiPrivate endpoints. DELETE /dapi/v1/allOpenOrders returns code 200 even with nothing resting — a safe idempotent cleanup hook.\n\nSupersedes the binancecoinm slice of tasks 668/669 (superseded 2026-08-24: the exhaustive-inventory write/WS architecture was replaced by the role-journey lane per operator decision). Routing trigger: live external-system evidence (real sandbox orders) and parallel throughput across venues.\n",
       "created_at": "2026-08-24",
       "started_at": "2026-08-28",
+      "done_at": "2026-08-28",
       "scored_at": "2026-08-24",
+      "implemented": "Landed by codex via merge-train; reviewer-approved (run run-1787889600110-556ff322, ea50bf6908aec1400b8bf97583ed2253b9936b35).",
+      "delivered_by": "codex",
+      "verified": true,
+      "verified_by": "cursor",
+      "verification_ref": "harness-run:run-1787889600110-556ff322",
       "cross_repo": []
     },
     {
