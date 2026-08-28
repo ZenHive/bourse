@@ -204,8 +204,8 @@ Transform raw exchange responses into unified structs via compile-time field map
 | Task 21b | ✅ | 🎁 **parsers** · Unified Type Schemas [D:2/B:7/U:8 → Eff:3.75?] 🎯 |
 | Task 44 | ✅ | 🎁 **v4_adopt** · 🚀 **v0_7_0** · Response Shape Transformers (reduce scope pending upstream Task 83) [D:4/B:8/U:8 → Eff:2.0?] 🎯 |
 | Task 116 | ⛔ | 🎁 **parsers** · Catalog 2026-04-21 integration-run failures into a persistent evidence artifact [D:3/B:5/U:5 → Eff:1.67?] 🚀 |
-| Task 515 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Error classification silently drops market-type-scoped exception sub-maps [D:6/B:8/U:7 → Eff:1.25] 📋 |
-| Task 518 `[CX]` | ✅ | 🎁 **authored_specs** · Author the error-classification market scope instead of inferring it from base-URL text [D:5/B:7/U:6 → Eff:1.3] 📋 |
+| Task 515 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Error classification silently drops market-type-scoped exception sub-maps [D:6/B:8/U:7 → Eff:1.25?] 📋 |
+| Task 518 `[CX]` | ✅ | 🎁 **authored_specs** · Author the error-classification market scope instead of inferring it from base-URL text [D:5/B:7/U:6 → Eff:1.3?] 📋 |
 <!-- TASKS:END -->
 
 ## Phase 7: WebSocket (Real-Time Streaming) — Unified Layer
@@ -742,18 +742,18 @@ The authored-specs pivot workstream (see [docs/authored-specs.md](docs/authored-
 | Task 502 `[P]` | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Replay the shared Binance corpus for binanceusdm in the fixture replay gate [D:2/B:6/U:5 → Eff:2.75?] 🎯 |
 | Task 503 `[P]` | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · T-D/OKX: derivative market identity — carve the _UM instId grammar into canonical unified symbols [D:5/B:7/U:6 → Eff:1.3?] 📋 |
 | Task 504 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · OKX _UM carve: scope the quote-settled suffix to the USD family and extend it to SWAP instIds [D:3/B:7/U:6 → Eff:2.17?] 🎯 |
-| Task 514 | ✅ | 🎁 **authored_specs** · 🐛 Make %CCXT.OrderBook{} level arity a real contract, and confront okx's count-or-id column [D:4/B:8/U:8 → Eff:2.0] 🎯 |
-| Task 516 | ✅ | 🎁 **authored_specs** · Author each supported venue's oracle profile instead of inferring graded sets from exemption lists [D:5/B:7/U:5 → Eff:1.2] 📋 |
-| Task 517 `[CX]` | ✅ | 🎁 **authored_specs** · No signing pattern may exist that no supported venue routes to [D:3/B:5/U:3 → Eff:1.33] 📋 |
-| Task 519 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Compute binary oracle provenance from reality manifests and add the oracle gate [D:7/B:9/U:9 → Eff:1.29] 📋 |
-| Task 520 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Capture recorded real error responses as a first-class evidence category [D:4/B:7/U:7 → Eff:1.75] 🚀 |
-| Task 521 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Close the reality-recording gaps: alpaca, lighter, binancecoinm and the critical-slot residue [D:7/B:8/U:8 → Eff:1.14] 📋 |
-| Task 522 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Bulk-capture public accepted-request goldens across all ten venues [D:5/B:8/U:7 → Eff:1.5] 🚀 |
-| Task 523 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Retire the CCXT tier-2 oracle machinery and flip verification to the reality gate [D:8/B:9/U:6 → Eff:0.94] ⚠️ |
-| Task 524 | ✅ | 🎁 **authored_specs** · Decide the client's remaining vendored reference slice: recorded seeds or documented carry [D:4/B:5/U:4 → Eff:1.12] 📋 |
-| Task 525 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Unified public reads must round-trip live on each venue's own market symbols [D:5/B:8/U:7 → Eff:1.5] 🚀 |
-| Task 526 | ✅ | 🎁 **authored_specs** · Converge task 521: close residual critical-slot evidence and flip the oracle gate to hard-fail per venue [D:5/B:7/U:5 → Eff:1.2] 📋 |
-| Task 527 | ✅ | 🎁 **authored_specs** · Always-on VPS runner for the live-drift lane: full ten-venue coverage without the unreachable allowlist [D:3/B:6/U:3 → Eff:1.5] 🚀 |
+| Task 514 | ✅ | 🎁 **authored_specs** · 🐛 Make %CCXT.OrderBook{} level arity a real contract, and confront okx's count-or-id column [D:4/B:8/U:8 → Eff:2.0?] 🎯 |
+| Task 516 | ✅ | 🎁 **authored_specs** · Author each supported venue's oracle profile instead of inferring graded sets from exemption lists [D:5/B:7/U:5 → Eff:1.2?] 📋 |
+| Task 517 `[CX]` | ✅ | 🎁 **authored_specs** · No signing pattern may exist that no supported venue routes to [D:3/B:5/U:3 → Eff:1.33?] 📋 |
+| Task 519 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Compute binary oracle provenance from reality manifests and add the oracle gate [D:7/B:9/U:9 → Eff:1.29?] 📋 |
+| Task 520 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Capture recorded real error responses as a first-class evidence category [D:4/B:7/U:7 → Eff:1.75?] 🚀 |
+| Task 521 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Close the reality-recording gaps: alpaca, lighter, binancecoinm and the critical-slot residue [D:7/B:8/U:8 → Eff:1.14?] 📋 |
+| Task 522 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Bulk-capture public accepted-request goldens across all ten venues [D:5/B:8/U:7 → Eff:1.5?] 🚀 |
+| Task 523 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Retire the CCXT tier-2 oracle machinery and flip verification to the reality gate [D:8/B:9/U:6 → Eff:0.94?] ⚠️ |
+| Task 524 | ✅ | 🎁 **authored_specs** · Decide the client's remaining vendored reference slice: recorded seeds or documented carry [D:4/B:5/U:4 → Eff:1.12?] 📋 |
+| Task 525 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Unified public reads must round-trip live on each venue's own market symbols [D:5/B:8/U:7 → Eff:1.5?] 🚀 |
+| Task 526 | ✅ | 🎁 **authored_specs** · Converge task 521: close residual critical-slot evidence and flip the oracle gate to hard-fail per venue [D:5/B:7/U:5 → Eff:1.2?] 📋 |
+| Task 527 | ✅ | 🎁 **authored_specs** · Always-on VPS runner for the live-drift lane: full ten-venue coverage without the unreachable allowlist [D:3/B:6/U:3 → Eff:1.5?] 🚀 |
 | Task 528 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Derive: close the live-red private read slices — subaccount threading, actionable missing-identifier error, balance free/used mapping [D:4/B:7/U:5 → Eff:1.5] 🚀 |
 | Task 529 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Reconcile the live integration suites with landed contracts and current venue state [D:5/B:6/U:5 → Eff:1.1] 📋 |
 | Task 530 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Binance-family: correct USD-M multi-assets balance free/used mapping and live trading-fee contracts [D:5/B:8/U:7 → Eff:1.5] 🚀 |
