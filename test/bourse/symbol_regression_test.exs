@@ -125,7 +125,8 @@ defmodule Bourse.SymbolRegressionTest do
       for {input, source, target} <- [
             {"BANANA", :yyyymmdd, :yymmdd},
             {"nonsense", :yymmdd, :yyyymmdd},
-            {"2026-03-27", :yyyymmdd, :yymmdd}
+            {"2026-03-27", :yyyymmdd, :yymmdd},
+            {"BANANA", :yyyymmdd, :yyyymmdd}
           ] do
         assert_raise ArgumentError, ~r/does not match declared source format/, fn ->
           Symbol.convert_date(input, source, target)

@@ -9,6 +9,16 @@ defmodule Bourse.BybitAuthoredIntegrationTest do
   alias Bourse.Order
   alias Bourse.Trade
 
+  @milliseconds_per_hour 60 * 60 * 1000
+  @trade_limit 50
+  # Demo host for C28 balance branch pin (granted fake funds). Not sandbox/testnet.
+  @bybit_demo_url "https://api-demo.bybit.com"
+  @demo_convert_unsupported_code 10_032
+  @demo_convert_unsupported_message "Demo trading are not supported."
+
+  @moduletag :integration
+  @moduletag :network
+
   test "live dated linear future ids parse without prior normalization" do
     exchange = build_exchange(:bybit, sandbox: true)
     assert {:ok, loaded} = Bourse.load_markets(exchange)
@@ -25,16 +35,6 @@ defmodule Bourse.BybitAuthoredIntegrationTest do
     assert parsed.expiry =~ ~r/^\d{6}$/
     assert parsed.quote in ["USDT", "USDC", "USD"]
   end
-
-  @milliseconds_per_hour 60 * 60 * 1000
-  @trade_limit 50
-  # Demo host for C28 balance branch pin (granted fake funds). Not sandbox/testnet.
-  @bybit_demo_url "https://api-demo.bybit.com"
-  @demo_convert_unsupported_code 10_032
-  @demo_convert_unsupported_message "Demo trading are not supported."
-
-  @moduletag :integration
-  @moduletag :network
 
   test "public spot and linear reads need no caller category workaround" do
     exchange = build_exchange(:bybit, sandbox: true)
