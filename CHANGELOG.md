@@ -38,6 +38,10 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   It inventories 409 sandbox-native branches across the eleven runtime venues
   and hits the venue host for each one. Product surfaces the provisioned
   sandboxes do not host remain on the prod-verification ledger.
+- `mix bourse.provision_lighter` provisions a Lighter testnet account from an
+  L1 wallet, derives the configured zk API public key, signs ChangePubKey with
+  the native helper, submits it, and verifies the registered key and advanced
+  nonce. The L1 private key stays outside credentials and the native helper.
 
 ### Changed
 
@@ -77,11 +81,12 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   overwrite the terminal "filled" row, adlQuantile contract cases no longer
   asserting fields the venue never sends, and every genuinely unreachable
   branch recorded in `docs/prod-verification-ledger.md` instead of hidden.
-- Deribit option positions derive premium notional as
-  `abs(contracts) × contract_size × abs(mark_price)` when loaded markets provide
-  a positive contract size, and label it with the option settlement currency.
-  Without loaded market units the notional remains nil rather than assuming a
-  contract size.
+- Option-position `notional` consistently means absolute mark-to-market premium
+  value: Deribit derives it as
+  `abs(contracts) × contract_size × abs(mark_price)`, while OKX and Bybit use
+  `optVal` and `positionValue`. Values retain their settlement currency; when
+  required market units are unavailable, notional remains nil rather than
+  assuming a contract size.
 - Request shaping keeps a caller-supplied native key when the authored unified
   source is missing, so a Deribit `reduce_only` is no longer dropped.
 - Bybit `fetchBalance` passes the `coin` filter to
