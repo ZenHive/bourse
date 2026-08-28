@@ -19,6 +19,8 @@ defmodule Mix.Tasks.Bourse.VerifyRestReadContracts do
 
   use Mix.Task
 
+  alias Bourse.LiveLane.Ledger
+
   @default_output_path "/tmp/bourse-rest-read-contracts.json"
   @live_root "test/live"
 
@@ -31,7 +33,7 @@ defmodule Mix.Tasks.Bourse.VerifyRestReadContracts do
     denominator = denominator(venue)
     File.mkdir_p!(Path.dirname(output_path))
 
-    {command_output, exit_status} =
+    {command_output, _exit_status} =
       System.cmd(mix_executable!(), test_args(output_path, venue),
         env: [{"MIX_ENV", "test"}],
         stderr_to_stdout: true
@@ -39,9 +41,13 @@ defmodule Mix.Tasks.Bourse.VerifyRestReadContracts do
 
     report = read_report!(output_path, command_output)
     summary = summarize(report, denominator)
-    print_summary(summary, output_path)
+    classification = classify_failures(report)
+    print_summary(summary, output_path, classification)
 
-    if exit_status != 0 or incomplete?(summary) do
+    shrinking? = summary.executed != summary.denominator
+    genuine? = classification.genuine != []
+
+    if shrinking? or genuine? do
       Mix.shell().error(command_output)
       raise Mix.Error, "provider-live REST-read contracts failed; report: #{output_path}"
     end
@@ -151,10 +157,29 @@ defmodule Mix.Tasks.Bourse.VerifyRestReadContracts do
     summary.executed != summary.denominator or summary.failures != 0 or summary.result != "passed"
   end
 
-  defp print_summary(summary, output_path) do
+  defp print_summary(summary, output_path, classification) do
     Mix.shell().info(
       "REST-read contracts denominator=#{summary.denominator} " <>
         "executed=#{summary.executed} failures=#{summary.failures} report=#{output_path}"
     )
+
+    Mix.shell().info(Ledger.format_summary(classification.ledgered, length(classification.genuine)))
+
+    Enum.each(classification.genuine, fn test ->
+      Mix.shell().info("  genuine: #{test["name"]}")
+    end)
+  end
+
+  defp classify_failures(report) do
+    failed = report |> Map.get("tests", []) |> Enum.filter(&(&1["state"] == "failed"))
+    classified = Ledger.classify_report_failures(failed, Ledger.load!())
+    %{classified | ledgered: read_hits() ++ classified.ledgered}
+  end
+
+  defp read_hits do
+    case File.read(Ledger.hits_path()) do
+      {:ok, contents} -> Jason.decode!(contents)
+      {:error, _reason} -> []
+    end
   end
 end

@@ -11,7 +11,9 @@ defmodule Bourse.Test.RestReadContractScenario do
 
   alias Bourse.Error
   alias Bourse.Exchange
+  alias Bourse.LiveLane.Ledger
   alias Bourse.RawResponse
+  alias Bourse.Test.RestReadContractOwnedState
   alias Bourse.Test.RestReadContracts
   alias Bourse.Testnet
   alias Bourse.Unified
@@ -58,6 +60,10 @@ defmodule Bourse.Test.RestReadContractScenario do
     result = apply(Bourse, method, [context.exchange | args] ++ [opts])
     assert_success!(contract_case, result, resolved)
   rescue
+    confirmed in [Ledger.ErrorConfirmed] ->
+      Ledger.record(confirmed)
+      :ok
+
     error in [ExUnit.AssertionError, ArgumentError] ->
       reraise error, __STACKTRACE__
 
@@ -282,15 +288,55 @@ defmodule Bourse.Test.RestReadContractScenario do
 
     case value do
       nil ->
-        flunk(
-          "#{contract_case["id"]}: provider account state has no #{argument["field"]} from #{argument["source_method"]}"
-        )
+        own_or_ledger_resource!(argument, contract_case, context, collection?)
 
       value when collection? ->
         [value]
 
       value ->
         value
+    end
+  end
+
+  defp own_or_ledger_resource!(argument, contract_case, context, collection?) do
+    owned = Map.put(contract_case, "resolved_symbol", market_symbol!(context, contract_case))
+
+    case RestReadContractOwnedState.ensure(argument, owned, context) do
+      {:ok, value} when collection? ->
+        [value]
+
+      {:ok, value} ->
+        value
+
+      :unownable ->
+        ledger_empty_resource!(argument, contract_case)
+
+      {:error, reason} ->
+        flunk(
+          "#{contract_case["id"]}: failed to create sandbox state for #{argument["source_method"]}: #{format_reason(reason)}"
+        )
+    end
+  end
+
+  defp ledger_empty_collection!(contract_case) do
+    case Ledger.classify(contract_case, :empty_collection) do
+      {:ledgered, entry} ->
+        Ledger.confirm!(entry, contract_case)
+
+      :genuine ->
+        flunk(unexercised_message(contract_case))
+    end
+  end
+
+  defp ledger_empty_resource!(argument, contract_case) do
+    case Ledger.classify(contract_case, {:empty_resource, argument["source_method"]}) do
+      {:ledgered, entry} ->
+        Ledger.confirm!(entry, contract_case)
+
+      :genuine ->
+        flunk(
+          "#{contract_case["id"]}: provider account state has no #{argument["field"]} from #{argument["source_method"]}"
+        )
     end
   end
 
@@ -343,10 +389,7 @@ defmodule Bourse.Test.RestReadContractScenario do
   defp successful_rows!(other, contract_case, source),
     do: flunk("#{contract_case["id"]}: resource source #{source} returned #{inspect(other)}")
 
-  defp payload_rows!(payload, contract_case, source) do
-    rows = find_first_collection(payload)
-    if rows == [], do: flunk("#{contract_case["id"]}: provider account state for #{source} is empty"), else: rows
-  end
+  defp payload_rows!(payload, _contract_case, _source), do: find_first_collection(payload)
 
   defp find_first_collection(value) when is_list(value), do: value
 
@@ -378,8 +421,15 @@ defmodule Bourse.Test.RestReadContractScenario do
     :ok
   end
 
-  defp assert_success!(contract_case, {:error, reason}, _resolved),
-    do: flunk("#{contract_case["id"]}: live provider success failed: #{format_reason(reason)}")
+  defp assert_success!(contract_case, {:error, reason}, _resolved) do
+    case Ledger.classify(contract_case, {:error, reason}) do
+      {:ledgered, entry} ->
+        Ledger.confirm!(entry, contract_case)
+
+      :genuine ->
+        flunk("#{contract_case["id"]}: live provider success failed: #{format_reason(reason)}")
+    end
+  end
 
   defp assert_success!(contract_case, other, _resolved),
     do: flunk("#{contract_case["id"]}: live provider returned #{inspect(other)}")
@@ -410,7 +460,10 @@ defmodule Bourse.Test.RestReadContractScenario do
 
   defp assert_representation!(%{"success" => %{"representation" => "positional_rows"} = success} = contract_case, value) do
     assert is_list(value), "#{contract_case["id"]}: expected positional provider rows"
-    assert value != [], "#{contract_case["id"]}: provider returned no rows"
+
+    if value == [] do
+      ledger_empty_collection!(contract_case)
+    end
 
     assert Enum.all?(value, &(is_list(&1) and length(&1) >= success["minimum_length"])),
            "#{contract_case["id"]}: provider returned an invalid positional row"
@@ -422,7 +475,11 @@ defmodule Bourse.Test.RestReadContractScenario do
 
     case success["collection"] do
       "single" ->
-        assert is_struct(value, module), "#{contract_case["id"]}: expected #{inspect(module)}, got #{inspect(value)}"
+        if value in [nil, []] do
+          ledger_empty_collection!(contract_case)
+        else
+          assert is_struct(value, module), "#{contract_case["id"]}: expected #{inspect(module)}, got #{inspect(value)}"
+        end
 
       collection when collection in ["list", "map"] ->
         assert_collection!(contract_case, value, module, collection)
@@ -432,8 +489,8 @@ defmodule Bourse.Test.RestReadContractScenario do
   defp assert_collection!(contract_case, value, module, "list") do
     assert is_list(value), "#{contract_case["id"]}: expected a provider list, got #{inspect(value)}"
 
-    if empty_unexercised?(contract_case) do
-      assert value != [], unexercised_message(contract_case)
+    if empty_unexercised?(contract_case) and value == [] do
+      ledger_empty_collection!(contract_case)
     end
 
     if value != [] do
@@ -445,8 +502,8 @@ defmodule Bourse.Test.RestReadContractScenario do
   defp assert_collection!(contract_case, value, module, "map") do
     assert is_map(value), "#{contract_case["id"]}: expected a provider map, got #{inspect(value)}"
 
-    if empty_unexercised?(contract_case) do
-      assert map_size(value) > 0, unexercised_message(contract_case)
+    if empty_unexercised?(contract_case) and map_size(value) == 0 do
+      ledger_empty_collection!(contract_case)
     end
 
     if map_size(value) > 0 do
@@ -485,24 +542,12 @@ defmodule Bourse.Test.RestReadContractScenario do
          _resolved
        ) do
     keys = contract_case["success"]["provider_meaning_keys"]
-
-    refute all_collections_empty?(payload),
-           "#{contract_case["id"]}: provider returned no rows. Populate the sandbox account so this " <>
-             "read has data, or ledger the branch in docs/prod-verification-ledger.md"
-
-    assert contains_meaning?(payload, keys),
-           "#{contract_case["id"]}: raw provider payload contains none of the semantic keys #{inspect(keys)}"
+    assert_provider_meaning_keys!(contract_case, payload, keys)
   end
 
   defp assert_meaning!(%{"success" => %{"representation" => "nested_map"}} = contract_case, value, _resolved) do
     keys = contract_case["success"]["provider_meaning_keys"]
-
-    refute all_collections_empty?(value),
-           "#{contract_case["id"]}: provider returned no rows. Populate the sandbox account so this " <>
-             "read has data, or ledger the branch in docs/prod-verification-ledger.md"
-
-    assert contains_meaning?(value, keys),
-           "#{contract_case["id"]}: provider map contains none of the semantic keys #{inspect(keys)}"
+    assert_provider_meaning_keys!(contract_case, value, keys)
   end
 
   defp assert_meaning!(
@@ -530,6 +575,31 @@ defmodule Bourse.Test.RestReadContractScenario do
     end)
 
     assert_symbol_meaning!(contract_case, values, resolved)
+  end
+
+  defp assert_provider_meaning_keys!(contract_case, value, keys) do
+    cond do
+      all_collections_empty?(value) and contract_case["success"]["empty_collection"] == "allowed" ->
+        :ok
+
+      all_collections_empty?(value) ->
+        case Ledger.classify(contract_case, :empty_payload) do
+          {:ledgered, entry} ->
+            Ledger.confirm!(entry, contract_case)
+
+          :genuine ->
+            flunk(
+              "#{contract_case["id"]}: provider returned no rows (empty collection). " <>
+                "This is empty account state, not a missing-key carve. Populate the sandbox " <>
+                "account so this read has data, or ledger the branch in docs/prod-verification-ledger.md"
+            )
+        end
+
+      true ->
+        assert contains_meaning?(value, keys),
+               "#{contract_case["id"]}: rows are present but none of them carry the semantic keys #{inspect(keys)}. " <>
+                 "This is a shape/carve mismatch, not empty account state."
+    end
   end
 
   defp semantic_values(value, "single"), do: [value]

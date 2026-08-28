@@ -36,8 +36,9 @@ response framing, malformed and trailing payloads, invalid protocol dispatch,
 helper termination, and restart behavior. These tests are tagged `:native`
 because they require Go and a C compiler.
 
-`mix bourse.check_lighter_signer` builds and runs the native tests when that
-toolchain is available. When `gcov` is present, it also enforces at least 95%
+`mix bourse.check_lighter_signer` builds and runs the native tests. A missing
+Go or C compiler is a failing step of `mix check.dispatch` — install the
+toolchain and run `mix bourse.build_lighter_signer`. When `gcov` is present, it also enforces at least 95%
 line coverage across the C input parser, frame I/O, operation parsers, and
 dispatcher. Output-allocation and dependency-result failure branches remain
 outside that metric; successful auth and every transaction response still

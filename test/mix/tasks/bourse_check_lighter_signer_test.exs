@@ -9,6 +9,20 @@ defmodule Mix.Tasks.Bourse.CheckLighterSignerTest do
     assert length(missing) == 2
   end
 
+  test "cannot-run path raises Mix.Error and pins the non-zero mix exit" do
+    error =
+      assert_raise Mix.Error, fn ->
+        CheckLighterSigner.run_with(fn _name -> nil end)
+      end
+
+    message = Exception.message(error)
+
+    assert message =~ "cannot run: missing go"
+    assert message =~ "mix bourse.build_lighter_signer"
+    assert message =~ "C compiler"
+    assert CheckLighterSigner.cannot_run_exit_status() == 1
+  end
+
   test "toolchain detection accepts resolved Go and C executables" do
     assert {:ok, ["go", _compiler]} = CheckLighterSigner.toolchain(&"/toolchain/#{&1}")
   end

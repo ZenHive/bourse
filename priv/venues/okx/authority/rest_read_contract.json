@@ -2575,7 +2575,8 @@
         "representation": "nested_map",
         "provider_meaning_keys": [
           "status"
-        ]
+        ],
+        "empty_collection": "allowed"
       },
       "authority_source_ids": [
         "api-v5-docs"

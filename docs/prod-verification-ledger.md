@@ -22,6 +22,148 @@ Entry template:
 - Expected evidence: <what the live response must show to CONFIRM>
 ```
 
+The live suite classifies failures from the JSON fence below, not from a list in
+test code. Edit the fence when adding a ledgered case.
+
+<!-- live-suite-classification:begin -->
+```json
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "okx-demo-unavailable-50038",
+      "class": "ledgered_demo_unavailable",
+      "venue": "okx",
+      "methods": [
+        "fetchCurrencies",
+        "fetchDepositWithdrawFees",
+        "fetchDepositAddress",
+        "fetchDepositAddressesByNetwork",
+        "fetchBorrowRateHistory",
+        "fetchBorrowRateHistories"
+      ],
+      "match": {
+        "code": "50038",
+        "message_contains": "unavailable in demo trading"
+      },
+      "summary": "OKX demo trading does not host funding-account and savings reads"
+    },
+    {
+      "id": "okx-deposit-withdrawal-history",
+      "class": "ledgered_state_dependent",
+      "venue": "okx",
+      "methods": ["fetchDeposit", "fetchWithdrawal"],
+      "match": {
+        "empty_resource": true
+      },
+      "summary": "demo trading cannot accumulate deposit or withdrawal history rows"
+    },
+    {
+      "id": "okx-transfer-transId-unreachable",
+      "class": "ledgered_unreachable",
+      "venue": "okx",
+      "methods": ["fetchTransfer"],
+      "match": {
+        "code": "58129",
+        "message_contains": "transId"
+      },
+      "summary": "fetchTransfers yields billId; transfer-state accepts only transId"
+    },
+    {
+      "id": "bybit-settlement-needs-delivery",
+      "class": "ledgered_state_dependent",
+      "venue": "bybit",
+      "methods": ["fetchMySettlementHistory"],
+      "match": {
+        "empty_payload": true
+      },
+      "summary": "delivery records need a contract held through expiry"
+    },
+    {
+      "id": "closed-order-history-window",
+      "class": "ledgered_state_dependent",
+      "venue": "deribit",
+      "methods": ["fetchOrder", "fetchOrderTrades"],
+      "match": {
+        "empty_resource": true
+      },
+      "summary": "Deribit windows filled orders out of history; that state is not durable"
+    },
+    {
+      "id": "bybit-closed-order-identity",
+      "class": "ledgered_state_dependent",
+      "venue": "bybit",
+      "methods": ["fetchClosedOrder", "fetchOrder", "fetchOrderClassic", "fetchOrderTrades"],
+      "match": {
+        "empty_resource": true
+      },
+      "summary": "closed-order identity needs a fill still inside the venue history window"
+    },
+    {
+      "id": "okx-closed-order-identity",
+      "class": "ledgered_state_dependent",
+      "venue": "okx",
+      "methods": ["fetchOrder", "fetchOrderTrades"],
+      "match": {
+        "empty_resource": true
+      },
+      "summary": "closed-order identity needs a fill still inside the venue history window"
+    },
+    {
+      "id": "derive-closed-order-identity",
+      "class": "ledgered_state_dependent",
+      "venue": "derive",
+      "methods": ["fetchOrderTrades"],
+      "match": {
+        "empty_resource": true
+      },
+      "summary": "closed-order identity needs a fill still inside the venue history window"
+    },
+    {
+      "id": "hyperliquid-deposit-bridge",
+      "class": "ledgered_state_dependent",
+      "venue": "hyperliquid",
+      "methods": ["fetchDeposits", "fetchWithdrawals", "fetchFundingHistory", "fetchOpenOrders", "fetchPosition", "fetchPositions"],
+      "match": {
+        "empty_collection": true
+      },
+      "summary": "hyperliquid testnet wallet has no deposits, withdrawals, positions, or resting orders"
+    },
+    {
+      "id": "lighter-empty-market-history",
+      "class": "ledgered_state_dependent",
+      "venue": "lighter",
+      "methods": ["fetchOHLCV", "fetchFundingRateHistory"],
+      "match": {
+        "empty_collection": true
+      },
+      "summary": "lighter testnet carries no candle or funding history for the probed markets"
+    },
+    {
+      "id": "okx-empty-position",
+      "class": "ledgered_state_dependent",
+      "venue": "okx",
+      "methods": ["fetchPosition"],
+      "match": {
+        "empty_collection": true
+      },
+      "summary": "no open position on the demo account"
+    },
+    {
+      "id": "binanceusdm-empty-position-adl",
+      "class": "ledgered_state_dependent",
+      "venue": "binanceusdm",
+      "methods": ["fetchPositionADLRank"],
+      "match": {
+        "empty_collection": true
+      },
+      "summary": "ADL rank needs an open USD-M position"
+    }
+  ]
+}
+```
+<!-- live-suite-classification:end -->
+
 ## Open
 
 ### eleven venues — sandbox-unhosted REST-read product surfaces (task 667, filed 2026-08-23)

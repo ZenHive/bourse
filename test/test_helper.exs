@@ -1,3 +1,4 @@
+alias Bourse.LiveLane.Ledger
 alias Mix.Tasks.Bourse.BuildLighterSigner
 
 # This suite is provider-live. There is no default tag exclusion and no offline
@@ -26,6 +27,12 @@ if not lighter_binary_present? do
     {:error, _missing} -> :ok
   end
 end
+
+Ledger.start_hits!()
+
+ExUnit.after_suite(fn result ->
+  Ledger.print_suite_summary(result)
+end)
 
 ExUnit.start(exclude: [:dangerous])
 

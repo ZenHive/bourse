@@ -460,7 +460,7 @@ sibling binance-family venues (`binanceusdm`, `binancecoinm` — same field-map 
 
 ## 2026-08-28 — the provider-live suite cannot distinguish a deliberately-red ledgered case from a genuine failure, so reviewers dismiss the whole result
 
-**Status:** 🆕 measured (orchestrator, across six harness reviews and two full local runs) — not consumer-reported. · **Tracked:** task 687 (2026-08-28).
+**Status:** ✅ fixed 2026-08-28 (task 687) — live-suite summary classifies from the JSON fence in `docs/prod-verification-ledger.md`; raw contracts distinguish empty rows from missing semantic keys; resource cases own a resting/cancelled order or are ledgered as state-dependent. · **Tracked:** task 687.
 
 A full `mix test.json` on `main` confirms ~46–48 failures. Independently classified:
 
@@ -568,7 +568,7 @@ correct (no private URL; address-scoped public subscriptions).
 
 ## 2026-08-28 — `mix bourse.check_lighter_signer` exits 0 while reporting "NOT RUN" — a gate that is green without running
 
-**Status:** 🆕 measured (orchestrator) — not consumer-reported. · **Tracked:** task 687 (2026-08-28).
+**Status:** ✅ fixed 2026-08-28 (task 687) — `mix bourse.check_lighter_signer` raises `Mix.Error` (Mix exit 1) when Go or a C compiler is missing, with setup text naming `mix bourse.build_lighter_signer`. · **Tracked:** task 687.
 
 With `go` absent from `PATH` the task prints
 
@@ -764,8 +764,9 @@ open upstream and silently removes ~16 % of mutants from the denominator.
 
 ## 2026-08-27 — `spec_disk_test` pins pre-rotation spec hashes, so every legitimate authored-spec edit reds the suite
 
-**Status:** 🆕 reported (found while scoping a mutation-testing run; `main` is red on a clean
-tree as of `e71e714`) · **Tracked:** task 687 (2026-08-28).
+**Status:** ✅ fixed 2026-08-28 (task 687) — hash pin **retired**. It proved the one-shot
+rotation was lossless; re-recording would only hash the same loader. The structural
+split test remains. · **Tracked:** task 687.
 
 **The call:** `mix test.json --quiet test/bourse` on a clean checkout.
 

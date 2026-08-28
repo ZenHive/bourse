@@ -1,0 +1,138 @@
+defmodule Bourse.Test.RestReadContractOwnedState do
+  @moduledoc """
+  Creates and tears down the sandbox state a REST-read resource argument needs.
+
+  `fetchOpenOrders` / `fetchOrders` get a far-from-market resting limit.
+  `fetchCanceledOrders` gets the same order cancelled before the read.
+  History windows that the venue itself expires are not manufactured here.
+  """
+
+  alias Bourse.Order
+  alias Bourse.Test.Journeys.Case, as: Journey
+
+  @resting_ratio 0.9
+
+  @doc "Creates the live row a resource argument needs, or `:unownable`."
+  @spec ensure(map(), map(), map()) :: {:ok, term()} | :unownable | {:error, term()}
+  def ensure(argument, contract_case, context) do
+    case argument["source_method"] do
+      source when source in ["fetchOpenOrders", "fetchOrders"] ->
+        own_resting_order(argument, contract_case, context)
+
+      "fetchCanceledOrders" ->
+        own_canceled_order(argument, contract_case, context)
+
+      _other ->
+        :unownable
+    end
+  end
+
+  defp own_resting_order(argument, contract_case, context) do
+    with {:ok, placed} <- place_resting_order(contract_case, context) do
+      register_cleanup!(context.exchange, placed)
+      field = field_from(placed, argument["field"])
+
+      if is_nil(field), do: {:error, {:missing_field, argument["field"], placed}}, else: {:ok, field}
+    end
+  end
+
+  defp own_canceled_order(argument, contract_case, context) do
+    with {:ok, placed} <- place_resting_order(contract_case, context),
+         :ok <- cancel_now(context.exchange, placed) do
+      field = field_from(placed, argument["field"])
+
+      if is_nil(field), do: {:error, {:missing_field, argument["field"], placed}}, else: {:ok, field}
+    end
+  end
+
+  defp place_resting_order(contract_case, context) do
+    symbol = contract_case["resolved_symbol"] || market_symbol(context, contract_case)
+    market = Enum.find(context.markets || [], &(&1.symbol == symbol))
+    amount = min_amount(market)
+
+    case resting_price(context.exchange, symbol, market) do
+      price when is_number(price) and price > 0 ->
+        sized = sized_amount(amount, price, market)
+        Bourse.create_order(context.exchange, symbol, "limit", "buy", sized, price: price, timeInForce: "GTC")
+
+      _missing ->
+        {:error, :no_resting_price}
+    end
+  end
+
+  defp resting_price(exchange, symbol, market) do
+    case Bourse.fetch_ticker(exchange, symbol) do
+      {:ok, ticker} ->
+        bid = ticker.bid || ticker.last
+        if is_number(bid) and bid > 0, do: round_to(bid * @resting_ratio, market, "price")
+
+      _other ->
+        nil
+    end
+  end
+
+  defp cancel_now(exchange, placed) do
+    Journey.release_order!(exchange, placed.id, placed.symbol)
+  end
+
+  defp register_cleanup!(exchange, placed) do
+    id = placed.id
+    symbol = placed.symbol
+
+    ExUnit.Callbacks.on_exit(fn ->
+      Journey.release_order!(exchange, id, symbol)
+    end)
+  end
+
+  defp min_amount(%{limits: %{"amount" => %{"min" => min}}}) when is_number(min) and min > 0, do: min
+  defp min_amount(_market), do: 0.001
+
+  # USD-M demo rejects notionals below 50; size the resting buy above that floor.
+  @min_notional 100.0
+
+  defp sized_amount(min_amount, price, market) when price > 0 do
+    needed = @min_notional / price
+    raw = if needed > min_amount, do: needed, else: min_amount
+    round_to(raw, market, "amount")
+  end
+
+  defp round_to(value, %{precision: precision}, "amount") when is_map(precision) do
+    ceil_precision(value, precision["amount"])
+  end
+
+  defp round_to(value, %{precision: precision}, "price") when is_map(precision) do
+    floor_precision(value, precision["price"])
+  end
+
+  defp round_to(value, _market, _key), do: Float.round(value, 8)
+
+  defp ceil_precision(value, precision) when is_integer(precision) and precision >= 0 do
+    factor = :math.pow(10, precision)
+    Float.ceil(value * factor - 1.0e-9) / factor
+  end
+
+  defp ceil_precision(value, precision) when is_float(precision) and precision > 0 and precision < 1 do
+    Float.round(Float.ceil(value / precision - 1.0e-9) * precision, 8)
+  end
+
+  defp ceil_precision(value, _precision), do: Float.round(value, 8)
+
+  defp floor_precision(value, precision) when is_integer(precision) and precision >= 0 do
+    factor = :math.pow(10, precision)
+    Float.floor(value * factor + 1.0e-9) / factor
+  end
+
+  defp floor_precision(value, precision) when is_float(precision) and precision > 0 and precision < 1 do
+    Float.round(Float.floor(value / precision + 1.0e-9) * precision, 8)
+  end
+
+  defp floor_precision(value, _precision), do: Float.round(value, 8)
+
+  defp field_from(%Order{} = order, "id"), do: order.id
+  defp field_from(order, field), do: Map.get(order, String.to_existing_atom(field))
+
+  defp market_symbol(context, contract_case) do
+    kind = contract_case["market_kind"]
+    context.venue_contract["symbols"][kind] || context.venue_contract["symbols"]["spot"]
+  end
+end

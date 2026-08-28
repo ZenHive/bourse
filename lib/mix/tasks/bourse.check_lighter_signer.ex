@@ -1,11 +1,13 @@
 defmodule Mix.Tasks.Bourse.CheckLighterSigner do
-  @shortdoc "Builds and verifies the Lighter native signer when its toolchain is available"
+  @shortdoc "Builds and verifies the Lighter native signer; fails when the toolchain is missing"
 
   @moduledoc """
   Runs the pinned Go golden vectors and the BEAM-to-C native helper tests.
 
-  The check is explicit when Go or the platform C compiler is unavailable. The
-  dedicated Lighter signer workflow remains the mandatory cross-platform gate.
+  A missing Go or C compiler is a RED: `priv/native/lighter_signer/` is a
+  gitignored build artifact of `mix bourse.build_lighter_signer`, so a host
+  without that toolchain cannot run the signer and this check must not report
+  a pass. Mix maps the raised `Mix.Error` to a non-zero process exit.
   """
 
   use Mix.Task
@@ -25,33 +27,31 @@ defmodule Mix.Tasks.Bourse.CheckLighterSigner do
     process_update_margin process_frame
   )
 
+  # Mix.CLI maps Mix.Error to System.halt(1). Tests pin this constant as the
+  # cannot-run exit code of `mix bourse.check_lighter_signer`.
+  @cannot_run_exit_status 1
+
   @impl Mix.Task
   @spec run([String.t()]) :: :ok
-  def run([]) do
-    case toolchain(&System.find_executable/1) do
-      {:ok, _executables} ->
-        coverage? = not is_nil(System.find_executable("gcov"))
-        build_args = if coverage?, do: ["--coverage"], else: []
-
-        clear_coverage_data()
-        Mix.Task.run("bourse.build_lighter_signer", build_args)
-        run!("go", ["test", "./..."], @source_dir)
-        run_native_tests!()
-        if coverage?, do: check_c_coverage!()
-        :ok
-
-      {:error, missing} ->
-        Mix.shell().info([
-          "Lighter native verification NOT RUN: missing ",
-          Enum.join(missing, ", "),
-          ". The lighter-signer workflow remains the mandatory native gate."
-        ])
-
-        :ok
-    end
-  end
+  def run([]), do: run_with(&System.find_executable/1)
 
   def run(args), do: Mix.raise("Unexpected arguments: #{inspect(args)}")
+
+  @doc "Exit code Mix reports when this task raises on a missing toolchain."
+  @spec cannot_run_exit_status() :: 1
+  def cannot_run_exit_status, do: @cannot_run_exit_status
+
+  @doc "Runs the check with an injectable executable lookup, for the cannot-run test."
+  @spec run_with((String.t() -> String.t() | nil)) :: :ok
+  def run_with(find_executable) when is_function(find_executable, 1) do
+    case toolchain(find_executable) do
+      {:ok, _executables} ->
+        verify_native!(find_executable)
+
+      {:error, missing} ->
+        Mix.raise(cannot_run_message(missing))
+    end
+  end
 
   @doc "Reports whether Go and the platform C compiler can be resolved."
   @spec toolchain((String.t() -> String.t() | nil)) :: {:ok, [String.t()]} | {:error, [String.t()]}
@@ -76,6 +76,32 @@ defmodule Mix.Tasks.Bourse.CheckLighterSigner do
 
     if executable == 0, do: Mix.raise("gcov report contained no Lighter C parser or framing functions")
     %{covered: covered, executable: executable, percentage: covered / executable * 100.0}
+  end
+
+  defp verify_native!(find_executable) do
+    coverage? = not is_nil(find_executable.("gcov"))
+    build_args = if coverage?, do: ["--coverage"], else: []
+
+    clear_coverage_data()
+    Mix.Task.run("bourse.build_lighter_signer", build_args)
+    run!("go", ["test", "./..."], @source_dir)
+    run_native_tests!()
+    if coverage?, do: check_c_coverage!()
+    :ok
+  end
+
+  defp cannot_run_message(missing) do
+    """
+    Lighter native verification cannot run: missing #{Enum.join(missing, ", ")}.
+
+    The helper under priv/native/lighter_signer/ is a gitignored build artifact.
+    Install Go 1.25+ and a C compiler, then:
+
+      mix bourse.build_lighter_signer
+
+    mix check.dispatch records this as a failing step. A missing toolchain is a
+    RED, not a skipped pass.
+    """
   end
 
   defp run_native_tests! do
