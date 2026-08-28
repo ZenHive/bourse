@@ -22,6 +22,7 @@ defmodule Bourse.WS.SpecConfigTest do
     @impl true
     def handle_call(:get_state, _from, state), do: {:reply, :connected, state}
 
+    @impl true
     def handle_call({:send_message, _message}, _from, state), do: {:reply, :ok, state}
   end
 
@@ -126,8 +127,27 @@ defmodule Bourse.WS.SpecConfigTest do
         {:ok, %Client{server_pid: pid, state: :connected}}
       end
 
+      # Offline inventory. `Exchange.new!/1` carries no credentials, so the
+      # outcome each venue owes is fixed by its own authored config, and an
+      # unauthenticated `{:ok, ws}` is forbidden for every one of them — the
+      # `:no_auth_pattern`-to-`:ok` mapping this pins against surfaced here as
+      # `{:ok, ws}` with a nil `auth`. The reason is asserted per venue rather
+      # than against an allowlist: a regression that collapsed every venue to
+      # `:websocket_not_configured` would satisfy an allowlist while proving
+      # nothing about the handshake.
       for id <- Enum.sort(@ws_venues ++ Map.keys(Config.registered_divergences())) do
-        case WS.connect(Exchange.new!(id), :private, connect_fun: connect_fun) do
+        expected =
+          case Config.for_exchange(id) do
+            # A registered divergence carries no WS config to resolve from.
+            nil -> :websocket_not_configured
+            # No private URL, so the section never reaches a handshake.
+            %{private_url: nil, private_url_sandbox: nil} -> :no_url_configured
+            # A private URL and an authored handshake: connect/3 gets as far as
+            # the handshake and stops there for want of a credential.
+            _ -> :no_credentials
+          end
+
+        case WS.connect(Exchange.new!(id), :private, connect_fun: connect_fun, auth_timeout_ms: 50) do
           {:ok, ws} ->
             try do
               assert ws.auth,
@@ -136,8 +156,10 @@ defmodule Bourse.WS.SpecConfigTest do
               WS.close(ws)
             end
 
-          {:error, _reason} ->
-            :ok
+          {:error, reason} ->
+            assert reason == expected,
+                   "#{id} private connect stopped at #{inspect(reason)}, " <>
+                     "expected #{inspect(expected)} for its authored config"
         end
       end
     end

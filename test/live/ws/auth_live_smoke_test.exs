@@ -388,17 +388,21 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
     {mark, ""} = Float.parse(mark)
     price = :erlang.float_to_binary(Float.round(mark * 0.7, 2), decimals: 2)
 
+    params =
+      maybe_put_position_side(
+        %{
+          "symbol" => @coinm_symbol,
+          "side" => "BUY",
+          "type" => "LIMIT",
+          "timeInForce" => "GTC",
+          "quantity" => "1",
+          "price" => price
+        },
+        exchange
+      )
+
     {:ok, %{body: %{"orderId" => order_id}}} =
-      Bourse.Binancecoinm.dapiPrivate_post_order(exchange, %{
-        "symbol" => @coinm_symbol,
-        "side" => "BUY",
-        # The demo futures account runs Hedge Mode; omitting positionSide is -4061.
-        "positionSide" => "LONG",
-        "type" => "LIMIT",
-        "timeInForce" => "GTC",
-        "quantity" => "1",
-        "price" => price
-      })
+      Bourse.Binancecoinm.dapiPrivate_post_order(exchange, params)
 
     order_id
   end
@@ -420,7 +424,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
       |> :erlang.float_to_binary(decimals: @usdm_price_decimals)
 
     params =
-      maybe_put_usdm_position_side(
+      maybe_put_position_side(
         %{
           "symbol" => @usdm_symbol,
           "side" => "BUY",
@@ -438,13 +442,27 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
     order_id
   end
 
-  defp maybe_put_usdm_position_side(params, exchange) do
+  # Hedge Mode REQUIRES `positionSide` and answers -4061 without it; One-way
+  # REQUIRES its absence and answers -4061 with it. Both futures halves are one
+  # account but their modes are set per wallet, so each probe reads its own
+  # rather than assuming — a hardcoded side is a venue claim that goes stale
+  # silently the day the account is flipped. `fetchPositionMode` has no authored
+  # parse slice, so the read fails open into a `RawResponse`; the bare-map
+  # clause is what this reads once that slice exists.
+  defp maybe_put_position_side(params, exchange) do
     case Bourse.fetch_position_mode(exchange) do
-      {:ok, %{"dualSidePosition" => true}} -> Map.put(params, "positionSide", "LONG")
-      {:ok, %{"dualSidePosition" => false}} -> params
-      other -> flunk("Binance USD-M position-mode read failed: #{inspect(other)}")
+      {:ok, %Bourse.RawResponse{payload: payload}} -> put_position_side(params, payload, exchange)
+      {:ok, payload} when is_map(payload) -> put_position_side(params, payload, exchange)
+      other -> flunk("#{exchange.id} position-mode read failed: #{inspect(other)}")
     end
   end
+
+  defp put_position_side(params, %{"dualSidePosition" => true}, _exchange), do: Map.put(params, "positionSide", "LONG")
+
+  defp put_position_side(params, %{"dualSidePosition" => false}, _exchange), do: params
+
+  defp put_position_side(_params, payload, exchange),
+    do: flunk("#{exchange.id} position-mode payload has no dualSidePosition: #{inspect(payload)}")
 
   defp cancel_usdm_order(exchange, order_id) do
     Bourse.Binanceusdm.fapiPrivate_delete_order(exchange, %{"symbol" => @usdm_symbol, "orderId" => order_id})
