@@ -3,6 +3,21 @@
 Provider authority: [`priv/venues/bybit/authority/manifest.json`](../../priv/venues/bybit/authority/manifest.json).
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
+
+## 2026-08-28 — option position value (Task 666)
+
+**C-T666b — option `positionValue` satisfies the shared premium-value rule.
+Outcome: CONFIRM the provider field.**
+
+Bybit's `GET /v5/position/list` contract applies `positionValue` to the
+`option` category and identifies it as position value. The unified option row
+therefore preserves its absolute value and labels it with the parsed settlement
+currency; no perpetual arithmetic is applied.
+[Bybit position contract](https://bybit-exchange.github.io/docs/v5/position)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T666b","date":"2026-08-28","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 Get Position Info positionValue field"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":null,"known_gap_reason":"No populated Bybit testnet option position was available in this run"}
+-->
   ([pinned authority manifest](../../priv/venues/bybit/authority/manifest.json), artifact
 ## 2026-08-12 — rate-unit confrontation (Task 594)
 **C-T594e — Bybit's authored rate-like slots name their venue units (task 594).

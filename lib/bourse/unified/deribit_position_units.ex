@@ -13,6 +13,9 @@ defmodule Bourse.Unified.DeribitPositionUnits do
   `contract_size`. Combo books are not converted.
 
   Every populated `notional` is paired with its actual unified currency code.
+  Across option venues it means absolute mark-to-market premium value, not
+  strike/index exposure: Deribit derives premium from mark and contract size,
+  OKX publishes `optVal`, and Bybit publishes `positionValue`.
   Most venues publish quote value; Binance COIN-M and inverse Bybit/OKX rows
   publish settlement value, while OKX linear rows publish USD `notionalUsd`.
   Deribit option rows publish settlement-currency premium value.

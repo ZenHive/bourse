@@ -8,6 +8,7 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
 
   alias Bourse.Error
   alias Bourse.Exchange
+  alias Bourse.Unified.DeribitPositionUnits
   alias Bourse.Unified.ReadParse
 
   defmodule NoFieldMapParser do
@@ -1573,8 +1574,8 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
                )
     end
 
-    test "option market category annotation still resolves option positions" do
-      exchange = Exchange.new!("bybit")
+    test "option positions share premium-value semantics and always name their currency" do
+      bybit = Exchange.new!("bybit")
 
       body = %{
         "retCode" => 0,
@@ -1600,9 +1601,16 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
         }
       }
 
-      assert {:ok, [%Bourse.Position{symbol: "BTC/USDC:USDC-250131-100000-C", notional: 50.0}]} =
-               ReadParse.parse(
-                 exchange,
+      assert {:ok,
+              [
+                %Bourse.Position{
+                  symbol: "BTC/USDC:USDC-250131-100000-C",
+                  notional: 50.0,
+                  notional_currency: "USDC"
+                }
+              ]} =
+               bybit
+               |> ReadParse.parse(
                  Bourse.Bybit,
                  :fetch_positions,
                  "fetchPositions",
@@ -1611,6 +1619,62 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
                  :parse_position,
                  true
                )
+               |> DeribitPositionUnits.reconcile(bybit)
+
+      okx =
+        "okx"
+        |> Exchange.new!()
+        |> Exchange.put_markets([
+          %Bourse.Market{
+            id: "BTC-USD-260925-65000-C",
+            symbol: "BTC/USD:BTC-260925-65000-C",
+            base: "BTC",
+            quote: "USD",
+            settle: "BTC",
+            type: "option",
+            option: true,
+            inverse: true,
+            contract: true,
+            contract_size: 0.01,
+            quantity_unit: "base",
+            native_quantity_unit: "base",
+            native_amount_step: 0.01,
+            precision: %{"amount" => 0.01}
+          }
+        ])
+
+      okx_body = %{
+        "code" => "0",
+        "data" => [
+          %{
+            "instId" => "BTC-USD-260925-65000-C",
+            "instType" => "OPTION",
+            "markPx" => "0.00001668",
+            "notionalUsd" => "649.947",
+            "optVal" => "0.0000001084604966",
+            "pos" => "1",
+            "posSide" => "net"
+          }
+        ]
+      }
+
+      assert {:ok,
+              [
+                %Bourse.Position{
+                  notional: 1.084604966e-7,
+                  notional_currency: "BTC"
+                }
+              ]} =
+               okx
+               |> ReadParse.parse(Bourse.Okx, :fetch_positions, "fetchPositions", okx_body, %{}, :parse_position, true)
+               |> DeribitPositionUnits.reconcile(okx)
+
+      unloaded_okx = Exchange.new!("okx")
+
+      assert {:ok, [%Bourse.Position{notional: nil, notional_currency: nil}]} =
+               unloaded_okx
+               |> ReadParse.parse(Bourse.Okx, :fetch_positions, "fetchPositions", okx_body, %{}, :parse_position, true)
+               |> DeribitPositionUnits.reconcile(unloaded_okx)
     end
 
     test "margin loan backfills currency from request and leaves amount nil without request amount" do

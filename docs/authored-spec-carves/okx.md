@@ -1,6 +1,24 @@
 # OKX carve register
 
 Provider authority: [`priv/venues/okx/authority/manifest.json`](../../priv/venues/okx/authority/manifest.json).
+
+## 2026-08-28 — option position value (Task 666)
+
+**C-T666a — option `notional` is premium value. Outcome: DIVERGE from the
+inverse-perpetual arithmetic.**
+
+- *Provider contract:* `GET /api/v5/account/positions` defines `optVal` as
+  "Option Value" for `OPTION`, while `notionalUsd` is USD notional exposure.
+  [OKX position contract](https://www.okx.com/docs-v5/en/#trading-account-rest-api-get-positions)
+- *Our carve:* an option row reads absolute `optVal` in its settlement currency
+  only after its market supplies `contract_size`. It never enters the inverse
+  swap formula. Missing market units leave `notional` nil.
+- *Live evidence:* unavailable in this run; the credentialed demo option gate
+  flunks unless the account holds a populated option position.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T666a","date":"2026-08-28","semantic_source":{"kind":"provider_owned","reference":"OKX v5 Get positions optVal and notionalUsd fields"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":null,"known_gap_reason":"No populated OKX demo option position was available in this run"}
+-->
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 from `priv/venues/okx/authority/manifest.json` artifact `api-v5-docs` — makes those cursors exclusive.

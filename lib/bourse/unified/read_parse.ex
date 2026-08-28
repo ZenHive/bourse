@@ -3436,6 +3436,17 @@ defmodule Bourse.Unified.ReadParse do
 
   defp okx_margin_position_side(_row, _exchange), do: nil
 
+  # OKX publishes option market value as `optVal`. It is a premium value, not
+  # the inverse-perpetual contracts*ctVal/markPx quantity (carve C-T666a).
+  # Require the loaded market contract before accepting it so an unrecognised
+  # instrument cannot acquire a value whose contract unit we never resolved.
+  defp okx_position_notional(%{"instType" => "OPTION"} = row, _contracts_abs, contract_size, _mark, _inverse?)
+       when is_binary(contract_size) do
+    non_empty_string(Map.get(row, "optVal"))
+  end
+
+  defp okx_position_notional(%{"instType" => "OPTION"}, _contracts_abs, _contract_size, _mark, _inverse?), do: nil
+
   defp okx_position_notional(_row, contracts_abs, contract_size, mark, true)
        when is_binary(contracts_abs) and is_binary(contract_size) and is_binary(mark) do
     contracts_abs

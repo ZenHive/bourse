@@ -14,7 +14,9 @@ defmodule Bourse.Position do
     * `contracts` - Number of contracts
     * `contract_size` - Size of one contract
     * `notional` - Absolute position value denominated by `notional_currency`.
-      The numeric value preserves the venue's published unit.
+      On an option it is the mark-to-market premium value, not strike/index
+      exposure: that is the cash value common to the venues' option-value
+      fields and does not pretend unlike exposures are additive.
     * `notional_currency` - Unified currency code that denominates `notional`.
       Populated whenever `notional` is populated on the unified read path.
     * `base_quantity` - Absolute position size in the base currency. Populated
