@@ -71,6 +71,103 @@ roadmap.
 
 ---
 
+## 2026-08-28 — the client's rate limiter grants a 545-deep burst on OKX, then stalls the next call for a full 60 s
+
+**Status:** 🆕 measured live + proven arithmetically (orchestrator, investigating a reported
+60 s stall on two OKX contract cases) — not consumer-reported. **Latent**: it did not fire in
+any of seven runs on 2026-08-28, but it is the only code path in the client that can block a
+single call for exactly ~60 000 ms.
+
+`Bourse.RateLimiter.Shaping` converts a venue's authored bucket into a sliding-window check by
+reading **only** `cost`, `axes` and `rate_limit_ms`, then dividing a hardcoded
+`@rate_limit_period_ms 60_000` by `rate_limit_ms`. OKX authors
+(`priv/venues/okx/authored/venue.json`, `rate_limits.buckets.buckets[0]`):
+
+```json
+{"algorithm": "leakyBucket", "max_size": 1, "refill_per_sec": 9.09090909090909,
+ "rate_limit_ms": 110.00000000000001, "rolling_window_ms": null}
+```
+
+`max_size` and `refill_per_sec` are never read. A leaky bucket of **depth 1 refilling at
+9.09 req/s** is therefore executed as **545 weight per rolling 60 s** (`trunc(60_000 / 110)`),
+which permits the entire minute's budget to be spent in a single burst.
+
+**Two measured consequences.**
+
+1. **The venue 429s us while our own limiter says `:ok`.** Live against `www.okx.com` +
+   `x-simulated-trading: 1`, signed GETs issued back to back with `retry: false`:
+
+   ```
+   /api/v5/asset/transfer-state?transId=1   → 200 ×10, then 429 %{"code" => "50011", "msg" => "Too many requests"}
+   /api/v5/asset/deposit-history            → 200 ×6,  then 429 %{"code" => "50011", "msg" => "Too many requests"}
+   ```
+
+   OKX sends **no `retry-after` header** on that 429 (full header set captured: cloudflare,
+   `b-locale`, `x-brokerid`, no `retry-after`), so `Defaults.retry_policy()` `:safe_transient`
+   falls through to Req's exponential backoff and turns a fast, informative venue rejection into
+   4 attempts spread over ~7 s. Observed in the contract lane as
+   `retry: got response with status 429, will retry in 907ms, 3 attempts left`, turning a 200 ms
+   case into 1 216 ms.
+
+2. **After saturation the next call sleeps ~60 s, silently.** `Shaping.maybe_rate_limit/3` does
+   `Process.sleep(delay_ms)` on `{:delay, _}`, and `RateLimiter.calculate_delay/6` returns
+   `oldest_needed_ts + period - now + 1`. When the window filled as a burst, the oldest entry is
+   also recent, so the delay is the whole window. Proven:
+
+   ```elixir
+   {:ok, pid} = Bourse.RateLimiter.start_link(name: :probe_rl)
+   key = {"okx", "k", "request"}; limit = %{requests: 545, period: 60_000}
+   for _ <- 1..545, do: :ok = Bourse.RateLimiter.check_rates([{key, limit, 1}], :probe_rl)
+   Bourse.RateLimiter.check_rates([{key, limit, 1}], :probe_rl)
+   #=> {:delay, 59998}
+   Bourse.RateLimiter.check_rates([{key, limit, 4}], :probe_rl)
+   #=> {:delay, 59996}
+   ```
+
+   A caller sees a 60-second block inside one `Bourse.fetch_*` call, with no `:timeout` option
+   able to bound it (the sleep happens **before** the HTTP request, so `receive_timeout` never
+   applies). Under ExUnit that is indistinguishable from a hang and lands as
+   `test timed out after 60000ms`.
+
+**How close the OKX lane runs to that ceiling:** replaying all 84
+`okx` REST-read contract cases against the live demo host consumed **263.4 of the 545 budget in
+13.4 s** (measured with `Bourse.RateLimiter.get_cost({"okx", api_key, "request"}, 60_000)` —
+`load_markets` 9, then 27.5 / 97.0 / 116.7 / 141.3 / 151.2 / 166.8 / 187.8 / 258.0 at every
+tenth case). One extra concurrent OKX consumer — the demo-integration and error modules in the
+same run, or `mix ci` running `precommit`'s suite and `bourse.verify_rest_read_contracts`
+inside the same minute — reaches 545 and buys a 60 s stall for whichever call arrives next.
+
+**Consumer impact:** a library call that normally returns in ~100 ms can block for a full
+minute with no way to bound it, and the burst allowance that causes it also provokes the venue
+429s the limiter exists to prevent. It is order-dependent, so it presents as an intermittent
+hang on an arbitrary method rather than as a rate-limit error.
+
+**The fix needs a model decision, not a constant tweak.** The authored bucket already carries
+the right shape (`max_size` = burst depth, `refill_per_sec` = drain rate); the limiter needs to
+honour it instead of substituting a fixed 60 s window. A naive `window = rate_limit_ms *
+max_size` is **not** the fix: it makes `max_weight` 1 for OKX, and `check_bucket/6` answers
+`:skip_record` for any `cost > max_weight` — silently disabling limiting for the 274 OKX
+endpoints (of 433) whose authored cost exceeds 1 — up to 20. Whatever shape is chosen
+must (a) bound burst depth so
+the client stops earning 429s, (b) bound the worst-case pre-request sleep well below the ExUnit
+/ caller timeout, and (c) keep endpoints whose cost exceeds one bucket slot limited rather than
+exempt. It touches all eleven venues, so it needs live proof per venue.
+
+**Not the cause of the two OKX contract-lane reds it was found while investigating.** Measured
+2026-08-28 across seven runs — isolated (`--only method_fetch_deposit --only
+method_fetch_transfer`), whole file, `mix bourse.verify_rest_read_contracts --venue okx`, the
+`test/live/okx` directory, and a full `mix test.json` (2 895 tests, 4 m 15 s) —
+`okx:fetchDeposit:0:privateGetAssetDepositHistory` takes **66–78 ms** and
+`okx:fetchTransfer:0:privateGetAssetTransferState` **192–226 ms**; nothing in the whole suite
+exceeded 24 s. Those two reds are the already-recorded conditions: `fetchDeposit` is empty
+account state (ledgered as task 570; re-probed live 2026-08-28 —
+`GET /api/v5/asset/deposit-history` answers `%{"code" => "0", "data" => [], "msg" => ""}` with
+no params, with `limit=10`, with `instType=SPOT`, and with `instId=BTC-USDT`, and
+`asset/withdrawal-history` likewise, so no parameter is filtering the rows away), and
+`fetchTransfer` is the `billId`-as-`TransferEntry.id` carve defect in its own entry below.
+
+---
+
 ## 2026-08-28 — Lighter's differential auth test never built a bad signature, so it pinned the wrong rejection code
 
 **Status:** ✅ fixed 2026-08-28 — test construction corrected; both codes now pinned from live calls.
