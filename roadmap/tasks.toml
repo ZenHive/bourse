@@ -23083,3 +23083,20 @@ started_at = "2026-08-28"
 scored_at = "2026-08-24"
 done_at = "2026-08-28"
 shipped_in = "87572cd21d2501e3f624cae218e761ed981550e1"
+
+[[task]]
+id = "683"
+phase = 16
+bundle = "foundation"
+milestone = "v1_2"
+status = "pending"
+title = "Upgrade the transitive Gun/Cowlib HTTP stack past published 2026 advisories"
+scores = { d = 3, b = 7, u = 8 }
+acceptance_criteria = ["mix deps.audit reports no advisory for gun or cowlib", "The locked HTTP stack remains compatible with zen_websocket and the provider-live WebSocket tests", "mix check.dispatch reaches the provider-live credential/state gate without dependency-audit failure"]
+out_of_scope = ["unrelated dependency upgrades"]
+touches = ["mix.exs", "mix.lock"]
+body = """
+A cold `mix deps.get` on 2026-08-28 reports published request/response splitting and header-encoding advisories against locked gun 2.5.0 and cowlib 2.19.0. Resolve through the owning direct dependency or compatible lock updates, preserving the live-provider test contract.
+"""
+created_at = "2026-08-28"
+scored_at = "2026-08-28"
