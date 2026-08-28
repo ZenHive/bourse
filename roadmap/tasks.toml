@@ -23413,7 +23413,7 @@ scored_at = "2026-08-28"
 id = "688"
 phase = 16
 bundle = "live_triage"
-status = "in_progress"
+status = "done"
 title = "Bourse.Symbol quietly returns a different market: non-injective inversion, unanchored alias rewriting, and unparsed dated ids"
 scores = { d = 6, b = 7, u = 7 }
 markers = ["bug"]
@@ -23460,9 +23460,16 @@ Provenance: a mutation-testing testability survey run 2026-08-24. Bourse.Symbol 
 mutation-tested; the findings come from reading the module and re-measuring every claim above
 with mix run against the authored specs. Re-measure rather than trusting the numbers here.
 """
+implemented = "Landed by codex via merge-train; reviewer-approved (run run-1787932841798-7f9905e9, a4da3c5cc799da2e93e2136a46881a82884f0c72)."
+delivered_by = "codex"
+verified = true
+verified_by = "cursor"
+verification_ref = "harness-run:run-1787932841798-7f9905e9"
 created_at = "2026-08-28"
 started_at = "2026-08-28"
 scored_at = "2026-08-28"
+done_at = "2026-08-28"
+shipped_in = "a4da3c5cc799da2e93e2136a46881a82884f0c72"
 
 [[task]]
 id = "689"
