@@ -26,7 +26,8 @@ enum operation {
   OP_MODIFY_ORDER = 6,
   OP_UPDATE_LEVERAGE = 7,
   OP_UPDATE_MARGIN = 8,
-  OP_TRANSFER = 9
+  OP_TRANSFER = 9,
+  OP_CHANGE_PUB_KEY = 10
 };
 
 enum error_code {
@@ -247,12 +248,12 @@ static int copy_tx_string(uint8_t *response, size_t *offset, const char *value) 
   return 1;
 }
 
-static int send_signed_result(uint8_t operation, uint32_t request_id,
-                              SignedTxResponse result) {
+static int send_signed_tx(uint8_t operation, uint32_t request_id, SignedTxResponse result,
+                          const char *tx_info) {
   uint8_t *response = NULL;
   size_t offset = RESPONSE_HEADER_SIZE;
   int written;
-  if (result.err != NULL || result.txInfo == NULL) {
+  if (result.err != NULL || result.txInfo == NULL || tx_info == NULL) {
     free_string(result.txInfo);
     free_string(result.txHash);
     free_string(result.messageToSign);
@@ -269,7 +270,7 @@ static int send_signed_result(uint8_t operation, uint32_t request_id,
   }
   write_response_header(response, operation, request_id, 0U);
   response[offset++] = result.txType;
-  if (!copy_tx_string(response, &offset, result.txInfo) ||
+  if (!copy_tx_string(response, &offset, tx_info) ||
       !copy_tx_string(response, &offset, result.txHash) ||
       !copy_tx_string(response, &offset, result.messageToSign)) {
     secure_zero(response, MAX_FRAME_SIZE);
@@ -288,6 +289,51 @@ static int send_signed_result(uint8_t operation, uint32_t request_id,
   free_string(result.messageToSign);
   free_string(result.err);
   return written;
+}
+
+static int send_signed_result(uint8_t operation, uint32_t request_id,
+                              SignedTxResponse result) {
+  return send_signed_tx(operation, request_id, result, result.txInfo);
+}
+
+static int valid_hex(const uint8_t *bytes, size_t length) {
+  size_t index;
+  for (index = 0U; index < length; index++) {
+    unsigned char character = bytes[index];
+    if (!((character >= '0' && character <= '9') || (character >= 'a' && character <= 'f') ||
+          (character >= 'A' && character <= 'F'))) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+static char *inject_l1_sig(const char *tx_info, const char *l1_sig) {
+  static const char marker[] = "\"L1Sig\":\"\"";
+  const char *found;
+  size_t prefix_len;
+  size_t suffix_len;
+  size_t sig_len;
+  char *patched;
+  if (tx_info == NULL || l1_sig == NULL) {
+    return NULL;
+  }
+  found = strstr(tx_info, marker);
+  if (found == NULL) {
+    return NULL;
+  }
+  prefix_len = (size_t)(found - tx_info) + 9U;
+  suffix_len = strlen(found + 9U);
+  sig_len = strlen(l1_sig);
+  patched = (char *)malloc(prefix_len + sig_len + suffix_len + 1U);
+  if (patched == NULL) {
+    return NULL;
+  }
+  memcpy(patched, tx_info, prefix_len);
+  memcpy(patched + prefix_len, l1_sig, sig_len);
+  memcpy(patched + prefix_len + sig_len, found + 9U, suffix_len);
+  patched[prefix_len + sig_len + suffix_len] = '\0';
+  return patched;
 }
 
 static int process_init(reader *input, uint8_t operation, uint32_t request_id) {
@@ -531,6 +577,75 @@ static int process_transfer(reader *input, uint8_t operation, uint32_t request_i
   return send_signed_result(operation, request_id, result);
 }
 
+static int process_change_pub_key(reader *input, uint8_t operation, uint32_t request_id) {
+  uint16_t pub_key_length;
+  uint16_t l1_sig_length;
+  const uint8_t *pub_key_bytes;
+  const uint8_t *l1_sig_bytes;
+  uint8_t skip_nonce;
+  int64_t nonce;
+  const uint8_t *hex_bytes;
+  size_t hex_length;
+  char pub_key[83];
+  char *l1_sig;
+  char *patched;
+  SignedTxResponse result;
+  int written;
+  if (!take_u16(input, &pub_key_length) || !take_bytes(input, pub_key_length, &pub_key_bytes) ||
+      !take_u16(input, &l1_sig_length) || !take_bytes(input, l1_sig_length, &l1_sig_bytes) ||
+      !take_u8(input, &skip_nonce) || !take_i64(input, &nonce) || !exhausted(input) ||
+      skip_nonce > 1U || nonce < 0) {
+    return send_error(operation, request_id, ERROR_INVALID_ARGUMENT);
+  }
+  if (pub_key_length == 82U && pub_key_bytes[0] == '0' &&
+      (pub_key_bytes[1] == 'x' || pub_key_bytes[1] == 'X')) {
+    hex_bytes = pub_key_bytes + 2U;
+    hex_length = 80U;
+  } else if (pub_key_length == 80U) {
+    hex_bytes = pub_key_bytes;
+    hex_length = 80U;
+  } else {
+    return send_error(operation, request_id, ERROR_INVALID_ARGUMENT);
+  }
+  if (!valid_hex(hex_bytes, hex_length) || l1_sig_length != 132U ||
+      l1_sig_bytes[0] != '0' || (l1_sig_bytes[1] != 'x' && l1_sig_bytes[1] != 'X') ||
+      !valid_hex(l1_sig_bytes + 2U, 130U)) {
+    return send_error(operation, request_id, ERROR_INVALID_ARGUMENT);
+  }
+  pub_key[0] = '0';
+  pub_key[1] = 'x';
+  memcpy(pub_key + 2U, hex_bytes, 80U);
+  pub_key[82] = '\0';
+  l1_sig = (char *)calloc((size_t)l1_sig_length + 1U, 1U);
+  if (l1_sig == NULL) {
+    secure_zero(pub_key, sizeof(pub_key));
+    return send_error(operation, request_id, ERROR_RESPONSE_TOO_LARGE);
+  }
+  memcpy(l1_sig, l1_sig_bytes, l1_sig_length);
+  result = SignChangePubKey(pub_key, skip_nonce, (long long)nonce, api_key_index,
+                            (long long)account_index);
+  secure_zero(pub_key, sizeof(pub_key));
+  if (result.err != NULL || result.txInfo == NULL) {
+    secure_zero(l1_sig, (size_t)l1_sig_length + 1U);
+    free(l1_sig);
+    return send_signed_result(operation, request_id, result);
+  }
+  patched = inject_l1_sig(result.txInfo, l1_sig);
+  secure_zero(l1_sig, (size_t)l1_sig_length + 1U);
+  free(l1_sig);
+  if (patched == NULL) {
+    free_string(result.txInfo);
+    free_string(result.txHash);
+    free_string(result.messageToSign);
+    free_string(result.err);
+    return send_error(operation, request_id, ERROR_SIGNING);
+  }
+  written = send_signed_tx(operation, request_id, result, patched);
+  secure_zero(patched, strlen(patched));
+  free(patched);
+  return written;
+}
+
 static int process_frame(const uint8_t *frame, size_t length) {
   reader input = {frame, length, 0U};
   uint8_t version;
@@ -563,6 +678,8 @@ static int process_frame(const uint8_t *frame, size_t length) {
     return process_update_margin(&input, operation, request_id);
   case OP_TRANSFER:
     return process_transfer(&input, operation, request_id);
+  case OP_CHANGE_PUB_KEY:
+    return process_change_pub_key(&input, operation, request_id);
   default:
     return send_error(operation, request_id, ERROR_PROTOCOL);
   }

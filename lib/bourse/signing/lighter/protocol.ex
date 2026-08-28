@@ -26,7 +26,8 @@ defmodule Bourse.Signing.Lighter.Protocol do
     modify_order: 6,
     update_leverage: 7,
     update_margin: 8,
-    transfer: 9
+    transfer: 9,
+    change_pub_key: 10
   }
 
   @errors %{
@@ -48,6 +49,7 @@ defmodule Bourse.Signing.Lighter.Protocol do
           | :update_leverage
           | :update_margin
           | :transfer
+          | :change_pub_key
   @type protocol_error ::
           :protocol_error
           | :not_initialized
@@ -214,6 +216,16 @@ defmodule Bourse.Signing.Lighter.Protocol do
     end
   end
 
+  defp encode_payload(:change_pub_key, params) do
+    with {:ok, pub_key} <- pub_key(params),
+         {:ok, l1_signature} <- l1_signature(params),
+         {:ok, nonce_fields} <- encode_fields(params, [{:skip_nonce, :bool}, {:nonce, :nonce}]) do
+      {:ok,
+       <<byte_size(pub_key)::16, pub_key::binary, byte_size(l1_signature)::16, l1_signature::binary,
+         nonce_fields::binary>>}
+    end
+  end
+
   defp encode_payload(_operation, _params), do: {:error, :invalid_argument}
 
   defp encode_fields(params, fields) do
@@ -279,6 +291,42 @@ defmodule Bourse.Signing.Lighter.Protocol do
     end
   end
 
+  defp pub_key(params) do
+    case Map.fetch(params, :pub_key) do
+      {:ok, value} when is_binary(value) ->
+        hex = strip_0x(value)
+
+        if byte_size(hex) == 80 and match?({:ok, <<_::binary-size(40)>>}, Base.decode16(hex, case: :mixed)) do
+          {:ok, hex}
+        else
+          {:error, :invalid_argument}
+        end
+
+      _ ->
+        {:error, :invalid_argument}
+    end
+  end
+
+  defp l1_signature(params) do
+    case Map.fetch(params, :l1_signature) do
+      {:ok, "0x" <> hex = value} when byte_size(hex) == 130 ->
+        case Base.decode16(hex, case: :mixed) do
+          {:ok, <<_::binary-size(65)>>} -> {:ok, value}
+          _ -> {:error, :invalid_argument}
+        end
+
+      {:ok, "0X" <> hex} when byte_size(hex) == 130 ->
+        l1_signature(%{l1_signature: "0x" <> hex})
+
+      _ ->
+        {:error, :invalid_argument}
+    end
+  end
+
+  defp strip_0x("0x" <> rest), do: rest
+  defp strip_0x("0X" <> rest), do: rest
+  defp strip_0x(value) when is_binary(value), do: value
+
   defp encode_unsigned(params, name, maximum, bits) do
     with {:ok, value} <- integer(params, name),
          :ok <- valid_uint(value, maximum) do
@@ -298,7 +346,8 @@ defmodule Bourse.Signing.Lighter.Protocol do
               :modify_order,
               :update_leverage,
               :update_margin,
-              :transfer
+              :transfer,
+              :change_pub_key
             ] do
     with {:ok, tx_info, rest} <- take_string(payload),
          {:ok, tx_hash, rest} <- take_string(rest),

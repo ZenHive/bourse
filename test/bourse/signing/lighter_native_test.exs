@@ -2,13 +2,18 @@ defmodule Bourse.Signing.LighterNativeTest do
   use ExUnit.Case, async: false
 
   alias Bourse.Credentials
+  alias Bourse.LighterProvision
+  alias Bourse.Signing.Crypto
   alias Bourse.Signing.Lighter
   alias Bourse.Signing.Lighter.Protocol
   alias Bourse.Signing.Request
   alias Bourse.Signing.SignedRequest
+  alias Mix.Tasks.Bourse.BuildLighterSigner
 
   @moduletag :native
   @private_key "07000000000000000300000000000000000000000000000000000000000000000000000000000000"
+  @expected_public_key "48d4615592bf39d71889f5127c7710c36912b733a1f8f32cb9446a7aec4e34461348642d459cbc77"
+  @l1_private_key "0x0123456789012345678901234567890123456789012345678901234567890123"
   @base_url "https://testnet.zklighter.elliot.ai"
   @port_timeout_ms 5_000
   @empty_memo String.duplicate("00", 32)
@@ -85,6 +90,47 @@ defmodule Bourse.Signing.LighterNativeTest do
           flunk("#{operation} returned #{inspect(other)}")
       end
     end)
+  end
+
+  test "ChangePubKey signs over the Port boundary without the L1 private key in any frame", %{
+    credentials: credentials,
+    config: config
+  } do
+    params = change_pub_key()
+    assert {:ok, request} = Protocol.encode_request(400, :change_pub_key, params)
+    refute_l1_key_in_frame(request)
+
+    port = open_helper()
+    initialize_port!(port, 401)
+    response = exchange_frame!(port, request)
+
+    assert {:ok, %{tx_type: 8, tx_info: tx_info, message_to_sign: message}} =
+             Protocol.decode_response(response, :change_pub_key, 400)
+
+    refute_l1_key_in_frame(response)
+    assert {:ok, decoded} = Jason.decode(tx_info)
+    assert decoded["L1Sig"] == params.l1_signature
+    assert decoded["Nonce"] == 12
+    assert message == LighterProvision.l1_message(params.pub_key, 12, 1, 0)
+
+    assert {:ok, %{tx_type: 8, tx_info: worker_info}} =
+             Lighter.sign_transaction(:change_pub_key, params, credentials, config)
+
+    assert {:ok, %{"L1Sig" => l1_sig}} = Jason.decode(worker_info)
+    assert l1_sig == params.l1_signature
+  end
+
+  test "derive_pubkey prints the golden-vector zk public key" do
+    go = System.find_executable("go") || flunk("go is required for native Lighter tests")
+    source_dir = BuildLighterSigner.source_dir()
+
+    assert {output, 0} =
+             System.cmd(go, ["run", "./cmd/derive_pubkey", @private_key],
+               cd: source_dir,
+               stderr_to_stdout: true
+             )
+
+    assert String.trim(output) == @expected_public_key
   end
 
   test "C helper rejects malformed frames and parser boundary violations" do
@@ -212,7 +258,8 @@ defmodule Bourse.Signing.LighterNativeTest do
          memo: @empty_memo,
          skip_nonce: false,
          nonce: 11
-       }}
+       }},
+      {:change_pub_key, change_pub_key()}
     ]
   end
 
@@ -229,13 +276,35 @@ defmodule Bourse.Signing.LighterNativeTest do
          0::signed-64>>},
       {:update_leverage, 7, <<0::16, 0x10000::32, 0, 0, 0::signed-64>>},
       {:update_margin, 8, <<0::16, 0::signed-64, 0, 2, 0::signed-64>>},
-      {:transfer, 9, invalid_transfer_frame()}
+      {:transfer, 9, invalid_transfer_frame()},
+      {:change_pub_key, 10, invalid_change_pub_key_frame()}
     ]
   end
 
   defp invalid_transfer_frame do
     fields = <<1::signed-64, 2::16, 2, 1, 100_000_000::signed-64, 3_000_000::signed-64>>
     fields <> @empty_memo <> <<0, 11::signed-64>>
+  end
+
+  defp change_pub_key do
+    nonce = 12
+    pub_key = @expected_public_key
+    message = LighterProvision.l1_message(pub_key, nonce, 1, 0)
+    l1_signature = Crypto.sign_message(message, private_key: @l1_private_key)
+
+    %{pub_key: pub_key, l1_signature: l1_signature, skip_nonce: false, nonce: nonce}
+  end
+
+  defp invalid_change_pub_key_frame do
+    l1_signature = "0x" <> String.duplicate("ab", 65)
+    <<0::16, 132::16, l1_signature::binary, 0, 12::signed-64>>
+  end
+
+  defp refute_l1_key_in_frame(frame) when is_binary(frame) do
+    stripped = Crypto.strip_0x(@l1_private_key)
+    refute frame =~ @l1_private_key
+    refute frame =~ stripped
+    refute frame =~ String.downcase(stripped)
   end
 
   defp initialize_port!(port, request_id) do

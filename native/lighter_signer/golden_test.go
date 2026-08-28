@@ -101,14 +101,16 @@ func TestCreateOrderVector(t *testing.T) {
 	assertHex(t, "order signature", tx.Sig, "e0a05f331d066a48e1ad5a6fbbb1a14994460474f3c0fdcf2dcb40f6db19ef718df9e1115f8ca31e8ec991d573d321d00d00c616935f57f90a46aecbbea69a426fc293ae4dab259c8fc017adfa61c55c")
 }
 
-// The five transaction vectors below were captured by running the pinned official
+// The transaction vectors below were captured by running the pinned official
 // github.com/elliottech/lighter-go@v0.0.0-20260608173247-c26ac340ce5d directly with
 // fixedSigner and Bourse's pre-bump dependency graph from commit f72dd288bdfee611cdfa7acca634323ccadef231
 // (go-ethereum v1.15.6 and gnark-crypto v0.14.0). The assertions do not generate their goldens.
 // Re-running the same vectors against the later bump (go-ethereum v1.17.0,
 // gnark-crypto v0.18.1) produced identical signature and tx_info bytes — the bump
 // is signature-neutral for cancel_order, cancel_all_orders, modify_order,
-// update_leverage, and update_margin.
+// update_leverage, update_margin, and change_pub_key. L1Sig is empty in the
+// change_pub_key golden because it is not part of the zk hash; the helper
+// attaches a caller-supplied L1 signature after SignChangePubKey returns.
 
 func TestCancelOrderVector(t *testing.T) {
 	nonce := int64(3)
@@ -202,6 +204,39 @@ func TestUpdateLeverageVector(t *testing.T) {
 		"8e59ebaf9667607617b86aaf949a10d21e22a5718c08fc42074f8d99faaea5282d6a92c9d1114b0ba7627fdbb196404b595b87b6302a38c848ac6fdcd5ecb17fc7f82df08672e28bb5fa1c167c44bd22",
 		`{"AccountIndex":1,"ApiKeyIndex":0,"MarketIndex":1,"InitialMarginFraction":100,"MarginMode":0,"ExpiredAt":1800000000,"Nonce":9,"Sig":"jlnrr5ZnYHYXuGqvlJoQ0h4ipXGMCPxCB0+NmfqupSgtapLJ0RFLC6dif9uxlkBLWVuHtjAqOMhIrG/c1eyxf8f4LfCGcuKLtfocFnxEvSI=","L2TxAttributes":null}`,
 	)
+}
+
+func TestChangePubKeyVector(t *testing.T) {
+	nonce := int64(12)
+	var pubKey [40]byte
+	copy(pubKey[:], decodeHex(t, expectedPublicKey))
+	tx, err := types.ConstructChangePubKeyTx(
+		newFixedSigner(t),
+		lighterChainID,
+		&types.ChangePubKeyReq{PubKey: pubKey},
+		vectorTransactOpts(nonce, nil),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertTransactionVector(
+		t,
+		tx,
+		tx.Sig,
+		"e8a403ba7563a000baf8bf5bca18c51b2ae6bddd1c6decfef2c7db77d0b664772b7c79610747d40d01e5aa5577bf5c444eee80316c69be1f761f13ce1a057e91b1f9c700844390fec110f5f722d60003",
+		`{"AccountIndex":1,"ApiKeyIndex":0,"PubKey":"SNRhVZK/OdcYifUSfHcQw2kStzOh+PMsuURqeuxONEYTSGQtRZy8dw==","L1Sig":"","ExpiredAt":1800000000,"Nonce":12,"Sig":"6KQDunVjoAC6+L9byhjFGyrmvd0cbez+8sfbd9C2ZHcrfHlhB0fUDQHlqlV3v1xETu6AMWxpvh92HxPOGgV+kbH5xwCEQ5D+wRD19yLWAAM=","L2TxAttributes":null}`,
+	)
+
+	wantL1 := "Register Lighter Account\n\n" +
+		"pubkey: 0x" + expectedPublicKey + "\n" +
+		"nonce: 0x000000000000000c\n" +
+		"account index: 0x0000000000000001\n" +
+		"api key index: 0x0000000000000000\n" +
+		"Only sign this message for a trusted client!"
+	if body := tx.GetL1SignatureBody(); body != wantL1 {
+		t.Fatalf("L1 signature body mismatch\nwant: %q\n got: %q", wantL1, body)
+	}
 }
 
 func TestUpdateMarginNegativeAmountVector(t *testing.T) {

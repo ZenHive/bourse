@@ -104,8 +104,7 @@ defmodule Bourse.Signing.Derive do
   """
   @spec hash_message(String.t()) :: binary()
   def hash_message(message) when is_binary(message) do
-    prefix = "\x19Ethereum Signed Message:\n" <> Integer.to_string(byte_size(message))
-    Crypto.keccak256(prefix <> message)
+    Crypto.hash_message(message)
   end
 
   @doc """
@@ -114,12 +113,7 @@ defmodule Bourse.Signing.Derive do
   """
   @spec sign_message(String.t(), keyword()) :: String.t()
   def sign_message(message, opts) do
-    private_key = fetch_private_key(opts)
-
-    message
-    |> hash_message()
-    |> Crypto.sign_hash(private_key)
-    |> signature_hex()
+    Crypto.sign_message(message, opts)
   end
 
   @doc """

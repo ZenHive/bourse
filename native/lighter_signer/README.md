@@ -16,9 +16,17 @@ directory. Prebuilt binaries are not distributed.
 
 `golden_test.go` tests the pinned Go cryptography directly. Its vectors cover
 the primitive public key and signature, auth-token construction, create-order,
-and the five remaining C-exposed transaction constructors (cancel-order,
-cancel-all-orders, modify-order, update-leverage, and update-margin with a
-negative USDCAmount). It does not compile `csrc/helper.c` or send Port frames.
+and the remaining C-exposed transaction constructors (cancel-order,
+cancel-all-orders, modify-order, update-leverage, update-margin with a
+negative USDCAmount, and ChangePubKey / L2 tx type 8). ChangePubKey's golden
+`L1Sig` is empty because that field is not part of the zk hash; the helper
+injects a caller-supplied L1 signature string after `SignChangePubKey`. It
+does not compile `csrc/helper.c` or send Port frames.
+
+The helper never receives an L1 private key. Elixir produces the EIP-191
+signature and passes the finished `0x` string as an input parameter. Derive
+the 40-byte zk public key from an API private key with
+`go run ./cmd/derive_pubkey <hex>` from this directory.
 
 `test/bourse/signing/lighter_native_test.exs` runs the built executable through
 the BEAM Port boundary. It covers initialization, every supported operation,

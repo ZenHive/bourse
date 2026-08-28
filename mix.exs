@@ -74,6 +74,7 @@ defmodule Bourse.MixProject do
   # `package/0` already withholds.
   @unpackaged_prefixes ~w(
     live_lane
+    lighter_provision
   )
 
   @doc """

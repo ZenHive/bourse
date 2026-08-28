@@ -33,6 +33,14 @@ defmodule Bourse.CredentialsTest do
       assert output =~ "sandbox: false"
     end
 
+    test "rejects an L1 key field — the public credential surface did not grow" do
+      assert {:error, {:unknown_key, :l1_private_key}} =
+               Credentials.new(api_key: "k", secret: "s", l1_private_key: "0xabc")
+
+      assert {:ok, %Credentials{api_key: "k", secret: "s", password: nil, uid: nil, sandbox: false}} =
+               Credentials.new(api_key: "k", secret: "s")
+    end
+
     test "an %Bourse.Exchange{} carrying credentials leaks no key material through inspect" do
       creds = Credentials.new!(api_key: "exchange-embedded-key", secret: "exchange-embedded-secret")
       exchange = Bourse.Exchange.new!("bybit", credentials: creds)

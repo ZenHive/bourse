@@ -86,6 +86,9 @@ defmodule Bourse.Signing.Lighter.ProtocolTest do
 
     assert {:ok, <<1, 9, @request_id::32, _payload::binary>>} =
              Protocol.encode_request(@request_id, :transfer, transfer())
+
+    assert {:ok, <<1, 10, @request_id::32, _payload::binary>>} =
+             Protocol.encode_request(@request_id, :change_pub_key, change_pub_key())
   end
 
   test "rejects unknown, missing, and out-of-range operation values" do
@@ -138,6 +141,28 @@ defmodule Bourse.Signing.Lighter.ProtocolTest do
                skip_nonce: false,
                nonce: 9
              })
+
+    assert {:error, :invalid_argument} =
+             Protocol.encode_request(@request_id, :change_pub_key, Map.delete(change_pub_key(), :pub_key))
+
+    assert {:error, :invalid_argument} =
+             Protocol.encode_request(@request_id, :change_pub_key, %{change_pub_key() | l1_signature: "0xdead"})
+
+    assert {:error, :invalid_argument} =
+             Protocol.encode_request(@request_id, :change_pub_key, %{change_pub_key() | pub_key: "not-hex"})
+
+    assert {:ok, <<1, 10, @request_id::32, _payload::binary>>} =
+             Protocol.encode_request(@request_id, :change_pub_key, %{
+               change_pub_key()
+               | pub_key: "0X" <> change_pub_key().pub_key,
+                 l1_signature: String.replace_prefix(change_pub_key().l1_signature, "0x", "0X")
+             })
+
+    assert {:error, :invalid_argument} =
+             Protocol.encode_request(@request_id, :change_pub_key, %{
+               change_pub_key()
+               | l1_signature: "0x" <> String.duplicate("zz", 65)
+             })
   end
 
   test "decodes successful initialization, auth, and signed transactions strictly" do
@@ -174,6 +199,8 @@ defmodule Bourse.Signing.Lighter.ProtocolTest do
 
     assert {:error, :protocol_error} =
              Protocol.decode_response(<<1, 3, @request_id::32, 0, 0, 14, 99::32>>, :create_order, @request_id)
+
+    assert {:error, :protocol_error} = Protocol.decode_response(<<1, 10, @request_id::32>>, :withdraw, @request_id)
   end
 
   defp create_order do
@@ -209,6 +236,16 @@ defmodule Bourse.Signing.Lighter.ProtocolTest do
       memo: @empty_memo,
       skip_nonce: false,
       nonce: 11
+    }
+  end
+
+  defp change_pub_key do
+    %{
+      pub_key: "48d4615592bf39d71889f5127c7710c36912b733a1f8f32cb9446a7aec4e34461348642d459cbc77",
+      l1_signature:
+        "0xe65c3e066894a1631220983b5da8617e21512ead950bb3ec6f38899349ebbe8d5f9111ffd4fa1bdfde707eae5f752ccdf11f3b5911ba014e92c2b9a50140b6a71b",
+      skip_nonce: false,
+      nonce: 12
     }
   end
 end

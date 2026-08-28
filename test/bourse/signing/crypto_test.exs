@@ -74,6 +74,41 @@ defmodule Bourse.Signing.CryptoTest do
     end
   end
 
+  describe "hash_message/1, sign_message/2, recover_signer_address/2" do
+    @private_key "0x0123456789012345678901234567890123456789012345678901234567890123"
+    @vector_message "1700000000000"
+    @vector_hash "1362375365df31a82fb5331c8b5ae150f25d8ee09c8431ae46bac7625862136a"
+    @vector_signature "0xe65c3e066894a1631220983b5da8617e21512ead950bb3ec6f38899349ebbe8d5f9111ffd4fa1bdfde707eae5f752ccdf11f3b5911ba014e92c2b9a50140b6a71b"
+
+    test "hash_message matches the Derive personal-message vector" do
+      assert @vector_message |> Crypto.hash_message() |> Base.encode16(case: :lower) == @vector_hash
+    end
+
+    test "sign_message matches the Derive packed signature vector" do
+      assert Crypto.sign_message(@vector_message, private_key: @private_key) == @vector_signature
+    end
+
+    test "sign_message requires :private_key" do
+      assert_raise ArgumentError, ~r/private_key/, fn ->
+        Crypto.sign_message(@vector_message, [])
+      end
+    end
+
+    test "recover_signer_address round-trips a packed EIP-191 signature" do
+      signature = Crypto.sign_message(@vector_message, private_key: @private_key)
+      assert {:ok, address} = Crypto.recover_signer_address(@vector_message, signature)
+      assert address =~ ~r/^0x[0-9a-f]{40}$/
+      assert {:ok, ^address} = Crypto.recover_signer_address(@vector_message, signature)
+    end
+
+    test "recover_signer_address rejects a malformed packed signature" do
+      assert {:error, :invalid_signature} =
+               Crypto.recover_signer_address(@vector_message, "0x" <> String.duplicate("00", 65))
+
+      assert {:error, :invalid_signature} = Crypto.recover_signer_address(@vector_message, "not-a-signature")
+    end
+  end
+
   # Hides the value from compile-time type inference so the runtime guard, not the
   # type checker, is what rejects it.
   defp untyped(value), do: Enum.random([value])
