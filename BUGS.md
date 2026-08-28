@@ -211,7 +211,7 @@ the rest. That is the gate training its own users to ignore it.
 **Worth investigating individually** (not yet adjudicated):
 
 - `bybit:fetchMySettlementHistory` — *"raw provider payload contains none of the semantic keys `["deliveryPrice", …]`"*. The venue answered; none of the expected keys are present. That is carve divergence, not empty state.
-- `lighter:fetchOHLCV: provider returned no rows` and `lighter.fetch_ohlcv returned no rows` — `publicGetCandles` is a **public** endpoint, so the dead account is not an explanation; suspect wrong resolution / market-id parameters.
+- ~~`lighter:fetchOHLCV: provider returned no rows`~~ — **adjudicated 2026-08-28: not a client defect, do not re-investigate.** Probed live against `testnet.zklighter.elliot.ai`: `publicGetCandles` with `market_id=1` (and `0`), `resolution="1h"`, a 24h `start_timestamp`/`end_timestamp` window and `count_back=0` answers HTTP 200 with `%{"code" => 200, "r" => "1h", "c" => []}`. The venue **echoes the resolution back**, and a parameterless call is rejected as `bad_request` — so the request is well-formed and understood; the testnet simply carries no candle history for the probed markets. Note this holds *despite* `priv/venues/lighter/authored/endpoints.json` marking `market_id` and `resolution` as `{"kind": "unresolved", "reason": "dynamic_construction"}`, which is what made this look like a parameter bug.
 - `hyperliquid:fetchPosition: expected Bourse.Position, got nil` and `binanceusdm:fetchPositionADLRank: expected ADLRank, got nil` — ambiguous between empty state and a parse gap.
 - `okx:fetchTransfer: transId is incorrect or transId does not match` — the argument the case supplies is rejected by the venue; fixture problem or real param shaping.
 
