@@ -65,7 +65,12 @@ defmodule Bourse.Spec.Disk do
   end
 
   @doc "Assembles a facet-major spec from already-decoded split maps."
-  @spec assemble_maps(map(), String.t()) :: map()
+  @spec assemble_maps(
+          %{
+            required(String.t()) => map() | list()
+          },
+          String.t()
+        ) :: map()
   def assemble_maps(files, spec_root) when is_map(files) and is_binary(spec_root) do
     venue = Map.fetch!(files, "venue.json")
     endpoints = Map.fetch!(files, "endpoints.json")

@@ -161,7 +161,10 @@ under `--include dangerous`.
 
 ## 2026-08-28 — `mix check.dispatch` is structurally red on `main`: a pre-existing `reach.check` smell makes "check.dispatch passes" unsatisfiable as an acceptance criterion
 
-**Status:** 🆕 measured (orchestrator) — one-line fix, not yet applied.
+**Status:** ✅ fixed 2026-08-28 — `Bourse.Spec.Disk.assemble_maps/2` now declares the
+explicit `%{required(String.t()) => map() | list()}` shape (harness run
+`run-1787882432734-2e732247`, reviewer fix riding task 674). `MIX_ENV=dev mix reach.check
+--arch --smells --strict --path lib` is green. Repro kept below as the evidence trail.
 
 On landed `main` (`5923baf`), offline and independent of any task:
 

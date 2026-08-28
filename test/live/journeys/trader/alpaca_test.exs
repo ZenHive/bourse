@@ -119,9 +119,11 @@ defmodule Bourse.Journeys.Trader.AlpacaTest do
 
       # Observed live 2026-08-28 on paper-api.alpaca.markets: HTTP 403,
       # code 40310000, "cost basis must be >= minimal amount of order 10".
-      # The status-map 403 classifies this as authentication_error; Alpaca's
-      # own docs name 40310000 as an authorization/business refusal
-      # (https://docs.alpaca.markets/us/reference/postorder).
+      # Alpaca's own docs name 40310000 as an authorization/business refusal
+      # (https://docs.alpaca.markets/us/reference/postorder). The unified type
+      # comes from `Bourse.HTTP.Errors`, which short-circuits every 401/403 to
+      # authentication_error before any authored mapping is consulted — the
+      # venue's own code and message are what pin the refusal here.
       assert error.type == :authentication_error
       assert error.code == 40_310_000
       assert error.http_status == 403
