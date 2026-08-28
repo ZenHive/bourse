@@ -1,6 +1,7 @@
 defmodule Bourse.WS.SpecConfigTest do
   use ExUnit.Case, async: true
 
+  alias Bourse.Credentials
   alias Bourse.Exchange
   alias Bourse.WS
   alias Bourse.WS.Config
@@ -122,10 +123,7 @@ defmodule Bourse.WS.SpecConfigTest do
     end
 
     test "every venue's private connect either carries a non-nil ws.auth or returns an error" do
-      connect_fun = fn _url, _opts ->
-        {:ok, pid} = Transport.start()
-        {:ok, %Client{server_pid: pid, state: :connected}}
-      end
+      connect_fun = stub_connect_fun()
 
       # Offline inventory. `Exchange.new!/1` carries no credentials, so the
       # outcome each venue owes is fixed by its own authored config, and an
@@ -169,12 +167,58 @@ defmodule Bourse.WS.SpecConfigTest do
       refute source =~ ~r/\{:error, :no_auth_pattern\}\s*->\s*\{:ok, ws\}/
     end
 
+    test "derive private connect records the handshake on ws.auth" do
+      # The inventory above never takes the {:ok, ws} branch: no credentials.
+      # Seed the login result the stub transport will not emit, so connect/3
+      # records the venue's subaccount list the same way the live handshake does.
+      send(self(), {:websocket_message, %{"id" => 1, "result" => [144_422]}})
+
+      assert {:ok, ws} =
+               WS.connect(derive_exchange(), :private,
+                 connect_fun: stub_connect_fun(),
+                 auth_timeout_ms: 200,
+                 request_id: 1
+               )
+
+      try do
+        assert %{pattern: :eip191_jsonrpc_login, meta: %{subaccounts: [144_422]}} = ws.auth
+      after
+        WS.close(ws)
+      end
+    end
+
+    test "a failed derive handshake is an error, not an open unauthenticated socket" do
+      send(
+        self(),
+        {:websocket_message, %{"error" => %{"code" => 403, "message" => "Unauthorized or Forbidden"}}}
+      )
+
+      assert {:error, {:auth_failed, %{"code" => 403, "message" => "Unauthorized or Forbidden"}}} =
+               WS.connect(derive_exchange(), :private,
+                 connect_fun: stub_connect_fun(),
+                 auth_timeout_ms: 200,
+                 request_id: 1
+               )
+    end
+
     test "hyperliquid's nil auth_pattern is correct — private data is address-scoped on the public socket" do
       config = Config.for_exchange("hyperliquid")
       assert config.auth_pattern == nil
       assert is_nil(config.private_url)
       assert is_nil(config.private_url_sandbox)
       assert {:error, :no_url_configured} = WS.connect(Exchange.new!("hyperliquid"), :private)
+
+      # The error connect/3 used to map to ok. Hyperliquid has no private URL,
+      # so the only way to observe it is authenticate/2 on the public socket.
+      assert {:ok, ws} =
+               WS.connect(Exchange.new!("hyperliquid"), :public, connect_fun: stub_connect_fun())
+
+      try do
+        assert is_nil(ws.auth)
+        assert {:error, :no_auth_pattern} = WS.authenticate(ws)
+      after
+        WS.close(ws)
+      end
     end
 
     test "derive uses registered :method_params_subscribe and build_subscribe returns frames" do
@@ -195,6 +239,25 @@ defmodule Bourse.WS.SpecConfigTest do
       assert Config.for_exchange("kraken") == nil
       refute Config.supported?("kraken")
       assert Config.for_exchange(%Exchange{id: "kraken", name: "Unsupported", spec: %{}}) == nil
+    end
+  end
+
+  # Same vector as Bourse.WS.Auth.Eip191JsonrpcLoginTest — valid secp256k1, not a
+  # registered session key. Frame building needs a real key; the stub never hits the venue.
+  defp derive_exchange do
+    creds =
+      Credentials.new!(
+        api_key: "0x108b9aF9279a525b8A8AeAbE7AC2bA925Bc50075",
+        secret: "0x0123456789012345678901234567890123456789012345678901234567890123"
+      )
+
+    Exchange.new!("derive", credentials: creds, sandbox: true)
+  end
+
+  defp stub_connect_fun do
+    fn _url, _opts ->
+      {:ok, pid} = Transport.start()
+      {:ok, %Client{server_pid: pid, state: :connected}}
     end
   end
 end

@@ -1,9 +1,9 @@
 defmodule Bourse.WS.AuthLiveSmokeTest do
   @moduledoc """
-  Opt-in live auth smoke tests — exercise the auth frames built by T93 pattern
-  modules against real exchange sandboxes. Excluded by default; run with:
+  Live auth smoke tests — exercise the auth frames against real sandboxes.
 
-      mix test --include network --include ws_auth_smoke
+  Tagged `:network` and `:ws_auth_smoke` for selection. They run in the default
+  suite (`ExUnit.start/1` excludes only `:dangerous`).
 
   Covers:
 
@@ -11,14 +11,16 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
       expect `{"op" => "auth", "success" => true}`.
     * deribit (`:jsonrpc_linebreak`) — connect testnet WS, send JSON-RPC
       `public/auth`, expect correlated `access_token` in the reply.
+    * derive (`:eip191_jsonrpc_login`) — `public/login` with EIP-191 of the ms
+      timestamp; an unregistered signer is JSON-RPC 403.
 
   The second half covers the handshake `Bourse.WS.connect/3` runs for a
-  `:private` section, on all three frame-based venues. Those tests are
-  deliberately *differential*: each subscribes to a private channel twice, once
-  on an authenticated connection and once on `authenticate: false`. Asserting
-  only that the authenticated call succeeds would pass just as well against a
-  venue that never checked — the rejection on the unauthenticated connection is
-  what proves the handshake is load-bearing.
+  `:private` section. Those tests are deliberately *differential*: each
+  subscribes to a private channel twice, once on an authenticated connection
+  and once on `authenticate: false`. Asserting only that the authenticated call
+  succeeds would pass just as well against a venue that never checked — the
+  rejection on the unauthenticated connection is what proves the handshake is
+  load-bearing.
 
   The binance family is covered too, and no part of it is a subscribe-ack
   venue. The two futures halves (`:listen_key`) authenticate before the socket
@@ -30,9 +32,10 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
   (`:ws_api_signature`) opens its user data stream with a signed WS-API request,
   and is checked against a bad secret, which the venue rejects outright.
 
-  Credentials: bybit + deribit testnet and okx demo keys must be registered via
-  `Bourse.Testnet.register_from_env/3` in `test_helper.exs`. Tests flunk
-  with setup instructions when credentials are missing — never silent skip.
+  Credentials: bybit + deribit + derive testnet and okx demo keys must be
+  registered via `Bourse.Testnet.register_from_env/3` in `test_helper.exs`.
+  Tests flunk with setup instructions when credentials are missing — never
+  silent skip.
   """
 
   use Bourse.Test.Case, async: false
