@@ -155,8 +155,7 @@
           "status",
           "type",
           "side"
-        ],
-        "empty_collection": "allowed"
+        ]
       },
       "authority_source_ids": [
         "api-openapi"

@@ -449,6 +449,10 @@
           "source_class": "optional",
           "unless_present": "symbol"
         },
+        "historical": {
+          "kind": "literal",
+          "value": true
+        },
         "instrument_name": {
           "kind": "reference",
           "source": "symbol",
