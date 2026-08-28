@@ -104,16 +104,19 @@ roadmap.
 >    socket, bybit's `watchOrders` template pointing at a topic the venue does not serve, and
 >    okx's outer batch `code "1"` masking the real `sCode`.
 >
-> Every entry is real evidence regardless of who measured it; what decides the destination is
-> the operator's routing call, one class at a time (`CLAUDE.md` § The operator routes findings
-> into the roadmap). Several — classes 1, 3 and parts of 6 — are small enough to be inline fixes
-> rather than filings.
+> **Routed 2026-08-28 (operator: all six).** One task per class, so the next instance of a class
+> lands in the task that owns it instead of spawning a sibling: **685** substitution ·
+> **686** unified read · **687** the gates · **688** `Bourse.Symbol` · **689** pacing and signing
+> order · **690** transport honesty. Each open entry above carries its task id on its `**Status:**`
+> line. Two live siblings were checked rather than duplicated: **563** (derive WS auth, superseded,
+> hand-build because the handshake was unobserved — now live-verified, so 690 carries it) and
+> **670** (the fixture-oracle deletion and gate flip, which 687 stays out of).
 
 ---
 
 ## 2026-08-28 — bybit `fetch_positions_history`: one dated-contract row fails the WHOLE call with `missing_position_notional_currency`
 
-**Status:** 🆕 measured live (orchestrator, landed-base `mix ci` on `000034a`) — not consumer-reported.
+**Status:** 🆕 measured live (orchestrator, landed-base `mix ci` on `000034a`) — not consumer-reported. · **Tracked:** task 685, 688 (2026-08-28).
 
 The contract case `bybit:fetchPositionsHistory:0:privateGetV5PositionClosedPnl` fails with
 
@@ -156,7 +159,7 @@ account acquired a closed position on a dated contract (expiring the day of the 
 **Status:** 🆕 measured live + proven arithmetically (orchestrator, investigating a reported
 60 s stall on two OKX contract cases) — not consumer-reported. **Latent**: it did not fire in
 any of seven runs on 2026-08-28, but it is the only code path in the client that can block a
-single call for exactly ~60 000 ms.
+single call for exactly ~60 000 ms. · **Tracked:** task 689 (2026-08-28).
 
 `Bourse.RateLimiter.Shaping` converts a venue's authored bucket into a sliding-window check by
 reading **only** `cost`, `axes` and `rate_limit_ms`, then dividing a hardcoded
@@ -341,7 +344,7 @@ venue-journey review.
 
 **Status:** 🆕 confirmed live (orchestrator) — not consumer-reported. **This is a real client
 defect**, unlike the rest of the 2026-08-28 contract-lane reds, which adjudicated to empty
-sandbox state or host toolchain.
+sandbox state or host toolchain. · **Tracked:** task 685 (2026-08-28).
 
 `fetchTransfers` reads `privateGetAccountBillsArchive` (correctly filtered to `type: "1"`,
 the transfer bill type). Probed live against the OKX demo:
@@ -396,7 +399,7 @@ was wrong.
 
 ## 2026-08-28 — alpaca's authored `errors.status_map` is silently dropped by the spec loader, so the venue has no HTTP-status error classification
 
-**Status:** 🆕 measured live (orchestrator triage of the task 674 reviewer's finding) — not consumer-reported.
+**Status:** 🆕 measured live (orchestrator triage of the task 674 reviewer's finding) — not consumer-reported. · **Tracked:** task 685 (2026-08-28).
 
 `priv/venues/alpaca/authored/errors.json` declares `status_map` as bare strings:
 
@@ -428,7 +431,7 @@ re-pinned in the same change. Also reconcile the hard `401`/`403` short-circuit 
 
 ## 2026-08-28 — binance `fetch_balance` drops the venue's `updateTime`; `Balance.timestamp` and `datetime` come back `nil`
 
-**Status:** 🆕 measured live (orchestrator triage of the task 675 reviewer's finding) — not consumer-reported.
+**Status:** 🆕 measured live (orchestrator triage of the task 675 reviewer's finding) — not consumer-reported. · **Tracked:** task 686 (2026-08-28).
 
 Exact call, against `testnet.binance.vision`:
 
@@ -457,7 +460,7 @@ sibling binance-family venues (`binanceusdm`, `binancecoinm` — same field-map 
 
 ## 2026-08-28 — the provider-live suite cannot distinguish a deliberately-red ledgered case from a genuine failure, so reviewers dismiss the whole result
 
-**Status:** 🆕 measured (orchestrator, across six harness reviews and two full local runs) — not consumer-reported.
+**Status:** 🆕 measured (orchestrator, across six harness reviews and two full local runs) — not consumer-reported. · **Tracked:** task 687 (2026-08-28).
 
 A full `mix test.json` on `main` confirms ~46–48 failures. Independently classified:
 
@@ -498,7 +501,7 @@ the rest. That is the gate training its own users to ignore it.
 
 ## 2026-08-28 — OKX already-canceled cancel classifies as `:exchange_error` code `"1"`, not `:order_not_found` 51400
 
-**Status:** 🆕 measured live (task 679 trader journey) — not consumer-reported.
+**Status:** 🆕 measured live (task 679 trader journey) — not consumer-reported. · **Tracked:** task 690 (2026-08-28).
 
 `POST /api/v5/trade/cancel-order` for an order that is already canceled (or filled, or
 missing) answers HTTP 200 with a batch envelope: outer `code` `"1"`, `msg` `"All operations
@@ -522,7 +525,7 @@ classification change, not a journey-lane patch.
 
 ## 2026-08-28 — `Bourse.WS.connect/3` swallows `:no_auth_pattern` and hands back an open **unauthenticated** private socket
 
-**Status:** 🆕 measured live (orchestrator, harness wave 665/673/681/682) — not consumer-reported.
+**Status:** 🆕 measured live (orchestrator, harness wave 665/673/681/682) — not consumer-reported. · **Tracked:** task 690 (2026-08-28).
 
 `lib/bourse/ws.ex:247` maps the missing-handshake case straight to success:
 
@@ -564,7 +567,7 @@ Both are behaviour changes outside the wave that surfaced this.
 
 ## 2026-08-28 — `mix bourse.check_lighter_signer` exits 0 while reporting "NOT RUN" — a gate that is green without running
 
-**Status:** 🆕 measured (orchestrator) — not consumer-reported.
+**Status:** 🆕 measured (orchestrator) — not consumer-reported. · **Tracked:** task 687 (2026-08-28).
 
 With `go` absent from `PATH` the task prints
 
@@ -642,7 +645,7 @@ around the gate instead of reading it.
 ## 2026-08-28 — deribit `fetch_option_chain/2`: an underlying with a live linear book answers `{:ok, %{}}`, and `implied_volatility` is `nil` on every leg
 
 **Status:** 🆕 reported (consumer: `trading_dashboard`, bourse 0.7.0, live Deribit public API,
-2026-08-28 ~00:50 UTC; no credentials — all endpoints public)
+2026-08-28 ~00:50 UTC; no credentials — all endpoints public) · **Tracked:** task 686 (2026-08-28).
 
 **The call:** `Bourse.fetch_option_chain(exchange, currency)` against `deribit`.
 
@@ -706,7 +709,7 @@ instrument name also fails `ZenQuant.Options.Deribit.parse_option/1`
 ## 2026-08-27 — `HmacRecipe`'s canonical-string fallback ladders silently pick a block instead of failing; no test reaches past their first rung
 
 **Status:** 🆕 reported (measured, not consumer-reported — mutation testing on
-`lib/bourse/signing/hmac_recipe.ex`, muex 0.9.1, 2366 mutants, 421 survivors)
+`lib/bourse/signing/hmac_recipe.ex`, muex 0.9.1, 2366 mutants, 421 survivors) · **Tracked:** task 685 (2026-08-28).
 
 **The call:** any signed request whose authored `canonical_string` slice does not carry the
 exact key the ladder looks for first.
@@ -761,7 +764,7 @@ open upstream and silently removes ~16 % of mutants from the denominator.
 ## 2026-08-27 — `spec_disk_test` pins pre-rotation spec hashes, so every legitimate authored-spec edit reds the suite
 
 **Status:** 🆕 reported (found while scoping a mutation-testing run; `main` is red on a clean
-tree as of `e71e714`)
+tree as of `e71e714`) · **Tracked:** task 687 (2026-08-28).
 
 **The call:** `mix test.json --quiet test/bourse` on a clean checkout.
 
@@ -804,7 +807,7 @@ unmutated code marks every mutant as killed, so the score would have read 100 %.
 
 **Status:** 🆕 reported (found live while building the trader WS journey, 2026-08-24; the
 journey subscribes the raw `"order"` topic directly and is green, so nothing user-facing is
-blocked — the defect is that the unified `watch_orders/2` path cannot do the same)
+blocked — the defect is that the unified `watch_orders/2` path cannot do the same) · **Tracked:** task 690 (2026-08-28).
 
 **The call:** `Bourse.WS.watch_orders(ws, ...)` on a bybit private connection — the unified
 way a consumer would ask for the account's order stream.
@@ -836,7 +839,7 @@ channel template should keep that delivery shape in mind.
 
 **Status:** 🆕 reported (mutation-testing testability survey, 2026-08-24 — see the provenance
 note on the test-gap entry below; the finding came from reading `lib/bourse/symbol.ex`, and the
-numbers here were re-measured against the authored data with `mix run`)
+numbers here were re-measured against the authored data with `mix run`) · **Tracked:** task 688 (2026-08-28).
 
 **The call:** `Bourse.Symbol.reverse_aliases(aliases)` where `aliases` is a venue's authored
 `markets.patterns.currency_aliases` — public API, meant to invert exchange→unified into
@@ -882,7 +885,7 @@ and gets no error saying so.
 
 **Status:** 🆕 reported (mutation-testing testability survey, 2026-08-24 — provenance note on the
 test-gap entry below; measured against authored alias maps and the frozen reference slice's
-market ids)
+market ids) · **Tracked:** task 688 (2026-08-28).
 
 **The call:** `Bourse.Symbol.normalize(exchange_id, %{separator: "", case: :upper}, aliases: venue_aliases)`
 — the documented `:aliases` option (`lib/bourse/symbol.ex:138`).
@@ -933,7 +936,7 @@ using the client's own conversion, with no error — a symbol that names a diffe
 
 ## 2026-08-24 — `Bourse.Symbol`: three untested surfaces where the code and the docs already disagree
 
-**Status:** 📋 noted (not defects — test gaps, filed so the evidence is not lost)
+**Status:** 📋 noted (not defects — test gaps, filed so the evidence is not lost) · **Tracked:** task 688 (2026-08-28).
 
 **Provenance for all three, and for the two entries above:** a mutation-testing *testability*
 survey of the offline-testable surface, run 2026-08-24. `Bourse.Symbol` **was not itself
@@ -1001,7 +1004,7 @@ mutated away.
 
 ## 2026-08-24 — bybit: intermittent `invalid_nonce` on signed reads — the client signs before it throttles, and the authored `recv_window` never reaches the wire
 
-**Status:** 🆕 reported (surfaced by the task-671 bybit lane; cross-venue client machinery, untouched by the venue-scoped fix pass)
+**Status:** 🆕 reported (surfaced by the task-671 bybit lane; cross-venue client machinery, untouched by the venue-scoped fix pass) · **Tracked:** task 689 (2026-08-28).
 
 **The call:** `mix ccxt.verify_rest_read_contracts --venue bybit` — `fetchTradingFee:0`,
 `fetchTradingFees:0` and `fetchBorrowRateHistory:0` fail non-deterministically with
@@ -1035,7 +1038,7 @@ retryable since task 604) usually heals it, which is why it flakes instead of fa
 ## 2026-08-24 — bybit `fetchBalance` coins-balance branch parses to an empty `%Bourse.Balance{}` — the envelope is pinned to the wallet-balance shape
 
 **Status:** 🆕 reported (task-671 bybit pass — deliberately not fixed venue-scoped: the fix
-touches `fetchBalance` envelope authoring for `type: funding` across venues)
+touches `fetchBalance` envelope authoring for `type: funding` across venues) · **Tracked:** task 686 (2026-08-28).
 
 **The call:** `Bourse.fetch_balance(ex, type: "funding", params: %{"coin" => "BTC,USDT"})`
 (bybit, testnet) → routed to `GET /v5/asset/transfer/query-account-coins-balance`.
@@ -1111,7 +1114,7 @@ live account state exists"), reproduced here on a new account.
 
 ## 2026-08-23 — contract lane: fourteen cases across five venues are green only while live account state exists
 
-**Status:** 🆕 reported (task 671 state-population pass)
+**Status:** 🆕 reported (task 671 state-population pass) · **Tracked:** task 687 (2026-08-28).
 
 **The call:** `mix ccxt.verify_rest_read_contracts` (binance family, hyperliquid, okx, deribit).
 
@@ -1136,7 +1139,7 @@ nor spec defects; the lane's honest-red discipline loses signal.
 
 ## 2026-08-23 — okx: `endpoint_index`-selected algo reads can only ever see `ordType: "conditional"` orders
 
-**Status:** 🆕 reported (task 671, live-verified 2026-08-23)
+**Status:** 🆕 reported (task 671, live-verified 2026-08-23) · **Tracked:** task 686 (2026-08-28).
 
 **The call:** `Bourse.fetch_open_orders(ex, endpoint_index: 0)` / `fetch_closed_orders(ex, endpoint_index: 0)` (okx algo branches).
 
@@ -1154,7 +1157,7 @@ both contract cases stay green because they allow an empty collection.
 
 ## 2026-08-23 — binanceusdm: the `fetchOpenOrder`/`fetchOrder` algo branch can never reach `GET /fapi/v1/algoOrder`
 
-**Status:** 🆕 reported (task 671, live-verified 2026-08-23)
+**Status:** 🆕 reported (task 671, live-verified 2026-08-23) · **Tracked:** task 686 (2026-08-28).
 
 **The call:** `Bourse.fetch_open_order(ex, id, endpoint_index: 1)` (binanceusdm).
 
@@ -1177,7 +1180,7 @@ branch's green is vacuous.
 
 ## 2026-08-23 — binancecoinm `fetch_adl_rank`: provider list collapsed into a single struct — second position silently dropped
 
-**Status:** 🆕 reported (task 671, live-verified 2026-08-23)
+**Status:** 🆕 reported (task 671, live-verified 2026-08-23) · **Tracked:** task 686 (2026-08-28).
 
 **The call:** `Bourse.fetch_adl_rank(ex)` (binancecoinm).
 
@@ -1196,7 +1199,7 @@ case has always passed vacuously because a flat account answers `[]`.
 
 ## 2026-08-23 — bybit: account-classification helper endpoints remain in `fetchBalance` reads and every write method's `unified` array
 
-**Status:** 🆕 reported (task 671 carved them out of the six red READ methods only — see `docs/authored-spec-carves/bybit.md` C-T671a)
+**Status:** 🆕 reported (task 671 carved them out of the six red READ methods only — see `docs/authored-spec-carves/bybit.md` C-T671a) · **Tracked:** task 686 (2026-08-28).
 
 **The call:** `Bourse.fetch_balance(ex, endpoint_index: 0)` / `endpoint_index: 4` (bybit), and the
 `unified` arrays of `createOrder`, `createOrders`, `createMarketBuyOrderWithCost`,
@@ -1222,7 +1225,7 @@ currently-green cases.
 
 **Status:** 🆕 reported · **Venue:** deribit (testnet, `sandbox: true`, bourse `0.7.0` from Hex) ·
 **Class:** unfilled unified field — not a venue gap. The venue publishes the numbers in the very
-payload the client already fetches and parses.
+payload the client already fetches and parses. · **Tracked:** task 686 (2026-08-28).
 
 **Reporter:** `bourse_trading` (task 4, `Bourse.PortfolioRisk` account-level snapshot layer).
 

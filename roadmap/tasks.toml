@@ -23219,3 +23219,350 @@ started_at = "2026-08-28"
 scored_at = "2026-08-28"
 done_at = "2026-08-28"
 shipped_in = "e6ef7ea35d42b966532a7db22c7b5166d0cbd13b"
+
+[[task]]
+id = "685"
+phase = 16
+bundle = "live_triage"
+status = "pending"
+title = "Silent substitution is the class: a slice that does not fit must fail loudly, never resolve to a plausible wrong value"
+scores = { d = 7, b = 8, u = 8 }
+markers = ["bug"]
+acceptance_criteria = ["OKX fetch_transfers and fetch_transfer/2 compose live against the demo host: every id the list read returns is either accepted by the detail read, or the list read declares the id unavailable. A returned id that the venue rejects as malformed is a failure of this criterion. The chosen carve is recorded in docs/authored-spec-carves/okx.md with the live evidence for it", "No authored id field map resolves through fallback_keys onto a key of a different identifier class. A manifest-wide test over all eleven venues fails when one does, so the next venue cannot ship the same substitution", "alpaca's authored errors.status_map is consumed by the loader: Bourse.Exchange.new(alpaca) yields a non-empty status_map and http_exceptions, and a manifest-wide test raises when any venue authors a status_map shape the loader does not read", "alpaca 403, 404, 422 and 429 are classified from live calls against paper-api.alpaca.markets, and the re-observed unified type for the 403 is re-pinned in test/live/journeys/trader/alpaca_test.exs in this same change. The interaction with the hard 401/403 short-circuit in Bourse.HTTP.Errors.normalize_error/3 is resolved and stated, not left to outrank the authored map by accident", "HmacRecipe's two canonical-string ladders and the permissive path_predicate?/4 clauses either have every reachable rung pinned by a test that distinguishes it from its neighbours, or the unreachable rungs are replaced by a clause that raises and names the malformed slice. Deleting a surviving rung must redden the suite; state the before and after mutation counts from the muex command in the BUGS entry", "One unparseable row no longer discards a whole successful multi-row read: bybit fetch_positions_history returns the rows it could resolve, and the row it could not is either dropped with a named reason or carries an explicit unavailability marker. Proven live on the bybit testnet main-account key against an account holding a dated contract", "Each of the four instances above has a live call in test/ that fails when the substitution returns, and none of them is satisfied by a shape assertion alone"]
+out_of_scope = ["Normalizing bybit dated-future symbol ids, which is the Bourse.Symbol task", "The rate limiter and signing order", "Deleting fixture-oracle test architecture, which is task 670"]
+touches = ["lib/bourse/exchange.ex", "lib/bourse/spec/schema.ex", "lib/bourse/signing/hmac_recipe.ex", "lib/bourse/unified/read_parse.ex", "lib/bourse/unified/deribit_position_units.ex", "priv/venues/okx/authored/normalization.json", "priv/venues/alpaca/authored/errors.json", "test/bourse", "test/live/okx", "test/live/journeys/trader/alpaca_test.exs"]
+assignee = "codex"
+model = "gpt-5.6-sol"
+body = """
+Four live instances of one mechanism: when the authored slice or the provider payload does
+not fit what the code expects, the code substitutes a guess instead of failing. Each was
+measured separately; the deliverable is the gate that makes the class impossible plus the
+four fixes, not four patches.
+
+The instances, all recorded in BUGS.md with their exact calls and observed values:
+
+1. OKX TransferEntry.id declares fallback_keys onto billId. account/bills-archive carries no
+   transId at all, so every transfer row gets a plausible 19-digit id that the venue then
+   rejects on transfer-state as 51000 Parameter transId error or 58129. A nil id would have
+   failed at the first consumer; a billId looks like an id all the way to the wire. The carve
+   is a decision, not a key swap: either TransferEntry.id is documented as the bills-archive
+   identifier and fetchTransfer sources its transId from the transfer-creating POST response,
+   or fetchTransfers moves to a source that returns one, or fetchTransfer is declared
+   unreachable from a fetchTransfers id and ledgered. Whichever is chosen, the billId fallback
+   goes away.
+2. alpaca authors errors.status_map as bare strings; Bourse.Exchange.build_status_map/2 only
+   matches the class-wrapped shape the other ten venues use and falls through to an empty map.
+   Measured: Bourse.Exchange.new(alpaca) yields status_map and http_exceptions both empty, so
+   alpaca 404 and 422 are typed only when the numeric provider code happens to be one of six
+   entries in error_codes. Rotating alpaca's file to the loader's shape leaves the next venue
+   free to ship the same silently-dropped map, so the schema is the deliverable.
+3. HmacRecipe resolves which canonical-string block signs a request through two fallback
+   ladders ending in Map.values() |> List.first(). Mutation testing (muex 0.9.1, 2366 mutants,
+   421 survivors) shows every rung past the first survives: no test in the 274 signing tests
+   distinguishes them. No venue currently authors a recipe that reaches past the first rung, so
+   the report is that the signing module carries untested branches whose only job is to guess
+   when a slice is malformed. Mitigating and worth keeping in mind: a wrong block yields a
+   wrong signature, which the venue rejects, so this one fails loud at the wire.
+4. put_notional_currencies/2 folds with reduce_while and halts on the first error, so one row
+   whose symbol did not normalize turns a successful multi-row read into an error for the whole
+   account. Observed live as bybit fetchPositionsHistory failing with
+   missing_position_notional_currency on DOGEUSDT-28AUG26. The guard refusing to ship a notional
+   with a nil currency is correct in isolation; the blast radius is the defect.
+
+Authority: the venues own the contracts. Probe okx on www.okx.com with x-simulated-trading: 1,
+alpaca on paper-api.alpaca.markets, bybit on api-testnet.bybit.com with the main-account key.
+The provider docs define what each field means; no third-party client can settle a carve here.
+Read one success and one relevant error from each venue before changing the slice, and pin both.
+
+Open decision the operator owns, answer it before building: for the OKX transfer id, which of
+the three carves above ships. Ask rather than pick silently, then fold the answer into this task.
+"""
+created_at = "2026-08-28"
+scored_at = "2026-08-28"
+
+[[task]]
+id = "686"
+phase = 16
+bundle = "live_triage"
+status = "pending"
+title = "The unified read returns less than the payload it already holds: fields that never fill and routes that never reach the venue"
+scores = { d = 7, b = 8, u = 8 }
+markers = ["bug"]
+acceptance_criteria = ["binance fetch_balance stamps Balance.timestamp and datetime from the venue's updateTime, proven live against testnet.binance.vision, and the sibling binance-family venues over the assets shape are checked and fixed in the same change. test/live/journeys/trader/binance_test.exs gains the assert_recent_timestamp! the bybit exemplar carries, which its author had correctly omitted while the gap existed", "deribit fetch_option_chain populates implied_volatility on every leg that carries mark_iv, proven live on the public host for both the inverse BTC book and the USDC-settled linear book", "deribit fetch_option_chain no longer answers an empty success for an underlying whose book exists: SOL either resolves to the settlement currency carrying its book or returns a not_supported error, and a live call proves the chosen behaviour against the 682 SOL legs the USDC call returns", "deribit fetch_account_facts exposes the account-level margin figures as normalized facts with the same status/provider_fields/value vocabulary the existing facts use, so a venue that does not publish a field is distinguishable from one reporting zero. The fact shape gains a numeric slot; the deribit clause is not special-cased around it. Proven live on the testnet PM-enabled account against the documented per-currency fields of private/get_account_summaries", "binancecoinm fetch_adl_rank returns one entry per position-carrying symbol; proven live with two or more COIN-M positions open, and the second entry is asserted rather than the call merely succeeding", "bybit fetch_balance on the coins-balance branch parses actual rows: a second authored envelope covers the flat result.balance shape, and the contract assertion distinguishes parsed-a-balance from parsed-nothing so an empty map can no longer satisfy it", "bybit's account-classification helper endpoints no longer sit in fetchBalance's read branches; a consumer iterating endpoint_index never receives classification metadata labelled as a balance. The two currently-green cases are re-pinned to whatever they now assert", "okx algo reads reach orders whose ordType is not conditional: either the read fans out across the venue's algo types or the caller can select one, proven live by placing a trigger order on the demo host and reading it back through the unified call", "binanceusdm's algo branch actually reaches GET /fapi/v1/algoOrder with algoId rather than orderId, and endpoint_index: 1 no longer returns the non-algo endpoint's row byte-identical to index 0. Its contract branch sources its argument from open algo orders", "Every one of the eight defects above has a live assertion that fails when the field is nil or the route is wrong; none is satisfied by a non-empty map or an allowed-empty collection"]
+out_of_scope = ["Carving new unified methods or venues", "The transport-honesty defects: WS auth, watch_orders templates, okx batch sCode masking", "Deleting fixture-oracle test architecture, which is task 670"]
+touches = ["lib/bourse/unified/read_parse.ex", "lib/bourse/unified/request_shape.ex", "lib/bourse/unified/request_shape/okx.ex", "priv/venues/binance/authored/normalization.json", "priv/venues/binanceusdm/authored", "priv/venues/binancecoinm/authored", "priv/venues/bybit/authored", "priv/venues/deribit/authored", "priv/venues/okx/authored", "test/live"]
+assignee = "cursor"
+model = "cursor-grok-4.6-high"
+body = """
+Eight measured instances of one shape: the venue supplied the value, the client fetched and
+often already parsed it, and the unified surface hands back less than it holds. Two sub-shapes,
+both in BUGS.md with exact calls and observed values.
+
+Field never fills. binance fetch_balance returns nil timestamp and datetime while info carries
+updateTime, and the authored slice already declares the mapping. deribit fetch_option_chain
+returns 1070 BTC legs with implied_volatility nil on every one while info carries mark_iv on
+every one. binancecoinm fetch_adl_rank collapses a provider list into a single struct, so the
+second position is silently dropped. bybit's coins-balance branch parses to an empty Balance
+because the authored envelope is pinned to the wallet-balance shape. deribit fetch_account_facts
+reads twelve margin fields per currency row and normalizes two of them; the twelve numbers exist
+in the payload the client is already holding, and map_account_facts/2's fact shape has no slot
+for a numeric fact, which is the real constraint.
+
+Route never reaches the venue. deribit fetch_option_chain answers ok with an empty map for SOL
+because deribit lists altcoin options as USDC-margined linear contracts indexed under USDC, and
+an empty success is indistinguishable from this venue lists no options on this underlying. okx's
+endpoint_index-selected algo reads default ordType to conditional, so a live trigger order is
+invisible. binanceusdm's algo branch sends orderId to an endpoint that only accepts algoId, and
+book_routes runs first_success so endpoint_index: 1 silently returns index 0's row. bybit keeps
+account-classification helpers in fetchBalance's branches, so two indices return classification
+metadata labelled as a balance.
+
+Do not carve this per venue. Every one of them lands in lib/bourse/unified/read_parse.ex, which
+is 6191 lines and is the shared surface of all of them; a per-venue split collides there and
+proves nothing about the class. If the diff is too large to review in one pass, stage it along
+the two sub-shapes above, never per venue.
+
+The deribit option-chain half is consumer-reported: trading_dashboard, bourse 0.7.0, live public
+API. A trader session concluded from ok with an empty map that Deribit runs no SOL options market
+at all, and the correction cost a full re-probe of the venue. The consumer needs no workaround
+today (passing USDC and filtering on currency reaches everything) but the empty-success shape is
+what made the wrong reading look verified.
+
+Authority: each venue's own API and its published documentation. Deribit documents the
+per-currency account fields on private/get_account_summaries as distinct from the per-position
+margin rows, and that distinction is the point: under cross_pm the account figure is not the sum
+of the position rows, so a consumer cannot reconstruct it. Read one success and one relevant
+error live per defect before changing a slice, and pin both.
+
+Premise to confirm rather than assume: the note that the sibling binance-family venues share the
+field-map shape over assets was read from the authored files, not proven live. Check it.
+"""
+created_at = "2026-08-28"
+scored_at = "2026-08-28"
+
+[[task]]
+id = "687"
+phase = 16
+bundle = "live_triage"
+status = "pending"
+title = "The gates report green without running and red without a defect, so reviewers have learned to dismiss them"
+scores = { d = 6, b = 8, u = 8 }
+markers = ["bug"]
+acceptance_criteria = ["mix bourse.check_lighter_signer exits non-zero when it cannot run, with setup text naming the missing toolchain and the exact command to build the helper. mix check.dispatch records it as a failing step on a host without Go, and a test pins the exit code for the cannot-run path", "A live-suite summary distinguishes a ledgered deliberate red from a genuine failure: a reader can tell the six okx 50038 demo-unavailable cases from an actual defect without opening the ledger, and the classification comes from the ledger file rather than a hand-maintained list in the test code", "The raw contract branch distinguishes provider returned no rows from rows present but none carry the semantic keys. The current wording sent an orchestrator chasing a carve divergence that was empty account state; the new wording must make that misreading impossible", "A contract case that needs live account state owns that state: the scenario executor creates the resting order or minimum position before the branch runs and tears it down afterwards, or the case is ledgered as state-dependent and the summary says so. Prove it by running the lane against an account with no hand-made state and reading the result", "spec_disk_test is green on a clean tree, and the decision taken on the rotation hash pin is recorded with its reasoning: re-scoped, re-recorded or retired. Re-recording is only acceptable with an argument for what the new hash proves, given it is produced by the loader it is meant to check", "mix precommit and mix ci go green on a clean checkout with credentials exported, and the delivery names which commands were run and on which host"]
+out_of_scope = ["Deleting fixture-oracle test architecture and flipping the canonical gate, which is task 670", "Closing the prod-verification ledger entries themselves, which is task 327", "Provisioning sandbox account state as an operator action"]
+touches = ["lib/mix/tasks/bourse.check_lighter_signer.ex", "test/bourse/spec_disk_test.exs", "test/support/rest_read_contract_scenario.ex", "test/support/rest_read_contracts.ex", "priv/venues/_shared/binance_family/rotation_report.json", "docs/prod-verification-ledger.md"]
+assignee = "grok"
+model = "grok-4.6"
+body = """
+Four measured instances of gates that carry no honest signal, and one measured consequence that
+is worse than any of them.
+
+mix bourse.check_lighter_signer prints Lighter native verification NOT RUN: missing go and exits
+0, so mix check.dispatch records a passing step. The helper directory is a gitignored build
+artifact, so on a host without Go the signer is genuinely unavailable and the gate says nothing.
+
+The provider-live suite cannot tell a deliberately-red ledgered case from a genuine failure. A
+full run on main sits at roughly 46 to 48 failures whose independent classification is: about
+twelve lighter helper_unavailable, about six lighter account errors, six okx 50038 deliberately
+kept in the denominator because dropping them is the green lie CLAUDE.md forbids, about thirteen
+branches that only execute when live account state exists, one hardcoded threshold against a
+drained wallet, and about five that warranted real investigation. Four of those five adjudicated
+to empty account state; the fifth was the okx transfer id defect, and it took six reviews to find.
+
+The measured consequence: across six harness reviews in one day, every reviewer labelled the
+entire cluster environmental or pre-existing, reproduced two or three of its causes, and approved
+over the rest. That is the gate training its own users to ignore it, and it is the reason this
+task exists rather than four separate patches.
+
+spec_disk_test pins the SHA-256 of the assembled maps as they stood before spec.json was deleted.
+bybit's authored document has been edited three times on purpose since, so the pin cannot hold and
+main is red on a clean tree. The guarantee the pin gave (the rotation was lossless) expired with
+the first legitimate authored edit; re-recording restores nothing, because the new hash is
+produced by the same loader it is meant to check. This is an owner decision, which is why it was
+filed rather than patched.
+
+Fourteen contract cases across five venues resolve their arguments from live account state and go
+red once that state is cleaned up or ages out. Deribit is the sharpest instance: a filled
+round-trip made two cases green, and 2.5 hours later fetchClosedOrders returned zero rows even
+with include_old, because the venue windows filled orders out of its history. That state cannot be
+made durable by hand.
+
+Task 670 owns the larger flip to provider-live-only and the deletion of fixture oracles. This task
+does not delete anything; it makes the signal honest so 670 lands on a gate someone believes.
+
+Authority for the per-case adjudications is the venue: probe the demo host before reclassifying a
+red. A ledgered case is ledgered because a live call could not reach it, and the ledger records why
+it is unverified without discharging it.
+"""
+created_at = "2026-08-28"
+scored_at = "2026-08-28"
+
+[[task]]
+id = "688"
+phase = 16
+bundle = "live_triage"
+status = "pending"
+title = "Bourse.Symbol quietly returns a different market: non-injective inversion, unanchored alias rewriting, and unparsed dated ids"
+scores = { d = 6, b = 7, u = 7 }
+markers = ["bug"]
+acceptance_criteria = ["reverse_aliases/1 never silently drops a key: hyperliquid's 14-entry alias map either inverts losslessly through a designated canonical exchange code per unified code, or the inversion refuses the non-injective map and names the collision. apply_alias(aliases) |> apply_alias(reverse_aliases(aliases)) is the identity on every key every venue authors, asserted across all eight venues that author a non-empty map", "The :aliases option applies per currency after splitting, not as a substring rewrite over the raw id: normalize(AIXBTUSDT, ..., aliases: binance_aliases) yields AIXBT/USDT and normalize(AEVO-USDT, ..., aliases: okx_aliases) yields AEVO/USDT. A test sweeps every authored alias key against real market ids and asserts no boundary-crossing rewrite survives", "A bybit dated linear future id parses: Symbol.parse_extended on the venue-native form resolves rather than answering invalid_format, so the unit resolution that failed on it can complete. Proven against a real id read live from the bybit testnet, not a literal typed into a test", "convert_date/3 either raises on input that does not match the declared source format, as its own @doc promises, or the doc is corrected to what the code does. The three observed garbage returns are pinned either way", "The single-digit expiry day is exercised on both branches: the bybit padded form and the deribit unpadded form each have a test with a day in 1 to 9, so deleting the padding clause or its guard reddens the suite", "The asymmetry between from_exchange_id/3 and normalize/3 over the quote-currency list is resolved or documented: either from_exchange_id can reach the venue's extended quote list, or the doc states that it uses the default 13 and the venue-extensible list is normalize-only. Whichever holds is pinned by a test"]
+out_of_scope = ["The blast-radius half of the bybit positions-history defect, which belongs to the silent-substitution task", "New symbol grammars for venues that do not already author one"]
+touches = ["lib/bourse/symbol.ex", "priv/venues/hyperliquid/authored/markets.json", "priv/venues/bybit/authored/markets.json", "test/bourse/symbol_test.exs"]
+assignee = "codex"
+model = "gpt-5.6-sol"
+body = """
+Four findings on one module, three of them cases where the client hands back a symbol naming a
+different market than the caller asked about, with no error.
+
+reverse_aliases/1 is Map.new over the alias map with key and value swapped. hyperliquid authors
+two keys onto BTC (XBT and UBTC), so a 14-entry map comes back with 13 and which key survives is
+decided by map iteration order, which Elixir does not specify. UBTC is a real traded market
+prefix, not a duplicate to discard. Measured impact today is consumer-only: reverse_aliases/1 has
+zero callers in lib, so nothing in this client is wrong because of it, and a consumer building a
+unified-to-exchange map from the venue's own slice gets a code hyperliquid does not use.
+
+The documented :aliases option on normalize/3 reduces String.replace over the whole symbol
+string, unanchored to any currency boundary. Measured against real market ids: okx 43 symbols
+affected (AE inside AEVO, AERGO, AERO), binance 40 (XBT inside AIXBT and inside every X-then-BTC
+seam such as AVAX/BTC), bybit 3, binanceusdm 1, hyperliquid 1. So a consumer following the
+documented option gets a worse answer than one using the client's own conversion, which does the
+correct per-currency lookup. A second hazard sits on the same three lines: Enum.reduce over a map
+makes chained replacements order-dependent. That one is unverified as a real-data instance, since
+no authored key is a substring of another key or value today; treat it as a latent hazard, not a
+measured defect.
+
+A bybit dated linear future id does not parse: parse_extended on DOGEUSDT-28AUG26 answers
+invalid_format while the unified form parses fine. This is the third instance of the same class,
+after tasks 658 and 660 both shipped fixes for bybit dated-future symbols; it surfaced live when
+the testnet account acquired a closed position on a dated contract. Read the two landed tasks
+first and fix the class rather than the id, or say why it is genuinely a fourth shape.
+
+Three further surfaces where the docs and the code already disagree, filed as test gaps rather
+than defects: the single-digit expiry day is never exercised on either the padding or the
+non-padding branch; convert_date/3's @doc promises an ArgumentError on malformed input that two
+of its clauses do not raise, returning NANA and 20nonsense instead; and split_no_separator/2
+comprehends over a hardcoded 13-quote attribute, so get_quote_currencies/1 and its extra
+parameter are reachable only through normalize/3 and never through from_exchange_id/3.
+
+Provenance: a mutation-testing testability survey run 2026-08-24. Bourse.Symbol was not itself
+mutation-tested; the findings come from reading the module and re-measuring every claim above
+with mix run against the authored specs. Re-measure rather than trusting the numbers here.
+"""
+created_at = "2026-08-28"
+scored_at = "2026-08-28"
+
+[[task]]
+id = "689"
+phase = 16
+bundle = "live_triage"
+status = "pending"
+title = "The rate limiter substitutes a fixed window for the authored bucket, so it grants a 545-deep burst and then sleeps a full minute"
+scores = { d = 8, b = 8, u = 8 }
+markers = ["bug"]
+acceptance_criteria = ["The limiter honours the authored bucket's burst depth and drain rate instead of dividing a hardcoded 60000 ms window by rate_limit_ms. Endpoints whose authored cost exceeds one bucket slot stay limited rather than exempt: a naive window of rate_limit_ms times max_size makes max_weight 1 for okx and silently unlimits the 274 okx endpoints whose cost exceeds 1, so a test asserts that no endpoint on any venue answers skip_record", "No single call can block longer than a stated, tested bound well below the caller and ExUnit timeout. The bound is a named value, not an emergent property, and a test drives the limiter to saturation and asserts the worst-case delay against it", "Issuing signed reads back to back against the okx demo host no longer earns 50011 Too many requests while the client's own limiter answers ok. Proven live with retry disabled, and the request count at which the venue first rejects is recorded", "A 429 that carries no retry-after is not turned into four exponential-backoff attempts: the okx rejection reaches the caller as the venue's informative error, or the retry policy states why it retries and for how long", "The timestamp on a signed request is stamped after the rate limiter releases it, so queue wait cannot produce staleness. Proven on bybit under queue pressure: a lane run that previously showed intermittent invalid_nonce shows none, and the measured req-to-server timestamp gap stays inside recv_window", "The authored per-venue recv_window reaches the signed payload: bybit's authored 10000 appears on the wire instead of the global 5000 default, confirmed from the venue's own error text or an observed request", "Every one of the eleven venues has a live call proving its bucket is honoured, since the shaping change touches all of them"]
+out_of_scope = ["Retry classification for errors other than the 429 and nonce paths named here", "Per-venue authored bucket values, which are the venues' published limits and are not being re-derived here"]
+touches = ["lib/bourse/rate_limiter.ex", "lib/bourse/rate_limiter/shaping.ex", "lib/bourse/dispatch.ex", "lib/bourse/http.ex", "lib/bourse/signing/hmac_recipe.ex", "test/bourse/rate_limiter"]
+assignee = "cursor"
+model = "cursor-grok-4.6-high"
+body = """
+Two cross-venue defects in the same request path, both measured, both able to present as an
+intermittent hang on an arbitrary method rather than as a rate-limit error.
+
+Bourse.RateLimiter.Shaping reads only cost, axes and rate_limit_ms from a venue's authored
+bucket, then divides a hardcoded 60000 ms period by rate_limit_ms. okx authors a leaky bucket of
+depth 1 refilling at 9.09 per second; max_size and refill_per_sec are never read, so the bucket
+executes as 545 weight per rolling 60 s and the entire minute's budget can be spent at once.
+Two measured consequences. First, the venue 429s us while our own limiter says ok: signed GETs
+issued back to back against www.okx.com with x-simulated-trading: 1 and retry disabled returned
+200 ten times then 50011 on transfer-state, and 200 six times then 50011 on deposit-history. okx
+sends no retry-after on that 429, so the safe_transient policy falls through to exponential
+backoff and turns a fast informative rejection into four attempts over about seven seconds.
+Second, after saturation the next call sleeps about 60 s silently: maybe_rate_limit/3 does a
+Process.sleep before the HTTP request, so no timeout option can bound it, and calculate_delay/6
+returns the whole window when the window filled as a burst. Proven directly: 545 successful
+check_rates calls followed by one more answered delay 59998.
+
+How close the lane runs to that ceiling: replaying all 84 okx contract cases against the live
+demo host consumed 263.4 of the 545 budget in 13.4 s. One extra concurrent okx consumer in the
+same minute reaches 545 and buys a 60 s stall for whichever call arrives next.
+
+The second defect is ordering. Dispatch.call/4 signs (stamping the timestamp) and only then
+enters HTTP, where the limiter blocks. Observed on bybit: a 10.5 s queue wait against a measured
+clock skew of only 78 to 214 ms produced invalid_nonce on three of 78 cases, non-deterministically.
+The resigner hook fires only on Req retries, never on the initial throttled attempt. Alongside it,
+bybit's authored recv_window of 10000 never reaches the wire because HmacRecipe reads the global
+default; the venue's own error text confirms recv_window 5000.
+
+This is the one class that stays alone rather than folding into another: the fix is a model
+decision about how an authored bucket becomes a limiter, it touches all eleven venues, and it
+needs live proof per venue.
+
+Open decision the operator owns, answer it before building: what shape replaces the fixed window.
+The authored bucket already carries the right fields, and whatever is chosen must bound burst
+depth so the client stops earning 429s, bound the worst-case pre-request sleep well below the
+caller timeout, and keep endpoints whose cost exceeds one bucket slot limited rather than exempt.
+Name the candidate shapes with their trade-offs, ask, then fold the answer into this task.
+
+Premise worth keeping straight: this is not the cause of the two okx contract-lane reds it was
+found while investigating. Measured across seven runs on 2026-08-28, fetchDeposit takes 66 to 78 ms
+and fetchTransfer 192 to 226 ms; nothing in the suite exceeded 24 s. Those reds are empty account
+state and the okx transfer id carve respectively.
+"""
+created_at = "2026-08-28"
+scored_at = "2026-08-28"
+
+[[task]]
+id = "690"
+phase = 16
+bundle = "ws_unified"
+status = "pending"
+title = "The transport reports success it did not achieve: an unauthenticated private socket, an unreachable order topic, and a batch code that masks the real rejection"
+scores = { d = 6, b = 8, u = 8 }
+markers = ["bug"]
+acceptance_criteria = ["Bourse.WS.connect/3 never returns an open unauthenticated socket for a :private section. Either derive authors its auth_pattern so the venue's public/login runs as the handshake, or connect/3 refuses the section with a named error. The no_auth_pattern-to-ok mapping is gone, and a test asserts that every venue's private connect either carries a non-nil ws.auth or returns an error", "Live-verified differentially against wss://api-demo.lyra.finance: the authenticated connection accepts a private subscription and delivers order_status events, and the unauthenticated leg is rejected rather than silently empty. The existing repro in test/live/journeys/trader/derive_test.exs is upgraded from asserting is_nil(ws.auth) to asserting the fixed behaviour", "hyperliquid's nil auth_pattern is left correct and a test states why: its private subscriptions are scoped by address, so it is not the same condition as derive's", "Bourse.WS.watch_orders/2 on bybit subscribes the venue's real account-wide order topic and delivers order events without the caller supplying a symbol or knowing the venue topic string. Proven live on the testnet by placing and cancelling an order and reading the resulting events through the unified call", "The delivery shape of bybit's private pushes is handled, not left to surprise the caller: the frames carry an id field, so zen_websocket's correlator delivers them as an unmatched response rather than a message. The unified path either normalizes that or the behaviour is documented and pinned", "An okx batch refusal is typed from the per-order sCode rather than the outer envelope code: an already-cancelled cancel classifies as order_not_found from 51400 instead of exchange_error code 1. The lot-size rejection the trader journey pins is re-observed live and re-pinned in the same change, since this retypes every okx batch refusal", "CLAUDE.md's WebSocket section is corrected in the same change: it currently claims derive's unwired auth surface fails loudly, and it does not fail at all. AGENTS.md is regenerated and mix bourse.agents_md --check passes"]
+out_of_scope = ["Venues with no WebSocket configuration at all", "Unified WS event normalization beyond the delivery shape named above", "Retyping okx errors outside the batch-envelope path"]
+touches = ["lib/bourse/ws.ex", "lib/bourse/ws/channels.ex", "priv/venues/derive/authored/venue.json", "priv/venues/bybit/authored/venue.json", "priv/venues/okx/authored/errors.json", "lib/bourse/http/errors.ex", "test/live/ws", "test/live/journeys/trader/derive_test.exs"]
+assignee = "grok"
+model = "grok-4.6"
+body = """
+Three measured instances of a transport telling the caller something succeeded when it did not.
+
+Bourse.WS.connect/3 maps no_auth_pattern straight to ok, so for derive, the one live instance, a
+private connect returns an open socket with ws.auth nil and state connected. Every other auth
+error closes the socket; that one alone becomes success, and the caller gets a connection that
+will never deliver private events. Verified live on 2026-08-28 against wss://api-demo.lyra.finance:
+connect returns ok with nil auth, a pre-login subscribe is rejected with envelope 13000 wrapping
+14022, and the venue's own public/login (EIP-191 over the ms timestamp, Admin session key, wallet
+equal to X-LyraWallet) answers with the subscription id, after which the same subscribe succeeds
+and delivers order_status open then cancelled.
+
+This supersedes the reason task 563 was kept as a hand-build: it was routed human because the
+venue's auth surface had not been observed, so acceptance criteria could not be written ahead of
+the answer. The handshake shape is now known and live-verified, so the work is dispatchable.
+Known trap before probing: derive's edge proxy verifies auth before the app, so a wrong signer
+gets an HTML 403 from nginx with no JSON body. DERIVE_TESTNET_API_KEY is the smart-contract
+wallet, DERIVE_TESTNET_API_SECRET is a registered Admin session key, and the owner EOA is not
+auto-registered on UI onboarding. Budget for a 403 that looks like a network failure.
+
+bybit's authored watchOrders channel template is the degenerate string colon-brace-symbol. With
+no symbol, channel build errors missing_symbol; with a symbol it interpolates to a topic bybit
+does not serve. The venue's real private order topic is the flat account-wide one, verified live
+on the testnet: subscribing it delivers orderStatus New on place and Cancelled with cancelType
+CancelByUser on cancel. Nothing user-facing is blocked, because the trader journey subscribes the
+raw topic directly and is green; the defect is that the unified path cannot do what the raw path
+does, which is the whole point of the unified layer.
+
+okx answers an already-cancelled cancel with HTTP 200 and a batch envelope: outer code 1, msg All
+operations failed, and the real outcome only in data[0] as sCode 51400. The authored mapping of
+51400 is OrderNotFound, but classification keys on the outer code field, so the typed error is
+exchange_error with code 1. Observed live on 2026-08-28 after a successful cancel of a resting
+BTC-USDT-SWAP limit. Authority: OKX API v5 error code 51400. This retypes every okx batch refusal,
+including the 51121 lot-size rejection the trader journey pins, which is why it was not patched
+inside a journey lane.
+
+Authority throughout: the venues. Derive's own login route, bybit's published private topic list,
+okx's documented error codes. Read one success and one relevant error live per instance before
+changing a slice, and pin both.
+"""
+created_at = "2026-08-28"
+scored_at = "2026-08-28"
