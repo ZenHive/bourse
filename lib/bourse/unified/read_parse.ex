@@ -18,6 +18,7 @@ defmodule Bourse.Unified.ReadParse do
   alias Bourse.Unified.Envelope
   alias Bourse.Unified.FieldMaps
   alias Bourse.Unified.OptionQuantity
+  alias Bourse.Unified.RequestShape.Deribit, as: DeribitRequestShape
   alias Bourse.VolatilityHistory
 
   @parser_slots %{
@@ -94,11 +95,6 @@ defmodule Bourse.Unified.ReadParse do
     "total_maintenance_margin_usd",
     "total_margin_balance_usd"
   ]
-
-  # Deribit get_book_summary_by_currency settlement currencies. Altcoin option
-  # books (SOL, …) are USDC-margined linear contracts indexed under USDC, not
-  # under the underlying code.
-  @deribit_option_settlement_currencies MapSet.new(~w(BTC ETH USDC USDT EURR))
 
   @doc """
   Parses a unified read response body into the mapped struct(s).
@@ -995,7 +991,7 @@ defmodule Bourse.Unified.ReadParse do
   # underlying. An empty filter is not_supported so an empty success cannot
   # look like "this venue lists no options on this underlying".
   defp filter_option_chain_underlying(chain, %Exchange{id: "deribit"}, "fetchOptionChain", params) when is_map(chain) do
-    filter_deribit_option_chain(chain, option_chain_requested_underlying(params))
+    filter_deribit_option_chain(chain, DeribitRequestShape.option_chain_underlying(params))
   end
 
   defp filter_option_chain_underlying(parsed, _exchange, _js_name, _params), do: {:ok, parsed}
@@ -1003,7 +999,7 @@ defmodule Bourse.Unified.ReadParse do
   defp filter_deribit_option_chain(chain, nil), do: {:ok, chain}
 
   defp filter_deribit_option_chain(chain, underlying) do
-    if deribit_option_settlement_currency?(underlying) do
+    if DeribitRequestShape.settlement_currency?(underlying) do
       {:ok, chain}
     else
       keep_deribit_option_underlying(chain, underlying)
@@ -1025,17 +1021,6 @@ defmodule Bourse.Unified.ReadParse do
       _count ->
         {:ok, filtered}
     end
-  end
-
-  defp option_chain_requested_underlying(params) when is_map(params) do
-    case params["symbol"] || params["code"] || params["currency"] do
-      value when is_binary(value) and value != "" -> String.upcase(value)
-      _ -> nil
-    end
-  end
-
-  defp deribit_option_settlement_currency?(code) when is_binary(code) do
-    MapSet.member?(@deribit_option_settlement_currencies, String.upcase(code))
   end
 
   defp option_matches_underlying?(%{currency: currency}, underlying) when is_binary(currency) do
@@ -1781,7 +1766,7 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   defp put_balance_info(%Bourse.Balance{} = balance, body) do
-    timestamp = balance.timestamp || balance_timestamp(body)
+    timestamp = positive_ms(balance.timestamp) || balance_timestamp(body)
 
     balance
     |> remap_hyperliquid_spot_balance_codes(body)
@@ -1839,13 +1824,39 @@ defmodule Bourse.Unified.ReadParse do
     }
   end
 
-  # Binance family account payloads stamp `updateTime`; some envelopes also
-  # carry `time`. Prefer a field-map timestamp already parsed onto the struct.
+  # Binance spot stamps the account snapshot with `updateTime`; some envelopes
+  # carry `time` instead. The two futures wallets carry neither a usable
+  # snapshot stamp (live 2026-08-29: USD-M `/fapi/v2/account` omits `updateTime`
+  # entirely, COIN-M `/dapi/v1/account` publishes a literal `0`) — what they do
+  # carry is a per-asset `updateTime`, so the newest of those is the venue's own
+  # last word on the balance rows. A non-positive value is not a time and never
+  # becomes one: stamping `0` would date the account to the epoch, which reads
+  # as a filled field while carrying no venue meaning.
   defp balance_timestamp(body) when is_map(body) do
-    Bourse.Safe.integer(Map.get(body, "time") || Map.get(body, "updateTime"))
+    positive_ms(Map.get(body, "time")) ||
+      positive_ms(Map.get(body, "updateTime")) ||
+      latest_row_update_time(Map.get(body, "assets"))
   end
 
   defp balance_timestamp(_body), do: nil
+
+  defp latest_row_update_time(rows) when is_list(rows) do
+    rows
+    |> Enum.flat_map(fn
+      row when is_map(row) -> List.wrap(positive_ms(Map.get(row, "updateTime")))
+      _row -> []
+    end)
+    |> Enum.max(fn -> nil end)
+  end
+
+  defp latest_row_update_time(_rows), do: nil
+
+  defp positive_ms(value) do
+    case Bourse.Safe.integer(value) do
+      ms when is_integer(ms) and ms > 0 -> ms
+      _non_time -> nil
+    end
+  end
 
   # Fill exactly one missing balance member from the other
   # two. Authored values are never overwritten.
@@ -2066,6 +2077,20 @@ defmodule Bourse.Unified.ReadParse do
     case Map.fetch(map, key) do
       {:ok, value} -> {:cont, {:ok, value}}
       :error -> {:halt, :miss}
+    end
+  end
+
+  # A numeric segment indexes a list (lighter's balance envelope is `accounts.0`).
+  defp fetch_envelope_step(list, key) when is_list(list) and is_binary(key) do
+    case Integer.parse(key) do
+      {index, ""} when index >= 0 ->
+        case Enum.fetch(list, index) do
+          {:ok, value} -> {:cont, {:ok, value}}
+          :error -> {:halt, :miss}
+        end
+
+      _not_an_index ->
+        {:halt, :miss}
     end
   end
 

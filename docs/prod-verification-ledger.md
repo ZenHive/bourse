@@ -181,6 +181,16 @@ test code. Edit the fence when adding a ledgered case.
         "empty_collection": true
       },
       "summary": "ADL rank needs an open USD-M position"
+    },
+    {
+      "id": "binancecoinm-empty-position-adl",
+      "class": "ledgered_state_dependent",
+      "venue": "binancecoinm",
+      "methods": ["fetchADLRank"],
+      "match": {
+        "empty_collection": true
+      },
+      "summary": "ADL rank needs an open COIN-M position; the two-position proof runs in the mutating lane"
     }
   ]
 }

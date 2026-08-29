@@ -168,7 +168,7 @@ Unreachable is not green. A branch we cannot call with our keys and hosts — pr
 
 Any venue-source, contract-coverage or field-judgment question opens `priv/venues/<venue>/authority/` **FIRST**. The manifest is the local provenance index, not the authority itself: when the question is discovery or freshness, check the provider's official upstream next. Manifests record URL, upstream revision, retrieval date, byte count, SHA-256 and licensing disposition.
 
-The **live evidence** column is the venue's entry in `priv/venues/<venue>/authority/rest_read_contract.json`: its provider-owned authority pins, its operation branches, and the credentials the lane needs to call them. A venue's coverage is what its cases prove against its own host — 409 across the eleven venues — and nothing is stored in this repo that could answer for it instead.
+The **live evidence** column is the venue's entry in `priv/venues/<venue>/authority/rest_read_contract.json`: its provider-owned authority pins, its operation branches, and the credentials the lane needs to call them. A venue's coverage is what its cases prove against its own host — 407 across the eleven venues — and nothing is stored in this repo that could answer for it instead.
 
 | Venue | Official docs | Testnet/demo host | Live contract cases | Credential env vars |
 |---|---|---|---|---|
@@ -176,7 +176,7 @@ The **live evidence** column is the venue's entry in `priv/venues/<venue>/author
 | Binance | [Spot API](https://developers.binance.com/en/docs/products/spot) | `https://testnet.binance.vision` | 26 | `BINANCE_TESTNET_API_KEY` / `BINANCE_TESTNET_API_SECRET` |
 | Binance COIN-M | [COIN-M futures](https://developers.binance.com/en/docs/products/derivatives-trading-coin-futures) | `https://demo-dapi.binance.com` | 32 | `BINANCE_FUTURES_TEST_API_KEY` / `BINANCE_FUTURES_TEST_API_SECRET` |
 | Binance USD-M | [USD-M futures](https://developers.binance.com/en/docs/products/derivatives-trading-usds-futures) | `https://demo-fapi.binance.com` | 61 | same pair as COIN-M — one account, two wallets |
-| Bybit | [V5 API](https://bybit-exchange.github.io/docs/v5/intro) | `https://api-testnet.bybit.com` | 78 | `BYBIT_TESTNET_API_KEY` / `BYBIT_TESTNET_API_SECRET` |
+| Bybit | [V5 API](https://bybit-exchange.github.io/docs/v5/intro) | `https://api-testnet.bybit.com` | 76 | `BYBIT_TESTNET_API_KEY` / `BYBIT_TESTNET_API_SECRET` |
 | Coinbase Exchange | [Exchange REST API](https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products) | production public only | 3 | none — public-only |
 | Deribit | [API v2](https://docs.deribit.com/) | `https://test.deribit.com` | 41 | `DERIBIT_TESTNET_API_KEY` / `DERIBIT_TESTNET_API_SECRET` |
 | Derive | [API reference](https://docs.derive.xyz/) | `https://api-demo.lyra.finance` | 24 | `DERIVE_TESTNET_API_KEY` / `DERIVE_TESTNET_API_SECRET` |
@@ -205,7 +205,7 @@ a claim until it names which command was run and where.
 
 🚨 **`check.dispatch` reaches venues but does not cover them.** Its `precommit`
 step runs the provider-live suite, so a green there is real evidence for whatever
-that suite asserted — and it is not the whole REST-read surface: the 409-case
+that suite asserted — and it is not the whole REST-read surface: the 407-case
 contract lane runs under `mix ci`, or `mix bourse.verify_rest_read_contracts` on
 its own. Approving a
 venue-facing acceptance criterion means naming the lane that exercised it, not the
@@ -223,7 +223,7 @@ touches it.
 |-------|---------|-------|
 | Compile | `mix compile --warnings-as-errors` | silent finish = success |
 | Tests | `mix test.json --quiet` | **emits JSON by design** — parse it for real failures; the envelope is **not** a build error. Read `summary.result` / `summary.failed`. 🚨 **Provider-live**: it calls real venues and raises at startup on a missing credential pair. After the run, stderr prints a live-suite classification from `docs/prod-verification-ledger.md` (ledgered demo-unavailable / state-dependent / unreachable vs genuine failures) — do not treat the six okx 50038 rows as defects. |
-| REST-read contracts | `mix bourse.verify_rest_read_contracts` | Runs all 409 provider-live contract cases and fails when `executed < denominator`, so a shrinking live surface cannot pass as green. Ledgered reds stay in the denominator and are named in the classification summary; only genuine failures fail the lane. |
+| REST-read contracts | `mix bourse.verify_rest_read_contracts` | Runs all 407 provider-live contract cases and fails when `executed < denominator`, so a shrinking live surface cannot pass as green. Ledgered reds stay in the denominator and are named in the classification summary; only genuine failures fail the lane. |
 | WS first frame | `mix bourse.verify_ws_first_frame` | Classified public WebSocket first data frame per venue. |
 | Dialyzer | `mix dialyzer.json --quiet` | **emits JSON by design**. Plain `mix dialyzer` is the authoritative fallback when the JSON encoder can't serialize a warning shape. |
 | Lint | `mix credo --strict` | |
@@ -243,7 +243,7 @@ touches it.
 ```bash
 mix test.json --quiet --failed                       # default iteration — calls real venues
 mix test.json --quiet test/live/deribit              # everything deribit, contract cases included
-mix bourse.verify_rest_read_contracts                  # all 409 provider-live REST-read contract cases
+mix bourse.verify_rest_read_contracts                  # all 407 provider-live REST-read contract cases
 mix bourse.verify_rest_read_contracts --venue deribit  # one venue's cases against its own denominator
 mix test.json --quiet --include dangerous            # add the mutating probes + journeys
 mix test.json --quiet --include dangerous test/live/journeys   # role journeys only (place real sandbox orders)

@@ -44,7 +44,12 @@ defmodule Bourse.Journeys.Trader.BinancecoinmTest do
       {:ok, balance} = Bourse.fetch_balance(exchange)
       assert map_size(balance.total) > 0
       assert_coinm_margin!(balance)
-      assert_recent_timestamp!(balance.timestamp)
+      # The futures account payload carries no snapshot stamp — USD-M omits
+      # `updateTime`, COIN-M publishes a literal `0` (live 2026-08-29). The
+      # newest per-asset `updateTime` is the venue's own last word on these
+      # rows, so that is what the unified field must carry; a nil or an epoch
+      # `0` fails here.
+      assert_asset_update_timestamp!(balance)
 
       for {currency, total} <- balance.total, is_number(total) do
         free = balance.free[currency] || 0.0
@@ -232,5 +237,24 @@ defmodule Bourse.Journeys.Trader.BinancecoinmTest do
 
   defp assert_coinm_margin!(balance) do
     assert (balance.free["BTC"] || 0) > 0, @margin_remediation
+  end
+
+  # Fails when `timestamp` is nil, non-positive, or disagrees with the newest
+  # `updateTime` the venue's own asset rows carry.
+  defp assert_asset_update_timestamp!(%Bourse.Balance{} = balance) do
+    newest =
+      balance.info["assets"]
+      |> List.wrap()
+      |> Enum.map(& &1["updateTime"])
+      |> Enum.filter(&(is_integer(&1) and &1 > 0))
+      |> Enum.max(fn -> nil end)
+
+    assert is_integer(newest) and newest > 0,
+           "the account payload carries no positive per-asset updateTime to stamp"
+
+    assert balance.timestamp == newest,
+           "Balance.timestamp #{inspect(balance.timestamp)} is not the newest asset updateTime #{newest}"
+
+    assert balance.datetime == DateTime.to_iso8601(DateTime.from_unix!(newest, :millisecond))
   end
 end

@@ -4,6 +4,24 @@ Provider authority: [`priv/venues/deribit/authority/manifest.json`](../../priv/v
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 
+## 2026-08-29 — option-row implied volatility (Task 686)
+
+**C-T686f — Deribit's option book summary carries `mark_iv`, so the unified
+option row emits it as a fraction (task 686). Outcome: DIVERGE from C-T600f's
+`absent` claim for this slot.**
+
+<!-- rate-unit path="normalization.field_maps.option.field_map.impliedVolatility" unit="fraction" source-unit="percent_points" --> `public/get_book_summary_by_currency` publishes `mark_iv` in the same percent-point convention as the ticker IVs carved in C-T600f (`100` means 100%), so the authored `scale: 0.01` emits a fraction — matching the sibling `greeks` IV slots and bybit's already-fractional `markIv`. [Book summary](https://docs.deribit.com/api-reference/market-data/public-get_book_summary_by_currency) [Ticker](https://docs.deribit.com/api-reference/market-data/public-ticker)
+
+- *Live evidence (2026-08-29, www.deribit.com public):* the inverse BTC book
+  returned 1030 legs, every one carrying `mark_iv` and a numeric
+  `implied_volatility` — `BTC/USD:BTC-260925-81000-P` read `mark_iv 36.3` and
+  emitted `0.363`. The USDC-settled linear book returned 3308 legs of which 606
+  are SOL; `SOL/USDC:USDC-261225-115-P` read `mark_iv 61.58` and emitted
+  `0.6158`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T686f","date":"2026-08-29","semantic_source":{"kind":"provider_owned","reference":"Deribit public/get_book_summary_by_currency mark_iv and public/ticker percent-point IV convention linked in C-T686f"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-29 www.deribit.com public/get_book_summary_by_currency: BTC 1030/1030 legs with mark_iv (BTC/USD:BTC-260925-81000-P 36.3 -> 0.363); USDC 606 SOL legs (SOL/USDC:USDC-261225-115-P 61.58 -> 0.6158); pinned in test/live/read_parse_slots_test.exs"},"compatibility_reference":null,"resolved_tier":1}
+-->
 ## 2026-08-28 — option premium notional shared rule (Task 666)
 
 **C-T666c — Deribit's Task 664 premium derivation satisfies the shared option

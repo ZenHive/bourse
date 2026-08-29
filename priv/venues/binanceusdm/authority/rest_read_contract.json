@@ -1113,6 +1113,7 @@
               "strategy": "resource",
               "source_method": "fetchOpenOrders",
               "source_endpoint_index": 2,
+              "source_kind": "algo",
               "field": "id",
               "collection": false
             }
@@ -1232,6 +1233,17 @@
             {
               "name": "symbol",
               "strategy": "market_symbol"
+            }
+          ],
+          "arguments": [
+            {
+              "name": "id",
+              "strategy": "resource",
+              "source_method": "fetchOpenOrders",
+              "source_endpoint_index": 2,
+              "source_kind": "algo",
+              "field": "id",
+              "collection": false
             }
           ]
         },

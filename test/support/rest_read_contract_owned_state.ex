@@ -33,18 +33,22 @@ defmodule Bourse.Test.RestReadContractOwnedState do
   end
 
   defp own_resting_order(argument, contract_case, context) do
-    # A source_endpoint_index names a distinct book (e.g. USD-M open algo
-    # orders). Manufacturing a regular GTC would yield an id the selected
-    # branch cannot read.
-    if is_integer(argument["source_endpoint_index"]) do
-      :unownable
-    else
-      place_and_register_resting_order(argument, contract_case, context)
-    end
+    # `source_kind: "algo"` names a venue's algo book, whose ids only the
+    # `algoOrder` read branches accept. A plain GTC limit would yield an
+    # `orderId` that endpoint answers `order_not_found` for, so the algo case
+    # needs a conditional order of its own. The kind is declared rather than
+    # inferred from `source_endpoint_index`, which other venues use to select an
+    # ordinary book.
+    placement =
+      if argument["source_kind"] == "algo",
+        do: &place_algo_order/2,
+        else: &place_resting_order/2
+
+    place_and_register_order(argument, contract_case, context, placement)
   end
 
-  defp place_and_register_resting_order(argument, contract_case, context) do
-    with {:ok, placed} <- place_resting_order(contract_case, context) do
+  defp place_and_register_order(argument, contract_case, context, placement) do
+    with {:ok, placed} <- placement.(contract_case, context) do
       register_cleanup!(context.exchange, placed)
       field = field_from(placed, argument["field"])
 
@@ -75,6 +79,31 @@ defmodule Bourse.Test.RestReadContractOwnedState do
       price when is_number(price) and price > 0 ->
         sized = sized_amount(amount, price, market)
         Bourse.create_order(context.exchange, symbol, "limit", "buy", sized, price: price, timeInForce: "GTC")
+
+      _missing ->
+        {:error, :no_resting_price}
+    end
+  end
+
+  # A far-below-market conditional sell rests on the venue's algo book
+  # (`POST /fapi/v1/algoOrder`, live-proven shape: market + trigger_price +
+  # GTC answers `%Order{status: "open", type: "stop_market"}`). Its id is an
+  # `algoId`, which is what the `algoOrder` read branches require.
+  defp place_algo_order(contract_case, context) do
+    symbol = contract_case["resolved_symbol"] || market_symbol(context, contract_case)
+    market = Enum.find(context.markets || [], &(&1.symbol == symbol))
+
+    case resting_price(context.exchange, symbol, market) do
+      trigger when is_number(trigger) and trigger > 0 ->
+        Bourse.create_order(
+          context.exchange,
+          symbol,
+          "market",
+          "sell",
+          sized_amount(min_amount(market), trigger, market),
+          time_in_force: "GTC",
+          trigger_price: trigger
+        )
 
       _missing ->
         {:error, :no_resting_price}

@@ -8,6 +8,9 @@ defmodule Bourse.OKXDemoIntegrationTest do
   @moduletag :network
 
   @minimum_probe_price 1
+  # Far below market so the trigger rests instead of firing.
+  @trigger_ratio 0.85
+  @trigger_amount 0.01
 
   test "international demo transport returns a balance and the live environment rejects its key" do
     credentials = credentials!()
@@ -135,6 +138,51 @@ defmodule Bourse.OKXDemoIntegrationTest do
       assert error.message =~ "unavailable in demo trading"
       assert error.type == :exchange_error
     end
+  end
+
+  # Task 686: the algo read used to default `ordType` to "conditional", so a live
+  # `trigger` order was invisible through the unified call. The differential is
+  # the whole point — the same order must be reachable without a selector and
+  # absent from a conditional-only read, else the fan-out proves nothing.
+  @tag :dangerous
+  test "a live trigger algo order is reachable through the unified algo read without a selector" do
+    exchange = Exchange.new!("okx", credentials: credentials!(), sandbox: true)
+    {:ok, exchange} = Bourse.load_markets(exchange)
+    symbol = "BTC/USDT:USDT"
+
+    assert {:ok, %Bourse.Ticker{} = ticker} = Bourse.fetch_ticker(exchange, symbol)
+    trigger_price = Float.round((ticker.mark_price || ticker.last) * @trigger_ratio, 1)
+
+    assert {:ok, %Bourse.Order{id: id}} =
+             Bourse.create_order(exchange, symbol, "market", "sell", @trigger_amount, triggerPrice: trigger_price)
+
+    on_exit(fn ->
+      exchange = Exchange.new!("okx", credentials: credentials!(), sandbox: true)
+      Bourse.cancel_order(exchange, id, symbol: symbol, stop: true)
+    end)
+
+    assert {:ok, fanned_out} = Bourse.fetch_open_orders(exchange, symbol: symbol, endpoint_index: 0)
+
+    found = Enum.find(fanned_out, &(&1.id == id))
+
+    assert found,
+           "the unified algo read did not reach the live trigger order #{id}; " <>
+             "saw #{inspect(Enum.map(fanned_out, &{&1.id, &1.info["ordType"]}))}"
+
+    assert found.info["ordType"] == "trigger"
+
+    # The pre-fix path: a conditional-only read cannot see a trigger order, so a
+    # green above with a green here would mean the fan-out was never load-bearing.
+    assert {:ok, conditional_only} =
+             Bourse.fetch_open_orders(exchange, symbol: symbol, endpoint_index: 0, ordType: "conditional")
+
+    refute Enum.any?(conditional_only, &(&1.id == id)),
+           "ordType=conditional returned the trigger order, so the read never defaulted it away"
+
+    assert {:ok, %Bourse.Order{}} = Bourse.cancel_order(exchange, id, symbol: symbol, stop: true)
+
+    assert {:ok, after_cancel} = Bourse.fetch_open_orders(exchange, symbol: symbol, endpoint_index: 0)
+    refute Enum.any?(after_cancel, &(&1.id == id))
   end
 
   defp credentials! do

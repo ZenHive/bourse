@@ -193,21 +193,90 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
     assert {:ok, ledger} = Bourse.fetch_ledger(exchange)
     assert Enum.all?(ledger, &match?(%LedgerEntry{}, &1))
 
+    # The provider list is the oracle: every `dapiPrivateGetAdlQuantile` row must
+    # survive as its own map entry. The pre-fix carve collapsed the list into one
+    # struct, so a two-row payload silently lost its second symbol. Whether the
+    # wallet carries positions right now is the venue's business — what may never
+    # differ is row count vs entry count.
+    assert {:ok, %{status: 200, body: raw_rows}} =
+             Bourse.Binancecoinm.dapiPrivate_get_adlquantile(exchange, %{})
+
+    assert is_list(raw_rows)
+
     assert {:ok, ranks} = Bourse.fetch_adl_rank(exchange)
     assert is_map(ranks)
+    assert map_size(ranks) == length(raw_rows)
 
-    assert map_size(ranks) >= 2,
-           "binancecoinm fetch_adl_rank must return one entry per position-carrying symbol; " <>
-             "open at least two COIN-M positions on the demo wallet, got #{map_size(ranks)}: #{inspect(Map.keys(ranks))}"
+    raw_symbols =
+      MapSet.new(raw_rows, &Bourse.Symbol.from_exchange_id(&1["symbol"], exchange, :inverse))
 
-    values = Map.values(ranks)
-    assert Enum.all?(values, &match?(%ADLRank{symbol: symbol} when is_binary(symbol), &1))
-    symbols = Enum.map(values, & &1.symbol)
-    assert length(Enum.uniq(symbols)) >= 2
-    second = Enum.at(values, 1)
-    assert %ADLRank{symbol: second_symbol, rank: rank} = second
-    assert is_binary(second_symbol) and second_symbol != ""
-    assert is_integer(rank)
+    assert MapSet.new(Map.values(ranks), & &1.symbol) == raw_symbols
+
+    for {_symbol, rank} <- ranks do
+      assert %ADLRank{symbol: symbol, rank: value} = rank
+      assert is_binary(symbol) and symbol != ""
+      assert is_integer(value)
+    end
+  end
+
+  # Opening the positions is the only way to reach a multi-row `adlQuantile`
+  # payload — the wallet carries none at rest — so the two-entry proof lives in
+  # the mutating lane and closes what it opens.
+  @tag :dangerous
+  test "two open COIN-M positions yield one ADL entry per position-carrying symbol" do
+    exchange = signed_exchange!()
+    symbols = ["BTC/USD:BTC", "ETH/USD:ETH"]
+
+    on_exit(fn ->
+      exchange = signed_exchange!()
+      Enum.each(symbols, &close_position!(exchange, &1))
+    end)
+
+    Enum.each(symbols, fn symbol ->
+      assert {:ok, %Order{}} = Bourse.create_order(exchange, symbol, "market", "buy", 1)
+    end)
+
+    ranks =
+      poll_until!("binancecoinm adlQuantile lists both positions", fn ->
+        case Bourse.fetch_adl_rank(exchange) do
+          {:ok, ranks} when map_size(ranks) >= 2 -> {:ok, ranks}
+          {:ok, _partial} -> :retry
+          {:error, reason} -> flunk("fetch_adl_rank failed: #{inspect(reason)}")
+        end
+      end)
+
+    assert MapSet.subset?(MapSet.new(symbols), MapSet.new(Map.keys(ranks)))
+
+    for symbol <- symbols do
+      assert %ADLRank{symbol: ^symbol, rank: rank} = ranks[symbol]
+      assert is_integer(rank)
+    end
+
+    # The second entry is the one the collapsed carve dropped — assert it by
+    # identity, not by the call merely succeeding.
+    assert %ADLRank{symbol: "ETH/USD:ETH"} = ranks["ETH/USD:ETH"]
+  end
+
+  defp close_position!(exchange, symbol) do
+    case Bourse.create_order(exchange, symbol, "market", "sell", 1, reduce_only: true) do
+      {:ok, %Order{}} -> :ok
+      {:error, %Error{}} -> :ok
+    end
+  end
+
+  defp poll_until!(label, fun), do: poll_until!(label, fun, 10)
+
+  defp poll_until!(label, _fun, 0), do: flunk("gave up polling: #{label}")
+
+  defp poll_until!(label, fun, attempts) do
+    case fun.() do
+      {:ok, value} ->
+        value
+
+      :retry ->
+        Process.sleep(500)
+        poll_until!(label, fun, attempts - 1)
+    end
   end
 
   test "live DAPI history and account analytics preserve provider errors" do

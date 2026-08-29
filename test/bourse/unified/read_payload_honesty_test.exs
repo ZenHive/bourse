@@ -95,6 +95,85 @@ defmodule Bourse.Unified.ReadPayloadHonestyTest do
     end
   end
 
+  describe "binance-family futures fall back to the newest asset updateTime" do
+    # Live 2026-08-29: USD-M `/fapi/v2/account` omits `updateTime` and COIN-M
+    # `/dapi/v1/account` publishes a literal `0`; both carry a per-asset
+    # `updateTime`. A `0` must never become a timestamp — it would date the
+    # account to the epoch and read as a filled field carrying no venue meaning.
+    test "COIN-M's literal zero account updateTime never becomes the timestamp" do
+      exchange = Exchange.new!("binancecoinm")
+      newest = 1_787_976_805_693
+
+      body = %{
+        "updateTime" => 0,
+        "assets" => [
+          %{"asset" => "BTC", "walletBalance" => "1", "updateTime" => 1_784_973_214_240},
+          %{"asset" => "NEAR", "walletBalance" => "90", "updateTime" => newest},
+          %{"asset" => "FDUSD", "walletBalance" => "0", "updateTime" => 0}
+        ]
+      }
+
+      assert {:ok, %Bourse.Balance{timestamp: ^newest, datetime: datetime}} =
+               ReadParse.parse(
+                 exchange,
+                 Bourse.Binancecoinm,
+                 :fetch_balance,
+                 "fetchBalance",
+                 body,
+                 %{},
+                 :parse_balance,
+                 false
+               )
+
+      assert datetime == DateTime.to_iso8601(DateTime.from_unix!(newest, :millisecond))
+    end
+
+    test "USD-M's missing account updateTime falls back to the newest asset row" do
+      exchange = Exchange.new!("binanceusdm")
+      newest = 1_787_496_713_525
+
+      body = %{
+        "assets" => [
+          %{"asset" => "FDUSD", "walletBalance" => "0", "updateTime" => 0},
+          %{"asset" => "USDT", "walletBalance" => "10", "updateTime" => newest}
+        ]
+      }
+
+      assert {:ok, %Bourse.Balance{timestamp: ^newest}} =
+               ReadParse.parse(
+                 exchange,
+                 Bourse.Binanceusdm,
+                 :fetch_balance,
+                 "fetchBalance",
+                 body,
+                 %{},
+                 :parse_balance,
+                 false
+               )
+    end
+
+    test "an account with no positive time anywhere stays nil rather than epoch zero" do
+      exchange = Exchange.new!("binanceusdm")
+
+      body = %{
+        "updateTime" => 0,
+        "assets" => [%{"asset" => "USDT", "walletBalance" => "10", "updateTime" => 0}]
+      }
+
+      assert {:ok, %Bourse.Balance{timestamp: nil, datetime: nil}} =
+               ReadParse.parse(
+                 exchange,
+                 Bourse.Binanceusdm,
+                 :fetch_balance,
+                 "fetchBalance",
+                 body,
+                 %{},
+                 :parse_balance,
+                 false
+               )
+    end
+  end
+
   describe "bybit coins-balance envelope" do
     test "flat result.balance rows parse into total/free, not empty maps" do
       exchange = Exchange.new!("bybit")
