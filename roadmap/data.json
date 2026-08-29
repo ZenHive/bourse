@@ -31332,7 +31332,7 @@
       "id": "687",
       "phase": 16,
       "bundle": "live_triage",
-      "status": "in_progress",
+      "status": "done",
       "title": "The gates report green without running and red without a defect, so reviewers have learned to dismiss them",
       "scores": {
         "d": 6,
@@ -31369,17 +31369,17 @@
         "priv/venues/_shared/binance_family/rotation_report.json",
         "docs/prod-verification-ledger.md"
       ],
-      "shipped_in": "bf099e99889b0bf14c574b2c92abde4b82417538",
+      "shipped_in": "abd78b3886f8f4b222e33f99ad07a34359bba746",
       "body": "Four measured instances of gates that carry no honest signal, and one measured consequence that\nis worse than any of them.\n\nmix bourse.check_lighter_signer prints Lighter native verification NOT RUN: missing go and exits\n0, so mix check.dispatch records a passing step. The helper directory is a gitignored build\nartifact, so on a host without Go the signer is genuinely unavailable and the gate says nothing.\n\nThe provider-live suite cannot tell a deliberately-red ledgered case from a genuine failure. A\nfull run on main sits at roughly 46 to 48 failures whose independent classification is: about\ntwelve lighter helper_unavailable, about six lighter account errors, six okx 50038 deliberately\nkept in the denominator because dropping them is the green lie CLAUDE.md forbids, about thirteen\nbranches that only execute when live account state exists, one hardcoded threshold against a\ndrained wallet, and about five that warranted real investigation. Four of those five adjudicated\nto empty account state; the fifth was the okx transfer id defect, and it took six reviews to find.\n\nThe measured consequence: across six harness reviews in one day, every reviewer labelled the\nentire cluster environmental or pre-existing, reproduced two or three of its causes, and approved\nover the rest. That is the gate training its own users to ignore it, and it is the reason this\ntask exists rather than four separate patches.\n\nspec_disk_test pins the SHA-256 of the assembled maps as they stood before spec.json was deleted.\nbybit's authored document has been edited three times on purpose since, so the pin cannot hold and\nmain is red on a clean tree. The guarantee the pin gave (the rotation was lossless) expired with\nthe first legitimate authored edit; re-recording restores nothing, because the new hash is\nproduced by the same loader it is meant to check. This is an owner decision, which is why it was\nfiled rather than patched.\n\nFourteen contract cases across five venues resolve their arguments from live account state and go\nred once that state is cleaned up or ages out. Deribit is the sharpest instance: a filled\nround-trip made two cases green, and 2.5 hours later fetchClosedOrders returned zero rows even\nwith include_old, because the venue windows filled orders out of its history. That state cannot be\nmade durable by hand.\n\nTask 670 owns the larger flip to provider-live-only and the deletion of fixture oracles. This task\ndoes not delete anything; it makes the signal honest so 670 lands on a gate someone believes.\n\nAuthority for the per-case adjudications is the venue: probe the demo host before reclassifying a\nred. A ledgered case is ledgered because a live call could not reach it, and the ledger records why\nit is unverified without discharging it.\n\nMeasured 2026-08-29 on ex63-eth at a04e91a so the next implementer does not rediscover it. This\ntask has been marked done and reset four times; criteria 1 to 5 hold on the landed base and\ncriterion 6 is the only one open, on both of its halves.\n\nmix check.dispatch exits 0 and the provider-live suite is green: 2934 passed, 0 failed, one\nhealed flake in Bourse.WS.AuthLiveSmokeTest on the binancecoinm delivery listen key. mix ci is\nred and not on a test: coverage is 75.04 percent against the alias's own 80 threshold. The\ncritical tier of critical-rules.md is unmet in the money and signing path as well: Bourse.Signing\n94.06, Bourse.Signing.HmacRecipe 94.65, Bourse.Signing.Hyperliquid 93.98, Bourse.Signing.Lighter\n74.19, Bourse.Signing.Lighter.Worker 70.45 and Bourse.Unified.OrderPrecision 64.13 all sit below\nthe 95 floor.\n\nReaching 80 overall needs roughly 666 more covered lines out of 3349 uncovered. The largest pure\nsurfaces, which are testable offline because they assert about this client rather than about a\nvenue, are Bourse.Unified.ReadParse 545 uncovered, Bourse.Unified 276, RequestShape.OKX 161,\nBourse.ResponseParser 139, RequestShape.Hyperliquid 136, Bourse.Symbol 131, plus two modules with\neffectively no tests: Bourse.Multi at 0 percent and Bourse.Order.Builder at 12.5.\n\n931 of the 3349 uncovered lines are Mix.Tasks.* which mix.exs already keeps out of the package.\nDropping them from the denominator crosses 80 without covering a line and is the same move\nCLAUDE.md forbids for the verification ledger. It is out of scope: cover code, do not shrink the\ndenominator.\n\nThe second half of criterion 6 is the delivery record. The implemented note currently on this\ntask names neither the commands run nor the host, which is exactly what the criterion asks for.\n",
       "created_at": "2026-08-28",
       "started_at": "2026-08-28",
       "done_at": "2026-08-28",
       "scored_at": "2026-08-28",
-      "implemented": "Landed by grok via merge-train; reviewer-approved (run run-1787954441033-ed5e37f0, bf099e99889b0bf14c574b2c92abde4b82417538).",
-      "delivered_by": "grok",
+      "implemented": "Landed by codex via merge-train; reviewer-approved (run run-1787971942411-0ff0254b, abd78b3886f8f4b222e33f99ad07a34359bba746).",
+      "delivered_by": "codex",
       "verified": true,
       "verified_by": "claude",
-      "verification_ref": "harness-run:run-1787954441033-ed5e37f0",
+      "verification_ref": "harness-run:run-1787971942411-0ff0254b",
       "cross_repo": []
     },
     {

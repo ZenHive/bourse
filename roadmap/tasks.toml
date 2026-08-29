@@ -23383,7 +23383,7 @@ scored_at = "2026-08-28"
 id = "687"
 phase = 16
 bundle = "live_triage"
-status = "in_progress"
+status = "done"
 title = "The gates report green without running and red without a defect, so reviewers have learned to dismiss them"
 scores = { d = 6, b = 8, u = 8 }
 markers = ["bug"]
@@ -23459,16 +23459,16 @@ denominator.
 The second half of criterion 6 is the delivery record. The implemented note currently on this
 task names neither the commands run nor the host, which is exactly what the criterion asks for.
 """
-implemented = "Landed by grok via merge-train; reviewer-approved (run run-1787954441033-ed5e37f0, bf099e99889b0bf14c574b2c92abde4b82417538)."
-delivered_by = "grok"
+implemented = "Landed by codex via merge-train; reviewer-approved (run run-1787971942411-0ff0254b, abd78b3886f8f4b222e33f99ad07a34359bba746)."
+delivered_by = "codex"
 verified = true
 verified_by = "claude"
-verification_ref = "harness-run:run-1787954441033-ed5e37f0"
+verification_ref = "harness-run:run-1787971942411-0ff0254b"
 created_at = "2026-08-28"
 started_at = "2026-08-28"
 scored_at = "2026-08-28"
 done_at = "2026-08-28"
-shipped_in = "bf099e99889b0bf14c574b2c92abde4b82417538"
+shipped_in = "abd78b3886f8f4b222e33f99ad07a34359bba746"
 
 [[task]]
 id = "688"
