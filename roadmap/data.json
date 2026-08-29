@@ -31477,7 +31477,7 @@
       "id": "690",
       "phase": 16,
       "bundle": "ws_unified",
-      "status": "in_progress",
+      "status": "done",
       "title": "The transport reports success it did not achieve: an unauthenticated private socket, an unreachable order topic, and a batch code that masks the real rejection",
       "scores": {
         "d": 6,
@@ -31517,17 +31517,17 @@
         "test/live/ws",
         "test/live/journeys/trader/derive_test.exs"
       ],
-      "shipped_in": "778da5dc7cbf21ad47eac66aad1f4c454609022f",
+      "shipped_in": "cf6cafc0b1e95175bd22123ca6177bc341fd0d5e",
       "body": "Three measured instances of a transport telling the caller something succeeded when it did not.\n\nBourse.WS.connect/3 maps no_auth_pattern straight to ok, so for derive, the one live instance, a\nprivate connect returns an open socket with ws.auth nil and state connected. Every other auth\nerror closes the socket; that one alone becomes success, and the caller gets a connection that\nwill never deliver private events. Verified live on 2026-08-28 against wss://api-demo.lyra.finance:\nconnect returns ok with nil auth, a pre-login subscribe is rejected with envelope 13000 wrapping\n14022, and the venue's own public/login (EIP-191 over the ms timestamp, Admin session key, wallet\nequal to X-LyraWallet) answers with the subscription id, after which the same subscribe succeeds\nand delivers order_status open then cancelled.\n\nThis supersedes the reason task 563 was kept as a hand-build: it was routed human because the\nvenue's auth surface had not been observed, so acceptance criteria could not be written ahead of\nthe answer. The handshake shape is now known and live-verified, so the work is dispatchable.\nKnown trap before probing: derive's edge proxy verifies auth before the app, so a wrong signer\ngets an HTML 403 from nginx with no JSON body. DERIVE_TESTNET_API_KEY is the smart-contract\nwallet, DERIVE_TESTNET_API_SECRET is a registered Admin session key, and the owner EOA is not\nauto-registered on UI onboarding. Budget for a 403 that looks like a network failure.\n\nbybit's authored watchOrders channel template is the degenerate string colon-brace-symbol. With\nno symbol, channel build errors missing_symbol; with a symbol it interpolates to a topic bybit\ndoes not serve. The venue's real private order topic is the flat account-wide one, verified live\non the testnet: subscribing it delivers orderStatus New on place and Cancelled with cancelType\nCancelByUser on cancel. Nothing user-facing is blocked, because the trader journey subscribes the\nraw topic directly and is green; the defect is that the unified path cannot do what the raw path\ndoes, which is the whole point of the unified layer.\n\nokx answers an already-cancelled cancel with HTTP 200 and a batch envelope: outer code 1, msg All\noperations failed, and the real outcome only in data[0] as sCode 51400. The authored mapping of\n51400 is OrderNotFound, but classification keys on the outer code field, so the typed error is\nexchange_error with code 1. Observed live on 2026-08-28 after a successful cancel of a resting\nBTC-USDT-SWAP limit. Authority: OKX API v5 error code 51400. This retypes every okx batch refusal,\nincluding the 51121 lot-size rejection the trader journey pins, which is why it was not patched\ninside a journey lane.\n\nAuthority throughout: the venues. Derive's own login route, bybit's published private topic list,\nokx's documented error codes. Read one success and one relevant error live per instance before\nchanging a slice, and pin both.\n",
       "created_at": "2026-08-28",
       "started_at": "2026-08-28",
       "done_at": "2026-08-28",
       "scored_at": "2026-08-28",
-      "implemented": "Landed by grok via merge-train; reviewer-approved (run run-1787958051912-8e8dc28c, 778da5dc7cbf21ad47eac66aad1f4c454609022f).",
+      "implemented": "Landed by grok via merge-train; reviewer-approved (run run-1787961655160-ae545d71, cf6cafc0b1e95175bd22123ca6177bc341fd0d5e).",
       "delivered_by": "grok",
       "verified": true,
       "verified_by": "claude",
-      "verification_ref": "harness-run:run-1787958051912-8e8dc28c",
+      "verification_ref": "harness-run:run-1787961655160-ae545d71",
       "cross_repo": []
     }
   ]
