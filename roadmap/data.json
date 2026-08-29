@@ -31219,7 +31219,7 @@
       "id": "685",
       "phase": 16,
       "bundle": "live_triage",
-      "status": "blocked",
+      "status": "pending",
       "title": "Silent substitution is the class: a slice that does not fit must fail loudly, never resolve to a plausible wrong value",
       "scores": {
         "d": 7,
@@ -31265,7 +31265,6 @@
       "created_at": "2026-08-28",
       "started_at": "2026-08-28",
       "scored_at": "2026-08-28",
-      "blocked_reason": "land-cap exhausted after reflex_halt x2 (task 685, last run run-1787938095655-2dbbba0e)",
       "cross_repo": []
     },
     {
@@ -31380,7 +31379,7 @@
       "id": "688",
       "phase": 16,
       "bundle": "live_triage",
-      "status": "pending",
+      "status": "done",
       "title": "Bourse.Symbol quietly returns a different market: non-injective inversion, unanchored alias rewriting, and unparsed dated ids",
       "scores": {
         "d": 6,
@@ -31420,11 +31419,11 @@
       "started_at": "2026-08-28",
       "done_at": "2026-08-28",
       "scored_at": "2026-08-28",
-      "implemented": "Landed by codex via merge-train; reviewer-approved (run run-1787961655164-0f6bb71f, d94f63344ec6ee091f66fd352061026690d8bb66).",
-      "delivered_by": "codex",
+      "implemented": "Bourse.Symbol hardened across all six criteria: reverse_aliases/1 raises ArgumentError naming the colliding unified code instead of silently dropping a key (hyperliquid is the one non-injective venue); :aliases applies per-currency after splitting on / rather than as a substring rewrite; bybit dated linear futures parse via parse_native_ddmmmyy_future/1; every convert_date/3 clause validates through validate_date!; single-digit expiry days keep each venue's native width (bybit DOGEUSDT-07AUG26 padded, deribit BTC-7AUG26 unpadded); and from_exchange_id/3 threads the venue's common_currencies into the quote-currency candidates. Sweeps in test/bourse/symbol_regression_test.exs derive their venue roster from priv/venues/runtime_support.json rather than a hardcoded list, and AC3 sources a real dated-future id from the live bybit testnet catalog, flunking loudly when the catalog carries none.",
+      "delivered_by": "grok",
       "verified": true,
-      "verified_by": "claude",
-      "verification_ref": "harness-run:run-1787961655164-0f6bb71f",
+      "verified_by": "independent acceptance-criteria reconciliation against the landed base (opus 5)",
+      "verification_ref": "mix check.dispatch EXIT=0 on ex63-eth at a04e91a; suite 2934 passed / 0 failed; harness-run:run-1787961655164-0f6bb71f",
       "cross_repo": []
     },
     {
@@ -31477,7 +31476,7 @@
       "id": "690",
       "phase": 16,
       "bundle": "ws_unified",
-      "status": "pending",
+      "status": "done",
       "title": "The transport reports success it did not achieve: an unauthenticated private socket, an unreachable order topic, and a batch code that masks the real rejection",
       "scores": {
         "d": 6,
@@ -31523,11 +31522,11 @@
       "started_at": "2026-08-28",
       "done_at": "2026-08-28",
       "scored_at": "2026-08-28",
-      "implemented": "Landed by grok via merge-train; reviewer-approved (run run-1787961655160-ae545d71, cf6cafc0b1e95175bd22123ca6177bc341fd0d5e).",
-      "delivered_by": "grok",
+      "implemented": "The transport no longer reports success it did not achieve. connect/3 closes the socket and returns an error on any private-section auth failure, including :no_auth_pattern (the old {:error, :no_auth_pattern} -> {:ok, ws} mapping is gone and a regression guard greps for its return); derive's :eip191_jsonrpc_login handshake is recorded on ws.auth and verified differentially against wss://api-demo.lyra.finance, with the unauthenticated leg rejected as envelope 13000 wrapping 14022; hyperliquid's nil pattern is documented as correct (address-scoped public socket, not a missing handshake); bybit watch_orders subscribes the account-wide 'order' topic with no symbol; bybit's id-bearing order push is documented and pinned as {:websocket_unmatched_response, frame}; and okx batch refusals are typed from the per-order sCode instead of the outer envelope code 1, so 51400 classifies as order_not_found and 51121 as invalid_order. CLAUDE.md's WS section was corrected and AGENTS.md regenerated.",
+      "delivered_by": "cursor",
       "verified": true,
-      "verified_by": "claude",
-      "verification_ref": "harness-run:run-1787961655160-ae545d71",
+      "verified_by": "independent acceptance-criteria reconciliation plus execution of the opt-in journey lane (opus 5)",
+      "verification_ref": "mix test.json --include dangerous test/live/journeys/trader/{derive,bybit,okx}_test.exs on ex63-eth at a04e91a: 10/10 passed, 0 failed, 0 excluded; mix bourse.agents_md --check clean in check.dispatch; harness-run:run-1787961655160-ae545d71",
       "cross_repo": []
     }
   ]
