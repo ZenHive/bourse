@@ -31380,7 +31380,7 @@
       "id": "688",
       "phase": 16,
       "bundle": "live_triage",
-      "status": "in_progress",
+      "status": "done",
       "title": "Bourse.Symbol quietly returns a different market: non-injective inversion, unanchored alias rewriting, and unparsed dated ids",
       "scores": {
         "d": 6,
@@ -31414,17 +31414,17 @@
         "priv/venues/bybit/authored/markets.json",
         "test/bourse/symbol_test.exs"
       ],
-      "shipped_in": "7b05cc376a062b8e0788b84d4c4699220627f1cc",
+      "shipped_in": "d94f63344ec6ee091f66fd352061026690d8bb66",
       "body": "Four findings on one module, three of them cases where the client hands back a symbol naming a\ndifferent market than the caller asked about, with no error.\n\nreverse_aliases/1 is Map.new over the alias map with key and value swapped. hyperliquid authors\ntwo keys onto BTC (XBT and UBTC), so a 14-entry map comes back with 13 and which key survives is\ndecided by map iteration order, which Elixir does not specify. UBTC is a real traded market\nprefix, not a duplicate to discard. Measured impact today is consumer-only: reverse_aliases/1 has\nzero callers in lib, so nothing in this client is wrong because of it, and a consumer building a\nunified-to-exchange map from the venue's own slice gets a code hyperliquid does not use.\n\nThe documented :aliases option on normalize/3 reduces String.replace over the whole symbol\nstring, unanchored to any currency boundary. Measured against real market ids: okx 43 symbols\naffected (AE inside AEVO, AERGO, AERO), binance 40 (XBT inside AIXBT and inside every X-then-BTC\nseam such as AVAX/BTC), bybit 3, binanceusdm 1, hyperliquid 1. So a consumer following the\ndocumented option gets a worse answer than one using the client's own conversion, which does the\ncorrect per-currency lookup. A second hazard sits on the same three lines: Enum.reduce over a map\nmakes chained replacements order-dependent. That one is unverified as a real-data instance, since\nno authored key is a substring of another key or value today; treat it as a latent hazard, not a\nmeasured defect.\n\nA bybit dated linear future id does not parse: parse_extended on DOGEUSDT-28AUG26 answers\ninvalid_format while the unified form parses fine. This is the third instance of the same class,\nafter tasks 658 and 660 both shipped fixes for bybit dated-future symbols; it surfaced live when\nthe testnet account acquired a closed position on a dated contract. Read the two landed tasks\nfirst and fix the class rather than the id, or say why it is genuinely a fourth shape.\n\nThree further surfaces where the docs and the code already disagree, filed as test gaps rather\nthan defects: the single-digit expiry day is never exercised on either the padding or the\nnon-padding branch; convert_date/3's @doc promises an ArgumentError on malformed input that two\nof its clauses do not raise, returning NANA and 20nonsense instead; and split_no_separator/2\ncomprehends over a hardcoded 13-quote attribute, so get_quote_currencies/1 and its extra\nparameter are reachable only through normalize/3 and never through from_exchange_id/3.\n\nProvenance: a mutation-testing testability survey run 2026-08-24. Bourse.Symbol was not itself\nmutation-tested; the findings come from reading the module and re-measuring every claim above\nwith mix run against the authored specs. Re-measure rather than trusting the numbers here.\n",
       "created_at": "2026-08-28",
       "started_at": "2026-08-28",
       "done_at": "2026-08-28",
       "scored_at": "2026-08-28",
-      "implemented": "Landed by codex via merge-train; reviewer-approved (run run-1787950863449-f9571581, 7b05cc376a062b8e0788b84d4c4699220627f1cc).",
+      "implemented": "Landed by codex via merge-train; reviewer-approved (run run-1787961655164-0f6bb71f, d94f63344ec6ee091f66fd352061026690d8bb66).",
       "delivered_by": "codex",
       "verified": true,
       "verified_by": "claude",
-      "verification_ref": "harness-run:run-1787950863449-f9571581",
+      "verification_ref": "harness-run:run-1787961655164-0f6bb71f",
       "cross_repo": []
     },
     {
