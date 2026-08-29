@@ -170,10 +170,24 @@ defmodule Bourse.RateLimiter do
   end
 
   @doc """
+  Clears rate-limit tracking for every bucket belonging to one exchange.
+
+  `Bourse.Test.LiveGateIsolation` uses this so a venue probe cannot enter its
+  bucket with capacity another probe already spent (Task 179) *without*
+  discarding the sibling venues' pacing at the same time — a global wipe lets a
+  heavy endpoint (okx `system/status`, authored cost 50 against a 9.09/s drain)
+  go out back to back and earn the venue's own 50011.
+  """
+  @spec reset_exchange(String.t(), GenServer.name()) :: :ok
+  def reset_exchange(exchange_id, name \\ __MODULE__) when is_binary(exchange_id) do
+    GenServer.call(name, {:reset_exchange, exchange_id})
+  end
+
+  @doc """
   Clears all rate-limit tracking state.
 
-  Used by `Bourse.Test.LiveGateIsolation` so one venue probe cannot enter its
-  window with capacity another probe already spent (Task 179).
+  Whole-map reset; prefer `reset_exchange/2` when only one venue's buckets
+  should be cleared.
   """
   @spec reset_all(GenServer.name()) :: :ok
   def reset_all(name \\ __MODULE__) do
@@ -223,6 +237,11 @@ defmodule Bourse.RateLimiter do
       end
 
     {:reply, used, state}
+  end
+
+  @impl true
+  def handle_call({:reset_exchange, exchange_id}, _from, state) do
+    {:reply, :ok, Map.reject(state, fn {{id, _credential, _axis}, _bucket} -> id == exchange_id end)}
   end
 
   @impl true

@@ -301,18 +301,21 @@ defmodule Bourse.HTTP do
   Executes a signed request and refreshes its signature before every retry.
 
   `resigner` reproduces the complete signed URL, headers, and body from the
-  original unsigned request. Req still controls whether and when to retry; the
-  Bourse request step replaces the time-bound signing material before the
-  repeated attempt reaches the adapter.
+  original unsigned request. It runs *after* the rate limiter releases the
+  request, so queue wait cannot stale the timestamp, which is why the second
+  argument is always `nil` — there is no pre-signed request to pass in. Req
+  still controls whether and when to retry; the Bourse request step replaces
+  the time-bound signing material before the repeated attempt reaches the
+  adapter.
   """
   @spec signed_request(
           Exchange.t(),
-          Signing.signed_request() | nil,
+          nil,
           String.t(),
           (-> Signing.signed_request() | {:error, Error.t()}),
           keyword()
         ) :: {:ok, response()} | {:error, Error.t()}
-  def signed_request(%Exchange{} = exchange, _signed, base_url, resigner, opts) when is_function(resigner, 0) do
+  def signed_request(%Exchange{} = exchange, nil, base_url, resigner, opts) when is_function(resigner, 0) do
     request_step = &refresh_signed_request(&1, base_url, resigner)
     do_signed_request(exchange, resigner, base_url, request_step, opts)
   end

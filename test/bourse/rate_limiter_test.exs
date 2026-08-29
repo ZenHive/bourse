@@ -99,6 +99,38 @@ defmodule Bourse.RateLimiterTest do
     end
   end
 
+  describe "reset_exchange/2" do
+    test "clears only the named exchange's buckets, leaving siblings paced", %{name: name} do
+      # Slow drain so the sibling cannot silently refill during the assertion.
+      rate_limit = %{capacity: 1, refill_per_sec: 0.001}
+      okx_public = {"okx", :public, "request"}
+      okx_private = {"okx", "api_key", "request"}
+      bybit_key = {"bybit", :public, "request"}
+
+      assert :ok = RateLimiter.check_rate(okx_public, rate_limit, 1, name)
+      assert :ok = RateLimiter.check_rate(okx_private, rate_limit, 1, name)
+      assert :ok = RateLimiter.check_rate(bybit_key, rate_limit, 1, name)
+
+      assert :ok = RateLimiter.reset_exchange("okx", name)
+
+      # Both okx buckets are fresh again...
+      assert :ok = RateLimiter.check_rate(okx_public, rate_limit, 1, name)
+      assert :ok = RateLimiter.check_rate(okx_private, rate_limit, 1, name)
+
+      # ...while bybit keeps the cost it already spent.
+      assert {:delay, _} = RateLimiter.check_rate(bybit_key, rate_limit, 1, name)
+    end
+
+    test "is a no-op for an exchange with no tracked buckets", %{name: name} do
+      rate_limit = %{capacity: 1, refill_per_sec: 0.001}
+      key = {"bybit", :public, "request"}
+
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 1, name)
+      assert :ok = RateLimiter.reset_exchange("deribit", name)
+      assert {:delay, _} = RateLimiter.check_rate(key, rate_limit, 1, name)
+    end
+  end
+
   describe "per-credential isolation" do
     test "different bucket axes have independent limits for the same credential", %{name: name} do
       rate_limit = %{requests: 1, period: 1000}
@@ -153,7 +185,10 @@ defmodule Bourse.RateLimiterTest do
   describe "get_cost/3" do
     test "returns total cost within window", %{name: name} do
       key = {"binance", :public}
-      rate_limit = %{requests: 100, period: 1000}
+      # Refill is frozen for the assertion window: get_cost/3 reports
+      # `capacity - tokens` AFTER refilling, so a live drain rate makes the
+      # charged total drift by `refill_per_sec * elapsed` between calls.
+      rate_limit = %{capacity: 100, refill_per_sec: 0.001}
 
       assert :ok = RateLimiter.check_rate(key, rate_limit, 3, name)
       assert :ok = RateLimiter.check_rate(key, rate_limit, 5, name)
@@ -242,7 +277,8 @@ defmodule Bourse.RateLimiterTest do
     test "records all bucket costs when every bucket has capacity", %{name: name} do
       ip_key = {"binance", :public, "ip"}
       order_key = {"binance", :public, "order_weight"}
-      rate_limit = %{requests: 10, period: 1000}
+      # Frozen refill so the charged totals cannot drift between the two reads.
+      rate_limit = %{capacity: 10, refill_per_sec: 0.001}
 
       assert :ok =
                RateLimiter.check_rates(
@@ -260,7 +296,7 @@ defmodule Bourse.RateLimiterTest do
     test "does not partially record when any bucket is over limit", %{name: name} do
       ip_key = {"binance", :public, "ip"}
       order_key = {"binance", :public, "order_weight"}
-      rate_limit = %{requests: 1, period: 1000}
+      rate_limit = %{capacity: 1, refill_per_sec: 0.001}
 
       assert :ok = RateLimiter.check_rate(order_key, rate_limit, 1, name)
 
@@ -327,7 +363,7 @@ defmodule Bourse.RateLimiterTest do
 
     test "the periodic :cleanup pass keeps in-window entries", %{name: name} do
       key = {"binance", :public}
-      rate_limit = %{requests: 100, period: 1000}
+      rate_limit = %{capacity: 100, refill_per_sec: 0.001}
 
       assert :ok = RateLimiter.check_rate(key, rate_limit, 3, name)
 

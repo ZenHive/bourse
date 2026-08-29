@@ -184,6 +184,13 @@ defmodule Bourse.RateLimiter.ShapingTest do
 
   describe "maybe_rate_limit/3" do
     test "returns :ok when limiter is enabled and capacity is free", %{exchange: exchange} do
+      # Frozen drain rate: get_cost/3 refills before reporting, so a live
+      # refill_per_sec makes the charged cost drift below 1 within a millisecond.
+      exchange = %{
+        exchange
+        | config: %{"rate_limit_bucket" => %{max_size: 5, refill_per_sec: 0.001}}
+      }
+
       rate_key = Shaping.rate_key(exchange)
       assert :ok = Shaping.maybe_rate_limit(rate_key, exchange, 1)
       assert RateLimiter.get_cost({exchange.id, :public, "request"}, 60_000) == 1
@@ -309,6 +316,37 @@ defmodule Bourse.RateLimiter.ShapingTest do
                  "#{venue} endpoint cost #{cost} > max_size #{max_size} was not limited"
         end
       end
+    end
+
+    test "an authored cost that outruns the wait bound errors immediately instead of sleeping" do
+      okx = Exchange.new!("okx")
+      bucket = Map.fetch!(okx.config, "rate_limit_bucket")
+      max_wait = Bourse.Defaults.rate_limit_max_wait_ms()
+
+      over_bound =
+        Enum.find(okx.request_contracts, fn {_key, %{rate_limit: rate_limit}} ->
+          is_map(rate_limit) and is_number(rate_limit[:cost]) and
+            (rate_limit.cost - bucket.max_size) / bucket.refill_per_sec * 1000 > max_wait
+        end)
+
+      assert {_key, %{rate_limit: rate_limit}} = over_bound,
+             "okx authors no endpoint whose accrual exceeds #{max_wait}ms; " <>
+               "this test pins the documented refusal for those endpoints"
+
+      # A private key so the probe cannot collide with the shared okx buckets.
+      probe = %{okx | id: "over_bound_#{System.unique_integer([:positive])}", credentials: nil}
+      started = System.monotonic_time(:millisecond)
+
+      assert {:error, %Bourse.Error{type: :rate_limit_exceeded} = error} =
+               Shaping.maybe_rate_limit(Shaping.rate_key(probe), probe, rate_limit)
+
+      elapsed = System.monotonic_time(:millisecond) - started
+
+      assert elapsed < 200, "refusal slept #{elapsed}ms instead of returning immediately"
+      assert error.exchange == probe.id
+      assert error.message =~ probe.id
+      assert error.message =~ "exceeds max #{max_wait}ms"
+      assert error.retry_after > max_wait
     end
   end
 end

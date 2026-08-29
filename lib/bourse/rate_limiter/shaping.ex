@@ -6,6 +6,25 @@ defmodule Bourse.RateLimiter.Shaping do
   Authored buckets execute as token buckets: `max_size` is capacity and
   `refill_per_sec` is the drain rate. A request is admitted when the bucket
   holds its cost. There is no fixed 60s window and no skip-record exemption.
+
+  ## Endpoints whose authored cost outruns the wait bound
+
+  Because no cost is exempt, an endpoint accrues `cost / refill_per_sec`
+  seconds before it is admitted. Where that accrual exceeds
+  `Bourse.Defaults.rate_limit_max_wait_ms/0` the call returns
+  `{:error, %Bourse.Error{type: :rate_limit_exceeded}}` naming the venue and
+  the wait, instead of the pre-Task-689 skip-record pass-through that let the
+  request go out unlimited and collect the venue's own 429.
+
+  Measured against the authored documents at the 10s default: 50 of 3,530
+  runtime endpoints sit above the bound — 13 each on binance, binancecoinm and
+  binanceusdm (heaviest `POST papi/margin/repay-debt`, cost 3000 at 20/s =
+  150s) and 11 on okx (heaviest `POST asset/monthly-statement`, cost 1_296_000
+  at 9.09/s ≈ 39.6h — okx publishes it as one request per month). These are
+  administrative endpoints the venue itself paces in hours or days; calling one
+  requires raising `config :bourse, :rate_limit_max_wait_ms` to the accrual the
+  venue actually demands. The refusal is immediate and names the wait; it is
+  never a silent sleep.
   """
 
   alias Bourse.Defaults
