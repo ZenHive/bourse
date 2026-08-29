@@ -1047,7 +1047,8 @@ defmodule Bourse.Exchange do
             |> build_config()
             |> Map.put("option_quantity", get_in(spec, ["markets", "option_quantity"]))
             |> Map.put("contract_unit", get_in(spec, ["markets", "contract_unit"]))
-            |> Map.put("greeks_conventions", get_in(spec, ["markets", "greeks_conventions"])),
+            |> Map.put("greeks_conventions", get_in(spec, ["markets", "greeks_conventions"]))
+            |> Map.put("rate_limit_bucket", authored_rate_limit_bucket(spec)),
           doc_urls: build_doc_urls(spec),
           required_credentials: build_required_credentials(spec, describe),
           signing_pattern: signing_pattern,
@@ -2176,17 +2177,36 @@ defmodule Bourse.Exchange do
     cost = Map.get(endpoint_cost, "cost")
     axes = first_axes(endpoint_cost["axes"], binding["axes"], bucket["axes"])
     rate_limit_ms = bucket["rate_limit_ms"]
+    max_size = bucket["max_size"]
+    refill_per_sec = bucket["refill_per_sec"]
 
     cond do
       is_number(cost) and axes != [] ->
-        %{cost: cost, axes: axes, rate_limit_ms: rate_limit_ms, bucket_index: binding["bucket_index"]}
+        %{
+          cost: cost,
+          axes: axes,
+          rate_limit_ms: rate_limit_ms,
+          max_size: max_size,
+          refill_per_sec: refill_per_sec,
+          bucket_index: binding["bucket_index"]
+        }
 
       is_number(cost) ->
-        %{cost: cost}
+        %{cost: cost, max_size: max_size, refill_per_sec: refill_per_sec, rate_limit_ms: rate_limit_ms}
 
       true ->
         nil
     end
+  end
+
+  defp authored_rate_limit_bucket(spec) do
+    bucket = rate_limit_bucket(spec, 0)
+
+    %{
+      max_size: bucket["max_size"],
+      refill_per_sec: bucket["refill_per_sec"],
+      rate_limit_ms: bucket["rate_limit_ms"]
+    }
   end
 
   defp rate_limit_bucket(spec, index) when is_integer(index) do

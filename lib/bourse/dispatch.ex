@@ -228,18 +228,12 @@ defmodule Bourse.Dispatch do
         sign_request(pattern, signing_request, credentials, config, endpoint_config, exchange.id)
       end
 
-      case signer.() do
-        {:error, %Error{}} = error ->
-          error
+      opts =
+        opts
+        |> Keyword.put(:endpoint_weight, weight)
+        |> Keyword.put(:endpoint_rate_limit, rate_limit)
 
-        signed ->
-          opts =
-            opts
-            |> Keyword.put(:endpoint_weight, weight)
-            |> Keyword.put(:endpoint_rate_limit, rate_limit)
-
-          HTTP.signed_request(exchange, signed, base_url, signer, opts)
-      end
+      HTTP.signed_request(exchange, nil, base_url, signer, opts)
     end
   end
 

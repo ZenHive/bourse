@@ -63,13 +63,23 @@ defmodule Bourse.RateLimiterTest do
       assert {:delay, _} = RateLimiter.check_rate(key, rate_limit, 1, name)
     end
 
-    test "a single cost exceeding max_weight is let through but not recorded", %{name: name} do
+    test "a single cost exceeding capacity is delayed, not skip-recorded", %{name: name} do
       key = {"binance", :public}
-      rate_limit = %{requests: 5, period: 1000}
+      rate_limit = %{capacity: 5, refill_per_sec: 5}
 
-      # cost > max_weight — allowed through (never blocks forever) and NOT recorded
-      assert :ok = RateLimiter.check_rate(key, rate_limit, 10, name)
+      assert {:delay, delay_ms} = RateLimiter.check_rate(key, rate_limit, 10, name)
+      assert delay_ms > 0
       assert RateLimiter.get_cost(key, 1000, name) == 0
+    end
+
+    test "token-bucket capacity and refill admit until empty then delay", %{name: name} do
+      key = {"okx", :public}
+      rate_limit = %{capacity: 1, refill_per_sec: 9.09}
+
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 1, name)
+      assert {:delay, delay_ms} = RateLimiter.check_rate(key, rate_limit, 1, name)
+      assert delay_ms > 0
+      assert delay_ms <= 200
     end
   end
 
@@ -194,6 +204,26 @@ defmodule Bourse.RateLimiterTest do
       # wait_for_capacity sleeps the returned delay and retries until the window frees.
       assert :ok = RateLimiter.wait_for_capacity(key, rate_limit, 1, name)
     end
+
+    test "returns rate_limit_exceeded when the wait would exceed the named bound", %{name: name} do
+      key = {"okx", :public}
+      rate_limit = %{capacity: 1, refill_per_sec: 0.001}
+      max_wait = Bourse.Defaults.rate_limit_max_wait_ms()
+
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 1, name)
+
+      started = System.monotonic_time(:millisecond)
+
+      assert {:error, %Bourse.Error{type: :rate_limit_exceeded} = error} =
+               RateLimiter.wait_for_capacity(key, rate_limit, 1, name)
+
+      elapsed = System.monotonic_time(:millisecond) - started
+      assert elapsed < 200
+      assert error.exchange == "okx"
+      assert error.message =~ "okx"
+      assert error.message =~ "exceeds max #{max_wait}ms"
+      assert error.retry_after > max_wait
+    end
   end
 
   describe "record_request/3" do
@@ -247,13 +277,9 @@ defmodule Bourse.RateLimiterTest do
       assert RateLimiter.get_cost(order_key, 1000, name) == 1
     end
 
-    test "per-key window state stays bounded under sustained volume (no growth between cleanup ticks)",
-         %{name: name} do
-      # Production path (HTTP.maybe_rate_limit → check_rates). High capacity so every
-      # request records; short window so entries age out before the 60s cleanup tick.
+    test "per-key bucket state stays O(1) under sustained volume", %{name: name} do
       key = {"binance", :public, "ip"}
-      period_ms = 50
-      rate_limit = %{requests: 10_000, period: period_ms}
+      rate_limit = %{capacity: 10_000, refill_per_sec: 10_000}
       burst = 100
 
       for _ <- 1..burst do
@@ -261,20 +287,18 @@ defmodule Bourse.RateLimiterTest do
       end
 
       state_after_burst = :sys.get_state(name)
-      assert length(Map.get(state_after_burst, key, [])) == burst
+      bucket = Map.fetch!(state_after_burst, key)
+      assert is_map(bucket)
+      assert is_number(bucket.tokens)
+      assert map_size(state_after_burst) == 1
 
-      # Age out of the rate window without waiting for the cleanup timer
-      Process.sleep(period_ms + 20)
+      for _ <- 1..burst do
+        _ = RateLimiter.check_rates([{key, rate_limit, 1}], name)
+      end
 
-      assert :ok = RateLimiter.check_rates([{key, rate_limit, 1}], name)
-
-      state_after_write = :sys.get_state(name)
-      entries = Map.get(state_after_write, key, [])
-
-      # Window-trim on write: only in-window samples remain (the new request).
-      # Without the fix this would be burst+1 and grow until the cleanup tick.
-      assert length(entries) == 1
-      assert RateLimiter.get_cost(key, period_ms, name) == 1
+      state_after_more = :sys.get_state(name)
+      assert map_size(state_after_more) == 1
+      assert is_map(Map.fetch!(state_after_more, key))
     end
 
     test "uses the default period when a bucket rate_limit omits it", %{name: name} do

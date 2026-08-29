@@ -17,6 +17,7 @@ defmodule Bourse.Defaults do
   | `:retry_policy` | `:safe_transient` | HTTP retry strategy (GET/HEAD only) |
   | `:retry_delay` | `nil` | Backoff between retries; `nil` keeps Req's exponential default |
   | `:rate_limiter_enabled` | `true` | Enable/disable rate limiter |
+  | `:rate_limit_max_wait_ms` | 10000 | Named upper bound on pre-request limiter sleep |
   | `:rate_limit_cleanup_interval_ms` | 60000 | Interval for cleaning up old rate limit timestamps |
   | `:rate_limit_max_age_ms` | 60000 | Maximum age for rate limit request timestamps |
 
@@ -27,6 +28,7 @@ defmodule Bourse.Defaults do
   @default_retry_policy :safe_transient
   @default_retry_delay nil
   @default_rate_limiter_enabled true
+  @default_rate_limit_max_wait_ms 10_000
   @default_rate_limit_cleanup_interval_ms 60_000
   @default_rate_limit_max_age_ms 60_000
 
@@ -99,6 +101,21 @@ defmodule Bourse.Defaults do
   end
 
   @doc """
+  Named upper bound on how long `maybe_rate_limit/3` may `Process.sleep` before a request.
+
+  A wait that would exceed this value is returned as
+  `{:error, %Bourse.Error{type: :rate_limit_exceeded}}` naming the venue and the
+  wait, never a longer silent sleep. Well below the 30s request timeout and the
+  60s ExUnit default.
+
+  Default: #{@default_rate_limit_max_wait_ms}ms
+  """
+  @spec rate_limit_max_wait_ms() :: pos_integer()
+  def rate_limit_max_wait_ms do
+    Application.get_env(:bourse, :rate_limit_max_wait_ms, @default_rate_limit_max_wait_ms)
+  end
+
+  @doc """
   Returns the interval for cleaning up expired rate limit timestamps.
 
   Default: #{@default_rate_limit_cleanup_interval_ms}ms
@@ -129,6 +146,7 @@ defmodule Bourse.Defaults do
           retry_policy: atom(),
           retry_delay: non_neg_integer() | nil,
           rate_limiter_enabled: boolean(),
+          rate_limit_max_wait_ms: pos_integer(),
           rate_limit_cleanup_interval_ms: pos_integer(),
           rate_limit_max_age_ms: pos_integer()
         }
@@ -139,6 +157,7 @@ defmodule Bourse.Defaults do
       retry_policy: @default_retry_policy,
       retry_delay: @default_retry_delay,
       rate_limiter_enabled: @default_rate_limiter_enabled,
+      rate_limit_max_wait_ms: @default_rate_limit_max_wait_ms,
       rate_limit_cleanup_interval_ms: @default_rate_limit_cleanup_interval_ms,
       rate_limit_max_age_ms: @default_rate_limit_max_age_ms
     }

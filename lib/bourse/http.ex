@@ -51,6 +51,7 @@ defmodule Bourse.HTTP do
   alias Bourse.Error
   alias Bourse.Exchange
   alias Bourse.HTTP.Errors
+  alias Bourse.HTTP.Retry
   alias Bourse.RateLimiter.Shaping
   alias Bourse.Signing
 
@@ -132,7 +133,7 @@ defmodule Bourse.HTTP do
         base_url: base_url,
         error_scope: Exchange.error_scope(exchange, base_url),
         timeout: timeout,
-        retry: Defaults.retry_policy(),
+        retry: retry_option(),
         body_encoding: body_encoding,
         extra_opts: extra_opts
       }
@@ -174,6 +175,15 @@ defmodule Bourse.HTTP do
     case Defaults.retry_delay() do
       nil -> []
       delay -> [retry_delay: delay]
+    end
+  end
+
+  # `:safe_transient` is Req's GET/HEAD retry, except 429 without Retry-After
+  # returns the venue error instead of four exponential-backoff attempts.
+  defp retry_option do
+    case Defaults.retry_policy() do
+      :safe_transient -> &Retry.safe_transient?/2
+      other -> other
     end
   end
 
@@ -297,17 +307,17 @@ defmodule Bourse.HTTP do
   """
   @spec signed_request(
           Exchange.t(),
-          Signing.signed_request(),
+          Signing.signed_request() | nil,
           String.t(),
           (-> Signing.signed_request() | {:error, Error.t()}),
           keyword()
         ) :: {:ok, response()} | {:error, Error.t()}
-  def signed_request(%Exchange{} = exchange, signed, base_url, resigner, opts) when is_function(resigner, 0) do
+  def signed_request(%Exchange{} = exchange, _signed, base_url, resigner, opts) when is_function(resigner, 0) do
     request_step = &refresh_signed_request(&1, base_url, resigner)
-    do_signed_request(exchange, signed, base_url, request_step, opts)
+    do_signed_request(exchange, resigner, base_url, request_step, opts)
   end
 
-  defp do_signed_request(exchange, signed, base_url, request_step, opts) do
+  defp do_signed_request(exchange, signed_or_resigner, base_url, request_step, opts) do
     timeout = Keyword.get(opts, :timeout, Defaults.request_timeout_ms())
     endpoint_weight = Keyword.get(opts, :endpoint_weight, 1)
     endpoint_rate_limit = Keyword.get(opts, :endpoint_rate_limit, endpoint_weight)
@@ -315,14 +325,15 @@ defmodule Bourse.HTTP do
 
     with :ok <- reject_unknown_opts(opts, exchange.id),
          :ok <- check_circuit_breaker(exchange),
-         :ok <- Shaping.maybe_rate_limit(Shaping.rate_key(exchange), exchange, endpoint_rate_limit) do
+         :ok <- Shaping.maybe_rate_limit(Shaping.rate_key(exchange), exchange, endpoint_rate_limit),
+         {:ok, signed} <- resolve_signed(signed_or_resigner) do
       url = base_url <> signed.url
       body_opts = if signed.body, do: [body: signed.body], else: []
 
       req_opts =
         [method: signed.method, url: url, headers: sandbox_headers(exchange) ++ signed.headers] ++
           body_opts ++
-          [receive_timeout: timeout, retry: Defaults.retry_policy()] ++
+          [receive_timeout: timeout, retry: retry_option()] ++
           retry_delay_opt() ++
           extra_opts
 
@@ -331,6 +342,15 @@ defmodule Bourse.HTTP do
       execute_request(exchange, signed.method, telemetry_path, req_opts, error_scope, request_step)
     end
   end
+
+  defp resolve_signed(resigner) when is_function(resigner, 0) do
+    case resigner.() do
+      {:error, %Error{}} = error -> error
+      signed -> {:ok, signed}
+    end
+  end
+
+  defp resolve_signed(%Signing.SignedRequest{} = signed), do: {:ok, signed}
 
   defp refresh_signed_request(request, base_url, resigner) do
     if Req.Request.get_private(request, :bourse_signed_attempt_started, false) do

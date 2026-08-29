@@ -9,6 +9,12 @@ defmodule Bourse.DefaultsTest do
     end
   end
 
+  describe "rate_limit_max_wait_ms/0" do
+    test "returns default value" do
+      assert Defaults.rate_limit_max_wait_ms() == 10_000
+    end
+  end
+
   describe "request_timeout_ms/0" do
     test "returns default value" do
       assert Defaults.request_timeout_ms() == 30_000
@@ -27,6 +33,7 @@ defmodule Bourse.DefaultsTest do
       assert defaults.recv_window_ms == 5_000
       assert defaults.request_timeout_ms == 30_000
       assert defaults.retry_policy == :safe_transient
+      assert defaults.rate_limit_max_wait_ms == 10_000
     end
   end
 

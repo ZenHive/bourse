@@ -1,23 +1,22 @@
 defmodule Bourse.RateLimiter do
   @moduledoc """
-  Per-credential weighted rate limiter for exchange API requests.
+  Per-credential token-bucket rate limiter for exchange API requests.
 
-  Tracks request costs per `{exchange_id, credential_key, bucket_axis}` using a
-  sliding window. Costs are summed (not counted) to handle weighted endpoints
-  correctly.
+  Each `{exchange_id, credential_key, bucket_axis}` key holds tokens that refill
+  at the authored `refill_per_sec`, capped at `capacity` (`max_size`). A request
+  is admitted when the bucket holds its cost. An over-capacity cost is not
+  exempt: the bucket accrues until it can pay, then goes to zero.
 
   ## Usage
 
-      # Authenticated request (per-API-key tracking)
-      key = {"binance", api_key, "ip"}
-      case Bourse.RateLimiter.check_rate(key, %{requests: 1200, period: 60_000}, 4) do
+      key = {"okx", api_key, "request"}
+      case Bourse.RateLimiter.check_rate(key, %{capacity: 1, refill_per_sec: 9.09}, 1) do
         :ok -> make_request()
         {:delay, ms} -> Process.sleep(ms); make_request()
       end
 
-      # Or use wait_for_capacity which blocks until ready:
-      :ok = Bourse.RateLimiter.wait_for_capacity(key, rate_limit, cost)
-      make_request()
+  `%{requests: max, period: period_ms}` is accepted as capacity `max` refilling
+  at `max / (period_ms / 1000)` tokens per second.
 
   ## Credential Keys
 
@@ -34,8 +33,11 @@ defmodule Bourse.RateLimiter do
 
   alias Bourse.Defaults
 
-  @typedoc "Rate limit configuration with max weight and period in milliseconds"
-  @type rate_limit :: %{requests: pos_integer(), period: pos_integer()}
+  @typedoc "Token-bucket configuration: authored capacity and refill rate."
+  @type rate_limit ::
+          %{capacity: number(), refill_per_sec: number()}
+          | %{requests: number(), period: pos_integer()}
+          | %{requests: number()}
 
   @typedoc """
   Rate limiter key: `{exchange_id, api_key | :public, bucket_axis}`.
@@ -45,7 +47,16 @@ defmodule Bourse.RateLimiter do
   @typedoc "A single bucket capacity check: `{key, rate_limit, cost}`."
   @type bucket_check :: {key(), rate_limit() | nil, number()}
 
-  # Default period of 1 second if not specified
+  @typep bucket_state :: %{
+           tokens: float(),
+           updated_at: integer(),
+           capacity: number(),
+           refill_per_sec: number()
+         }
+
+  @typep normalized_check :: {key(), number(), number(), number()}
+
+  # Default period of 1 second if a legacy `%{requests: n}` omits `period`
   @default_period_ms 1000
 
   # Default cost if not specified
@@ -77,15 +88,11 @@ defmodule Bourse.RateLimiter do
   @doc """
   Checks if a request can be made within rate limits.
 
-  Returns `:ok` if within limits (and records the request), or `{:delay, milliseconds}`
-  if the caller should wait before making the request.
+  Returns `:ok` if the bucket holds `cost` (and records it), or
+  `{:delay, milliseconds}` if the caller should wait for tokens to accrue.
 
-  ## Parameters
-
-  - `key` -- `{exchange_id, api_key}` or `{exchange_id, :public}` tuple
-  - `rate_limit` -- `%{requests: max_weight, period: period_ms}` or nil (no limiting)
-  - `cost` -- Request weight/cost (default: 1)
-  - `name` -- GenServer name (default: `Bourse.RateLimiter`)
+  A cost larger than capacity is limited: the caller waits until the bucket
+  has accrued that cost. There is no skip-record exemption.
   """
   @spec check_rate(key(), rate_limit() | nil, number(), GenServer.name()) ::
           :ok | {:delay, pos_integer()}
@@ -93,12 +100,8 @@ defmodule Bourse.RateLimiter do
 
   def check_rate(_key, nil, _cost, _name), do: :ok
 
-  def check_rate(key, %{requests: max_weight, period: period}, cost, name) do
-    GenServer.call(name, {:check_rate, normalize_key(key), max_weight, period, cost})
-  end
-
-  def check_rate(key, %{requests: max_weight}, cost, name) do
-    GenServer.call(name, {:check_rate, normalize_key(key), max_weight, @default_period_ms, cost})
+  def check_rate(key, %{} = rate_limit, cost, name) do
+    check_rates([{key, rate_limit, cost}], name)
   end
 
   @doc """
@@ -106,7 +109,7 @@ defmodule Bourse.RateLimiter do
 
   Returns `:ok` only when every bucket has capacity, recording every cost in the
   same GenServer transition. Returns `{:delay, milliseconds}` without recording
-  any bucket when at least one bucket is over limit.
+  any bucket when at least one bucket cannot yet pay.
   """
   @spec check_rates([bucket_check()], GenServer.name()) :: :ok | {:delay, pos_integer()}
   def check_rates(bucket_checks, name \\ __MODULE__) when is_list(bucket_checks) do
@@ -125,27 +128,17 @@ defmodule Bourse.RateLimiter do
   @doc """
   Blocks until rate limit capacity is available, then records the request.
 
-  ## Parameters
-
-  - `key` -- `{exchange_id, api_key}` or `{exchange_id, :public}` tuple
-  - `rate_limit` -- `%{requests: max_weight, period: period_ms}` or nil
-  - `cost` -- Request weight/cost (default: 1)
-  - `name` -- GenServer name (default: `Bourse.RateLimiter`)
+  Returns `{:error, %Bourse.Error{}}` when the wait would exceed
+  `Bourse.Defaults.rate_limit_max_wait_ms/0`.
   """
-  @spec wait_for_capacity(key(), rate_limit() | nil, number(), GenServer.name()) :: :ok
+  @spec wait_for_capacity(key(), rate_limit() | nil, number(), GenServer.name()) ::
+          :ok | {:error, Bourse.Error.t()}
   def wait_for_capacity(key, rate_limit, cost \\ @default_cost, name \\ __MODULE__)
 
   def wait_for_capacity(_key, nil, _cost, _name), do: :ok
 
   def wait_for_capacity(key, rate_limit, cost, name) do
-    case check_rate(key, rate_limit, cost, name) do
-      :ok ->
-        :ok
-
-      {:delay, ms} ->
-        Process.sleep(ms)
-        wait_for_capacity(key, rate_limit, cost, name)
-    end
+    await_capacity(key, rate_limit, cost, name, System.monotonic_time(:millisecond))
   end
 
   @doc """
@@ -160,9 +153,10 @@ defmodule Bourse.RateLimiter do
   end
 
   @doc """
-  Gets current total cost for a key within a time window.
+  Gets tokens currently borrowed from the bucket (`capacity - tokens` after refill).
 
-  Useful for debugging and monitoring.
+  The `period` argument is unused; it remains so callers that passed a window
+  length keep compiling. Useful for debugging and monitoring.
   """
   @spec get_cost(key(), pos_integer(), GenServer.name()) :: number()
   def get_cost(key, period, name \\ __MODULE__) do
@@ -191,19 +185,7 @@ defmodule Bourse.RateLimiter do
   @impl true
   def init(_opts) do
     schedule_cleanup()
-    # State: %{key => [{timestamp, cost}, ...]}
     {:ok, %{}}
-  end
-
-  @impl true
-  def handle_call({:check_rate, key, max_weight, period, cost}, from, state) do
-    # Single-bucket path shares the multi-bucket check + window-trim recording path.
-    # TODO(T59): If a single endpoint weight exceeds converted max_weight, allow it
-    # through rather than blocking forever. Proper fix: validate weight <= max_weight
-    # at compile time in Exchange generator, or normalize weights in Dispatch.
-    # With correct conversion (max_weight = period / rate_limit_ms), this should
-    # not trigger — endpoint weights are much smaller than per-minute limits.
-    handle_call({:check_rates, [{key, max_weight, period, cost}]}, from, state)
   end
 
   @impl true
@@ -211,40 +193,36 @@ defmodule Bourse.RateLimiter do
     now = System.monotonic_time(:millisecond)
 
     decisions =
-      Enum.map(checks, fn {key, max_weight, period, cost} ->
-        {key, max_weight, period, cost, check_bucket(state, key, max_weight, period, cost, now)}
+      Enum.map(checks, fn {key, capacity, refill_per_sec, cost} ->
+        {key, check_bucket(state, key, capacity, refill_per_sec, cost, now)}
       end)
 
-    case Enum.find(decisions, fn {_key, _max, _period, _cost, decision} -> match?({:delay, _}, decision) end) do
-      nil ->
-        new_state =
-          Enum.reduce(decisions, state, fn
-            {key, _max, period, cost, :ok}, acc ->
-              record_in_state(acc, key, cost, now, period)
+    delay_ms =
+      Enum.find_value(decisions, fn
+        {_key, {:delay, ms, _bucket}} -> ms
+        _ -> nil
+      end)
 
-            {_key, _max, _period, _cost, :skip_record}, acc ->
-              acc
-          end)
-
-        {:reply, :ok, new_state}
-
-      {_key, _max, _period, _cost, {:delay, delay}} ->
-        {:reply, {:delay, max(delay, 1)}, state}
-    end
+    new_state = persist_buckets(state, decisions, delay_ms)
+    reply = if is_nil(delay_ms), do: :ok, else: {:delay, max(delay_ms, 1)}
+    {:reply, reply, new_state}
   end
 
   @impl true
-  def handle_call({:get_cost, key, period}, _from, state) do
+  def handle_call({:get_cost, key, _period}, _from, state) do
     now = System.monotonic_time(:millisecond)
-    window_start = now - period
 
-    total_cost =
-      state
-      |> Map.get(key, [])
-      |> Enum.filter(fn {ts, _cost} -> ts > window_start end)
-      |> Enum.reduce(0, fn {_ts, cost}, acc -> acc + cost end)
+    used =
+      case Map.get(state, key) do
+        nil ->
+          0
 
-    {:reply, total_cost, state}
+        bucket ->
+          refilled = refill_bucket(bucket, bucket.capacity, bucket.refill_per_sec, now)
+          max(refilled.capacity - refilled.tokens, 0)
+      end
+
+    {:reply, used, state}
   end
 
   @impl true
@@ -255,52 +233,82 @@ defmodule Bourse.RateLimiter do
   @impl true
   def handle_cast({:record_request, key, cost}, state) do
     now = System.monotonic_time(:millisecond)
-    # Manual record has no per-bucket period; trim to max-age (same horizon as cleanup).
-    {:noreply, record_in_state(state, key, cost, now, Defaults.rate_limit_max_age_ms())}
+
+    bucket =
+      case Map.get(state, key) do
+        nil ->
+          %{tokens: 0.0, updated_at: now, capacity: cost, refill_per_sec: 0.0}
+
+        existing ->
+          refilled = refill_bucket(existing, existing.capacity, existing.refill_per_sec, now)
+          %{refilled | tokens: max(refilled.tokens - cost, 0.0), updated_at: now}
+      end
+
+    {:noreply, Map.put(state, key, bucket)}
   end
 
   @impl true
   def handle_cast({:reset, key}, state) do
-    new_state = Map.delete(state, key)
-    {:noreply, new_state}
+    {:noreply, Map.delete(state, key)}
   end
 
   @impl true
   def handle_info(:cleanup, state) do
     now = System.monotonic_time(:millisecond)
-    request_cutoff = now - Defaults.rate_limit_max_age_ms()
     eviction_cutoff = now - @key_eviction_age_ms
 
-    # Remove expired timestamps from all keys
-    cleaned_state =
-      Map.new(state, fn {key, requests} ->
-        recent = Enum.filter(requests, fn {ts, _cost} -> ts > request_cutoff end)
-        {key, recent}
-      end)
-
-    # Remove empty keys and keys idle beyond eviction threshold
     final_state =
-      Map.filter(cleaned_state, fn {_key, requests} ->
-        case requests do
-          [] ->
-            false
-
-          [{newest_ts, _} | _] ->
-            newest_ts > eviction_cutoff
-        end
+      Map.filter(state, fn {_key, %{updated_at: updated_at}} ->
+        updated_at > eviction_cutoff
       end)
 
     schedule_cleanup()
     {:noreply, final_state}
   end
 
-  @spec normalize_check(key(), rate_limit(), number()) :: {key(), pos_integer(), pos_integer(), number()}
-  defp normalize_check(key, %{requests: max_weight, period: period}, cost) do
-    {normalize_key(key), max_weight, period, cost}
+  defp await_capacity(key, rate_limit, cost, name, started_at) do
+    max_wait = Defaults.rate_limit_max_wait_ms()
+    elapsed = System.monotonic_time(:millisecond) - started_at
+    remaining = max_wait - elapsed
+
+    case check_rate(key, rate_limit, cost, name) do
+      :ok ->
+        :ok
+
+      {:delay, delay_ms} when delay_ms > remaining ->
+        {:error, wait_exceeded_error(key, delay_ms + max(elapsed, 0), max_wait)}
+
+      {:delay, delay_ms} ->
+        Process.sleep(delay_ms)
+        await_capacity(key, rate_limit, cost, name, started_at)
+    end
+  end
+
+  defp wait_exceeded_error(key, wait_ms, max_wait_ms) do
+    exchange_id =
+      case key do
+        {id, _, _} -> id
+        {id, _} -> id
+      end
+
+    Bourse.Error.rate_limit_exceeded(
+      exchange: exchange_id,
+      message: "#{exchange_id} rate-limit wait #{wait_ms}ms exceeds max #{max_wait_ms}ms",
+      retry_after: wait_ms
+    )
+  end
+
+  @spec normalize_check(key(), rate_limit(), number()) :: normalized_check()
+  defp normalize_check(key, %{capacity: capacity, refill_per_sec: refill_per_sec}, cost) do
+    {normalize_key(key), capacity, refill_per_sec, cost}
+  end
+
+  defp normalize_check(key, %{requests: max_weight, period: period}, cost) when period > 0 do
+    {normalize_key(key), max_weight, max_weight / (period / 1000), cost}
   end
 
   defp normalize_check(key, %{requests: max_weight}, cost) do
-    {normalize_key(key), max_weight, @default_period_ms, cost}
+    normalize_check(key, %{requests: max_weight, period: @default_period_ms}, cost)
   end
 
   @spec normalize_key(key()) :: {String.t(), String.t() | :public, String.t()}
@@ -312,75 +320,54 @@ defmodule Bourse.RateLimiter do
     {exchange_id, credential_key, "request"}
   end
 
-  @spec check_bucket(map(), key(), number(), integer(), number(), integer()) ::
-          :ok | :skip_record | {:delay, integer()}
-  defp check_bucket(state, key, max_weight, period, cost, now) do
-    if cost > max_weight do
-      :skip_record
-    else
-      window_start = now - period
-      recent_requests = recent_requests(state, key, window_start)
-      current_weight = total_cost(recent_requests)
+  @spec check_bucket(map(), key(), number(), number(), number(), integer()) ::
+          {:ok, bucket_state(), bucket_state()} | {:delay, integer(), bucket_state()}
+  defp check_bucket(state, key, capacity, refill_per_sec, cost, now) do
+    bucket =
+      case Map.get(state, key) do
+        nil ->
+          %{tokens: capacity * 1.0, updated_at: now, capacity: capacity, refill_per_sec: refill_per_sec}
 
-      if current_weight + cost <= max_weight do
-        :ok
-      else
-        {:delay, calculate_delay(recent_requests, current_weight, max_weight, cost, period, now)}
+        existing ->
+          existing
       end
-    end
-  end
 
-  @spec recent_requests(map(), key(), integer()) :: [{integer(), number()}]
-  defp recent_requests(state, key, window_start) do
-    state
-    |> Map.get(key, [])
-    |> Enum.filter(fn {ts, _cost} -> ts > window_start end)
-  end
+    # Over-capacity costs may accrue above max_size until they can pay; burst
+    # of ordinary costs stays capped at authored capacity.
+    refill_cap = max(capacity, cost)
+    refilled = refill_bucket(bucket, refill_cap, refill_per_sec, now)
+    accrued = %{refilled | capacity: capacity, refill_per_sec: refill_per_sec, updated_at: now}
 
-  @spec total_cost([{integer(), number()}]) :: number()
-  defp total_cost(requests) do
-    Enum.reduce(requests, 0, fn {_ts, cost}, acc -> acc + cost end)
-  end
-
-  # Prepend cost and drop entries outside the rate window so busy keys stay
-  # O(window) between cleanup ticks (mirrors legacy check_rate/4 self-trim).
-  @spec record_in_state(map(), key(), number(), integer(), pos_integer()) :: map()
-  defp record_in_state(state, key, cost, now, period) do
-    window_start = now - period
-    recent = recent_requests(state, key, window_start)
-    Map.put(state, key, [{now, cost} | recent])
-  end
-
-  # Calculate delay needed until enough capacity for the requested cost.
-  # Finds how long we need to wait for old requests to expire to free up space.
-  @spec calculate_delay([{integer(), number()}], number(), number(), number(), integer(), integer()) ::
-          integer()
-  defp calculate_delay(requests, current_weight, max_weight, cost, period, now) do
-    # Sort by timestamp (oldest first)
-    sorted = Enum.sort_by(requests, fn {ts, _cost} -> ts end)
-
-    # Find how much weight needs to expire
-    weight_to_free = current_weight + cost - max_weight
-
-    # Accumulate oldest requests until we've freed enough weight
-    {freed_weight, last_ts} =
-      Enum.reduce_while(sorted, {0, now}, fn {ts, c}, {acc_weight, _last_ts} ->
-        new_weight = acc_weight + c
-
-        if new_weight >= weight_to_free do
-          {:halt, {new_weight, ts}}
-        else
-          {:cont, {new_weight, ts}}
-        end
-      end)
-
-    if freed_weight >= weight_to_free do
-      # Add 1ms to ensure we're past the window boundary when we retry
-      last_ts + period - now + 1
+    if refilled.tokens >= cost do
+      {:ok, %{accrued | tokens: refilled.tokens - cost}, accrued}
     else
-      # Edge case: fall back to a full period wait as a safe default
-      period
+      {:delay, delay_ms(cost - refilled.tokens, refill_per_sec), accrued}
     end
+  end
+
+  defp persist_buckets(state, decisions, delay_ms) do
+    Enum.reduce(decisions, state, fn {key, result}, acc ->
+      Map.put(acc, key, persisted_bucket(result, delay_ms))
+    end)
+  end
+
+  defp persisted_bucket({:ok, paid, _accrued}, nil), do: paid
+  defp persisted_bucket({:ok, _paid, accrued}, _delay_ms), do: accrued
+  defp persisted_bucket({:delay, _ms, accrued}, _delay_ms), do: accrued
+
+  @spec refill_bucket(bucket_state(), number(), number(), integer()) :: bucket_state()
+  defp refill_bucket(bucket, cap, refill_per_sec, now) do
+    elapsed_s = max(now - bucket.updated_at, 0) / 1000
+    tokens = min(cap * 1.0, bucket.tokens + refill_per_sec * elapsed_s)
+    %{bucket | tokens: tokens, updated_at: now, capacity: cap, refill_per_sec: refill_per_sec}
+  end
+
+  @spec delay_ms(number(), number()) :: pos_integer()
+  defp delay_ms(_need, refill_per_sec) when refill_per_sec <= 0, do: Defaults.rate_limit_max_wait_ms() + 1
+
+  defp delay_ms(need, refill_per_sec) do
+    ms = ceil(need / refill_per_sec * 1000)
+    max(ms, 1)
   end
 
   @spec schedule_cleanup() :: reference()

@@ -49,8 +49,9 @@ defmodule Bourse.Signing.HmacRecipe do
       eff_recipe ->
         timestamp = timestamp(eff_recipe, config)
         nonce = nonce(eff_recipe, config)
+        recv_window = recv_window_ms(config)
         body = body(request, eff_recipe)
-        params = maybe_inject_query_auth_params(request.params, credentials, eff_recipe, timestamp)
+        params = maybe_inject_query_auth_params(request.params, credentials, eff_recipe, timestamp, recv_window)
         components = canonical_components(eff_recipe, method, request.path)
         query = query_string(params, components)
 
@@ -72,6 +73,7 @@ defmodule Bourse.Signing.HmacRecipe do
           path: request.path,
           query: query,
           timestamp: timestamp,
+          recv_window: recv_window,
           stages: stages,
           hostname: Map.get(config, :hostname, "")
         }
@@ -82,7 +84,7 @@ defmodule Bourse.Signing.HmacRecipe do
         placement = placement(eff_recipe, method)
         url = signed_url(request, query, signature, placement)
         signed_body = signed_body(body, params, signature, request.path, placement)
-        headers = headers(credentials, timestamp, nonce, signature, eff_recipe, placement)
+        headers = headers(credentials, timestamp, nonce, signature, eff_recipe, placement, recv_window)
 
         %SignedRequest{
           url: url,
@@ -206,6 +208,9 @@ defmodule Bourse.Signing.HmacRecipe do
         |> Timestamp.iso8601_seconds_from_ms()
     end
   end
+
+  defp recv_window_ms(%{recv_window: window}) when is_integer(window) and window > 0, do: window
+  defp recv_window_ms(_config), do: Defaults.recv_window_ms()
 
   defp nonce(recipe, config) do
     case get_in(recipe, ["nonce", "source"]) do
@@ -349,8 +354,8 @@ defmodule Bourse.Signing.HmacRecipe do
     context.nonce || ""
   end
 
-  defp component_value(%{"source" => "recv_window"}, _context) do
-    to_string(Defaults.recv_window_ms())
+  defp component_value(%{"source" => "recv_window"}, context) do
+    to_string(context.recv_window)
   end
 
   defp component_value(%{"source" => "hostname"}, context) do
@@ -547,12 +552,12 @@ defmodule Bourse.Signing.HmacRecipe do
     if query == "", do: signature_param, else: query <> "&" <> signature_param
   end
 
-  defp headers(credentials, timestamp, nonce, signature, recipe, placement) do
+  defp headers(credentials, timestamp, nonce, signature, recipe, placement, recv_window) do
     auth_headers =
       recipe
       |> Map.get("auth_headers", [])
       |> List.wrap()
-      |> Enum.map(&auth_header(&1, credentials, timestamp, nonce))
+      |> Enum.map(&auth_header(&1, credentials, timestamp, nonce, recv_window))
       |> Enum.reject(&is_nil/1)
 
     case Map.get(placement, "location") do
@@ -561,27 +566,27 @@ defmodule Bourse.Signing.HmacRecipe do
     end
   end
 
-  defp auth_header(%{"name" => name, "source" => "api_key"}, credentials, _timestamp, _nonce) do
+  defp auth_header(%{"name" => name, "source" => "api_key"}, credentials, _timestamp, _nonce, _recv_window) do
     {name, credentials.api_key}
   end
 
-  defp auth_header(%{"name" => name, "source" => "passphrase"}, credentials, _timestamp, _nonce) do
+  defp auth_header(%{"name" => name, "source" => "passphrase"}, credentials, _timestamp, _nonce, _recv_window) do
     {name, credentials.password || ""}
   end
 
-  defp auth_header(%{"name" => name, "source" => "timestamp"}, _credentials, timestamp, _nonce) do
+  defp auth_header(%{"name" => name, "source" => "timestamp"}, _credentials, timestamp, _nonce, _recv_window) do
     {name, timestamp}
   end
 
-  defp auth_header(%{"name" => name, "source" => "nonce"}, _credentials, _timestamp, nonce) do
+  defp auth_header(%{"name" => name, "source" => "nonce"}, _credentials, _timestamp, nonce, _recv_window) do
     {name, nonce || ""}
   end
 
-  defp auth_header(%{"name" => name, "source" => "recv_window"}, _credentials, _timestamp, _nonce) do
-    {name, to_string(Defaults.recv_window_ms())}
+  defp auth_header(%{"name" => name, "source" => "recv_window"}, _credentials, _timestamp, _nonce, recv_window) do
+    {name, to_string(recv_window)}
   end
 
-  defp auth_header(_header, _credentials, _timestamp, _nonce), do: nil
+  defp auth_header(_header, _credentials, _timestamp, _nonce, _recv_window), do: nil
 
   defp maybe_add_content_type(headers, body, recipe, path, placement) do
     cond do
@@ -744,39 +749,45 @@ defmodule Bourse.Signing.HmacRecipe do
 
   defp execute_stage(_, _), do: ""
 
-  defp maybe_inject_query_auth_params(params, credentials, recipe, timestamp) do
+  defp maybe_inject_query_auth_params(params, credentials, recipe, timestamp, recv_window) do
     params
     |> normalize_query_params()
-    |> inject_declared_query_params(credentials, recipe, timestamp)
+    |> inject_declared_query_params(credentials, recipe, timestamp, recv_window)
     |> maybe_inject_query_timestamp(recipe, timestamp)
   end
 
   defp normalize_query_params(nil), do: %{}
   defp normalize_query_params(params), do: params
 
-  defp inject_declared_query_params(params, credentials, recipe, timestamp) do
+  defp inject_declared_query_params(params, credentials, recipe, timestamp, recv_window) do
     recipe
     |> Map.get("query_params", [])
     |> List.wrap()
     |> Enum.reduce(params, fn declaration, acc ->
-      inject_query_param(acc, declaration, credentials, timestamp)
+      inject_query_param(acc, declaration, credentials, timestamp, recv_window)
     end)
   end
 
-  defp inject_query_param(params, %{"name" => name, "source" => "literal", "value" => value}, _credentials, _timestamp) do
+  defp inject_query_param(
+         params,
+         %{"name" => name, "source" => "literal", "value" => value},
+         _credentials,
+         _timestamp,
+         _recv_window
+       ) do
     put_query_param(params, name, value)
   end
 
-  defp inject_query_param(params, %{"name" => name, "source" => source}, credentials, timestamp) do
-    put_query_param(params, name, query_param_value(source, credentials, timestamp))
+  defp inject_query_param(params, %{"name" => name, "source" => source}, credentials, timestamp, recv_window) do
+    put_query_param(params, name, query_param_value(source, credentials, timestamp, recv_window))
   end
 
-  defp inject_query_param(params, _declaration, _credentials, _timestamp), do: params
+  defp inject_query_param(params, _declaration, _credentials, _timestamp, _recv_window), do: params
 
-  defp query_param_value("api_key", credentials, _timestamp), do: credentials.api_key
-  defp query_param_value("timestamp", _credentials, timestamp), do: timestamp
-  defp query_param_value("recv_window", _credentials, _timestamp), do: to_string(Defaults.recv_window_ms())
-  defp query_param_value(_source, _credentials, _timestamp), do: nil
+  defp query_param_value("api_key", credentials, _timestamp, _recv_window), do: credentials.api_key
+  defp query_param_value("timestamp", _credentials, timestamp, _recv_window), do: timestamp
+  defp query_param_value("recv_window", _credentials, _timestamp, recv_window), do: to_string(recv_window)
+  defp query_param_value(_source, _credentials, _timestamp, _recv_window), do: nil
 
   defp maybe_inject_query_timestamp(params, recipe, timestamp) when is_map(params) do
     placement = Map.get(recipe, "signature_placement") || %{}

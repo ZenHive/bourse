@@ -36,7 +36,10 @@ defmodule Bourse.Unified do
     :base_url,
     :sanity,
     :timestamp_ms_override,
-    :nonce_override
+    :nonce_override,
+    :retry,
+    :retry_delay,
+    :max_retries
   ]
 
   # Dispatch opts that only steer endpoint SELECTION — they are consumed before

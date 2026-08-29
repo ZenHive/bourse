@@ -1139,6 +1139,75 @@ defmodule Bourse.Signing.HmacRecipeTest do
       assert {"X-SIGNATURE", expected_signature} in signed.headers
     end
 
+    test "authored recv_window overrides the global default on headers and canonical payload" do
+      recipe = %{
+        "auth_headers" => [
+          %{"name" => "X-NONCE", "source" => "nonce"},
+          %{"name" => "X-RECV-WINDOW", "source" => "recv_window"}
+        ],
+        "canonical_string" => %{
+          "GET" => %{
+            "components" => [
+              %{"source" => "nonce"},
+              %{"source" => "recv_window"}
+            ]
+          }
+        },
+        "crypto_op" => %{"algo" => "hmac_sha256"},
+        "nonce" => %{"source" => "timestamp_ms", "format" => "string"},
+        "pre_sign_transforms" => [%{"op" => "hex_encode", "target" => "signature"}],
+        "signature_placement" => %{"key" => "X-SIGNATURE", "location" => "header"},
+        "timestamp" => %{"format" => "string", "source" => "timestamp_ms"}
+      }
+
+      signed =
+        HmacRecipe.sign(
+          %{method: :get, path: "/private", body: nil, params: %{}},
+          @credentials,
+          %{sign_recipe: recipe, nonce_override: @nonce_override, recv_window: 10_000}
+        )
+
+      nonce = to_string(@nonce_override)
+      expected_payload = nonce <> "10000"
+      expected_signature = expected_payload |> Signing.hmac_sha256(@credentials.secret) |> Signing.encode_hex()
+
+      assert {"X-RECV-WINDOW", "10000"} in signed.headers
+      refute {"X-RECV-WINDOW", to_string(Defaults.recv_window_ms())} in signed.headers
+      assert {"X-SIGNATURE", expected_signature} in signed.headers
+    end
+
+    test "bybit signing_config recv_window 10000 is what HmacRecipe puts on the wire" do
+      {:ok, exchange} = Bourse.Exchange.new("bybit")
+      assert exchange.signing_config.recv_window == 10_000
+
+      timestamp = "1700000000000"
+      recv = "10000"
+
+      request = %{
+        method: :get,
+        path: "/v5/account/wallet-balance",
+        body: nil,
+        params: %{"accountType" => "UNIFIED"}
+      }
+
+      signed =
+        HmacRecipe.sign(
+          request,
+          @credentials,
+          %{
+            sign_recipe: @bybit_recipe,
+            timestamp: timestamp,
+            recv_window: exchange.signing_config.recv_window
+          }
+        )
+
+      payload = timestamp <> @credentials.api_key <> recv <> "accountType=UNIFIED"
+      expected = payload |> Signing.hmac_sha256(@credentials.secret) |> Signing.encode_hex()
+
+      assert {"X-BAPI-RECV-WINDOW", recv} in signed.headers
+      assert {"X-BAPI-SIGN", expected} in signed.headers
+    end
+
     test "decodes base64 HMAC secrets when declared by the recipe" do
       secret = "decoded-secret"
       encoded_credentials = %{@credentials | secret: Base.encode64(secret)}

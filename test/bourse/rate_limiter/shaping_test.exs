@@ -50,13 +50,14 @@ defmodule Bourse.RateLimiter.ShapingTest do
   end
 
   describe "build_rate_limit_checks/3" do
-    test "numeric weight uses default request axis", %{exchange: exchange} do
+    test "numeric weight uses default request axis as a token bucket", %{exchange: exchange} do
       rate_key = Shaping.rate_key(exchange)
 
-      assert [{{id, :public, "request"}, %{requests: 600, period: 60_000}, 3}] =
+      assert [{{id, :public, "request"}, %{capacity: 1, refill_per_sec: refill}, 3}] =
                Shaping.build_rate_limit_checks(rate_key, exchange, 3)
 
       assert id == exchange.id
+      assert_in_delta refill, 10.0, 0.0001
     end
 
     test "map with axes and cost shapes multi-axis checks", %{exchange: exchange} do
@@ -71,8 +72,8 @@ defmodule Bourse.RateLimiter.ShapingTest do
 
       assert length(checks) == 2
 
-      assert Enum.all?(checks, fn {_key, %{requests: r, period: p}, cost} ->
-               r == 1200 and p == 60_000 and cost == 5
+      assert Enum.all?(checks, fn {_key, %{capacity: cap, refill_per_sec: refill}, cost} ->
+               cap == 1 and abs(refill - 20.0) < 0.0001 and cost == 5
              end)
 
       axes = Enum.map(checks, fn {{_id, :public, axis}, _, _} -> axis end)
@@ -82,12 +83,14 @@ defmodule Bourse.RateLimiter.ShapingTest do
     test "string-key maps are accepted", %{exchange: exchange} do
       rate_key = Shaping.rate_key(exchange)
 
-      assert [{{_, :public, "uid"}, %{requests: 600, period: 60_000}, 2}] =
+      assert [{{_, :public, "uid"}, %{capacity: 1, refill_per_sec: refill}, 2}] =
                Shaping.build_rate_limit_checks(rate_key, exchange, %{
                  "axes" => ["uid"],
                  "cost" => 2,
                  "rate_limit_ms" => 100
                })
+
+      assert_in_delta refill, 10.0, 0.0001
     end
 
     test "list of descriptors expands flatly", %{exchange: exchange} do
@@ -136,8 +139,25 @@ defmodule Bourse.RateLimiter.ShapingTest do
     test "unknown descriptor shape falls back to weight 1", %{exchange: exchange} do
       rate_key = Shaping.rate_key(exchange)
 
-      assert [{{_, :public, "request"}, %{requests: 600, period: 60_000}, 1}] =
+      assert [{{_, :public, "request"}, %{capacity: 1, refill_per_sec: refill}, 1}] =
                Shaping.build_rate_limit_checks(rate_key, exchange, :not_a_descriptor)
+
+      assert_in_delta refill, 10.0, 0.0001
+    end
+
+    test "authored max_size and refill_per_sec are the limiter, not a 60s window", %{exchange: exchange} do
+      exchange = %{
+        exchange
+        | config: %{"rate_limit_bucket" => %{max_size: 1, refill_per_sec: 9.09, rate_limit_ms: 110}}
+      }
+
+      rate_key = Shaping.rate_key(exchange)
+
+      assert [{{_, :public, "request"}, %{capacity: 1, refill_per_sec: refill}, 1}] =
+               Shaping.build_rate_limit_checks(rate_key, exchange, 1)
+
+      assert_in_delta refill, 9.09, 0.0001
+      refute match?({_, %{requests: _, period: 60_000}, _}, hd(Shaping.build_rate_limit_checks(rate_key, exchange, 1)))
     end
 
     test "non-numeric cost defaults to 1", %{exchange: exchange} do
@@ -170,19 +190,6 @@ defmodule Bourse.RateLimiter.ShapingTest do
     end
 
     test "throttles then retries when the bucket is exhausted", %{exchange: exchange} do
-      # Shrink the sliding window so the delay path is exerciseable in tests.
-      previous_window = Application.get_env(:bourse, :rate_limit_window_ms)
-      Application.put_env(:bourse, :rate_limit_window_ms, 40)
-
-      on_exit(fn ->
-        if is_nil(previous_window) do
-          Application.delete_env(:bourse, :rate_limit_window_ms)
-        else
-          Application.put_env(:bourse, :rate_limit_window_ms, previous_window)
-        end
-      end)
-
-      # rate_limit_ms == window → max 1 request per window
       exchange = %{exchange | rate_limit_ms: 40}
       rate_key = Shaping.rate_key(exchange)
 
@@ -202,13 +209,37 @@ defmodule Bourse.RateLimiter.ShapingTest do
       on_exit(fn -> :telemetry.detach(handler_id) end)
 
       assert :ok = Shaping.maybe_rate_limit(rate_key, exchange, 1)
-      # Second call hits {:delay, _}, emits telemetry, sleeps ~window, then retries to :ok
+      # Second call hits {:delay, _}, emits telemetry, sleeps ~1/refill, then retries to :ok
       assert :ok = Shaping.maybe_rate_limit(rate_key, exchange, 1)
 
       assert_received {:throttled, %{delay_ms: delay_ms, cost: cost}, %{exchange: id}}
       assert delay_ms > 0
+      assert delay_ms <= 80
       assert cost >= 1
       assert id == exchange.id
+    end
+
+    test "returns rate_limit_exceeded without sleeping past the named bound", %{exchange: exchange} do
+      exchange = %{
+        exchange
+        | config: %{"rate_limit_bucket" => %{max_size: 1, refill_per_sec: 0.001}}
+      }
+
+      rate_key = Shaping.rate_key(exchange)
+      max_wait = Bourse.Defaults.rate_limit_max_wait_ms()
+
+      assert :ok = Shaping.maybe_rate_limit(rate_key, exchange, 1)
+
+      started = System.monotonic_time(:millisecond)
+
+      assert {:error, %Bourse.Error{type: :rate_limit_exceeded} = error} =
+               Shaping.maybe_rate_limit(rate_key, exchange, 1)
+
+      elapsed = System.monotonic_time(:millisecond) - started
+      assert elapsed < 200
+      assert error.exchange == exchange.id
+      assert error.message =~ exchange.id
+      assert error.message =~ "exceeds max #{max_wait}ms"
     end
 
     test "returns :ok when rate limiter is disabled", %{exchange: exchange} do
@@ -235,6 +266,49 @@ defmodule Bourse.RateLimiter.ShapingTest do
 
       assert [{{_, :public, "request"}, _, 1}] =
                Shaping.build_rate_limit_checks(rate_key, exchange, %{axes: :invalid, cost: 1})
+    end
+  end
+
+  describe "over-capacity costs on authored venues" do
+    test "every runtime venue delays a cost above max_size; no endpoint skip-records" do
+      name = :"authored_bucket_#{:erlang.unique_integer([:positive])}"
+      start_supervised!({RateLimiter, name: name})
+
+      venues = Bourse.Registry.exchanges()
+      assert length(venues) == 11
+
+      for venue <- venues do
+        exchange = Exchange.new!(venue)
+        bucket = Map.fetch!(exchange.config, "rate_limit_bucket")
+        max_size = bucket.max_size
+        refill = bucket.refill_per_sec
+
+        assert is_number(max_size) and max_size > 0,
+               "#{venue} authored max_size is missing or non-positive: #{inspect(bucket)}"
+
+        assert is_number(refill) and refill > 0,
+               "#{venue} authored refill_per_sec is missing or non-positive: #{inspect(bucket)}"
+
+        RateLimiter.reset_all(name)
+        over_cost = max_size + 1
+        checks = Shaping.build_rate_limit_checks({venue, :public}, exchange, over_cost)
+        assert checks != [], "#{venue} produced no limiter checks for over-capacity cost #{over_cost}"
+
+        assert {:delay, delay_ms} = RateLimiter.check_rates(checks, name),
+               "#{venue} skip-recorded over-capacity cost #{over_cost} instead of delaying"
+
+        assert delay_ms > 0
+        assert RateLimiter.get_cost({venue, :public, "request"}, 1, name) == 0
+
+        for {_key, %{rate_limit: %{cost: cost} = rate_limit}} <- exchange.request_contracts,
+            is_number(cost) and cost > max_size do
+          RateLimiter.reset_all(name)
+          endpoint_checks = Shaping.build_rate_limit_checks({venue, :public}, exchange, rate_limit)
+
+          assert {:delay, _} = RateLimiter.check_rates(endpoint_checks, name),
+                 "#{venue} endpoint cost #{cost} > max_size #{max_size} was not limited"
+        end
+      end
     end
   end
 end

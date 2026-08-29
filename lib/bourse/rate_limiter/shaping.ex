@@ -3,21 +3,17 @@ defmodule Bourse.RateLimiter.Shaping do
   Shapes endpoint rate-limit descriptors into `Bourse.RateLimiter` checks and
   updates rate-limit state from response headers.
 
-  Extracted from `Bourse.HTTP` so transport stays focused on request execution
-  while bucket-axis normalization, cost shaping, and header→ETS updates live
-  with the RateLimiter family. Behavior-preserving delegation only.
+  Authored buckets execute as token buckets: `max_size` is capacity and
+  `refill_per_sec` is the drain rate. A request is admitted when the bucket
+  holds its cost. There is no fixed 60s window and no skip-record exemption.
   """
 
-  # reach:disable-for-this-file fixed_shape_map — local rate-limit descriptor; struct adds ceremony, no boundary win
-
   alias Bourse.Defaults
+  alias Bourse.Error
   alias Bourse.Exchange
   alias Bourse.RateLimiter
   alias Bourse.RateLimiter.Headers, as: RateLimitHeaders
 
-  # Authored rateLimit values are milliseconds between requests; convert to max req/window below.
-  # Window defaults to 60s (req/min). Overridable via `:rate_limit_window_ms` for tests.
-  @rate_limit_period_ms 60_000
   @default_bucket_axis "request"
 
   @typedoc "Credential slice of a rate key: API key string or `:public`"
@@ -29,8 +25,11 @@ defmodule Bourse.RateLimiter.Shaping do
   @typedoc "Full rate key including bucket axis"
   @type axis_key :: {String.t(), credential_key(), String.t()}
 
+  @typedoc "Token-bucket limit passed to RateLimiter.check_rates/1"
+  @type bucket_limit :: %{capacity: number(), refill_per_sec: number()}
+
   @typedoc "One RateLimiter.check_rates/1 triple"
-  @type rate_check :: {axis_key(), %{requests: non_neg_integer(), period: pos_integer()}, number()}
+  @type rate_check :: {axis_key(), bucket_limit(), number()}
 
   @doc """
   Builds the base rate-limiter key from an exchange: `{exchange_id, api_key | :public}`.
@@ -40,28 +39,14 @@ defmodule Bourse.RateLimiter.Shaping do
   def rate_key(%Exchange{id: id, credentials: creds}), do: {id, creds.api_key || :public}
 
   @doc """
-  Checks rate limit if enabled — blocks until capacity is available, returns `:ok`.
+  Checks rate limit if enabled — blocks until capacity is available.
 
-  `rate_limit_ms` is "milliseconds between requests", so
-  max requests per period = period / rate_limit_ms.
+  Returns `{:error, %Bourse.Error{}}` when the pre-request wait would exceed
+  `Bourse.Defaults.rate_limit_max_wait_ms/0`, naming the venue and the wait.
   """
-  @spec maybe_rate_limit(rate_key(), Exchange.t(), term()) :: :ok
+  @spec maybe_rate_limit(rate_key(), Exchange.t(), term()) :: :ok | {:error, Error.t()}
   def maybe_rate_limit(rate_key, exchange, endpoint_rate_limit) do
-    checks = build_rate_limit_checks(rate_key, exchange, endpoint_rate_limit)
-
-    if Defaults.rate_limiter_enabled?() and checks != [] do
-      case RateLimiter.check_rates(checks) do
-        :ok ->
-          :ok
-
-        {:delay, delay_ms} ->
-          emit_rate_limit_throttled(exchange.id, delay_ms, total_check_cost(checks))
-          Process.sleep(delay_ms)
-          maybe_rate_limit(rate_key, exchange, endpoint_rate_limit)
-      end
-    else
-      :ok
-    end
+    await_capacity(rate_key, exchange, endpoint_rate_limit, System.monotonic_time(:millisecond))
   end
 
   @doc """
@@ -86,51 +71,133 @@ defmodule Bourse.RateLimiter.Shaping do
   @doc """
   Builds RateLimiter check triples from an endpoint rate-limit descriptor.
 
-  Accepts a numeric weight, a map with `:cost`/`:axes`/`:rate_limit_ms`, a list
-  of those maps, or falls back to weight `1` on the default `"request"` axis.
+  Accepts a numeric weight, a map with `:cost`/`:axes`/`:max_size`/
+  `:refill_per_sec`, a list of those maps, or falls back to weight `1` on the
+  default `"request"` axis. Venue-level `config["rate_limit_bucket"]` fills
+  `max_size` / `refill_per_sec` gaps; `rate_limit_ms` is only a refill
+  fallback (`1000 / rate_limit_ms` per second, capacity 1).
   """
   @spec build_rate_limit_checks(rate_key(), Exchange.t(), term()) :: [rate_check()]
   def build_rate_limit_checks(rate_key, exchange, endpoint_rate_limit) do
-    period_ms = rate_limit_period_ms()
+    fallback = venue_bucket(exchange)
 
     endpoint_rate_limit
-    |> normalize_endpoint_rate_limits(exchange.rate_limit_ms)
-    |> Enum.flat_map(fn %{axis: axis, cost: cost, rate_limit_ms: rate_limit_ms} ->
-      if is_number(rate_limit_ms) and rate_limit_ms > 0 do
-        max_requests = trunc(period_ms / rate_limit_ms)
-        limit = %{requests: max_requests, period: period_ms}
-        [{put_rate_axis(rate_key, axis), limit, cost}]
-      else
-        []
+    |> normalize_endpoint_rate_limits(fallback)
+    |> Enum.flat_map(fn descriptor ->
+      case bucket_limit(descriptor) do
+        nil ->
+          []
+
+        limit ->
+          [{put_rate_axis(rate_key, descriptor.axis), limit, descriptor.cost}]
       end
     end)
   end
 
-  defp rate_limit_period_ms do
-    Application.get_env(:bourse, :rate_limit_window_ms, @rate_limit_period_ms)
+  defp await_capacity(rate_key, exchange, endpoint_rate_limit, started_at) do
+    checks = build_rate_limit_checks(rate_key, exchange, endpoint_rate_limit)
+
+    if Defaults.rate_limiter_enabled?() and checks != [] do
+      max_wait = Defaults.rate_limit_max_wait_ms()
+      elapsed = System.monotonic_time(:millisecond) - started_at
+      remaining = max_wait - elapsed
+
+      case RateLimiter.check_rates(checks) do
+        :ok ->
+          :ok
+
+        {:delay, delay_ms} when delay_ms > remaining ->
+          {:error, wait_exceeded_error(exchange.id, delay_ms + max(elapsed, 0), max_wait)}
+
+        {:delay, delay_ms} ->
+          emit_rate_limit_throttled(exchange.id, delay_ms, total_check_cost(checks))
+          Process.sleep(delay_ms)
+          await_capacity(rate_key, exchange, endpoint_rate_limit, started_at)
+      end
+    else
+      :ok
+    end
   end
 
-  defp normalize_endpoint_rate_limits(weight, fallback_rate_limit_ms) when is_number(weight) do
-    [%{axis: @default_bucket_axis, cost: weight, rate_limit_ms: fallback_rate_limit_ms}]
+  defp wait_exceeded_error(exchange_id, wait_ms, max_wait_ms) do
+    Error.rate_limit_exceeded(
+      exchange: exchange_id,
+      message: "#{exchange_id} rate-limit wait #{wait_ms}ms exceeds max #{max_wait_ms}ms",
+      retry_after: wait_ms
+    )
   end
 
-  defp normalize_endpoint_rate_limits(rate_limits, fallback_rate_limit_ms) when is_list(rate_limits) do
-    Enum.flat_map(rate_limits, &normalize_endpoint_rate_limits(&1, fallback_rate_limit_ms))
+  defp venue_bucket(%Exchange{} = exchange) do
+    bucket = Map.get(exchange.config, "rate_limit_bucket") || %{}
+
+    %{
+      max_size: Map.get(bucket, :max_size) || Map.get(bucket, "max_size"),
+      refill_per_sec: Map.get(bucket, :refill_per_sec) || Map.get(bucket, "refill_per_sec"),
+      rate_limit_ms: Map.get(bucket, :rate_limit_ms) || Map.get(bucket, "rate_limit_ms") || exchange.rate_limit_ms
+    }
   end
 
-  defp normalize_endpoint_rate_limits(%{} = rate_limit, fallback_rate_limit_ms) do
+  defp normalize_endpoint_rate_limits(weight, fallback) when is_number(weight) do
+    [
+      Map.merge(fallback, %{
+        axis: @default_bucket_axis,
+        cost: weight
+      })
+    ]
+  end
+
+  defp normalize_endpoint_rate_limits(rate_limits, fallback) when is_list(rate_limits) do
+    Enum.flat_map(rate_limits, &normalize_endpoint_rate_limits(&1, fallback))
+  end
+
+  defp normalize_endpoint_rate_limits(%{} = rate_limit, fallback) do
     cost = numeric_or_default(Map.get(rate_limit, :cost) || Map.get(rate_limit, "cost"), 1)
-    rate_limit_ms = Map.get(rate_limit, :rate_limit_ms) || Map.get(rate_limit, "rate_limit_ms") || fallback_rate_limit_ms
+
+    max_size =
+      Map.get(rate_limit, :max_size) || Map.get(rate_limit, "max_size") || fallback.max_size
+
+    refill_per_sec =
+      Map.get(rate_limit, :refill_per_sec) || Map.get(rate_limit, "refill_per_sec") ||
+        fallback.refill_per_sec
+
+    rate_limit_ms =
+      Map.get(rate_limit, :rate_limit_ms) || Map.get(rate_limit, "rate_limit_ms") ||
+        fallback.rate_limit_ms
 
     rate_limit
     |> Map.get(:axes, Map.get(rate_limit, "axes", [@default_bucket_axis]))
     |> normalize_axes()
-    |> Enum.map(&%{axis: &1, cost: cost, rate_limit_ms: rate_limit_ms})
+    |> Enum.map(fn axis ->
+      %{
+        axis: axis,
+        cost: cost,
+        max_size: max_size,
+        refill_per_sec: refill_per_sec,
+        rate_limit_ms: rate_limit_ms
+      }
+    end)
   end
 
-  defp normalize_endpoint_rate_limits(_rate_limit, fallback_rate_limit_ms) do
-    normalize_endpoint_rate_limits(1, fallback_rate_limit_ms)
+  defp normalize_endpoint_rate_limits(_rate_limit, fallback) do
+    normalize_endpoint_rate_limits(1, fallback)
   end
+
+  defp bucket_limit(%{max_size: max_size, refill_per_sec: refill_per_sec})
+       when is_number(max_size) and max_size > 0 and is_number(refill_per_sec) and refill_per_sec > 0 do
+    %{capacity: max_size, refill_per_sec: refill_per_sec}
+  end
+
+  defp bucket_limit(%{rate_limit_ms: rate_limit_ms, max_size: max_size})
+       when is_number(rate_limit_ms) and rate_limit_ms > 0 do
+    capacity = if is_number(max_size) and max_size > 0, do: max_size, else: 1
+    %{capacity: capacity, refill_per_sec: 1000 / rate_limit_ms}
+  end
+
+  defp bucket_limit(%{rate_limit_ms: rate_limit_ms}) when is_number(rate_limit_ms) and rate_limit_ms > 0 do
+    %{capacity: 1, refill_per_sec: 1000 / rate_limit_ms}
+  end
+
+  defp bucket_limit(_descriptor), do: nil
 
   defp normalize_axes([]), do: [@default_bucket_axis]
 
