@@ -754,10 +754,10 @@ The authored-specs pivot workstream (see [docs/authored-specs.md](docs/authored-
 | Task 525 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Unified public reads must round-trip live on each venue's own market symbols [D:5/B:8/U:7 → Eff:1.5?] 🚀 |
 | Task 526 | ✅ | 🎁 **authored_specs** · Converge task 521: close residual critical-slot evidence and flip the oracle gate to hard-fail per venue [D:5/B:7/U:5 → Eff:1.2?] 📋 |
 | Task 527 | ✅ | 🎁 **authored_specs** · Always-on VPS runner for the live-drift lane: full ten-venue coverage without the unreachable allowlist [D:3/B:6/U:3 → Eff:1.5?] 🚀 |
-| Task 528 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Derive: close the live-red private read slices — subaccount threading, actionable missing-identifier error, balance free/used mapping [D:4/B:7/U:5 → Eff:1.5] 🚀 |
-| Task 529 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Reconcile the live integration suites with landed contracts and current venue state [D:5/B:6/U:5 → Eff:1.1] 📋 |
-| Task 530 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Binance-family: correct USD-M multi-assets balance free/used mapping and live trading-fee contracts [D:5/B:8/U:7 → Eff:1.5] 🚀 |
-| Task 531 | ✅ | 🎁 **authored_specs** · Thread venue-required symbol params into unified private integration probes [D:3/B:5/U:4 → Eff:1.5] 🚀 |
+| Task 528 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Derive: close the live-red private read slices — subaccount threading, actionable missing-identifier error, balance free/used mapping [D:4/B:7/U:5 → Eff:1.5?] 🚀 |
+| Task 529 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Reconcile the live integration suites with landed contracts and current venue state [D:5/B:6/U:5 → Eff:1.1?] 📋 |
+| Task 530 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Binance-family: correct USD-M multi-assets balance free/used mapping and live trading-fee contracts [D:5/B:8/U:7 → Eff:1.5?] 🚀 |
+| Task 531 | ✅ | 🎁 **authored_specs** · Thread venue-required symbol params into unified private integration probes [D:3/B:5/U:4 → Eff:1.5?] 🚀 |
 | Task 532 | ✅ | 🎁 **authored_specs** · 🐛 Alpaca fetchOHLCV: author the time-window request slice so since/limit reach the venue instead of 400ing or silently returning nothing [D:3/B:7/U:6 → Eff:2.17] 🎯 |
 | Task 533 | ✅ | 🎁 **authored_specs** · 🐛 Whole-surface unified-read contract guard: no raw envelopes, no collapsed multi-row responses, no un-normalized symbol keys [D:5/B:9/U:8 → Eff:1.7] 🚀 |
 | Task 534 | ✅ | 🎁 **authored_specs** · 🐛 Unified endpoint selection must honor section priority, and every mapped method must be reachable by some documented param set [D:5/B:9/U:9 → Eff:1.8] 🚀 |
