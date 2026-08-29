@@ -47,6 +47,24 @@ defmodule Bourse.Signing.LighterNativeTest do
     assert byte_size(signature_bytes) == 80
     assert tx_hash =~ ~r/^[0-9a-f]{80}$/
     assert message == ""
+
+    transaction_request = %Request{
+      method: :post,
+      path: "/api/v1/sendTx",
+      body: nil,
+      params: %{
+        "__bourse_lighter_transaction_operation" => "create_order",
+        "__bourse_lighter_transaction_params" => create_order()
+      }
+    }
+
+    assert %SignedRequest{
+             method: :post,
+             headers: [{"Content-Type", "application/x-www-form-urlencoded"}],
+             body: encoded_transaction
+           } = Lighter.sign(transaction_request, credentials, config)
+
+    assert %{"tx_info" => _tx_info, "tx_type" => "14"} = URI.decode_query(encoded_transaction)
   end
 
   test "crashing the official helper cannot terminate the VM and a new helper restarts", %{
