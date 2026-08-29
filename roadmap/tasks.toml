@@ -23230,7 +23230,7 @@ scores = { d = 7, b = 8, u = 8 }
 markers = ["bug"]
 acceptance_criteria = ["OKX fetch_transfers and fetch_transfer/2 compose live against the demo host: every id the list read returns is either accepted by the detail read, or the list read declares the id unavailable. A returned id that the venue rejects as malformed is a failure of this criterion. The chosen carve is recorded in docs/authored-spec-carves/okx.md with the live evidence for it", "No authored id field map resolves through fallback_keys onto a key of a different identifier class. A manifest-wide test over all eleven venues fails when one does, so the next venue cannot ship the same substitution", "alpaca's authored errors.status_map is consumed by the loader: Bourse.Exchange.new(alpaca) yields a non-empty status_map and http_exceptions, and a manifest-wide test raises when any venue authors a status_map shape the loader does not read", "alpaca 403, 404, 422 and 429 are classified from live calls against paper-api.alpaca.markets, and the re-observed unified type for the 403 is re-pinned in test/live/journeys/trader/alpaca_test.exs in this same change. The interaction with the hard 401/403 short-circuit in Bourse.HTTP.Errors.normalize_error/3 is resolved and stated, not left to outrank the authored map by accident", "HmacRecipe's two canonical-string ladders and the permissive path_predicate?/4 clauses either have every reachable rung pinned by a test that distinguishes it from its neighbours, or the unreachable rungs are replaced by a clause that raises and names the malformed slice. Deleting a surviving rung must redden the suite; state the before and after mutation counts from the muex command in the BUGS entry", "One unparseable row no longer discards a whole successful multi-row read: bybit fetch_positions_history returns the rows it could resolve, and the row it could not is either dropped with a named reason or carries an explicit unavailability marker. Proven live on the bybit testnet main-account key against an account holding a dated contract", "Each of the four instances above has a live call in test/ that fails when the substitution returns, and none of them is satisfied by a shape assertion alone"]
 out_of_scope = ["Normalizing bybit dated-future symbol ids, which is the Bourse.Symbol task", "The rate limiter and signing order", "Deleting fixture-oracle test architecture, which is task 670"]
-touches = ["lib/bourse/exchange.ex", "lib/bourse/spec/schema.ex", "lib/bourse/signing/hmac_recipe.ex", "lib/bourse/unified/read_parse.ex", "lib/bourse/unified/deribit_position_units.ex", "priv/venues/okx/authored/normalization.json", "priv/venues/alpaca/authored/errors.json", "test/bourse", "test/live/okx", "test/live/journeys/trader/alpaca_test.exs"]
+touches = ["lib/bourse/exchange.ex", "lib/bourse/spec/schema.ex", "lib/bourse/signing/hmac_recipe.ex", "lib/bourse/unified/read_parse.ex", "lib/bourse/unified/deribit_position_units.ex", "priv/venues/okx/authored/normalization.json", "priv/venues/okx/authority/rest_read_contract.json", "priv/venues/alpaca/authored/errors.json", "docs/authored-spec-carves/okx.md", "docs/prod-verification-ledger.md", "BUGS.md", "test/bourse", "test/live/okx", "test/live/bybit", "test/live/errors/alpaca_test.exs", "test/live/journeys/trader/alpaca_test.exs"]
 assignee = "codex"
 model = "gpt-5.6-sol"
 body = """
@@ -23287,6 +23287,32 @@ route the venue documents before implementing. If one of them does return a tran
 instead - move fetchTransfers to that source - and say in the delivery which route it was and what
 it returned. Do not ship (c): declaring the pair unreachable discards an identifier the venue does
 publish and leaves the field nil for no gain.
+
+Scoped 2026-08-29 on ex63-eth at 380ad65 by reading the landed tree: nothing on this task has
+landed. All seven criteria are open, so start from the tree as it stands rather than looking for
+partial work. The one thing that is already true is the alpaca error-classification half of
+criterion 4: the live 403 is pinned in test/live/journeys/trader/alpaca_test.exs around line 120
+with the 401/403 short-circuit stated in its comment, 404 in test/live/errors/alpaca_test.exs and
+422 in test/live/alpaca/alpaca_authored_integration_test.exs. The 429 has no live pin anywhere,
+which is the remaining half of that criterion.
+
+The substitution itself is untouched: priv/venues/okx/authored/normalization.json still declares
+the transfer id as key transId with fallback_keys billId, and no commit has ever changed either
+string under priv/venues/okx or lib. HmacRecipe still ends all three ladders on
+Map.values |> List.first || cs, and deribit_position_units put_notional_currencies still halts the
+whole batch with reduce_while on the first unresolvable row.
+
+One decision the criteria imply but do not settle, decided here so it does not reach an
+implementer as a question addressed to nobody. The okx fetchTransfer contract case currently
+sources its id argument with strategy resource from fetchTransfers, which is the mechanism that
+feeds a billId into an endpoint that only accepts a transId. Once the carve lands, that chain is
+wrong by construction. Default: keep the case in the denominator and re-ledger it, replacing the
+okx-transfer-transId-unreachable reasoning with the real one, that the read and detail surfaces
+carry different identifier classes by the venue's design, not that a value could not be reached.
+The evidence gate: if the demo transfer round-trip proves safely repeatable and reversible under
+the lane's own cleanup, prefer re-declaring the case as write-then-read so it actually executes,
+and say in the delivery which of the two you found and why. Do not drop the case from the
+denominator either way, per CLAUDE.md on the ledger not discharging a case.
 """
 created_at = "2026-08-28"
 started_at = "2026-08-28"
