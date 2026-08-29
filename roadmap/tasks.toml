@@ -23557,7 +23557,7 @@ scored_at = "2026-08-28"
 id = "690"
 phase = 16
 bundle = "ws_unified"
-status = "done"
+status = "in_progress"
 title = "The transport reports success it did not achieve: an unauthenticated private socket, an unreachable order topic, and a batch code that masks the real rejection"
 scores = { d = 6, b = 8, u = 8 }
 markers = ["bug"]
