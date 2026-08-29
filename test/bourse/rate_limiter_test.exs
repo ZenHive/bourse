@@ -188,7 +188,7 @@ defmodule Bourse.RateLimiterTest do
       # Refill is frozen for the assertion window: get_cost/3 reports
       # `capacity - tokens` AFTER refilling, so a live drain rate makes the
       # charged total drift by `refill_per_sec * elapsed` between calls.
-      rate_limit = %{capacity: 100, refill_per_sec: 0.001}
+      rate_limit = %{capacity: 100, refill_per_sec: 0.0}
 
       assert :ok = RateLimiter.check_rate(key, rate_limit, 3, name)
       assert :ok = RateLimiter.check_rate(key, rate_limit, 5, name)
@@ -278,7 +278,7 @@ defmodule Bourse.RateLimiterTest do
       ip_key = {"binance", :public, "ip"}
       order_key = {"binance", :public, "order_weight"}
       # Frozen refill so the charged totals cannot drift between the two reads.
-      rate_limit = %{capacity: 10, refill_per_sec: 0.001}
+      rate_limit = %{capacity: 10, refill_per_sec: 0.0}
 
       assert :ok =
                RateLimiter.check_rates(
@@ -296,7 +296,8 @@ defmodule Bourse.RateLimiterTest do
     test "does not partially record when any bucket is over limit", %{name: name} do
       ip_key = {"binance", :public, "ip"}
       order_key = {"binance", :public, "order_weight"}
-      rate_limit = %{capacity: 1, refill_per_sec: 0.001}
+      # Frozen refill: the reads below assert exact charged costs.
+      rate_limit = %{capacity: 1, refill_per_sec: 0.0}
 
       assert :ok = RateLimiter.check_rate(order_key, rate_limit, 1, name)
 
@@ -363,7 +364,11 @@ defmodule Bourse.RateLimiterTest do
 
     test "the periodic :cleanup pass keeps in-window entries", %{name: name} do
       key = {"binance", :public}
-      rate_limit = %{capacity: 100, refill_per_sec: 0.001}
+      # Frozen refill. `:sys.get_state/1` below can take tens of milliseconds
+      # when it has to load the `:sys` module, and `get_cost/3` refills before
+      # reporting, so any positive drain rate turns the exact assertion into a
+      # timing coin flip (observed live: 2.9999619999999965 against 3).
+      rate_limit = %{capacity: 100, refill_per_sec: 0.0}
 
       assert :ok = RateLimiter.check_rate(key, rate_limit, 3, name)
 

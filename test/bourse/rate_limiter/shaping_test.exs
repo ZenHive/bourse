@@ -184,8 +184,12 @@ defmodule Bourse.RateLimiter.ShapingTest do
 
   describe "maybe_rate_limit/3" do
     test "returns :ok when limiter is enabled and capacity is free", %{exchange: exchange} do
-      # Frozen drain rate: get_cost/3 refills before reporting, so a live
-      # refill_per_sec makes the charged cost drift below 1 within a millisecond.
+      # Slowest drain the authored-bucket clause accepts — `bucket_limit/1`
+      # requires `refill_per_sec > 0`, so unlike the limiter's own tests this
+      # one cannot freeze the clock entirely. `get_cost/3` refills before
+      # reporting, so the charged cost decays by `refill_per_sec * elapsed`:
+      # assert the charge within a tolerance that the drain cannot cross,
+      # never exact equality, which is a timing coin flip.
       exchange = %{
         exchange
         | config: %{"rate_limit_bucket" => %{max_size: 5, refill_per_sec: 0.001}}
@@ -193,7 +197,7 @@ defmodule Bourse.RateLimiter.ShapingTest do
 
       rate_key = Shaping.rate_key(exchange)
       assert :ok = Shaping.maybe_rate_limit(rate_key, exchange, 1)
-      assert RateLimiter.get_cost({exchange.id, :public, "request"}, 60_000) == 1
+      assert_in_delta RateLimiter.get_cost({exchange.id, :public, "request"}, 60_000), 1, 0.01
     end
 
     test "throttles then retries when the bucket is exhausted", %{exchange: exchange} do
