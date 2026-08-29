@@ -73,6 +73,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- Rate limiting now executes each venue's authored token bucket instead of a
+  fixed one-minute window, bounds pre-request waits, and signs only after
+  throttling. Venue-authored receive windows reach HMAC signatures, and a 429
+  without `Retry-After` returns immediately instead of entering Req's generic
+  transient retry loop.
 - Symbol normalization applies venue aliases to split currencies rather than
   rewriting substrings in raw market ids, rejects ambiguous reverse alias maps,
   parses Bybit's native dated-future ids (including digit-prefixed bases), and
