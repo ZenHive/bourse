@@ -5,10 +5,23 @@ defmodule Bourse.SymbolRegressionTest do
   alias Bourse.Symbol
   alias Bourse.Symbol.ParsedSymbol
 
-  @alias_venues ~w(binance binancecoinm binanceusdm bybit deribit derive hyperliquid okx)
+  @runtime_support_path "priv/venues/runtime_support.json"
+  @external_resource @runtime_support_path
+  @runtime_venues @runtime_support_path |> File.read!() |> :json.decode() |> Map.fetch!("venues")
   @format %{separator: "", case: :upper}
 
   describe "currency aliases" do
+    test "the alias sweeps cover every runtime venue that authors a non-empty map" do
+      swept = Enum.map(alias_venues(), &elem(&1, 0))
+
+      refute swept == [],
+             "no runtime venue authored currency_aliases; the alias sweeps below are vacuous"
+
+      for venue <- @runtime_venues, aliases = authored_aliases(venue), map_size(aliases) > 0 do
+        assert venue in swept, "#{venue} authors aliases but escaped the sweep"
+      end
+    end
+
     test "non-injective inversion names every colliding exchange code" do
       aliases = authored_aliases("hyperliquid")
       assert map_size(aliases) == 14
@@ -18,17 +31,24 @@ defmodule Bourse.SymbolRegressionTest do
       end
     end
 
-    test "every injective authored venue alias map round-trips every key" do
-      for venue <- @alias_venues -- ["hyperliquid"] do
-        aliases = authored_aliases(venue)
-        reversed = Symbol.reverse_aliases(aliases)
+    test "every authored venue alias map round-trips every key or names its collision" do
+      for {venue, aliases} <- alias_venues() do
+        case colliding_unified_codes(aliases) do
+          [] ->
+            reversed = Symbol.reverse_aliases(aliases)
 
-        for exchange_code <- Map.keys(aliases) do
-          assert exchange_code ==
-                   exchange_code
-                   |> Symbol.apply_alias(aliases)
-                   |> Symbol.apply_alias(reversed),
-                 "#{venue} failed to round-trip #{exchange_code}"
+            for exchange_code <- Map.keys(aliases) do
+              assert exchange_code ==
+                       exchange_code
+                       |> Symbol.apply_alias(aliases)
+                       |> Symbol.apply_alias(reversed),
+                     "#{venue} failed to round-trip #{exchange_code}"
+            end
+
+          [_ | _] ->
+            assert_raise ArgumentError, ~r/cannot reverse non-injective aliases/, fn ->
+              Symbol.reverse_aliases(aliases)
+            end
         end
       end
     end
@@ -51,8 +71,7 @@ defmodule Bourse.SymbolRegressionTest do
     end
 
     test "every authored alias key is inert inside a currency code and across a pair boundary" do
-      for venue <- @alias_venues,
-          aliases = authored_aliases(venue),
+      for {_venue, aliases} <- alias_venues(),
           alias_key <- Map.keys(aliases) do
         embedded_base = "A#{alias_key}Z"
 
@@ -66,8 +85,7 @@ defmodule Bourse.SymbolRegressionTest do
 
     test "authored example ids never take a substring alias rewrite" do
       crossed =
-        for venue <- @alias_venues,
-            aliases = authored_aliases(venue),
+        for {venue, aliases} <- alias_venues(),
             {id, format} <- authored_example_ids(venue),
             naive = naive_alias_rewrite(id, aliases),
             naive != id,
@@ -158,10 +176,26 @@ defmodule Bourse.SymbolRegressionTest do
     assert Symbol.from_exchange_id("BTCTRY", without_try, :spot) == "BTCTRY"
   end
 
+  # Derived from runtime_support.json rather than hardcoded so a venue that
+  # gains authored aliases cannot escape the sweeps below.
+  defp alias_venues do
+    for venue <- @runtime_venues,
+        aliases = authored_aliases(venue),
+        map_size(aliases) > 0,
+        do: {venue, aliases}
+  end
+
+  defp colliding_unified_codes(aliases) do
+    aliases
+    |> Enum.group_by(fn {_exchange, unified} -> unified end)
+    |> Enum.filter(fn {_unified, pairs} -> length(pairs) > 1 end)
+  end
+
   defp authored_aliases(venue) do
     venue
     |> authored_markets()
     |> get_in(["patterns", "currency_aliases"])
+    |> Kernel.||(%{})
   end
 
   defp authored_example_ids(venue) do
