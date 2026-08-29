@@ -23363,8 +23363,8 @@ markers = ["bug"]
 acceptance_criteria = ["mix bourse.check_lighter_signer exits non-zero when it cannot run, with setup text naming the missing toolchain and the exact command to build the helper. mix check.dispatch records it as a failing step on a host without Go, and a test pins the exit code for the cannot-run path", "A live-suite summary distinguishes a ledgered deliberate red from a genuine failure: a reader can tell the six okx 50038 demo-unavailable cases from an actual defect without opening the ledger, and the classification comes from the ledger file rather than a hand-maintained list in the test code", "The raw contract branch distinguishes provider returned no rows from rows present but none carry the semantic keys. The current wording sent an orchestrator chasing a carve divergence that was empty account state; the new wording must make that misreading impossible", "A contract case that needs live account state owns that state: the scenario executor creates the resting order or minimum position before the branch runs and tears it down afterwards, or the case is ledgered as state-dependent and the summary says so. Prove it by running the lane against an account with no hand-made state and reading the result", "spec_disk_test is green on a clean tree, and the decision taken on the rotation hash pin is recorded with its reasoning: re-scoped, re-recorded or retired. Re-recording is only acceptable with an argument for what the new hash proves, given it is produced by the loader it is meant to check", "mix precommit and mix ci go green on a clean checkout with credentials exported, and the delivery names which commands were run and on which host"]
 out_of_scope = ["Deleting fixture-oracle test architecture and flipping the canonical gate, which is task 670", "Closing the prod-verification ledger entries themselves, which is task 327", "Provisioning sandbox account state as an operator action"]
 touches = ["lib/mix/tasks/bourse.check_lighter_signer.ex", "test/bourse/spec_disk_test.exs", "test/support/rest_read_contract_scenario.ex", "test/support/rest_read_contracts.ex", "priv/venues/_shared/binance_family/rotation_report.json", "docs/prod-verification-ledger.md"]
-assignee = "grok"
-model = "grok-4.6"
+assignee = "codex"
+model = "gpt-5.6-sol"
 body = """
 Four measured instances of gates that carry no honest signal, and one measured consequence that
 is worse than any of them.
@@ -23405,6 +23405,32 @@ does not delete anything; it makes the signal honest so 670 lands on a gate some
 Authority for the per-case adjudications is the venue: probe the demo host before reclassifying a
 red. A ledgered case is ledgered because a live call could not reach it, and the ledger records why
 it is unverified without discharging it.
+
+Measured 2026-08-29 on ex63-eth at a04e91a so the next implementer does not rediscover it. This
+task has been marked done and reset four times; criteria 1 to 5 hold on the landed base and
+criterion 6 is the only one open, on both of its halves.
+
+mix check.dispatch exits 0 and the provider-live suite is green: 2934 passed, 0 failed, one
+healed flake in Bourse.WS.AuthLiveSmokeTest on the binancecoinm delivery listen key. mix ci is
+red and not on a test: coverage is 75.04 percent against the alias's own 80 threshold. The
+critical tier of critical-rules.md is unmet in the money and signing path as well: Bourse.Signing
+94.06, Bourse.Signing.HmacRecipe 94.65, Bourse.Signing.Hyperliquid 93.98, Bourse.Signing.Lighter
+74.19, Bourse.Signing.Lighter.Worker 70.45 and Bourse.Unified.OrderPrecision 64.13 all sit below
+the 95 floor.
+
+Reaching 80 overall needs roughly 666 more covered lines out of 3349 uncovered. The largest pure
+surfaces, which are testable offline because they assert about this client rather than about a
+venue, are Bourse.Unified.ReadParse 545 uncovered, Bourse.Unified 276, RequestShape.OKX 161,
+Bourse.ResponseParser 139, RequestShape.Hyperliquid 136, Bourse.Symbol 131, plus two modules with
+effectively no tests: Bourse.Multi at 0 percent and Bourse.Order.Builder at 12.5.
+
+931 of the 3349 uncovered lines are Mix.Tasks.* which mix.exs already keeps out of the package.
+Dropping them from the denominator crosses 80 without covering a line and is the same move
+CLAUDE.md forbids for the verification ledger. It is out of scope: cover code, do not shrink the
+denominator.
+
+The second half of criterion 6 is the delivery record. The implemented note currently on this
+task names neither the commands run nor the host, which is exactly what the criterion asks for.
 """
 implemented = "Landed by grok via merge-train; reviewer-approved (run run-1787954441033-ed5e37f0, bf099e99889b0bf14c574b2c92abde4b82417538)."
 delivered_by = "grok"
