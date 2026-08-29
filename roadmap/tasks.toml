@@ -23357,7 +23357,7 @@ scored_at = "2026-08-28"
 id = "687"
 phase = 16
 bundle = "live_triage"
-status = "in_progress"
+status = "pending"
 title = "The gates report green without running and red without a defect, so reviewers have learned to dismiss them"
 scores = { d = 6, b = 8, u = 8 }
 markers = ["bug"]
