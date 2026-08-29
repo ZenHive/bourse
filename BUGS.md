@@ -114,6 +114,145 @@ roadmap.
 
 ---
 
+## 2026-08-29 — the unified trigger/stop opt is spelled differently per venue, so the same `create_order` call rests a stop on binance and fills a market order on okx
+
+**Status:** 🆕 measured (orchestrator, whole-surface pass over the landed base at `c462021`) — not consumer-reported. · **Tracked:** unrouted.
+
+`Bourse.create_order/6`'s trigger opt has no single spelling. The authored
+`createOrder.request.endpoint_selection` rule — the thing that decides whether the order goes
+to the algo endpoint or to the plain order endpoint — keys on a **different string per venue**:
+
+| Venue | rule key | sibling key |
+|---|---|---|
+| binance, binancecoinm, binanceusdm | `trigger_price` | `stop_loss_price` |
+| okx | `triggerPrice` | `stopLossPrice` |
+| bybit | — | `stopLossPrice` |
+
+Surveyed across all eleven authored documents (`grep -c` on each
+`priv/venues/<venue>/authored/endpoints.json`); no other venue authors either key.
+
+**Consumer impact is a wrong fill, not an error.** A caller who learned `trigger_price:` on
+binance and reuses it on okx gets no rejection: the rule does not match, `ordType` stays
+`market`, and the venue fills immediately. Measured live during the task 686 review on the
+okx international demo host — `create_order(ex, "BTC/USDT:USDT", "market", "sell", 0.01,
+trigger_price: trigger)` shaped to
+`%{"instId" => "BTC-USDT-SWAP", "ordType" => "market", "side" => "sell", "sz" => "0.01",
+"tdMode" => "cross"}` and opened a real 0.01 BTC short (order `3874682099387973632`, state
+`filled`) that had to be closed by hand. The same call with `triggerPrice:` shapes to
+`ordType: trigger` with `triggerPx`.
+
+**Nothing in `lib/` reads the snake_case form.** `grep -rn '"trigger_price"' lib/` returns
+zero hits — `Bourse.Unified.build_params/3` stringifies the opt key verbatim with no
+camelization, so the only thing that ever consumes `"trigger_price"` is the binance family's
+authored rule. `Bourse.Order` carries `trigger_price` as a **response** field, which is
+where the snake_case expectation comes from.
+
+**Second, unverified half — the contract lane may be placing market sells.**
+`Bourse.Test.RestReadContractOwnedState.place_algo_order/2`
+(`test/support/rest_read_contract_owned_state.ex:93-110`, added by the task 686 reviewer)
+passes `time_in_force: "GTC", trigger_price: trigger` while its sibling
+`place_resting_order/2` twelve lines above passes `timeInForce: "GTC"`. On the binance family
+the snake_case key is the authored one, so those cases route to `algoOrder` as the reviewer
+reported — but the inconsistency between the two helpers is the tell, and any venue added to
+the algo book that authors the camelCase spelling would silently place a **filled market
+sell** in the default (non-`:dangerous`) lane. Not yet reproduced; recorded so the next
+change to that helper does not inherit the assumption.
+
+**What one task would cover:** pick one spelling as the unified contract, make every venue's
+authored rule and request builder accept it (accepting the other as a deprecated alias rather
+than ignoring it), and pin a live test per algo-capable venue asserting that a trigger request
+never comes back `filled`. Fixing okx alone reproduces the class on the next venue.
+
+## 2026-08-29 — after the bucket rewrite, 50 runtime endpoints always answer `rate_limit_exceeded`, and a heavy request can be starved by cheap traffic
+
+**Status:** 🆕 surfaced by the task 689 reviewer, verified in its own review, approved deliberately. · **Tracked:** unrouted.
+
+Task 689 replaced the fixed window with the authored token bucket and removed the
+`skip_record` exemption, which is what the task asked for. Three consequences of the new
+accounting were measured and left in:
+
+1. **50 of 3,530 runtime endpoints are now uncallable.** Their authored cost accrues past the
+   new 10 s bound (`Bourse.Defaults.rate_limit_max_wait_ms/0`), so they refuse immediately:
+   13 each on binance, binancecoinm, binanceusdm (heaviest `POST papi/margin/repay-debt`,
+   cost 3000 at 20/s = 150 s) and 11 on okx (heaviest `POST asset/monthly-statement`, cost
+   1_296_000 at 9.09/s ≈ 39.6 h, which is okx's published one-per-month limit). Before the
+   change these went out unlimited and collected the venue's own 429. The only escape today
+   is the process-wide `config :bourse, :rate_limit_max_wait_ms`, which is racy under
+   concurrent consumers.
+2. **Over-capacity accrual is destroyed by interleaved cheap requests.**
+   `Bourse.RateLimiter.check_bucket/6` refills to `max(capacity, cost)` per check, so while a
+   cost-N request (N > `max_size`) sleeps toward N tokens, a concurrent cost-1 request on the
+   same `{exchange, credential, axis}` key refills to `max(max_size, 1)` and clamps the
+   accrued tokens back down. Under sustained cheap traffic the heavy endpoint starves to the
+   bound instead of being served. Reachable on okx today, where many endpoints are cost 2–50
+   against `max_size` 1 on a shared public bucket.
+3. **`check_rates/2` double-spends two checks on one key.** Every `check_bucket/6` reads the
+   same pre-call state and `persist_buckets/3` `Map.put`s per decision, so the last write
+   wins and only one cost is charged. Unreachable through the authored documents today (all
+   eleven venues bind `axes: ["request"]` and endpoint `rate_limits` are single maps), but
+   nothing rejects the shape and `build_rate_limit_checks/3` already accepts a list.
+
+All three share one mechanism — the bucket's per-check accounting — so they are one class,
+not three patches.
+
+## 2026-08-29 — `mix ci` clears its own coverage floor by 0.18 points, so an unrelated change reddens it
+
+**Status:** 🆕 surfaced by the task 687 reviewer, measured on ex63-eth. · **Tracked:** unrouted.
+
+Task 687 took coverage from 75.04 % to **80.18 %** against the alias's own 80.0 % threshold.
+The critical tier is comfortably met (Signing 96.04, HmacRecipe 95.99, Signing.Hyperliquid
+100.0, Signing.Lighter 95.70, Signing.Lighter.Worker 95.45, OrderPrecision 96.74 — all above
+the 95 floor), and the denominator was not gamed: `mix.exs` is untouched and 18 `Mix.Tasks.*`
+modules are still measured.
+
+The residue is headroom. Nine surfaces stay below the 80 % standard tier —
+`RequestShape.Binance` 48.05, `Order.Builder` 58.33, `Bourse.Unified` 64.66, `Bourse.Symbol`
+70.52, `RequestShape.OKX` 71.15, `ResponseParser` 71.16, `RequestShape.Derive` 74.36,
+`RequestShape.Bybit` 74.55, `Unified.ReadParse` 74.62 — so a future change adding a handful of
+uncovered `lib/` lines turns the coverage step red on a diff that did not cause it. That is
+the same red-without-a-defect dynamic task 687 was filed to end, relocated from the live suite
+to the coverage gate. `critical-rules.md` § RAISE COVERAGE BEFORE MUTATING already makes each
+of those a pre-mutation obligation for whoever touches them next, so this is a fragility
+report, not an uncovered-defect report.
+
+## 2026-08-29 — `select_endpoint/5` answers with index 0 when the requested `endpoint_index` does not exist
+
+**Status:** 🆕 surfaced by the task 686 reviewer while auditing a contract argument. · **Tracked:** folds into task 685 (silent substitution).
+
+`Bourse.Unified.select_endpoint/5` resolves an explicit index with
+`Enum.at(configs, idx) || hd(configs)`, so `endpoint_index: 99` quietly returns index 0's
+endpoint. A caller naming a branch that does not exist gets a different branch's data labelled
+as the one it asked for, and a contract argument carrying a wrong `source_endpoint_index`
+reads the wrong book while looking correct.
+
+This is task 685's class verbatim — *a slice that does not fit must fail loudly, never resolve
+to a plausible wrong value* — so it belongs in that task rather than a sibling. Recorded here
+with its evidence: the reviewer could only establish that `source_endpoint_index: 2` on
+binanceusdm `fetchOpenOrders` was correct by enumerating generated case ids, because an
+incorrect one would have read index 0 rather than failing.
+
+## 2026-08-29 — two read surfaces lost their contract home, and one dangerous test asserts a shape the client no longer returns
+
+**Status:** 🆕 surfaced by the task 686 reviewer. · **Tracked:** unrouted.
+
+Bookkeeping fallout from task 686, both real, neither a defect in the shipped behaviour:
+
+- **bybit `privateGetV5UserQueryApi` is exercised by no case at all.** Removing it and
+  `privateGetV5AccountInfo` from `fetchBalance`'s branches was the point of the criterion —
+  they are account-classification helpers, not balance carriers — and it moved the venue's
+  denominator 78 → 76. `privateGetV5AccountInfo` reappears under `fetchMarginMode`;
+  `user/query-api` appears nowhere, even though the key's `kycLevel` / `kycRegion` /
+  permission set is the load-bearing operator evidence CLAUDE.md cites for the testnet KYC
+  wall being lifted. Coverage loss, not a regression.
+- **binancecoinm `fetch_position_mode` has no authored parse slice**, so the documented
+  missing-coverage-fails-open path returns `{:ok, %Bourse.RawResponse{payload:
+  %{"dualSidePosition" => false}, verification: :unverified}}` while
+  `test/live/binancecoinm/binancecoinm_promotion_integration_test.exs` matches a bare map.
+  Red today and invisible to `mix check.dispatch`, which excludes `:dangerous`. Predates task
+  686; the venue's answer is a single documented boolean, so a slice is cheap — but whether
+  `RawResponse` is the intended carve is the decision, and it applies to the whole binance
+  family, not to binancecoinm alone.
+
 ## 2026-08-28 — bybit `fetch_positions_history`: one dated-contract row fails the WHOLE call with `missing_position_notional_currency`
 
 **Status:** 🆕 measured live (orchestrator, landed-base `mix ci` on `000034a`) — not consumer-reported. · **Tracked:** task 685, 688 (2026-08-28).
