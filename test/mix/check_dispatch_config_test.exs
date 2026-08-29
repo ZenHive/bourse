@@ -40,12 +40,26 @@ defmodule Bourse.CheckDispatchConfigTest do
     refute Enum.any?(steps, &String.starts_with?(&1, "ccxt."))
 
     assert Enum.filter(steps, &String.starts_with?(&1, "bourse.")) == [
+             "bourse.check_lighter_signer",
              "bourse.authority_check",
              "bourse.error_authority",
-             "bourse.check_lighter_signer",
              "bourse.claude_check",
              "bourse.agents_md --check"
            ]
+  end
+
+  test "check.dispatch builds the Lighter helper before the suite that loads it" do
+    steps = alias_steps(:"check.dispatch")
+
+    signer = Enum.find_index(steps, &(&1 == "bourse.check_lighter_signer"))
+    suite = Enum.find_index(steps, &(&1 == "precommit"))
+
+    assert is_integer(signer) and is_integer(suite)
+
+    assert signer < suite,
+           "precommit runs the :native tests against priv/native/lighter_signer/, which is a " <>
+             "gitignored build artifact. Ordering the suite first lets a stale binary red the " <>
+             "gate on operations it predates — a red with no defect."
   end
 
   test "check.dispatch pins Reach to the lib source tree" do

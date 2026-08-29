@@ -290,12 +290,16 @@ defmodule Bourse.MixProject do
       # host-PostToolUse-hook-run locally). No dialyzer (a cold harness worktree
       # cold-builds the PLT for minutes → `review_stuck`).
       "check.dispatch": [
+        # Owns `priv/native/lighter_signer/`, which the `:native` tests inside
+        # `precommit` load. The artifact is gitignored, so a source change leaves
+        # a stale binary behind and the suite reds on operations it predates —
+        # a red with no defect. This step rebuilds it, so it runs first.
+        "bourse.check_lighter_signer",
         "precommit",
         # Cheap, network-free provider-authority structure/hash and exact-error
         # consistency checks. Remote freshness is `--online`, run by hand.
         "bourse.authority_check",
         "bourse.error_authority",
-        "bourse.check_lighter_signer",
         # CLAUDE.md's mechanical claims (modules, mix tasks, repo paths, and the
         # Signing / Application rows of the Key modules table) vs the tree, plus
         # AGENTS.md freshness — the reviewer reads AGENTS.md, not CLAUDE.md,
