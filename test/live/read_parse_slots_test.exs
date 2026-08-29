@@ -159,7 +159,7 @@ defmodule Bourse.Unified.ReadParseSlotsTest do
       end
     end
 
-    test "deribit fetch_option_chain returns %OptionData{} values" do
+    test "deribit fetch_option_chain returns %OptionData{} values with mark_iv as implied_volatility" do
       exchange = Exchange.new!("deribit")
 
       case Bourse.fetch_option_chain(exchange, "BTC") do
@@ -167,9 +167,46 @@ defmodule Bourse.Unified.ReadParseSlotsTest do
           assert map_size(chain) > 0
           assert Enum.all?(chain, fn {_sym, opt} -> match?(%Bourse.OptionData{}, opt) end)
 
+          Enum.each(chain, fn {_sym, option} ->
+            case option.info["mark_iv"] do
+              iv when is_number(iv) or (is_binary(iv) and iv != "") ->
+                assert is_number(option.implied_volatility),
+                       "#{option.symbol} carried mark_iv=#{inspect(iv)} but implied_volatility=#{inspect(option.implied_volatility)}"
+
+              _missing ->
+                :ok
+            end
+          end)
+
         {:error, %Error{type: type} = err} ->
           flunk("deribit fetch_option_chain failed (#{type}): #{Exception.message(err)}")
       end
+    end
+
+    test "deribit fetch_option_chain USDC-settled SOL book populates IV and is not an empty success" do
+      exchange = Exchange.new!("deribit")
+
+      assert {:ok, usdc_book} = Bourse.fetch_option_chain(exchange, "USDC")
+      sol_legs = Enum.filter(usdc_book, fn {_sym, opt} -> opt.currency == "SOL" end)
+      assert sol_legs != [], "USDC book returned no SOL legs"
+
+      assert {:ok, sol_chain} = Bourse.fetch_option_chain(exchange, "SOL")
+      assert map_size(sol_chain) == length(sol_legs)
+      assert map_size(sol_chain) > 0
+
+      Enum.each(sol_chain, fn {_sym, option} ->
+        assert option.currency == "SOL"
+
+        case option.info["mark_iv"] do
+          iv when is_number(iv) or (is_binary(iv) and iv != "") ->
+            assert is_number(option.implied_volatility)
+
+          _missing ->
+            :ok
+        end
+      end)
+
+      assert {:error, %Error{type: :not_supported}} = Bourse.fetch_option_chain(exchange, "FOOBAR")
     end
   end
 end

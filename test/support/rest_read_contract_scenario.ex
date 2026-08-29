@@ -206,6 +206,7 @@ defmodule Bourse.Test.RestReadContractScenario do
     "startTime" => :startTime,
     "subaccount_id" => :subaccount_id,
     "symbol" => :symbol,
+    "type" => :type,
     "user" => :user
   }
 
@@ -561,6 +562,7 @@ defmodule Bourse.Test.RestReadContractScenario do
   defp assert_meaning!(contract_case, value, resolved) do
     values = semantic_values(value, contract_case["success"]["collection"])
     success = contract_case["success"]
+    refute_empty_parsed_collection!(contract_case, value, success)
 
     Enum.each(values, fn semantic_value ->
       Enum.each(success["required_fields"], fn field ->
@@ -572,10 +574,28 @@ defmodule Bourse.Test.RestReadContractScenario do
         assert Enum.any?(success["any_fields"], &(not is_nil(field_value(semantic_value, &1)))),
                "#{contract_case["id"]}: none of #{inspect(success["any_fields"])} carries provider meaning"
       end
+
+      Enum.each(List.wrap(success["nonempty_maps"]), fn field ->
+        map = field_value(semantic_value, field)
+
+        assert is_map(map) and map_size(map) > 0,
+               "#{contract_case["id"]}: #{field} must be a non-empty map, got #{inspect(map)}"
+      end)
     end)
 
     assert_symbol_meaning!(contract_case, values, resolved)
   end
+
+  defp refute_empty_parsed_collection!(contract_case, value, %{"collection" => "map"} = success) do
+    if success["empty_collection"] == "allowed" do
+      :ok
+    else
+      assert is_map(value) and map_size(value) > 0,
+             "#{contract_case["id"]}: expected a non-empty symbol-keyed map, got #{inspect(value)}"
+    end
+  end
+
+  defp refute_empty_parsed_collection!(_contract_case, _value, _success), do: :ok
 
   defp assert_provider_meaning_keys!(contract_case, value, keys) do
     cond do
@@ -607,8 +627,8 @@ defmodule Bourse.Test.RestReadContractScenario do
   end
 
   defp semantic_values(value, "single"), do: [value]
-  defp semantic_values(value, "list"), do: value
-  defp semantic_values(value, "map"), do: Map.values(value)
+  defp semantic_values(value, "list") when is_list(value), do: value
+  defp semantic_values(value, "map") when is_map(value), do: Map.values(value)
   defp semantic_values(_value, "scalar"), do: []
 
   defp assert_symbol_meaning!(contract_case, values, %{"symbol" => symbol}) do

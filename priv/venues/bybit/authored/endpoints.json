@@ -985,10 +985,8 @@
   },
   "fetchBalance": {
     "unified": [
-      "privateGetV5AccountInfo",
       "privateGetV5AccountWalletBalance",
-      "privateGetV5AssetTransferQueryAccountCoinsBalance",
-      "privateGetV5UserQueryApi"
+      "privateGetV5AssetTransferQueryAccountCoinsBalance"
     ],
     "has": true,
     "mapping_complete": true,

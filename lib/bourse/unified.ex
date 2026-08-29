@@ -147,7 +147,8 @@ defmodule Bourse.Unified do
     fetch_open_orders: "Fetch all currently open orders.",
     fetch_closed_orders: "Fetch completed (filled) orders.",
     fetch_balance: "Fetch account balance across all currencies.",
-    fetch_account_facts: "Fetch provider-observed product access, account margin model, and position margin modes.",
+    fetch_account_facts:
+      "Fetch provider-observed product access, account margin model, position margin modes, and account-level margin figures.",
     fetch_my_trades: "Fetch the authenticated user's trade history.",
     fetch_positions: "Fetch all open derivative positions.",
     fetch_position: "Fetch a specific derivative position for a symbol.",
@@ -2410,7 +2411,7 @@ defmodule Bourse.Unified do
   end
 
   defp finalize_single_config_plan(exchange, method_atom, config, params, opts) do
-    case param_fan_out_plan(exchange, method_atom, params, opts) do
+    case param_fan_out_plan_for(exchange, method_atom, config, params, opts) do
       {:ok, param_variants} -> {:ok, {:param_fan_out, config, param_variants}}
       :no_param_fan_out -> {:ok, {:single, config}}
     end
@@ -2453,13 +2454,19 @@ defmodule Bourse.Unified do
   defp batch_order_selection_params(params, _method_atom), do: params
 
   defp authored_book_dispatch_plan(exchange, method_atom, configs, params, opts) do
-    selection = Map.get(exchange.endpoint_selection, js_name_for!(method_atom), %{})
-    context = selection_context(params, opts, exchange)
+    # `endpoint_index` names one unified slot. first_success/merge book_routes
+    # would otherwise ignore it and return index 0's row (or a merged book).
+    if is_integer(Keyword.get(opts, :endpoint_index)) do
+      :none
+    else
+      selection = Map.get(exchange.endpoint_selection, js_name_for!(method_atom), %{})
+      context = selection_context(params, opts, exchange)
 
-    selection
-    |> Map.get("book_routes", [])
-    |> Enum.find(&selection_conditions_match?(Map.get(&1, "when", %{}), context))
-    |> resolve_book_dispatch_plan(configs, exchange, method_atom)
+      selection
+      |> Map.get("book_routes", [])
+      |> Enum.find(&selection_conditions_match?(Map.get(&1, "when", %{}), context))
+      |> resolve_book_dispatch_plan(configs, exchange, method_atom)
+    end
   end
 
   defp resolve_book_dispatch_plan(nil, _configs, _exchange, _method_atom), do: :none
@@ -2566,6 +2573,39 @@ defmodule Bourse.Unified do
   defp market_surface_configs(configs, _exchange, _method_atom), do: configs
 
   defp endpoint_section(config), do: List.first(config.sections)
+
+  # OKX algo pending/history requires `ordType`. Defaulting it to `conditional`
+  # hides live trigger/oco/trailing orders. Fan out across the documented algo
+  # types when the selected path is an algo read and the caller did not pick one.
+  @okx_algo_order_read_methods [:fetch_open_orders, :fetch_closed_orders, :fetch_canceled_orders]
+  @okx_algo_order_read_paths ["trade/orders-algo-pending", "trade/orders-algo-history", "trade/order-algo"]
+  @okx_algo_ord_types ~w(conditional oco trigger move_order_stop)
+
+  defp param_fan_out_plan_for(%Exchange{id: "okx"} = exchange, method_atom, config, params, opts)
+       when method_atom in @okx_algo_order_read_methods do
+    if okx_algo_ord_type_fan_out?(config, params) do
+      {:ok, Enum.map(@okx_algo_ord_types, &%{"ordType" => &1})}
+    else
+      param_fan_out_plan(exchange, method_atom, params, opts)
+    end
+  end
+
+  defp param_fan_out_plan_for(exchange, method_atom, _config, params, opts) do
+    param_fan_out_plan(exchange, method_atom, params, opts)
+  end
+
+  defp okx_algo_ord_type_fan_out?(config, params) do
+    config.path in @okx_algo_order_read_paths and
+      not present_param?(params["ordType"]) and
+      not truthy_param?(params["trigger"]) and
+      not truthy_param?(params["trailing"])
+  end
+
+  defp present_param?(value) when is_binary(value), do: value != ""
+  defp present_param?(_value), do: false
+
+  defp truthy_param?(value) when value in [true, "true", 1, "1"], do: true
+  defp truthy_param?(_value), do: false
 
   defp param_fan_out_plan(%Exchange{id: "bybit"} = exchange, :fetch_markets, params, opts) do
     if param_fan_out_allowed?(params, opts) do

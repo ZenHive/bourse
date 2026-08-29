@@ -596,7 +596,12 @@
           "key": "base_currency"
         },
         "datetime": null,
-        "impliedVolatility": null,
+        "impliedVolatility": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "mark_iv",
+          "scale": 0.01
+        },
         "info": null,
         "lastPrice": {
           "coercion": "safeNumber",

@@ -45,14 +45,13 @@
       "arguments": [],
       "success": {
         "representation": "parsed",
-        "collection": "list",
+        "collection": "map",
         "module": "Bourse.ADLRank",
         "required_fields": [
           "symbol",
           "rank"
         ],
-        "any_fields": [],
-        "empty_collection": "allowed"
+        "any_fields": []
       },
       "authority_source_ids": [
         "developer-docs-full"

@@ -40,6 +40,7 @@ defmodule Bourse.Journeys.Trader.BinanceTest do
 
       {:ok, balance} = Bourse.fetch_balance(exchange)
       assert map_size(balance.total) > 0
+      assert_recent_timestamp!(balance.timestamp)
 
       for {currency, total} <- balance.total, is_number(total) do
         free = balance.free[currency] || 0.0

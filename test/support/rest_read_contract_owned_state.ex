@@ -33,6 +33,17 @@ defmodule Bourse.Test.RestReadContractOwnedState do
   end
 
   defp own_resting_order(argument, contract_case, context) do
+    # A source_endpoint_index names a distinct book (e.g. USD-M open algo
+    # orders). Manufacturing a regular GTC would yield an id the selected
+    # branch cannot read.
+    if is_integer(argument["source_endpoint_index"]) do
+      :unownable
+    else
+      place_and_register_resting_order(argument, contract_case, context)
+    end
+  end
+
+  defp place_and_register_resting_order(argument, contract_case, context) do
     with {:ok, placed} <- place_resting_order(contract_case, context) do
       register_cleanup!(context.exchange, placed)
       field = field_from(placed, argument["field"])

@@ -1106,6 +1106,16 @@
               "name": "symbol",
               "strategy": "market_symbol"
             }
+          ],
+          "arguments": [
+            {
+              "name": "id",
+              "strategy": "resource",
+              "source_method": "fetchOpenOrders",
+              "source_endpoint_index": 2,
+              "field": "id",
+              "collection": false
+            }
           ]
         },
         {

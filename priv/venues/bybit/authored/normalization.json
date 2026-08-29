@@ -24,54 +24,98 @@
     },
     "balance": {
       "_unresolved_reason": null,
-      "extras": [],
-      "field_map": {
-        "datetime": null,
-        "debt": {
-          "coercion": "safeNumber",
-          "collection_key": "coin",
-          "index_coercion": "safeCurrencyCode",
-          "index_key": "coin",
-          "kind": "keyed_collection",
-          "value_key": "borrowAmount"
+      "branches": [
+        {
+          "field_map": {
+            "datetime": null,
+            "debt": {
+              "coercion": "safeNumber",
+              "collection_key": "coin",
+              "index_coercion": "safeCurrencyCode",
+              "index_key": "coin",
+              "kind": "keyed_collection",
+              "value_key": "borrowAmount"
+            },
+            "free": {
+              "coercion": "safeNumber",
+              "collection_key": "coin",
+              "index_coercion": "safeCurrencyCode",
+              "index_key": "coin",
+              "kind": "keyed_collection",
+              "value_key": "availableToWithdraw",
+              "value_key2": "free"
+            },
+            "info": null,
+            "timestamp": null,
+            "total": {
+              "coercion": "safeNumber",
+              "collection_key": "coin",
+              "index_coercion": "safeCurrencyCode",
+              "index_key": "coin",
+              "kind": "keyed_collection",
+              "value_key": "walletBalance"
+            },
+            "used": {
+              "coercion": "safeNumber",
+              "collection_key": "coin",
+              "index_coercion": "safeCurrencyCode",
+              "index_key": "coin",
+              "kind": "keyed_collection",
+              "operand_keys": [
+                "locked",
+                "totalPositionIM",
+                "totalOrderIM"
+              ],
+              "value_op": "add",
+              "when_keys_absent": [
+                "availableToWithdraw",
+                "free"
+              ]
+            }
+          },
+          "guard": {
+            "has_key": "coin"
+          }
         },
-        "free": {
-          "coercion": "safeNumber",
-          "collection_key": "coin",
-          "index_coercion": "safeCurrencyCode",
-          "index_key": "coin",
-          "kind": "keyed_collection",
-          "value_key": "availableToWithdraw",
-          "value_key2": "free"
-        },
-        "info": null,
-        "timestamp": null,
-        "total": {
-          "coercion": "safeNumber",
-          "collection_key": "coin",
-          "index_coercion": "safeCurrencyCode",
-          "index_key": "coin",
-          "kind": "keyed_collection",
-          "value_key": "walletBalance"
-        },
-        "used": {
-          "coercion": "safeNumber",
-          "collection_key": "coin",
-          "index_coercion": "safeCurrencyCode",
-          "index_key": "coin",
-          "kind": "keyed_collection",
-          "operand_keys": [
-            "locked",
-            "totalPositionIM",
-            "totalOrderIM"
-          ],
-          "value_op": "add",
-          "when_keys_absent": [
-            "availableToWithdraw",
-            "free"
-          ]
+        {
+          "field_map": {
+            "datetime": null,
+            "debt": null,
+            "free": {
+              "coercion": "safeNumber",
+              "collection_key": "balance",
+              "index_coercion": "safeCurrencyCode",
+              "index_key": "coin",
+              "kind": "keyed_collection",
+              "value_key": "transferBalance"
+            },
+            "info": null,
+            "timestamp": null,
+            "total": {
+              "coercion": "safeNumber",
+              "collection_key": "balance",
+              "index_coercion": "safeCurrencyCode",
+              "index_key": "coin",
+              "kind": "keyed_collection",
+              "value_key": "walletBalance"
+            },
+            "used": {
+              "coercion": "safeNumber",
+              "collection_key": "balance",
+              "index_coercion": "safeCurrencyCode",
+              "index_key": "coin",
+              "kind": "keyed_collection",
+              "value_key": "walletBalance",
+              "value_key2": "transferBalance",
+              "value_op": "subtract"
+            }
+          },
+          "guard": {
+            "has_key": "balance"
+          }
         }
-      }
+      ],
+      "extras": []
     },
     "borrow_interest": {
       "_unresolved_reason": null,
@@ -2205,7 +2249,9 @@
     "balance": {
       "fetchBalance": {
         "default": [],
-        "fallback_keys": [],
+        "fallback_keys": [
+          "result.balance"
+        ],
         "key": "result.list"
       }
     },

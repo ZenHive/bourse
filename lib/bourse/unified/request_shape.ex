@@ -15,6 +15,7 @@ defmodule Bourse.Unified.RequestShape do
   alias Bourse.Unified.OrderPrecision
   alias Bourse.Unified.RequestShape.Binance
   alias Bourse.Unified.RequestShape.Bybit
+  alias Bourse.Unified.RequestShape.Deribit
   alias Bourse.Unified.RequestShape.Derive
   alias Bourse.Unified.RequestShape.Hyperliquid
   alias Bourse.Unified.RequestShape.Lighter
@@ -112,6 +113,9 @@ defmodule Bourse.Unified.RequestShape do
 
   defp apply_venue_builders(params, %Exchange{id: "okx"} = exchange, js_name, opts),
     do: OKX.build(params, js_name, exchange, opts)
+
+  defp apply_venue_builders(params, %Exchange{id: "deribit"} = exchange, js_name, opts),
+    do: Deribit.build(params, js_name, exchange, opts)
 
   defp apply_venue_builders(params, %Exchange{id: "hyperliquid"} = exchange, js_name, opts),
     do: Hyperliquid.build(params, js_name, exchange, opts)

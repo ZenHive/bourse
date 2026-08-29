@@ -30,6 +30,8 @@ defmodule Bourse.AccountFactsIntegrationTest do
     assert facts.info["shorting_enabled"] == facts.product_access.value["shorting_enabled"]
     assert facts.account_margin_model.provider_fields == ["multiplier"]
     assert facts.product_access.provider_fields == ["shorting_enabled"]
+    assert facts.account_margin.status == :unavailable
+    assert facts.account_margin.value == nil
   end
 
   test "bybit demo account exposes unifiedMarginStatus and marginMode" do
@@ -51,6 +53,8 @@ defmodule Bourse.AccountFactsIntegrationTest do
     assert result["marginMode"] == facts.account_margin_model.value["marginMode"]
     assert facts.product_access.provider_fields == ["unifiedMarginStatus"]
     assert facts.account_margin_model.provider_fields == ["marginMode"]
+    assert facts.account_margin.status == :unavailable
+    assert facts.account_margin.value == nil
   end
 
   test "binance spot and USD-M accounts expose their independent provider fields" do
@@ -75,6 +79,7 @@ defmodule Bourse.AccountFactsIntegrationTest do
     assert is_binary(spot_facts.info["accountType"])
     assert is_list(spot_facts.info["permissions"])
     assert spot_facts.product_access.value == Map.take(spot_facts.info, ["accountType", "permissions"])
+    assert spot_facts.account_margin.status == :unavailable
 
     futures_env =
       require_env!(
@@ -99,6 +104,7 @@ defmodule Bourse.AccountFactsIntegrationTest do
     assert Enum.all?(futures_facts.info["positions"], &Map.has_key?(&1, "isolated"))
     assert futures_facts.position_margin_modes.status == :observed
     assert futures_facts.position_margin_modes.provider_fields == ["isolated"]
+    assert futures_facts.account_margin.status == :unavailable
   end
 
   test "deribit account summaries expose portfolio_margining_enabled and margin_model" do
@@ -126,6 +132,32 @@ defmodule Bourse.AccountFactsIntegrationTest do
     assert Enum.all?(summaries, &Map.has_key?(&1, "margin_model"))
     assert facts.product_access.provider_fields == ["portfolio_margining_enabled"]
     assert facts.account_margin_model.provider_fields == ["margin_model"]
+    assert facts.account_margin.status == :observed
+
+    assert facts.account_margin.provider_fields == [
+             "initial_margin",
+             "maintenance_margin",
+             "projected_initial_margin",
+             "projected_maintenance_margin",
+             "margin_balance",
+             "projected_close_out_margin",
+             "close_out_margin",
+             "total_initial_margin_usd",
+             "total_maintenance_margin_usd",
+             "total_margin_balance_usd"
+           ]
+
+    assert facts.account_margin.value != []
+
+    for row <- facts.account_margin.value do
+      summary = Enum.find(summaries, &(&1["currency"] == row["currency"]))
+      assert summary, "account_margin row #{inspect(row)} has no matching summary"
+      assert is_binary(row["currency"])
+      assert row["initial_margin"]
+      assert row["initial_margin"] == summary["initial_margin"]
+      assert row["maintenance_margin"] == summary["maintenance_margin"]
+      assert row["margin_balance"] == summary["margin_balance"]
+    end
   end
 
   test "hyperliquid clearinghouse state exposes crossMarginSummary and observed leverage types" do
@@ -149,6 +181,8 @@ defmodule Bourse.AccountFactsIntegrationTest do
     assert {:ok, facts} = Bourse.fetch_account_facts(exchange)
     assert is_map(facts.info["crossMarginSummary"])
     assert facts.account_margin_model.value == %{"crossMarginSummary" => facts.info["crossMarginSummary"]}
+    assert facts.account_margin.status == :unavailable
+    assert facts.account_margin.value == nil
 
     case facts.info["assetPositions"] do
       [] ->
@@ -202,6 +236,8 @@ defmodule Bourse.AccountFactsIntegrationTest do
     assert facts.product_access.provider_fields == ["account_type"]
     assert facts.account_margin_model.provider_fields == ["account_trading_mode"]
     assert facts.position_margin_modes.provider_fields == ["margin_mode"]
+    assert facts.account_margin.status == :unavailable
+    assert facts.account_margin.value == nil
   end
 
   defp require_env!(label, names, credentials_url) do

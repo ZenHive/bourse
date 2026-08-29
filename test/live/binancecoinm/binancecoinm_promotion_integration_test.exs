@@ -193,8 +193,21 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
     assert {:ok, ledger} = Bourse.fetch_ledger(exchange)
     assert Enum.all?(ledger, &match?(%LedgerEntry{}, &1))
 
-    assert {:ok, adl_rank} = Bourse.fetch_adl_rank(exchange, symbol: @symbol)
-    assert is_nil(adl_rank) or match?(%ADLRank{symbol: @symbol}, adl_rank)
+    assert {:ok, ranks} = Bourse.fetch_adl_rank(exchange)
+    assert is_map(ranks)
+
+    assert map_size(ranks) >= 2,
+           "binancecoinm fetch_adl_rank must return one entry per position-carrying symbol; " <>
+             "open at least two COIN-M positions on the demo wallet, got #{map_size(ranks)}: #{inspect(Map.keys(ranks))}"
+
+    values = Map.values(ranks)
+    assert Enum.all?(values, &match?(%ADLRank{symbol: symbol} when is_binary(symbol), &1))
+    symbols = Enum.map(values, & &1.symbol)
+    assert length(Enum.uniq(symbols)) >= 2
+    second = Enum.at(values, 1)
+    assert %ADLRank{symbol: second_symbol, rank: rank} = second
+    assert is_binary(second_symbol) and second_symbol != ""
+    assert is_integer(rank)
   end
 
   test "live DAPI history and account analytics preserve provider errors" do

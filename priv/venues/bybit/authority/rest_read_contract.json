@@ -75,14 +75,6 @@
       "method": "fetchBalance",
       "branches": [
         {
-          "provider_operation": "privateGetV5AccountInfo",
-          "http_method": "GET",
-          "path": "v5/account/info",
-          "authenticated": true,
-          "market_kind": "spot",
-          "options": []
-        },
-        {
           "provider_operation": "privateGetV5AccountWalletBalance",
           "http_method": "GET",
           "path": "v5/account/wallet-balance",
@@ -103,19 +95,16 @@
           "market_kind": "spot",
           "options": [
             {
+              "name": "type",
+              "strategy": "literal",
+              "value": "funding"
+            },
+            {
               "name": "code",
               "strategy": "literal",
               "value": "BTC,USDT"
             }
           ]
-        },
-        {
-          "provider_operation": "privateGetV5UserQueryApi",
-          "http_method": "GET",
-          "path": "v5/user/query-api",
-          "authenticated": true,
-          "market_kind": "spot",
-          "options": []
         }
       ],
       "arguments": [],
@@ -129,6 +118,9 @@
           "used",
           "total",
           "debt"
+        ],
+        "nonempty_maps": [
+          "total"
         ]
       },
       "authority_source_ids": [

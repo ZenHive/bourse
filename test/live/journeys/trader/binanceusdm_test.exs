@@ -48,8 +48,7 @@ defmodule Bourse.Journeys.Trader.BinanceusdmTest do
 
       {:ok, balance} = Bourse.fetch_balance(exchange)
       assert map_size(balance.total) > 0
-      # Observed live 2026-08-28: unified Balance.timestamp is nil — the
-      # fapi account payload has no top-level time field.
+      assert_recent_timestamp!(balance.timestamp)
 
       for {currency, total} <- balance.total, is_number(total) do
         free = balance.free[currency] || 0.0

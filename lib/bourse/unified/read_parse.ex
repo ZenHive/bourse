@@ -74,8 +74,31 @@ defmodule Bourse.Unified.ReadParse do
           product_access: account_fact(),
           account_margin_model: account_fact(),
           position_margin_modes: account_fact(),
+          account_margin: account_fact(),
           info: term()
         }
+
+  # Deribit private/get_account_summaries per-currency numeric fields
+  # (https://docs.deribit.com/#private-get_account_summaries). Distinct from
+  # per-position margin rows: under cross_pm the account figure is not the sum
+  # of those rows.
+  @deribit_account_margin_fields [
+    "initial_margin",
+    "maintenance_margin",
+    "projected_initial_margin",
+    "projected_maintenance_margin",
+    "margin_balance",
+    "projected_close_out_margin",
+    "close_out_margin",
+    "total_initial_margin_usd",
+    "total_maintenance_margin_usd",
+    "total_margin_balance_usd"
+  ]
+
+  # Deribit get_book_summary_by_currency settlement currencies. Altcoin option
+  # books (SOL, …) are USDC-margined linear contracts indexed under USDC, not
+  # under the underlying code.
+  @deribit_option_settlement_currencies MapSet.new(~w(BTC ETH USDC USDT EURR))
 
   @doc """
   Parses a unified read response body into the mapped struct(s).
@@ -129,6 +152,7 @@ defmodule Bourse.Unified.ReadParse do
        fact(body, ["shorting_enabled"]),
        fact(body, ["multiplier"]),
        unavailable([]),
+       unavailable([]),
        body
      )}
   end
@@ -138,6 +162,7 @@ defmodule Bourse.Unified.ReadParse do
      facts(
        fact(result, ["unifiedMarginStatus"]),
        fact(result, ["marginMode"]),
+       unavailable([]),
        unavailable([]),
        body
      )}
@@ -149,6 +174,7 @@ defmodule Bourse.Unified.ReadParse do
        row_fact(summaries, ["currency"], ["portfolio_margining_enabled"]),
        row_fact(summaries, ["currency"], ["margin_model"]),
        unavailable([]),
+       row_fact(summaries, ["currency"], @deribit_account_margin_fields),
        body
      )}
   end
@@ -159,6 +185,7 @@ defmodule Bourse.Unified.ReadParse do
        fact(body, ["accountType", "permissions"]),
        unavailable([]),
        row_fact(List.wrap(Map.get(body, "positions")), ["symbol"], ["isolated"]),
+       unavailable([]),
        body
      )}
   end
@@ -169,6 +196,7 @@ defmodule Bourse.Unified.ReadParse do
        unavailable([]),
        fact(body, ["crossMarginSummary"]),
        hyperliquid_position_fact(List.wrap(Map.get(body, "assetPositions"))),
+       unavailable([]),
        body
      )}
   end
@@ -179,6 +207,7 @@ defmodule Bourse.Unified.ReadParse do
        row_fact(accounts, ["account_index"], ["account_type"]),
        row_fact(accounts, ["account_index"], ["account_trading_mode"]),
        lighter_position_fact(accounts),
+       unavailable([]),
        body
      )}
   end
@@ -191,11 +220,12 @@ defmodule Bourse.Unified.ReadParse do
   defp map_account_facts(exchange_id, _body),
     do: {:error, Error.not_supported(exchange: exchange_id, message: "Account facts are not mapped for #{exchange_id}")}
 
-  defp facts(product_access, account_margin_model, position_margin_modes, body) do
+  defp facts(product_access, account_margin_model, position_margin_modes, account_margin, body) do
     %{
       product_access: product_access,
       account_margin_model: account_margin_model,
       position_margin_modes: position_margin_modes,
+      account_margin: account_margin,
       info: body
     }
   end
@@ -522,6 +552,7 @@ defmodule Bourse.Unified.ReadParse do
          {:ok, parsed} <- backfill_native_symbols(parsed, exchange, parse_type, params),
          parsed = filter_deribit_requested_tickers(parsed, exchange, js_name, params),
          {:ok, parsed} <- shape_parsed_result(parsed, dict_js_name, list_return?, params),
+         {:ok, parsed} <- filter_option_chain_underlying(parsed, exchange, js_name, params),
          {:ok, parsed} <- backfill_market_symbols(parsed, exchange, parse_type, payload, envelope_list?),
          # Emptiness is judged BEFORE request-symbol backfill so a genuinely
          # empty list/single parse (e.g. all-nil trades) is rejected rather than
@@ -625,7 +656,7 @@ defmodule Bourse.Unified.ReadParse do
   # binancecoinm's `fundingInfo` is the same no-symbol-bare-array shape,
   # additionally spanning both COIN-M and USD-M symbols in one combined list
   # (verified live: identical 616-row body from both dapi and fapi hosts).
-  @binancecoinm_dict_return_aliases ["fetchFundingIntervals"]
+  @binancecoinm_dict_return_aliases ["fetchFundingIntervals", "fetchADLRank"]
 
   defp dict_shape_js_name(js_name, %Exchange{id: "binancecoinm"}) when js_name in @binancecoinm_dict_return_aliases,
     do: "fetchTickers"
@@ -957,6 +988,61 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   defp shape_parsed_result(parsed, _js_name, _list_return?, _params), do: {:ok, parsed}
+
+  # Deribit indexes altcoin option books under the USDC settlement currency.
+  # `fetch_option_chain("SOL")` remaps the wire currency to USDC; this filter
+  # keeps only legs whose `currency` (base_currency) matches the requested
+  # underlying. An empty filter is not_supported so an empty success cannot
+  # look like "this venue lists no options on this underlying".
+  defp filter_option_chain_underlying(chain, %Exchange{id: "deribit"}, "fetchOptionChain", params) when is_map(chain) do
+    filter_deribit_option_chain(chain, option_chain_requested_underlying(params))
+  end
+
+  defp filter_option_chain_underlying(parsed, _exchange, _js_name, _params), do: {:ok, parsed}
+
+  defp filter_deribit_option_chain(chain, nil), do: {:ok, chain}
+
+  defp filter_deribit_option_chain(chain, underlying) do
+    if deribit_option_settlement_currency?(underlying) do
+      {:ok, chain}
+    else
+      keep_deribit_option_underlying(chain, underlying)
+    end
+  end
+
+  defp keep_deribit_option_underlying(chain, underlying) do
+    filtered =
+      Map.filter(chain, fn {_symbol, option} -> option_matches_underlying?(option, underlying) end)
+
+    case map_size(filtered) do
+      0 ->
+        {:error,
+         Error.not_supported(
+           exchange: "deribit",
+           message: "no option chain for underlying #{underlying}"
+         )}
+
+      _count ->
+        {:ok, filtered}
+    end
+  end
+
+  defp option_chain_requested_underlying(params) when is_map(params) do
+    case params["symbol"] || params["code"] || params["currency"] do
+      value when is_binary(value) and value != "" -> String.upcase(value)
+      _ -> nil
+    end
+  end
+
+  defp deribit_option_settlement_currency?(code) when is_binary(code) do
+    MapSet.member?(@deribit_option_settlement_currencies, String.upcase(code))
+  end
+
+  defp option_matches_underlying?(%{currency: currency}, underlying) when is_binary(currency) do
+    String.upcase(currency) == underlying
+  end
+
+  defp option_matches_underlying?(_option, _underlying), do: false
 
   defp shape_singular_funding_rate([], symbol) do
     if fundingless_symbol?(symbol) do
@@ -1646,8 +1732,14 @@ defmodule Bourse.Unified.ReadParse do
       # Bybit v5 wallet-balance: accounts under `result.list`, currency rows under
       # each account's `coin` — flatten across accounts so the keyed_collection
       # field map (collection_key "coin") indexes every row.
-      [%{"coin" => _} | _] = accounts ->
+      [%{"coin" => coins} | _] = accounts when is_list(coins) ->
         %{"coin" => Enum.flat_map(accounts, &List.wrap(&1["coin"]))}
+
+      # Bybit v5 coins-balance: flat `{coin, walletBalance, transferBalance}` rows
+      # under `result.balance`. Keep them as a `balance` collection so the
+      # coins-balance field-map branch can index them.
+      [%{"coin" => coin} | _] = rows when is_binary(coin) ->
+        %{"balance" => rows}
 
       # Derive get_all_portfolios: multi-subaccount list, currency rows under
       # each account's `collaterals` — flatten so keyed_collection can index.
@@ -1689,11 +1781,13 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   defp put_balance_info(%Bourse.Balance{} = balance, body) do
+    timestamp = balance.timestamp || balance_timestamp(body)
+
     balance
     |> remap_hyperliquid_spot_balance_codes(body)
     |> reconcile_balance_used()
     |> Map.put(:info, body)
-    |> Map.put(:timestamp, balance_timestamp(body))
+    |> Map.put(:timestamp, timestamp)
     |> put_datetime()
   end
 
@@ -1745,10 +1839,12 @@ defmodule Bourse.Unified.ReadParse do
     }
   end
 
-  # Binance portfolio-margin (`GET /papi/v1/balance`) answers with a bare JSON
-  # array of asset rows and carries no envelope `time`; map-enveloped balance
-  # payloads (spot, futures account) carry it at the top level.
-  defp balance_timestamp(body) when is_map(body), do: Bourse.Safe.integer(Map.get(body, "time"))
+  # Binance family account payloads stamp `updateTime`; some envelopes also
+  # carry `time`. Prefer a field-map timestamp already parsed onto the struct.
+  defp balance_timestamp(body) when is_map(body) do
+    Bourse.Safe.integer(Map.get(body, "time") || Map.get(body, "updateTime"))
+  end
+
   defp balance_timestamp(_body), do: nil
 
   # Fill exactly one missing balance member from the other
@@ -1939,11 +2035,41 @@ defmodule Bourse.Unified.ReadParse do
     {:error, {:unexpected_order_book_level, %{exchange: exchange_id, level: level}}}
   end
 
-  defp extract_path_from_config(body, %{"key" => key}) when is_binary(key) do
-    ResponseTransformer.extract_path(body, String.split(key, "."))
+  defp extract_path_from_config(body, %{"key" => key} = config) when is_binary(key) do
+    case fetch_envelope_path(body, String.split(key, ".")) do
+      {:ok, value} ->
+        value
+
+      :miss ->
+        extract_fallback_envelope(body, Map.get(config, "fallback_keys", []))
+    end
   end
 
   defp extract_path_from_config(body, _config), do: body
+
+  defp extract_fallback_envelope(body, fallback_keys) when is_list(fallback_keys) do
+    Enum.find_value(fallback_keys, body, fn key ->
+      case fetch_envelope_path(body, String.split(key, ".")) do
+        {:ok, value} -> value
+        :miss -> nil
+      end
+    end)
+  end
+
+  defp fetch_envelope_path(body, path) do
+    Enum.reduce_while(path, {:ok, body}, fn key, {:ok, acc} ->
+      fetch_envelope_step(acc, key)
+    end)
+  end
+
+  defp fetch_envelope_step(%{} = map, key) do
+    case Map.fetch(map, key) do
+      {:ok, value} -> {:cont, {:ok, value}}
+      :error -> {:halt, :miss}
+    end
+  end
+
+  defp fetch_envelope_step(_acc, _key), do: {:halt, :miss}
 
   # Read the candle list from its envelope key;
   # so a venue answering an empty window with the envelope key set to null
