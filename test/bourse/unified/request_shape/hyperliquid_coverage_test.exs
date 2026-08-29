@@ -190,7 +190,7 @@ defmodule Bourse.Unified.RequestShape.HyperliquidCoverageTest do
       end
     end
 
-    for tif <- ["IOC", "ALO", "unknown", 7] do
+    for {tif, expected} <- [{"IOC", "Ioc"}, {"ALO", "Alo"}, {"unknown", "Gtc"}, {7, "Gtc"}] do
       params = %{"symbol" => "BTC", "side" => "buy", "amount" => 1, "price" => 1, "timeInForce" => tif}
 
       assert get_in(Hyperliquid.build(params, "createOrder", exchange), [
@@ -200,7 +200,7 @@ defmodule Bourse.Unified.RequestShape.HyperliquidCoverageTest do
                "t",
                "limit",
                "tif"
-             ])
+             ]) == expected
     end
 
     no_fee = exchange(%{"approvedBuilderFee" => true, "builderFee" => false})

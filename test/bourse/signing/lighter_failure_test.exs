@@ -200,10 +200,17 @@ defmodule Bourse.Signing.LighterFailureTest do
   end
 
   defp protocol_helper! do
+    # A missing interpreter would make the helper exit non-zero, which is
+    # indistinguishable from the `:helper_terminated` branch under test — a green
+    # that proves nothing. Fail loudly with the setup instead.
+    python =
+      System.find_executable("python3") ||
+        flunk("python3 is required to stand up the Lighter protocol helper stub. Install it: apt-get install python3")
+
     path = Path.join(System.tmp_dir!(), "bourse-lighter-protocol-helper-#{System.unique_integer([:positive])}")
 
     File.write!(path, """
-    #!/usr/bin/python3
+    #!#{python}
     import signal, struct, sys, time
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
     def read_frame():
