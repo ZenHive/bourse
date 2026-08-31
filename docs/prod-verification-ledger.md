@@ -70,6 +70,16 @@ test code. Edit the fence when adding a ledgered case.
       "summary": "fetchTransfers yields billId; transfer-state accepts only transId"
     },
     {
+      "id": "okx-convert-history",
+      "class": "ledgered_state_dependent",
+      "venue": "okx",
+      "methods": ["fetchConvertTrade"],
+      "match": {
+        "empty_resource": true
+      },
+      "summary": "convert-trade lookup needs an id from populated conversion history"
+    },
+    {
       "id": "bybit-settlement-needs-delivery",
       "class": "ledgered_state_dependent",
       "venue": "bybit",
@@ -821,6 +831,7 @@ test code. Edit the fence when adding a ledgered case.
 - The open question: does OKX read `posSide` from our close-position body (expect 51169 no-position / 51000 posSide error on a long/short-mode account with no position), and does convert-trade lookup echo `clTReqId`?
 - Exact call: `Bourse.Unified.call(ex, :close_position, "closePosition", %{"symbol" => "ETH/USDT:USDT", "side" => "buy", "mgnMode" => "cross"}, [])` and `Bourse.fetch_convert_trade(ex, "<real clTReqId>")` against `www.okx.com`.
 - Expected evidence: close-position answers a posSide/position business error (not a params-shape error); convert lookup echoes the requested `clTReqId`.
+- Update (2026-08-31): the international demo account's convert-history read succeeds with no rows, so the success contract cannot source a real `clTReqId`; the JSON fence classifies that outcome as state-dependent until conversion history exists.
 
 ### binance + binanceusdm — sapi/eapi request identifier bindings (task 341, C-T341a/C-T341b, filed 2026-07-18)
 - Blocked by: a production Binance key with margin / wallet / gift-card / convert permissions. The provisioned testnet keys cannot reach these bases at all: CCXT's own `urls.test` map (vendored, `test/reference_slice/binance.json`) publishes only `public`/`private`/`v1` (spot `api/v3`) and the `fapi*`/`dapi*` futures bases — no `sapi` and no `eapi` — and binance.ts states it outright: *"sandbox/testnet does not support sapi endpoints"*.

@@ -171,8 +171,24 @@ defmodule Bourse.LiveLaneLedgerTest do
     b = Ledger.hits_path("/data/worktrees/bourse/run-b")
 
     assert a != b
-    assert Path.dirname(a) == System.tmp_dir!()
+    assert Path.dirname(a) == Path.expand(System.tmp_dir!())
     assert Ledger.hits_path("/data/worktrees/bourse/run-a") == a
+  end
+
+  test "okx convert lookup without conversion history is ledgered as state-dependent" do
+    document = Ledger.load!()
+
+    contract_case = %{
+      "venue" => "okx",
+      "method" => "fetchConvertTrade",
+      "id" => "okx:fetchConvertTrade:0:privateGetAssetConvertHistory"
+    }
+
+    assert {:ledgered, entry} =
+             Ledger.classify(contract_case, {:empty_resource, "fetchConvertTradeHistory"}, document)
+
+    assert entry["class"] == "ledgered_state_dependent"
+    assert entry["id"] == "okx-convert-history"
   end
 
   test "a shape/carve mismatch on a state-dependent method stays genuine" do
