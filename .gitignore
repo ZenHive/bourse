@@ -30,6 +30,8 @@ bourse-*.tar
 # Per-machine Claude Code overrides (permissions, MCP opt-ins). The committed
 # `.claude/settings.json` carries the shared marketplace/plugin set.
 /.claude/settings.local.json
+/.claude/deps-audit/
+/.claude/deps-update/
 
 # Superpowers workflow files
 /docs/superpowers/

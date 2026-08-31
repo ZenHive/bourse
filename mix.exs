@@ -246,7 +246,7 @@ defmodule Bourse.MixProject do
 
       # Self-describing APIs — emit_api/3 (for-comprehension api declarations,
       # used in lib/bourse.ex) ships in descripex 0.11.0; vendor fork retired.
-      {:descripex, "~> 0.13.0"},
+      {:descripex, "~> 1.0.0"},
 
       # Custom DEX signing (hyperliquid + derive): EIP-712 / msgpack / secp256k1.
       # msgpax — canonical MessagePack for Hyperliquid action hashing.
@@ -257,7 +257,7 @@ defmodule Bourse.MixProject do
       {:ex_secp256k1, "~> 0.8.0"},
 
       # WebSocket client (Gun-based, 5-function API + Deribit heartbeat + reconnection)
-      {:zen_websocket, "~> 0.7.0"}
+      {:zen_websocket, "~> 0.9.0"}
     ]
   end
 
