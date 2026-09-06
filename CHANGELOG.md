@@ -7,6 +7,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-08-31
+
 ### Added
 
 - Mutation testing as a hand-run audit, not a gate: `:muex` is a `:dev`/`:test`
@@ -29,16 +31,18 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   which is the removed defect, not a regression. A first pass over the offline
   surface closed eight behaviours the suite only appeared to cover — the digest-size and key guards
   of `Bourse.Signing.Crypto.sign_hash/2`, the raw 32-byte `bytes32` passthrough
-  in `Bourse.Signing.Eip712` (what a nested struct hash actually arrives as),
+  in `Bourse.Signing.EIP712` (what a nested struct hash actually arrives as),
   and five in `Bourse.Error`: `message/1` with and without an exchange, the
   `recoverable?/1` catch-all, and the direct `__function:` class mapping, whose
   one existing test healed the mutant through the ancestor path.
 
-- `mix bourse.verify_rest_read_contracts` is the provider-live REST-read lane.
+- [`mix bourse.verify_rest_read_contracts`](https://github.com/ZenHive/bourse/blob/main/lib/mix/tasks/bourse.verify_rest_read_contracts.ex)
+  is the provider-live REST-read lane.
   It inventories 409 sandbox-native branches across the eleven runtime venues
   and hits the venue host for each one. Product surfaces the provisioned
   sandboxes do not host remain on the prod-verification ledger.
-- `mix bourse.provision_lighter` provisions a Lighter testnet account from an
+- [`mix bourse.provision_lighter`](https://github.com/ZenHive/bourse/blob/main/lib/mix/tasks/bourse.provision_lighter.ex)
+  provisions a Lighter testnet account from an
   L1 wallet, derives the configured zk API public key, signs ChangePubKey with
   the native helper, submits it, and verifies the registered key and advanced
   nonce. The L1 private key stays outside credentials and the native helper.
@@ -141,7 +145,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   the renamed `test/bourse/ws_first_frame_test.exs` (formerly
   `live_lane_test.exs`) are gone with it. `Bourse.LiveLane.FirstFrame` and
   `Bourse.LiveLane.Bootstrap` survive under that namespace as the classified
-  public WebSocket first-frame check (`mix bourse.verify_ws_first_frame`),
+  public WebSocket first-frame check
+  ([`mix bourse.verify_ws_first_frame`](https://github.com/ZenHive/bourse/blob/main/lib/mix/tasks/bourse.verify_ws_first_frame.ex)),
   with no parent aggregator left to read `GITHUB_RUN_ID` or assemble a
   per-run report. All four GitHub Actions workflows (`ci.yml`,
   `integration.yml`, `lighter-signer.yml`, `live-drift.yml`) are removed;
@@ -152,7 +157,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `test/bourse/no_faked_provider_oracle_test.exs` is a repo-wide guard
   forbidding `Req.Test`, `Bypass`, `Mox`, `plug: {`, fixture paths, and
   `@tag :skip` anywhere under `test/`. `mix ci` now runs `check.dispatch`,
-  the provider-live `ccxt.verify_rest_read_contracts` REST-read contract
+  the provider-live `bourse.verify_rest_read_contracts` REST-read contract
   lane, the full suite under an 80% coverage gate, `deps.audit`, and
   dialyzer; `check.dispatch` lost its `ccxt.oracle_gate` step and
   `mix precommit` lost its `--exclude integration` filter. Every surviving
@@ -1081,6 +1086,8 @@ Published before this repository existed, from the tree that is now the private
   ccxt.build_lighter_signer`, the prerequisite for private Lighter calls, is the
   one task consumers receive.
 
+[Unreleased]: https://github.com/ZenHive/bourse/compare/v0.8.0...HEAD
+[0.8.0]: https://hex.pm/packages/bourse/0.8.0
 [0.7.0]: https://hex.pm/packages/bourse/0.7.0
 [0.6.0]: https://hex.pm/packages/bourse/0.6.0
 [0.5.0]: https://hex.pm/packages/bourse/0.5.0

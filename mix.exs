@@ -1,7 +1,7 @@
 defmodule Bourse.MixProject do
   use Mix.Project
 
-  @version "0.7.0"
+  @version "0.8.0"
   @source_url "https://github.com/ZenHive/bourse"
   @runtime_manifest "priv/venues/runtime_support.json"
   @capability_surface "priv/venues/capability_surface.json"
@@ -40,6 +40,12 @@ defmodule Bourse.MixProject do
       # repo-internal tasks must not appear on hexdocs as tasks consumers can run.
       # `filter_modules` is a KEEP predicate — true documents the module.
       filter_modules: &__MODULE__.document_module?/2,
+      # Maintainer-facing extras name deliberately filtered tasks and modules.
+      # Render them as code without manufacturing links to pages HexDocs omits.
+      skip_code_autolink_to: [
+        "Bourse.LiveLane.Bootstrap",
+        "Bourse.LiveLane.FirstFrame"
+      ],
       groups_for_modules: [
         Exchanges: ~r/^Elixir\.Bourse\.[A-Z][a-zA-Z0-9]+$/,
         Signing: ~r/^Elixir\.Bourse\.Signing\./,

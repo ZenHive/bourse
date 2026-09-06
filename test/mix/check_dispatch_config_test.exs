@@ -81,4 +81,16 @@ defmodule Bourse.CheckDispatchConfigTest do
     assert Enum.filter(steps, &(&1 in @authority_commands)) == @authority_commands
     refute Enum.any?(steps, &String.contains?(&1, "authority_check --online"))
   end
+
+  test "docs do not autolink deliberately filtered internals" do
+    skipped_references =
+      Bourse.MixProject.project()
+      |> Keyword.fetch!(:docs)
+      |> Keyword.fetch!(:skip_code_autolink_to)
+
+    assert skipped_references == [
+             "Bourse.LiveLane.Bootstrap",
+             "Bourse.LiveLane.FirstFrame"
+           ]
+  end
 end

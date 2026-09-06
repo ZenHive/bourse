@@ -10,7 +10,7 @@ from owned JSON specs via compile-time macros.
 ```elixir
 def deps do
   [
-    {:bourse, "~> 0.7"}
+    {:bourse, "~> 0.8.0"}
   ]
 end
 ```
@@ -143,7 +143,8 @@ The binance futures venues are the exception to "authenticate the open socket":
 their credential is a listen key issued over REST and carried in the URL, so
 `connect/3` obtains it first and `authenticate: false` is refused — there is no
 later handshake to run. `binanceusdm` and `binancecoinm` issue separate keys for
-separate streams. `derive` has no authored handshake yet and connects without one.
+separate streams. `derive` authenticates with a signed EIP-191 JSON-RPC
+`public/login` request; a rejected login closes the socket.
 
 ## Known Caveats
 
@@ -206,7 +207,8 @@ package; only `mix bourse.build_lighter_signer` ships to consumers.
 For a supported venue, author the owned spec or normalization slice against the
 provider's API behavior and provider-owned documentation, then add the branch it
 covers to `priv/venues/<venue>/authority/rest_read_contract.json` and keep
-`mix bourse.verify_rest_read_contracts` green — that lane calls the venue's own
+[`mix bourse.verify_rest_read_contracts`](https://github.com/ZenHive/bourse/blob/main/lib/mix/tasks/bourse.verify_rest_read_contracts.ex)
+green — that lane calls the venue's own
 host, so a claim is graded by the provider, not by a stored response. CCXT and
 ccxt-distill are a pinned third-party extraction; they do not establish venue
 semantics.
