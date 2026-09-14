@@ -3191,6 +3191,12 @@ die fehlende Bourse-Semantik verdeckt.
 > `:no_field_map`. The empty-list snapshot the reporter wanted remains a
 > consumer-side interpretation of a provider-unsupported parse slot; open
 > orders continue to go through `parse_order/2`.
+>
+> **2026-09-14 — consumer aligned (trading_dashboard).** The MM session's open-order
+> reconciliation still routed non-empty `private/get_open_orders_by_instrument`
+> rows through `parse_order_list/2`, so on the first kill switch with MMP enabled
+> every cleanup re-polled `{:unsupported_operation, "order_list"}` once a second.
+> Now parses per row via `parse_order/2` (commit `90124f2`). No bourse action.
 
 ---
 
@@ -3283,3 +3289,70 @@ only the private reads. Local workaround only; the misclassification is the fix 
 > workaround stays, but only for the reason that was always independently true
 > (markets are venue-wide public data, so one load answers for every credential
 > on the venue), not to route around this defect.
+
+## 2026-09-14 — Deribit `parse_order/2`: `symbol` bleibt `nil`, obwohl `instrument_name` im Raw steht und `symbol:` als Option übergeben wird
+
+Call (bourse 0.8.0, Testnet live):
+
+```elixir
+raw = %{"order_id" => "OPT-1", "instrument_name" => "BTC-16SEP26-79000-P",
+        "direction" => "buy", "amount" => 0.1, "price" => 0.02, "order_state" => "open",
+        "order_type" => "limit", "label" => "mm", "creation_timestamp" => 1789374000000, ...}
+Bourse.Deribit.parse_order(raw, symbol: "BTC-16SEP26-79000-P")
+```
+
+Observed: `{:ok, %Bourse.Order{id: "OPT-1", symbol: nil, side: "buy", price: 0.02, ...}}`.
+Dasselbe gilt für die Orders, die `private/cancel` und `private/buy|sell` im
+Envelope liefern — jede geparste Deribit-Order trägt `symbol: nil`.
+
+Cause: `priv/venues/deribit/authored/normalization.json` → `field_maps.order.field_map.symbol`
+ist `null`, obwohl das Raw-Objekt `instrument_name` führt. `Bourse.Parser.parse/4`
+fädelt `:symbol` zwar in den Kontext, ein `null`-Slot wird aber nicht aus dem
+Request-Kontext aufgefüllt — der in `Unified.ReadParse` beschriebene
+"request-context symbol backfill" greift nur auf dem Unified-Lesepfad, nicht bei
+`parse_order/2`.
+
+Expected: entweder mappt der Slot `instrument_name` (bei Deribit ist das der
+Unified-Symbol-Rohwert; mit geladenen Markets die `BTC/USD:BTC-…`-Form), oder ein
+`null`-Slot wird aus `opts[:symbol]` aufgefüllt — so wie es die Positions- und
+Trade-Pfade konsumentenseitig ohnehin tun müssen.
+
+Konsument-Handling (trading_dashboard `MarketMaking.DeribitSession`): füllt
+`symbol` nach dem Parse aus dem Request-Instrument nach (`parsed.symbol || instrument`),
+identisch zum bestehenden Positions-Pfad. Betroffene Exchange: deribit.
+
+---
+
+## 2026-09-14 — Deribit: Antwort auf die Heartbeat-Reply (`public/test`) erreicht den Owner als Datenframe
+
+Call (bourse 0.8.0, Testnet live): `Bourse.WS.connect(exchange, :public, [])` mit
+Default-Handler, dann `watch_ticker(ws, "BTC-16SEP26-79000-P", [])` und
+`watch_ticker(ws, "BTC-PERPETUAL", [])`; Deribit-Heartbeat aktiv.
+
+Observed: neben den `subscription`-Notifications liefert der Default-Handler
+periodisch
+
+```elixir
+{:websocket_message, %{"jsonrpc" => "2.0", "result" => %{"version" => "1.2.26"},
+                       "testnet" => true, "usIn" => 1789374068399802, "usOut" => ..., "usDiff" => 42}}
+```
+
+Das ist Deribits Antwort auf das `public/test`, das die Bibliothek als Reply auf
+`test_request` schickt. Sie kommt als `{:message, data}` → `{:websocket_message, _}`
+beim Owner an, nicht als `{:websocket_unmatched_response, _}` und nicht
+verschluckt — obwohl der Kommentar in `Bourse.WS` (Zeile ~544) genau diese Trennung
+für Frames ohne In-flight-Request beschreibt.
+
+Impact: ein Consumer, der jedes `{:websocket_message, frame}` eines abonnierten
+Kanals als Tick liest (trading_dashboard `MarketData.Transport.Local.classify/2`),
+verarbeitet das Result-Envelope als Marktdaten. Beobachtet: der MM-Orchestrator
+journalierte es als `quote_rejected missing_mark_iv` und zog beide Quotes.
+
+Expected: Antworten auf bibliothekseigene Requests (Heartbeat-Reply, Subscribe-Ack)
+erreichen den Owner nie als Datenframe; entweder wird die Reply-ID getrackt und die
+Antwort konsumiert, oder sie läuft als `:websocket_unmatched_response`.
+
+Konsument-Handling (trading_dashboard): `Transport.Local.classify/2` verwirft
+JSON-RPC-Envelopes mit `result`/`error` ohne `method` (Commit `90124f2`). Betroffene
+Exchange: deribit; jede andere JSON-RPC-Venue mit Heartbeat dürfte gleich reagieren.
+
