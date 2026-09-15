@@ -31550,6 +31550,47 @@
       "verified_by": "independent acceptance-criteria reconciliation plus execution of the opt-in journey lane (opus 5)",
       "verification_ref": "mix test.json --include dangerous test/live/journeys/trader/{derive,bybit,okx}_test.exs on ex63-eth at a04e91a: 10/10 passed, 0 failed, 0 excluded; mix bourse.agents_md --check clean in check.dispatch; harness-run:run-1787961655160-ae545d71",
       "cross_repo": []
+    },
+    {
+      "id": "691",
+      "phase": 16,
+      "bundle": "live_e2e",
+      "status": "pending",
+      "title": "Keep Coinbase candle pagination inside the requested window without missing boundary buckets",
+      "scores": {
+        "d": 3,
+        "b": 8,
+        "u": 8
+      },
+      "eff": 2.67,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "codex",
+      "model": "gpt-6-astra",
+      "acceptance_criteria": [
+        "A live ETH/USD hourly request for 1200 opened candles ending inside the current hour succeeds without a page whose start lies in the future; the returned timestamps satisfy the unified inclusive window and limit.",
+        "Aligned and unaligned starts and ends, page-size boundaries, partial final pages and windows containing no candle openings preserve every eligible bucket without duplicates, gaps, invented candles or requests beyond the effective window.",
+        "Before changing provider semantics, observe a real success and relevant future-start error from Coinbase Exchange and consult its official candle endpoint contract. Pin the successful paginated read and relevant rejection in live integration tests; unreachable providers fail loudly.",
+        "Raise coverage of the existing pagination module to the repository tier before mutation. Regression tests distinguish the extra-page defect and boundary omissions; the independent reviewer runs and reports the repository checks."
+      ],
+      "out_of_scope": [
+        "Trading dashboard UI",
+        "Private exchange accounts and order entry",
+        "Publishing a Hex release"
+      ],
+      "touches": [
+        "lib/bourse/coinbase_exchange.ex",
+        "test/live/coinbaseexchange/",
+        "test/bourse/"
+      ],
+      "body": "The trading_dashboard consumer observed Bourse 0.8.0 requesting a future fifth page for a valid 1200-hour chart history. Repro: Bourse.fetch_ohlcv(client, \"ETH/USD\", \"1h\", since: 1785110400000, until: 1789429905831, limit: 1200) returned Coinbase HTTP 400 'Start cannot be in the future' while provider /time agreed with the clock. Aligning until to 1789426800000 immediately returned 1200 real rows. The dashboard now aligns its boundary, but Bourse must implement the correct window semantics for every caller. See BUGS.md dated 2026-09-15.\n\nReview the entire page tiling invariant, not only that last page: the current code tiles from an unaligned start in whole granularity steps, so verify that page boundaries neither skip eligible candle openings nor exceed the effective end. Coinbase's live API and official endpoint documentation own the semantics; existing ceil arithmetic and third-party clients are not oracles. Use public spot reads only. Dispatch is chosen because provider window semantics need independent live verification, rather than another consumer-side adjustment. D3 is bounded pagination work; B8 restores chart history for all consumers; U8 reflects an observed failure in an active chart.\n",
+      "created_at": "2026-09-15",
+      "scored_at": "2026-09-15",
+      "cross_repo": []
     }
   ]
 }

@@ -3356,3 +3356,6 @@ Konsument-Handling (trading_dashboard): `Transport.Local.classify/2` verwirft
 JSON-RPC-Envelopes mit `result`/`error` ohne `method` (Commit `90124f2`). Betroffene
 Exchange: deribit; jede andere JSON-RPC-Venue mit Heartbeat dürfte gleich reagieren.
 
+## 2026-09-15 — Coinbase pagination adds a future page at an unaligned end
+
+Observed in trading_dashboard with Bourse 0.8.0: `Bourse.fetch_ohlcv(client, "ETH/USD", "1h", since: 1785110400000, until: 1789429905831, limit: 1200)` fails with Coinbase HTTP 400 `Start cannot be in the future`. Provider `/time` agrees with the local clock. `CoinbaseCandlePagination.pagination/3` adds ceil alignment slack despite the start already being aligned, generating a fifth page whose start is the next hour. Expected: four pages covering the 1200 opened buckets, no page starting after the requested end. Aligning until to 1789426800000 returned 1200 real rows immediately. Consumer Calendar now aligns the inclusive end to the native candle opening; upstream should bound generated page starts/ends to the actual requested window. This was hidden by the chart continuing to display WebSocket-only prices after history failed.

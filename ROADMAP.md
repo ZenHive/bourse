@@ -229,7 +229,7 @@ Real-time market data and order updates. ZenWebsocket, three-layer architecture.
 | Task 27 | ⛔ | 🎁 **ws_unified** · 🚀 **v1_0** · WS Auth Patterns [D:3/B:7/U:6 → Eff:2.17?] 🎯 |
 | Task 121 | ✅ | 🎁 **ws_unified** · 🚀 **v1_0** · Adopt spec-driven WS config from v4.1.0 `websocket` section [D:4/B:6/U:5 → Eff:1.38?] 📋 |
 | Task 122 | ✅ | 🎁 **signing** · Resolve signing fixture-replay drift vs ccxt_extract fixtures (8 cases) [D:3/B:5/U:4 → Eff:1.5?] 🚀 |
-| Task 618 `[P]` | ✅ | 🎁 **live_triage** · Binance-family WS subscribe templates are CCXT message-hashes, not provider stream names — silent dead streams that ack cannot catch [D:5/B:7/U:5 → Eff:1.2] 📋 |
+| Task 618 `[P]` | ✅ | 🎁 **live_triage** · Binance-family WS subscribe templates are CCXT message-hashes, not provider stream names — silent dead streams that ack cannot catch [D:5/B:7/U:5 → Eff:1.2?] 📋 |
 | Task 627 `[P]` | ✅ | 🎁 **live_triage** · USD-M public WS host /ws silently drops documented ticker and aggTrade streams [D:4/B:7/U:6 → Eff:1.62] 🚀 |
 | Task 628 `[P]` | ✅ | 🎁 **live_triage** · Spot partial-depth frames have no e field, so watch_order_book never routes after task 618 [D:4/B:6/U:5 → Eff:1.38] 📋 |
 | Task 629 `[P]` | ⛔ | 🎁 **live_triage** · 🐛 Author Binance COIN-M unified WebSocket watch channels [D:4/B:6/U:5 → Eff:1.38] 📋 |
@@ -758,91 +758,91 @@ The authored-specs pivot workstream (see [docs/authored-specs.md](docs/authored-
 | Task 529 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Reconcile the live integration suites with landed contracts and current venue state [D:5/B:6/U:5 → Eff:1.1?] 📋 |
 | Task 530 | ✅ | 🎁 **authored_specs** · 🚀 **v1_0** · Binance-family: correct USD-M multi-assets balance free/used mapping and live trading-fee contracts [D:5/B:8/U:7 → Eff:1.5?] 🚀 |
 | Task 531 | ✅ | 🎁 **authored_specs** · Thread venue-required symbol params into unified private integration probes [D:3/B:5/U:4 → Eff:1.5?] 🚀 |
-| Task 532 | ✅ | 🎁 **authored_specs** · 🐛 Alpaca fetchOHLCV: author the time-window request slice so since/limit reach the venue instead of 400ing or silently returning nothing [D:3/B:7/U:6 → Eff:2.17] 🎯 |
-| Task 533 | ✅ | 🎁 **authored_specs** · 🐛 Whole-surface unified-read contract guard: no raw envelopes, no collapsed multi-row responses, no un-normalized symbol keys [D:5/B:9/U:8 → Eff:1.7] 🚀 |
-| Task 534 | ✅ | 🎁 **authored_specs** · 🐛 Unified endpoint selection must honor section priority, and every mapped method must be reachable by some documented param set [D:5/B:9/U:9 → Eff:1.8] 🚀 |
-| Task 535 | ✅ | 🎁 **authored_specs** · 🐛 Funding cadence must come from observed venue data, not an authored constant — deribit reports 8h for an hourly venue [D:4/B:8/U:8 → Eff:2.0] 🎯 |
-| Task 536 | ✅ | 🎁 **authored_specs** · 🐛 Order-status reads are unfiltered: fetch_canceled_orders, fetch_closed_orders and fetch_orders return identical rows [D:3/B:7/U:7 → Eff:2.33] 🎯 |
-| Task 537 | ✅ | 🎁 **authored_specs** · 🐛 Unified read parsing raises instead of returning a typed error on legitimate venue responses [D:4/B:7/U:7 → Eff:1.75] 🚀 |
-| Task 538 | ✅ | 🎁 **authored_specs** · 🐛 Authored enum slices reject real venue values — an unmapped order status kills four hyperliquid read methods [D:3/B:7/U:7 → Eff:2.33] 🎯 |
-| Task 539 | ✅ | 🎁 **authored_specs** · 🐛 Field maps present but inert: populated venue fields arrive nil, and one scalar parse takes the year off a timestamp [D:4/B:7/U:6 → Eff:1.62] 🚀 |
-| Task 540 | ✅ | 🎁 **authored_specs** · 🐛 Time-window request params must reach the venue on every venue, not one at a time [D:4/B:7/U:6 → Eff:1.62] 🚀 |
-| Task 541 | ✅ | 🎁 **authored_specs** · 🐛 Lighter private reads demand a symbol the venue documents as optional [D:3/B:5/U:5 → Eff:1.67] 🚀 |
-| Task 542 | ✅ | 🎁 **ws_unified** · 🐛 WebSocket private path never authenticates — the auth layer has no caller from the public API [D:7/B:8/U:7 → Eff:1.07] 📋 |
-| Task 543 | ✅ | 🎁 **ws_unified** · 🐛 WS subscribe reports success when the venue rejects the subscription, and its return shape varies by venue [D:3/B:7/U:6 → Eff:2.17] 🎯 |
-| Task 544 | ✅ | 🎁 **ws_unified** · 🐛 Two runtime venues have no WebSocket support at all — alpaca and lighter [D:5/B:6/U:4 → Eff:1.0] 📋 |
-| Task 545 | ✅ | 🎁 **authored_specs** · 🐛 binancecoinm exposes 17 unified methods while the venue supports order history, leverage tiers, open interest, fees, ledger and ADL [D:4/B:6/U:5 → Eff:1.38] 📋 |
-| Task 546 | ✅ | 🎁 **authored_specs** · 🐛 lighter exposes 8 unified methods and no balance or positions, though one account response carries both [D:4/B:6/U:5 → Eff:1.38] 📋 |
-| Task 547 | ✅ | 🎁 **authored_specs** · 🐛 alpaca exposes no trade history and no transfers, though the paper account serves all three live [D:4/B:5/U:4 → Eff:1.12] 📋 |
-| Task 548 | ✅ | 🎁 **authored_specs** · 🐛 binance OCO order lists are invisible to the unified surface [D:3/B:5/U:4 → Eff:1.5] 🚀 |
-| Task 549 | ✅ | 🎁 **authored_specs** · 🐛 derive declares four capabilities false while the endpoints for them exist [D:3/B:5/U:4 → Eff:1.5] 🚀 |
-| Task 550 | ⛔ | 🎁 **authored_specs** · 🐛 Close the unified parse-coverage gap: declared-supported read methods that have no response parse slice [D:7/B:9/U:8 → Eff:1.21] 📋 |
-| Task 551 | ⛔ | 🎁 **authored_specs** · Grade every sliced read method against a recording — 246 of 313 are measured by nothing today [D:7/B:9/U:8 → Eff:1.21] 📋 |
-| Task 552 | ✅ | 🎁 **authored_specs** · enum_passthrough silently exempts a venue from the status-coverage test — enumerate it or drop it [D:4/B:7/U:6 → Eff:1.62] 🚀 |
-| Task 553 | ✅ | 🎁 **authored_specs** · 🐛 since is still dropped on binance spot reads — assert the returned window, not the absence of an error [D:6/B:8/U:7 → Eff:1.25] 📋 |
-| Task 554 `[P]` | ✅ | 🎁 **authored_specs** · Activate the provider-authority corpus as a complete, freshness-visible source index [D:6/B:8/U:9 → Eff:1.42] 📋 |
-| Task 555 | ✅ | 🎁 **authored_specs** · Compare provider-owned contracts with authored specs across the ten supported venues [D:8/B:10/U:9 → Eff:1.19] 📋 |
-| Task 556 | ✅ | 🎁 **authored_specs** · Build provider-operation reality capture and prove it on Deribit public REST [D:7/B:10/U:9 → Eff:1.36] 📋 |
-| Task 557 | ⛔ | 🎁 **authored_specs** · Drain Deribit current-REST read evidence by provider contract section [D:9/B:10/U:8 → Eff:1.0] 📋 |
-| Task 558 | ✅ | 🎁 **authored_specs** · Adjudicate Deribit mutating REST operations with reversible evidence and explicit unsafe boundaries [D:7/B:9/U:8 → Eff:1.21] 📋 |
-| Task 559 | ✅ | 🎁 **integration_tests** · 🐛 Circuit-breaker fuses leak across test modules, so the offline suite reports a rotating set of flaky failures [D:4/B:7/U:7 → Eff:1.75] 🚀 |
-| Task 560 | ✅ | 🎁 **authored_specs** · 🐛 Derive ticker maps high/low/change/percentage from a stats object the venue does not publish [D:2/B:5/U:4 → Eff:2.25] 🎯 |
-| Task 561 | ✅ | 🎁 **integration_tests** · 🐛 Bourse.Testnet exits the calling process when unsupervised, aborting a consumer's entire test suite [D:3/B:6/U:5 → Eff:1.83] 🚀 |
-| Task 562 | ✅ | 🎁 **parsers** · 🐛 Per-field maps cannot address envelope-level keys, so every bybit ticker is unstamped [D:5/B:7/U:7 → Eff:1.4] 📋 |
-| Task 563 | ⛔ | 🎁 **ws_unified** · 🐛 derive authors no WebSocket auth pattern, so its private section connects without a handshake [D:6/B:6/U:5 → Eff:0.92] ⚠️ |
-| Task 564 | ✅ | 🎁 **authored_specs** · 🐛 The parse-coverage guard measures a dead CCXT descriptor field: 65 of its 79 tracked cells are phantom and 49 real leaks are invisible [D:5/B:9/U:9 → Eff:1.8] 🚀 |
-| Task 565 | ✅ | 🎁 **authored_specs** · 🐛 51 declared reads resolve to no parser slot at all — repair the return-type resolution table, do not invent types per venue [D:6/B:9/U:9 → Eff:1.5] 🚀 |
-| Task 566 | ⛔ | 🎁 **authored_specs** · 🐛 Build the unified return types the resolution repair could not alias, or retire their declarations [D:7/B:7/U:7 → Eff:1.0] 📋 |
-| Task 567 | ✅ | 🎁 **authored_specs** · 🐛 The conversion and currency parse types are wired but have no field map on bybit and binanceusdm — 8 declared reads error instead of parsing [D:4/B:7/U:6 → Eff:1.62] 🚀 |
-| Task 568 | ✅ | 🎁 **authored_specs** · 🐛 funding_history and margin_modification parse types have no field map on four venue-method pairs [D:3/B:6/U:5 → Eff:1.83] 🚀 |
-| Task 569 | ✅ | 🎁 **signing** · 🔒 Five of the seven C-exposed Lighter signing operations are pinned only by shape, so a dependency bump cannot be verified [D:4/B:7/U:6 → Eff:1.62] 🚀 |
-| Task 570 | ✅ | 🎁 **authored_specs** · 🚀 **v1_1** · 🐛 One field carries three independent facts, so a raw unmapped read is either silently mislabelled as normalized or deleted outright — separate them and label raw as raw [D:9/B:9/U:9 → Eff:1.0] 📋 |
-| Task 571 | ✅ | 🎁 **authored_specs** · 🐛 Bulk list reads return venue-native symbols in unified structs, so a consumer cannot join them to any other unified result [D:5/B:8/U:7 → Eff:1.5] 🚀 |
-| Task 572 | ✅ | 🎁 **authored_specs** · 🚀 **v1_1** · 🐛 Bybit authors 59 unresolved category defaults, so declared reads that pass every coverage gate still fail live with error 10001 [D:6/B:8/U:7 → Eff:1.25] 📋 |
-| Task 573 | ✅ | 🎁 **authored_specs** · 🐛 binance fetch_funding_rate leaves interval nil — the C5 funding-interval carve was never confronted for binance [D:2/B:5/U:5 → Eff:2.5] 🎯 |
-| Task 574 | ✅ | 🎁 **authored_specs** · 🐛 binance fapi write path drops unified opts and misparses cancel confirmations — a stop order executed as a naked market sell [D:6/B:9/U:8 → Eff:1.42] 📋 |
-| Task 575 | ✅ | 🎁 **authored_specs** · 🐛 binance fetch_balance(type: :swap) routes to the spot testnet in sandbox — no unified path to the USD-M wallet [D:4/B:7/U:6 → Eff:1.62] 🚀 |
-| Task 576 | ✅ | 🎁 **authored_specs** · 🐛 binance USD-M conditional orders are write-only: cancel and fetch cannot see the algo book, and take_profit_price still routes as a naked market order [D:6/B:9/U:8 → Eff:1.42] 📋 |
-| Task 577 | ✅ | 🎁 **authored_specs** · 🐛 binance-family funding interval: inverse symbols on the generic client read the USD-M funding list, and the plural read is never enriched [D:4/B:6/U:5 → Eff:1.38] 📋 |
-| Task 578 | ✅ | 🎁 **authored_specs** · 🐛 The task-574/575 write-path fixes landed only on the generic binance spec — binanceusdm still sends the symbol as marginType and both dedicated futures venues drop unified order opts [D:6/B:8/U:6 → Eff:1.17] 📋 |
-| Task 579 | ✅ | 🎁 **authored_specs** · 🐛 Authority drift lane cries wolf: split --online drift semantics by artifact class (typed contract fails, prose churn warns) [D:4/B:7/U:6 → Eff:1.62] 🚀 |
-| Task 580 | ✅ | 🎁 **authored_specs** · 🐛 Unified order reads are blind to the binance algo book: an identifier cancel_order accepts makes fetch_order answer order_not_found [D:5/B:6/U:5 → Eff:1.1] 📋 |
-| Task 581 | ✅ | 🎁 **authored_specs** · 🐛 Oracle critical-slot waivers never expire: 79 dated entries satisfy the hard gate indefinitely, restoring report-only semantics under a new name [D:4/B:6/U:5 → Eff:1.38] 📋 |
-| Task 582 | ⛔ | 🎁 **authored_specs** · Record populated evidence for shape-only-verified surfaces: binance order lists (C-T548) and derive ERC-20 transfers (C-T549b) [D:4/B:3/U:2 → Eff:0.62] ⚠️ |
-| Task 583 | ⛔ | 🎁 **authored_specs** · 🐛 Generic binance inverse-family parity: symbols denormalize to the pair form, and the algo/book_routes selection exists only on the dedicated venue [D:6/B:7/U:5 → Eff:1.0] 📋 |
-| Task 584 | ✅ | 🎁 **authored_specs** · 🐛 Binance-family plural funding reads stamp a fabricated 8h interval onto instruments that never fund — gate the default on perpetuals [D:4/B:6/U:5 → Eff:1.38] 📋 |
-| Task 585 | ✅ | 🎁 **authored_specs** · 🐛 Derive fetch_transfers silently drops caller-supplied code and limit — the venue endpoint has no asset filter or pagination [D:3/B:4/U:3 → Eff:1.17] 📋 |
-| Task 586 | ✅ | 🎁 **authored_specs** · 🐛 binance futures family declares capabilities false the venues serve: coinm setPositionMode/setLeverage, usdm fetchLeverage via symbolConfig [D:3/B:5/U:4 → Eff:1.5] 🚀 |
-| Task 587 | ✅ | 🎁 **authored_specs** · Unified boundary accepts structurally invalid arguments and crashes in the signing layer — validate param value shapes before dispatch [D:3/B:4/U:2 → Eff:1.0] 📋 |
-| Task 588 | ⛔ | 🎁 **authored_specs** · Native-symbol backfill fails loudly on one venue out of ten — make the resolver's outcome explicit everywhere and stop accepting degenerate unified forms [D:5/B:6/U:3 → Eff:0.9] ⚠️ |
-| Task 589 | ✅ | 🎁 **authored_specs** · Emulated configuration reads answer {:ok, nil} when the plural has no row — a config read refuses or errors, it never hands back nil [D:3/B:6/U:2 → Eff:1.33] 📋 |
-| Task 590 | ⛔ | 🎁 **authored_specs** · Binance futures leverage/margin carve completion: coinm cannot read the margin mode it can set, and leverage 0 ships as a multipliable number [D:4/B:5/U:2 → Eff:0.88] ⚠️ |
-| Task 591 | ✅ | 🎁 **authored_specs** · 🐛 binancecoinm wires plural fetchTradingFees to the symbol-mandatory commission-rate endpoint - move to singular fetchTradingFee and retire the shared parse compensation [D:3/B:5/U:4 → Eff:1.5] 🚀 |
-| Task 592 | ✅ | 🎁 **authored_specs** · 🐛 binance-family ledger enums are incomplete and undirected - add the missing income-type arms, sign_direction, and a documented-set coverage guard for ledger_entry.type [D:4/B:6/U:5 → Eff:1.38] 📋 |
-| Task 593 | ✅ | 🎁 **authored_specs** · Promote coinbaseexchange as a public-only market-data venue (candles + ticker) [D:5/B:6/U:5 → Eff:1.1] 📋 |
-| Task 594 | ✅ | 🎁 **authored_specs** · 🐛 Confront the unit of every authored rate-like slot against venue-owned arithmetic [D:4/B:7/U:6 → Eff:1.62] 🚀 |
-| Task 595 | ✅ | 🎁 **authored_specs** · 🐛 Lighter account and history slice fidelity against a funded, active testnet account [D:7/B:8/U:5 → Eff:0.93] ⚠️ |
-| Task 596 | ✅ | 🎁 **authored_specs** · Request-shape / recorded-request congruence gate: a recording captured with params the runtime builder cannot produce is red [D:5/B:8/U:6 → Eff:1.4] 📋 |
-| Task 597 | ⛔ | 🎁 **authored_specs** · Coinbase Exchange read-only market data: candles and ticker [D:4/B:5/U:2 → Eff:0.88] ⚠️ |
-| Task 598 | ✅ | 🎁 **authored_specs** · 🐛 Ledger type authority: derive the documented-set registry from provider contracts, fix the generic binance ledger map, make unmapped types loud [D:6/B:8/U:7 → Eff:1.25] 📋 |
-| Task 599 | ✅ | 🎁 **authored_specs** · Close the 596 congruence-gate residuals: vacuous-pass ratchet, exemption pinning, caller_params and inventory-snapshot anchoring [D:7/B:8/U:6 → Eff:1.0] 📋 |
-| Task 600 | ✅ | 🎁 **authored_specs** · 🐛 One unit per unified rate-like field: cross-venue unit invariant (margin percentage, implied volatility, lighter coverage, extras-carried rates) [D:6/B:8/U:6 → Eff:1.17] 📋 |
-| Task 601 | ✅ | 🎁 **authored_specs** · 🐛 Ledger vocabulary is route-blind: scope the type registries per routed endpoint and make the unified type contract honest [D:6/B:7/U:6 → Eff:1.08] 📋 |
-| Task 603 | ✅ | 🎁 **authored_specs** · 🐛 The rate-unit invariant grades declarations, not emissions: make it falsifiable and fix the three unit bugs it certified green [D:7/B:8/U:6 → Eff:1.0] 📋 |
-| Task 606 | ✅ | 🎁 **live_triage** · 🐛 Unit discriminators die on list reads: deribit positions emit nil margins, binance plural option tickers stay 100x off [D:5/B:8/U:6 → Eff:1.4] 📋 |
-| Task 607 `[P]` | ✅ | 🎁 **live_triage** · Reconcile bybit and hyperliquid ledger labels onto the registered taxonomy; venue_specific must mean outside-the-registry [D:6/B:5/U:4 → Eff:0.75] ⚠️ |
-| Task 608 `[P]` | ✅ | 🎁 **live_triage** · Money-field discriminators must be payload-derived on every symbol-less read: deribit trade cost is 2.5e9x off, and the endpoint-route key is not an identity [D:6/B:8/U:6 → Eff:1.17] 📋 |
-| Task 609 `[P]` | ✅ | 🎁 **live_triage** · Close the remaining ledger-taxonomy splits: bybit funding is invisible, promotional credits and converts split cross-venue, passthrough remainders split by casing [D:6/B:7/U:4 → Eff:0.92] ⚠️ |
-| Task 610 `[P]` | ✅ | 🎁 **live_triage** · Position carries one unit contract: notional is quote-denominated and contracts x contractSize reconciles, on every venue [D:6/B:6/U:4 → Eff:0.83] ⚠️ |
-| Task 611 `[P]` | ✅ | 🎁 **live_triage** · Deribit linear futures break the fresh unit contract: notional guards on kind, not settlement, so the USDC book emits base-coin notional labelled as quote [D:5/B:8/U:7 → Eff:1.5] 🚀 |
-| Task 612 `[P]` | ⛔ | 🎁 **live_triage** · Deribit inverse classification has one source of truth: collapse the instrument-id parser onto the market carve and cover combos [D:5/B:7/U:5 → Eff:1.2] 📋 |
-| Task 613 `[P]` | ✅ | 🎁 **live_triage** · Unified Position carries a machine-readable unit contract: notional currency and base_quantity are populated or scoped, never prose-only [D:5/B:7/U:4 → Eff:1.1] 📋 |
-| Task 614 `[P]` | ✅ | 🎁 **live_triage** · Bybit USDC-perp SETTLEMENT rows mix session P&L into funding_fee amount — source the funding component, not change [D:4/B:6/U:4 → Eff:1.25] 📋 |
-| Task 615 `[P]` | ✅ | 🎁 **live_triage** · Authored conditional request entries clobber caller-supplied native params — caller value wins, the conditional only supplies the default [D:3/B:7/U:4 → Eff:1.83] 🚀 |
-| Task 616 `[P]` | ✅ | 🎁 **live_triage** · A single struct escaping a symbol-dict unified read is a silent contract break — make the fallthrough loud and prove the binance fee slice live [D:4/B:6/U:4 → Eff:1.25] 📋 |
-| Task 617 `[P]` | ✅ | 🎁 **live_triage** · 🐛 Time-window translation is asserted request-side: an offline guard over every since/until read, and a since-mutation the matrix can actually catch [D:6/B:8/U:6 → Eff:1.17] 📋 |
-| Task 619 | ✅ | 🎁 **authored_specs** · Refresh the pinned Deribit current-REST OpenAPI and re-bind every artifact that quotes it [D:5/B:8/U:8 → Eff:1.6] 🚀 |
-| Task 620 `[P]` | ✅ | 🎁 **authored_specs** · Shape-check non-lighter caller_params against request_param_shapes so recaptured no-injection fixtures are actually verified [D:4/B:7/U:5 → Eff:1.5] 🚀 |
+| Task 532 | ✅ | 🎁 **authored_specs** · 🐛 Alpaca fetchOHLCV: author the time-window request slice so since/limit reach the venue instead of 400ing or silently returning nothing [D:3/B:7/U:6 → Eff:2.17?] 🎯 |
+| Task 533 | ✅ | 🎁 **authored_specs** · 🐛 Whole-surface unified-read contract guard: no raw envelopes, no collapsed multi-row responses, no un-normalized symbol keys [D:5/B:9/U:8 → Eff:1.7?] 🚀 |
+| Task 534 | ✅ | 🎁 **authored_specs** · 🐛 Unified endpoint selection must honor section priority, and every mapped method must be reachable by some documented param set [D:5/B:9/U:9 → Eff:1.8?] 🚀 |
+| Task 535 | ✅ | 🎁 **authored_specs** · 🐛 Funding cadence must come from observed venue data, not an authored constant — deribit reports 8h for an hourly venue [D:4/B:8/U:8 → Eff:2.0?] 🎯 |
+| Task 536 | ✅ | 🎁 **authored_specs** · 🐛 Order-status reads are unfiltered: fetch_canceled_orders, fetch_closed_orders and fetch_orders return identical rows [D:3/B:7/U:7 → Eff:2.33?] 🎯 |
+| Task 537 | ✅ | 🎁 **authored_specs** · 🐛 Unified read parsing raises instead of returning a typed error on legitimate venue responses [D:4/B:7/U:7 → Eff:1.75?] 🚀 |
+| Task 538 | ✅ | 🎁 **authored_specs** · 🐛 Authored enum slices reject real venue values — an unmapped order status kills four hyperliquid read methods [D:3/B:7/U:7 → Eff:2.33?] 🎯 |
+| Task 539 | ✅ | 🎁 **authored_specs** · 🐛 Field maps present but inert: populated venue fields arrive nil, and one scalar parse takes the year off a timestamp [D:4/B:7/U:6 → Eff:1.62?] 🚀 |
+| Task 540 | ✅ | 🎁 **authored_specs** · 🐛 Time-window request params must reach the venue on every venue, not one at a time [D:4/B:7/U:6 → Eff:1.62?] 🚀 |
+| Task 541 | ✅ | 🎁 **authored_specs** · 🐛 Lighter private reads demand a symbol the venue documents as optional [D:3/B:5/U:5 → Eff:1.67?] 🚀 |
+| Task 542 | ✅ | 🎁 **ws_unified** · 🐛 WebSocket private path never authenticates — the auth layer has no caller from the public API [D:7/B:8/U:7 → Eff:1.07?] 📋 |
+| Task 543 | ✅ | 🎁 **ws_unified** · 🐛 WS subscribe reports success when the venue rejects the subscription, and its return shape varies by venue [D:3/B:7/U:6 → Eff:2.17?] 🎯 |
+| Task 544 | ✅ | 🎁 **ws_unified** · 🐛 Two runtime venues have no WebSocket support at all — alpaca and lighter [D:5/B:6/U:4 → Eff:1.0?] 📋 |
+| Task 545 | ✅ | 🎁 **authored_specs** · 🐛 binancecoinm exposes 17 unified methods while the venue supports order history, leverage tiers, open interest, fees, ledger and ADL [D:4/B:6/U:5 → Eff:1.38?] 📋 |
+| Task 546 | ✅ | 🎁 **authored_specs** · 🐛 lighter exposes 8 unified methods and no balance or positions, though one account response carries both [D:4/B:6/U:5 → Eff:1.38?] 📋 |
+| Task 547 | ✅ | 🎁 **authored_specs** · 🐛 alpaca exposes no trade history and no transfers, though the paper account serves all three live [D:4/B:5/U:4 → Eff:1.12?] 📋 |
+| Task 548 | ✅ | 🎁 **authored_specs** · 🐛 binance OCO order lists are invisible to the unified surface [D:3/B:5/U:4 → Eff:1.5?] 🚀 |
+| Task 549 | ✅ | 🎁 **authored_specs** · 🐛 derive declares four capabilities false while the endpoints for them exist [D:3/B:5/U:4 → Eff:1.5?] 🚀 |
+| Task 550 | ⛔ | 🎁 **authored_specs** · 🐛 Close the unified parse-coverage gap: declared-supported read methods that have no response parse slice [D:7/B:9/U:8 → Eff:1.21?] 📋 |
+| Task 551 | ⛔ | 🎁 **authored_specs** · Grade every sliced read method against a recording — 246 of 313 are measured by nothing today [D:7/B:9/U:8 → Eff:1.21?] 📋 |
+| Task 552 | ✅ | 🎁 **authored_specs** · enum_passthrough silently exempts a venue from the status-coverage test — enumerate it or drop it [D:4/B:7/U:6 → Eff:1.62?] 🚀 |
+| Task 553 | ✅ | 🎁 **authored_specs** · 🐛 since is still dropped on binance spot reads — assert the returned window, not the absence of an error [D:6/B:8/U:7 → Eff:1.25?] 📋 |
+| Task 554 `[P]` | ✅ | 🎁 **authored_specs** · Activate the provider-authority corpus as a complete, freshness-visible source index [D:6/B:8/U:9 → Eff:1.42?] 📋 |
+| Task 555 | ✅ | 🎁 **authored_specs** · Compare provider-owned contracts with authored specs across the ten supported venues [D:8/B:10/U:9 → Eff:1.19?] 📋 |
+| Task 556 | ✅ | 🎁 **authored_specs** · Build provider-operation reality capture and prove it on Deribit public REST [D:7/B:10/U:9 → Eff:1.36?] 📋 |
+| Task 557 | ⛔ | 🎁 **authored_specs** · Drain Deribit current-REST read evidence by provider contract section [D:9/B:10/U:8 → Eff:1.0?] 📋 |
+| Task 558 | ✅ | 🎁 **authored_specs** · Adjudicate Deribit mutating REST operations with reversible evidence and explicit unsafe boundaries [D:7/B:9/U:8 → Eff:1.21?] 📋 |
+| Task 559 | ✅ | 🎁 **integration_tests** · 🐛 Circuit-breaker fuses leak across test modules, so the offline suite reports a rotating set of flaky failures [D:4/B:7/U:7 → Eff:1.75?] 🚀 |
+| Task 560 | ✅ | 🎁 **authored_specs** · 🐛 Derive ticker maps high/low/change/percentage from a stats object the venue does not publish [D:2/B:5/U:4 → Eff:2.25?] 🎯 |
+| Task 561 | ✅ | 🎁 **integration_tests** · 🐛 Bourse.Testnet exits the calling process when unsupervised, aborting a consumer's entire test suite [D:3/B:6/U:5 → Eff:1.83?] 🚀 |
+| Task 562 | ✅ | 🎁 **parsers** · 🐛 Per-field maps cannot address envelope-level keys, so every bybit ticker is unstamped [D:5/B:7/U:7 → Eff:1.4?] 📋 |
+| Task 563 | ⛔ | 🎁 **ws_unified** · 🐛 derive authors no WebSocket auth pattern, so its private section connects without a handshake [D:6/B:6/U:5 → Eff:0.92?] ⚠️ |
+| Task 564 | ✅ | 🎁 **authored_specs** · 🐛 The parse-coverage guard measures a dead CCXT descriptor field: 65 of its 79 tracked cells are phantom and 49 real leaks are invisible [D:5/B:9/U:9 → Eff:1.8?] 🚀 |
+| Task 565 | ✅ | 🎁 **authored_specs** · 🐛 51 declared reads resolve to no parser slot at all — repair the return-type resolution table, do not invent types per venue [D:6/B:9/U:9 → Eff:1.5?] 🚀 |
+| Task 566 | ⛔ | 🎁 **authored_specs** · 🐛 Build the unified return types the resolution repair could not alias, or retire their declarations [D:7/B:7/U:7 → Eff:1.0?] 📋 |
+| Task 567 | ✅ | 🎁 **authored_specs** · 🐛 The conversion and currency parse types are wired but have no field map on bybit and binanceusdm — 8 declared reads error instead of parsing [D:4/B:7/U:6 → Eff:1.62?] 🚀 |
+| Task 568 | ✅ | 🎁 **authored_specs** · 🐛 funding_history and margin_modification parse types have no field map on four venue-method pairs [D:3/B:6/U:5 → Eff:1.83?] 🚀 |
+| Task 569 | ✅ | 🎁 **signing** · 🔒 Five of the seven C-exposed Lighter signing operations are pinned only by shape, so a dependency bump cannot be verified [D:4/B:7/U:6 → Eff:1.62?] 🚀 |
+| Task 570 | ✅ | 🎁 **authored_specs** · 🚀 **v1_1** · 🐛 One field carries three independent facts, so a raw unmapped read is either silently mislabelled as normalized or deleted outright — separate them and label raw as raw [D:9/B:9/U:9 → Eff:1.0?] 📋 |
+| Task 571 | ✅ | 🎁 **authored_specs** · 🐛 Bulk list reads return venue-native symbols in unified structs, so a consumer cannot join them to any other unified result [D:5/B:8/U:7 → Eff:1.5?] 🚀 |
+| Task 572 | ✅ | 🎁 **authored_specs** · 🚀 **v1_1** · 🐛 Bybit authors 59 unresolved category defaults, so declared reads that pass every coverage gate still fail live with error 10001 [D:6/B:8/U:7 → Eff:1.25?] 📋 |
+| Task 573 | ✅ | 🎁 **authored_specs** · 🐛 binance fetch_funding_rate leaves interval nil — the C5 funding-interval carve was never confronted for binance [D:2/B:5/U:5 → Eff:2.5?] 🎯 |
+| Task 574 | ✅ | 🎁 **authored_specs** · 🐛 binance fapi write path drops unified opts and misparses cancel confirmations — a stop order executed as a naked market sell [D:6/B:9/U:8 → Eff:1.42?] 📋 |
+| Task 575 | ✅ | 🎁 **authored_specs** · 🐛 binance fetch_balance(type: :swap) routes to the spot testnet in sandbox — no unified path to the USD-M wallet [D:4/B:7/U:6 → Eff:1.62?] 🚀 |
+| Task 576 | ✅ | 🎁 **authored_specs** · 🐛 binance USD-M conditional orders are write-only: cancel and fetch cannot see the algo book, and take_profit_price still routes as a naked market order [D:6/B:9/U:8 → Eff:1.42?] 📋 |
+| Task 577 | ✅ | 🎁 **authored_specs** · 🐛 binance-family funding interval: inverse symbols on the generic client read the USD-M funding list, and the plural read is never enriched [D:4/B:6/U:5 → Eff:1.38?] 📋 |
+| Task 578 | ✅ | 🎁 **authored_specs** · 🐛 The task-574/575 write-path fixes landed only on the generic binance spec — binanceusdm still sends the symbol as marginType and both dedicated futures venues drop unified order opts [D:6/B:8/U:6 → Eff:1.17?] 📋 |
+| Task 579 | ✅ | 🎁 **authored_specs** · 🐛 Authority drift lane cries wolf: split --online drift semantics by artifact class (typed contract fails, prose churn warns) [D:4/B:7/U:6 → Eff:1.62?] 🚀 |
+| Task 580 | ✅ | 🎁 **authored_specs** · 🐛 Unified order reads are blind to the binance algo book: an identifier cancel_order accepts makes fetch_order answer order_not_found [D:5/B:6/U:5 → Eff:1.1?] 📋 |
+| Task 581 | ✅ | 🎁 **authored_specs** · 🐛 Oracle critical-slot waivers never expire: 79 dated entries satisfy the hard gate indefinitely, restoring report-only semantics under a new name [D:4/B:6/U:5 → Eff:1.38?] 📋 |
+| Task 582 | ⛔ | 🎁 **authored_specs** · Record populated evidence for shape-only-verified surfaces: binance order lists (C-T548) and derive ERC-20 transfers (C-T549b) [D:4/B:3/U:2 → Eff:0.62?] ⚠️ |
+| Task 583 | ⛔ | 🎁 **authored_specs** · 🐛 Generic binance inverse-family parity: symbols denormalize to the pair form, and the algo/book_routes selection exists only on the dedicated venue [D:6/B:7/U:5 → Eff:1.0?] 📋 |
+| Task 584 | ✅ | 🎁 **authored_specs** · 🐛 Binance-family plural funding reads stamp a fabricated 8h interval onto instruments that never fund — gate the default on perpetuals [D:4/B:6/U:5 → Eff:1.38?] 📋 |
+| Task 585 | ✅ | 🎁 **authored_specs** · 🐛 Derive fetch_transfers silently drops caller-supplied code and limit — the venue endpoint has no asset filter or pagination [D:3/B:4/U:3 → Eff:1.17?] 📋 |
+| Task 586 | ✅ | 🎁 **authored_specs** · 🐛 binance futures family declares capabilities false the venues serve: coinm setPositionMode/setLeverage, usdm fetchLeverage via symbolConfig [D:3/B:5/U:4 → Eff:1.5?] 🚀 |
+| Task 587 | ✅ | 🎁 **authored_specs** · Unified boundary accepts structurally invalid arguments and crashes in the signing layer — validate param value shapes before dispatch [D:3/B:4/U:2 → Eff:1.0?] 📋 |
+| Task 588 | ⛔ | 🎁 **authored_specs** · Native-symbol backfill fails loudly on one venue out of ten — make the resolver's outcome explicit everywhere and stop accepting degenerate unified forms [D:5/B:6/U:3 → Eff:0.9?] ⚠️ |
+| Task 589 | ✅ | 🎁 **authored_specs** · Emulated configuration reads answer {:ok, nil} when the plural has no row — a config read refuses or errors, it never hands back nil [D:3/B:6/U:2 → Eff:1.33?] 📋 |
+| Task 590 | ⛔ | 🎁 **authored_specs** · Binance futures leverage/margin carve completion: coinm cannot read the margin mode it can set, and leverage 0 ships as a multipliable number [D:4/B:5/U:2 → Eff:0.88?] ⚠️ |
+| Task 591 | ✅ | 🎁 **authored_specs** · 🐛 binancecoinm wires plural fetchTradingFees to the symbol-mandatory commission-rate endpoint - move to singular fetchTradingFee and retire the shared parse compensation [D:3/B:5/U:4 → Eff:1.5?] 🚀 |
+| Task 592 | ✅ | 🎁 **authored_specs** · 🐛 binance-family ledger enums are incomplete and undirected - add the missing income-type arms, sign_direction, and a documented-set coverage guard for ledger_entry.type [D:4/B:6/U:5 → Eff:1.38?] 📋 |
+| Task 593 | ✅ | 🎁 **authored_specs** · Promote coinbaseexchange as a public-only market-data venue (candles + ticker) [D:5/B:6/U:5 → Eff:1.1?] 📋 |
+| Task 594 | ✅ | 🎁 **authored_specs** · 🐛 Confront the unit of every authored rate-like slot against venue-owned arithmetic [D:4/B:7/U:6 → Eff:1.62?] 🚀 |
+| Task 595 | ✅ | 🎁 **authored_specs** · 🐛 Lighter account and history slice fidelity against a funded, active testnet account [D:7/B:8/U:5 → Eff:0.93?] ⚠️ |
+| Task 596 | ✅ | 🎁 **authored_specs** · Request-shape / recorded-request congruence gate: a recording captured with params the runtime builder cannot produce is red [D:5/B:8/U:6 → Eff:1.4?] 📋 |
+| Task 597 | ⛔ | 🎁 **authored_specs** · Coinbase Exchange read-only market data: candles and ticker [D:4/B:5/U:2 → Eff:0.88?] ⚠️ |
+| Task 598 | ✅ | 🎁 **authored_specs** · 🐛 Ledger type authority: derive the documented-set registry from provider contracts, fix the generic binance ledger map, make unmapped types loud [D:6/B:8/U:7 → Eff:1.25?] 📋 |
+| Task 599 | ✅ | 🎁 **authored_specs** · Close the 596 congruence-gate residuals: vacuous-pass ratchet, exemption pinning, caller_params and inventory-snapshot anchoring [D:7/B:8/U:6 → Eff:1.0?] 📋 |
+| Task 600 | ✅ | 🎁 **authored_specs** · 🐛 One unit per unified rate-like field: cross-venue unit invariant (margin percentage, implied volatility, lighter coverage, extras-carried rates) [D:6/B:8/U:6 → Eff:1.17?] 📋 |
+| Task 601 | ✅ | 🎁 **authored_specs** · 🐛 Ledger vocabulary is route-blind: scope the type registries per routed endpoint and make the unified type contract honest [D:6/B:7/U:6 → Eff:1.08?] 📋 |
+| Task 603 | ✅ | 🎁 **authored_specs** · 🐛 The rate-unit invariant grades declarations, not emissions: make it falsifiable and fix the three unit bugs it certified green [D:7/B:8/U:6 → Eff:1.0?] 📋 |
+| Task 606 | ✅ | 🎁 **live_triage** · 🐛 Unit discriminators die on list reads: deribit positions emit nil margins, binance plural option tickers stay 100x off [D:5/B:8/U:6 → Eff:1.4?] 📋 |
+| Task 607 `[P]` | ✅ | 🎁 **live_triage** · Reconcile bybit and hyperliquid ledger labels onto the registered taxonomy; venue_specific must mean outside-the-registry [D:6/B:5/U:4 → Eff:0.75?] ⚠️ |
+| Task 608 `[P]` | ✅ | 🎁 **live_triage** · Money-field discriminators must be payload-derived on every symbol-less read: deribit trade cost is 2.5e9x off, and the endpoint-route key is not an identity [D:6/B:8/U:6 → Eff:1.17?] 📋 |
+| Task 609 `[P]` | ✅ | 🎁 **live_triage** · Close the remaining ledger-taxonomy splits: bybit funding is invisible, promotional credits and converts split cross-venue, passthrough remainders split by casing [D:6/B:7/U:4 → Eff:0.92?] ⚠️ |
+| Task 610 `[P]` | ✅ | 🎁 **live_triage** · Position carries one unit contract: notional is quote-denominated and contracts x contractSize reconciles, on every venue [D:6/B:6/U:4 → Eff:0.83?] ⚠️ |
+| Task 611 `[P]` | ✅ | 🎁 **live_triage** · Deribit linear futures break the fresh unit contract: notional guards on kind, not settlement, so the USDC book emits base-coin notional labelled as quote [D:5/B:8/U:7 → Eff:1.5?] 🚀 |
+| Task 612 `[P]` | ⛔ | 🎁 **live_triage** · Deribit inverse classification has one source of truth: collapse the instrument-id parser onto the market carve and cover combos [D:5/B:7/U:5 → Eff:1.2?] 📋 |
+| Task 613 `[P]` | ✅ | 🎁 **live_triage** · Unified Position carries a machine-readable unit contract: notional currency and base_quantity are populated or scoped, never prose-only [D:5/B:7/U:4 → Eff:1.1?] 📋 |
+| Task 614 `[P]` | ✅ | 🎁 **live_triage** · Bybit USDC-perp SETTLEMENT rows mix session P&L into funding_fee amount — source the funding component, not change [D:4/B:6/U:4 → Eff:1.25?] 📋 |
+| Task 615 `[P]` | ✅ | 🎁 **live_triage** · Authored conditional request entries clobber caller-supplied native params — caller value wins, the conditional only supplies the default [D:3/B:7/U:4 → Eff:1.83?] 🚀 |
+| Task 616 `[P]` | ✅ | 🎁 **live_triage** · A single struct escaping a symbol-dict unified read is a silent contract break — make the fallthrough loud and prove the binance fee slice live [D:4/B:6/U:4 → Eff:1.25?] 📋 |
+| Task 617 `[P]` | ✅ | 🎁 **live_triage** · 🐛 Time-window translation is asserted request-side: an offline guard over every since/until read, and a since-mutation the matrix can actually catch [D:6/B:8/U:6 → Eff:1.17?] 📋 |
+| Task 619 | ✅ | 🎁 **authored_specs** · Refresh the pinned Deribit current-REST OpenAPI and re-bind every artifact that quotes it [D:5/B:8/U:8 → Eff:1.6?] 🚀 |
+| Task 620 `[P]` | ✅ | 🎁 **authored_specs** · Shape-check non-lighter caller_params against request_param_shapes so recaptured no-injection fixtures are actually verified [D:4/B:7/U:5 → Eff:1.5?] 🚀 |
 | Task 622 `[P]` | ✅ | 🎁 **live_triage** · 🐛 Unified client_order_id is one-way on deribit: it goes out as label and never comes back — make the round-trip a cross-venue invariant [D:5/B:7/U:6 → Eff:1.3] 📋 |
 | Task 623 `[P]` | ✅ | 🎁 **live_triage** · 🐛 binanceusdm markets ship contract_size nil while the position carve already assumes 1 — source the linear unit from the provider, never a silent default [D:4/B:8/U:6 → Eff:1.75] 🚀 |
 | Task 624 `[P]` | ✅ | 🎁 **authored_specs** · Mutation-lifecycle compensation holds under transport and parse failure: attempted-act tracking, session-label sweep, mutating-steps-before-cleanup plan rule [D:4/B:7/U:5 → Eff:1.5] 🚀 |
@@ -912,5 +912,5 @@ Four-venue option trading program (deribit, bybit, okx-international, derive): o
 | Task 511 | ✅ | 🎁 **options_execution** · 🐛 Authored order-state completeness: map Deribit speed_bumped and close the unmapped-status class [D:6/B:8/U:7 → Eff:1.25?] 📋 |
 | Task 512 | ⛔ | 🎁 **options_execution** · OptionProposal: base-currency numeraire risk targets + covered-call preflight mode [D:6/B:7/U:6 → Eff:1.08?] 📋 |
 | Task 513 | ✅ | 🎁 **options_execution** · OptionReadiness: expose orthogonal short-side lifecycle capability [D:4/B:7/U:6 → Eff:1.62?] 🚀 |
-| Task 602 `[P]` | ⛔ | 🎁 **options_execution** · Expose account-level portfolio-margin summaries in Bourse.PortfolioRisk [D:5/B:7/U:5 → Eff:1.2] 📋 |
+| Task 602 `[P]` | ⛔ | 🎁 **options_execution** · Expose account-level portfolio-margin summaries in Bourse.PortfolioRisk [D:5/B:7/U:5 → Eff:1.2?] 📋 |
 <!-- TASKS:END -->
