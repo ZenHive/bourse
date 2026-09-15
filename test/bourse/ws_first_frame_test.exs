@@ -16,6 +16,11 @@ defmodule Bourse.WSFirstFrameTest do
       {:ok, %{channels: ["ticker:#{exchange.id}"]}}
     end
 
+    def watch_trades(%{id: "coinbaseexchange"}, _symbol, _opts) do
+      send(self(), {:websocket_message, coinbase_last_match()})
+      {:ok, %{channels: ["ETH-USD"]}}
+    end
+
     def watch_trades(exchange, _symbol, _opts) do
       send(self(), {:websocket_message, [%{"T" => "t", "S" => "FAKEPACA"}]})
       {:ok, %{channels: ["trades:#{exchange.id}"]}}
@@ -35,6 +40,18 @@ defmodule Bourse.WSFirstFrameTest do
 
     defp lighter_snapshot do
       %{"type" => "subscribed/market_stats", "channel" => "market_stats/0", "market_stats" => %{"market_id" => 0}}
+    end
+
+    defp coinbase_last_match do
+      %{
+        "type" => "last_match",
+        "trade_id" => 842_900_890,
+        "product_id" => "ETH-USD",
+        "side" => "sell",
+        "price" => "2497.85",
+        "size" => "0.09718141",
+        "time" => "2026-09-15T06:09:35.256006Z"
+      }
     end
   end
 
@@ -232,6 +249,26 @@ defmodule Bourse.WSFirstFrameTest do
     assert okx.data_frame == "data"
   end
 
+  test "coinbaseexchange application heartbeats are skipped so last_match is the data frame" do
+    subscribe = fn _ws, spec ->
+      if spec.venue == "coinbaseexchange" do
+        send(self(), {:websocket_message, %{"type" => "subscriptions", "channels" => []}})
+        send(self(), {:websocket_message, %{"type" => "heartbeat", "last_trade_id" => 1, "sequence" => 1}})
+        send(self(), {:websocket_message, coinbase_last_match()})
+      else
+        send_passed_frames(spec)
+      end
+
+      {:ok, channel_name(spec)}
+    end
+
+    assert {:ok, report} = run_classified(subscribe)
+    coinbase = Enum.find(report.venues, &(&1.venue == "coinbaseexchange" and &1.status == "passed"))
+    assert coinbase.first_frame == "acknowledgement"
+    assert coinbase.data_frame == "data"
+    assert coinbase.channel == "watch_trades:ETH/USD"
+  end
+
   test "heartbeats are skipped and a rejected subscribe fails the named channel" do
     subscribe = fn _ws, spec ->
       if spec.venue == "okx" do
@@ -376,8 +413,24 @@ defmodule Bourse.WSFirstFrameTest do
     send(self(), {:websocket_message, lighter_snapshot()})
   end
 
+  defp send_passed_frames(%{venue: "coinbaseexchange"}) do
+    send(self(), {:websocket_message, coinbase_last_match()})
+  end
+
   defp send_passed_frames(_spec) do
     send(self(), {:websocket_message, %{"topic" => "tickers.BTCUSDT", "data" => %{"lastPrice" => "1"}}})
+  end
+
+  defp coinbase_last_match do
+    %{
+      "type" => "last_match",
+      "trade_id" => 842_900_890,
+      "product_id" => "ETH-USD",
+      "side" => "sell",
+      "price" => "2497.85",
+      "size" => "0.09718141",
+      "time" => "2026-09-15T06:09:35.256006Z"
+    }
   end
 
   defp lighter_snapshot do

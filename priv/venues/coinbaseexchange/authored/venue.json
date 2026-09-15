@@ -19,9 +19,9 @@
     "api": {
       "ws": {
         "private": null,
-        "public": null,
+        "public": "wss://ws-feed.exchange.coinbase.com",
         "sandbox_private": null,
-        "sandbox_public": null
+        "sandbox_public": "wss://ws-feed.exchange.coinbase.com"
       }
     },
     "api_management": null,
@@ -93,38 +93,94 @@
   },
   "websocket": {
     "auth": {
-      "reason": "REST-only public market-data contract",
-      "supported": false
+      "authenticate_defined": false,
+      "credentials": [],
+      "mechanism": "none",
+      "message": null,
+      "resolved_from": "self",
+      "source": "provider_websocket_contract",
+      "unresolved_reason": "no_ws_auth"
     },
     "dispatch": {
-      "reason": "REST-only public market-data contract",
-      "supported": false
+      "discriminators": [
+        "type"
+      ],
+      "entries": [
+        {
+          "channel": "match",
+          "handler": "handleTrades"
+        },
+        {
+          "channel": "last_match",
+          "handler": "handleLastMatch"
+        },
+        {
+          "channel": "heartbeat",
+          "handler": "handleHeartbeat"
+        },
+        {
+          "channel": "subscriptions",
+          "handler": "handleSubscriptionStatus"
+        },
+        {
+          "channel": "error",
+          "handler": "handleError"
+        }
+      ],
+      "handle_message_defined": true,
+      "kind": "routed",
+      "resolved_from": "self",
+      "source": "provider_websocket_contract",
+      "unresolved": [],
+      "unresolved_reason": null
     },
     "heartbeat": {
-      "reason": "REST-only public market-data contract",
+      "reason": "Keepalive is the application heartbeat channel, not a transport ping",
       "supported": false
     },
     "ohlcv_semantics": {
-      "reason": "REST-only public market-data contract",
+      "reason": "not_live_verified",
       "supported": false
     },
     "orderbook_semantics": {
-      "reason": "REST-only public market-data contract",
+      "reason": "not_live_verified",
       "supported": false
     },
     "subscribe": {
-      "reason": "REST-only public market-data contract",
-      "supported": false
+      "args_key": "product_ids",
+      "channels": {
+        "watchTrades": [
+          "{symbol}"
+        ]
+      },
+      "discriminant": "type",
+      "envelope_keys": [
+        "type",
+        "product_ids",
+        "channels"
+      ],
+      "mechanism": "json_message",
+      "resolved_from": "self",
+      "source": "provider_websocket_contract",
+      "subscribe_op": "subscribe",
+      "unresolved_reason": null,
+      "unsubscribe_op": "unsubscribe"
     },
     "trades_semantics": {
-      "reason": "REST-only public market-data contract",
-      "supported": false
+      "cache_type": "ArrayCache",
+      "dedup_key": "trade_id",
+      "resolved_from": "self",
+      "source": "provider_websocket_contract",
+      "trades_defined": true,
+      "unresolved_reason": null,
+      "update_model": "append"
     },
     "urls": {
       "private": null,
-      "public": null,
+      "public": "wss://ws-feed.exchange.coinbase.com",
       "sandbox_private": null,
-      "sandbox_public": null
+      "sandbox_public": "wss://ws-feed.exchange.coinbase.com",
+      "unresolved_reason": null
     }
   },
   "emulated_methods": [],

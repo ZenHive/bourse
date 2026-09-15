@@ -67,6 +67,7 @@ defmodule Bourse.WS.Subscription.TypeSubscribe do
   end
 
   defp wrap_channel_name("channels", nil), do: []
+  defp wrap_channel_name("channels", names) when is_list(names), do: names
   defp wrap_channel_name("channels", name) when is_binary(name), do: [name]
   defp wrap_channel_name(_field, nil), do: ""
   defp wrap_channel_name(_field, name), do: name

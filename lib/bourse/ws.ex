@@ -49,7 +49,7 @@ defmodule Bourse.WS do
   subscription on the host that worked.
 
   Correlated JSON-RPC replies (deribit) and asynchronous acks (alpaca, bybit,
-  okx, hyperliquid, derive, binance, lighter) are classified by
+  okx, hyperliquid, derive, binance, lighter, coinbaseexchange) are classified by
   `Bourse.WS.SubscribeAck`.
   Rejection frames that arrive asynchronously are still consumed and returned
   as errors; non-ack data frames that arrive during the wait are re-queued to
@@ -58,8 +58,8 @@ defmodule Bourse.WS do
 
   ## Scope
 
-  Ten runtime venues have WS transport config. Coinbase Exchange remains the
-  registered runtime venue without one.
+  All eleven runtime venues have WS transport config. Coinbase Exchange is
+  public-only (matches and heartbeat on the Exchange feed, no credentials).
   """
 
   alias Bourse.Exchange

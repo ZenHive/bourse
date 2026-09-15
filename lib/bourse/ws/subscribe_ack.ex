@@ -7,7 +7,7 @@ defmodule Bourse.WS.SubscribeAck do
   1. **Correlated** (deribit JSON-RPC) — `ZenWebsocket.Client.send_message/2`
      returns `{:ok, envelope}` because the outbound frame carries an `id`.
   2. **Asynchronous** (alpaca, bybit, okx, hyperliquid, derive, binance,
-     lighter) — send
+     lighter, coinbaseexchange) — send
      returns `:ok` and the venue reply arrives as
      `{:websocket_message, frame}` or `{:websocket_unmatched_response, frame}`
      (derive replies with a JSON-RPC envelope even when the request had no id).
@@ -39,6 +39,7 @@ defmodule Bourse.WS.SubscribeAck do
   def classify("binance", frame) when is_map(frame), do: classify_binance(frame)
   def classify("binanceusdm", frame) when is_map(frame), do: classify_binance(frame)
   def classify("lighter", frame) when is_map(frame), do: classify_lighter(frame)
+  def classify("coinbaseexchange", frame) when is_map(frame), do: classify_coinbase(frame)
   def classify(exchange_id, frame) when is_binary(exchange_id) and is_map(frame), do: classify_generic(frame)
 
   @doc """
@@ -103,6 +104,15 @@ defmodule Bourse.WS.SubscribeAck do
   defp classify_binance(%{"error" => error} = frame) when not is_nil(error), do: {:rejected, frame}
   defp classify_binance(%{"result" => _}), do: :success
   defp classify_binance(_), do: :not_ack
+
+  # Coinbase Exchange: `type: "subscriptions"` is the ack; `type: "error"`
+  # with `reason: "<channel> is not a valid channel"` is the rejection.
+  # last_match / match / heartbeat are data, not acks — last_match is the
+  # historical snapshot and must not be treated as a subscribe success that
+  # swallows the frame.
+  defp classify_coinbase(%{"type" => "subscriptions"}), do: :success
+  defp classify_coinbase(%{"type" => "error"} = frame), do: {:rejected, frame}
+  defp classify_coinbase(_frame), do: :not_ack
 
   # Lighter's initial subscribed/* frame is both the acknowledgement and the
   # first public snapshot. Subsequent update/* frames are data, not acks.

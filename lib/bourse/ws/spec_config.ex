@@ -135,6 +135,26 @@ defmodule Bourse.WS.SpecConfig do
         expires_offset_ms: 10_000
       }
     },
+    "coinbaseexchange" => %{
+      # Official Exchange feed (not Advanced Trade). Public matches and
+      # heartbeat need no credentials. Sandbox URL is the same production
+      # host — REST for this venue is production-public-only, and the
+      # sandbox book is a different product.
+      public_url: "wss://ws-feed.exchange.coinbase.com",
+      public_url_sandbox: "wss://ws-feed.exchange.coinbase.com",
+      private_url: nil,
+      private_url_sandbox: nil,
+      heartbeat: :disabled,
+      subscription_pattern: :type_subscribe,
+      subscription_config: %{
+        args_field: "product_ids",
+        args_format: :string_list,
+        channels_field: "channels",
+        channel_name: ["matches", "heartbeat"]
+      },
+      auth_pattern: nil,
+      auth_config: %{}
+    },
     "okx" => %{
       public_url: "wss://ws.okx.com:8443/ws/v5/public",
       public_url_sandbox: "wss://wspap.okx.com:8443/ws/v5/public",

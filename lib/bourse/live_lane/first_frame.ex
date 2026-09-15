@@ -54,6 +54,14 @@ defmodule Bourse.LiveLane.FirstFrame do
     },
     %{venue: "bybit", section: :public, watch: :watch_ticker, symbol: "BTC/USDT", sandbox: true, credentials: false},
     %{
+      venue: "coinbaseexchange",
+      section: :public,
+      watch: :watch_trades,
+      symbol: "ETH/USD",
+      sandbox: false,
+      credentials: false
+    },
+    %{
       venue: "deribit",
       section: :public,
       watch: :watch_ticker,
@@ -83,15 +91,9 @@ defmodule Bourse.LiveLane.FirstFrame do
   @exclusions [
     %{
       venue: "coinbaseexchange",
-      surface: "ws_public",
-      reason: "runtime venue without a WebSocket config; connect/3 answers :websocket_not_configured",
-      tracking: "Bourse.WS.Config.registered_divergences — task 544"
-    },
-    %{
-      venue: "coinbaseexchange",
       surface: "ws_private",
-      reason: "runtime venue without a WebSocket config; connect/3 answers :websocket_not_configured",
-      tracking: "Bourse.WS.Config.registered_divergences — task 544"
+      reason: "public-only venue; private Coinbase APIs are out of scope",
+      tracking: "task 697 — public matches and heartbeat; private remains excluded"
     },
     %{
       venue: "alpaca",
@@ -416,7 +418,7 @@ defmodule Bourse.LiveLane.FirstFrame do
   defp heartbeat?(frame) when is_binary(frame), do: String.downcase(frame) in ["ping", "pong"]
   defp heartbeat?(%{"op" => op}) when op in ["ping", "pong"], do: true
   defp heartbeat?(%{"event" => event}) when event in ["ping", "pong"], do: true
-  defp heartbeat?(%{"type" => type}) when type in ["ping", "pong"], do: true
+  defp heartbeat?(%{"type" => type}) when type in ["ping", "pong", "heartbeat"], do: true
   defp heartbeat?(_frame), do: false
 
   defp success_row(venue, channel, class, frame, first_kind) do

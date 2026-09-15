@@ -149,6 +149,51 @@ defmodule Bourse.WS.SubscribeAckTest do
                })
     end
 
+    test "coinbaseexchange subscriptions ack, invalid-channel error, and data frames" do
+      assert :success =
+               SubscribeAck.classify("coinbaseexchange", %{
+                 "type" => "subscriptions",
+                 "channels" => [
+                   %{"name" => "matches", "product_ids" => ["ETH-USD"]},
+                   %{"name" => "heartbeat", "product_ids" => ["ETH-USD"]}
+                 ]
+               })
+
+      error = %{
+        "type" => "error",
+        "message" => "Failed to subscribe",
+        "reason" => "not_a_valid_channel is not a valid channel"
+      }
+
+      assert {:rejected, ^error} = SubscribeAck.classify("coinbaseexchange", error)
+      assert {:error, {:subscription_rejected, ^error}} = SubscribeAck.to_result({:rejected, error})
+
+      assert :not_ack =
+               SubscribeAck.classify("coinbaseexchange", %{
+                 "type" => "last_match",
+                 "trade_id" => 842_900_890,
+                 "product_id" => "ETH-USD"
+               })
+
+      assert :not_ack =
+               SubscribeAck.classify("coinbaseexchange", %{
+                 "type" => "match",
+                 "trade_id" => 842_900_891,
+                 "product_id" => "ETH-USD",
+                 "side" => "sell",
+                 "price" => "2497.81",
+                 "size" => "0.721"
+               })
+
+      assert :not_ack =
+               SubscribeAck.classify("coinbaseexchange", %{
+                 "type" => "heartbeat",
+                 "last_trade_id" => 842_900_890,
+                 "sequence" => 102_860_075_212,
+                 "product_id" => "ETH-USD"
+               })
+    end
+
     test "generic fallback recognizes common ack shapes without classifying data" do
       assert :success = SubscribeAck.classify("future_venue", %{"success" => true})
 

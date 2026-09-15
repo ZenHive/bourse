@@ -22,6 +22,20 @@ defmodule Bourse.WS.Subscription.TypeSubscribeTest do
            } = TypeSubscribe.subscribe(["BTC-USD", "ETH-USD"], config)
   end
 
+  test "Coinbase dual-field form accepts a list of channel names" do
+    config = %{
+      args_field: "product_ids",
+      channels_field: "channels",
+      channel_name: ["matches", "heartbeat"]
+    }
+
+    assert %{
+             "type" => "subscribe",
+             "product_ids" => ["ETH-USD"],
+             "channels" => ["matches", "heartbeat"]
+           } = TypeSubscribe.subscribe(["ETH-USD"], config)
+  end
+
   test "dual-field variant with a non-\"channels\" field name passes channel_name as bare string" do
     config = %{args_field: "product_ids", channels_field: "channel", channel_name: "matches"}
 

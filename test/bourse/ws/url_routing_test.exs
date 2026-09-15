@@ -43,6 +43,19 @@ defmodule Bourse.WS.URLRoutingTest do
       assert URLRouting.public_url(exchange) == "wss://wspap.okx.com:8443/ws/v5/public"
     end
 
+    test "coinbaseexchange public URL is the Exchange feed with or without sandbox" do
+      exchange = Exchange.new!("coinbaseexchange")
+
+      assert URLRouting.public_url(exchange) == "wss://ws-feed.exchange.coinbase.com"
+      assert URLRouting.private_url(exchange) == nil
+
+      # The venue authors no testnet REST host, so Exchange.new!/2 refuses
+      # sandbox: true. The WS config still carries a sandbox URL (the same
+      # production feed) for callers that flip the flag on the struct.
+      sandbox = %{exchange | sandbox: true}
+      assert URLRouting.public_url(sandbox) == "wss://ws-feed.exchange.coinbase.com"
+    end
+
     test "unsupported exchange returns nil" do
       exchange = %Exchange{id: "kraken", name: "Unsupported", spec: %{}}
       assert URLRouting.public_url(exchange) == nil

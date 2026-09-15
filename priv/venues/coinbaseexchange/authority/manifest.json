@@ -118,6 +118,59 @@
         "semantic_authority": true,
         "completeness_gate": false
       }
+    },
+    {
+      "id": "websocket-channels",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.cdp.coinbase.com/exchange/websocket-feed/channels",
+      "fetch_url": "https://docs.cdp.coinbase.com/exchange/websocket-feed/channels",
+      "filename": "coinbaseexchange-websocket-channels-2026-09-15.html",
+      "retrieved_at": "2026-09-15",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-09-15"
+      },
+      "sha256": "a803a624948ea6fe57b9b0097a767be52570cde1bae8d0f4dd1aed4520d674d8",
+      "bytes": 1349853,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific redistribution license published",
+        "evidence_url": "https://docs.cdp.coinbase.com/",
+        "handling": "reference_only",
+        "reason": "The rendered provider documentation is referenced rather than redistributed."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.cdp.coinbase.com/exchange/websocket-feed/channels"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-09-15",
+        "mutable": true,
+        "notes": "Pinned from a live public-feed probe on 2026-09-15 against wss://ws-feed.exchange.coinbase.com: subscriptions ack, last_match, match, heartbeat.last_trade_id, and type=error reason '<channel> is not a valid channel'. Overview: https://docs.cdp.coinbase.com/exchange/websocket-feed/overview"
+      },
+      "expressiveness": {
+        "level": "prose_documentation",
+        "limitations": [
+          "The page documents feed channels in prose rather than a typed contract."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_websocket",
+          "coverage": "partial",
+          "limitations": [
+            "Authored coverage is the public matches and heartbeat channels; private and Advanced Trade are out of scope."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
     }
   ],
   "rejected_candidates": []

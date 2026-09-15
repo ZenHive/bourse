@@ -6,10 +6,9 @@ defmodule Bourse.WS.Config do
   urls when emitted) with hand-maintained bases in `Bourse.WS.SpecConfig` for
   subscription patterns, URL fallbacks, and auth pattern detail.
 
-  Ten runtime venues have hand bases. Coinbase Exchange is the sole registered
-  runtime/config divergence because its WebSocket transport is not configured.
-  Spec-resolved heartbeat/auth overrides hand values where
-  `unresolved_reason` is nil.
+  All eleven runtime venues have hand bases. Coinbase Exchange is public-only
+  on the Exchange feed (`wss://ws-feed.exchange.coinbase.com`). Spec-resolved
+  heartbeat/auth overrides hand values where `unresolved_reason` is nil.
 
   ## Entry shape
 
@@ -34,7 +33,7 @@ defmodule Bourse.WS.Config do
   alias Bourse.Exchange
   alias Bourse.WS.SpecConfig
 
-  @registered_divergences %{"coinbaseexchange" => :websocket_not_configured}
+  @registered_divergences %{}
 
   @doc """
   Returns the WS config map for the given exchange id or struct, or nil if it

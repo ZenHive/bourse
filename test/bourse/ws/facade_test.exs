@@ -42,8 +42,11 @@ defmodule Bourse.WS.FacadeTest do
   end
 
   test "returns connection setup errors without opening a socket" do
-    assert {:error, :websocket_not_configured} =
-             WS.connect(Exchange.new!("coinbaseexchange"), :public)
+    alias Bourse.WS.Config
+
+    # Every runtime venue has a public WS config. The missing-config
+    # classification for a supported id is still :websocket_not_configured.
+    assert Config.missing_config_error("coinbaseexchange") == {:error, :websocket_not_configured}
 
     unsupported = %Exchange{id: "kraken", name: "Kraken", spec: %{}}
     assert {:error, :unsupported_exchange} = WS.connect(unsupported, :public)

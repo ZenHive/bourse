@@ -71,6 +71,38 @@ defmodule Bourse.WS.MessageRouterTest do
       assert {:unknown, ^unknown} = MessageRouter.route(unknown, nil, exchange)
     end
 
+    test "routes Coinbase match as trades and last_match/heartbeat as system" do
+      exchange = Exchange.new!("coinbaseexchange")
+      envelope = Envelope.for_exchange(exchange)
+
+      match = %{
+        "type" => "match",
+        "trade_id" => 842_900_891,
+        "product_id" => "ETH-USD",
+        "side" => "sell",
+        "price" => "2497.81",
+        "size" => "0.721",
+        "time" => "2026-09-15T06:09:40.530674Z"
+      }
+
+      last_match = %{match | "type" => "last_match", "trade_id" => 842_900_890}
+
+      heartbeat = %{
+        "type" => "heartbeat",
+        "last_trade_id" => 842_900_890,
+        "sequence" => 102_860_075_212,
+        "product_id" => "ETH-USD",
+        "time" => "2026-09-15T06:09:40.000000Z"
+      }
+
+      subscriptions = %{"type" => "subscriptions", "channels" => []}
+
+      assert {:routed, :watch_trades, ^match, "match"} = MessageRouter.route(match, envelope, exchange)
+      assert {:system, ^last_match} = MessageRouter.route(last_match, envelope, exchange)
+      assert {:system, ^heartbeat} = MessageRouter.route(heartbeat, envelope, exchange)
+      assert {:system, ^subscriptions} = MessageRouter.route(subscriptions, envelope, exchange)
+    end
+
     test "classifies Deribit public/test replies as system without a channel" do
       exchange = Exchange.new!("deribit")
       envelope = Envelope.for_exchange(exchange)

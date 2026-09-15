@@ -108,6 +108,25 @@ defmodule Bourse.WS.CanaryTest do
     end
   end
 
+  describe "coinbaseexchange public WS" do
+    @tag :task_697
+    test "connect → watch_trades → receive last_match → close" do
+      exchange = Exchange.new!("coinbaseexchange")
+      assert {:ok, ws} = WS.connect(exchange, :public)
+
+      try do
+        assert WS.get_state(ws) == :connected
+        assert {:ok, _handle} = WS.watch_trades(ws, "ETH/USD")
+
+        assert_receive {:websocket_message, %{"type" => type, "product_id" => "ETH-USD"}}
+                       when type in ["last_match", "match", "heartbeat"],
+                       @receive_timeout
+      after
+        WS.close(ws)
+      end
+    end
+  end
+
   describe "okx public WS" do
     test "connect → subscribe → receive → close" do
       exchange = Exchange.new!("okx")

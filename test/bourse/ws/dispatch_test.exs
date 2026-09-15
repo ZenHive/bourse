@@ -49,4 +49,13 @@ defmodule Bourse.WS.DispatchTest do
     exchange = %{Exchange.new!("bybit") | spec: %{}}
     assert Dispatch.entries(exchange) == []
   end
+
+  test "coinbaseexchange routes match to trades and last_match/heartbeat to system" do
+    exchange = Exchange.new!("coinbaseexchange")
+    assert {:family, :watch_trades} = Dispatch.resolve_channel(exchange, "match")
+    assert :system = Dispatch.resolve_channel(exchange, "last_match")
+    assert :system = Dispatch.resolve_channel(exchange, "heartbeat")
+    assert :system = Dispatch.resolve_channel(exchange, "subscriptions")
+    assert :system = Dispatch.resolve_channel(exchange, "error")
+  end
 end

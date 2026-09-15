@@ -74,6 +74,23 @@ defmodule Bourse.WS.SubscribeRejectionLiveTest do
       assert :ok = WS.close(ws)
     end
 
+    test "coinbaseexchange rejects an unknown channel" do
+      exchange = Exchange.new!("coinbaseexchange")
+      assert {:ok, ws} = WS.connect(exchange, :public)
+
+      assert {:error, {:subscription_rejected, frame}} =
+               WS.subscribe(ws, ["ETH-USD"],
+                 channel_name: "not_a_valid_channel",
+                 ack_timeout_ms: @ack_timeout_ms
+               )
+
+      assert frame["type"] == "error"
+      assert frame["message"] == "Failed to subscribe"
+      assert frame["reason"] == "not_a_valid_channel is not a valid channel"
+
+      assert :ok = WS.close(ws)
+    end
+
     test "bybit accepted subscription still returns bare :ok" do
       exchange = Exchange.new!("bybit", sandbox: true)
       assert {:ok, ws} = WS.connect(exchange, :public)

@@ -38,6 +38,11 @@ defmodule Bourse.WS.Envelope do
       "unwrap_list" => false,
       "match_type" => "exact_then_substring"
     },
+    "coinbaseexchange" => %{
+      "discriminator_field" => "type",
+      "data_field" => "self",
+      "match_type" => "exact"
+    },
     "deribit" => %{
       "discriminator_field" => "params.channel",
       "data_field" => "params.data",

@@ -36,6 +36,13 @@ defmodule Bourse.WS.EnvelopeHandlerMappingsTest do
              Envelope.for_exchange(Exchange.new!("derive"))
   end
 
+  test "coinbaseexchange envelope keys frames on type and keeps the payload as self" do
+    envelope = Envelope.for_exchange(Exchange.new!("coinbaseexchange"))
+    assert envelope["discriminator_field"] == "type"
+    assert envelope["data_field"] == "self"
+    assert Envelope.match_type(envelope) == "exact"
+  end
+
   test "authors a Binance partial-book shape channel and none for a missing envelope" do
     envelope = Envelope.for_exchange(Exchange.new!("binance"))
 

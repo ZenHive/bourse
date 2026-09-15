@@ -8,7 +8,7 @@ defmodule Bourse.WS.SpecConfigTest do
   alias Bourse.WS.Subscription
   alias ZenWebsocket.Client
 
-  @ws_venues ~w(alpaca binance binancecoinm binanceusdm bybit deribit derive hyperliquid lighter okx)
+  @ws_venues ~w(alpaca binance binancecoinm binanceusdm bybit coinbaseexchange deribit derive hyperliquid lighter okx)
 
   defmodule Transport do
     @moduledoc false
@@ -73,6 +73,27 @@ defmodule Bourse.WS.SpecConfigTest do
       assert Config.for_exchange("hyperliquid").heartbeat == :disabled
       assert Config.for_exchange("alpaca").heartbeat == :disabled
       assert Config.for_exchange("lighter").heartbeat == :disabled
+      assert Config.for_exchange("coinbaseexchange").heartbeat == :disabled
+    end
+
+    test "coinbaseexchange authors the Exchange feed and dual-field subscribe" do
+      config = Config.for_exchange("coinbaseexchange")
+      assert config.public_url == "wss://ws-feed.exchange.coinbase.com"
+      assert config.subscription_pattern == :type_subscribe
+      assert config.auth_pattern == nil
+      assert is_nil(config.private_url)
+
+      assert {:ok,
+              %{
+                "type" => "subscribe",
+                "product_ids" => ["ETH-USD"],
+                "channels" => ["matches", "heartbeat"]
+              }} =
+               Subscription.build_subscribe(
+                 config.subscription_pattern,
+                 ["ETH-USD"],
+                 config.subscription_config
+               )
     end
 
     test "hyperliquid is supported with public URL" do

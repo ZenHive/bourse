@@ -10,6 +10,7 @@ defmodule Bourse.WS.ChannelsTest do
       {"bybit", :watch_ticker, %{symbol: "BTC/USDT"}, "tickers.BTCUSDT"},
       {"bybit", :watch_order_book, %{symbol: "BTC/USDT"}, "orderbook:BTCUSDT"},
       {"bybit", :watch_trades, %{symbol: "BTC/USDT"}, "publicTrade.BTCUSDT"},
+      {"coinbaseexchange", :watch_trades, %{symbol: "ETH/USD"}, "ETH-USD"},
       {"okx", :watch_ticker, %{symbol: "BTC/USDT"}, %{"channel" => "tickers", "instId" => "BTC-USDT"}},
       {"okx", :watch_trades, %{symbol: "BTC/USDT"}, %{"channel" => "trades", "instId" => "BTC-USDT"}},
       {"okx", :watch_orders, %{}, %{"channel" => "orders"}},
