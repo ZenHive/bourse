@@ -1096,7 +1096,7 @@ test code. Edit the fence when adding a ledgered case.
 
 ### Task 702 — public WS template audit delivery gaps (2026-09-15)
 
-The full denominator is in [the channel audit](task-702-public-ws-audit.md).
+The full denominator is in [the channel audit](public-ws-channel-confrontation.md).
 A documented name or subscribe acknowledgement below is not a data-frame pass.
 No test exclusions or lane classifications are changed by these entries.
 
@@ -1107,3 +1107,4 @@ No test exclusions or lane classifications are changed by these entries.
 | OKX `watchOHLCV`, `watchOHLCVForSymbols`: `candle{timeframe}` | Authored public URL rejects `candle1m` with error `60018`; provider requires `/ws/v5/business`. Direct subscription on that host delivered a candle, but current unified host routing does not select it. | Author business-host routing and receive the candle through the repository's subscribed path. The valid channel names are retained. |
 | Hyperliquid `watchOHLCV: candle` | Testnet acknowledged `coin: BTC, interval: 1m` but no frame in 45 seconds. Production delivered a candle; demo activity remains unproven. | Receive a candle on the testnet channel; production evidence is in the audit. |
 | Derive `watchOrders`, `watchMyTrades` removed `:{symbol}` slots | No public counterpart; provider channels require a numeric subaccount and authenticated account events. Bad hash rejected with error 13000. Slots explicitly unresolved instead of sending invented names. | Private follow-up must subscribe to `{subaccount_id}.orders` / `{subaccount_id}.trades` with authorized event generation and prove delivery. No private handshake is changed here. |
+| binancecoinm — every `watch*` method | The venue authors `websocket.subscribe` as `supported: false, reason: not_live_verified` and carries no `channels` map, so `Bourse.WS.Channels` answers `:no_channel_templates` and `mix bourse.verify_ws_first_frame` stays red for the lane as a whole even with every venue above passing. Not a delivery gap: nothing is subscribed because nothing is authored. Its socket base URLs (`dstream` / `demo-dstream`) are authored, so this is not `:websocket_not_configured` either. | Confront binancecoinm's own `dstream` channel names, author the subscribe slice, and receive a classified first data frame. Outside the task 702 confrontation, which audited only authored templates. |

@@ -19,6 +19,7 @@ That boolean is the whole contract: One-way is `false`, Hedge is `true`.
 <!-- carve-evidence-status
 {"carve_id":"C-T698b","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M Get Current Position Mode dualSidePosition"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 demo-dapi.binance.com dapiPrivateGetPositionSideDual dualSidePosition false; invalid API key -2014; stale timestamp -1021"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":null}
 -->
+
 ## 2026-08-12 — rate-unit confrontation (Task 594)
 **C-T594c — Binance COIN-M's authored rate-like slots name their venue units (task 594).
 Outcome: CONFIRM documented and arithmetic-derived units; retain explicit gaps.**
@@ -65,6 +66,7 @@ Outcome: DIVERGE from the prior unscaled EAPI percentage.**
 <!-- carve-evidence-status
 {"carve_id":"C-T603c","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance EAPI and COIN-M ticker contracts linked in C-T603c"},"observed_evidence":{"kind":"provider_shaped","reference":"The 2026-08-12 EAPI row pinned in binance_authored_spec_test.exs is parsed through the carried COIN-M module"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The EAPI slice is carried by this complete document but is not a COIN-M runtime operation"}
 -->
+
 ## 2026-08-13 — list-read discriminator (Task 606)
 **C-T606c — the carried Binance option ticker slice uses the eapi route
 (task 606). Outcome: DIVERGE from the request-context `market.option` gate.**

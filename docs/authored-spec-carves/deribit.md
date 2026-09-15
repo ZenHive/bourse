@@ -32,6 +32,7 @@ previous "deribit publishes no transfer currency" reading.**
 <!-- carve-evidence-status
 {"carve_id":null,"date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_transfers transfer object"},"observed_evidence":{"kind":"live_call","reference":"test.deribit.com private/get_transfers currency=BTC 2026-09-15, one confirmed subaccount row carrying currency BTC"},"compatibility_reference":null,"resolved_tier":"verified","note":"authored inline from the landed-base mix ci gate, no task; see BUGS.md 2026-09-15 entry for the gate triage"}
 -->
+
 ## 2026-09-15 — order identity, fill fees, closed-order 11044 (Task 695)
 
 **C-T695 — Deribit `instrument_name` is order/trade identity, user-trade `fee`/`fee_currency`
@@ -91,6 +92,7 @@ option row emits it as a fraction (task 686). Outcome: DIVERGE from C-T600f's
 <!-- carve-evidence-status
 {"carve_id":"C-T686f","date":"2026-08-29","semantic_source":{"kind":"provider_owned","reference":"Deribit public/get_book_summary_by_currency mark_iv and public/ticker percent-point IV convention linked in C-T686f"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-29 www.deribit.com public/get_book_summary_by_currency: BTC 1030/1030 legs with mark_iv (BTC/USD:BTC-260925-81000-P 36.3 -> 0.363); USDC 606 SOL legs (SOL/USDC:USDC-261225-115-P 61.58 -> 0.6158); pinned in test/live/read_parse_slots_test.exs"},"compatibility_reference":null,"resolved_tier":1}
 -->
+
 ## 2026-08-28 — option premium notional shared rule (Task 666)
 
 **C-T666c — Deribit's Task 664 premium derivation satisfies the shared option
@@ -209,6 +211,7 @@ Outcome: DIVERGE from the same-currency claim for linear settlement.**
 <!-- carve-evidence-status
 {"carve_id":"C-T603f","date":"2026-08-18","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_positions contract and inverse example linked in C-T603f"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":null,"known_gap_reason":"Deribit does not expose a same-unit percentage identity for the linear row; the recording pins the intentional nil output","note":"the replay corpus this tier rested on was deleted; unverified until a live call against the venue re-proves it"}
 -->
+
 ## 2026-08-13 — list-read discriminator (Task 606)
 **C-T606f — Deribit inverse margin ratios are gated on the payload instrument
 (task 606). Outcome: DIVERGE from the request-context `market.inverse` gate.**

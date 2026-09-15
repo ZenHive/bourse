@@ -63,6 +63,7 @@ Outcome: DIVERGE from the prior unscaled EAPI percentage.**
 <!-- carve-evidence-status
 {"carve_id":"C-T603d","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Binance EAPI and USD-M ticker contracts linked in C-T603d"},"observed_evidence":{"kind":"provider_shaped","reference":"The 2026-08-12 EAPI row pinned in binance_authored_spec_test.exs is parsed through the carried USD-M module"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The EAPI slice is carried by this complete document but is not a USD-M runtime operation"}
 -->
+
 ## 2026-08-13 — list-read discriminator (Task 606)
 **C-T606d — the carried Binance option ticker slice uses the eapi route
 (task 606). Outcome: DIVERGE from the request-context `market.option` gate.**

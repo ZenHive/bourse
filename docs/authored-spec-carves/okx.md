@@ -87,6 +87,7 @@ Outcome: CONFIRM provider arithmetic; retain one history-position gap.**
 <!-- carve-evidence-status
 {"carve_id":"C-T594j","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"OKX interest, funding, position, ticker, and fee contracts linked in C-T594j"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":null,"known_gap_reason":"The history-position maintenance-margin percentage is a scale-invariant zero without a provider maintenance-margin/notional identity","note":"the replay corpus this tier rested on was deleted; unverified until a live call against the venue re-proves it"}
 -->
+
 ## 2026-08-12 — ledger type authority (Task 598)
 **C-T600j — OKX IV and funding fields conform to the cross-venue fraction contract
 (task 600). Outcome: CONFIRM provider decimal volatility.**

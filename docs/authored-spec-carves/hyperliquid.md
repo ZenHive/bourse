@@ -171,6 +171,7 @@ Outcome: CONFIRM provider arithmetic.**
 <!-- carve-evidence-status
 {"carve_id":"C-T594i","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Hyperliquid funding, fees, clearinghouse, mids, and fills contracts linked in C-T594i"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":null,"known_gap_reason":"Dynamic user fee rates and a populated clearinghouse percentage row are not both covered by manifest-registered responses","note":"the replay corpus this tier rested on was deleted; unverified until a live call against the venue re-proves it"}
 -->
+
 ## 2026-08-12 — ledger type authority (Task 598)
 **C-T600h — Hyperliquid funding fields conform to the cross-venue fraction contract
 (task 600). Outcome: CONFIRM and delete the dead income-rate duplicate.**

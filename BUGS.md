@@ -114,6 +114,33 @@ roadmap.
 
 ---
 
+## 2026-09-15 — the bybit funding-rate contract compared two separate live reads of a moving number at `1.0e-12`, so it went red on the venue's own drift
+
+**Status:** ✅ fixed 2026-09-15 inline (post-merge audit of `79e57bd`).
+
+`test/live/bybit/bybit_authored_integration_test.exs:411` read `fundingRate` from
+`GET /v5/market/tickers`, then called `Bourse.fetch_funding_rate/2`, and asserted the two
+agreed to `1.0e-12`. That field is the **predicted** next funding rate and it moves
+continuously, so the assertion was grading venue drift, not the parse. Observed in the cold
+`mix check.dispatch` run on this range:
+
+```
+Expected the difference between 1.3943e-4 and 1.4487e-4 (5.439999999999975e-6)
+to be less than or equal to 1.0e-12
+```
+
+Five orders of magnitude above the tolerance, seconds apart. The automatic retry passed, so
+it surfaced as `flaky` rather than as a failure — which is exactly how a latent live-lane
+flake stays invisible.
+
+**The fix keeps the assertion's real intent.** The test now takes a *second* raw sample
+after the unified call and asserts the unified rate falls within `[min, max]` of the two
+raw observations. A wrong field or a scale error still fails hard (those differ by orders
+of magnitude); the venue's own drift between two HTTP calls no longer can. Re-run green:
+`mix test.json test/live/bybit/bybit_authored_integration_test.exs:411` — 1 passed.
+
+---
+
 ## 2026-09-15 — `fetch_open_orders` and `fetch_orders` on binanceusdm resolve to the ALGO book by default, so a resting limit order is invisible to a consumer that asks for its open orders
 
 **Status:** 🆕 measured live (orchestrator, landed-base gate run on `44edfaa`) — not
@@ -813,7 +840,7 @@ The private half may need operator re-provisioning (`mix bourse.provision_lighte
 
 ---
 
-## 2026-09-15 — two live contract cases red on unpopulated sandbox state with no ledger row to explain them
+## 2026-09-15 — live contract cases red on unpopulated sandbox state with no ledger row to explain them
 
 **Status:** Recorded, not routed (post-merge audit of `0ac2cd2`, 2026-09-15). No task filed — the ledger process already owns this class.
 
@@ -823,6 +850,18 @@ Same cold `mix check.dispatch` run. Two cases fail for sandbox state rather than
 - `okx:fetchOpenInterestHistory:1:publicGetRubikStatOptionOpenInterestVolume` — *"provider account/market state did not exercise the read"*. The rubik option open-interest read answered empty.
 
 Both scenario helpers fail loudly with actionable text, which is the designed behavior — the open question is whether the state is populatable (populate it) or structurally unavailable on these sandboxes (fence it as state-dependent). Left for the operator to route; recorded here so the next reader does not re-derive it.
+
+**Amended 2026-09-15 (post-merge audit of `79e57bd`).** A third case of the same class
+appeared in the cold `mix check.dispatch` run on that range, so the count in the original
+title is dropped:
+
+- `okx:fetchTrades:2:publicGetPublicOptionTrades` — *"provider account/market state did not
+  exercise the read"*. The public option trade tape answered empty on the demo host.
+
+That run's other reds are all already-owned: ten lighter cases answering `20013 "invalid
+auth: couldnt find account"` (the unprovisioned testnet account, `mix bourse.provision_lighter`,
+task 684 — operator-gated) and the two cases above. Same routing question, same operator
+decision; nothing new to file.
 
 ---
 ## 2026-09-01 — `fetch_funding_rate/2` is unavailable on hyperliquid while `fetch_funding_rates/2` serves the same number, so a per-symbol consumer gets `not_supported` for a rate the venue publishes hourly

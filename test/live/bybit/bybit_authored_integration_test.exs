@@ -426,7 +426,23 @@ defmodule Bourse.BybitAuthoredIntegrationTest do
     assert {:ok, %Bourse.FundingRate{} = rate} = Bourse.fetch_funding_rate(exchange, "BTC/USDT:USDT")
     assert rate.symbol == "BTC/USDT:USDT"
     assert is_number(rate.funding_rate)
-    assert_in_delta rate.funding_rate, raw_rate, 1.0e-12
+
+    # `fundingRate` on the tickers read is the PREDICTED next rate, and it moves
+    # between two calls: observed 1.3943e-4 then 1.4487e-4 seconds apart, five
+    # orders of magnitude above the 1.0e-12 delta this once asserted. Bracket the
+    # unified value with a second raw sample instead, which still fails hard on a
+    # wrong field or a scale error while surviving the venue's own drift.
+    assert {:ok, %{body: after_body}} =
+             Bourse.Bybit.public_get_v5_market_tickers(exchange, %{
+               "category" => "linear",
+               "symbol" => "BTCUSDT"
+             })
+
+    after_rate =
+      after_body |> get_in(["result", "list"]) |> List.first() |> Map.fetch!("fundingRate") |> String.to_float()
+
+    assert rate.funding_rate >= min(raw_rate, after_rate) - 1.0e-12
+    assert rate.funding_rate <= max(raw_rate, after_rate) + 1.0e-12
     assert is_integer(rate.funding_timestamp)
     assert is_binary(rate.funding_datetime)
 

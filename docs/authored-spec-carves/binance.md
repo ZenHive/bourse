@@ -20,6 +20,7 @@ the boolean map.
 <!-- carve-evidence-status
 {"carve_id":"C-T698d","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Binance Get Current Position Mode dualSidePosition on USD-M and COIN-M"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 dedicated futures demo hosts dualSidePosition false"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":null}
 -->
+
 ## 2026-07-22 — market maker/taker + filter precision/limits (Task 164)
 **C-T164a — Public market maker/taker come from Binance's published fee schedule, not
 exchangeInfo and not private tradeFee (task 164). Outcome: CONFIRM venue; DIVERGE from
@@ -103,6 +104,7 @@ Outcome: DIVERGE from the spot-ticker unit applied to the EAPI route.**
 <!-- carve-evidence-status
 {"carve_id":"C-T603b","date":"2026-08-13","semantic_source":{"kind":"provider_owned","reference":"Binance EAPI and spot 24hr ticker contracts linked in C-T603b"},"observed_evidence":{"kind":"live_venue","reference":"2026-08-13 eapi.binance.com GET /eapi/v1/ticker SOL-260814-66-P priceChange 1.42 open 0.08 priceChangePercent 17.75; unified fetch_option emitted percentage 1775.0"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"The live EAPI body is pinned as a parser golden but is not registered as a frozen response"}
 -->
+
 ## 2026-08-13 — list-read discriminator (Task 606)
 **C-T606b — Binance option ticker fractions are gated on the eapi route
 (task 606). Outcome: DIVERGE from the request-context `market.option` gate.**

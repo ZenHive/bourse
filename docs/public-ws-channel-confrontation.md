@@ -1,4 +1,7 @@
-# Task 702 — authored public WebSocket channel confrontation
+# Authored public WebSocket channel confrontation
+
+Every authored public `watch*` template, confronted against the venue's own
+channel names and a live frame (task 702).
 
 Provider documentation and live observations below were collected on 2026-09-15.
 CONFIRMED means the authored template, after the existing channel/envelope
@@ -251,59 +254,19 @@ No provider-name inference is taken from CCXT. Every absent public counterpart
 and every accepted-but-idle channel remains visible above and in
 [the verification ledger](prod-verification-ledger.md#task-702--public-ws-template-audit-delivery-gaps-2026-09-15).
 
-## Verification performed
+## How this was proven
 
-- `mix test.json test/bourse/ws/channels_test.exs test/bourse/ws/channels_fallback_test.exs test/bourse/ws/derive_ticker_test.exs test/bourse/ws/envelope_handler_mappings_test.exs test/bourse/ws/message_router_test.exs test/live/ws/bybit_watch_frame_delivery_test.exs test/live/ws/derive_watch_frame_delivery_test.exs test/live/ws/hyperliquid_watch_frame_delivery_test.exs --quiet --output /tmp/task-702-tests.json`
-  — **69 passed, 0 failed**, including fresh provider data. This is implementer
-  execution, not independent reviewer approval.
-- Before changing runtime modules: `Bourse.WS.Envelope` coverage reached **100%**;
-  `Bourse.WS.Channels` rose from **77.69% to 84.62%** with missing fallback/shape
-  tests. After the channel change it measured **84.73%**.
-- `mix bourse.verify_ws_first_frame --report artifacts/task-702-ws-before.json`
-  — failed on Derive's deprecated ticker rejection and Binance COIN-M's absent
-  template.
-- `mix bourse.verify_ws_first_frame --report artifacts/task-702-ws-after.json`
-  — Derive changed **failed → passed**, channel `ticker_slim.ETH-PERP.100`, first
-  frame `acknowledgement`, subsequent `data_frame: data`. The provider notification
-  shape and real prices are quoted in the Derive carve. No other venue changed
-  status. The whole lane remains **failed**, solely because Binance COIN-M returns
-  `:no_channel_templates`; that venue is explicitly outside Task 702.
+The confrontation is pinned by provider-live delivery tests that subscribe to
+each changed venue's authored templates and assert a real data frame:
+`test/live/ws/bybit_watch_frame_delivery_test.exs`,
+`test/live/ws/derive_watch_frame_delivery_test.exs` and
+`test/live/ws/hyperliquid_watch_frame_delivery_test.exs`. The channel and
+envelope shapes themselves are pinned offline by `test/bourse/ws/`.
 
-Reports under `artifacts/` and `/tmp/` are execution output, not committed fixtures.
-The reviewer remains the independent approval gate. Accepted-but-idle feeds and
-OKX business-host routing are not represented as completed live proof.
-
-The dispatch prechecks passed formatting, compilation with warnings as errors,
-strict Credo, Doctor and Sobelow. Separate `bourse.authority_check`,
-`bourse.error_authority`, `bourse.claude_check`, `bourse.agents_md --check`,
-`ex_dna --max-clones 0` and `reach.check --arch --smells --strict --path lib`
-also passed. Credo's complexity finding on the added coin wrapping was fixed by
-extracting the coin-object helper; no rule was suppressed.
-
-`mix check.dispatch` completed its full live test stage with **3,147 passed,
-14 confirmed failures, 1 flaky result and 82 excluded dangerous tests** (3,244
-total). One failure was a stale Bybit facade assertion expecting
-`orderbook:BTCUSDT`; it was corrected to the observed `orderbook.50.BTCUSDT`.
-The other 13 failures are on unchanged REST/account-state paths:
-
-- Binance `fetchOrderList`: no account order-list ID available.
-- Lighter: 10 account/history/signing reads rejected the configured account with
-  `20013`, `invalid auth: couldnt find account` (promotion 1, signing 2,
-  REST-read contract cases 7).
-- OKX: option open-interest history and option trades returned no populated rows.
-
-The flaky result was OKX `fetchStatus`, whose first request was rate-limited and
-whose automatic retry passed. Those failures were not hidden, skipped or treated
-as success. The full dispatch gate is **not green**. Later static alias stages
-were also run separately, as listed above; the full suite was not repeated to
-regrade unrelated provider failures.
-
-Final targeted verification after the facade expectation and formatter helper fixes:
-
-```sh
-mix test.json test/bourse/ws test/bourse/ws_first_frame_test.exs test/live/ws/bybit_watch_frame_delivery_test.exs test/live/ws/derive_watch_frame_delivery_test.exs test/live/ws/hyperliquid_watch_frame_delivery_test.exs --quiet --output /tmp/task-702-ws-final.json
-```
-
-**411 passed, 0 failed, 0 excluded, 0 skipped.** This includes the complete WS unit
-suite, first-frame classification tests and fresh provider-live delivery tests for
-all three changed venues. `git diff --check` also passed.
+`mix bourse.verify_ws_first_frame` classifies the first data frame per venue.
+Derive moved from failed to passed on channel `ticker_slim.ETH-PERP.100` once
+the deprecated `ticker` template was replaced. The lane as a whole is still
+red, for one reason outside this confrontation: binancecoinm authors no
+`channels` map at all, so `Bourse.WS.Channels` answers
+`:no_channel_templates` for every method on that venue. That gap is carried in
+[the verification ledger](prod-verification-ledger.md#task-702--public-ws-template-audit-delivery-gaps-2026-09-15).

@@ -100,6 +100,87 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   dependency can send those payloads; the remaining upstream gaps are recorded
   in `docs/ws-heartbeat-upstream.md`.
 
+- A slice that does not fit fails loudly instead of resolving to a plausible
+  wrong value. `endpoint_index` must name an available endpoint: an integer
+  outside `0..length(configs) - 1` answers `invalid_parameters` rather than
+  silently falling back to the first config, and an explicit
+  `endpoint_index: nil` stays equivalent to omitting the option. A
+  `sign_recipe` whose `canonical_string` carries no block for the request's
+  method (and no `*`) raises instead of signing with an arbitrary map value,
+  and a non-string path predicate raises instead of matching everything.
+  `errors.status_map` accepts a bare class string — the shape every authored
+  document uses — where the old clause dropped it into an empty map, so the
+  authored status classes are live again; an unrecognized entry shape raises.
+  Non-JSON error bodies are typed by the authored `status_map` /
+  `http_exceptions` too, so a plain-text 403 is the authored class rather than
+  a generic `exchange_error`, and HTTP 403 defers to the authored map when one
+  exists (401 stays hard authentication). Waking alpaca's map exposed a wrong
+  carve underneath it: `404 => OrderNotFound` typed a missing *ticker* as
+  `:order_not_found`, and is now `ExchangeError` per the venue's own
+  "requested resource was not found" — the genuine order 404 stays typed by its
+  exact provider code. OKX `fetch_transfer/2` refuses a 16+ digit
+  bills-archive `billId` as `identifier_class_mismatch` before the wire, since
+  transfer-state accepts only the `transId` issued by
+  `POST /api/v5/asset/transfer`; `Bourse.TransferEntry`'s `id` documentation
+  now names both identifier classes. Pinned live on alpaca paper, bybit and
+  okx demo.
+
+- A position whose notional currency cannot be resolved is marked, not dropped.
+  The reconciliation is wired to `:parse_position` for all eleven venues, so
+  failing the whole call reddened every positions read and dropping the row
+  silently shortened it — a consumer summing exposure understates the account,
+  and "am I flat?" answers yes for an account that is not. The row is retained
+  with `notional` and `notional_currency` blanked, which preserves the
+  documented invariant that `notional_currency` is populated whenever
+  `notional` is, and `info["bourse_notional_unavailable"]` carries the reason,
+  the context and the `unstated_notional` so the gap is machine-visible rather
+  than only a log line. Verified live 2026-09-15 against bybit testnet
+  `fetch_positions_history/2`.
+
+- Lighter can sign orders again, and its order carve matches the venue's own
+  validator. `native/lighter_signer` pins `lighter-go` v1.0.9 — the previous
+  pseudo-version rejected every four-digit market id, so no order could be
+  signed at all — and the shim passes `txtypes.NilOrderVersion` to
+  `SignModifyOrder`, the one signer that takes an order version from the
+  caller, so the signed attributes are byte-identical to the previous pin (the
+  golden vectors were re-run unchanged). An immediate-or-cancel limit order now
+  defaults its `order_expiry` to `txtypes.NilOrderExpiry`, the only expiry
+  `L2CreateOrderTxInfo.Validate/0` accepts for IOC; a caller-supplied expiry
+  still wins. The time-in-force carve advertises `GTD` and no longer advertises
+  `FOK`: lighter-go publishes exactly `ImmediateOrCancel`, `GoodTillTime` and
+  `PostOnly`, and the venue expresses the resting case as an explicit expiry,
+  so `"GTC"` and `"GTD"` both resolve to `GoodTillTime`. `fetch_balance`'s
+  `free` and `used` draw lighter's account-level `cross_asset_value` and
+  `cross_initial_margin_requirement` into the USDC row instead of leaving the
+  cross-margin account unstated. Proven live on
+  `testnet.zklighter.elliot.ai`.
+
+- Deribit `fetch_transfers` carries the currency the venue publishes. The
+  authored transfer slot left `currency` unmapped, so every row answered `nil`
+  for a field the provider sends as `currency`; it is now authored with
+  `safeCurrencyCode`, and the first live transfer row parses.
+
+- Authored public WebSocket watch channels name the venues' own channels.
+  Derive's `watchTicker` subscribes to `ticker_slim.{symbol}.100` — the venue
+  deprecated plain `ticker` and rejects it — and its notification envelope is
+  read from `params.channel` / `params.data`, the shape the venue actually
+  sends, rather than top-level `channel` / `data`. Derive's ticker field map
+  falls back to the abbreviated `instrument_ticker` keys the slim channel
+  carries. Its private `watchMyTrades` / `watchOrders` templates, which carried
+  a CCXT message hash rather than a provider channel, are now flagged
+  `_unresolved_reason` naming the `{subaccount_id}.trades` /
+  `{subaccount_id}.orders` channels to pass explicitly, instead of subscribing
+  to a name the venue does not publish. Hyperliquid's `l2Book` and `trades`
+  subscriptions are wrapped into the venue's `%{"type" => …, "coin" => …}`
+  subscription object instead of being sent as a bare type string, and its
+  duplicate CCXT-shaped aliases are gone. Bybit's templates are the V5 topic
+  names — `allLiquidation.{symbol}`, `orderbook.50.{symbol}`,
+  `kline.{timeframe}.{symbol}`, `publicTrade.{symbol}`, `tickers` — with the
+  CCXT-shaped duplicates removed. Every template was confronted against the
+  provider's own documentation and a live frame; the full denominator,
+  including the channels the venues accept but leave idle, is in
+  `docs/public-ws-channel-confrontation.md`.
+
 ## [0.8.0] - 2026-08-31
 
 ### Added

@@ -10,7 +10,7 @@ parses the `rate-unit` markers and unit tables below against the public structs.
 DIVERGE for six invalid alternatives; CONFIRMED for four existing valid
 method/template occurrences.**
 
-The [complete audit](../task-702-public-ws-audit.md#bybit) names every template,
+The [complete audit](../public-ws-channel-confrontation.md#bybit) names every template,
 provider source, actual rendered topic, rejection and data-frame evidence.
 Bybit rejected `liquidations:BTCUSDT`, `ohlcv:BTCUSDT:1`,
 `orderbook:BTCUSDT`, `BTCUSDT`, `ticker:BTCUSDT` and `trade:BTCUSDT` with
@@ -39,7 +39,7 @@ unchanged. The live regression is
 `test/live/ws/bybit_watch_frame_delivery_test.exs`.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T702-bybit","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 public ticker, orderbook, trade, kline and all-liquidation documentation linked above"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 stream-testnet.bybit.com: individual malformed topic rejection frames; ticker ts1789470111552, orderbook ts1789470134595, kline ts1789470134641, publicTrade ts1789470139409; docs/task-702-public-ws-audit.md"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"allLiquidation.BTCUSDT acknowledged but delivered no data in 65 seconds on testnet and 60 seconds on production; tracked in prod-verification-ledger"}
+{"carve_id":"C-T702-bybit","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 public ticker, orderbook, trade, kline and all-liquidation documentation linked above"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 stream-testnet.bybit.com: individual malformed topic rejection frames; ticker ts1789470111552, orderbook ts1789470134595, kline ts1789470134641, publicTrade ts1789470139409; docs/public-ws-channel-confrontation.md"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"allLiquidation.BTCUSDT acknowledged but delivered no data in 65 seconds on testnet and 60 seconds on production; tracked in prod-verification-ledger"}
 -->
 
 ## 2026-09-15 — API-key metadata lives on fetchAccount (Task 698)
@@ -106,6 +106,7 @@ Outcome: CONFIRM provider arithmetic where available; retain one position-histor
 <!-- carve-evidence-status
 {"carve_id":"C-T594e","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Bybit funding-fee, borrow-history, ticker, position, instrument, and fee-rate contracts linked in C-T594e"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":null,"known_gap_reason":"The closed-position cumEntryValue/cumExitValue ratio is not identified by Bybit as an initial-margin percentage","note":"the replay corpus this tier rested on was deleted; unverified until a live call against the venue re-proves it"}
 -->
+
 ## 2026-08-12 — ledger type authority (Task 598)
 **C-T600e — Bybit rate fields conform to the cross-venue unit contract (task 600).
 Outcome: CONFIRM option IV and funding fractions.**
