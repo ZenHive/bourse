@@ -23788,7 +23788,7 @@ shipped_in = "8304acb0ea91dea81d88a9b439e6ec00cf6857e3"
 id = "695"
 phase = 16
 bundle = "live_triage"
-status = "in_progress"
+status = "done"
 title = "Preserve Deribit order identity, fill fees and closed-order errors through the full lifecycle"
 scores = { d = 5, b = 9, u = 9 }
 markers = ["bug"]
@@ -23801,9 +23801,16 @@ body = """
 Three trading_dashboard reports in BUGS.md dated 2026-09-14/15 describe one Deribit order/fill lifecycle: parse_order loses instrument identity, parse_trade emits an empty fee map despite fee/fee_currency, and canceling a closed order classifies 11044 as InvalidOrder/operation_failed. Local authored source still has order.symbol null, trade.fee with unresolved sub_field_map, and raw exceptions 11044 __function:InvalidOrder.
 
 Make direct parsers, unified reads/writes and WS error delivery agree on provider-owned identity, fee and terminal-order semantics. Normalize instrument_name with the venue market mapping rather than claiming raw and unified symbols are interchangeable. Preserve the existing Fee representation contract and its precision; populate all supported fee views consistently without inventing an order-level aggregate from missing trades. For cancel, classify provider not_open_order as order_not_found, but never treat it as proof of canceled rather than filled: consumers must still be able to read the actual terminal state. Check the code's meaning on other operations before applying a global error mapping. Dispatch for money and public parser/error contracts. D5 is one lifecycle pass; B9/U9 removes three active consumer workarounds."""
+implemented = "Landed by cursor via merge-train; reviewer-approved (run run-1789440336549-c7b3ded5, b4daa6f9402ec5c1d17bb0f4d70e1556dfefdd41)."
+delivered_by = "cursor"
+verified = true
+verified_by = "claude"
+verification_ref = "harness-run:run-1789440336549-c7b3ded5"
 created_at = "2026-09-15"
 started_at = "2026-09-15"
 scored_at = "2026-09-15"
+done_at = "2026-09-15"
+shipped_in = "b4daa6f9402ec5c1d17bb0f4d70e1556dfefdd41"
 
 [[task]]
 id = "696"
