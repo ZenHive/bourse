@@ -23794,7 +23794,7 @@ scored_at = "2026-09-15"
 id = "696"
 phase = 16
 bundle = "live_triage"
-status = "pending"
+status = "in_progress"
 title = "Make WebSocket heartbeat liveness observable and keep control replies out of market data"
 scores = { d = 6, b = 9, u = 9 }
 markers = ["bug"]
@@ -23808,6 +23808,7 @@ BUGS.md 2026-09-14 reports Deribit public/test replies delivered as websocket_me
 
 Treat heartbeat requests/replies as transport control. Expose actual connection-scoped liveness observations through Bourse, including routed subscription sockets: successful heartbeat evidence, pending/failed state and a bounded failure/disconnect outcome. Do not use market-data silence as heartbeat failure on sparse feeds. Configure only provider-supported and dependency-supported heartbeat mechanisms; unsupported combinations fail loudly. Reuse the dependency's lifecycle instead of building a competing heartbeat state machine. If the locked dependency lacks the required primitive, coordinate a separately reviewable upstream change and state the exact blocker rather than promising evidence Bourse cannot observe. Dispatch for cross-venue runtime and public health contract. D6 crosses socket routing/control/lifecycle; B9/U9 prevents quote withdrawal on control frames and false liveness."""
 created_at = "2026-09-15"
+started_at = "2026-09-15"
 scored_at = "2026-09-15"
 
 [[task]]
