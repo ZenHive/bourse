@@ -23888,7 +23888,7 @@ shipped_in = "8ace58828f500aed5d5ddf9a8d4c375a829f0b3e"
 id = "698"
 phase = 16
 bundle = "live_triage"
-status = "pending"
+status = "in_progress"
 title = "Restore live contract coverage for account metadata removed from balance reads"
 scores = { d = 4, b = 6, u = 6 }
 markers = ["bug"]
@@ -23902,6 +23902,7 @@ BUGS.md 2026-08-29 reports task 686 bookkeeping fallout: Bybit user/query-api lo
 
 Choose a provider-backed normalized position-mode result across the Binance family, reusing the existing response vocabulary if it expresses the provider boolean losslessly. Reserve RawResponse for genuinely unauthored semantics; do not merely relax the promotion test. Exercise Bybit key/account metadata as raw metadata or an existing appropriate account surface, without inventing a new balance branch. Re-confirm the historical missing-case premise before changing the denominator. Dispatch for public response semantics and live test infrastructure; D4 is a bounded contract repair; B6/U6 restores reported missing coverage."""
 created_at = "2026-09-15"
+started_at = "2026-09-15"
 scored_at = "2026-09-15"
 
 [[task]]
