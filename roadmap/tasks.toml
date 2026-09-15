@@ -23959,3 +23959,42 @@ D8 covers one invariant over the whole unified control surface plus every violat
 """
 created_at = "2026-09-15"
 scored_at = "2026-09-15"
+
+[[task]]
+id = "701"
+phase = 16
+bundle = "live_triage"
+status = "in_progress"
+title = "The WS first-frame lane passes on any non-heartbeat frame, so a connection greeting certifies a venue whose subscription the venue rejected"
+scores = { d = 5, b = 8, u = 8 }
+markers = ["bug"]
+acceptance_criteria = ["A live run of `mix bourse.verify_ws_first_frame` reports lighter as failed with the venue's own 30005 rejection in the row's reason, for as long as the venue rejects that channel — the report is shown in the delivery", "The lane observes a subscribe rejection before it begins waiting for data; a rejection returned by `WS.subscribe/3` becomes the row's verdict rather than being discarded", "A frame only counts as coverage when it is attributable to the subscribed channel; a venue whose data frames carry no channel identifier is recorded as such in the row instead of passing on an unattributable frame", """An offline regression test feeds lighter's `%{"type" => "connected"}` greeting into the lane's classification path and asserts it does not produce a passing row — the test is red without the fix""", "Every venue that passed the lane before this change still passes it after, proven by a live run of the full lane, and any venue that flips to failed is named with the provider frame that caused it", "The BUGS.md entry of 2026-09-15 about the greeting-as-data-frame carries a dated fix note naming the shipped commit"]
+out_of_scope = ["Fixing lighter's rejected channel itself, which is task 699", "The intermittent binanceusdm `btcusdt@miniTicker` timeout recorded in BUGS.md 2026-09-15 — a different symptom with no established mechanism", "Broadening the lane from one probe per venue to the full authored channel set, which is the sibling breadth task", "Private WS sections, which the lane excludes by registration"]
+touches = ["lib/bourse/live_lane/first_frame.ex", "lib/bourse/ws/subscribe_ack.ex", "test/bourse/ws_first_frame_test.exs"]
+assignee = "cursor"
+model = "cursor-grok-4.6-high"
+body = """
+`mix bourse.verify_ws_first_frame` reports lighter `passed` with `first_frame: "data"` while the same channel is rejected live. Measured 2026-09-15 (BUGS.md entry of that date carries the full evidence):
+
+    {:ok, ex} = Bourse.Exchange.new("lighter", sandbox: true)
+    {:ok, ws} = Bourse.WS.connect(ex, :public)
+    Bourse.WS.subscribe(ws, ["market_stats/0"], ack_timeout_ms: 6_000)
+    # => {:error, {:subscription_rejected, %{"error" => %{"code" => 30005, "message" => "Invalid Channel:  (marketId)"}}}}
+
+Two holes, both verified mechanically, both in `Bourse.LiveLane.FirstFrame`:
+
+1. `default_subscribe/3` calls `ws_client.subscribe(ws, channels, ack_timeout_ms: 0)` (first_frame.ex:348). With a zero budget the lane never observes the rejection that `WS.subscribe/3` would return.
+2. The lane then accepts the first non-heartbeat frame as coverage without binding it to the subscribed channel. lighter sends an unsolicited `%{"type" => "connected"}` greeting; `SubscribeAck.classify("lighter", %{"type" => "connected"})` answers `:not_ack`, `FirstFrame.frame_kind(:not_ack, frame)` answers `"data"`, and `classify_received/4` maps every `:not_ack` onto `{:data, ...}` → `success_row`. The greeting arrives before the rejection frame, so the probe returns green before the rejection is ever seen.
+
+This is the venue-generic version of the moduledoc's own rule — "Subscribe acknowledgements are not coverage" — and a greeting is weaker than an ack. Any venue that emits an unsolicited frame outside the ping/pong/heartbeat and known-ack shapes passes this lane without a single real data frame, which makes the lane unable to detect exactly the dead-stream class it exists for.
+
+Decisions already made for you (veto them in the delivery if the live evidence contradicts):
+
+- Both holes are in scope; fixing only the `ack_timeout_ms: 0` budget leaves hole 2 open, because a venue can emit a greeting before any ack at all.
+- The pass condition becomes: a frame arrived that is attributable to the subscribed channel. Where a venue's data frames carry no channel identifier at all, the probe must say so explicitly in the row rather than fall back to "any frame counts" — an unattributable frame is not coverage.
+- `SubscribeAck.classify/2` stays the ack classifier; do not overload it into a channel matcher. The channel binding belongs in the lane.
+- Do not silence the lighter row by adding it to `@exclusions`. lighter's rejection is a real finding tracked as task 699; this task makes the lane report it, it does not route around it.
+"""
+created_at = "2026-09-15"
+started_at = "2026-09-15"
+scored_at = "2026-09-15"
