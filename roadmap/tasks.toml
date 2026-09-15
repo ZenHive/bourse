@@ -23691,7 +23691,7 @@ shipped_in = "cf6cafc0b1e95175bd22123ca6177bc341fd0d5e"
 id = "691"
 phase = 16
 bundle = "live_e2e"
-status = "pending"
+status = "in_progress"
 title = "Keep Coinbase candle pagination inside the requested window without missing boundary buckets"
 scores = { d = 3, b = 8, u = 8 }
 markers = ["bug"]
@@ -23706,6 +23706,7 @@ The trading_dashboard consumer observed Bourse 0.8.0 requesting a future fifth p
 Review the entire page tiling invariant, not only that last page: the current code tiles from an unaligned start in whole granularity steps, so verify that page boundaries neither skip eligible candle openings nor exceed the effective end. Coinbase's live API and official endpoint documentation own the semantics; existing ceil arithmetic and third-party clients are not oracles. Use public spot reads only. Dispatch is chosen because provider window semantics need independent live verification, rather than another consumer-side adjustment. D3 is bounded pagination work; B8 restores chart history for all consumers; U8 reflects an observed failure in an active chart.
 """
 created_at = "2026-09-15"
+started_at = "2026-09-15"
 scored_at = "2026-09-15"
 
 [[task]]
