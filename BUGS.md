@@ -959,7 +959,17 @@ re-derive it.
 
 ## 2026-09-15 — lighter testnet went dark: every private read answers `invalid auth: couldnt find account`, the public WS channel is rejected, and an unknown market id no longer errors
 
-**Status:** ⚠️ split — two of three symptoms fixed, the third is operator-gated and tracked by
+**Status:** ✅ resolved 2026-09-15 — the private half was never a venue reset. It was a
+**configuration drift**: `LIGHTER_TESTNET_ACCOUNT_INDEX` named a different account on this
+machine, on the harness server and inside long-lived agent sessions, and each session
+"fixed" the resulting 20013 by re-provisioning, which minted a new key at a new index and
+broke the next machine. Root cause, evidence and the durable guard are in the resolution
+note at the end of this entry. **Nothing needs provisioning; the registered key is the one
+`LIGHTER_TESTNET_API_PRIVATE_KEY` derives.** The WS-channel and unknown-market-id halves
+were closed earlier by task 699 (shipped `ba09535718725edef9fcd580660457dab6a5c21c`).
+
+**Historical status line, kept because the reasoning below builds on it:** ⚠️ split — two of
+three symptoms fixed, the third is operator-gated and tracked by
 no task (re-confirmed in the post-merge audit of `9c2e70e`, 2026-09-15). Task 699 (shipped
 `ba09535718725edef9fcd580660457dab6a5c21c`) closed the **WS channel** and **unknown-market-id**
 halves; both pass in this audit's cold `mix check.dispatch`. The **private-read** half is still
@@ -1004,6 +1014,38 @@ The private half may need operator re-provisioning (`mix bourse.provision_lighte
 >   account's open position is `4095`), so a replacement bad-input probe must use a
 >   malformed value, not a large integer.
 
+> **Resolution (2026-09-15).** The paragraph above is right about the mechanism and wrong
+> about the cause. The venue de-registered nothing: the *configured account was the wrong
+> account*.
+>
+> - `LIGHTER_TESTNET_ACCOUNT_INDEX` held two different values in two places. sha256
+>   fingerprints of all five lighter/hyperliquid values match between this machine and the
+>   harness server **except** that one. The stale value names an account whose two keys
+>   (indices 0 and 10) are the fossil record of two earlier re-provisioning rounds; the
+>   correct value names the account whose L1 address is `$HYPERLIQUID_TESTNET_API_KEY`, and
+>   there `LIGHTER_TESTNET_API_PRIVATE_KEY` derives exactly the key registered at
+>   `LIGHTER_TESTNET_API_KEY_INDEX`. The credentials were correct the whole time.
+> - **A long-lived process env beats `~/.secrets`.** An agent session started before the
+>   file was corrected keeps the old export, so editing the file changes nothing for it.
+>   That is why the failure kept "coming back" after each fix.
+> - **The re-provisioning loop is the thing that made it recur.** `20013 "invalid auth:
+>   couldnt find account"` names the *account* when the *index* is wrong, so every session
+>   read it as a testnet reset and ran `mix bourse.provision_lighter`, minting a new key at
+>   a new index and invalidating every machine pinned to the old one. The paragraph above
+>   records that wrong inference at the moment it was made.
+>
+> **Durable guard shipped with this resolution** — `Bourse.Lighter.CredentialCheck`, a
+> packaged module (so every consumer repo gets it), needs no credentials, no signature and
+> no Go toolchain; it reads two public endpoints and asks the venue which indices the
+> account actually carries (`api_key_index=255` lists them all). Three call sites:
+>
+> 1. `test/test_helper.exs` confronts the configured triple with the venue once at startup,
+>    so the suite fails with the reason instead of nine cryptic 20013s.
+> 2. `mix bourse.provision_lighter` refuses to mint a second key for a wallet that already
+>    has one, naming the registered index and the export that fixes the configuration.
+> 3. Every message that can be produced by a mismatch names the stale-process-env case and
+>    the `zsh -l -c` comparison that proves it.
+
 
 ---
 
@@ -1026,8 +1068,12 @@ title is dropped:
   exercise the read"*. The public option trade tape answered empty on the demo host.
 
 That run's other reds are all already-owned: ten lighter cases answering `20013 "invalid
-auth: couldnt find account"` (the unprovisioned testnet account, `mix bourse.provision_lighter`,
-task 684 — operator-gated) and the two cases above. Same routing question, same operator
+auth: couldnt find account"` (then believed to be an unprovisioned testnet account awaiting
+`mix bourse.provision_lighter`, task 684 — operator-gated) and the two cases above.
+**The lighter clause is superseded:** those ten were a stale `LIGHTER_TESTNET_ACCOUNT_INDEX`,
+not an unprovisioned account, and provisioning was the thing making it recur — see the
+resolution note on the entry above. They are green as of 2026-09-15. Only the two
+unpopulated-state cases remain in this class. Same routing question, same operator
 decision; nothing new to file.
 
 ---

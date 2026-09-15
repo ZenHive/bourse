@@ -20,6 +20,7 @@ defmodule Mix.Tasks.Bourse.ProvisionLighter do
   use Mix.Task
 
   alias Bourse.Credentials
+  alias Bourse.Lighter.CredentialCheck
   alias Bourse.LighterProvision
   alias Bourse.Signing.Lighter
   alias Mix.Tasks.Bourse.BuildLighterSigner
@@ -53,6 +54,7 @@ defmodule Mix.Tasks.Bourse.ProvisionLighter do
     faucet!(config)
     account_index = wait_for_account!(config)
     pub_key = derive_pub_key!(config.api_private_key)
+    refute_already_registered!(config, account_index, pub_key)
     nonce = next_nonce!(config, account_index)
     message = LighterProvision.l1_message(pub_key, nonce, account_index, config.api_key_index)
     signature = LighterProvision.sign_l1_message(message, config.l1_private_key)
@@ -278,6 +280,27 @@ defmodule Mix.Tasks.Bourse.ProvisionLighter do
 
       {:error, :invalid_signature} ->
         Mix.raise("L1 signature could not be recovered. Aborting before sendTx.")
+    end
+  end
+
+  # Minting a second key for a wallet that already has one is what breaks every
+  # other machine: the new key lands at a new index, so every configuration
+  # pinned to the old index starts answering 20013 "couldnt find account" and
+  # invites another re-provision. Account 153 carries keys at indices 0 and 10
+  # from two such rounds. Refuse instead.
+  defp refute_already_registered!(config, account_index, pub_key) do
+    case CredentialCheck.locate(pub_key,
+           account_index: account_index,
+           base_url: config.base_url
+         ) do
+      {:error, :not_registered} ->
+        :ok
+
+      {:ok, index} ->
+        Mix.raise(CredentialCheck.provision_refusal_message(account_index, index, config.api_key_index))
+
+      {:error, reason} when is_binary(reason) ->
+        Mix.raise("Could not confirm whether this key is already registered: #{reason}")
     end
   end
 

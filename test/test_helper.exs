@@ -113,6 +113,25 @@ unregistered =
     "  #{exchange}/#{sandbox_key} -> #{inspect(result)}"
   end
 
+# Registration only proves the three Lighter variables are PRESENT. It cannot
+# see that they disagree with each other — a key index pointing at an empty slot,
+# or an account index left over from a previous wallet. That disagreement is
+# indistinguishable from a venue outage in the suite output: nine cases answer
+# 20013 "invalid auth: couldnt find account", which names the account and so
+# reads as "the testnet reset". It never is. Confront the triple with the venue
+# here, once, so the run fails with the reason instead of the symptom.
+case Bourse.Lighter.CredentialCheck.run(sandbox: true) do
+  :ok ->
+    :ok
+
+  {:error, message} ->
+    raise """
+    Lighter credentials do not match what the venue has registered.
+
+    #{message}
+    """
+end
+
 if unregistered != [] do
   raise """
   Provider-live credentials are missing; this suite has no offline mode.
