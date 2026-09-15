@@ -362,7 +362,7 @@ Tasks triggered by upcoming ccxt-distill changes. Two sub-bundles:
 | Task 198 | ✅ | 🎁 **signing_v4** · Spike: native lighter zk_schnorr signer WITHOUT QuickBEAM (cgo C-lib port vs pure-Rust NIF) [D:6/B:4/U:4 → Eff:0.67?] ⚠️ |
 | Task 470 `[P]` | ✅ | 🎁 **signing_v4** · 🐛 Lighter test helper crashes with :epipe on normal Port teardown, polluting every check run [D:2/B:4/U:4 → Eff:2.0?] 🎯 |
 | Task 703 | ⬜ | 🎁 **signing** · Reuse Cartouche and Hieroglyph for DEX EVM signing primitives [D:6/B:8/U:5 → Eff:1.08] 📋 |
-| Task 704 | ⬜ | 🎁 **signing** · Lighter order signing is dead against the venue's four-digit market ids — bump the pinned zk SDK and make time-in-force carry its own expiry [D:6/B:9/U:9 → Eff:1.5] 🚀 |
+| Task 704 | 🔄 | 🎁 **signing** · Lighter order signing is dead against the venue's four-digit market ids — bump the pinned zk SDK and make time-in-force carry its own expiry [D:6/B:9/U:9 → Eff:1.5] 🚀 |
 <!-- TASKS:END -->
 
 ## Phase 12: WebSocket Track (Unnormalized)

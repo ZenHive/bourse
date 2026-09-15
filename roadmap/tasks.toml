@@ -24109,7 +24109,7 @@ scored_at = "2026-09-15"
 id = "704"
 phase = 11
 bundle = "signing"
-status = "pending"
+status = "in_progress"
 title = "Lighter order signing is dead against the venue's four-digit market ids — bump the pinned zk SDK and make time-in-force carry its own expiry"
 scores = { d = 6, b = 9, u = 9 }
 acceptance_criteria = ["A real limit order is placed on lighter testnet against a live four-digit market id (BTC/USDC:USDC) and the venue answers code 200 with a tx_hash; the order is then observed in fetch_open_orders and cancelled, with the cancel likewise answered 200. Name the observed market id, tx hashes and the account index source in the delivery.", "A relevant live rejection is re-observed with the new SDK and pinned in test/live/errors/lighter_test.exs or the journey file — at minimum the below-minimum base amount (21706) and the replayed nonce (21104) still map to the same Bourse.Error shape. A changed code is recorded as the new provider truth, not forced back to the old one.", "timeInForce IOC signs and is accepted end-to-end on a live market without the caller passing order_expiry, and PO still signs and rests. Both are proven by a live call, and a unit test pins the expiry the request shape derives for each time-in-force.", "native/lighter_signer/golden_test.go passes against the new SDK with vectors re-derived from the provider's own signing definition — each vector's expected hash and signature justified in a comment by what produced it. A vector whose only justification is that the new binary emitted it is not acceptable.", "mix bourse.check_lighter_signer is green (Go and C toolchain present, helper builds), and mix bourse.verify_rest_read_contracts --venue lighter reports executed == denominator with zero failures, including lighter:fetchPositions:0:publicGetAccount — which requires an open position on the sandbox account. Leave that position open or document why it was closed.", "mix check.dispatch is green and the reviewer runs the lighter contract lane itself. Missing credentials or an unreachable testnet fail loudly with the exact export commands; an unreachable branch is recorded in docs/prod-verification-ledger.md as unverified and reported as an unmet criterion, never converted to a skip or a mock.", "The BUGS.md entry for this defect gains a dated Update block naming the landed SDK version, the market id proven live, and the commit; its Status header is changed to fixed. The retired account index no longer appears as a live fact in any comment."]
@@ -24190,4 +24190,5 @@ state did not exercise the read" because the account is flat, and it cannot be p
 can be signed.
 """
 created_at = "2026-09-15"
+started_at = "2026-09-15"
 scored_at = "2026-09-15"
