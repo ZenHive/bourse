@@ -985,7 +985,7 @@ Bookkeeping fallout from task 686, both real, neither a defect in the shipped be
 
 ## 2026-08-28 — bybit `fetch_positions_history`: one dated-contract row fails the WHOLE call with `missing_position_notional_currency`
 
-**Status:** ✅ fixed in task 685 — `put_notional_currencies/2` drops a row with `missing_position_notional_currency` (named `Logger.warning`) and returns the resolvable rows. Dated-future symbol ids remain task 688.
+**Status:** ✅ fixed in task 685, amended in review the same day — `put_notional_currencies/2` no longer fails the whole call. **Review correction:** the landed cut *dropped* the unresolvable row, and `reconcile/2` is wired to `:parse_position` for all eleven venues, so that shortened every positions read, not only history. A shorter list is exactly the plausible-wrong-value this task exists to remove: a consumer summing exposure understates the account, and "am I flat?" answers yes for an account that is not. The row is now retained with `notional`/`notional_currency` blanked — which preserves the struct's documented invariant that `notional_currency` is populated whenever `notional` is — and `info["bourse_notional_unavailable"]` carries `reason`, `context` and the `unstated_notional`, so the gap is machine-visible rather than only a log line. The `Logger.warning` stays. Verified live 2026-09-15: `fetch_positions_history(bybit, category: "linear")` returns `{:ok, [9 rows]}`, every row carrying `notional_currency` (the DOGEUSDT-28AUG26 contract has since expired out of the window, so the marker branch is pinned by unit test rather than by a live row). Dated-future symbol ids remain task 688.
 
 The contract case `bybit:fetchPositionsHistory:0:privateGetV5PositionClosedPnl` fails with
 
