@@ -23720,7 +23720,7 @@ shipped_in = "d2befc8afe241d060dd57015a1e2bc608e390330"
 id = "692"
 phase = 16
 bundle = "live_triage"
-status = "pending"
+status = "in_progress"
 title = "Make singular and plural funding reads expose the same provider-backed rates"
 scores = { d = 5, b = 8, u = 8 }
 markers = ["bug"]
@@ -23734,6 +23734,7 @@ BUGS.md 2026-09-01 reports the funding capability asymmetry and Lighter authorin
 
 Give consumers one consistent funding interface: an authored singular-to-plural bridge selects the exact requested swap; the reverse bridge serves an explicit finite symbols list where only singular reads exist, without guessing the venue universe. Author Lighter funding using its own venue rates, not a cross-exchange comparison row. Confirm units, direction and cadence from the live provider and official docs; the report's percent/hour interpretation remains a premise to verify. Preserve loud unsupported/fundingless/unknown-symbol outcomes. Public API and financial-unit semantics require independent dispatch review. D5 spans capability and normalization; B8/U8 restores active hedge ranking."""
 created_at = "2026-09-15"
+started_at = "2026-09-15"
 scored_at = "2026-09-15"
 
 [[task]]
