@@ -51,7 +51,8 @@ defmodule Bourse.WS.CanaryTest do
     test "loaded market ids subscribe to stats, order books and trades" do
       exchange = Exchange.new!("lighter", sandbox: true)
       assert {:ok, exchange} = Bourse.load_markets(exchange)
-      assert [market | _] = exchange.markets
+      market = live_lighter_swap_market(exchange.markets)
+      market_id = String.to_integer(market.id)
 
       for {channel, payload} <- [
             {"market_stats", "market_stats"},
@@ -71,7 +72,7 @@ defmodule Bourse.WS.CanaryTest do
 
           case payload do
             "market_stats" ->
-              assert frame[payload]["market_id"] == String.to_integer(market.id)
+              assert frame[payload]["market_id"] == market_id
 
             "order_book" ->
               assert %{"asks" => asks, "bids" => bids} = frame[payload]
@@ -83,6 +84,28 @@ defmodule Bourse.WS.CanaryTest do
         after
           WS.close(ws)
         end
+      end
+    end
+
+    @tag :task_699
+    test "market_stats/all delivers a snapshot keyed by live market ids" do
+      exchange = Exchange.new!("lighter", sandbox: true)
+      assert {:ok, ws} = WS.connect(exchange, :public)
+
+      try do
+        assert :ok = WS.subscribe(ws, ["market_stats/all"])
+
+        assert_receive {:websocket_message,
+                        %{
+                          "type" => "subscribed/market_stats",
+                          "channel" => "market_stats:all",
+                          "market_stats" => stats
+                        }},
+                       @receive_timeout
+
+        assert is_map(stats) and map_size(stats) > 0
+      after
+        WS.close(ws)
       end
     end
 
@@ -160,5 +183,15 @@ defmodule Bourse.WS.CanaryTest do
 
       assert :ok = WS.close(ws)
     end
+  end
+
+  defp live_lighter_swap_market(markets) do
+    market =
+      Enum.find(markets, fn market ->
+        market.type == "swap" and is_binary(market.id) and match?({_id, ""}, Integer.parse(market.id))
+      end)
+
+    assert market, "lighter load_markets returned no swap with a numeric market id"
+    market
   end
 end
