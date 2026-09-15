@@ -148,6 +148,71 @@ defmodule Bourse.LighterPromotionIntegrationTest do
     end
   end
 
+  # Task 692. `GET /api/v1/funding-rates` publishes one row per (market,
+  # exchange) pair — the provider's own `FundingRate.exchange` enum is
+  # ["binance", "bybit", "hyperliquid", "lighter"], so the response carries
+  # competitors' rates against the SAME market_id as Lighter's own. Reading an
+  # unfiltered row would hand a consumer another venue's funding under a Lighter
+  # symbol, so the authored slice keeps only `exchange == "lighter"`. This test
+  # reads the raw payload and the unified parse and pins that separation.
+  test "live funding rates expose Lighter's own swap rates, never a comparison venue's row" do
+    assert {:ok, %Exchange{markets: markets} = exchange} =
+             "lighter"
+             |> Exchange.new!(sandbox: true)
+             |> Bourse.load_markets()
+
+    assert {:ok, %{status: 200, body: %{"funding_rates" => raw_rows}}} =
+             Bourse.Lighter.public_get_funding_rates(exchange, %{})
+
+    {lighter_rows, foreign_rows} = Enum.split_with(raw_rows, &(&1["exchange"] == "lighter"))
+    assert lighter_rows != []
+
+    assert foreign_rows != [],
+           "the provider stopped publishing comparison rows — re-confirm the exchange filter still has a subject"
+
+    assert {:ok, rates} = Bourse.fetch_funding_rates(exchange)
+    assert map_size(rates) == length(lighter_rows)
+
+    swap_symbols = markets |> Enum.filter(&(&1.type == "swap")) |> MapSet.new(& &1.symbol)
+
+    for {symbol, rate} <- rates do
+      assert %Bourse.FundingRate{symbol: ^symbol, interval: "1h", funding_rate: value} = rate
+      assert MapSet.member?(swap_symbols, symbol), "#{symbol} is not a Lighter swap market"
+
+      # Provider-owned unit: FundingRate.rate is a signed decimal fraction
+      # (OpenAPI `number/double`), not the percent-points the /fundings history
+      # carries. A whole-percent magnitude here would mean the scale drifted.
+      assert is_number(value)
+      assert abs(value) < 0.01
+    end
+
+    %{"market_id" => market_id, "rate" => raw_rate} = Enum.find(lighter_rows, &(&1["symbol"] == "BTC"))
+    assert %Market{symbol: btc_symbol} = Enum.find(markets, &(to_string(&1.id) == to_string(market_id)))
+    assert %Bourse.FundingRate{funding_rate: parsed_rate} = Map.fetch!(rates, btc_symbol)
+
+    foreign_btc = foreign_rows |> Enum.filter(&(&1["symbol"] == "BTC")) |> Enum.map(& &1["rate"])
+    assert foreign_btc != []
+
+    # The parsed rate must track Lighter's own row. Only assert non-identity
+    # with a competitor's row when the venue's snapshot actually separates them
+    # — two venues quoting the same rate is legal, and asserting otherwise
+    # would be a test that fails on a true provider state.
+    assert_in_delta parsed_rate, raw_rate, abs(raw_rate) * 0.5 + 1.0e-9
+
+    for foreign <- foreign_btc, foreign != raw_rate do
+      refute parsed_rate == foreign,
+             "parsed Lighter BTC funding equals a comparison venue's row (#{foreign}) — the exchange filter leaked"
+    end
+
+    # The singular read is emulated from this same payload and must select the
+    # exact market, never a neighbour and never a fabricated zero.
+    assert {:ok, %Bourse.FundingRate{symbol: ^btc_symbol, interval: "1h", funding_rate: single}} =
+             Bourse.fetch_funding_rate(exchange, btc_symbol)
+
+    assert is_number(single)
+    assert {:error, %Error{}} = Bourse.fetch_funding_rate(exchange, "NOTACOIN/USDC:USDC")
+  end
+
   @tag :dangerous
   test "live signed transfer round trip preserves account identity and route metadata" do
     credentials = require_credentials!()

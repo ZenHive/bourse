@@ -127,6 +127,18 @@ defmodule Bourse.EmulationStrategiesTest do
       {:ok, Process.get(:funding_rates, %{})}
     end
 
+    # Returns one funding rate per requested symbol for the singular-only
+    # venues the fetchFundingRates bridge delegates to (task 692).
+    def fetch_funding_rate(symbol, _opts) do
+      case Map.fetch(Process.get(:singular_funding_rates, %{}), symbol) do
+        {:ok, rate} ->
+          {:ok, rate}
+
+        :error ->
+          {:error, Bourse.Error.exchange_error("fetchFundingRate() returned no data for #{symbol}")}
+      end
+    end
+
     # Returns leverage tiers map from process dictionary for emulation tests
     def fetch_leverage_tiers(_creds, _symbols, _opts) do
       {:ok, Process.get(:leverage_tiers, %{})}
@@ -985,6 +997,47 @@ defmodule Bourse.EmulationStrategiesTest do
       assert String.contains?(message, @symbol)
     end
 
+    test "fetch_funding_rates keys an explicit symbols list by the requested symbols" do
+      exchange = build_exchange("deribit", [:fetch_funding_rate])
+
+      Process.put(:singular_funding_rates, %{
+        @symbol => %{symbol: @symbol, fundingRate: "0.0001"},
+        @other_symbol => %{symbol: @other_symbol, fundingRate: "-0.0002"}
+      })
+
+      assert {:ok, rates} =
+               dispatch(exchange, :fetch_funding_rates, params: %{symbols: [@symbol, @other_symbol]})
+
+      assert rates |> Map.keys() |> Enum.sort() == Enum.sort([@symbol, @other_symbol])
+      assert rates[@symbol] == %{symbol: @symbol, fundingRate: "0.0001"}
+      assert rates[@other_symbol] == %{symbol: @other_symbol, fundingRate: "-0.0002"}
+    end
+
+    test "fetch_funding_rates refuses to guess the universe without an explicit symbols list" do
+      exchange = build_exchange("deribit", [:fetch_funding_rate])
+
+      Process.put(:singular_funding_rates, %{@symbol => %{symbol: @symbol, fundingRate: "0.0001"}})
+
+      for params <- [%{}, %{symbols: []}, %{symbols: [""]}, %{symbols: [@symbol, nil]}, %{symbols: @symbol}] do
+        assert {:error, %Bourse.Error{type: :bad_request, message: message}} =
+                 dispatch(exchange, :fetch_funding_rates, params: params)
+
+        assert String.contains?(message, "fetchFundingRates()")
+        assert String.contains?(message, "does not guess a universe")
+      end
+    end
+
+    test "fetch_funding_rates propagates a singular failure instead of a partial map" do
+      exchange = build_exchange("deribit", [:fetch_funding_rate])
+
+      Process.put(:singular_funding_rates, %{@symbol => %{symbol: @symbol, fundingRate: "0.0001"}})
+
+      assert {:error, %Bourse.Error{type: :exchange_error, message: message}} =
+               dispatch(exchange, :fetch_funding_rates, params: %{symbols: [@symbol, @other_symbol]})
+
+      assert String.contains?(message, @other_symbol)
+    end
+
     test "fetch_isolated_borrow_rate returns error when not found" do
       exchange_id = exchange_for_method("fetchIsolatedBorrowRate")
 
@@ -1508,6 +1561,10 @@ defmodule Bourse.EmulationStrategiesTest do
 
   defp stub_positional_args(:fetch_funding_rates, params) do
     [normalize_symbols(extract_param(params, :symbol))]
+  end
+
+  defp stub_positional_args(:fetch_funding_rate, params) do
+    [extract_param(params, :symbol)]
   end
 
   defp stub_positional_args(:fetch_funding_intervals, params) do

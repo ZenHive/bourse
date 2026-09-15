@@ -696,6 +696,31 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
     assert interval == "1h"
   end
 
+  # Task 692: Deribit exposes only a singular funding read, so the plural is
+  # authored as a bridge over an explicit symbols list. It must key the result
+  # by the symbols the caller asked for and refuse to invent a universe.
+  test "funding rate collection bridges an explicit symbols list and never guesses a universe" do
+    exchange = build_exchange(:deribit, sandbox: true)
+    symbols = ["BTC/USD:BTC", "ETH/USD:ETH"]
+
+    assert {:ok, rates} = Bourse.fetch_funding_rates(exchange, symbols: symbols)
+    assert Enum.sort(Map.keys(rates)) == Enum.sort(symbols)
+
+    for symbol <- symbols do
+      assert %Bourse.FundingRate{symbol: ^symbol, interval: "1h", funding_rate: rate} = Map.fetch!(rates, symbol)
+      assert is_number(rate)
+    end
+
+    # No symbols list: Deribit has no all-swaps funding endpoint, so the bridge
+    # reports that loudly instead of enumerating a universe it cannot observe.
+    assert {:error, %Error{type: :bad_request, message: message}} = Bourse.fetch_funding_rates(exchange)
+    assert message =~ "fetchFundingRates()"
+    assert message =~ "does not guess a universe"
+
+    # One unknown symbol fails the whole read rather than yielding a partial map.
+    assert {:error, %Error{}} = Bourse.fetch_funding_rates(exchange, symbols: ["BTC/USD:BTC", "NOPE/USD:NOPE"])
+  end
+
   test "ticker collection requires scope and returns parsed symbol-keyed values" do
     exchange = build_exchange(:deribit, sandbox: true)
 

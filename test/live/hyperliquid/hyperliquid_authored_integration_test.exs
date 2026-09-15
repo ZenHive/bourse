@@ -220,6 +220,54 @@ defmodule Bourse.HyperliquidAuthoredIntegrationTest do
     assert Enum.all?(rows, &is_number(&1.funding_rate))
   end
 
+  # Task 692: the singular read is authored as an emulated selection over the
+  # same metaAndAssetCtxs payload the plural read parses. Hyperliquid's funding
+  # re-prices every few seconds, so the two calls cannot be compared for exact
+  # equality; the mark price pins asset identity (no other coin trades within
+  # 2% of BTC) and the plural readings bracket the singular value.
+  test "live fetch_funding_rate selects the requested swap from the plural funding payload" do
+    exchange = build_exchange(:hyperliquid, sandbox: true)
+
+    assert {:ok, before_rates} = Bourse.fetch_funding_rates(exchange)
+    assert map_size(before_rates) > 1
+
+    assert %Bourse.FundingRate{
+             symbol: @perp_symbol,
+             interval: "1h",
+             funding_rate: before_rate,
+             mark_price: plural_mark
+           } = Map.fetch!(before_rates, @perp_symbol)
+
+    assert {:ok,
+            %Bourse.FundingRate{
+              symbol: @perp_symbol,
+              interval: "1h",
+              funding_rate: single_rate,
+              mark_price: single_mark
+            }} = Bourse.fetch_funding_rate(exchange, @perp_symbol)
+
+    assert {:ok, after_rates} = Bourse.fetch_funding_rates(exchange)
+    assert %Bourse.FundingRate{funding_rate: after_rate} = Map.fetch!(after_rates, @perp_symbol)
+
+    assert is_number(single_rate)
+    assert is_number(single_mark) and single_mark > 0
+    assert abs(single_mark - plural_mark) / plural_mark < 0.02
+
+    # Tolerance absorbs a non-monotone tick between the three calls while
+    # staying an order of magnitude tighter than the gap to any other coin's
+    # funding — a substituted asset still fails this.
+    drift = abs(before_rate) * 0.1 + 1.0e-9
+
+    assert single_rate >= min(before_rate, after_rate) - drift and
+             single_rate <= max(before_rate, after_rate) + drift,
+           "singular funding #{single_rate} fell outside the bracketing plural readings " <>
+             "#{before_rate}..#{after_rate} — the emulated selection did not read the requested swap"
+
+    # A symbol the universe does not carry must fail loudly rather than fall
+    # through to a neighbouring asset or a fabricated zero.
+    assert {:error, %Bourse.Error{}} = Bourse.fetch_funding_rate(exchange, "NOTACOIN/USDC:USDC")
+  end
+
   @tag :dangerous
   test "schedule-cancel reaches Hyperliquid with a signed timer action" do
     gate_credentials!()
