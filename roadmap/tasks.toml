@@ -22750,7 +22750,7 @@ acceptance_criteria = ["Every external-semantic assertion in the canonical suite
 out_of_scope = ["Deleting recordings or authority artifacts that remain useful as provenance or optional replay/debug data", "Adding new venues or expanding the library's public API", "Retaining a legacy semantic test solely to preserve historical line coverage or test counts"]
 touches = ["test/", "mix.exs", "CLAUDE.md", "AGENTS.md"]
 assignee = "codex"
-model = "gpt-5.6-sol"
+model = "gpt-6-astra"
 body = """
 Converge the repository onto one testing model after the three provider-live lanes have landed. Delete every remaining semantic test whose authority is a fixture, mock, recording, generated expectation, authored runtime spec, CCXT artifact or local fake service. Retain small offline tests only for truly deterministic mechanics such as encoders, pure transformations and state-machine mechanics; each retained case must state that boundary.
 

@@ -30475,7 +30475,7 @@
         669
       ],
       "assignee": "codex",
-      "model": "gpt-5.6-sol",
+      "model": "gpt-6-astra",
       "acceptance_criteria": [
         "Every external-semantic assertion in the canonical suite is provider-live; grep and an architecture guard find no fixture, mock, recording, self-authored golden, CCXT artifact or local fake server acting as an oracle for REST or WebSocket behavior",
         "Only provider-live E2E contracts plus minimal deterministic pure-mechanics tests remain; each retained offline test names the pure invariant it proves and cannot pass or fail based on an external provider semantic claim",
