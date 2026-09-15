@@ -153,9 +153,17 @@ and reads it back cannot tell a stop from a market order without reaching into `
 | `stopLossPrice` | all but derive, okx |
 | `takeProfitPrice` | all but okx |
 
-**Consumer impact:** `trading_dashboard` reads conditional orders back in its bracket-guard
-reconciler; on deribit, bybit and okx the reconciler cannot see the trigger it just placed.
-Reported alongside the 693 rollout, so it lands on a surface consumers are about to adopt.
+**Consumer impact — confirmed worse than a missing field (`trading_dashboard`, same day).**
+Its subaccount allocation cap is enforced in a Postgres trigger, not in app code, and that
+trigger reads `params ->> 'reduce_only'` out of the adopted order row's jsonb, then uses the
+flag to pick `position_side`. A deribit reduce-only order adopted through the unified
+surface therefore does not merely lose a flag: it books on the **wrong side of that
+symbol's exposure**, inflating committed entry exposure that should have been a reduction
+and polluting the `latest_full_close` bookkeeping the notional trigger keys on. Their
+adoption code reads `order.reduce_only`, gets `nil`, and correctly concludes "the venue did
+not say" — a deliberate documented rule whose premise this gap falsifies. Tracked there as
+`trading_dashboard` task 286 (a venue-agnostic seam: mapped struct field first, raw `info`
+as fallback, so our fix simply wins when it lands and nothing has to be unwound).
 
 **Not fixed inline** on purpose: ten venues times four slots is authoring work with a live
 call and a carve-register entry per venue, not a bounded local edit. One class, one task if
