@@ -74,6 +74,20 @@ defmodule Bourse.DeribitOrderLifecycleIntegrationTest do
     assert market_symbol!(exchange, parsed_order.symbol) == @symbol
   end
 
+  test "a public trade carries no provider fee and stays explicitly unavailable" do
+    exchange = loaded_sandbox!()
+
+    assert {:ok, [%Trade{} = public | _]} = Bourse.fetch_trades(exchange, @symbol, limit: 5)
+
+    # Observed live 2026-09-15: public/get_last_trades_by_instrument rows carry
+    # no `fee`/`fee_currency` — only user trades do. The same authored trade
+    # field map serves both, so the absent fee must stay unavailable instead of
+    # collapsing into an empty fee object or a one-entry `fees` list.
+    refute Map.has_key?(public.info, "fee")
+    assert public.fee == %{"cost" => nil, "currency" => nil}
+    assert public.fees == []
+  end
+
   @tag :dangerous
   test "a sandbox order keeps instrument identity through parse, unified writes, and WS; 11044 is order_not_found" do
     exchange = loaded_sandbox!()

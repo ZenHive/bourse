@@ -1082,6 +1082,7 @@
         },
         "datetime": null,
         "fee": {
+          "omit_if_empty": true,
           "sub_field_map": {
             "cost": {
               "coercion": "safeNumber",
@@ -1094,6 +1095,7 @@
           }
         },
         "fees": {
+          "omit_if_empty": true,
           "sub_field_map": {
             "cost": {
               "coercion": "safeNumber",

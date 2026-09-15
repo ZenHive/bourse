@@ -24,14 +24,19 @@ and from classifying a closed-order cancel as InvalidOrder.**
 - *Our carve:* `field_maps.order`/`trade` `.symbol` read `instrument_name` as
   the native id. Unified reads remap through loaded markets. Trade `fee`/`fees`
   copy `fee`/`fee_currency` into the map Fee contract (signed, no abs, no
-  invented order-level aggregate). `raw.exceptions.11044` is `OrderNotFound`
+  invented order-level aggregate), both `omit_if_empty` because the same trade
+  field map also serves public `public/get_last_trades_by_instrument` rows,
+  which carry no fee: there the absent fee stays the unavailable default
+  (`fee` null-cost/null-currency, `fees` empty) instead of an empty fee object.
+  `raw.exceptions.11044` is `OrderNotFound`
   for every open-order operation that returns it.
 - *Live evidence (2026-09-15, test.deribit.com):* resting BTC-PERPETUAL GTC
   create/fetch/cancel kept unified `BTC/USD:BTC`; direct `parse_order` of the
   payload kept native `BTC-PERPETUAL`. `fetch_my_trades` fill `267466153` had
   `info.fee 7.1e-7` / `fee_currency BTC`. Cancel-then-cancel and edit of that
   closed order both answered `11044`; `fetch_order` of a filled id stayed
-  `closed`. Malformed `BTC-0` stayed JSON-RPC `-32602`. WS `private/cancel`
+  `closed`. A public BTC-PERPETUAL trade row carried no `fee` key and parsed to
+  the unavailable default. Malformed `BTC-0` stayed JSON-RPC `-32602`. WS `private/cancel`
   of the closed id returned the same JSON-RPC error, classified through
   `Bourse.HTTP.Errors.classify_response/5`. Pinned in
   `test/live/deribit/deribit_order_lifecycle_integration_test.exs`.
@@ -39,8 +44,8 @@ and from classifying a closed-order cancel as InvalidOrder.**
 <!-- carve-evidence-status
 {"carve_id":"C-T695","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Deribit instrument_name on orders/trades; user-trade fee/fee_currency; errors 11044 not_open_order"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 test.deribit.com: parse_order native BTC-PERPETUAL, unified BTC/USD:BTC; fill 267466153 fee 7.1e-7 BTC; cancel+edit 11044; fetch filled order closed; WS private/cancel same code"},"compatibility_reference":null,"resolved_tier":1}
 -->
-## 2026-08-29 — option-row implied volatility (Task 686)
 
+## 2026-08-29 — option-row implied volatility (Task 686)
 
 **C-T686f — Deribit's option book summary carries `mark_iv`, so the unified
 option row emits it as a fraction (task 686). Outcome: DIVERGE from C-T600f's

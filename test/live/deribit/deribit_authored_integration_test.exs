@@ -299,7 +299,16 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
     assert {:ok, exchange} = Bourse.load_markets(base)
     market = Enum.find(exchange.markets, &(&1.id == "ETH_USDC-PERPETUAL"))
 
-    assert %Bourse.Market{contract_size: 0.001, inverse: false, linear: true} = market
+    assert %Bourse.Market{inverse: false, linear: true} = market
+
+    # Pin the parsed contract size against the venue's own `contract_size`
+    # rather than a literal: deribit re-scaled ETH_USDC-PERPETUAL from 0.001 to
+    # 0.0001 (observed 2026-09-15 on test.deribit.com), and a hardcoded
+    # expectation would either redden on the venue's change or, once updated,
+    # certify our parse against nothing.
+    assert market.contract_size == Bourse.Safe.number(market.info["contract_size"])
+    assert is_number(market.contract_size) and market.contract_size > 0
+
     amount = Bourse.Safe.number(market.info["min_trade_amount"])
     tick_size = Bourse.Safe.number(market.info["tick_size"])
     assert amount == market.contract_size
