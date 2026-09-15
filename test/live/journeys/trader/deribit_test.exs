@@ -70,6 +70,7 @@ defmodule Bourse.Journeys.Trader.DeribitTest do
         )
 
       assert is_binary(placed.id) and placed.id != ""
+      assert placed.symbol == @symbol
       # Deribit echoes clientOrderId back as `label`; assert the round-trip
       # against the generated value, not against `placed` (both would be nil
       # if the venue ever stopped echoing it).
@@ -88,6 +89,7 @@ defmodule Bourse.Journeys.Trader.DeribitTest do
           end)
 
         assert order.side == "buy"
+        assert order.symbol == @symbol
         assert order.type == "limit"
         assert order.client_order_id == client_order_id
         assert_in_delta order.price, price, tick / 2
@@ -98,6 +100,7 @@ defmodule Bourse.Journeys.Trader.DeribitTest do
 
         {:ok, canceled} = Bourse.cancel_order(exchange, placed.id, symbol: @symbol)
         assert canceled.id == placed.id
+        assert canceled.symbol == @symbol
 
         poll_until!("order #{placed.id} gone from open orders", fn ->
           {:ok, open} = Bourse.fetch_open_orders(exchange, symbol: @symbol)
@@ -157,6 +160,7 @@ defmodule Bourse.Journeys.Trader.DeribitTest do
 
           {:ok, canceled} = Bourse.cancel_order(exchange, placed.id, symbol: @symbol)
           assert canceled.id == placed.id
+          assert canceled.symbol == @symbol
 
           # Observed live 2026-08-28: the same order_id returns order_state
           # "cancelled" and cancel_reason "user_request" — the venue names who

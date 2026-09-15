@@ -90,7 +90,7 @@
       "11041": "__function:InvalidOrder",
       "11042": "__function:PermissionDenied",
       "11043": "__function:BadRequest",
-      "11044": "__function:InvalidOrder",
+      "11044": "__function:OrderNotFound",
       "11045": "__function:BadRequest",
       "11046": "__function:BadRequest",
       "11047": "__function:BadRequest",

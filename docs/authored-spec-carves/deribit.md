@@ -4,7 +4,43 @@ Provider authority: [`priv/venues/deribit/authority/manifest.json`](../../priv/v
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 
+## 2026-09-15 — order identity, fill fees, closed-order 11044 (Task 695)
+
+**C-T695 — Deribit `instrument_name` is order/trade identity, user-trade `fee`/`fee_currency`
+are the fill fee, and `11044 not_open_order` is OrderNotFound for open-order ops.
+Outcome: CONFIRM provider contract; DIVERGE from treating native ids as unified symbols
+and from classifying a closed-order cancel as InvalidOrder.**
+
+- *Exchange semantics:* Order and user-trade objects carry `instrument_name`
+  ([private/buy](https://docs.deribit.com/api-reference/trading/private-buy),
+  [private/get_user_trades_by_instrument](https://docs.deribit.com/api-reference/trading/private-get_user_trades_by_instrument)).
+  That id is not the unified symbol; loaded markets map `market.id` onto
+  `market.symbol` (`BTC-PERPETUAL` → `BTC/USD:BTC`). User trades publish `fee`
+  in units of `fee_currency`, including signed rebates. [Errors](https://docs.deribit.com/articles/errors)
+  define `11044` as `"not_open_order"` — “Attempt to do open order operations
+  with the not open order.” Observed live on both `private/cancel` and
+  `private/edit`. The code does not say filled versus canceled; `order_state`
+  does (`cancelled` → `canceled`, `filled` → `closed`).
+- *Our carve:* `field_maps.order`/`trade` `.symbol` read `instrument_name` as
+  the native id. Unified reads remap through loaded markets. Trade `fee`/`fees`
+  copy `fee`/`fee_currency` into the map Fee contract (signed, no abs, no
+  invented order-level aggregate). `raw.exceptions.11044` is `OrderNotFound`
+  for every open-order operation that returns it.
+- *Live evidence (2026-09-15, test.deribit.com):* resting BTC-PERPETUAL GTC
+  create/fetch/cancel kept unified `BTC/USD:BTC`; direct `parse_order` of the
+  payload kept native `BTC-PERPETUAL`. `fetch_my_trades` fill `267466153` had
+  `info.fee 7.1e-7` / `fee_currency BTC`. Cancel-then-cancel and edit of that
+  closed order both answered `11044`; `fetch_order` of a filled id stayed
+  `closed`. Malformed `BTC-0` stayed JSON-RPC `-32602`. WS `private/cancel`
+  of the closed id returned the same JSON-RPC error, classified through
+  `Bourse.HTTP.Errors.classify_response/5`. Pinned in
+  `test/live/deribit/deribit_order_lifecycle_integration_test.exs`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T695","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Deribit instrument_name on orders/trades; user-trade fee/fee_currency; errors 11044 not_open_order"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 test.deribit.com: parse_order native BTC-PERPETUAL, unified BTC/USD:BTC; fill 267466153 fee 7.1e-7 BTC; cancel+edit 11044; fetch filled order closed; WS private/cancel same code"},"compatibility_reference":null,"resolved_tier":1}
+-->
 ## 2026-08-29 — option-row implied volatility (Task 686)
+
 
 **C-T686f — Deribit's option book summary carries `mark_iv`, so the unified
 option row emits it as a fraction (task 686). Outcome: DIVERGE from C-T600f's

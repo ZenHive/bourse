@@ -34,4 +34,22 @@ defmodule Bourse.LiveErrors.DeribitTest do
     assert error.code == 10_004
     assert error.message =~ "order_not_found"
   end
+
+  test "a malformed order id is refused as invalid params, not order_not_found" do
+    credentials = Bourse.Testnet.creds!(:deribit)
+    {:ok, exchange} = Bourse.Exchange.new("deribit", credentials: credentials, sandbox: true)
+
+    assert {:error, %Error{} = error} = Bourse.cancel_order(exchange, "BTC-0", symbol: @symbol)
+
+    # Observed live 2026-09-15 on test.deribit.com: private/cancel with
+    # order_id "BTC-0" answers JSON-RPC -32602 invalid_order_id. That is the
+    # genuine invalid-order control next to 11044 not_open_order (closed but
+    # well-formed) and 10004 order_not_found (never seen).
+    # Authority: Deribit JSON-RPC errors —32602 Invalid params
+    # (https://docs.deribit.com/articles/errors).
+    assert error.type == :bad_request
+    assert error.code == -32_602
+    assert error.message =~ "invalid_order_id"
+    refute error.type == :order_not_found
+  end
 end

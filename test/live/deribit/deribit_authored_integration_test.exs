@@ -491,7 +491,7 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
 
       assert filled >= amount
 
-      assert {:error, %Error{code: sell_cancel_code, message: sell_cancel_message}} =
+      assert {:error, %Error{type: :order_not_found, code: sell_cancel_code, message: sell_cancel_message}} =
                Bourse.cancel_order(exchange, sell_order["order_id"], symbol: market.symbol)
 
       assert to_string(sell_cancel_code) == "11044"

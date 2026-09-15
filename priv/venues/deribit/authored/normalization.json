@@ -732,7 +732,11 @@
           "key": "order_state"
         },
         "stopLossPrice": null,
-        "symbol": null,
+        "symbol": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "instrument_name"
+        },
         "takeProfitPrice": null,
         "timeInForce": {
           "enum_map": {
@@ -1078,8 +1082,29 @@
         },
         "datetime": null,
         "fee": {
-          "sub_field_map": null,
-          "unresolved_reason": "fee_not_object_literal"
+          "sub_field_map": {
+            "cost": {
+              "coercion": "safeNumber",
+              "key": "fee"
+            },
+            "currency": {
+              "coercion": "safeString",
+              "key": "fee_currency"
+            }
+          }
+        },
+        "fees": {
+          "sub_field_map": {
+            "cost": {
+              "coercion": "safeNumber",
+              "key": "fee"
+            },
+            "currency": {
+              "coercion": "safeString",
+              "key": "fee_currency"
+            }
+          },
+          "wrap_list": true
         },
         "id": {
           "coercion": "safeString",
@@ -1103,7 +1128,11 @@
           "format": null,
           "key": "direction"
         },
-        "symbol": null,
+        "symbol": {
+          "coercion": "safeString",
+          "format": null,
+          "key": "instrument_name"
+        },
         "takerOrMaker": null,
         "timestamp": {
           "coercion": "safeInteger",
