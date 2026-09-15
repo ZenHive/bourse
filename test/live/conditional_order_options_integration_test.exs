@@ -13,6 +13,11 @@ defmodule Bourse.ConditionalOrderOptionsIntegrationTest do
   @moduletag :network
   @moduletag :dangerous
 
+  # COIN-M GET /dapi/v1/algoOrder can lag the open-algo list under suite load
+  # (order_not_found -2013 while fetch_open_orders already holds the row).
+  @fetch_attempts 10
+  @fetch_interval_ms 250
+
   for {venue, symbol, amount, type, native_trigger} <- [
         {:okx, "BTC/USDT:USDT", 0.01, "market", "triggerPx"},
         {:bybit, "BTC/USDT:USDT", 0.001, "market", "triggerPrice"},
@@ -76,7 +81,7 @@ defmodule Bourse.ConditionalOrderOptionsIntegrationTest do
         assert_reduce_only!(@venue, order)
         assert_untriggered!(@venue, order.info)
 
-        assert {:ok, %Order{} = fetched} = Bourse.fetch_order(exchange, id, read_opts)
+        fetched = fetch_resting_order!(exchange, id, read_opts)
         assert numeric(fetched.trigger_price) == trigger
         assert_reduce_only!(@venue, fetched)
 
@@ -159,6 +164,28 @@ defmodule Bourse.ConditionalOrderOptionsIntegrationTest do
   defp assert_untriggered!(:deribit, info), do: assert(info["order_state"] == "untriggered")
   defp assert_untriggered!(:alpaca, info), do: assert(info["status"] in ["new", "accepted"])
   defp assert_untriggered!(_binance, info), do: assert(info["algoStatus"] == "NEW")
+
+  defp fetch_resting_order!(exchange, id, read_opts, attempts \\ @fetch_attempts)
+
+  defp fetch_resting_order!(_exchange, id, _read_opts, 0) do
+    flunk("owned trigger #{id} never became visible to fetch_order")
+  end
+
+  defp fetch_resting_order!(exchange, id, read_opts, attempts) do
+    case Bourse.fetch_order(exchange, id, read_opts) do
+      {:ok, %Order{} = fetched} ->
+        fetched
+
+      {:error, %Error{type: :order_not_found}} ->
+        receive do
+        after
+          @fetch_interval_ms -> fetch_resting_order!(exchange, id, read_opts, attempts - 1)
+        end
+
+      {:error, error} ->
+        flunk("fetch_order for owned trigger #{id} failed: #{inspect(error)}")
+    end
+  end
 
   defp resting_trigger!(venue, exchange, id, read_opts) do
     assert {:ok, orders} = Bourse.fetch_open_orders(exchange, read_opts)

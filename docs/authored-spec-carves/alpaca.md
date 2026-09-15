@@ -3,6 +3,21 @@
 Provider authority: [`priv/venues/alpaca/authority/manifest.json`](../../priv/venues/alpaca/authority/manifest.json).
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
+
+## 2026-09-15 — reduceOnly has no readable counterpart (Task 700)
+
+**C-T700b — Alpaca equity Order objects do not publish `reduce_only`. Outcome:
+DIVERGE; named exemption rather than a silent null.** OrderOptions refuses
+`reduce_only: true`. `false` still passes `prepare/3` as a no-op; the Trading
+API create/get-order contract has no such field to echo, so the order-control
+round-trip invariant exempts the slot instead of mapping a key the provider
+never returns.
+[Create an order](https://docs.alpaca.markets/us/reference/postorder)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T700b","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Alpaca Trading API Order object on POST /v2/orders and GET /v2/orders/{order_id}; no reduce_only field"},"observed_evidence":{"kind":"live_venue","reference":"paper-api.alpaca.markets stop-order re-read in conditional_order_options_integration_test.exs with reduce_only omitted and unified reduce_only nil"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 {"carve_id":"C-T429a","date":"2026-07-23","semantic_source":{"kind":"provider_owned","reference":"Alpaca Trading API and Market Data product boundaries; priv/venues/alpaca/authority/manifest.json"},"observed_evidence":{"kind":"live_venue","reference":"Live data.alpaca.markets reads and paper-api.alpaca.markets account/order lifecycle observed 2026-07-23"},"compatibility_reference":{"kind":"ccxt","reference":"Frozen Alpaca reference supplies the reconciled 118-method inventory only"},"resolved_tier":1}
 ## 2026-08-12 — rate-unit confrontation (Task 594)
 **C-T594a — Alpaca's authored rate-like slots name their venue units (task 594).

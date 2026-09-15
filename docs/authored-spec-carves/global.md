@@ -15,6 +15,7 @@ An unmapped slot with no named exemption fails
 622 (client identifier) and 632 (Binance-family order type) each fenced off
 for one field. Binance-family `stopLossPrice` / `takeProfitPrice` are exempted
 per venue (C-T700a): the provider publishes one trigger plus an order type.
+Alpaca `reduceOnly` is exempted (C-T700b): equities orders have no such field.
 
 <!-- carve-evidence-status
 {"carve_id":"C-T700","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Per-venue order objects: Deribit trigger_price/reduce_only; Bybit triggerPrice/stopLoss/takeProfit; OKX triggerPx; Binance-family triggerPrice plus type"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 test.deribit.com SLTS-11018249; api-demo.bybit.com 621de10e-13cf-475c-a3b4-a80b5ce7a41e; OKX demo 3924794877069905920; catalog invariant test/bourse/order_control_round_trip_invariant_test.exs"},"compatibility_reference":null,"resolved_tier":1}

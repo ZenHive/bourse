@@ -60,6 +60,12 @@ defmodule Bourse.OrderControlRoundTripInvariantTest do
         "COIN-M algo and regular order objects publish triggerPrice; STOP vs TAKE_PROFIT is the type, not a distinct takeProfitPrice field.",
       source: "https://developers.binance.com/en/docs/derivatives/coin-margined-futures/trade/rest-api",
       tracking: "Task 700; docs/authored-spec-carves/binancecoinm.md C-T700a"
+    },
+    {"alpaca", "reduceOnly"} => %{
+      reason:
+        "Alpaca equity Order objects have no reduce_only; OrderOptions refuses reduce_only: true, and false is a no-op the provider never echoes.",
+      source: "https://docs.alpaca.markets/us/reference/postorder",
+      tracking: "Task 700; docs/authored-spec-carves/alpaca.md C-T700b"
     }
   }
 
@@ -227,7 +233,8 @@ defmodule Bourse.OrderControlRoundTripInvariantTest do
     exchange = Exchange.new!(venue)
 
     for {canonical, slot} <- alias_pairs,
-        option_accepted?(exchange, canonical, sample_value(canonical)),
+        value <- sample_values(canonical),
+        option_accepted?(exchange, canonical, value),
         into: MapSet.new() do
       slot
     end
@@ -258,9 +265,9 @@ defmodule Bourse.OrderControlRoundTripInvariantTest do
   defp maybe_put_trigger(params, "deribit"), do: Map.put(params, "trigger", "index_price")
   defp maybe_put_trigger(params, _venue), do: params
 
-  defp sample_value("reduce_only"), do: true
-  defp sample_value("time_in_force"), do: "GTC"
-  defp sample_value(_price), do: 40_000
+  defp sample_values("reduce_only"), do: [true, false]
+  defp sample_values("time_in_force"), do: ["GTC"]
+  defp sample_values(_price), do: [40_000]
 
   defp spec_write_slots(spec, alias_pairs, order_slots) do
     alias_map =
