@@ -27,6 +27,8 @@ defmodule Bourse.Signing.Derive do
 
   @behaviour Bourse.Signing.Behaviour
 
+  alias ABI.FunctionSelector
+  alias ABI.TypeEncoder
   alias Bourse.Credentials
   alias Bourse.Signing
   alias Bourse.Signing.Crypto
@@ -92,11 +94,7 @@ defmodule Bourse.Signing.Derive do
   @doc "Derives the session-key EOA address used by Derive's order envelope."
   @spec signer_address(String.t()) :: String.t()
   def signer_address(private_key) when is_binary(private_key) do
-    {:ok, <<4, public_key::binary-size(64)>>} =
-      private_key |> Crypto.decode_private_key() |> ExSecp256k1.create_public_key()
-
-    <<_::binary-size(12), address::binary-size(20)>> = Crypto.keccak256(public_key)
-    "0x" <> Crypto.encode_hex(address)
+    Crypto.address_from_private_key(private_key)
   end
 
   @doc """
@@ -126,6 +124,9 @@ defmodule Bourse.Signing.Derive do
   additive — private reads with only a JSON body (or empty params) succeed
   without an `:order` precondition.
   """
+
+  # --- internals ---
+
   @impl true
   @spec sign(Signing.request(), Credentials.t(), Signing.config()) :: Signing.signed_request()
   def sign(request, credentials, config) do
@@ -151,8 +152,6 @@ defmodule Bourse.Signing.Derive do
       body: body
     }
   end
-
-  # --- internals ---
 
   defp build_body(request, credentials, config) do
     params = request.params || %{}
@@ -192,20 +191,19 @@ defmodule Bourse.Signing.Derive do
     end
   end
 
-  # ABI-encodes static-only types into concatenated 32-byte words.
+  # ABI-encodes static-only types into concatenated 32-byte words via Hieroglyph.
   defp abi_encode_static(values, types) do
-    values
-    |> Enum.zip(types)
-    |> Enum.map_join(fn {value, type} -> encode_word(type, value) end)
+    decoded = Enum.zip_with(values, types, &decode_abi_value/2)
+    type_maps = Enum.map(types, &%{type: FunctionSelector.decode_type(&1)})
+    TypeEncoder.encode_raw(decoded, type_maps)
   end
 
-  # Only the static types in Derive's two signed tuples are supported.
-  defp encode_word("bytes32", value), do: to_bytes32(value)
-  defp encode_word("address", value), do: encode_address(value)
-  defp encode_word("uint256", value) when is_integer(value), do: <<value::unsigned-big-256>>
-  defp encode_word("int256", value) when is_integer(value), do: <<value::signed-big-256>>
-  defp encode_word("bool", true), do: <<0::248, 1>>
-  defp encode_word("bool", false), do: <<0::256>>
+  defp decode_abi_value(value, "bytes32"), do: to_bytes32(value)
+  defp decode_abi_value(value, "address"), do: decode_address(value)
+  defp decode_abi_value(value, "uint256") when is_integer(value), do: value
+  defp decode_abi_value(value, "int256") when is_integer(value), do: value
+  defp decode_abi_value(true, "bool"), do: true
+  defp decode_abi_value(false, "bool"), do: false
 
   defp unit_integer(value) when is_integer(value), do: value * @unit_scale
 
@@ -221,8 +219,8 @@ defmodule Bourse.Signing.Derive do
   defp to_bytes32(value) when is_binary(value) and byte_size(value) == 32, do: value
   defp to_bytes32(value) when is_binary(value), do: decode_fixed(value, 32, "bytes32")
 
-  defp encode_address(value) when is_binary(value) and byte_size(value) == 20, do: <<0::96>> <> value
-  defp encode_address(value) when is_binary(value), do: <<0::96>> <> decode_fixed(value, 20, "address")
+  defp decode_address(value) when is_binary(value) and byte_size(value) == 20, do: value
+  defp decode_address(value) when is_binary(value), do: decode_fixed(value, 20, "address")
 
   defp decode_fixed(value, size, label) do
     bytes = value |> Crypto.strip_0x() |> Base.decode16!(case: :mixed)

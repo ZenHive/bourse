@@ -107,6 +107,44 @@ defmodule Bourse.Signing.CryptoTest do
 
       assert {:error, :invalid_signature} = Crypto.recover_signer_address(@vector_message, "not-a-signature")
     end
+
+    test "EIP-191 envelope uses byte_size, not UTF-8 length" do
+      # "é" is one grapheme (String.length 1) and two UTF-8 bytes. EIP-191
+      # prefixes the byte length; Cartouche.Recover.prefix_eth/1 uses String.length.
+      message = "é"
+      envelope = "\x19Ethereum Signed Message:\n" <> Integer.to_string(byte_size(message)) <> message
+      assert Crypto.hash_message(message) == Crypto.keccak256(envelope)
+      refute Crypto.hash_message(message) == Crypto.keccak256(Cartouche.Recover.prefix_eth(message))
+    end
+  end
+
+  describe "address derivation, low-s, and recovery conventions" do
+    # Yellow-paper / libsecp256k1 well-known vector: privkey 1 → this address.
+    @privkey_one <<1::256>>
+    @address_one "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf"
+
+    test "address_from_private_key matches the secp256k1 privkey-1 vector" do
+      assert Crypto.address_from_private_key(@privkey_one) == @address_one
+      assert Crypto.address_from_private_key("0x" <> String.duplicate("00", 31) <> "01") == @address_one
+    end
+
+    test "sign_hash emits canonical low-s and Ethereum v = 27 + recovery_id" do
+      digest = Crypto.keccak256("low-s vector")
+      sig = Crypto.sign_hash(digest, @privkey_one)
+      s = String.to_integer(sig.s, 16)
+
+      assert s > 0
+      assert s <= Crypto.secp256k1_half_n()
+      assert Crypto.secp256k1_n() == 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+      assert sig.v in [27, 28]
+      assert byte_size(sig.r) == 64
+      assert byte_size(sig.s) == 64
+    end
+
+    test "recover_signer_address recovers privkey-1 from an EIP-191 signature" do
+      signature = Crypto.sign_message("hello", private_key: "0x" <> String.duplicate("00", 31) <> "01")
+      assert {:ok, @address_one} = Crypto.recover_signer_address("hello", signature)
+    end
   end
 
   # Hides the value from compile-time type inference so the runtime guard, not the

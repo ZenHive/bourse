@@ -254,13 +254,14 @@ defmodule Bourse.MixProject do
       # used in lib/bourse.ex) ships in descripex 0.11.0; vendor fork retired.
       {:descripex, "~> 1.0.0"},
 
-      # Custom DEX signing (hyperliquid + derive): EIP-712 / msgpack / secp256k1.
-      # msgpax — canonical MessagePack for Hyperliquid action hashing.
-      # ex_keccak — Keccak-256 NIF (EIP-712 struct/domain hashing).
-      # ex_secp256k1 — RFC-6979 deterministic ECDSA with recovery id (signature r/s/v).
+      # Custom DEX signing (hyperliquid + derive + Lighter L1 personal signatures).
+      # cartouche — keccak, secp256k1 sign/recover, EIP-712 typed encoding.
+      # hieroglyph — Solidity ABI encoding (Derive order / trade-module tuples).
+      # msgpax — canonical MessagePack for Hyperliquid L1 action packing
+      # (venue payload construction; not a shared EVM primitive).
+      {:cartouche, "~> 0.9.0"},
+      {:hieroglyph, "~> 1.8.0"},
       {:msgpax, "~> 2.4"},
-      {:ex_keccak, "~> 0.7.8"},
-      {:ex_secp256k1, "~> 0.8.0"},
 
       # WebSocket client (Gun-based, 5-function API + Deribit heartbeat + reconnection)
       {:zen_websocket, "~> 0.9.0"}

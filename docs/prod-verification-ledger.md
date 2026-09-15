@@ -200,9 +200,12 @@ test code. Edit the fence when adding a ledgered case.
 
 ### lighter — L1 ChangePubKey signing migration (task 703, filed 2026-09-15)
 
-- Status: `evidence=unverified`. The migration is blocked before implementation;
-  no signing modules or dependencies were changed. This entry does not classify
-  a failing live test as passing or exempt it from a gate.
+- Status: `evidence=unverified`. The EVM primitive migration to published Cartouche
+  0.9.0 / Hieroglyph 1.8.0 is implemented in-tree (`Bourse.Signing.Crypto`,
+  `EIP712`, `Derive`; Hyperliquid and Lighter L1 personal-sign go through Crypto).
+  Live L1 ChangePubKey success and rejection against Lighter testnet remain
+  unobserved in this environment. This entry does not classify a failing live
+  test as passing or exempt it from a gate.
 - Blocked by: `LIGHTER_TESTNET_L1_ADDRESS` and `LIGHTER_TESTNET_L1_PRIVATE_KEY`
   are absent in the dispatched environment. The zk API key, API key index and
   account index are present, but cannot sign the account's EVM L1 message.

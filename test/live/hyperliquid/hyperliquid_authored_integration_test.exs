@@ -1,13 +1,14 @@
 defmodule Bourse.HyperliquidAuthoredIntegrationTest do
-  @moduledoc false
   # Live tier-1 pins for Hyperliquid public /info request shaping (task 333).
   # Semantic authority: https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint
+  @moduledoc false
 
   use ExUnit.Case, async: false
 
   import Bourse.IntegrationHelper, only: [build_exchange: 2, require_credentials!: 1]
   import Bourse.StructValidators, only: [assert_order_book_struct: 2]
 
+  alias Bourse.Signing.Crypto
   alias Bourse.Test.LiveGateIsolation
   alias Bourse.Testnet
   alias Bourse.Unified.RequestShape
@@ -460,13 +461,12 @@ defmodule Bourse.HyperliquidAuthoredIntegrationTest do
   # the registered testnet wallet (api_key). A mismatch is the root cause of the
   # historical "User or API Wallet 0x… does not exist" rejection.
   test "derived signing address equals the registered testnet wallet" do
+    # --- task 225 helpers -----------------------------------------------------
     gate_credentials!()
     creds = require_credentials!(:hyperliquid)
 
     assert String.downcase(creds.api_key) == derive_eth_address(creds.secret)
   end
-
-  # --- task 225 helpers -----------------------------------------------------
 
   defp order_row(side, price, reduce_only?) do
     %{
@@ -522,18 +522,7 @@ defmodule Bourse.HyperliquidAuthoredIntegrationTest do
     Req.post!(url, headers: [{"content-type", "application/json"}], body: body).body
   end
 
-  # secp256k1 pubkey → keccak256(pub[1..])[-20..] → lowercased 0x-address.
-  defp derive_eth_address(secret) do
-    priv =
-      secret
-      |> String.replace_prefix("0x", "")
-      |> String.slice(-64, 64)
-      |> Base.decode16!(case: :mixed)
-
-    {:ok, <<0x04, xy::binary-64>>} = ExSecp256k1.create_public_key(priv)
-    <<_::binary-12, addr::binary-20>> = ExKeccak.hash_256(xy)
-    "0x" <> Base.encode16(addr, case: :lower)
-  end
+  defp derive_eth_address(secret), do: Crypto.address_from_private_key(secret)
 
   defp gate_credentials! do
     if !Testnet.registered?(:hyperliquid, :default) do

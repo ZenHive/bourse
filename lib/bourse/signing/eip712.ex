@@ -3,37 +3,45 @@ defmodule Bourse.Signing.EIP712 do
   Minimal EIP-712 typed-data encoder for the custom DEX signing modules
   (`Bourse.Signing.Hyperliquid`).
 
-  Implements canonical EIP-712 encoding for the atomic-field message types
-  Hyperliquid uses (`Agent`, `HyperliquidTransaction:*`). The
-  result is the EIP-712 digest preimage `0x1901 ‖ domainSeparator ‖ hashStruct`,
-  as defined by EIP-712.
+  Thin representation adapter over Cartouche 0.9.0 `Cartouche.Typed`. The
+  public functions still take Bourse's map/`%{"name","type"}` shapes and return
+  the EIP-712 digest preimage `0x1901 ‖ domainSeparator ‖ hashStruct`.
+
+  ## Hashing boundaries
+
+  * `encode/4` hashes with an **explicit** `primary_type`. Cartouche.Typed.encode/1
+    infers the primary type from value keys (`find_type/2`); that is not used.
+  * `hash_struct/3` calls `Cartouche.Typed.hash_struct/3` (keccak of typeHash ‖
+    encodeData). Callers that need a digest (`Hyperliquid.sign_l1_action/3`)
+    keccak the preimage themselves — this module does not hash the 0x1901
+    envelope.
+  * Cartouche.Typed.Type.deserialize_type/1 only accepts `uint256` among the
+    `uint*` family. Hyperliquid user-signed actions use `uint64`; the adapter
+    parses `uintN`/`bytesN` into `{:uint, n}`/`{:bytes, n}` tuples that
+    `serialize_type/1` and `encode_data_value/2` already accept.
+  * Cartouche left-pads short `bytes32`/`address` values. Bourse rejects them
+    so a truncated hex string cannot silently become a different word.
 
   ## Scope
 
   Only **atomic** field types are supported (`string`, `bytes`, `bytes32`,
-  `address`, `bool`, `uint*`, `int*`). Struct-typed fields (nested custom types)
-  raise — none of the supported Hyperliquid message types use them, so a nested
-  type is a programming error rather than a silent wrong signature.
+  `address`, `bool`, `uint*`). Struct-typed fields (nested custom types) and
+  `int*` raise — Cartouche 0.9.0 Typed has no `{:int, n}` primitive (signed
+  integers for Derive orders go through Hieroglyph ABI, not this encoder).
+  None of the supported Hyperliquid message types use nested structs or ints.
 
   The `EIP712Domain` type is rendered in ethers' canonical field order
   (`name`, `version`, `chainId`, `verifyingContract`, `salt`), including only the
-  fields present in the supplied domain.
+  fields present in the supplied domain — `Cartouche.Typed.Domain.domain_type/1`.
   """
 
   alias Bourse.Signing.Crypto
+  alias Cartouche.Typed
+  alias Cartouche.Typed.Domain
+  alias Cartouche.Typed.Type
 
   @type field :: %{required(String.t()) => String.t()}
   @type domain :: %{optional(String.t()) => term()}
-
-  # ethers renders EIP712Domain fields in this fixed canonical order,
-  # regardless of the order they appear in the supplied domain map.
-  @domain_field_order [
-    {"name", "string"},
-    {"version", "string"},
-    {"chainId", "uint256"},
-    {"verifyingContract", "address"},
-    {"salt", "bytes32"}
-  ]
 
   @doc """
   Encodes typed data into the EIP-712 digest preimage
@@ -46,89 +54,98 @@ defmodule Bourse.Signing.EIP712 do
 
   @doc "Computes the 32-byte EIP-712 domain separator for `domain`."
   @spec domain_separator(domain()) :: binary()
-  def domain_separator(domain) do
-    fields = Enum.filter(@domain_field_order, fn {name, _type} -> Map.has_key?(domain, name) end)
-    type_string = "EIP712Domain(" <> Enum.map_join(fields, ",", fn {n, t} -> "#{t} #{n}" end) <> ")"
-    type_hash = Crypto.keccak256(type_string)
-
-    encoded =
-      Enum.map_join(fields, fn {name, type} ->
-        encode_field(type, Map.fetch!(domain, name))
-      end)
-
-    Crypto.keccak256(type_hash <> encoded)
+  def domain_separator(domain) when is_map(domain) do
+    typed = %Typed{domain: Domain.deserialize(domain), types: %{}, value: %{}}
+    Typed.domain_seperator(typed)
   end
 
   @doc "Computes `hashStruct(primaryType) = keccak256(typeHash ‖ encodeData)`."
   @spec hash_struct(String.t(), %{String.t() => [field()]}, map()) :: binary()
   def hash_struct(primary_type, types, message) do
+    cartouche_types = to_cartouche_types(types)
     fields = Map.fetch!(types, primary_type)
-    type_string = encode_type(primary_type, fields)
-    type_hash = Crypto.keccak256(type_string)
-
-    encoded =
-      Enum.map_join(fields, fn %{"name" => name, "type" => type} ->
-        encode_field(type, Map.fetch!(message, name))
-      end)
-
-    Crypto.keccak256(type_hash <> encoded)
+    cartouche_message = to_cartouche_message(fields, message)
+    Typed.hash_struct(primary_type, cartouche_message, cartouche_types)
   end
 
-  defp encode_type(primary_type, fields) do
-    body = Enum.map_join(fields, ",", fn %{"name" => name, "type" => type} -> "#{type} #{name}" end)
-    "#{primary_type}(#{body})"
+  defp to_cartouche_types(types) do
+    Map.new(types, fn {name, fields} ->
+      {name, %Type{fields: Enum.map(fields, &to_cartouche_field/1)}}
+    end)
   end
 
-  # --- Atomic field encoders (each returns exactly 32 bytes) ---
+  defp to_cartouche_field(%{"name" => name, "type" => type}) do
+    {name, parse_atomic_type(type)}
+  end
 
-  defp encode_field("string", value) when is_binary(value), do: Crypto.keccak256(value)
-
-  defp encode_field("bytes", value) when is_binary(value), do: Crypto.keccak256(value)
-
-  defp encode_field("bytes32", value), do: to_bytes32(value)
-
-  defp encode_field("address", value), do: encode_address(value)
-
-  defp encode_field("bool", true), do: <<0::248, 1>>
-  defp encode_field("bool", false), do: <<0::256>>
-
-  defp encode_field(type, value) when is_integer(value) do
-    if uint_or_int?(type) do
-      <<value::unsigned-big-256>>
-    else
-      raise ArgumentError, "EIP712: unsupported field type #{inspect(type)}"
+  # Cartouche.Typed.Type.deserialize_type/1 handles address/string/bytes/bool/uint256/bytes32
+  # and uppercase custom types. uint64 (Hyperliquid) and other uintN/bytesN are parsed here.
+  defp parse_atomic_type(type) when is_binary(type) do
+    case parse_cartouche_type(type) do
+      parsed when is_atom(parsed) or is_tuple(parsed) -> parsed
+      _custom -> raise ArgumentError, "EIP712: unsupported field type #{inspect(type)}"
     end
   end
 
-  defp encode_field(type, value) do
+  defp parse_cartouche_type(type) do
+    Type.deserialize_type(type)
+  rescue
+    RuntimeError -> parse_sized_type(type)
+  end
+
+  defp parse_sized_type("uint" <> rest) do
+    case Integer.parse(rest) do
+      {n, ""} when n > 0 -> {:uint, n}
+      _other -> raise ArgumentError, "EIP712: unsupported field type #{inspect("uint" <> rest)}"
+    end
+  end
+
+  defp parse_sized_type("bytes" <> rest) do
+    case Integer.parse(rest) do
+      {n, ""} when n > 0 -> {:bytes, n}
+      _other -> raise ArgumentError, "EIP712: unsupported field type #{inspect("bytes" <> rest)}"
+    end
+  end
+
+  defp parse_sized_type(type) do
+    raise ArgumentError, "EIP712: unsupported field type #{inspect(type)}"
+  end
+
+  defp to_cartouche_message(fields, message) do
+    Map.new(fields, fn %{"name" => name, "type" => type} ->
+      {name, convert_value(type, Map.fetch!(message, name))}
+    end)
+  end
+
+  defp convert_value("string", value) when is_binary(value), do: value
+  defp convert_value("bytes", value) when is_binary(value), do: value
+  defp convert_value("bool", value) when is_boolean(value), do: value
+  defp convert_value("uint" <> _rest, value) when is_integer(value), do: value
+
+  defp convert_value("bytes" <> rest, value) when rest != "" do
+    {n, ""} = Integer.parse(rest)
+    exact_bytes(value, n, "bytes#{n}")
+  end
+
+  defp convert_value("address", value), do: exact_bytes(value, 20, "address")
+
+  defp convert_value(type, value) when is_integer(value) do
+    raise ArgumentError, "EIP712: unsupported field type #{inspect(type)}"
+  end
+
+  defp convert_value(type, value) do
     raise ArgumentError, "EIP712: unsupported field #{inspect(type)} for #{inspect(value)}"
   end
 
-  defp uint_or_int?(type) do
-    String.starts_with?(type, "uint") or String.starts_with?(type, "int")
-  end
+  defp exact_bytes(value, size, _label) when is_binary(value) and byte_size(value) == size, do: value
 
-  # bytes32 value: raw 32-byte binary, or a (0x-prefixed) 64-char hex string.
-  defp to_bytes32(value) when is_binary(value) and byte_size(value) == 32, do: value
-
-  defp to_bytes32(value) when is_binary(value) do
+  defp exact_bytes(value, size, label) when is_binary(value) do
     bytes = value |> Crypto.strip_0x() |> Base.decode16!(case: :mixed)
 
-    if byte_size(bytes) == 32 do
+    if byte_size(bytes) == size do
       bytes
     else
-      raise ArgumentError, "EIP712: bytes32 must be 32 bytes, got #{byte_size(bytes)}"
-    end
-  end
-
-  # address: 20-byte value right-aligned in a 32-byte word.
-  defp encode_address(value) when is_binary(value) do
-    bytes = value |> Crypto.strip_0x() |> Base.decode16!(case: :mixed)
-
-    if byte_size(bytes) == 20 do
-      <<0::96>> <> bytes
-    else
-      raise ArgumentError, "EIP712: address must be 20 bytes, got #{byte_size(bytes)}"
+      raise ArgumentError, "EIP712: #{label} must be #{size} bytes, got #{byte_size(bytes)}"
     end
   end
 end

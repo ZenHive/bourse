@@ -12,6 +12,7 @@ defmodule Bourse.Signing.DeriveTest do
 
   alias Bourse.Credentials
   alias Bourse.Signing
+  alias Bourse.Signing.Crypto
   alias Bourse.Signing.Derive
 
   @private_key "0x0123456789012345678901234567890123456789012345678901234567890123"
@@ -127,6 +128,24 @@ defmodule Bourse.Signing.DeriveTest do
 
       refute whole == fractional
     end
+
+    test "signed int256 words follow the ABI two's-complement spec, including -1" do
+      # Solidity abi.encode(int256(-1)) is 32 0xff bytes (the ABI spec, not a
+      # previously-computed bourse hash).
+      minus_one = ABI.TypeEncoder.encode_raw([-1], [%{type: ABI.FunctionSelector.decode_type("int256")}])
+      assert minus_one == :binary.copy(<<0xFF>>, 32)
+
+      scale = 1_000_000_000_000_000_000
+      price = 100 * scale
+      amount = -1 * scale
+      max_fee = 200 * scale
+
+      encoded =
+        <<1::256, 0::256, price::signed-256, amount::signed-256, max_fee::256, 1::256, 1::256>>
+
+      expected = Crypto.keccak256(encoded)
+      assert Derive.trade_module_data_hash(@base_asset, 0, 100, -1, 200, 1, true) == expected
+    end
   end
 
   describe "signer_address/1" do
@@ -136,6 +155,7 @@ defmodule Bourse.Signing.DeriveTest do
       assert String.starts_with?(address, "0x")
       assert String.length(address) == 42
       assert address == String.downcase(address)
+      assert address == Crypto.address_from_private_key(@private_key)
     end
   end
 
