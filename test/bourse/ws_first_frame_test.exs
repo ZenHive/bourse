@@ -186,10 +186,15 @@ defmodule Bourse.WSFirstFrameTest do
           assert lighter.first_frame == "rejected"
           assert lighter.data_frame == nil
 
+        # Not silent in the wire sense: the greeting arrived and nothing followed
+        # it. Reporting "received no frame" here would be a lie about a socket
+        # that is demonstrably talking, and it reads the same as a dead host —
+        # two failures with different remedies. The greeting is an unattributable
+        # frame, which is what the lane's generic guard already calls it.
         :silent ->
           assert status == :error
           assert lighter.data_frame == nil
-          assert lighter.reason =~ "received no frame"
+          assert lighter.reason =~ "none carried the subscribed channel"
       end
     end
   end

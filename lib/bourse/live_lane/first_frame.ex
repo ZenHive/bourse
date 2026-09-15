@@ -425,10 +425,6 @@ defmodule Bourse.LiveLane.FirstFrame do
   defp timeout_result(:none, _unattributed), do: :timeout
   defp timeout_result(first_kind, _unattributed), do: {:ack_timeout, first_kind}
 
-  defp handle_frame("lighter" = venue, deadline, first_kind, tokens, unattributed, %{"type" => "connected"}) do
-    await_frame(venue, deadline, first_kind, tokens, unattributed)
-  end
-
   defp handle_frame(venue, deadline, first_kind, tokens, unattributed, frame) do
     if heartbeat?(frame) do
       await_frame(venue, deadline, first_kind, tokens, unattributed)
