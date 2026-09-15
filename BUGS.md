@@ -114,6 +114,92 @@ roadmap.
 
 ---
 
+## 2026-09-01 — `fetch_funding_rate/2` is unavailable on hyperliquid while `fetch_funding_rates/2` serves the same number, so a per-symbol consumer gets `not_supported` for a rate the venue publishes hourly
+
+**Status:** 🆕 reported (consumer: `trading_dashboard`, hedge-venue ranking) · **Tracked:** unrouted.
+
+**The call:**
+
+```elixir
+{:ok, hl} = Bourse.exchange(:hyperliquid)
+Bourse.fetch_funding_rate(hl, "BTC/USDC:USDC")
+```
+
+**Observed:**
+
+```elixir
+{:error, %Bourse.Error{
+   type: :not_supported,
+   message: "hyperliquid does not support fetchFundingRate",
+   recoverable: false, retry_class: :non_retryable}}
+```
+
+**The same number is one call away.** The plural, on the same client, same symbol, live
+2026-09-01:
+
+```elixir
+Bourse.fetch_funding_rates(hl, symbols: ["BTC/USDC:USDC"])
+#=> {:ok, %{"BTC/USDC:USDC" => %Bourse.FundingRate{funding_rate: 1.25e-5, interval: "1h"}}}
+```
+
+`interval` is populated, the rate is hyperliquid's base hourly rate. Nothing is missing from
+the venue; only the singular entry point refuses.
+
+**Root cause is a capability-map asymmetry, and hyperliquid is the only venue that has it.**
+Probed across all eleven venues on the installed 0.8.0:
+
+| Venue | `fetchFundingRate` | `fetchFundingRates` |
+|---|---|---|
+| **hyperliquid** | **false** | **true** |
+| deribit | true | `nil` |
+| binance, binanceusdm, binancecoinm, bybit, okx | true | true |
+| derive | true | false |
+| lighter, alpaca, coinbaseexchange | false | false |
+
+Hyperliquid is the single `false → true` row. This mirrors upstream CCXT faithfully — HL has no
+per-symbol funding endpoint, only `metaAndAssetCtxs`, which returns every asset at once — so the
+capability flag is not itself wrong. The gap is that bourse offers no bridge across it.
+
+**Expected.** When a venue declares `fetchFundingRates` and not `fetchFundingRate`, the singular
+serves the request from the plural and slices the requested symbol out, rather than refusing.
+A consumer asking one venue for one symbol's funding should not have to know which of the two
+spellings that particular venue happens to implement — that is precisely the normalization this
+library exists to provide. The reverse case (deribit: singular yes, plural `nil`) argues for the
+same bridge in the other direction.
+
+**Consumer impact (`trading_dashboard`).** The hedge manager ranks perp venues by daily funding
+before allocating a hedge; a venue whose funding interval it cannot read is dropped from the plan
+entirely (`excluded: :funding_interval_unavailable`). Its funding fetcher calls the singular:
+
+```elixir
+def default_funding_fetcher(exchange_id, symbol) do
+  with {:ok, exchange} <- Bourse.exchange(exchange_id) do
+    Bourse.fetch_funding_rate(exchange, symbol)
+  end
+end
+```
+
+So hyperliquid — a venue the desk holds credentials for and actively hedges on — is silently
+unrankable and never receives an order leg. The consumer can special-case the plural per venue,
+and will locally, but that is the venue-shape knowledge the unified layer is supposed to absorb.
+
+**Secondary observation, same probe, filed here rather than separately because it is one
+authoring pass:** `lighter` declares **both** funding capabilities `false`, but publishes funding
+publicly and unauthenticated. Live 2026-09-01:
+
+```
+$ curl -s 'https://mainnet.zklighter.elliot.ai/api/v1/funding-rates'
+{"code":200,"funding_rates":[{"market_id":133,"exchange":"binance","symbol":"BIRB","rate":0.0001}, …]}
+```
+
+`/api/v1/fundings?market_id&resolution=1h` carries the per-market history (rate in percent per
+hour, sign in a separate `direction` field, timestamps in seconds, ~2 months retention). So
+lighter's `false/false` is an authoring gap, not a venue limitation — a distinct defect class
+from the hyperliquid bridge above, but it lands the same consumer outcome: a real perp venue that
+the hedge ranker cannot see.
+
+---
+
 ## 2026-08-29 — the unified trigger/stop opt is spelled differently per venue, so the same `create_order` call rests a stop on binance and fills a market order on okx
 
 **Status:** 🆕 measured (orchestrator, whole-surface pass over the landed base at `c462021`) — not consumer-reported. · **Tracked:** unrouted.
@@ -3472,3 +3558,4 @@ Expected: `fee: %Bourse.Fee{cost: 6.385e-5, currency: "BTC"}` (bzw. die Map mit 
 
 Konsument-Handling (trading_dashboard, 2026-09-15): `TradingDashboard.Exchange.OrderLifecycle` fällt beim Anlegen einer `OrderFill` auf `info["fee"]`/`info["fee_currency"]` zurück, wenn die normalisierte Fee keinen `cost` hat. Der Fallback entfällt, sobald die Normalisierung greift.
 Betroffene Exchange: deribit.
+||||||| Stash base
