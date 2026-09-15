@@ -336,6 +336,13 @@ defmodule Bourse.LiveLane.FirstFrame do
   defp present?(value) when is_binary(value), do: String.trim(value) != ""
   defp present?(_value), do: false
 
+  # The ack budget stays 0 on purpose: `WS.subscribe/3`'s ack wait turns "no
+  # outcome yet" into `{:error, :subscription_ack_timeout}`, which would fail a
+  # venue for being slow rather than for being wrong, and it cannot see a
+  # rejection that arrives behind an unsolicited greeting. `await_frame/5` below
+  # classifies every frame against the venue's own ack shapes for the whole probe
+  # window instead, so a rejection wins whenever it arrives — a strictly wider
+  # window than any fixed pre-wait budget, over the lane's own timeout.
   defp default_subscribe(ws, %{watch: :watch_ticker, symbol: symbol}, ws_client) do
     watch_result(ws_client.watch_ticker(ws, symbol, ack_timeout_ms: 0))
   end
@@ -357,12 +364,30 @@ defmodule Bourse.LiveLane.FirstFrame do
   defp await_classified_frames(venue, channel, timeout_ms) do
     deadline = System.monotonic_time(:millisecond) + timeout_ms
 
-    case await_frame(venue, deadline, :none) do
+    case await_frame(venue, deadline, :none, channel_tokens(channel)) do
       :timeout ->
         {:error, silence_row(venue, channel, nil, "connected but received no frame within #{timeout_ms}ms")}
 
       {:ack_timeout, first_kind} ->
         {:error, silence_row(venue, channel, first_kind, "connected but received no data frame within #{timeout_ms}ms")}
+
+      {:unattributable, first_kind, frame} ->
+        {:error,
+         silence_row(
+           venue,
+           channel,
+           first_kind,
+           "received frames within #{timeout_ms}ms but none carried the subscribed channel; last was #{inspect(frame)}"
+         )}
+
+      :no_channel_tokens ->
+        {:error,
+         silence_row(
+           venue,
+           channel,
+           nil,
+           "the subscribed channel yields no token a frame could be attributed to, so no frame can count as coverage"
+         )}
 
       {:rejected, frame} ->
         {:error, rejected_row(venue, channel, frame)}
@@ -372,44 +397,106 @@ defmodule Bourse.LiveLane.FirstFrame do
     end
   end
 
-  defp await_frame(venue, deadline, first_kind) do
+  defp await_frame(_venue, _deadline, _first_kind, []), do: :no_channel_tokens
+
+  defp await_frame(venue, deadline, first_kind, tokens) do
+    await_frame(venue, deadline, first_kind, tokens, nil)
+  end
+
+  defp await_frame(venue, deadline, first_kind, tokens, unattributed) do
     left = deadline - System.monotonic_time(:millisecond)
 
     if left <= 0 do
-      timeout_result(first_kind)
+      timeout_result(first_kind, unattributed)
     else
       receive do
-        {:websocket_message, frame} -> handle_frame(venue, deadline, first_kind, frame)
-        {:websocket_unmatched_response, frame} -> handle_frame(venue, deadline, first_kind, frame)
-        {:ws_frame, frame} -> handle_frame(venue, deadline, first_kind, frame)
-        _other -> await_frame(venue, deadline, first_kind)
+        {:websocket_message, frame} -> handle_frame(venue, deadline, first_kind, tokens, unattributed, frame)
+        {:websocket_unmatched_response, frame} -> handle_frame(venue, deadline, first_kind, tokens, unattributed, frame)
+        {:ws_frame, frame} -> handle_frame(venue, deadline, first_kind, tokens, unattributed, frame)
+        _other -> await_frame(venue, deadline, first_kind, tokens, unattributed)
       after
-        max(left, 0) -> timeout_result(first_kind)
+        max(left, 0) -> timeout_result(first_kind, unattributed)
       end
     end
   end
 
-  defp timeout_result(:none), do: :timeout
-  defp timeout_result(first_kind), do: {:ack_timeout, first_kind}
+  defp timeout_result(first_kind, unattributed)
+  defp timeout_result(first_kind, frame) when not is_nil(frame), do: {:unattributable, first_kind, frame}
+  defp timeout_result(:none, _unattributed), do: :timeout
+  defp timeout_result(first_kind, _unattributed), do: {:ack_timeout, first_kind}
 
-  defp handle_frame(venue, deadline, first_kind, frame) do
+  defp handle_frame(venue, deadline, first_kind, tokens, unattributed, frame) do
     if heartbeat?(frame) do
-      await_frame(venue, deadline, first_kind)
+      await_frame(venue, deadline, first_kind, tokens, unattributed)
     else
-      classify_received(venue, deadline, first_kind, frame)
+      classify_received(venue, deadline, first_kind, tokens, unattributed, frame)
     end
   end
 
-  defp classify_received(venue, deadline, first_kind, frame) do
+  defp classify_received(venue, deadline, first_kind, tokens, unattributed, frame) do
     case SubscribeAck.classify(venue, frame) do
-      {:rejected, rejected} -> {:rejected, rejected}
-      :success -> continue_after_ack(venue, deadline, first_kind, frame)
-      class -> {:data, frame, class, first_kind_or(first_kind, frame_kind(class, frame))}
+      {:rejected, rejected} ->
+        {:rejected, rejected}
+
+      :success ->
+        continue_after_ack(venue, deadline, first_kind, tokens, unattributed, frame)
+
+      class ->
+        data_or_wait(venue, deadline, first_kind, tokens, unattributed, frame, class)
     end
   end
 
-  defp continue_after_ack(venue, deadline, first_kind, frame) do
-    await_frame(venue, deadline, first_kind_or(first_kind, frame_kind(:success, frame)))
+  # A frame is coverage only when it carries the channel this probe subscribed to.
+  # Venues emit unsolicited control frames that are neither heartbeats nor
+  # acknowledgements — lighter greets every connection with `%{"type" => "connected"}` —
+  # and counting one of those as data reports a venue green whose subscription it
+  # then rejects. An unattributable frame is therefore not a verdict: keep waiting, so
+  # a rejection that arrives behind it still wins and real data still passes.
+  defp data_or_wait(venue, deadline, first_kind, tokens, unattributed, frame, class) do
+    if attributable?(frame, tokens) do
+      {:data, frame, class, first_kind_or(first_kind, frame_kind(class, frame))}
+    else
+      await_frame(venue, deadline, first_kind, tokens, unattributed || frame)
+    end
+  end
+
+  defp continue_after_ack(venue, deadline, first_kind, tokens, unattributed, frame) do
+    await_frame(venue, deadline, first_kind_or(first_kind, frame_kind(:success, frame)), tokens, unattributed)
+  end
+
+  @doc """
+  Tokens a data frame must carry to be attributable to the subscribed channel.
+
+  Derived from the venue-native channel label the probe actually subscribed
+  (`btcusdt@miniTicker`, `ticker.BTC-PERPETUAL.100ms`, `market_stats/0`,
+  `ETH-USD`). Purely numeric and very short fragments are dropped: a bare `0`
+  from `market_stats/0` matches almost any payload and would re-open the hole
+  this guard closes. So are the structural key names that ride along when a
+  map-shaped channel is rendered into its label (okx subscribes
+  `%{"channel" => "tickers", "instId" => "BTC-USDT"}`) — `channel` matches every
+  okx frame regardless of what was subscribed, which is exactly the kind of
+  free match this guard exists to refuse. The identity survives in the values.
+  """
+  @structural_tokens ~w(channel channels instid inst args arg topic type name)
+
+  @spec channel_tokens(String.t()) :: [String.t()]
+  def channel_tokens(channel) when is_binary(channel) do
+    channel
+    |> String.split(~r/[^A-Za-z0-9_-]+/u, trim: true)
+    |> Enum.map(&String.downcase/1)
+    |> Enum.reject(&(String.length(&1) < 3 or &1 =~ ~r/^\d+$/ or &1 in @structural_tokens))
+    |> Enum.uniq()
+  end
+
+  def channel_tokens(_channel), do: []
+
+  @doc "True when the frame references at least one token of the subscribed channel."
+  @spec attributable?(term(), [String.t()]) :: boolean()
+  def attributable?(_frame, []), do: false
+
+  def attributable?(frame, tokens) do
+    haystack = frame |> inspect(limit: :infinity, printable_limit: :infinity) |> String.downcase()
+    Enum.any?(tokens, &String.contains?(haystack, &1))
   end
 
   defp first_kind_or(:none, kind), do: kind

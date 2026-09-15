@@ -21,9 +21,12 @@ defmodule Bourse.WSFirstFrameTest do
       {:ok, %{channels: ["ETH-USD"]}}
     end
 
-    def watch_trades(exchange, _symbol, _opts) do
+    # The handle names the market the subscription actually resolved to — that is
+    # what the lane attributes a frame against, so the stub cannot label the
+    # channel after the venue while the payload names the market.
+    def watch_trades(_exchange, _symbol, _opts) do
       send(self(), {:websocket_message, [%{"T" => "t", "S" => "FAKEPACA"}]})
-      {:ok, %{channels: ["trades:#{exchange.id}"]}}
+      {:ok, %{channels: ["trades:FAKEPACA"]}}
     end
 
     def subscribe(%{id: "lighter"}, _channels, _opts) do
@@ -183,6 +186,47 @@ defmodule Bourse.WSFirstFrameTest do
     assert hyperliquid.first_frame == "acknowledgement"
     assert hyperliquid.data_frame == nil
     assert hyperliquid.reason =~ "received no data frame"
+  end
+
+  test "a connection greeting that names no subscribed channel is not coverage" do
+    # lighter greets every socket with this frame before any subscription is
+    # resolved. It is neither a heartbeat nor a known ack shape, so the lane used
+    # to classify it as data and report the venue green — while the venue was
+    # rejecting the subscription behind it.
+    subscribe = fn _ws, spec ->
+      if spec.venue == "lighter" do
+        send(self(), {:websocket_message, %{"type" => "connected"}})
+      else
+        send_passed_frames(spec)
+      end
+
+      {:ok, channel_name(spec)}
+    end
+
+    assert {:error, report} = run_classified(subscribe)
+    lighter = Enum.find(report.venues, &(&1.venue == "lighter"))
+    assert lighter.status == "failed"
+    assert lighter.data_frame == nil
+    assert lighter.reason =~ "none carried the subscribed channel"
+  end
+
+  test "a rejection arriving behind an unattributable frame is still the verdict" do
+    subscribe = fn _ws, spec ->
+      if spec.venue == "lighter" do
+        send(self(), {:websocket_message, %{"type" => "connected"}})
+        send(self(), {:websocket_message, %{"error" => %{"code" => 30_005, "message" => "Invalid Channel:  (marketId)"}}})
+      else
+        send_passed_frames(spec)
+      end
+
+      {:ok, channel_name(spec)}
+    end
+
+    assert {:error, report} = run_classified(subscribe)
+    lighter = Enum.find(report.venues, &(&1.venue == "lighter"))
+    assert lighter.status == "failed"
+    assert lighter.first_frame == "rejected"
+    assert lighter.reason =~ "30005" or lighter.reason =~ "30_005"
   end
 
   test "late frames from one venue cannot satisfy the next venue probe" do
@@ -417,8 +461,11 @@ defmodule Bourse.WSFirstFrameTest do
     send(self(), {:websocket_message, coinbase_last_match()})
   end
 
-  defp send_passed_frames(_spec) do
-    send(self(), {:websocket_message, %{"topic" => "tickers.BTCUSDT", "data" => %{"lastPrice" => "1"}}})
+  # The lane only counts a frame that carries the channel the probe subscribed,
+  # so the stub payload has to name that channel rather than one fixed topic —
+  # a venue-agnostic frame is exactly what a connection greeting looks like.
+  defp send_passed_frames(spec) do
+    send(self(), {:websocket_message, %{"topic" => channel_name(spec), "data" => %{"lastPrice" => "1"}}})
   end
 
   defp coinbase_last_match do
