@@ -68,7 +68,8 @@ defmodule Bourse.HTTP do
     :base_url,
     :body_encoding,
     :endpoint_weight,
-    :endpoint_rate_limit
+    :endpoint_rate_limit,
+    :rate_limit_max_wait_ms
   ]
   @forwarded_request_opts [
     :plug,
@@ -101,6 +102,10 @@ defmodule Bourse.HTTP do
   - `:body_encoding` - Endpoint body convention from the exchange spec
   - `:plug` / `:adapter` - Req transport override (tests / custom adapter)
   - `:retry` / `:retry_delay` / `:max_retries` - Req retry controls
+  - `:rate_limit_max_wait_ms` - Per-call limiter wait budget in milliseconds
+    (default `Bourse.Defaults.rate_limit_max_wait_ms/0`). Isolated from other
+    callers; exceeding it returns `{:error, %Bourse.Error{type: :rate_limit_exceeded}}`
+    naming the required wait, without dispatching the request.
 
   Any other key is rejected as `{:error, %Bourse.Error{type: :bad_request}}`
   before a request is issued. Unknown options are a caller error; they are
@@ -121,12 +126,19 @@ defmodule Bourse.HTTP do
     body_encoding = Keyword.get(opts, :body_encoding)
     endpoint_weight = Keyword.get(opts, :endpoint_weight, 1)
     endpoint_rate_limit = Keyword.get(opts, :endpoint_rate_limit, endpoint_weight)
+    max_wait_ms = Keyword.get(opts, :rate_limit_max_wait_ms, Defaults.rate_limit_max_wait_ms())
 
     extra_opts = Keyword.take(opts, @forwarded_request_opts)
 
     with :ok <- reject_unknown_opts(opts, exchange.id),
          :ok <- check_circuit_breaker(exchange),
-         :ok <- Shaping.maybe_rate_limit(Shaping.rate_key(exchange), exchange, endpoint_rate_limit) do
+         :ok <-
+           Shaping.maybe_rate_limit(
+             Shaping.rate_key(exchange),
+             exchange,
+             endpoint_rate_limit,
+             max_wait_ms: max_wait_ms
+           ) do
       base_url = custom_base_url || default_base_url(exchange)
 
       request_opts = %{
@@ -324,11 +336,25 @@ defmodule Bourse.HTTP do
     timeout = Keyword.get(opts, :timeout, Defaults.request_timeout_ms())
     endpoint_weight = Keyword.get(opts, :endpoint_weight, 1)
     endpoint_rate_limit = Keyword.get(opts, :endpoint_rate_limit, endpoint_weight)
-    extra_opts = Keyword.drop(opts, [:timeout, :endpoint_weight, :endpoint_rate_limit])
+    max_wait_ms = Keyword.get(opts, :rate_limit_max_wait_ms, Defaults.rate_limit_max_wait_ms())
+
+    extra_opts =
+      Keyword.drop(opts, [
+        :timeout,
+        :endpoint_weight,
+        :endpoint_rate_limit,
+        :rate_limit_max_wait_ms
+      ])
 
     with :ok <- reject_unknown_opts(opts, exchange.id),
          :ok <- check_circuit_breaker(exchange),
-         :ok <- Shaping.maybe_rate_limit(Shaping.rate_key(exchange), exchange, endpoint_rate_limit),
+         :ok <-
+           Shaping.maybe_rate_limit(
+             Shaping.rate_key(exchange),
+             exchange,
+             endpoint_rate_limit,
+             max_wait_ms: max_wait_ms
+           ),
          {:ok, signed} <- resolve_signed(signed_or_resigner) do
       url = base_url <> signed.url
       body_opts = if signed.body, do: [body: signed.body], else: []

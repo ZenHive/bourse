@@ -87,6 +87,17 @@ defmodule Bourse.Live.RateLimiterBucketTest do
     end
   end
 
+  test "a live public read with an explicit wait budget still dispatches" do
+    LiveGateIsolation.isolate!("coinbaseexchange")
+    exchange = live_exchange("coinbaseexchange")
+
+    assert {:ok, ticker} =
+             Bourse.fetch_ticker(exchange, "ETH/USD", rate_limit_max_wait_ms: 15_000)
+
+    assert ticker.symbol == "ETH/USD"
+    assert is_number(ticker.last) or is_number(ticker.bid) or is_number(ticker.ask)
+  end
+
   @tag timeout: 120_000
   test "okx signed GETs with retry disabled do not earn 50011 while the limiter admits them" do
     LiveGateIsolation.isolate!("okx")

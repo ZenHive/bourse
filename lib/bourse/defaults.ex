@@ -101,12 +101,15 @@ defmodule Bourse.Defaults do
   end
 
   @doc """
-  Named upper bound on how long `maybe_rate_limit/3` may `Process.sleep` before a request.
+  Default per-call upper bound on how long `maybe_rate_limit/4` may `Process.sleep`
+  before a request.
 
   A wait that would exceed this value is returned as
   `{:error, %Bourse.Error{type: :rate_limit_exceeded}}` naming the venue and the
-  wait, never a longer silent sleep. Well below the 30s request timeout and the
-  60s ExUnit default.
+  wait, never a longer silent sleep. Callers that accept a longer wait pass
+  `:rate_limit_max_wait_ms` on the request; that budget is isolated from this
+  default and from other concurrent consumers. Well below the 30s request
+  timeout and the 60s ExUnit default.
 
   Default: #{@default_rate_limit_max_wait_ms}ms
   """

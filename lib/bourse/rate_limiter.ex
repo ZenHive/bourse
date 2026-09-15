@@ -7,6 +7,13 @@ defmodule Bourse.RateLimiter do
   is admitted when the bucket holds its cost. An over-capacity cost is not
   exempt: the bucket accrues until it can pay, then goes to zero.
 
+  A waiter that will actually sleep (an explicit or default wait budget that
+  covers the delay) reserves the unpaid cost so interleaved cheaper traffic
+  cannot clamp accrual or spend the reserved tokens. Cheap burst stays capped
+  at authored `capacity`. Repeated checks of one key in a single `check_rates/2`
+  call are charged once at their combined cost; conflicting bucket definitions
+  for the same key fail before any spend.
+
   ## Usage
 
       key = {"okx", api_key, "request"}
@@ -32,6 +39,7 @@ defmodule Bourse.RateLimiter do
   use GenServer
 
   alias Bourse.Defaults
+  alias Bourse.Error
 
   @typedoc "Token-bucket configuration: authored capacity and refill rate."
   @type rate_limit ::
@@ -51,21 +59,27 @@ defmodule Bourse.RateLimiter do
            tokens: float(),
            updated_at: integer(),
            capacity: number(),
-           refill_per_sec: number()
+           refill_per_sec: number(),
+           reserved: float(),
+           reserved_until: integer()
          }
 
   @typep normalized_check :: {key(), number(), number(), number()}
 
   # Default period of 1 second if a legacy `%{requests: n}` omits `period`
+  # Client API
+
   @default_period_ms 1000
 
   # Default cost if not specified
   @default_cost 1
 
+  # Scheduling slack so a waiter that `Process.sleep`s the returned delay still
+  # owns the reservation when it retries.
+  @reservation_slack_ms 250
+
   # Maximum idle time before a key is evicted entirely (24 hours)
   @key_eviction_age_ms 24 * 60 * 60 * 1000
-
-  # Client API
 
   @doc """
   Returns a child specification for starting the rate limiter under a supervisor.
@@ -109,36 +123,64 @@ defmodule Bourse.RateLimiter do
 
   Returns `:ok` only when every bucket has capacity, recording every cost in the
   same GenServer transition. Returns `{:delay, milliseconds}` without recording
-  any bucket when at least one bucket cannot yet pay.
-  """
-  @spec check_rates([bucket_check()], GenServer.name()) :: :ok | {:delay, pos_integer()}
-  def check_rates(bucket_checks, name \\ __MODULE__) when is_list(bucket_checks) do
-    checks =
-      bucket_checks
-      |> Enum.reject(fn {_key, rate_limit, _cost} -> is_nil(rate_limit) end)
-      |> Enum.map(fn {key, rate_limit, cost} -> normalize_check(key, rate_limit, cost) end)
+  any spend when at least one bucket cannot yet pay.
 
-    if checks == [] do
-      :ok
-    else
-      GenServer.call(name, {:check_rates, checks})
-    end
+  Repeated checks of the same key are coalesced into one combined cost. Two
+  checks that name the same key with different `capacity` or `refill_per_sec`
+  return `{:error, %Bourse.Error{type: :invalid_parameters}}` and spend nothing.
+
+  Pass `max_wait_ms:` when the caller will sleep the returned delay — the unpaid
+  cost is reserved so cheaper traffic cannot erase accrual. Probe-style calls
+  (no budget) do not reserve.
+  """
+  @spec check_rates([bucket_check()]) :: :ok | {:delay, pos_integer()} | {:error, Error.t()}
+  @spec check_rates([bucket_check()], GenServer.name() | keyword()) ::
+          :ok | {:delay, pos_integer()} | {:error, Error.t()}
+  @spec check_rates([bucket_check()], GenServer.name(), keyword()) ::
+          :ok | {:delay, pos_integer()} | {:error, Error.t()}
+  def check_rates(bucket_checks) when is_list(bucket_checks) do
+    dispatch_checks(bucket_checks, __MODULE__, [])
+  end
+
+  def check_rates(bucket_checks, opts) when is_list(bucket_checks) and is_list(opts) do
+    dispatch_checks(bucket_checks, __MODULE__, opts)
+  end
+
+  def check_rates(bucket_checks, name) when is_list(bucket_checks) do
+    dispatch_checks(bucket_checks, name, [])
+  end
+
+  def check_rates(bucket_checks, name, opts) when is_list(bucket_checks) and is_list(opts) do
+    dispatch_checks(bucket_checks, name, opts)
   end
 
   @doc """
   Blocks until rate limit capacity is available, then records the request.
 
-  Returns `{:error, %Bourse.Error{}}` when the wait would exceed
-  `Bourse.Defaults.rate_limit_max_wait_ms/0`.
+  Returns `{:error, %Bourse.Error{}}` when the wait would exceed the per-call
+  budget (`:max_wait_ms`, default `Bourse.Defaults.rate_limit_max_wait_ms/0`).
+  The refusal names the required wait and spends nothing.
   """
-  @spec wait_for_capacity(key(), rate_limit() | nil, number(), GenServer.name()) ::
-          :ok | {:error, Bourse.Error.t()}
-  def wait_for_capacity(key, rate_limit, cost \\ @default_cost, name \\ __MODULE__)
+  @spec wait_for_capacity(key(), rate_limit() | nil) :: :ok | {:error, Error.t()}
+  @spec wait_for_capacity(key(), rate_limit() | nil, number()) :: :ok | {:error, Error.t()}
+  @spec wait_for_capacity(key(), rate_limit() | nil, number(), GenServer.name() | keyword()) ::
+          :ok | {:error, Error.t()}
+  @spec wait_for_capacity(key(), rate_limit() | nil, number(), GenServer.name(), keyword()) ::
+          :ok | {:error, Error.t()}
+  def wait_for_capacity(key, rate_limit, cost \\ @default_cost, name \\ __MODULE__, opts \\ [])
 
-  def wait_for_capacity(_key, nil, _cost, _name), do: :ok
+  def wait_for_capacity(_key, nil, _cost, _name, _opts), do: :ok
 
-  def wait_for_capacity(key, rate_limit, cost, name) do
-    await_capacity(key, rate_limit, cost, name, System.monotonic_time(:millisecond))
+  def wait_for_capacity(key, rate_limit, cost, name, opts) when is_list(opts) do
+    {name, opts} = split_limiter_name_opts(name, opts)
+
+    case Keyword.get(opts, :max_wait_ms, Defaults.rate_limit_max_wait_ms()) do
+      max_wait when is_integer(max_wait) and max_wait > 0 ->
+        await_capacity(key, rate_limit, cost, name, max_wait, System.monotonic_time(:millisecond))
+
+      other ->
+        {:error, Error.invalid_parameters(message: "max_wait_ms must be a positive integer, got: #{inspect(other)}")}
+    end
   end
 
   @doc """
@@ -158,6 +200,9 @@ defmodule Bourse.RateLimiter do
   The `period` argument is unused; it remains so callers that passed a window
   length keep compiling. Useful for debugging and monitoring.
   """
+
+  # Server callbacks
+
   @spec get_cost(key(), pos_integer(), GenServer.name()) :: number()
   def get_cost(key, period, name \\ __MODULE__) do
     GenServer.call(name, {:get_cost, normalize_key(key), period})
@@ -194,8 +239,6 @@ defmodule Bourse.RateLimiter do
     GenServer.call(name, :reset_all)
   end
 
-  # Server callbacks
-
   @impl true
   def init(_opts) do
     schedule_cleanup()
@@ -203,21 +246,24 @@ defmodule Bourse.RateLimiter do
   end
 
   @impl true
-  def handle_call({:check_rates, checks}, _from, state) do
+  def handle_call({:check_rates, checks, max_wait_ms}, _from, state) do
     now = System.monotonic_time(:millisecond)
 
-    decisions =
-      Enum.map(checks, fn {key, capacity, refill_per_sec, cost} ->
-        {key, check_bucket(state, key, capacity, refill_per_sec, cost, now)}
+    {decisions, delay_ms} =
+      Enum.reduce(checks, {[], nil}, fn {key, capacity, refill_per_sec, cost}, {acc, delay} ->
+        result = check_bucket(state, key, capacity, refill_per_sec, cost, now)
+
+        delay =
+          case result do
+            {:delay, ms, _} -> max(ms, delay || 0)
+            _ -> delay
+          end
+
+        {[{key, cost, result} | acc], delay}
       end)
 
-    delay_ms =
-      Enum.find_value(decisions, fn
-        {_key, {:delay, ms, _bucket}} -> ms
-        _ -> nil
-      end)
-
-    new_state = persist_buckets(state, decisions, delay_ms)
+    decisions = Enum.reverse(decisions)
+    new_state = persist_buckets(state, decisions, delay_ms, max_wait_ms, now)
     reply = if is_nil(delay_ms), do: :ok, else: {:delay, max(delay_ms, 1)}
     {:reply, reply, new_state}
   end
@@ -256,7 +302,14 @@ defmodule Bourse.RateLimiter do
     bucket =
       case Map.get(state, key) do
         nil ->
-          %{tokens: 0.0, updated_at: now, capacity: cost, refill_per_sec: 0.0}
+          %{
+            tokens: 0.0,
+            updated_at: now,
+            capacity: cost,
+            refill_per_sec: 0.0,
+            reserved: 0.0,
+            reserved_until: 0
+          }
 
         existing ->
           refilled = refill_bucket(existing, existing.capacity, existing.refill_per_sec, now)
@@ -285,21 +338,23 @@ defmodule Bourse.RateLimiter do
     {:noreply, final_state}
   end
 
-  defp await_capacity(key, rate_limit, cost, name, started_at) do
-    max_wait = Defaults.rate_limit_max_wait_ms()
+  defp await_capacity(key, rate_limit, cost, name, max_wait, started_at) do
     elapsed = System.monotonic_time(:millisecond) - started_at
     remaining = max_wait - elapsed
 
-    case check_rate(key, rate_limit, cost, name) do
+    case check_rates([{key, rate_limit, cost}], name, max_wait_ms: max(remaining, 0)) do
       :ok ->
         :ok
+
+      {:error, %Error{}} = error ->
+        error
 
       {:delay, delay_ms} when delay_ms > remaining ->
         {:error, wait_exceeded_error(key, delay_ms + max(elapsed, 0), max_wait)}
 
       {:delay, delay_ms} ->
         Process.sleep(delay_ms)
-        await_capacity(key, rate_limit, cost, name, started_at)
+        await_capacity(key, rate_limit, cost, name, max_wait, started_at)
     end
   end
 
@@ -310,7 +365,7 @@ defmodule Bourse.RateLimiter do
         {id, _} -> id
       end
 
-    Bourse.Error.rate_limit_exceeded(
+    Error.rate_limit_exceeded(
       exchange: exchange_id,
       message: "#{exchange_id} rate-limit wait #{wait_ms}ms exceeds max #{max_wait_ms}ms",
       retry_after: wait_ms
@@ -339,46 +394,209 @@ defmodule Bourse.RateLimiter do
     {exchange_id, credential_key, "request"}
   end
 
+  defp dispatch_checks(bucket_checks, name, opts) do
+    with {:ok, checks} <- prepare_checks(bucket_checks) do
+      if checks == [] do
+        :ok
+      else
+        GenServer.call(name, {:check_rates, checks, Keyword.get(opts, :max_wait_ms)})
+      end
+    end
+  end
+
+  defp prepare_checks(bucket_checks) do
+    bucket_checks
+    |> Enum.reject(fn {_key, rate_limit, _cost} -> is_nil(rate_limit) end)
+    |> Enum.map(fn {key, rate_limit, cost} -> normalize_check(key, rate_limit, cost) end)
+    |> coalesce_checks()
+  end
+
+  defp coalesce_checks(checks) do
+    checks
+    |> Enum.reduce_while({:ok, %{}, []}, fn {key, capacity, refill, cost}, {:ok, defs, order} ->
+      case Map.get(defs, key) do
+        nil ->
+          {:cont, {:ok, Map.put(defs, key, {capacity, refill, cost}), [key | order]}}
+
+        {^capacity, ^refill, existing_cost} ->
+          {:cont, {:ok, Map.put(defs, key, {capacity, refill, existing_cost + cost}), order}}
+
+        {other_cap, other_refill, _} ->
+          {:halt, {:error, incompatible_bucket_error(key, {capacity, refill}, {other_cap, other_refill})}}
+      end
+    end)
+    |> case do
+      {:ok, defs, order} ->
+        {:ok,
+         order
+         |> Enum.reverse()
+         |> Enum.map(fn key ->
+           {capacity, refill, cost} = Map.fetch!(defs, key)
+           {key, capacity, refill, cost}
+         end)}
+
+      {:error, _} = error ->
+        error
+    end
+  end
+
+  defp incompatible_bucket_error({exchange_id, _, _} = key, incoming, existing) do
+    Error.invalid_parameters(
+      exchange: exchange_id,
+      message:
+        "incompatible token-bucket definitions for #{inspect(key)}: " <>
+          "got #{inspect(incoming)}, already #{inspect(existing)}"
+    )
+  end
+
+  defp split_limiter_name_opts(name, []) when is_list(name) do
+    if Keyword.keyword?(name), do: {__MODULE__, name}, else: {name, []}
+  end
+
+  defp split_limiter_name_opts(name, opts), do: {name, opts}
+
   @spec check_bucket(map(), key(), number(), number(), number(), integer()) ::
           {:ok, bucket_state(), bucket_state()} | {:delay, integer(), bucket_state()}
   defp check_bucket(state, key, capacity, refill_per_sec, cost, now) do
     bucket =
       case Map.get(state, key) do
-        nil ->
-          %{tokens: capacity * 1.0, updated_at: now, capacity: capacity, refill_per_sec: refill_per_sec}
-
-        existing ->
-          existing
+        nil -> new_bucket(capacity, refill_per_sec, now)
+        existing -> expire_reservation(existing, now)
       end
 
-    # Over-capacity costs may accrue above max_size until they can pay; burst
-    # of ordinary costs stays capped at authored capacity.
-    refill_cap = max(capacity, cost)
+    refill_cap = refill_cap(bucket, capacity, cost)
     refilled = refill_bucket(bucket, refill_cap, refill_per_sec, now)
-    accrued = %{refilled | capacity: capacity, refill_per_sec: refill_per_sec, updated_at: now}
 
-    if refilled.tokens >= cost do
-      {:ok, %{accrued | tokens: refilled.tokens - cost}, accrued}
+    accrued = %{
+      refilled
+      | capacity: capacity,
+        refill_per_sec: refill_per_sec,
+        updated_at: now
+    }
+
+    if available_tokens(accrued, cost) >= cost do
+      {:ok, debit(accrued, cost, now), accrued}
     else
-      {:delay, delay_ms(cost - refilled.tokens, refill_per_sec), accrued}
+      {:delay, delay_for(accrued, cost, now, refill_per_sec), accrued}
     end
   end
 
-  defp persist_buckets(state, decisions, delay_ms) do
-    Enum.reduce(decisions, state, fn {key, result}, acc ->
-      Map.put(acc, key, persisted_bucket(result, delay_ms))
+  defp persist_buckets(state, decisions, delay_ms, max_wait_ms, now) do
+    Enum.reduce(decisions, state, fn {key, cost, result}, acc ->
+      Map.put(acc, key, persisted_bucket(result, cost, delay_ms, max_wait_ms, now))
     end)
   end
 
-  defp persisted_bucket({:ok, paid, _accrued}, nil), do: paid
-  defp persisted_bucket({:ok, _paid, accrued}, _delay_ms), do: accrued
-  defp persisted_bucket({:delay, _ms, accrued}, _delay_ms), do: accrued
+  defp persisted_bucket({:ok, paid, _accrued}, _cost, nil, _max_wait_ms, _now), do: paid
+  defp persisted_bucket({:ok, _paid, accrued}, _cost, _delay_ms, _max_wait_ms, _now), do: accrued
+
+  defp persisted_bucket({:delay, delay_ms, accrued}, cost, _overall_delay, max_wait_ms, now) do
+    persist_delay(accrued, cost, delay_ms, max_wait_ms, now)
+  end
+
+  defp persist_delay(bucket, cost, delay_ms, max_wait_ms, now) do
+    reserved = Map.get(bucket, :reserved, 0.0)
+    will_wait = is_integer(max_wait_ms) and delay_ms <= max_wait_ms
+
+    cond do
+      will_wait ->
+        %{
+          bucket
+          | reserved: max(reserved, cost),
+            reserved_until: now + delay_ms + @reservation_slack_ms
+        }
+
+      is_integer(max_wait_ms) and reserved > 0 and cost >= reserved ->
+        expire_reservation(%{bucket | reserved_until: now}, now)
+
+      true ->
+        bucket
+    end
+  end
+
+  defp new_bucket(capacity, refill_per_sec, now) do
+    %{
+      tokens: :erlang.float(capacity),
+      updated_at: now,
+      capacity: capacity,
+      refill_per_sec: refill_per_sec,
+      reserved: 0.0,
+      reserved_until: 0
+    }
+  end
+
+  defp expire_reservation(bucket, now) do
+    reserved = Map.get(bucket, :reserved, 0)
+    reserved_until = Map.get(bucket, :reserved_until, 0)
+
+    bucket =
+      bucket
+      |> Map.put_new(:reserved, 0.0)
+      |> Map.put_new(:reserved_until, 0)
+
+    if reserved > 0 and now >= reserved_until do
+      %{
+        bucket
+        | reserved: 0.0,
+          reserved_until: 0,
+          tokens: min(bucket.tokens, bucket.capacity)
+      }
+    else
+      bucket
+    end
+  end
+
+  defp refill_cap(bucket, capacity, cost) do
+    reserved = Map.get(bucket, :reserved, 0)
+    Enum.max([capacity, reserved, cost, bucket.tokens])
+  end
+
+  defp available_tokens(bucket, cost) do
+    reserved = Map.get(bucket, :reserved, 0)
+
+    cond do
+      reserved <= 0 -> bucket.tokens
+      cost >= reserved -> bucket.tokens
+      true -> max(bucket.tokens - reserved, 0.0)
+    end
+  end
+
+  defp debit(bucket, cost, now) do
+    reserved = Map.get(bucket, :reserved, 0.0)
+
+    {next_reserved, next_until} =
+      if reserved > 0 and cost >= reserved do
+        {0.0, 0}
+      else
+        {reserved, Map.get(bucket, :reserved_until, 0)}
+      end
+
+    %{
+      bucket
+      | tokens: bucket.tokens - cost,
+        reserved: next_reserved,
+        reserved_until: next_until,
+        updated_at: now
+    }
+  end
+
+  defp delay_for(bucket, cost, now, refill_per_sec) do
+    reserved = Map.get(bucket, :reserved, 0)
+    reserved_until = Map.get(bucket, :reserved_until, 0)
+    token_delay = delay_ms(cost - bucket.tokens, refill_per_sec)
+
+    if reserved > 0 and cost < reserved and reserved_until > now do
+      max(reserved_until - now, token_delay)
+    else
+      token_delay
+    end
+  end
 
   @spec refill_bucket(bucket_state(), number(), number(), integer()) :: bucket_state()
   defp refill_bucket(bucket, cap, refill_per_sec, now) do
     elapsed_s = max(now - bucket.updated_at, 0) / 1000
-    tokens = min(cap * 1.0, bucket.tokens + refill_per_sec * elapsed_s)
-    %{bucket | tokens: tokens, updated_at: now, capacity: cap, refill_per_sec: refill_per_sec}
+    tokens = min(:erlang.float(cap), bucket.tokens + refill_per_sec * elapsed_s)
+    %{bucket | tokens: tokens, updated_at: now, refill_per_sec: refill_per_sec}
   end
 
   @spec delay_ms(number(), number()) :: pos_integer()

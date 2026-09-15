@@ -10,21 +10,19 @@ defmodule Bourse.RateLimiter.Shaping do
   ## Endpoints whose authored cost outruns the wait bound
 
   Because no cost is exempt, an endpoint accrues `cost / refill_per_sec`
-  seconds before it is admitted. Where that accrual exceeds
-  `Bourse.Defaults.rate_limit_max_wait_ms/0` the call returns
+  seconds before it is admitted. Where that accrual exceeds the per-call wait
+  budget (default `Bourse.Defaults.rate_limit_max_wait_ms/0`) the call returns
   `{:error, %Bourse.Error{type: :rate_limit_exceeded}}` naming the venue and
-  the wait, instead of the pre-Task-689 skip-record pass-through that let the
+  the required wait, instead of a skip-record pass-through that let the
   request go out unlimited and collect the venue's own 429.
 
-  Measured against the authored documents at the 10s default: 50 of 3,530
-  runtime endpoints sit above the bound — 13 each on binance, binancecoinm and
-  binanceusdm (heaviest `POST papi/margin/repay-debt`, cost 3000 at 20/s =
-  150s) and 11 on okx (heaviest `POST asset/monthly-statement`, cost 1_296_000
-  at 9.09/s ≈ 39.6h — okx publishes it as one request per month). These are
-  administrative endpoints the venue itself paces in hours or days; calling one
-  requires raising `config :bourse, :rate_limit_max_wait_ms` to the accrual the
-  venue actually demands. The refusal is immediate and names the wait; it is
-  never a silent sleep.
+  Callers that accept a longer wait pass `:rate_limit_max_wait_ms` on the
+  request (or `:max_wait_ms` on `maybe_rate_limit/4`). The budget is per call,
+  so concurrent consumers do not race on process-wide config. Exceeding the
+  budget never bypasses accounting. Long-period endpoints (okx's published
+  one-per-month `POST asset/monthly-statement`, binance-family
+  `POST papi/margin/repay-debt`) are refused immediately at the default bound;
+  the error's `retry_after` is the accrual, not a multi-hour sleep.
   """
 
   alias Bourse.Defaults
@@ -61,11 +59,13 @@ defmodule Bourse.RateLimiter.Shaping do
   Checks rate limit if enabled — blocks until capacity is available.
 
   Returns `{:error, %Bourse.Error{}}` when the pre-request wait would exceed
-  `Bourse.Defaults.rate_limit_max_wait_ms/0`, naming the venue and the wait.
+  the per-call budget (`:max_wait_ms`, default
+  `Bourse.Defaults.rate_limit_max_wait_ms/0`), naming the venue and the wait.
   """
   @spec maybe_rate_limit(rate_key(), Exchange.t(), term()) :: :ok | {:error, Error.t()}
-  def maybe_rate_limit(rate_key, exchange, endpoint_rate_limit) do
-    await_capacity(rate_key, exchange, endpoint_rate_limit, System.monotonic_time(:millisecond))
+  @spec maybe_rate_limit(rate_key(), Exchange.t(), term(), keyword()) :: :ok | {:error, Error.t()}
+  def maybe_rate_limit(rate_key, exchange, endpoint_rate_limit, opts \\ []) do
+    await_capacity(rate_key, exchange, endpoint_rate_limit, opts, System.monotonic_time(:millisecond))
   end
 
   @doc """
@@ -113,28 +113,46 @@ defmodule Bourse.RateLimiter.Shaping do
     end)
   end
 
-  defp await_capacity(rate_key, exchange, endpoint_rate_limit, started_at) do
+  defp await_capacity(rate_key, exchange, endpoint_rate_limit, opts, started_at) do
     checks = build_rate_limit_checks(rate_key, exchange, endpoint_rate_limit)
 
     if Defaults.rate_limiter_enabled?() and checks != [] do
-      max_wait = Defaults.rate_limit_max_wait_ms()
-      elapsed = System.monotonic_time(:millisecond) - started_at
-      remaining = max_wait - elapsed
-
-      case RateLimiter.check_rates(checks) do
-        :ok ->
-          :ok
-
-        {:delay, delay_ms} when delay_ms > remaining ->
-          {:error, wait_exceeded_error(exchange.id, delay_ms + max(elapsed, 0), max_wait)}
-
-        {:delay, delay_ms} ->
-          emit_rate_limit_throttled(exchange.id, delay_ms, total_check_cost(checks))
-          Process.sleep(delay_ms)
-          await_capacity(rate_key, exchange, endpoint_rate_limit, started_at)
+      with {:ok, max_wait} <- wait_budget(opts) do
+        do_await_capacity(rate_key, exchange, endpoint_rate_limit, opts, checks, max_wait, started_at)
       end
     else
       :ok
+    end
+  end
+
+  defp wait_budget(opts) do
+    case Keyword.get(opts, :max_wait_ms, Defaults.rate_limit_max_wait_ms()) do
+      max_wait when is_integer(max_wait) and max_wait > 0 ->
+        {:ok, max_wait}
+
+      other ->
+        {:error, Error.invalid_parameters(message: "max_wait_ms must be a positive integer, got: #{inspect(other)}")}
+    end
+  end
+
+  defp do_await_capacity(rate_key, exchange, endpoint_rate_limit, opts, checks, max_wait, started_at) do
+    elapsed = System.monotonic_time(:millisecond) - started_at
+    remaining = max_wait - elapsed
+
+    case RateLimiter.check_rates(checks, max_wait_ms: max(remaining, 0)) do
+      :ok ->
+        :ok
+
+      {:error, %Error{}} = error ->
+        error
+
+      {:delay, delay_ms} when delay_ms > remaining ->
+        {:error, wait_exceeded_error(exchange.id, delay_ms + max(elapsed, 0), max_wait)}
+
+      {:delay, delay_ms} ->
+        emit_rate_limit_throttled(exchange.id, delay_ms, total_check_cost(checks))
+        Process.sleep(delay_ms)
+        await_capacity(rate_key, exchange, endpoint_rate_limit, opts, started_at)
     end
   end
 

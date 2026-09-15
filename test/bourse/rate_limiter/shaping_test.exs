@@ -3,6 +3,7 @@ defmodule Bourse.RateLimiter.ShapingTest do
 
   alias Bourse.Credentials
   alias Bourse.Exchange
+  alias Bourse.HTTP
   alias Bourse.RateLimiter
   alias Bourse.RateLimiter.Info
   alias Bourse.RateLimiter.Shaping
@@ -269,6 +270,51 @@ defmodule Bourse.RateLimiter.ShapingTest do
       rate_key = Shaping.rate_key(exchange)
       assert :ok = Shaping.maybe_rate_limit(rate_key, exchange, 1)
     end
+
+    test "rejects a non-positive per-call wait budget", %{exchange: exchange} do
+      rate_key = Shaping.rate_key(exchange)
+
+      assert {:error, %Bourse.Error{type: :invalid_parameters} = error} =
+               Shaping.maybe_rate_limit(rate_key, exchange, 1, max_wait_ms: -1)
+
+      assert error.message =~ "positive integer"
+    end
+
+    test "propagates incompatible duplicate bucket definitions", %{exchange: exchange} do
+      exchange = %{
+        exchange
+        | config: %{"rate_limit_bucket" => %{max_size: 1, refill_per_sec: 10}}
+      }
+
+      rate_key = Shaping.rate_key(exchange)
+
+      assert {:error, %Bourse.Error{type: :invalid_parameters} = error} =
+               Shaping.maybe_rate_limit(rate_key, exchange, [
+                 %{axes: ["request"], cost: 1, max_size: 1, refill_per_sec: 10},
+                 %{axes: ["request"], cost: 1, max_size: 5, refill_per_sec: 10}
+               ])
+
+      assert error.message =~ "incompatible token-bucket"
+    end
+
+    test "HTTP.request refuses over-budget waits without a network dispatch", %{exchange: exchange} do
+      exchange = %{
+        exchange
+        | config: %{"rate_limit_bucket" => %{max_size: 1, refill_per_sec: 0.001}}
+      }
+
+      rate_key = Shaping.rate_key(exchange)
+      assert :ok = Shaping.maybe_rate_limit(rate_key, exchange, 1)
+
+      started = System.monotonic_time(:millisecond)
+
+      assert {:error, %Bourse.Error{type: :rate_limit_exceeded} = error} =
+               HTTP.request(exchange, :get, "/probe", rate_limit_max_wait_ms: 50, retry: false)
+
+      elapsed = System.monotonic_time(:millisecond) - started
+      assert elapsed < 200
+      assert error.message =~ "exceeds max 50ms"
+    end
   end
 
   describe "normalize_axes edge cases via build_rate_limit_checks/3" do
@@ -351,6 +397,92 @@ defmodule Bourse.RateLimiter.ShapingTest do
       assert error.message =~ probe.id
       assert error.message =~ "exceeds max #{max_wait}ms"
       assert error.retry_after > max_wait
+    end
+
+    test "recomputes over-bound costs across all eleven venues without sleeping long periods" do
+      name = :"over_bound_inventory_#{:erlang.unique_integer([:positive])}"
+      start_supervised!({RateLimiter, name: name})
+
+      venues = Bourse.Registry.exchanges()
+      assert length(venues) == 11
+      max_wait = Bourse.Defaults.rate_limit_max_wait_ms()
+
+      inventory =
+        for venue <- venues, reduce: [] do
+          acc ->
+            exchange = Exchange.new!(venue)
+            bucket = Map.fetch!(exchange.config, "rate_limit_bucket")
+            max_size = bucket.max_size
+            refill = bucket.refill_per_sec
+
+            over =
+              for {_key, %{rate_limit: %{cost: cost} = rate_limit}} <- exchange.request_contracts,
+                  is_number(cost) and cost > max_size,
+                  wait_ms = (cost - max_size) / refill * 1000,
+                  wait_ms > max_wait do
+                RateLimiter.reset_all(name)
+                checks = Shaping.build_rate_limit_checks({venue, :public}, exchange, rate_limit)
+                assert checks != [], "#{venue} #{cost} produced no limiter checks"
+
+                assert {:delay, delay_ms} = RateLimiter.check_rates(checks, name),
+                       "#{venue} cost #{cost} skip-recorded instead of delaying"
+
+                assert_in_delta delay_ms, wait_ms, 2
+                {venue, cost, wait_ms}
+              end
+
+            acc ++ over
+        end
+
+      by_venue = Enum.frequencies_by(inventory, &elem(&1, 0))
+
+      # Recomputed from the current eleven-venue surface, not the historical 50.
+      assert map_size(by_venue) >= 1
+      assert length(inventory) == Enum.reduce(by_venue, 0, fn {_venue, count}, acc -> acc + count end)
+
+      assert {:error, %Bourse.Error{type: :rate_limit_exceeded} = error} =
+               Shaping.maybe_rate_limit(
+                 {"inventory_probe", :public},
+                 %{Exchange.new!("okx") | id: "inventory_probe", credentials: nil},
+                 %{cost: 1_296_000, axes: ["request"], max_size: 1, refill_per_sec: 9.09}
+               )
+
+      assert error.retry_after > max_wait
+      assert error.message =~ "exceeds max #{max_wait}ms"
+    end
+
+    test "an explicit per-call budget is isolated from the default bound" do
+      exchange = %Exchange{
+        id: "budget_#{System.unique_integer([:positive])}",
+        name: "Budget",
+        credentials: nil,
+        sandbox: false,
+        rate_limit_ms: 100,
+        hostname: nil,
+        base_urls: %{"public" => "https://api.test.com"},
+        has: %{},
+        required_credentials: %{},
+        options: %{},
+        error_codes: %{},
+        broad_error_patterns: %{},
+        error_body_checks: [],
+        error_code_fields: [],
+        http_exceptions: %{},
+        spec: %{},
+        config: %{"rate_limit_bucket" => %{max_size: 1, refill_per_sec: 20}}
+      }
+
+      rate_key = Shaping.rate_key(exchange)
+
+      started = System.monotonic_time(:millisecond)
+
+      assert {:error, %Bourse.Error{type: :rate_limit_exceeded} = refused} =
+               Shaping.maybe_rate_limit(rate_key, exchange, 15, max_wait_ms: 200)
+
+      assert System.monotonic_time(:millisecond) - started < 200
+      assert refused.message =~ "exceeds max 200ms"
+
+      assert :ok = Shaping.maybe_rate_limit(rate_key, exchange, 15, max_wait_ms: 2_000)
     end
   end
 end

@@ -39,7 +39,8 @@ defmodule Bourse.Unified do
     :nonce_override,
     :retry,
     :retry_delay,
-    :max_retries
+    :max_retries,
+    :rate_limit_max_wait_ms
   ]
 
   # Dispatch opts that only steer endpoint SELECTION — they are consumed before

@@ -259,6 +259,63 @@ defmodule Bourse.RateLimiterTest do
       assert error.message =~ "exceeds max #{max_wait}ms"
       assert error.retry_after > max_wait
     end
+
+    test "per-call wait budgets stay isolated across concurrent consumers", %{name: name} do
+      rate_limit = %{capacity: 1, refill_per_sec: 8}
+      key_a = {"budget_a_#{:erlang.unique_integer([:positive])}", :public, "request"}
+      key_b = {"budget_b_#{:erlang.unique_integer([:positive])}", :public, "request"}
+
+      assert :ok = RateLimiter.check_rate(key_a, rate_limit, 1, name)
+      assert :ok = RateLimiter.check_rate(key_b, rate_limit, 1, name)
+
+      task_a =
+        Task.async(fn ->
+          RateLimiter.wait_for_capacity(key_a, rate_limit, 1, name, max_wait_ms: 40)
+        end)
+
+      task_b =
+        Task.async(fn ->
+          RateLimiter.wait_for_capacity(key_b, rate_limit, 1, name, max_wait_ms: 1_000)
+        end)
+
+      assert {:error, %Bourse.Error{type: :rate_limit_exceeded} = error_a} = Task.await(task_a, 2_000)
+      assert error_a.message =~ "exceeds max 40ms"
+      assert :ok = Task.await(task_b, 2_000)
+    end
+
+    test "an explicit budget admits a heavy request the default bound would refuse", %{name: name} do
+      key = {"explicit_#{:erlang.unique_integer([:positive])}", :public, "request"}
+      rate_limit = %{capacity: 1, refill_per_sec: 20}
+
+      started = System.monotonic_time(:millisecond)
+
+      assert {:error, %Bourse.Error{type: :rate_limit_exceeded} = refused} =
+               RateLimiter.wait_for_capacity(key, rate_limit, 15, name, max_wait_ms: 200)
+
+      assert System.monotonic_time(:millisecond) - started < 200
+      assert refused.message =~ "exceeds max 200ms"
+      assert refused.retry_after > 200
+
+      assert :ok = RateLimiter.wait_for_capacity(key, rate_limit, 15, name, max_wait_ms: 2_000)
+    end
+
+    test "rejects a non-positive per-call wait budget without dispatching", %{name: name} do
+      key = {"bad_budget", :public}
+
+      assert {:error, %Bourse.Error{type: :invalid_parameters} = error} =
+               RateLimiter.wait_for_capacity(key, %{capacity: 1, refill_per_sec: 1}, 1, name, max_wait_ms: 0)
+
+      assert error.message =~ "positive integer"
+      assert RateLimiter.get_cost(key, 1000, name) == 0
+    end
+
+    test "accepts a keyword wait budget without a limiter name" do
+      key = {"kw_budget_#{:erlang.unique_integer([:positive])}", :public, "request"}
+      rate_limit = %{capacity: 10, refill_per_sec: 10}
+
+      assert :ok = RateLimiter.wait_for_capacity(key, rate_limit, 1, max_wait_ms: 1_000)
+      assert :ok = RateLimiter.check_rates([{key, rate_limit, 1}])
+    end
   end
 
   describe "record_request/3" do
@@ -267,6 +324,17 @@ defmodule Bourse.RateLimiterTest do
 
       RateLimiter.record_request(key, 5, name)
       # Drain cast mailbox before asserting (call waits for prior messages)
+      _ = :sys.get_state(name)
+
+      assert RateLimiter.get_cost(key, 1000, name) == 5
+    end
+
+    test "records additional cost against an existing bucket", %{name: name} do
+      key = {"binance", :public, "request"}
+      rate_limit = %{capacity: 10, refill_per_sec: 0.0}
+
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 3, name)
+      RateLimiter.record_request(key, 2, name)
       _ = :sys.get_state(name)
 
       assert RateLimiter.get_cost(key, 1000, name) == 5
@@ -346,6 +414,136 @@ defmodule Bourse.RateLimiterTest do
       assert :ok = RateLimiter.check_rates([{key, rate_limit, 1}], name)
       assert {:delay, _} = RateLimiter.check_rates([{key, rate_limit, 1}], name)
     end
+
+    test "repeated checks of one key charge the combined cost once", %{name: name} do
+      key = {"binance", :public, "request"}
+      rate_limit = %{capacity: 10, refill_per_sec: 0.0}
+
+      assert :ok =
+               RateLimiter.check_rates(
+                 [
+                   {key, rate_limit, 3},
+                   {key, rate_limit, 2}
+                 ],
+                 name
+               )
+
+      assert RateLimiter.get_cost(key, 1000, name) == 5
+      assert {:delay, _} = RateLimiter.check_rates([{key, rate_limit, 6}], name)
+    end
+
+    test "a failed multi-key admission that repeats a key spends nothing", %{name: name} do
+      key = {"binance", :public, "request"}
+      other = {"binance", :public, "ip"}
+      rate_limit = %{capacity: 4, refill_per_sec: 0.0}
+
+      assert {:delay, _} =
+               RateLimiter.check_rates(
+                 [
+                   {key, rate_limit, 3},
+                   {other, rate_limit, 1},
+                   {key, rate_limit, 2}
+                 ],
+                 name
+               )
+
+      assert RateLimiter.get_cost(key, 1000, name) == 0
+      assert RateLimiter.get_cost(other, 1000, name) == 0
+    end
+
+    test "incompatible duplicate bucket definitions fail before any spend", %{name: name} do
+      key = {"okx", :public, "request"}
+
+      assert {:error, %Bourse.Error{type: :invalid_parameters} = error} =
+               RateLimiter.check_rates(
+                 [
+                   {key, %{capacity: 1, refill_per_sec: 9.09}, 1},
+                   {key, %{capacity: 5, refill_per_sec: 9.09}, 1}
+                 ],
+                 name
+               )
+
+      assert error.exchange == "okx"
+      assert error.message =~ "incompatible token-bucket"
+      assert RateLimiter.get_cost(key, 1000, name) == 0
+    end
+  end
+
+  describe "heavy-request reservation" do
+    test "cheap traffic cannot erase accrual or steal a reserved heavy request", %{name: name} do
+      key = {"fair_#{:erlang.unique_integer([:positive])}", :public, "request"}
+      rate_limit = %{capacity: 1, refill_per_sec: 10}
+
+      heavy =
+        Task.async(fn ->
+          RateLimiter.wait_for_capacity(key, rate_limit, 8, name, max_wait_ms: 2_000)
+        end)
+
+      assert wait_until(fn ->
+               case :sys.get_state(name) do
+                 %{^key => %{reserved: reserved}} when reserved >= 8 -> true
+                 _ -> false
+               end
+             end)
+
+      cheap = for _ <- 1..40, do: RateLimiter.check_rate(key, rate_limit, 1, name)
+
+      assert Enum.all?(cheap, fn
+               {:delay, ms} when ms > 0 -> true
+               _ -> false
+             end)
+
+      assert :ok = Task.await(heavy, 3_000)
+      assert {:delay, _} = RateLimiter.check_rate(key, rate_limit, 1, name)
+    end
+
+    test "cheap requests cannot exceed authored burst while a reservation is held", %{name: name} do
+      key = {"burst_#{:erlang.unique_integer([:positive])}", :public, "request"}
+      rate_limit = %{capacity: 1, refill_per_sec: 5}
+
+      assert {:delay, _} = RateLimiter.check_rates([{key, rate_limit, 4}], name, max_wait_ms: 2_000)
+
+      state = :sys.get_state(name)
+      assert %{reserved: reserved} = Map.fetch!(state, key)
+      assert reserved >= 4
+
+      cheap_ok =
+        Enum.count(1..10, fn _ ->
+          RateLimiter.check_rate(key, rate_limit, 1, name) == :ok
+        end)
+
+      assert cheap_ok == 0
+    end
+
+    test "a waiter that exceeds its remaining budget releases the reservation", %{name: name} do
+      key = {"giveup_#{:erlang.unique_integer([:positive])}", :public, "request"}
+      rate_limit = %{capacity: 1, refill_per_sec: 5}
+
+      assert {:delay, _} = RateLimiter.check_rates([{key, rate_limit, 8}], name, max_wait_ms: 2_000)
+      assert %{reserved: reserved} = Map.fetch!(:sys.get_state(name), key)
+      assert reserved >= 8
+
+      assert {:error, %Bourse.Error{type: :rate_limit_exceeded}} =
+               RateLimiter.wait_for_capacity(key, rate_limit, 8, name, max_wait_ms: 1)
+
+      assert Map.fetch!(:sys.get_state(name), key).reserved == 0
+    end
+
+    test "an expired reservation clamps tokens back to authored capacity", %{name: name} do
+      key = {"expire_#{:erlang.unique_integer([:positive])}", :public, "request"}
+      rate_limit = %{capacity: 1, refill_per_sec: 40}
+
+      assert {:delay, _} = RateLimiter.check_rates([{key, rate_limit, 6}], name, max_wait_ms: 2_000)
+      assert %{reserved: reserved} = Map.fetch!(:sys.get_state(name), key)
+      assert reserved >= 6
+
+      Process.sleep(500)
+
+      assert :ok = RateLimiter.check_rate(key, rate_limit, 1, name)
+      bucket = Map.fetch!(:sys.get_state(name), key)
+      assert bucket.reserved == 0
+      assert bucket.tokens <= 1.0
+    end
   end
 
   describe "cleanup" do
@@ -379,6 +577,22 @@ defmodule Bourse.RateLimiterTest do
 
       # Recent entry is younger than the max-age horizon, so it survives.
       assert RateLimiter.get_cost(key, 1000, name) == 3
+    end
+  end
+
+  defp wait_until(fun, deadline \\ System.monotonic_time(:millisecond) + 1_000) do
+    cond do
+      fun.() ->
+        true
+
+      System.monotonic_time(:millisecond) > deadline ->
+        flunk("timed out waiting for reservation")
+
+      true ->
+        receive do
+        after
+          5 -> wait_until(fun, deadline)
+        end
     end
   end
 end
