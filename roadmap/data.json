@@ -31558,7 +31558,7 @@
       "id": "691",
       "phase": 16,
       "bundle": "live_e2e",
-      "status": "in_progress",
+      "status": "done",
       "title": "Keep Coinbase candle pagination inside the requested window without missing boundary buckets",
       "scores": {
         "d": 3,
@@ -31590,10 +31590,17 @@
         "test/live/coinbaseexchange/",
         "test/bourse/"
       ],
+      "shipped_in": "d2befc8afe241d060dd57015a1e2bc608e390330",
       "body": "The trading_dashboard consumer observed Bourse 0.8.0 requesting a future fifth page for a valid 1200-hour chart history. Repro: Bourse.fetch_ohlcv(client, \"ETH/USD\", \"1h\", since: 1785110400000, until: 1789429905831, limit: 1200) returned Coinbase HTTP 400 'Start cannot be in the future' while provider /time agreed with the clock. Aligning until to 1789426800000 immediately returned 1200 real rows. The dashboard now aligns its boundary, but Bourse must implement the correct window semantics for every caller. See BUGS.md dated 2026-09-15.\n\nReview the entire page tiling invariant, not only that last page: the current code tiles from an unaligned start in whole granularity steps, so verify that page boundaries neither skip eligible candle openings nor exceed the effective end. Coinbase's live API and official endpoint documentation own the semantics; existing ceil arithmetic and third-party clients are not oracles. Use public spot reads only. Dispatch is chosen because provider window semantics need independent live verification, rather than another consumer-side adjustment. D3 is bounded pagination work; B8 restores chart history for all consumers; U8 reflects an observed failure in an active chart.\n",
       "created_at": "2026-09-15",
       "started_at": "2026-09-15",
+      "done_at": "2026-09-15",
       "scored_at": "2026-09-15",
+      "implemented": "Landed by codex via merge-train; reviewer-approved (run run-1789440336545-cae96015, d2befc8afe241d060dd57015a1e2bc608e390330).",
+      "delivered_by": "codex",
+      "verified": true,
+      "verified_by": "cursor",
+      "verification_ref": "harness-run:run-1789440336545-cae96015",
       "cross_repo": []
     },
     {
