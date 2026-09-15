@@ -24029,7 +24029,7 @@ shipped_in = "26bb651"
 id = "702"
 phase = 16
 bundle = "live_triage"
-status = "in_progress"
+status = "done"
 title = "Authored public WS watch channels are not confronted against the venues' own channel names — derive's ticker is deprecated and two of its channels carry a CCXT message hash"
 scores = { d = 7, b = 7, u = 6 }
 markers = ["bug"]
@@ -24083,9 +24083,16 @@ it, and say which):
   Adding new unified watch methods is a separate piece of work; this task fixes and proves what is
   already authored.
 """
+implemented = "Landed by codex via merge-train; reviewer-approved (run run-1789470024545-66d6e1ee, c18a0a7bd16d734aeaab3be0180997b542b6c436)."
+delivered_by = "codex"
+verified = true
+verified_by = "cursor"
+verification_ref = "harness-run:run-1789470024545-66d6e1ee"
 created_at = "2026-09-15"
 started_at = "2026-09-15"
 scored_at = "2026-09-15"
+done_at = "2026-09-15"
+shipped_in = "c18a0a7bd16d734aeaab3be0180997b542b6c436"
 
 [[task]]
 id = "703"

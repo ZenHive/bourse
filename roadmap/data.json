@@ -32149,7 +32149,7 @@
       "id": "702",
       "phase": 16,
       "bundle": "live_triage",
-      "status": "in_progress",
+      "status": "done",
       "title": "Authored public WS watch channels are not confronted against the venues' own channel names — derive's ticker is deprecated and two of its channels carry a CCXT message hash",
       "scores": {
         "d": 7,
@@ -32193,10 +32193,17 @@
         "docs/prod-verification-ledger.md",
         "test/live/ws/canary_test.exs"
       ],
+      "shipped_in": "c18a0a7bd16d734aeaab3be0180997b542b6c436",
       "body": "Sibling rationale (DD-8, checked against 699, 618 and 544 before filing): task 618 is the same\nmechanism class and it is **done** — it audited the binance family's `watch_*` templates against\nthe provider's own stream documentation and found them to be CCXT message hashes rather than\nprovider stream names. It deliberately scoped itself to binance and binanceusdm. This task is the\nrest of that surface: the seven remaining venues with a public WS config, whose templates have\nnever been confronted. Task 699 is an *instance* of the same class, venue-scoped to lighter, in\nflight, and carrying a REST error-probe component this task does not touch — folding it in would\nwiden a live task and lose its REST half. Task 544 established that alpaca and lighter have WS\nsupport at all; it proved a socket connects, never that the authored channels are the venue's own.\n\nThe trigger, both instances live-verified against `wss://api-demo.lyra.finance/ws` on 2026-09-15:\n\n    # authored watch_ticker template: ticker.{symbol}.100\n    %{\"error\" => %{\"code\" => -32602,\n        \"data\" => \"`ticker` channel has been deprecated. Please use `ticker_slim`.\"}}\n\n    # authored watch_orders / watch_my_trades template: \":{symbol}\" — a CCXT message hash\n    # live-rejected with envelope error 13000, while trades.ETH-PERP and\n    # orderbook.ETH-PERP.1.10 acknowledge and deliver on the same socket\n\nThis is the failure shape 618 named: a template that is not the venue's channel name produces a\nsocket that connects, subscribes, and never delivers — and a subscribe acknowledgement cannot\ncatch it, because there is no acknowledgement to read. Task 701 made the first-frame lane refuse\nto count an unattributable frame as coverage, so the lane can now *report* a dead channel; it\ncannot fix one. The channels themselves are authored, and authored judgment is confronted against\nthe provider's own contract, never inherited.\n\nDecisions already made for you (veto any of them in the delivery if the live evidence contradicts\nit, and say which):\n\n- **`ticker_slim` is not a drop-in rename.** The replacement's payload puts the ticker under\n  `params.data.instrument_ticker`, which is not where the current parse slice reads. Confront the\n  parse slice against a real `ticker_slim` frame before changing the channel string; a channel fix\n  that leaves the parse reading the old path trades a loud rejection for a silent empty stream.\n- **Frame delivery is the proof, not an ack.** For each template, subscribe and wait for a real\n  data frame. A venue that acknowledges and then sends nothing is a finding, not a pass — this is\n  the whole reason 618 exists.\n- **Audit every authored public watch template of the seven venues, not only the ones that look\n  suspicious.** A template that happens to match is a CONFIRMED outcome and costs one live\n  subscription; guessing which ones to check is how the derive instances survived this long.\n- **Where a venue serves a channel this repo does not author at all, record it and stop there.**\n  Adding new unified watch methods is a separate piece of work; this task fixes and proves what is\n  already authored.\n",
       "created_at": "2026-09-15",
       "started_at": "2026-09-15",
+      "done_at": "2026-09-15",
       "scored_at": "2026-09-15",
+      "implemented": "Landed by codex via merge-train; reviewer-approved (run run-1789470024545-66d6e1ee, c18a0a7bd16d734aeaab3be0180997b542b6c436).",
+      "delivered_by": "codex",
+      "verified": true,
+      "verified_by": "cursor",
+      "verification_ref": "harness-run:run-1789470024545-66d6e1ee",
       "cross_repo": []
     },
     {
