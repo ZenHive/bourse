@@ -735,7 +735,7 @@ read defect. Deciding it needs a live read of both underlying endpoints against
 the same window, which nobody has run. Recorded here so the next reader does not
 re-derive it.
 
-> **Update (2026-09-15, four consecutive gate runs):** the failure is not
+> **Update (2026-09-15, gate runs 1-4 of the day):** the failure is not
 > occasional. It reappeared in every full-suite run of the day — `mix
 > test.json --cover` 14:31, `mix ci` 16:11, `mix check.dispatch` 17:24
 > (healed on the automatic retry, so it settled *flaky*) and 17:50 — and the
@@ -752,6 +752,23 @@ re-derive it.
 > would make the symptom intermittent rather than settle it. Deciding it
 > still needs the live read of both underlying USD-M endpoints against one
 > window that nobody has run.
+>
+> **Correction and two further runs (2026-09-15, same day).** "Reappeared in
+> every full-suite run of the day" was true of the four runs it was written
+> from and is no longer true: gate run 6 on `44edfaa` passed this test
+> outright — the first green in five runs — and gate run 7 on `8cce218` failed
+> it again with a shortfall of **5,572 ms** (`requested 1789459979895, last
+> 1789459974323`). The six-run record is therefore **2,113 ms · 3,981 ms ·
+> 1,355,925 ms · 313,974 ms · GREEN · 5,572 ms**. The claim this evidence
+> supports is *intermittent with a four-order-of-magnitude spread*, not
+> *always red*; the earlier wording overstated the frequency and is corrected
+> here rather than edited away. Nothing about the diagnosis changes — an
+> intermittent green is what a merged read whose upper page drifts would
+> produce, and a run that lands twenty-two minutes short still cannot be
+> explained by a 1 s tolerance. What the green does add is that the bounded
+> read is reachable: on at least one run the `until`-bounded page WAS the page
+> nearest the boundary, so the defect is in which page gets selected, not in a
+> boundary the venue never honours.
 
 ---
 
