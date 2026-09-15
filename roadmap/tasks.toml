@@ -23957,7 +23957,7 @@ shipped_in = "ba09535718725edef9fcd580660457dab6a5c21c"
 id = "700"
 phase = 16
 bundle = "live_triage"
-status = "pending"
+status = "in_progress"
 title = "Make write-side order controls round-trip by invariant, so no unified control can land readable in one direction only"
 scores = { d = 8, b = 9, u = 9 }
 markers = ["bug"]
@@ -23978,6 +23978,7 @@ Decisions already taken, so the implementer does not have to ask. The invariant 
 D8 covers one invariant over the whole unified control surface plus every violation it reports across ten venues, each needing a live call and a register entry. B9/U9 reflect a shipped feature whose read half is missing and a consumer whose exposure accounting is already wrong because of it.
 """
 created_at = "2026-09-15"
+started_at = "2026-09-15"
 scored_at = "2026-09-15"
 
 [[task]]
