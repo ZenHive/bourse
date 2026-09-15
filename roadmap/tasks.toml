@@ -24090,7 +24090,7 @@ scored_at = "2026-09-15"
 id = "703"
 phase = 11
 bundle = "signing"
-status = "pending"
+status = "in_progress"
 title = "Reuse Cartouche and Hieroglyph for DEX EVM signing primitives"
 scores = { d = 6, b = 8, u = 5 }
 acceptance_criteria = ["Bourse uses published Cartouche and Hieroglyph packages for the shared EVM cryptographic and ABI primitives used by Hyperliquid, Derive and Lighter L1 personal signatures; no path dependencies or duplicated replacement implementation remain. Preserve existing public signing function signatures, output representations and error contracts, using thin representation adapters where needed.", "Before mutating each existing critical module, capture mix test.json --cover --quiet --output evidence and raise its coverage to at least 95%; the delivered critical modules retain that tier. Cover hashes, ABI bytes, signatures, address derivation and recovery with independently justified vectors, including signed integers, binary/hex boundaries, domain-field presence, explicit primary type, low-s and recovery-value conventions. A mismatch must fail, not bless the old implementation as an oracle.", "Before implementation observe a live success and a relevant live rejection for each affected provider-authentication path; repeat them with the migrated implementation and pin provider-owned semantics in live integration tests. Hyperliquid and Derive sandbox order journeys and affected WebSocket authentication paths pass with isolated setup and cleanup. The touched Lighter L1 signing/provisioning path has its own live evidence; success from the unchanged zk-Schnorr helper cannot grade it.", "Missing credentials fail loudly with exact setup instructions. An unreachable required live path is recorded as unverified in the existing ledger and reported as an unmet criterion, never converted to a passing mock, capture or silent skip.", "The reviewer runs mix check.dispatch, the affected provider REST-read contract lanes and Dialyzer, records durable independent evidence, and verifies a standalone packaged consumer resolves the published dependencies without the sibling checkout or new RPC/signer configuration. The full mix ci gate runs on the landed base.", "Removed implementations leave no unused direct crypto dependencies. Existing tests are retained or adapted to the public behavior; generated guidance is regenerated if CLAUDE.md changes. Any missing library capability is reported with the exact published API limitation and release prerequisite, without silently restoring local crypto or declaring partial migration complete."]
@@ -24111,6 +24111,7 @@ Provider authority: open priv/venues/<venue>/authority first, then the official 
 Routing: one signing migration warrants independent harness review; do not split install/use/deletion into separate tasks. No missing upstream capability has been demonstrated, so no speculative upstream task is filed. If live proof or published compatibility establishes an actual external blocker, report the precise unmet criterion and upstream release prerequisite for operator routing; never silently reduce the requested scope. Auto-dispatch owns execution; no manual dispatch is requested by this filing.
 """
 created_at = "2026-09-15"
+started_at = "2026-09-15"
 scored_at = "2026-09-15"
 
 [[task]]
