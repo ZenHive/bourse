@@ -7,6 +7,7 @@ Guidance for Claude Code working in this repository.
 Eager-load only the irreducible floor; everything else is skill-on-demand via enabled plugins. **Don't double-load** (an `@`-import plus its sibling skill pays twice for the same tokens).
 
 - **`critical-rules`** — hard guardrails that must stay ambient every session (a guardrail the model invokes "when relevant" fails exactly when it doesn't realize the rule applies).
+- **`elixir-security-adjudications`** — this repo declares `mix_audit` and runs Sobelow, so every fresh session meets the same `gun`/`cowlib` `VULNERABLE!` lines and the same Sobelow false positives. Both verdicts are settled; carrying them ambiently is what stops each session re-deriving them.
 - **`ex-unit-json`** — `mix test.json` is the test runner every session uses; its flight-recorder semantics and the "JSON-by-design — parse for real failures, never reject the envelope" rule are load-bearing for cross-family reviewers.
 - **`harness-workflow`** — this repo IS registered for harness dispatch (see below). Its guardrails fail by non-recognition (`Recover, Don't Redo`; `Settle ≠ landed`; the duplicate-land trap), so a skill-on-demand load is not equivalent.
 

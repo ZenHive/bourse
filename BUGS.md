@@ -114,6 +114,32 @@ roadmap.
 
 ---
 
+## 2026-09-15 — lighter testnet went dark: every private read answers `invalid auth: couldnt find account`, the public WS channel is rejected, and an unknown market id no longer errors
+
+**Status:** Tracked in task 699 (post-merge audit of `0ac2cd2`, 2026-09-15); implementation pending.
+
+Measured in the cold post-merge audit worktree with `mix check.dispatch` against `https://testnet.zklighter.elliot.ai`, using the provisioned `LIGHTER_TESTNET_API_KEY_INDEX` / `LIGHTER_TESTNET_ACCOUNT_INDEX` / `LIGHTER_TESTNET_API_PRIVATE_KEY`. Nothing in the audited range (`972c1e8..0ac2cd2`) touches lighter, so this is venue-side drift, not a regression. Three distinct symptoms:
+
+- Every private lighter read answers `%Bourse.Error{type: :authentication_error, code: 20013, http_status: 401, message: "invalid auth: couldnt find account"}` — `fetchClosedOrders`, `fetchDeposits`, `fetchMyLiquidations`, `fetchMyTrades`, `fetchOpenOrders`, `fetchTransfers`, `fetchWithdrawals` in `test/live/lighter/rest_read_contract_test.exs`, plus both `lighter_signing_integration_test.exs` cases and `lighter_promotion_integration_test.exs`. The signer produces a token the venue accepts as well-formed and then cannot resolve to an account, which is the shape of a de-provisioned or reset testnet account rather than a bad signature.
+- `WS.subscribe(ws, ["market_stats/0"])` is rejected with `{:subscription_rejected, %{"error" => %{"code" => 30005, "message" => "Invalid Channel:  (marketId)"}}}` (`test/live/ws/canary_test.exs`). The authored channel grammar no longer matches what the venue accepts.
+- `Bourse.Lighter.public_get_orderbookorders(exchange, %{"market_id" => <unknown>, "limit" => 1})` answers `{:ok, %{status: 200, body: %{"asks" => [], "bids" => [], "code" => 200, "total_asks" => 0, "total_bids" => 0}}}` where `test/live/errors/lighter_test.exs` expects a rejection. An unknown market id now reads as an empty book — the venue stopped distinguishing "no such market" from "empty market", so our only pinned lighter bad-input error no longer exists.
+
+The private half may need operator re-provisioning (`mix bourse.provision_lighter` takes an L1 wallet key that is deliberately outside the credential set); the WS-channel and public-error halves need no credentials and are re-provable immediately.
+
+---
+
+## 2026-09-15 — two live contract cases red on unpopulated sandbox state with no ledger row to explain them
+
+**Status:** Recorded, not routed (post-merge audit of `0ac2cd2`, 2026-09-15). No task filed — the ledger process already owns this class.
+
+Same cold `mix check.dispatch` run. Two cases fail for sandbox state rather than for a defect, and neither matches a fence entry in `docs/prod-verification-ledger.md`, so they land in the "genuine failures" count:
+
+- `binance:fetchOrderList:0:privateGetOrderList` — *"provider account state has no id from fetchOrderLists"*. The testnet spot account holds no OCO list to look up.
+- `okx:fetchOpenInterestHistory:1:publicGetRubikStatOptionOpenInterestVolume` — *"provider account/market state did not exercise the read"*. The rubik option open-interest read answered empty.
+
+Both scenario helpers fail loudly with actionable text, which is the designed behavior — the open question is whether the state is populatable (populate it) or structurally unavailable on these sandboxes (fence it as state-dependent). Left for the operator to route; recorded here so the next reader does not re-derive it.
+
+---
 ## 2026-09-01 — `fetch_funding_rate/2` is unavailable on hyperliquid while `fetch_funding_rates/2` serves the same number, so a per-symbol consumer gets `not_supported` for a rate the venue publishes hourly
 
 **Status:** Tracked in task 692 (triage 2026-09-15); implementation pending.
@@ -3441,7 +3467,7 @@ Exchange: deribit; jede andere JSON-RPC-Venue mit Heartbeat dürfte gleich reagi
 
 ## 2026-09-15 — Coinbase pagination adds a future page at an unaligned end
 
-**Status:** Tracked in task 691 (triage 2026-09-15); implementation pending.
+**Status:** Landed via task 691, `d2befc8afe24`; confirmed present on origin/main during the 2026-09-15 post-merge audit. The reported 1200-hour window is pinned offline in `test/bourse/coinbase_candle_pagination_test.exs`; no fresh live `ETH/USD` call was made in this audit.
 
 Observed in trading_dashboard with Bourse 0.8.0: `Bourse.fetch_ohlcv(client, "ETH/USD", "1h", since: 1785110400000, until: 1789429905831, limit: 1200)` fails with Coinbase HTTP 400 `Start cannot be in the future`. Provider `/time` agrees with the local clock. `CoinbaseCandlePagination.pagination/3` adds ceil alignment slack despite the start already being aligned, generating a fifth page whose start is the next hour. Expected: four pages covering the 1200 opened buckets, no page starting after the requested end. Aligning until to 1789426800000 returned 1200 real rows immediately. Consumer Calendar now aligns the inclusive end to the native candle opening; upstream should bound generated page starts/ends to the actual requested window. This was hidden by the chart continuing to display WebSocket-only prices after history failed.
 

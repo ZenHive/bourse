@@ -37,10 +37,19 @@ defmodule Bourse.LiveLaneLedgerTest do
       Ledger.format_summary([%{"id" => contract_case["id"], "class" => entry["class"], "summary" => entry["summary"]}], 1)
 
     assert summary =~ "ledgered demo-unavailable: 1"
-    assert summary =~ "genuine failures: 1"
+    assert summary =~ "genuine failures (named in the run JSON, not here): 1"
     assert summary =~ "okx:fetchDepositAddress:0:x"
     assert summary =~ "does not host funding-account"
     refute summary =~ "actual defect"
+
+    # The ledgered rows are named under their own heading and the genuine count
+    # is last, so a ledgered id can never be read as one of the genuine failures.
+    ledger_heading = Enum.find_index(String.split(summary, "\n"), &String.contains?(&1, "ledgered cases"))
+    detail_row = Enum.find_index(String.split(summary, "\n"), &String.contains?(&1, "okx:fetchDepositAddress:0:x"))
+    genuine_line = Enum.find_index(String.split(summary, "\n"), &String.contains?(&1, "genuine failures"))
+
+    assert ledger_heading < detail_row
+    assert detail_row < genuine_line
   end
 
   test "a 50038-shaped error on another venue is genuine" do

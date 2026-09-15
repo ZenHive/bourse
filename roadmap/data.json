@@ -31932,6 +31932,52 @@
       "created_at": "2026-09-15",
       "scored_at": "2026-09-15",
       "cross_repo": []
+    },
+    {
+      "id": "699",
+      "phase": 16,
+      "bundle": "live_triage",
+      "status": "pending",
+      "title": "Re-prove the public lighter surface: the authored WS channel is rejected and the pinned bad-input error no longer occurs",
+      "scores": {
+        "d": 3,
+        "b": 6,
+        "u": 6
+      },
+      "eff": 2.0,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "codex",
+      "model": "gpt-6-astra",
+      "acceptance_criteria": [
+        "The authored lighter WebSocket channel grammar is re-derived from the provider's own API reference and accepted by the venue: test/live/ws/canary_test.exs subscribes and receives a real data frame instead of `{:subscription_rejected, %{\"error\" => %{\"code\" => 30005}}}`, and `mix bourse.verify_ws_first_frame` classifies a lighter first data frame.",
+        "test/live/errors/lighter_test.exs asserts an error the venue still returns. An unknown market id now answers HTTP 200 with an empty book — pin that observed semantics where it belongs, and move the bad-input probe to a request lighter does reject, proven by one live call. Deleting the probe instead is not acceptable: it is the venue's only pinned error case.",
+        "Both changes are proven by a live call against https://testnet.zklighter.elliot.ai and need no credentials, so neither may be left pending on the separately-tracked private-account condition.",
+        "Observe one real success and one relevant real provider error per changed surface before changing external semantics; consult the provider-owned sources indexed under priv/venues/lighter/authority/. Record the commands run and their output, at minimum `mix bourse.verify_ws_first_frame` and `mix check.dispatch`."
+      ],
+      "out_of_scope": [
+        "The lighter private reads answering `invalid auth: couldnt find account` (20013) — that is an unprovisioned testnet account, whose remedy is the `mix bourse.provision_lighter` task 684 already shipped, run by the operator with the L1 wallet key that is deliberately outside the credential set. Do not re-implement provisioning and do not change the signer: the venue accepts the token as well-formed.",
+        "Rewriting the zk-Schnorr signer or the native helper.",
+        "The other ten venues' WS channels and error probes."
+      ],
+      "files_to_modify": [
+        "priv/venues/lighter/authored/venue.json",
+        "test/live/errors/lighter_test.exs",
+        "test/live/ws/canary_test.exs"
+      ],
+      "touches": [
+        "priv/venues/lighter/authored/",
+        "test/live/errors/lighter_test.exs",
+        "test/live/ws/canary_test.exs"
+      ],
+      "body": "Surfaced by the post-merge audit of `972c1e8..0ac2cd2` (report: `.audit/0ac2cd2.md`), which ran `mix check.dispatch` in a cold worktree. Nothing in the audited range touches lighter, so this is venue-side drift; the evidence is in BUGS.md under 2026-09-15.\n\nThe class this task closes: **our authored claims about lighter's public surface assert behavior the venue no longer exhibits.** Two instances, both credential-less and both provable immediately:\n\n1. `WS.subscribe(ws, [\"market_stats/0\"])` is rejected `30005 \"Invalid Channel:  (marketId)\"`. The message names `marketId` as the missing piece, so the channel almost certainly gained or reshaped a parameter — read the provider's reference rather than guessing a suffix, and let the canary prove it with a real frame.\n2. `Bourse.Lighter.public_get_orderbookorders(exchange, %{\"market_id\" => <unknown>, \"limit\" => 1})` answers `{:ok, %{status: 200, body: %{\"asks\" => [], \"bids\" => [], \"code\" => 200, \"total_asks\" => 0, \"total_bids\" => 0}}}`, where `test/live/errors/lighter_test.exs` expects a rejection. The venue stopped distinguishing \"no such market\" from \"empty market\". Pin what it does now, and find a request it still rejects so lighter keeps a live-observed bad-input error — a venue with no pinned error has no proof we classify its errors at all.\n\nScope the fix as the class, not the two rows: if the authored channel grammar or the error probe is stale in one place, check whether the same staleness is present in the venue's other authored public claims while you are in there, and say in the delivery what you checked.\n",
+      "created_at": "2026-09-15",
+      "scored_at": "2026-09-15",
+      "cross_repo": []
     }
   ]
 }

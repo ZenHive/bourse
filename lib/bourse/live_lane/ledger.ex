@@ -158,15 +158,11 @@ defmodule Bourse.LiveLane.Ledger do
   def format_summary(recorded, genuine) when is_list(recorded) and is_integer(genuine) do
     grouped = Enum.group_by(recorded, & &1["class"])
 
-    lines =
-      [
-        "Live-suite classification (from docs/prod-verification-ledger.md):",
-        class_line(grouped, "ledgered_demo_unavailable", "ledgered demo-unavailable"),
-        class_line(grouped, "ledgered_state_dependent", "ledgered state-dependent"),
-        class_line(grouped, "ledgered_unreachable", "ledgered unreachable"),
-        "  genuine failures: #{genuine}"
-      ]
-
+    # Only the ledgered hits carry identities here — `genuine` is the raw
+    # failure count from the run. So the detail rows belong under their own
+    # heading and the genuine count goes last: printed directly beneath
+    # "genuine failures: N" they read as that list, which is the opposite of
+    # what they are. Read the failing test names out of the run's JSON.
     detail_lines =
       recorded
       |> Enum.sort_by(& &1["id"])
@@ -174,7 +170,16 @@ defmodule Bourse.LiveLane.Ledger do
         "    #{hit["id"]} [#{hit["class"]}] #{hit["summary"]}"
       end)
 
-    Enum.join(lines ++ detail_lines, "\n")
+    lines =
+      [
+        "Live-suite classification (from docs/prod-verification-ledger.md):",
+        class_line(grouped, "ledgered_demo_unavailable", "ledgered demo-unavailable"),
+        class_line(grouped, "ledgered_state_dependent", "ledgered state-dependent"),
+        class_line(grouped, "ledgered_unreachable", "ledgered unreachable"),
+        "  ledgered cases (not defects, named below): #{length(recorded)}"
+      ] ++ detail_lines ++ ["  genuine failures (named in the run JSON, not here): #{genuine}"]
+
+    Enum.join(lines, "\n")
   end
 
   @doc "Classifies ExUnit JSON failure rows against the ledger document."

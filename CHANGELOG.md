@@ -7,6 +7,17 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Fixed
+
+- Coinbase Exchange candle pagination tiles the aligned candle openings that
+  fall inside the requested window instead of adding an alignment step beyond
+  it. A window whose end is off the granularity grid no longer generates a
+  trailing page that starts after the requested end — live, a 1200-hour
+  `ETH/USD` `fetch_ohlcv` answered HTTP 400 `Start cannot be in the future`
+  from that extra page. A window holding no eligible opening now issues no
+  requests and merges to an empty body rather than asking the venue for a
+  range it cannot serve.
+
 ## [0.8.0] - 2026-08-31
 
 ### Added
@@ -41,6 +52,13 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   It inventories 409 sandbox-native branches across the eleven runtime venues
   and hits the venue host for each one. Product surfaces the provisioned
   sandboxes do not host remain on the prod-verification ledger.
+- `fetch_account_facts` carries an `account_margin` fact. Deribit's
+  `private/get_account_summaries` publishes per-currency initial, maintenance,
+  projected and close-out margin plus margin balance; under `cross_pm` the
+  account figure is not the sum of the per-position margin rows, so it is
+  carried as its own fact rather than derived from them. Venues that publish no
+  account-level margin answer `unavailable` for the slot.
+
 - [`mix bourse.provision_lighter`](https://github.com/ZenHive/bourse/blob/main/lib/mix/tasks/bourse.provision_lighter.ex)
   provisions a Lighter testnet account from an
   L1 wallet, derives the configured zk API public key, signs ChangePubKey with
@@ -114,6 +132,37 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - The bybit and okx `fetchDepositAddressesByNetwork` contract cases assert
   the client's actual return contract — a network-keyed map, not a list.
 - Direction-bearing `endpoint_selection` cannot carry a silent `default`.
+- OKX algo order reads fan out across the documented `ordType` values
+  (`conditional`, `oco`, `trigger`, `move_order_stop`) instead of defaulting to
+  `conditional`, which hid live trigger, OCO and trailing orders from
+  `fetch_open_orders` / `fetch_closed_orders` / `fetch_canceled_orders`. A
+  caller-supplied `ordType`, `trigger` or `trailing` still selects one type.
+- `endpoint_index` names one unified slot again: a `first_success` or `merge`
+  book route no longer overrides it and answer index 0's row or a merged book.
+- Deribit indexes altcoin option books under their USDC settlement currency, so
+  `fetch_option_chain("SOL")` reached an empty `currency=SOL` book. The request
+  remaps the wire currency to USDC and the parse keeps only the legs whose base
+  currency is the requested underlying; a filter that keeps nothing answers
+  `not_supported` rather than an empty success that reads as "this venue lists
+  no options on this underlying". Deribit option rows also emit
+  `impliedVolatility` as a fraction from the book summary's percent-point
+  `mark_iv` (carve register C-T686f).
+- Balance snapshots carry a timestamp on the two binance futures wallets. USD-M
+  `/fapi/v2/account` omits `updateTime` entirely and COIN-M `/dapi/v1/account`
+  publishes a literal `0`; the newest per-asset `updateTime` is used instead,
+  and a non-positive value never becomes a timestamp — stamping `0` would date
+  the account to the epoch while carrying no venue meaning.
+- Bybit `coins-balance` rows (flat `{coin, walletBalance, transferBalance}`
+  under `result.balance`) are indexed as their own balance collection instead of
+  being read as wallet-balance accounts; the authored bybit balance field map
+  branches on the payload shape it actually received. `fetchBalance` also drops
+  the two account-classification helpers that the C-T671a/b carve left in its
+  unified endpoint list.
+- Envelope extraction falls back to the authored `fallback_keys` when the
+  primary key is absent, and a numeric path segment indexes a list (lighter's
+  `accounts.0`) instead of missing the envelope.
+- binancecoinm `fetchADLRank` answers the same no-symbol bare-array shape as
+  `fetchFundingIntervals` and is keyed accordingly.
 
 ### Removed
 
