@@ -78,7 +78,7 @@ defmodule Bourse.Test.RestReadContractOwnedState do
     case resting_price(context.exchange, symbol, market) do
       price when is_number(price) and price > 0 ->
         sized = sized_amount(amount, price, market)
-        Bourse.create_order(context.exchange, symbol, "limit", "buy", sized, price: price, timeInForce: "GTC")
+        Bourse.create_order(context.exchange, symbol, "limit", "buy", sized, price: price, time_in_force: "GTC")
 
       _missing ->
         {:error, :no_resting_price}

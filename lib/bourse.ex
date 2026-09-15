@@ -58,6 +58,11 @@ defmodule Bourse do
   raised) until markets are loaded with `Bourse.load_markets/1`, since the limits
   it checks live in market metadata.
 
+  Order controls use `trigger_price`, `stop_loss_price`, `take_profit_price`,
+  `time_in_force`, and `reduce_only`. Their camelCase spellings remain aliases.
+  Conflicting aliases and controls the selected venue operation cannot express
+  return `invalid_parameters` before an order is sent.
+
   Order `side` is separate and unconditional: every unified write that carries a
   side — including a nested `side` inside an `orders` entry — accepts only the
   wire strings `"buy"` and `"sell"`. The atom forms `:buy` and `:sell` are
@@ -79,6 +84,7 @@ defmodule Bourse do
   alias Bourse.Exchange
   alias Bourse.Unified
   alias Bourse.Unified.Descriptor
+  alias Bourse.Unified.OrderOptions
 
   # ===========================================================================
   # Exchange Constructor
@@ -250,7 +256,7 @@ defmodule Bourse do
         {:ok, {dispatch_opts, extra}} ->
           required_values = [unquote_splicing(param_vars)]
           params = Unified.build_params(unquote(param_names), required_values, extra)
-          Unified.call(exchange, unquote(name), unquote(js_name), params, dispatch_opts)
+          OrderOptions.call(exchange, unquote(name), unquote(js_name), params, dispatch_opts)
 
         {:error, _} = error ->
           error
