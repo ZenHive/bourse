@@ -114,6 +114,170 @@ roadmap.
 
 ---
 
+## 2026-09-15 — die WS-First-Frame-Lane zählt lighters Verbindungsgruß als Datenframe und meldet den Venue grün, während die Venue die Subscription mit 30005 ablehnt
+
+**Method:** `mix bourse.verify_ws_first_frame` (`Bourse.LiveLane.FirstFrame`) ·
+**Exchange:** lighter (testnet), Mechanismus venue-generisch ·
+**Severity:** hoch (falsches Grün in genau der Lane, die beweisen soll, dass Streams liefern)
+
+**Status:** 🆕 reported 2026-09-15 — live und mechanisch verifiziert, noch nicht geroutet.
+
+Gefunden beim Landed-Base-Gate nach Task 697. Die Lane meldet für lighter
+
+```json
+{"venue":"lighter","section":"public","channel":"market_stats/0",
+ "status":"passed","first_frame":"data","data_frame":"data","reason":null}
+```
+
+während derselbe Kanal über `Bourse.WS.subscribe/3` live abgelehnt wird:
+
+```elixir
+{:ok, ex} = Bourse.Exchange.new("lighter", sandbox: true)
+{:ok, ws} = Bourse.WS.connect(ex, :public)
+Bourse.WS.subscribe(ws, ["market_stats/0"], ack_timeout_ms: 6_000)
+# => {:error, {:subscription_rejected, %{"error" => %{"code" => 30005,
+#      "message" => "Invalid Channel:  (marketId)"}}}}
+Bourse.WS.subscribe(ws, ["order_book/0"], ack_timeout_ms: 6_000)   # dasselbe
+```
+
+Der `test/live/ws/canary_test.exs`-Fall für lighter ist aus demselben Grund rot. Zwei Lanes
+widersprechen sich also über denselben Kanal, und die grüne hat unrecht.
+
+**Mechanismus — zwei Löcher, ein Symptom:**
+
+1. `default_subscribe/3` ruft `ws_client.subscribe(ws, channels, ack_timeout_ms: 0)`
+   (`lib/bourse/live_lane/first_frame.ex:348`). Mit Budget 0 wartet die Lane den Ack nie
+   ab und sieht die Ablehnung nicht, die `WS.subscribe/3` zurückgäbe.
+2. Danach nimmt sie das erste Nicht-Heartbeat-Frame als Daten, ohne zu prüfen, ob es zum
+   abonnierten Kanal gehört. lighter schickt unaufgefordert `%{"type" => "connected"}`.
+   Mechanisch nachgestellt:
+
+   ```elixir
+   Bourse.WS.SubscribeAck.classify("lighter", %{"type" => "connected"})   # => :not_ack
+   Bourse.LiveLane.FirstFrame.frame_kind(:not_ack, %{"type" => "connected"})  # => "data"
+   ```
+
+   `classify_received/4` mappt jedes `:not_ack` auf `{:data, ...}` → `success_row`. Der
+   Gruß kommt vor dem Rejection-Frame an, also ist die Lane fertig, bevor die Ablehnung
+   überhaupt eintrifft.
+
+Expected: der Moduledoc der Lane sagt selbst „Subscribe acknowledgements are not coverage.
+A connection that stays silent after a bounded wait fails" — ein Verbindungsgruß ist noch
+weniger als ein Ack. Die Lane muss (a) die Ablehnung sehen, bevor sie auf Daten wartet,
+und (b) ein Datenframe daran binden, dass es den abonnierten Kanal trägt.
+
+**Klassen-Scope für die Routing-Entscheidung:** nicht lighter-spezifisch. Jeder Venue, der
+ein unaufgefordertes Frame schickt, das weder ping/pong/heartbeat noch ein bekanntes
+Ack-Muster ist, passiert die Lane ohne einen einzigen echten Datenframe. Ein Fix am
+`ack_timeout_ms: 0` allein schließt nur Loch 1; die Kanalbindung in `success_row` ist das,
+was die Klasse schließt.
+
+**Konsequenz für schon getroffene Aussagen:** der BUGS-Eintrag vom 2026-09-15 („lighter
+testnet ging dunkel") bleibt richtig — die öffentliche WS-Subscription wird abgelehnt. Die
+grüne lighter-Zeile im First-Frame-Report ist die falsche Angabe, nicht umgekehrt.
+
+## 2026-09-15 — derive's authored WS channel templates name channels the venue does not serve: `watch_ticker` is rejected as deprecated, `watch_orders` / `watch_my_trades` carry a CCXT message hash
+
+**Method:** `Bourse.WS.watch_ticker/3`, `watch_orders/3`, `watch_my_trades/3` (authored
+`websocket.subscribe.channels` in `priv/venues/derive/authored/venue.json`) ·
+**Exchange:** derive (demo, `wss://api-demo.lyra.finance/ws`) · **Severity:** hoch
+(`watch_ticker` ist auf derive vollständig tot; die beiden privaten Kanäle können nie ackn)
+
+**Status:** 🆕 reported 2026-09-15 — live-verifiziert in beide Richtungen, noch nicht geroutet.
+
+Gefunden beim Landed-Base-Gate nach Task 697: `mix bourse.verify_ws_first_frame` ist auf
+derive rot. Die Ursache ist nicht der Lane-Probe, sondern die authored Kanalliste.
+
+**Instanz 1 — `watchTicker` → `ticker.{symbol}.100` ist provider-seitig abgekündigt.**
+Live 2026-09-15:
+
+```
+subscribe ["ticker.ETH-PERP.100"]
+  → {:error, {:subscription_rejected,
+       %{"error" => %{"code" => -32602, "message" => "Invalid params",
+                      "data" => "`ticker` channel has been deprecated. Please use `ticker_slim`."}}}}
+
+subscribe ["ticker_slim.ETH-PERP.100"]
+  → :ok, danach method="subscription", params.channel="ticker_slim.ETH-PERP.100",
+    params.data.instrument_ticker = %{"A" => "2.96", ...}
+```
+
+Expected: `watch_ticker/3` subscribed einen Kanal, den die Venue bedient. Der Ersatz ist
+`ticker_slim`, und sein Payload ist **nicht formgleich** — die Daten hängen unter
+`params.data.instrument_ticker` statt der bisherigen `ticker`-Form. Ein Fix ist deshalb
+Kanalname **plus** Dispatch-Entry (`dispatch.entries[].channel == "ticker"`) **plus**
+Prüfung der Feldabbildung gegen den neuen Payload — nicht nur ein String-Tausch.
+
+**Instanz 2 — `watchMyTrades` und `watchOrders` sind auf `":{symbol}"` authored**, den
+CCXT-internen Message-Hash, exakt die Klasse, die Task 618 auf binance/binanceusdm
+entfernt hat. Live gegen dieselbe Socket:
+
+```
+subscribe [":ETH-PERP"]          → {:error, {:subscription_rejected, %{"error" => %{"code" => 13000, ...}}}}
+subscribe ["trades.ETH-PERP"]    → :ok
+subscribe ["orderbook.ETH-PERP.1.10"] → :ok
+```
+
+Die Venue lehnt den Hash also laut ab (besser als binances stummes Ack), aber die beiden
+unified Methoden sind damit unbenutzbar. `trades.` und `orderbook.` sind echte
+derive-Kanäle — die authored Templates für `watchTrades` sind korrekt, die beiden privaten
+sind es nicht.
+
+**Repro:** `{:ok, ex} = Bourse.Exchange.new("derive", sandbox: true)` →
+`{:ok, ws} = Bourse.WS.connect(ex, :public)` → die vier `Bourse.WS.subscribe/3`-Calls oben.
+Kein Credential nötig, die Kanalvalidierung läuft vor der Auth.
+
+**Consumer impact:** nicht gemeldet — gefunden durch den Lane-Rot, nicht durch einen
+Consumer. `watch_ticker` auf derive liefert nie ein Frame; ein Consumer, der auf den
+Subscribe-Fehler nicht prüft, sieht einen stillen leeren Stream.
+
+**Klassen-Scope für die Routing-Entscheidung:** vier `watch_*`-Templates auf derive gegen
+die provider-owned Kanalliste auditieren (dieselbe Form wie Task 618 für die
+binance-Familie), inklusive der Payload-Formprüfung für `ticker_slim`. Der verbleibende
+binancecoinm-`:no_channel_templates`-Rest aus 618 gehört in dieselbe Klasse.
+
+## 2026-09-15 — binanceusdm demo public WebSocket ackt jede Subscription und liefert nie ein Frame; dieselben drei Streams sind auf Produktion sofort grün
+
+**Method:** `Bourse.WS.subscribe/3` auf `btcusdt@miniTicker`, `btcusdt@ticker`,
+`btcusdt@aggTrade` · **Exchange:** binanceusdm (demo, `wss://demo-fstream.binance.com/public/ws`) ·
+**Severity:** mittel (kein Client-Defekt — aber die WS-First-Frame-Lane ist dadurch dauerhaft rot)
+
+**Status:** 🆕 reported 2026-09-15 — differentiell live-verifiziert, noch nicht geroutet.
+
+Gefunden beim Landed-Base-Gate nach Task 697: `mix bourse.verify_ws_first_frame` meldet
+`binanceusdm btcusdt@miniTicker: connected but received no data frame within 15000ms`.
+
+Das differentielle Probe trennt Kanalname, Pfad und Host — **der Host ist es**:
+
+| Host | `@miniTicker` | `@ticker` | `@aggTrade` |
+|---|---|---|---|
+| `wss://demo-fstream.binance.com/public/ws` (`sandbox: true`) | ack `:ok`, 0 Frames / 15 s | ack `:ok`, 0 Frames | ack `:ok`, 0 Frames |
+| `wss://fstream.binance.com/public/ws` (`sandbox: false`) | `24hrMiniTicker` sofort | — | `aggTrade` sofort |
+
+Der authored Kanalname ist also korrekt (`btcusdt@miniTicker` liefert auf Produktion
+`"e" => "24hrMiniTicker"`), der Pfad `/public/ws` ist korrekt, die Subscribe-Form ist
+korrekt. Nur der Demo-Host schweigt — und ackt dabei jede Subscription kommentarlos, also
+genau die Fehlerklasse, die BUGS-Eintrag 2026-08-14 (Task 618) als schlimmste benennt:
+kein Error, keine Daten.
+
+**Repro:**
+
+```elixir
+{:ok, ex} = Bourse.Exchange.new("binanceusdm", sandbox: true)
+{:ok, ws} = Bourse.WS.connect(ex, :public)
+Bourse.WS.subscribe(ws, ["btcusdt@aggTrade"], ack_timeout_ms: 5_000)   # => :ok
+# 15 s warten: kein {:websocket_message, _}
+# dasselbe mit sandbox: false liefert sofort aggTrade-Frames
+```
+
+**Offene Entscheidung für den Operator (nicht eigenmächtig entschieden):** ob
+binanceusdms Public-WS-Zeile als *demo-unavailable* nach
+`docs/prod-verification-ledger.md` gehört. Dafür spricht, dass es nachweislich keine
+Client-Eigenschaft ist; dagegen, dass eine Ledger-Zeile den Fall aus dem Nenner nimmt und
+die Lane dann grün meldet, was der Doktrin nach eine grüne Lüge wäre, solange nicht
+geklärt ist, ob der Demo-Host dauerhaft oder vorübergehend still ist. Ich habe deshalb
+nichts am Ledger geändert und lasse die Lane rot.
+
 ## 2026-09-15 — task 693 made conditional controls first-class on the request side, but the read side drops them: three venues never parse `triggerPrice`, and `stop_loss_price` / `take_profit_price` are unmapped on nine of ten
 
 **Status:** 🆕 reported — unrouted, awaiting the operator's routing decision. Found from the
