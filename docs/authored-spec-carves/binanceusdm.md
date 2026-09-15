@@ -4,6 +4,17 @@ Provider authority: [`priv/venues/binanceusdm/authority/manifest.json`](../../pr
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 
+## 2026-09-15 — stopLossPrice / takeProfitPrice have no distinct order field (Task 700)
+
+**C-T700a — USD-M algo and regular orders publish `triggerPrice`; STOP vs
+TAKE_PROFIT is the type. Outcome: DIVERGE from inventing distinct TP/SL slots
+on the same native key.** See binance.md C-T700a.
+[USD-M trade API](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/trade)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T700a","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M order triggerPrice plus type; no distinct stopLossPrice/takeProfitPrice"},"observed_evidence":{"kind":"live_venue","reference":"binance_authored_integration_test.exs USD-M algo open-order re-read of trigger_price"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-09-15 — position mode is the venue boolean (Task 698)
 
 **C-T698c — `GET /fapi/v1/positionSide/dual` is `dualSidePosition`, returned as

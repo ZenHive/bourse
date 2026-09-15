@@ -4,6 +4,28 @@ Provider authority: [`priv/venues/deribit/authority/manifest.json`](../../priv/v
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 
+## 2026-09-15 — order trigger_price and reduce_only round-trip (Task 700)
+
+**C-T700 — Deribit order objects publish `trigger_price` and `reduce_only`.
+Outcome: CONFIRM the provider fields on the order read map.**
+
+- *Exchange semantics:* `private/get_order_state` (and the open-order list)
+  return an order object with `trigger_price` (future trigger orders) and
+  `reduce_only` (omitted on spot). There is no distinct stop-loss / take-profit
+  price: those legs are `order_type` (`stop_market` / `take_market`) plus
+  `trigger_price`.
+  [private/get_order_state](https://docs.deribit.com/api-reference/upcoming/trading/private-get_order_state.md)
+- *Live evidence (2026-09-15, test.deribit.com):* `stop_market` sell
+  `SLTS-11018249` at trigger 65525.0, `order_state` `untriggered`,
+  `info["trigger_price"] == 65525.0`, `info["reduce_only"] == false`. Before
+  the mapping, unified `trigger_price` and `reduce_only` were nil on create,
+  `fetch_open_orders`, and `fetch_order`. Cancelled; open book empty. Buy-stop
+  at trigger 1 answered `10035 trigger_price_too_low`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T700","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Deribit order object trigger_price and reduce_only on private/get_order_state"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 test.deribit.com SLTS-11018249 untriggered stop_market sell trigger_price 65525.0 reduce_only false; 10035 trigger_price_too_low on buy-stop at 1"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-09-15 — transfer currency (landed-base gate, no task)
 
 **Deribit `private/get_transfers` rows carry their own `currency`; the authored

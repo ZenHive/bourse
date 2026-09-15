@@ -22,6 +22,14 @@ defmodule Bourse.Unified.OrderOptions do
     create_order_with_take_profit_and_stop_loss create_market_buy_order_with_cost create_market_sell_order_with_cost create_twap_order)a
   @binance ~w(binance binanceusdm binancecoinm)
 
+  @doc "Canonical snake_case write keys paired with their camelCase order field-map slots."
+  @spec aliases() :: [{String.t(), String.t()}]
+  def aliases, do: @aliases
+
+  @doc "CamelCase order field-map slots for the canonical write controls."
+  @spec canonical_slots() :: [String.t()]
+  def canonical_slots, do: Enum.map(@aliases, fn {_canonical, slot} -> slot end)
+
   @doc "Dispatches a public unified call after normalizing and checking its order controls."
   @spec call(Exchange.t(), atom(), String.t(), map(), keyword()) :: {:ok, term()} | {:error, term()}
   def call(exchange, method, capability, params, opts) do

@@ -703,7 +703,10 @@
           "format": null,
           "key": "price"
         },
-        "reduceOnly": null,
+        "reduceOnly": {
+          "coercion": "safeBool",
+          "key": "reduce_only"
+        },
         "remaining": {
           "coercion": "safeNumber",
           "kind": "computed",
@@ -752,7 +755,10 @@
           "key": "creation_timestamp"
         },
         "trades": null,
-        "triggerPrice": null,
+        "triggerPrice": {
+          "coercion": "safeNumber",
+          "key": "trigger_price"
+        },
         "type": {
           "coercion": "safeStringLower",
           "fallback_keys": [

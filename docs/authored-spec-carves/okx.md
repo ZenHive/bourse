@@ -4,6 +4,25 @@ Provider authority: [`priv/venues/okx/authority/manifest.json`](../../priv/venue
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 
+## 2026-09-15 — algo triggerPx round-trip (Task 700)
+
+**C-T700 — OKX algo order rows publish `triggerPx`. Outcome: CONFIRM that field
+as unified `triggerPrice`; `slTriggerPx` / `tpTriggerPx` were already mapped.**
+
+- *Exchange semantics:* GET `/api/v5/trade/order-algo` returns `triggerPx` for
+  trigger algos, `tpTriggerPx` / `slTriggerPx` for conditional TP/SL, and
+  `reduceOnly` as a string boolean.
+  [GET / Algo order details](https://www.okx.com/docs-v5/en/#order-book-trading-algo-trading-get-algo-order-details)
+- *Live evidence (2026-09-15, www.okx.com simulated):* trigger sell
+  `3924794877069905920`, `state` `live`, `info["triggerPx"] == "65520.55"`,
+  `info["reduceOnly"] == "false"`. Unified `trigger_price` was nil on
+  `fetch_open_orders` (`stop: true`) and `fetch_order` before the mapping.
+  Qty 0 answered `51000 Parameter sz error`. Cancelled in-session.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T700","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"OKX v5 GET /api/v5/trade/order-algo triggerPx reduceOnly"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 OKX international demo 3924794877069905920 live triggerPx 65520.55 reduceOnly false; sz 0 sCode 51000"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-09-15 — transfer identifiers (Task 685)
 
 **C-T685a — bills and transfer-state use different identifier classes. Outcome:

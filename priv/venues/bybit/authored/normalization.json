@@ -1405,9 +1405,19 @@
           "format": null,
           "key": "orderStatus"
         },
-        "stopLossPrice": null,
+        "stopLossPrice": {
+          "coercion": "safeNumberCanonical",
+          "format": null,
+          "key": "stopLoss",
+          "zero_as_nil": true
+        },
         "symbol": null,
-        "takeProfitPrice": null,
+        "takeProfitPrice": {
+          "coercion": "safeNumberCanonical",
+          "format": null,
+          "key": "takeProfit",
+          "zero_as_nil": true
+        },
         "timeInForce": {
           "coercion": "safeString",
           "enum_map": {
@@ -1429,7 +1439,12 @@
           "key": "createdTime"
         },
         "trades": null,
-        "triggerPrice": null,
+        "triggerPrice": {
+          "coercion": "safeNumberCanonical",
+          "format": null,
+          "key": "triggerPrice",
+          "zero_as_nil": true
+        },
         "type": {
           "coercion": "safeStringLower",
           "enum_map": null,

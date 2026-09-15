@@ -49,13 +49,12 @@ defmodule Bourse.ConditionalOrderOptionsIntegrationTest do
         |> Decimal.to_float()
 
       for spelling <- spellings(@venue) do
-        client_id = "t693#{System.system_time(:microsecond)}#{System.unique_integer([:positive])}"
-        order_opts = [{spelling, trigger}, {:clientOrderId, client_id} | opts] ++ selectors(@venue)
+        client_id = "t700#{System.system_time(:microsecond)}#{System.unique_integer([:positive])}"
+        extras = [{spelling, trigger} | selectors(@venue)] ++ reduce_only_opt(@venue)
+        order_opts = [{:clientOrderId, client_id} | extras ++ opts]
 
         params =
-          Unified.build_params([:symbol, :type, :side, :amount], [@symbol, @order_type, "sell", @amount], [
-            {spelling, trigger} | selectors(@venue)
-          ])
+          Unified.build_params([:symbol, :type, :side, :amount], [@symbol, @order_type, "sell", @amount], extras)
 
         # Refuse to reproduce the original bug by sending an unprotected market order.
         assert {:ok, prepared} = OrderOptions.prepare(exchange, :create_order, params)
@@ -73,8 +72,13 @@ defmodule Bourse.ConditionalOrderOptionsIntegrationTest do
         assert order.status == "open"
         assert order.side == "sell"
         assert order.filled in [nil, 0, 0.0]
-        assert numeric(order.info[@native_trigger] || order.trigger_price) == trigger
+        assert numeric(order.trigger_price) == trigger
+        assert_reduce_only!(@venue, order)
         assert_untriggered!(@venue, order.info)
+
+        assert {:ok, %Order{} = fetched} = Bourse.fetch_order(exchange, id, read_opts)
+        assert numeric(fetched.trigger_price) == trigger
+        assert_reduce_only!(@venue, fetched)
 
         assert {:ok, _} = Bourse.cancel_order(exchange, id, read_opts)
       end
@@ -126,6 +130,12 @@ defmodule Bourse.ConditionalOrderOptionsIntegrationTest do
   defp selectors(:deribit), do: [trigger: "index_price"]
   defp selectors(:alpaca), do: [time_in_force: "gtc"]
   defp selectors(_venue), do: []
+
+  defp reduce_only_opt(:alpaca), do: []
+  defp reduce_only_opt(_venue), do: [reduce_only: false]
+
+  defp assert_reduce_only!(:alpaca, %Order{reduce_only: reduce_only}), do: assert(is_nil(reduce_only))
+  defp assert_reduce_only!(_venue, %Order{reduce_only: reduce_only}), do: assert(reduce_only == false)
 
   defp book_selector(:okx), do: [stop: true]
   defp book_selector(_venue), do: []

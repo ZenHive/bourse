@@ -3,7 +3,9 @@ defmodule Bourse.BinanceOrderTypeRoundTripTest do
   # Suite-level invariant: Binance-family native→unified order-type reads invert
   # the authored write mapping. A newly authored write type without a matching
   # read counterpart fails here rather than collapsing to market/limit or a
-  # silent downcase (task 632).
+  # silent downcase (task 632). Write-side mapping presence for `type` (and every
+  # other unified order control) is also enforced by
+  # OrderControlRoundTripInvariantTest (task 700).
 
   use ExUnit.Case, async: true
 

@@ -6,6 +6,18 @@ defmodule Bourse.Unified.OrderOptionsTest do
   alias Bourse.Unified
   alias Bourse.Unified.OrderOptions
 
+  test "aliases/0 is the canonical write-side control set" do
+    assert OrderOptions.aliases() == [
+             {"trigger_price", "triggerPrice"},
+             {"stop_loss_price", "stopLossPrice"},
+             {"take_profit_price", "takeProfitPrice"},
+             {"time_in_force", "timeInForce"},
+             {"reduce_only", "reduceOnly"}
+           ]
+
+    assert OrderOptions.canonical_slots() == ~w(triggerPrice stopLossPrice takeProfitPrice timeInForce reduceOnly)
+  end
+
   @aliases [
     {"trigger_price", "triggerPrice", 40_000},
     {"stop_loss_price", "stopLossPrice", 40_000},

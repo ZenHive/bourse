@@ -42,6 +42,26 @@ unchanged. The live regression is
 {"carve_id":"C-T702-bybit","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 public ticker, orderbook, trade, kline and all-liquidation documentation linked above"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 stream-testnet.bybit.com: individual malformed topic rejection frames; ticker ts1789470111552, orderbook ts1789470134595, kline ts1789470134641, publicTrade ts1789470139409; docs/public-ws-channel-confrontation.md"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"allLiquidation.BTCUSDT acknowledged but delivered no data in 65 seconds on testnet and 60 seconds on production; tracked in prod-verification-ledger"}
 -->
 
+## 2026-09-15 — order triggerPrice / stopLoss / takeProfit round-trip (Task 700)
+
+**C-T700 — Bybit V5 order rows publish `triggerPrice`, `stopLoss`, `takeProfit`,
+and `reduceOnly`. Outcome: CONFIRM those fields on the order read map.**
+
+- *Exchange semantics:* Get Open / History Order list rows carry `triggerPrice`
+  (conditional), `stopLoss` / `takeProfit` (attached TP/SL), and boolean
+  `reduceOnly`. Unset numeric legs are `"0.00"` or `""`.
+  [Get Order History](https://bybit-exchange.github.io/docs/v5/order/order-list)
+- *Live evidence (2026-09-15, api-demo.bybit.com):* linear market sell
+  `621de10e-13cf-475c-a3b4-a80b5ce7a41e`, `orderStatus` `Untriggered`,
+  `info["triggerPrice"] == "65500.7"`, `info["reduceOnly"] == false`,
+  `stopLoss`/`takeProfit` empty. Unified `trigger_price` was nil on the re-read
+  before the mapping. Qty 0 answered `10001` "The number of contracts exceeds
+  minimum limit allowed". Cancelled in-session.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T700","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 order list triggerPrice stopLoss takeProfit reduceOnly"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 api-demo.bybit.com 621de10e-13cf-475c-a3b4-a80b5ce7a41e Untriggered triggerPrice 65500.7 reduceOnly false; qty 0 retCode 10001"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-09-15 — API-key metadata lives on fetchAccount (Task 698)
 
 **C-T698a — `GET /v5/user/query-api` is current-key metadata, not a balance

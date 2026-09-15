@@ -4,6 +4,8 @@ defmodule Bourse.ClientOrderIdRoundTripInvariantTest do
   # directions or in neither. Mapping unified clientOrderId onto a native request key
   # without mapping that identifier back on order *and* trade fails here, unless a
   # named exemption cites the provider contract for a surface that has no returnable id.
+  # Order-side mapping presence for every write control, including clientOrderId, is
+  # also enforced by OrderControlRoundTripInvariantTest (task 700).
 
   use ExUnit.Case, async: true
 

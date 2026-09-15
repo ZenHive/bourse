@@ -4,6 +4,24 @@ Provider authority: [`priv/venues/binance/authority/manifest.json`](../../priv/v
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 
+## 2026-09-15 — stopLossPrice / takeProfitPrice have no distinct order field (Task 700)
+
+**C-T700a — Binance-family order objects publish `stopPrice` / `triggerPrice`;
+the protective leg is the order type. Outcome: DIVERGE from mapping those
+unified slots onto the same native trigger.**
+
+Write accepts `stop_loss_price` / `take_profit_price` as fallback sources for
+the algo `triggerPrice`. The response has one trigger and a `type`
+(`STOP_MARKET` vs `TAKE_PROFIT_MARKET`). Mapping both unified slots onto that
+one native key would populate `stop_loss_price` on a `trigger_price` order —
+a guess. The order-control round-trip invariant exempts these two slots;
+`triggerPrice` already round-trips.
+[USD-M trade API](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/trade)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T700a","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Binance family order type plus stopPrice/triggerPrice; no distinct stopLossPrice/takeProfitPrice on the order object"},"observed_evidence":{"kind":"live_venue","reference":"binance_authored_integration_test.exs re-reads trigger_price and reduce_only on USD-M algo open orders"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-09-15 — position mode is the venue boolean (Task 698)
 
 **C-T698d — Binance-family `fetchPositionMode` is `dualSidePosition` as a nested

@@ -1459,7 +1459,11 @@
           "key": "cTime"
         },
         "trades": null,
-        "triggerPrice": null,
+        "triggerPrice": {
+          "coercion": "safeNumber2",
+          "format": null,
+          "key": "triggerPx"
+        },
         "type": {
           "coercion": "safeString",
           "enum_map": {

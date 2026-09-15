@@ -20,6 +20,13 @@ Supported trigger lifecycle tests cover OKX, Bybit demo, Binance futures through
 all three unified venue IDs, Deribit testnet, and Alpaca paper. Venues whose
 current unified builders cannot express conditional controls fail explicitly.
 
+A control the write path accepts must map back on the order. The suite-level
+invariant in `test/bourse/order_control_round_trip_invariant_test.exs` derives
+that set from `OrderOptions.aliases/0` and the authored request shapes. Live
+re-reads (`fetch_open_orders` / `fetch_order`) assert `trigger_price` and, where
+the venue offers it, `reduce_only` — never the create echo and never an `info`
+fallback. A venue that omits a mapped field still answers `nil`.
+
 ## Provider authority
 
 Consulted the indexed authority manifests under `priv/venues/*/authority/` and
