@@ -395,6 +395,9 @@ defmodule Bourse.WS.Channels do
           {:ok, channel()} | {:error, :missing_symbol}
   defp wrap_channel(%Exchange{} = exchange, method, channel, market_id) do
     case subscription_settings(exchange) do
+      {:method_subscription, _} when channel in ["l2Book", "trades"] ->
+        wrap_coin_channel(channel, market_id)
+
       {:op_subscribe_objects, _} ->
         channel_name =
           case channel do
@@ -417,4 +420,10 @@ defmodule Bourse.WS.Channels do
         {:ok, channel}
     end
   end
+
+  defp wrap_coin_channel(channel, market_id) when is_binary(market_id) and market_id != "" do
+    {:ok, %{"type" => channel, "coin" => market_id}}
+  end
+
+  defp wrap_coin_channel(_channel, _market_id), do: {:error, :missing_symbol}
 end

@@ -207,7 +207,7 @@
           "handler": "handleOrderBook"
         },
         {
-          "channel": "ticker",
+          "channel": "ticker_slim",
           "handler": "handleTicker"
         },
         {
@@ -283,14 +283,14 @@
     "subscribe": {
       "args_key": "id",
       "channels": {
-        "watchMyTrades": [
-          ":{symbol}"
-        ],
-        "watchOrders": [
-          ":{symbol}"
-        ],
+        "watchMyTrades": {
+          "_unresolved_reason": "Private channel {subaccount_id}.trades requires an authenticated subaccount; supply the provider channel explicitly"
+        },
+        "watchOrders": {
+          "_unresolved_reason": "Private channel {subaccount_id}.orders requires an authenticated subaccount; supply the provider channel explicitly"
+        },
         "watchTicker": [
-          "ticker.{symbol}.100"
+          "ticker_slim.{symbol}.100"
         ],
         "watchTrades": [
           "trades.{symbol}"

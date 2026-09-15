@@ -58,3 +58,44 @@ Outcome: CONFIRM decimal IV and funding fractions; delete the dead income-rate s
   and `used` null. Deriving either from a USD margin field would mix currency units and invent a
   provider meaning.
 
+
+## 2026-09-15 — public WS channel confrontation (Task 702)
+
+**C-T702 — DIVERGE ticker and private message hashes; CONFIRMED trade channel
+with production data delivery.** Provider sources:
+[Ticker slim](https://docs.derive.xyz/api-reference/channels/tickerslim),
+[Trades by instrument](https://docs.derive.xyz/api-reference/channels/tradesbyinstrument),
+[Subaccount orders](https://docs.derive.xyz/api-reference/channels/subaccountorders),
+[Subaccount trades](https://docs.derive.xyz/api-reference/channels/subaccounttrades).
+
+| Authored method/template | Provider channel | Outcome and live evidence |
+|---|---|---|
+| `watchTicker`: `ticker.{symbol}.100` | `ticker_slim.{instrument_name}.{interval}` | DIVERGE. Demo rejected `ticker.ETH-PERP.100` with `{"code":-32602,"message":"Invalid params","data":"\u0060ticker\u0060 channel has been deprecated. Please use \u0060ticker_slim\u0060. Caught for wallet: "}`. Replacement delivered the frame below. |
+| `watchTrades`: `trades.{symbol}` | `trades.{instrument_name}` | CONFIRMED. Production delivered `trades.ETH-PERP` on a later bounded probe (frame below). Demo acknowledged but remained idle in repeated 60-second waits; the demo gap remains ledgered. |
+| `watchOrders`: `:{symbol}` | `{subaccount_id}.orders` (private) | DIVERGE. `:ETH-PERP` rejected with `{"code":13000,"message":"Invalid channels","data":"{\":ETH-PERP\":\"Channel name \u0060:ETH-PERP\u0060 does not match any patterns\"}"}`. No public counterpart. Slot now explicitly unresolved and names the private provider channel; `channel:` pass-through remains available. |
+| `watchMyTrades`: `:{symbol}` | `{subaccount_id}.trades` (private) | DIVERGE, same rejected hash. No public counterpart. Slot explicitly unresolved; no new private handshake or unified watch method. |
+
+Actual demo replacement frame (subscription, not acknowledgement):
+
+```json
+{"method":"subscription","params":{"channel":"ticker_slim.ETH-PERP.100","data":{"timestamp":1789470139328,"instrument_ticker":{"t":1789470139328,"A":"40","a":"2485.85","B":"40","b":"2483.35","f":"0.000012500","option_pricing":null,"I":"2484.67","M":"2484.81","stats":{"c":"94.04","v":"237377.368","pr":"237379.351","n":13,"oi":"14609.766","h":"2569.89","l":"2474.329","p":"-0.027"},"minp":"2424.21","maxp":"2546.92"}}}}
+```
+
+The router now reads `params.channel` and `params.data`, and dispatch names
+`ticker_slim`. The ticker parse slice reads compact bid/ask/size/index/mark/time
+fields from the nested `instrument_ticker` while retaining REST long-name inputs.
+It does not invent last price or percentage from undocumented interpretations of
+`stats`. The live test passes the routed payload through the generated
+`parse_ticker/2`, asserting prices against that same newly received provider frame.
+The recorded frame in the unit test is only a parser regression check.
+
+Provider orderbook and trades-by-type channels exist but have no authored public
+watch template here; adding unified methods is outside Task 702. Private account
+event delivery remains outside this public audit and is explicitly ledgered.
+
+Production trade delivery on `wss://api.lyra.finance/ws` (the earlier 60-second
+production wait had been idle; the later probe received this actual trade):
+
+```json
+{"method":"subscription","params":{"channel":"trades.ETH-PERP","data":[{"trade_id":"f69d1a1d-5c4f-4f7b-b66a-1234838364ee","instrument_name":"ETH-PERP","timestamp":1789470739946,"trade_price":"2485.2","trade_amount":"0.1","mark_price":"2485.268140596208468195982277393341064453125","index_price":"2485.170961678356","direction":"buy","quote_id":null,"rfq_id":null}]}}
+```

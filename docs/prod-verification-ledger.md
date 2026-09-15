@@ -1093,3 +1093,17 @@ test code. Edit the fence when adding a ledgered case.
   `Bourse.HTTP.Errors.classify_response/5`.
 - Expected evidence: `%Bourse.Error{type: :rate_limit_exceeded, http_status: 429}`
   with `retry_after` populated from the live response rather than `nil`.
+
+### Task 702 — public WS template audit delivery gaps (2026-09-15)
+
+The full denominator is in [the channel audit](task-702-public-ws-audit.md).
+A documented name or subscribe acknowledgement below is not a data-frame pass.
+No test exclusions or lane classifications are changed by these entries.
+
+| Venue / authored templates | Blocker observed live | Required proof |
+|---|---|---|
+| Derive `watchTrades: trades.{symbol}` | `trades.ETH-PERP` acknowledged on `wss://api-demo.lyra.finance/ws` but remained idle in repeated 60-second waits. Production delivered trade `f69d1a1d-5c4f-4f7b-b66a-1234838364ee` on a later probe, so only demo delivery remains unproven. | Receive a nonempty demo trade notification attributed to this channel. |
+| Bybit `watchLiquidations: allLiquidation.{symbol}` (replaces `liquidations::{symbol}`) | `allLiquidation.BTCUSDT` accepted on testnet and production; no event within 65/60 seconds respectively. Liquidations require external market activity. | Receive a real liquidation event on the documented topic; an ack is insufficient. |
+| OKX `watchOHLCV`, `watchOHLCVForSymbols`: `candle{timeframe}` | Authored public URL rejects `candle1m` with error `60018`; provider requires `/ws/v5/business`. Direct subscription on that host delivered a candle, but current unified host routing does not select it. | Author business-host routing and receive the candle through the repository's subscribed path. The valid channel names are retained. |
+| Hyperliquid `watchOHLCV: candle` | Testnet acknowledged `coin: BTC, interval: 1m` but no frame in 45 seconds. Production delivered a candle; demo activity remains unproven. | Receive a candle on the testnet channel; production evidence is in the audit. |
+| Derive `watchOrders`, `watchMyTrades` removed `:{symbol}` slots | No public counterpart; provider channels require a numeric subaccount and authenticated account events. Bad hash rejected with error 13000. Slots explicitly unresolved instead of sending invented names. | Private follow-up must subscribe to `{subaccount_id}.orders` / `{subaccount_id}.trades` with authorized event generation and prove delivery. No private handshake is changed here. |

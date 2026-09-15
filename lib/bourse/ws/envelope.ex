@@ -50,8 +50,8 @@ defmodule Bourse.WS.Envelope do
       "match_type" => "split"
     },
     "derive" => %{
-      "discriminator_field" => "channel",
-      "data_field" => "data",
+      "discriminator_field" => "params.channel",
+      "data_field" => "params.data",
       "match_type" => "split"
     },
     "hyperliquid" => %{

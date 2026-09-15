@@ -274,18 +274,15 @@
           "userFills"
         ],
         "watchOHLCV": [
-          "candle",
-          "candles:{timeframe}:{symbol}"
+          "candle"
         ],
         "watchOrderBook": [
-          "l2Book",
-          "orderbook:{symbol}"
+          "l2Book"
         ],
         "watchOrders": [
           "orderUpdates"
         ],
         "watchTrades": [
-          "trade:{symbol}",
           "trades"
         ]
       },

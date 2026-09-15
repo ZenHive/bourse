@@ -155,7 +155,7 @@ defmodule Bourse.WS.FacadeTest do
     ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
     send(self(), {:websocket_message, %{"op" => "subscribe", "success" => true}})
 
-    assert {:ok, %Handle{channels: ["orderbook:BTCUSDT"]}} = WS.watch_order_book(ws, "BTC/USDT")
+    assert {:ok, %Handle{channels: ["orderbook.50.BTCUSDT"]}} = WS.watch_order_book(ws, "BTC/USDT")
     assert_receive {:transport_sent, _}
   end
 

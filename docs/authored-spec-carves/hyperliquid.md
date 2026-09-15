@@ -1,5 +1,57 @@
 # Hyperliquid carve register
 
+## 2026-09-15 — Public watch channel names (Task 702)
+
+Authority: [Hyperliquid WebSocket subscriptions](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/websocket/subscriptions).
+Each named subscription below was confronted on a live socket; acknowledgements
+were excluded from delivery evidence.
+
+| Authored method | Authored template | Provider counterpart | Outcome |
+|---|---|---|---|
+| `watchOrderBook` | `l2Book` | `{type: "l2Book", coin}` | CONFIRMED |
+| `watchOrderBook` | `orderbook:{symbol}` | No documented channel; use `l2Book` | DIVERGE — removed |
+| `watchTrades` | `trades` | `{type: "trades", coin}` | CONFIRMED |
+| `watchTrades` | `trade:{symbol}` | No documented channel; use `trades` | DIVERGE — removed |
+| `watchOHLCV` | `candle` | `{type: "candle", coin, interval}` | CONFIRMED |
+| `watchOHLCV` | `candles:{timeframe}:{symbol}` | No documented channel; use `candle` | DIVERGE — removed |
+
+At `wss://api.hyperliquid-testnet.xyz/ws`, `l2Book` delivered BTC levels
+at `time: 1789470173632`, including bid `px: "77327.0", sz: "0.3"`.
+`trades` delivered BTC trades including `tid: 140845237624259`,
+`px: "77347.0", sz: "0.00001", time: 1789469571563`.
+The returned trade history is provider data, not an acknowledgement.
+Testnet `candle` acknowledged but delivered no data within 45 seconds.
+Production `wss://api.hyperliquid.xyz/ws` delivered:
+
+```json
+{"channel":"candle","data":{"t":1789470180000,"T":1789470239999,"s":"BTC","i":"1m","o":"77091.0","c":"77070.0","h":"77100.0","l":"77069.0","v":"20.46409","n":110}}
+```
+
+All three removed names received `channel: "error"` on testnet, with
+`data: "Error parsing JSON into valid websocket request: ..."`. For example:
+
+```json
+{"channel":"error","data":"Error parsing JSON into valid websocket request: {\"method\":\"subscribe\",\"subscription\":{\"type\":\"trade:BTC\",\"coin\":\"BTC\"}}"}
+{"channel":"error","data":"Error parsing JSON into valid websocket request: {\"method\":\"subscribe\",\"subscription\":{\"type\":\"orderbook:BTC\",\"coin\":\"BTC\"}}"}
+{"channel":"error","data":"Error parsing JSON into valid websocket request: {\"method\":\"subscribe\",\"subscription\":{\"type\":\"candles:1m:BTC\",\"coin\":\"BTC\",\"interval\":\"1m\"}}"}
+```
+
+The other rejected request types were `orderbook:BTC` and `candles:1m:BTC`
+(the candle request also supplied `interval: "1m"`). Channel selection formerly
+preferred these hashes. The retained book/trade templates now produce subscription
+objects containing the required `coin`, using the exchange ID supplied by the
+symbol resolver. Native coin IDs such as `BTC` and `@107` are preserved.
+The authored candle name remains available through `WS.subscribe` with an explicit
+`coin` and `interval`; this change does not add a unified OHLCV watch method.
+Private user subscriptions are outside this confrontation: `watchOrders`
+authors `orderUpdates`, and `watchMyTrades` authors `:{symbol}` and `userFills`.
+Their retained configuration is not evidence of a provider-owned channel name.
+
+Live regression: `test/live/ws/hyperliquid_watch_frame_delivery_test.exs` checks
+the authored book/trade watch paths and a real candle payload. Provider channels
+such as `allMids` and `bbo` are documented but have no authored public watch template;
+they are recorded here without adding methods.
+
 Provider authority: [`priv/venues/hyperliquid/authority/manifest.json`](../../priv/venues/hyperliquid/authority/manifest.json).
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.

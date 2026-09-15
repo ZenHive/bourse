@@ -27,12 +27,13 @@ defmodule Bourse.WS.EnvelopeHandlerMappingsTest do
 
     envelope = Envelope.for_exchange(%{exchange | spec: spec})
     assert envelope["discriminator_field"] == "topic"
+    assert Envelope.for_exchange(%{exchange | spec: %{}})["discriminator_field"] == "topic"
     assert Envelope.match_type(nil) == "exact"
     assert Envelope.prefix_channels(nil) == []
   end
 
   test "keeps derive's explicit discriminator when its dispatch slice is empty" do
-    assert %{"discriminator_field" => "channel"} =
+    assert %{"discriminator_field" => "params.channel"} =
              Envelope.for_exchange(Exchange.new!("derive"))
   end
 

@@ -751,32 +751,28 @@
       "args_key": "args",
       "channels": {
         "watchLiquidations": [
-          "liquidations::{symbol}"
+          "allLiquidation.{symbol}"
         ],
         "watchMyTrades": [
           ":{symbol}"
         ],
         "watchOHLCVForSymbols": [
-          "kline.{timeframe}.{symbol}",
-          "ohlcv::{symbol}::{timeframe}"
+          "kline.{timeframe}.{symbol}"
         ],
         "watchOrderBookForSymbols": [
-          "orderbook:{symbol}"
+          "orderbook.50.{symbol}"
         ],
         "watchOrders": [
           "order"
         ],
         "watchTicker": [
-          ".{symbol}",
-          "ticker:{symbol}",
           "tickers"
         ],
         "watchTickers": [
           "tickers"
         ],
         "watchTradesForSymbols": [
-          "publicTrade.{symbol}",
-          "trade:{symbol}"
+          "publicTrade.{symbol}"
         ]
       },
       "discriminant": "op",

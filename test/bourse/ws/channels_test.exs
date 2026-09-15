@@ -8,7 +8,7 @@ defmodule Bourse.WS.ChannelsTest do
     @cases [
       {"alpaca", :watch_trades, %{symbol: "FAKEPACA"}, "trades:FAKEPACA"},
       {"bybit", :watch_ticker, %{symbol: "BTC/USDT"}, "tickers.BTCUSDT"},
-      {"bybit", :watch_order_book, %{symbol: "BTC/USDT"}, "orderbook:BTCUSDT"},
+      {"bybit", :watch_order_book, %{symbol: "BTC/USDT"}, "orderbook.50.BTCUSDT"},
       {"bybit", :watch_trades, %{symbol: "BTC/USDT"}, "publicTrade.BTCUSDT"},
       {"coinbaseexchange", :watch_trades, %{symbol: "ETH/USD"}, "ETH-USD"},
       {"okx", :watch_ticker, %{symbol: "BTC/USDT"}, %{"channel" => "tickers", "instId" => "BTC-USDT"}},
@@ -21,10 +21,10 @@ defmodule Bourse.WS.ChannelsTest do
       {"binanceusdm", :watch_ticker, %{symbol: "BTC/USDT"}, "btcusdt@miniTicker"},
       {"binanceusdm", :watch_order_book, %{symbol: "BTC/USDT"}, "btcusdt@depth20@100ms"},
       {"binanceusdm", :watch_trades, %{symbol: "BTC/USDT"}, "btcusdt@trade"},
-      {"derive", :watch_ticker, %{symbol: "BTC/USDT"}, "ticker.BTC-USDT.100"},
+      {"derive", :watch_ticker, %{symbol: "BTC/USDT"}, "ticker_slim.BTC-USDT.100"},
       {"derive", :watch_trades, %{symbol: "BTC/USDT"}, "trades.BTC-USDT"},
-      {"hyperliquid", :watch_order_book, %{symbol: "BTC/USDT"}, "orderbook:BTCUSDT"},
-      {"hyperliquid", :watch_trades, %{symbol: "BTC/USDT"}, "trade:BTCUSDT"},
+      {"hyperliquid", :watch_order_book, %{symbol: "BTC"}, %{"type" => "l2Book", "coin" => "BTC"}},
+      {"hyperliquid", :watch_trades, %{symbol: "BTC"}, %{"type" => "trades", "coin" => "BTC"}},
       {"hyperliquid", :watch_orders, %{}, "orderUpdates"},
       {"bybit", :watch_orders, %{}, "order"}
     ]
@@ -47,7 +47,22 @@ defmodule Bourse.WS.ChannelsTest do
 
     test "symbol-only templates require a symbol" do
       exchange = Exchange.new!("derive")
+      spec = put_in(exchange.spec, ["websocket", "subscribe", "channels", "watchOrders"], [":{symbol}"])
+      exchange = %{exchange | spec: spec}
       assert {:error, :missing_symbol} = Channels.build(exchange, :watch_orders, %{}, [])
+    end
+
+    test "Hyperliquid coin channels reject an absent or empty coin" do
+      exchange = Exchange.new!("hyperliquid")
+
+      for method <- [:watch_order_book, :watch_trades], params <- [%{}, %{symbol: ""}] do
+        assert {:error, :missing_symbol} = Channels.build(exchange, method, params)
+      end
+    end
+
+    test "Hyperliquid preserves provider spot coin ids" do
+      assert {:ok, %{"type" => "l2Book", "coin" => "@107"}} =
+               Channels.build(Exchange.new!("hyperliquid"), :watch_order_book, %{symbol: "@107"})
     end
 
     test "bybit watch_orders stays the account-wide topic even when a symbol is supplied" do

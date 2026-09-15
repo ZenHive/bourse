@@ -4,6 +4,44 @@ Provider authority: [`priv/venues/bybit/authority/manifest.json`](../../priv/ven
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 
+## 2026-09-15 — public watch channel names (Task 702)
+
+**C-T702-bybit — public watch templates use provider topic names. Outcome:
+DIVERGE for six invalid alternatives; CONFIRMED for four existing valid
+method/template occurrences.**
+
+The [complete audit](../task-702-public-ws-audit.md#bybit) names every template,
+provider source, actual rendered topic, rejection and data-frame evidence.
+Bybit rejected `liquidations:BTCUSDT`, `ohlcv:BTCUSDT:1`,
+`orderbook:BTCUSDT`, `BTCUSDT`, `ticker:BTCUSDT` and `trade:BTCUSDT` with
+`success:false` and `ret_msg="error:handler not found,topic:<topic>"`.
+The corresponding authored forms were `liquidations::{symbol}`,
+`ohlcv::{symbol}::{timeframe}`, `orderbook:{symbol}`, `.{symbol}`,
+`ticker:{symbol}` and `trade:{symbol}`.
+
+The invalid alternates are removed. Orderbook uses `orderbook.50.{symbol}`;
+liquidations uses `allLiquidation.{symbol}`. Retained `tickers` bases in
+`watchTicker` and `watchTickers` append the symbol through the existing
+formatter; they already produce the documented `tickers.{symbol}`.
+`kline.{timeframe}.{symbol}` and `publicTrade.{symbol}` also delivered data.
+Sources: [ticker](https://bybit-exchange.github.io/docs/v5/websocket/public/ticker),
+[orderbook](https://bybit-exchange.github.io/docs/v5/websocket/public/orderbook),
+[trade](https://bybit-exchange.github.io/docs/v5/websocket/public/trade),
+[kline](https://bybit-exchange.github.io/docs/v5/websocket/public/kline),
+[liquidation](https://bybit-exchange.github.io/docs/v5/websocket/public/all-liquidation).
+
+Testnet delivered ticker snapshot `ts=1789470111552`, corrected orderbook
+snapshot `ts=1789470134595`, kline snapshot `ts=1789470134641` and public trades
+`ts=1789470139409`. The liquidation replacement was acknowledged but idle for
+65 seconds on testnet and 60 seconds on production; delivery remains a ledger
+gap. Private `watchOrders` and `watchMyTrades` are inventoried separately and
+unchanged. The live regression is
+`test/live/ws/bybit_watch_frame_delivery_test.exs`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T702-bybit","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 public ticker, orderbook, trade, kline and all-liquidation documentation linked above"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 stream-testnet.bybit.com: individual malformed topic rejection frames; ticker ts1789470111552, orderbook ts1789470134595, kline ts1789470134641, publicTrade ts1789470139409; docs/task-702-public-ws-audit.md"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"allLiquidation.BTCUSDT acknowledged but delivered no data in 65 seconds on testnet and 60 seconds on production; tracked in prod-verification-ledger"}
+-->
+
 ## 2026-09-15 — API-key metadata lives on fetchAccount (Task 698)
 
 **C-T698a — `GET /v5/user/query-api` is current-key metadata, not a balance

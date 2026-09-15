@@ -681,24 +681,36 @@
         "ask": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "best_ask_price"
+          "key": "best_ask_price",
+          "fallback_keys": [
+            "instrument_ticker.a"
+          ]
         },
         "askVolume": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "best_ask_amount"
+          "key": "best_ask_amount",
+          "fallback_keys": [
+            "instrument_ticker.A"
+          ]
         },
         "average": null,
         "baseVolume": null,
         "bid": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "best_bid_price"
+          "key": "best_bid_price",
+          "fallback_keys": [
+            "instrument_ticker.b"
+          ]
         },
         "bidVolume": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "best_bid_amount"
+          "key": "best_bid_amount",
+          "fallback_keys": [
+            "instrument_ticker.B"
+          ]
         },
         "change": null,
         "close": null,
@@ -707,7 +719,10 @@
         "indexPrice": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "index_price"
+          "key": "index_price",
+          "fallback_keys": [
+            "instrument_ticker.I"
+          ]
         },
         "info": null,
         "last": null,
@@ -715,7 +730,10 @@
         "markPrice": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "mark_price"
+          "key": "mark_price",
+          "fallback_keys": [
+            "instrument_ticker.M"
+          ]
         },
         "open": null,
         "percentage": null,
@@ -725,7 +743,10 @@
         "timestamp": {
           "coercion": "safeInteger",
           "format": "ms",
-          "key": "timestamp"
+          "key": "timestamp",
+          "fallback_keys": [
+            "instrument_ticker.t"
+          ]
         },
         "vwap": null
       }
