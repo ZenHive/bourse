@@ -9320,7 +9320,7 @@ bundle = "authored_specs"
 status = "blocked"
 title = "Work the prod-verification ledger: close deferred tier-1 confirmations with prod keys / real market state"
 scores = { d = 3, b = 6, u = 4 }
-acceptance_criteria = ["Every entry under 'Open' in docs/prod-verification-ledger.md is either moved to 'Closed' with the observed live evidence (actual call output, dated) or re-blocked with a named reason", "Where a live observation contradicts the authored slice, the divergence is filed as its own task with the live payload as evidence — the ledger entry records the filed id", "Carve-register entries touched by a closed confirmation are upgraded from tier-2/compat labels to CONFIRMED with the live citation"]
+acceptance_criteria = ["Every entry under 'Open' in docs/prod-verification-ledger.md is either moved to 'Closed' with the observed live evidence (actual call output, dated) or re-blocked with a named reason", "Where a live observation contradicts the authored slice, the divergence is filed as its own task with the live payload as evidence — the ledger entry records the filed id", "Carve-register entries touched by a closed confirmation are upgraded from tier-2/compat labels to CONFIRMED with the live citation", "Recheck the reported Lighter testnet account identity and authenticated reads; when credentials are repaired, its sandbox journey runs with cleanup, otherwise record the precise remaining account-provisioning blocker."]
 out_of_scope = ["Authoring new slices", "Adding new ledger entries (that happens continuously via the CLAUDE.md append rule)"]
 assignee = "human"
 blocked_reason = "Live session 2026-07-23 closed Binance task 319, Binance USD-M task 321, and the obsolete OKX EEA follow-up for task 364; every remaining OKX probe is routed to the international entity. Remaining ledger entries require one or more of: populated account state, an OKX international production read key, usable sandbox liquidity, or explicit approval for a venue-final mutation."
@@ -9332,6 +9332,7 @@ is the single source, this task is the schedulable pointer. Work top-to-bottom, 
 in place per the ledger's own template. Security: prod keys stay in ~/.secrets, read in-eval;
 read-only probes only unless the entry explicitly requires a mutation and the operator
 approves it in-session.
+Triage 2026-09-15: include BUGS.md 2026-08-28 Lighter account-not-found report in the existing operator-gated account-state work. Its 29404/21100/20013 observations are historical, not re-proven today. Confirm whether the configured testnet account now exists; if not, provision or select the account and update the credential triple with operator involvement. Do not put credential values in git or silently replace a wallet.
 """
 created_at = "2026-07-17"
 scored_at = "2026-07-17"
@@ -22758,6 +22759,7 @@ Make the canonical commands honest. A default green must mean that live REST rea
 This is a deletion and gate-flip task, not another additive suite. Compare final non-JSON test-source lines against the 74,276-line baseline at bourse 57284d8, remove obsolete helpers and tags, update CLAUDE.md, regenerate AGENTS.md, and verify the delivered origin/main with the complete live lane, mix check.dispatch and mix ci. Cleanup is part of correctness: no test-owned order or position may remain.
 
 Routing trigger: CI/check infrastructure, repo-wide invariant and live trading safety. Dispatch as a solo final wave after the REST and WebSocket migrations land.
+Triage 2026-09-15: the BUGS.md 2026-08-29 coverage-headroom report is historical fragility, not evidence of a new runtime defect. Re-measure coverage during this already-scoped suite convergence; retain the 80 percent standard and 95 percent critical per-module obligations without a separate cosmetic headroom task. Task 698 owns the specific metadata contract gaps left by 686.
 """
 created_at = "2026-08-22"
 scored_at = "2026-08-22"
@@ -23228,9 +23230,9 @@ status = "pending"
 title = "Silent substitution is the class: a slice that does not fit must fail loudly, never resolve to a plausible wrong value"
 scores = { d = 7, b = 8, u = 8 }
 markers = ["bug"]
-acceptance_criteria = ["OKX fetch_transfers and fetch_transfer/2 compose live against the demo host: every id the list read returns is either accepted by the detail read, or the list read declares the id unavailable. A returned id that the venue rejects as malformed is a failure of this criterion. The chosen carve is recorded in docs/authored-spec-carves/okx.md with the live evidence for it", "No authored id field map resolves through fallback_keys onto a key of a different identifier class. A manifest-wide test over all eleven venues fails when one does, so the next venue cannot ship the same substitution", "alpaca's authored errors.status_map is consumed by the loader: Bourse.Exchange.new(alpaca) yields a non-empty status_map and http_exceptions, and a manifest-wide test raises when any venue authors a status_map shape the loader does not read", "alpaca 403, 404, 422 and 429 are classified from live calls against paper-api.alpaca.markets, and the re-observed unified type for the 403 is re-pinned in test/live/journeys/trader/alpaca_test.exs in this same change. The interaction with the hard 401/403 short-circuit in Bourse.HTTP.Errors.normalize_error/3 is resolved and stated, not left to outrank the authored map by accident", "HmacRecipe's two canonical-string ladders and the permissive path_predicate?/4 clauses either have every reachable rung pinned by a test that distinguishes it from its neighbours, or the unreachable rungs are replaced by a clause that raises and names the malformed slice. Deleting a surviving rung must redden the suite; state the before and after mutation counts from the muex command in the BUGS entry", "One unparseable row no longer discards a whole successful multi-row read: bybit fetch_positions_history returns the rows it could resolve, and the row it could not is either dropped with a named reason or carries an explicit unavailability marker. Proven live on the bybit testnet main-account key against an account holding a dated contract", "Each of the four instances above has a live call in test/ that fails when the substitution returns, and none of them is satisfied by a shape assertion alone"]
+acceptance_criteria = ["OKX fetch_transfers and fetch_transfer/2 compose live against the demo host: every id the list read returns is either accepted by the detail read, or the list read declares the id unavailable. A returned id that the venue rejects as malformed is a failure of this criterion. The chosen carve is recorded in docs/authored-spec-carves/okx.md with the live evidence for it", "No authored id field map resolves through fallback_keys onto a key of a different identifier class. A manifest-wide test over all eleven venues fails when one does, so the next venue cannot ship the same substitution", "alpaca's authored errors.status_map is consumed by the loader: Bourse.Exchange.new(alpaca) yields a non-empty status_map and http_exceptions, and a manifest-wide test raises when any venue authors a status_map shape the loader does not read", "alpaca 403, 404, 422 and 429 are classified from live calls against paper-api.alpaca.markets, and the re-observed unified type for the 403 is re-pinned in test/live/journeys/trader/alpaca_test.exs in this same change. The interaction with the hard 401/403 short-circuit in Bourse.HTTP.Errors.normalize_error/3 is resolved and stated, not left to outrank the authored map by accident", "HmacRecipe's two canonical-string ladders and the permissive path_predicate?/4 clauses either have every reachable rung pinned by a test that distinguishes it from its neighbours, or the unreachable rungs are replaced by a clause that raises and names the malformed slice. Deleting a surviving rung must redden the suite; state the before and after mutation counts from the muex command in the BUGS entry", "One unparseable row no longer discards a whole successful multi-row read: bybit fetch_positions_history returns the rows it could resolve, and the row it could not is either dropped with a named reason or carries an explicit unavailability marker. Proven live on the bybit testnet main-account key against an account holding a dated contract", "Each of the four instances above has a live call in test/ that fails when the substitution returns, and none of them is satisfied by a shape assertion alone", "An explicitly invalid endpoint_index returns a named error without making a venue request; valid indices still reach their selected book, including credential-filtered lists. Regression tests distinguish out-of-range fallback from successful index-zero selection."]
 out_of_scope = ["Normalizing bybit dated-future symbol ids, which is the Bourse.Symbol task", "The rate limiter and signing order", "Deleting fixture-oracle test architecture, which is task 670"]
-touches = ["lib/bourse/exchange.ex", "lib/bourse/spec/schema.ex", "lib/bourse/signing/hmac_recipe.ex", "lib/bourse/unified/read_parse.ex", "lib/bourse/unified/deribit_position_units.ex", "priv/venues/okx/authored/normalization.json", "priv/venues/okx/authority/rest_read_contract.json", "priv/venues/alpaca/authored/errors.json", "docs/authored-spec-carves/okx.md", "docs/prod-verification-ledger.md", "BUGS.md", "test/bourse", "test/live/okx", "test/live/bybit", "test/live/errors/alpaca_test.exs", "test/live/journeys/trader/alpaca_test.exs"]
+touches = ["lib/bourse/exchange.ex", "lib/bourse/spec/schema.ex", "lib/bourse/signing/hmac_recipe.ex", "lib/bourse/unified/read_parse.ex", "lib/bourse/unified/deribit_position_units.ex", "priv/venues/okx/authored/normalization.json", "priv/venues/okx/authority/rest_read_contract.json", "priv/venues/alpaca/authored/errors.json", "docs/authored-spec-carves/okx.md", "docs/prod-verification-ledger.md", "BUGS.md", "test/bourse", "test/live/okx", "test/live/bybit", "test/live/errors/alpaca_test.exs", "test/live/journeys/trader/alpaca_test.exs", "lib/bourse/unified.ex"]
 assignee = "codex"
 model = "gpt-5.6-sol"
 body = """
@@ -23313,6 +23315,7 @@ The evidence gate: if the demo transfer round-trip proves safely repeatable and 
 the lane's own cleanup, prefer re-declaring the case as write-then-read so it actually executes,
 and say in the delivery which of the two you found and why. Do not drop the case from the
 denominator either way, per CLAUDE.md on the ledger not discharging a case.
+Triage 2026-09-15: BUGS.md 2026-08-29 endpoint_index substitution is the same class. Source lib/bourse/unified.ex select_endpoint still uses Enum.at(configs, idx) || hd(configs). Explicit invalid or out-of-range indices must fail before dispatch, never select index zero or another book. Preserve valid credential-filtered index semantics and exercise negative/non-integer inputs according to the documented contract.
 """
 created_at = "2026-08-28"
 started_at = "2026-08-28"
@@ -23702,5 +23705,145 @@ The trading_dashboard consumer observed Bourse 0.8.0 requesting a future fifth p
 
 Review the entire page tiling invariant, not only that last page: the current code tiles from an unaligned start in whole granularity steps, so verify that page boundaries neither skip eligible candle openings nor exceed the effective end. Coinbase's live API and official endpoint documentation own the semantics; existing ceil arithmetic and third-party clients are not oracles. Use public spot reads only. Dispatch is chosen because provider window semantics need independent live verification, rather than another consumer-side adjustment. D3 is bounded pagination work; B8 restores chart history for all consumers; U8 reflects an observed failure in an active chart.
 """
+created_at = "2026-09-15"
+scored_at = "2026-09-15"
+
+[[task]]
+id = "692"
+phase = 16
+bundle = "live_triage"
+status = "pending"
+title = "Make singular and plural funding reads expose the same provider-backed rates"
+scores = { d = 5, b = 8, u = 8 }
+markers = ["bug"]
+acceptance_criteria = ["Hyperliquid singular BTC funding equals the matching plural row from the same observed payload and keeps the hourly unit; missing symbols never select another asset or a fabricated zero.", "An explicit symbols list on a singular-only venue (Deribit control) produces correctly keyed rates; no-symbol plural behavior is documented and never guesses a universe.", "Lighter singular/plural expose Lighter swap rates with provider-confirmed sign, unit, interval and symbol identity; history and other-exchange comparison rows cannot masquerade as the current venue rate.", "Observe a real success and a relevant provider error before changing external semantics; consult the provider-owned docs indexed under priv/venues/<venue>/authority/. Pin domain assertions in provider-live integration tests; missing credentials or unreachable hosts fail loudly. Record independent reviewer commands and evidence, including the affected REST-read contract lane and mix check.dispatch. Raise touched modules to the required coverage tier before mutation."]
+out_of_scope = ["Consumer hedge allocation", "New funding history features", "Production writes"]
+touches = ["lib/bourse/unified.ex", "lib/bourse/unified/read_parse.ex", "priv/venues/hyperliquid/authored/endpoints.json", "priv/venues/lighter/authored/endpoints.json", "priv/venues/lighter/authored/normalization.json", "priv/venues/deribit/authored/endpoints.json", "priv/venues/hyperliquid/authority/rest_read_contract.json", "priv/venues/lighter/authority/rest_read_contract.json", "priv/venues/deribit/authority/rest_read_contract.json", "test/live/hyperliquid/", "test/live/lighter/", "test/live/deribit/"]
+assignee = "cursor"
+model = "cursor-grok-4.6-high"
+body = """
+BUGS.md 2026-09-01 reports the funding capability asymmetry and Lighter authoring gap. Reproduced through the running Bourse Tidewave on 2026-09-15: Bourse.fetch_funding_rate(hyperliquid, "BTC/USDC:USDC") returns not_supported; fetch_funding_rates with that symbols filter returns funding_rate 1.25e-5, interval "1h", and info.funding "0.0000125". The invalid-symbol singular is also rejected at capability gating, so that is not provider-error evidence. Local authored documents omit Hyperliquid's singular and set both Lighter capabilities false.
+
+Give consumers one consistent funding interface: an authored singular-to-plural bridge selects the exact requested swap; the reverse bridge serves an explicit finite symbols list where only singular reads exist, without guessing the venue universe. Author Lighter funding using its own venue rates, not a cross-exchange comparison row. Confirm units, direction and cadence from the live provider and official docs; the report's percent/hour interpretation remains a premise to verify. Preserve loud unsupported/fundingless/unknown-symbol outcomes. Public API and financial-unit semantics require independent dispatch review. D5 spans capability and normalization; B8/U8 restores active hedge ranking."""
+created_at = "2026-09-15"
+scored_at = "2026-09-15"
+
+[[task]]
+id = "693"
+phase = 16
+bundle = "live_triage"
+status = "pending"
+title = "Normalize conditional order options before venue routing so a stop cannot become a market fill"
+scores = { d = 6, b = 10, u = 10 }
+markers = ["bug"]
+acceptance_criteria = ["Across all algo-capable supported venues, canonical and legacy spellings produce the same protective intent; conflicting aliases fail before any order is sent.", "Live far-from-market trigger orders remain untriggered and appear in the correct algo book with the requested trigger and side; a market fill is a failure, not cleanup success.", "Unsupported protective controls return an explicit error; plain market/limit controls still behave normally. The owned-state contract helper uses the same canonical options.", "Tests own unique sandbox orders and always cancel them; demonstrate a real accepted trigger and a relevant rejected order per affected venue without production trading.", "Observe a real success and a relevant provider error before changing external semantics; consult the provider-owned docs indexed under priv/venues/<venue>/authority/. Pin domain assertions in provider-live integration tests; missing credentials or unreachable hosts fail loudly. Record independent reviewer commands and evidence, including the affected REST-read contract lane and mix check.dispatch. Raise touched modules to the required coverage tier before mutation."]
+out_of_scope = ["New order types", "Changing production account configuration"]
+touches = ["lib/bourse/unified.ex", "lib/bourse/unified/request_shape/", "priv/venues/", "test/support/rest_read_contract_owned_state.ex", "test/live/journeys/", "test/live/errors/", "test/bourse/"]
+assignee = "codex"
+model = "gpt-6-astra"
+body = """
+BUGS.md 2026-08-29 records an OKX demo market fill when trigger_price was silently ignored, while triggerPrice selects the algo route. Source inspection 2026-09-15 confirms the OKX authored selection still names triggerPrice/stopLossPrice and the Binance family uses snake_case. This is the cross-venue option contract, not another OKX-only patch.
+
+Use snake_case as the canonical Elixir unified spelling for trigger_price, stop_loss_price, take_profit_price, time_in_force and reduce_only wherever offered. Preserve existing camelCase callers as aliases before route selection; refuse conflicting duplicate spellings with invalid_parameters before network dispatch. A requested protective control that a venue cannot express must fail, never disappear. Apply the same contract to sandbox owned-state helpers. Dispatch is required for order safety and public API compatibility. D6 covers request routing and live order lifecycle; B10/U10 reflects the observed unintended position."""
+created_at = "2026-09-15"
+scored_at = "2026-09-15"
+
+[[task]]
+id = "694"
+phase = 16
+bundle = "live_triage"
+status = "pending"
+title = "Make token-bucket accounting fair for heavy requests and atomic for repeated keys"
+scores = { d = 6, b = 8, u = 8 }
+markers = ["bug"]
+acceptance_criteria = ["A heavy request completes under sustained interleaved cheap traffic when its explicit budget permits it; cheap requests cannot erase accrual, steal a reservation or exceed authored burst limits.", "Repeated checks of one key charge their total cost exactly once atomically; a failed multi-key admission spends nothing. Incompatible duplicate definitions fail loudly.", "Per-call wait budgets remain isolated across concurrent consumers; default calls stay bounded, and budget refusal reports the required wait without network dispatch.", "Recompute affected endpoint costs across all eleven venues; demonstrate no skip_record exemption and preserve provider rate-limit behavior with safe live reads. Long-period endpoints are checked mechanically rather than slept on for hours.", "Observe a real success and a relevant provider error before changing external semantics; consult the provider-owned docs indexed under priv/venues/<venue>/authority/. Pin domain assertions in provider-live integration tests; missing credentials or unreachable hosts fail loudly. Record independent reviewer commands and evidence, including the affected REST-read contract lane and mix check.dispatch. Raise touched modules to the required coverage tier before mutation."]
+out_of_scope = ["Changing provider limits to make tests green", "Automatic retries of order writes"]
+touches = ["lib/bourse/rate_limiter.ex", "lib/bourse/rate_limiter/shaping.ex", "lib/bourse/defaults.ex", "lib/bourse/http.ex", "lib/bourse/dispatch.ex", "test/bourse/rate_limiter/", "test/live/"]
+assignee = "grok"
+model = "grok-4.6"
+body = """
+BUGS.md 2026-08-29 records three residuals of landed task 689: endpoint costs beyond the global wait budget, over-capacity accrual erased by cheap traffic, and repeated-key checks charged only once. Source inspection 2026-09-15 confirms check_bucket refills to max(capacity, current cost), every decision reads the same state, persist_buckets overwrites by key, and the wait bound comes from global application config. The reported 50-endpoint count is historical: recompute it from the current eleven-venue surface.
+
+Preserve bounded defaults and provider pacing while making heavy requests attainable without global configuration races or starvation. Expose an explicit per-call wait budget for callers who accept a longer wait; exceeding it returns an informative error, never bypasses accounting. Charge repeated keys atomically for the combined request, or reject incompatible bucket definitions before spending anything. Protect accrued/reserved heavy-request progress from cheap traffic while maintaining authored burst limits and credential isolation. Dispatch for shared runtime invariants and public timeout behavior. D6 is concurrent accounting; B8/U8 restores callable endpoints under mixed traffic."""
+created_at = "2026-09-15"
+scored_at = "2026-09-15"
+
+[[task]]
+id = "695"
+phase = 16
+bundle = "live_triage"
+status = "pending"
+title = "Preserve Deribit order identity, fill fees and closed-order errors through the full lifecycle"
+scores = { d = 5, b = 9, u = 9 }
+markers = ["bug"]
+acceptance_criteria = ["A real sandbox order retains the correct instrument identity through direct parse_order, unified create/read/cancel and supported WS delivery, including native and unified symbol input.", "A real Deribit fill exposes fee cost/currency matching its raw provider fields through parse_trade and fetch_my_trades, preserving signed fees and any supported fees collection; missing provider fee data remains explicitly unavailable.", "Cancel followed by cancel reproduces 11044 and returns order_not_found through supported REST/WS paths; reading the order still distinguishes canceled from filled. A genuine invalid-order control remains distinct.", "Tests own sandbox state and clean it up; use live observed fills and provider docs for fee units, not a fabricated payload or self-authored expectation.", "Observe a real success and a relevant provider error before changing external semantics; consult the provider-owned docs indexed under priv/venues/<venue>/authority/. Pin domain assertions in provider-live integration tests; missing credentials or unreachable hosts fail loudly. Record independent reviewer commands and evidence, including the affected REST-read contract lane and mix check.dispatch. Raise touched modules to the required coverage tier before mutation."]
+out_of_scope = ["Consumer journal implementation", "Inferring filled versus canceled from an error code alone"]
+touches = ["priv/venues/deribit/authored/normalization.json", "priv/venues/deribit/authored/raw.json", "lib/bourse/parser.ex", "lib/bourse/unified/read_parse.ex", "lib/bourse/error.ex", "lib/bourse/ws/", "test/live/deribit/", "test/live/errors/deribit_test.exs", "test/live/journeys/trader/deribit_test.exs"]
+assignee = "cursor"
+model = "cursor-grok-4.6-high"
+body = """
+Three trading_dashboard reports in BUGS.md dated 2026-09-14/15 describe one Deribit order/fill lifecycle: parse_order loses instrument identity, parse_trade emits an empty fee map despite fee/fee_currency, and canceling a closed order classifies 11044 as InvalidOrder/operation_failed. Local authored source still has order.symbol null, trade.fee with unresolved sub_field_map, and raw exceptions 11044 __function:InvalidOrder.
+
+Make direct parsers, unified reads/writes and WS error delivery agree on provider-owned identity, fee and terminal-order semantics. Normalize instrument_name with the venue market mapping rather than claiming raw and unified symbols are interchangeable. Preserve the existing Fee representation contract and its precision; populate all supported fee views consistently without inventing an order-level aggregate from missing trades. For cancel, classify provider not_open_order as order_not_found, but never treat it as proof of canceled rather than filled: consumers must still be able to read the actual terminal state. Check the code's meaning on other operations before applying a global error mapping. Dispatch for money and public parser/error contracts. D5 is one lifecycle pass; B9/U9 removes three active consumer workarounds."""
+created_at = "2026-09-15"
+scored_at = "2026-09-15"
+
+[[task]]
+id = "696"
+phase = 16
+bundle = "live_triage"
+status = "pending"
+title = "Make WebSocket heartbeat liveness observable and keep control replies out of market data"
+scores = { d = 6, b = 9, u = 9 }
+markers = ["bug"]
+acceptance_criteria = ["Deribit live subscriptions continue delivering real market frames while public/test replies and subscription acknowledgements never arrive as market-data websocket_message events; errors remain observable.", "Each configured heartbeat type is supported by both the provider contract and the locked dependency; prove live heartbeat success for the affected dialects, including Binance native frames and Deribit JSON-RPC.", "The Bourse health API reports connection-specific observations for primary and routed sockets; a sparse but healthy feed remains healthy without receiving market data.", "A bounded heartbeat failure causes an observable transport failure/disconnect and recovery; test the real transport/dependency boundary without a fake provider semantic oracle. Unsupported configurations fail explicitly.", "Observe a real success and a relevant provider error before changing external semantics; consult the provider-owned docs indexed under priv/venues/<venue>/authority/. Pin domain assertions in provider-live integration tests; missing credentials or unreachable hosts fail loudly. Record independent reviewer commands and evidence, including the affected REST-read contract lane and mix check.dispatch. Raise touched modules to the required coverage tier before mutation."]
+out_of_scope = ["Consumer chart freshness policy", "Private production subscriptions", "Coinbase channel onboarding"]
+touches = ["lib/bourse/ws.ex", "lib/bourse/ws/spec_config.ex", "lib/bourse/ws/config.ex", "lib/bourse/ws/adapter.ex", "lib/bourse/ws/connection_owner.ex", "test/live/ws/", "test/bourse/ws/", "mix.exs", "mix.lock"]
+assignee = "codex"
+model = "gpt-6-astra"
+body = """
+BUGS.md 2026-09-14 reports Deribit public/test replies delivered as websocket_message and heartbeat type :ping entering zen_websocket 0.9.0's no-op branch, with no Bourse health API. Source inspection confirms SpecConfig authors :ping on multiple venues and Bourse.WS only forwards heartbeat config. Dependency behavior and the reported failure-to-disconnect remain premises to verify against the running locked dependency.
+
+Treat heartbeat requests/replies as transport control. Expose actual connection-scoped liveness observations through Bourse, including routed subscription sockets: successful heartbeat evidence, pending/failed state and a bounded failure/disconnect outcome. Do not use market-data silence as heartbeat failure on sparse feeds. Configure only provider-supported and dependency-supported heartbeat mechanisms; unsupported combinations fail loudly. Reuse the dependency's lifecycle instead of building a competing heartbeat state machine. If the locked dependency lacks the required primitive, coordinate a separately reviewable upstream change and state the exact blocker rather than promising evidence Bourse cannot observe. Dispatch for cross-venue runtime and public health contract. D6 crosses socket routing/control/lifecycle; B9/U9 prevents quote withdrawal on control frames and false liveness."""
+created_at = "2026-09-15"
+scored_at = "2026-09-15"
+
+[[task]]
+id = "697"
+phase = 16
+bundle = "live_triage"
+status = "pending"
+title = "Support Coinbase Exchange public trades and heartbeat streams through Bourse.WS"
+scores = { d = 5, b = 8, u = 8 }
+markers = ["bug"]
+acceptance_criteria = ["Bourse.WS.connect and trade subscription work against wss://ws-feed.exchange.coinbase.com without credentials; normal subscription errors are returned for a deliberately invalid channel.", "Real new matches reach the subscribing owner with correct product, trade id, time, side, price and amount; acknowledgements/heartbeats are not counted as trades.", "Historical last_match is explicitly distinguishable from new match, and heartbeat sequence/last_trade_id evidence is accessible for consumer gap recovery.", "Update runtime WS coverage and the registered-divergence assertion so Coinbase cannot remain silently excluded; provider-live first-frame tests cover its actual data and rejection shapes.", "Observe a real success and a relevant provider error before changing external semantics; consult the provider-owned docs indexed under priv/venues/<venue>/authority/. Pin domain assertions in provider-live integration tests; missing credentials or unreachable hosts fail loudly. Record independent reviewer commands and evidence, including the affected REST-read contract lane and mix check.dispatch. Raise touched modules to the required coverage tier before mutation."]
+out_of_scope = ["Private Coinbase APIs", "Advanced Trade", "Implementing consumer REST gap recovery"]
+touches = ["lib/bourse/ws/spec_config.ex", "lib/bourse/ws/config.ex", "lib/bourse/ws/", "lib/bourse/live_lane/", "priv/venues/coinbaseexchange/", "test/live/ws/", "test/bourse/ws/"]
+assignee = "grok"
+model = "grok-4.6"
+body = """
+BUGS.md 2026-09-14 records an independent live Coinbase public-feed probe: subscriptions ack, historical last_match, subsequent match trade_id 842699720, heartbeat, and invalid-channel error. Bourse currently registers Coinbase Exchange as websocket_not_configured, so trading_dashboard maintains a direct ZenWebsocket socket.
+
+Add the provider-owned public matches and heartbeat surface through the normal Bourse.WS API and broadcast routing, with subscribe acknowledgements/errors and normalized trades. Preserve the semantic difference between historical last_match and new match; surface heartbeat.last_trade_id so consumers can detect gaps without counting the historical frame twice. Use the official Exchange feed, not Advanced Trade, and require no credentials. Dispatch for a new public venue contract and live streaming verification. D5 covers config, protocol and routing; B8/U8 removes a running consumer's custom transport. See the official provider channels documentation indexed in the venue authority directory; re-probe all report claims before authoring."""
+created_at = "2026-09-15"
+scored_at = "2026-09-15"
+
+[[task]]
+id = "698"
+phase = 16
+bundle = "live_triage"
+status = "pending"
+title = "Restore live contract coverage for account metadata removed from balance reads"
+scores = { d = 4, b = 6, u = 6 }
+markers = ["bug"]
+acceptance_criteria = ["Bybit user/query-api is exercised on the operator-selected testnet main-account key by a live contract with provider-owned meaning and a relevant rejected request; credentials and sensitive key values never appear in artifacts.", "Binance family position-mode reads have a documented consistent normalized contract proven against the venue boolean, and the COIN-M promotion test matches that actual contract.", "The retained surfaces stay inside the contract denominator; reclassification neither restores them as balances nor hides them under dangerous/excluded cases.", "Observe a real success and a relevant provider error before changing external semantics; consult the provider-owned docs indexed under priv/venues/<venue>/authority/. Pin domain assertions in provider-live integration tests; missing credentials or unreachable hosts fail loudly. Record independent reviewer commands and evidence, including the affected REST-read contract lane and mix check.dispatch. Raise touched modules to the required coverage tier before mutation."]
+out_of_scope = ["General API-key management", "Switching Bybit credentials or account mode", "Task 670 suite-wide architecture rewrite"]
+touches = ["priv/venues/bybit/authority/rest_read_contract.json", "priv/venues/binance/", "priv/venues/binancecoinm/", "priv/venues/binanceusdm/", "lib/bourse/unified/read_parse.ex", "test/live/bybit/", "test/live/binancecoinm/binancecoinm_promotion_integration_test.exs", "test/support/rest_read_contracts.ex"]
+assignee = "cursor"
+model = "cursor-grok-4.6-high"
+body = """
+BUGS.md 2026-08-29 reports task 686 bookkeeping fallout: Bybit user/query-api lost its case after classification helpers were removed from fetchBalance, and Binance COIN-M fetch_position_mode returns RawResponse while the promotion test expects a bare map. Keep those helpers outside balances; give the retained public/raw client surface an honest contract home.
+
+Choose a provider-backed normalized position-mode result across the Binance family, reusing the existing response vocabulary if it expresses the provider boolean losslessly. Reserve RawResponse for genuinely unauthored semantics; do not merely relax the promotion test. Exercise Bybit key/account metadata as raw metadata or an existing appropriate account surface, without inventing a new balance branch. Re-confirm the historical missing-case premise before changing the denominator. Dispatch for public response semantics and live test infrastructure; D4 is a bounded contract repair; B6/U6 restores reported missing coverage."""
 created_at = "2026-09-15"
 scored_at = "2026-09-15"

@@ -4,8 +4,8 @@ The inbound queue for defects consumers of this library hit. File here — this 
 repository a consumer needs to know. Each entry: the call, observed vs. expected, a repro,
 and consumer impact. Newest first.
 
-Triage runs in the private authoring workbench: an open entry becomes a scored task there,
-and the entry gets a dated note pointing at it. Entries are never deleted — they are the
+Triage runs in this repository: operator-routed work becomes a scored task in
+`roadmap/tasks.toml`, and the entry gets a dated note pointing at it. Entries are never deleted — they are the
 reporter's evidence trail.
 
 Entries before 2026-08-05 were filed while the consumers (`trading_dashboard`, `zen_quant`)
@@ -116,7 +116,9 @@ roadmap.
 
 ## 2026-09-01 — `fetch_funding_rate/2` is unavailable on hyperliquid while `fetch_funding_rates/2` serves the same number, so a per-symbol consumer gets `not_supported` for a rate the venue publishes hourly
 
-**Status:** 🆕 reported (consumer: `trading_dashboard`, hedge-venue ranking) · **Tracked:** unrouted.
+**Status:** Tracked in task 692 (triage 2026-09-15); implementation pending.
+
+> **Live recheck 2026-09-15 (Bourse Tidewave):** the singular still returns `not_supported`; the plural BTC row returns `funding_rate: 1.25e-5`, `interval: "1h"`, and provider `info.funding: "0.0000125"`. An invalid-symbol singular also fails at the capability gate, not at the provider. Task 692 requires separate live provider-error evidence.
 
 **The call:**
 
@@ -202,7 +204,7 @@ the hedge ranker cannot see.
 
 ## 2026-08-29 — the unified trigger/stop opt is spelled differently per venue, so the same `create_order` call rests a stop on binance and fills a market order on okx
 
-**Status:** 🆕 measured (orchestrator, whole-surface pass over the landed base at `c462021`) — not consumer-reported. · **Tracked:** unrouted.
+**Status:** Tracked in task 693 (triage 2026-09-15); implementation pending.
 
 `Bourse.create_order/6`'s trigger opt has no single spelling. The authored
 `createOrder.request.endpoint_selection` rule — the thing that decides whether the order goes
@@ -251,7 +253,7 @@ never comes back `filled`. Fixing okx alone reproduces the class on the next ven
 
 ## 2026-08-29 — after the bucket rewrite, 50 runtime endpoints always answer `rate_limit_exceeded`, and a heavy request can be starved by cheap traffic
 
-**Status:** 🆕 surfaced by the task 689 reviewer, verified in its own review, approved deliberately. · **Tracked:** unrouted.
+**Status:** Tracked in task 694 (triage 2026-09-15); implementation pending.
 
 Task 689 replaced the fixed window with the authored token bucket and removed the
 `skip_record` exemption, which is what the task asked for. Three consequences of the new
@@ -283,7 +285,7 @@ not three patches.
 
 ## 2026-08-29 — `mix ci` clears its own coverage floor by 0.18 points, so an unrelated change reddens it
 
-**Status:** 🆕 surfaced by the task 687 reviewer, measured on ex63-eth. · **Tracked:** unrouted.
+**Status:** Coverage fragility noted; remeasurement belongs to existing task 670 and coverage-on-touch (triage 2026-09-15). No separate defect task.
 
 Task 687 took coverage from 75.04 % to **80.18 %** against the alias's own 80.0 % threshold.
 The critical tier is comfortably met (Signing 96.04, HmacRecipe 95.99, Signing.Hyperliquid
@@ -319,7 +321,7 @@ incorrect one would have read index 0 rather than failing.
 
 ## 2026-08-29 — two read surfaces lost their contract home, and one dangerous test asserts a shape the client no longer returns
 
-**Status:** 🆕 surfaced by the task 686 reviewer. · **Tracked:** unrouted.
+**Status:** Tracked in task 698 (triage 2026-09-15); implementation pending.
 
 Bookkeeping fallout from task 686, both real, neither a defect in the shipped behaviour:
 
@@ -381,10 +383,7 @@ account acquired a closed position on a dated contract (expiring the day of the 
 
 ## 2026-08-28 — the client's rate limiter grants a 545-deep burst on OKX, then stalls the next call for a full 60 s
 
-**Status:** 🆕 measured live + proven arithmetically (orchestrator, investigating a reported
-60 s stall on two OKX contract cases) — not consumer-reported. **Latent**: it did not fire in
-any of seven runs on 2026-08-28, but it is the only code path in the client that can block a
-single call for exactly ~60 000 ms. · **Tracked:** task 689 (2026-08-28).
+**Status:** Landed via task 689, `7c4beddf9c01`; confirmed present on origin/main during triage 2026-09-15. No fresh live verification in this triage. Residual bucket-accounting defects are tracked in task 694.
 
 `Bourse.RateLimiter.Shaping` converts a venue's authored bucket into a sliding-window check by
 reading **only** `cost`, `axes` and `rate_limit_ms`, then dividing a hardcoded
@@ -656,7 +655,7 @@ re-pinned in the same change. Also reconcile the hard `401`/`403` short-circuit 
 
 ## 2026-08-28 — binance `fetch_balance` drops the venue's `updateTime`; `Balance.timestamp` and `datetime` come back `nil`
 
-**Status:** 🆕 measured live (orchestrator triage of the task 675 reviewer's finding) — not consumer-reported. · **Tracked:** task 686 (2026-08-28).
+**Status:** Landed via task 686, `c6ebd79fcd96`; confirmed present on origin/main during triage 2026-09-15. No fresh live verification in this triage.
 
 Exact call, against `testnet.binance.vision`:
 
@@ -818,7 +817,7 @@ not `:ok`.
 
 ## 2026-08-28 — Lighter testnet credentials point at an account the venue does not know (29404), so the trader journey's round-trip cannot be proven
 
-**Status:** 🆕 operator action — credential refresh, not a code defect.
+**Status:** Operator-gated account recheck tracked in task 327 (triage 2026-09-15); the historical credential failure has not been re-proven today.
 
 Reproduced live against `testnet.zklighter.elliot.ai` on harness run
 `run-1787878849303-bd01a1ca` (task 681):
@@ -870,8 +869,7 @@ around the gate instead of reading it.
 
 ## 2026-08-28 — deribit `fetch_option_chain/2`: an underlying with a live linear book answers `{:ok, %{}}`, and `implied_volatility` is `nil` on every leg
 
-**Status:** 🆕 reported (consumer: `trading_dashboard`, bourse 0.7.0, live Deribit public API,
-2026-08-28 ~00:50 UTC; no credentials — all endpoints public) · **Tracked:** task 686 (2026-08-28).
+**Status:** Landed via task 686, `c6ebd79fcd96`; confirmed present on origin/main during triage 2026-09-15. No fresh live verification in this triage.
 
 **The call:** `Bourse.fetch_option_chain(exchange, currency)` against `deribit`.
 
@@ -1061,9 +1059,7 @@ shape is documented on `watch_orders/2` and pinned by the trader journey.
 
 ## 2026-08-24 — `Bourse.Symbol.reverse_aliases/1` is not injective on hyperliquid's authored alias map — one currency is silently dropped
 
-**Status:** 🆕 reported (mutation-testing testability survey, 2026-08-24 — see the provenance
-note on the test-gap entry below; the finding came from reading `lib/bourse/symbol.ex`, and the
-numbers here were re-measured against the authored data with `mix run`) · **Tracked:** task 688 (2026-08-28).
+**Status:** Landed via task 688, `d94f63344ec6`; confirmed present on origin/main during triage 2026-09-15. No fresh live verification in this triage.
 
 **The call:** `Bourse.Symbol.reverse_aliases(aliases)` where `aliases` is a venue's authored
 `markets.patterns.currency_aliases` — public API, meant to invert exchange→unified into
@@ -1107,9 +1103,7 @@ and gets no error saying so.
 
 ## 2026-08-24 — `Bourse.Symbol.normalize/3`'s `:aliases` option rewrites the whole symbol, not currencies — real venue aliases corrupt real market ids
 
-**Status:** 🆕 reported (mutation-testing testability survey, 2026-08-24 — provenance note on the
-test-gap entry below; measured against authored alias maps and the frozen reference slice's
-market ids) · **Tracked:** task 688 (2026-08-28).
+**Status:** Landed via task 688, `d94f63344ec6`; confirmed present on origin/main during triage 2026-09-15. No fresh live verification in this triage.
 
 **The call:** `Bourse.Symbol.normalize(exchange_id, %{separator: "", case: :upper}, aliases: venue_aliases)`
 — the documented `:aliases` option (`lib/bourse/symbol.ex:138`).
@@ -1160,7 +1154,7 @@ using the client's own conversion, with no error — a symbol that names a diffe
 
 ## 2026-08-24 — `Bourse.Symbol`: three untested surfaces where the code and the docs already disagree
 
-**Status:** 📋 noted (not defects — test gaps, filed so the evidence is not lost) · **Tracked:** task 688 (2026-08-28).
+**Status:** Landed via task 688, `d94f63344ec6`; confirmed present on origin/main during triage 2026-09-15. No fresh live verification in this triage.
 
 **Provenance for all three, and for the two entries above:** a mutation-testing *testability*
 survey of the offline-testable surface, run 2026-08-24. `Bourse.Symbol` **was not itself
@@ -1228,7 +1222,7 @@ mutated away.
 
 ## 2026-08-24 — bybit: intermittent `invalid_nonce` on signed reads — the client signs before it throttles, and the authored `recv_window` never reaches the wire
 
-**Status:** 🆕 reported (surfaced by the task-671 bybit lane; cross-venue client machinery, untouched by the venue-scoped fix pass) · **Tracked:** task 689 (2026-08-28).
+**Status:** Landed via task 689, `7c4beddf9c01`; confirmed present on origin/main during triage 2026-09-15. No fresh live verification in this triage. Residual bucket-accounting defects are tracked in task 694.
 
 **The call:** `mix ccxt.verify_rest_read_contracts --venue bybit` — `fetchTradingFee:0`,
 `fetchTradingFees:0` and `fetchBorrowRateHistory:0` fail non-deterministically with
@@ -1261,8 +1255,7 @@ retryable since task 604) usually heals it, which is why it flakes instead of fa
 
 ## 2026-08-24 — bybit `fetchBalance` coins-balance branch parses to an empty `%Bourse.Balance{}` — the envelope is pinned to the wallet-balance shape
 
-**Status:** 🆕 reported (task-671 bybit pass — deliberately not fixed venue-scoped: the fix
-touches `fetchBalance` envelope authoring for `type: funding` across venues) · **Tracked:** task 686 (2026-08-28).
+**Status:** Landed via task 686, `c6ebd79fcd96`; confirmed present on origin/main during triage 2026-09-15. No fresh live verification in this triage.
 
 **The call:** `Bourse.fetch_balance(ex, type: "funding", params: %{"coin" => "BTC,USDT"})`
 (bybit, testnet) → routed to `GET /v5/asset/transfer/query-account-coins-balance`.
@@ -1338,7 +1331,7 @@ live account state exists"), reproduced here on a new account.
 
 ## 2026-08-23 — contract lane: fourteen cases across five venues are green only while live account state exists
 
-**Status:** 🆕 reported (task 671 state-population pass) · **Tracked:** task 687 (2026-08-28).
+**Status:** Landed via task 687, `abd78b3886f8`; confirmed present on origin/main during triage 2026-09-15. No fresh live verification in this triage. Ledgered unavailable cases remain unverified; this is not a claim that all account state is available.
 
 **The call:** `mix ccxt.verify_rest_read_contracts` (binance family, hyperliquid, okx, deribit).
 
@@ -1363,7 +1356,7 @@ nor spec defects; the lane's honest-red discipline loses signal.
 
 ## 2026-08-23 — okx: `endpoint_index`-selected algo reads can only ever see `ordType: "conditional"` orders
 
-**Status:** 🆕 reported (task 671, live-verified 2026-08-23) · **Tracked:** task 686 (2026-08-28).
+**Status:** Landed via task 686, `c6ebd79fcd96`; confirmed present on origin/main during triage 2026-09-15. No fresh live verification in this triage.
 
 **The call:** `Bourse.fetch_open_orders(ex, endpoint_index: 0)` / `fetch_closed_orders(ex, endpoint_index: 0)` (okx algo branches).
 
@@ -1381,7 +1374,7 @@ both contract cases stay green because they allow an empty collection.
 
 ## 2026-08-23 — binanceusdm: the `fetchOpenOrder`/`fetchOrder` algo branch can never reach `GET /fapi/v1/algoOrder`
 
-**Status:** 🆕 reported (task 671, live-verified 2026-08-23) · **Tracked:** task 686 (2026-08-28).
+**Status:** Landed via task 686, `c6ebd79fcd96`; confirmed present on origin/main during triage 2026-09-15. No fresh live verification in this triage.
 
 **The call:** `Bourse.fetch_open_order(ex, id, endpoint_index: 1)` (binanceusdm).
 
@@ -1404,7 +1397,7 @@ branch's green is vacuous.
 
 ## 2026-08-23 — binancecoinm `fetch_adl_rank`: provider list collapsed into a single struct — second position silently dropped
 
-**Status:** 🆕 reported (task 671, live-verified 2026-08-23) · **Tracked:** task 686 (2026-08-28).
+**Status:** Landed via task 686, `c6ebd79fcd96`; confirmed present on origin/main during triage 2026-09-15. No fresh live verification in this triage.
 
 **The call:** `Bourse.fetch_adl_rank(ex)` (binancecoinm).
 
@@ -1423,7 +1416,7 @@ case has always passed vacuously because a flat account answers `[]`.
 
 ## 2026-08-23 — bybit: account-classification helper endpoints remain in `fetchBalance` reads and every write method's `unified` array
 
-**Status:** 🆕 reported (task 671 carved them out of the six red READ methods only — see `docs/authored-spec-carves/bybit.md` C-T671a) · **Tracked:** task 686 (2026-08-28).
+**Status:** Landed via task 686, `c6ebd79fcd96`; confirmed present on origin/main during triage 2026-09-15. No fresh live verification in this triage.
 
 **The call:** `Bourse.fetch_balance(ex, endpoint_index: 0)` / `endpoint_index: 4` (bybit), and the
 `unified` arrays of `createOrder`, `createOrders`, `createMarketBuyOrderWithCost`,
@@ -1447,9 +1440,7 @@ currently-green cases.
 
 ## 2026-08-23 — deribit `fetch_account_facts`: the account-level margin figures are parsed and then dropped — only the two classification flags survive
 
-**Status:** 🆕 reported · **Venue:** deribit (testnet, `sandbox: true`, bourse `0.7.0` from Hex) ·
-**Class:** unfilled unified field — not a venue gap. The venue publishes the numbers in the very
-payload the client already fetches and parses. · **Tracked:** task 686 (2026-08-28).
+**Status:** Landed via task 686, `c6ebd79fcd96`; confirmed present on origin/main during triage 2026-09-15. No fresh live verification in this triage.
 
 **Reporter:** `bourse_trading` (task 4, `Bourse.PortfolioRisk` account-level snapshot layer).
 
@@ -3288,6 +3279,8 @@ die fehlende Bourse-Semantik verdeckt.
 
 ## 2026-08-22 — `Bourse.load_markets/2` rejects `:type` and reports the unknown option as a recoverable network error, blowing the circuit breaker
 
+**Status:** Landed via task 662, `fda5fa717262`; confirmed present on origin/main during triage 2026-09-15. No fresh live verification in this triage.
+
 Reporter: trading_dashboard (`TradingDashboard.Risk`, `/risk` account rows), verified
 live against Binance testnet on 2026-08-22.
 
@@ -3378,6 +3371,8 @@ only the private reads. Local workaround only; the misclassification is the fix 
 
 ## 2026-09-14 — Deribit `parse_order/2`: `symbol` bleibt `nil`, obwohl `instrument_name` im Raw steht und `symbol:` als Option übergeben wird
 
+**Status:** Tracked in task 695 (triage 2026-09-15); implementation pending.
+
 Call (bourse 0.8.0, Testnet live):
 
 ```elixir
@@ -3410,6 +3405,8 @@ identisch zum bestehenden Positions-Pfad. Betroffene Exchange: deribit.
 ---
 
 ## 2026-09-14 — Deribit: Antwort auf die Heartbeat-Reply (`public/test`) erreicht den Owner als Datenframe
+
+**Status:** Tracked in task 696 (triage 2026-09-15); implementation pending.
 
 Call (bourse 0.8.0, Testnet live): `Bourse.WS.connect(exchange, :public, [])` mit
 Default-Handler, dann `watch_ticker(ws, "BTC-16SEP26-79000-P", [])` und
@@ -3444,11 +3441,15 @@ Exchange: deribit; jede andere JSON-RPC-Venue mit Heartbeat dürfte gleich reagi
 
 ## 2026-09-15 — Coinbase pagination adds a future page at an unaligned end
 
+**Status:** Tracked in task 691 (triage 2026-09-15); implementation pending.
+
 Observed in trading_dashboard with Bourse 0.8.0: `Bourse.fetch_ohlcv(client, "ETH/USD", "1h", since: 1785110400000, until: 1789429905831, limit: 1200)` fails with Coinbase HTTP 400 `Start cannot be in the future`. Provider `/time` agrees with the local clock. `CoinbaseCandlePagination.pagination/3` adds ceil alignment slack despite the start already being aligned, generating a fifth page whose start is the next hour. Expected: four pages covering the 1200 opened buckets, no page starting after the requested end. Aligning until to 1789426800000 returned 1200 real rows immediately. Consumer Calendar now aligns the inclusive end to the native candle opening; upstream should bound generated page starts/ends to the actual requested window. This was hidden by the chart continuing to display WebSocket-only prices after history failed.
 
 ---
 
 ## 2026-09-14 — `SpecConfig`-Heartbeat `:ping` erreicht in zen_websocket 0.9.0 den No-op-Zweig; `Bourse.WS` legt keine Heartbeat-Evidenz offen
+
+**Status:** Tracked in task 696 (triage 2026-09-15); implementation pending.
 
 Call (bourse 0.8.0, zen_websocket 0.9.0, Quell-Inspektion): `Bourse.WS.connect(exchange, :public, [])`
 für `binance`/`binanceusdm`; `Bourse.WS.Config`/`SpecConfig` löst die Heartbeat-Konfiguration auf.
@@ -3499,6 +3500,8 @@ Betroffene Exchange: binance, binanceusdm und jede Venue mit `heartbeat.type: :p
 
 ## 2026-09-14 — `coinbaseexchange` hat keine öffentliche WebSocket-Hand-Base; `Bourse.WS.connect/2` ist für die Venue nicht benutzbar
 
+**Status:** Tracked in task 697 (triage 2026-09-15); implementation pending.
+
 Call (bourse 0.8.0): `Bourse.WS.connect(:coinbaseexchange, :public, [])` bzw. jede
 Subscription auf dem öffentlichen Coinbase-Exchange-Feed.
 
@@ -3537,6 +3540,8 @@ Betroffene Exchange: coinbaseexchange.
 
 ## 2026-09-15 — Deribit: Fehlercode 11044 `not_open_order` wird als `:operation_failed`/InvalidOrder statt `:order_not_found` klassifiziert
 
+**Status:** Tracked in task 695 (triage 2026-09-15); implementation pending.
+
 Call (bourse 0.8.0): `Bourse.cancel_order/3` bzw. jeder `private/cancel` gegen Deribit auf eine Order, die die Venue bereits geschlossen hat — typisch nach einem MMP-Trigger, der alle MMP-Orders des Index selbst cancelt, oder nach einem Fill.
 
 Observed: Deribit antwortet `{"code": 11044, "message": "not_open_order"}` (Live-Probe 2026-09-15 auf test.deribit.com: Order anlegen, canceln, nochmals canceln). `priv/venues/deribit/authored/raw.json` mappt `"11044": "__function:InvalidOrder"` (CCXT-Erbe), der `%Bourse.Error{}` trägt `type: :invalid_order` bzw. auf dem WS-Pfad `:operation_failed`, `retry_class: :non_retryable`. Ein Konsument, der `:invalid_order` als definitive Ablehnung behandelt, macht aus einem idempotenten Cancel einen permanenten Fehler.
@@ -3549,6 +3554,8 @@ Betroffene Exchange: deribit.
 ---
 
 ## 2026-09-15 — Deribit `parse_trade/2`: `fee` bleibt `%{"cost" => nil, "currency" => nil}`, obwohl der Rohtrade `fee`/`fee_currency` trägt
+
+**Status:** Tracked in task 695 (triage 2026-09-15); implementation pending.
 
 Call (bourse 0.8.0): `Bourse.fetch_my_trades(exchange, symbol: "BTC/USD:BTC", limit: 1)` gegen test.deribit.com; gleiches Bild für die Trades in `Bourse.fetch_order/3` (`trades: []`, `fee: nil`).
 

@@ -13114,13 +13114,14 @@
       "acceptance_criteria": [
         "Every entry under 'Open' in docs/prod-verification-ledger.md is either moved to 'Closed' with the observed live evidence (actual call output, dated) or re-blocked with a named reason",
         "Where a live observation contradicts the authored slice, the divergence is filed as its own task with the live payload as evidence — the ledger entry records the filed id",
-        "Carve-register entries touched by a closed confirmation are upgraded from tier-2/compat labels to CONFIRMED with the live citation"
+        "Carve-register entries touched by a closed confirmation are upgraded from tier-2/compat labels to CONFIRMED with the live citation",
+        "Recheck the reported Lighter testnet account identity and authenticated reads; when credentials are repaired, its sandbox journey runs with cleanup, otherwise record the precise remaining account-provisioning blocker."
       ],
       "out_of_scope": [
         "Authoring new slices",
         "Adding new ledger entries (that happens continuously via the CLAUDE.md append rule)"
       ],
-      "body": "Operator session, gated on production API keys (bybit read, binance wallet-read) and/or an\noperator-approved mutation window (derive demo position). The work list IS\ndocs/prod-verification-ledger.md — this task deliberately carries no copy of it; the ledger\nis the single source, this task is the schedulable pointer. Work top-to-bottom, close entries\nin place per the ledger's own template. Security: prod keys stay in ~/.secrets, read in-eval;\nread-only probes only unless the entry explicitly requires a mutation and the operator\napproves it in-session.\n",
+      "body": "Operator session, gated on production API keys (bybit read, binance wallet-read) and/or an\noperator-approved mutation window (derive demo position). The work list IS\ndocs/prod-verification-ledger.md — this task deliberately carries no copy of it; the ledger\nis the single source, this task is the schedulable pointer. Work top-to-bottom, close entries\nin place per the ledger's own template. Security: prod keys stay in ~/.secrets, read in-eval;\nread-only probes only unless the entry explicitly requires a mutation and the operator\napproves it in-session.\nTriage 2026-09-15: include BUGS.md 2026-08-28 Lighter account-not-found report in the existing operator-gated account-state work. Its 29404/21100/20013 observations are historical, not re-proven today. Confirm whether the configured testnet account now exists; if not, provision or select the account and update the credential triple with operator involvement. Do not put credential values in git or silently replace a wallet.\n",
       "created_at": "2026-07-17",
       "scored_at": "2026-07-17",
       "blocked_reason": "Live session 2026-07-23 closed Binance task 319, Binance USD-M task 321, and the obsolete OKX EEA follow-up for task 364; every remaining OKX probe is routed to the international entity. Remaining ledger entries require one or more of: populated account state, an OKX international production read key, usable sandbox liquidity, or explicit approval for a venue-final mutation.",
@@ -30496,7 +30497,7 @@
         "CLAUDE.md",
         "AGENTS.md"
       ],
-      "body": "Converge the repository onto one testing model after the three provider-live lanes have landed. Delete every remaining semantic test whose authority is a fixture, mock, recording, generated expectation, authored runtime spec, CCXT artifact or local fake service. Retain small offline tests only for truly deterministic mechanics such as encoders, pure transformations and state-machine mechanics; each retained case must state that boundary.\n\nMake the canonical commands honest. A default green must mean that live REST reads, real sandbox state transitions and real WebSocket frames all ran. Missing credentials or an unavailable provider makes the gate red, not excluded or skipped. Recordings can remain for provenance and opt-in replay/debugging, but cannot grade correctness.\n\nThis is a deletion and gate-flip task, not another additive suite. Compare final non-JSON test-source lines against the 74,276-line baseline at bourse 57284d8, remove obsolete helpers and tags, update CLAUDE.md, regenerate AGENTS.md, and verify the delivered origin/main with the complete live lane, mix check.dispatch and mix ci. Cleanup is part of correctness: no test-owned order or position may remain.\n\nRouting trigger: CI/check infrastructure, repo-wide invariant and live trading safety. Dispatch as a solo final wave after the REST and WebSocket migrations land.\n",
+      "body": "Converge the repository onto one testing model after the three provider-live lanes have landed. Delete every remaining semantic test whose authority is a fixture, mock, recording, generated expectation, authored runtime spec, CCXT artifact or local fake service. Retain small offline tests only for truly deterministic mechanics such as encoders, pure transformations and state-machine mechanics; each retained case must state that boundary.\n\nMake the canonical commands honest. A default green must mean that live REST reads, real sandbox state transitions and real WebSocket frames all ran. Missing credentials or an unavailable provider makes the gate red, not excluded or skipped. Recordings can remain for provenance and opt-in replay/debugging, but cannot grade correctness.\n\nThis is a deletion and gate-flip task, not another additive suite. Compare final non-JSON test-source lines against the 74,276-line baseline at bourse 57284d8, remove obsolete helpers and tags, update CLAUDE.md, regenerate AGENTS.md, and verify the delivered origin/main with the complete live lane, mix check.dispatch and mix ci. Cleanup is part of correctness: no test-owned order or position may remain.\n\nRouting trigger: CI/check infrastructure, repo-wide invariant and live trading safety. Dispatch as a solo final wave after the REST and WebSocket migrations land.\nTriage 2026-09-15: the BUGS.md 2026-08-29 coverage-headroom report is historical fragility, not evidence of a new runtime defect. Re-measure coverage during this already-scoped suite convergence; retain the 80 percent standard and 95 percent critical per-module obligations without a separate cosmetic headroom task. Task 698 owns the specific metadata contract gaps left by 686.\n",
       "created_at": "2026-08-22",
       "scored_at": "2026-08-22",
       "cross_repo": []
@@ -31242,7 +31243,8 @@
         "alpaca 403, 404, 422 and 429 are classified from live calls against paper-api.alpaca.markets, and the re-observed unified type for the 403 is re-pinned in test/live/journeys/trader/alpaca_test.exs in this same change. The interaction with the hard 401/403 short-circuit in Bourse.HTTP.Errors.normalize_error/3 is resolved and stated, not left to outrank the authored map by accident",
         "HmacRecipe's two canonical-string ladders and the permissive path_predicate?/4 clauses either have every reachable rung pinned by a test that distinguishes it from its neighbours, or the unreachable rungs are replaced by a clause that raises and names the malformed slice. Deleting a surviving rung must redden the suite; state the before and after mutation counts from the muex command in the BUGS entry",
         "One unparseable row no longer discards a whole successful multi-row read: bybit fetch_positions_history returns the rows it could resolve, and the row it could not is either dropped with a named reason or carries an explicit unavailability marker. Proven live on the bybit testnet main-account key against an account holding a dated contract",
-        "Each of the four instances above has a live call in test/ that fails when the substitution returns, and none of them is satisfied by a shape assertion alone"
+        "Each of the four instances above has a live call in test/ that fails when the substitution returns, and none of them is satisfied by a shape assertion alone",
+        "An explicitly invalid endpoint_index returns a named error without making a venue request; valid indices still reach their selected book, including credential-filtered lists. Regression tests distinguish out-of-range fallback from successful index-zero selection."
       ],
       "out_of_scope": [
         "Normalizing bybit dated-future symbol ids, which is the Bourse.Symbol task",
@@ -31265,9 +31267,10 @@
         "test/live/okx",
         "test/live/bybit",
         "test/live/errors/alpaca_test.exs",
-        "test/live/journeys/trader/alpaca_test.exs"
+        "test/live/journeys/trader/alpaca_test.exs",
+        "lib/bourse/unified.ex"
       ],
-      "body": "Four live instances of one mechanism: when the authored slice or the provider payload does\nnot fit what the code expects, the code substitutes a guess instead of failing. Each was\nmeasured separately; the deliverable is the gate that makes the class impossible plus the\nfour fixes, not four patches.\n\nThe instances, all recorded in BUGS.md with their exact calls and observed values:\n\n1. OKX TransferEntry.id declares fallback_keys onto billId. account/bills-archive carries no\n   transId at all, so every transfer row gets a plausible 19-digit id that the venue then\n   rejects on transfer-state as 51000 Parameter transId error or 58129. A nil id would have\n   failed at the first consumer; a billId looks like an id all the way to the wire. The carve\n   is a decision, not a key swap: either TransferEntry.id is documented as the bills-archive\n   identifier and fetchTransfer sources its transId from the transfer-creating POST response,\n   or fetchTransfers moves to a source that returns one, or fetchTransfer is declared\n   unreachable from a fetchTransfers id and ledgered. Whichever is chosen, the billId fallback\n   goes away.\n2. alpaca authors errors.status_map as bare strings; Bourse.Exchange.build_status_map/2 only\n   matches the class-wrapped shape the other ten venues use and falls through to an empty map.\n   Measured: Bourse.Exchange.new(alpaca) yields status_map and http_exceptions both empty, so\n   alpaca 404 and 422 are typed only when the numeric provider code happens to be one of six\n   entries in error_codes. Rotating alpaca's file to the loader's shape leaves the next venue\n   free to ship the same silently-dropped map, so the schema is the deliverable.\n3. HmacRecipe resolves which canonical-string block signs a request through two fallback\n   ladders ending in Map.values() |> List.first(). Mutation testing (muex 0.9.1, 2366 mutants,\n   421 survivors) shows every rung past the first survives: no test in the 274 signing tests\n   distinguishes them. No venue currently authors a recipe that reaches past the first rung, so\n   the report is that the signing module carries untested branches whose only job is to guess\n   when a slice is malformed. Mitigating and worth keeping in mind: a wrong block yields a\n   wrong signature, which the venue rejects, so this one fails loud at the wire.\n4. put_notional_currencies/2 folds with reduce_while and halts on the first error, so one row\n   whose symbol did not normalize turns a successful multi-row read into an error for the whole\n   account. Observed live as bybit fetchPositionsHistory failing with\n   missing_position_notional_currency on DOGEUSDT-28AUG26. The guard refusing to ship a notional\n   with a nil currency is correct in isolation; the blast radius is the defect.\n\nAuthority: the venues own the contracts. Probe okx on www.okx.com with x-simulated-trading: 1,\nalpaca on paper-api.alpaca.markets, bybit on api-testnet.bybit.com with the main-account key.\nThe provider docs define what each field means; no third-party client can settle a carve here.\nRead one success and one relevant error from each venue before changing the slice, and pin both.\n\nCarve decision, taken 2026-08-28 rather than left open, because this project dispatches\nunattended and a question in a task body reaches no one: ship (a) unless a live probe disproves\nits premise. TransferEntry.id carries the billId, declared directly under its own key rather than\nreached through a fallback, and documented as a bills-archive identifier. fetch_transfer/2 takes a\ntransId, which OKX issues only in the POST /api/v5/asset/transfer response, and it rejects a\nbills-archive id with a named error instead of forwarding it for the venue to refuse.\n\nThe premise to test first, because it is the only thing that could change the answer: that no OKX\nlisting route returns a transId. Probe the funding-account bill routes and any transfer-history\nroute the venue documents before implementing. If one of them does return a transId, ship (b)\ninstead - move fetchTransfers to that source - and say in the delivery which route it was and what\nit returned. Do not ship (c): declaring the pair unreachable discards an identifier the venue does\npublish and leaves the field nil for no gain.\n\nScoped 2026-08-29 on ex63-eth at 380ad65 by reading the landed tree: nothing on this task has\nlanded. All seven criteria are open, so start from the tree as it stands rather than looking for\npartial work. The one thing that is already true is the alpaca error-classification half of\ncriterion 4: the live 403 is pinned in test/live/journeys/trader/alpaca_test.exs around line 120\nwith the 401/403 short-circuit stated in its comment, 404 in test/live/errors/alpaca_test.exs and\n422 in test/live/alpaca/alpaca_authored_integration_test.exs. The 429 has no live pin anywhere,\nwhich is the remaining half of that criterion.\n\nThe substitution itself is untouched: priv/venues/okx/authored/normalization.json still declares\nthe transfer id as key transId with fallback_keys billId, and no commit has ever changed either\nstring under priv/venues/okx or lib. HmacRecipe still ends all three ladders on\nMap.values |> List.first || cs, and deribit_position_units put_notional_currencies still halts the\nwhole batch with reduce_while on the first unresolvable row.\n\nOne decision the criteria imply but do not settle, decided here so it does not reach an\nimplementer as a question addressed to nobody. The okx fetchTransfer contract case currently\nsources its id argument with strategy resource from fetchTransfers, which is the mechanism that\nfeeds a billId into an endpoint that only accepts a transId. Once the carve lands, that chain is\nwrong by construction. Default: keep the case in the denominator and re-ledger it, replacing the\nokx-transfer-transId-unreachable reasoning with the real one, that the read and detail surfaces\ncarry different identifier classes by the venue's design, not that a value could not be reached.\nThe evidence gate: if the demo transfer round-trip proves safely repeatable and reversible under\nthe lane's own cleanup, prefer re-declaring the case as write-then-read so it actually executes,\nand say in the delivery which of the two you found and why. Do not drop the case from the\ndenominator either way, per CLAUDE.md on the ledger not discharging a case.\n",
+      "body": "Four live instances of one mechanism: when the authored slice or the provider payload does\nnot fit what the code expects, the code substitutes a guess instead of failing. Each was\nmeasured separately; the deliverable is the gate that makes the class impossible plus the\nfour fixes, not four patches.\n\nThe instances, all recorded in BUGS.md with their exact calls and observed values:\n\n1. OKX TransferEntry.id declares fallback_keys onto billId. account/bills-archive carries no\n   transId at all, so every transfer row gets a plausible 19-digit id that the venue then\n   rejects on transfer-state as 51000 Parameter transId error or 58129. A nil id would have\n   failed at the first consumer; a billId looks like an id all the way to the wire. The carve\n   is a decision, not a key swap: either TransferEntry.id is documented as the bills-archive\n   identifier and fetchTransfer sources its transId from the transfer-creating POST response,\n   or fetchTransfers moves to a source that returns one, or fetchTransfer is declared\n   unreachable from a fetchTransfers id and ledgered. Whichever is chosen, the billId fallback\n   goes away.\n2. alpaca authors errors.status_map as bare strings; Bourse.Exchange.build_status_map/2 only\n   matches the class-wrapped shape the other ten venues use and falls through to an empty map.\n   Measured: Bourse.Exchange.new(alpaca) yields status_map and http_exceptions both empty, so\n   alpaca 404 and 422 are typed only when the numeric provider code happens to be one of six\n   entries in error_codes. Rotating alpaca's file to the loader's shape leaves the next venue\n   free to ship the same silently-dropped map, so the schema is the deliverable.\n3. HmacRecipe resolves which canonical-string block signs a request through two fallback\n   ladders ending in Map.values() |> List.first(). Mutation testing (muex 0.9.1, 2366 mutants,\n   421 survivors) shows every rung past the first survives: no test in the 274 signing tests\n   distinguishes them. No venue currently authors a recipe that reaches past the first rung, so\n   the report is that the signing module carries untested branches whose only job is to guess\n   when a slice is malformed. Mitigating and worth keeping in mind: a wrong block yields a\n   wrong signature, which the venue rejects, so this one fails loud at the wire.\n4. put_notional_currencies/2 folds with reduce_while and halts on the first error, so one row\n   whose symbol did not normalize turns a successful multi-row read into an error for the whole\n   account. Observed live as bybit fetchPositionsHistory failing with\n   missing_position_notional_currency on DOGEUSDT-28AUG26. The guard refusing to ship a notional\n   with a nil currency is correct in isolation; the blast radius is the defect.\n\nAuthority: the venues own the contracts. Probe okx on www.okx.com with x-simulated-trading: 1,\nalpaca on paper-api.alpaca.markets, bybit on api-testnet.bybit.com with the main-account key.\nThe provider docs define what each field means; no third-party client can settle a carve here.\nRead one success and one relevant error from each venue before changing the slice, and pin both.\n\nCarve decision, taken 2026-08-28 rather than left open, because this project dispatches\nunattended and a question in a task body reaches no one: ship (a) unless a live probe disproves\nits premise. TransferEntry.id carries the billId, declared directly under its own key rather than\nreached through a fallback, and documented as a bills-archive identifier. fetch_transfer/2 takes a\ntransId, which OKX issues only in the POST /api/v5/asset/transfer response, and it rejects a\nbills-archive id with a named error instead of forwarding it for the venue to refuse.\n\nThe premise to test first, because it is the only thing that could change the answer: that no OKX\nlisting route returns a transId. Probe the funding-account bill routes and any transfer-history\nroute the venue documents before implementing. If one of them does return a transId, ship (b)\ninstead - move fetchTransfers to that source - and say in the delivery which route it was and what\nit returned. Do not ship (c): declaring the pair unreachable discards an identifier the venue does\npublish and leaves the field nil for no gain.\n\nScoped 2026-08-29 on ex63-eth at 380ad65 by reading the landed tree: nothing on this task has\nlanded. All seven criteria are open, so start from the tree as it stands rather than looking for\npartial work. The one thing that is already true is the alpaca error-classification half of\ncriterion 4: the live 403 is pinned in test/live/journeys/trader/alpaca_test.exs around line 120\nwith the 401/403 short-circuit stated in its comment, 404 in test/live/errors/alpaca_test.exs and\n422 in test/live/alpaca/alpaca_authored_integration_test.exs. The 429 has no live pin anywhere,\nwhich is the remaining half of that criterion.\n\nThe substitution itself is untouched: priv/venues/okx/authored/normalization.json still declares\nthe transfer id as key transId with fallback_keys billId, and no commit has ever changed either\nstring under priv/venues/okx or lib. HmacRecipe still ends all three ladders on\nMap.values |> List.first || cs, and deribit_position_units put_notional_currencies still halts the\nwhole batch with reduce_while on the first unresolvable row.\n\nOne decision the criteria imply but do not settle, decided here so it does not reach an\nimplementer as a question addressed to nobody. The okx fetchTransfer contract case currently\nsources its id argument with strategy resource from fetchTransfers, which is the mechanism that\nfeeds a billId into an endpoint that only accepts a transId. Once the carve lands, that chain is\nwrong by construction. Default: keep the case in the denominator and re-ledger it, replacing the\nokx-transfer-transId-unreachable reasoning with the real one, that the read and detail surfaces\ncarry different identifier classes by the venue's design, not that a value could not be reached.\nThe evidence gate: if the demo transfer round-trip proves safely repeatable and reversible under\nthe lane's own cleanup, prefer re-declaring the case as write-then-read so it actually executes,\nand say in the delivery which of the two you found and why. Do not drop the case from the\ndenominator either way, per CLAUDE.md on the ledger not discharging a case.\nTriage 2026-09-15: BUGS.md 2026-08-29 endpoint_index substitution is the same class. Source lib/bourse/unified.ex select_endpoint still uses Enum.at(configs, idx) || hd(configs). Explicit invalid or out-of-range indices must fail before dispatch, never select index zero or another book. Preserve valid credential-filtered index semantics and exercise negative/non-integer inputs according to the documented contract.\n",
       "created_at": "2026-08-28",
       "started_at": "2026-08-28",
       "scored_at": "2026-08-28",
@@ -31588,6 +31591,333 @@
         "test/bourse/"
       ],
       "body": "The trading_dashboard consumer observed Bourse 0.8.0 requesting a future fifth page for a valid 1200-hour chart history. Repro: Bourse.fetch_ohlcv(client, \"ETH/USD\", \"1h\", since: 1785110400000, until: 1789429905831, limit: 1200) returned Coinbase HTTP 400 'Start cannot be in the future' while provider /time agreed with the clock. Aligning until to 1789426800000 immediately returned 1200 real rows. The dashboard now aligns its boundary, but Bourse must implement the correct window semantics for every caller. See BUGS.md dated 2026-09-15.\n\nReview the entire page tiling invariant, not only that last page: the current code tiles from an unaligned start in whole granularity steps, so verify that page boundaries neither skip eligible candle openings nor exceed the effective end. Coinbase's live API and official endpoint documentation own the semantics; existing ceil arithmetic and third-party clients are not oracles. Use public spot reads only. Dispatch is chosen because provider window semantics need independent live verification, rather than another consumer-side adjustment. D3 is bounded pagination work; B8 restores chart history for all consumers; U8 reflects an observed failure in an active chart.\n",
+      "created_at": "2026-09-15",
+      "scored_at": "2026-09-15",
+      "cross_repo": []
+    },
+    {
+      "id": "692",
+      "phase": 16,
+      "bundle": "live_triage",
+      "status": "pending",
+      "title": "Make singular and plural funding reads expose the same provider-backed rates",
+      "scores": {
+        "d": 5,
+        "b": 8,
+        "u": 8
+      },
+      "eff": 1.6,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "cursor",
+      "model": "cursor-grok-4.6-high",
+      "acceptance_criteria": [
+        "Hyperliquid singular BTC funding equals the matching plural row from the same observed payload and keeps the hourly unit; missing symbols never select another asset or a fabricated zero.",
+        "An explicit symbols list on a singular-only venue (Deribit control) produces correctly keyed rates; no-symbol plural behavior is documented and never guesses a universe.",
+        "Lighter singular/plural expose Lighter swap rates with provider-confirmed sign, unit, interval and symbol identity; history and other-exchange comparison rows cannot masquerade as the current venue rate.",
+        "Observe a real success and a relevant provider error before changing external semantics; consult the provider-owned docs indexed under priv/venues/<venue>/authority/. Pin domain assertions in provider-live integration tests; missing credentials or unreachable hosts fail loudly. Record independent reviewer commands and evidence, including the affected REST-read contract lane and mix check.dispatch. Raise touched modules to the required coverage tier before mutation."
+      ],
+      "out_of_scope": [
+        "Consumer hedge allocation",
+        "New funding history features",
+        "Production writes"
+      ],
+      "touches": [
+        "lib/bourse/unified.ex",
+        "lib/bourse/unified/read_parse.ex",
+        "priv/venues/hyperliquid/authored/endpoints.json",
+        "priv/venues/lighter/authored/endpoints.json",
+        "priv/venues/lighter/authored/normalization.json",
+        "priv/venues/deribit/authored/endpoints.json",
+        "priv/venues/hyperliquid/authority/rest_read_contract.json",
+        "priv/venues/lighter/authority/rest_read_contract.json",
+        "priv/venues/deribit/authority/rest_read_contract.json",
+        "test/live/hyperliquid/",
+        "test/live/lighter/",
+        "test/live/deribit/"
+      ],
+      "body": "BUGS.md 2026-09-01 reports the funding capability asymmetry and Lighter authoring gap. Reproduced through the running Bourse Tidewave on 2026-09-15: Bourse.fetch_funding_rate(hyperliquid, \"BTC/USDC:USDC\") returns not_supported; fetch_funding_rates with that symbols filter returns funding_rate 1.25e-5, interval \"1h\", and info.funding \"0.0000125\". The invalid-symbol singular is also rejected at capability gating, so that is not provider-error evidence. Local authored documents omit Hyperliquid's singular and set both Lighter capabilities false.\n\nGive consumers one consistent funding interface: an authored singular-to-plural bridge selects the exact requested swap; the reverse bridge serves an explicit finite symbols list where only singular reads exist, without guessing the venue universe. Author Lighter funding using its own venue rates, not a cross-exchange comparison row. Confirm units, direction and cadence from the live provider and official docs; the report's percent/hour interpretation remains a premise to verify. Preserve loud unsupported/fundingless/unknown-symbol outcomes. Public API and financial-unit semantics require independent dispatch review. D5 spans capability and normalization; B8/U8 restores active hedge ranking.",
+      "created_at": "2026-09-15",
+      "scored_at": "2026-09-15",
+      "cross_repo": []
+    },
+    {
+      "id": "693",
+      "phase": 16,
+      "bundle": "live_triage",
+      "status": "pending",
+      "title": "Normalize conditional order options before venue routing so a stop cannot become a market fill",
+      "scores": {
+        "d": 6,
+        "b": 10,
+        "u": 10
+      },
+      "eff": 1.67,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "codex",
+      "model": "gpt-6-astra",
+      "acceptance_criteria": [
+        "Across all algo-capable supported venues, canonical and legacy spellings produce the same protective intent; conflicting aliases fail before any order is sent.",
+        "Live far-from-market trigger orders remain untriggered and appear in the correct algo book with the requested trigger and side; a market fill is a failure, not cleanup success.",
+        "Unsupported protective controls return an explicit error; plain market/limit controls still behave normally. The owned-state contract helper uses the same canonical options.",
+        "Tests own unique sandbox orders and always cancel them; demonstrate a real accepted trigger and a relevant rejected order per affected venue without production trading.",
+        "Observe a real success and a relevant provider error before changing external semantics; consult the provider-owned docs indexed under priv/venues/<venue>/authority/. Pin domain assertions in provider-live integration tests; missing credentials or unreachable hosts fail loudly. Record independent reviewer commands and evidence, including the affected REST-read contract lane and mix check.dispatch. Raise touched modules to the required coverage tier before mutation."
+      ],
+      "out_of_scope": [
+        "New order types",
+        "Changing production account configuration"
+      ],
+      "touches": [
+        "lib/bourse/unified.ex",
+        "lib/bourse/unified/request_shape/",
+        "priv/venues/",
+        "test/support/rest_read_contract_owned_state.ex",
+        "test/live/journeys/",
+        "test/live/errors/",
+        "test/bourse/"
+      ],
+      "body": "BUGS.md 2026-08-29 records an OKX demo market fill when trigger_price was silently ignored, while triggerPrice selects the algo route. Source inspection 2026-09-15 confirms the OKX authored selection still names triggerPrice/stopLossPrice and the Binance family uses snake_case. This is the cross-venue option contract, not another OKX-only patch.\n\nUse snake_case as the canonical Elixir unified spelling for trigger_price, stop_loss_price, take_profit_price, time_in_force and reduce_only wherever offered. Preserve existing camelCase callers as aliases before route selection; refuse conflicting duplicate spellings with invalid_parameters before network dispatch. A requested protective control that a venue cannot express must fail, never disappear. Apply the same contract to sandbox owned-state helpers. Dispatch is required for order safety and public API compatibility. D6 covers request routing and live order lifecycle; B10/U10 reflects the observed unintended position.",
+      "created_at": "2026-09-15",
+      "scored_at": "2026-09-15",
+      "cross_repo": []
+    },
+    {
+      "id": "694",
+      "phase": 16,
+      "bundle": "live_triage",
+      "status": "pending",
+      "title": "Make token-bucket accounting fair for heavy requests and atomic for repeated keys",
+      "scores": {
+        "d": 6,
+        "b": 8,
+        "u": 8
+      },
+      "eff": 1.33,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "grok",
+      "model": "grok-4.6",
+      "acceptance_criteria": [
+        "A heavy request completes under sustained interleaved cheap traffic when its explicit budget permits it; cheap requests cannot erase accrual, steal a reservation or exceed authored burst limits.",
+        "Repeated checks of one key charge their total cost exactly once atomically; a failed multi-key admission spends nothing. Incompatible duplicate definitions fail loudly.",
+        "Per-call wait budgets remain isolated across concurrent consumers; default calls stay bounded, and budget refusal reports the required wait without network dispatch.",
+        "Recompute affected endpoint costs across all eleven venues; demonstrate no skip_record exemption and preserve provider rate-limit behavior with safe live reads. Long-period endpoints are checked mechanically rather than slept on for hours.",
+        "Observe a real success and a relevant provider error before changing external semantics; consult the provider-owned docs indexed under priv/venues/<venue>/authority/. Pin domain assertions in provider-live integration tests; missing credentials or unreachable hosts fail loudly. Record independent reviewer commands and evidence, including the affected REST-read contract lane and mix check.dispatch. Raise touched modules to the required coverage tier before mutation."
+      ],
+      "out_of_scope": [
+        "Changing provider limits to make tests green",
+        "Automatic retries of order writes"
+      ],
+      "touches": [
+        "lib/bourse/rate_limiter.ex",
+        "lib/bourse/rate_limiter/shaping.ex",
+        "lib/bourse/defaults.ex",
+        "lib/bourse/http.ex",
+        "lib/bourse/dispatch.ex",
+        "test/bourse/rate_limiter/",
+        "test/live/"
+      ],
+      "body": "BUGS.md 2026-08-29 records three residuals of landed task 689: endpoint costs beyond the global wait budget, over-capacity accrual erased by cheap traffic, and repeated-key checks charged only once. Source inspection 2026-09-15 confirms check_bucket refills to max(capacity, current cost), every decision reads the same state, persist_buckets overwrites by key, and the wait bound comes from global application config. The reported 50-endpoint count is historical: recompute it from the current eleven-venue surface.\n\nPreserve bounded defaults and provider pacing while making heavy requests attainable without global configuration races or starvation. Expose an explicit per-call wait budget for callers who accept a longer wait; exceeding it returns an informative error, never bypasses accounting. Charge repeated keys atomically for the combined request, or reject incompatible bucket definitions before spending anything. Protect accrued/reserved heavy-request progress from cheap traffic while maintaining authored burst limits and credential isolation. Dispatch for shared runtime invariants and public timeout behavior. D6 is concurrent accounting; B8/U8 restores callable endpoints under mixed traffic.",
+      "created_at": "2026-09-15",
+      "scored_at": "2026-09-15",
+      "cross_repo": []
+    },
+    {
+      "id": "695",
+      "phase": 16,
+      "bundle": "live_triage",
+      "status": "pending",
+      "title": "Preserve Deribit order identity, fill fees and closed-order errors through the full lifecycle",
+      "scores": {
+        "d": 5,
+        "b": 9,
+        "u": 9
+      },
+      "eff": 1.8,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "cursor",
+      "model": "cursor-grok-4.6-high",
+      "acceptance_criteria": [
+        "A real sandbox order retains the correct instrument identity through direct parse_order, unified create/read/cancel and supported WS delivery, including native and unified symbol input.",
+        "A real Deribit fill exposes fee cost/currency matching its raw provider fields through parse_trade and fetch_my_trades, preserving signed fees and any supported fees collection; missing provider fee data remains explicitly unavailable.",
+        "Cancel followed by cancel reproduces 11044 and returns order_not_found through supported REST/WS paths; reading the order still distinguishes canceled from filled. A genuine invalid-order control remains distinct.",
+        "Tests own sandbox state and clean it up; use live observed fills and provider docs for fee units, not a fabricated payload or self-authored expectation.",
+        "Observe a real success and a relevant provider error before changing external semantics; consult the provider-owned docs indexed under priv/venues/<venue>/authority/. Pin domain assertions in provider-live integration tests; missing credentials or unreachable hosts fail loudly. Record independent reviewer commands and evidence, including the affected REST-read contract lane and mix check.dispatch. Raise touched modules to the required coverage tier before mutation."
+      ],
+      "out_of_scope": [
+        "Consumer journal implementation",
+        "Inferring filled versus canceled from an error code alone"
+      ],
+      "touches": [
+        "priv/venues/deribit/authored/normalization.json",
+        "priv/venues/deribit/authored/raw.json",
+        "lib/bourse/parser.ex",
+        "lib/bourse/unified/read_parse.ex",
+        "lib/bourse/error.ex",
+        "lib/bourse/ws/",
+        "test/live/deribit/",
+        "test/live/errors/deribit_test.exs",
+        "test/live/journeys/trader/deribit_test.exs"
+      ],
+      "body": "Three trading_dashboard reports in BUGS.md dated 2026-09-14/15 describe one Deribit order/fill lifecycle: parse_order loses instrument identity, parse_trade emits an empty fee map despite fee/fee_currency, and canceling a closed order classifies 11044 as InvalidOrder/operation_failed. Local authored source still has order.symbol null, trade.fee with unresolved sub_field_map, and raw exceptions 11044 __function:InvalidOrder.\n\nMake direct parsers, unified reads/writes and WS error delivery agree on provider-owned identity, fee and terminal-order semantics. Normalize instrument_name with the venue market mapping rather than claiming raw and unified symbols are interchangeable. Preserve the existing Fee representation contract and its precision; populate all supported fee views consistently without inventing an order-level aggregate from missing trades. For cancel, classify provider not_open_order as order_not_found, but never treat it as proof of canceled rather than filled: consumers must still be able to read the actual terminal state. Check the code's meaning on other operations before applying a global error mapping. Dispatch for money and public parser/error contracts. D5 is one lifecycle pass; B9/U9 removes three active consumer workarounds.",
+      "created_at": "2026-09-15",
+      "scored_at": "2026-09-15",
+      "cross_repo": []
+    },
+    {
+      "id": "696",
+      "phase": 16,
+      "bundle": "live_triage",
+      "status": "pending",
+      "title": "Make WebSocket heartbeat liveness observable and keep control replies out of market data",
+      "scores": {
+        "d": 6,
+        "b": 9,
+        "u": 9
+      },
+      "eff": 1.5,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "codex",
+      "model": "gpt-6-astra",
+      "acceptance_criteria": [
+        "Deribit live subscriptions continue delivering real market frames while public/test replies and subscription acknowledgements never arrive as market-data websocket_message events; errors remain observable.",
+        "Each configured heartbeat type is supported by both the provider contract and the locked dependency; prove live heartbeat success for the affected dialects, including Binance native frames and Deribit JSON-RPC.",
+        "The Bourse health API reports connection-specific observations for primary and routed sockets; a sparse but healthy feed remains healthy without receiving market data.",
+        "A bounded heartbeat failure causes an observable transport failure/disconnect and recovery; test the real transport/dependency boundary without a fake provider semantic oracle. Unsupported configurations fail explicitly.",
+        "Observe a real success and a relevant provider error before changing external semantics; consult the provider-owned docs indexed under priv/venues/<venue>/authority/. Pin domain assertions in provider-live integration tests; missing credentials or unreachable hosts fail loudly. Record independent reviewer commands and evidence, including the affected REST-read contract lane and mix check.dispatch. Raise touched modules to the required coverage tier before mutation."
+      ],
+      "out_of_scope": [
+        "Consumer chart freshness policy",
+        "Private production subscriptions",
+        "Coinbase channel onboarding"
+      ],
+      "touches": [
+        "lib/bourse/ws.ex",
+        "lib/bourse/ws/spec_config.ex",
+        "lib/bourse/ws/config.ex",
+        "lib/bourse/ws/adapter.ex",
+        "lib/bourse/ws/connection_owner.ex",
+        "test/live/ws/",
+        "test/bourse/ws/",
+        "mix.exs",
+        "mix.lock"
+      ],
+      "body": "BUGS.md 2026-09-14 reports Deribit public/test replies delivered as websocket_message and heartbeat type :ping entering zen_websocket 0.9.0's no-op branch, with no Bourse health API. Source inspection confirms SpecConfig authors :ping on multiple venues and Bourse.WS only forwards heartbeat config. Dependency behavior and the reported failure-to-disconnect remain premises to verify against the running locked dependency.\n\nTreat heartbeat requests/replies as transport control. Expose actual connection-scoped liveness observations through Bourse, including routed subscription sockets: successful heartbeat evidence, pending/failed state and a bounded failure/disconnect outcome. Do not use market-data silence as heartbeat failure on sparse feeds. Configure only provider-supported and dependency-supported heartbeat mechanisms; unsupported combinations fail loudly. Reuse the dependency's lifecycle instead of building a competing heartbeat state machine. If the locked dependency lacks the required primitive, coordinate a separately reviewable upstream change and state the exact blocker rather than promising evidence Bourse cannot observe. Dispatch for cross-venue runtime and public health contract. D6 crosses socket routing/control/lifecycle; B9/U9 prevents quote withdrawal on control frames and false liveness.",
+      "created_at": "2026-09-15",
+      "scored_at": "2026-09-15",
+      "cross_repo": []
+    },
+    {
+      "id": "697",
+      "phase": 16,
+      "bundle": "live_triage",
+      "status": "pending",
+      "title": "Support Coinbase Exchange public trades and heartbeat streams through Bourse.WS",
+      "scores": {
+        "d": 5,
+        "b": 8,
+        "u": 8
+      },
+      "eff": 1.6,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "grok",
+      "model": "grok-4.6",
+      "acceptance_criteria": [
+        "Bourse.WS.connect and trade subscription work against wss://ws-feed.exchange.coinbase.com without credentials; normal subscription errors are returned for a deliberately invalid channel.",
+        "Real new matches reach the subscribing owner with correct product, trade id, time, side, price and amount; acknowledgements/heartbeats are not counted as trades.",
+        "Historical last_match is explicitly distinguishable from new match, and heartbeat sequence/last_trade_id evidence is accessible for consumer gap recovery.",
+        "Update runtime WS coverage and the registered-divergence assertion so Coinbase cannot remain silently excluded; provider-live first-frame tests cover its actual data and rejection shapes.",
+        "Observe a real success and a relevant provider error before changing external semantics; consult the provider-owned docs indexed under priv/venues/<venue>/authority/. Pin domain assertions in provider-live integration tests; missing credentials or unreachable hosts fail loudly. Record independent reviewer commands and evidence, including the affected REST-read contract lane and mix check.dispatch. Raise touched modules to the required coverage tier before mutation."
+      ],
+      "out_of_scope": [
+        "Private Coinbase APIs",
+        "Advanced Trade",
+        "Implementing consumer REST gap recovery"
+      ],
+      "touches": [
+        "lib/bourse/ws/spec_config.ex",
+        "lib/bourse/ws/config.ex",
+        "lib/bourse/ws/",
+        "lib/bourse/live_lane/",
+        "priv/venues/coinbaseexchange/",
+        "test/live/ws/",
+        "test/bourse/ws/"
+      ],
+      "body": "BUGS.md 2026-09-14 records an independent live Coinbase public-feed probe: subscriptions ack, historical last_match, subsequent match trade_id 842699720, heartbeat, and invalid-channel error. Bourse currently registers Coinbase Exchange as websocket_not_configured, so trading_dashboard maintains a direct ZenWebsocket socket.\n\nAdd the provider-owned public matches and heartbeat surface through the normal Bourse.WS API and broadcast routing, with subscribe acknowledgements/errors and normalized trades. Preserve the semantic difference between historical last_match and new match; surface heartbeat.last_trade_id so consumers can detect gaps without counting the historical frame twice. Use the official Exchange feed, not Advanced Trade, and require no credentials. Dispatch for a new public venue contract and live streaming verification. D5 covers config, protocol and routing; B8/U8 removes a running consumer's custom transport. See the official provider channels documentation indexed in the venue authority directory; re-probe all report claims before authoring.",
+      "created_at": "2026-09-15",
+      "scored_at": "2026-09-15",
+      "cross_repo": []
+    },
+    {
+      "id": "698",
+      "phase": 16,
+      "bundle": "live_triage",
+      "status": "pending",
+      "title": "Restore live contract coverage for account metadata removed from balance reads",
+      "scores": {
+        "d": 4,
+        "b": 6,
+        "u": 6
+      },
+      "eff": 1.5,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "cursor",
+      "model": "cursor-grok-4.6-high",
+      "acceptance_criteria": [
+        "Bybit user/query-api is exercised on the operator-selected testnet main-account key by a live contract with provider-owned meaning and a relevant rejected request; credentials and sensitive key values never appear in artifacts.",
+        "Binance family position-mode reads have a documented consistent normalized contract proven against the venue boolean, and the COIN-M promotion test matches that actual contract.",
+        "The retained surfaces stay inside the contract denominator; reclassification neither restores them as balances nor hides them under dangerous/excluded cases.",
+        "Observe a real success and a relevant provider error before changing external semantics; consult the provider-owned docs indexed under priv/venues/<venue>/authority/. Pin domain assertions in provider-live integration tests; missing credentials or unreachable hosts fail loudly. Record independent reviewer commands and evidence, including the affected REST-read contract lane and mix check.dispatch. Raise touched modules to the required coverage tier before mutation."
+      ],
+      "out_of_scope": [
+        "General API-key management",
+        "Switching Bybit credentials or account mode",
+        "Task 670 suite-wide architecture rewrite"
+      ],
+      "touches": [
+        "priv/venues/bybit/authority/rest_read_contract.json",
+        "priv/venues/binance/",
+        "priv/venues/binancecoinm/",
+        "priv/venues/binanceusdm/",
+        "lib/bourse/unified/read_parse.ex",
+        "test/live/bybit/",
+        "test/live/binancecoinm/binancecoinm_promotion_integration_test.exs",
+        "test/support/rest_read_contracts.ex"
+      ],
+      "body": "BUGS.md 2026-08-29 reports task 686 bookkeeping fallout: Bybit user/query-api lost its case after classification helpers were removed from fetchBalance, and Binance COIN-M fetch_position_mode returns RawResponse while the promotion test expects a bare map. Keep those helpers outside balances; give the retained public/raw client surface an honest contract home.\n\nChoose a provider-backed normalized position-mode result across the Binance family, reusing the existing response vocabulary if it expresses the provider boolean losslessly. Reserve RawResponse for genuinely unauthored semantics; do not merely relax the promotion test. Exercise Bybit key/account metadata as raw metadata or an existing appropriate account surface, without inventing a new balance branch. Re-confirm the historical missing-case premise before changing the denominator. Dispatch for public response semantics and live test infrastructure; D4 is a bounded contract repair; B6/U6 restores reported missing coverage.",
       "created_at": "2026-09-15",
       "scored_at": "2026-09-15",
       "cross_repo": []
