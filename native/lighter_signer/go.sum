@@ -14,8 +14,8 @@ github.com/decred/dcrd/crypto/blake256 v1.0.0 h1:/8DMNYp9SGi5f0w7uCm6d6M4OU2rGFK
 github.com/decred/dcrd/crypto/blake256 v1.0.0/go.mod h1:sQl2p6Y26YV+ZOcSTP6thNdn47hh8kt6rqSlvmrXFAc=
 github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 h1:YLtO71vCjJRCBcrPMtQ9nqBsqpA1m5sE92cU+pd5Mcc=
 github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1/go.mod h1:hyedUtir6IdtD/7lIxGeCxkaw7y45JueMRL4DIyJDKs=
-github.com/elliottech/lighter-go v0.0.0-20260608173247-c26ac340ce5d h1:1jY2l4xNVIj5yre1TvWLAzSwe7BIKr22DgN2fOHXUTg=
-github.com/elliottech/lighter-go v0.0.0-20260608173247-c26ac340ce5d/go.mod h1:G5QpWXZfa/ge3EGjrAL3ls11IPUa5KCVt+PG2CQmYnU=
+github.com/elliottech/lighter-go v1.0.9 h1:cfAmRsk3T8CJWL0jl/g6UEMoNHw9Fjv4Wn+jpKIgodI=
+github.com/elliottech/lighter-go v1.0.9/go.mod h1:G5QpWXZfa/ge3EGjrAL3ls11IPUa5KCVt+PG2CQmYnU=
 github.com/elliottech/poseidon_crypto v0.0.15 h1:+f/YTnIFEWX1Xss75Ky7QRvhDpR372XAAMtpWxKvp+k=
 github.com/elliottech/poseidon_crypto v0.0.15/go.mod h1:/nFxH8V+3yk3eakI+Arlu5U8XwRXgydBvsiwfA/yYrg=
 github.com/emicklei/dot v1.6.2 h1:08GN+DD79cy/tzN6uLCT84+2Wk9u+wvqP+Hkx/dIR8A=

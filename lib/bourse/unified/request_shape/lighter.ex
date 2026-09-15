@@ -8,25 +8,45 @@ defmodule Bourse.Unified.RequestShape.Lighter do
   @operation_key "__bourse_lighter_transaction_operation"
   @params_key "__bourse_lighter_transaction_params"
   @auth_lifetime_seconds 300
-  @default_order_expiry -1
+  # lighter-go's own sentinels. -1 tells the signer to fill in its 28-day default;
+  # 0 is txtypes.NilOrderExpiry, the only expiry an immediate-or-cancel limit order
+  # may carry — `L2CreateOrderTxInfo.Validate/0` rejects a LimitOrder whose
+  # TimeInForce is ImmediateOrCancel and whose OrderExpiry is anything else, and
+  # the signer rewrites -1 into `now + 28d` *before* that check. Proven live
+  # 2026-09-15 on testnet.zklighter.elliot.ai: {market 4096, IOC, -1} fails to sign,
+  # {market 4096, IOC, 0} signs. See BUGS.md and docs/authored-spec-carves/lighter.md.
+  @signer_default_order_expiry -1
+  @nil_order_expiry 0
   @order_type_limit 0
   @account_methods ~w(fetchBalance fetchPositions)
   # Every private read is account-scoped in the QUERY STRING, not only in the auth
   # token the signer builds from the same credential. Omitting account_index answers
   # a bare 20001 "invalid param " that names nothing — observed live 2026-08-28 on
   # testnet.zklighter.elliot.ai, where `accountActiveOrders?market_id=1` returns that
-  # message while `accountActiveOrders?account_index=153` reaches the auth check.
+  # message while the same call carrying the account's own index reaches the auth
+  # check. (Never write a literal index here: the account is re-created under a
+  # different L1 wallet when we move to one whose key we hold, and the literal then
+  # reads as a live fact. LIGHTER_TESTNET_ACCOUNT_INDEX names the current one.)
   # A method missing from this list is therefore broken for every caller, silently.
   @private_account_methods ~w(fetchClosedOrders fetchDeposits fetchMyLiquidations fetchMyTrades
                               fetchOpenOrders fetchTransfers fetchWithdrawals)
+  # lighter-go publishes exactly three: ImmediateOrCancel 0, GoodTillTime 1,
+  # PostOnly 2 (types/txtypes/constants.go). There is no fill-or-kill — the venue's
+  # own validator rejects any other value — so the capability slice must not
+  # advertise FOK. "GTC" and "GTD" both resolve to GoodTillTime: the venue expresses
+  # the resting case as an explicit expiry (max 30 days), so its one resting mode
+  # answers to both spellings rather than either being a separate venue behaviour.
   @time_in_force %{
     "GTC" => 1,
+    "GTD" => 1,
     "IOC" => 0,
     "PO" => 2,
+    "good-till-date" => 1,
     "good-till-time" => 1,
     "immediate-or-cancel" => 0,
     "post-only" => 2
   }
+  @immediate_or_cancel 0
 
   @doc false
   @spec build(map(), String.t(), Exchange.t(), keyword()) :: map()
@@ -83,6 +103,7 @@ defmodule Bourse.Unified.RequestShape.Lighter do
 
   defp build_create_order(params, %Exchange{} = exchange) do
     market = find_market!(exchange, Map.fetch!(params, "symbol"))
+    time_in_force = time_in_force!(params)
 
     transaction_params = %{
       market_index: integer!(market_field(market, :id), "market id"),
@@ -91,10 +112,10 @@ defmodule Bourse.Unified.RequestShape.Lighter do
       price: scaled_integer!(Map.fetch!(params, "price"), market_precision!(market, :price), "price"),
       is_ask: side_is_ask!(Map.fetch!(params, "side")),
       order_type: order_type!(Map.fetch!(params, "type")),
-      time_in_force: time_in_force!(params),
+      time_in_force: time_in_force,
       reduce_only: boolean_param(params, ["reduceOnly", "reduce_only"], false),
       trigger_price: 0,
-      order_expiry: integer_param(params, ["order_expiry", "orderExpiry"], @default_order_expiry),
+      order_expiry: integer_param(params, ["order_expiry", "orderExpiry"], default_order_expiry(time_in_force)),
       integrator_account_index: integer_param(params, ["integrator_account_index"], 0),
       integrator_taker_fee: integer_param(params, ["integrator_taker_fee"], 0),
       integrator_maker_fee: integer_param(params, ["integrator_maker_fee"], 0),
@@ -196,6 +217,11 @@ defmodule Bourse.Unified.RequestShape.Lighter do
               )
     end
   end
+
+  # An explicit caller-supplied order_expiry still wins; this only decides what the
+  # slice sends when the caller says nothing.
+  defp default_order_expiry(@immediate_or_cancel), do: @nil_order_expiry
+  defp default_order_expiry(_time_in_force), do: @signer_default_order_expiry
 
   defp boolean_param(params, names, default) do
     case first_value(params, names, default) do

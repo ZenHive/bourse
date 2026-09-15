@@ -47,8 +47,8 @@
           "marketBuyRequiresPrice": false,
           "selfTradePrevention": false,
           "timeInForce": {
-            "FOK": true,
-            "GTD": false,
+            "FOK": false,
+            "GTD": true,
             "IOC": true,
             "PO": true
           },

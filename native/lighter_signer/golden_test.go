@@ -111,6 +111,18 @@ func TestCreateOrderVector(t *testing.T) {
 // update_leverage, update_margin, and change_pub_key. L1Sig is empty in the
 // change_pub_key golden because it is not part of the zk hash; the helper
 // attaches a caller-supplied L1 signature after SignChangePubKey returns.
+//
+// The same vectors were re-run unchanged against lighter-go v1.0.9 (2026-09-15)
+// and again produced identical signature and tx_info bytes, so that bump is
+// signature-neutral too. The reason is in the SDK's own source rather than in
+// the observation: v1.0.9 adds `AttributeTypeOrderOrderVersion` to the signed
+// attribute set, but `types/tx_request.go` writes it only when
+// `attr.OrderVersion != nil`, and `sharedlib/main.go` leaves it nil for every
+// signer our shim calls — `SignCreateOrder` passes `txtypes.NilOrderVersion`
+// itself, and `csrc/helper.c` passes the same nil value to the one signer that
+// takes it from the caller (`SignModifyOrder`). A vector that changed here would
+// therefore mean the shim started sending a real order version, not that the
+// SDK changed the hash under us.
 
 func TestCancelOrderVector(t *testing.T) {
 	nonce := int64(3)

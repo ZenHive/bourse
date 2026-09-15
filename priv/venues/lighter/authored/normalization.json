@@ -29,6 +29,8 @@
             "balance",
             "margin_balance"
           ],
+          "parent_value_index": "USDC",
+          "parent_value_key": "cross_asset_value",
           "value_op": "add"
         },
         "used": {
@@ -37,6 +39,8 @@
           "index_coercion": "safeCurrencyCode",
           "index_key": "symbol",
           "kind": "keyed_collection",
+          "parent_value_index": "USDC",
+          "parent_value_key": "cross_initial_margin_requirement",
           "value_key": "locked_balance"
         }
       }

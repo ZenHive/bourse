@@ -15,7 +15,11 @@ defmodule Bourse.Unified.RequestShape.LighterTest do
   alias Bourse.Exchange
   alias Bourse.Unified.RequestShape.Lighter
 
-  @account_index 153
+  # A synthetic fixture, deliberately not any account we hold: this module builds
+  # request shapes offline and never calls the venue, so the value only has to round
+  # trip. The live account is named by LIGHTER_TESTNET_ACCOUNT_INDEX and is
+  # re-created under a different L1 wallet when the account is re-provisioned.
+  @account_index 4_242
   @market %{
     id: "1",
     symbol: "BTC/USDC:USDC",
@@ -57,7 +61,8 @@ defmodule Bourse.Unified.RequestShape.LighterTest do
     # the auth token. Omitting account_index answers a bare 20001 "invalid param "
     # with no hint (observed live 2026-08-28 against testnet.zklighter.elliot.ai:
     # `accountActiveOrders?market_id=1` -> "invalid param ", while
-    # `accountActiveOrders?account_index=153` reaches the auth check).
+    # `accountActiveOrders?account_index=<the account's own index>` reaches the auth
+    # check).
     for method <- ~w(fetchOpenOrders fetchClosedOrders fetchMyTrades fetchWithdrawals
                      fetchTransfers fetchMyLiquidations) do
       test "#{method} fills account_index and auth_deadline from credentials" do
@@ -100,7 +105,7 @@ defmodule Bourse.Unified.RequestShape.LighterTest do
 
   describe "account_index resolution" do
     test "falls back to exchange options when credentials carry no uid" do
-      exchange = %{exchange(uid: nil) | options: %{"account_index" => "153"}}
+      exchange = %{exchange(uid: nil) | options: %{"account_index" => "4242"}}
 
       assert Lighter.build(%{}, "fetchMyTrades", exchange, [])["account_index"] == @account_index
     end
@@ -207,6 +212,47 @@ defmodule Bourse.Unified.RequestShape.LighterTest do
       assert transaction.time_in_force == 1
       assert transaction.reduce_only == false
       assert transaction.skip_nonce == false
+    end
+
+    test "the expiry follows the time in force the caller asked for" do
+      # lighter-go rejects a LimitOrder whose TimeInForce is ImmediateOrCancel and
+      # whose OrderExpiry is anything but its nil sentinel (0), and it rewrites the
+      # -1 "signer default" into `now + 28d` BEFORE that check — so a flat -1 makes
+      # IOC unsignable. Proven live 2026-09-15 on testnet.zklighter.elliot.ai:
+      # {market 4096, IOC, -1} failed to sign, {market 4096, IOC, 0} signed.
+      for {time_in_force, expected} <- [{"IOC", 0}, {"immediate-or-cancel", 0}, {"PO", -1}, {"GTC", -1}, {"GTD", -1}] do
+        transaction =
+          transaction(Lighter.build(order_params(%{"timeInForce" => time_in_force}), "createOrder", exchange(), []))
+
+        assert transaction.order_expiry == expected,
+               "#{time_in_force} should default its expiry to #{expected}"
+      end
+    end
+
+    test "an explicit order_expiry still wins over the time-in-force default" do
+      transaction =
+        transaction(
+          Lighter.build(
+            order_params(%{"timeInForce" => "IOC", "order_expiry" => 1_800_000_000_000}),
+            "createOrder",
+            exchange(),
+            []
+          )
+        )
+
+      assert transaction.order_expiry == 1_800_000_000_000
+    end
+
+    test "GTD and GTC both resolve to the venue's one resting mode" do
+      # lighter-go publishes exactly three codes (IOC 0, GoodTillTime 1, PostOnly 2).
+      # The venue expresses resting as an explicit expiry, so "good till date" and
+      # "good till cancel" are two spellings of the same venue behaviour, not two.
+      for spelling <- ["GTC", "GTD", "good-till-time", "good-till-date"] do
+        transaction =
+          transaction(Lighter.build(order_params(%{"timeInForce" => spelling}), "createOrder", exchange(), []))
+
+        assert transaction.time_in_force == 1, "#{spelling} should map to GoodTillTime"
+      end
     end
 
     test "post-only and sell map to their venue codes" do

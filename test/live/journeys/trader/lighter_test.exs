@@ -19,8 +19,11 @@ defmodule Bourse.Journeys.Trader.LighterTest do
   # `{:error, :no_url_configured}` (re-measured live 2026-08-28). That is a gap in
   # our spec, not a venue or credential limit — an earlier note here blamed the
   # testnet key, citing a 20013 "couldnt find account" that came from an
-  # unprovisioned account (index 354). The account is provisioned now (index 153),
-  # so that reason no longer describes anything; the missing URL still does.
+  # unprovisioned account. The account named by LIGHTER_TESTNET_ACCOUNT_INDEX is
+  # provisioned, so that reason no longer describes anything; the missing URL still
+  # does. Never pin a literal account index here: a re-provision creates a NEW account
+  # under whichever L1 wallet signs the ChangePubKey, so the index moves, and a literal in a
+  # comment reads as a live fact long after it stops being one.
 
   describe "a trader's day" do
     test "survey the market, place a resting limit buy, track it, cancel it" do
@@ -96,10 +99,11 @@ defmodule Bourse.Journeys.Trader.LighterTest do
 
   describe "orders the venue rejects" do
     # Both codes were first observed live on testnet.zklighter.elliot.ai on
-    # 2026-08-28 against a provisioned account (index 153). They supersede an
-    # earlier pin of 21100 "account not found", which described an unprovisioned
-    # account rather than the order — every create failed that check first, so no
-    # in-flow rejection could be isolated behind it.
+    # 2026-08-28 and re-observed 2026-09-15 against the account named by
+    # LIGHTER_TESTNET_ACCOUNT_INDEX. They supersede an earlier pin of 21100
+    # "account not found", which described an unprovisioned account rather than the
+    # order — every create failed that check first, so no in-flow rejection could be
+    # isolated behind it.
     test "sendTx refuses an amount below the market minimum" do
       exchange = sandbox_exchange!(@venue)
       on_exit(fn -> terminate_lighter_helper(exchange) end)

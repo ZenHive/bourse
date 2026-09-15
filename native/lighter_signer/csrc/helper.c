@@ -17,6 +17,12 @@
 #define RESPONSE_HEADER_SIZE 8U
 #define MAX_FRAME_SIZE 65535U
 
+/* lighter-go's txtypes.NilOrderVersion. modify_order is the only exported signer
+   that takes an order version from the caller (SignCreateOrder passes the nil
+   value itself), and our wire protocol carries no such field, so the nil value
+   is what keeps the signed attributes identical to the pre-v1.0.9 shim. */
+#define NIL_ORDER_VERSION 0LL
+
 enum operation {
   OP_INIT = 1,
   OP_AUTH_TOKEN = 2,
@@ -501,8 +507,8 @@ static int process_modify_order(reader *input, uint8_t operation, uint32_t reque
                            (long long)price, (long long)trigger_price,
                            (long long)integrator_account_index, (int)taker_fee,
                            (int)maker_fee, self_trade_behavior, self_trade_equality,
-                           skip_nonce, (long long)nonce, api_key_index,
-                           (long long)account_index);
+                           skip_nonce, (long long)nonce, NIL_ORDER_VERSION,
+                           api_key_index, (long long)account_index);
   return send_signed_result(operation, request_id, result);
 }
 

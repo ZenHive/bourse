@@ -3,7 +3,7 @@ module github.com/ZenHive/bourse/native/lighter_signer
 go 1.25.0
 
 require (
-	github.com/elliottech/lighter-go v0.0.0-20260608173247-c26ac340ce5d
+	github.com/elliottech/lighter-go v1.0.9
 	github.com/elliottech/poseidon_crypto v0.0.15
 )
 
