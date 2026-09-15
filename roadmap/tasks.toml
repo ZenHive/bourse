@@ -23740,7 +23740,7 @@ scored_at = "2026-09-15"
 id = "693"
 phase = 16
 bundle = "live_triage"
-status = "in_progress"
+status = "done"
 title = "Normalize conditional order options before venue routing so a stop cannot become a market fill"
 scores = { d = 6, b = 10, u = 10 }
 markers = ["bug"]
@@ -23753,9 +23753,16 @@ body = """
 BUGS.md 2026-08-29 records an OKX demo market fill when trigger_price was silently ignored, while triggerPrice selects the algo route. Source inspection 2026-09-15 confirms the OKX authored selection still names triggerPrice/stopLossPrice and the Binance family uses snake_case. This is the cross-venue option contract, not another OKX-only patch.
 
 Use snake_case as the canonical Elixir unified spelling for trigger_price, stop_loss_price, take_profit_price, time_in_force and reduce_only wherever offered. Preserve existing camelCase callers as aliases before route selection; refuse conflicting duplicate spellings with invalid_parameters before network dispatch. A requested protective control that a venue cannot express must fail, never disappear. Apply the same contract to sandbox owned-state helpers. Dispatch is required for order safety and public API compatibility. D6 covers request routing and live order lifecycle; B10/U10 reflects the observed unintended position."""
+implemented = "Landed by codex via merge-train; reviewer-approved (run run-1789444835773-5d708551, 9475f0bf329899e76e6de1ed8ef202f19f460601)."
+delivered_by = "codex"
+verified = true
+verified_by = "cursor"
+verification_ref = "harness-run:run-1789444835773-5d708551"
 created_at = "2026-09-15"
 started_at = "2026-09-15"
 scored_at = "2026-09-15"
+done_at = "2026-09-15"
+shipped_in = "9475f0bf329899e76e6de1ed8ef202f19f460601"
 
 [[task]]
 id = "694"
