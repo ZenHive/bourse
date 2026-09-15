@@ -162,6 +162,26 @@ test code. Edit the fence when adding a ledgered case.
       "summary": "Deribit public tape does not always hold four distinct timestamps for the time-window probe"
     },
     {
+      "id": "okx-option-open-interest-volume-demo",
+      "class": "ledgered_demo_unavailable",
+      "venue": "okx",
+      "methods": ["fetchOpenInterestHistory"],
+      "match": {
+        "empty_collection": true
+      },
+      "summary": "OKX demo trading serves the rubik option open-interest/volume stat empty; the production public host answers the same request with rows"
+    },
+    {
+      "id": "binance-empty-order-lists",
+      "class": "ledgered_state_dependent",
+      "venue": "binance",
+      "methods": ["fetchOrderList"],
+      "match": {
+        "empty_resource": true
+      },
+      "summary": "OCO list identity needs an order list on the spot testnet account; fetchOrderLists returns zero rows"
+    },
+    {
       "id": "okx-empty-position",
       "class": "ledgered_state_dependent",
       "venue": "okx",
@@ -264,6 +284,40 @@ test code. Edit the fence when adding a ledgered case.
     That account/key binding also needs repair; this response does not exercise
     or establish rejection semantics for the L1 personal signature.
 
+
+### okx — rubik option open-interest/volume stat on demo trading (filed 2026-09-15)
+
+- Authored slice: `okx:fetchOpenInterestHistory:1:publicGetRubikStatOptionOpenInterestVolume`
+- Blocked by: the demo host answers the request successfully and empty. Measured
+  2026-09-15 against `www.okx.com` with `x-simulated-trading: 1`:
+  `GET /api/v5/rubik/stat/option/open-interest-volume?ccy=BTC` returned
+  `code "0", msg "", data []`. The identical request on the production public host
+  returned 72 rows for `ccy=BTC` and 72 for `ccy=ETH`. So this is the venue
+  withholding the statistic from simulated trading, not a parse or request defect —
+  the same class as the `50038` funding-account reads above, but reported as an
+  empty success rather than an error code.
+- The open question: the field meaning of a populated rubik option OI/volume row
+  (`ts`, call OI, put OI, call volume, put volume ordering) against production semantics
+- Exact call: construct okx without `sandbox: true`, then
+  `Bourse.fetch_open_interest_history(exchange, "BTC", "8H")` against the production host
+- Expected evidence: a non-empty parsed list whose timestamps and call/put axes match
+  the provider's documented column order
+
+### binance — OCO order-list identity on the spot testnet account (filed 2026-09-15)
+
+- Authored slice: `binance:fetchOrderList:0:privateGetOrderList`
+- Blocked by: the branch reads an id out of `fetchOrderLists`, and the spot testnet
+  account holds none. Measured 2026-09-15: `Bourse.fetch_order_lists/1` returned
+  `{:ok, []}` and `Bourse.fetch_open_order_lists/1` returned `{:ok, []}` against
+  `testnet.binance.vision`. No OCO/OTO list has ever been placed on this account, so
+  there is no id to look up.
+- The open question: the identity semantics of a single order-list read — whether
+  `orderListId`, `listClientOrderId` and the contained `orders[]` echo the placement
+- Exact call: place an OCO on the spot testnet account
+  (`POST /api/v3/orderList/oco`), then
+  `Bourse.fetch_order_list(exchange, <orderListId>)`
+- Expected evidence: the read echoes the placed list's id, its `listStatusType` /
+  `listOrderStatus`, and both contained legs
 
 ### eleven venues — sandbox-unhosted REST-read product surfaces (task 667, filed 2026-08-23)
 

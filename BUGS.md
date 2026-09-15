@@ -114,6 +114,146 @@ roadmap.
 
 ---
 
+## 2026-09-15 — `limit` on hyperliquid's emulated order-status reads truncated the history BEFORE the status filter ran, so `fetch_closed_orders(limit: 10)` answered `[]` while 137 closed orders existed
+
+**Status:** ✅ fixed inline (orchestrator, landed-base review) — `lib/bourse/emulation.ex`,
+live-proven against hyperliquid testnet. Regression test:
+`test/live/hyperliquid/emulated_order_status_limit_test.exs`.
+
+Hyperliquid carries the only three `_delegate` entries in the authored surface —
+`fetchClosedOrders`, `fetchCanceledOrders` and `fetchCanceledAndClosedOrders` all delegate to
+`fetchOrders`. `Bourse.Emulation.handle_fetch_filtered_orders/5` extracted `since`/`limit`
+to apply them locally after `filter_by_status/2`, but did **not** declare them consumed in
+`@consumed_delegated_params`, so `delegated_params/4` forwarded them to the delegate as well.
+`Bourse.Unified.ReadParse.maybe_take_limit/3` then applied `limit` at the delegate's parse
+layer, cutting the raw order history down to the newest N rows *before* the status filter
+ever saw it. The wallet's newest rows are `open`/`canceled` lifecycle events, so the closed
+filter found nothing in them.
+
+**Repro on the landed base** (`c73e031`), hyperliquid testnet:
+
+```elixir
+{:ok, h} = Bourse.Exchange.new("hyperliquid", credentials: creds, sandbox: true)
+Bourse.fetch_closed_orders(h)            #=> {:ok, [137 orders]}
+Bourse.fetch_closed_orders(h, limit: 10) #=> {:ok, []}      # expected 10
+```
+
+A caller asking for "the last 10 closed orders" got a silently empty list — the answer is
+well-formed, plausible, and wrong, with no error to notice. `fetch_canceled_orders` and
+`fetch_canceled_and_closed_orders` share the handler class and the same defect.
+
+> **Update (2026-09-15, orchestrator).** Fixed by declaring `since` and `limit` consumed for
+> `{:handle_fetch_filtered_orders, :fetch_orders}` and
+> `{:handle_fetch_canceled_and_closed_orders, :fetch_orders}`, so the delegate returns the
+> full history and the window is applied once, locally, after the status filter. Hyperliquid's
+> `fetchOrders` authors no `limit`/`since` request slot (its request defaults are `type` +
+> `user` only), so nothing server-side is lost. Live after the fix: `limit: 10` → 10 closed
+> orders, all `status == "closed"`, matching the newest 10 timestamps of the full 137;
+> `since: <median>` → 69 rows all `>= since`, and `since` + `limit: 5` → the 5 oldest in that
+> window; `fetch_canceled_orders(limit: 5)` → 5, `fetch_canceled_and_closed_orders(limit: 7)`
+> → 7. The contract case `hyperliquid:fetchClosedOrders:0:publicPostInfo`, red on the landed
+> base as "provider account/market state did not exercise the read", now passes — its failure
+> message had been blaming account state for a client bug.
+>
+> **Latent siblings, deliberately not changed.** `handle_fetch_my_trades/4`,
+> `handle_fetch_order_trades/4` and `handle_fetch_deposits_withdrawals/4` have the same shape
+> (extract `since`/`limit` locally, forward the untouched params to a delegate, filter after).
+> No venue routes to them today — hyperliquid's three are the only `_delegate` entries in all
+> eleven authored documents — so there is no live evidence to fix against, and inventing it
+> would be guessing. They become real the moment a venue delegates one of those methods.
+
+---
+
+## 2026-09-15 — every venue's contract `symbols.option` names a non-option symbol, so each option branch is proven against an arbitrarily-picked illiquid strike
+
+**Status:** 🆕 measured live (orchestrator, landed-base review) — not routed.
+
+`Bourse.Test.RestReadContractScenario.market_symbol!/2` prefers
+`venue_contract["symbols"][kind]`, then falls back to the first active market whose symbol
+starts with `BTC`. All eleven `priv/venues/<venue>/authority/rest_read_contract.json` files
+declare an `option` slot that is a swap or spot symbol — okx `BTC/USDT:USDT`, deribit
+`BTC/USD:BTC`, bybit `BTC/USDT:USDT`, alpaca `GLD`, and so on — so no option market ever
+matches the preference and every option branch runs against whichever BTC option happens to
+sort first. That instrument is usually an untraded strike.
+
+**Live evidence** (2026-09-15, okx demo, `x-simulated-trading: 1`):
+`okx:fetchTrades:2:publicGetPublicOptionTrades` fails as "provider account/market state did
+not exercise the read", yet the venue is actively trading options —
+`GET /api/v5/public/option-trades?instFamily=BTC-USD` returns 100 fills across 30 distinct
+instruments, and a per-instrument query returns 100 rows for `BTC-USD-260925-100000-C`, 9 for
+`BTC-USD-260916-73000-P` and 3 for `BTC-USD-260916-72000-P`. The branch is reachable; the
+case just picks an instrument nothing has traded.
+
+**Why pinning a symbol does not fix it:** option instruments expire, so any literal written
+into the contract file goes stale on a schedule and lands back here. The durable shape is a
+selection strategy that picks a *traded* option instrument — but `market_symbol!/2` is shared
+by all eleven venues and every market kind, so changing it is a whole-lane change, not a
+one-line correction. That is the routing question.
+
+**What this masks:** an option branch that is genuinely broken is indistinguishable from one
+that drew a dead strike, because both report the same "did not exercise the read" message.
+
+---
+
+## 2026-09-15 — swapping the DEX signing primitives onto Cartouche/Hieroglyph moved keccak and secp256k1 off Rust NIFs onto pure Elixir, costing ~50x more CPU per signed request
+
+**Status:** 🆕 measured live (orchestrator, landed-base review of task 703, shipped
+`434c97988d6a`) — not routed. The migration is **correct**: hyperliquid and derive both
+accept the new signatures live, so this is a cost finding, not a correctness one.
+
+Task 703 replaced `ex_keccak` (Rust NIF) and `ex_secp256k1` (Rust NIF) with `cartouche`,
+whose transitive hashing and curve dependencies — `ex_sha3` and `curvy` — are pure Elixir.
+No acceptance criterion named performance and no per-task reviewer could see it: every
+live journey passes, only the clock changed.
+
+**Measured on this host against the landed base (Tidewave `project_eval`, warm BEAM):**
+
+```
+Crypto.sign_hash/2                    2.788 ms each   (50 iterations)
+Crypto.recover_signer_address/2       2.030 ms each   (50 iterations)
+Crypto.keccak256/1, 32-byte input     181.96 us each  (2000 iterations)
+Crypto.keccak256/1, 128-byte input    197.25 us each
+Crypto.keccak256/1, 1024-byte input   1344.32 us each
+EIP712.encode/4 (Agent, 2 fields)     1.032 ms each   (200 iterations)
+one signed hyperliquid order preimage 5.657 ms each   (200 iterations, encode + keccak + sign)
+```
+
+The `ex_keccak` / `ex_secp256k1` NIFs they replaced are single-digit microseconds for
+keccak and well under 100 us for a sign, so signing one DEX order went from roughly a
+tenth of a millisecond to **~5.7 ms** — and it is synchronous scheduler time in the caller
+process, not dirty-NIF work that yields.
+
+**Consumer impact.** Every hyperliquid, derive and lighter-L1 write pays it: order place,
+order cancel, and each WebSocket auth handshake. A consumer placing or amending orders at
+rate (`bourse_trading`'s saga executor, any market-making loop) burns ~50x the CPU per
+order and blocks a scheduler for milliseconds at a time. A single order is still fast next
+to venue latency; a burst is not.
+
+**The routing question is a dependency decision, not a local fix**, which is why this is
+recorded rather than patched: re-adding `ex_keccak` for `Crypto.keccak256/1` alone would
+only recover the hashing our own code does — `Cartouche.Typed` hashes internally through
+`ex_sha3` regardless — and would partially undo 703's own "no duplicated replacement
+implementation" criterion. The choices are (a) accept the cost, (b) ask the Cartouche
+maintainers for a NIF-backed hash/curve backend, or (c) carve the hot path back onto NIFs
+and say so in the criterion. Not ours to pick.
+
+---
+
+## 2026-09-15 — 23 authored WebSocket `watch*` channel entries across seven venues name methods the client has no function for
+
+**Status:** 🆕 measured live (orchestrator, landed-base review of task 702, shipped
+`c18a0a7bd16d`) — not routed.
+
+`Bourse.WS.Channels` dispatches exactly four unified methods plus three fallbacks, so every
+other authored `websocket.subscribe.channels` key answers `{:error, :unsupported_method}`
+before the template is read — which means task 702 corrected two channel strings nothing can
+send (bybit `watchLiquidations`, `watchOHLCVForSymbols`) and left CCXT message hashes in
+entries it did not touch (bybit and hyperliquid `watchMyTrades` both carry `":{symbol}"`).
+Routing is a choice between trimming the authored set to what the client can dispatch and
+adding the missing `watch_*` methods; either way the next confrontation pass repeats this one
+until one of them is picked.
+
+---
 ## 2026-09-15 — the bybit funding-rate contract compared two separate live reads of a moving number at `1.0e-12`, so it went red on the venue's own drift
 
 **Status:** ✅ fixed 2026-09-15 inline (post-merge audit of `79e57bd`).
