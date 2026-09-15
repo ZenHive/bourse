@@ -3359,3 +3359,116 @@ Exchange: deribit; jede andere JSON-RPC-Venue mit Heartbeat dürfte gleich reagi
 ## 2026-09-15 — Coinbase pagination adds a future page at an unaligned end
 
 Observed in trading_dashboard with Bourse 0.8.0: `Bourse.fetch_ohlcv(client, "ETH/USD", "1h", since: 1785110400000, until: 1789429905831, limit: 1200)` fails with Coinbase HTTP 400 `Start cannot be in the future`. Provider `/time` agrees with the local clock. `CoinbaseCandlePagination.pagination/3` adds ceil alignment slack despite the start already being aligned, generating a fifth page whose start is the next hour. Expected: four pages covering the 1200 opened buckets, no page starting after the requested end. Aligning until to 1789426800000 returned 1200 real rows immediately. Consumer Calendar now aligns the inclusive end to the native candle opening; upstream should bound generated page starts/ends to the actual requested window. This was hidden by the chart continuing to display WebSocket-only prices after history failed.
+
+---
+
+## 2026-09-14 — `SpecConfig`-Heartbeat `:ping` erreicht in zen_websocket 0.9.0 den No-op-Zweig; `Bourse.WS` legt keine Heartbeat-Evidenz offen
+
+Call (bourse 0.8.0, zen_websocket 0.9.0, Quell-Inspektion): `Bourse.WS.connect(exchange, :public, [])`
+für `binance`/`binanceusdm`; `Bourse.WS.Config`/`SpecConfig` löst die Heartbeat-Konfiguration auf.
+
+Observed — drei zusammenhängende Befunde:
+
+1. `Bourse.WS.SpecConfig` konfiguriert Binance (und die meisten Venues außer Deribit)
+   mit `heartbeat: %{type: :ping, interval: …}` (`lib/bourse/ws/spec_config.ex:50,66,79,107,129,145,167,181,192`;
+   `heartbeat_type/3` fällt für `"native_frame"`/unbekannte `ping_kind` auf `:ping` zurück).
+   `ZenWebsocket.HeartbeatManager.send_heartbeat/1` kennt nur `%{type: :deribit}` und
+   `%{type: :ping_pong}`; jeder andere Typ trifft die explizite Fallback-Klausel
+   (`deps/zen_websocket/lib/zen_websocket/heartbeat_manager.ex:147-150`, Kommentar:
+   "unrecognized heartbeat types are no-ops"). Auf einem Binance-Socket wird damit
+   **nie** ein Heartbeat gesendet, obwohl einer konfiguriert ist — Timer läuft,
+   `active_heartbeats` bleibt leer.
+2. `Bourse.WS.get_state/1` liefert ein Verbindungs-Zustands-Atom, keine Heartbeat-Evidenz.
+   `ZenWebsocket.Client.get_heartbeat_health/1` (`client.ex:379`) existiert, wird von
+   `Bourse.WS` aber nirgends gewrappt (`grep heartbeat lib/bourse/ws.ex` trifft nur
+   Moduledoc und die Config-Weitergabe in Zeile 722/726).
+3. `HeartbeatManager` zählt ausbleibende Pongs in `heartbeat_failures`, trennt die
+   Verbindung aber nicht, wenn sie sich häufen. Es gibt damit keine
+   Failed-Heartbeat-Disconnect-Evidenz mit gebundener Deadline.
+
+Impact: ein Consumer kann verifizierte Transport-Liveness nicht von Datenstille
+unterscheiden. Für dichte Feeds ist ein leeres Marktdatenfenster ein brauchbarer
+Proxy, für dünne Feeds (Binance USD-M `{symbol}@forceOrder`) nicht: dort ist Stille
+der Normalfall, und die einzige verbleibende Evidenz ist der Disconnect selbst.
+Socket-Existenz, ein laufender Timer, ein erfolgreicher Session-Keepalive und ein
+leeres Marktdatenfenster sind keine Heartbeat-Evidenz.
+
+Expected: `Bourse.WS` konfiguriert einen von zen_websocket tatsächlich unterstützten
+Heartbeat-Mechanismus (`:ping_pong` für Venues mit nativen Control-Frames, siehe
+[Binance Spot WebSocket](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md))
+und legt verbindungsbezogene, verifizierte Heartbeat-Beobachtungen plus
+Failed-Heartbeat/Disconnect-Evidenz über eine eigene API offen — auch für geroutete
+Subscription-Sockets. Ein nicht unterstützter Heartbeat-Typ sollte laut scheitern
+statt still zum No-op zu werden.
+
+Konsument-Handling (trading_dashboard `MarketData.StreamWorker`, Task 263): ein
+stiller Liquidations-Socket wird allein auf Disconnect-Evidenz oben gehalten;
+Data-Freshness wird nur für dichte Feeds erzwungen. Die Failed-Heartbeat-Erholung ist
+am Worker mit injiziertem `{:down, :heartbeat_failed}` getestet — Bourse emittiert
+diesen Grund noch nicht. Der Dashboard-Code greift bewusst nicht auf `ws.zen_client`
+durch. Kontext: `docs/stream-liveness-contract.md` im trading_dashboard.
+Betroffene Exchange: binance, binanceusdm und jede Venue mit `heartbeat.type: :ping`.
+
+---
+
+## 2026-09-14 — `coinbaseexchange` hat keine öffentliche WebSocket-Hand-Base; `Bourse.WS.connect/2` ist für die Venue nicht benutzbar
+
+Call (bourse 0.8.0): `Bourse.WS.connect(:coinbaseexchange, :public, [])` bzw. jede
+Subscription auf dem öffentlichen Coinbase-Exchange-Feed.
+
+Observed: `coinbaseexchange` ist in `Bourse.WS.Config.registered_divergences/0` als
+`:websocket_not_configured` geführt. REST-Venue-Support (`Bourse.fetch_ohlcv/4`
+liefert für die Venue einwandfrei Kerzen) impliziert also keinen WebSocket-Support;
+es gibt keinen Weg, den öffentlichen `matches`/`heartbeat`-Kanal über Bourse zu
+konsumieren.
+
+Expected: eine öffentliche Hand-Base für Coinbase Exchange — URL
+`wss://ws-feed.exchange.coinbase.com`, `type: "subscribe"` mit `product_ids` und
+`channels: ["matches", "heartbeat"]`, Subscribe-Ack (`type: "subscriptions"`) und
+Reject (`type: "error"`, `message: "Failed to subscribe"`,
+`reason: "<kanal> is not a valid channel"`), sowie normalisierte Trades aus
+`trade_id`/`price`/`size`/`time`. Kanaldokumentation:
+https://docs.cdp.coinbase.com/exchange/websocket-feed/channels
+
+Live-Evidenz (2026-09-14, unabhängiger Probe gegen den öffentlichen Feed): ein
+`subscriptions`-Ack, ein historischer `last_match`, ein neuer `match`
+(trade_id 842699720, ETH-USD), ein `heartbeat` sowie Coinbases dokumentierte
+Ablehnung eines ungültigen Kanals. `last_match` ist historisch — als Volumen
+angewandt, doppelt es REST-Historie; `matches` darf Frames verlieren, und
+`heartbeat.last_trade_id` ist die Lücken-Evidenz für REST-Recovery. Ticker-Frames
+sind kein Ersatz, da sie das exakte Trade-Volumen nicht tragen.
+
+Konsument-Handling (trading_dashboard Task 261): `TradingDashboard.Chart.Feed`
+konsumiert den Feed direkt über `ZenWebsocket.Client` — denselben Client, den
+`Bourse.WS` wrappt — in `TradingDashboard.Chart.CoinbaseSocket`, ohne Credentials
+und ohne private Kanäle. Sobald die Hand-Base existiert, ersetzt
+`Bourse.WS.connect/2` diesen Direktzugriff; der Contract-Test dafür ist
+`test/integration/chart_stream_integration_test.exs`. Kontext:
+`docs/coinbase-chart-stream-blocker.md` im trading_dashboard.
+Betroffene Exchange: coinbaseexchange.
+
+---
+
+## 2026-09-15 — Deribit: Fehlercode 11044 `not_open_order` wird als `:operation_failed`/InvalidOrder statt `:order_not_found` klassifiziert
+
+Call (bourse 0.8.0): `Bourse.cancel_order/3` bzw. jeder `private/cancel` gegen Deribit auf eine Order, die die Venue bereits geschlossen hat — typisch nach einem MMP-Trigger, der alle MMP-Orders des Index selbst cancelt, oder nach einem Fill.
+
+Observed: Deribit antwortet `{"code": 11044, "message": "not_open_order"}` (Live-Probe 2026-09-15 auf test.deribit.com: Order anlegen, canceln, nochmals canceln). `priv/venues/deribit/authored/raw.json` mappt `"11044": "__function:InvalidOrder"` (CCXT-Erbe), der `%Bourse.Error{}` trägt `type: :invalid_order` bzw. auf dem WS-Pfad `:operation_failed`, `retry_class: :non_retryable`. Ein Konsument, der `:invalid_order` als definitive Ablehnung behandelt, macht aus einem idempotenten Cancel einen permanenten Fehler.
+
+Expected: `type: :order_not_found` (bourse kennt den Typ bereits, `Bourse.Error.order_not_found/1`). „Order ist nicht offen“ ist für einen Cancel das Ziel, nicht ein ungültiger Auftrag; CCXT-Konsumenten prüfen genau dafür auf OrderNotFound. Dokumentation: https://docs.deribit.com/api-reference/errors (11044 not_open_order).
+
+Konsument-Handling (trading_dashboard, 2026-09-15): `TradingDashboard.MarketMaking.DeribitSession.venue_error/1` und `TradingDashboard.Exchange.OrderPlacement.error_term/1` mappen den Code 11044 lokal auf `:order_not_found`; die Session liest danach `private/get_order_state`, um den echten Endzustand zu journalisieren. Beide Sonderfälle können entfallen, sobald bourse den Code richtig klassifiziert.
+Betroffene Exchange: deribit.
+
+---
+
+## 2026-09-15 — Deribit `parse_trade/2`: `fee` bleibt `%{"cost" => nil, "currency" => nil}`, obwohl der Rohtrade `fee`/`fee_currency` trägt
+
+Call (bourse 0.8.0): `Bourse.fetch_my_trades(exchange, symbol: "BTC/USD:BTC", limit: 1)` gegen test.deribit.com; gleiches Bild für die Trades in `Bourse.fetch_order/3` (`trades: []`, `fee: nil`).
+
+Observed (2026-09-15, Perp-Hedge-Fill trade_id 267453606): `%Bourse.Trade{fee: %{"cost" => nil, "currency" => nil}, fees: [], info: %{"fee" => 6.385e-5, "fee_currency" => "BTC", ...}}`. Die Normalisierung legt die Fee-Map an, füllt sie aber nicht aus den Deribit-Feldern `fee` und `fee_currency`. `cost` ist dagegen gefüllt.
+
+Expected: `fee: %Bourse.Fee{cost: 6.385e-5, currency: "BTC"}` (bzw. die Map mit denselben Werten) und `fees: [...]`, wie bei den anderen Venues. Deribit-Trade-Schema: https://docs.deribit.com/api-reference/trading/private-get_user_trades_by_instrument (`fee`, `fee_currency`).
+
+Konsument-Handling (trading_dashboard, 2026-09-15): `TradingDashboard.Exchange.OrderLifecycle` fällt beim Anlegen einer `OrderFill` auf `info["fee"]`/`info["fee_currency"]` zurück, wenn die normalisierte Fee keinen `cost` hat. Der Fallback entfällt, sobald die Normalisierung greift.
+Betroffene Exchange: deribit.
