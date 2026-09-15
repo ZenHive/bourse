@@ -31875,7 +31875,7 @@
       "id": "697",
       "phase": 16,
       "bundle": "live_triage",
-      "status": "in_progress",
+      "status": "done",
       "title": "Support Coinbase Exchange public trades and heartbeat streams through Bourse.WS",
       "scores": {
         "d": 5,
@@ -31912,10 +31912,17 @@
         "test/live/ws/",
         "test/bourse/ws/"
       ],
+      "shipped_in": "8ace58828f500aed5d5ddf9a8d4c375a829f0b3e",
       "body": "BUGS.md 2026-09-14 records an independent live Coinbase public-feed probe: subscriptions ack, historical last_match, subsequent match trade_id 842699720, heartbeat, and invalid-channel error. Bourse currently registers Coinbase Exchange as websocket_not_configured, so trading_dashboard maintains a direct ZenWebsocket socket.\n\nAdd the provider-owned public matches and heartbeat surface through the normal Bourse.WS API and broadcast routing, with subscribe acknowledgements/errors and normalized trades. Preserve the semantic difference between historical last_match and new match; surface heartbeat.last_trade_id so consumers can detect gaps without counting the historical frame twice. Use the official Exchange feed, not Advanced Trade, and require no credentials. Dispatch for a new public venue contract and live streaming verification. D5 covers config, protocol and routing; B8/U8 removes a running consumer's custom transport. See the official provider channels documentation indexed in the venue authority directory; re-probe all report claims before authoring.",
       "created_at": "2026-09-15",
       "started_at": "2026-09-15",
+      "done_at": "2026-09-15",
       "scored_at": "2026-09-15",
+      "implemented": "Landed by grok via merge-train; reviewer-approved (run run-1789452040772-59a1910e, 8ace58828f500aed5d5ddf9a8d4c375a829f0b3e).",
+      "delivered_by": "grok",
+      "verified": true,
+      "verified_by": "cursor",
+      "verification_ref": "harness-run:run-1789452040772-59a1910e",
       "cross_repo": []
     },
     {
