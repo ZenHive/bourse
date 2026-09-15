@@ -67,8 +67,6 @@ defmodule Bourse.RateLimiter do
   @typep normalized_check :: {key(), number(), number(), number()}
 
   # Default period of 1 second if a legacy `%{requests: n}` omits `period`
-  # Client API
-
   @default_period_ms 1000
 
   # Default cost if not specified
@@ -80,6 +78,8 @@ defmodule Bourse.RateLimiter do
 
   # Maximum idle time before a key is evicted entirely (24 hours)
   @key_eviction_age_ms 24 * 60 * 60 * 1000
+
+  # Client API
 
   @doc """
   Returns a child specification for starting the rate limiter under a supervisor.
@@ -200,9 +200,6 @@ defmodule Bourse.RateLimiter do
   The `period` argument is unused; it remains so callers that passed a window
   length keep compiling. Useful for debugging and monitoring.
   """
-
-  # Server callbacks
-
   @spec get_cost(key(), pos_integer(), GenServer.name()) :: number()
   def get_cost(key, period, name \\ __MODULE__) do
     GenServer.call(name, {:get_cost, normalize_key(key), period})
@@ -238,6 +235,8 @@ defmodule Bourse.RateLimiter do
   def reset_all(name \\ __MODULE__) do
     GenServer.call(name, :reset_all)
   end
+
+  # Server callbacks
 
   @impl true
   def init(_opts) do
@@ -490,28 +489,40 @@ defmodule Bourse.RateLimiter do
   defp persisted_bucket({:ok, paid, _accrued}, _cost, nil, _max_wait_ms, _now), do: paid
   defp persisted_bucket({:ok, _paid, accrued}, _cost, _delay_ms, _max_wait_ms, _now), do: accrued
 
-  defp persisted_bucket({:delay, delay_ms, accrued}, cost, _overall_delay, max_wait_ms, now) do
-    persist_delay(accrued, cost, delay_ms, max_wait_ms, now)
+  defp persisted_bucket({:delay, _bucket_delay, accrued}, cost, overall_delay, max_wait_ms, now) do
+    persist_delay(accrued, cost, overall_delay, max_wait_ms, now)
   end
 
   defp persist_delay(bucket, cost, delay_ms, max_wait_ms, now) do
     reserved = Map.get(bucket, :reserved, 0.0)
-    will_wait = is_integer(max_wait_ms) and delay_ms <= max_wait_ms
 
     cond do
-      will_wait ->
+      waiter_will_claim?(max_wait_ms, delay_ms, cost, reserved) ->
         %{
           bucket
-          | reserved: max(reserved, cost),
+          | reserved: cost,
             reserved_until: now + delay_ms + @reservation_slack_ms
         }
 
-      is_integer(max_wait_ms) and reserved > 0 and cost >= reserved ->
+      waiter_gives_up?(max_wait_ms, delay_ms, cost, reserved) ->
         expire_reservation(%{bucket | reserved_until: now}, now)
 
       true ->
         bucket
     end
+  end
+
+  defp waiter_will_claim?(max_wait_ms, delay_ms, cost, reserved) do
+    covers_wait?(max_wait_ms, delay_ms) and cost >= reserved
+  end
+
+  defp waiter_gives_up?(max_wait_ms, delay_ms, cost, reserved) do
+    is_integer(max_wait_ms) and not covers_wait?(max_wait_ms, delay_ms) and reserved > 0 and
+      cost >= reserved
+  end
+
+  defp covers_wait?(max_wait_ms, delay_ms) do
+    is_integer(max_wait_ms) and is_integer(delay_ms) and delay_ms <= max_wait_ms
   end
 
   defp new_bucket(capacity, refill_per_sec, now) do

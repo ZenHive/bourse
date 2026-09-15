@@ -17,7 +17,7 @@ defmodule Bourse.Defaults do
   | `:retry_policy` | `:safe_transient` | HTTP retry strategy (GET/HEAD only) |
   | `:retry_delay` | `nil` | Backoff between retries; `nil` keeps Req's exponential default |
   | `:rate_limiter_enabled` | `true` | Enable/disable rate limiter |
-  | `:rate_limit_max_wait_ms` | 10000 | Named upper bound on pre-request limiter sleep |
+  | `:rate_limit_max_wait_ms` | 10000 | Default per-call upper bound on pre-request limiter sleep |
   | `:rate_limit_cleanup_interval_ms` | 60000 | Interval for cleaning up old rate limit timestamps |
   | `:rate_limit_max_age_ms` | 60000 | Maximum age for rate limit request timestamps |
 

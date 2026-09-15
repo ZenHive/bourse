@@ -486,7 +486,10 @@ defmodule Bourse.RateLimiterTest do
                end
              end)
 
-      cheap = for _ <- 1..40, do: RateLimiter.check_rate(key, rate_limit, 1, name)
+      cheap =
+        for _ <- 1..40 do
+          RateLimiter.check_rates([{key, rate_limit, 1}], name, max_wait_ms: 10_000)
+        end
 
       assert Enum.all?(cheap, fn
                {:delay, ms} when ms > 0 -> true
@@ -509,7 +512,7 @@ defmodule Bourse.RateLimiterTest do
 
       cheap_ok =
         Enum.count(1..10, fn _ ->
-          RateLimiter.check_rate(key, rate_limit, 1, name) == :ok
+          RateLimiter.check_rates([{key, rate_limit, 1}], name, max_wait_ms: 10_000) == :ok
         end)
 
       assert cheap_ok == 0
@@ -543,6 +546,58 @@ defmodule Bourse.RateLimiterTest do
       bucket = Map.fetch!(:sys.get_state(name), key)
       assert bucket.reserved == 0
       assert bucket.tokens <= 1.0
+    end
+
+    test "cheap waiters cannot refresh a heavier reservation's deadline", %{name: name} do
+      key = {"cheap_refresh_#{:erlang.unique_integer([:positive])}", :public, "request"}
+      rate_limit = %{capacity: 1, refill_per_sec: 10}
+
+      assert {:delay, _} = RateLimiter.check_rates([{key, rate_limit, 8}], name, max_wait_ms: 2_000)
+
+      %{reserved: reserved, reserved_until: until} = Map.fetch!(:sys.get_state(name), key)
+      assert reserved >= 8
+
+      Process.sleep(20)
+
+      assert {:delay, _} = RateLimiter.check_rates([{key, rate_limit, 1}], name, max_wait_ms: 10_000)
+
+      bucket = Map.fetch!(:sys.get_state(name), key)
+      assert bucket.reserved == reserved
+      assert bucket.reserved_until == until
+    end
+
+    test "a failed multi-key admission does not reserve the short-delay key", %{name: name} do
+      fast = {"binance", :public, "ip"}
+      slow = {"binance", :public, "order_weight"}
+      fast_limit = %{capacity: 1, refill_per_sec: 50}
+      slow_limit = %{capacity: 1, refill_per_sec: 0.001}
+
+      assert :ok = RateLimiter.check_rate(fast, fast_limit, 1, name)
+      assert :ok = RateLimiter.check_rate(slow, slow_limit, 1, name)
+
+      assert {:delay, delay_ms} =
+               RateLimiter.check_rates(
+                 [{fast, fast_limit, 1}, {slow, slow_limit, 1}],
+                 name,
+                 max_wait_ms: 1_000
+               )
+
+      assert delay_ms > 1_000
+
+      state = :sys.get_state(name)
+      assert Map.fetch!(state, fast).reserved == 0
+      assert Map.fetch!(state, slow).reserved == 0
+    end
+
+    test "an abandoned heavy reservation expires so a cheap waiter can proceed", %{name: name} do
+      key = {"abandon_#{:erlang.unique_integer([:positive])}", :public, "request"}
+      rate_limit = %{capacity: 1, refill_per_sec: 40}
+
+      assert {:delay, _} = RateLimiter.check_rates([{key, rate_limit, 6}], name, max_wait_ms: 2_000)
+      assert Map.fetch!(:sys.get_state(name), key).reserved >= 6
+
+      assert :ok = RateLimiter.wait_for_capacity(key, rate_limit, 1, name, max_wait_ms: 2_000)
+      assert Map.fetch!(:sys.get_state(name), key).reserved == 0
     end
   end
 
