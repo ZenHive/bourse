@@ -24029,7 +24029,7 @@ shipped_in = "26bb651"
 id = "702"
 phase = 16
 bundle = "live_triage"
-status = "pending"
+status = "in_progress"
 title = "Authored public WS watch channels are not confronted against the venues' own channel names — derive's ticker is deprecated and two of its channels carry a CCXT message hash"
 scores = { d = 7, b = 7, u = 6 }
 markers = ["bug"]
@@ -24084,6 +24084,7 @@ it, and say which):
   already authored.
 """
 created_at = "2026-09-15"
+started_at = "2026-09-15"
 scored_at = "2026-09-15"
 
 [[task]]
