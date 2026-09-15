@@ -30,9 +30,6 @@ defmodule Bourse.Unified.OrderOptions do
          :ok <- check_route(exchange, method, params, opts) do
       Unified.call(exchange, method, capability, params, opts)
     end
-  rescue
-    error in Error ->
-      if error.type == :invalid_parameters, do: {:error, error}, else: reraise(error, __STACKTRACE__)
   end
 
   @doc "Resolves aliases and checks that the venue builder can preserve every requested control."
@@ -141,15 +138,29 @@ defmodule Bourse.Unified.OrderOptions do
   defp validate_edit_controls(_params, _exchange, _method, _controls), do: :ok
 
   defp validate_control_values(params, exchange) do
-    cond do
-      Enum.any?(@aliases, fn {key, _alias} -> Map.fetch(params, key) == {:ok, nil} end) ->
-        invalid(exchange, "order controls cannot be nil")
+    with :ok <- refuse_nil_controls(params, exchange),
+         :ok <- refuse_non_numeric_prices(params, exchange),
+         :ok <- refuse_invalid_reduce_only(params, exchange) do
+      refuse_invalid_time_in_force(params, exchange)
+    end
+  end
 
+  defp refuse_nil_controls(params, exchange) do
+    if Enum.any?(@aliases, fn {key, _alias} -> Map.fetch(params, key) == {:ok, nil} end),
+      do: invalid(exchange, "order controls cannot be nil"),
+      else: :ok
+  end
+
+  defp refuse_non_numeric_prices(params, exchange) do
+    if Enum.any?(@conditional_keys, &(Map.has_key?(params, &1) and not numeric_price?(params[&1]))),
+      do: invalid(exchange, "trigger and protective prices must be numeric"),
+      else: :ok
+  end
+
+  defp refuse_invalid_reduce_only(params, exchange) do
+    cond do
       Map.has_key?(params, "reduce_only") and not is_boolean(params["reduce_only"]) ->
         invalid(exchange, "reduce_only must be a boolean")
-
-      Map.has_key?(params, "time_in_force") and not is_binary(params["time_in_force"]) ->
-        invalid(exchange, "time_in_force must be a string")
 
       params["reduce_only"] == true and exchange.id in ["alpaca", "coinbaseexchange"] ->
         invalid(exchange, "this order cannot express reduce_only")
@@ -158,6 +169,19 @@ defmodule Bourse.Unified.OrderOptions do
         :ok
     end
   end
+
+  defp refuse_invalid_time_in_force(params, exchange) do
+    if Map.has_key?(params, "time_in_force") and not is_binary(params["time_in_force"]),
+      do: invalid(exchange, "time_in_force must be a string"),
+      else: :ok
+  end
+
+  defp numeric_price?(value) when is_number(value), do: true
+
+  defp numeric_price?(value) when is_binary(value), do: match?({_parsed, ""}, Float.parse(value))
+
+  defp numeric_price?(%Decimal{}), do: true
+  defp numeric_price?(_value), do: false
 
   defp validate_conditionals(_params, _exchange, _method, []), do: :ok
 
@@ -258,7 +282,7 @@ defmodule Bourse.Unified.OrderOptions do
 
   defp check_route(%Exchange{id: venue} = exchange, :create_order, params, opts) when venue in @binance do
     if Enum.any?(@conditional_keys, &Map.has_key?(params, &1)) do
-      with {:ok, shapes} <- Unified.request_param_shapes(exchange, :create_order, params, opts) do
+      with {:ok, shapes} <- request_shapes(exchange, :create_order, params, opts) do
         require_algo_shapes(shapes, exchange)
       end
     else
@@ -283,7 +307,7 @@ defmodule Bourse.Unified.OrderOptions do
     conditional? = Enum.any?(~w(triggerPrice stopLossPrice takeProfitPrice), &Map.has_key?(params, &1))
 
     if conditional? or params["reduceOnly"] == true do
-      with {:ok, [shape]} <- Unified.request_param_shapes(exchange, method, params, opts) do
+      with {:ok, [shape]} <- request_shapes(exchange, method, params, opts) do
         validate_bybit_category(shape["category"], params, conditional?, exchange)
       end
     else
@@ -293,7 +317,7 @@ defmodule Bourse.Unified.OrderOptions do
 
   defp check_route(%Exchange{id: "okx"} = exchange, method, %{"reduceOnly" => true} = params, opts)
        when method in [:create_order, :create_market_buy_order_with_cost, :create_market_sell_order_with_cost] do
-    with {:ok, [shape]} <- Unified.request_param_shapes(exchange, method, params, opts) do
+    with {:ok, [shape]} <- request_shapes(exchange, method, params, opts) do
       if shape["tdMode"] == "cash",
         do: invalid(exchange, "OKX cash orders cannot express reduce_only"),
         else: :ok
@@ -324,6 +348,16 @@ defmodule Bourse.Unified.OrderOptions do
   end
 
   defp validate_bybit_category(_category, _params, _conditional?, _exchange), do: :ok
+
+  # Shaping raises caller-input `invalid_parameters` (unsupported type, missing
+  # field). Convert those at this boundary so a bad route is an error, not a
+  # throw past `Unified.call/5`'s own raise-vs-tuple contract.
+  defp request_shapes(exchange, method, params, opts) do
+    Unified.request_param_shapes(exchange, method, params, opts)
+  rescue
+    error in Error ->
+      if error.type == :invalid_parameters, do: {:error, error}, else: reraise(error, __STACKTRACE__)
+  end
 
   defp rename(params, pairs) do
     Enum.reduce(pairs, params, fn {source, target}, acc ->

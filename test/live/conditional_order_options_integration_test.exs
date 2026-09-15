@@ -66,20 +66,17 @@ defmodule Bourse.ConditionalOrderOptionsIntegrationTest do
         assert {:ok, %Order{id: id}} = Bourse.create_order(exchange, @symbol, @order_type, "sell", @amount, order_opts)
         assert is_binary(id) and id != ""
 
-        try do
-          read_opts = Keyword.put(opts, :symbol, @symbol) ++ book_selector(@venue)
-          assert {:ok, orders} = Bourse.fetch_open_orders(exchange, read_opts)
-          order = Enum.find(orders, &(&1.id == id))
-          assert %Order{} = order, "owned trigger #{id} missing from #{@venue} conditional book"
-          assert order.status == "open"
-          assert order.side == "sell"
-          assert order.filled in [nil, 0, 0.0]
-          assert numeric(order.info[@native_trigger] || order.trigger_price) == trigger
-          assert_untriggered!(@venue, order.info)
-        after
-          assert {:ok, _} =
-                   Bourse.cancel_order(exchange, id, Keyword.put(opts, :symbol, @symbol) ++ book_selector(@venue))
-        end
+        read_opts = Keyword.put(opts, :symbol, @symbol) ++ book_selector(@venue)
+        on_exit(fn -> cancel_owned(exchange, id, read_opts) end)
+
+        order = resting_trigger!(@venue, exchange, id, read_opts)
+        assert order.status == "open"
+        assert order.side == "sell"
+        assert order.filled in [nil, 0, 0.0]
+        assert numeric(order.info[@native_trigger] || order.trigger_price) == trigger
+        assert_untriggered!(@venue, order.info)
+
+        assert {:ok, _} = Bourse.cancel_order(exchange, id, read_opts)
       end
 
       rejected_opts = [{hd(spellings(@venue)), trigger} | opts] ++ selectors(@venue)
@@ -152,6 +149,36 @@ defmodule Bourse.ConditionalOrderOptionsIntegrationTest do
   defp assert_untriggered!(:deribit, info), do: assert(info["order_state"] == "untriggered")
   defp assert_untriggered!(:alpaca, info), do: assert(info["status"] in ["new", "accepted"])
   defp assert_untriggered!(_binance, info), do: assert(info["algoStatus"] == "NEW")
+
+  defp resting_trigger!(venue, exchange, id, read_opts) do
+    assert {:ok, orders} = Bourse.fetch_open_orders(exchange, read_opts)
+    order = Enum.find(orders, &(&1.id == id))
+
+    if is_nil(order) do
+      seen =
+        case Bourse.fetch_order(exchange, id, read_opts) do
+          {:ok, %Order{} = found} ->
+            " fetch_order status=#{inspect(found.status)} filled=#{inspect(found.filled)} type=#{inspect(found.type)}"
+
+          other ->
+            " fetch_order=#{inspect(other)}"
+        end
+
+      flunk(
+        "owned trigger #{id} missing from #{venue} conditional book; a market fill is a failure, not cleanup success.#{seen}"
+      )
+    end
+
+    order
+  end
+
+  defp cancel_owned(exchange, id, read_opts) do
+    case Bourse.cancel_order(exchange, id, read_opts) do
+      {:ok, _} -> :ok
+      {:error, %Error{type: type}} when type in [:order_not_found, :invalid_order] -> :ok
+      {:error, error} -> flunk("cleanup for owned trigger #{id} failed: #{inspect(error)}")
+    end
+  end
 
   defp numeric(value) when is_number(value), do: value
   defp numeric(value) when is_binary(value), do: value |> Float.parse() |> elem(0)

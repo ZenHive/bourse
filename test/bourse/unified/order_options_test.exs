@@ -87,9 +87,26 @@ defmodule Bourse.Unified.OrderOptionsTest do
              shape(exchange, Map.merge(order(), %{"type" => "limit", "price" => 40_000}))
   end
 
+  test "non-order methods and numeric price spellings pass through preparation" do
+    exchange = Exchange.new!("okx")
+    assert {:ok, %{"limit" => 5}} = OrderOptions.prepare(exchange, :fetch_open_orders, %{"limit" => 5})
+
+    assert {:ok, %{"triggerPrice" => "40000.5"}} =
+             OrderOptions.prepare(exchange, :create_order, Map.put(order(), "trigger_price", "40000.5"))
+
+    assert {:ok, %{"triggerPrice" => %Decimal{} = price}} =
+             OrderOptions.prepare(exchange, :create_order, Map.put(order(), "trigger_price", Decimal.new("40000")))
+
+    assert Decimal.equal?(price, Decimal.new("40000"))
+
+    assert {:error, %Error{type: :invalid_parameters}} =
+             OrderOptions.prepare(exchange, :create_order, Map.put(order(), "trigger_price", "40x"))
+  end
+
   test "nil controls, competing triggers and unsupported edit controls fail closed" do
     for {venue, method, extra} <- [
           {"okx", :create_order, %{"trigger_price" => nil}},
+          {"okx", :create_order, %{"trigger_price" => :not_a_price}},
           {"okx", :create_order, %{"trigger_price" => 40_000, "stop_loss_price" => 30_000}},
           {"binanceusdm", :create_order, %{"stop_loss_price" => 40_000, "take_profit_price" => 90_000}},
           {"bybit", :edit_order, %{"trigger_price" => 40_000}},
@@ -166,6 +183,9 @@ defmodule Bourse.Unified.OrderOptionsTest do
                trigger_price: 40_000,
                endpoint_index: index
              )
+
+    assert {:error, %Error{type: :invalid_parameters}} =
+             Bourse.create_order(exchange, "BTC/USDT:USDT", "market", "sell", 1, trigger_price: :not_a_price)
   end
 
   test "spot reduce-only and Bybit spot dual legs are refused before submitting an order" do
@@ -226,6 +246,11 @@ defmodule Bourse.Unified.OrderOptionsTest do
 
     assert {:error, %Error{type: :invalid_parameters}} =
              Bourse.create_order(exchange, market.symbol, "market", "sell", 1, trigger_price: 40_000, category: "option")
+
+    assert {:error, %Error{type: :invalid_parameters}} =
+             Bourse.create_orders(exchange, [Map.merge(order(), %{"trigger_price" => 40_000, "category" => "option"})],
+               category: "option"
+             )
   end
 
   test "unsupported wrappers and native overrides cannot discard protective controls" do
