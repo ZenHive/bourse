@@ -11,7 +11,9 @@ defmodule Bourse.WS.ConnectionOwnerTest do
     {:ok, owner} = ConnectionOwner.start("wss://a.test", client)
     on_exit(fn -> if Process.alive?(owner), do: GenServer.stop(owner) end)
 
+    assert {:ok, %{"wss://a.test" => ^client}} = ConnectionOwner.snapshot(owner, 1_000)
     assert {:ok, [^client]} = ConnectionOwner.take(owner, 1_000)
+    assert {:error, :connection_closed} = ConnectionOwner.snapshot(owner, 1_000)
 
     assert {:error, :connection_closed} =
              ConnectionOwner.checkout(

@@ -20,7 +20,7 @@ defmodule Bourse.WS.Config do
         market_url_sandbox: String.t() | nil,
         private_url: String.t() | nil,
         private_url_sandbox: String.t() | nil,
-        heartbeat: %{type: :ping | :deribit | :custom, interval: pos_integer() | nil, optional(:payload) => term()},
+        heartbeat: :disabled | %{type: :ping_pong | :deribit, interval: pos_integer() | nil},
         subscription_pattern: atom(),
         subscription_config: map(),
         auth_pattern: atom() | nil,

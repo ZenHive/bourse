@@ -37,7 +37,7 @@ defmodule Bourse.WS.SpecConfigTest do
       for id <- @ws_venues do
         assert %{} = config = Config.for_exchange(id)
         assert is_atom(config.subscription_pattern)
-        assert is_map(config.heartbeat)
+        assert config.heartbeat == :disabled or is_map(config.heartbeat)
       end
     end
 
@@ -50,10 +50,10 @@ defmodule Bourse.WS.SpecConfigTest do
       assert lighter.auth_pattern == nil
     end
 
-    test "bybit heartbeat interval comes from spec (18000ms)" do
+    test "bybit disables heartbeat because zen_websocket cannot send JSON pings" do
       exchange = Exchange.new!("bybit")
       config = Config.for_exchange(exchange)
-      assert config.heartbeat.interval == 18_000
+      assert config.heartbeat == :disabled
     end
 
     test "deribit heartbeat keeps deribit type from hand base" do
@@ -61,6 +61,18 @@ defmodule Bourse.WS.SpecConfigTest do
       config = Config.for_exchange(exchange)
       assert config.heartbeat.type == :deribit
       assert config.heartbeat.interval == 30_000
+    end
+
+    test "native-frame venues use ping_pong; JSON and string pings stay disabled" do
+      assert Config.for_exchange("binance").heartbeat.type == :ping_pong
+      assert Config.for_exchange("binanceusdm").heartbeat.type == :ping_pong
+      assert Config.for_exchange("binancecoinm").heartbeat.type == :ping_pong
+      assert Config.for_exchange("derive").heartbeat.type == :ping_pong
+      assert Config.for_exchange("bybit").heartbeat == :disabled
+      assert Config.for_exchange("okx").heartbeat == :disabled
+      assert Config.for_exchange("hyperliquid").heartbeat == :disabled
+      assert Config.for_exchange("alpaca").heartbeat == :disabled
+      assert Config.for_exchange("lighter").heartbeat == :disabled
     end
 
     test "hyperliquid is supported with public URL" do

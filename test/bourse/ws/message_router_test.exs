@@ -71,6 +71,15 @@ defmodule Bourse.WS.MessageRouterTest do
       assert {:unknown, ^unknown} = MessageRouter.route(unknown, nil, exchange)
     end
 
+    test "classifies Deribit public/test replies as system without a channel" do
+      exchange = Exchange.new!("deribit")
+      envelope = Envelope.for_exchange(exchange)
+      reply = %{"jsonrpc" => "2.0", "result" => %{"version" => "1.2.26"}}
+
+      assert {:system, ^reply} = MessageRouter.route(reply, envelope, exchange)
+      assert {:system, ^reply} = MessageRouter.route(reply, exchange)
+    end
+
     test "routes Binance depthUpdate", %{envelope: _envelope} do
       exchange = Exchange.new!("binance")
       envelope = %{"discriminator_field" => "e", "data_field" => "self", "match_type" => "exact"}

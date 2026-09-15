@@ -91,6 +91,13 @@ defmodule Bourse.WS.SubscribeAckTest do
 
       assert :not_ack = SubscribeAck.classify("derive", %{"jsonrpc" => "2.0", "method" => "subscription"})
       assert :not_ack = SubscribeAck.classify("derive", %{"channel" => "ticker"})
+
+      # Deribit public/test (heartbeat) is a version map, not a subscribe echo.
+      assert :not_ack =
+               SubscribeAck.classify("deribit", %{
+                 "jsonrpc" => "2.0",
+                 "result" => %{"version" => "1.2.26"}
+               })
     end
 
     test "deribit's empty result list is a refusal, not an acknowledgement" do

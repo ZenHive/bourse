@@ -6,6 +6,7 @@ defmodule Bourse.WS.MessageRouter do
   """
 
   alias Bourse.Exchange
+  alias Bourse.WS.ControlFrame
   alias Bourse.WS.Dispatch
   alias Bourse.WS.Envelope
 
@@ -55,8 +56,7 @@ defmodule Bourse.WS.MessageRouter do
   end
 
   @spec response_message?(map()) :: boolean()
-  defp response_message?(%{"id" => _, "result" => _}), do: true
-  defp response_message?(_), do: false
+  defp response_message?(msg), do: ControlFrame.classify(msg) == :control
 
   @doc "Extracts the channel name using the envelope's `discriminator_field`."
   @spec extract_channel(map(), map()) :: String.t() | nil

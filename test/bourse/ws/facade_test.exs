@@ -22,6 +22,17 @@ defmodule Bourse.WS.FacadeTest do
     end
 
     def handle_call(:get_state, _from, owner), do: {:reply, :connected, owner}
+
+    def handle_call(:get_heartbeat_health, _from, owner) do
+      {:reply,
+       %{
+         active_heartbeats: [],
+         last_heartbeat_at: nil,
+         failure_count: 0,
+         config: :disabled,
+         timer_active: false
+       }, owner}
+    end
   end
 
   setup do
@@ -53,6 +64,24 @@ defmodule Bourse.WS.FacadeTest do
     assert_receive {:transport_sent, ~s({"op":"ping"})}
     assert WS.get_state(ws) == :connected
     assert WS.get_url(ws) == "wss://offline.test"
+
+    assert {:ok,
+            [
+              %{
+                url: "wss://offline.test",
+                role: :primary,
+                connection_state: :connected,
+                heartbeat: %{failure_count: 0, config: :disabled}
+              }
+            ]} = WS.health(ws)
+  end
+
+  test "unsupported heartbeat types fail without opening a socket" do
+    assert {:error, {:unsupported_heartbeat, :ping}} =
+             WS.connect(Exchange.new!("bybit"), :public,
+               heartbeat_config: %{type: :ping, interval: 1_000},
+               connect_fun: fn _url, _opts -> flunk("must not connect") end
+             )
   end
 
   test "binanceusdm watch_ticker stays on a non-authored test-double URL", %{client: client} do

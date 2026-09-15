@@ -9,8 +9,6 @@ defmodule Bourse.WS.SpecConfig do
   alias Bourse.Exchange
   alias Bourse.Spec
 
-  @public_heartbeat_interval_ms 30_000
-
   @doc """
   Builds the effective WS config map for an exchange, or nil when unsupported.
 
@@ -47,7 +45,7 @@ defmodule Bourse.WS.SpecConfig do
       public_url_sandbox: "wss://stream.data.alpaca.markets/v2/test",
       private_url: nil,
       private_url_sandbox: nil,
-      heartbeat: %{type: :ping, interval: @public_heartbeat_interval_ms},
+      heartbeat: :disabled,
       subscription_pattern: :action_channels,
       subscription_config: %{},
       auth_pattern: :action_key_secret,
@@ -63,7 +61,7 @@ defmodule Bourse.WS.SpecConfig do
       # host, opened by a signed request rather than by a key in the path.
       private_url: "wss://ws-api.binance.com:443/ws-api/v3",
       private_url_sandbox: "wss://ws-api.testnet.binance.vision/ws-api/v3",
-      heartbeat: %{type: :ping, interval: 180_000},
+      heartbeat: %{type: :ping_pong, interval: 180_000},
       subscription_pattern: :method_subscribe,
       subscription_config: %{separator: "@", market_id_format: :lowercase},
       auth_pattern: :ws_api_signature,
@@ -76,7 +74,7 @@ defmodule Bourse.WS.SpecConfig do
       market_url_sandbox: "wss://demo-fstream.binance.com/market/ws",
       private_url: "wss://fstream.binance.com/private/ws",
       private_url_sandbox: "wss://demo-fstream.binance.com/private/ws",
-      heartbeat: %{type: :ping, interval: 180_000},
+      heartbeat: %{type: :ping_pong, interval: 180_000},
       subscription_pattern: :method_subscribe,
       subscription_config: %{separator: "@", market_id_format: :lowercase},
       auth_pattern: :listen_key,
@@ -104,7 +102,7 @@ defmodule Bourse.WS.SpecConfig do
       public_url_sandbox: "wss://demo-dstream.binance.com/ws",
       private_url: "wss://dstream.binance.com/ws",
       private_url_sandbox: "wss://demo-dstream.binance.com/ws",
-      heartbeat: %{type: :ping, interval: 180_000},
+      heartbeat: %{type: :ping_pong, interval: 180_000},
       subscription_pattern: :method_subscribe,
       subscription_config: %{separator: "@", market_id_format: :lowercase},
       auth_pattern: :listen_key,
@@ -126,7 +124,7 @@ defmodule Bourse.WS.SpecConfig do
       public_url_sandbox: "wss://stream-testnet.{hostname}/v5/public/linear",
       private_url: "wss://stream.{hostname}/v5/private",
       private_url_sandbox: "wss://stream-testnet.{hostname}/v5/private",
-      heartbeat: %{type: :ping, interval: 20_000},
+      heartbeat: :disabled,
       subscription_pattern: :op_subscribe,
       subscription_config: %{separator: "."},
       auth_pattern: :direct_hmac_expiry,
@@ -142,7 +140,7 @@ defmodule Bourse.WS.SpecConfig do
       public_url_sandbox: "wss://wspap.okx.com:8443/ws/v5/public",
       private_url: "wss://ws.okx.com:8443/ws/v5/private",
       private_url_sandbox: "wss://wspap.okx.com:8443/ws/v5/private",
-      heartbeat: %{type: :ping, interval: 25_000},
+      heartbeat: :disabled,
       subscription_pattern: :op_subscribe_objects,
       subscription_config: %{},
       auth_pattern: :iso_passphrase,
@@ -164,7 +162,7 @@ defmodule Bourse.WS.SpecConfig do
       public_url_sandbox: "wss://api-demo.lyra.finance/ws",
       private_url: "wss://api.lyra.finance/ws",
       private_url_sandbox: "wss://api-demo.lyra.finance/ws",
-      heartbeat: %{type: :ping, interval: 9_000},
+      heartbeat: %{type: :ping_pong, interval: 9_000},
       # Derive wire shape: {"method":"subscribe","params":{"channels":[...]}}
       # Registered atom is :method_params_subscribe (MethodParams); bare
       # :method_params has no module_for_pattern clause and falls through to nil.
@@ -178,7 +176,7 @@ defmodule Bourse.WS.SpecConfig do
       public_url_sandbox: "wss://api.hyperliquid-testnet.xyz/ws",
       private_url: nil,
       private_url_sandbox: nil,
-      heartbeat: %{type: :ping, interval: 20_000},
+      heartbeat: :disabled,
       subscription_pattern: :method_subscription,
       subscription_config: %{},
       auth_pattern: nil,
@@ -189,7 +187,7 @@ defmodule Bourse.WS.SpecConfig do
       public_url_sandbox: "wss://testnet.zklighter.elliot.ai/stream",
       private_url: nil,
       private_url_sandbox: nil,
-      heartbeat: %{type: :ping, interval: @public_heartbeat_interval_ms},
+      heartbeat: :disabled,
       subscription_pattern: :type_subscribe,
       subscription_config: %{args_field: "channel", args_format: :string},
       auth_pattern: nil,
@@ -252,32 +250,26 @@ defmodule Bourse.WS.SpecConfig do
   end
 
   defp heartbeat_from_spec(exchange_id, hb, config) do
-    hand = Map.get(config, :heartbeat, %{})
-    interval = Map.get(hb, "keep_alive_ms") || Map.get(hand, :interval)
+    case heartbeat_type(exchange_id, Map.get(hb, "ping_kind")) do
+      :disabled ->
+        :disabled
 
-    base = %{
-      type: heartbeat_type(exchange_id, Map.get(hb, "ping_kind"), hand),
-      interval: interval
-    }
-
-    case Map.get(hb, "ping_payload") do
-      payload when is_map(payload) or is_binary(payload) ->
-        Map.put(base, :payload, payload)
-
-      _ ->
-        base
+      type ->
+        interval = Map.get(hb, "keep_alive_ms") || hand_interval(config)
+        %{type: type, interval: interval}
     end
   end
 
-  defp heartbeat_type("deribit", "native_frame", _hand), do: :deribit
+  defp hand_interval(%{heartbeat: %{interval: interval}}), do: interval
+  defp hand_interval(_config), do: nil
 
-  defp heartbeat_type(_exchange_id, "native_frame", hand) do
-    Map.get(hand, :type, :ping)
-  end
-
-  defp heartbeat_type(_exchange_id, "json_message", hand), do: Map.get(hand, :type, :custom)
-  defp heartbeat_type(_exchange_id, "string_message", hand), do: Map.get(hand, :type, :custom)
-  defp heartbeat_type(_exchange_id, _kind, hand), do: Map.get(hand, :type, :ping)
+  # zen_websocket 0.9.0 only sends `:deribit` and `:ping_pong`. JSON/string
+  # application pings would be silent no-ops, so they stay disabled.
+  defp heartbeat_type("deribit", "native_frame"), do: :deribit
+  defp heartbeat_type(_exchange_id, "native_frame"), do: :ping_pong
+  defp heartbeat_type(_exchange_id, "json_message"), do: :disabled
+  defp heartbeat_type(_exchange_id, "string_message"), do: :disabled
+  defp heartbeat_type(_exchange_id, _kind), do: :disabled
 
   defp merge_auth(config, _exchange_id, spec) do
     case get_in(spec, ["websocket", "auth"]) do

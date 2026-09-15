@@ -25,7 +25,9 @@ defmodule Bourse.WS do
   Lower-level subscribe with pre-formatted channels still works:
 
       :ok = Bourse.WS.subscribe(ws, ["tickers.BTCUSDT"])
-      # Data messages arrive at the calling process as {:websocket_message, decoded_map}
+      # Market data arrives as {:websocket_message, decoded_map}. Heartbeat
+      # replies and other transport control arrive as {:websocket_unmatched_response, _}.
+      {:ok, observations} = Bourse.WS.health(ws)
       Bourse.WS.close(ws)
 
   ## Subscribe return shape (unified)
@@ -66,7 +68,9 @@ defmodule Bourse.WS do
   alias Bourse.WS.Channels
   alias Bourse.WS.Config
   alias Bourse.WS.ConnectionOwner
+  alias Bourse.WS.ControlFrame
   alias Bourse.WS.Handle
+  alias Bourse.WS.Heartbeat
   alias Bourse.WS.ListenKey
   alias Bourse.WS.SubscribeAck
   alias Bourse.WS.Subscription
@@ -129,13 +133,28 @@ defmodule Bourse.WS do
           connect_fun: (String.t(), keyword() -> {:ok, ZenClient.t()} | {:error, term()})
         }
 
+  @typedoc """
+  One socket's liveness observation from `health/1`.
+
+  `heartbeat` is the locked dependency's `get_heartbeat_health/1` map, or
+  `nil` when the client process cannot be queried.
+  """
+  @type socket_health :: %{
+          url: String.t(),
+          role: :primary | :routed,
+          connection_state: :connecting | :connected | :disconnected,
+          heartbeat: map() | nil
+        }
+
   @doc """
   Connects to the exchange's WebSocket endpoint for the given section
   (`:public` or `:private`).
 
   Extra opts are forwarded to `ZenWebsocket.Client.connect/2`. The connection's
   heartbeat config is resolved from `Bourse.WS.Config` unless the caller overrides
-  `heartbeat_config` in opts. `connect_fun:` replaces `ZenWebsocket.Client.connect/2`
+  `heartbeat_config` in opts. Only `:deribit` and `:ping_pong` are accepted;
+  unsupported types return `{:error, {:unsupported_heartbeat, type}}`.
+  `connect_fun:` replaces `ZenWebsocket.Client.connect/2`
   for instrumented transports and is reused for authored secondary hosts.
 
   Returns `{:error, :websocket_not_configured}` if a runtime-supported exchange
@@ -182,7 +201,7 @@ defmodule Bourse.WS do
     with {:ok, config} <- fetch_config(exchange),
          {:ok, url} <- fetch_url(exchange, section),
          {:ok, url, auth} <- maybe_embed_credential(exchange, config, section, auth?, url, connect_opts),
-         zen_opts = build_connect_opts(config, connect_opts),
+         {:ok, zen_opts} <- build_connect_opts(config, connect_opts),
          {:ok, zen_client} <- connect_fun.(url, zen_opts),
          {:ok, connection_owner} <- own_connection(url, zen_client) do
       ws = %__MODULE__{
@@ -491,6 +510,27 @@ defmodule Bourse.WS do
   @spec get_state(t()) :: :connecting | :connected | :disconnected
   def get_state(%__MODULE__{zen_client: zen_client}), do: ZenClient.get_state(zen_client)
 
+  @doc """
+  Connection-scoped liveness observations for the primary socket and every
+  routed host this connection still owns.
+
+  Heartbeat fields are the locked dependency's `get_heartbeat_health/1` map
+  (`active_heartbeats`, `last_heartbeat_at`, `failure_count`, `config`,
+  `timer_active`). Market-data silence is not treated as a miss. A missing or
+  closed owner is an error rather than an empty healthy list.
+  """
+  @spec health(t()) ::
+          {:ok, [socket_health()]} | {:error, :connection_closed | {:connection_owner_down, term()}}
+  def health(%__MODULE__{connection_owner: nil} = ws) do
+    {:ok, [socket_health(ws.url, ws.zen_client, :primary)]}
+  end
+
+  def health(%__MODULE__{} = ws) do
+    with {:ok, connections} <- snapshot_owned_connections(ws) do
+      {:ok, health_observations(ws.url, connections)}
+    end
+  end
+
   @doc "Returns the resolved WS URL this connection is using."
   @spec get_url(t()) :: String.t()
   def get_url(%__MODULE__{url: url}), do: url
@@ -683,6 +723,30 @@ defmodule Bourse.WS do
     :exit, reason -> {:error, reason}
   end
 
+  defp snapshot_owned_connections(ws) do
+    ConnectionOwner.snapshot(ws.connection_owner, connection_owner_timeout(ws))
+  catch
+    :exit, reason -> {:error, {:connection_owner_down, reason}}
+  end
+
+  defp health_observations(primary_url, connections) do
+    connections
+    |> Enum.map(fn {url, client} ->
+      role = if url == primary_url, do: :primary, else: :routed
+      socket_health(url, client, role)
+    end)
+    |> Enum.sort_by(fn obs -> {obs.role != :primary, obs.url} end)
+  end
+
+  defp socket_health(url, client, role) do
+    %{
+      url: url,
+      role: role,
+      connection_state: ZenClient.get_state(client),
+      heartbeat: ZenClient.get_heartbeat_health(client)
+    }
+  end
+
   defp stop_connection_owner(owner, timeout), do: ConnectionOwner.stop(owner, timeout)
 
   defp connection_owner_timeout(%__MODULE__{connect_opts: opts}) do
@@ -721,10 +785,19 @@ defmodule Bourse.WS do
   defp build_connect_opts(config, opts) do
     heartbeat = Keyword.get(opts, :heartbeat_config, config.heartbeat)
 
-    opts
-    |> Keyword.delete(:pre_auth_opts)
-    |> Keyword.put(:heartbeat_config, heartbeat)
-    |> put_default_handler()
+    case Heartbeat.validate(heartbeat) do
+      :ok ->
+        opts =
+          opts
+          |> Keyword.delete(:pre_auth_opts)
+          |> Keyword.put(:heartbeat_config, heartbeat)
+          |> put_default_handler()
+
+        {:ok, opts}
+
+      {:error, _} = error ->
+        error
+    end
   end
 
   defp put_default_handler(opts) do
@@ -732,13 +805,20 @@ defmodule Bourse.WS do
 
     Keyword.put_new_lazy(opts, :handler, fn ->
       fn
-        {:message, data} -> send(parent, {:websocket_message, data})
-        {:binary, data} -> send(parent, {:websocket_message, data})
+        {:message, data} -> send(parent, market_or_control(data))
+        {:binary, data} -> send(parent, market_or_control(data))
         {:unmatched_response, response} -> send(parent, {:websocket_unmatched_response, response})
         {:protocol_error, reason} -> send(parent, {:websocket_protocol_error, reason})
         _other -> :ok
       end
     end)
+  end
+
+  defp market_or_control(data) do
+    case ControlFrame.classify(data) do
+      :control -> {:websocket_unmatched_response, data}
+      :market -> {:websocket_message, data}
+    end
   end
 
   defp merge_subscription_config(%{subscription_config: base}, opts) when is_list(opts) do

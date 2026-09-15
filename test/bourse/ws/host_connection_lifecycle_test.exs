@@ -4,6 +4,7 @@ defmodule Bourse.WS.HostConnectionLifecycleTest do
   alias Bourse.Exchange
   alias Bourse.WS
   alias Bourse.WS.Adapter
+  alias Bourse.WS.ConnectionOwner
   alias Bourse.WS.URLRouting
   alias ZenWebsocket.Client
 
@@ -26,7 +27,14 @@ defmodule Bourse.WS.HostConnectionLifecycleTest do
     @impl true
     def init({owner, url, opts}) do
       send(owner, {:transport_connected, url, self(), opts})
-      {:ok, %{owner: owner, url: url, handler: Keyword.fetch!(opts, :handler)}}
+
+      {:ok,
+       %{
+         owner: owner,
+         url: url,
+         handler: Keyword.fetch!(opts, :handler),
+         heartbeat_config: Keyword.get(opts, :heartbeat_config, :disabled)
+       }}
     end
 
     @impl true
@@ -41,12 +49,23 @@ defmodule Bourse.WS.HostConnectionLifecycleTest do
     end
 
     def handle_call(:get_state, _from, state), do: {:reply, :connected, state}
+
+    def handle_call(:get_heartbeat_health, _from, state) do
+      {:reply,
+       %{
+         active_heartbeats: [],
+         last_heartbeat_at: nil,
+         failure_count: 0,
+         config: state.heartbeat_config,
+         timer_active: false
+       }, state}
+    end
   end
 
   test "watch and raw subscriptions reuse hosts, preserve options, deliver, and close as one lifecycle" do
     test_pid = self()
     handler = fn message -> send(test_pid, {:configured_handler, message}) end
-    heartbeat = %{type: :ping, interval: @heartbeat_interval_ms}
+    heartbeat = %{type: :ping_pong, interval: @heartbeat_interval_ms}
     disconnect = fn _reason -> :ok end
 
     connect_opts = [
@@ -339,6 +358,58 @@ defmodule Bourse.WS.HostConnectionLifecycleTest do
              WS.subscribe(ws, ["btcusdt@aggTrade"], ack_timeout_ms: @ack_timeout_ms)
 
     refute_receive {:transport_sent, _, _}, @refute_timeout_ms
+  end
+
+  test "default handler isolates control replies and keeps market frames" do
+    {ws, public_pid} = owned_ws(timeout: @connection_timeout_ms)
+    on_exit(fn -> WS.close(ws) end)
+
+    :ok =
+      Transport.deliver(public_pid, %{
+        "method" => "subscription",
+        "params" => %{"channel" => "ticker.BTC-PERPETUAL.100ms", "data" => %{"mark_price" => 1}}
+      })
+
+    assert_receive {:websocket_message, %{"method" => "subscription"}}, @assert_timeout_ms
+
+    :ok = Transport.deliver(public_pid, %{"jsonrpc" => "2.0", "result" => %{"version" => "1.2.26"}})
+    assert_receive {:websocket_unmatched_response, %{"result" => %{"version" => "1.2.26"}}}, @assert_timeout_ms
+    refute_received {:websocket_message, %{"result" => %{"version" => _}}}
+
+    :ok = Transport.deliver(public_pid, %{"error" => %{"code" => 13_778}})
+    assert_receive {:websocket_unmatched_response, %{"error" => %{"code" => 13_778}}}, @assert_timeout_ms
+  end
+
+  test "health reports primary and routed sockets without taking ownership" do
+    heartbeat = %{type: :ping_pong, interval: @heartbeat_interval_ms}
+    {ws, _public_pid} = owned_ws(heartbeat_config: heartbeat, timeout: @connection_timeout_ms)
+    on_exit(fn -> WS.close(ws) end)
+
+    public_url = URLRouting.public_url(ws.exchange)
+    market_url = URLRouting.market_url(ws.exchange)
+
+    assert {:ok, [%{role: :primary, url: ^public_url, connection_state: :connected, heartbeat: health}]} =
+             WS.health(ws)
+
+    assert health.config == heartbeat
+
+    assert {:ok, _} = WS.watch_ticker(ws, "BTC/USDT", ack_timeout_ms: @ack_timeout_ms)
+    assert_receive {:transport_connected, ^market_url, _market_pid, _opts}, @assert_timeout_ms
+
+    assert {:ok, observations} = WS.health(ws)
+    assert Enum.map(observations, & &1.role) == [:primary, :routed]
+    assert Enum.any?(observations, &(&1.url == market_url and &1.role == :routed))
+
+    assert {:ok, _} = WS.watch_ticker(ws, "ETH/USDT", ack_timeout_ms: @ack_timeout_ms)
+  end
+
+  test "health after take reports a closed owner" do
+    {ws, _public_pid} = owned_ws(timeout: @connection_timeout_ms)
+    on_exit(fn -> WS.close(ws) end)
+
+    assert {:ok, clients} = ConnectionOwner.take(ws.connection_owner, 1_000)
+    assert {:error, :connection_closed} = WS.health(ws)
+    Enum.each(clients, &Client.close/1)
   end
 
   defp owned_ws(connect_opts) do

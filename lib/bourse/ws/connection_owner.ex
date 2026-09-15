@@ -53,6 +53,12 @@ defmodule Bourse.WS.ConnectionOwner do
     GenServer.call(owner, :take, timeout)
   end
 
+  @doc "Returns held clients without transferring ownership or closing them."
+  @spec snapshot(pid(), timeout()) :: {:ok, %{String.t() => ZenClient.t()}} | {:error, term()}
+  def snapshot(owner, timeout) do
+    GenServer.call(owner, :snapshot, timeout)
+  end
+
   @doc "Stops the owner. Remaining clients are closed from `terminate/2`."
   @spec stop(pid(), timeout()) :: :ok
   def stop(owner, timeout) do
@@ -78,6 +84,14 @@ defmodule Bourse.WS.ConnectionOwner do
       {:ok, zen_client} -> {:reply, {:ok, zen_client}, state}
       :error -> connect_and_store(state, connect_fun, url, opts)
     end
+  end
+
+  def handle_call(:snapshot, _from, %{closed?: true} = state) do
+    {:reply, {:error, :connection_closed}, state}
+  end
+
+  def handle_call(:snapshot, _from, state) do
+    {:reply, {:ok, state.connections}, state}
   end
 
   def handle_call(:take, _from, state) do

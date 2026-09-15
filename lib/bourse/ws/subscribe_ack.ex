@@ -94,7 +94,8 @@ defmodule Bourse.WS.SubscribeAck do
   # `"result" => ["user.portfolio.btc"]` authenticated. Reading the first as
   # success is what turns a dead private stream into a green call.
   defp classify_jsonrpc(%{"result" => []} = frame), do: {:rejected, frame}
-  defp classify_jsonrpc(%{"result" => _}), do: :success
+  defp classify_jsonrpc(%{"result" => result}) when is_list(result), do: :success
+  defp classify_jsonrpc(%{"result" => %{"status" => _}}), do: :success
   defp classify_jsonrpc(%{"jsonrpc" => _}), do: :not_ack
   defp classify_jsonrpc(_), do: :not_ack
 
