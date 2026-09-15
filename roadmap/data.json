@@ -31935,7 +31935,7 @@
       "id": "698",
       "phase": 16,
       "bundle": "live_triage",
-      "status": "in_progress",
+      "status": "done",
       "title": "Restore live contract coverage for account metadata removed from balance reads",
       "scores": {
         "d": 4,
@@ -31972,10 +31972,17 @@
         "test/live/binancecoinm/binancecoinm_promotion_integration_test.exs",
         "test/support/rest_read_contracts.ex"
       ],
+      "shipped_in": "c09fd963eb3f88a8d51322e58816d8d6a8de1124",
       "body": "BUGS.md 2026-08-29 reports task 686 bookkeeping fallout: Bybit user/query-api lost its case after classification helpers were removed from fetchBalance, and Binance COIN-M fetch_position_mode returns RawResponse while the promotion test expects a bare map. Keep those helpers outside balances; give the retained public/raw client surface an honest contract home.\n\nChoose a provider-backed normalized position-mode result across the Binance family, reusing the existing response vocabulary if it expresses the provider boolean losslessly. Reserve RawResponse for genuinely unauthored semantics; do not merely relax the promotion test. Exercise Bybit key/account metadata as raw metadata or an existing appropriate account surface, without inventing a new balance branch. Re-confirm the historical missing-case premise before changing the denominator. Dispatch for public response semantics and live test infrastructure; D4 is a bounded contract repair; B6/U6 restores reported missing coverage.",
       "created_at": "2026-09-15",
       "started_at": "2026-09-15",
+      "done_at": "2026-09-15",
       "scored_at": "2026-09-15",
+      "implemented": "Landed by cursor via merge-train; reviewer-approved (run run-1789457609603-e7ade034, c09fd963eb3f88a8d51322e58816d8d6a8de1124).",
+      "delivered_by": "cursor",
+      "verified": true,
+      "verified_by": "claude",
+      "verification_ref": "harness-run:run-1789457609603-e7ade034",
       "cross_repo": []
     },
     {
