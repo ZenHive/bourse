@@ -318,13 +318,43 @@ defmodule Bourse.EmulationTest do
                  :fetch_closed_orders,
                  %{
                    "until" => @passthrough_until,
-                   "venueNative" => @passthrough_native,
-                   "limit" => 5
+                   "venueNative" => @passthrough_native
                  },
                  fn :fetch_orders, params ->
                    assert params["until"] == @passthrough_until
                    assert params["venueNative"] == @passthrough_native
-                   assert params["limit"] == 5
+                   {:ok, []}
+                 end
+               )
+    end
+
+    # `limit` and `since` are declared consumed for the status-filtered reads: the
+    # delegate's own parse layer applies `limit` (ReadParse.maybe_take_limit/3), so
+    # forwarding it truncates the history BEFORE filter_by_status/2 runs and the
+    # caller gets fewer matching orders than exist — zero, live on hyperliquid.
+    test "since and limit are withheld from the delegate so the status filter sees the full history" do
+      ExchangeStub.configure_endpoints!(MapSet.new([:fetch_orders]))
+
+      assert {:ok, []} =
+               dispatch_declared(
+                 :fetch_closed_orders,
+                 %{"since" => 1, "limit" => 5},
+                 fn :fetch_orders, params ->
+                   refute Map.has_key?(params, "limit")
+                   refute Map.has_key?(params, :limit)
+                   refute Map.has_key?(params, "since")
+                   refute Map.has_key?(params, :since)
+                   {:ok, []}
+                 end
+               )
+
+      assert {:ok, []} =
+               dispatch_declared(
+                 :fetch_canceled_and_closed_orders,
+                 %{"since" => 1, "limit" => 5},
+                 fn :fetch_orders, params ->
+                   refute Map.has_key?(params, "limit")
+                   refute Map.has_key?(params, "since")
                    {:ok, []}
                  end
                )

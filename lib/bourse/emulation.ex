@@ -35,8 +35,16 @@ defmodule Bourse.Emulation do
     {:handle_fetch_bids_asks, :fetch_tickers} => %{
       symbol: "translated to the delegated plural symbols selector"
     },
+    {:handle_fetch_canceled_and_closed_orders, :fetch_orders} => %{
+      since: "applied locally after the status filter selects the merged rows",
+      limit: "applied locally after the status filter selects the merged rows"
+    },
     {:handle_fetch_deposit_address, :fetch_deposit_addresses_by_network} => %{
       network: "used locally to select one address from the delegated result"
+    },
+    {:handle_fetch_filtered_orders, :fetch_orders} => %{
+      since: "applied locally after the status filter selects the matching rows",
+      limit: "applied locally after the status filter selects the matching rows"
     },
     {:handle_fetch_funding_interval, :fetch_markets} => %{
       symbol: "used locally to validate the requested contract market"

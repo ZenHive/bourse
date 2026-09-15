@@ -9,6 +9,16 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- `limit` and `since` no longer truncate hyperliquid's status-filtered order reads
+  before the status filter runs. `fetch_closed_orders`, `fetch_canceled_orders` and
+  `fetch_canceled_and_closed_orders` are emulated from `fetch_orders`, and the
+  delegate's parse layer applied `limit` itself — so the raw order history was cut
+  to the newest N rows first, and only the lifecycle events inside that slice were
+  offered to the filter. Verified live on hyperliquid testnet: a wallet holding 137
+  closed orders answered `fetch_closed_orders(limit: 10)` with an empty list; it now
+  returns the newest 10, all `status: "closed"`. `since` anchors the window to the
+  oldest matching orders as documented.
+
 - `Bourse.WS.health/1` reports a dead connection as `{:error, :connection_closed}`
   instead of `{:ok, []}`. The connection owner drops a client whose transport
   process exits, so a dead socket left an empty snapshot behind, and
