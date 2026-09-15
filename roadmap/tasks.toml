@@ -9323,7 +9323,7 @@ scores = { d = 3, b = 6, u = 4 }
 acceptance_criteria = ["Every entry under 'Open' in docs/prod-verification-ledger.md is either moved to 'Closed' with the observed live evidence (actual call output, dated) or re-blocked with a named reason", "Where a live observation contradicts the authored slice, the divergence is filed as its own task with the live payload as evidence — the ledger entry records the filed id", "Carve-register entries touched by a closed confirmation are upgraded from tier-2/compat labels to CONFIRMED with the live citation", "Recheck the reported Lighter testnet account identity and authenticated reads; when credentials are repaired, its sandbox journey runs with cleanup, otherwise record the precise remaining account-provisioning blocker."]
 out_of_scope = ["Authoring new slices", "Adding new ledger entries (that happens continuously via the CLAUDE.md append rule)"]
 assignee = "human"
-blocked_reason = "Live session 2026-07-23 closed Binance task 319, Binance USD-M task 321, and the obsolete OKX EEA follow-up for task 364; every remaining OKX probe is routed to the international entity. Remaining ledger entries require one or more of: populated account state, an OKX international production read key, usable sandbox liquidity, or explicit approval for a venue-final mutation."
+blocked_reason = "Ledger review 2026-09-15; historical observations, not fresh live probes. External prerequisites recorded by venue: OKX International needs production read access for demo-unhosted funding/savings surfaces and populated transaction history; Binance Spot/USD-M/COIN-M need product-authorized production access or matching position/history state; Derive needs unwindable demo liquidity and funding-bearing positions; Deribit needs matching account state or isolated/disposable accounts for account-wide operations; Hyperliquid needs bridge/withdrawal history or an eligible vault; Lighter records an account-provisioning issue and missing fee-bearing/withdrawal/liquidation rows. These do not block every ledger entry: Bybit spot coverage and the Alpaca private-stream configuration are implementation gaps, while Bybit settlement seeded for 2026-08-28 and other dated state claims require rechecking before treating them as current blockers. The ledger remains the per-case source of truth. Production conversions, withdrawals and other operator-gated mutations still require explicit authorization."
 body = """
 Operator session, gated on production API keys (bybit read, binance wallet-read) and/or an
 operator-approved mutation window (derive demo position). The work list IS
@@ -10231,7 +10231,7 @@ out_of_scope = ["Changing the JSON-array dialect already verified for common Bin
 touches = ["priv/venues/binance/authored/spec.json", "lib/bourse/signing/hmac_recipe.ex", "test/bourse/signing/hmac_recipe_test.exs", "test/live/binance/binance_query_array_integration_test.exs", "docs/authored-spec-carves/binance.md", "docs/prod-verification-ledger.md"]
 assignee = "codex"
 model = "gpt-6-astra"
-blocked_reason = "Never dispatched (0 attempts, no harness branch, no commits) — the reason field previously carried a foreign run's note about Credo depth findings in lib/ccxt/circuit_breaker.ex; that WIP is gone and credo --strict on that file is clean, so it was never this task's blocker. The real blocker is the one in the body: the sapi dust wire contract is not safely observable. Confirmed live 2026-07-25 while working task 450 — the production MAIN key is spot-only (accountType SPOT, permissions TRD_GRP_002/TRD_GRP_077) and returns -2015 on every /fapi and /dapi path, SUB1 is IP-whitelisted (-2015 even on spot), and spot testnet does not expose the sapi dust endpoint at all. The MAIN key may technically reach sapi on spot, and the wallet does hold dust, but a valid dust conversion is an IRREVERSIBLE mutation on a live-money account: unblock only with explicit operator approval for a controlled minimal conversion, an official SDK capture, or observed signed production traffic."
+blocked_reason = "Rechecked 2026-09-15: provider documentation https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/asset#dust-transfer and the official binance-connector-python wallet AssetApi.dust_transfer both specify one comma-separated asset string (asset=BTC,USDT). The endpoint-specific urlencodeCommaSeparatedArray recipe already exists in priv/venues/binance/authored/venue.json, with signing assertions in test/bourse/signing/hmac_recipe_test.exs. Encoding discovery is therefore not the remaining blocker. Successful production execution remains unverified: docs/prod-verification-ledger.md records only a historical non-mutating dust preview; conversion requires explicit operator approval for the named assets and a trade-enabled production key. No production mutation or current key-permission probe was performed in this recheck. The endpoint offers no amount cap. Historical key restrictions are not freshly verified."
 body = """
 The prior task asserted repeated bare asset keys, but current Binance documentation describes a
 single asset string and spot testnet does not expose the SAPI dust endpoint. A valid production
@@ -24002,3 +24002,64 @@ started_at = "2026-09-15"
 scored_at = "2026-09-15"
 done_at = "2026-09-15"
 shipped_in = "26bb651"
+
+[[task]]
+id = "702"
+phase = 16
+bundle = "live_triage"
+status = "pending"
+title = "Authored public WS watch channels are not confronted against the venues' own channel names — derive's ticker is deprecated and two of its channels carry a CCXT message hash"
+scores = { d = 7, b = 7, u = 6 }
+markers = ["bug"]
+acceptance_criteria = ["Every authored public watch channel template of alpaca, bybit, coinbaseexchange, deribit, derive, hyperliquid and okx is named in the delivery with the provider-documented channel it was confronted against, and the outcome per template is CONFIRMED or DIVERGE — a template with no provider-owned documented counterpart is reported as such rather than left asserted", "Each template that the venue accepts is proven by a live run that receives a real data frame on it, not by a subscribe acknowledgement; each template the venue rejects is proven by the venue's own rejection frame quoted in the delivery", """derive's `watch_ticker` no longer names the channel the venue answers `-32602 "`ticker` channel has been deprecated. Please use `ticker_slim`"` on, and derive's parse slice is confronted against the replacement's actual payload shape rather than assumed shape-identical""", """derive's `watch_orders` and `watch_my_trades` no longer author the CCXT message hash `":{symbol}"`, which the venue rejects live with error 13000""", "Every CONFIRMED and DIVERGE outcome for derive is recorded in `docs/authored-spec-carves/derive.md`; the other venues' carve registers gain an entry for any template this task changes", "A live `mix bourse.verify_ws_first_frame` run is shown in the delivery, and any venue whose row changes status because of this task is named with the provider frame that caused it", "A template that cannot be proven live with our keys and hosts is entered in `docs/prod-verification-ledger.md` with the reason, never dropped from the audit's denominator"]
+out_of_scope = ["binance, binancecoinm and binanceusdm — task 618 already audited the binance family's watch templates against the provider's stream documentation and is done", "lighter's rejected `market_stats/0` channel and its bad-input error probe, which are task 699 and in flight", "The first-frame lane's own classification logic, fixed in task 701 — this task changes what is subscribed, not how a frame is judged", "Private WebSocket sections and their handshakes", "Widening `mix bourse.verify_ws_first_frame` from one probe per venue to the full authored channel set — the lane's shape is not this task's subject"]
+touches = ["priv/venues/alpaca/authored/endpoints.json", "priv/venues/bybit/authored/endpoints.json", "priv/venues/coinbaseexchange/authored/endpoints.json", "priv/venues/deribit/authored/endpoints.json", "priv/venues/derive/authored/endpoints.json", "priv/venues/hyperliquid/authored/endpoints.json", "priv/venues/okx/authored/endpoints.json", "docs/authored-spec-carves/derive.md", "docs/prod-verification-ledger.md", "test/live/ws/canary_test.exs"]
+assignee = "codex"
+model = "gpt-6-astra"
+body = """
+Sibling rationale (DD-8, checked against 699, 618 and 544 before filing): task 618 is the same
+mechanism class and it is **done** — it audited the binance family's `watch_*` templates against
+the provider's own stream documentation and found them to be CCXT message hashes rather than
+provider stream names. It deliberately scoped itself to binance and binanceusdm. This task is the
+rest of that surface: the seven remaining venues with a public WS config, whose templates have
+never been confronted. Task 699 is an *instance* of the same class, venue-scoped to lighter, in
+flight, and carrying a REST error-probe component this task does not touch — folding it in would
+widen a live task and lose its REST half. Task 544 established that alpaca and lighter have WS
+support at all; it proved a socket connects, never that the authored channels are the venue's own.
+
+The trigger, both instances live-verified against `wss://api-demo.lyra.finance/ws` on 2026-09-15:
+
+    # authored watch_ticker template: ticker.{symbol}.100
+    %{"error" => %{"code" => -32602,
+        "data" => "`ticker` channel has been deprecated. Please use `ticker_slim`."}}
+
+    # authored watch_orders / watch_my_trades template: ":{symbol}" — a CCXT message hash
+    # live-rejected with envelope error 13000, while trades.ETH-PERP and
+    # orderbook.ETH-PERP.1.10 acknowledge and deliver on the same socket
+
+This is the failure shape 618 named: a template that is not the venue's channel name produces a
+socket that connects, subscribes, and never delivers — and a subscribe acknowledgement cannot
+catch it, because there is no acknowledgement to read. Task 701 made the first-frame lane refuse
+to count an unattributable frame as coverage, so the lane can now *report* a dead channel; it
+cannot fix one. The channels themselves are authored, and authored judgment is confronted against
+the provider's own contract, never inherited.
+
+Decisions already made for you (veto any of them in the delivery if the live evidence contradicts
+it, and say which):
+
+- **`ticker_slim` is not a drop-in rename.** The replacement's payload puts the ticker under
+  `params.data.instrument_ticker`, which is not where the current parse slice reads. Confront the
+  parse slice against a real `ticker_slim` frame before changing the channel string; a channel fix
+  that leaves the parse reading the old path trades a loud rejection for a silent empty stream.
+- **Frame delivery is the proof, not an ack.** For each template, subscribe and wait for a real
+  data frame. A venue that acknowledges and then sends nothing is a finding, not a pass — this is
+  the whole reason 618 exists.
+- **Audit every authored public watch template of the seven venues, not only the ones that look
+  suspicious.** A template that happens to match is a CONFIRMED outcome and costs one live
+  subscription; guessing which ones to check is how the derive instances survived this long.
+- **Where a venue serves a channel this repo does not author at all, record it and stop there.**
+  Adding new unified watch methods is a separate piece of work; this task fixes and proves what is
+  already authored.
+"""
+created_at = "2026-09-15"
+scored_at = "2026-09-15"
