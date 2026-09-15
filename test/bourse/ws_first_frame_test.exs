@@ -42,7 +42,11 @@ defmodule Bourse.WSFirstFrameTest do
     def close(_exchange), do: :ok
 
     defp lighter_snapshot do
-      %{"type" => "subscribed/market_stats", "channel" => "market_stats/0", "market_stats" => %{"market_id" => 0}}
+      %{
+        "type" => "subscribed/market_stats",
+        "channel" => "market_stats:all",
+        "market_stats" => %{"4095" => %{"market_id" => 4095}}
+      }
     end
 
     defp coinbase_last_match do
@@ -143,7 +147,51 @@ defmodule Bourse.WSFirstFrameTest do
     lighter = Enum.find(report.venues, &(&1.venue == "lighter" and &1.status == "passed"))
     assert lighter.first_frame == "acknowledgement_with_payload"
     assert lighter.data_frame == "acknowledgement_with_payload"
-    assert lighter.channel == "market_stats/0"
+    assert lighter.channel == "market_stats/all"
+  end
+
+  test "lighter's connection greeting does not count as market data" do
+    for outcome <- [:snapshot, :rejected, :silent] do
+      subscribe = fn _ws, spec ->
+        if spec.venue == "lighter" do
+          send(self(), {:websocket_message, %{"type" => "connected", "session_id" => "session"}})
+
+          case outcome do
+            :snapshot ->
+              send(self(), {:websocket_message, lighter_snapshot()})
+
+            :rejected ->
+              send(self(), {:websocket_message, %{"error" => %{"code" => 30_005, "message" => "Invalid Channel"}}})
+
+            :silent ->
+              :ok
+          end
+        else
+          send_passed_frames(spec)
+        end
+
+        {:ok, channel_name(spec)}
+      end
+
+      {status, report} = run_classified(subscribe)
+      lighter = Enum.find(report.venues, &(&1.venue == "lighter"))
+
+      case outcome do
+        :snapshot ->
+          assert status == :ok
+          assert lighter.data_frame == "acknowledgement_with_payload"
+
+        :rejected ->
+          assert status == :error
+          assert lighter.first_frame == "rejected"
+          assert lighter.data_frame == nil
+
+        :silent ->
+          assert status == :error
+          assert lighter.data_frame == nil
+          assert lighter.reason =~ "received no frame"
+      end
+    end
   end
 
   test "a later data frame after a pure ack is classified separately from the acknowledgement" do
@@ -481,7 +529,11 @@ defmodule Bourse.WSFirstFrameTest do
   end
 
   defp lighter_snapshot do
-    %{"type" => "subscribed/market_stats", "channel" => "market_stats/0", "market_stats" => %{"market_id" => 0}}
+    %{
+      "type" => "subscribed/market_stats",
+      "channel" => "market_stats:all",
+      "market_stats" => %{"4095" => %{"market_id" => 4095}}
+    }
   end
 
   defp channel_name(%{channels: [channel | _]}) when is_binary(channel), do: channel

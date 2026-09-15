@@ -47,20 +47,42 @@ defmodule Bourse.WS.CanaryTest do
   end
 
   describe "lighter public WS" do
-    @tag :task_544
-    test "connect → subscribe → receive → close" do
+    @tag :task_699
+    test "loaded market ids subscribe to stats, order books and trades" do
       exchange = Exchange.new!("lighter", sandbox: true)
-      assert {:ok, ws} = WS.connect(exchange, :public)
+      assert {:ok, exchange} = Bourse.load_markets(exchange)
+      assert [market | _] = exchange.markets
 
-      try do
-        assert WS.get_state(ws) == :connected
-        assert :ok = WS.subscribe(ws, ["market_stats/0"])
+      for {channel, payload} <- [
+            {"market_stats", "market_stats"},
+            {"order_book", "order_book"},
+            {"trade", "trades"}
+          ] do
+        assert {:ok, ws} = WS.connect(exchange, :public)
 
-        assert_receive {:websocket_message,
-                        %{"type" => "subscribed/market_stats", "channel" => "market_stats:0", "market_stats" => %{}}},
-                       @receive_timeout
-      after
-        WS.close(ws)
+        try do
+          assert WS.get_state(ws) == :connected
+          assert :ok = WS.subscribe(ws, ["#{channel}/#{market.id}"])
+          response_channel = "#{channel}:#{market.id}"
+          response_type = "subscribed/#{channel}"
+
+          assert_receive {:websocket_message, %{"type" => ^response_type, "channel" => ^response_channel} = frame},
+                         @receive_timeout
+
+          case payload do
+            "market_stats" ->
+              assert frame[payload]["market_id"] == String.to_integer(market.id)
+
+            "order_book" ->
+              assert %{"asks" => asks, "bids" => bids} = frame[payload]
+              assert is_list(asks) and is_list(bids)
+
+            "trades" ->
+              assert is_list(frame[payload])
+          end
+        after
+          WS.close(ws)
+        end
       end
     end
 
