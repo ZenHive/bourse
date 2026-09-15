@@ -23225,7 +23225,7 @@ shipped_in = "e6ef7ea35d42b966532a7db22c7b5166d0cbd13b"
 id = "685"
 phase = 16
 bundle = "live_triage"
-status = "in_progress"
+status = "done"
 title = "Silent substitution is the class: a slice that does not fit must fail loudly, never resolve to a plausible wrong value"
 scores = { d = 7, b = 8, u = 8 }
 markers = ["bug"]
@@ -23316,9 +23316,16 @@ and say in the delivery which of the two you found and why. Do not drop the case
 denominator either way, per CLAUDE.md on the ledger not discharging a case.
 Triage 2026-09-15: BUGS.md 2026-08-29 endpoint_index substitution is the same class. Source lib/bourse/unified.ex select_endpoint still uses Enum.at(configs, idx) || hd(configs). Explicit invalid or out-of-range indices must fail before dispatch, never select index zero or another book. Preserve valid credential-filtered index semantics and exercise negative/non-integer inputs according to the documented contract.
 """
+implemented = "Landed by codex via merge-train; reviewer-approved (run run-1789458456232-b2db834f, 559aabd84da17440bca10aaba5243640cf9cfcd0)."
+delivered_by = "codex"
+verified = true
+verified_by = "claude"
+verification_ref = "harness-run:run-1789458456232-b2db834f"
 created_at = "2026-08-28"
 started_at = "2026-08-28"
 scored_at = "2026-08-28"
+done_at = "2026-09-15"
+shipped_in = "559aabd84da17440bca10aaba5243640cf9cfcd0"
 
 [[task]]
 id = "686"
