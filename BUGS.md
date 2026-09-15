@@ -236,47 +236,54 @@ die provider-owned Kanalliste auditieren (dieselbe Form wie Task 618 für die
 binance-Familie), inklusive der Payload-Formprüfung für `ticker_slim`. Der verbleibende
 binancecoinm-`:no_channel_templates`-Rest aus 618 gehört in dieselbe Klasse.
 
-## 2026-09-15 — binanceusdm demo public WebSocket ackt jede Subscription und liefert nie ein Frame; dieselben drei Streams sind auf Produktion sofort grün
+## 2026-09-15 — die WS-First-Frame-Probe für binanceusdm ist intermittierend: zwei von drei Lane-Läufen laufen auf `btcusdt@miniTicker` in den 15-s-Timeout, direkte Probes desselben Streams liefern in 3-5 s
 
-**Method:** `Bourse.WS.subscribe/3` auf `btcusdt@miniTicker`, `btcusdt@ticker`,
-`btcusdt@aggTrade` · **Exchange:** binanceusdm (demo, `wss://demo-fstream.binance.com/public/ws`) ·
-**Severity:** mittel (kein Client-Defekt — aber die WS-First-Frame-Lane ist dadurch dauerhaft rot)
+**Method:** `mix bourse.verify_ws_first_frame` (`Bourse.LiveLane.FirstFrame`, Probe
+`%{venue: "binanceusdm", watch: :watch_ticker, sandbox: true}`) ·
+**Exchange:** binanceusdm (demo, `wss://demo-fstream.binance.com/public/ws`) ·
+**Severity:** mittel (false-RED-Generator in einem Gate, das per Doktrin verlässlich sein muss)
 
-**Status:** 🆕 reported 2026-09-15 — differentiell live-verifiziert, noch nicht geroutet.
+**Status:** 🆕 reported 2026-09-15 — Mechanismus **nicht** gefunden, Symptom reproduziert und
+eingegrenzt. Noch nicht geroutet.
 
-Gefunden beim Landed-Base-Gate nach Task 697: `mix bourse.verify_ws_first_frame` meldet
-`binanceusdm btcusdt@miniTicker: connected but received no data frame within 15000ms`.
+**🚨 Korrektur einer früheren Fassung dieses Eintrags (2026-09-15, gleicher Tag):** die
+erste Version behauptete, der Demo-Host acke jede Subscription und liefere nie ein Frame.
+Das ist **widerlegt**. Die Behauptung stützte sich auf eine einzige Probe, deren
+Sammelschleife nach der ersten 2-s-Lücke abbrach, während drei `WS.subscribe`-Calls mit je
+5 s Ack-Budget davor liefen. Der Fehler lag im Probe-Code, nicht bei der Venue.
 
-Das differentielle Probe trennt Kanalname, Pfad und Host — **der Host ist es**:
+**Was tatsächlich gilt (live 2026-09-15):**
 
-| Host | `@miniTicker` | `@ticker` | `@aggTrade` |
-|---|---|---|---|
-| `wss://demo-fstream.binance.com/public/ws` (`sandbox: true`) | ack `:ok`, 0 Frames / 15 s | ack `:ok`, 0 Frames | ack `:ok`, 0 Frames |
-| `wss://fstream.binance.com/public/ws` (`sandbox: false`) | `24hrMiniTicker` sofort | — | `aggTrade` sofort |
+| Stream, einzeln auf frischem Socket, `sandbox: true` | Ergebnis |
+|---|---|
+| `btcusdt@aggTrade` | `aggTrade` sofort |
+| `btcusdt@miniTicker` | `24hrMiniTicker` sofort |
+| `btcusdt@kline_1m` | `kline` sofort |
+| `btcusdt@depth20@100ms` | `depthUpdate` sofort |
+| `btcusdt@markPrice@1s` | `markPriceUpdate` jede Sekunde |
+| `btcusdt@bookTicker` | `bookTicker` laufend |
 
-Der authored Kanalname ist also korrekt (`btcusdt@miniTicker` liefert auf Produktion
-`"e" => "24hrMiniTicker"`), der Pfad `/public/ws` ist korrekt, die Subscribe-Form ist
-korrekt. Nur der Demo-Host schweigt — und ackt dabei jede Subscription kommentarlos, also
-genau die Fehlerklasse, die BUGS-Eintrag 2026-08-14 (Task 618) als schlimmste benennt:
-kein Error, keine Daten.
+Sequentielle Subscribes auf **einem** Socket funktionieren ebenfalls (aggTrade, danach
+miniTicker — beide liefern weiter). Das Demo-Buch ist nicht ruhig: `fetch_trades` liefert
+Rows mit Alter ~0 s, `fetch_ticker` ein 24-h-Quote-Volumen von 1.198e11.
 
-**Repro:**
+**Das verbleibende Symptom:** `Bourse.WS.watch_ticker(ws, "BTC/USDT", ack_timeout_ms: 0)` —
+also exakt der Lane-Pfad — liefert in direkter Wiederholung 5 von 5 Mal `24hrMiniTicker`
+nach 2,8 s bzw. 5,6 s. Die Lane selbst meldete denselben Kanal in zwei unabhängigen Läufen
+(mein Landed-Base-Gate und der Reviewer-Lauf von Task 697) als
+`connected but received no data frame within 15000ms` und im dritten Lauf als `passed`.
 
-```elixir
-{:ok, ex} = Bourse.Exchange.new("binanceusdm", sandbox: true)
-{:ok, ws} = Bourse.WS.connect(ex, :public)
-Bourse.WS.subscribe(ws, ["btcusdt@aggTrade"], ack_timeout_ms: 5_000)   # => :ok
-# 15 s warten: kein {:websocket_message, _}
-# dasselbe mit sandbox: false liefert sofort aggTrade-Frames
-```
+Eine Erklärung für die Differenz habe ich **nicht**. Ausgeschlossen ist
+Mailbox-Kontamination zwischen Venues: `record_probe/4` kapselt jede Probe in einen eigenen
+`Task.async/1`, jede Probe hat also ihre eigene Mailbox und ihren eigenen Socket.
 
-**Offene Entscheidung für den Operator (nicht eigenmächtig entschieden):** ob
-binanceusdms Public-WS-Zeile als *demo-unavailable* nach
-`docs/prod-verification-ledger.md` gehört. Dafür spricht, dass es nachweislich keine
-Client-Eigenschaft ist; dagegen, dass eine Ledger-Zeile den Fall aus dem Nenner nimmt und
-die Lane dann grün meldet, was der Doktrin nach eine grüne Lüge wäre, solange nicht
-geklärt ist, ob der Demo-Host dauerhaft oder vorübergehend still ist. Ich habe deshalb
-nichts am Ledger geändert und lasse die Lane rot.
+**Repro (das Symptom, nicht der Mechanismus):** `mix bourse.verify_ws_first_frame`
+mehrfach laufen lassen und die `binanceusdm`-Zeile vergleichen.
+
+**Warum das trotzdem hier steht:** ein Gate, das in einem Drittel der Läufe grundlos rot
+meldet, erzieht dazu, seine Roten wegzulesen — und genau dann übersieht es das echte Rot.
+Der Nachbarbefund im selben Report (lighter meldet grün auf einem Verbindungsgruß) zeigt,
+dass die Lane-Klassifikation ohnehin zu schwach ist; beide gehören in dieselbe Betrachtung.
 
 ## 2026-09-15 — task 693 made conditional controls first-class on the request side, but the read side drops them: three venues never parse `triggerPrice`, and `stop_loss_price` / `take_profit_price` are unmapped on nine of ten
 
