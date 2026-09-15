@@ -44,7 +44,7 @@ defmodule Bourse.CoinbaseCandlePagination do
     window_steps = max(div(last_opening - first_opening, timeframe_ms) + 1, 0)
     page_steps = min(limit, window_steps)
 
-    metadata = %{end_ms: end_ms, limit: min(limit, window_steps), start_ms: start_ms}
+    metadata = %{end_ms: end_ms, limit: page_steps, start_ms: start_ms}
     {:paginate, build_pages(params, first_opening, page_steps, timeframe_ms), metadata}
   end
 
