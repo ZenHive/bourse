@@ -32050,7 +32050,7 @@
       "id": "700",
       "phase": 16,
       "bundle": "live_triage",
-      "status": "in_progress",
+      "status": "done",
       "title": "Make write-side order controls round-trip by invariant, so no unified control can land readable in one direction only",
       "scores": {
         "d": 8,
@@ -32089,10 +32089,17 @@
         "test/live/",
         "test/bourse/"
       ],
+      "shipped_in": "75a540b77ca469f3b8e5db22cb2f26ba34bfc113",
       "body": "Sibling check per DD-8: this is the same class as 622 (client identifier one-way on deribit) and 632 (Binance-family conditional order types collapse on read), and adjacent to 589 and 253. It is deliberately NOT filed as the third instance. 622 fixed the client id and fenced off \"other unified write fields\"; 632 fixed the order type and fenced off venues outside the Binance family. Each landed its own bespoke round-trip test for its own field. The class neither of them states is the one filed here: a unified control the write side accepts must be readable back, enforced by one invariant derived from the write surface, so the next write-only control cannot land at all. A finding caught three times by hand is a missing test.\n\nThe third instance, measured, is what makes it urgent. Task 693 made the conditional controls first-class on the request side; the response slice was not moved with it. Live on test.deribit.com 2026-09-15: Bourse.create_order(ex, \"BTC/USD:BTC\", \"take_market\", \"sell\", 10, trigger_price: 96_956.0, trigger: \"last_price\") returned order TPTS-11018234, order_state \"untriggered\", with order.trigger_price == nil and order.reduce_only == nil while order.info[\"trigger_price\"] == 96956.0 and order.info[\"reduce_only\"] == false. The order was cancelled and the book verified empty. A survey of field_maps.order.field_map across the ten venues carrying an order map: triggerPrice unmapped on bybit, deribit and okx; reduceOnly on alpaca and deribit; stopLossPrice on all but derive and okx; takeProfitPrice on all but okx. Recorded in BUGS.md 2026-09-15.\n\nThe consumer impact is confirmed, not projected. trading_dashboard enforces its subaccount allocation cap in a Postgres trigger that reads params ->> 'reduce_only' out of the adopted order row and uses that flag to choose position_side. A deribit reduce-only order adopted through the unified surface books on the wrong side of that symbol's exposure, inflating committed entry exposure that should have been a reduction and polluting the latest_full_close bookkeeping the notional trigger keys on. Their adoption code reads order.reduce_only, gets nil, and correctly concludes the venue did not say — a deliberate documented rule whose premise this gap falsifies. Tracked there as trading_dashboard task 286.\n\nDecisions already taken, so the implementer does not have to ask. The invariant is the deliverable and the per-venue mappings are its first consumers, not the other way round — do not ship the four protective slots without the enumeration, because that is exactly what produced three instances. Derive the control set from the authored write shapes and the OrderOptions canonical set; a hand-listed field set in the test reproduces the defect one generation later. Where a venue genuinely does not publish a control, it carries a named exemption with provider evidence rather than a silent null, mirroring the exemption shape 622 established. The client adds no fallback to info and no value coercion: reading raw info is the consumer's seam, and coercing truthy spellings is the class of guess 693 removed. Evidence is a re-read of the order, never the create response echoing its own input.\n\nD8 covers one invariant over the whole unified control surface plus every violation it reports across ten venues, each needing a live call and a register entry. B9/U9 reflect a shipped feature whose read half is missing and a consumer whose exposure accounting is already wrong because of it.\n",
       "created_at": "2026-09-15",
       "started_at": "2026-09-15",
+      "done_at": "2026-09-15",
       "scored_at": "2026-09-15",
+      "implemented": "Landed by grok via merge-train; reviewer-approved (run run-1789469696113-194b3aea, 75a540b77ca469f3b8e5db22cb2f26ba34bfc113).",
+      "delivered_by": "grok",
+      "verified": true,
+      "verified_by": "cursor",
+      "verification_ref": "harness-run:run-1789469696113-194b3aea",
       "cross_repo": []
     },
     {
