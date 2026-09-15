@@ -16,16 +16,16 @@ defmodule Bourse.WS.Subscription.TypeSubscribe do
 
   The dual-field form is selected by setting `config[:channels_field]` to
   `"channels"` (or similar); in that case `args_field` receives the market
-  id list and `channels_field` receives the channel name (wrapped in a
-  single-element list when the field is literally `"channels"`, otherwise
-  bare).
+  id list and `channels_field` receives the channel name. A `"channels"` field
+  wraps a binary name in a single-element list and passes a name list
+  through; any other field name stays bare.
 
   Config keys:
   - `:op_field` — default `"type"`
   - `:args_field` — default `"topic"`; Coinbase sets `"product_ids"`
   - `:args_format` — `:string` (KuCoin default) or `:string_list` for arrays
   - `:channels_field` — when set, activates the dual-field shape
-  - `:channel_name` — the channel name placed under `channels_field`
+  - `:channel_name` — the channel name or list of names placed under `channels_field`
   """
 
   @behaviour Bourse.WS.Subscription.Behaviour

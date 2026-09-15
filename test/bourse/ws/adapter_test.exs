@@ -233,6 +233,62 @@ defmodule Bourse.WS.AdapterTest do
     refute_received {:bourse_ws, {:routed, :watch_order_book, _, _, _, _}}
   end
 
+  test "routes Coinbase match onto watch_trades and last_match/heartbeat onto system" do
+    exchange = Exchange.new!("coinbaseexchange")
+    trades_topic = Broadcast.topic("coinbaseexchange", :watch_trades, nil)
+    system_topic = Broadcast.topic("coinbaseexchange", :system, nil)
+    Broadcast.subscribe(trades_topic)
+    Broadcast.subscribe(system_topic)
+
+    on_exit(fn ->
+      Broadcast.unsubscribe(trades_topic)
+      Broadcast.unsubscribe(system_topic)
+    end)
+
+    {:ok, adapter} = Adapter.start_link(exchange, :public, connect: false)
+    on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter, :normal) end)
+
+    match = %{
+      "type" => "match",
+      "trade_id" => 842_900_891,
+      "product_id" => "ETH-USD",
+      "side" => "sell",
+      "price" => "2497.81",
+      "size" => "0.721",
+      "time" => "2026-09-15T06:09:40.530674Z"
+    }
+
+    last_match = %{match | "type" => "last_match", "trade_id" => 842_900_890}
+
+    heartbeat = %{
+      "type" => "heartbeat",
+      "last_trade_id" => 842_900_890,
+      "sequence" => 102_860_075_212,
+      "product_id" => "ETH-USD",
+      "time" => "2026-09-15T06:09:40.000000Z"
+    }
+
+    subscriptions = %{"type" => "subscriptions", "channels" => []}
+
+    send(adapter, {:ws_frame, subscriptions})
+    assert_receive {:bourse_ws, {:system, ^subscriptions}}
+
+    send(adapter, {:ws_frame, last_match})
+    assert_receive {:bourse_ws, {:system, ^last_match}}
+
+    send(adapter, {:ws_frame, heartbeat})
+    assert_receive {:bourse_ws, {:system, ^heartbeat}}
+    assert heartbeat["last_trade_id"] == last_match["trade_id"]
+
+    send(adapter, {:ws_frame, match})
+
+    assert_receive {:bourse_ws, {:routed, :watch_trades, ^match, "match", _market, nil}}
+
+    refute_received {:bourse_ws, {:routed, :watch_trades, ^last_match, _, _, _}}
+    refute_received {:bourse_ws, {:routed, :watch_trades, ^heartbeat, _, _, _}}
+    refute_received {:bourse_ws, {:routed, :watch_trades, ^subscriptions, _, _, _}}
+  end
+
   test "broadcasts system and unknown frames without changing adapter state" do
     exchange = Exchange.new!("bybit")
     system_topic = Broadcast.topic("bybit", :system, nil)

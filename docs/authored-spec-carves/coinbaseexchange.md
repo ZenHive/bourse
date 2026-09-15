@@ -28,4 +28,6 @@ Outcome: CONFIRM absence.**
 | `heartbeat.last_trade_id` / `sequence` | Heartbeat channel carries `last_trade_id` and `sequence` for gap recovery ([channels](https://docs.cdp.coinbase.com/exchange/websocket-feed/channels)). Live: `last_trade_id` 842900890 matched the preceding last_match. |
 | invalid channel | Live: `{"type":"error","message":"Failed to subscribe","reason":"not_a_valid_channel is not a valid channel"}`. |
 
+<!-- carve-evidence-status
 {"carve_id":"C-T697a","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Coinbase Exchange WebSocket channels + overview; priv/venues/coinbaseexchange/authority/manifest.json websocket-channels"},"observed_evidence":{"kind":"live_venue","reference":"wss://ws-feed.exchange.coinbase.com ETH-USD matches+heartbeat 2026-09-15"},"compatibility_reference":null,"resolved_tier":1}
+-->
