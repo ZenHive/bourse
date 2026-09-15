@@ -4,6 +4,34 @@ Provider authority: [`priv/venues/deribit/authority/manifest.json`](../../priv/v
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 
+## 2026-09-15 — transfer currency (landed-base gate, no task)
+
+**Deribit `private/get_transfers` rows carry their own `currency`; the authored
+transfer slot had it null. Outcome: CONFIRM the provider field, DIVERGE from the
+previous "deribit publishes no transfer currency" reading.**
+
+- *Exchange semantics:* a transfer object is documented with a `currency` field
+  alongside `amount`, `direction`, `state` and `other_side`.
+  [private/get_transfers](https://docs.deribit.com/api-reference/account-management/private-get_transfers)
+- *Live evidence (2026-09-15):* `GET /api/v2/private/get_transfers?currency=BTC&count=5`
+  on `test.deribit.com` returned one row —
+  `{"id": 493346, "type": "subaccount", "state": "confirmed", "currency": "BTC",
+  "amount": 5.0, "direction": "payment", "other_side": "efries_1"}`. The authored
+  `transfer.field_map.currency` was `null`, so `Bourse.TransferEntry.currency`
+  came back nil and `deribit:fetchTransfers:0:privateGetGetTransfers` failed its
+  `required_fields` check with *"required semantic field currency is nil"*.
+- *Why it was invisible until now:* the case declares `empty_collection: allowed`
+  and the testnet account held no transfer at all, so an empty list passed the
+  lane for as long as the slot stayed unexercised. The defect is as old as the
+  slice; the first live row is what made it observable.
+- `fromAccount` / `toAccount` stay null on purpose: deribit publishes `other_side`
+  plus a `direction` (`payment` = outgoing, `income` = incoming), so naming the two
+  sides needs a direction-dependent rule rather than a flat key map, and the
+  contract case requires neither.
+
+<!-- carve-evidence-status
+{"carve_id":null,"date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Deribit private/get_transfers transfer object"},"observed_evidence":{"kind":"live_call","reference":"test.deribit.com private/get_transfers currency=BTC 2026-09-15, one confirmed subaccount row carrying currency BTC"},"compatibility_reference":null,"resolved_tier":"verified","note":"authored inline from the landed-base mix ci gate, no task; see BUGS.md 2026-09-15 entry for the gate triage"}
+-->
 ## 2026-09-15 — order identity, fill fees, closed-order 11044 (Task 695)
 
 **C-T695 — Deribit `instrument_name` is order/trade identity, user-trade `fee`/`fee_currency`

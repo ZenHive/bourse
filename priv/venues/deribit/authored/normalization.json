@@ -1259,7 +1259,11 @@
           "format": null,
           "key": "amount"
         },
-        "currency": null,
+        "currency": {
+          "coercion": "safeCurrencyCode",
+          "format": null,
+          "key": "currency"
+        },
         "datetime": null,
         "fromAccount": null,
         "id": {

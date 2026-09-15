@@ -114,6 +114,33 @@ roadmap.
 
 ---
 
+## 2026-09-15 — deribit's authored transfer slot never mapped the venue's own `currency`, so the first live transfer row failed the contract lane
+
+**Status:** ✅ fixed 2026-09-15 inline (landed-base `mix ci` gate) — `priv/venues/deribit/authored/normalization.json`
+`field_maps.transfer.field_map.currency` now maps `safeCurrencyCode` onto the provider key `currency`;
+`mix bourse.verify_rest_read_contracts --venue deribit` runs `denominator=41 executed=41 failures=0`.
+Carve recorded in `docs/authored-spec-carves/deribit.md` (2026-09-15, transfer currency).
+
+- Exact call: `deribit:fetchTransfers:0:privateGetGetTransfers` in
+  `test/live/deribit/rest_read_contract_test.exs`, i.e. `private/get_transfers`
+  with `currency=BTC`, `limit=10` against `test.deribit.com`.
+- Observed: `deribit:fetchTransfers:0:privateGetGetTransfers: required semantic field currency is nil`.
+- Expected: `Bourse.TransferEntry.currency == "BTC"` — the venue publishes it. Live
+  2026-09-15: `{"id": 493346, "type": "subaccount", "state": "confirmed",
+  "currency": "BTC", "amount": 5.0, "direction": "payment", "other_side": "efries_1"}`.
+- Cause: the authored transfer field map carried `"currency": null` while the
+  contract case declares `required_fields: ["id", "currency"]`. bybit maps `coin`
+  and okx maps `ccy` through `safeCurrencyCode`; deribit's slot was simply never
+  authored.
+- Why it stayed green for so long: the case declares `empty_collection: allowed`
+  and the testnet account held **no transfer at all**, so the lane passed on an
+  empty list. The defect is as old as the slice — a transfer row appearing on the
+  account is what made it observable, not any change in our code or in the venue.
+  That is the shape `empty_collection: allowed` will keep producing: a required
+  field can be unauthored indefinitely while nothing exercises the slot.
+
+---
+
 ## 2026-09-15 — die Emulations-Brücke `fetchFundingRate` ⇄ `fetchFundingRates` ist ein echter Zyklus im Delegationsgraphen; dass kein Venue beide Hälften als `emulated` führt, ist nirgends erzwungen
 
 **Method:** Lesen von `lib/bourse/emulation.ex` plus mechanische Extraktion des Delegationsgraphen, beim Landed-Base-Review von Task 692 ·
@@ -484,6 +511,33 @@ Measured in the cold post-merge audit worktree with `mix check.dispatch` against
 - `Bourse.Lighter.public_get_orderbookorders(exchange, %{"market_id" => <unknown>, "limit" => 1})` answers `{:ok, %{status: 200, body: %{"asks" => [], "bids" => [], "code" => 200, "total_asks" => 0, "total_bids" => 0}}}` where `test/live/errors/lighter_test.exs` expects a rejection. An unknown market id now reads as an empty book — the venue stopped distinguishing "no such market" from "empty market", so our only pinned lighter bad-input error no longer exists.
 
 The private half may need operator re-provisioning (`mix bourse.provision_lighter` takes an L1 wallet key that is deliberately outside the credential set); the WS-channel and public-error halves need no credentials and are re-provable immediately.
+
+> **Update (2026-09-15, landed-base `mix ci` gate).** Re-measured on `main` at `75dddad`;
+> all three symptoms reproduce, and the private half is now pinned to a specific cause
+> rather than a guess — it is **key de-registration, not an account reset**.
+>
+> - `GET /api/v1/account?by=index&value=$LIGHTER_TESTNET_ACCOUNT_INDEX` answers `code 200`
+>   with the account alive: `status 1`, `collateral "10001.029839"`, an open position. So
+>   "couldnt find account" is not about the account being gone.
+> - `GET /api/v1/apikeys?account_index=$LIGHTER_TESTNET_ACCOUNT_INDEX&api_key_index=$LIGHTER_TESTNET_API_KEY_INDEX`
+>   answers `{"code":21109,"message":"api key not found"}`. Querying the same account with
+>   `api_key_index=255` lists the keys it does carry — two of them, at indices **0 and 10**,
+>   neither of which is our provisioned index.
+> - `native/lighter_signer/cmd/derive_pubkey` on our `LIGHTER_TESTNET_API_PRIVATE_KEY`
+>   yields a public key that matches **neither** of those two registered keys. Our signer is
+>   therefore producing a
+>   well-formed token for a key the venue no longer knows — exactly the observed 20013.
+>   Re-provisioning needs the L1 wallet key, which is deliberately outside the credential
+>   set, so this half is operator-gated.
+> - The unknown-market-id half is sharper than "the venue stopped distinguishing":
+>   the venue no longer **range-checks** `market_id` at all. `-1`, `65536`, `2147483647`
+>   and `4294967296` each answer `200` with an empty book, while a *malformed* value
+>   (`not-a-market`, `1.5`, `0x10`, empty) still answers `400` / `20001 "invalid param "`.
+>   The 20001 mapping is intact; only the existence check is gone. Note the id space also
+>   moved — `GET /api/v1/orderBooks` now lists four-digit ids (`SOL` is `4097`, the
+>   account's open position is `4095`), so a replacement bad-input probe must use a
+>   malformed value, not a large integer.
+
 
 ---
 
