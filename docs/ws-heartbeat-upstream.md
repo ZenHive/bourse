@@ -1,4 +1,4 @@
-# Task 696: WebSocket heartbeat liveness and control isolation
+# WebSocket heartbeat liveness and control-frame isolation
 
 ## What Bourse now does
 
@@ -82,7 +82,7 @@ REST observations: `GET /api/v2/public/test` returned the version;
 `GET /api/v2/public/get_order_book?instrument_name=TASK696_INVALID` returned
 `-32602` with `reason=instrument not found`.
 
-## Reviewer reproduction
+## Reproduction
 
 ```sh
 MIX_ENV=test mix run scripts/probe_ws_heartbeat.exs

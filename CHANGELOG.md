@@ -18,6 +18,70 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   requests and merges to an empty body rather than asking the venue for a
   range it cannot serve.
 
+- Unified order controls are normalized before the venue operation is selected,
+  so a protective order cannot silently become a market fill. `trigger_price`,
+  `stop_loss_price`, `take_profit_price`, `time_in_force` and `reduce_only` are
+  the canonical spellings and their camelCase forms stay accepted aliases;
+  equal duplicates pass, conflicting ones answer `invalid_parameters`.
+  Normalization runs before routing — including inside nested `orders` batch
+  entries — so the legacy spelling can no longer reach a plain MARKET route on
+  the Binance family while the trigger field is dropped. A control the selected
+  venue operation cannot express, a native selector that would discard one, a
+  non-boolean `reduce_only`, a non-string `time_in_force`, or a non-numeric
+  trigger/protective price is refused before the request is signed. Raw venue
+  endpoints keep their provider-owned spelling untouched. Pinned live across
+  alpaca, binance, binancecoinm, binanceusdm, bybit, deribit and okx for both
+  alias spellings; see `docs/conditional-order-controls.md`.
+
+- The token bucket no longer lets cheap traffic starve a heavy request. A
+  waiter whose wait budget actually covers the returned delay reserves the
+  unpaid cost, so interleaved cheaper calls can neither spend the reserved
+  tokens nor clamp accrual; a waiter that will not wait releases the
+  reservation instead of holding it. The reservation is set to the waiter's own
+  cost rather than accumulated across waiters, and the persisted delay is the
+  whole call's delay rather than one bucket's, so a cheap late arrival cannot
+  extend a heavy reservation. Repeated checks of one key inside a single
+  `check_rates/2` call are charged once at their combined cost, and two checks
+  naming the same key with conflicting `capacity`/`refill_per_sec` answer
+  `invalid_parameters` before anything is spent. The wait budget is now
+  per-call: `Bourse.HTTP` accepts `:rate_limit_max_wait_ms`, defaulting to
+  `Bourse.Defaults.rate_limit_max_wait_ms/0`, and a refusal names the required
+  wait without dispatching the request.
+
+- Deribit keeps order identity, fill fees and closed-order errors intact across
+  the lifecycle. The trade field map's `fee`/`fees` are `omit_if_empty`,
+  because the same map also serves public
+  `public/get_last_trades_by_instrument` rows, which carry no fee: an absent
+  provider fee now stays the unavailable default instead of collapsing into an
+  empty fee object or a one-entry `fees` list. `raw.exceptions.11044` maps to
+  `OrderNotFound` for every open-order operation that returns it, so
+  cancel-then-cancel and editing a closed order are no longer classified as
+  `InvalidOrder`. The `ETH_USDC-PERPETUAL` contract-size assertion is pinned
+  against the venue's own `contract_size` rather than a literal — deribit
+  re-scaled it from `0.001` to `0.0001` (observed 2026-09-15 on
+  test.deribit.com), and a hardcoded expectation would either redden on the
+  venue's change or certify the parse against nothing once updated.
+
+- WebSocket heartbeat liveness is observable and transport control no longer
+  arrives as market data. `Bourse.WS.health/1` reports per-socket
+  `url`/`role`/`connection_state` plus the locked `zen_websocket` 0.9.0
+  `get_heartbeat_health/1` map for the primary socket and every routed host the
+  connection still owns, via a new non-destructive `ConnectionOwner.snapshot/2`;
+  market-data silence is not treated as a miss, and a closed or missing owner is
+  an error rather than an empty healthy list. `Bourse.WS.ControlFrame`
+  classifies inbound frames, so heartbeat replies, JSON-RPC result/error
+  envelopes and ping/pong keepalives arrive as
+  `{:websocket_unmatched_response, _}` instead of `{:websocket_message, _}`, and
+  adapter routing treats them as `:system` rather than broadcasting them as
+  `:raw` market data. `Bourse.WS.Heartbeat.validate/1` accepts only `:disabled`,
+  `:deribit` and `:ping_pong`; `:ping` and `:custom` — which the locked
+  dependency silently no-ops — now fail at `connect/3` with
+  `{:error, {:unsupported_heartbeat, type}}` rather than presenting a dead timer
+  as liveness. The venues whose keepalive is a JSON or string application ping
+  (bybit, okx, hyperliquid, alpaca, lighter) are authored `:disabled` until the
+  dependency can send those payloads; the remaining upstream gaps are recorded
+  in `docs/ws-heartbeat-upstream.md`.
+
 ## [0.8.0] - 2026-08-31
 
 ### Added

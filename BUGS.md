@@ -114,6 +114,74 @@ roadmap.
 
 ---
 
+## 2026-09-15 — bybit `fetch_all_greeks` answered `%{}` for a symbol its own option ticker list carried, sustained across a retry, then recovered
+
+**Status:** Recorded, not routed (post-merge audit of `de6916d`, 2026-09-15). No task filed — re-probed green minutes later, so this is venue state rather than a client defect on current evidence.
+
+Measured in the cold post-merge audit worktree (`mix check.dispatch`,
+`api-testnet.bybit.com`, public — no credentials). Nothing in the audited range
+(`8e040ba..de6916d`) touches bybit or the greeks path, so this is not a
+regression from the landed work.
+
+- Failing case: `test/live/bybit/bybit_account_analytics_integration_test.exs:25`,
+  *"public fetch_all_greeks returns symbol-keyed %Greeks{} values"*.
+- Exact call: `public_get_v5_market_tickers(category: "option", baseCoin: "BTC")`
+  returned a non-empty list; `hd(rows)["symbol"]` unified to
+  `BTC/USDT:USDT-261002-66000-C`; `Bourse.fetch_all_greeks(exchange, symbols:
+  [unified], baseCoin: "BTC")` then answered `{:ok, %{}}`.
+- Expected: a `%Bourse.Greeks{}` under that key — the ticker list and the greeks
+  read are the same option board.
+- Not a single-frame race: `mix test.json`'s automatic retry re-ran it and
+  confirmed the failure, so the empty read persisted across the retry window.
+- Re-probed by this audit minutes after the suite finished: tickers returned 716
+  rows, `hd` unified to `BTC/USDT:USDT-260915-77750-P` and round-tripped back to
+  `BTC-15SEP26-77750-P-USDT`; the filtered `fetch_all_greeks` returned exactly
+  that one key and the unfiltered call returned all 716. Symbol normalization and
+  the `symbols:` filter are both correct as of the re-probe.
+
+What is not settled: whether bybit's option greeks surface intermittently drops
+instruments its ticker surface still lists, or whether the specific
+`261002-66000-C` instrument was delisted between the two calls inside the test.
+The test picks `hd(rows)` out of ~716 instruments with no stability requirement,
+so it will keep sampling whichever instrument the venue happens to head the list
+with. Deciding this needs the failure caught again with both payloads captured
+side by side, which no run has done.
+
+---
+
+## 2026-09-15 — binanceusdm merged order history stops ~5.3 s short of the requested `until` boundary, past the probe's 1 s tolerance
+
+**Status:** Recorded, not routed (post-merge audit of `de6916d`, 2026-09-15). No task filed — one observation, and it is not yet settled whether the client selects the boundary wrongly or the probe's tolerance is too tight for a merged read.
+
+Preserved from the task 693 run journal before that journal was rewritten as
+`docs/conditional-order-controls.md`; measured by the task 693 implementer
+(run `run-1789444835773-5d708551`), not re-proven by this audit.
+
+- Exact call: `test/live/time_window_integration_test.exs`, the
+  `binanceusdm` / `fetch_orders` probe against `demo-fapi.binance.com`
+  (`tolerance_ms: 1_000`, i.e. `@one_second_ms`).
+- Assertion that failed: `last_timestamp >= until_boundary - probe.tolerance_ms`
+  — *"did not stop at the until boundary"*.
+- Observed: the last returned timestamp was **5,347 ms earlier** than the
+  requested upper boundary. No row came back *beyond* the upper bound, so the
+  window is not over-wide; it is under-full at the top.
+- Expected by the probe: a last row within 1 s of `until_boundary`.
+- Persisted when the generated time-window lane was run alone (17/18), so it is
+  not contention with concurrent mutation from the rest of the suite.
+
+The open question is which side is wrong. `fetch_orders` on USD-M is a *merged*
+read across more than one provider endpoint, so a boundary picked per-endpoint
+and then merged can legitimately land short of the requested edge — in which
+case the 1 s tolerance (shared with single-endpoint OHLCV probes) is the defect,
+and `binancecoinm.fetch_trades` / `derive.fetch_trades` / `lighter.fetch_ohlcv`
+already carry `@one_minute_ms` for comparable reasons. If instead the client
+picks the merged upper boundary from the wrong endpoint's page, that is a real
+read defect. Deciding it needs a live read of both underlying endpoints against
+the same window, which nobody has run. Recorded here so the next reader does not
+re-derive it.
+
+---
+
 ## 2026-09-15 — lighter testnet went dark: every private read answers `invalid auth: couldnt find account`, the public WS channel is rejected, and an unknown market id no longer errors
 
 **Status:** Tracked in task 699 (post-merge audit of `0ac2cd2`, 2026-09-15); implementation pending.
@@ -230,7 +298,7 @@ the hedge ranker cannot see.
 
 ## 2026-08-29 — the unified trigger/stop opt is spelled differently per venue, so the same `create_order` call rests a stop on binance and fills a market order on okx
 
-**Status:** Tracked in task 693 (triage 2026-09-15); implementation pending.
+**Status:** ✅ fixed 2026-09-15 (task 693, shipped `9475f0bf3298`) — `Bourse.Unified.OrderOptions` canonicalizes the control spellings and validates them *before* venue selection, including inside nested `orders` entries, so the legacy spelling can no longer reach a plain MARKET route with the trigger dropped; a control the selected operation cannot express is refused with `invalid_parameters` before signing. Repro kept below as the evidence trail.
 
 `Bourse.create_order/6`'s trigger opt has no single spelling. The authored
 `createOrder.request.endpoint_selection` rule — the thing that decides whether the order goes
@@ -279,7 +347,7 @@ never comes back `filled`. Fixing okx alone reproduces the class on the next ven
 
 ## 2026-08-29 — after the bucket rewrite, 50 runtime endpoints always answer `rate_limit_exceeded`, and a heavy request can be starved by cheap traffic
 
-**Status:** Tracked in task 694 (triage 2026-09-15); implementation pending.
+**Status:** ✅ mostly fixed 2026-09-15 (task 694, shipped `8304acb0ea91`) — (2) a waiter whose budget covers the delay now reserves its unpaid cost, so interleaved cheap traffic can neither spend the reservation nor clamp accrual; (3) repeated checks of one key inside a `check_rates/2` call are coalesced into one combined cost and conflicting bucket definitions for the same key answer `invalid_parameters` before any spend. **(1) is only partly addressed**: the wait budget became per-call (`:rate_limit_max_wait_ms` on `Bourse.HTTP`, default `Bourse.Defaults.rate_limit_max_wait_ms/0`), which removes the racy process-wide config, but the 50 endpoints whose authored cost accrues past the 10 s default still refuse unless the caller passes a larger per-call budget. Repro kept below as the evidence trail.
 
 Task 689 replaced the fixed window with the authored token bucket and removed the
 `skip_record` exemption, which is what the task asked for. Three consequences of the new
@@ -3397,7 +3465,7 @@ only the private reads. Local workaround only; the misclassification is the fix 
 
 ## 2026-09-14 — Deribit `parse_order/2`: `symbol` bleibt `nil`, obwohl `instrument_name` im Raw steht und `symbol:` als Option übergeben wird
 
-**Status:** Tracked in task 695 (triage 2026-09-15); implementation pending.
+**Status:** ✅ fixed 2026-09-15 (task 695, shipped `b4daa6f9402e`) — `field_maps.order.symbol` reads `instrument_name` as the native id; unified reads remap through loaded markets. Repro kept below as the evidence trail.
 
 Call (bourse 0.8.0, Testnet live):
 
@@ -3432,7 +3500,7 @@ identisch zum bestehenden Positions-Pfad. Betroffene Exchange: deribit.
 
 ## 2026-09-14 — Deribit: Antwort auf die Heartbeat-Reply (`public/test`) erreicht den Owner als Datenframe
 
-**Status:** Tracked in task 696 (triage 2026-09-15); implementation pending.
+**Status:** ✅ fixed 2026-09-15 (task 696, shipped `cbc17f5a7b73`) — `Bourse.WS.ControlFrame` classifies JSON-RPC result/error envelopes and ping/pong keepalives as transport control, so they arrive as `{:websocket_unmatched_response, _}` and route as `:system` instead of being broadcast as `:raw` market data. Repro kept below as the evidence trail.
 
 Call (bourse 0.8.0, Testnet live): `Bourse.WS.connect(exchange, :public, [])` mit
 Default-Handler, dann `watch_ticker(ws, "BTC-16SEP26-79000-P", [])` und
@@ -3475,7 +3543,7 @@ Observed in trading_dashboard with Bourse 0.8.0: `Bourse.fetch_ohlcv(client, "ET
 
 ## 2026-09-14 — `SpecConfig`-Heartbeat `:ping` erreicht in zen_websocket 0.9.0 den No-op-Zweig; `Bourse.WS` legt keine Heartbeat-Evidenz offen
 
-**Status:** Tracked in task 696 (triage 2026-09-15); implementation pending.
+**Status:** ✅ fixed 2026-09-15 (task 696, shipped `cbc17f5a7b73`) — `Bourse.WS.Heartbeat.validate/1` accepts only `:disabled`, `:deribit` and `:ping_pong`; `:ping`/`:custom` fail at `connect/3` with `{:error, {:unsupported_heartbeat, type}}` rather than presenting a dead timer as liveness, and `Bourse.WS.health/1` exposes the dependency's `get_heartbeat_health/1` observations per socket. The venues whose keepalive is a JSON/string application ping are authored `:disabled`; the remaining upstream gaps are recorded in `docs/ws-heartbeat-upstream.md`. Repro kept below as the evidence trail.
 
 Call (bourse 0.8.0, zen_websocket 0.9.0, Quell-Inspektion): `Bourse.WS.connect(exchange, :public, [])`
 für `binance`/`binanceusdm`; `Bourse.WS.Config`/`SpecConfig` löst die Heartbeat-Konfiguration auf.
@@ -3566,7 +3634,7 @@ Betroffene Exchange: coinbaseexchange.
 
 ## 2026-09-15 — Deribit: Fehlercode 11044 `not_open_order` wird als `:operation_failed`/InvalidOrder statt `:order_not_found` klassifiziert
 
-**Status:** Tracked in task 695 (triage 2026-09-15); implementation pending.
+**Status:** ✅ fixed 2026-09-15 (task 695, shipped `b4daa6f9402e`) — `raw.exceptions.11044` maps to `OrderNotFound` for every open-order operation that returns it, over REST and WS alike. Repro kept below as the evidence trail.
 
 Call (bourse 0.8.0): `Bourse.cancel_order/3` bzw. jeder `private/cancel` gegen Deribit auf eine Order, die die Venue bereits geschlossen hat — typisch nach einem MMP-Trigger, der alle MMP-Orders des Index selbst cancelt, oder nach einem Fill.
 
@@ -3581,7 +3649,7 @@ Betroffene Exchange: deribit.
 
 ## 2026-09-15 — Deribit `parse_trade/2`: `fee` bleibt `%{"cost" => nil, "currency" => nil}`, obwohl der Rohtrade `fee`/`fee_currency` trägt
 
-**Status:** Tracked in task 695 (triage 2026-09-15); implementation pending.
+**Status:** ✅ fixed 2026-09-15 (task 695, shipped `b4daa6f9402e`) — the trade field map copies `fee`/`fee_currency` into the Fee contract (signed, no invented order-level aggregate), and both `fee`/`fees` are `omit_if_empty` so public `public/get_last_trades_by_instrument` rows, which carry no fee, keep the unavailable default. Repro kept below as the evidence trail.
 
 Call (bourse 0.8.0): `Bourse.fetch_my_trades(exchange, symbol: "BTC/USD:BTC", limit: 1)` gegen test.deribit.com; gleiches Bild für die Trades in `Bourse.fetch_order/3` (`trades: []`, `fee: nil`).
 
