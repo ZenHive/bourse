@@ -674,6 +674,24 @@ read defect. Deciding it needs a live read of both underlying endpoints against
 the same window, which nobody has run. Recorded here so the next reader does not
 re-derive it.
 
+> **Update (2026-09-15, four consecutive gate runs):** the failure is not
+> occasional. It reappeared in every full-suite run of the day — `mix
+> test.json --cover` 14:31, `mix ci` 16:11, `mix check.dispatch` 17:24
+> (healed on the automatic retry, so it settled *flaky*) and 17:50 — and the
+> shortfall varies by four orders of magnitude between runs: **2,113 ms**,
+> **3,981 ms**, **1,355,925 ms (22.6 min)** and **313,974 ms (5.2 min)**.
+> That variance is the new evidence, and it cuts against the tolerance
+> reading: a merged read whose upper boundary is picked per-endpoint and then
+> merged can land a second or two short, but it cannot land twenty-two
+> minutes short. A shortfall that large means the `until`-bounded page is not
+> the page nearest the boundary at all — it is some other page of the same
+> history — which points at request construction or provider paging
+> semantics, not at the probe's 1 s tolerance. Widening the tolerance would
+> turn the small-gap runs green and leave the large-gap runs red, i.e. it
+> would make the symptom intermittent rather than settle it. Deciding it
+> still needs the live read of both underlying USD-M endpoints against one
+> window that nobody has run.
+
 ---
 
 ## 2026-09-15 — lighter testnet went dark: every private read answers `invalid auth: couldnt find account`, the public WS channel is rejected, and an unknown market id no longer errors
