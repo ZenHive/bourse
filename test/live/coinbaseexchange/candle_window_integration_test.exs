@@ -18,8 +18,26 @@ defmodule Bourse.CoinbaseCandleWindowIntegrationTest do
     opening = div(now, @hour) * @hour
     since = opening - 1199 * @hour
 
-    assert {:ok, candles} = Bourse.fetch_ohlcv(exchange, "ETH/USD", "1h", since: since, until: now, limit: 1200)
-    assert Enum.map(candles, &hd/1) == Enum.map(0..1199, &(since + &1 * @hour))
+    assert {:ok, candles} =
+             Bourse.fetch_ohlcv(exchange, "ETH/USD", "1h",
+               since: since,
+               until: now,
+               limit: 1200,
+               timestamp_ms_override: now
+             )
+
+    timestamps = Enum.map(candles, &hd/1)
+    completed = Enum.map(0..1198, &(since + &1 * @hour))
+
+    assert timestamps == Enum.sort(timestamps)
+    assert length(Enum.uniq(timestamps)) == length(timestamps)
+    assert length(timestamps) <= 1200
+    assert List.first(timestamps) >= since
+    assert List.last(timestamps) <= now
+    # Provider omits no-tick intervals; ETH/USD 1h completed hours are liquid.
+    # The current forming bucket is optional until it trades.
+    assert completed -- timestamps == []
+    assert Enum.any?(timestamps, &(&1 > since + 299 * @hour))
   end
 
   test "unaligned pagination preserves openings at both page seams", %{exchange: exchange} do

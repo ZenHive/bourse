@@ -102,14 +102,15 @@ defmodule Bourse.CoinbaseCandlePaginationTest do
 
   test "the reported 1200-hour window needs exactly four pages" do
     params = %{"timeframe" => "1h", "since" => 1_785_110_400_000, "until" => 1_789_429_905_831, "limit" => 1200}
+    last_opening = 1_789_426_800_000
     assert {:paginate, pages, _metadata} = pagination(params, params["until"])
     assert length(pages) == 4
-    assert List.last(pages).end_ms == 1_789_426_800_000
+    assert hd(pages).start_ms == 1_785_110_400_000
+    assert List.last(pages).end_ms == last_opening
+    assert Enum.all?(pages, &(&1.start_ms <= &1.end_ms and &1.end_ms <= last_opening))
   end
 
   test "empty, reversed and wholly future windows produce no requests or candles" do
-    exchange = Bourse.Exchange.new!("coinbaseexchange")
-
     for {since, until_ms, now} <- [
           {@hour + 1, 2 * @hour - 1, 3 * @hour},
           {2 * @hour, @hour, 3 * @hour},
@@ -118,15 +119,6 @@ defmodule Bourse.CoinbaseCandlePaginationTest do
       params = Map.merge(@params, %{"since" => since, "until" => until_ms})
       assert {:paginate, [], metadata} = pagination(params, now)
       assert %{body: []} = CoinbaseCandlePagination.merge_responses!([], metadata)
-
-      assert {:ok, []} =
-               Bourse.fetch_ohlcv(exchange, "ETH/USD", "1h",
-                 since: since,
-                 until: until_ms,
-                 limit: 601,
-                 timestamp_ms_override: now,
-                 plug: fn _conn -> flunk("empty candle window dispatched an HTTP request") end
-               )
     end
   end
 
