@@ -24104,3 +24104,90 @@ Routing: one signing migration warrants independent harness review; do not split
 """
 created_at = "2026-09-15"
 scored_at = "2026-09-15"
+
+[[task]]
+id = "704"
+phase = 11
+bundle = "signing"
+status = "pending"
+title = "Lighter order signing is dead against the venue's four-digit market ids — bump the pinned zk SDK and make time-in-force carry its own expiry"
+scores = { d = 6, b = 9, u = 9 }
+acceptance_criteria = ["A real limit order is placed on lighter testnet against a live four-digit market id (BTC/USDC:USDC) and the venue answers code 200 with a tx_hash; the order is then observed in fetch_open_orders and cancelled, with the cancel likewise answered 200. Name the observed market id, tx hashes and the account index source in the delivery.", "A relevant live rejection is re-observed with the new SDK and pinned in test/live/errors/lighter_test.exs or the journey file — at minimum the below-minimum base amount (21706) and the replayed nonce (21104) still map to the same Bourse.Error shape. A changed code is recorded as the new provider truth, not forced back to the old one.", "timeInForce IOC signs and is accepted end-to-end on a live market without the caller passing order_expiry, and PO still signs and rests. Both are proven by a live call, and a unit test pins the expiry the request shape derives for each time-in-force.", "native/lighter_signer/golden_test.go passes against the new SDK with vectors re-derived from the provider's own signing definition — each vector's expected hash and signature justified in a comment by what produced it. A vector whose only justification is that the new binary emitted it is not acceptable.", "mix bourse.check_lighter_signer is green (Go and C toolchain present, helper builds), and mix bourse.verify_rest_read_contracts --venue lighter reports executed == denominator with zero failures, including lighter:fetchPositions:0:publicGetAccount — which requires an open position on the sandbox account. Leave that position open or document why it was closed.", "mix check.dispatch is green and the reviewer runs the lighter contract lane itself. Missing credentials or an unreachable testnet fail loudly with the exact export commands; an unreachable branch is recorded in docs/prod-verification-ledger.md as unverified and reported as an unmet criterion, never converted to a skip or a mock.", "The BUGS.md entry for this defect gains a dated Update block naming the landed SDK version, the market id proven live, and the commit; its Status header is changed to fixed. The retired account index no longer appears as a live fact in any comment."]
+out_of_scope = ["Replacing the Go zk-Schnorr helper with an in-Elixir signer", "The EVM/L1 personal-signature migration to Cartouche and Hieroglyph (task 703)", "Adding lighter WebSocket URLs or a private stream leg", "Grouped orders, public pools, staking or any SDK surface the shim does not already call", "Unrelated venue or signing cleanup"]
+files_to_modify = ["native/lighter_signer/go.mod", "native/lighter_signer/go.sum", "native/lighter_signer/csrc/helper.c", "native/lighter_signer/golden_test.go", "lib/bourse/unified/request_shape/lighter.ex", "priv/venues/lighter/authored/venue.json", "docs/authored-spec-carves/lighter.md", "test/live/journeys/trader/lighter_test.exs"]
+assignee = "codex"
+model = "gpt-6-astra"
+body = """
+Sibling check (RMAP_SIBLING_CHECKED): 286 is the canonical query-encoder space encoding (+ vs %20) for
+HMAC query signing — a different surface with no overlap beyond the words "signing" and "venue". This
+task is the pinned Go zk-Schnorr SDK's market-index validation. Nothing in the roadmap, landed or
+pending, covers the lighter signer's vendored SDK pin.
+
+Every lighter write is currently impossible. Measured live on 2026-09-15 through Tidewave against
+testnet.zklighter.elliot.ai: `Bourse.create_order/6` fails with
+`%Bourse.Error{type: :authentication_error, message: "Request signing failed: lighter_signing/signing_failed"}`
+before a byte leaves the process, for every market the venue actually lists. Full evidence, the
+boundary sweep and the constants are in BUGS.md under
+"the pinned lighter-go SDK rejects every four-digit market id".
+
+Cause, verified by reading the pinned SDK and by a boundary sweep, not inferred: `native/lighter_signer/go.mod`
+pins `github.com/elliottech/lighter-go v0.0.0-20260608173247-c26ac340ce5d`, whose
+`types/txtypes/constants.go` validates the market index against two disjoint windows — perps
+`0..254`, spot `2048..4094`. Lighter testnet has moved its perp ids to ETH 4095 / BTC 4096 / SOL 4097,
+outside both, so `L2CreateOrderTxInfo.Validate/0` returns `ErrInvalidMarketIndex`. Our C shim collapses
+every Go error into `ERROR_SIGNING`, which is why the symptom names nothing. The sweep cuts exactly at
+254 and 4094 (254 signs, 255 fails; 4094 signs, 4095 fails), and `CreateAuthToken` signs fine on the
+same helper process — so private reads are unaffected and no credential is involved.
+
+DECISIONS ALREADY MADE — bourse dispatches on cron, so these are answered here rather than asked.
+Each is vetoable; if live evidence contradicts one, report the precise unmet criterion instead of
+silently re-scoping.
+
+1. Target `github.com/elliottech/lighter-go v1.0.9` (published 2026-09-11 — the latest tagged release;
+   the current pin is a June pseudo-version). Its constants drop the two-window split entirely:
+   `MinMarketIndex 0`, `MaxMarketIndex (1 << 15) - 1`, `NilMarketIndex 255`. EVIDENCE GATE: if live
+   signing or live sendTx proves v1.0.9 incompatible with the testnet chain, step back through v1.0.8,
+   v1.0.7 and so on, and say in the delivery which version you landed on and what disproved the later
+   ones. Do not stay on the current pin.
+
+2. The exported C surface of v1.0.9 is source-compatible with our shim for every call it makes
+   EXCEPT `SignModifyOrder`, which gained a trailing `cOrderVersion C.longlong`. `csrc/helper.c:500`
+   must pass it; decide the value from the SDK's own nil/default order version rather than inventing one,
+   and if the wire protocol between Elixir and the helper needs a new field, extend
+   `Bourse.Signing.Lighter.Protocol`'s `modify_order` payload rather than hardcoding a constant in C.
+   `CreateIntegratorTxAttributes` also gained `orderVersion` on the Go side, so the SIGNED PAYLOAD
+   CHANGED: `native/lighter_signer/golden_test.go` vectors must be RE-DERIVED from the new SDK and
+   independently justified, never re-blessed by copying whatever the new binary emits. A vector that
+   only records the new output is not a test.
+
+3. A LimitOrder with `TimeInForce == ImmediateOrCancel` is valid only when `OrderExpiry == 0`, and the
+   SDK rewrites the sentinel `-1` into `now + 28d` before validating — so our flat
+   `@default_order_expiry -1` in `Bourse.Unified.RequestShape.Lighter` makes `timeInForce: "IOC"`
+   unsignable. Proven in the same sweep: `{market 2, IOC, expiry -1}` fails, `{market 2, IOC, expiry 0}`
+   signs. Make the default expiry a function of the resolved time-in-force (IOC to the SDK's nil expiry,
+   GTT/PO to the existing default), keeping an explicit caller-supplied `order_expiry` authoritative.
+
+4. `priv/venues/lighter/authored/venue.json` advertises `createOrder.timeInForce.FOK: true`, but the
+   `@time_in_force` map in the request shape has no `"FOK"` key at all — a caller passing it gets our
+   own `unsupported_time_in_force` raise — and the SDK's `Validate/0` accepts only
+   ImmediateOrCancel / GoodTillTime / PostOnly. Confront the capability against the provider's own
+   documented set and correct whichever side is wrong, with the outcome recorded in
+   `docs/authored-spec-carves/lighter.md`. Do not add an FOK mapping that the signer cannot produce.
+
+Provider authority: `priv/venues/lighter/authority/` first, then https://apidocs.lighter.xyz/ and the
+official lighter-go SDK for meaning. The SDK is the provider's own, so its constants are provider-owned
+evidence — but only the live testnet establishes what the chain accepts.
+
+Sandbox state: the testnet account was re-provisioned on 2026-09-15 (`mix bourse.provision_lighter`);
+`LIGHTER_TESTNET_ACCOUNT_INDEX` / `_API_KEY_INDEX` / `_API_PRIVATE_KEY` in the environment are current and
+the account carries USDC collateral and no open position. Two in-repo comments still name a retired
+account index as a live fact — the moduledoc comment in `test/live/journeys/trader/lighter_test.exs`
+and the rejection-test comments below it. Correct them to name the env var, not a literal index.
+
+This also unblocks `lighter:fetchPositions:0:publicGetAccount`, the one remaining red in
+`mix bourse.verify_rest_read_contracts --venue lighter`: the branch reports "provider account/market
+state did not exercise the read" because the account is flat, and it cannot be populated until an order
+can be signed.
+"""
+created_at = "2026-09-15"
+scored_at = "2026-09-15"

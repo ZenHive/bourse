@@ -114,6 +114,76 @@ roadmap.
 
 ---
 
+## 2026-09-15 — the pinned lighter-go SDK rejects every four-digit market id, so no lighter order can be signed at all
+
+**Status:** 🆕 reported 2026-09-15 (landed-base gate, Tidewave live probe) — routed to roadmap task 704.
+
+**Impact:** every lighter write is dead. `Bourse.create_order/6`, `Bourse.cancel_order/3` and
+`modify_order` against the live testnet fail before a byte reaches the venue, with
+`%Bourse.Error{type: :authentication_error, message: "Request signing failed: lighter_signing/signing_failed"}`.
+The private *reads* are unaffected — `CreateAuthToken` does not validate a market id.
+
+**What it is.** `native/lighter_signer/go.mod` pins
+`github.com/elliottech/lighter-go v0.0.0-20260608173247-c26ac340ce5d`. That revision
+validates the market index against two disjoint windows
+(`types/txtypes/constants.go`):
+
+```
+MinPerpsMarketIndex int16 = 0
+MaxPerpsMarketIndex int16 = 254  // (1 << 8) - 2
+MinSpotMarketIndex  int16 = 2048 // (1 << 11)
+MaxSpotMarketIndex  int16 = 4094 // (1 << 12) - 2
+```
+
+`L2CreateOrderTxInfo.Validate/0` returns `ErrInvalidMarketIndex` for anything outside both,
+and our C shim collapses every Go error into `ERROR_SIGNING` (6), so the venue-visible
+symptom is a bare `signing_failed` that names nothing.
+
+Lighter testnet has since moved its perp ids into the four-digit space — ETH `4095`,
+BTC `4096`, SOL `4097` (same migration already recorded in the lighter WS entry below).
+`4095` and `4096` are both outside `0..254` **and** outside `2048..4094`, so the market our
+own `fetchMarkets` publishes can never be signed for.
+
+**Live repro (Tidewave, 2026-09-15, testnet account index from `LIGHTER_TESTNET_ACCOUNT_INDEX`):**
+a boundary sweep through `Bourse.Signing.Lighter.sign_transaction(:create_order, …)` with
+every other field held constant:
+
+| market_index | time_in_force | order_expiry | result |
+|---|---|---|---|
+| 2 | PO | -1 | signed |
+| 254 | PO | -1 | signed |
+| **255** | PO | -1 | `signing_failed` |
+| 4094 | PO | -1 | signed |
+| **4095** | PO | -1 | `signing_failed` |
+| **4096** (live BTC) | PO | -1 | `signing_failed` |
+| 2 | IOC | 0 | signed |
+| **4096** | IOC | 0 | `signing_failed` |
+
+The cut points are exactly `MaxPerpsMarketIndex` and `MaxSpotMarketIndex`. Nothing about
+the credential, the nonce or the key is involved: `CreateAuthToken` signs fine on the same
+helper process, and `GET /api/v1/apikeys?account_index=<idx>&api_key_index=255` shows our
+registered zk pubkey at the configured key index.
+
+**Second finding from the same sweep — an IOC limit order can never carry our default
+expiry.** `Bourse.Unified.RequestShape.Lighter` sends `order_expiry: -1` by default; the
+SDK's `SignCreateOrder` rewrites `-1` to `now + 28d`, and `Validate/0` then rejects a
+`LimitOrder` whose `TimeInForce == ImmediateOrCancel` and whose `OrderExpiry != 0`. So
+`timeInForce: "IOC"` (and `"FOK"`, which our capability slice advertises as supported) is
+unusable unless the caller also passes `order_expiry: 0`. Proven above: `{2, IOC, -1}`
+fails, `{2, IOC, 0}` signs.
+
+**The fix is an SDK bump, not a workaround.** `lighter-go v1.0.9` (2026-09-11) drops the
+two-window split entirely — `MinMarketIndex 0` / `MaxMarketIndex (1 << 15) - 1`, with
+`NilMarketIndex 255`. Its exported C surface is source-compatible for every call our shim
+makes **except `SignModifyOrder`, which gained a trailing `cOrderVersion C.longlong`**, so
+`native/lighter_signer/csrc/helper.c:500` needs the new argument. `CreateIntegratorTxAttributes`
+gained `orderVersion` on the Go side, which means the signed payload changed — the golden
+vectors in `native/lighter_signer/golden_test.go` must be re-derived, not re-blessed.
+
+**Consumer note.** No consumer has hit this yet because no consumer places lighter orders;
+it was found by the landed-base gate while trying to open a position so
+`lighter:fetchPositions:0:publicGetAccount` would stop reporting an unexercised read.
+
 ## 2026-09-15 — deribit's authored transfer slot never mapped the venue's own `currency`, so the first live transfer row failed the contract lane
 
 **Status:** ✅ fixed 2026-09-15 inline (landed-base `mix ci` gate) — `priv/venues/deribit/authored/normalization.json`
