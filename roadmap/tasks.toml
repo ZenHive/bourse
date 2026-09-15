@@ -23908,7 +23908,7 @@ scored_at = "2026-09-15"
 id = "699"
 phase = 16
 bundle = "live_triage"
-status = "in_progress"
+status = "done"
 title = "Re-prove the public lighter surface: the authored WS channel is rejected and the pinned bad-input error no longer occurs"
 scores = { d = 3, b = 6, u = 6 }
 markers = ["bug"]
@@ -23928,9 +23928,16 @@ The class this task closes: **our authored claims about lighter's public surface
 
 Scope the fix as the class, not the two rows: if the authored channel grammar or the error probe is stale in one place, check whether the same staleness is present in the venue's other authored public claims while you are in there, and say in the delivery what you checked.
 """
+implemented = "Landed by codex via merge-train; reviewer-approved (run run-1789457609601-bff0207f, ba09535718725edef9fcd580660457dab6a5c21c)."
+delivered_by = "codex"
+verified = true
+verified_by = "cursor"
+verification_ref = "harness-run:run-1789457609601-bff0207f"
 created_at = "2026-09-15"
 started_at = "2026-09-15"
 scored_at = "2026-09-15"
+done_at = "2026-09-15"
+shipped_in = "ba09535718725edef9fcd580660457dab6a5c21c"
 
 [[task]]
 id = "700"
