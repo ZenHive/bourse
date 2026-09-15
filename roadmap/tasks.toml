@@ -23760,7 +23760,7 @@ scored_at = "2026-09-15"
 id = "694"
 phase = 16
 bundle = "live_triage"
-status = "in_progress"
+status = "done"
 title = "Make token-bucket accounting fair for heavy requests and atomic for repeated keys"
 scores = { d = 6, b = 8, u = 8 }
 markers = ["bug"]
@@ -23773,9 +23773,16 @@ body = """
 BUGS.md 2026-08-29 records three residuals of landed task 689: endpoint costs beyond the global wait budget, over-capacity accrual erased by cheap traffic, and repeated-key checks charged only once. Source inspection 2026-09-15 confirms check_bucket refills to max(capacity, current cost), every decision reads the same state, persist_buckets overwrites by key, and the wait bound comes from global application config. The reported 50-endpoint count is historical: recompute it from the current eleven-venue surface.
 
 Preserve bounded defaults and provider pacing while making heavy requests attainable without global configuration races or starvation. Expose an explicit per-call wait budget for callers who accept a longer wait; exceeding it returns an informative error, never bypasses accounting. Charge repeated keys atomically for the combined request, or reject incompatible bucket definitions before spending anything. Protect accrued/reserved heavy-request progress from cheap traffic while maintaining authored burst limits and credential isolation. Dispatch for shared runtime invariants and public timeout behavior. D6 is concurrent accounting; B8/U8 restores callable endpoints under mixed traffic."""
+implemented = "Landed by grok via merge-train; reviewer-approved (run run-1789440336552-556ea50f, 8304acb0ea91dea81d88a9b439e6ec00cf6857e3)."
+delivered_by = "grok"
+verified = true
+verified_by = "cursor"
+verification_ref = "harness-run:run-1789440336552-556ea50f"
 created_at = "2026-09-15"
 started_at = "2026-09-15"
 scored_at = "2026-09-15"
+done_at = "2026-09-15"
+shipped_in = "8304acb0ea91dea81d88a9b439e6ec00cf6857e3"
 
 [[task]]
 id = "695"
