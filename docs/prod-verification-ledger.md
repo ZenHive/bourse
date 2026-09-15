@@ -198,6 +198,70 @@ test code. Edit the fence when adding a ledgered case.
 
 ## Open
 
+### lighter — L1 ChangePubKey signing migration (task 703, filed 2026-09-15)
+
+- Status: `evidence=unverified`. The migration is blocked before implementation;
+  no signing modules or dependencies were changed. This entry does not classify
+  a failing live test as passing or exempt it from a gate.
+- Blocked by: `LIGHTER_TESTNET_L1_ADDRESS` and `LIGHTER_TESTNET_L1_PRIVATE_KEY`
+  are absent in the dispatched environment. The zk API key, API key index and
+  account index are present, but cannot sign the account's EVM L1 message.
+  `MIX_ENV=test mix bourse.provision_lighter` exited 1 with the L1 credential
+  setup error before any network request. This is a local prerequisite failure,
+  not a provider rejection. No Lighter L1 success or rejection was observed.
+- Authority: [Lighter API keys](https://apidocs.lighter.xyz/docs/api-keys),
+  retrieved 2026-09-15, distinguishes API-key generation from associating a key
+  with an account, which requires the L1 private key. The affected Bourse path is
+  `Mix.Tasks.Bourse.ProvisionLighter` → `Bourse.LighterProvision.sign_l1_message/2`
+  and `assert_signer/3` → `Bourse.Signing.Crypto`.
+- Setup: obtain the L1 wallet credentials for an isolated account at
+  https://testnet.zklighter.elliot.ai, then export:
+
+  ```sh
+  export LIGHTER_TESTNET_L1_ADDRESS="0x<testnet-account-L1-address>"
+  export LIGHTER_TESTNET_L1_PRIVATE_KEY="0x<matching-32-byte-private-key>"
+  export LIGHTER_TESTNET_ACCOUNT_INDEX="<isolated-account-index>"
+  export LIGHTER_TESTNET_API_KEY_INDEX="<isolated-API-key-slot>"
+  export LIGHTER_TESTNET_API_PRIVATE_KEY="<40-byte-hex-API-private-key>"
+  ```
+
+- Exact call: `MIX_ENV=test mix bourse.provision_lighter` exercises the existing
+  successful registration path once those inputs are supplied. A live integration
+  test must also submit a relevant invalid L1 signature, assert the observed
+  provider rejection, and restore the isolated API-key slot after the journey.
+  The provisioning command alone does not supply rejection or cleanup evidence.
+- Expected evidence: live accepted ChangePubKey registration and rejected L1
+  signature, with registration readback and cleanup, before migration and again
+  through Cartouche after migration. The unchanged zk-Schnorr authentication tests
+  cannot grade this path. Task 703's pre-implementation live-proof criterion is
+  unmet; no upstream release prerequisite has been established.
+- Other baseline observations, run by the implementer on
+  `add8b6a5fde15abb202d3bc669790e30a9cb314d` (not independent review evidence):
+  - `mix test.json --quiet --include dangerous test/live/journeys/trader/derive_test.exs test/live/journeys/trader/hyperliquid_test.exs --output /tmp/task703-journeys.json`:
+    7 passed, 0 failed, 0 skipped, seed 444144. Existing tests exercised resting
+    orders, cancellation, lifecycle streams and venue order rejections.
+  - `mix test.json --quiet --only venue:derive test/live/ws/auth_live_smoke_test.exs --output /tmp/task703-ws.json`:
+    2 passed, 14 excluded by venue selection, 0 failed, seed 746491. Authenticated
+    private subscription succeeded; unauthenticated subscription and wrong-signer
+    login were rejected with the asserted provider codes.
+  - `mix test.json --quiet test/live/derive/derive_authored_integration_test.exs:126 --output /tmp/task703-derive-rejection.json`:
+    1 passed, 7 excluded by line selection, 0 failed, seed 59853. Unregistered
+    session-key REST authentication returned the asserted HTTP 403.
+  - `mix test.json --cover --quiet --output /tmp/task703-cov.json`: stopped by
+    the implementer with SIGTERM after the L1 prerequisite blocked implementation.
+    The remaining JSON reports 3,133 passed, 15 failed, 82 excluded, seed 297227;
+    it has no coverage section. This interrupted run is not a completed coverage
+    gate or a passing suite. The 95% critical-module prerequisite remains
+    unverified. Failures name Binance, Binance USD-M, Lighter, OKX and the
+    time-window lane; no failures were suppressed or reclassified for this task.
+  - `mix test.json --quiet test/live/lighter/lighter_signing_integration_test.exs:17 --output /tmp/task703-lighter-auth.json`:
+    isolated confirmation failed (1 failed, 1 excluded, seed 105044, exit 2).
+    The configured zk API credentials received HTTP 401/code 20013,
+    `invalid auth: couldnt find account`, from `private_get_accountlimits`.
+    That account/key binding also needs repair; this response does not exercise
+    or establish rejection semantics for the L1 personal signature.
+
+
 ### eleven venues — sandbox-unhosted REST-read product surfaces (task 667, filed 2026-08-23)
 
 - Authored slices: runtime `fetch*` branches whose provider operation is not on the venue's
