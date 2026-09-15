@@ -23740,7 +23740,7 @@ scored_at = "2026-09-15"
 id = "693"
 phase = 16
 bundle = "live_triage"
-status = "pending"
+status = "in_progress"
 title = "Normalize conditional order options before venue routing so a stop cannot become a market fill"
 scores = { d = 6, b = 10, u = 10 }
 markers = ["bug"]
@@ -23754,6 +23754,7 @@ BUGS.md 2026-08-29 records an OKX demo market fill when trigger_price was silent
 
 Use snake_case as the canonical Elixir unified spelling for trigger_price, stop_loss_price, take_profit_price, time_in_force and reduce_only wherever offered. Preserve existing camelCase callers as aliases before route selection; refuse conflicting duplicate spellings with invalid_parameters before network dispatch. A requested protective control that a venue cannot express must fail, never disappear. Apply the same contract to sandbox owned-state helpers. Dispatch is required for order safety and public API compatibility. D6 covers request routing and live order lifecycle; B10/U10 reflects the observed unintended position."""
 created_at = "2026-09-15"
+started_at = "2026-09-15"
 scored_at = "2026-09-15"
 
 [[task]]
