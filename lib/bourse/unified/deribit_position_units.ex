@@ -59,6 +59,13 @@ defmodule Bourse.Unified.DeribitPositionUnits do
 
   defp reconcile_deribit_position(position, _exchange), do: position
 
+  # One row whose notional currency will not resolve must not shorten the list:
+  # a positions read is exposure input, and a silently shorter list is exactly
+  # the plausible-wrong-value this task exists to remove — it understates the
+  # account and can answer "flat" for an account that is not. Keep the row, drop
+  # only the pair that cannot be stated (which preserves the struct's documented
+  # invariant that notional_currency is populated whenever notional is), and mark
+  # the reason on `info` so a consumer sees it without reading the log.
   defp put_notional_currencies(positions, exchange) do
     normalized =
       Enum.reduce(positions, [], fn position, acc ->
@@ -67,12 +74,25 @@ defmodule Bourse.Unified.DeribitPositionUnits do
             [normalized | acc]
 
           {:error, {:missing_position_notional_currency, context}} ->
-            Logger.warning("dropping position row: missing_position_notional_currency #{inspect(context)}")
-            acc
+            Logger.warning("position notional unavailable: missing_position_notional_currency #{inspect(context)}")
+            [mark_notional_unavailable(position, context) | acc]
         end
       end)
 
     {:ok, Enum.reverse(normalized)}
+  end
+
+  defp mark_notional_unavailable(%Position{} = position, context) do
+    info =
+      position.info
+      |> Kernel.||(%{})
+      |> Map.put("bourse_notional_unavailable", %{
+        "reason" => "missing_position_notional_currency",
+        "context" => context,
+        "unstated_notional" => position.notional
+      })
+
+    %{position | notional: nil, notional_currency: nil, info: info}
   end
 
   defp put_notional_currency(%Position{notional: nil} = position, _exchange), do: {:ok, position}

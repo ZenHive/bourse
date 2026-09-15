@@ -103,14 +103,21 @@ defmodule Bourse.Unified.DeribitPositionUnitsTest do
 
     log =
       capture_log(fn ->
-        assert {:ok, [%Position{symbol: "BTC/USDT:USDT", notional_currency: "USDT"}]} =
+        assert {:ok, [%Position{symbol: "BTC/USDT:USDT", notional_currency: "USDT"}, unavailable]} =
                  DeribitPositionUnits.reconcile({:ok, positions}, exchange)
+
+        assert unavailable.notional == nil
+        assert unavailable.notional_currency == nil
+
+        marker = unavailable.info["bourse_notional_unavailable"]
+        assert marker["reason"] == "missing_position_notional_currency"
+        assert marker["unstated_notional"] == 50.0
       end)
 
     assert log =~ "missing_position_notional_currency"
   end
 
-  test "drops an unparseable Bybit dated-future row while retaining resolvable history" do
+  test "marks an unparseable Bybit dated-future row without shortening the list" do
     exchange = Exchange.new!("bybit")
 
     positions = [
@@ -120,8 +127,14 @@ defmodule Bourse.Unified.DeribitPositionUnitsTest do
 
     log =
       capture_log(fn ->
-        assert {:ok, [%Position{symbol: "BTC/USDT:USDT", notional_currency: "USDT"}]} =
+        assert {:ok, [dated, %Position{symbol: "BTC/USDT:USDT", notional_currency: "USDT"}]} =
                  DeribitPositionUnits.reconcile({:ok, positions}, exchange)
+
+        # the venue row survives: only the pair that could not be stated is dropped
+        assert dated.info["symbol"] == "DOGEUSDT-28AUG26"
+        assert dated.notional == nil
+        assert dated.notional_currency == nil
+        assert dated.info["bourse_notional_unavailable"]["context"].exchange == "bybit"
       end)
 
     assert log =~ "missing_position_notional_currency"

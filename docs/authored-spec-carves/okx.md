@@ -23,6 +23,17 @@ DIVERGE; retain each provider identifier under its own contract.**
   itself returned. A genuine `transId` from the creating POST still reaches
   transfer-state (write-then-read).
 
+Re-measured live 2026-09-15 on the international demo host, which is what makes
+the 16-digit threshold auditable rather than a guess: the five most recent
+`bills-archive` rows carried 19-digit `billId`s (`3924643864301129728` and
+siblings) and no `transId` at all, while a real `POST /api/v5/asset/transfer`
+answered `transId` **330955773** — nine digits. `fetch_transfer("330955773")`
+then returned `{:ok, %TransferEntry{status: "ok"}}` from transfer-state, and a
+nine-digit id that is merely *wrong* (`760599`) reaches the venue's own `58129`
+rather than the client refusal, so the width check does not over-block. The two
+classes are an order of magnitude apart in width; a transId would have to grow
+by seven digits before the threshold could mistake one for a bill.
+
 Provider contract: [OKX funding-account transfer API](https://www.okx.com/docs-v5/en/#funding-account-rest-api-funds-transfer).
 
 <!-- carve-evidence-status
