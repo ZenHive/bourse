@@ -112,6 +112,14 @@ defmodule Bourse.Signing.LighterFailureTest do
     assert {:error, :not_running} = Worker.helper_info(identity)
   end
 
+  # The stub is a python3 script, and `Worker.request/5` spends the same budget on
+  # the interpreter's startup plus the init round-trip before the request frame is
+  # even written. A budget that cannot cover that turns every assertion below into
+  # a timeout: `:invalid_argument` never arrives, and `:helper_terminated` is
+  # reported for the wrong reason. The stub-backed budgets are therefore generous;
+  # only the deliberate "hang" case below asserts on the timeout itself.
+  @stub_timeout_ms 5_000
+
   test "worker contains initialization protocol errors and invalid requests" do
     init = init_options("/bin/cat")
 
@@ -121,7 +129,7 @@ defmodule Bourse.Signing.LighterFailureTest do
     helper = protocol_helper!()
 
     assert {:error, :invalid_argument} =
-             Worker.request(:crypto.strong_rand_bytes(32), init_options(helper), :unsupported, %{}, 100)
+             Worker.request(:crypto.strong_rand_bytes(32), init_options(helper), :unsupported, %{}, @stub_timeout_ms)
   end
 
   test "worker contains helper exit and timeout after successful initialization" do
@@ -133,7 +141,7 @@ defmodule Bourse.Signing.LighterFailureTest do
                init_options(helper, ["exit"]),
                :auth_token,
                %{deadline: 1},
-               100
+               @stub_timeout_ms
              )
 
     assert {:error, :helper_terminated} =

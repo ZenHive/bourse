@@ -9,6 +9,24 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- `Bourse.WS.health/1` reports a dead connection as `{:error, :connection_closed}`
+  instead of `{:ok, []}`. The connection owner drops a client whose transport
+  process exits, so a dead socket left an empty snapshot behind, and
+  `Enum.all?(observations, & &1.connection_state == :connected)` holds on an
+  empty list — a caller polling for liveness read a dead socket as healthy.
+  A client that can no longer be queried now answers `connection_state:
+  :disconnected` and `heartbeat: nil` rather than crashing the health call.
+  Verified live against `wss://test.deribit.com/ws/api/v2`.
+
+- Unified order controls refuse a snake_case trailing selector alongside a
+  conditional price. `trailing_amount`, `trailing_percent`, `trailing_price`,
+  `trailing_stop`, `trading_stop_endpoint`, `callback_ratio` and
+  `callback_spread` were only recognized in their camelCase spelling, so a
+  caller writing snake_case everywhere else slipped the selector past the
+  combination refusal and reached the venue with a trigger price the selected
+  operation cannot express. Verified live on bybit testnet: both spellings now
+  answer `invalid_parameters` before the request is signed.
+
 - Coinbase Exchange candle pagination tiles the aligned candle openings that
   fall inside the requested window instead of adding an alignment step beyond
   it. A window whose end is off the granularity grid no longer generates a
