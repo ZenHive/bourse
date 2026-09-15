@@ -6,7 +6,9 @@ defmodule Bourse.CoinbaseCandlePagination do
   `21600`, and `86400` seconds. Its candle endpoint returns newest-first rows
   and documents a 300-candle maximum. Because `start` and `end` are inclusive,
   Bourse requests at most 299 intervals per page, then merges non-overlapping
-  pages back into Coinbase's newest-first wire order.
+  pages back into Coinbase's newest-first wire order. Pages tile aligned candle
+  openings inside the inclusive window, capped at the current time and limit.
+  Windows without eligible openings make no requests.
 
   Unified callers use `ETH/USD`; the authored dash symbol pattern routes it to
   Coinbase's `ETH-USD` product id. Native product ids remain available on the
@@ -21,7 +23,7 @@ defmodule Bourse.CoinbaseCandlePagination do
   @milliseconds_per_second 1_000
 
   @type page :: %{params: map(), start_ms: non_neg_integer(), end_ms: non_neg_integer()}
-  @type metadata :: %{start_ms: non_neg_integer(), end_ms: non_neg_integer(), limit: pos_integer()}
+  @type metadata :: %{start_ms: non_neg_integer(), end_ms: non_neg_integer(), limit: non_neg_integer()}
 
   @doc """
   Builds inclusive, non-overlapping request pages when `limit` exceeds 300.
@@ -37,14 +39,13 @@ defmodule Bourse.CoinbaseCandlePagination do
     timeframe_ms = timeframe_ms!(params, timeframes)
     {start_ms, end_ms} = requested_window(params, now_ms, limit, timeframe_ms)
 
-    # Ceil, not floor: a start off the granularity grid still has an aligned
-    # bucket inside the trailing partial step. Page tiling gets one extra step
-    # beyond `limit` for that alignment slack; the merge row cap does not.
-    window_steps = max(div(end_ms - start_ms + timeframe_ms - 1, timeframe_ms) + 1, 1)
-    page_steps = min(limit + 1, window_steps)
+    first_opening = ceil_opening(start_ms, timeframe_ms)
+    last_opening = div(end_ms, timeframe_ms) * timeframe_ms
+    window_steps = max(div(last_opening - first_opening, timeframe_ms) + 1, 0)
+    page_steps = min(limit, window_steps)
 
     metadata = %{end_ms: end_ms, limit: min(limit, window_steps), start_ms: start_ms}
-    {:paginate, build_pages(params, start_ms, page_steps, timeframe_ms), metadata}
+    {:paginate, build_pages(params, first_opening, page_steps, timeframe_ms), metadata}
   end
 
   def pagination(params, timeframes, now_ms), do: {:single, complete_window(params, timeframes, now_ms)}
@@ -74,6 +75,8 @@ defmodule Bourse.CoinbaseCandlePagination do
 
   @doc "Merges paged raw responses, deduplicating and retaining the requested chronological range."
   @spec merge_responses!([map()], metadata()) :: map()
+  def merge_responses!([], _metadata), do: %{body: []}
+
   def merge_responses!([first | _] = responses, %{start_ms: start_ms, end_ms: end_ms, limit: limit}) do
     rows =
       responses
@@ -95,15 +98,18 @@ defmodule Bourse.CoinbaseCandlePagination do
   end
 
   defp requested_window(%{"since" => since_ms} = params, now_ms, limit, timeframe_ms) when is_integer(since_ms) do
-    requested_end = Map.get(params, "until", since_ms + (limit - 1) * timeframe_ms)
+    requested_end = Map.get(params, "until", ceil_opening(since_ms, timeframe_ms) + (limit - 1) * timeframe_ms)
     end_ms = min(requested_end, now_ms)
-    {min(since_ms, end_ms), end_ms}
+    {since_ms, end_ms}
   end
 
   defp requested_window(params, now_ms, limit, timeframe_ms) do
     end_ms = min(Map.get(params, "until", now_ms), now_ms)
-    {max(end_ms - (limit - 1) * timeframe_ms, 0), end_ms}
+    last_opening = div(end_ms, timeframe_ms) * timeframe_ms
+    {max(last_opening - (limit - 1) * timeframe_ms, 0), end_ms}
   end
+
+  defp ceil_opening(timestamp_ms, timeframe_ms), do: div(timestamp_ms + timeframe_ms - 1, timeframe_ms) * timeframe_ms
 
   defp build_pages(params, start_ms, count, timeframe_ms) do
     {start_ms, count}
