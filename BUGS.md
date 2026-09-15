@@ -114,6 +114,58 @@ roadmap.
 
 ---
 
+## 2026-09-15 — `fetch_open_orders` and `fetch_orders` on binanceusdm resolve to the ALGO book by default, so a resting limit order is invisible to a consumer that asks for its open orders
+
+**Status:** 🆕 measured live (orchestrator, landed-base gate run on `44edfaa`) — not
+consumer-reported. · **Unrouted, awaiting the operator's routing decision.**
+
+The calls, against `demo-fapi.binance.com` with the shared futures demo key:
+
+```elixir
+{:ok, ex} = Bourse.Exchange.new("binanceusdm", credentials: creds, sandbox: true)
+
+Bourse.fetch_open_orders(ex, symbol: "BTC/USDT:USDT")
+#=> {:ok, [%Order{id: "1000000206015819", type: "stop_market",
+#           info: %{"algoId" => 1000000206015819, "clientAlgoId" => "QRrtElg3vDTvHwyCx9qJfe"}}]}
+
+Bourse.fetch_open_orders(ex, symbol: "BTC/USDT:USDT", endpoint_index: 2)  # fapiPrivate_get_openalgoorders
+#=> the same single algo row
+
+Bourse.fetch_open_orders(ex, symbol: "BTC/USDT:USDT", endpoint_index: 3)  # fapiPrivate_get_openorders
+#=> {:ok, []}
+```
+
+The default and the explicit algo index return byte-identical results, and the returned row
+carries `algoId` with no `orderId` — so the unqualified read is served by
+`GET /fapi/v1/openAlgoOrders`, the conditional/algo book, not `GET /fapi/v1/openOrders`.
+`fetch_orders` has the same shape: index 2 is `fapiPrivate_get_allalgoorders`, index 3 is
+`fapiPrivate_get_allorders`, and the default takes the lower index.
+
+**Consumer impact, and why it is worse than an empty list.** A caller asking "what are my
+open orders?" on USD-M is answered from a book that does not contain ordinary limit orders.
+A resting GTC limit reads as *absent*, so a consumer polling for its own fill, reconciling
+an order it just placed, or deciding whether to re-place, is told the order is gone. The
+list is non-empty and well-formed, so nothing anywhere signals that a different book was
+read — this is the same substitution class as task 685, one level up: not a wrong field
+inside a row, but the wrong book behind a whole read.
+
+**What is already fixed, and what is not.** The REST-read contract cases for
+`binanceusdm:fetchOpenOrder:2:fapiPrivateGetOpenOrder` and
+`binanceusdm:fetchOrder:2:fapiPrivateGetOrder` inherited an *unpinned* top-level
+`id` argument, so they drew their resource id from whatever the default read returned —
+an `algoId` — and then handed it to the regular-book endpoint, which answered
+`order_not_found: Order does not exist.` Both branches now pin
+`source_endpoint_index: 3`, the regular book, so the case owns a real resting limit order
+and proves the route it claims to prove (61/61 green on
+`test/live/binanceusdm/rest_read_contract_test.exs`). **That repairs the test, not the
+client**: the default endpoint selection for the two unified methods is unchanged, and a
+consumer calling `fetch_open_orders/2` without `endpoint_index` still reads the algo book.
+Deciding that is a carve question — whether USD-M's default open-orders book should be the
+regular one, whether the two books should fan out and merge, or whether the unqualified
+read should refuse to guess the way deribit's plural funding read does.
+
+---
+
 ## 2026-09-15 — five live deribit tests grade against the PRODUCTION host, so a venue maintenance window reds the suite
 
 **Status:** 🆕 reported 2026-09-15 — unrouted, awaiting the operator's routing decision.
