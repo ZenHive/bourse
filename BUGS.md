@@ -114,9 +114,80 @@ roadmap.
 
 ---
 
+
+## 2026-09-15 — five live deribit tests grade against the PRODUCTION host, so a venue maintenance window reds the suite
+
+**Status:** 🆕 reported 2026-09-15 — unrouted, awaiting the operator's routing decision.
+Found by the landed-base gate while verifying task 704.
+
+**What it is.** `test/live/read_parse_slots_test.exs` (4 tests) and
+`test/live/ws/canary_test.exs` (1 test) construct the venue with `Exchange.new!("deribit")`
+— no `sandbox: true` — so they resolve `www.deribit.com`, not `test.deribit.com`. The
+repo's own doctrine reserves the production host for public-only Coinbase Exchange; every
+credentialed venue is supposed to be graded on testnet/demo.
+
+**Evidence (2026-09-15 17:30 CEST).** Production is in maintenance, testnet is up:
+
+```
+www.deribit.com  /api/v2/public/get_index_price → {"error":{"message":"system_maintenance","code":11051}}
+test.deribit.com /api/v2/public/get_index_price → {"result":{"index_price":76870.19},"testnet":true}
+```
+
+All five tests fail with that 11051 / HTTP 503, and `mix bourse.verify_ws_first_frame`
+reports deribit **passed** in the same minutes — that lane uses the testnet host. So the
+split is real and observable, not an outage narrative.
+
+**Why this is not a one-line fix.** Re-pointing them at `sandbox: true` trades a loud
+external outage for a possibly-thin testnet book: `fetch_option_chain(exchange, "USDC")`
+asserts a populated USDC-settled SOL option book with non-empty IV, and the test explicitly
+guards against "an empty success". Whether testnet carries that book has to be measured
+before the host is moved, or the fix converts a true RED into a flaky one. That measurement
+plus the re-point is the task, if the operator routes it.
+
+## 2026-09-15 — task 699's land re-broke a test that had shipped one commit earlier: the WS lane called a talking lighter socket silent
+
+**Status:** ✅ fixed 2026-09-15 inline (shipped `d8c786b`).
+
+**What it was.** `26bb651` (task 701) made a frame count as coverage only when it carries
+the subscribed channel, and shipped a test asserting the lane's reason for lighter's
+greeting-only case: *"received frames within 50ms but none carried the subscribed channel"*.
+`0b10aed` (task 699, landed after it) added a venue-specific clause to
+`lib/bourse/live_lane/first_frame.ex`:
+
+```elixir
+defp handle_frame("lighter" = venue, deadline, first_kind, tokens, unattributed, %{"type" => "connected"}) do
+  await_frame(venue, deadline, first_kind, tokens, unattributed)
+end
+```
+
+which drops the greeting without recording it as `unattributed`, so `timeout_result/2` took
+the `:none` branch and the lane reported *"connected but received no frame within 50ms"* —
+a socket that had demonstrably spoken. Task 699 also shipped a second test asserting the
+new string, so the file carried two tests contradicting each other on the same input and
+the suite was red on `main` from that land onward.
+
+**Why the clause was redundant.** `data_or_wait/7` already refuses to count a
+non-attributable frame as data and carries it forward as `unattributed`; `%{"type" =>
+"connected"}` classifies as `:not_ack` and matches none of the `market_stats/all` tokens, so
+the generic path produces exactly the accurate verdict. The clause only removed the
+bookkeeping.
+
+**Why the wording matters.** "received no frame" and "received frames, none attributable"
+are two different failures with two different remedies — a dead host versus a subscription
+that never resolved. Collapsing them hides which one happened.
+
+**Fix.** Clause removed; task 699's `:silent` assertion corrected to the accurate string.
+`test/bourse/ws_first_frame_test.exs` 20/20, and `mix bourse.verify_ws_first_frame` reports
+lighter `passed` / `acknowledgement_with_payload` live against the venue.
+
+**Class note.** This is the per-task-reviewer blind spot, not a reviewer lapse: run 699
+forked before `26bb651` landed, so the test it broke did not exist in its base. Only the
+landed-base gate could see it.
+
 ## 2026-09-15 — the pinned lighter-go SDK rejects every four-digit market id, so no lighter order can be signed at all
 
-**Status:** 🆕 reported 2026-09-15 (landed-base gate, Tidewave live probe) — routed to roadmap task 704.
+**Status:** ✅ fixed 2026-09-15 inline (task 704) — `native/lighter_signer/go.mod` now pins
+`github.com/elliottech/lighter-go v1.0.9`; see the Update block at the end of this entry.
 
 **Impact:** every lighter write is dead. `Bourse.create_order/6`, `Bourse.cancel_order/3` and
 `modify_order` against the live testnet fail before a byte reaches the venue, with
@@ -183,6 +254,41 @@ vectors in `native/lighter_signer/golden_test.go` must be re-derived, not re-ble
 **Consumer note.** No consumer has hit this yet because no consumer places lighter orders;
 it was found by the landed-base gate while trying to open a position so
 `lighter:fetchPositions:0:publicGetAccount` would stop reporting an unexercised read.
+
+> **Update (2026-09-15, shipped `1bceb79`).** Landed SDK: `github.com/elliottech/lighter-go
+> v1.0.9`. Market **4096** (live BTC/USDC:USDC) now signs and executes: an IOC buy of
+> 0.0002 BTC @ 77343.6 returned `{"code" => 200, "tx_hash" =>
+> "32c58e4d04116ff4a248cd1c88c968b589913440052a88c40feb292525a916f5a4fcaafb927df155"}` and
+> filled at 76955.6; a post-only buy @ 69176.0 rested as order `844424927511380`
+> (tx `03c2c667647ba021c2be42df8a312bab3f9ed04761e0f38d31942afff783f72bf18580ca3b753da6`),
+> appeared in `fetch_open_orders`, and cancelled clean
+> (tx `83be2699fe32f26eed7fbeff5d46b910931803705c4daf48e6f52630a8e3b138db78c6378e2d0a48`).
+> `mix bourse.verify_rest_read_contracts --venue lighter` → `denominator=16 executed=16
+> failures=0`.
+>
+> **Correction to this entry.** The paragraph above claiming the signed payload changed and
+> that "the golden vectors in `native/lighter_signer/golden_test.go` must be re-derived, not
+> re-blessed" is **wrong**, and it was wrong when written. All eight vectors pass
+> byte-identically against v1.0.9. The reason is in the SDK's own source rather than in the
+> observation: v1.0.9 adds `AttributeTypeOrderOrderVersion` to the signed attribute set, but
+> `types/tx_request.go:220` writes it only when `attr.OrderVersion != nil`, and
+> `sharedlib/main.go` leaves it nil for every signer our shim reaches — `SignCreateOrder`
+> passes `txtypes.NilOrderVersion` itself (`main.go:325`, `:373`), and `csrc/helper.c` now
+> passes the same nil value to `SignModifyOrder`, the one signer that takes it from the
+> caller. A vector that changes here in future therefore means our shim started sending a
+> real order version, not that the SDK moved the hash under us.
+>
+> The IOC/expiry coupling from the second finding is fixed with it: `default_order_expiry/1`
+> derives the sent expiry from the resolved time-in-force (`NilOrderExpiry` for IOC, the
+> signer's `-1` otherwise), and an explicit caller `order_expiry` still wins. The false
+> `createOrder.timeInForce.FOK: true` capability is corrected to `FOK: false` / `GTD: true`
+> — lighter-go publishes exactly `{ImmediateOrCancel 0, GoodTillTime 1, PostOnly 2}` and
+> never had a fill-or-kill. Both outcomes are recorded as carve C-T704a in
+> `docs/authored-spec-carves/lighter.md`; the parent-level `balance.used` / `total` fix is
+> C-T704b.
+>
+> The long 0.0002 BTC position opened by the IOC probe is **left open** on purpose — it is
+> what makes `lighter:fetchPositions:0:publicGetAccount` an exercised read.
 
 ## 2026-09-15 — deribit's authored transfer slot never mapped the venue's own `currency`, so the first live transfer row failed the contract lane
 
