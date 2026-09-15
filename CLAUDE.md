@@ -11,6 +11,7 @@ Eager-load only the irreducible floor; everything else is skill-on-demand via en
 - **`harness-workflow`** — this repo IS registered for harness dispatch (see below). Its guardrails fail by non-recognition (`Recover, Don't Redo`; `Settle ≠ landed`; the duplicate-land trap), so a skill-on-demand load is not equivalent.
 
 @~/.claude/includes/critical-rules.md
+@~/.claude/includes/elixir-security-adjudications.md
 @~/.claude/includes/ex-unit-json.md
 @~/.claude/includes/harness-workflow.md
 

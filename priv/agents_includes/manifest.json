@@ -1,22 +1,27 @@
 {
   "schema_version": 1,
-  "_doc": "Pinned external @-import sources for AGENTS.md generation (task 471). Each CLAUDE.md @~/.claude/includes/* line must resolve here — never via $HOME. Update a pin by replacing the file and refreshing sha256/bytes, then run mix bourse.agents_md.",
+  "_doc": "Pinned external @-import sources for AGENTS.md generation (task 471). Each CLAUDE.md @~/.claude/includes/* line must resolve here \u2014 never via $HOME. Update a pin by replacing the file and refreshing sha256/bytes, then run mix bourse.agents_md.",
   "max_depth": 5,
   "includes": {
     "~/.claude/includes/critical-rules.md": {
       "path": "priv/agents_includes/critical-rules.md",
-      "sha256": "1218dcf41737d4b6683e90523daeb96bdf4b9b165132f8476b9e8f2c592861ad",
-      "bytes": 18919
+      "sha256": "ae5c7838ceea676b91368dce1204053a715a97859e0d5d289e2dba77d68cca79",
+      "bytes": 18540
     },
-    "~/.claude/includes/harness-workflow.md": {
-      "path": "priv/agents_includes/harness-workflow.md",
-      "sha256": "7c6dd88c578dd77fe79e504d43075116acae73ead7376f97641b954deb2c4b16",
-      "bytes": 48938
+    "~/.claude/includes/elixir-security-adjudications.md": {
+      "path": "priv/agents_includes/elixir-security-adjudications.md",
+      "sha256": "df80e290c6aee294071b8310f9f2f13ea18efc67dc605191437a6e7aacd08663",
+      "bytes": 7508
     },
     "~/.claude/includes/ex-unit-json.md": {
       "path": "priv/agents_includes/ex-unit-json.md",
       "sha256": "1f4a7e7480a06eb38582ccca8d48caee1beaaf81444fe5db5ccd548040fdffe8",
       "bytes": 9769
+    },
+    "~/.claude/includes/harness-workflow.md": {
+      "path": "priv/agents_includes/harness-workflow.md",
+      "sha256": "6bfe22a757f35ba94e05da4d2be767dd69573073e23eaf46d1fd3509a60e05f8",
+      "bytes": 47878
     }
   }
 }
