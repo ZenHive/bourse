@@ -61,8 +61,8 @@
           "default": "1h",
           "evidence": {
             "carve_id": "C-T692",
-            "derivation": "provider_documented_hourly_cadence",
-            "source": "docs/authored-spec-carves/lighter.md#c-t692--current-funding-rate-is-a-signed-hourly-fraction-outcome-confirmed"
+            "derivation": "provider_documented_hourly_funding_period",
+            "source": "https://docs.lighter.xyz/perpetual-futures/funding — see docs/authored-spec-carves/lighter.md#c-t692"
           }
         },
         "markPrice": null,

@@ -114,6 +114,63 @@ roadmap.
 
 ---
 
+## 2026-09-15 — die Emulations-Brücke `fetchFundingRate` ⇄ `fetchFundingRates` ist ein echter Zyklus im Delegationsgraphen; dass kein Venue beide Hälften als `emulated` führt, ist nirgends erzwungen
+
+**Method:** Lesen von `lib/bourse/emulation.ex` plus mechanische Extraktion des Delegationsgraphen, beim Landed-Base-Review von Task 692 ·
+**Exchange:** venue-generisch (Kandidaten heute: bybit, deribit, hyperliquid, lighter) ·
+**Severity:** mittel (latent — kein Venue verletzt es heute; die Verletzung wäre aber unbegrenzte Netzwerkverstärkung ohne Signal)
+
+**Status:** 🆕 reported 2026-09-15 — mechanisch verifiziert, **nicht geroutet**. Kein aktueller Verstoß,
+also kein Defekt der gelandeten Arbeit; die Frage ist, ob die Invariante erzwungen wird.
+
+Task 692 hat `fetchFundingRates` als Emulation über den singulären Read ergänzt
+(`handle_fetch_funding_rates` → `call_method(:fetch_funding_rate)`, über den Helfer
+`collect_funding_rates_from_singular/5`). Die Gegenrichtung existierte schon
+(`handle_fetch_funding_rate` → `call_method(:fetch_funding_rates)`). Damit ist das Paar ein
+2-Zyklus im Delegationsgraphen von `Bourse.Emulation`.
+
+Auseinandergehalten wird er ausschließlich von den Capability-Daten. Live geprüft in
+`priv/venues/capability_surface.json` (2026-09-15):
+
+```
+alpaca            rate=false     rates=false
+binance/coinm/usdm rate=true     rates=true
+bybit             rate=emulated  rates=true
+coinbaseexchange  rate=false     rates=false
+deribit           rate=true      rates=emulated
+derive            rate=true      rates=false
+hyperliquid       rate=emulated  rates=true
+lighter           rate=emulated  rates=true
+okx               rate=true      rates=true
+```
+
+Kein Venue führt beide als `emulated` — aber nichts prüft das. Ein authored document, das es täte,
+liefe `handle_fetch_funding_rate` → `fetch_funding_rates` → `handle_fetch_funding_rates` →
+`fetch_funding_rate` → … unbegrenzt, und **jede Ebene ruft echt beim Venue an** (der singuläre
+Handler ruft zusätzlich `ensure_contract_market` → `fetch_markets`). Das ist keine Stack-Overflow-
+Fußnote, sondern unbegrenzte Netzwerkverstärkung gegen die Venue, ohne Compile-, Test- oder
+Lint-Signal.
+
+🚨 **Ein Quelltext-Scan als Prüfung wäre falsch-grün, und das ist hier belegt statt vermutet.**
+Der Extraktor, mit dem dieser Befund entstand, liest `call_method(exchange, exchange_module, :method, …)`
+je Handler-Rumpf und meldete für genau dieses Paar *keinen* Zyklus — weil die neue Kante nicht im
+Handler steht, sondern im Helfer, den er aufruft. Eine Prüfung, die den Graphen aus dem Quelltext
+rät, meldet also grün, während der Zyklus dasteht. Wer das erzwingen will, deklariert den Graphen
+oder erkennt den Zyklus zur Laufzeit an der einen Stelle, die jeder emulierte Aufruf passiert
+(`Bourse.Emulation.dispatch/4`), statt ihn zu extrahieren.
+
+Gegenprobe: die restlichen Delegationskanten sind alle singulär→plural und haben keine
+Gegenrichtung (`fetch_ticker`→`fetch_tickers`, `fetch_position`→`fetch_positions`,
+`fetch_leverage`→`fetch_leverages`, `fetch_margin_mode`→`fetch_margin_modes`,
+`fetch_open_interest`→`fetch_open_interests`, `fetch_trading_fee`→`fetch_trading_fees`,
+`fetch_transaction_fee`→`fetch_transaction_fees`, `fetch_deposit_withdraw_fee`→`…fees`,
+`fetch_funding_interval`→`fetch_funding_intervals`, `fetch_market_leverage_tiers`→`fetch_leverage_tiers`,
+`fetch_bids_asks`→`fetch_tickers`, `fetch_my_trades`/`fetch_filtered_orders`/
+`fetch_canceled_and_closed_orders`→`fetch_orders`, `fetch_trading_limits`→`fetch_markets`).
+Funding ist das einzige Paar, das in beide Richtungen emuliert werden kann.
+
+---
+
 ## 2026-09-15 — die WS-First-Frame-Lane zählt lighters Verbindungsgruß als Datenframe und meldet den Venue grün, während die Venue die Subscription mit 30005 ablehnt
 
 **Method:** `mix bourse.verify_ws_first_frame` (`Bourse.LiveLane.FirstFrame`) ·
