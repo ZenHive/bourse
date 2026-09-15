@@ -285,6 +285,10 @@ defmodule Bourse.Test.RestReadContractScenario do
     own_or_ledger_resource!(argument, contract_case, context, argument["collection"] == true)
   end
 
+  defp resource_value!(%{"source_kind" => "transfer"} = argument, contract_case, context) do
+    own_or_ledger_resource!(argument, contract_case, context, argument["collection"] == true)
+  end
+
   defp resource_value!(argument, contract_case, context) do
     source = existing_method_atom!(argument["source_method"])
 

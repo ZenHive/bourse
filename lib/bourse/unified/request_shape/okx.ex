@@ -109,8 +109,8 @@ defmodule Bourse.Unified.RequestShape.OKX do
 
   def build(params, "transfer", %Exchange{} = exchange) when is_map(params), do: map_transfer_accounts(params, exchange)
 
-  # Authored defaults bind id → transId; keep the rename for callers that still
-  # hand a unified `id`, and never forward the optional currency filter.
+  # fetchTransfer takes a transId. A bills-archive billId is refused in
+  # Unified.validate_venue_params/3 before this rename reaches the wire.
   def build(params, "fetchTransfer", %Exchange{}) when is_map(params) do
     params
     |> rename("id", "transId")

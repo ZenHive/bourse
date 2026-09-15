@@ -502,6 +502,25 @@ defmodule Bourse.BybitAuthoredIntegrationTest do
     end)
   end
 
+  # Task 685: one unparseable dated-future row used to fail the whole history
+  # read. The call must return the rows it could resolve (`{:ok, list}`), not
+  # `{:error, {:missing_position_notional_currency, ...}}`.
+  test "signed fetch_positions_history returns resolvable rows as a list" do
+    credentials = require_credentials!(:bybit, url: "https://api-testnet.bybit.com")
+    exchange = build_exchange(:bybit, credentials: credentials, sandbox: true)
+
+    assert {:ok, rows} = Bourse.fetch_positions_history(exchange, category: "linear")
+    assert is_list(rows)
+
+    Enum.each(rows, fn row ->
+      assert %Bourse.Position{} = row
+
+      if is_number(row.notional) and row.notional != 0 do
+        assert is_binary(row.notional_currency) and row.notional_currency != ""
+      end
+    end)
+  end
+
   defp assert_ohlcv_rows(rows) when is_list(rows) and rows != [] do
     assert Enum.all?(rows, fn [timestamp, open, high, low, close, volume] ->
              is_integer(timestamp) and Enum.all?([open, high, low, close, volume], &is_number/1)

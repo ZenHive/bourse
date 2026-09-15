@@ -733,18 +733,23 @@ defmodule Bourse.Signing.HmacRecipe do
     canonical_block!(cs, method)
   end
 
-  defp canonical_block!(%{"components" => components} = block, _method) when is_list(components), do: block
-
   defp canonical_block!(cs, method) when is_map(cs) do
-    case Map.get(cs, method) || Map.get(cs, "*") do
-      %{} = block ->
-        block
+    cond do
+      is_map_key(cs, method) or is_map_key(cs, "*") ->
+        case Map.get(cs, method) || Map.get(cs, "*") do
+          %{} = block ->
+            block
 
-      nil ->
+          malformed ->
+            raise ArgumentError,
+                  "sign_recipe canonical_string block for #{method} is malformed: #{inspect(malformed)}"
+        end
+
+      match?(%{"components" => components} when is_list(components), cs) ->
+        cs
+
+      true ->
         raise ArgumentError, "sign_recipe canonical_string has no block for #{method} or *"
-
-      malformed ->
-        raise ArgumentError, "sign_recipe canonical_string block for #{method} is malformed: #{inspect(malformed)}"
     end
   end
 

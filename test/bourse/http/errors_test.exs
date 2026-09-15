@@ -209,6 +209,13 @@ defmodule Bourse.HTTP.ErrorsTest do
                Errors.classify_response(:get, 403, %{}, %{"message" => "forbidden"}, exchange)
     end
 
+    test "an authored 403 mapping classifies a non-map body", %{exchange: exchange} do
+      exchange = %{exchange | status_map: %{"403" => :permission_denied}}
+
+      assert {:error, %Error{type: :permission_denied, http_status: 403}} =
+               Errors.classify_response(:get, 403, %{}, "forbidden", exchange)
+    end
+
     test "401/403 keep the venue error code from the body", %{exchange: exchange} do
       # OKX answers a permission failure with HTTP 401 and its own code "50120".
       # The auth status must not discard that code (task 432 live evidence).

@@ -418,10 +418,17 @@ defmodule Bourse.ExchangeTest do
     test "consumes Alpaca's bare-class status map without dropping entries" do
       exchange = Exchange.new!("alpaca")
 
+      # 404 is `ExchangeError`, not `OrderNotFound`: Alpaca's own authority
+      # (priv/venues/alpaca/authority/errors.json) documents 40410000 as "the
+      # requested resource was not found" and declares
+      # `unmapped_code_disposition: exchange_error`. A bare status rule cannot
+      # know the route, and a ticker 404 ("no snapshot found for ZZZZZZ", live
+      # on paper-api) is not a missing order. The genuine order 404 is typed by
+      # the exact provider code — see test/live/errors/alpaca_test.exs.
       assert exchange.status_map == %{
                "401" => :authentication_error,
                "403" => :permission_denied,
-               "404" => :order_not_found,
+               "404" => :exchange_error,
                "422" => :bad_request,
                "429" => :rate_limit_exceeded
              }

@@ -7,7 +7,9 @@ defmodule Bourse.TransferEntry do
 
   ## Fields
 
-    * `id` - Transfer ID
+    * `id` - Venue transfer identifier. On OKX `fetch_transfers` this is the
+      bills-archive `billId`; `fetch_transfer/2` requires the `transId` issued
+      by the creating transfer request.
     * `timestamp` - Transfer time in milliseconds
     * `datetime` - ISO 8601 datetime string
     * `currency` - Currency code
@@ -62,7 +64,8 @@ defmodule Bourse.TransferEntry do
                    info: map() | nil
                  },
                  doc: [
-                   id: "Transfer ID",
+                   id:
+                     "Transfer identifier. On OKX list reads this is the bills-archive billId; fetch_transfer/2 takes a transId.",
                    timestamp: "Transfer time in milliseconds",
                    datetime: "ISO 8601 datetime string",
                    currency: "Currency code",

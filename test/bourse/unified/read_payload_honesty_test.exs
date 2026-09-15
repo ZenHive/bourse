@@ -460,6 +460,38 @@ defmodule Bourse.Unified.ReadPayloadHonestyTest do
 
       assert shape["orderId"] == "12345"
     end
+
+    test "an explicit endpoint_index: nil still resolves the authored book" do
+      # `nil` reaches `select_endpoint/5` as `{:ok, nil}` from `Keyword.fetch/2`,
+      # which also matches the `{:ok, idx}` invalid-index pattern. Ordering that
+      # catch-all first refused these reads live (alpaca/binance/binanceusdm
+      # `fetchTicker` error contracts), so pin the absent-vs-nil equivalence.
+      exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret")
+      params = %{"id" => "12345", "symbol" => "BTC/USDT:USDT"}
+
+      assert {:ok, without_key} = Unified.request_param_shapes(exchange, :fetch_open_order, params, [])
+
+      assert {:ok, with_nil} =
+               Unified.request_param_shapes(exchange, :fetch_open_order, params, endpoint_index: nil)
+
+      assert with_nil == without_key
+    end
+
+    test "invalid endpoint_index fails before any venue request" do
+      exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret")
+      params = %{"id" => "12345", "symbol" => "BTC/USDT:USDT"}
+      unreachable = [base_url: "http://127.0.0.1:1"]
+
+      assert {:error, %Error{type: :invalid_parameters, message: message}} =
+               Unified.call(exchange, :fetch_open_order, "fetchOpenOrder", params, [{:endpoint_index, 99} | unreachable])
+
+      assert message =~ "endpoint_index"
+
+      assert {:error, %Error{type: type}} =
+               Unified.call(exchange, :fetch_open_order, "fetchOpenOrder", params, [{:endpoint_index, 0} | unreachable])
+
+      refute type == :invalid_parameters
+    end
   end
 
   defp deribit_option_row(instrument_name, base_currency, mark_iv) do

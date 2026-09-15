@@ -2858,7 +2858,8 @@
         {
           "name": "id",
           "strategy": "resource",
-          "source_method": "fetchTransfers",
+          "source_method": "transfer",
+          "source_kind": "transfer",
           "field": "id",
           "collection": false
         }

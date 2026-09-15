@@ -10,19 +10,23 @@ parses the `rate-unit` markers and unit tables below against the public structs.
 DIVERGE; retain each provider identifier under its own contract.**
 
 - `GET /api/v5/account/bills` and `/api/v5/account/bills-archive` identify rows
-  with `billId`; the observed demo transfer rows carried no `transId`.
+  with `billId`; the observed demo transfer rows carried no `transId`. Funding
+  listing routes were probed first (carve (a) unless a listing route returns
+  `transId`); none did.
 - `POST /api/v5/asset/transfer` issues `transId`, and
-  `GET /api/v5/asset/transfer-state` accepts that `transId`. Live calls with a
-  bills-archive `billId` returned `51000` (`Parameter transId error`) or `58129`.
-- `TransferEntry.id` from `fetch_transfers` therefore means the bills-archive
-  `billId` and is read directly from `billId`, never through a `transId` fallback.
-  `fetch_transfer/2` continues to require the `transId` returned by the creating
-  transfer request; the two surfaces are not composable by OKX's design.
+  `GET /api/v5/asset/transfer-state` accepts that `transId`.
+- `TransferEntry.id` from `fetch_transfers` is the bills-archive `billId`, read
+  from a `has_key: billId` parse branch, never through a `transId` fallback.
+  `fetch_transfer/2` takes a `transId`. A 16+ digit bills-archive id is refused
+  as `invalid_parameters` / `identifier_class_mismatch` before any venue
+  request, so the venue never answers `51000`/`58129` for a value this client
+  itself returned. A genuine `transId` from the creating POST still reaches
+  transfer-state (write-then-read).
 
 Provider contract: [OKX funding-account transfer API](https://www.okx.com/docs-v5/en/#funding-account-rest-api-funds-transfer).
 
 <!-- carve-evidence-status
-{"carve_id":"C-T685a","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"OKX v5 bills archive, funds transfer, and transfer-state contracts"},"observed_evidence":{"kind":"live","reference":"OKX international demo: populated type=1 bills exposed billId without transId; transfer-state rejected billId with 51000/58129"},"compatibility_reference":null,"resolved_tier":1,"known_gap_reason":null}
+{"carve_id":"C-T685a","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"OKX v5 bills archive, funds transfer, and transfer-state contracts"},"observed_evidence":{"kind":"live","reference":"OKX international demo: type=1 bills expose billId without transId; fetch_transfer refuses that billId as identifier_class_mismatch; POST /api/v5/asset/transfer issues transId that transfer-state accepts"},"compatibility_reference":null,"resolved_tier":1,"known_gap_reason":null}
 -->
 
 ## 2026-08-28 — option position value (Task 666)

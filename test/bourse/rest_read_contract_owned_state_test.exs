@@ -7,7 +7,7 @@ defmodule Bourse.Test.RestReadContractOwnedStateTest do
     context = %{exchange: nil, markets: [], venue: "example", venue_contract: %{}}
     contract_case = %{"id" => "example:fetchOrder:0:x", "market_kind" => "spot"}
 
-    for source <- ["fetchOpenOrders", "fetchOrders", "fetchCanceledOrders"] do
+    for source <- ["fetchOpenOrders", "fetchOrders", "fetchCanceledOrders", "transfer"] do
       assert RestReadContractOwnedState.ownable_source?(source)
     end
 

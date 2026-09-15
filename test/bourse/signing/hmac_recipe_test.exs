@@ -1356,6 +1356,46 @@ defmodule Bourse.Signing.HmacRecipeTest do
       assert {"X-SIGNATURE", "wild" |> Signing.hmac_sha256(@credentials.secret) |> Signing.encode_hex()} in signed.headers
     end
 
+    test "a components map that is not method-keyed still signs" do
+      recipe =
+        "hmac_sha256"
+        |> digest_recipe([])
+        |> Map.put("canonical_string", %{"components" => [%{"source" => "literal", "value" => "bare"}]})
+
+      signed =
+        HmacRecipe.sign(
+          %{method: :post, path: "/private", body: nil, params: %{}},
+          @credentials,
+          %{sign_recipe: recipe}
+        )
+
+      assert {"X-SIGNATURE", "bare" |> Signing.hmac_sha256(@credentials.secret) |> Signing.encode_hex()} in signed.headers
+    end
+
+    test "raises when a canonical_string method block is not a map" do
+      recipe = put_in(digest_recipe("hmac_sha256", []), ["canonical_string", "GET"], "not-a-block")
+
+      assert_raise ArgumentError, ~r/malformed/, fn ->
+        HmacRecipe.sign(
+          %{method: :get, path: "/private", body: nil, params: %{}},
+          @credentials,
+          %{sign_recipe: recipe}
+        )
+      end
+    end
+
+    test "a staged recipe does not fall back to another method's block" do
+      recipe = staged_digest_recipe("sha256", "hex")
+
+      assert_raise ArgumentError, ~r/no block for POST or \*/, fn ->
+        HmacRecipe.sign(
+          %{method: :post, path: "/private", body: nil, params: %{}},
+          @credentials,
+          %{sign_recipe: recipe}
+        )
+      end
+    end
+
     test "raises on malformed path predicates instead of ignoring them" do
       recipe =
         "hmac_sha256"

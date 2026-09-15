@@ -1013,6 +1013,61 @@ defmodule Bourse.Unified.ReadParseTest do
       assert Enum.map(transfers, & &1.amount) == [10.0, 0.1, 1.0]
     end
 
+    test "okx bills-archive rows parse billId and transfer-state rows parse transId" do
+      exchange = Exchange.new!("okx")
+
+      bills = %{
+        "code" => "0",
+        "data" => [
+          %{
+            "billId" => "3858573567752257536",
+            "ccy" => "USDT",
+            "balChg" => "-1",
+            "from" => "6",
+            "to" => "18"
+          }
+        ]
+      }
+
+      assert {:ok, [%Bourse.TransferEntry{id: "3858573567752257536", amount: -1.0}]} =
+               ReadParse.parse(
+                 exchange,
+                 Bourse.Okx,
+                 :fetch_transfers,
+                 "fetchTransfers",
+                 bills,
+                 %{},
+                 :parse_transfer,
+                 true
+               )
+
+      state = %{
+        "code" => "0",
+        "data" => [
+          %{
+            "transId" => "327514023",
+            "ccy" => "USDT",
+            "amt" => "30",
+            "from" => "18",
+            "to" => "6",
+            "state" => "success"
+          }
+        ]
+      }
+
+      assert {:ok, %Bourse.TransferEntry{id: "327514023", amount: 30.0, status: "ok"}} =
+               ReadParse.parse(
+                 exchange,
+                 Bourse.Okx,
+                 :fetch_transfer,
+                 "fetchTransfer",
+                 state,
+                 %{},
+                 :parse_transfer,
+                 false
+               )
+    end
+
     test "empty bybit deposit/withdrawal collection under result.rows is {:ok, []}" do
       # Live history-less testnet: retCode 0 + result.rows: [] must not raise
       # all-nil Transaction (authored envelope key is result.list; rows is the

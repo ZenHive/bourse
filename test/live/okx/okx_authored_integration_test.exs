@@ -620,13 +620,20 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
       end
     end
 
-    assert {:ok, [%Bourse.TransferEntry{} = transfer | _]} = Bourse.fetch_transfers(exchange)
+    assert {:ok, [%Bourse.TransferEntry{} = transfer | _] = transfers} = Bourse.fetch_transfers(exchange)
     assert is_binary(transfer.currency)
     assert is_number(transfer.amount)
     assert transfer.amount == Bourse.Safe.number(transfer.info["balChg"])
     assert transfer.currency == transfer.info["ccy"]
     assert transfer.id == transfer.info["billId"]
     refute Map.has_key?(transfer.info, "transId")
+
+    for %Bourse.TransferEntry{id: id} <- transfers do
+      assert {:error, %Error{type: :invalid_parameters} = error} = Bourse.fetch_transfer(exchange, id)
+      assert error.raw["reason"] == "identifier_class_mismatch"
+      refute to_string(error.code) in ["51000", "58129"]
+      assert error.message =~ "bills-archive"
+    end
 
     # fetch_transfers reads account bills. Internal-transfer rows carry OKX account
     # codes 6 (funding) / 18 (trading) and map via the authored enum (C-T365b).
@@ -1091,6 +1098,43 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
     assert is_binary(message) and message != ""
   end
 
+  test "demo fetch_transfer accepts a transId issued by the creating transfer POST" do
+    exchange =
+      build_exchange(:okx,
+        credentials: demo_credentials!(),
+        sandbox: true,
+        hostname: @okx_demo_host
+      )
+
+    wait = [rate_limit_max_wait_ms: 60_000]
+
+    trans_id =
+      case place_reversible_demo_transfer(exchange, wait) do
+        {:ok, placed, reverse_from, reverse_to} ->
+          on_exit(fn ->
+            _ = Bourse.transfer(exchange, placed.currency || "USDT", 1, reverse_from, reverse_to, wait)
+          end)
+
+          assert is_binary(placed.id) and placed.id != ""
+          refute Regex.match?(~r/^\d{16,}$/, placed.id)
+          assert placed.id == placed.info["transId"]
+          placed.id
+
+        {:error, %Error{type: :rate_limit_exceeded}} ->
+          # Task 671 verified this demo transId against transfer-state. A 50011 on
+          # a fresh POST must not skip the detail-read pin, but it does mean this
+          # run proved the detail read against a stored id rather than one it just
+          # created — say so instead of reporting a full write-then-read.
+          IO.warn("okx demo transfer rate-limited; pinning transfer-state against the task 671 transId")
+          "327514023"
+
+        {:error, reason} ->
+          flunk("okx demo transfer failed: #{inspect(reason)}")
+      end
+
+    assert {:ok, %Bourse.TransferEntry{id: ^trans_id}} = Bourse.fetch_transfer(exchange, trans_id)
+  end
+
   test "demo algo amend and cancel return their specific missing-order business errors" do
     # Task 494: edit_order is precision-gated; load markets so the probe reaches
     # the venue missing-order codes rather than "missing instrument precision".
@@ -1240,6 +1284,37 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
   defp account_name("6"), do: "funding"
   defp account_name("18"), do: "trading"
   defp account_name(_other), do: nil
+
+  # One balance read, then one transfer POST. Trying a direction and falling back
+  # always wasted a doomed POST (OKX demo keeps USDT in `trading`, `funding`
+  # empty) and the retry then hit the venue's funds-transfer budget with
+  # `50011 Too many requests`.
+  defp place_reversible_demo_transfer(exchange, wait) do
+    with {:ok, from, to} <- funded_demo_direction(exchange),
+         {:ok, placed} <- Bourse.transfer(exchange, "USDT", 1, from, to, wait) do
+      {:ok, placed, to, from}
+    end
+  end
+
+  defp funded_demo_direction(exchange) do
+    with {:ok, funding} <- Bourse.fetch_balance(exchange, type: "funding"),
+         {:ok, trading} <- Bourse.fetch_balance(exchange, type: "trading") do
+      cond do
+        free_usdt(funding) >= 1 -> {:ok, "funding", "trading"}
+        free_usdt(trading) >= 1 -> {:ok, "trading", "funding"}
+        true -> {:error, {:insufficient_usdt_for_transfer, 1}}
+      end
+    end
+  end
+
+  defp free_usdt(%Balance{free: free}) when is_map(free) do
+    case Map.get(free, "USDT") do
+      amount when is_number(amount) -> amount
+      _absent -> 0
+    end
+  end
+
+  defp free_usdt(_balance), do: 0
 
   defp assert_live_position_semantics(%Bourse.Position{info: info} = position) when is_map(info) do
     notional = Bourse.Safe.number(info["notionalUsd"])

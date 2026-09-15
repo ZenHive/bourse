@@ -59,17 +59,6 @@ test code. Edit the fence when adding a ledgered case.
       "summary": "demo trading cannot accumulate deposit or withdrawal history rows"
     },
     {
-      "id": "okx-transfer-transId-unreachable",
-      "class": "ledgered_unreachable",
-      "venue": "okx",
-      "methods": ["fetchTransfer"],
-      "match": {
-        "code": "58129",
-        "message_contains": "transId"
-      },
-      "summary": "fetchTransfers yields billId; transfer-state accepts only transId"
-    },
-    {
       "id": "okx-convert-history",
       "class": "ledgered_state_dependent",
       "venue": "okx",
@@ -986,33 +975,23 @@ test code. Edit the fence when adding a ledgered case.
 - Exact call: production account with at least one deposit and one withdrawal on record.
 - Expected evidence: the resource strategy resolves a real id and the lookup returns its row.
 
-### okx — no read-only source of a transId for transfer-state (task 671, filed 2026-08-23)
+### okx — no read-only source of a transId for transfer-state (task 671, filed 2026-08-23; task 685 2026-09-15)
 
 - Authored slices: okx case `fetchTransfer:0:privateGetAssetTransferState`
-- Blocked by: OKX issues `transId` only from `POST /api/v5/asset/transfer`; every read surface
-  (`asset/bills`, `account/bills`) exposes `billId`, and `transfer-state` rejects a billId with
-  `58129 "transId is incorrect or transId does not match with 'type'"` (live probe 2026-08-23).
-- The open question: transfer-state semantics for a genuine transId.
-- Exact call: perform one funding→trading transfer (a write), capture its transId, then call
-  `fetch_transfer(ex, transId)`.
-- Expected evidence: code 0 with the transfer's state row matching the authored map.
-- Update (2026-08-23, task 671): a real transfer now exists (transId 327514023, 30 USDT
-  trading→funding, since reversed via 327514025) and `Bourse.fetch_transfer(ex, "327514023")`
-  returned the correct `%Bourse.TransferEntry{}` — the state semantics are live-verified. What
-  remains unreachable is only the contract case's resource strategy: no read surface
-  (`asset/bills`, `account/bills`, `account/bills-archive`) exposes a `transId` (rows carry
-  `billId` only, re-probed live), so `source_method: fetchTransfers` can never resolve one.
-- Update (2026-08-28): the `fetchTransfers:0` branch of this same lane was independently
-  zeroing itself (both `account/bills-archive` calls carried a stray `instType: "SPOT"`
-  literal; type-1 transfer bills carry an empty `instType`/`instId`, live-confirmed:
-  `fetch_transfers(ex)` → 7 rows, `fetch_transfers(ex, instType: "SPOT")` → `[]`). Removing
-  that literal from both the `fetchTransfers` and `fetchTransfer` branches (the latter's copy
-  was leaking into `fetchTransfer:0`'s resource-strategy lookup and forcing the same `[]`) makes
-  the resource strategy resolve a real `billId` again. `fetchTransfer:0` now fails with the exact
-  documented reason instead of a misleading `provider account state has no id from
-  fetchTransfers`: `[okx] exchange_error: transId is incorrect or transId does not match with
-  'type'` (live, 2026-08-28) — the same 58129 confirmed above, now reached honestly rather than
-  masked by an unrelated filtering bug. The transId/billId gap itself is unchanged.
+- Blocked by (historical): OKX issues `transId` only from `POST /api/v5/asset/transfer`; every
+  read surface (`asset/bills`, `account/bills`, `account/bills-archive`) exposes `billId`.
+- Update (2026-09-15, task 685): the contract case stays in the denominator and now owns a
+  reversible 1 USDT funding↔trading transfer (`source_kind: "transfer"`), then reads
+  transfer-state with that POST `transId`. The direction is chosen by reading both wallet
+  balances first, not by trying one and falling back: OKX demo holds its USDT in `trading`
+  with `funding` empty, so a try-then-fallback burned a doomed POST and the retry hit the
+  venue's funds-transfer budget as `50011 Too many requests` — the case then failed for
+  lack of the state it was supposed to create, which is not the same thing as the read
+  being unreachable. Carve (a): list `id` is bills-archive `billId`;
+  `fetch_transfer/2` refuses a bills-archive id as `identifier_class_mismatch` before the
+  wire. The JSON fence that matched venue `58129` is removed — forwarding a `billId` to
+  transfer-state is a genuine failure, not a ledgered unreachable. Do not re-add a 58129
+  match: it would green-lie that substitution.
 
 ### hyperliquid — deposit-history rows require a real bridge/CCTP transaction (task 671, filed 2026-08-23)
 
@@ -1092,3 +1071,25 @@ test code. Edit the fence when adding a ledgered case.
   and subscribe to `trade_updates` on that paper stream.
 - Expected evidence: the resting order's id appears in a `trade_updates` frame
   before cancellation; a `canceled` event arrives after `DELETE /v2/orders/{id}`.
+
+### alpaca — HTTP 429 rate-limit classification (task 685, filed 2026-09-15)
+
+- Authored slices: `priv/venues/alpaca/authored/errors.json` `status_map["429"]`
+  (`RateLimitExceeded`)
+- Blocked by: the only way to make `paper-api.alpaca.markets` answer 429 is to
+  exceed the account's request budget on purpose. That budget is per API key, the
+  paper key is the one every alpaca lane in this suite authenticates with, and a
+  sustained burst risks a throttle window that reddens every other alpaca case
+  for reasons unrelated to what is being proven. Task 685 pinned alpaca's 403,
+  404 and 422 from live calls and deliberately did not issue the 429 burst.
+- The open question: none on the mapping itself — `Bourse.HTTP.Errors` types
+  every HTTP 429 as `:rate_limit_exceeded` in a status-specific clause that runs
+  before any authored lookup, and alpaca's authored `status_map["429"]` resolves
+  to the same `:rate_limit_exceeded`. The unverified part is only that alpaca's
+  live 429 body carries the `Retry-After` shape `extract_retry_after/1` reads.
+- Exact call: from a throwaway paper key (never the suite's key), burst
+  `GET /v2/account` past the documented 200 req/min budget until the venue
+  answers 429, then classify that response through
+  `Bourse.HTTP.Errors.classify_response/5`.
+- Expected evidence: `%Bourse.Error{type: :rate_limit_exceeded, http_status: 429}`
+  with `retry_after` populated from the live response rather than `nil`.

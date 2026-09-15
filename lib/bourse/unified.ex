@@ -62,6 +62,7 @@ defmodule Bourse.Unified do
     amount_with_close_position
     cost_based_market_on_derivative
     good_till_date_requires_gtd
+    identifier_class_mismatch
     inapplicable_batch_order_field
     invalid_amount
     invalid_boolean
@@ -973,6 +974,34 @@ defmodule Bourse.Unified do
 
     with {:ok, markets} <- call_dispatch(exchange, module, :fetch_markets, "fetchMarkets", %{}, spot_markets_opts) do
       {:ok, ReadParse.index_tickers_by_market_id(tickers, markets)}
+    end
+  end
+
+  # OKX bills-archive ids are 16+ digit snowflakes (`billId`). Transfer-state
+  # accepts only the sequential `transId` issued by POST /api/v5/asset/transfer.
+  # Forwarding a billId lets the venue answer 51000/58129 for a value this
+  # client itself returned from fetch_transfers.
+  defp validate_venue_params(%Exchange{id: "okx"} = exchange, :fetch_transfer, %{"id" => id} = params)
+       when is_integer(id) do
+    validate_venue_params(exchange, :fetch_transfer, Map.put(params, "id", Integer.to_string(id)))
+  end
+
+  defp validate_venue_params(%Exchange{id: "okx"} = exchange, :fetch_transfer, %{"id" => id} = params)
+       when is_binary(id) do
+    if Regex.match?(~r/^\d{16,}$/, id) do
+      {:error,
+       Error.invalid_parameters(
+         exchange: exchange.id,
+         message:
+           "okx fetch_transfer requires a transId from POST /api/v5/asset/transfer; " <>
+             "bills-archive billId #{inspect(id)} is a different identifier class",
+         raw: %{
+           "identifier_class" => "bills_archive_bill_id",
+           "reason" => "identifier_class_mismatch"
+         }
+       )}
+    else
+      {:ok, params}
     end
   end
 
@@ -2386,24 +2415,29 @@ defmodule Bourse.Unified do
 
   # Resolves single-endpoint vs concurrent fan-out for unified dispatch.
   defp resolve_dispatch_plan(%Exchange{} = exchange, module, method_atom, capability_name, params, opts) do
-    configs = module.__unified_endpoint__(method_atom)
+    case module.__unified_endpoint__(method_atom) do
+      # An unsupported capability outranks the index check: there is no book to
+      # index into, so "0..-1" would name a range that never existed.
+      [] ->
+        {:error,
+         Error.not_supported(
+           exchange: exchange.id,
+           message: unsupported_capability_message(exchange, method_atom, capability_name)
+         )}
 
-    with :ok <- validate_endpoint_index(configs, exchange, opts) do
-      case configs do
-        [] ->
-          {:error,
-           Error.not_supported(
-             exchange: exchange.id,
-             message: unsupported_capability_message(exchange, method_atom, capability_name)
-           )}
-
-        [config] ->
-          finalize_single_config_plan(exchange, method_atom, config, params, opts)
-
-        configs ->
-          resolve_multi_config_plan(exchange, method_atom, capability_name, configs, params, opts)
-      end
+      configs ->
+        with :ok <- validate_endpoint_index(configs, exchange, opts) do
+          selected_dispatch_plan(exchange, method_atom, capability_name, configs, params, opts)
+        end
     end
+  end
+
+  defp selected_dispatch_plan(exchange, method_atom, _capability_name, [config], params, opts) do
+    finalize_single_config_plan(exchange, method_atom, config, params, opts)
+  end
+
+  defp selected_dispatch_plan(exchange, method_atom, capability_name, configs, params, opts) do
+    resolve_multi_config_plan(exchange, method_atom, capability_name, configs, params, opts)
   end
 
   # Hyperliquid has no public market-trade tape. The CCXT compatibility mapping
@@ -2949,16 +2983,11 @@ defmodule Bourse.Unified do
   # selection never silently uses bare `hd(configs)`.
   defp select_endpoint(configs, exchange, method_atom, opts, params) do
     case Keyword.fetch(opts, :endpoint_index) do
-      {:ok, idx} when is_integer(idx) and idx >= 0 and idx < length(configs) ->
-        {:ok, Enum.fetch!(configs, idx)}
-
-      {:ok, idx} ->
-        {:error,
-         Error.invalid_parameters(
-           exchange: exchange.id,
-           message: "endpoint_index must select an available endpoint (0..#{length(configs) - 1}), got: #{inspect(idx)}"
-         )}
-
+      # `nil` means "caller did not pick a book", not "caller picked nothing".
+      # This clause MUST stay above the `{:ok, idx}` catch-all: `{:ok, nil}`
+      # matches that pattern too, and ordering it second refused every read
+      # whose opts carry an explicit `endpoint_index: nil` (live: alpaca,
+      # binance and binanceusdm `fetchTicker` error contracts).
       result when result in [:error, {:ok, nil}] ->
         # Explicit stages (authored/configured) express authored venue intent, so
         # they resolve over the FULL config list — a credless pre-filter would make
@@ -2975,6 +3004,16 @@ defmodule Bourse.Unified do
           nil ->
             unresolved_multi_endpoint(reachable, exchange, method_atom)
         end
+
+      {:ok, idx} when is_integer(idx) and idx >= 0 and idx < length(configs) ->
+        {:ok, Enum.fetch!(configs, idx)}
+
+      {:ok, idx} ->
+        {:error,
+         Error.invalid_parameters(
+           exchange: exchange.id,
+           message: "endpoint_index must select an available endpoint (0..#{length(configs) - 1}), got: #{inspect(idx)}"
+         )}
     end
   end
 

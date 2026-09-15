@@ -2010,7 +2010,10 @@ defmodule Bourse.Exchange do
     [{to_string(status), Bourse.Error.from_spec_class(class, ancestors)}]
   end
 
-  defp status_map_entry(_, _), do: []
+  defp status_map_entry({status, other}, _ancestors) do
+    raise ArgumentError,
+          "errors.status_map #{inspect(status)} must be a class string or [%{\"class\" => class} | _], got: #{inspect(other)}"
+  end
 
   # Inverts the v4 errors.retry_classification contract (Phase 13) from
   # %{bucket => [class, ...]} into a faithful %{class_name => bucket_atom} index.

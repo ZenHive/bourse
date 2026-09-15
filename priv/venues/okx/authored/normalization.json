@@ -2060,60 +2060,122 @@
     },
     "transfer": {
       "_unresolved_reason": null,
-      "extras": [],
-      "field_map": {
-        "amount": {
-          "coercion": "safeNumber",
-          "fallback_keys": [
-            "amt"
-          ],
-          "format": null,
-          "key": "balChg"
-        },
-        "currency": {
-          "coercion": "safeCurrencyCode",
-          "format": null,
-          "key": "ccy"
-        },
-        "datetime": null,
-        "fromAccount": {
-          "coercion": "safeString",
-          "enum_map": {
-            "18": "trading",
-            "6": "funding"
+      "branches": [
+        {
+          "field_map": {
+            "amount": {
+              "coercion": "safeNumber",
+              "format": null,
+              "key": "amt"
+            },
+            "currency": {
+              "coercion": "safeCurrencyCode",
+              "format": null,
+              "key": "ccy"
+            },
+            "datetime": null,
+            "fromAccount": {
+              "coercion": "safeString",
+              "enum_map": {
+                "18": "trading",
+                "6": "funding"
+              },
+              "format": null,
+              "key": "from"
+            },
+            "id": {
+              "coercion": "safeString2",
+              "format": null,
+              "key": "transId"
+            },
+            "info": null,
+            "status": {
+              "coercion": "safeString",
+              "enum_map": {
+                "success": "ok"
+              },
+              "format": null,
+              "key": "state"
+            },
+            "timestamp": {
+              "coercion": "safeInteger",
+              "format": "ms",
+              "key": "ts"
+            },
+            "toAccount": {
+              "coercion": "safeString",
+              "enum_map": {
+                "18": "trading",
+                "6": "funding"
+              },
+              "format": null,
+              "key": "to"
+            }
           },
-          "format": null,
-          "key": "from"
+          "guard": {
+            "has_key": "transId"
+          }
         },
-        "id": {
-          "coercion": "safeString2",
-          "format": null,
-          "key": "billId"
-        },
-        "info": null,
-        "status": {
-          "coercion": "safeString",
-          "enum_map": {
-            "success": "ok"
+        {
+          "field_map": {
+            "amount": {
+              "coercion": "safeNumber",
+              "fallback_keys": [
+                "amt"
+              ],
+              "format": null,
+              "key": "balChg"
+            },
+            "currency": {
+              "coercion": "safeCurrencyCode",
+              "format": null,
+              "key": "ccy"
+            },
+            "datetime": null,
+            "fromAccount": {
+              "coercion": "safeString",
+              "enum_map": {
+                "18": "trading",
+                "6": "funding"
+              },
+              "format": null,
+              "key": "from"
+            },
+            "id": {
+              "coercion": "safeString2",
+              "format": null,
+              "key": "billId"
+            },
+            "info": null,
+            "status": {
+              "coercion": "safeString",
+              "enum_map": {
+                "success": "ok"
+              },
+              "format": null,
+              "key": "state"
+            },
+            "timestamp": {
+              "coercion": "safeInteger",
+              "format": "ms",
+              "key": "ts"
+            },
+            "toAccount": {
+              "coercion": "safeString",
+              "enum_map": {
+                "18": "trading",
+                "6": "funding"
+              },
+              "format": null,
+              "key": "to"
+            }
           },
-          "format": null,
-          "key": "state"
-        },
-        "timestamp": {
-          "coercion": "safeInteger",
-          "format": "ms",
-          "key": "ts"
-        },
-        "toAccount": {
-          "coercion": "safeString",
-          "enum_map": {
-            "18": "trading",
-            "6": "funding"
-          },
-          "format": null,
-          "key": "to"
+          "guard": {
+            "has_key": "billId"
+          }
         }
-      }
+      ],
+      "extras": []
     }
   },
   "response_envelopes": {

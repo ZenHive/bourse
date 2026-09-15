@@ -56,7 +56,7 @@
   "status_map": {
     "401": "AuthenticationError",
     "403": "PermissionDenied",
-    "404": "OrderNotFound",
+    "404": "ExchangeError",
     "422": "BadRequest",
     "429": "RateLimitExceeded"
   }

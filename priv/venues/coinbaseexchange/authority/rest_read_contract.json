@@ -168,11 +168,11 @@
       ],
       "options": [],
       "expected_error": {
-        "type": "exchange_error",
+        "type": "bad_symbol",
         "code": "NotFound",
         "message_contains": "NotFound"
       },
-      "observed_at": "2026-08-23"
+      "observed_at": "2026-09-15"
     }
   ],
   "provider_operation_prefixes": [

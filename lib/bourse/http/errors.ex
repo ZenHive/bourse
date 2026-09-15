@@ -369,11 +369,24 @@ defmodule Bourse.HTTP.Errors do
   end
 
   # Non-JSON error bodies (e.g. plain "Method Not Allowed") retain text as message + raw.
+  # Authored status_map / http_exceptions still apply: a 403 string body on Alpaca
+  # is PermissionDenied, not a generic exchange_error.
   defp normalize_error(status, body, exchange) do
-    body
-    |> extract_message()
-    |> Error.exchange_error(exchange: exchange.id, raw: body)
-    |> with_http_status(status)
+    error_type =
+      Map.get(exchange.status_map, to_string(status)) ||
+        Map.get(exchange.http_exceptions, to_string(status))
+
+    message = extract_message(body)
+
+    if error_type do
+      error_type
+      |> build_typed_error(message, status, exchange.id, body)
+      |> with_http_status(status)
+    else
+      message
+      |> Error.exchange_error(exchange: exchange.id, raw: body)
+      |> with_http_status(status)
+    end
   end
 
   defp with_http_status(%Error{} = err, status), do: %{err | http_status: status}

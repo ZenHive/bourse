@@ -10,14 +10,17 @@ defmodule Bourse.Test.RestReadContractOwnedState do
   alias Bourse.Order
   alias Bourse.Test.Journeys.Case, as: Journey
 
+  require Logger
+
   @resting_ratio 0.9
   @resting_sources ["fetchOpenOrders", "fetchOrders"]
   @canceled_sources ["fetchCanceledOrders"]
+  @transfer_amount 1
 
   @doc "Whether the scenario can manufacture a sandbox row for this resource source."
   @spec ownable_source?(String.t()) :: boolean()
   def ownable_source?(source) when is_binary(source) do
-    source in @resting_sources or source in @canceled_sources
+    source in @resting_sources or source in @canceled_sources or source == "transfer"
   end
 
   @doc "Creates the live row a resource argument needs, or `:unownable`."
@@ -28,6 +31,7 @@ defmodule Bourse.Test.RestReadContractOwnedState do
     cond do
       source in @resting_sources -> own_resting_order(argument, contract_case, context)
       source in @canceled_sources -> own_canceled_order(argument, contract_case, context)
+      source == "transfer" or argument["source_kind"] == "transfer" -> own_transfer(context)
       true -> :unownable
     end
   end
@@ -68,6 +72,81 @@ defmodule Bourse.Test.RestReadContractOwnedState do
 
       if is_nil(field), do: {:error, {:missing_field, argument["field"], placed}}, else: {:ok, field}
     end
+  end
+
+  defp own_transfer(context) do
+    case place_reversible_transfer(context.exchange) do
+      {:ok, %Bourse.TransferEntry{id: id} = placed, reverse_from, reverse_to}
+      when is_binary(id) and id != "" ->
+        register_transfer_cleanup!(
+          context.exchange,
+          placed.currency || "USDT",
+          @transfer_amount,
+          reverse_from,
+          reverse_to
+        )
+
+        {:ok, id}
+
+      {:ok, placed, _reverse_from, _reverse_to} ->
+        {:error, {:missing_field, "id", placed}}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  # Read which account actually holds the funds instead of trying a direction and
+  # falling back. OKX demo keeps its USDT in `trading` and `funding` empty, so a
+  # try-then-fallback always burned a doomed POST first and the follow-up hit the
+  # venue's funds-transfer budget as `50011 Too many requests` — the state the
+  # case needs never got created. One read, then one POST.
+  defp place_reversible_transfer(exchange) do
+    wait = [rate_limit_max_wait_ms: 60_000]
+
+    with {:ok, from, to} <- funded_transfer_direction(exchange),
+         {:ok, placed} <- Bourse.transfer(exchange, "USDT", @transfer_amount, from, to, wait) do
+      {:ok, placed, to, from}
+    end
+  end
+
+  defp funded_transfer_direction(exchange) do
+    with {:ok, funding} <- Bourse.fetch_balance(exchange, type: "funding"),
+         {:ok, trading} <- Bourse.fetch_balance(exchange, type: "trading") do
+      cond do
+        free_usdt(funding) >= @transfer_amount -> {:ok, "funding", "trading"}
+        free_usdt(trading) >= @transfer_amount -> {:ok, "trading", "funding"}
+        true -> {:error, {:insufficient_usdt_for_transfer, @transfer_amount}}
+      end
+    end
+  end
+
+  defp free_usdt(%Bourse.Balance{free: free}) when is_map(free) do
+    case Map.get(free, "USDT") do
+      amount when is_number(amount) -> amount
+      _absent -> 0
+    end
+  end
+
+  defp free_usdt(_balance), do: 0
+
+  # Cleanup must not redden the case it cleans up after, but a reversal that keeps
+  # failing drains the demo wallet one unit per run, so name it rather than drop it.
+  defp register_transfer_cleanup!(exchange, currency, amount, from_account, to_account) do
+    ExUnit.Callbacks.on_exit(fn ->
+      case Bourse.transfer(exchange, currency, amount, from_account, to_account) do
+        {:ok, _reversed} ->
+          :ok
+
+        {:error, reason} ->
+          Logger.warning(
+            "rest_read_contract: could not reverse the #{amount} #{currency} " <>
+              "#{from_account}->#{to_account} transfer: #{inspect(reason)}"
+          )
+      end
+    end)
+
+    :ok
   end
 
   defp place_resting_order(contract_case, context) do

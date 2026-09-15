@@ -114,7 +114,6 @@ roadmap.
 
 ---
 
-
 ## 2026-09-15 — five live deribit tests grade against the PRODUCTION host, so a venue maintenance window reds the suite
 
 **Status:** 🆕 reported 2026-09-15 — unrouted, awaiting the operator's routing decision.
@@ -314,6 +313,16 @@ Carve recorded in `docs/authored-spec-carves/deribit.md` (2026-09-15, transfer c
   account is what made it observable, not any change in our code or in the venue.
   That is the shape `empty_collection: allowed` will keep producing: a required
   field can be unauthored indefinitely while nothing exercises the slot.
+
+**Independently rediscovered in the task 685 dispatch run (2026-09-15).** The review of
+that run hit the same contract failure — `deribit:fetchTransfers:0:privateGetGetTransfers:
+required semantic field currency is nil`, live row `id: "493346"`, `currency: nil` while
+`info["currency"]` held `"BTC"` — and carved the same slot the same way, confirming the
+defect predates task 685 and is unrelated to its four instances. Consumer impact named
+there: a transfer row whose currency the venue published reads as "currency unknown", so
+any consumer bucketing transfers by asset silently loses deribit rows or attributes them
+to a nil key. All 41 `test/live/deribit/rest_read_contract_test.exs` cases pass against
+`test.deribit.com` with the carve in place.
 
 ---
 
@@ -938,7 +947,7 @@ report, not an uncovered-defect report.
 
 ## 2026-08-29 — `select_endpoint/5` answers with index 0 when the requested `endpoint_index` does not exist
 
-**Status:** 🆕 surfaced by the task 686 reviewer while auditing a contract argument. · **Tracked:** folds into task 685 (silent substitution).
+**Status:** ✅ fixed in task 685 — `select_endpoint/5` and `validate_endpoint_index/3` refuse an explicit invalid or out-of-range index as `invalid_parameters` before dispatch; `Enum.at(configs, idx) || hd(configs)` is gone. Regression tests distinguish that from successful index-zero selection, including against an unreachable `base_url`. **Review correction:** the first cut ordered the `{:ok, idx}` catch-all above the absent/`nil` clause, so `Keyword.fetch/2` returning `{:ok, nil}` — "caller did not pick a book" — was refused as an invalid index. That reddened the live `fetchTicker` error contracts for alpaca, binance and binanceusdm. The clause order is fixed and an explicit `endpoint_index: nil` is now pinned equivalent to omitting the option.
 
 `Bourse.Unified.select_endpoint/5` resolves an explicit index with
 `Enum.at(configs, idx) || hd(configs)`, so `endpoint_index: 99` quietly returns index 0's
@@ -976,7 +985,7 @@ Bookkeeping fallout from task 686, both real, neither a defect in the shipped be
 
 ## 2026-08-28 — bybit `fetch_positions_history`: one dated-contract row fails the WHOLE call with `missing_position_notional_currency`
 
-**Status:** 🆕 measured live (orchestrator, landed-base `mix ci` on `000034a`) — not consumer-reported. · **Tracked:** task 685, 688 (2026-08-28).
+**Status:** ✅ fixed in task 685 — `put_notional_currencies/2` drops a row with `missing_position_notional_currency` (named `Logger.warning`) and returns the resolvable rows. Dated-future symbol ids remain task 688.
 
 The contract case `bybit:fetchPositionsHistory:0:privateGetV5PositionClosedPnl` fails with
 
@@ -1199,9 +1208,7 @@ venue-journey review.
 
 ## 2026-08-28 — OKX `TransferEntry.id` is a `billId`, so `fetch_transfer/2` can never resolve an id that `fetch_transfers/1` returned
 
-**Status:** 🆕 confirmed live (orchestrator) — not consumer-reported. **This is a real client
-defect**, unlike the rest of the 2026-08-28 contract-lane reds, which adjudicated to empty
-sandbox state or host toolchain. · **Tracked:** task 685 (2026-08-28).
+**Status:** ✅ fixed in task 685 (carve (a)): list `id` is bills-archive `billId` via a `has_key` branch, never `fallback_keys` onto `transId`. `fetch_transfer/2` refuses a 16+ digit billId as `identifier_class_mismatch` before the wire. `fetchTransfer` stays in the REST-read denominator as write-then-read from `POST /api/v5/asset/transfer` (the lane picks the transfer direction by reading both wallet balances — OKX demo keeps USDT in `trading`, so guessing `funding` first wasted a POST and the retry hit `50011`). Manifest-wide identifier-class gate in `test/bourse/authored_identifier_class_test.exs`.
 
 `fetchTransfers` reads `privateGetAccountBillsArchive` (correctly filtered to `type: "1"`,
 the transfer bill type). Probed live against the OKX demo:
@@ -1256,7 +1263,7 @@ was wrong.
 
 ## 2026-08-28 — alpaca's authored `errors.status_map` is silently dropped by the spec loader, so the venue has no HTTP-status error classification
 
-**Status:** 🆕 measured live (orchestrator triage of the task 674 reviewer's finding) — not consumer-reported. · **Tracked:** task 685 (2026-08-28).
+**Status:** ✅ fixed in task 685 — `build_status_map/2` consumes a bare class string; an unrecognized shape raises. HTTP 401 stays hard auth; 403 uses the authored map when present; 429 stays hard `:rate_limit_exceeded` (same type as alpaca's authored 429). **Review correction:** waking the map exposed a wrong carve underneath it — `status_map["404"]` claimed `OrderNotFound`, so a *ticker* 404 ("no snapshot found for ZZZZZZ") typed as `:order_not_found`. Alpaca's own authority documents 40410000 as "the requested resource was not found" and declares `unmapped_code_disposition: exchange_error`, so the 404 entry is now `ExchangeError`; the genuine order 404 stays typed by the exact provider code (`:invalid_order`, pinned in `test/live/errors/alpaca_test.exs`). The same bare-string shape woke coinbaseexchange's `status_map` too, where `404 => BadSymbol` is correct for a public-only product surface and its contract expectation was re-pinned from the old dead-map fallback. Live 403/404/422 pinned on paper-api; the 429 stays unverified and is ledgered (`docs/prod-verification-ledger.md` — "alpaca — HTTP 429 rate-limit classification"), because the only way to provoke it is to burn the suite's own paper key's request budget.
 
 `priv/venues/alpaca/authored/errors.json` declares `status_map` as bare strings:
 
@@ -1565,8 +1572,7 @@ instrument name also fails `ZenQuant.Options.Deribit.parse_option/1`
 
 ## 2026-08-27 — `HmacRecipe`'s canonical-string fallback ladders silently pick a block instead of failing; no test reaches past their first rung
 
-**Status:** 🆕 reported (measured, not consumer-reported — mutation testing on
-`lib/bourse/signing/hmac_recipe.ex`, muex 0.9.1, 2366 mutants, 421 survivors) · **Tracked:** task 685 (2026-08-28).
+**Status:** ✅ fixed in task 685 — `canonical_block!/2` raises on a missing or malformed method block instead of `Map.values() |> List.first()`. Malformed path predicates raise. **muex:** before (BUGS 2026-08-27) muex 0.9.1, 2366 mutants, 421 survivors. After-count was not re-run in this delivery (the implementer's muex invocation produced no JSON after seven minutes; this review did not fabricate a count). The `List.first()` rungs no longer exist, so those surviving mutants are gone by deletion.
 
 **The call:** any signed request whose authored `canonical_string` slice does not carry the
 exact key the ladder looks for first.
