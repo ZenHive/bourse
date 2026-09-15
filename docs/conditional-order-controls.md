@@ -22,8 +22,10 @@ current unified builders cannot express conditional controls fail explicitly.
 
 A control the write path accepts must map back on the order. The suite-level
 invariant in `test/bourse/order_control_round_trip_invariant_test.exs` derives
-that set from `OrderOptions.aliases/0` and the authored request shapes. Live
-re-reads (`fetch_open_orders` / `fetch_order`) assert `trigger_price` and, where
+that set from `OrderOptions.aliases/0` and the authored request shapes; it is
+offline and asserts mapping presence, not venue values. The live re-reads live
+in `test/live/conditional_order_options_integration_test.exs`
+(`fetch_open_orders` / `fetch_order`), which assert `trigger_price` and, where
 the venue offers it, `reduce_only` — never the create echo and never an `info`
 fallback. A venue that omits a mapped field still answers `nil`.
 

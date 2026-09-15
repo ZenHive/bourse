@@ -181,6 +181,31 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   including the channels the venues accept but leave idle, is in
   `docs/public-ws-channel-confrontation.md`.
 
+- A unified order control the write path accepts now reads back on the order.
+  `trigger_price`, `stop_loss_price`, `take_profit_price` and `reduce_only`
+  were canonical *inputs* while the response slice left them unmapped, so a
+  consumer that placed a protective order and re-read it could not tell a stop
+  from a market order without reaching into `info` — and a `trading_dashboard`
+  allocation trigger keying on `reduce_only` booked a reduction on the wrong
+  side of its exposure. Deribit now maps `trigger_price` and `reduce_only`,
+  bybit maps `triggerPrice` / `stopLoss` / `takeProfit` (a provider zero or
+  empty string stays `nil`, not `0.0`), and okx maps `triggerPx`. The durable
+  fix is the invariant, not the four mappings: a suite-level test derives the
+  control set from `Bourse.Unified.OrderOptions.aliases/0` plus the authored
+  create/edit request shapes and fails when a venue accepts a control on write
+  without mapping it back, so the next write-only control cannot land at all.
+  Where a venue genuinely publishes no counterpart — the Binance family, whose
+  protective leg is the order type rather than a distinct price, and Alpaca
+  equities, which have no `reduce_only` — the slot carries a named exemption
+  citing the provider contract, and an exemption that stops matching a real
+  violation fails as stale. The client adds no `info` fallback and no truthy
+  coercion: a venue that omits a mapped field still answers `nil`. Evidence is
+  a re-read (`fetch_open_orders` / `fetch_order`), never the create echo,
+  pinned live on test.deribit.com, bybit demo, okx demo, the three Binance
+  venue IDs and Alpaca paper. `Bourse.Unified.OrderOptions.aliases/0` and
+  `canonical_slots/0` are public so the invariant derives the set rather than
+  hand-listing it; see `docs/conditional-order-controls.md`.
+
 ## [0.8.0] - 2026-08-31
 
 ### Added

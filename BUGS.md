@@ -643,10 +643,19 @@ dass die Lane-Klassifikation ohnehin zu schwach ist; beide gehören in dieselbe 
 
 ## 2026-09-15 — task 693 made conditional controls first-class on the request side, but the read side drops them: three venues never parse `triggerPrice`, and `stop_loss_price` / `take_profit_price` are unmapped on nine of ten
 
-**Status:** 🆕 reported — unrouted, awaiting the operator's routing decision. Found from the
-orchestrator seat while answering a `trading_dashboard` question about the deribit
-conditional gate; no per-task reviewer could see it, because the asymmetry only exists once
-693 landed.
+**Status:** ✅ fixed 2026-09-15 (task 700, shipped `75a540b77ca4`) — the durable fix is the
+invariant, not the mappings: `test/bourse/order_control_round_trip_invariant_test.exs`
+derives the control set from `Bourse.Unified.OrderOptions.aliases/0` plus the authored
+create/edit request shapes and fails when a venue accepts a control on write without
+mapping it back. Deribit now maps `trigger_price` and `reduce_only`, bybit `triggerPrice` /
+`stopLoss` / `takeProfit`, okx `triggerPx`; the Binance family's `stopLossPrice` /
+`takeProfitPrice` and alpaca's `reduceOnly` carry named exemptions citing the provider
+contract, and a stale exemption fails the same test. The remaining unmapped cells in the
+table below are slots those venues' write paths do not accept, which the invariant does not
+require. Originally found from the orchestrator seat while answering a `trading_dashboard`
+question about the deribit conditional gate; no per-task reviewer could see it, because the
+asymmetry only existed once 693 landed. Repro and the pre-fix survey kept below as the
+evidence trail.
 
 **The call, live against `test.deribit.com` (2026-09-15):**
 
@@ -796,12 +805,30 @@ re-derive it.
 > read is reachable: on at least one run the `until`-bounded page WAS the page
 > nearest the boundary, so the defect is in which page gets selected, not in a
 > boundary the venue never honours.
+>
+> **Seventh observation (2026-09-15, post-merge audit of `9c2e70e`).** Red again
+> in a cold un-warmed worktree, `mix check.dispatch` on the landed base:
+> shortfall **18,728 ms** (`requested 1789464039359, last 1789464020631`). The
+> seven-run record is **2,113 ms · 3,981 ms · 1,355,925 ms · 313,974 ms · GREEN ·
+> 5,572 ms · 18,728 ms**. Adds no new mechanism — a seventh point inside the
+> already-established spread — and is recorded only so the frequency claim stays
+> honest: six of seven runs red, spread still four orders of magnitude. The
+> deciding experiment is unchanged and still unrun.
 
 ---
 
 ## 2026-09-15 — lighter testnet went dark: every private read answers `invalid auth: couldnt find account`, the public WS channel is rejected, and an unknown market id no longer errors
 
-**Status:** Tracked in task 699 (post-merge audit of `0ac2cd2`, 2026-09-15); implementation pending.
+**Status:** ⚠️ split — two of three symptoms fixed, the third is operator-gated and tracked by
+no task (re-confirmed in the post-merge audit of `9c2e70e`, 2026-09-15). Task 699 (shipped
+`ba09535718725edef9fcd580660457dab6a5c21c`) closed the **WS channel** and **unknown-market-id**
+halves; both pass in this audit's cold `mix check.dispatch`. The **private-read** half is still
+red — nine lighter cases answer 20013 `invalid auth: couldnt find account` — and 699 put it
+`out_of_scope` on purpose: the remedy is the operator running `mix bourse.provision_lighter`
+with the L1 wallet key that is deliberately outside the credential set, so it is **not**
+pending implementation work and no task will close it. The earlier header read "Tracked in
+task 699; implementation pending", which would have left the next reader waiting on a task
+that had already shipped and had declined this half by name.
 
 Measured in the cold post-merge audit worktree with `mix check.dispatch` against `https://testnet.zklighter.elliot.ai`, using the provisioned `LIGHTER_TESTNET_API_KEY_INDEX` / `LIGHTER_TESTNET_ACCOUNT_INDEX` / `LIGHTER_TESTNET_API_PRIVATE_KEY`. Nothing in the audited range (`972c1e8..0ac2cd2`) touches lighter, so this is venue-side drift, not a regression. Three distinct symptoms:
 
