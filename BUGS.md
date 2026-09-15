@@ -114,6 +114,53 @@ roadmap.
 
 ---
 
+## 2026-09-15 — task 693 made conditional controls first-class on the request side, but the read side drops them: three venues never parse `triggerPrice`, and `stop_loss_price` / `take_profit_price` are unmapped on nine of ten
+
+**Status:** 🆕 reported — unrouted, awaiting the operator's routing decision. Found from the
+orchestrator seat while answering a `trading_dashboard` question about the deribit
+conditional gate; no per-task reviewer could see it, because the asymmetry only exists once
+693 landed.
+
+**The call, live against `test.deribit.com` (2026-09-15):**
+
+```elixir
+{:ok, order} =
+  Bourse.create_order(ex, "BTC/USD:BTC", "take_market", "sell", 10,
+    trigger_price: 96_956.0, trigger: "last_price")
+
+order.trigger_price        #=> nil          ← observed
+order.reduce_only          #=> nil          ← observed
+order.info["trigger_price"] #=> 96956.0     ← the venue published it
+order.info["reduce_only"]   #=> false       ← the venue published it
+```
+
+Order `TPTS-11018234`, `order_state: "untriggered"`, cancelled in the same session; the book
+was verified empty afterwards (`fetch_open_orders` → 0).
+
+**Expected:** a protective order placed through the unified surface reads back with the
+protective fields populated. 693 made `trigger_price` / `stop_loss_price` /
+`take_profit_price` / `reduce_only` canonical *inputs* and refuses a request the venue
+cannot express; the response slice was not moved with it, so a consumer that places a stop
+and reads it back cannot tell a stop from a market order without reaching into `info`.
+
+**It is a class, not an instance** — `priv/venues/<venue>/authored/normalization.json`,
+`field_maps.order.field_map`, across all ten venues with an order map:
+
+| slot | unmapped on |
+|---|---|
+| `triggerPrice` | bybit, deribit, okx |
+| `reduceOnly` | alpaca, deribit |
+| `stopLossPrice` | all but derive, okx |
+| `takeProfitPrice` | all but okx |
+
+**Consumer impact:** `trading_dashboard` reads conditional orders back in its bracket-guard
+reconciler; on deribit, bybit and okx the reconciler cannot see the trigger it just placed.
+Reported alongside the 693 rollout, so it lands on a surface consumers are about to adopt.
+
+**Not fixed inline** on purpose: ten venues times four slots is authoring work with a live
+call and a carve-register entry per venue, not a bounded local edit. One class, one task if
+the operator routes it.
+
 ## 2026-09-15 — bybit `fetch_all_greeks` answered `%{}` for a symbol its own option ticker list carried, sustained across a retry, then recovered
 
 **Status:** Recorded, not routed (post-merge audit of `de6916d`, 2026-09-15). No task filed — re-probed green minutes later, so this is venue state rather than a client defect on current evidence.
