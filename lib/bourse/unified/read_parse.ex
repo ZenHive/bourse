@@ -3815,6 +3815,12 @@ defmodule Bourse.Unified.ReadParse do
     Enum.map(rows, &annotate_lighter_trade(&1, exchange))
   end
 
+  defp annotate_lighter_payload(rows, %Exchange{id: "lighter"} = exchange, "funding_rate", _js_name) when is_list(rows) do
+    rows
+    |> Enum.filter(&lighter_current_funding_row?/1)
+    |> Enum.map(&annotate_lighter_funding_rate(&1, exchange))
+  end
+
   defp annotate_lighter_payload(payload, _exchange, _parse_type, _js_name), do: payload
 
   defp annotate_lighter_trade(%{} = row, exchange) do
@@ -3872,6 +3878,32 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   defp lighter_market_settle(_exchange, _market_id), do: nil
+
+  defp lighter_current_funding_row?(%{"exchange" => "lighter"}), do: true
+  defp lighter_current_funding_row?(_row), do: false
+
+  defp annotate_lighter_funding_rate(%{} = row, exchange) do
+    maybe_put_synthetic(row, "_bourse_symbol", lighter_funding_symbol(exchange, row))
+  end
+
+  defp annotate_lighter_funding_rate(row, _exchange), do: row
+
+  defp lighter_funding_symbol(%Exchange{markets: markets} = exchange, row) when is_list(markets) do
+    native_id = Bourse.Safe.string(Map.get(row, "market_id"))
+
+    case Enum.find(markets, &(Bourse.Safe.string(binance_market_id(&1)) == native_id)) do
+      %{symbol: symbol} when is_binary(symbol) and symbol != "" -> symbol
+      _ -> lighter_funding_symbol_from_native(exchange, row)
+    end
+  end
+
+  defp lighter_funding_symbol(exchange, row), do: lighter_funding_symbol_from_native(exchange, row)
+
+  defp lighter_funding_symbol_from_native(exchange, %{"symbol" => symbol} = row) when is_binary(symbol) do
+    lighter_market_symbol(symbol, Map.put(row, "market_type", "perp"), exchange)
+  end
+
+  defp lighter_funding_symbol_from_native(_exchange, _row), do: nil
 
   defp annotate_binance_order(%{} = row, js_name, exchange, params) do
     id = binance_field(row, ["orderId", "algoId"])

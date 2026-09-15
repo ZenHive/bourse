@@ -44,6 +44,9 @@ defmodule Bourse.Emulation do
     {:handle_fetch_funding_rate, :fetch_markets} => %{
       symbol: "used locally to validate the requested contract market"
     },
+    {:handle_fetch_funding_rates, :fetch_funding_rate} => %{
+      symbols: "used locally to select requested rates from delegated singular reads"
+    },
     {:handle_fetch_isolated_borrow_rate, :fetch_isolated_borrow_rates} => %{
       symbol: "used locally to select one rate from the delegated result"
     },
@@ -261,6 +264,7 @@ defmodule Bourse.Emulation do
     fetch_margin_mode: :handle_fetch_margin_mode,
     fetch_market_leverage_tiers: :handle_fetch_market_leverage_tiers,
     fetch_funding_rate: :handle_fetch_funding_rate,
+    fetch_funding_rates: :handle_fetch_funding_rates,
     fetch_funding_interval: :handle_fetch_funding_interval,
     fetch_isolated_borrow_rate: :handle_fetch_isolated_borrow_rate,
     fetch_trading_limits: :handle_fetch_trading_limits,
@@ -347,6 +351,9 @@ defmodule Bourse.Emulation do
 
   defp dispatch_handler(exchange, exchange_module, :fetch_funding_rate, params, opts),
     do: handle_fetch_funding_rate(exchange, exchange_module, params, opts)
+
+  defp dispatch_handler(exchange, exchange_module, :fetch_funding_rates, params, opts),
+    do: handle_fetch_funding_rates(exchange, exchange_module, params, opts)
 
   defp dispatch_handler(exchange, exchange_module, :fetch_funding_interval, params, opts),
     do: handle_fetch_funding_interval(exchange, exchange_module, params, opts)
@@ -709,6 +716,43 @@ defmodule Bourse.Emulation do
         require_symbol_result(rates, symbol, exchange, "fetchFundingRate() returned no data for")
       end
     end
+  end
+
+  @doc false
+  # Emulates fetchFundingRates by calling fetchFundingRate for an explicit symbols list.
+  @spec handle_fetch_funding_rates(Exchange.t(), module(), map(), keyword()) ::
+          dispatch_result()
+  defp handle_fetch_funding_rates(exchange, exchange_module, params, opts) do
+    symbols = extract_param(params, :symbols)
+
+    if explicit_funding_symbols?(symbols) do
+      collect_funding_rates_from_singular(exchange, exchange_module, symbols, params, opts)
+    else
+      require_explicit_symbols_error(exchange, "fetchFundingRates")
+    end
+  end
+
+  defp explicit_funding_symbols?(symbols) when is_list(symbols) and symbols != [] do
+    Enum.all?(symbols, &(is_binary(&1) and &1 != ""))
+  end
+
+  defp explicit_funding_symbols?(_symbols), do: false
+
+  defp collect_funding_rates_from_singular(exchange, exchange_module, symbols, params, opts) do
+    Enum.reduce_while(symbols, {:ok, %{}}, fn symbol, {:ok, acc} ->
+      case call_method(
+             exchange,
+             exchange_module,
+             :fetch_funding_rate,
+             delegated_params(params, :handle_fetch_funding_rates, :fetch_funding_rate, %{
+               "symbol" => symbol
+             }),
+             opts
+           ) do
+        {:ok, rate} -> {:cont, {:ok, Map.put(acc, symbol, rate)}}
+        {:error, _} = error -> {:halt, error}
+      end
+    end)
   end
 
   @doc false
@@ -1158,6 +1202,14 @@ defmodule Bourse.Emulation do
     {:error,
      Error.invalid_parameters(
        message: "#{method_name} requires a symbol argument",
+       exchange: exchange_id(exchange)
+     )}
+  end
+
+  defp require_explicit_symbols_error(exchange, method_name) do
+    {:error,
+     Error.bad_request(
+       message: "#{method_name}() requires an explicit symbols list; this venue does not guess a universe",
        exchange: exchange_id(exchange)
      )}
   end

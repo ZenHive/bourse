@@ -177,7 +177,7 @@
   },
   "fetchFundingRate": {
     "unified": [],
-    "has": false,
+    "has": "emulated",
     "mapping_complete": false,
     "verification": "unverified",
     "transaction_classification": {
@@ -460,10 +460,23 @@
     }
   },
   "fetchFundingRates": {
-    "unified": [],
-    "has": false,
-    "mapping_complete": false,
-    "verification": "unverified",
+    "unified": [
+      "publicGetFundingRates"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "verified",
+    "descriptor": {
+      "description": "Uses Lighter's venue-native /api/v1/funding-rates rows where exchange is lighter; comparison-venue rows are dropped.",
+      "name": "fetchFundingRates",
+      "provider_operation_id": "funding-rates",
+      "signature": {
+        "return_type": "Promise<FundingRates>"
+      }
+    },
+    "parse": [
+      "parseFundingRates"
+    ],
     "transaction_classification": {
       "on_chain": false,
       "transactional": false

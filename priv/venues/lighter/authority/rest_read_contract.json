@@ -197,6 +197,35 @@
       ]
     },
     {
+      "method": "fetchFundingRates",
+      "branches": [
+        {
+          "provider_operation": "publicGetFundingRates",
+          "http_method": "GET",
+          "path": "funding-rates",
+          "authenticated": false,
+          "market_kind": "linear",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "parsed",
+        "collection": "map",
+        "module": "Bourse.FundingRate",
+        "required_fields": [
+          "symbol"
+        ],
+        "any_fields": [
+          "fundingRate",
+          "interval"
+        ]
+      },
+      "authority_source_ids": [
+        "rest-openapi"
+      ]
+    },
+    {
       "method": "fetchMarkets",
       "branches": [
         {

@@ -41,6 +41,44 @@
         }
       }
     },
+    "funding_rate": {
+      "_unresolved_reason": null,
+      "extras": [],
+      "field_map": {
+        "datetime": null,
+        "estimatedSettlePrice": null,
+        "fundingDatetime": null,
+        "fundingRate": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "rate"
+        },
+        "fundingTimestamp": null,
+        "indexPrice": null,
+        "info": null,
+        "interestRate": null,
+        "interval": {
+          "default": "1h",
+          "evidence": {
+            "carve_id": "C-T692",
+            "derivation": "provider_documented_hourly_cadence",
+            "source": "docs/authored-spec-carves/lighter.md#c-t692--current-funding-rate-is-a-signed-hourly-fraction-outcome-confirmed"
+          }
+        },
+        "markPrice": null,
+        "nextFundingDatetime": null,
+        "nextFundingRate": null,
+        "nextFundingTimestamp": null,
+        "previousFundingDatetime": null,
+        "previousFundingRate": null,
+        "previousFundingTimestamp": null,
+        "symbol": {
+          "coercion": "safeString",
+          "key": "_bourse_symbol"
+        },
+        "timestamp": null
+      }
+    },
     "funding_rate_history": {
       "_unresolved_reason": null,
       "extras": [],
@@ -748,6 +786,13 @@
         "default": {},
         "fallback_keys": [],
         "key": "accounts.0"
+      }
+    },
+    "funding_rate": {
+      "fetchFundingRates": {
+        "default": [],
+        "fallback_keys": [],
+        "key": "funding_rates"
       }
     },
     "funding_rate_history": {

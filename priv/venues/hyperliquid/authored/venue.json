@@ -381,6 +381,13 @@
       "reasons": [
         "has_emulated"
       ]
+    },
+    {
+      "name": "fetchFundingRate",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
     }
   ],
   "capabilities": {
@@ -535,7 +542,7 @@
       "fetchDepositAddresses": false,
       "fetchDepositWithdrawFee": "emulated",
       "fetchDepositWithdrawFees": false,
-      "fetchFundingRate": false,
+      "fetchFundingRate": "emulated",
       "fetchIndexOHLCV": false,
       "fetchIsolatedBorrowRate": false,
       "fetchIsolatedBorrowRates": false,

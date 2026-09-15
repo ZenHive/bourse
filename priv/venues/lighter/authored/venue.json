@@ -204,7 +204,15 @@
       "unresolved_reason": null
     }
   },
-  "emulated_methods": [],
+  "emulated_methods": [
+    {
+      "name": "fetchFundingRate",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    }
+  ],
   "capabilities": {
     "features": {
       "default": {

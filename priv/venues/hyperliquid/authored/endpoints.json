@@ -889,6 +889,10 @@
     },
     "request": {
       "defaults": {
+        "_omit": [
+          "symbol",
+          "symbols"
+        ],
         "type": {
           "kind": "literal",
           "reason": null,

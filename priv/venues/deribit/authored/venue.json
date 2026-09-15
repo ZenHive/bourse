@@ -347,7 +347,15 @@
       "unresolved_reason": null
     }
   },
-  "emulated_methods": [],
+  "emulated_methods": [
+    {
+      "name": "fetchFundingRates",
+      "scope": "rest",
+      "reasons": [
+        "has_emulated"
+      ]
+    }
+  ],
   "capabilities": {
     "features": {
       "default": {
@@ -468,6 +476,7 @@
       "fetchDeposit": false,
       "fetchDepositAddresses": false,
       "fetchDepositAddressesByNetwork": false,
+      "fetchFundingRates": "emulated",
       "fetchIndexOHLCV": false,
       "fetchIsolatedBorrowRate": false,
       "fetchIsolatedBorrowRates": false,

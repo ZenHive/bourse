@@ -29,3 +29,20 @@ Outcome: CONFIRM percent-point-to-fraction conversion.**
 <!-- carve-evidence-status
 {"carve_id":"C-T603g","date":"2026-08-12","semantic_source":{"kind":"provider_owned","reference":"Pinned Lighter Funding and AccountPosition schemas"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":null,"note":"the replay corpus this tier rested on was deleted; unverified until a live call against the venue re-proves it"}
 -->
+## 2026-09-15 — current venue funding rates (Task 692)
+**C-T692 — Lighter's current funding `rate` is a signed hourly fraction, not history percent-points (task 692).
+Outcome: CONFIRM current `GET /api/v1/funding-rates` `rate` as source-unit fraction; DIVERGE from `/fundings` history `scale: 0.01`.**
+
+| Authored slot | Unit | Venue-owned confrontation |
+|---|---|---|
+| `normalization.field_maps.funding_rate.field_map.fundingRate` | fraction | OpenAPI `FundingRate.rate` is a signed decimal with no percent conversion. Live testnet 2026-09-15 returned Lighter BTC `rate: 9.6e-5` alongside comparison-venue rows; that magnitude matches an hourly fraction (Hyperliquid `funding: 0.0001841099` the same day), not the history percent-points that C-T546g/`scale: 0.01` convert. [Funding rates](https://apidocs.lighter.xyz/#tag/funding/GET/api/v1/funding-rates) [OpenAPI FundingRate](https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json) |
+| `normalization.field_maps.funding_rate.field_map.interestRate`, `normalization.field_maps.funding_rate.field_map.nextFundingRate`, `normalization.field_maps.funding_rate.field_map.previousFundingRate` | absent | The current `FundingRate` object is `{market_id, exchange, symbol, rate}` — no interest, next, or previous slots. [OpenAPI FundingRate](https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json) |
+
+<!-- rate-unit path="normalization.field_maps.funding_rate.field_map.fundingRate" unit="fraction" source-unit="fraction" --> Lighter's current `funding-rates` `rate` is already a signed decimal fraction; no scale. History `/fundings` stays percent-points under C-T603g. [Funding rates](https://apidocs.lighter.xyz/#tag/funding/GET/api/v1/funding-rates)
+<!-- rate-unit path="normalization.field_maps.funding_rate.field_map.interestRate" unit="absent" --> Current funding rows do not carry an interest component. [OpenAPI FundingRate](https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json)
+<!-- rate-unit path="normalization.field_maps.funding_rate.field_map.nextFundingRate" unit="absent" --> Current funding rows do not carry a next-rate slot. [OpenAPI FundingRate](https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json)
+<!-- rate-unit path="normalization.field_maps.funding_rate.field_map.previousFundingRate" unit="absent" --> Current funding rows do not carry a previous-rate slot. [OpenAPI FundingRate](https://github.com/elliottech/lighter-python/blob/6957dd8a1b36894ca9580be0d51de30aeea3bd4a/openapi.json)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T692","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Pinned Lighter OpenAPI FundingRate plus GET /api/v1/funding-rates"},"observed_evidence":{"kind":"live_call","reference":"testnet GET /api/v1/funding-rates 2026-09-15 Lighter BTC rate 9.6e-5 signed fraction; comparison rows dropped"},"compatibility_reference":null,"resolved_tier":"verified","note":"interval authored 1h from history resolution 1h plus matching hourly-fraction magnitude; REST snapshot is not the market_stats WebSocket"}
+-->

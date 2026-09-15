@@ -156,7 +156,8 @@ defmodule Bourse.Unified do
     set_leverage: "Set leverage for a symbol on the exchange.",
     set_margin_mode: "Set margin mode (cross/isolated) for a symbol.",
     fetch_funding_rate: "Fetch the current funding rate for a perpetual swap.",
-    fetch_funding_rates: "Fetch funding rates for all perpetual swaps.",
+    fetch_funding_rates:
+      "Fetch current funding rates. Venues that only expose a singular read require an explicit symbols list and do not guess the swap universe.",
     fetch_deposit_address: "Fetch a deposit address for a currency.",
     withdraw: "Withdraw funds to an external address.",
     fetch_deposits: "Fetch deposit history.",
