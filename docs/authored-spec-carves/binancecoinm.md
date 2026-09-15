@@ -4,6 +4,21 @@ Provider authority: [`priv/venues/binancecoinm/authority/manifest.json`](../../p
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 indexed by `priv/venues/binancecoinm/authority/manifest.json`.
+
+## 2026-09-15 — position mode is the venue boolean (Task 698)
+
+**C-T698b — `GET /dapi/v1/positionSide/dual` is `dualSidePosition`, returned as
+a nested map. Outcome: CONFIRM the provider boolean; reserve `RawResponse`
+for unauthored semantics.**
+
+COIN-M Get Current Position Mode answers `{"dualSidePosition": true|false}`.
+That boolean is the whole contract: One-way is `false`, Hedge is `true`.
+`mapping_complete: true` with no parser returns the body map losslessly.
+[Get Current Position Mode](https://developers.binance.com/docs/derivatives/coin-margined-futures/trade/rest-api/Get-Current-Position-Mode)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T698b","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M Get Current Position Mode dualSidePosition"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 demo-dapi.binance.com dapiPrivateGetPositionSideDual dualSidePosition false; invalid API key -2014; stale timestamp -1021"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":null}
+-->
 ## 2026-08-12 — rate-unit confrontation (Task 594)
 **C-T594c — Binance COIN-M's authored rate-like slots name their venue units (task 594).
 Outcome: CONFIRM documented and arithmetic-derived units; retain explicit gaps.**

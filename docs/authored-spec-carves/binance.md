@@ -3,6 +3,23 @@
 Provider authority: [`priv/venues/binance/authority/manifest.json`](../../priv/venues/binance/authority/manifest.json).
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
+
+## 2026-09-15 — position mode is the venue boolean (Task 698)
+
+**C-T698d — Binance-family `fetchPositionMode` is `dualSidePosition` as a nested
+map. Outcome: CONFIRM the provider boolean on the dedicated futures venues;
+generic `binance` authors the same mapping.**
+
+Spot-prefixed generic `binance` does not inventory the DAPI/FAPI dual reads.
+USD-M and COIN-M do. The authored mapping is family-wide so a later generic
+caller does not fail-open to `RawResponse` while the dedicated venues return
+the boolean map.
+[USD-M Get Current Position Mode](https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Get-Current-Position-Mode)
+[COIN-M Get Current Position Mode](https://developers.binance.com/docs/derivatives/coin-margined-futures/trade/rest-api/Get-Current-Position-Mode)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T698d","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Binance Get Current Position Mode dualSidePosition on USD-M and COIN-M"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 dedicated futures demo hosts dualSidePosition false"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":null}
+-->
 ## 2026-07-22 — market maker/taker + filter precision/limits (Task 164)
 **C-T164a — Public market maker/taker come from Binance's published fee schedule, not
 exchangeInfo and not private tradeFee (task 164). Outcome: CONFIRM venue; DIVERGE from

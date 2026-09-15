@@ -921,6 +921,18 @@
       "transactional": true
     }
   },
+  "fetchAccount": {
+    "unified": [
+      "privateGetV5UserQueryApi"
+    ],
+    "has": true,
+    "mapping_complete": true,
+    "verification": "unverified",
+    "transaction_classification": {
+      "on_chain": false,
+      "transactional": false
+    }
+  },
   "fetchAllGreeks": {
     "unified": [
       "publicGetV5MarketTickers"

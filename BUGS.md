@@ -760,7 +760,7 @@ incorrect one would have read index 0 rather than failing.
 
 ## 2026-08-29 — two read surfaces lost their contract home, and one dangerous test asserts a shape the client no longer returns
 
-**Status:** Tracked in task 698 (triage 2026-09-15); implementation pending.
+**Status:** Fixed in task 698 — `GET /v5/user/query-api` is `fetchAccount` (nested map of Get API Key Information) on the testnet main-account key; Binance-family `fetchPositionMode` returns `{"dualSidePosition" => boolean}` and the COIN-M promotion test matches that contract.
 
 Bookkeeping fallout from task 686, both real, neither a defect in the shipped behaviour:
 

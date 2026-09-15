@@ -4,6 +4,25 @@ Provider authority: [`priv/venues/bybit/authority/manifest.json`](../../priv/ven
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 
+## 2026-09-15 — API-key metadata lives on fetchAccount (Task 698)
+
+**C-T698a — `GET /v5/user/query-api` is current-key metadata, not a balance
+carrier and not `Account[]`. Outcome: DIVERGE — keep it off `fetchBalance`;
+wire it as `fetchAccount` nested map.**
+
+Bybit's Get API Key Information contract publishes the calling key's
+`kycLevel`, `kycRegion`, permission groups, `uta`, and `readOnly`. Those
+fields are the operator evidence for the testnet KYC wall; they are not
+wallet rows. C-T671a already removed the helper from six read methods;
+task 686 then dropped it from `fetchBalance`. The retained home is the
+existing unified `fetchAccount` surface: one nested provider map, no
+`Account[]` parser (OKX/Deribit `fetchAccounts` is a subaccount list).
+[Get API Key Information](https://bybit-exchange.github.io/docs/v5/user/apikey-info)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T698a","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Bybit V5 Get API Key Information (GET /v5/user/query-api)"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 api-testnet.bybit.com privateGetV5UserQueryApi retCode 0 with kycLevel/kycRegion/permissions present; invalid key 10003; stale timestamp 10002"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":null}
+-->
+
 ## 2026-08-28 — option position value (Task 666)
 
 **C-T666b — option `positionValue` satisfies the shared premium-value rule.

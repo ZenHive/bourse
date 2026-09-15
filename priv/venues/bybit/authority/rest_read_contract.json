@@ -31,6 +31,31 @@
   },
   "operations": [
     {
+      "method": "fetchAccount",
+      "branches": [
+        {
+          "provider_operation": "privateGetV5UserQueryApi",
+          "http_method": "GET",
+          "path": "v5/user/query-api",
+          "authenticated": true,
+          "market_kind": "spot",
+          "options": []
+        }
+      ],
+      "arguments": [],
+      "success": {
+        "representation": "nested_map",
+        "provider_meaning_keys": [
+          "kycLevel",
+          "kycRegion",
+          "permissions"
+        ]
+      },
+      "authority_source_ids": [
+        "v5-docs-source"
+      ]
+    },
+    {
       "method": "fetchAllGreeks",
       "branches": [
         {
@@ -2938,6 +2963,27 @@
         "message_contains": "Not supported symbols"
       },
       "observed_at": "2026-08-23"
+    },
+    {
+      "id": "bybit:fetchAccount:error:stale_timestamp",
+      "kind": "error",
+      "method": "fetchAccount",
+      "provider_operation": "privateGetV5UserQueryApi",
+      "authority_source_id": "v5-docs-source",
+      "arguments": [],
+      "options": [
+        {
+          "name": "timestamp_ms_override",
+          "strategy": "literal",
+          "value": 1
+        }
+      ],
+      "expected_error": {
+        "type": "invalid_nonce",
+        "code": 10002,
+        "message_contains": "server timestamp"
+      },
+      "observed_at": "2026-09-15"
     }
   ],
   "provider_operation_prefixes": [

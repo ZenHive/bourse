@@ -1488,11 +1488,9 @@
       ],
       "arguments": [],
       "success": {
-        "representation": "raw",
+        "representation": "nested_map",
         "provider_meaning_keys": [
-          "position",
-          "mode",
-          "positions"
+          "dualSidePosition"
         ]
       },
       "authority_source_ids": [

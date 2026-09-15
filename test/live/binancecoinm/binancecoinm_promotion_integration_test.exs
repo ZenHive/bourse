@@ -17,7 +17,6 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
   alias Bourse.Order
   alias Bourse.OrderBook
   alias Bourse.Position
-  alias Bourse.RawResponse
   alias Bourse.Test.LiveGateIsolation
   alias Bourse.Ticker
   alias Bourse.Trade
@@ -127,13 +126,10 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
     assert {:ok, my_trades} = Bourse.fetch_my_trades(exchange, symbol: @symbol, limit: @public_limit)
     assert Enum.all?(my_trades, &match?(%Trade{}, &1))
 
-    # binancecoinm authors fetchPositionMode with mapping_complete: false, so the
-    # unified read fails open to a labelled RawResponse rather than a parsed map.
-    assert {:ok, %RawResponse{} = position_mode} = Bourse.fetch_position_mode(exchange)
-    assert position_mode.venue == "binancecoinm"
-    assert position_mode.method == "fetchPositionMode"
-    assert position_mode.verification == :unverified
-    assert position_mode.payload["dualSidePosition"] == false
+    # Get Current Position Mode is the venue boolean dualSidePosition; One-way
+    # mode on this demo account is false (CLAUDE.md, verified live 2026-08-10
+    # and again 2026-09-15).
+    assert {:ok, %{"dualSidePosition" => false}} = Bourse.fetch_position_mode(exchange)
 
     assert {:ok, %{body: %{"positions" => account_positions} = account}} =
              Bourse.Binancecoinm.dapiPrivate_get_account(exchange)
@@ -315,6 +311,9 @@ defmodule Bourse.BinancecoinmPromotionIntegrationTest do
 
     assert {:error, %Error{type: :authentication_error, code: -2014}} =
              Bourse.fetch_balance(exchange)
+
+    assert {:error, %Error{type: :authentication_error, code: -2014}} =
+             Bourse.fetch_position_mode(exchange)
   end
 
   @tag :dangerous

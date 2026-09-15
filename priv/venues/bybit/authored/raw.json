@@ -681,6 +681,7 @@
       "editOrderWs": "__undefined",
       "editOrders": true,
       "fetchADLRank": "__undefined",
+      "fetchAccount": true,
       "fetchAccounts": "__undefined",
       "fetchAllGreeks": true,
       "fetchBalance": true,

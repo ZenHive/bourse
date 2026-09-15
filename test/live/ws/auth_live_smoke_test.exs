@@ -465,9 +465,8 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
   # REQUIRES its absence and answers -4061 with it. Both futures halves are one
   # account but their modes are set per wallet, so each probe reads its own
   # rather than assuming — a hardcoded side is a venue claim that goes stale
-  # silently the day the account is flipped. `fetchPositionMode` has no authored
-  # parse slice, so the read fails open into a `RawResponse`; the bare-map
-  # clause is what this reads once that slice exists.
+  # silently the day the account is flipped. Position-mode reads return the
+  # venue boolean `dualSidePosition` as a nested map.
   defp maybe_put_position_side(params, exchange) do
     case Bourse.fetch_position_mode(exchange) do
       {:ok, %Bourse.RawResponse{payload: payload}} -> put_position_side(params, payload, exchange)

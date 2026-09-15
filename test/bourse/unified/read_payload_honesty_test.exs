@@ -215,6 +215,11 @@ defmodule Bourse.Unified.ReadPayloadHonestyTest do
       refute "v5/user/query-api" in paths
       assert length(paths) == 2
     end
+
+    test "fetchAccount unified slot is query-api only" do
+      paths = Enum.map(Bourse.Bybit.__unified_endpoints__()[:fetch_account], & &1.path)
+      assert paths == ["v5/user/query-api"]
+    end
   end
 
   describe "COIN-M fetchADLRank keeps every position-carrying symbol" do

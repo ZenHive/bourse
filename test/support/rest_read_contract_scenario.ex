@@ -206,6 +206,7 @@ defmodule Bourse.Test.RestReadContractScenario do
     "startTime" => :startTime,
     "subaccount_id" => :subaccount_id,
     "symbol" => :symbol,
+    "timestamp_ms_override" => :timestamp_ms_override,
     "type" => :type,
     "user" => :user
   }

@@ -632,6 +632,7 @@
       "createTriggerOrder": true,
       "editOrder": true,
       "editOrders": true,
+      "fetchAccount": true,
       "fetchAllGreeks": true,
       "fetchBalance": true,
       "fetchBidsAsks": "emulated",

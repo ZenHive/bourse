@@ -54,6 +54,26 @@ defmodule Bourse.BybitAuthoredIntegrationTest do
     assert_ohlcv_rows(linear_rows)
   end
 
+  test "fetch_account is Get API Key Information on the testnet main-account key" do
+    credentials = require_credentials!(:bybit, url: "https://api-testnet.bybit.com")
+    exchange = build_exchange(:bybit, credentials: credentials, sandbox: true)
+
+    payload = fetch_account_payload!(exchange)
+    result = Map.fetch!(payload, "result")
+
+    kyc_level = result["kycLevel"]
+    kyc_region = result["kycRegion"]
+    permissions = result["permissions"]
+    read_only = result["readOnly"]
+    uta = result["uta"]
+
+    assert is_binary(kyc_level) and kyc_level != ""
+    assert is_binary(kyc_region) and kyc_region != ""
+    assert is_map(permissions) and map_size(permissions) > 0
+    assert read_only in [0, 1, "0", "1"]
+    assert uta in [0, 1, "0", "1"]
+  end
+
   test "public system status uses the venue status event schema" do
     exchange = build_exchange(:bybit, sandbox: true)
 
@@ -218,6 +238,9 @@ defmodule Bourse.BybitAuthoredIntegrationTest do
 
     assert {:error, %Error{type: type}} = Bourse.fetch_balance(exchange)
     assert type in [:authentication_error, :permission_denied]
+
+    assert {:error, %Error{type: :authentication_error, code: 10_003}} =
+             Bourse.fetch_account(exchange)
   end
 
   test "a deliberately invalid convert quote reaches Bybit without executing a conversion" do
@@ -483,6 +506,20 @@ defmodule Bourse.BybitAuthoredIntegrationTest do
     assert Enum.all?(rows, fn [timestamp, open, high, low, close, volume] ->
              is_integer(timestamp) and Enum.all?([open, high, low, close, volume], &is_number/1)
            end)
+  end
+
+  # Bind only envelope keys on failure so a mismatch cannot dump apiKey/secret.
+  defp fetch_account_payload!(exchange) do
+    case Bourse.fetch_account(exchange) do
+      {:ok, %{"retCode" => 0, "result" => result} = payload} when is_map(result) ->
+        payload
+
+      {:ok, other} when is_map(other) ->
+        flunk("fetch_account envelope keys were #{inspect(Map.keys(other))}")
+
+      {:error, %Error{} = error} ->
+        flunk("fetch_account failed: #{error.type} #{inspect(error.code)}")
+    end
   end
 
   defp observed_funding_interval!(rows) do

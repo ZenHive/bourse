@@ -3,6 +3,19 @@
 Provider authority: [`priv/venues/binanceusdm/authority/manifest.json`](../../priv/venues/binanceusdm/authority/manifest.json).
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
+
+## 2026-09-15 — position mode is the venue boolean (Task 698)
+
+**C-T698c — `GET /fapi/v1/positionSide/dual` is `dualSidePosition`, returned as
+a nested map. Outcome: CONFIRM the provider boolean; same contract as COIN-M.**
+
+USD-M Get Current Position Mode answers `{"dualSidePosition": true|false}`.
+`mapping_complete: true` with no parser returns that map losslessly.
+[Get Current Position Mode](https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Get-Current-Position-Mode)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T698c","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M Get Current Position Mode dualSidePosition"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 demo-fapi.binance.com fapiPrivateGetPositionSideDual dualSidePosition false; stale timestamp -1021"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":null}
+-->
 {"carve_id":"C-T633a","date":"2026-08-19","semantic_source":{"kind":"provider_owned","reference":"Binance official USD-M connector GET /fapi/v1/allOrders and /fapi/v1/userTrades startTime/endTime; GET /fapi/v1/openOrders has no time-bound parameters. Indexed by priv/venues/binanceusdm/authority/manifest.json artifacts developer-docs-full and usds-futures-postman"},"observed_evidence":{"kind":"provider_shaped","reference":"Request-shape goldens in test/live/time_window_integration_test.exs and test/bourse/binance_authored_spec_test.exs pin startTime/endTime on USD-M closed/canceled/order-trades reads and omit since/until/startTime/endTime on fetchOpenOrders"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Open-orders omit and history rename are pinned request-side; populated-row boundary evidence for those private histories remains on the time-window exclusion matrix"}
 ## 2026-08-12 — rate-unit confrontation (Task 594)
 **C-T594d — Binance USD-M's authored rate-like slots name their venue units (task 594).

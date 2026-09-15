@@ -2659,7 +2659,7 @@
       "fapiPrivateGetPositionSideDual"
     ],
     "has": true,
-    "mapping_complete": false,
+    "mapping_complete": true,
     "verification": "unverified",
     "transaction_classification": {
       "on_chain": false,

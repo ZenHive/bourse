@@ -9,7 +9,7 @@ defmodule Bourse.RestReadContractInventoryTest do
     "binance" => 26,
     "binancecoinm" => 32,
     "binanceusdm" => 61,
-    "bybit" => 76,
+    "bybit" => 78,
     "coinbaseexchange" => 3,
     "deribit" => 41,
     "derive" => 24,
@@ -27,7 +27,7 @@ defmodule Bourse.RestReadContractInventoryTest do
       end)
 
     assert actual_counts == @expected_case_counts
-    assert RestReadContracts.denominator() == 408
+    assert RestReadContracts.denominator() == 410
   end
 
   test "scalar time contracts assert current milliseconds without a module" do
@@ -63,6 +63,24 @@ defmodule Bourse.RestReadContractInventoryTest do
              RestReadContractScenario.assert_live_value!(
                contract_case,
                %{"BTC/USDT" => %{"min" => 0.00001, "max" => 9000.0}}
+             )
+  end
+
+  test "nested map contracts keep a false provider boolean as meaning" do
+    contract_case = %{
+      "id" => "binancecoinm:fetchPositionMode:0:dapiPrivateGetPositionSideDual",
+      "method" => "fetchPositionMode",
+      "venue" => "binancecoinm",
+      "success" => %{
+        "representation" => "nested_map",
+        "provider_meaning_keys" => ["dualSidePosition"]
+      }
+    }
+
+    assert :ok =
+             RestReadContractScenario.assert_live_value!(
+               contract_case,
+               %{"dualSidePosition" => false}
              )
   end
 end
