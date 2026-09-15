@@ -204,11 +204,16 @@ defmodule Bourse.Unified.OrderOptions do
     end
   end
 
+  # Both spellings, for the same reason the protective prices carry aliases: a
+  # caller that writes snake_case everywhere else would otherwise slip a
+  # trailing selector past the combination refusal and reach the venue with a
+  # trigger price the selected operation cannot express.
+  @trailing_selectors ~w(trailingAmount trailingPercent trailingPrice trailingStop tradingStopEndpoint
+    callbackRatio callbackSpread trailing_amount trailing_percent trailing_price trailing_stop
+    trading_stop_endpoint callback_ratio callback_spread)
+
   defp trailing_selector?(params) do
-    Enum.any?(
-      ~w(trailingAmount trailingPercent trailingPrice trailingStop tradingStopEndpoint callbackRatio callbackSpread),
-      &(Map.get(params, &1) not in [nil, false])
-    )
+    Enum.any?(@trailing_selectors, &(Map.get(params, &1) not in [nil, false]))
   end
 
   defp conditional_supported?("okx", :create_order, params, ["trigger_price"]),
