@@ -395,6 +395,9 @@ defmodule Bourse.WS.Channels do
           {:ok, channel()} | {:error, :missing_symbol}
   defp wrap_channel(%Exchange{} = exchange, method, channel, market_id) do
     case subscription_settings(exchange) do
+      # Hyperliquid's method_subscription frame is `%{"type" => channel, "coin" => id}`.
+      # A bare `"l2Book"` / `"trades"` string is the documented type, not a complete
+      # subscription object — wrap before MethodSubscription sends it.
       {:method_subscription, _} when channel in ["l2Book", "trades"] ->
         wrap_coin_channel(channel, market_id)
 
@@ -421,6 +424,8 @@ defmodule Bourse.WS.Channels do
     end
   end
 
+  @spec wrap_coin_channel(String.t(), String.t() | nil) ::
+          {:ok, channel()} | {:error, :missing_symbol}
   defp wrap_coin_channel(channel, market_id) when is_binary(market_id) and market_id != "" do
     {:ok, %{"type" => channel, "coin" => market_id}}
   end

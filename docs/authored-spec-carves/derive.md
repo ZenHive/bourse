@@ -99,3 +99,7 @@ production wait had been idle; the later probe received this actual trade):
 ```json
 {"method":"subscription","params":{"channel":"trades.ETH-PERP","data":[{"trade_id":"f69d1a1d-5c4f-4f7b-b66a-1234838364ee","instrument_name":"ETH-PERP","timestamp":1789470739946,"trade_price":"2485.2","trade_amount":"0.1","mark_price":"2485.268140596208468195982277393341064453125","index_price":"2485.170961678356","direction":"buy","quote_id":null,"rfq_id":null}]}}
 ```
+
+<!-- carve-evidence-status
+{"carve_id":"C-T702","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Derive ticker_slim, trades-by-instrument, subaccount orders and subaccount trades channel docs linked above"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 api-demo.lyra.finance ticker_slim.ETH-PERP.100 instrument_ticker frame; production trades.ETH-PERP trade_id f69d1a1d-5c4f-4f7b-b66a-1234838364ee; deprecated ticker and :ETH-PERP rejection frames in this carve"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Demo trades.ETH-PERP acknowledged without a data frame in repeated 60s waits; private {subaccount_id}.orders/.trades not proven in this public audit"}
+-->

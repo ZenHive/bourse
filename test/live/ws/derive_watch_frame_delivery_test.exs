@@ -1,4 +1,11 @@
 defmodule Bourse.WS.DeriveWatchFrameDeliveryTest do
+  @moduledoc """
+  Provider-live delivery for Derive's authored public watch channels (task 702).
+
+  `ticker_slim` is not shape-identical to the retired `ticker` channel: parse
+  is asserted against the nested `instrument_ticker` payload on a real frame.
+  """
+
   use Bourse.Test.Case, async: false
 
   alias Bourse.Exchange
@@ -7,6 +14,8 @@ defmodule Bourse.WS.DeriveWatchFrameDeliveryTest do
 
   @moduletag :network
   @moduletag :integration
+  @moduletag :exchange_derive
+  @moduletag timeout: 30_000
 
   test "the authored ticker delivers and parses the provider's slim payload" do
     exchange = Exchange.new!("derive", sandbox: true)

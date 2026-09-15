@@ -1,5 +1,9 @@
 # Hyperliquid carve register
 
+Provider authority: [`priv/venues/hyperliquid/authority/manifest.json`](../../priv/venues/hyperliquid/authority/manifest.json).
+Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
+parses the `rate-unit` markers and unit tables below against the public structs.
+
 ## 2026-09-15 — Public watch channel names (Task 702)
 
 Authority: [Hyperliquid WebSocket subscriptions](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/websocket/subscriptions).
@@ -52,9 +56,6 @@ the authored book/trade watch paths and a real candle payload. Provider channels
 such as `allMids` and `bbo` are documented but have no authored public watch template;
 they are recorded here without adding methods.
 
-Provider authority: [`priv/venues/hyperliquid/authority/manifest.json`](../../priv/venues/hyperliquid/authority/manifest.json).
-Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
-parses the `rate-unit` markers and unit tables below against the public structs.
 ## 2026-07-19 — fetchCurrencies public default (Task 378)
   [pinned authority manifest](../../priv/venues/hyperliquid/authority/manifest.json), artifact
 **C-T370 — Hyperliquid unified READ slices (markets / currencies / tickers / funding rates /
