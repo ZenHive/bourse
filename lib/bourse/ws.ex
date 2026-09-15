@@ -527,7 +527,15 @@ defmodule Bourse.WS do
 
   def health(%__MODULE__{} = ws) do
     with {:ok, connections} <- snapshot_owned_connections(ws) do
-      {:ok, health_observations(ws.url, connections)}
+      # The owner drops a client from `connections` when its transport process
+      # exits, so a dead socket leaves an empty map behind. Answering `{:ok, []}`
+      # there is a false green: `Enum.all?(observations, & &1.connection_state
+      # == :connected)` is `true` on an empty list, so a caller polling for
+      # liveness reads a dead connection as healthy.
+      case health_observations(ws.url, connections) do
+        [] -> {:error, :connection_closed}
+        observations -> {:ok, observations}
+      end
     end
   end
 
@@ -742,9 +750,21 @@ defmodule Bourse.WS do
     %{
       url: url,
       role: role,
-      connection_state: ZenClient.get_state(client),
-      heartbeat: ZenClient.get_heartbeat_health(client)
+      connection_state: connection_state(client),
+      heartbeat: heartbeat_health(client)
     }
+  end
+
+  defp connection_state(client) do
+    ZenClient.get_state(client)
+  catch
+    :exit, _reason -> :disconnected
+  end
+
+  defp heartbeat_health(client) do
+    ZenClient.get_heartbeat_health(client)
+  catch
+    :exit, _reason -> nil
   end
 
   defp stop_connection_owner(owner, timeout), do: ConnectionOwner.stop(owner, timeout)

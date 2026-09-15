@@ -13,6 +13,7 @@ defmodule Bourse.WS.HostConnectionLifecycleTest do
   @refute_timeout_ms 50
   @connection_timeout_ms 250
   @heartbeat_interval_ms 12_345
+  @poll_interval_ms 10
 
   defmodule Transport do
     @moduledoc false
@@ -403,6 +404,21 @@ defmodule Bourse.WS.HostConnectionLifecycleTest do
     assert {:ok, _} = WS.watch_ticker(ws, "ETH/USDT", ack_timeout_ms: @ack_timeout_ms)
   end
 
+  test "health reports a closed connection once the socket process is gone" do
+    {ws, public_pid} = owned_ws(timeout: @connection_timeout_ms)
+    on_exit(fn -> WS.close(ws) end)
+
+    ref = Process.monitor(public_pid)
+    Process.exit(public_pid, :kill)
+    assert_receive {:DOWN, ^ref, :process, ^public_pid, :killed}, @assert_timeout_ms
+
+    # The owner drops a client whose transport exited, so a dead socket leaves an
+    # empty snapshot behind. Answering `{:ok, []}` there is a false green:
+    # `Enum.all?(observations, & &1.connection_state == :connected)` holds on an
+    # empty list, so a caller polling for liveness reads a dead socket as healthy.
+    assert await_closed_health(ws) == {:error, :connection_closed}
+  end
+
   test "health after take reports a closed owner" do
     {ws, _public_pid} = owned_ws(timeout: @connection_timeout_ms)
     on_exit(fn -> WS.close(ws) end)
@@ -410,6 +426,23 @@ defmodule Bourse.WS.HostConnectionLifecycleTest do
     assert {:ok, clients} = ConnectionOwner.take(ws.connection_owner, 1_000)
     assert {:error, :connection_closed} = WS.health(ws)
     Enum.each(clients, &Client.close/1)
+  end
+
+  # The owner learns of the dead transport through an `:EXIT` signal that is not
+  # ordered against this process's own call, so poll for the drop instead of
+  # racing it.
+  defp await_closed_health(ws, attempts \\ 50) do
+    case {WS.health(ws), attempts} do
+      {{:error, :connection_closed} = closed, _attempts} ->
+        closed
+
+      {other, 0} ->
+        other
+
+      {_other, attempts} ->
+        Process.sleep(@poll_interval_ms)
+        await_closed_health(ws, attempts - 1)
+    end
   end
 
   defp owned_ws(connect_opts) do
