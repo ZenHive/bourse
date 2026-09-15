@@ -466,12 +466,16 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
   # account but their modes are set per wallet, so each probe reads its own
   # rather than assuming — a hardcoded side is a venue claim that goes stale
   # silently the day the account is flipped. Position-mode reads return the
-  # venue boolean `dualSidePosition` as a nested map.
+  # venue boolean `dualSidePosition` as a nested provider map, so a labelled
+  # `RawResponse` here is a regression of that contract and must fail loudly
+  # rather than be read through.
   defp maybe_put_position_side(params, exchange) do
     case Bourse.fetch_position_mode(exchange) do
-      {:ok, %Bourse.RawResponse{payload: payload}} -> put_position_side(params, payload, exchange)
-      {:ok, payload} when is_map(payload) -> put_position_side(params, payload, exchange)
-      other -> flunk("#{exchange.id} position-mode read failed: #{inspect(other)}")
+      {:ok, payload} when is_map(payload) and not is_struct(payload) ->
+        put_position_side(params, payload, exchange)
+
+      other ->
+        flunk("#{exchange.id} position-mode read failed: #{inspect(other)}")
     end
   end
 
