@@ -4,6 +4,27 @@ Provider authority: [`priv/venues/okx/authority/manifest.json`](../../priv/venue
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 
+## 2026-09-15 — transfer identifiers (Task 685)
+
+**C-T685a — bills and transfer-state use different identifier classes. Outcome:
+DIVERGE; retain each provider identifier under its own contract.**
+
+- `GET /api/v5/account/bills` and `/api/v5/account/bills-archive` identify rows
+  with `billId`; the observed demo transfer rows carried no `transId`.
+- `POST /api/v5/asset/transfer` issues `transId`, and
+  `GET /api/v5/asset/transfer-state` accepts that `transId`. Live calls with a
+  bills-archive `billId` returned `51000` (`Parameter transId error`) or `58129`.
+- `TransferEntry.id` from `fetch_transfers` therefore means the bills-archive
+  `billId` and is read directly from `billId`, never through a `transId` fallback.
+  `fetch_transfer/2` continues to require the `transId` returned by the creating
+  transfer request; the two surfaces are not composable by OKX's design.
+
+Provider contract: [OKX funding-account transfer API](https://www.okx.com/docs-v5/en/#funding-account-rest-api-funds-transfer).
+
+<!-- carve-evidence-status
+{"carve_id":"C-T685a","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"OKX v5 bills archive, funds transfer, and transfer-state contracts"},"observed_evidence":{"kind":"live","reference":"OKX international demo: populated type=1 bills exposed billId without transId; transfer-state rejected billId with 51000/58129"},"compatibility_reference":null,"resolved_tier":1,"known_gap_reason":null}
+-->
+
 ## 2026-08-28 — option position value (Task 666)
 
 **C-T666a — option `notional` is premium value. Outcome: DIVERGE from the

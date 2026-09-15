@@ -272,8 +272,8 @@ defmodule Bourse.Signing.HmacRecipe do
       get_in(recipe, ["canonical_string"]) ||
         get_in(recipe, ["private", "canonical_string"]) || %{}
 
-    block = cs[method] || cs["*"] || cs |> Map.values() |> List.first() || cs
-    if is_map(block), do: Map.get(block, "components")
+    block = canonical_block!(cs, method)
+    Map.get(block, "components")
   end
 
   defp canonical_components_for(recipe, method, path) do
@@ -281,8 +281,8 @@ defmodule Bourse.Signing.HmacRecipe do
       get_in(recipe, ["canonical_string"]) ||
         get_in(recipe, ["private", "canonical_string"]) || %{}
 
-    block = cs[method] || cs["*"] || cs |> Map.values() |> List.first() || cs
-    components = if is_map(block), do: Map.get(block, "components")
+    block = canonical_block!(cs, method)
+    components = Map.get(block, "components")
 
     if is_list(components), do: Enum.filter(components, &component_included?(&1, method, path))
   end
@@ -305,9 +305,15 @@ defmodule Bourse.Signing.HmacRecipe do
 
   defp path_predicate?(key, component, path, matcher) do
     case Map.get(component, key) do
-      nil -> true
-      needle when is_binary(needle) -> matcher.(path, needle)
-      _ -> true
+      nil ->
+        true
+
+      needle when is_binary(needle) ->
+        matcher.(path, needle)
+
+      invalid ->
+        raise ArgumentError,
+              "sign_recipe #{key} must be a string, got: #{inspect(invalid)}"
     end
   end
 
@@ -709,7 +715,7 @@ defmodule Bourse.Signing.HmacRecipe do
   defp normalize_branch_result(branch) when is_map(branch), do: branch
 
   defp execute_stages(recipe, base_context) do
-    block = get_canonical_block(recipe)
+    block = get_canonical_block(recipe, base_context.method)
     stages = get_in(block, ["stages"]) || []
 
     Enum.reduce(stages, %{}, fn stage, acc ->
@@ -719,12 +725,27 @@ defmodule Bourse.Signing.HmacRecipe do
     end)
   end
 
-  defp get_canonical_block(recipe) do
+  defp get_canonical_block(recipe, method) do
     cs =
       Map.get(recipe, "canonical_string") ||
         get_in(recipe, ["private", "canonical_string"]) || %{}
 
-    cs["POST"] || cs["GET"] || cs["*"] || cs |> Map.values() |> List.first() || cs
+    canonical_block!(cs, method)
+  end
+
+  defp canonical_block!(%{"components" => components} = block, _method) when is_list(components), do: block
+
+  defp canonical_block!(cs, method) when is_map(cs) do
+    case Map.get(cs, method) || Map.get(cs, "*") do
+      %{} = block ->
+        block
+
+      nil ->
+        raise ArgumentError, "sign_recipe canonical_string has no block for #{method} or *"
+
+      malformed ->
+        raise ArgumentError, "sign_recipe canonical_string block for #{method} is malformed: #{inspect(malformed)}"
+    end
   end
 
   defp execute_stage(%{"op" => "hash", "algo" => algo, "components" => comps, "output_encoding" => enc}, context) do

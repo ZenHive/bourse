@@ -415,6 +415,33 @@ defmodule Bourse.ExchangeTest do
       assert Enum.all?(exchange.status_map, fn {_k, v} -> is_atom(v) end)
     end
 
+    test "consumes Alpaca's bare-class status map without dropping entries" do
+      exchange = Exchange.new!("alpaca")
+
+      assert exchange.status_map == %{
+               "401" => :authentication_error,
+               "403" => :permission_denied,
+               "404" => :order_not_found,
+               "422" => :bad_request,
+               "429" => :rate_limit_exceeded
+             }
+
+      assert exchange.http_exceptions != %{}
+    end
+
+    test "every authored status map entry has a loader-supported shape" do
+      for venue <- Bourse.Registry.exchanges() do
+        status_map = Spec.load!(venue)["errors"]["status_map"] || %{}
+
+        assert Enum.all?(status_map, fn
+                 {_status, class} when is_binary(class) -> true
+                 {_status, [%{"class" => class} | _]} when is_binary(class) -> true
+                 _ -> false
+               end),
+               "#{venue} authored an errors.status_map entry the loader cannot consume"
+      end
+    end
+
     test "populates retry_classification (class → bucket) from v4 contract" do
       {:ok, exchange} = Exchange.new("bybit")
       assert is_map(exchange.retry_classification)

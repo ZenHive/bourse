@@ -38,7 +38,7 @@ defmodule Bourse.Unified.ReadPayloadHonestyTest do
     end
 
     test "USD-M assets payload fills Balance.timestamp from updateTime" do
-      exchange = Exchange.new!("binanceusdm")
+      exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret")
       update_time = 1_700_000_000_123
 
       body = %{
@@ -442,6 +442,23 @@ defmodule Bourse.Unified.ReadPayloadHonestyTest do
       assert index1["algoId"] == "12345"
       refute Map.has_key?(index1, "orderId")
       assert index0["orderId"] == "12345"
+    end
+
+    test "invalid endpoint_index fails instead of selecting index zero" do
+      exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret")
+      params = %{"id" => "12345", "symbol" => "BTC/USDT:USDT"}
+
+      for index <- [-1, 99, "0"] do
+        assert {:error, %Error{type: :invalid_parameters, message: message}} =
+                 Unified.request_param_shapes(exchange, :fetch_open_order, params, endpoint_index: index)
+
+        assert message =~ "endpoint_index"
+      end
+
+      assert {:ok, [shape]} =
+               Unified.request_param_shapes(exchange, :fetch_open_order, params, endpoint_index: 0)
+
+      assert shape["orderId"] == "12345"
     end
   end
 

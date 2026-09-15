@@ -1319,11 +1319,56 @@ defmodule Bourse.Signing.HmacRecipeTest do
     end
 
     test "raises when canonical components are missing" do
-      assert_raise ArgumentError, ~r/missing canonical_string components/, fn ->
+      assert_raise ArgumentError, ~r/canonical_string has no block/, fn ->
         HmacRecipe.sign(
           %{method: :get, path: "/private", body: nil, params: %{}},
           @credentials,
           %{sign_recipe: %{"canonical_string" => %{}, "crypto_op" => %{"algo" => "hmac_sha256"}}}
+        )
+      end
+    end
+
+    test "raises instead of signing with a different method's canonical block" do
+      recipe = digest_recipe("hmac_sha256", [])
+
+      assert_raise ArgumentError, ~r/no block for POST or \*/, fn ->
+        HmacRecipe.sign(
+          %{method: :post, path: "/private", body: nil, params: %{}},
+          @credentials,
+          %{sign_recipe: recipe}
+        )
+      end
+    end
+
+    test "wildcard canonical blocks are explicit and supported" do
+      recipe =
+        "hmac_sha256"
+        |> digest_recipe([])
+        |> Map.put("canonical_string", %{"*" => %{"components" => [%{"source" => "literal", "value" => "wild"}]}})
+
+      signed =
+        HmacRecipe.sign(
+          %{method: :post, path: "/private", body: nil, params: %{}},
+          @credentials,
+          %{sign_recipe: recipe}
+        )
+
+      assert {"X-SIGNATURE", "wild" |> Signing.hmac_sha256(@credentials.secret) |> Signing.encode_hex()} in signed.headers
+    end
+
+    test "raises on malformed path predicates instead of ignoring them" do
+      recipe =
+        "hmac_sha256"
+        |> digest_recipe([])
+        |> put_in(["canonical_string", "GET", "components"], [
+          %{"source" => "literal", "value" => "payload", "path_equals" => ["/private"]}
+        ])
+
+      assert_raise ArgumentError, ~r/path_equals must be a string/, fn ->
+        HmacRecipe.sign(
+          %{method: :get, path: "/private", body: nil, params: %{}},
+          @credentials,
+          %{sign_recipe: recipe}
         )
       end
     end

@@ -92,7 +92,7 @@ defmodule Bourse.AlpacaAuthoredIntegrationTest do
     # Live-observed: paper accounts carry no FX data entitlement — HTTP 403.
     # Message has drifted (`not authorized for FX data` → `forbidden: insufficient
     # grants` on 2026-07-29); pin the entitlement boundary, not a frozen string.
-    assert {:error, %Error{type: :authentication_error, http_status: 403} = fx_error} =
+    assert {:error, %Error{type: :permission_denied, http_status: 403} = fx_error} =
              call_endpoint(exchange, "v1beta1/forex/latest/rates", %{"currency_pairs" => @forex_pair})
 
     assert is_binary(fx_error.message) and fx_error.message != ""

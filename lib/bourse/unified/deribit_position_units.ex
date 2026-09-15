@@ -26,6 +26,8 @@ defmodule Bourse.Unified.DeribitPositionUnits do
   alias Bourse.Safe
   alias Bourse.Symbol
 
+  require Logger
+
   @type parse_result :: {:ok, term()} | {:error, term()}
 
   @doc "Populates position unit fields and reconciles Deribit future contracts and option premium notionals."
@@ -58,17 +60,19 @@ defmodule Bourse.Unified.DeribitPositionUnits do
   defp reconcile_deribit_position(position, _exchange), do: position
 
   defp put_notional_currencies(positions, exchange) do
-    positions
-    |> Enum.reduce_while({:ok, []}, fn position, {:ok, acc} ->
-      case put_notional_currency(position, exchange) do
-        {:ok, normalized} -> {:cont, {:ok, [normalized | acc]}}
-        {:error, _reason} = error -> {:halt, error}
-      end
-    end)
-    |> case do
-      {:ok, normalized} -> {:ok, Enum.reverse(normalized)}
-      {:error, _reason} = error -> error
-    end
+    normalized =
+      Enum.reduce(positions, [], fn position, acc ->
+        case put_notional_currency(position, exchange) do
+          {:ok, normalized} ->
+            [normalized | acc]
+
+          {:error, {:missing_position_notional_currency, context}} ->
+            Logger.warning("dropping position row: missing_position_notional_currency #{inspect(context)}")
+            acc
+        end
+      end)
+
+    {:ok, Enum.reverse(normalized)}
   end
 
   defp put_notional_currency(%Position{notional: nil} = position, _exchange), do: {:ok, position}
@@ -79,7 +83,9 @@ defmodule Bourse.Unified.DeribitPositionUnits do
         {:ok, %{position | notional_currency: currency}}
 
       _missing_currency ->
-        {:error, {:missing_position_notional_currency, %{exchange: exchange.id, symbol: position.symbol}}}
+        {:error,
+         {:missing_position_notional_currency,
+          %{exchange: exchange.id, symbol: position.symbol || get_in(position.info || %{}, ["symbol"])}}}
     end
   end
 

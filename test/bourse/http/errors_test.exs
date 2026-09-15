@@ -194,12 +194,19 @@ defmodule Bourse.HTTP.ErrorsTest do
                Errors.classify_response(:get, 429, %{}, body, exchange)
     end
 
-    test "401/403 are authentication_error", %{exchange: exchange} do
+    test "401 and unmapped 403 are authentication_error", %{exchange: exchange} do
       assert {:error, %Error{type: :authentication_error, http_status: 401}} =
                Errors.classify_response(:get, 401, %{}, %{"message" => "nope"}, exchange)
 
       assert {:error, %Error{type: :authentication_error, http_status: 403}} =
                Errors.classify_response(:get, 403, %{}, "forbidden", exchange)
+    end
+
+    test "an authored 403 mapping outranks the generic authentication fallback", %{exchange: exchange} do
+      exchange = %{exchange | status_map: %{"403" => :permission_denied}}
+
+      assert {:error, %Error{type: :permission_denied, http_status: 403}} =
+               Errors.classify_response(:get, 403, %{}, %{"message" => "forbidden"}, exchange)
     end
 
     test "401/403 keep the venue error code from the body", %{exchange: exchange} do

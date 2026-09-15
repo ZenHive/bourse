@@ -2386,19 +2386,23 @@ defmodule Bourse.Unified do
 
   # Resolves single-endpoint vs concurrent fan-out for unified dispatch.
   defp resolve_dispatch_plan(%Exchange{} = exchange, module, method_atom, capability_name, params, opts) do
-    case module.__unified_endpoint__(method_atom) do
-      [] ->
-        {:error,
-         Error.not_supported(
-           exchange: exchange.id,
-           message: unsupported_capability_message(exchange, method_atom, capability_name)
-         )}
+    configs = module.__unified_endpoint__(method_atom)
 
-      [config] ->
-        finalize_single_config_plan(exchange, method_atom, config, params, opts)
+    with :ok <- validate_endpoint_index(configs, exchange, opts) do
+      case configs do
+        [] ->
+          {:error,
+           Error.not_supported(
+             exchange: exchange.id,
+             message: unsupported_capability_message(exchange, method_atom, capability_name)
+           )}
 
-      configs ->
-        resolve_multi_config_plan(exchange, method_atom, capability_name, configs, params, opts)
+        [config] ->
+          finalize_single_config_plan(exchange, method_atom, config, params, opts)
+
+        configs ->
+          resolve_multi_config_plan(exchange, method_atom, capability_name, configs, params, opts)
+      end
     end
   end
 
@@ -2434,6 +2438,23 @@ defmodule Bourse.Unified do
     case plan do
       {:ok, {:single, config}} -> finalize_single_config_plan(exchange, method_atom, config, params, opts)
       other -> other
+    end
+  end
+
+  defp validate_endpoint_index(configs, exchange, opts) do
+    case Keyword.fetch(opts, :endpoint_index) do
+      result when result in [:error, {:ok, nil}] ->
+        :ok
+
+      {:ok, index} when is_integer(index) and index >= 0 and index < length(configs) ->
+        :ok
+
+      {:ok, index} ->
+        {:error,
+         Error.invalid_parameters(
+           exchange: exchange.id,
+           message: "endpoint_index must select an available endpoint (0..#{length(configs) - 1}), got: #{inspect(index)}"
+         )}
     end
   end
 
@@ -2927,11 +2948,18 @@ defmodule Bourse.Unified do
   # `{:ok, config}` or `{:error, Error.t()}` — first-class multi-endpoint
   # selection never silently uses bare `hd(configs)`.
   defp select_endpoint(configs, exchange, method_atom, opts, params) do
-    case Keyword.get(opts, :endpoint_index) do
-      idx when is_integer(idx) ->
-        {:ok, Enum.at(configs, idx) || hd(configs)}
+    case Keyword.fetch(opts, :endpoint_index) do
+      {:ok, idx} when is_integer(idx) and idx >= 0 and idx < length(configs) ->
+        {:ok, Enum.fetch!(configs, idx)}
 
-      _ ->
+      {:ok, idx} ->
+        {:error,
+         Error.invalid_parameters(
+           exchange: exchange.id,
+           message: "endpoint_index must select an available endpoint (0..#{length(configs) - 1}), got: #{inspect(idx)}"
+         )}
+
+      result when result in [:error, {:ok, nil}] ->
         # Explicit stages (authored/configured) express authored venue intent, so
         # they resolve over the FULL config list — a credless pre-filter would make
         # an authored rule targeting an authenticated endpoint silently miss and

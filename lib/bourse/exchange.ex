@@ -1064,7 +1064,7 @@ defmodule Bourse.Exchange do
           error_body_checks: error_body_checks,
           error_handler_checks: error_handler_checks,
           error_code_fields: build_error_code_fields(spec),
-          http_exceptions: build_http_exceptions(describe),
+          http_exceptions: Map.merge(build_http_exceptions(describe), build_status_map(spec, error_class_ancestors)),
           status_map: build_status_map(spec, error_class_ancestors),
           retry_classification: build_retry_classification(spec),
           error_class_ancestors: error_class_ancestors,
@@ -2003,6 +2003,10 @@ defmodule Bourse.Exchange do
   end
 
   defp status_map_entry({status, [%{"class" => class} | _]}, ancestors) do
+    [{to_string(status), Bourse.Error.from_spec_class(class, ancestors)}]
+  end
+
+  defp status_map_entry({status, class}, ancestors) when is_binary(class) do
     [{to_string(status), Bourse.Error.from_spec_class(class, ancestors)}]
   end
 

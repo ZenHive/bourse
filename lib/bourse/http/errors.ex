@@ -323,7 +323,7 @@ defmodule Bourse.HTTP.Errors do
   # code still travels in the body (OKX answers HTTP 401 with code "50120"). Keep
   # it on the struct — dropping it left callers with code: nil and forced them to
   # dig through `raw`, the same defect task 255 fixed for other non-2xx statuses.
-  defp normalize_error(status, body, exchange) when status in [401, 403] do
+  defp normalize_error(401, body, exchange) do
     [
       message: extract_message(body),
       code: extract_error_code(body, exchange.error_code_fields),
@@ -331,7 +331,18 @@ defmodule Bourse.HTTP.Errors do
       raw: body
     ]
     |> Error.authentication_error()
-    |> with_http_status(status)
+    |> with_http_status(401)
+  end
+
+  defp normalize_error(403, body, exchange) when not is_map_key(exchange.status_map, "403") do
+    [
+      message: extract_message(body),
+      code: extract_error_code(body, exchange.error_code_fields),
+      exchange: exchange.id,
+      raw: body
+    ]
+    |> Error.authentication_error()
+    |> with_http_status(403)
   end
 
   defp normalize_error(status, body, exchange) when is_map(body) do

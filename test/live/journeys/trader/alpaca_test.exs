@@ -121,10 +121,10 @@ defmodule Bourse.Journeys.Trader.AlpacaTest do
       # code 40310000, "cost basis must be >= minimal amount of order 10".
       # Alpaca's own docs name 40310000 as an authorization/business refusal
       # (https://docs.alpaca.markets/us/reference/postorder). The unified type
-      # comes from `Bourse.HTTP.Errors`, which short-circuits every 401/403 to
-      # authentication_error before any authored mapping is consulted — the
-      # venue's own code and message are what pin the refusal here.
-      assert error.type == :authentication_error
+      # resolves through Alpaca's more specific provider-code map. The authored
+      # HTTP 403 PermissionDenied mapping remains the fallback when no known
+      # provider code is present; only 401 is hard-short-circuited as auth.
+      assert error.type == :insufficient_funds
       assert error.code == 40_310_000
       assert error.http_status == 403
       assert error.message =~ "cost basis must be >= minimal amount of order 10"

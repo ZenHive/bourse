@@ -625,6 +625,8 @@ defmodule Bourse.OkxAuthoredIntegrationTest do
     assert is_number(transfer.amount)
     assert transfer.amount == Bourse.Safe.number(transfer.info["balChg"])
     assert transfer.currency == transfer.info["ccy"]
+    assert transfer.id == transfer.info["billId"]
+    refute Map.has_key?(transfer.info, "transId")
 
     # fetch_transfers reads account bills. Internal-transfer rows carry OKX account
     # codes 6 (funding) / 18 (trading) and map via the authored enum (C-T365b).

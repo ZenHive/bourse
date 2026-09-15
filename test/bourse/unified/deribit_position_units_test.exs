@@ -1,6 +1,8 @@
 defmodule Bourse.Unified.DeribitPositionUnitsTest do
   use ExUnit.Case, async: true
 
+  import ExUnit.CaptureLog
+
   alias Bourse.Exchange
   alias Bourse.Market
   alias Bourse.Position
@@ -88,7 +90,7 @@ defmodule Bourse.Unified.DeribitPositionUnitsTest do
     assert DeribitPositionUnits.reconcile(error, exchange) == error
   end
 
-  test "fails loudly when a populated notional has no resolvable currency" do
+  test "a row with unresolvable notional currency does not discard valid rows" do
     exchange = Exchange.new!("binance")
 
     positions = [
@@ -99,8 +101,31 @@ defmodule Bourse.Unified.DeribitPositionUnitsTest do
     assert {:error, {:missing_position_notional_currency, %{exchange: "binance", symbol: nil}}} =
              DeribitPositionUnits.reconcile({:ok, %Position{notional: 50.0}}, exchange)
 
-    assert {:error, {:missing_position_notional_currency, %{exchange: "binance", symbol: nil}}} =
-             DeribitPositionUnits.reconcile({:ok, positions}, exchange)
+    log =
+      capture_log(fn ->
+        assert {:ok, [%Position{symbol: "BTC/USDT:USDT", notional_currency: "USDT"}]} =
+                 DeribitPositionUnits.reconcile({:ok, positions}, exchange)
+      end)
+
+    assert log =~ "missing_position_notional_currency"
+  end
+
+  test "drops an unparseable Bybit dated-future row while retaining resolvable history" do
+    exchange = Exchange.new!("bybit")
+
+    positions = [
+      %Position{notional: 25.0, symbol: nil, info: %{"symbol" => "DOGEUSDT-28AUG26"}},
+      %Position{notional: 50.0, symbol: "BTC/USDT:USDT"}
+    ]
+
+    log =
+      capture_log(fn ->
+        assert {:ok, [%Position{symbol: "BTC/USDT:USDT", notional_currency: "USDT"}]} =
+                 DeribitPositionUnits.reconcile({:ok, positions}, exchange)
+      end)
+
+    assert log =~ "missing_position_notional_currency"
+    assert log =~ "DOGEUSDT-28AUG26"
   end
 
   test "leaves deribit future contracts unchanged when the settlement quantity is missing" do
