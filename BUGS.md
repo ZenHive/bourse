@@ -120,7 +120,15 @@ roadmap.
 **Exchange:** lighter (testnet), Mechanismus venue-generisch ·
 **Severity:** hoch (falsches Grün in genau der Lane, die beweisen soll, dass Streams liefern)
 
-**Status:** 🆕 reported 2026-09-15 — live und mechanisch verifiziert, noch nicht geroutet.
+**Status:** ✅ fixed 2026-09-15 in `26bb651` (Task 701, inline) — die Lane zählt einen Frame
+nur noch als Coverage, wenn er den abonnierten Channel trägt; ein Frame, der das nicht tut,
+beendet die Probe nicht, sodass eine dahinter eintreffende Ablehnung weiterhin das Verdikt wird.
+Live-Beleg nach dem Fix (voller Lauf über elf Venues): lighter meldet
+`failed` / `first_frame: "rejected"` mit der venue-eigenen `%{"error" => %{"code" => 30005,
+"message" => "Invalid Channel:  (marketId)"}}` in der Row-Reason, und alle acht zuvor grünen
+Venues (alpaca, binance, binanceusdm, bybit, coinbaseexchange, deribit, hyperliquid, okx)
+bleiben grün. Zwei Regressionstests in `test/bourse/ws_first_frame_test.exs` sind ohne den Fix
+rot verifiziert. Lighters abgelehnter Channel selbst bleibt offen — das ist Task 699.
 
 Gefunden beim Landed-Base-Gate nach Task 697. Die Lane meldet für lighter
 

@@ -10230,7 +10230,7 @@ acceptance_criteria = ["The asset/dust wire encoding is selected only from obser
 out_of_scope = ["Changing the JSON-array dialect already verified for common Binance GET endpoints", "Batch-order request construction owned by task 320"]
 touches = ["priv/venues/binance/authored/spec.json", "lib/bourse/signing/hmac_recipe.ex", "test/bourse/signing/hmac_recipe_test.exs", "test/live/binance/binance_query_array_integration_test.exs", "docs/authored-spec-carves/binance.md", "docs/prod-verification-ledger.md"]
 assignee = "codex"
-model = "gpt-5.6-sol"
+model = "gpt-6-astra"
 blocked_reason = "Never dispatched (0 attempts, no harness branch, no commits) — the reason field previously carried a foreign run's note about Credo depth findings in lib/ccxt/circuit_breaker.ex; that WIP is gone and credo --strict on that file is clean, so it was never this task's blocker. The real blocker is the one in the body: the sapi dust wire contract is not safely observable. Confirmed live 2026-07-25 while working task 450 — the production MAIN key is spot-only (accountType SPOT, permissions TRD_GRP_002/TRD_GRP_077) and returns -2015 on every /fapi and /dapi path, SUB1 is IP-whitelisted (-2015 even on spot), and spot testnet does not expose the sapi dust endpoint at all. The MAIN key may technically reach sapi on spot, and the wallet does hold dust, but a valid dust conversion is an IRREVERSIBLE mutation on a live-money account: unblock only with explicit operator approval for a controlled minimal conversion, an official SDK capture, or observed signed production traffic."
 body = """
 The prior task asserted repeated bare asset keys, but current Binance documentation describes a
@@ -23144,13 +23144,12 @@ id = "683"
 phase = 16
 bundle = "foundation"
 milestone = "v1_2"
-status = "blocked"
+status = "superseded"
 title = "Upgrade the transitive Gun/Cowlib HTTP stack past published 2026 advisories"
 scores = { d = 3, b = 7, u = 8 }
 acceptance_criteria = ["mix deps.audit reports no advisory for gun or cowlib", "The locked HTTP stack remains compatible with zen_websocket and the provider-live WebSocket tests", "mix check.dispatch reaches the provider-live credential/state gate without dependency-audit failure"]
 out_of_scope = ["unrelated dependency upgrades"]
 touches = ["mix.exs", "mix.lock"]
-blocked_reason = "Invalid premise - adjudicated, do not re-investigate. AC 'mix deps.audit reports no advisory for gun or cowlib' is unachievable: cowlib 2.19.0 IS the latest release (no fix version exists); the vulnerable functions cow_link:link/1 and cow_http_struct_hd:escape_string/2 have 0 references in deps/gun/src/; gun's cookie path is opt-in and zen_websocket never enables it. The 'gun 2.5.0' line is a mirego mirror bug attaching cowboy's <2.16.0 range to gun (gun's real vulnerable range is <2.4.0; 2.5.0 is patched), filed upstream as mirego/elixir-security-advisories#8. The noise comes from Hex core during cold 'mix deps.get', not mix_audit, so no dependency change silences it. Suppress per-id only; never blanket-ignore (bandit EEF-CVE-2026-74836 is real with a genuine fix). Filed by the post-merge audit agent 2026-08-28 without the adjudication in context."
 body = """
 A cold `mix deps.get` on 2026-08-28 reports published request/response splitting and header-encoding advisories against locked gun 2.5.0 and cowlib 2.19.0. Resolve through the owning direct dependency or compatible lock updates, preserving the live-provider test contract.
 """
@@ -23964,7 +23963,7 @@ scored_at = "2026-09-15"
 id = "701"
 phase = 16
 bundle = "live_triage"
-status = "in_progress"
+status = "done"
 title = "The WS first-frame lane passes on any non-heartbeat frame, so a connection greeting certifies a venue whose subscription the venue rejected"
 scores = { d = 5, b = 8, u = 8 }
 markers = ["bug"]
@@ -23995,6 +23994,11 @@ Decisions already made for you (veto them in the delivery if the live evidence c
 - `SubscribeAck.classify/2` stays the ack classifier; do not overload it into a channel matcher. The channel binding belongs in the lane.
 - Do not silence the lighter row by adding it to `@exclusions`. lighter's rejection is a real finding tracked as task 699; this task makes the lane report it, it does not route around it.
 """
+implemented = "Fixed inline by the orchestrator, not dispatched. The lane now counts a frame as coverage only when it carries the subscribed channel, and an unattributable frame no longer ends the probe, so a rejection arriving behind a connection greeting still becomes the verdict. Proven by a full live run of mix bourse.verify_ws_first_frame: lighter flips to failed with the venue's own 30005 frame in the row reason, and all eight previously-passing venues stay green. Two regression tests verified red without the fix."
+verified = true
+verified_by = "operator live lane run 2026-09-15"
 created_at = "2026-09-15"
 started_at = "2026-09-15"
 scored_at = "2026-09-15"
+done_at = "2026-09-15"
+shipped_in = "26bb651"

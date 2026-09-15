@@ -14221,7 +14221,7 @@
         271
       ],
       "assignee": "codex",
-      "model": "gpt-5.6-sol",
+      "model": "gpt-6-astra",
       "acceptance_criteria": [
         "The asset/dust wire encoding is selected only from observed signed production traffic, an official SDK capture, or a current authoritative Binance contract; the task does not assume repeated keys",
         "The selected endpoint-specific dialect is expressed through the authored signing contract rather than a hard-coded path branch",
@@ -31128,7 +31128,7 @@
       "phase": 16,
       "bundle": "foundation",
       "milestone": "v1_2",
-      "status": "blocked",
+      "status": "superseded",
       "title": "Upgrade the transitive Gun/Cowlib HTTP stack past published 2026 advisories",
       "scores": {
         "d": 3,
@@ -31155,7 +31155,6 @@
       "body": "A cold `mix deps.get` on 2026-08-28 reports published request/response splitting and header-encoding advisories against locked gun 2.5.0 and cowlib 2.19.0. Resolve through the owning direct dependency or compatible lock updates, preserving the live-provider test contract.\n",
       "created_at": "2026-08-28",
       "scored_at": "2026-08-28",
-      "blocked_reason": "Invalid premise - adjudicated, do not re-investigate. AC 'mix deps.audit reports no advisory for gun or cowlib' is unachievable: cowlib 2.19.0 IS the latest release (no fix version exists); the vulnerable functions cow_link:link/1 and cow_http_struct_hd:escape_string/2 have 0 references in deps/gun/src/; gun's cookie path is opt-in and zen_websocket never enables it. The 'gun 2.5.0' line is a mirego mirror bug attaching cowboy's <2.16.0 range to gun (gun's real vulnerable range is <2.4.0; 2.5.0 is patched), filed upstream as mirego/elixir-security-advisories#8. The noise comes from Hex core during cold 'mix deps.get', not mix_audit, so no dependency change silences it. Suppress per-id only; never blanket-ignore (bandit EEF-CVE-2026-74836 is real with a genuine fix). Filed by the post-merge audit agent 2026-08-28 without the adjudication in context.",
       "cross_repo": []
     },
     {
@@ -32078,7 +32077,7 @@
       "id": "701",
       "phase": 16,
       "bundle": "live_triage",
-      "status": "in_progress",
+      "status": "done",
       "title": "The WS first-frame lane passes on any non-heartbeat frame, so a connection greeting certifies a venue whose subscription the venue rejected",
       "scores": {
         "d": 5,
@@ -32113,10 +32112,15 @@
         "lib/bourse/ws/subscribe_ack.ex",
         "test/bourse/ws_first_frame_test.exs"
       ],
+      "shipped_in": "26bb651",
       "body": "`mix bourse.verify_ws_first_frame` reports lighter `passed` with `first_frame: \"data\"` while the same channel is rejected live. Measured 2026-09-15 (BUGS.md entry of that date carries the full evidence):\n\n    {:ok, ex} = Bourse.Exchange.new(\"lighter\", sandbox: true)\n    {:ok, ws} = Bourse.WS.connect(ex, :public)\n    Bourse.WS.subscribe(ws, [\"market_stats/0\"], ack_timeout_ms: 6_000)\n    # => {:error, {:subscription_rejected, %{\"error\" => %{\"code\" => 30005, \"message\" => \"Invalid Channel:  (marketId)\"}}}}\n\nTwo holes, both verified mechanically, both in `Bourse.LiveLane.FirstFrame`:\n\n1. `default_subscribe/3` calls `ws_client.subscribe(ws, channels, ack_timeout_ms: 0)` (first_frame.ex:348). With a zero budget the lane never observes the rejection that `WS.subscribe/3` would return.\n2. The lane then accepts the first non-heartbeat frame as coverage without binding it to the subscribed channel. lighter sends an unsolicited `%{\"type\" => \"connected\"}` greeting; `SubscribeAck.classify(\"lighter\", %{\"type\" => \"connected\"})` answers `:not_ack`, `FirstFrame.frame_kind(:not_ack, frame)` answers `\"data\"`, and `classify_received/4` maps every `:not_ack` onto `{:data, ...}` → `success_row`. The greeting arrives before the rejection frame, so the probe returns green before the rejection is ever seen.\n\nThis is the venue-generic version of the moduledoc's own rule — \"Subscribe acknowledgements are not coverage\" — and a greeting is weaker than an ack. Any venue that emits an unsolicited frame outside the ping/pong/heartbeat and known-ack shapes passes this lane without a single real data frame, which makes the lane unable to detect exactly the dead-stream class it exists for.\n\nDecisions already made for you (veto them in the delivery if the live evidence contradicts):\n\n- Both holes are in scope; fixing only the `ack_timeout_ms: 0` budget leaves hole 2 open, because a venue can emit a greeting before any ack at all.\n- The pass condition becomes: a frame arrived that is attributable to the subscribed channel. Where a venue's data frames carry no channel identifier at all, the probe must say so explicitly in the row rather than fall back to \"any frame counts\" — an unattributable frame is not coverage.\n- `SubscribeAck.classify/2` stays the ack classifier; do not overload it into a channel matcher. The channel binding belongs in the lane.\n- Do not silence the lighter row by adding it to `@exclusions`. lighter's rejection is a real finding tracked as task 699; this task makes the lane report it, it does not route around it.\n",
       "created_at": "2026-09-15",
       "started_at": "2026-09-15",
+      "done_at": "2026-09-15",
       "scored_at": "2026-09-15",
+      "implemented": "Fixed inline by the orchestrator, not dispatched. The lane now counts a frame as coverage only when it carries the subscribed channel, and an unattributable frame no longer ends the probe, so a rejection arriving behind a connection greeting still becomes the verdict. Proven by a full live run of mix bourse.verify_ws_first_frame: lighter flips to failed with the venue's own 30005 frame in the row reason, and all eight previously-passing venues stay green. Two regression tests verified red without the fix.",
+      "verified": true,
+      "verified_by": "operator live lane run 2026-09-15",
       "cross_repo": []
     }
   ]
