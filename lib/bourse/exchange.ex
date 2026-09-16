@@ -1174,6 +1174,27 @@ defmodule Bourse.Exchange do
       Bourse.Exchange.has?(exchange, "fetchFundingRateHistory")
       #=> false
 
+  ## This answers callability, never cost
+
+  A `true` here says the call will work, not that the venue serves it natively.
+  An emulated method is emulated *per call*: `fetchFundingRate` on hyperliquid,
+  bybit and lighter fetches the venue's whole bulk payload and selects one
+  symbol from it, so a caller looping over 300 symbols issues 300 bulk reads
+  rather than one. Nothing fails — the reads simply multiply, which is why this
+  is worth knowing before it opens a circuit breaker.
+
+  Use `venue_support/2` to decide batching. It returns the provider declaration
+  — `true`, `false`, or `"emulated"` — so the two answers together tell you
+  whether the singular or the plural form is the native one:
+
+      # prefer the bulk read when the singular is emulated and the plural is not
+      Bourse.Exchange.venue_support(exchange, "fetchFundingRate") != true and
+        Bourse.Exchange.venue_support(exchange, "fetchFundingRates") == true
+
+  The direction is per venue and not guessable: hyperliquid, bybit and lighter
+  emulate the singular, deribit emulates the plural, and the binance family and
+  okx serve both natively.
+
   """
   @spec has?(t(), String.t()) :: boolean()
   def has?(%__MODULE__{has: has}, capability) when is_binary(capability) do

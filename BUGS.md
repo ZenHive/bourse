@@ -114,6 +114,53 @@ roadmap.
 
 ---
 
+## 2026-09-16 — `has?/2` reads as a cost signal and is not one: a consumer's 300-asset hedging pass silently became 300 bulk reads and opened a circuit breaker
+
+**Status:** ✅ addressed as documentation (2026-09-16) — `has?/2`'s `@doc` and the 0.9.0 CHANGELOG now name the distinction. The behaviour is unchanged and correct; whether the API should offer more than a second function is left open below.
+
+**Reported by:** trading_dashboard, on upgrading to 0.9.0.
+
+**What happened.** `TradingDashboard.FundingReader` chose between a per-symbol read
+and a bulk read with `Bourse.Exchange.has?(exchange, "fetchFundingRate")`. `has?/2`
+answers the derived *callable* surface, which is `true` for a method Bourse emulates
+— and an emulated method is emulated *per call*: `fetchFundingRate` on hyperliquid,
+bybit and lighter fetches the venue's whole bulk payload and selects one symbol from
+it. So a 300-asset hedging pass that had been one bulk read became 300 bulk reads,
+and hyperliquid's circuit breaker is what finally reported it.
+
+**Why it is a false green.** Nothing fails. No test reddens, no error is returned,
+no type changes — the read count multiplies and the only symptom is latency and a
+tripped breaker under load. That is the same failure class as a wrong venue
+constant: internally consistent, fully exercised, and wrong.
+
+**The discriminator, verified live across the runtime venues:**
+
+```
+venue         fetchFundingRate              fetchFundingRates
+hyperliquid   has?=true venue_support="emulated"   has?=true venue_support=true
+bybit         has?=true venue_support="emulated"   has?=true venue_support=true
+lighter       has?=true venue_support="emulated"   has?=true venue_support=true
+deribit       has?=true venue_support=true         has?=true venue_support="emulated"
+binance       has?=true venue_support=true         has?=true venue_support=true
+binanceusdm   has?=true venue_support=true         has?=true venue_support=true
+okx           has?=true venue_support=true         has?=true venue_support=true
+alpaca        has?=false venue_support=false       has?=false venue_support=false
+```
+
+`venue_support/2` returns the provider declaration (`true` / `false` / `"emulated"`),
+so the batching test is `venue_support(ex, "fetchFundingRate") != true and
+venue_support(ex, "fetchFundingRates") == true`. Note the direction is per venue and
+not guessable: hyperliquid/bybit/lighter emulate the singular, **deribit emulates the
+plural**.
+
+**Open question, not routed.** Documentation fixes the next reader, not the next
+caller — a consumer who never opens the doc writes the same loop. The candidates are
+a cost-aware helper (`native?/2`, or a `batching_strategy/2` returning
+`:singular | :plural`), or emulation-level memoization of the bulk payload across a
+symbol loop so the pathological shape stops being pathological. Both are API surface
+and neither is obviously right; the operator routes this.
+
+
 ## 2026-09-16 — okx demo answers the missing-algo-order cancel with transient infrastructure codes instead of the 51400 business error, reddening `mix ci`
 
 **Status:** 🆕 reported — venue-side, unrouted. Not a bourse defect; awaiting operator routing (ledger it, or wait the venue out).

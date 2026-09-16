@@ -11,25 +11,39 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+- `Bourse.Exchange.has?/2` answers the derived **callable** surface, so it is
+  `true` for a method Bourse emulates. That is not new in 0.9.0, but it is worth
+  stating because it reads as a cost signal and is not one: an emulated method is
+  emulated per call, so `fetchFundingRate` on hyperliquid, bybit and lighter
+  fetches the venue's whole bulk payload and selects one symbol from it. A caller
+  that picks its strategy with `has?/2` and then loops over 300 symbols issues 300
+  bulk reads instead of one — nothing fails, the reads multiply, and the venue's
+  circuit breaker is what finally reports it. Use `venue_support/2`, which returns
+  the provider declaration (`true`, `false` or `"emulated"`), to decide batching.
+  The direction is per venue: hyperliquid, bybit and lighter emulate the singular,
+  deribit emulates the plural, the binance family and okx serve both natively.
+
 - The DEX signing primitives are no longer declared here. 0.8.0 depended on
   `ex_keccak ~> 0.7.8` and `ex_secp256k1 ~> 0.8.0` directly; both are dropped in
   favour of `cartouche` and `hieroglyph`, which own keccak, secp256k1
   sign/recover and EIP-712 encoding. secp256k1 is served by `curvy` (pure
   Elixir) from cartouche 0.9.0 onward.
 
-  Keccak's implementation now depends on how `{:cartouche, "~> 0.9.0"}`
-  resolves, and both resolutions are supported: cartouche 0.9.0 uses the
-  pure-Elixir `ex_sha3`, while 0.9.1 uses the `ex_keccak` Rust NIF via
-  `rustler_precompiled`, which downloads a prebuilt artifact matching the target
-  triple and NIF version and builds locally only when none matches or
-  `RUSTLER_PRECOMPILED_FORCE_BUILD` is set.
+  Keccak's implementation now follows how `{:cartouche, "~> 0.9.0"}` and
+  `{:hieroglyph, "~> 1.8.0"}` resolve, and every resolution is supported. Both
+  deps moved on the same axis: cartouche 0.9.0 and hieroglyph 1.8.0 use the
+  pure-Elixir `ex_sha3`, while cartouche 0.9.1 and hieroglyph 1.8.1 use the
+  `ex_keccak` Rust NIF via `rustler_precompiled`, which downloads a prebuilt
+  artifact matching the target triple and NIF version and builds locally only
+  when none matches or `RUSTLER_PRECOMPILED_FORCE_BUILD` is set. Because
+  *either* dep pulls `ex_keccak` on its own, the NIF leaves a tree only when
+  both resolve low.
 
   This does not add a Rust toolchain requirement — 0.8.0's direct `ex_keccak`
-  dependency already carried one. A consumer resolving cartouche 0.9.1 is in the
-  same position as before; one whose lock holds cartouche 0.9.0 loses the NIF
-  requirement entirely. Consumers upgrading from 0.8.0 should run
-  `mix deps.unlock --unused`: `ex_keccak` and `ex_secp256k1` are orphaned by this
-  change and a lock-hygiene gate will reject the commit until they are dropped.
+  dependency already carried one. Consumers upgrading from 0.8.0 should run
+  `mix deps.unlock --unused`: `ex_secp256k1` is orphaned by this change, as is
+  `ex_keccak` for a tree that resolves both deps low, and a lock-hygiene gate
+  will reject the commit until they are dropped.
 
 ### Added
 
