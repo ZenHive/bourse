@@ -294,7 +294,7 @@ defmodule Mix.Tasks.Bourse.AgentsMd do
     end
   end
 
-  defp verify_pin(raw, abs_path, contents, manifest) do
+  defp verify_pin(raw, _abs_path, contents, manifest) do
     if external_import?(raw) do
       entry = Map.fetch!(manifest.includes, raw)
       actual = sha256_hex(contents)
@@ -319,8 +319,8 @@ defmodule Mix.Tasks.Bourse.AgentsMd do
           :ok
       end
     else
-      # Repo-relative imports: file presence is the pin; abs_path already read.
-      _ = abs_path
+      # Repo-relative imports: file presence is the pin, and the caller already
+      # read the file to get `contents` — so there is nothing left to verify.
       :ok
     end
   end

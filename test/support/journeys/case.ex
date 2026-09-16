@@ -77,18 +77,31 @@ defmodule Bourse.Test.Journeys.Case do
   Live sandboxes propagate writes with a small lag, so journeys poll for the
   state they just created instead of asserting on the first read.
   """
-  def poll_until!(label, fun), do: poll_until!(label, fun, @poll_attempts)
+  def poll_until!(label, fun) do
+    case poll_until(fun) do
+      {:ok, value} -> value
+      :timeout -> flunk("gave up polling: #{label}")
+    end
+  end
 
-  defp poll_until!(label, _fun, 0), do: flunk("gave up polling: #{label}")
+  @doc """
+  Polls `fun` like `poll_until!/2` but answers `:timeout` instead of failing.
 
-  defp poll_until!(label, fun, attempts) do
+  For a caller whose own assertion is the gate: waiting out a propagation lag
+  is this function's job, deciding what an exhausted wait means is not.
+  """
+  def poll_until(fun), do: poll_until(fun, @poll_attempts)
+
+  defp poll_until(_fun, 0), do: :timeout
+
+  defp poll_until(fun, attempts) do
     case fun.() do
       {:ok, value} ->
-        value
+        {:ok, value}
 
       :retry ->
         Process.sleep(@poll_interval_ms)
-        poll_until!(label, fun, attempts - 1)
+        poll_until(fun, attempts - 1)
     end
   end
 

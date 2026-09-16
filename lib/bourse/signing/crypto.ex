@@ -23,9 +23,9 @@ defmodule Bourse.Signing.Crypto do
   Computes the EIP-191 personal-message hash (`hashMessage`) for `message`.
 
   Uses the spec envelope (`0x19 ‖ "Ethereum Signed Message:\\n" ‖ byte_size ‖
-  message`) hashed with `Cartouche.Hash.keccak/1`. `Cartouche.Recover.prefix_eth/1`
-  is not used: it measures `String.length/1` (UTF-8 graphemes), which disagrees
-  with EIP-191's byte length on non-ASCII input.
+  message`) hashed with `Cartouche.Hash.keccak/1`. The envelope is built here
+  rather than delegated, so the byte-length measure EIP-191 requires is owned by
+  this module and cannot change underneath it.
   """
   @spec hash_message(String.t()) :: binary()
   def hash_message(message) when is_binary(message) do

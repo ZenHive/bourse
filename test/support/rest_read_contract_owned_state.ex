@@ -54,11 +54,43 @@ defmodule Bourse.Test.RestReadContractOwnedState do
   defp place_and_register_order(argument, contract_case, context, placement) do
     with {:ok, placed} <- placement.(contract_case, context) do
       register_cleanup!(context.exchange, placed)
+      await_readable(context.exchange, placed, argument)
       field = field_from(placed, argument["field"])
 
       if is_nil(field), do: {:error, {:missing_field, argument["field"], placed}}, else: {:ok, field}
     end
   end
+
+  # A venue indexes a create into its order-read surface a beat after the create
+  # answers, so reading the new id immediately can answer `order_not_found` for
+  # an order that exists. Observed on bybit's `/v5/order/realtime`, where the
+  # order-identity cases lose that race often enough to red the lane — and lose
+  # it again on the automatic retry, which places a fresh order and reads it
+  # just as fast, so it reports as a confirmed failure rather than a flake.
+  #
+  # Waiting out the lag is this function's job; deciding what an exhausted wait
+  # means is not. On timeout the id is handed over anyway and the case's own
+  # assertion fails with the venue's answer, which is the message worth reading.
+  # An algo id resolves only on the algo branches, so it is not probed here.
+  defp await_readable(_exchange, _placed, %{"source_kind" => "algo"}), do: :ok
+
+  defp await_readable(exchange, %Order{id: id, symbol: symbol}, _argument) when is_binary(id) and is_binary(symbol) do
+    poll =
+      Journey.poll_until(fn ->
+        case Bourse.fetch_order(exchange, id, symbol: symbol) do
+          {:ok, %Order{}} -> {:ok, :readable}
+          _unreadable -> :retry
+        end
+      end)
+
+    if poll == :timeout do
+      Logger.warning("rest_read_contract: order #{id} on #{symbol} never became readable; reading it anyway")
+    end
+
+    :ok
+  end
+
+  defp await_readable(_exchange, _placed, _argument), do: :ok
 
   defp own_canceled_order(argument, contract_case, context) do
     # Register cleanup before cancelling: a cancel that raises would otherwise

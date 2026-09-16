@@ -114,6 +114,45 @@ roadmap.
 
 ---
 
+## 2026-09-16 — okx demo answers the missing-algo-order cancel with transient infrastructure codes instead of the 51400 business error, reddening `mix ci`
+
+**Status:** 🆕 reported — venue-side, unrouted. Not a bourse defect; awaiting operator routing (ledger it, or wait the venue out).
+
+**Call:** `Bourse.cancel_order(exchange, "999999999999999999", symbol: "BTC/USDT:USDT", stop: true)`
+against okx international demo (`www.okx.com` + `x-simulated-trading: 1`).
+
+**Expected:** `%Bourse.Error{type: :order_not_found, code: "51400"}` — the business error for an
+algo id that does not exist. Pinned in `f20eb64d` and asserted by
+`test/live/okx/okx_authored_integration_test.exs` ("demo algo amend and cancel return their
+specific missing-order business errors").
+
+**Observed (2026-09-16):** the venue never resolves the id. Across two `mix ci` runs, a focused
+re-run, and three deliberately spaced single probes, every answer was an infrastructure code
+carried in the per-order `sCode` — never `51400`:
+
+```
+1: sCode=51412 Cancellation request timed out. Try again later.
+2: sCode=50013 Systems are busy. Please try again later.
+3: sCode=50013 Systems are busy. Please try again later.
+```
+
+**What it is not.** Not the 0.9.0 dependency bump: okx signs with HMAC-SHA256 and never reaches
+cartouche/hieroglyph, which are the keccak/secp256k1 path for the three DEX venues. Not a VPN or
+egress condition either — reproduced with the VPN both off and on. Not seconds-scale transience:
+a bounded in-test retry (20 attempts) exhausted without ever reaching `51400`, and hammering the
+endpoint additionally trips bourse's own circuit breaker, so retrying is the wrong remedy and was
+reverted rather than shipped.
+
+**Consumer impact:** none on the client surface — the classification of a genuine `51400` is
+unchanged and still typed `:order_not_found`. The cost is the gate: this is the single remaining
+red in `mix ci` on the 0.9.0 tree, and it cannot be cleared from our side.
+
+**Routing question for the operator:** the honest dispositions are (a) add a
+`docs/prod-verification-ledger.md` row so the case is carried as venue-unavailable rather than
+green, or (b) leave the test strict and re-run when okx demo recovers. Weakening the assertion to
+accept `50013`/`51412` is not on the list — it would let a real misclassification pass.
+
+
 ## 2026-09-15 — `limit` on hyperliquid's emulated order-status reads truncated the history BEFORE the status filter ran, so `fetch_closed_orders(limit: 10)` answered `[]` while 137 closed orders existed
 
 **Status:** ✅ fixed inline (orchestrator, landed-base review) — `lib/bourse/emulation.ex`,
@@ -954,6 +993,19 @@ re-derive it.
 > already-established spread — and is recorded only so the frequency claim stays
 > honest: six of seven runs red, spread still four orders of magnitude. The
 > deciding experiment is unchanged and still unrun.
+>
+> **Eighth and ninth observations (2026-09-16, the 0.9.0 release gate).** Two
+> full `mix ci` runs on the release tree, an hour apart: the first **passed**
+> this probe, the second failed with a shortfall of **690,051 ms (11.5 min)**
+> (`requested 1789468022801, last 1789467332750`). The nine-run record is
+> **2,113 ms · 3,981 ms · 1,355,925 ms · 313,974 ms · GREEN · 5,572 ms ·
+> 18,728 ms · GREEN · 690,051 ms**. Still no new mechanism, and the run-to-run
+> flip inside one unchanged tree is the point: the two runs differ in nothing
+> but when they executed, so whatever selects the page is time- or
+> account-state-dependent rather than code-dependent. That also rules the
+> 0.9.0 dependency bump out as a cause — it is the same spread, on both sides
+> of the bump. The deciding experiment (one live read of both underlying USD-M
+> endpoints against a single window) is unchanged and still unrun.
 
 ---
 

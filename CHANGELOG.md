@@ -9,6 +9,16 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [0.9.0] - 2026-09-16
 
+### Changed
+
+- cartouche 0.9.1 and hieroglyph 1.8.1 replace the pure-Elixir
+  `ex_sha3` with the `ex_keccak` Rust NIF via `rustler_precompiled`. Consumers
+  inherit that transitively: `rustler_precompiled` downloads a prebuilt artifact
+  matching the target triple and NIF version, and falls back to a local Rust
+  build only when no artifact matches or `RUSTLER_PRECOMPILED_FORCE_BUILD` is
+  set — so a target with no published artifact, or an airgapped build that
+  cannot fetch one, now needs a Rust toolchain where 0.8.0 needed none.
+
 ### Added
 
 - `Bourse.Lighter.CredentialCheck` confronts a configured Lighter credential
@@ -238,6 +248,13 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   venue IDs and Alpaca paper. `Bourse.Unified.OrderOptions.aliases/0` and
   `canonical_slots/0` are public so the invariant derives the set rather than
   hand-listing it; see `docs/conditional-order-controls.md`.
+
+- `Bourse.Signing.Crypto.hash_message/1` no longer documents
+  `Cartouche.Recover.prefix_eth/1` as measuring UTF-8 graphemes. That was true
+  of cartouche before 0.9.1 and is the divergence the EIP-191 envelope test
+  pinned; cartouche now measures `byte_size`, so the doc and the test asserted a
+  difference that no longer exists. The test asserts agreement instead, and
+  still fails if either side moves back to a grapheme count.
 
 ## [0.8.0] - 2026-08-31
 
