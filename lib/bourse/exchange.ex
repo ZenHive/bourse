@@ -1174,26 +1174,42 @@ defmodule Bourse.Exchange do
       Bourse.Exchange.has?(exchange, "fetchFundingRateHistory")
       #=> false
 
-  ## This answers callability, never cost
+  ## This answers callability — not cost, and not nativeness
 
-  A `true` here says the call will work, not that the venue serves it natively.
-  An emulated method is emulated *per call*: `fetchFundingRate` on hyperliquid,
-  bybit and lighter fetches the venue's whole bulk payload and selects one
-  symbol from it, so a caller looping over 300 symbols issues 300 bulk reads
-  rather than one. Nothing fails — the reads simply multiply, which is why this
-  is worth knowing before it opens a circuit breaker.
+  A `true` here says the call will work. It does not say the venue serves it
+  natively, and both of the things a caller tends to read into it are wrong in
+  a different way.
 
-  Use `venue_support/2` to decide batching. It returns the provider declaration
-  — `true`, `false`, or `"emulated"` — so the two answers together tell you
-  whether the singular or the plural form is the native one:
+  **As a cost signal.** An emulated method is emulated *per call*:
+  `fetchFundingRate` on hyperliquid, bybit and lighter fetches the venue's whole
+  bulk payload and selects one symbol from it, so a caller looping over 300
+  symbols issues 300 bulk reads rather than one. Nothing fails — the reads
+  simply multiply, which is why this is worth knowing before it opens a circuit
+  breaker.
+
+  **As a nativeness signal, which is the worse one.** A caller that branches on
+  `has?/2` to pick a code path, and then grants that path a semantic allowance
+  the emulation does not earn, gets a false green rather than a slow one:
+  nothing multiplies and nothing errors. The reported case is a readiness check
+  that chose its order read-back with `has?(exchange, "fetchOrder")` and
+  exempted the native path from proving zero residual open orders — an
+  exemption written for a native read, handed to an emulated one by a `true`
+  that cannot tell them apart.
+
+  `venue_support/2` is the answer to both. It returns the provider declaration
+  — `true`, `false`, or `"emulated"` — so branch on `== true` when the branch
+  assumes the venue itself serves the call:
+
+      # the exemption belongs to the native read-back, not to a callable one
+      Bourse.Exchange.venue_support(exchange, "fetchOrder") == true
 
       # prefer the bulk read when the singular is emulated and the plural is not
       Bourse.Exchange.venue_support(exchange, "fetchFundingRate") != true and
         Bourse.Exchange.venue_support(exchange, "fetchFundingRates") == true
 
   The direction is per venue and not guessable: hyperliquid, bybit and lighter
-  emulate the singular, deribit emulates the plural, and the binance family and
-  okx serve both natively.
+  emulate the singular `fetchFundingRate`, deribit emulates the plural, and the
+  binance family and okx serve both natively.
 
   """
   @spec has?(t(), String.t()) :: boolean()

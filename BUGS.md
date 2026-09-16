@@ -114,11 +114,11 @@ roadmap.
 
 ---
 
-## 2026-09-16 — `has?/2` reads as a cost signal and is not one: a consumer's 300-asset hedging pass silently became 300 bulk reads and opened a circuit breaker
+## 2026-09-16 — `has?/2` is neither a cost signal nor a nativeness signal: one consumer's 300-asset pass became 300 bulk reads, another's readiness verdict grants an emulated read a native read's exemption
 
-**Status:** ✅ addressed as documentation (2026-09-16) — `has?/2`'s `@doc` and the 0.9.0 CHANGELOG now name the distinction. The behaviour is unchanged and correct; whether the API should offer more than a second function is left open below.
+**Status:** ✅ addressed as documentation (2026-09-16) — `has?/2`'s `@doc` and the 0.9.0 CHANGELOG now name both misreadings. The behaviour is unchanged and correct; whether the API should offer more than a second function is left open below.
 
-**Reported by:** trading_dashboard, on upgrading to 0.9.0.
+**Reported by:** trading_dashboard (the cost case) and bourse_trading (the semantics case), both on reading the 0.9.0 note.
 
 **What happened.** `TradingDashboard.FundingReader` chose between a per-symbol read
 and a bulk read with `Bourse.Exchange.has?(exchange, "fetchFundingRate")`. `has?/2`
@@ -152,6 +152,36 @@ so the batching test is `venue_support(ex, "fetchFundingRate") != true and
 venue_support(ex, "fetchFundingRates") == true`. Note the direction is per venue and
 not guessable: hyperliquid/bybit/lighter emulate the singular, **deribit emulates the
 plural**.
+
+**Second reading, worse than the first: `has?/2` as a nativeness signal.** Reported by
+bourse_trading after reading the cost note, and it is the sharper case because nothing
+multiplies and nothing errors. `OptionReadiness.Collector.read_back_order/4` there picks
+its lifecycle read-back path with `has?(exchange, "fetchOrder")`; the resulting
+`:fetch_order` / `:fetch_open_orders` label then feeds `lifecycle_ok?/4`, which carries
+
+```elixir
+# When fetch_order is the venue-native read-back, residual open-order
+# attestation is best-effort (network blip must not mask a good cancel).
+{{:ok, _}, {:ok, _}, {:error, _reason}, :fetch_order} -> true
+```
+
+The exemption is justified by the read-back being *native* — and the very next clause
+requires open-orders-only venues to prove zero residual. But the label it keys on is
+produced by `has?/2`, which answers `true` for an emulated `fetchOrder` too, so an
+emulated read-back would receive an exemption written to exclude it and a failed
+residual check would be forgiven into an `:ok` cell. A false green in a readiness
+attestation, not a cost multiplier.
+
+Latent rather than live in that repo: its four-venue matrix declares `fetchOrder`
+`true` for deribit/okx/bybit and `false` for derive, so no venue it runs takes the
+emulated branch and the two functions agree everywhere it looks. It filed the fix
+(branch on `venue_support/2`, grant the exemption only for `true`) as its task 9, with
+its live matrix task made dependent on it so a dated report cannot ratify a verdict the
+fix changes.
+
+This is why the `@doc` says "not cost, and not nativeness" rather than only naming the
+read multiplication: a caller reading `true` as *the venue serves this* is making a
+semantic claim, and the emulation satisfies the call without satisfying the claim.
 
 **Open question, not routed.** Documentation fixes the next reader, not the next
 caller — a consumer who never opens the doc writes the same loop. The candidates are
