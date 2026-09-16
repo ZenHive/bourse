@@ -7,7 +7,30 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-16
+
+### Added
+
+- `Bourse.Lighter.CredentialCheck` confronts a configured Lighter credential
+  triple with what the venue has actually registered. `run/1` answers the
+  question the venue's own error does not: whether a signing key sits at the
+  configured `api_key_index` on the configured `account_index`, and which
+  indices that account does carry. It reads two public endpoints, so it needs no
+  credentials, no signature and no Go toolchain — a consumer can call it from
+  its own `test_helper.exs`. `locate/2` reports where a zk public key is
+  registered on an account, if anywhere.
+
 ### Fixed
+
+- Lighter's `20013 "invalid auth: couldnt find account"` is no longer read as an
+  unprovisioned account. The message names the *account* when the *index* is
+  wrong, and the remedy that misreading suggests — `mix bourse.provision_lighter`
+  — mints a new key at a new index and invalidates the index every other machine
+  is configured with, which produces the same `20013` there and another
+  re-provision. `mix bourse.provision_lighter` now refuses to mint a second key
+  for a wallet that already carries one, and `test/test_helper.exs` runs the
+  credential check at startup, so the suite stops with the export that fixes the
+  configuration instead of with ten venue errors.
 
 - `limit` and `since` no longer truncate hyperliquid's status-filtered order reads
   before the status filter runs. `fetch_closed_orders`, `fetch_canceled_orders` and
@@ -1333,7 +1356,8 @@ Published before this repository existed, from the tree that is now the private
   ccxt.build_lighter_signer`, the prerequisite for private Lighter calls, is the
   one task consumers receive.
 
-[Unreleased]: https://github.com/ZenHive/bourse/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/ZenHive/bourse/compare/v0.9.0...HEAD
+[0.9.0]: https://hex.pm/packages/bourse/0.9.0
 [0.8.0]: https://hex.pm/packages/bourse/0.8.0
 [0.7.0]: https://hex.pm/packages/bourse/0.7.0
 [0.6.0]: https://hex.pm/packages/bourse/0.6.0
