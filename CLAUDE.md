@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+@~/.claude/includes/verification-policy.md
+
 Guidance for Claude Code working in this repository.
 
 ## Active Includes
@@ -194,9 +196,9 @@ Artifact **freshness**, **expressiveness** and **scope** are separate axes. A ma
 
 For cross-family reviewers (codex / cursor / grok) and any dispatch run.
 
-- **`mix check.dispatch`** — the dispatch-scale gate: `precommit`, `bourse.authority_check` (offline), `bourse.error_authority`, `bourse.check_lighter_signer`, `bourse.claude_check`, `bourse.agents_md --check`, `ex_dna --max-clones 0`, `reach.check --arch --smells --strict --path lib` (under `MIX_ENV=dev`; the `--path lib` pin is load-bearing — arch sources come from the Mix env, smell sources from `--path`). No dialyzer (a cold worktree cold-builds the PLT for minutes). `bourse.check_lighter_signer` is red when Go or a C compiler is missing — the helper is a gitignored build artifact, so a skipped pass here is a lie.
+- **`mix check.dispatch`** — existing alias inventory (select scoped commands per verification policy): `precommit`, `bourse.authority_check` (offline), `bourse.error_authority`, `bourse.check_lighter_signer`, `bourse.claude_check`, `bourse.agents_md --check`, `ex_dna --max-clones 0`, `reach.check --arch --smells --strict --path lib` (under `MIX_ENV=dev`; the `--path lib` pin is load-bearing — arch sources come from the Mix env, smell sources from `--path`). No dialyzer (a cold worktree cold-builds the PLT for minutes). `bourse.check_lighter_signer` is red when Go or a C compiler is missing — the helper is a gitignored build artifact, so a skipped pass here is a lie.
 - **`mix precommit`** — format / compile --warnings-as-errors / `credo --strict --ignore TagTODO,TagFIXME` / doctor --raise / sobelow --skip / `test.json`. It carries no `--exclude`: the suite is provider-live, so this step calls real venues and needs the testnet credentials exported.
-- **`mix precommit.full`** — adds `deps.audit` + dialyzer (local pre-PR).
+- **`mix precommit.full`** — adds `deps.audit` + dialyzer (post-merge QA).
 - **`mix ci`** — `check.dispatch` + the full `bourse.verify_rest_read_contracts` lane + `test.json --cover --cover-threshold 80 --output /tmp/bourse-ci-cover.json` + `deps.audit` (an alias carrying `--ignore-advisory-ids`) + dialyzer.
 
 🚨 **There is no hosted CI, and nothing runs on a schedule.** Every gate here is
@@ -213,13 +215,8 @@ its own. Approving a
 venue-facing acceptance criterion means naming the lane that exercised it, not the
 gate that happened to pass.
 
-`--cover` stays out of `precommit` and `check.dispatch` (`:cover` instruments every
-loaded beam — a multi-GB spike on a cold tree), so **`mix ci` is the only gate that
-enforces the tiers** in `critical-rules.md` § RAISE COVERAGE BEFORE MUTATING. Its
-threshold is the 80% standard floor; the 95% critical tier (money, signing, crypto,
-low-level encoders) is judged per module against that run. Measure the module you
-are about to change with `mix test.json --cover`, and raise it in the change that
-touches it.
+`mix ci` measures project coverage. Coverage timing and tiers follow
+`verification-policy.md`; changed behavior still needs focused tests.
 
 | Check | Command | Notes |
 |-------|---------|-------|
@@ -255,7 +252,7 @@ mix bourse.verify_ws_first_frame                       # classified public WS fi
 
 > 🚨 **A bare `mix test.json` calls real venues, and a missing credential is a RED.** `test/test_helper.exs` raises with the venue name and the variables to export; `ExUnit.start/1` excludes `:dangerous` and nothing else, so the network and contract cases run by default. There is no `--exclude` that makes this suite offline, and no offline suite to fall back to. Tags in use include `integration`, `network` (testnet REST probes), `rest_read_contract`, `dangerous` (mutating probes — raw POST/PUT/DELETE), `invalid_creds`, `native`, plus selection tags for `--only` filtering (`venue`, `exchange_<venue>`, `private`, `public`, `raw`, `ws_canary`, `ws_auth_smoke`, `unified_integration`, `time_window_live`). Only `:dangerous` is opt-in.
 
-> 🚨 **The complete REST-read surface runs in `mix ci`, not in `precommit`.** `mix bourse.verify_rest_read_contracts` reports denominator, executed count and failures, and fails when `executed < denominator`. Its denominator is scoped to the provider product prefixes each venue hosts on its sandbox; a branch we cannot reach with our keys is ledgered in `docs/prod-verification-ledger.md` as unverified rather than quietly dropped. Run it before calling a venue-facing task done, and say in the delivery that you ran it.
+> 🚨 **The complete REST-read surface runs in `mix ci`, not in `precommit`.** `mix bourse.verify_rest_read_contracts` reports denominator, executed count and failures, and fails when `executed < denominator`. Its denominator is scoped to the provider product prefixes each venue hosts on its sandbox; a branch we cannot reach with our keys is ledgered in `docs/prod-verification-ledger.md` as unverified rather than quietly dropped. For a venue-facing task, verify the changed provider behavior with live evidence and name the cases exercised; the complete lane belongs to full QA unless the task explicitly requires it.
 
 **REST-read contracts — the execution lane:** `priv/venues/<venue>/authority/rest_read_contract.json` owns the provider-source pins, operation/branch denominator, arguments, and success/error meanings for all eleven venues. **Its inventory deliberately mirrors the client's callable read surface** (`inventory_basis: client_read_surface`): what the lane proves is that every runtime REST-read branch executes once against the venue's live host and parses — breadth, with the mirror lock guaranteeing a new read branch cannot ship unexercised. It does not claim an inventory independent of the client; role-based **semantic** depth is the journey lane below. `Bourse.Test.RestReadContracts` loads and validates it — schema, authority-pin match against each venue's manifest, case-ID uniqueness, and the runtime mirror lock. `Bourse.Test.Generator.RestReadContract` emits mechanical ExUnit shells, `test/live/<venue>/rest_read_contract_test.exs` defines one module per venue from them, and `Bourse.Test.RestReadContractScenario` performs every real call and assertion. Resource-id branches that need an open or canceled order place a far-from-market GTC limit and cancel it in `on_exit`; that write lives in the default rest_read_contract lane, not under `:dangerous`, because the lane owns the state it reads. History the venue windows out (fills, deposits) is ledgered as state-dependent rather than invented. The raw endpoint probes remain transport-level coverage for request mechanics and write surfaces.
 
