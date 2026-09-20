@@ -230,13 +230,13 @@ Real-time market data and order updates. ZenWebsocket, three-layer architecture.
 | Task 121 | ✅ | 🎁 **ws_unified** · 🚀 **v1_0** · Adopt spec-driven WS config from v4.1.0 `websocket` section [D:4/B:6/U:5 → Eff:1.38?] 📋 |
 | Task 122 | ✅ | 🎁 **signing** · Resolve signing fixture-replay drift vs ccxt_extract fixtures (8 cases) [D:3/B:5/U:4 → Eff:1.5?] 🚀 |
 | Task 618 `[P]` | ✅ | 🎁 **live_triage** · Binance-family WS subscribe templates are CCXT message-hashes, not provider stream names — silent dead streams that ack cannot catch [D:5/B:7/U:5 → Eff:1.2?] 📋 |
-| Task 627 `[P]` | ✅ | 🎁 **live_triage** · USD-M public WS host /ws silently drops documented ticker and aggTrade streams [D:4/B:7/U:6 → Eff:1.62] 🚀 |
-| Task 628 `[P]` | ✅ | 🎁 **live_triage** · Spot partial-depth frames have no e field, so watch_order_book never routes after task 618 [D:4/B:6/U:5 → Eff:1.38] 📋 |
-| Task 629 `[P]` | ⛔ | 🎁 **live_triage** · 🐛 Author Binance COIN-M unified WebSocket watch channels [D:4/B:6/U:5 → Eff:1.38] 📋 |
-| Task 630 | ✅ | 🎁 **live_triage** · 🐛 Make split-host WebSocket subscriptions own and reuse connections [D:6/B:8/U:7 → Eff:1.25] 📋 |
-| Task 631 | ✅ | 🎁 **live_triage** · 🐛 Mixed-host WS subscribe must not leave a live half when the other host fails [D:4/B:6/U:4 → Eff:1.25] 📋 |
-| Task 632 | ✅ | 🎁 **live_triage** · 🐛 Binance-family order-type reads are not the inverse of the writes: every conditional type collapses to market or limit [D:5/B:7/U:6 → Eff:1.3] 📋 |
-| Task 634 | ✅ | 🎁 **live_triage** · 🐛 Deribit shipped release 2.1.1 during a maintenance window: re-bind the current-REST corpus to the republished OpenAPI [D:5/B:8/U:8 → Eff:1.6] 🚀 |
+| Task 627 `[P]` | ✅ | 🎁 **live_triage** · USD-M public WS host /ws silently drops documented ticker and aggTrade streams [D:4/B:7/U:6 → Eff:1.62?] 🚀 |
+| Task 628 `[P]` | ✅ | 🎁 **live_triage** · Spot partial-depth frames have no e field, so watch_order_book never routes after task 618 [D:4/B:6/U:5 → Eff:1.38?] 📋 |
+| Task 629 `[P]` | ⛔ | 🎁 **live_triage** · 🐛 Author Binance COIN-M unified WebSocket watch channels [D:4/B:6/U:5 → Eff:1.38?] 📋 |
+| Task 630 | ✅ | 🎁 **live_triage** · 🐛 Make split-host WebSocket subscriptions own and reuse connections [D:6/B:8/U:7 → Eff:1.25?] 📋 |
+| Task 631 | ✅ | 🎁 **live_triage** · 🐛 Mixed-host WS subscribe must not leave a live half when the other host fails [D:4/B:6/U:4 → Eff:1.25?] 📋 |
+| Task 632 | ✅ | 🎁 **live_triage** · 🐛 Binance-family order-type reads are not the inverse of the writes: every conditional type collapses to market or limit [D:5/B:7/U:6 → Eff:1.3?] 📋 |
+| Task 634 | ✅ | 🎁 **live_triage** · 🐛 Deribit shipped release 2.1.1 during a maintenance window: re-bind the current-REST corpus to the republished OpenAPI [D:5/B:8/U:8 → Eff:1.6?] 🚀 |
 <!-- TASKS:END -->
 
 ## Phase 8: Polish (Hex Publishing)
@@ -269,6 +269,7 @@ Production-ready for Hex.pm publication.
 | Task 215 | ✅ | 🎁 **polish** · Cache market data for symbol->market_id resolution (loadMarkets equivalent) instead of re-fetching per call [D:5/B:6/U:5 → Eff:1.1?] 📋 |
 | Task 447 `[P]` | ✅ | 🎁 **polish** · Reduce the warm offline test suite to at most 60 seconds without losing coverage [D:7/B:9/U:8 → Eff:1.21?] 📋 |
 | Task 448 `[P]` | ✅ | 🎁 **polish** · Reduce the full seven-venue fixture-replay gate to at most 60 seconds [D:6/B:9/U:7 → Eff:1.33?] 📋 |
+| Task 705 | ⬜ | 🎁 **polish** · Separate focused dispatch aliases from complete post-merge QA [D:3/B:7/U:7 → Eff:2.33] 🎯 |
 <!-- TASKS:END -->
 
 ## Phase 9: Trading Utilities
@@ -845,39 +846,39 @@ The authored-specs pivot workstream (see [docs/authored-specs.md](docs/authored-
 | Task 617 `[P]` | ✅ | 🎁 **live_triage** · 🐛 Time-window translation is asserted request-side: an offline guard over every since/until read, and a since-mutation the matrix can actually catch [D:6/B:8/U:6 → Eff:1.17?] 📋 |
 | Task 619 | ✅ | 🎁 **authored_specs** · Refresh the pinned Deribit current-REST OpenAPI and re-bind every artifact that quotes it [D:5/B:8/U:8 → Eff:1.6?] 🚀 |
 | Task 620 `[P]` | ✅ | 🎁 **authored_specs** · Shape-check non-lighter caller_params against request_param_shapes so recaptured no-injection fixtures are actually verified [D:4/B:7/U:5 → Eff:1.5?] 🚀 |
-| Task 622 `[P]` | ✅ | 🎁 **live_triage** · 🐛 Unified client_order_id is one-way on deribit: it goes out as label and never comes back — make the round-trip a cross-venue invariant [D:5/B:7/U:6 → Eff:1.3] 📋 |
-| Task 623 `[P]` | ✅ | 🎁 **live_triage** · 🐛 binanceusdm markets ship contract_size nil while the position carve already assumes 1 — source the linear unit from the provider, never a silent default [D:4/B:8/U:6 → Eff:1.75] 🚀 |
-| Task 624 `[P]` | ✅ | 🎁 **authored_specs** · Mutation-lifecycle compensation holds under transport and parse failure: attempted-act tracking, session-label sweep, mutating-steps-before-cleanup plan rule [D:4/B:7/U:5 → Eff:1.5] 🚀 |
-| Task 625 `[P]` | ✅ | 🎁 **authored_specs** · Author remaining linear contract_unit recipes for the known-gap venues (binance umbrella, bybit, derive) [D:4/B:7/U:5 → Eff:1.5] 🚀 |
-| Task 626 `[P]` | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · A market's declared type and its capability flags disagree, and multi-leg instruments carry no quantity semantics at all — a consumer keying on either signal computes a meaningless exposure [D:5/B:7/U:4 → Eff:1.1] 📋 |
-| Task 633 `[P]` | ✅ | 🎁 **live_triage** · 🐛 Binance USD-M and COIN-M time-window reads still pass raw since/until: omit open-orders bounds and rename the histories that document startTime/endTime [D:5/B:7/U:6 → Eff:1.3] 📋 |
-| Task 635 `[P]` | ✅ | 🎁 **live_triage** · 🐛 Unified until is declared inclusive but two OKX cursor sites still send it exclusive — decide once and guard the class [D:5/B:7/U:6 → Eff:1.3] 📋 |
-| Task 636 `[P]` | ✅ | 🎁 **live_triage** · Authority pins detect drift but cannot name it: reference_only artifacts retain no bytes, so every review reconstructs the delta by hand [D:6/B:7/U:6 → Eff:1.08] 📋 |
-| Task 637 `[P]` | ✅ | 🎁 **live_triage** · 🐛 OKX fetch_withdrawals still passes raw since/until onto exclusive before/after cursors [D:5/B:7/U:6 → Eff:1.3] 📋 |
-| Task 638 | ✅ | 🎁 **ws_unified** · 🐛 Lighter subscribe acknowledgement swallows the first market snapshot [D:3/B:4/U:3 → Eff:1.17] 📋 |
-| Task 639 `[P]` | ✅ | 🎁 **live_triage** · 🐛 Two canonical SHA-256 schemes hash the same operation-key set, so a REST surface digest will report false drift [D:6/B:8/U:5 → Eff:1.08] 📋 |
-| Task 640 `[P]` | ⛔ | 🎁 **live_triage** · Surface digests carry unvalidated inferred provenance and stale not-nameable claims the digest itself now disproves [D:5/B:6/U:4 → Eff:1.0] 📋 |
-| Task 641 `[P]` | ✅ | 🎁 **live_triage** · 🐛 Bybit inverse position contract_size is nil in production but the unit invariant is proven on an injected field the venue never sends [D:6/B:8/U:5 → Eff:1.08] 📋 |
-| Task 642 `[P]` | ✅ | 🎁 **live_triage** · 🐛 Caller-input validation has two error contracts: a too-long client_order_id raises out of the non-bang API while a bad price value returns a tuple [D:4/B:6/U:4 → Eff:1.25] 📋 |
-| Task 643 | ✅ | 🎁 **ws_unified** · 🐛 Shipped 0.6.0 connects the USD-M private stream to a host Binance decommissioned on 2026-04-23, and the failure is silent [D:5/B:9/U:6 → Eff:1.5] 🚀 |
-| Task 644 | ⛔ | 🎁 **ws_unified** · 🐛 watch_order_book returns nil on deribit and both binance futures surfaces, and one socket with several symbols collapses every book onto one key [D:6/B:8/U:5 → Eff:1.08] 📋 |
-| Task 645 | ✅ | 🎁 **ws_unified** · 🐛 Every WebSocket reconnect leaks a connection-owner process, and the ownership check that would have caught it is dead code three docs still describe as live [D:5/B:6/U:4 → Eff:1.0] 📋 |
-| Task 646 | ✅ | 🎁 **live_triage** · 🐛 fetch_funding_rate answers for markets that have no funding: a spot symbol silently receives the perp's rate stamped with the spot symbol [D:6/B:9/U:6 → Eff:1.25] 📋 |
-| Task 647 `[P]` | ✅ | 🎁 **live_triage** · 🐛 The live public-read smoke guard is red on main and nobody sees it: coinbaseexchange is missing and the test only runs under --include network [D:3/B:6/U:4 → Eff:1.67] 🚀 |
-| Task 648 `[P]` | ✅ | 🎁 **rest_unified** · 🚀 **v1_1** · Account class and margin model are not readable as unified facts, so a consumer cannot tell a derivatives account from a spot one [D:7/B:8/U:5 → Eff:0.93] ⚠️ |
-| Task 649 | ✅ | 🎁 **live_triage** · 🐛 Nothing pins the capability surface across releases, so answering whether a has? flag changed means unpacking two hex tarballs by hand [D:5/B:9/U:5 → Eff:1.4] 📋 |
-| Task 650 `[P]` | ✅ | 🎁 **live_triage** · The scheduled live lane probes two methods per venue while the WebSocket corpus that would have caught the last three outages runs nowhere [D:5/B:9/U:6 → Eff:1.5] 🚀 |
-| Task 651 `[P]` | ✅ | 🎁 **rest_unified** · 🐛 Two caller-input rejections still escape the non-bang unified API as exceptions, so the public error contract depends on which field was wrong [D:3/B:6/U:4 → Eff:1.67] 🚀 |
-| Task 652 | ✅ | 🎁 **rest_unified** · 🐛 Every emulated read rebuilds the parameter map from three hardcoded keys, so all other caller parameters are silently discarded before the delegated call [D:5/B:8/U:6 → Eff:1.4] 📋 |
-| Task 653 `[P]` | ✅ | 🎁 **rest_unified** · 🐛 RequestShape still raises ArgumentError for caller-input problems, and the 651 class sweep cannot see them [D:5/B:6/U:4 → Eff:1.0] 📋 |
-| Task 654 | ⛔ | 🎁 **live_triage** · 🐛 Umbrella binance inverse symbols denormalize to a compact id the COIN-M premiumIndex does not list [D:4/B:7/U:5 → Eff:1.5] 🚀 |
-| Task 655 | ⛔ | 🎁 **authored_specs** · 🐛 A post-parse backfill re-supplies the value the authored field map already produces, so oracle replay cannot tell a working envelope clock from a broken one [D:4/B:7/U:5 → Eff:1.5] 🚀 |
-| Task 656 `[P]` | ⛔ | 🎁 **authored_specs** · The critical-module coverage tier is doctrine that nothing enforces, and six modules on the money path are below it while every wave mutates them [D:5/B:8/U:6 → Eff:1.4] 📋 |
-| Task 657 `[P]` | ⛔ | 🎁 **rest_unified** · 🐛 The fundingless predicate names one of the four market types the taxonomy already distinguishes, so an option or dated future is only caught when the venue happens to answer empty [D:3/B:8/U:6 → Eff:2.33] 🎯 |
-| Task 658 | ✅ | 🎁 **rest_unified** · 🐛 The unified symbol for a bybit dated future carries the venue-native date form, so every unified method crashes on all 44 of them [D:5/B:9/U:7 → Eff:1.6] 🚀 |
-| Task 659 | ✅ | 🎁 **rest_unified** · 🐛 OrderPrecision snap_value MatchError is a third contract for non-numeric order amounts [D:3/B:5/U:3 → Eff:1.33] 📋 |
-| Task 660 | ✅ | 🎁 **rest_unified** · 🐛 Bybit dated-future unified symbols still carry venue-native DDMMMYY after the 658 pass-through [D:5/B:9/U:7 → Eff:1.6] 🚀 |
-| Task 661 | ⛔ | 🎁 **rest_unified** · 🐛 Bybit InverseFutures native ids are quarterly codes, not DDMMMYY [D:5/B:8/U:6 → Eff:1.4] 📋 |
+| Task 622 `[P]` | ✅ | 🎁 **live_triage** · 🐛 Unified client_order_id is one-way on deribit: it goes out as label and never comes back — make the round-trip a cross-venue invariant [D:5/B:7/U:6 → Eff:1.3?] 📋 |
+| Task 623 `[P]` | ✅ | 🎁 **live_triage** · 🐛 binanceusdm markets ship contract_size nil while the position carve already assumes 1 — source the linear unit from the provider, never a silent default [D:4/B:8/U:6 → Eff:1.75?] 🚀 |
+| Task 624 `[P]` | ✅ | 🎁 **authored_specs** · Mutation-lifecycle compensation holds under transport and parse failure: attempted-act tracking, session-label sweep, mutating-steps-before-cleanup plan rule [D:4/B:7/U:5 → Eff:1.5?] 🚀 |
+| Task 625 `[P]` | ✅ | 🎁 **authored_specs** · Author remaining linear contract_unit recipes for the known-gap venues (binance umbrella, bybit, derive) [D:4/B:7/U:5 → Eff:1.5?] 🚀 |
+| Task 626 `[P]` | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · A market's declared type and its capability flags disagree, and multi-leg instruments carry no quantity semantics at all — a consumer keying on either signal computes a meaningless exposure [D:5/B:7/U:4 → Eff:1.1?] 📋 |
+| Task 633 `[P]` | ✅ | 🎁 **live_triage** · 🐛 Binance USD-M and COIN-M time-window reads still pass raw since/until: omit open-orders bounds and rename the histories that document startTime/endTime [D:5/B:7/U:6 → Eff:1.3?] 📋 |
+| Task 635 `[P]` | ✅ | 🎁 **live_triage** · 🐛 Unified until is declared inclusive but two OKX cursor sites still send it exclusive — decide once and guard the class [D:5/B:7/U:6 → Eff:1.3?] 📋 |
+| Task 636 `[P]` | ✅ | 🎁 **live_triage** · Authority pins detect drift but cannot name it: reference_only artifacts retain no bytes, so every review reconstructs the delta by hand [D:6/B:7/U:6 → Eff:1.08?] 📋 |
+| Task 637 `[P]` | ✅ | 🎁 **live_triage** · 🐛 OKX fetch_withdrawals still passes raw since/until onto exclusive before/after cursors [D:5/B:7/U:6 → Eff:1.3?] 📋 |
+| Task 638 | ✅ | 🎁 **ws_unified** · 🐛 Lighter subscribe acknowledgement swallows the first market snapshot [D:3/B:4/U:3 → Eff:1.17?] 📋 |
+| Task 639 `[P]` | ✅ | 🎁 **live_triage** · 🐛 Two canonical SHA-256 schemes hash the same operation-key set, so a REST surface digest will report false drift [D:6/B:8/U:5 → Eff:1.08?] 📋 |
+| Task 640 `[P]` | ⛔ | 🎁 **live_triage** · Surface digests carry unvalidated inferred provenance and stale not-nameable claims the digest itself now disproves [D:5/B:6/U:4 → Eff:1.0?] 📋 |
+| Task 641 `[P]` | ✅ | 🎁 **live_triage** · 🐛 Bybit inverse position contract_size is nil in production but the unit invariant is proven on an injected field the venue never sends [D:6/B:8/U:5 → Eff:1.08?] 📋 |
+| Task 642 `[P]` | ✅ | 🎁 **live_triage** · 🐛 Caller-input validation has two error contracts: a too-long client_order_id raises out of the non-bang API while a bad price value returns a tuple [D:4/B:6/U:4 → Eff:1.25?] 📋 |
+| Task 643 | ✅ | 🎁 **ws_unified** · 🐛 Shipped 0.6.0 connects the USD-M private stream to a host Binance decommissioned on 2026-04-23, and the failure is silent [D:5/B:9/U:6 → Eff:1.5?] 🚀 |
+| Task 644 | ⛔ | 🎁 **ws_unified** · 🐛 watch_order_book returns nil on deribit and both binance futures surfaces, and one socket with several symbols collapses every book onto one key [D:6/B:8/U:5 → Eff:1.08?] 📋 |
+| Task 645 | ✅ | 🎁 **ws_unified** · 🐛 Every WebSocket reconnect leaks a connection-owner process, and the ownership check that would have caught it is dead code three docs still describe as live [D:5/B:6/U:4 → Eff:1.0?] 📋 |
+| Task 646 | ✅ | 🎁 **live_triage** · 🐛 fetch_funding_rate answers for markets that have no funding: a spot symbol silently receives the perp's rate stamped with the spot symbol [D:6/B:9/U:6 → Eff:1.25?] 📋 |
+| Task 647 `[P]` | ✅ | 🎁 **live_triage** · 🐛 The live public-read smoke guard is red on main and nobody sees it: coinbaseexchange is missing and the test only runs under --include network [D:3/B:6/U:4 → Eff:1.67?] 🚀 |
+| Task 648 `[P]` | ✅ | 🎁 **rest_unified** · 🚀 **v1_1** · Account class and margin model are not readable as unified facts, so a consumer cannot tell a derivatives account from a spot one [D:7/B:8/U:5 → Eff:0.93?] ⚠️ |
+| Task 649 | ✅ | 🎁 **live_triage** · 🐛 Nothing pins the capability surface across releases, so answering whether a has? flag changed means unpacking two hex tarballs by hand [D:5/B:9/U:5 → Eff:1.4?] 📋 |
+| Task 650 `[P]` | ✅ | 🎁 **live_triage** · The scheduled live lane probes two methods per venue while the WebSocket corpus that would have caught the last three outages runs nowhere [D:5/B:9/U:6 → Eff:1.5?] 🚀 |
+| Task 651 `[P]` | ✅ | 🎁 **rest_unified** · 🐛 Two caller-input rejections still escape the non-bang unified API as exceptions, so the public error contract depends on which field was wrong [D:3/B:6/U:4 → Eff:1.67?] 🚀 |
+| Task 652 | ✅ | 🎁 **rest_unified** · 🐛 Every emulated read rebuilds the parameter map from three hardcoded keys, so all other caller parameters are silently discarded before the delegated call [D:5/B:8/U:6 → Eff:1.4?] 📋 |
+| Task 653 `[P]` | ✅ | 🎁 **rest_unified** · 🐛 RequestShape still raises ArgumentError for caller-input problems, and the 651 class sweep cannot see them [D:5/B:6/U:4 → Eff:1.0?] 📋 |
+| Task 654 | ⛔ | 🎁 **live_triage** · 🐛 Umbrella binance inverse symbols denormalize to a compact id the COIN-M premiumIndex does not list [D:4/B:7/U:5 → Eff:1.5?] 🚀 |
+| Task 655 | ⛔ | 🎁 **authored_specs** · 🐛 A post-parse backfill re-supplies the value the authored field map already produces, so oracle replay cannot tell a working envelope clock from a broken one [D:4/B:7/U:5 → Eff:1.5?] 🚀 |
+| Task 656 `[P]` | ⛔ | 🎁 **authored_specs** · The critical-module coverage tier is doctrine that nothing enforces, and six modules on the money path are below it while every wave mutates them [D:5/B:8/U:6 → Eff:1.4?] 📋 |
+| Task 657 `[P]` | ⛔ | 🎁 **rest_unified** · 🐛 The fundingless predicate names one of the four market types the taxonomy already distinguishes, so an option or dated future is only caught when the venue happens to answer empty [D:3/B:8/U:6 → Eff:2.33?] 🎯 |
+| Task 658 | ✅ | 🎁 **rest_unified** · 🐛 The unified symbol for a bybit dated future carries the venue-native date form, so every unified method crashes on all 44 of them [D:5/B:9/U:7 → Eff:1.6?] 🚀 |
+| Task 659 | ✅ | 🎁 **rest_unified** · 🐛 OrderPrecision snap_value MatchError is a third contract for non-numeric order amounts [D:3/B:5/U:3 → Eff:1.33?] 📋 |
+| Task 660 | ✅ | 🎁 **rest_unified** · 🐛 Bybit dated-future unified symbols still carry venue-native DDMMMYY after the 658 pass-through [D:5/B:9/U:7 → Eff:1.6?] 🚀 |
+| Task 661 | ⛔ | 🎁 **rest_unified** · 🐛 Bybit InverseFutures native ids are quarterly codes, not DDMMMYY [D:5/B:8/U:6 → Eff:1.4?] 📋 |
 | Task 662 `[P]` | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · An unrecognized caller option is reported as a recoverable venue network fault and melts the circuit breaker, taking every read on that venue down [D:4/B:8/U:6 → Eff:1.75] 🚀 |
 | Task 663 | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · 🐛 🔒 The unified write boundary silently discards caller intent: an uninterpretable `side` routes to a DEFAULT direction instead of erroring [D:4/B:8/U:7 → Eff:1.88] 🚀 |
 | Task 664 | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · 🐛 Unified `notional` is authored nil for every non-future deribit position kind, so an open option contributes nothing to a size fold [D:4/B:6/U:5 → Eff:1.38] 📋 |
