@@ -22,7 +22,7 @@ defmodule Mix.Tasks.Bourse.CheckLighterSignerTest do
     assert message =~ "C compiler"
   end
 
-  test "mix exits non-zero on the cannot-run path, so check.dispatch records a failing step" do
+  test "mix exits non-zero on the cannot-run path, so check.full records a failing step" do
     # Observes the real Mix.Error -> System.halt mapping rather than echoing the
     # constant: without this, "the gate is red without Go" is an untested claim.
     {output, status} =

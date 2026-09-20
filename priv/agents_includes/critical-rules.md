@@ -92,15 +92,9 @@ The deciding asymmetry is the *kind* of failure, not the amount: live gives **lo
 - **Expiry does not create truth** — a freshness window bounds staleness; an unexpired recording is still only a claim about the past.
 - Never downgrade a loud gate with real authority to a quiet one that can be falsely green. Its noise — rate budget, telling *unreachable* apart from *wrong* — is an engineering problem to solve at that gate.
 
-## Raise coverage before mutating
+## Verification scope and coverage
 
-Before any code-changing task on an existing module, its `mix test.json --cover` must be at tier — **≥80%** standard, **≥95%** critical (money, signing, crypto, low-level encoders, security-sensitive parsers; when in doubt, critical). Below tier → write the missing tests first, in this task.
-
-1. `mix test.json --cover --quiet --output /tmp/cov.json`
-2. `jq '.coverage.modules[] | select(.module == "MyApp.Foo")' /tmp/cov.json`
-3. Below tier → cover the uncovered lines, even ones you didn't come to change. Then mutate.
-
-Exempt: doc-only edits, formatting/alias reordering, pure renames, typo fixes in strings/messages.
+Follow `~/.claude/includes/verification-policy.md` for check scope and coverage timing. Write tests for changed behavior; full-project coverage is evaluated in post-merge audit + QA.
 
 ## 🚨 NEVER HIDE TEST FAILURES
 
@@ -124,7 +118,7 @@ Hook fires → fix → re-run → stage. No planning around it, no asking, no di
 - Scope is only the files your change touched, not the project.
 - Generated files → fix the generator.
 - Never move the fix to ROADMAP or a follow-up. This commit.
-- Don't re-run a check the hook just ran on the same files. Full-suite re-runs earn their cost only before a PR/merge, after `mix deps.get`, after a branch switch, or on request.
+- Don't re-run a check the hook just ran on the same files. Check scope and rerun triggers are defined in `verification-policy.md`; lifecycle events alone do not trigger full QA.
 
 ## Read to the answer — don't use the runner as an oracle
 

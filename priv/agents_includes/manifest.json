@@ -5,8 +5,8 @@
   "includes": {
     "~/.claude/includes/critical-rules.md": {
       "path": "priv/agents_includes/critical-rules.md",
-      "sha256": "ae5c7838ceea676b91368dce1204053a715a97859e0d5d289e2dba77d68cca79",
-      "bytes": 18540
+      "sha256": "8a24599a092433332cfdcd8004986c0949825d70263f789303811ca5302b2081",
+      "bytes": 18092
     },
     "~/.claude/includes/elixir-security-adjudications.md": {
       "path": "priv/agents_includes/elixir-security-adjudications.md",
@@ -20,8 +20,13 @@
     },
     "~/.claude/includes/harness-workflow.md": {
       "path": "priv/agents_includes/harness-workflow.md",
-      "sha256": "6bfe22a757f35ba94e05da4d2be767dd69573073e23eaf46d1fd3509a60e05f8",
-      "bytes": 47878
+      "sha256": "ca49450a9d3155c32e89d14fdb67d4771c4511970cf7b30043695894b42c7791",
+      "bytes": 50461
+    },
+    "~/.claude/includes/verification-policy.md": {
+      "path": "priv/agents_includes/verification-policy.md",
+      "sha256": "6843473a65179908c28da6ce22649a9ce9d5da3ea88dfc1b23dd6df911d05b69",
+      "bytes": 3723
     }
   }
 }

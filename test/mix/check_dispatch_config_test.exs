@@ -11,8 +11,56 @@ defmodule Bourse.CheckDispatchConfigTest do
     |> List.wrap()
   end
 
+  defp expanded_steps(name) do
+    aliases = Keyword.fetch!(Bourse.MixProject.project(), :aliases)
+
+    Enum.flat_map(alias_steps(name), fn step ->
+      case Enum.find(Keyword.keys(aliases), &(Atom.to_string(&1) == step)) do
+        nil -> [step]
+        nested -> expanded_steps(nested)
+      end
+    end)
+  end
+
+  test "dispatch expands to formatting and compilation only" do
+    assert expanded_steps(:"check.dispatch") == [
+             "format --check-formatted",
+             "compile --warnings-as-errors"
+           ]
+  end
+
+  test "ci retains the complete QA graph independently of dispatch" do
+    refute "check.dispatch" in alias_steps(:ci)
+
+    assert expanded_steps(:ci) == [
+             "bourse.check_lighter_signer",
+             "format --check-formatted",
+             "compile --warnings-as-errors",
+             "credo --strict --ignore TagTODO,TagFIXME",
+             "doctor --raise",
+             "sobelow --skip",
+             "cmd env MIX_ENV=test mix test.json --quiet",
+             "bourse.authority_check",
+             "bourse.error_authority",
+             "bourse.claude_check",
+             "bourse.agents_md --check",
+             "ex_dna --max-clones 0",
+             @reach_command,
+             "cmd env MIX_ENV=test mix bourse.verify_rest_read_contracts",
+             "cmd env MIX_ENV=test mix test.json --quiet --cover --cover-threshold 80 --output /tmp/bourse-ci-cover.json",
+             "deps.audit --ignore-advisory-ids GHSA-w4f7-4cxr-rv3c",
+             "dialyzer.json --quiet"
+           ]
+  end
+
+  test "precommit.full retains its suite and audit steps" do
+    assert expanded_steps(:"precommit.full") ==
+             expanded_steps(:precommit) ++
+               ["deps.audit --ignore-advisory-ids GHSA-w4f7-4cxr-rv3c", "dialyzer.json --quiet"]
+  end
+
   test "no gate replays a recording as an oracle" do
-    steps = Enum.flat_map([:precommit, :"check.dispatch", :"precommit.full", :ci], &alias_steps/1)
+    steps = Enum.flat_map([:precommit, :"check.dispatch", :"check.full", :"precommit.full", :ci], &alias_steps/1)
 
     assert Enum.filter(steps, &(&1 =~ ~r/oracle|record_fixtures|accepted_requests|replay/)) == []
   end
@@ -35,7 +83,7 @@ defmodule Bourse.CheckDispatchConfigTest do
   end
 
   test "check aliases name Mix tasks under bourse.*, not ccxt.*" do
-    steps = Enum.flat_map([:precommit, :"check.dispatch", :"precommit.full", :ci], &alias_steps/1)
+    steps = Enum.flat_map([:precommit, :"check.dispatch", :"check.full", :"precommit.full", :ci], &alias_steps/1)
 
     refute Enum.any?(steps, &String.starts_with?(&1, "ccxt."))
 
@@ -48,8 +96,8 @@ defmodule Bourse.CheckDispatchConfigTest do
            ]
   end
 
-  test "check.dispatch builds the Lighter helper before the suite that loads it" do
-    steps = alias_steps(:"check.dispatch")
+  test "check.full builds the Lighter helper before the suite that loads it" do
+    steps = alias_steps(:"check.full")
 
     signer = Enum.find_index(steps, &(&1 == "bourse.check_lighter_signer"))
     suite = Enum.find_index(steps, &(&1 == "precommit"))
@@ -62,21 +110,21 @@ defmodule Bourse.CheckDispatchConfigTest do
              "gate on operations it predates — a red with no defect."
   end
 
-  test "check.dispatch pins Reach to the lib source tree" do
+  test "check.full pins Reach to the lib source tree" do
     reach_steps =
       Bourse.MixProject.project()
       |> Keyword.fetch!(:aliases)
-      |> Keyword.fetch!(:"check.dispatch")
+      |> Keyword.fetch!(:"check.full")
       |> Enum.filter(&String.contains?(&1, "reach.check"))
 
     assert reach_steps == [@reach_command]
   end
 
-  test "check.dispatch runs both authority checks offline" do
+  test "check.full runs both authority checks offline" do
     steps =
       Bourse.MixProject.project()
       |> Keyword.fetch!(:aliases)
-      |> Keyword.fetch!(:"check.dispatch")
+      |> Keyword.fetch!(:"check.full")
 
     assert Enum.filter(steps, &(&1 in @authority_commands)) == @authority_commands
     refute Enum.any?(steps, &String.contains?(&1, "authority_check --online"))

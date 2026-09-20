@@ -9,9 +9,8 @@ defmodule Mix.Tasks.Bourse.AgentsMd do
       mix bourse.agents_md --check    # exit non-zero if AGENTS.md is stale/missing
       mix bourse.agents_md --dry-run  # print rendered output, write nothing
 
-  Wired into `mix check.dispatch` so every cross-family reviewer validates the
-  rules document it is about to consume. Pure filesystem work — safe for cold
-  harness worktrees.
+  Wired into `mix check.full` to validate the generated rules document.
+  Pure filesystem work — safe for cold harness worktrees.
 
   ## Input resolution (explicit only)
 

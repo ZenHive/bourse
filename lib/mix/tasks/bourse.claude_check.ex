@@ -9,7 +9,7 @@ defmodule Mix.Tasks.Bourse.ClaudeCheck do
       mix bourse.claude_check
       mix bourse.claude_check --claude path/to/CLAUDE.md --root .
 
-  A step of `mix check.dispatch`, which `mix ci` then calls, alongside the
+  A step of `mix check.full`, which `mix ci` then calls, alongside the
   AGENTS.md freshness gate. Pure filesystem / source parsing — safe for cold
   reviewer worktrees.
 

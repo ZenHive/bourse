@@ -99,7 +99,7 @@ defmodule Mix.Tasks.Bourse.CheckLighterSigner do
 
       mix bourse.build_lighter_signer
 
-    mix check.dispatch records this as a failing step. A missing toolchain is a
+    mix check.full records this as a failing step. A missing toolchain is a
     RED, not a skipped pass.
     """
   end

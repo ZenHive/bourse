@@ -291,12 +291,13 @@ defmodule Bourse.MixProject do
         # one gate is `:dangerous` (mutating probes), which must be asked for.
         "cmd env MIX_ENV=test mix test.json --quiet"
       ],
-      # Dispatch-scale reviewer hint (the registered harness `check_command`).
-      # `precommit` (the provider-live suite) plus the clone + architecture/smell
-      # analyzers a cold reviewer worktree would otherwise never run (they're only
-      # host-PostToolUse-hook-run locally). No dialyzer (a cold harness worktree
-      # cold-builds the PLT for minutes → `review_stuck`).
+      # Focused dispatch bootstrap; behavior checks are selected by the reviewer.
       "check.dispatch": [
+        "format --check-formatted",
+        "compile --warnings-as-errors"
+      ],
+      # Full QA checks shared by the comprehensive CI entry point.
+      "check.full": [
         # Owns `priv/native/lighter_signer/`, which the `:native` tests inside
         # `precommit` load. The artifact is gitignored, so a source change leaves
         # a stale binary behind and the suite reds on operations it predates —
@@ -325,15 +326,14 @@ defmodule Bourse.MixProject do
       # flags gun 2.5.0 although gun's own vulnerable range is < 2.4.0.
       # Verified against the advisory 2026-07-30; drop when the DB row is fixed.
       "deps.audit": "deps.audit --ignore-advisory-ids GHSA-w4f7-4cxr-rv3c",
-      # Local pre-PR / post-merge-audit gate — adds dialyzer. SPLIT out because a
-      # cold harness worktree cold-builds the PLT (minutes) → `review_stuck`.
+      # Full-suite audit subset with dependency auditing and dialyzer.
       # `--cover` stays out of `precommit` (`:cover` instruments every loaded beam
       # — multi-GB spike on a cold tree); `ci` below enforces the tiers instead.
       "precommit.full": ["precommit", "deps.audit", "dialyzer.json --quiet"],
-      # Comprehensive pre-PR / CI gate: the dispatch gate, the full provider-live
+      # Complete post-merge QA: full checks, the provider-live
       # REST-read contract lane, the coverage tiers, and dialyzer.
       ci: [
-        "check.dispatch",
+        "check.full",
         # The complete provider-live REST-read lane. It reports
         # denominator/executed/failures and fails when executed < denominator, so
         # a shrinking live surface cannot pass as green. Alias steps ignore

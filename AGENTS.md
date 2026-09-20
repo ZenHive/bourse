@@ -1,4 +1,4 @@
-<!-- Auto-generated from CLAUDE.md by claude-marketplace/scripts/sync-agents-md.sh — do not edit manually -->
+<!-- Auto-generated from CLAUDE.md by mix bourse.agents_md — do not edit manually -->
 
 # CLAUDE.md
 
@@ -1096,10 +1096,11 @@ Artifact **freshness**, **expressiveness** and **scope** are separate axes. A ma
 
 For cross-family reviewers (codex / cursor / grok) and any dispatch run.
 
-- **`mix check.dispatch`** — existing alias inventory (select scoped commands per verification policy): `precommit`, `bourse.authority_check` (offline), `bourse.error_authority`, `bourse.check_lighter_signer`, `bourse.claude_check`, `bourse.agents_md --check`, `ex_dna --max-clones 0`, `reach.check --arch --smells --strict --path lib` (under `MIX_ENV=dev`; the `--path lib` pin is load-bearing — arch sources come from the Mix env, smell sources from `--path`). No dialyzer (a cold worktree cold-builds the PLT for minutes). `bourse.check_lighter_signer` is red when Go or a C compiler is missing — the helper is a gitignored build artifact, so a skipped pass here is a lie.
-- **`mix precommit`** — format / compile --warnings-as-errors / `credo --strict --ignore TagTODO,TagFIXME` / doctor --raise / sobelow --skip / `test.json`. It carries no `--exclude`: the suite is provider-live, so this step calls real venues and needs the testnet credentials exported.
-- **`mix precommit.full`** — adds `deps.audit` + dialyzer (post-merge QA).
-- **`mix ci`** — `check.dispatch` + the full `bourse.verify_rest_read_contracts` lane + `test.json --cover --cover-threshold 80 --output /tmp/bourse-ci-cover.json` + `deps.audit` (an alias carrying `--ignore-advisory-ids`) + dialyzer.
+- **`mix check.dispatch`** — `format --check-formatted` + `compile --warnings-as-errors`. No suite or analyzers; reviewers select focused behavior tests and risk-relevant live/security checks under the imported verification policy.
+- **`mix check.full`** — `bourse.check_lighter_signer`, `precommit`, `bourse.authority_check` (offline), `bourse.error_authority`, `bourse.claude_check`, `bourse.agents_md --check`, `ex_dna --max-clones 0`, and `reach.check --arch --smells --strict --path lib` under `MIX_ENV=dev`. The signer check builds the gitignored helper before testing it and fails when Go or a C compiler is missing.
+- **`mix precommit`** — format / compile --warnings-as-errors / `credo --strict --ignore TagTODO,TagFIXME` / doctor --raise / sobelow --skip / `test.json`. This is a full provider-live suite with no `--exclude`; it needs the testnet credentials exported.
+- **`mix precommit.full`** — `precommit` + `deps.audit` + dialyzer; a full-suite audit subset without the complete `ci` lanes.
+- **`mix ci`** — complete full-QA entry point: `check.full` + `bourse.verify_rest_read_contracts` + `test.json --cover --cover-threshold 80 --output /tmp/bourse-ci-cover.json` + `deps.audit` (with `--ignore-advisory-ids`) + dialyzer.
 
 🚨 **There is no hosted CI, and nothing runs on a schedule.** Every gate here is
 executed by a person or a harness run on this host. The live surface is proven by
@@ -1107,13 +1108,10 @@ running `mix bourse.verify_rest_read_contracts` — and `mix bourse.verify_ws_fi
 for streams — so a lane nobody ran proves nothing, and "the build is green" is only
 a claim until it names which command was run and where.
 
-🚨 **`check.dispatch` reaches venues but does not cover them.** Its `precommit`
-step runs the provider-live suite, so a green there is real evidence for whatever
-that suite asserted — and it is not the whole REST-read surface: the 410-case
-contract lane runs under `mix ci`, or `mix bourse.verify_rest_read_contracts` on
-its own. Approving a
-venue-facing acceptance criterion means naming the lane that exercised it, not the
-gate that happened to pass.
+`check.dispatch` provides no live-provider evidence. The provider-live suite is
+in `precommit`; the complete REST-read contract lane is in `ci` and can also run
+as `mix bourse.verify_rest_read_contracts`. Venue-facing acceptance must name the
+lane and cases exercised.
 
 `mix ci` measures project coverage. Coverage timing and tiers follow
 `verification-policy.md`; changed behavior still needs focused tests.
