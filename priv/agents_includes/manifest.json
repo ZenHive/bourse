@@ -20,8 +20,8 @@
     },
     "~/.claude/includes/harness-workflow.md": {
       "path": "priv/agents_includes/harness-workflow.md",
-      "sha256": "ca49450a9d3155c32e89d14fdb67d4771c4511970cf7b30043695894b42c7791",
-      "bytes": 50461
+      "sha256": "26ee8d1c8b48e8e0ec78fb78fd6f8f8c0154162b754b6ef4e35a4c8429e36613",
+      "bytes": 54056
     },
     "~/.claude/includes/verification-policy.md": {
       "path": "priv/agents_includes/verification-policy.md",

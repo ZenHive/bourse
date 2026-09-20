@@ -27,6 +27,39 @@ defmodule Bourse.CheckDispatchConfigTest do
              "format --check-formatted",
              "compile --warnings-as-errors"
            ]
+
+    joined = Enum.join(expanded_steps(:"check.dispatch"), "\n")
+
+    for needle <- ["credo", "doctor", "sobelow", "dialyzer", "reach", "ex_dna", "test.json", "--cover"] do
+      refute joined =~ needle, "check.dispatch must not invoke #{needle}"
+    end
+  end
+
+  test "CLAUDE.md imports the canonical verification-policy include" do
+    claude = File.read!("CLAUDE.md")
+
+    assert claude =~ ~r/^@~\/\.claude\/includes\/verification-policy\.md$/m
+    assert File.exists?("priv/agents_includes/verification-policy.md")
+  end
+
+  test "check.full retains the former dispatch analyzer graph" do
+    refute "check.dispatch" in alias_steps(:"check.full")
+
+    assert expanded_steps(:"check.full") == [
+             "bourse.check_lighter_signer",
+             "format --check-formatted",
+             "compile --warnings-as-errors",
+             "credo --strict --ignore TagTODO,TagFIXME",
+             "doctor --raise",
+             "sobelow --skip",
+             "cmd env MIX_ENV=test mix test.json --quiet",
+             "bourse.authority_check",
+             "bourse.error_authority",
+             "bourse.claude_check",
+             "bourse.agents_md --check",
+             "ex_dna --max-clones 0",
+             @reach_command
+           ]
   end
 
   test "ci retains the complete QA graph independently of dispatch" do
