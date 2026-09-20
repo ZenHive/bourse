@@ -269,7 +269,7 @@ Production-ready for Hex.pm publication.
 | Task 215 | ✅ | 🎁 **polish** · Cache market data for symbol->market_id resolution (loadMarkets equivalent) instead of re-fetching per call [D:5/B:6/U:5 → Eff:1.1?] 📋 |
 | Task 447 `[P]` | ✅ | 🎁 **polish** · Reduce the warm offline test suite to at most 60 seconds without losing coverage [D:7/B:9/U:8 → Eff:1.21?] 📋 |
 | Task 448 `[P]` | ✅ | 🎁 **polish** · Reduce the full seven-venue fixture-replay gate to at most 60 seconds [D:6/B:9/U:7 → Eff:1.33?] 📋 |
-| Task 705 | ⬜ | 🎁 **polish** · Separate focused dispatch aliases from complete post-merge QA [D:3/B:7/U:7 → Eff:2.33] 🎯 |
+| Task 705 | 🔄 | 🎁 **polish** · Separate focused dispatch aliases from complete post-merge QA [D:3/B:7/U:7 → Eff:2.33] 🎯 |
 <!-- TASKS:END -->
 
 ## Phase 9: Trading Utilities
