@@ -270,6 +270,8 @@ Production-ready for Hex.pm publication.
 | Task 447 `[P]` | ✅ | 🎁 **polish** · Reduce the warm offline test suite to at most 60 seconds without losing coverage [D:7/B:9/U:8 → Eff:1.21?] 📋 |
 | Task 448 `[P]` | ✅ | 🎁 **polish** · Reduce the full seven-venue fixture-replay gate to at most 60 seconds [D:6/B:9/U:7 → Eff:1.33?] 📋 |
 | Task 705 | ✅ | 🎁 **polish** · Separate focused dispatch aliases from complete post-merge QA [D:3/B:7/U:7 → Eff:2.33] 🎯 |
+| Task 706 | ⬜ | 🎁 **polish** · Repair intermittent Binance USD-M order time-window boundary failure [D:4/B:5/U:5 → Eff:1.25] 📋 |
+| Task 707 | ⬜ | 🎁 **polish** · Make Binance algo-order contract setup reliably readable before assertion [D:4/B:6/U:5 → Eff:1.38] 📋 |
 <!-- TASKS:END -->
 
 ## Phase 9: Trading Utilities
@@ -879,11 +881,11 @@ The authored-specs pivot workstream (see [docs/authored-specs.md](docs/authored-
 | Task 659 | ✅ | 🎁 **rest_unified** · 🐛 OrderPrecision snap_value MatchError is a third contract for non-numeric order amounts [D:3/B:5/U:3 → Eff:1.33?] 📋 |
 | Task 660 | ✅ | 🎁 **rest_unified** · 🐛 Bybit dated-future unified symbols still carry venue-native DDMMMYY after the 658 pass-through [D:5/B:9/U:7 → Eff:1.6?] 🚀 |
 | Task 661 | ⛔ | 🎁 **rest_unified** · 🐛 Bybit InverseFutures native ids are quarterly codes, not DDMMMYY [D:5/B:8/U:6 → Eff:1.4?] 📋 |
-| Task 662 `[P]` | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · An unrecognized caller option is reported as a recoverable venue network fault and melts the circuit breaker, taking every read on that venue down [D:4/B:8/U:6 → Eff:1.75] 🚀 |
-| Task 663 | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · 🐛 🔒 The unified write boundary silently discards caller intent: an uninterpretable `side` routes to a DEFAULT direction instead of erroring [D:4/B:8/U:7 → Eff:1.88] 🚀 |
-| Task 664 | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · 🐛 Unified `notional` is authored nil for every non-future deribit position kind, so an open option contributes nothing to a size fold [D:4/B:6/U:5 → Eff:1.38] 📋 |
-| Task 665 `[P]` | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · 🐛 🔒 A side that is not exactly "buy" or "sell" still becomes a direction on every batch write path [D:3/B:7/U:6 → Eff:2.17] 🎯 |
-| Task 666 `[P]` | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · 🐛 Option position notional is derived per venue with no shared rule, so the same field carries a different unit on each one [D:4/B:6/U:3 → Eff:1.12] 📋 |
+| Task 662 `[P]` | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · An unrecognized caller option is reported as a recoverable venue network fault and melts the circuit breaker, taking every read on that venue down [D:4/B:8/U:6 → Eff:1.75?] 🚀 |
+| Task 663 | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · 🐛 🔒 The unified write boundary silently discards caller intent: an uninterpretable `side` routes to a DEFAULT direction instead of erroring [D:4/B:8/U:7 → Eff:1.88?] 🚀 |
+| Task 664 | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · 🐛 Unified `notional` is authored nil for every non-future deribit position kind, so an open option contributes nothing to a size fold [D:4/B:6/U:5 → Eff:1.38?] 📋 |
+| Task 665 `[P]` | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · 🐛 🔒 A side that is not exactly "buy" or "sell" still becomes a direction on every batch write path [D:3/B:7/U:6 → Eff:2.17?] 🎯 |
+| Task 666 `[P]` | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · 🐛 Option position notional is derived per venue with no shared rule, so the same field carries a different unit on each one [D:4/B:6/U:3 → Eff:1.12?] 📋 |
 <!-- TASKS:END -->
 
 ## Phase 15: Options Execution

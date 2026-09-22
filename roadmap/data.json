@@ -30497,7 +30497,7 @@
         "CLAUDE.md",
         "AGENTS.md"
       ],
-      "body": "Converge the repository onto one testing model after the three provider-live lanes have landed. Delete every remaining semantic test whose authority is a fixture, mock, recording, generated expectation, authored runtime spec, CCXT artifact or local fake service. Retain small offline tests only for truly deterministic mechanics such as encoders, pure transformations and state-machine mechanics; each retained case must state that boundary.\n\nMake the canonical commands honest. A default green must mean that live REST reads, real sandbox state transitions and real WebSocket frames all ran. Missing credentials or an unavailable provider makes the gate red, not excluded or skipped. Recordings can remain for provenance and opt-in replay/debugging, but cannot grade correctness.\n\nThis is a deletion and gate-flip task, not another additive suite. Compare final non-JSON test-source lines against the 74,276-line baseline at bourse 57284d8, remove obsolete helpers and tags, update CLAUDE.md, regenerate AGENTS.md, and verify the delivered origin/main with the complete live lane, mix check.dispatch and mix ci. Cleanup is part of correctness: no test-owned order or position may remain.\n\nRouting trigger: CI/check infrastructure, repo-wide invariant and live trading safety. Dispatch as a solo final wave after the REST and WebSocket migrations land.\nTriage 2026-09-15: the BUGS.md 2026-08-29 coverage-headroom report is historical fragility, not evidence of a new runtime defect. Re-measure coverage during this already-scoped suite convergence; retain the 80 percent standard and 95 percent critical per-module obligations without a separate cosmetic headroom task. Task 698 owns the specific metadata contract gaps left by 686.\n",
+      "body": "Converge the repository onto one testing model after the three provider-live lanes have landed. Delete every remaining semantic test whose authority is a fixture, mock, recording, generated expectation, authored runtime spec, CCXT artifact or local fake service. Retain small offline tests only for truly deterministic mechanics such as encoders, pure transformations and state-machine mechanics; each retained case must state that boundary.\n\nMake the canonical commands honest. A default green must mean that live REST reads, real sandbox state transitions and real WebSocket frames all ran. Missing credentials or an unavailable provider makes the gate red, not excluded or skipped. Recordings can remain for provenance and opt-in replay/debugging, but cannot grade correctness.\n\nThis is a deletion and gate-flip task, not another additive suite. Compare final non-JSON test-source lines against the 74,276-line baseline at bourse 57284d8, remove obsolete helpers and tags, update CLAUDE.md, regenerate AGENTS.md, and verify the delivered origin/main with the complete live lane, mix check.dispatch and mix ci. Cleanup is part of correctness: no test-owned order or position may remain.\n\nRouting trigger: CI/check infrastructure, repo-wide invariant and live trading safety. Dispatch as a solo final wave after the REST and WebSocket migrations land.\nTriage 2026-09-15: the BUGS.md 2026-08-29 coverage-headroom report is historical fragility, not evidence of a new runtime defect. Re-measure coverage during this already-scoped suite convergence; retain the 80 percent standard and 95 percent critical per-module obligations without a separate cosmetic headroom task. Task 698 owns the specific metadata contract gaps left by 686.\n\nAudit 2026-09-22 at 21c9a4e: the full live coverage run measured 81.30 percent overall (11367/13981 lines), meeting the 80 percent global floor but not the 95 percent critical per-module obligation. Measured critical-path gaps: Bourse.Dispatch 69.7 percent; Bourse.Parser 91.67 percent; Bourse.ResponseParser 71.78 percent; Bourse.Signing.EIP712 94.59 percent; Bourse.Signing.HmacRecipe 93.93 percent; Bourse.Unified.ReadParse 75.01 percent; Bourse.Unified.RequestShape 82.77 percent; Bourse.Unified.RequestShape.Binance 48.05 percent; Bourse.Unified.RequestShape.Bybit 77.25 percent; Bourse.Unified.RequestShape.Deribit 80.0 percent; Bourse.Unified.RequestShape.Derive 74.36 percent; Bourse.Unified.RequestShape.Hyperliquid 93.64 percent; Bourse.Unified.RequestShape.OKX 75.09 percent; Bourse.WS.Auth 91.67 percent. Preserve both tiers and close these measured gaps with meaningful boundary/error tests while converging the suite; do not weaken thresholds or retain obsolete external-semantic mocks solely for coverage. The dangerous-tag exclusion means this run is not proof of write-lifecycle coverage. Full evidence: .audit/21c9a4e.md. This updates the existing coverage owner rather than reopening superseded task 656.\n",
       "created_at": "2026-08-22",
       "scored_at": "2026-08-22",
       "cross_repo": []
@@ -32389,6 +32389,73 @@
       "verified": true,
       "verified_by": "cursor",
       "verification_ref": "harness-run:run-1789946918442-f80d89cf",
+      "cross_repo": []
+    },
+    {
+      "id": "706",
+      "phase": 8,
+      "bundle": "polish",
+      "status": "pending",
+      "title": "Repair intermittent Binance USD-M order time-window boundary failure",
+      "scores": {
+        "d": 4,
+        "b": 5,
+        "u": 5
+      },
+      "eff": 1.25,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "codex",
+      "model": "gpt-6-astra",
+      "acceptance_criteria": [
+        "Reproduce and explain the live USD-M fetch_orders boundary failure using provider-owned documentation and observed requests/responses, including ordinary and algo order books and their timestamp semantics.",
+        "Fix the demonstrated request, parsing, or test-state defect while retaining meaningful since/until assertions; no wider tolerance, skip, or mock may conceal the mismatch.",
+        "An independent reviewer runs the affected live time-window case and relevant order contracts, verifies cleanup, and records evidence. Missing prerequisites fail visibly."
+      ],
+      "touches": [
+        "test/live/time_window_integration_test.exs",
+        "lib/bourse/unified/",
+        "priv/venues/binanceusdm/authored/endpoints.json"
+      ],
+      "body": "Audit of 21c9a4e on 2026-09-22: mix ci's full suite confirmed the USD-M fetch_orders until assertion after its automatic retry (seed 560967): requested 1789923016792, last 1789923014893. The later coverage suite passed this case, so this is intermittent, not a proven permanent mapping defect. The authored request already maps until to endTime and combines ordinary/algo history routes. Diagnose against live provider semantics before changing it. Tasks 617 and 633 are done and do not own this recurrence; task 670 owns broad suite convergence, not this specific regression. Evidence: .audit/21c9a4e.md. Routing trigger: live external semantics and independent verification.",
+      "created_at": "2026-09-22",
+      "scored_at": "2026-09-22",
+      "cross_repo": []
+    },
+    {
+      "id": "707",
+      "phase": 8,
+      "bundle": "polish",
+      "status": "pending",
+      "title": "Make Binance algo-order contract setup reliably readable before assertion",
+      "scores": {
+        "d": 4,
+        "b": 6,
+        "u": 5
+      },
+      "eff": 1.38,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "codex",
+      "model": "gpt-6-astra",
+      "acceptance_criteria": [
+        "Observe owned algo-order creation and the corresponding USD-M/COIN-M detail reads live; determine whether propagation, identifier selection, or another provider behavior causes order_not_found.",
+        "Repair the demonstrated cause with bounded state-aware setup and guaranteed cleanup. A never-readable order or unexpected provider error must fail; do not add fixed sleeps, catch-all passes, skips, or blanket retries that hide semantic failures.",
+        "An independent reviewer exercises affected algo-order contracts repeatedly against the real provider, including the relevant error path and cleanup, and records the full contract-lane result."
+      ],
+      "touches": [
+        "test/support/rest_read_contract_owned_state.ex",
+        "test/support/rest_read_contract_scenario.ex",
+        "test/live/binancecoinm/",
+        "test/live/binanceusdm/"
+      ],
+      "body": "Audit of 21c9a4e on 2026-09-22: the 410-case REST-read lane failed binancecoinm:fetchOpenOrder:0:dapiPrivateGetAlgoOrder with order_not_found (409 passed, seed recorded in .audit/21c9a4e.md). The earlier full suite had retry-cleared failures for COIN-M fetchOrder and USD-M fetchOpenOrder algo detail reads. RestReadContractScenario already creates an owned algo order, but RestReadContractOwnedState.await_readable explicitly returns :ok for source_kind algo; ordinary orders poll readability. This is a diagnostic lead, not proof of eventual consistency. Existing completed tasks 576/580 concern routing; task 670 is broad suite convergence. This task owns the observed recurring setup/read failure. Routing trigger: live sandbox order lifecycle and independent review.",
+      "created_at": "2026-09-22",
+      "scored_at": "2026-09-22",
       "cross_repo": []
     }
   ]
