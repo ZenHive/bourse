@@ -1,0 +1,76 @@
+defmodule Bourse.Signing.Derive.PreparedOrderTest do
+  use ExUnit.Case, async: true
+
+  alias Bourse.Signing.Derive.PreparedOrder
+
+  @params %{
+    "subaccount_id" => 30_769,
+    "nonce" => 1_790_476_000_000_001,
+    "signature_expiry_sec" => 1_790_476_600,
+    "owner" => "0x8772185a1516f0d61fC1c2524926BfC69F95d698",
+    "signer" => "0x0000000000000000000000000000000000000001",
+    "base_asset_address" => "0x4BB4C3CDc7562f08e9910A0C7D8bB7e108861eB4",
+    "base_asset_sub_id" => "2576980377601821772800",
+    "instrument_name" => "ETH-20270924-6000-P",
+    "direction" => "buy",
+    "amount" => "0.1",
+    "limit_price" => "100",
+    "max_fee" => "1"
+  }
+
+  test "keyless preparation matches the provider Python SDK and independent EIP-712 encoder" do
+    assert {:ok, result} = PreparedOrder.prepare(@params, :mainnet)
+    # derive_action_signing.SignedAction._to_typed_data_hash and ethers.TypedDataEncoder.hash
+    assert result.digest == "0x40b6c7a8cee212dbf762eaaa850beaf9d4f8b52e4931db666cc48269eeba1896"
+    assert result.typed_data["domain"]["chainId"] == 957
+    assert result.body["amount"] == "0.1"
+    refute Map.has_key?(result.body, "signature")
+    refute Map.has_key?(result.body, "owner")
+  end
+
+  test "every signed field and the deployment alter the digest" do
+    {:ok, original} = PreparedOrder.prepare(@params, :mainnet)
+
+    changes = %{
+      "subaccount_id" => 30_770,
+      "nonce" => 1_790_476_000_000_002,
+      "signature_expiry_sec" => 1_790_476_601,
+      "owner" => @params["signer"],
+      "signer" => @params["owner"],
+      "base_asset_address" => @params["owner"],
+      "base_asset_sub_id" => "1",
+      "amount" => "0.2",
+      "limit_price" => "101",
+      "max_fee" => "2",
+      "direction" => "sell"
+    }
+
+    for {key, value} <- changes do
+      assert {:ok, changed} = PreparedOrder.prepare(Map.put(@params, key, value), :mainnet)
+      refute changed.digest == original.digest, key
+    end
+
+    assert {:ok, sandbox} = PreparedOrder.prepare(@params, :testnet)
+    refute sandbox.digest == original.digest
+  end
+
+  test "invalid decimal precision, nonfinite values and malformed identities are refused without truncation" do
+    for key <- ~w(amount limit_price max_fee),
+        value <- [nil, "", "NaN", "Infinity", "-1", "0.0000000000000000001", 0.1] do
+      assert {:error, :invalid_order} = PreparedOrder.prepare(Map.put(@params, key, value), :mainnet)
+    end
+
+    for key <- ~w(owner signer base_asset_address), value <- [nil, "0x1", "0x" <> String.duplicate("z", 40)] do
+      assert {:error, :invalid_order} = PreparedOrder.prepare(Map.put(@params, key, value), :mainnet)
+    end
+
+    for key <- ~w(subaccount_id nonce signature_expiry_sec base_asset_sub_id), value <- [-1, "1.5", nil] do
+      assert {:error, :invalid_order} = PreparedOrder.prepare(Map.put(@params, key, value), :mainnet)
+    end
+
+    assert {:error, :invalid_order} = PreparedOrder.prepare(@params, :unknown)
+    assert {:error, :invalid_order} = PreparedOrder.prepare(nil, :mainnet)
+    assert {:ok, _} = PreparedOrder.prepare(Map.put(@params, "max_fee", "0"), :mainnet)
+    assert {:error, :invalid_order} = PreparedOrder.prepare(Map.put(@params, "amount", "0"), :mainnet)
+  end
+end
