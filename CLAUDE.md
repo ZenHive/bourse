@@ -16,7 +16,7 @@ Eager-load only the irreducible floor; everything else is skill-on-demand via en
 @~/.claude/includes/critical-rules.md
 @~/.claude/includes/elixir-security-adjudications.md
 @~/.claude/includes/ex-unit-json.md
-@~/.claude/includes/harness-workflow.md
+@~/.claude/includes/harness-guardrails.md
 
 (`response-conventions` loads globally via `~/.claude/CLAUDE.md` — not re-imported here.)
 
