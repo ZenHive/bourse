@@ -24285,3 +24285,28 @@ model = "gpt-6-astra"
 body = "Audit of 21c9a4e on 2026-09-22: the 410-case REST-read lane failed binancecoinm:fetchOpenOrder:0:dapiPrivateGetAlgoOrder with order_not_found (409 passed, seed recorded in .audit/21c9a4e.md). The earlier full suite had retry-cleared failures for COIN-M fetchOrder and USD-M fetchOpenOrder algo detail reads. RestReadContractScenario already creates an owned algo order, but RestReadContractOwnedState.await_readable explicitly returns :ok for source_kind algo; ordinary orders poll readability. This is a diagnostic lead, not proof of eventual consistency. Existing completed tasks 576/580 concern routing; task 670 is broad suite convergence. This task owns the observed recurring setup/read failure. Routing trigger: live sandbox order lifecycle and independent review."
 created_at = "2026-09-22"
 scored_at = "2026-09-22"
+
+[[task]]
+id = "708"
+phase = 7
+bundle = "ws_unified"
+status = "pending"
+title = "Incremental order books never check sequence continuity, so a dropped delta silently corrupts the book"
+scores = { d = 5, b = 9, u = 8 }
+acceptance_criteria = ["For every venue whose authored orderbook_semantics has apply_mode incremental or both, a delta whose continuity id does not follow the previous one causes the book to be invalidated and resynced; it is never merged", "The consumer receives an explicit gap/resync signal (event or error tuple) and no book snapshot is broadcast between the gap and the completed resync", "Deltas older than the snapshot are dropped according to each venue's documented bootstrap rule, cited in the code or spec by doc URL", "After a reconnect, the first book broadcast for a symbol comes from a fresh snapshot, never from deltas applied to the pre-disconnect book", "An incremental/both venue whose authored sequence_fields are empty fails loudly at spec load unless the spec records an explicit, doc-cited reason the venue has no continuity id; deribit's authored spec is corrected or carries that reason", "Live test per affected venue (binance, binanceusdm, okx, deribit): subscribe, observe real deltas chaining correctly, then inject a synthetic gap into the live stream and observe invalidate plus resync to a book matching a fresh REST snapshot", "A test that fails if sequence_fields is read from the spec but unused again (e.g. every declared field is consumed by the continuity check for at least one venue)"]
+out_of_scope = ["Checksum validation (no authored venue currently declares checksum.present = true) - file separately if a venue gains one", "replace-mode venues (hyperliquid, derive), which resend the full book each frame", "zen_websocket: it holds no order book state; transport reconnect behaviour there is unchanged"]
+assignee = "codex"
+model = "gpt-6-astra"
+body = """
+Verified 2026-09-29 by reading the code: `Bourse.WS.Semantics.Orderbook.new/1` reads `sequence_fields` (and `checksum.present`) from each venue's authored `orderbook_semantics`, but nothing ever uses them. `apply/3` classifies a frame as snapshot/delta/replace and merges deltas into the stored book unconditionally. A lost, duplicated or out-of-order delta, or a delta arriving after a reconnect before a fresh snapshot, is merged into the book and the consumer gets a wrong book with no signal. Task 644 explicitly scoped out "sequence-gap recovery"; it was never filed until now.
+
+Authored corpus today: binance and binanceusdm are `incremental` with sequence fields `U`/`u`/`pu`; okx is `both` with `prevSeqId`/`seqId`. deribit (`incremental`) declares no sequence fields — premise unverified: deribit is believed to publish continuity ids (`change_id`/`prev_change_id`); confirm against its official WS docs and live frames, and fix the authored spec if the fields exist. `replace`-mode venues (hyperliquid, derive) have nothing to chain and are out of this task.
+
+Make continuity a spec-driven, fail-visible property of incremental books: each delta is checked against the previous one using the venue's own rule; on a gap the book is discarded and resynced (fresh snapshot per the venue's documented procedure) and the consumer is told the book was invalid, rather than receiving a merged wrong book. Stale deltas that predate the snapshot are dropped per the venue's documented rule (Binance's `U <= lastUpdateId+1 <= u` bootstrap is the canonical example). Reconnect must start from an empty book awaiting a snapshot.
+
+Authority: each venue's official WebSocket documentation plus observed live frames. CCXT is reference only.
+
+Note 2026-09-29 — CCXT comparison (read at ccxt commit a0b76fa, not executed): ccxt-pro Go and Rust DO check continuity for binance (`U`/`u`/`pu` bootstrap + chain, raises ChecksumError — Rust via `panic!`) and okx (`prevSeqId` vs stored nonce, rejects with InvalidNonce and drops the book). They do NOT check deribit (uses the timestamp as nonce and ignores `prev_change_id`, although CCXT's own example frame shows it). bourse's authored `sequence_fields` use CCXT's names, so the data was carried over from CCXT but the check logic was lost in the port. Implication: CCXT is a useful reference for binance/okx, but offers no guidance for deribit — derive those rules from the venue docs. The deribit premise above is thereby half-confirmed (`prev_change_id` exists in real frames per CCXT's example); still confirm live. Do not copy CCXT's behavior of only detecting the gap and leaving resync to the caller, or of panicking.
+"""
+created_at = "2026-09-28"
+scored_at = "2026-09-28"

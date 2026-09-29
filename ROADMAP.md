@@ -237,6 +237,7 @@ Real-time market data and order updates. ZenWebsocket, three-layer architecture.
 | Task 631 | ✅ | 🎁 **live_triage** · 🐛 Mixed-host WS subscribe must not leave a live half when the other host fails [D:4/B:6/U:4 → Eff:1.25?] 📋 |
 | Task 632 | ✅ | 🎁 **live_triage** · 🐛 Binance-family order-type reads are not the inverse of the writes: every conditional type collapses to market or limit [D:5/B:7/U:6 → Eff:1.3?] 📋 |
 | Task 634 | ✅ | 🎁 **live_triage** · 🐛 Deribit shipped release 2.1.1 during a maintenance window: re-bind the current-REST corpus to the republished OpenAPI [D:5/B:8/U:8 → Eff:1.6?] 🚀 |
+| Task 708 | ⬜ | 🎁 **ws_unified** · Incremental order books never check sequence continuity, so a dropped delta silently corrupts the book [D:5/B:9/U:8 → Eff:1.7] 🚀 |
 <!-- TASKS:END -->
 
 ## Phase 8: Polish (Hex Publishing)
