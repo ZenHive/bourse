@@ -7,6 +7,42 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added
+
+- `Bourse.Signing.Derive.PreparedOrder.prepare/2` prepares a Derive v2 order for
+  signing somewhere else. It is pure — no keys, no clock, no nonce allocation, no
+  network — and returns the three things a customer's own wallet needs to
+  authorize one order: the EIP-712 typed data to display, the exact wire terms
+  that must accompany the signature, and the digest those two agree on. The
+  private key never has to reach this library.
+
+  The `Action` typehash is derived from the field list at compile time instead of
+  transcribed, so the struct a wallet displays and the struct the digest commits
+  to cannot drift apart, and a test pins the derived value against the constant
+  the provider publishes. Chain ids and Matching addresses are corroborated
+  in-tree: hashed as an EIP-712 domain they reproduce
+  `Bourse.Signing.Derive`'s independently pinned domain separators.
+
+  Scope is GTC limit orders, and `order_type` / `time_in_force` are refused
+  rather than rewritten when they name anything else — neither field enters the
+  signed blob, so a silent substitution would leave a valid digest attached to
+  terms the caller never asked for. A refusal names the field it refused.
+
+  🚨 **This prepares a signature; it does not establish that Derive accepts one.**
+  The encoding was compared against `derivexyz/v2-action-signing-python` and
+  ethers `TypedDataEncoder`, which is compatibility evidence, never venue
+  semantics — and the Trade module addresses are graded only by a vector from the
+  same SDK that supplied them, so a wrong address would be baked into the oracle
+  too. Both gaps are recorded in `docs/prod-verification-ledger.md` as open.
+
+### Changed
+
+- `Bourse.Signing.Derive.trade_module_data/7` is the one place the signed
+  trade-module tuple's field order and ABI types are stated.
+  `trade_module_data_hash/7` now scales and delegates to it, so a caller that
+  needs the encoded bytes to show someone gets the same encoder as a caller that
+  only needs the hash.
+
 ## [0.9.0] - 2026-09-16
 
 ### Changed
