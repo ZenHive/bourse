@@ -78,17 +78,35 @@ defmodule Bourse.Signing.Derive do
           binary()
   def trade_module_data_hash(base_asset, sub_id, price, amount, max_fee, subaccount_id, is_bid)
       when is_binary(base_asset) and is_integer(sub_id) and is_integer(subaccount_id) and is_boolean(is_bid) do
-    [
-      base_asset,
+    base_asset
+    |> trade_module_data(
       sub_id,
       unit_integer(price),
       unit_integer(amount),
       unit_integer(max_fee),
       subaccount_id,
       is_bid
-    ]
-    |> abi_encode_static(@trade_module_data_types)
+    )
     |> Crypto.keccak256()
+  end
+
+  @doc """
+  ABI-encodes Derive's trade-module tuple from already-scaled 1e18 integers.
+
+  Returns the encoded blob rather than its hash, because a caller that has to
+  *show* a customer what they are about to sign needs the bytes while a caller
+  that only signs needs the hash. Both go through here, so the field order and
+  the ABI types are stated once — two copies that agree today are the shape
+  that later signs one struct while displaying another.
+
+  `price`, `amount` and `max_fee` arrive already multiplied by 1e18; the
+  string-taking `trade_module_data_hash/7` does that scaling itself.
+  """
+  @spec trade_module_data(String.t(), integer(), integer(), integer(), integer(), integer(), boolean()) :: binary()
+  def trade_module_data(base_asset, sub_id, price, amount, max_fee, subaccount_id, is_bid)
+      when is_binary(base_asset) and is_integer(sub_id) and is_integer(price) and is_integer(amount) and
+             is_integer(max_fee) and is_integer(subaccount_id) and is_boolean(is_bid) do
+    abi_encode_static([base_asset, sub_id, price, amount, max_fee, subaccount_id, is_bid], @trade_module_data_types)
   end
 
   @doc "Derives the session-key EOA address used by Derive's order envelope."
