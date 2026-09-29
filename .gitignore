@@ -53,3 +53,6 @@ bourse-*.tar
 # Scheduled live-lane reports. ops/live-drift.sh writes them under artifacts/;
 # they are CI/operator output, not source.
 /artifacts/
+
+# dep-audit plugin state (last check date), local per checkout.
+/.dep-audit-watch.json
