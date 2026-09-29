@@ -22,6 +22,8 @@ defmodule Bourse.Lighter.CredentialCheck do
   message is written to be actionable without further investigation.
   """
 
+  alias Bourse.LighterProvision
+
   @testnet_url "https://testnet.zklighter.elliot.ai"
   @mainnet_url "https://mainnet.zklighter.elliot.ai"
 
@@ -42,18 +44,82 @@ defmodule Bourse.Lighter.CredentialCheck do
   @doc """
   Checks the configured Lighter credential triple against the venue.
 
-  Options: `:account_index` and `:api_key_index` (default to
-  `LIGHTER_TESTNET_ACCOUNT_INDEX` / `LIGHTER_TESTNET_API_KEY_INDEX`),
+  Options: `:account_index` (default: resolved from the L1 wallet through
+  `resolve_account_index/1`) and `:api_key_index` (default
+  `LIGHTER_TESTNET_API_KEY_INDEX`),
   `:public_key` (the 80-hex zk public key the configured private key derives —
   when given, the check also proves the *key* matches, not just that the slot is
   filled), `:sandbox` (default `true`) or an explicit `:base_url`.
   """
   @spec run([option()]) :: :ok | {:error, String.t()}
   def run(opts \\ []) do
-    with {:ok, account_index} <- index(opts, :account_index, "LIGHTER_TESTNET_ACCOUNT_INDEX"),
+    with {:ok, account_index} <- account_index(opts),
          {:ok, api_key_index} <- index(opts, :api_key_index, "LIGHTER_TESTNET_API_KEY_INDEX"),
          {:ok, keys} <- registered_keys(base_url(opts), account_index, opts) do
       classify(keys, account_index, api_key_index, public_key(opts))
+    end
+  end
+
+  @doc """
+  Asks the venue which account an L1 wallet owns.
+
+  The account index is venue-assigned and changes whenever the testnet is reset
+  and the wallet re-provisioned, so it is never configuration: every stored copy
+  of it (`~/.secrets` here, another copy on the harness server) went stale at
+  each reset and was rewritten by whichever session hit the 20013 first. Reading
+  it from the wallet at startup leaves nothing to rewrite.
+
+  The L1 address defaults to `LIGHTER_TESTNET_L1_ADDRESS`. A wallet with no
+  account at all answers `21100 "account not found"`; the error message names
+  that as a testnet reset and names the one operator step that repairs it.
+  """
+  @spec resolve_account_index([option() | {:l1_address, String.t()}]) ::
+          {:ok, pos_integer()} | {:error, String.t()}
+  def resolve_account_index(opts \\ []) do
+    with {:ok, l1_address} <- l1_address(opts) do
+      url =
+        base_url(opts) <>
+          "/api/v1/accountsByL1Address?l1_address=" <> URI.encode_www_form(l1_address)
+
+      case get_json(url, opts) do
+        {:ok, body} -> account_verdict(body, l1_address)
+        {:error, reason} -> {:error, "Could not reach Lighter at #{base_url(opts)}: #{inspect(reason)}"}
+      end
+    end
+  end
+
+  defp account_verdict(body, l1_address) do
+    case LighterProvision.parse_account_index(body) do
+      {:ok, index} -> {:ok, index}
+      {:error, :account_not_found} -> {:error, no_account_message(l1_address, body)}
+    end
+  end
+
+  defp no_account_message(l1_address, body) do
+    """
+    Lighter has NO account for L1 wallet #{l1_address} (venue answered #{inspect(body)}).
+
+    The wallet had one before, so the testnet has been reset. Nothing in the
+    configuration is wrong and nothing in ~/.secrets needs editing — the account
+    index is read from the wallet at startup, not stored.
+
+    The one repair is an operator step, run by a person in a terminal (it asks
+    for confirmation and refuses without one):
+
+        mix bourse.provision_lighter
+
+    It claims the faucet, which recreates the account, and registers the
+    configured key at LIGHTER_TESTNET_API_KEY_INDEX.
+    """
+  end
+
+  defp l1_address(opts) do
+    case Keyword.get(opts, :l1_address) || System.get_env("LIGHTER_TESTNET_L1_ADDRESS") do
+      address when is_binary(address) and address != "" ->
+        {:ok, String.trim(address)}
+
+      _missing ->
+        {:error, "LIGHTER_TESTNET_L1_ADDRESS is not set; export the wallet address that owns the Lighter testnet account"}
     end
   end
 
@@ -68,7 +134,7 @@ defmodule Bourse.Lighter.CredentialCheck do
   @spec locate(String.t(), [option()]) ::
           {:ok, non_neg_integer()} | {:error, :not_registered} | {:error, String.t()}
   def locate(public_key, opts \\ []) when is_binary(public_key) do
-    with {:ok, account_index} <- index(opts, :account_index, "LIGHTER_TESTNET_ACCOUNT_INDEX"),
+    with {:ok, account_index} <- account_index(opts),
          {:ok, keys} <- registered_keys(base_url(opts), account_index, opts) do
       expected = normalize(public_key)
 
@@ -148,6 +214,20 @@ defmodule Bourse.Lighter.CredentialCheck do
     """
   end
 
+  defp empty_slot_message([], account_index, api_key_index) do
+    """
+    Lighter account_index #{account_index} carries NO registered key at all, so
+    api_key_index #{api_key_index} is empty and every private Lighter read will
+    answer 20013 "invalid auth: couldnt find account".
+
+    The account belongs to the configured wallet (it was resolved from it), so the
+    key was never registered on it — the state right after a testnet reset. The
+    repair is the operator step, run by a person in a terminal:
+
+        mix bourse.provision_lighter
+    """
+  end
+
   defp empty_slot_message(keys, account_index, api_key_index) do
     """
     Lighter api_key_index #{api_key_index} is EMPTY on account_index #{account_index}.
@@ -159,14 +239,9 @@ defmodule Bourse.Lighter.CredentialCheck do
     Do NOT run `mix bourse.provision_lighter` to fix this. Provisioning mints a
     new key at a new index and moves the problem to every other machine that is
     configured with the current one. Point the configuration at the registered
-    index, or at the account the registered key belongs to:
+    index:
 
         export LIGHTER_TESTNET_API_KEY_INDEX=<the registered index above>
-        export LIGHTER_TESTNET_ACCOUNT_INDEX=<the account that key is on>
-
-    Both values live in ~/.secrets and must match on every machine that runs
-    this suite — including the harness server, whose stale copy is invisible
-    from here.
 
     #{stale_env_note()}
     """
@@ -184,8 +259,8 @@ defmodule Bourse.Lighter.CredentialCheck do
     export from before it was fixed. Compare what this process sees against what
     a fresh login shell sees:
 
-        echo "$LIGHTER_TESTNET_ACCOUNT_INDEX"
-        zsh -l -c 'echo $LIGHTER_TESTNET_ACCOUNT_INDEX'
+        echo "$LIGHTER_TESTNET_API_KEY_INDEX"
+        zsh -l -c 'echo $LIGHTER_TESTNET_API_KEY_INDEX'
 
     If they differ, restart the session (or re-export) — the file is not the
     problem.
@@ -214,17 +289,16 @@ defmodule Bourse.Lighter.CredentialCheck do
     account_index #{account_index}, but it is NOT the key that
     LIGHTER_TESTNET_API_PRIVATE_KEY derives.
 
-    Private reads will answer 20013 "invalid auth: couldnt find account". Either
-    the private key or the account index is from a different wallet — check
-    whether LIGHTER_TESTNET_ACCOUNT_INDEX still names the account this key was
-    registered on before provisioning anything. Provisioning mints a new key at
-    a new index and invalidates every other machine's configuration.
+    Private reads will answer 20013 "invalid auth: couldnt find account". The
+    account was resolved from LIGHTER_TESTNET_L1_ADDRESS, so either
+    LIGHTER_TESTNET_API_PRIVATE_KEY belongs to a different wallet or the slot was
+    re-registered by someone else. Check which key the private key derives before
+    provisioning anything: provisioning mints a new key and invalidates every
+    other machine's LIGHTER_TESTNET_API_KEY_INDEX.
 
     #{stale_env_note()}
     """
   end
-
-  defp occupied_text([]), do: "No key is registered on this account at all."
 
   defp occupied_text(keys) do
     indices = keys |> Enum.map(& &1.index) |> Enum.sort() |> Enum.join(", ")
@@ -264,6 +338,13 @@ defmodule Bourse.Lighter.CredentialCheck do
       url = Keyword.get(opts, :base_url) -> url
       Keyword.get(opts, :sandbox, true) -> @testnet_url
       true -> @mainnet_url
+    end
+  end
+
+  defp account_index(opts) do
+    case Keyword.get(opts, :account_index) do
+      nil -> resolve_account_index(opts)
+      value -> parse_index(value, ":account_index")
     end
   end
 

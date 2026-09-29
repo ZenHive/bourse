@@ -1,3 +1,4 @@
+alias Bourse.Lighter.CredentialCheck
 alias Bourse.LiveLane.Ledger
 alias Mix.Tasks.Bourse.BuildLighterSigner
 
@@ -69,6 +70,17 @@ binance_futures_secret =
   System.get_env("BINANCE_FUTURES_TESTNET_API_SECRET") ||
     System.get_env("BINANCE_FUTURES_TEST_API_SECRET")
 
+# Lighter's account index is venue-assigned and changes at every testnet reset,
+# so it is read from the wallet here instead of being configured. Every stored
+# copy of it went stale at each reset and was rewritten by whichever session hit
+# the resulting 20013 first. The resolved value is exported into this process so
+# every Lighter test reads the same one — overriding any stale shell export.
+lighter_verdict =
+  with {:ok, account_index} <- CredentialCheck.resolve_account_index(sandbox: true) do
+    System.put_env("LIGHTER_TESTNET_ACCOUNT_INDEX", Integer.to_string(account_index))
+    CredentialCheck.run(sandbox: true, account_index: account_index)
+  end
+
 explicit_registrations =
   [
     {:alpaca,
@@ -113,24 +125,29 @@ unregistered =
     "  #{exchange}/#{sandbox_key} -> #{inspect(result)}"
   end
 
-# Registration only proves the three Lighter variables are PRESENT. It cannot
-# see that they disagree with each other — a key index pointing at an empty slot,
-# or an account index left over from a previous wallet. That disagreement is
-# indistinguishable from a venue outage in the suite output: nine cases answer
-# 20013 "invalid auth: couldnt find account", which names the account and so
-# reads as "the testnet reset". It never is. Confront the triple with the venue
-# here, once, so the run fails with the reason instead of the symptom.
-case Bourse.Lighter.CredentialCheck.run(sandbox: true) do
-  :ok ->
-    :ok
+# A Lighter credential problem — above all a testnet reset, which is venue-side
+# and recurs — makes Lighter red, not the run: the other venues still owe their
+# statement. Every Lighter case fails (20013, or flunks on missing credentials),
+# and the reason is printed before the run and again after it, so the red is
+# never read as an outage without its cause next to it.
+unregistered =
+  case lighter_verdict do
+    :ok ->
+      unregistered
 
-  {:error, message} ->
-    raise """
-    Lighter credentials do not match what the venue has registered.
+    {:error, message} ->
+      banner = """
 
-    #{message}
-    """
-end
+      ======== LIGHTER IS RED FOR THIS RUN — every Lighter case will fail ========
+
+      #{message}
+      ============================================================================
+      """
+
+      IO.puts(:stderr, banner)
+      ExUnit.after_suite(fn _result -> IO.puts(:stderr, banner) end)
+      Enum.reject(unregistered, &String.starts_with?(&1, "  lighter/"))
+  end
 
 if unregistered != [] do
   raise """

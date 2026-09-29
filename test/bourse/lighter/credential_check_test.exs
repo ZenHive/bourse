@@ -29,14 +29,18 @@ defmodule Bourse.Lighter.CredentialCheckOfflineTest do
       assert message =~ "Registered indices on this account: 0, 10."
       assert message =~ "the account is not the problem"
       assert message =~ "Do NOT run `mix bourse.provision_lighter`"
-      assert message =~ "harness server"
+      assert message =~ "export LIGHTER_TESTNET_API_KEY_INDEX=<the registered index above>"
+      refute message =~ "LIGHTER_TESTNET_ACCOUNT_INDEX"
       assert message =~ "carrying a stale\nexport from before it was fixed"
       assert message =~ "restart the session"
     end
 
-    test "an account carrying no keys at all says so rather than listing nothing" do
+    test "an account carrying no keys at all is named as the post-reset state the operator repairs" do
       assert {:error, message} = CredentialCheck.classify([], 230, 3)
-      assert message =~ "No key is registered on this account at all."
+      assert message =~ "account_index 230 carries NO registered key at all"
+      assert message =~ "testnet reset"
+      assert message =~ "mix bourse.provision_lighter"
+      refute message =~ "Do NOT run"
     end
 
     test "our key registered at another index asks for the index, not a provision" do
@@ -52,7 +56,7 @@ defmodule Bourse.Lighter.CredentialCheckOfflineTest do
       assert {:error, message} = CredentialCheck.classify([key(3, "bb")], 230, 3, "aa")
 
       assert message =~ "it is NOT the key that\nLIGHTER_TESTNET_API_PRIVATE_KEY derives"
-      assert message =~ "LIGHTER_TESTNET_ACCOUNT_INDEX still names the account"
+      assert message =~ "resolved from LIGHTER_TESTNET_L1_ADDRESS"
       assert message =~ "the file is not the\nproblem"
     end
   end
@@ -76,7 +80,7 @@ defmodule Bourse.Lighter.CredentialCheckOfflineTest do
   describe "index parsing" do
     test "a non-numeric account index is refused before any request is made" do
       assert {:error, message} = CredentialCheck.run(account_index: "not-an-index")
-      assert message =~ "LIGHTER_TESTNET_ACCOUNT_INDEX"
+      assert message =~ ":account_index"
       assert message =~ "non-negative integer"
     end
 
@@ -92,9 +96,21 @@ defmodule Bourse.Lighter.CredentialCheckOfflineTest do
       assert message =~ "non-negative integer"
     end
 
-    test "an index of an unusable type reports the variable as unset" do
+    test "an index of an unusable type is reported as unset" do
       assert {:error, message} = CredentialCheck.run(account_index: :missing)
-      assert message =~ "LIGHTER_TESTNET_ACCOUNT_INDEX is not set"
+      assert message =~ ":account_index is not set"
+    end
+  end
+
+  describe "resolve_account_index/1" do
+    test "a missing L1 address is refused before any request is made" do
+      assert {:error, message} =
+               CredentialCheck.resolve_account_index(
+                 l1_address: "",
+                 base_url: "http://127.0.0.1:1/unreachable"
+               )
+
+      assert message =~ "LIGHTER_TESTNET_L1_ADDRESS is not set"
     end
   end
 

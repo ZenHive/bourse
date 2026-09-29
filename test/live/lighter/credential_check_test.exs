@@ -44,7 +44,7 @@ defmodule Bourse.Lighter.CredentialCheckTest do
 
   test "a malformed account index is refused before any request is made" do
     assert {:error, message} = CredentialCheck.run(sandbox: true, account_index: "not-an-index")
-    assert message =~ "LIGHTER_TESTNET_ACCOUNT_INDEX"
+    assert message =~ ":account_index"
     assert message =~ "non-negative integer"
   end
 
@@ -88,9 +88,11 @@ defmodule Bourse.Lighter.CredentialCheckTest do
   test "an account the venue does not know is indistinguishable from one holding no keys" do
     assert {:error, message} = CredentialCheck.run(sandbox: true, account_index: 999_999_999)
 
-    assert message =~ "is EMPTY on account_index 999999999"
-    assert message =~ "No key is registered on this account at all."
-    assert message =~ "Do NOT run `mix bourse.provision_lighter`"
+    # Lighter lists no keys for an unknown account rather than erroring, so an
+    # explicit index cannot tell "gone" from "empty". The default path never
+    # hits this: it resolves the account from the wallet, where a missing
+    # account is its own 21100 verdict.
+    assert message =~ "account_index 999999999 carries NO registered key at all"
     refute message =~ "did not list api keys"
   end
 
@@ -102,6 +104,19 @@ defmodule Bourse.Lighter.CredentialCheckTest do
              )
 
     assert message =~ "unexpected_status"
+  end
+
+  test "a wallet with no account is reported as a testnet reset with the operator repair" do
+    # An address nobody provisions: the venue answers 21100 "account not found".
+    assert {:error, message} =
+             CredentialCheck.resolve_account_index(
+               l1_address: "0x0000000000000000000000000000000000000001",
+               sandbox: true
+             )
+
+    assert message =~ "21100"
+    assert message =~ "testnet has been reset"
+    assert message =~ "mix bourse.provision_lighter"
   end
 
   test "sandbox: false selects the mainnet host" do

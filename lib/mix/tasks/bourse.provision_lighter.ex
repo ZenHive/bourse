@@ -15,6 +15,16 @@ defmodule Mix.Tasks.Bourse.ProvisionLighter do
   `LIGHTER_TESTNET_API_PRIVATE_KEY` / `LIGHTER_TESTNET_API_KEY_INDEX`.
 
   The L1 private key is signed in Elixir and never sent to the native helper.
+
+  🚨 **Operator-only.** The task asks for an interactive `yes` before it touches
+  the venue and refuses on anything else — including a closed or non-interactive
+  stdin, which is what every agent and harness run has. It is the repair for a
+  testnet reset and nothing else; an empty key slot on a live account is a
+  configuration error that `Bourse.Lighter.CredentialCheck` names, and a second
+  key minted for it breaks every other machine.
+
+  Nothing needs storing afterwards: the account index is resolved from the L1
+  wallet at every run (`Bourse.Lighter.CredentialCheck.resolve_account_index/1`).
   """
 
   use Mix.Task
@@ -46,6 +56,7 @@ defmodule Mix.Tasks.Bourse.ProvisionLighter do
     {opts, _argv, invalid} = OptionParser.parse(args, strict: @switches)
     ensure_valid_args!(invalid)
     config = settings!(opts)
+    confirm_operator!(config)
     ensure_go!()
     ensure_helper!()
 
@@ -64,9 +75,28 @@ defmodule Mix.Tasks.Bourse.ProvisionLighter do
     send_tx!(config, transaction)
     verify_registration!(config, account_index, pub_key, nonce)
 
-    Mix.shell().info("account_index=#{account_index}")
+    Mix.shell().info("account_index=#{account_index} (resolved from the wallet at every run; do not store it)")
     Mix.shell().info("api_key_index=#{config.api_key_index}")
     :ok
+  end
+
+  # Every earlier rewrite of the Lighter configuration came from a session that
+  # met a 20013 and ran this task on its own. A terminal plus a typed yes is what an
+  # agent cannot supply: piping `yes` in still leaves stdin a pipe, not a tty.
+  defp confirm_operator!(config) do
+    question = """
+    This mints a Lighter testnet key for #{config.l1_address} at api_key_index \
+    #{config.api_key_index}. Run it only after a testnet reset (CredentialCheck \
+    reports "NO account" or "NO registered key"). Proceed?\
+    """
+
+    if not :io.getopts(:standard_io)[:terminal] do
+      Mix.raise("Refusing to provision: stdin is not a terminal. This is an operator step; run it by hand.")
+    end
+
+    if not Mix.shell().yes?(question, default: :no) do
+      Mix.raise("Refusing to provision without an interactive operator confirmation.")
+    end
   end
 
   defp settings!(opts) do

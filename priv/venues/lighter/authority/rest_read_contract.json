@@ -15,7 +15,7 @@
   "credentials": {
     "exports": [
       "LIGHTER_TESTNET_API_KEY_INDEX",
-      "LIGHTER_TESTNET_ACCOUNT_INDEX",
+      "LIGHTER_TESTNET_L1_ADDRESS",
       "LIGHTER_TESTNET_API_PRIVATE_KEY"
     ],
     "url": "https://testnet.zklighter.elliot.ai"
