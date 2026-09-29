@@ -218,6 +218,40 @@ test code. Edit the fence when adding a ledgered case.
 
 ## Open
 
+### derive — keyless order preparation: Trade module address and venue acceptance (task 148, filed 2026-09-29)
+
+- Authored slices: none — `Bourse.Signing.Derive.PreparedOrder` is a signing boundary,
+  not an authored field map. It ships the chain id and the Matching and Trade module
+  addresses for both Derive environments.
+- Blocked by: nothing external. A demo order on `api-demo.lyra.finance` would close it;
+  it has not been run, so the claim stays unverified rather than assumed.
+- The open question, in two parts:
+  1. **Is the Trade module address right?** It enters the digest as the `module` field,
+     and the only thing grading it is the stored vector
+     `0x40b6c7a8cee212dbf762eaaa850beaf9d4f8b52e4931db666cc48269eeba1896`, which came
+     from the same provider SDK that supplied the address — so a wrong address would be
+     baked into the oracle too and the test would stay green. The chain ids and Matching
+     addresses do **not** share this gap: hashed as an EIP-712 domain they reproduce
+     `Bourse.Signing.Derive`'s independently pinned `@domain_separator_prod` /
+     `@domain_separator_sandbox`, and `prepared_order_test.exs` asserts that.
+  2. **Does the venue accept what this prepares?** `prepare/2` returns typed data, wire
+     terms and a digest. Nothing here proves that a signature over that digest, sent
+     with that body, is accepted — the encoding was compared against
+     `derivexyz/v2-action-signing-python` and ethers `TypedDataEncoder`, which are
+     compatibility evidence, never venue semantics.
+- Exact call: prepare with a real demo subaccount, sign the digest with the registered
+  Admin session key, and POST the returned `body` plus that signature:
+
+      {:ok, p} = Bourse.Signing.Derive.PreparedOrder.prepare(params, :testnet)
+      digest = Base.decode16!(String.trim_leading(p.digest, "0x"), case: :lower)
+      sig = Bourse.Signing.Crypto.sign_hash(digest, private_key)
+      # POST /order with p.body plus the packed signature
+
+- Expected evidence: an accepted `POST /order` on `api-demo.lyra.finance` whose response
+  echoes the submitted `limit_price` / `amount` / `max_fee`, plus one rejection whose
+  code names a term we changed on purpose (e.g. `11023` for a `max_fee` under the
+  dynamic floor) — success alone cannot tell a correct digest from an ignored one.
+
 ### lighter — L1 ChangePubKey signing migration (task 703, filed 2026-09-15)
 
 - Status: `evidence=unverified`. The EVM primitive migration to published Cartouche
