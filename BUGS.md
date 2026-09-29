@@ -114,6 +114,22 @@ roadmap.
 
 ---
 
+## 2026-09-29 — deribit: three value defects the REST-read contract lane passes green (found by a ccxt differential)
+
+**Status:** 🆕 reported — not routed.
+
+**Reported by:** operator-requested experiment: the deribit contract cases run against ccxt 4.5.84 (JS) on `test.deribit.com`, then bourse and ccxt compared value by value on the same symbols. Each disagreement was settled against the raw provider response, not against either client.
+
+1. **`fetch_funding_rate` labels an 8h value `interval: "1h"`.** `request_shape.ex` requests `get_funding_rate_value` over an 8h window (`@deribit_funding_window_ms 8 * 60 * 60 * 1000`), and the provider `result` is the rate accrued over that window. bourse and ccxt returned the identical value (`1.7839577803507683e-6`, `BTC/USDC:USDC`) at the same moment; ccxt labels it `"8h"`, bourse labels it `"1h"`. The `interval` default in `normalization.json` (carve C-T535a) is derived from the *history* rows' timestamp spacing and is then applied to the current-rate value. **Impact:** a consumer that annualizes via `interval` overstates deribit funding by 8×.
+2. **`fetch_ticker` puts the base-currency volume into `quote_volume`.** The mapping is `quoteVolume ← stats.volume`. Raw `BTC-PERPETUAL` stats: `volume: 59326.35` (BTC), `volume_usd: 4949951860`. bourse returns `quote_volume ≈ 59502` and `base_volume: nil`; ccxt returns base ≈ 59307 and quote ≈ 4.95e9.
+3. **`fetch_liquidations` returns ordinary public trades.** The mapping is `result.trades` with no filter. On `BTC_USDC-PERPETUAL`, 0 of 1000 raw trades carried a `liquidation` field, yet bourse returned 10 `%Bourse.Liquidation{}` rows.
+
+**Why the lane is green anyway:** `RestReadContractScenario` only checks that required and any-of fields are non-nil, so each of these rows passes. For contrast, ccxt fails in other places on the same account: option order `cost` 1.156 instead of 0.00865, `side: "short"` on a flat position (raw `direction: "zero"`), and 5613 static fee rows even though `get_account_summary` returns no `fees` field.
+
+**Repro:** `scratchpad/ccxtexp/{run.mjs,diff.mjs,raw.mjs,bourse_baseline.exs}` from the 2026-09-29 session; each defect above also reproduces with a single raw call as quoted.
+
+---
+
 ## 2026-09-16 — `has?/2` is neither a cost signal nor a nativeness signal: one consumer's 300-asset pass became 300 bulk reads, another's readiness verdict grants an emulated read a native read's exemption
 
 **Status:** ✅ addressed as documentation (2026-09-16) — `has?/2`'s `@doc` and the 0.9.0 CHANGELOG now name both misreadings. The behaviour is unchanged and correct; whether the API should offer more than a second function is left open below.
