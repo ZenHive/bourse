@@ -32395,7 +32395,7 @@
       "id": "706",
       "phase": 8,
       "bundle": "polish",
-      "status": "pending",
+      "status": "superseded",
       "title": "Repair intermittent Binance USD-M order time-window boundary failure",
       "scores": {
         "d": 4,
@@ -32428,7 +32428,7 @@
       "id": "707",
       "phase": 8,
       "bundle": "polish",
-      "status": "pending",
+      "status": "superseded",
       "title": "Make Binance algo-order contract setup reliably readable before assertion",
       "scores": {
         "d": 4,

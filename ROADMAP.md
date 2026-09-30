@@ -271,8 +271,8 @@ Production-ready for Hex.pm publication.
 | Task 447 `[P]` | ✅ | 🎁 **polish** · Reduce the warm offline test suite to at most 60 seconds without losing coverage [D:7/B:9/U:8 → Eff:1.21?] 📋 |
 | Task 448 `[P]` | ✅ | 🎁 **polish** · Reduce the full seven-venue fixture-replay gate to at most 60 seconds [D:6/B:9/U:7 → Eff:1.33?] 📋 |
 | Task 705 | ✅ | 🎁 **polish** · Separate focused dispatch aliases from complete post-merge QA [D:3/B:7/U:7 → Eff:2.33] 🎯 |
-| Task 706 | ⬜ | 🎁 **polish** · Repair intermittent Binance USD-M order time-window boundary failure [D:4/B:5/U:5 → Eff:1.25] 📋 |
-| Task 707 | ⬜ | 🎁 **polish** · Make Binance algo-order contract setup reliably readable before assertion [D:4/B:6/U:5 → Eff:1.38] 📋 |
+| Task 706 | ⛔ | 🎁 **polish** · Repair intermittent Binance USD-M order time-window boundary failure [D:4/B:5/U:5 → Eff:1.25] 📋 |
+| Task 707 | ⛔ | 🎁 **polish** · Make Binance algo-order contract setup reliably readable before assertion [D:4/B:6/U:5 → Eff:1.38] 📋 |
 <!-- TASKS:END -->
 
 ## Phase 9: Trading Utilities
