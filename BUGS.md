@@ -4670,4 +4670,18 @@ Expected: `fee: %Bourse.Fee{cost: 6.385e-5, currency: "BTC"}` (bzw. die Map mit 
 
 Konsument-Handling (trading_dashboard, 2026-09-15): `TradingDashboard.Exchange.OrderLifecycle` fällt beim Anlegen einer `OrderFill` auf `info["fee"]`/`info["fee_currency"]` zurück, wenn die normalisierte Fee keinen `cost` hat. Der Fallback entfällt, sobald die Normalisierung greift.
 Betroffene Exchange: deribit.
-||||||| Stash base
+
+---
+
+## 2026-09-30 — Bybit: `Exchange.new` ignores `urls.demotrading`, so demo-trading keys cannot reach `api-demo.bybit.com`
+
+**Status:** open
+
+Call (bourse 0.9.0): `Bourse.Exchange.new("bybit", api_key: ..., secret: ...)` with Bybit **demo-trading** keys (created under Demo Trading on the mainnet account; these are neither mainnet nor testnet keys). `sandbox: true` selects `urls.test` (`api-testnet.bybit.com`); nothing selects `urls.demotrading`.
+
+Observed: `priv/venues/bybit/authored/raw.json` carries `urls.demotrading` (`https://api-demo.{hostname}` for public/private/spot/futures/v2), but `Bourse.Exchange.new/2` accepts only `:sandbox` / `:hostname` in `@allowed_opts` and never applies the demotrading map. A demo key sent to `api.bybit.com` or `api-testnet.bybit.com` is rejected as an unknown key.
+
+Expected: an option (e.g. `demo_trading: true`, mirroring CCXT's `enable_demo_trading`) that switches `base_urls` to the `demotrading` map. Bybit documents the demo host: https://bybit-exchange.github.io/docs/v5/demo.
+
+Konsument-Handling (trading_dashboard, 2026-09-30, task 295): `TradingDashboard.Exchange.Edge.Session.maybe_demo/2` rewrites `base_urls` to `https://api-demo.bybit.com` after the session is built when the credential config says `demo_trading: true`. The rewrite goes away once bourse honours the option.
+Betroffene Exchange: bybit.
