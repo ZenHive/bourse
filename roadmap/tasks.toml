@@ -24275,7 +24275,7 @@ scored_at = "2026-09-22"
 id = "707"
 phase = 8
 bundle = "polish"
-status = "superseded"
+status = "pending"
 title = "Make Binance algo-order contract setup reliably readable before assertion"
 scores = { d = 4, b = 6, u = 5 }
 acceptance_criteria = ["Observe owned algo-order creation and the corresponding USD-M/COIN-M detail reads live; determine whether propagation, identifier selection, or another provider behavior causes order_not_found.", "Repair the demonstrated cause with bounded state-aware setup and guaranteed cleanup. A never-readable order or unexpected provider error must fail; do not add fixed sleeps, catch-all passes, skips, or blanket retries that hide semantic failures.", "An independent reviewer exercises affected algo-order contracts repeatedly against the real provider, including the relevant error path and cleanup, and records the full contract-lane result."]

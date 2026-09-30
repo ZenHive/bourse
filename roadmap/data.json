@@ -32428,7 +32428,7 @@
       "id": "707",
       "phase": 8,
       "bundle": "polish",
-      "status": "superseded",
+      "status": "pending",
       "title": "Make Binance algo-order contract setup reliably readable before assertion",
       "scores": {
         "d": 4,
