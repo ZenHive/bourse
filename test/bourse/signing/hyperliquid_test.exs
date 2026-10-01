@@ -36,6 +36,30 @@ defmodule Bourse.Signing.HyperliquidTest do
 
       assert hash == "2537d63c60d9bbc1e1f5113fde77729fdd53ccd5c58781df743b0e99d5753390"
     end
+
+    # Expected values computed with the official hyperliquid-python-sdk
+    # `hyperliquid.utils.signing.action_hash` (which also reproduces the two
+    # vectors above): nonce and expires_after are 8-byte big-endian words, so a
+    # value of any magnitude must hash, not only 11-hex-digit ms timestamps.
+    test "encodes a small nonce as a full 8-byte word" do
+      assert @action |> Hyperliquid.action_hash(nil, 1) |> Base.encode16(case: :lower) ==
+               "3961cb359fcc0e1d5acb7af4d41be2bd0b79b44d3f2994d88aa73d63da57325e"
+    end
+
+    test "accepts a checksummed vault and a small expires_after" do
+      hash =
+        @action
+        |> Hyperliquid.action_hash("0xAbCdEf0123456789aBcDeF0123456789AbCdEf01", @nonce, 5)
+        |> Base.encode16(case: :lower)
+
+      assert hash == "ff012e808581441bbf3e1d864f6c63a5e3a07c0f0da0b2d7c92def8d78e53ab4"
+    end
+
+    test "rejects a vault that is not 20 bytes" do
+      assert_raise ArgumentError, ~r/vault address must be 20 bytes/, fn ->
+        Hyperliquid.action_hash(@action, "0x1234", @nonce)
+      end
+    end
   end
 
   describe "pack_l1_action!/1" do

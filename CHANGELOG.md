@@ -15,6 +15,14 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   onchain's precompiled NIF targets macOS and Linux only — Windows hosts are no
   longer supported.
 
+### Fixed
+
+- `Bourse.Signing.Hyperliquid.action_hash/4` encodes `nonce` and
+  `expires_after` as 8-byte big-endian words. The hex-string build was only
+  correct for 11-hex-digit values (ms timestamps) and raised or hashed wrong
+  bytes for any other magnitude; a checksummed (mixed-case) vault address no
+  longer crashes the hash, and a vault that is not 20 bytes is rejected.
+
 ## [0.9.1] - 2026-10-01
 
 ### Added

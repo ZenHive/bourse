@@ -63,18 +63,12 @@ defmodule Bourse.Signing.Hyperliquid do
   @spec action_hash(map(), String.t() | nil, non_neg_integer(), non_neg_integer() | nil) ::
           binary()
   def action_hash(action, vault_address, nonce, expires_after \\ nil) do
-    data_hex =
-      action
-      |> pack_l1_action!()
-      |> Crypto.encode_hex()
-
-    data =
-      data_hex
-      |> Kernel.<>("00000" <> int_to_base16(nonce))
-      |> append_vault(vault_address)
-      |> append_expires(expires_after)
-
-    Crypto.keccak256(Base.decode16!(data, case: :lower))
+    Crypto.keccak256([
+      pack_l1_action!(action),
+      <<nonce::unsigned-big-64>>,
+      vault_bytes(vault_address),
+      expires_bytes(expires_after)
+    ])
   end
 
   @doc false
@@ -457,15 +451,13 @@ defmodule Bourse.Signing.Hyperliquid do
   defp phantom_source(true), do: "b"
   defp phantom_source(false), do: "a"
 
-  defp append_vault(data, nil), do: data <> "00"
-  defp append_vault(data, vault_address), do: data <> "01" <> vault_address
+  # Wire layout: msgpack(action) ‖ nonce u64 BE ‖ vault flag (‖ 20-byte vault)
+  # ‖ (0x00 ‖ expires_after u64 BE when present).
+  defp vault_bytes(nil), do: <<0>>
+  defp vault_bytes(vault_address), do: <<1>> <> Crypto.decode_fixed!(vault_address, 20, "Hyperliquid vault address")
 
-  defp append_expires(data, nil), do: data
-  defp append_expires(data, expires_after), do: data <> "00" <> "00000" <> int_to_base16(expires_after)
-
-  defp int_to_base16(int) when is_integer(int) and int >= 0 do
-    int |> Integer.to_string(16) |> String.downcase()
-  end
+  defp expires_bytes(nil), do: <<>>
+  defp expires_bytes(expires_after), do: <<0, expires_after::unsigned-big-64>>
 
   # vault address is concatenated as raw hex (no 0x) into the action hash bytes.
   defp normalize_vault(nil), do: nil
