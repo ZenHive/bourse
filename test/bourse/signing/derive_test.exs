@@ -132,7 +132,7 @@ defmodule Bourse.Signing.DeriveTest do
     test "signed int256 words follow the ABI two's-complement spec, including -1" do
       # Solidity abi.encode(int256(-1)) is 32 0xff bytes (the ABI spec, not a
       # previously-computed bourse hash).
-      minus_one = ABI.TypeEncoder.encode_raw([-1], [%{type: ABI.FunctionSelector.decode_type("int256")}])
+      minus_one = Onchain.ABI.TypeEncoder.encode_raw([-1], [%{type: Onchain.ABI.FunctionSelector.decode_type("int256")}])
       assert minus_one == :binary.copy(<<0xFF>>, 32)
 
       scale = 1_000_000_000_000_000_000

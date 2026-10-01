@@ -3,42 +3,41 @@ defmodule Bourse.Signing.EIP712 do
   Minimal EIP-712 typed-data encoder for the custom DEX signing modules
   (`Bourse.Signing.Hyperliquid`).
 
-  Thin representation adapter over Cartouche 0.9.0 `Cartouche.Typed`. The
+  Thin representation adapter over Onchain 0.16 `Onchain.Typed`. The
   public functions still take Bourse's map/`%{"name","type"}` shapes and return
   the EIP-712 digest preimage `0x1901 ‖ domainSeparator ‖ hashStruct`.
 
   ## Hashing boundaries
 
-  * `encode/4` hashes with an **explicit** `primary_type`. Cartouche.Typed.encode/1
+  * `encode/4` hashes with an **explicit** `primary_type`. Onchain.Typed.encode/1
     infers the primary type from value keys (`find_type/2`); that is not used.
-  * `hash_struct/3` calls `Cartouche.Typed.hash_struct/3` (keccak of typeHash ‖
+  * `hash_struct/3` calls `Onchain.Typed.hash_struct/3` (keccak of typeHash ‖
     encodeData). Callers that need a digest (`Hyperliquid.sign_l1_action/3`)
     keccak the preimage themselves — this module does not hash the 0x1901
     envelope.
-  * Cartouche.Typed.Type.deserialize_type/1 only accepts `uint256` among the
-    `uint*` family. Hyperliquid user-signed actions use `uint64`; the adapter
-    parses `uintN`/`bytesN` into `{:uint, n}`/`{:bytes, n}` tuples that
-    `serialize_type/1` and `encode_data_value/2` already accept.
-  * Cartouche left-pads short `bytes32`/`address` values. Bourse rejects them
+  * Field types are parsed by `Onchain.Typed.Type.deserialize_type/1`, which
+    covers every `uintN`/`intN`/`bytesN` width (Hyperliquid user-signed actions
+    use `uint64`).
+  * Onchain left-pads short `bytes32`/`address` values. Bourse rejects them
     so a truncated hex string cannot silently become a different word.
 
   ## Scope
 
   Only **atomic** field types are supported (`string`, `bytes`, `bytes32`,
   `address`, `bool`, `uint*`). Struct-typed fields (nested custom types) and
-  `int*` raise — Cartouche 0.9.0 Typed has no `{:int, n}` primitive (signed
-  integers for Derive orders go through Hieroglyph ABI, not this encoder).
-  None of the supported Hyperliquid message types use nested structs or ints.
+  `int*` values raise — no supported message type needs them (signed integers
+  for Derive orders go through `Onchain.ABI`, not this encoder). None of the
+  supported Hyperliquid message types use nested structs or ints.
 
   The `EIP712Domain` type is rendered in ethers' canonical field order
   (`name`, `version`, `chainId`, `verifyingContract`, `salt`), including only the
-  fields present in the supplied domain — `Cartouche.Typed.Domain.domain_type/1`.
+  fields present in the supplied domain — `Onchain.Typed.Domain.domain_type/1`.
   """
 
   alias Bourse.Signing.Crypto
-  alias Cartouche.Typed
-  alias Cartouche.Typed.Domain
-  alias Cartouche.Typed.Type
+  alias Onchain.Typed
+  alias Onchain.Typed.Domain
+  alias Onchain.Typed.Type
 
   @type field :: %{required(String.t()) => String.t()}
   @type domain :: %{optional(String.t()) => term()}
@@ -62,56 +61,34 @@ defmodule Bourse.Signing.EIP712 do
   @doc "Computes `hashStruct(primaryType) = keccak256(typeHash ‖ encodeData)`."
   @spec hash_struct(String.t(), %{String.t() => [field()]}, map()) :: binary()
   def hash_struct(primary_type, types, message) do
-    cartouche_types = to_cartouche_types(types)
+    onchain_types = to_onchain_types(types)
     fields = Map.fetch!(types, primary_type)
-    cartouche_message = to_cartouche_message(fields, message)
-    Typed.hash_struct(primary_type, cartouche_message, cartouche_types)
+    onchain_message = to_onchain_message(fields, message)
+    Typed.hash_struct(primary_type, onchain_message, onchain_types)
   end
 
-  defp to_cartouche_types(types) do
+  defp to_onchain_types(types) do
     Map.new(types, fn {name, fields} ->
-      {name, %Type{fields: Enum.map(fields, &to_cartouche_field/1)}}
+      {name, %Type{fields: Enum.map(fields, &to_onchain_field/1)}}
     end)
   end
 
-  defp to_cartouche_field(%{"name" => name, "type" => type}) do
+  defp to_onchain_field(%{"name" => name, "type" => type}) do
     {name, parse_atomic_type(type)}
   end
 
-  # Cartouche.Typed.Type.deserialize_type/1 handles address/string/bytes/bool/uint256/bytes32
-  # and uppercase custom types. uint64 (Hyperliquid) and other uintN/bytesN are parsed here.
+  # Onchain.Typed.Type.deserialize_type/1 parses every int/uint/bytes width; a
+  # custom (struct) type comes back as its name and an unknown one raises.
   defp parse_atomic_type(type) when is_binary(type) do
-    case parse_cartouche_type(type) do
+    case Type.deserialize_type(type) do
       parsed when is_atom(parsed) or is_tuple(parsed) -> parsed
       _custom -> raise ArgumentError, "EIP712: unsupported field type #{inspect(type)}"
     end
-  end
-
-  defp parse_cartouche_type(type) do
-    Type.deserialize_type(type)
   rescue
-    RuntimeError -> parse_sized_type(type)
+    RuntimeError -> reraise ArgumentError, [message: "EIP712: unsupported field type #{inspect(type)}"], __STACKTRACE__
   end
 
-  defp parse_sized_type("uint" <> rest) do
-    case Integer.parse(rest) do
-      {n, ""} when n > 0 -> {:uint, n}
-      _other -> raise ArgumentError, "EIP712: unsupported field type #{inspect("uint" <> rest)}"
-    end
-  end
-
-  defp parse_sized_type("bytes" <> rest) do
-    case Integer.parse(rest) do
-      {n, ""} when n > 0 -> {:bytes, n}
-      _other -> raise ArgumentError, "EIP712: unsupported field type #{inspect("bytes" <> rest)}"
-    end
-  end
-
-  defp parse_sized_type(type) do
-    raise ArgumentError, "EIP712: unsupported field type #{inspect(type)}"
-  end
-
-  defp to_cartouche_message(fields, message) do
+  defp to_onchain_message(fields, message) do
     Map.new(fields, fn %{"name" => name, "type" => type} ->
       {name, convert_value(type, Map.fetch!(message, name))}
     end)

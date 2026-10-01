@@ -4,14 +4,14 @@ defmodule Bourse.Signing.Crypto do
   (`Bourse.Signing.Hyperliquid`, `Bourse.Signing.Derive`) and Lighter L1
   ChangePubKey personal-message signatures.
 
-  Thin representation adapter over Cartouche 0.9.0 (`Cartouche.Hash.keccak`,
-  `Cartouche.Signer.Curvy.sign_payload/get_address`, `Cartouche.Recover`
+  Thin representation adapter over Onchain 0.16 (`Onchain.Hash.keccak`,
+  `Onchain.Signer.Secp256k1.sign_payload/get_address`, `Onchain.Recover`
   digest recovery). Signatures use RFC-6979 deterministic nonces, low-`s`
   normalization, and Ethereum recovery value `v = 27 + recovery_id`.
   """
 
-  alias Cartouche.Recover
-  alias Cartouche.Signer.Curvy
+  alias Onchain.Recover
+  alias Onchain.Signer.Secp256k1
 
   @type signature :: %{r: String.t(), s: String.t(), v: non_neg_integer()}
 
@@ -23,7 +23,7 @@ defmodule Bourse.Signing.Crypto do
   Computes the EIP-191 personal-message hash (`hashMessage`) for `message`.
 
   Uses the spec envelope (`0x19 ‖ "Ethereum Signed Message:\\n" ‖ byte_size ‖
-  message`) hashed with `Cartouche.Hash.keccak/1`. The envelope is built here
+  message`) hashed with `Onchain.Hash.keccak/1`. The envelope is built here
   rather than delegated, so the byte-length measure EIP-191 requires is owned by
   this module and cannot change underneath it.
   """
@@ -65,8 +65,8 @@ defmodule Bourse.Signing.Crypto do
 
   @doc "Keccak-256 digest of `data` (32 raw bytes)."
   @spec keccak256(iodata()) :: binary()
-  def keccak256(data) when is_binary(data), do: Cartouche.Hash.keccak(data)
-  def keccak256(data), do: data |> IO.iodata_to_binary() |> Cartouche.Hash.keccak()
+  def keccak256(data) when is_binary(data), do: Onchain.Hash.keccak(data)
+  def keccak256(data), do: data |> IO.iodata_to_binary() |> Onchain.Hash.keccak()
 
   @doc """
   Signs a 32-byte `digest` with the secp256k1 `private_key`.
@@ -75,11 +75,10 @@ defmodule Bourse.Signing.Crypto do
   64-char hex strings (no `0x`) and `v = 27 + recovery_id`. Signatures use
   RFC-6979 deterministic nonces and canonical low-`s` values.
 
-  `Cartouche.Signer.Curvy.sign_payload/2` signs the digest directly (`hash:
-  :keccak` is Curvy's pass-through sentinel — it does not keccak again) and
-  returns a DER-parsed `%Curvy.Signature{}` that has no recovery id. Recovery
-  is re-derived with `Cartouche.Recover.find_recid_from_digest/3` against the
-  same digest, matching Cartouche's documented composition.
+  `Onchain.Signer.Secp256k1.sign_payload/2` signs the digest directly (no
+  second keccak). Low-`s` is enforced with `Onchain.Recover.normalize_low_s/1`,
+  which clears the recovery id when it flips `s`, so recovery is re-derived
+  with `Onchain.Recover.find_recid_from_digest/3` against the same digest.
   """
   @spec sign_hash(binary(), binary()) :: signature()
   def sign_hash(digest, private_key) when is_binary(digest) and byte_size(digest) == 32 and is_binary(private_key) do
@@ -99,13 +98,13 @@ defmodule Bourse.Signing.Crypto do
   def address_from_private_key(private_key) when is_binary(private_key) do
     key = if byte_size(private_key) == 32, do: private_key, else: decode_private_key(private_key)
 
-    {:ok, address} = Curvy.get_address(key)
+    {:ok, address} = Secp256k1.get_address(key)
     "0x" <> encode_hex(address)
   end
 
   @doc """
   Decodes a (`0x`-prefixed) hex private key into the 32-byte binary
-  Cartouche/Curvy expect. Accepts the last 64 hex characters.
+  `Onchain.Signer.Secp256k1` expects. Accepts the last 64 hex characters.
   """
   @spec decode_private_key(String.t()) :: binary()
   def decode_private_key(private_key) when is_binary(private_key) do
@@ -136,8 +135,8 @@ defmodule Bourse.Signing.Crypto do
   def secp256k1_half_n, do: @secp256k1_half_n
 
   defp signed_components(digest, private_key) do
-    {:ok, signature} = Curvy.sign_payload(digest, private_key)
-    {:ok, address} = Curvy.get_address(private_key)
+    {:ok, signature} = Secp256k1.sign_payload(digest, private_key)
+    {:ok, address} = Secp256k1.get_address(private_key)
     low_s = Recover.normalize_low_s(signature)
     {:ok, recid} = Recover.find_recid_from_digest(digest, low_s, address)
     {:ok, {low_s, recid}}

@@ -255,12 +255,11 @@ defmodule Bourse.MixProject do
       {:descripex, "~> 1.0.0"},
 
       # Custom DEX signing (hyperliquid + derive + Lighter L1 personal signatures).
-      # cartouche — keccak, secp256k1 sign/recover, EIP-712 typed encoding.
-      # hieroglyph — Solidity ABI encoding (Derive order / trade-module tuples).
+      # onchain — keccak, secp256k1 sign/recover, EIP-712 typed encoding and
+      # Solidity ABI encoding (Derive order / trade-module tuples).
       # msgpax — canonical MessagePack for Hyperliquid L1 action packing
       # (venue payload construction; not a shared EVM primitive).
-      {:cartouche, "~> 0.9.0"},
-      {:hieroglyph, "~> 1.8.0"},
+      {:onchain, "~> 0.16.0"},
       {:msgpax, "~> 2.4"},
 
       # WebSocket client (Gun-based, 5-function API + Deribit heartbeat + reconnection)

@@ -27,11 +27,11 @@ defmodule Bourse.Signing.Derive do
 
   @behaviour Bourse.Signing.Behaviour
 
-  alias ABI.FunctionSelector
-  alias ABI.TypeEncoder
   alias Bourse.Credentials
   alias Bourse.Signing
   alias Bourse.Signing.Crypto
+  alias Onchain.ABI.FunctionSelector
+  alias Onchain.ABI.TypeEncoder
 
   # Derive trade-module domain separators (Optimism mainnet / testnet).
   @domain_separator_prod "d96e5f90797da7ec8dc4e276260c7f3f87fedf68775fbe1ef116e996fc60441b"
@@ -209,7 +209,7 @@ defmodule Bourse.Signing.Derive do
     end
   end
 
-  # ABI-encodes static-only types into concatenated 32-byte words via Hieroglyph.
+  # ABI-encodes static-only types into concatenated 32-byte words via `Onchain.ABI`.
   defp abi_encode_static(values, types) do
     decoded = Enum.zip_with(values, types, &decode_abi_value/2)
     type_maps = Enum.map(types, &%{type: FunctionSelector.decode_type(&1)})

@@ -260,8 +260,8 @@ test code. Edit the fence when adding a ledgered case.
 
 ### lighter — L1 ChangePubKey signing migration (task 703, filed 2026-09-15)
 
-- Status: `evidence=unverified`. The EVM primitive migration to published Cartouche
-  0.9.0 / Hieroglyph 1.8.0 is implemented in-tree (`Bourse.Signing.Crypto`,
+- Status: `evidence=unverified`. The EVM primitives run on published Onchain 0.16
+  (migrated from Cartouche 0.9 / Hieroglyph 1.8) in-tree (`Bourse.Signing.Crypto`,
   `EIP712`, `Derive`; Hyperliquid and Lighter L1 personal-sign go through Crypto).
   Live L1 ChangePubKey success and rejection against Lighter testnet remain
   unobserved in this environment. This entry does not classify a failing live
@@ -295,7 +295,7 @@ test code. Edit the fence when adding a ledgered case.
   The provisioning command alone does not supply rejection or cleanup evidence.
 - Expected evidence: live accepted ChangePubKey registration and rejected L1
   signature, with registration readback and cleanup, before migration and again
-  through Cartouche after migration. The unchanged zk-Schnorr authentication tests
+  through Onchain after migration. The unchanged zk-Schnorr authentication tests
   cannot grade this path. Task 703's pre-implementation live-proof criterion is
   unmet; no upstream release prerequisite has been established.
 - Other baseline observations, run by the implementer on

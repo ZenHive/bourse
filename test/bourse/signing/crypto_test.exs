@@ -111,14 +111,14 @@ defmodule Bourse.Signing.CryptoTest do
     test "EIP-191 envelope uses byte_size, not UTF-8 length" do
       # "é" is one grapheme (String.length 1) and two UTF-8 bytes, so the two
       # measures disagree here and nowhere in ASCII — which is why this is the
-      # message that pins which one is used. cartouche < 0.9.1 measured
-      # String.length in prefix_eth/1 and so disagreed with us on exactly this
-      # input; it now measures byte_size, and the differential below is what
-      # notices if either side moves back.
+      # message that pins which one is used. the dependency's
+      # prefix_eth/1 once measured String.length and so disagreed with us on
+      # exactly this input; the differential below is what notices if either
+      # side moves back.
       message = "é"
       envelope = "\x19Ethereum Signed Message:\n" <> Integer.to_string(byte_size(message)) <> message
       assert Crypto.hash_message(message) == Crypto.keccak256(envelope)
-      assert Crypto.hash_message(message) == Crypto.keccak256(Cartouche.Recover.prefix_eth(message))
+      assert Crypto.hash_message(message) == Crypto.keccak256(Onchain.Recover.prefix_eth(message))
       refute Crypto.hash_message(message) == Crypto.keccak256("\x19Ethereum Signed Message:\n1" <> message)
     end
   end

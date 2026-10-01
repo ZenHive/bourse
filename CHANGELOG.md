@@ -7,6 +7,14 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Changed
+
+- The EVM signing primitives (keccak, secp256k1 sign/recover, EIP-712 typed
+  encoding, Solidity ABI encoding) now come from `{:onchain, "~> 0.16.0"}`,
+  replacing `cartouche` and `hieroglyph`; `curvy` leaves the tree with them.
+  onchain's precompiled NIF targets macOS and Linux only — Windows hosts are no
+  longer supported.
+
 ## [0.9.1] - 2026-10-01
 
 ### Added
