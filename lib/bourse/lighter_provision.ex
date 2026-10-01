@@ -99,12 +99,7 @@ defmodule Bourse.LighterProvision do
   def faucet_ok?(body), do: code_ok?(body)
 
   @doc "Picks the first account index from `accountsByL1Address`."
-  @spec parse_account_index(map()) :: {:ok, pos_integer()} | {:error, :account_not_found}
-  def parse_account_index(%{"sub_accounts" => accounts} = body) when is_list(accounts) do
-    parse_sub_accounts(code_ok?(body), accounts)
-  end
-
-  def parse_account_index(_body), do: {:error, :account_not_found}
+  defdelegate parse_account_index(body), to: Bourse.Lighter.CredentialCheck
 
   @doc "Reads one API-key row from `GET /api/v1/apikeys`."
   @spec parse_api_key(map(), non_neg_integer()) ::
@@ -135,15 +130,6 @@ defmodule Bourse.LighterProvision do
     |> IO.iodata_to_binary()
   end
 
-  defp parse_sub_accounts(false, _accounts), do: {:error, :account_not_found}
-
-  defp parse_sub_accounts(true, accounts) do
-    case Enum.find_value(accounts, &account_index/1) do
-      index when is_integer(index) and index > 0 -> {:ok, index}
-      _other -> {:error, :account_not_found}
-    end
-  end
-
   defp parse_api_keys(false, _keys, _api_key_index), do: {:error, :api_key_not_found}
 
   defp parse_api_keys(true, keys, api_key_index) do
@@ -160,15 +146,6 @@ defmodule Bourse.LighterProvision do
       _other -> {:error, :nonce_not_found}
     end
   end
-
-  defp account_index(account) when is_map(account) do
-    case json_integer(Map.get(account, "index") || Map.get(account, "account_index")) do
-      index when is_integer(index) and index > 0 -> index
-      _other -> nil
-    end
-  end
-
-  defp account_index(_account), do: nil
 
   defp matching_api_key?(key, api_key_index) when is_map(key) do
     json_integer(Map.get(key, "api_key_index")) == api_key_index

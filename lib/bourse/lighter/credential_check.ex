@@ -22,8 +22,6 @@ defmodule Bourse.Lighter.CredentialCheck do
   message is written to be actionable without further investigation.
   """
 
-  alias Bourse.LighterProvision
-
   @testnet_url "https://testnet.zklighter.elliot.ai"
   @mainnet_url "https://mainnet.zklighter.elliot.ai"
 
@@ -88,8 +86,45 @@ defmodule Bourse.Lighter.CredentialCheck do
     end
   end
 
+  @doc """
+  Picks the first account index from an `accountsByL1Address` body.
+
+  Lives here rather than in the repo-internal provisioning module because
+  `resolve_account_index/1` ships in the package and needs it.
+  """
+  @spec parse_account_index(map()) :: {:ok, pos_integer()} | {:error, :account_not_found}
+  def parse_account_index(%{"code" => code, "sub_accounts" => accounts})
+      when code in [200, "200"] and is_list(accounts) do
+    case Enum.find_value(accounts, &sub_account_index/1) do
+      index when is_integer(index) -> {:ok, index}
+      nil -> {:error, :account_not_found}
+    end
+  end
+
+  def parse_account_index(_body), do: {:error, :account_not_found}
+
+  defp sub_account_index(account) when is_map(account) do
+    case json_integer(Map.get(account, "index") || Map.get(account, "account_index")) do
+      index when is_integer(index) and index > 0 -> index
+      _other -> nil
+    end
+  end
+
+  defp sub_account_index(_account), do: nil
+
+  defp json_integer(value) when is_integer(value), do: value
+
+  defp json_integer(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {integer, ""} -> integer
+      _other -> nil
+    end
+  end
+
+  defp json_integer(_value), do: nil
+
   defp account_verdict(body, l1_address) do
-    case LighterProvision.parse_account_index(body) do
+    case parse_account_index(body) do
       {:ok, index} -> {:ok, index}
       {:error, :account_not_found} -> {:error, no_account_message(l1_address, body)}
     end

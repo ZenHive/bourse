@@ -107,10 +107,13 @@ defmodule Bourse.Lighter.CredentialCheckTest do
   end
 
   test "a wallet with no account is reported as a testnet reset with the operator repair" do
-    # An address nobody provisions: the venue answers 21100 "account not found".
+    # A fresh random address: the venue answers 21100 "account not found". A fixed
+    # placeholder does not stay unclaimed — 0x…0001 acquired account 291.
+    l1_address = "0x" <> Base.encode16(:crypto.strong_rand_bytes(20), case: :lower)
+
     assert {:error, message} =
              CredentialCheck.resolve_account_index(
-               l1_address: "0x0000000000000000000000000000000000000001",
+               l1_address: l1_address,
                sandbox: true
              )
 
