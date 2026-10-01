@@ -32494,6 +32494,41 @@
       "created_at": "2026-09-28",
       "scored_at": "2026-09-28",
       "cross_repo": []
+    },
+    {
+      "id": "709",
+      "phase": 14,
+      "bundle": "authored_specs",
+      "status": "pending",
+      "title": "Migrate the Derive venue from API v2 to v3",
+      "scores": {
+        "d": 7,
+        "b": 7,
+        "u": 6
+      },
+      "eff": 0.93,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "codex",
+      "model": "gpt-6-astra",
+      "acceptance_criteria": [
+        "Derive's authored spec targets the v3 hosts (https://api.derive.xyz/v3, https://testnet.api.derive.xyz/v3 and their WebSocket endpoints); no lyra.finance host remains in runtime specs or tests",
+        "Signed actions follow v3: nanosecond nonces within the per-action windows, the per-chain EIP-712 domain separator (mainnet chainId 1, testnet 11155111) and the owner EOA/multisig as wallet; a live v3 testnet order is accepted and cancelled, and a deliberately wrong signature or nonce is rejected with the provider's documented error",
+        "The market-maker surface is reachable and live-pinned on v3 testnet: private/set_mmp_config, get_mmp_config and reset_mmp; private/set_cancel_on_disconnect; private/order with mmp: true; replace or cancel of a resting order; the private {subaccount_id}.orders and {subaccount_id}.trades channels deliver a frame for an owned order and fill",
+        "Session-key handling uses private/set_session_key; the removed v2 methods are no longer authored",
+        "docs/authored-spec-carves/derive.md records each v2-to-v3 confrontation with the provider doc it rests on; the 2026-09-15 C-T702 entry's open gap on private order/trade channels is resolved or still recorded as unverified",
+        "If v3 mainnet is not yet live when this lands, the mainnet path is recorded as unverified in the ledger, never claimed from testnet evidence"
+      ],
+      "out_of_scope": [
+        "Vaults, RFQ taker flows and L1 deposits beyond what the existing unified surface already exposes",
+        "Any zen_mm code"
+      ],
+      "body": "Derive (formerly Lyra) is replacing API v2 with v3, and bourse 0.9.0 still speaks v2 (`priv/venues/derive/authored/venue.json` points at api.lyra.finance / api-demo.lyra.finance). Verified 2026-10-01 from Derive's docs: v3 runs on testnet (Ethereum Sepolia), and the \"Coming soon\" page lists v2 methods still to arrive \"before v3 mainnet launch\". The breaking changes that matter here: new hosts, nanosecond nonces with per-action validity windows, a domain separator recomputed per chain, no separate \"Derive Wallet\" (every wallet field is the owner EOA or multisig), `private/set_session_key` replacing the v2 registration calls, and a single `private/set_cancel_on_disconnect` replacing the v2 enable/disable family. Sources: https://docs.derive.xyz/migrating/breaking-changes.md, https://docs.derive.xyz/migrating/coming-soon.md, https://docs.derive.xyz/trading/cancel-on-disconnect.md, https://docs.derive.xyz/integrators/trading/market-maker-protections.md.\n\nConsumer: zen_mm wants Derive as a second market-making venue (zen_mm roadmap) and is blocked on a bourse release that carries this. Its needs set the minimum surface: MMP config and reset, cancel-on-disconnect, mmp-flagged limit orders with replace/cancel, partial fills, and the private order/trade streams across reconnects.\n\nAuthority: Derive's v3 docs and machine-readable specs (https://docs.derive.xyz/openapi.json, websocket.asyncapi.json, subscriptions.asyncapi.json) plus live v3 testnet traffic. Derive's official SDKs (derive-py, derive-ts, derive-rs) are provider-owned reference for signing. CCXT is reference only. A 2026-07-19 sweep found all ATM option books empty on the v2 demo; if the v3 testnet is equally empty, prove fills with a self-cross or a perp and record the limitation.",
+      "created_at": "2026-10-01",
+      "scored_at": "2026-10-01",
+      "cross_repo": []
     }
   ]
 }
