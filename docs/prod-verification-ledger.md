@@ -218,13 +218,23 @@ test code. Edit the fence when adding a ledgered case.
 
 ## Open
 
-### derive — keyless order preparation: Trade module address and venue acceptance (task 148, filed 2026-09-29)
+### derive — keyless order preparation pins v2 identities the v3 migration replaces (task 148, filed 2026-09-29; superseded by task 709, 2026-10-01)
 
 - Authored slices: none — `Bourse.Signing.Derive.PreparedOrder` is a signing boundary,
   not an authored field map. It ships the chain id and the Matching and Trade module
   addresses for both Derive environments.
-- Blocked by: nothing external. A demo order on `api-demo.lyra.finance` would close it;
-  it has not been run, so the claim stays unverified rather than assumed.
+- Blocked by: **do not close this with a v2 order.** Derive is replacing API v2 with v3
+  (task 709, premise verified 2026-10-01 from https://docs.derive.xyz/migrating/breaking-changes.md),
+  and v3 changes the exact identities this module pins: chain ids 1 / 11155111 instead of
+  957 / 901, a domain separator recomputed per chain instead of v2's two fixed constants,
+  and no separate "Derive Wallet" — every wallet field becomes the owner EOA or multisig.
+  A `POST /order` accepted on `api-demo.lyra.finance` would therefore prove a host, a
+  digest and a module address that all three cease to exist. The gap closes when 709
+  migrates this boundary to v3 and pins a live v3 order, not before.
+- 🚨 Task 709's acceptance criteria do not name `PreparedOrder`. Its keyless prepare path
+  carries its own copy of the chain id, the Matching address and the Trade module address,
+  so a v3 migration that only touches the authored spec and `Derive.sign_order/2` leaves
+  this module silently emitting v2 digests against v3 hosts. Migrating it belongs in 709.
 - The open question, in two parts:
   1. **Is the Trade module address right?** It enters the digest as the `module` field,
      and the only thing grading it is the stored vector
@@ -239,18 +249,14 @@ test code. Edit the fence when adding a ledgered case.
      with that body, is accepted — the encoding was compared against
      `derivexyz/v2-action-signing-python` and ethers `TypedDataEncoder`, which are
      compatibility evidence, never venue semantics.
-- Exact call: prepare with a real demo subaccount, sign the digest with the registered
-  Admin session key, and POST the returned `body` plus that signature:
-
-      {:ok, p} = Bourse.Signing.Derive.PreparedOrder.prepare(params, :testnet)
-      digest = Base.decode16!(String.trim_leading(p.digest, "0x"), case: :lower)
-      sig = Bourse.Signing.Crypto.sign_hash(digest, private_key)
-      # POST /order with p.body plus the packed signature
-
-- Expected evidence: an accepted `POST /order` on `api-demo.lyra.finance` whose response
-  echoes the submitted `limit_price` / `amount` / `max_fee`, plus one rejection whose
-  code names a term we changed on purpose (e.g. `11023` for a `max_fee` under the
-  dynamic floor) — success alone cannot tell a correct digest from an ignored one.
+- Exact call: on v3, under task 709 — prepare with a real testnet subaccount, sign the
+  digest with the session key registered through `private/set_session_key`, and POST the
+  returned `body` plus that signature to the v3 host.
+- Expected evidence: an accepted v3 testnet `POST private/order` whose response echoes the
+  submitted `limit_price` / `amount` / `max_fee`, plus one rejection whose code names a
+  term we changed on purpose — success alone cannot tell a correct digest from an ignored
+  one. Mainnet stays unverified until v3 mainnet is live; never claimed from testnet
+  evidence.
 
 ### lighter — L1 ChangePubKey signing migration (task 703, filed 2026-09-15)
 
