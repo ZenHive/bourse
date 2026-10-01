@@ -7,6 +7,26 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-10-01
+
+### Added
+
+- `Bourse.Lighter.CredentialCheck.resolve_account_index/1` reads the Lighter
+  account index from the wallet that owns it (`accountsByL1Address`, address
+  from `:l1_address` or `LIGHTER_TESTNET_L1_ADDRESS`). Lighter reassigns the
+  index whenever the testnet is reset, so a stored copy goes stale at every
+  reset; a wallet with no account (`21100`) is reported as a reset, naming the
+  operator repair. `parse_account_index/1` parses that response.
+
+### Changed
+
+- `CredentialCheck.run/1` and `locate/2` no longer read
+  `LIGHTER_TESTNET_ACCOUNT_INDEX`. Without an explicit `:account_index` they
+  resolve it from the wallet as above, so `LIGHTER_TESTNET_L1_ADDRESS` must be
+  set.
+- An account that carries no registered key at all is reported as a testnet
+  reset rather than as a wrong `LIGHTER_TESTNET_API_KEY_INDEX`.
+
 ### Added
 
 - `Bourse.Signing.Derive.PreparedOrder.prepare/2` prepares a Derive v2 order for
@@ -1454,7 +1474,8 @@ Published before this repository existed, from the tree that is now the private
   ccxt.build_lighter_signer`, the prerequisite for private Lighter calls, is the
   one task consumers receive.
 
-[Unreleased]: https://github.com/ZenHive/bourse/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/ZenHive/bourse/compare/v0.9.1...HEAD
+[0.9.1]: https://hex.pm/packages/bourse/0.9.1
 [0.9.0]: https://hex.pm/packages/bourse/0.9.0
 [0.8.0]: https://hex.pm/packages/bourse/0.8.0
 [0.7.0]: https://hex.pm/packages/bourse/0.7.0
