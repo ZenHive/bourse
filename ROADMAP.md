@@ -887,7 +887,7 @@ The authored-specs pivot workstream (see [docs/authored-specs.md](docs/authored-
 | Task 664 | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · 🐛 Unified `notional` is authored nil for every non-future deribit position kind, so an open option contributes nothing to a size fold [D:4/B:6/U:5 → Eff:1.38?] 📋 |
 | Task 665 `[P]` | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · 🐛 🔒 A side that is not exactly "buy" or "sell" still becomes a direction on every batch write path [D:3/B:7/U:6 → Eff:2.17?] 🎯 |
 | Task 666 `[P]` | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · 🐛 Option position notional is derived per venue with no shared rule, so the same field carries a different unit on each one [D:4/B:6/U:3 → Eff:1.12?] 📋 |
-| Task 709 | ⬜ | 🎁 **authored_specs** · Migrate the Derive venue from API v2 to v3 [D:7/B:7/U:6 → Eff:0.93] ⚠️ |
+| Task 709 | ⬜ | 🎁 **authored_specs** · Migrate the Derive venue from API v2 to v3 [D:8/B:7/U:6 → Eff:0.81] ⚠️ |
 <!-- TASKS:END -->
 
 ## Phase 15: Options Execution
