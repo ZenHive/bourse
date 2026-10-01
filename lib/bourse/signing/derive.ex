@@ -70,7 +70,7 @@ defmodule Bourse.Signing.Derive do
     order
     |> hash_order_message(opts)
     |> Crypto.sign_hash(private_key)
-    |> signature_hex()
+    |> Crypto.packed_signature()
   end
 
   @doc "Hashes Derive's trade-module tuple for an EIP-712 order signature."
@@ -196,11 +196,6 @@ defmodule Bourse.Signing.Derive do
     end
   end
 
-  # Derive signatures pack `0x` + r(64) + s(64) + v(2 hex).
-  defp signature_hex(%{r: r, s: s, v: v}) do
-    "0x" <> r <> s <> (v |> Integer.to_string(16) |> String.downcase())
-  end
-
   defp order_domain_separator(opts) do
     if Keyword.get(opts, :testnet, false) do
       Base.decode16!(@domain_separator_sandbox, case: :lower)
@@ -216,8 +211,8 @@ defmodule Bourse.Signing.Derive do
     TypeEncoder.encode_raw(decoded, type_maps)
   end
 
-  defp decode_abi_value(value, "bytes32"), do: to_bytes32(value)
-  defp decode_abi_value(value, "address"), do: decode_address(value)
+  defp decode_abi_value(value, "bytes32"), do: Crypto.decode_fixed!(value, 32, "Derive ABI: bytes32")
+  defp decode_abi_value(value, "address"), do: Crypto.decode_fixed!(value, 20, "Derive ABI: address")
   defp decode_abi_value(value, "uint256") when is_integer(value), do: value
   defp decode_abi_value(value, "int256") when is_integer(value), do: value
   defp decode_abi_value(true, "bool"), do: true
@@ -232,22 +227,6 @@ defmodule Bourse.Signing.Derive do
     |> Decimal.new()
     |> Decimal.mult(Decimal.new(@unit_scale))
     |> Decimal.to_integer()
-  end
-
-  defp to_bytes32(value) when is_binary(value) and byte_size(value) == 32, do: value
-  defp to_bytes32(value) when is_binary(value), do: decode_fixed(value, 32, "bytes32")
-
-  defp decode_address(value) when is_binary(value) and byte_size(value) == 20, do: value
-  defp decode_address(value) when is_binary(value), do: decode_fixed(value, 20, "address")
-
-  defp decode_fixed(value, size, label) do
-    bytes = value |> Crypto.strip_0x() |> Base.decode16!(case: :mixed)
-
-    if byte_size(bytes) == size do
-      bytes
-    else
-      raise ArgumentError, "Derive ABI: #{label} must be #{size} bytes, got #{byte_size(bytes)}"
-    end
   end
 
   defp fetch_private_key(opts) do

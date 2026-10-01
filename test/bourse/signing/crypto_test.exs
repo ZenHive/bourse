@@ -37,6 +37,27 @@ defmodule Bourse.Signing.CryptoTest do
     end
   end
 
+  describe "decode_fixed!/3" do
+    test "passes a raw value of the exact size through and decodes hex of that size" do
+      raw = :binary.copy(<<0xAB>>, 20)
+      assert Crypto.decode_fixed!(raw, 20, "t") == raw
+      assert Crypto.decode_fixed!("0x" <> String.duplicate("Ab", 20), 20, "t") == raw
+      assert Crypto.decode_fixed!(String.duplicate("ab", 20), 20, "t") == raw
+    end
+
+    test "rejects short, long and odd-length hex instead of padding it" do
+      assert_raise ArgumentError, ~r/^label must be 20 bytes, got 19$/, fn ->
+        Crypto.decode_fixed!("0x" <> String.duplicate("ab", 19), 20, "label")
+      end
+
+      assert_raise ArgumentError, ~r/must be 20 bytes, got 21/, fn ->
+        Crypto.decode_fixed!(String.duplicate("ab", 21), 20, "label")
+      end
+
+      assert_raise ArgumentError, fn -> Crypto.decode_fixed!("0x" <> String.duplicate("a", 39), 20, "label") end
+    end
+  end
+
   describe "sign_hash/2" do
     @key Crypto.decode_private_key("0x0123456789012345678901234567890123456789012345678901234567890123")
 

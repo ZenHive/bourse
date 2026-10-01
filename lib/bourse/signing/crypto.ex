@@ -20,16 +20,14 @@ defmodule Bourse.Signing.Crypto do
   @secp256k1_half_n div(@secp256k1_n, 2)
 
   @doc """
-  Computes the EIP-191 personal-message hash (`hashMessage`) for `message`.
-
-  Uses the spec envelope (`0x19 ‖ "Ethereum Signed Message:\\n" ‖ byte_size ‖
-  message`) hashed with `Onchain.Hash.keccak/1`. The envelope is built here
-  rather than delegated, so the byte-length measure EIP-191 requires is owned by
-  this module and cannot change underneath it.
+  Computes the EIP-191 personal-message hash (`hashMessage`) for `message`:
+  keccak of `0x19 ‖ "Ethereum Signed Message:\\n" ‖ byte_size ‖ message`, the
+  envelope built by `Onchain.Recover.prefix_eth/1`. EIP-191 measures the
+  message in bytes; `crypto_test.exs` pins that on a multi-byte message.
   """
   @spec hash_message(String.t()) :: binary()
   def hash_message(message) when is_binary(message) do
-    keccak256("\x19Ethereum Signed Message:\n" <> Integer.to_string(byte_size(message)) <> message)
+    message |> Recover.prefix_eth() |> keccak256()
   end
 
   @doc """
@@ -112,6 +110,25 @@ defmodule Bourse.Signing.Crypto do
     Base.decode16!(hex, case: :mixed)
   end
 
+  @doc """
+  Returns `value` as exactly `size` raw bytes: a `size`-byte binary passes
+  through, anything else is decoded as (`0x`-prefixed) hex. A short or long value
+  raises instead of being padded, so a truncated hex string cannot silently
+  become a different word. `label` prefixes the error message.
+  """
+  @spec decode_fixed!(binary(), pos_integer(), String.t()) :: binary()
+  def decode_fixed!(value, size, _label) when is_binary(value) and byte_size(value) == size, do: value
+
+  def decode_fixed!(value, size, label) when is_binary(value) do
+    bytes = decode_hex(value)
+
+    if byte_size(bytes) == size do
+      bytes
+    else
+      raise ArgumentError, "#{label} must be #{size} bytes, got #{byte_size(bytes)}"
+    end
+  end
+
   @doc "Lowercase hex-encodes a binary (no `0x` prefix)."
   @spec encode_hex(binary()) :: String.t()
   def encode_hex(binary), do: Base.encode16(binary, case: :lower)
@@ -145,7 +162,9 @@ defmodule Bourse.Signing.Crypto do
       {:error, Exception.message(error)}
   end
 
-  defp packed_signature(%{r: r, s: s, v: v}) do
+  @doc "Packs `%{r, s, v}` into the `0x ‖ r ‖ s ‖ v` hex signature string."
+  @spec packed_signature(signature()) :: String.t()
+  def packed_signature(%{r: r, s: s, v: v}) do
     "0x" <> r <> s <> (v |> Integer.to_string(16) |> String.downcase())
   end
 

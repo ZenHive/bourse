@@ -101,10 +101,10 @@ defmodule Bourse.Signing.EIP712 do
 
   defp convert_value("bytes" <> rest, value) when rest != "" do
     {n, ""} = Integer.parse(rest)
-    exact_bytes(value, n, "bytes#{n}")
+    Crypto.decode_fixed!(value, n, "EIP712: bytes#{n}")
   end
 
-  defp convert_value("address", value), do: exact_bytes(value, 20, "address")
+  defp convert_value("address", value), do: Crypto.decode_fixed!(value, 20, "EIP712: address")
 
   defp convert_value(type, value) when is_integer(value) do
     raise ArgumentError, "EIP712: unsupported field type #{inspect(type)}"
@@ -112,17 +112,5 @@ defmodule Bourse.Signing.EIP712 do
 
   defp convert_value(type, value) do
     raise ArgumentError, "EIP712: unsupported field #{inspect(type)} for #{inspect(value)}"
-  end
-
-  defp exact_bytes(value, size, _label) when is_binary(value) and byte_size(value) == size, do: value
-
-  defp exact_bytes(value, size, label) when is_binary(value) do
-    bytes = value |> Crypto.strip_0x() |> Base.decode16!(case: :mixed)
-
-    if byte_size(bytes) == size do
-      bytes
-    else
-      raise ArgumentError, "EIP712: #{label} must be #{size} bytes, got #{byte_size(bytes)}"
-    end
   end
 end
