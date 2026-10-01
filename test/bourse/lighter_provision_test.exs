@@ -94,17 +94,27 @@ defmodule Bourse.LighterProvisionTest do
     assert LighterProvision.testnet_url() == "https://testnet.zklighter.elliot.ai"
   end
 
-  test "only the provision mix task reads LIGHTER_TESTNET_L1_*" do
-    hits =
-      "lib/**/*.ex"
-      |> Path.wildcard()
-      |> Enum.filter(fn path ->
-        path
-        |> File.read!()
-        |> String.contains?("LIGHTER_TESTNET_L1_")
-      end)
+  # The L1 private key mints signing keys, so it stays inside the one task an
+  # operator runs by hand. The L1 *address* is only a public wallet identifier
+  # and CredentialCheck must read it — it resolves the account index from the
+  # wallet at every run rather than trusting a stored copy. Guarding both under
+  # one prefix conflated a secret with an identifier and made that read a red.
+  test "the L1 private key never leaves the provision mix task" do
+    assert readers_of("LIGHTER_TESTNET_L1_PRIVATE_KEY") == ["lib/mix/tasks/bourse.provision_lighter.ex"]
+  end
 
-    assert hits == ["lib/mix/tasks/bourse.provision_lighter.ex"]
+  test "the L1 wallet address is read only to provision and to resolve the account index" do
+    assert readers_of("LIGHTER_TESTNET_L1_ADDRESS") == [
+             "lib/bourse/lighter/credential_check.ex",
+             "lib/mix/tasks/bourse.provision_lighter.ex"
+           ]
+  end
+
+  defp readers_of(variable) do
+    "lib/**/*.ex"
+    |> Path.wildcard()
+    |> Enum.filter(&(&1 |> File.read!() |> String.contains?(variable)))
+    |> Enum.sort()
   end
 
   test "LighterProvision is unpackaged and undocumented, matching LiveLane" do
