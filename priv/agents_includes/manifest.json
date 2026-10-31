@@ -3,30 +3,30 @@
   "_doc": "Pinned external @-import sources for AGENTS.md generation (task 471). Each CLAUDE.md @~/.claude/includes/* line must resolve here \u2014 never via $HOME. Update a pin by replacing the file and refreshing sha256/bytes, then run mix bourse.agents_md.",
   "max_depth": 5,
   "includes": {
+    "~/.claude/includes/verification-policy.md": {
+      "path": "priv/agents_includes/verification-policy.md",
+      "sha256": "8e84a46203302aa84a3dda42381c3e20904dd67e093bacc48fe1cf4e1d5073de",
+      "bytes": 4660
+    },
     "~/.claude/includes/critical-rules.md": {
       "path": "priv/agents_includes/critical-rules.md",
-      "sha256": "8a24599a092433332cfdcd8004986c0949825d70263f789303811ca5302b2081",
-      "bytes": 18092
+      "sha256": "79430e85ab1b1fe239ce8e8ce0062b85cdb01e7d05a9e80dbd28198aed786b28",
+      "bytes": 14280
     },
     "~/.claude/includes/elixir-security-adjudications.md": {
       "path": "priv/agents_includes/elixir-security-adjudications.md",
-      "sha256": "df80e290c6aee294071b8310f9f2f13ea18efc67dc605191437a6e7aacd08663",
-      "bytes": 7508
+      "sha256": "63fee6abfc945756149fb81228d1cf764793dceebf387b7fc70abf6058f3a8c7",
+      "bytes": 7908
     },
     "~/.claude/includes/ex-unit-json.md": {
       "path": "priv/agents_includes/ex-unit-json.md",
       "sha256": "1f4a7e7480a06eb38582ccca8d48caee1beaaf81444fe5db5ccd548040fdffe8",
       "bytes": 9769
     },
-    "~/.claude/includes/harness-workflow.md": {
-      "path": "priv/agents_includes/harness-workflow.md",
-      "sha256": "26ee8d1c8b48e8e0ec78fb78fd6f8f8c0154162b754b6ef4e35a4c8429e36613",
-      "bytes": 54056
-    },
-    "~/.claude/includes/verification-policy.md": {
-      "path": "priv/agents_includes/verification-policy.md",
-      "sha256": "6843473a65179908c28da6ce22649a9ce9d5da3ea88dfc1b23dd6df911d05b69",
-      "bytes": 3723
+    "~/.claude/includes/harness-guardrails.md": {
+      "path": "priv/agents_includes/harness-guardrails.md",
+      "sha256": "707487e9685ca2e053306e6ebaa6004b4cfdf7b21bb97a999fbcf81108fc4a4b",
+      "bytes": 2523
     }
   }
 }

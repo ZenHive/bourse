@@ -1,4 +1,4 @@
-<!-- Auto-generated from CLAUDE.md by claude-marketplace/scripts/sync-agents-md.sh — do not edit manually -->
+<!-- Auto-generated from CLAUDE.md by mix bourse.agents_md — do not edit manually -->
 
 # CLAUDE.md
 
