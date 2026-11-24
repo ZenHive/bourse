@@ -18,6 +18,7 @@ defmodule Bourse.Unified.ReadParse do
   alias Bourse.Unified.Envelope
   alias Bourse.Unified.FieldMaps
   alias Bourse.Unified.OptionQuantity
+  alias Bourse.Unified.RequestShape
   alias Bourse.Unified.RequestShape.Deribit, as: DeribitRequestShape
   alias Bourse.VolatilityHistory
 
@@ -515,6 +516,7 @@ defmodule Bourse.Unified.ReadParse do
          # all-nil struct. Empty collections become [] here (valid success).
          payload = coerce_collection_payload(payload, envelope_list?, exchange, dict_js_name),
          payload = filter_selected_deposit_rows(payload, exchange, js_name),
+         payload = Envelope.filter_rows(payload, module, parse_type, js_name),
          {:ok, payload} <- select_requested_row(payload, exchange, js_name, params),
          {:ok, payload} <- ensure_expected_shape(payload, envelope_list?),
          :ok <- reject_missing_single_order(payload, exchange, js_name, list_return?),
@@ -542,6 +544,7 @@ defmodule Bourse.Unified.ReadParse do
            # carried in `info`, which enrich/3 is what populates.
            |> enrich_deposit_address(exchange, parse_type, params)
            |> stamp_deribit_transaction_type(exchange, js_name)
+           |> stamp_deribit_funding_interval(exchange, js_name, params)
            |> normalize_lighter_order_sides(exchange, parse_type),
          parsed = backfill_bybit_requested_tickers(parsed, exchange, js_name, params),
          parsed = stamp_bybit_fetch_position_timestamp(parsed, body, exchange, js_name),
@@ -1062,6 +1065,31 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   defp stamp_deribit_transaction_type(parsed, _exchange, _js_name), do: parsed
+
+  # `public/get_funding_rate_value` returns the rate accrued over the requested
+  # window, so the interval is that window — not the venue's hourly settlement
+  # cadence. A window the parse cannot reconstruct gets no interval claim.
+  defp stamp_deribit_funding_interval(%{interval: _} = rate, %Exchange{id: "deribit"}, "fetchFundingRate", params) do
+    interval =
+      case RequestShape.deribit_funding_window_ms(params) do
+        {:ok, window_ms} -> duration_label(window_ms)
+        :unknown -> nil
+      end
+
+    %{rate | interval: interval}
+  end
+
+  defp stamp_deribit_funding_interval(parsed, _exchange, _js_name, _params), do: parsed
+
+  @ms_per_hour 3_600_000
+  @ms_per_minute 60_000
+
+  defp duration_label(ms) when is_integer(ms) and ms > 0 and rem(ms, @ms_per_hour) == 0, do: "#{div(ms, @ms_per_hour)}h"
+
+  defp duration_label(ms) when is_integer(ms) and ms > 0 and rem(ms, @ms_per_minute) == 0,
+    do: "#{div(ms, @ms_per_minute)}m"
+
+  defp duration_label(_ms), do: nil
 
   defp normalize_lighter_order_sides(orders, %Exchange{id: "lighter"}, "order") when is_list(orders) do
     Enum.map(orders, &normalize_lighter_order_side/1)

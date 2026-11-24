@@ -69,4 +69,27 @@ defmodule Bourse.Unified.EnvelopeTest do
                Envelope.unwrap(body, Bourse.Lighter, "lighter", "ticker", "fetchTicker", false)
     end
   end
+
+  describe "filter_rows/4" do
+    test "deribit fetchLiquidations keeps only rows carrying the liquidation marker" do
+      rows = [
+        %{"trade_id" => "1", "liquidation" => "T"},
+        %{"trade_id" => "2"},
+        %{"trade_id" => "3", "liquidation" => nil},
+        %{"trade_id" => "4", "liquidation" => "MT"}
+      ]
+
+      assert [%{"trade_id" => "1"}, %{"trade_id" => "4"}] =
+               Envelope.filter_rows(rows, Bourse.Deribit, "liquidation", "fetchLiquidations")
+    end
+
+    test "an unmarked tape filters to an empty list" do
+      assert [] = Envelope.filter_rows([%{"trade_id" => "1"}], Bourse.Deribit, "liquidation", "fetchLiquidations")
+    end
+
+    test "reads without an authored row_filter pass rows through" do
+      rows = [%{"trade_id" => "1"}]
+      assert ^rows = Envelope.filter_rows(rows, Bourse.Deribit, "liquidation", "fetchMyLiquidations")
+    end
+  end
 end

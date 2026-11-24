@@ -16,8 +16,6 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
   @moduletag :network
 
   @deribit_testnet_url "https://test.deribit.com"
-  @funding_history_window_ms 12 * 60 * 60 * 1000
-  @milliseconds_per_hour 60 * 60 * 1000
   @ohlcv_window_ms 300_000
   @option_probe_price 0.0001
   @order_poll_attempts 20
@@ -677,25 +675,6 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
     end
   end
 
-  test "funding rate cadence matches Deribit's live hourly history" do
-    exchange = build_exchange(:deribit, sandbox: true)
-    end_timestamp = System.system_time(:millisecond)
-    start_timestamp = end_timestamp - @funding_history_window_ms
-
-    assert {:ok, %Bourse.FundingRate{funding_rate: rate, interval: interval}} =
-             Bourse.fetch_funding_rate(exchange, "BTC/USD:BTC")
-
-    assert {:ok, [_first, _second | _] = history} =
-             Bourse.fetch_funding_rate_history(exchange, "BTC/USD:BTC",
-               since: start_timestamp,
-               end_timestamp: end_timestamp
-             )
-
-    assert is_number(rate)
-    assert interval == observed_funding_interval!(history)
-    assert interval == "1h"
-  end
-
   # Task 692: Deribit exposes only a singular funding read, so the plural is
   # authored as a bridge over an explicit symbols list. It must key the result
   # by the symbols the caller asked for and refuse to invent a universe.
@@ -707,7 +686,11 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
     assert Enum.sort(Map.keys(rates)) == Enum.sort(symbols)
 
     for symbol <- symbols do
-      assert %Bourse.FundingRate{symbol: ^symbol, interval: "1h", funding_rate: rate} = Map.fetch!(rates, symbol)
+      assert {:ok, %Bourse.FundingRate{interval: singular_interval}} = Bourse.fetch_funding_rate(exchange, symbol)
+
+      assert %Bourse.FundingRate{symbol: ^symbol, interval: ^singular_interval, funding_rate: rate} =
+               Map.fetch!(rates, symbol)
+
       assert is_number(rate)
     end
 
@@ -884,20 +867,6 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
 
   defp instrument_name(%{"instrument_name" => value}), do: value
   defp instrument_name(%{"result" => %{"instrument_name" => value}}), do: value
-
-  defp observed_funding_interval!(rows) do
-    gaps =
-      rows
-      |> Enum.map(& &1.timestamp)
-      |> Enum.sort()
-      |> Enum.chunk_every(2, 1, :discard)
-      |> Enum.map(fn [left, right] -> right - left end)
-      |> Enum.uniq()
-
-    assert [gap_ms] = gaps
-    assert rem(gap_ms, @milliseconds_per_hour) == 0
-    "#{div(gap_ms, @milliseconds_per_hour)}h"
-  end
 
   defp poll_open_position!(exchange, instrument_name, code, attempts \\ @order_poll_attempts)
 

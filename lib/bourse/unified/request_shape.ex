@@ -822,6 +822,27 @@ defmodule Bourse.Unified.RequestShape do
 
   @deribit_funding_window_ms 8 * 60 * 60 * 1000
 
+  @doc false
+  # The window deribit `fetchFundingRate` accrues its value over: the authored
+  # default when the caller sets neither end, the caller's span when it sets
+  # both, and `:unknown` when only one end is caller-set (the other is the
+  # request-time clock, which the parse does not see).
+  @spec deribit_funding_window_ms(map()) :: {:ok, integer()} | :unknown
+  def deribit_funding_window_ms(params) when is_map(params) do
+    start = explicit_timestamp(params, ["start_timestamp", "since"])
+    finish = explicit_timestamp(params, ["end_timestamp", "until"])
+
+    case {start, finish} do
+      {nil, nil} -> {:ok, @deribit_funding_window_ms}
+      {start, finish} when is_integer(start) and is_integer(finish) -> {:ok, finish - start}
+      _ -> :unknown
+    end
+  end
+
+  defp explicit_timestamp(params, keys) do
+    Enum.find_value(keys, fn key -> if is_integer(params[key]), do: params[key] end)
+  end
+
   defp deribit_funding_start_timestamp(params, context) do
     cond do
       is_integer(params["start_timestamp"]) -> params["start_timestamp"]

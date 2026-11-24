@@ -14,6 +14,31 @@ defmodule Bourse.Unified.Envelope do
     end
   end
 
+  @doc """
+  Keeps only the rows the authored `row_filter` admits for this read.
+
+  A read served by a broader provider collection (deribit `fetchLiquidations`
+  reads the public trade tape) names the row marker that makes a row belong to
+  it: `%{"key" => k, "present" => true}` keeps rows whose `k` is non-nil,
+  `%{"key" => k, "equals" => v}` keeps rows whose `k` equals `v`.
+  """
+  @spec filter_rows(term(), module(), String.t(), String.t()) :: term()
+  def filter_rows(rows, module, parse_type, js_name) when is_list(rows) do
+    case envelope_config(module, parse_type, js_name) do
+      %{"row_filter" => %{"key" => key} = filter} when is_binary(key) ->
+        Enum.filter(rows, &row_admitted?(&1, key, filter))
+
+      _ ->
+        rows
+    end
+  end
+
+  def filter_rows(payload, _module, _parse_type, _js_name), do: payload
+
+  defp row_admitted?(row, key, %{"present" => true}) when is_map(row), do: not is_nil(Map.get(row, key))
+  defp row_admitted?(row, key, %{"equals" => expected}) when is_map(row), do: Map.get(row, key) == expected
+  defp row_admitted?(_row, _key, _filter), do: false
+
   defp resolve_payload(body, module, parse_type, js_name, list_return?) do
     if list_return? and is_list(body) do
       {:ok, body}

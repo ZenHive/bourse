@@ -137,11 +137,11 @@
         "info": null,
         "interestRate": null,
         "interval": {
-          "default": "1h",
+          "default": "8h",
           "evidence": {
-            "carve_id": "C-T535a",
-            "derivation": "timestamp_spacing",
-            "source": "test/fixtures/responses/deribit/fetch_funding_rate_history.json"
+            "carve_id": "C-T710a",
+            "derivation": "request_window",
+            "source": "public/get_funding_rate_value accrues over [start_timestamp, end_timestamp]; fetchFundingRate requests an 8h window unless the caller supplies one"
           }
         },
         "markPrice": null,
@@ -957,7 +957,13 @@
           "key": "best_ask_amount"
         },
         "average": null,
-        "baseVolume": null,
+        "baseVolume": {
+          "coercion": "safeNumber",
+          "fallback_keys": [
+            "volume"
+          ],
+          "key": "stats.volume"
+        },
         "bid": {
           "coercion": "safeNumber",
           "fallback_keys": [
@@ -1018,9 +1024,11 @@
         "quoteVolume": {
           "coercion": "safeNumber",
           "fallback_keys": [
-            "volume"
+            "volume_notional",
+            "stats.volume_usd",
+            "volume_usd"
           ],
-          "key": "stats.volume"
+          "key": "stats.volume_notional"
         },
         "symbol": null,
         "timestamp": {
@@ -1509,7 +1517,11 @@
       "fetchLiquidations": {
         "default": [],
         "fallback_keys": [],
-        "key": "result.trades"
+        "key": "result.trades",
+        "row_filter": {
+          "key": "liquidation",
+          "present": true
+        }
       },
       "fetchMyLiquidations": {
         "default": [],

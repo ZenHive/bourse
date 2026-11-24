@@ -450,7 +450,8 @@
           "amount",
           "timestamp",
           "side"
-        ]
+        ],
+        "empty_collection": "allowed"
       },
       "authority_source_ids": [
         "api-openapi"
@@ -1474,7 +1475,7 @@
         {
           "name": "symbol",
           "strategy": "literal",
-          "value": "ZZZ/USD:BTC"
+          "value": "BTC/USD:BTC-991231"
         }
       ],
       "options": [],
@@ -1483,7 +1484,7 @@
         "code": -32602,
         "message_contains": "instrument not found"
       },
-      "observed_at": "2026-08-23"
+      "observed_at": "2026-11-25"
     }
   ],
   "provider_operation_prefixes": [
