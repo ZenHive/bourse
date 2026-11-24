@@ -3,11 +3,11 @@ defmodule Bourse.Emulation.Delegations do
   The declared delegation graph of `Bourse.Emulation`.
 
   Each key is a unified method with a runtime emulation handler; its value
-  lists every unified method that handler may call. `Bourse.Emulation`
-  refuses, by raising, any nested call that is not declared here, so the table
-  is never smaller than the code it describes. A source scan cannot stand in
-  for it: delegations hide inside shared helpers (`ensure_contract_market`,
-  `collect_funding_rates_from_singular`) that a per-handler read misses.
+  lists exactly the unified methods that handler can call, including calls made
+  from shared helpers such as `ensure_contract_market` and
+  `collect_funding_rates_from_singular`. `test/bourse/emulation_test.exs`
+  compares every entry with the call sites reachable from the handler, so a
+  missing or stale edge fails the suite.
 
   `Bourse.Spec.Schema` uses the graph to reject an authored document whose
   emulated methods delegate to each other in a cycle. Edges into a method the
@@ -56,24 +56,6 @@ defmodule Bourse.Emulation.Delegations do
   @spec declared?(atom(), atom()) :: boolean()
   def declared?(from, to) when is_atom(from) and is_atom(to) do
     to in Map.get(@edges, from, [])
-  end
-
-  @doc """
-  Raises unless `from`'s emulation handler is declared to call `to`.
-
-  `Bourse.Emulation` calls this before every nested call, ahead of any
-  endpoint-availability check, so an undeclared edge fails on its first run
-  even when the delegated method has no native route.
-  """
-  @spec assert_declared!(atom(), atom()) :: :ok
-  def assert_declared!(from, to) do
-    if declared?(from, to) do
-      :ok
-    else
-      raise ArgumentError,
-            "emulated #{from} delegated to #{to}, an edge #{inspect(__MODULE__)} does not declare; " <>
-              "declare it so authored documents are checked for emulation cycles through it"
-    end
   end
 
   @doc "Returns the graph in authored camelCase method names."

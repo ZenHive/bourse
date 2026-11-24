@@ -2,6 +2,7 @@ defmodule Bourse.EmulationTest do
   use ExUnit.Case, async: true
 
   alias Bourse.Emulation
+  alias Bourse.Emulation.Delegations
   alias Bourse.Exchange
   alias Bourse.Spec
   alias Bourse.Spec.EmulatedMethods
@@ -225,6 +226,28 @@ defmodule Bourse.EmulationTest do
                dispatch_declared(:fetch_deposit_withdraw_fee, %{"code" => "BTC"}, fn
                  :fetch_deposit_withdraw_fees, _params -> {:ok, []}
                end)
+    end
+  end
+
+  describe "declared delegation graph" do
+    test "every handler's declared targets equal the methods its reachable call sites delegate to" do
+      ast = emulation_ast()
+      definitions = function_definitions(ast)
+      dispatch_handlers = module_attribute!(ast, :dispatch_handlers)
+      declared = Delegations.edges()
+
+      assert MapSet.new(Map.keys(declared)) == MapSet.new(Map.keys(dispatch_handlers))
+
+      for {method, handler} <- dispatch_handlers do
+        assert Map.has_key?(definitions, handler), "#{method} routes to #{handler}, which is not defined"
+
+        reachable = MapSet.new(literal_delegation_targets(definitions, handler))
+        listed = MapSet.new(Map.fetch!(declared, method))
+
+        assert listed == reachable,
+               "#{method}: Delegations declares #{inspect(Enum.sort(listed))}, " <>
+                 "#{handler} reaches #{inspect(Enum.sort(reachable))}"
+      end
     end
   end
 
@@ -565,6 +588,21 @@ defmodule Bourse.EmulationTest do
         is_atom(method),
         uniq: true,
         do: method
+  end
+
+  # call_optional_method/6 forwards its method argument to call_method/5; its
+  # literal targets are read at its call sites, so its own body is skipped.
+  # Every other site must name a literal method, or the comparison is blind.
+  defp literal_delegation_targets(definitions, handler) do
+    for function <- reachable_functions(definitions, handler),
+        function != :call_optional_method,
+        body <- Map.fetch!(definitions, function),
+        call_name <- [:call_method, :call_optional_method],
+        %{method: method, line: line} <- calls_in(body, call_name),
+        uniq: true do
+      assert method != nil, "#{handler} reaches a #{call_name} at line #{line} with a non-literal method"
+      method
+    end
   end
 
   defp extracted_params(definitions, handler) do

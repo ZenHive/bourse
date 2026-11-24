@@ -17,7 +17,6 @@ defmodule Bourse.Emulation do
   call `Bourse.Emulation.reload!/0` or the stale index keeps answering.
   """
 
-  alias Bourse.Emulation.Delegations
   alias Bourse.Error
   alias Bourse.Exchange
   alias Bourse.Spec.EmulatedMethods
@@ -245,8 +244,6 @@ defmodule Bourse.Emulation do
       else
         base_opts
       end
-
-    opts = Keyword.put(opts, :__emulation_method__, method)
 
     dispatch_method(exchange, exchange_module, method, entry, params, opts)
   end
@@ -1423,24 +1420,11 @@ defmodule Bourse.Emulation do
   @doc false
   @spec call_method(Exchange.t(), module(), atom(), map(), keyword()) :: dispatch_result()
   defp call_method(exchange, exchange_module, method, params, opts) do
-    assert_declared_delegation!(opts, method)
-
     with :ok <- validate_endpoint_available(exchange, exchange_module, method),
          :ok <- validate_credentials_if_required(exchange, exchange_module, method) do
       caller = Keyword.get(opts, :__emulation_caller__) || default_nested_caller()
-      clean_opts = Keyword.drop(opts, [:__emulation_caller__, :__emulation_method__])
+      clean_opts = Keyword.delete(opts, :__emulation_caller__)
       caller.(exchange, exchange_module, method, params, clean_opts)
-    end
-  end
-
-  # Every nested call is checked against the declared delegation graph before
-  # endpoint availability: an edge into a method without a native route would
-  # otherwise never reach the check. Handlers invoked directly, outside
-  # dispatch/4, carry no emulated method and are not checked.
-  defp assert_declared_delegation!(opts, target) do
-    case Keyword.fetch(opts, :__emulation_method__) do
-      {:ok, emulated} -> Delegations.assert_declared!(emulated, target)
-      :error -> :ok
     end
   end
 
@@ -1479,8 +1463,6 @@ defmodule Bourse.Emulation do
   @spec call_optional_method(Exchange.t(), module(), atom(), map(), atom(), keyword()) ::
           {:ok, list()} | {:error, Error.t()}
   defp call_optional_method(exchange, exchange_module, method, params, handler, opts) do
-    assert_declared_delegation!(opts, method)
-
     if endpoint_available?(exchange_module, method) do
       case call_method(
              exchange,

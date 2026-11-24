@@ -1,7 +1,6 @@
 defmodule Bourse.Emulation.DelegationsTest do
   use ExUnit.Case, async: true
 
-  alias Bourse.Emulation
   alias Bourse.Emulation.Delegations
   alias Bourse.Spec
   alias Bourse.Spec.Schema
@@ -10,10 +9,6 @@ defmodule Bourse.Emulation.DelegationsTest do
   @runtime_venue_count 11
 
   describe "declared graph" do
-    test "covers exactly the methods with a runtime emulation handler" do
-      assert MapSet.new(Map.keys(Delegations.edges())) == Emulation.implemented_methods()
-    end
-
     test "names only unified methods, under their authored camelCase names" do
       for {from, targets} <- Delegations.edges(), method <- [from | targets] do
         assert Delegations.js_name(method) == Unified.js_name_for!(method),
@@ -21,14 +16,9 @@ defmodule Bourse.Emulation.DelegationsTest do
       end
     end
 
-    test "an undeclared nested call raises naming both methods" do
+    test "declared?/2 answers from the table" do
+      assert Delegations.declared?(:fetch_funding_rate, :fetch_funding_rates)
       refute Delegations.declared?(:fetch_ticker, :fetch_balance)
-
-      assert_raise ArgumentError, ~r/emulated fetch_ticker delegated to fetch_balance/, fn ->
-        Delegations.assert_declared!(:fetch_ticker, :fetch_balance)
-      end
-
-      assert :ok == Delegations.assert_declared!(:fetch_funding_rate, :fetch_funding_rates)
     end
   end
 
