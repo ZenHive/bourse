@@ -7,6 +7,14 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-25
+
+### Known issues
+
+- Every Derive call fails: Derive retired the v2 hosts (`api.lyra.finance`,
+  `api-demo.lyra.finance`) this client targets and serves its API at
+  `api.derive.xyz/v3`. This is unchanged from 0.9.1.
+
 ### Changed
 
 - The EVM signing primitives (keccak, secp256k1 sign/recover, EIP-712 typed
@@ -1495,7 +1503,8 @@ Published before this repository existed, from the tree that is now the private
   ccxt.build_lighter_signer`, the prerequisite for private Lighter calls, is the
   one task consumers receive.
 
-[Unreleased]: https://github.com/ZenHive/bourse/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/ZenHive/bourse/compare/v0.10.0...HEAD
+[0.10.0]: https://hex.pm/packages/bourse/0.10.0
 [0.9.1]: https://hex.pm/packages/bourse/0.9.1
 [0.9.0]: https://hex.pm/packages/bourse/0.9.0
 [0.8.0]: https://hex.pm/packages/bourse/0.8.0
