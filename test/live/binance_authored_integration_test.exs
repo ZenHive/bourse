@@ -48,6 +48,9 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
   @percentage_precision 2
   @http_ok_status 200
   @usdm_convert_demo_error_code -1000
+  # `fapiPrivateGetOpenAlgoOrders` in the authored `fetchOpenOrders` slot order;
+  # the unqualified read answers from the regular book only.
+  @usdm_algo_open_orders_index 2
   @usdm_sapi_sandbox_error "No base URL for section sapi on binanceusdm (sandbox)"
 
   @moduletag :integration
@@ -734,7 +737,9 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
 
       assert parsed_trigger == String.to_float(trigger_price)
 
-      assert {:ok, open_orders} = Bourse.fetch_open_orders(exchange, symbol: @usdm_conditional_symbol)
+      algo_book = [symbol: @usdm_conditional_symbol, endpoint_index: @usdm_algo_open_orders_index]
+
+      assert {:ok, open_orders} = Bourse.fetch_open_orders(exchange, algo_book)
 
       assert %Order{} = algo_order = Enum.find(open_orders, &(&1.id == conditional_id))
 
@@ -746,7 +751,7 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
       assert {:ok, %Order{id: ^conditional_id}} =
                Bourse.cancel_order(exchange, conditional_id, symbol: @usdm_conditional_symbol)
 
-      assert {:ok, open_orders} = Bourse.fetch_open_orders(exchange, symbol: @usdm_conditional_symbol)
+      assert {:ok, open_orders} = Bourse.fetch_open_orders(exchange, algo_book)
       refute Enum.any?(open_orders, &(&1.id == conditional_id))
 
       assert {:ok, %Order{id: cancel_all_id}} =
@@ -762,13 +767,13 @@ defmodule Bourse.BinanceAuthoredIntegrationTest do
                  trigger_price: trigger_price
                )
 
-      assert {:ok, open_orders} = Bourse.fetch_open_orders(exchange, symbol: @usdm_conditional_symbol)
+      assert {:ok, open_orders} = Bourse.fetch_open_orders(exchange, algo_book)
       assert Enum.any?(open_orders, &(&1.id == cancel_all_id))
 
       assert {:ok, %{"code" => 200}} =
                Bourse.cancel_all_orders(exchange, symbol: @usdm_conditional_symbol)
 
-      assert {:ok, open_orders} = Bourse.fetch_open_orders(exchange, symbol: @usdm_conditional_symbol)
+      assert {:ok, open_orders} = Bourse.fetch_open_orders(exchange, algo_book)
       refute Enum.any?(open_orders, &(&1.id == cancel_all_id))
     after
       assert {:ok, %{"code" => 200}} =

@@ -145,6 +145,12 @@ defmodule Bourse.ConditionalOrderOptionsIntegrationTest do
   defp book_selector(:okx), do: [stop: true]
   defp book_selector(_venue), do: []
 
+  # Binance-family unqualified order lists answer from the regular book; the
+  # conditional book is the authored algo slot, selected by index.
+  defp list_selector(venue) when venue in [:binance, :binanceusdm], do: [endpoint_index: 2]
+  defp list_selector(:binancecoinm), do: [endpoint_index: 0]
+  defp list_selector(_venue), do: []
+
   defp assert_conditional_shape!(shape, venue) when venue in [:binance, :binanceusdm, :binancecoinm] do
     assert shape["algoType"] == "CONDITIONAL"
     assert shape["type"] == "STOP_MARKET"
@@ -188,7 +194,7 @@ defmodule Bourse.ConditionalOrderOptionsIntegrationTest do
   end
 
   defp resting_trigger!(venue, exchange, id, read_opts) do
-    assert {:ok, orders} = Bourse.fetch_open_orders(exchange, read_opts)
+    assert {:ok, orders} = Bourse.fetch_open_orders(exchange, read_opts ++ list_selector(venue))
     order = Enum.find(orders, &(&1.id == id))
 
     if is_nil(order) do

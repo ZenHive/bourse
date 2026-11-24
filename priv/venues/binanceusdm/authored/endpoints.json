@@ -909,18 +909,6 @@
         }
       },
       "endpoint_selection": {
-        "book_routes": [
-          {
-            "endpoints": [
-              "fapiPrivate_get_allorders",
-              "fapiPrivate_get_allalgoorders"
-            ],
-            "mode": "merge",
-            "when": {
-              "market_family": "linear"
-            }
-          }
-        ],
         "consume": [
           "type",
           "subType",
@@ -986,18 +974,6 @@
         }
       },
       "endpoint_selection": {
-        "book_routes": [
-          {
-            "endpoints": [
-              "fapiPrivate_get_allorders",
-              "fapiPrivate_get_allalgoorders"
-            ],
-            "mode": "merge",
-            "when": {
-              "market_family": "linear"
-            }
-          }
-        ],
         "consume": [
           "type",
           "subType",
@@ -2272,18 +2248,6 @@
         ]
       },
       "endpoint_selection": {
-        "book_routes": [
-          {
-            "endpoints": [
-              "fapiPrivate_get_openorders",
-              "fapiPrivate_get_openalgoorders"
-            ],
-            "mode": "merge",
-            "when": {
-              "market_family": "linear"
-            }
-          }
-        ],
         "consume": [
           "type",
           "subType",
@@ -2559,18 +2523,6 @@
         }
       },
       "endpoint_selection": {
-        "book_routes": [
-          {
-            "endpoints": [
-              "fapiPrivate_get_allorders",
-              "fapiPrivate_get_allalgoorders"
-            ],
-            "mode": "merge",
-            "when": {
-              "market_family": "linear"
-            }
-          }
-        ],
         "consume": [
           "type",
           "subType",

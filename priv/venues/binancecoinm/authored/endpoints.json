@@ -1528,18 +1528,6 @@
         ]
       },
       "endpoint_selection": {
-        "book_routes": [
-          {
-            "endpoints": [
-              "dapiPrivate_get_openorders",
-              "dapiPrivate_get_openalgoorders"
-            ],
-            "mode": "merge",
-            "when": {
-              "market_family": "inverse"
-            }
-          }
-        ],
         "consume": [
           "type",
           "subType",
