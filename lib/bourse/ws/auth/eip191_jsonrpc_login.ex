@@ -3,12 +3,14 @@ defmodule Bourse.WS.Auth.Eip191JsonrpcLogin do
   EIP-191 JSON-RPC login — derive `public/login`.
 
   Signs the millisecond timestamp with EIP-191 personal signing (the same
-  primitive as Derive's REST `X-LyraSignature`) and wraps it in a JSON-RPC
-  `public/login` frame. `wallet` is the smart-contract wallet (`api_key` /
-  `X-LyraWallet`); `secret` is a registered Admin session key.
+  primitive as Derive's REST `X-DeriveSignature`) and wraps it in a JSON-RPC
+  `public/login` frame. `wallet` is the owner wallet (`api_key` /
+  `X-DeriveWallet`); `secret` is the wallet's own key or a registered session
+  key (https://docs.derive.xyz/authentication/session-login.md).
 
-  Live-verified 2026-08-28 against `wss://api-demo.lyra.finance/ws`: a
-  successful login returns the session's subaccount ids in `result`.
+  A successful login returns the session's subaccount ids in `result`. Live
+  rejections on `wss://testnet.api.derive.xyz/v3/ws` (2026-11-25): an unknown
+  session key answers `14026` "Session key not found"; other signers `403`.
 
   ## Example Frame
 

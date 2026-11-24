@@ -22,12 +22,12 @@ defmodule Bourse.WS.DeriveWatchFrameDeliveryTest do
     assert {:ok, ws} = WS.connect(exchange, :public)
 
     try do
-      assert {:ok, handle} = WS.watch_ticker(ws, "ETH/USD:USDC")
+      assert {:ok, handle} = WS.watch_ticker(ws, "ETH/USDC:USDC")
       assert handle.channels == ["ticker_slim.ETH-PERP.100"]
       frame = await_channel("ticker_slim.ETH-PERP.100")
       assert {:routed, :watch_ticker, payload, "ticker_slim.ETH-PERP.100"} = MessageRouter.route(frame, exchange)
       assert %{"instrument_ticker" => slim} = payload
-      assert {:ok, ticker} = exchange.module.parse_ticker(payload, symbol: "ETH/USD:USDC")
+      assert {:ok, ticker} = exchange.module.parse_ticker(payload, symbol: "ETH/USDC:USDC")
       assert ticker.bid == Bourse.Safe.number(slim["b"])
       assert ticker.ask == Bourse.Safe.number(slim["a"])
       assert ticker.mark_price == Bourse.Safe.number(slim["M"])

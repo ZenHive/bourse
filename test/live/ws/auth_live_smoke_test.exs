@@ -40,7 +40,7 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
 
   use Bourse.Test.Case, async: false
 
-  import Bourse.IntegrationHelper, only: [require_credentials!: 2]
+  import Bourse.IntegrationHelper, only: [derive_subaccount_id!: 0, require_credentials!: 2]
 
   alias Bourse.Exchange
   alias Bourse.WS
@@ -195,9 +195,10 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
 
     @tag venue: "derive"
     test "derive private subscribe is accepted only on the authenticated connection" do
-      creds = require_credentials!(:derive, url: "https://docs.derive.xyz/reference/public-login")
-      exchange = Exchange.new!(:derive, credentials: creds, sandbox: true, options: %{"subaccount_id" => 144_422})
-      channels = ["144422.orders"]
+      creds = require_credentials!(:derive, url: "https://docs.derive.xyz/authentication/session-login.md")
+      subaccount_id = derive_subaccount_id!()
+      exchange = Exchange.new!(:derive, credentials: creds, sandbox: true, options: %{"subaccount_id" => subaccount_id})
+      channels = ["#{subaccount_id}.orders"]
 
       {:ok, authed} = WS.connect(exchange, :private)
       assert %{pattern: :eip191_jsonrpc_login} = authed.auth
@@ -215,8 +216,9 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
         assert {:error, {:subscription_rejected, unauthorized}} =
                  WS.subscribe(unauth, channels, ack_timeout_ms: 8_000)
 
+        # Observed live 2026-11-25 on wss://testnet.api.derive.xyz/v3/ws.
         assert get_in(unauthorized, ["error", "code"]) == 13_000
-        assert get_in(unauthorized, ["error", "data"]) =~ "14022"
+        assert get_in(unauthorized, ["error", "data"]) =~ "Subscription to a private channel failed"
       after
         WS.close(unauth)
       end
@@ -224,17 +226,17 @@ defmodule Bourse.WS.AuthLiveSmokeTest do
 
     @tag venue: "derive"
     test "a wrong signer fails the connection with the venue's reason" do
-      creds = require_credentials!(:derive, url: "https://docs.derive.xyz/reference/public-login")
+      creds = require_credentials!(:derive, url: "https://docs.derive.xyz/authentication/session-login.md")
       # Valid secp256k1 key that is not a registered Admin session key for this wallet.
       wrong = %{creds | secret: "0x1111111111111111111111111111111111111111111111111111111111111111"}
       exchange = Exchange.new!(:derive, credentials: wrong, sandbox: true)
 
-      # Observed live 2026-08-28 against wss://api-demo.lyra.finance/ws:
-      # public/login with an unregistered signer answers JSON-RPC error
-      # 403 "Unauthorized or Forbidden" — not nginx's HTML 403, which is
-      # the REST edge-proxy surface. The socket is closed; this is not an
-      # open unauthenticated connection.
-      assert {:error, {:auth_failed, %{"code" => 403, "message" => "Unauthorized or Forbidden"}}} =
+      # Observed live 2026-11-25 against wss://testnet.api.derive.xyz/v3/ws:
+      # public/login signed by this key answers JSON-RPC error 403 "Forbidden"
+      # (an unregistered *session key* answers 14026 instead — see
+      # derive_authored_integration_test). The socket is closed; this is not
+      # an open unauthenticated connection.
+      assert {:error, {:auth_failed, %{"code" => 403, "message" => "Forbidden"}}} =
                WS.connect(exchange, :private)
     end
 

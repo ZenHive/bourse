@@ -178,10 +178,10 @@ defmodule Bourse.WS.SpecConfig do
       auth_config: %{}
     },
     "derive" => %{
-      public_url: "wss://api.lyra.finance/ws",
-      public_url_sandbox: "wss://api-demo.lyra.finance/ws",
-      private_url: "wss://api.lyra.finance/ws",
-      private_url_sandbox: "wss://api-demo.lyra.finance/ws",
+      public_url: "wss://api.derive.xyz/v3/ws",
+      public_url_sandbox: "wss://testnet.api.derive.xyz/v3/ws",
+      private_url: "wss://api.derive.xyz/v3/ws",
+      private_url_sandbox: "wss://testnet.api.derive.xyz/v3/ws",
       heartbeat: %{type: :ping_pong, interval: 9_000},
       # Derive wire shape: {"method":"subscribe","params":{"channels":[...]}}
       # Registered atom is :method_params_subscribe (MethodParams); bare

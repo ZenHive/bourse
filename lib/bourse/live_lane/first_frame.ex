@@ -73,7 +73,7 @@ defmodule Bourse.LiveLane.FirstFrame do
       venue: "derive",
       section: :public,
       watch: :watch_ticker,
-      symbol: "ETH/USD:USDC",
+      symbol: "ETH/USDC:USDC",
       sandbox: true,
       credentials: false
     },

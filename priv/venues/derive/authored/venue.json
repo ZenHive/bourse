@@ -283,12 +283,12 @@
     "subscribe": {
       "args_key": "id",
       "channels": {
-        "watchMyTrades": {
-          "_unresolved_reason": "Private channel {subaccount_id}.trades requires an authenticated subaccount; supply the provider channel explicitly"
-        },
-        "watchOrders": {
-          "_unresolved_reason": "Private channel {subaccount_id}.orders requires an authenticated subaccount; supply the provider channel explicitly"
-        },
+        "watchMyTrades": [
+          "{subaccount_id}.trades"
+        ],
+        "watchOrders": [
+          "{subaccount_id}.orders"
+        ],
         "watchTicker": [
           "ticker_slim.{symbol}.100"
         ],

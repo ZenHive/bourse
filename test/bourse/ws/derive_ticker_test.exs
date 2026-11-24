@@ -33,9 +33,9 @@ defmodule Bourse.WS.DeriveTickerTest do
     assert ticker.timestamp == 1_789_470_139_328
   end
 
-  test "REST ticker fields still parse and absent slim fields stay absent" do
+  test "the v3 REST slim ticker (top-level keys) parses and absent slim fields stay absent" do
     exchange = Exchange.new!("derive")
-    assert {:ok, ticker} = parse(exchange, %{"best_bid_price" => "10", "best_ask_price" => "11", "timestamp" => 123})
+    assert {:ok, ticker} = parse(exchange, %{"b" => "10", "a" => "11", "t" => 123})
     assert ticker.bid == 10
     assert ticker.ask == 11
     assert ticker.timestamp == 123
@@ -45,16 +45,18 @@ defmodule Bourse.WS.DeriveTickerTest do
     assert empty.mark_price == nil
   end
 
-  test "private message hashes are explicitly unresolved, with provider channel pass-through" do
+  test "private channels are the provider's subaccount-scoped names" do
     exchange = Exchange.new!("derive")
-    assert {:error, {:unresolved, reason}} = Channels.build(exchange, :watch_orders, %{symbol: "ETH/USD:USDC"})
+    channels = get_in(exchange.spec, ["websocket", "subscribe", "channels"])
+    assert channels["watchOrders"] == ["{subaccount_id}.orders"]
+    assert channels["watchMyTrades"] == ["{subaccount_id}.trades"]
+
+    assert {:error, {:unresolved, reason}} = Channels.build(exchange, :watch_orders, %{symbol: "ETH/USDC:USDC"})
     assert reason =~ "{subaccount_id}.orders"
-    assert {:ok, "144422.orders"} = Channels.build(exchange, :watch_orders, %{}, channel: "144422.orders")
+    assert {:ok, "7.orders"} = Channels.build(exchange, :watch_orders, %{}, channel: "7.orders")
 
-    assert %{"_unresolved_reason" => trades_reason} =
-             get_in(exchange.spec, ["websocket", "subscribe", "channels", "watchMyTrades"])
-
-    assert trades_reason =~ "{subaccount_id}.trades"
+    frame = %{"method" => "subscription", "params" => %{"channel" => "7.orders", "data" => [%{"order_id" => "x"}]}}
+    assert {:routed, :watch_orders, [%{"order_id" => "x"}], "7.orders"} = MessageRouter.route(frame, exchange)
   end
 
   defp parse(exchange, data) do

@@ -107,6 +107,17 @@ defmodule Bourse.WS.ChannelsTest do
       assert {:error, :missing_symbol} = Channels.build(exchange, :watch_orders, %{}, [])
     end
 
+    test "derive watch_orders names the configured subaccount and ignores a symbol" do
+      exchange = Exchange.new!("derive", options: %{"subaccount_id" => 42})
+
+      assert {:ok, "42.orders"} = Channels.build(exchange, :watch_orders, %{symbol: "BTC/USDC:USDC"}, [])
+    end
+
+    test "derive watch_orders without a subaccount is unresolved, not a malformed channel" do
+      assert {:error, {:unresolved, reason}} = Channels.build(Exchange.new!("derive"), :watch_orders, %{}, [])
+      assert reason =~ "subaccount_id"
+    end
+
     test "Hyperliquid coin channels reject an absent or empty coin" do
       exchange = Exchange.new!("hyperliquid")
 

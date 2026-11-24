@@ -241,7 +241,7 @@ defmodule Bourse.WS.Channels do
   end
 
   @spec format_template(Exchange.t(), atom(), template(), params(), keyword()) ::
-          {:ok, channel()} | {:error, :missing_symbol}
+          {:ok, channel()} | {:error, :missing_symbol | {:unresolved, String.t()}}
   defp format_template(exchange, _method, %{} = object, params, _opts) do
     {:ok, market_id} = market_id(exchange, params)
     format_object(object, market_id)
@@ -249,8 +249,9 @@ defmodule Bourse.WS.Channels do
 
   defp format_template(exchange, method, template, params, opts) do
     with :ok <- require_symbol_for_template(template, params),
+         {:ok, account_template} <- interpolate_account(template, exchange),
          {:ok, market_id} <- market_id(exchange, params) do
-      interpolated = interpolate(template, market_id, params, opts)
+      interpolated = interpolate(account_template, market_id, params, opts)
       channel = combine_with_symbol(interpolated, template, market_id, exchange, method)
       wrap_channel(exchange, method, channel, market_id)
     end
@@ -275,6 +276,21 @@ defmodule Bourse.WS.Channels do
   end
 
   defp interpolate_value(value, _market_id), do: {:ok, value}
+
+  # Account-scoped private channels (derive `{subaccount_id}.orders`) name the
+  # account the connection streams; it comes from the construction option.
+  @spec interpolate_account(String.t(), Exchange.t()) :: {:ok, String.t()} | {:error, {:unresolved, String.t()}}
+  defp interpolate_account(template, %Exchange{options: options}) do
+    if String.contains?(template, "{subaccount_id}") do
+      case Map.get(options || %{}, "subaccount_id", Map.get(options || %{}, :subaccount_id)) do
+        id when is_integer(id) and id > 0 -> {:ok, String.replace(template, "{subaccount_id}", Integer.to_string(id))}
+        id when is_binary(id) and id != "" -> {:ok, String.replace(template, "{subaccount_id}", id)}
+        _ -> {:error, {:unresolved, "channel #{template} needs options: %{\"subaccount_id\" => id}"}}
+      end
+    else
+      {:ok, template}
+    end
+  end
 
   @spec require_symbol_for_template(String.t(), params()) :: :ok | {:error, :missing_symbol}
   defp require_symbol_for_template(_template, %{symbol: symbol}) when is_binary(symbol), do: :ok
@@ -400,7 +416,8 @@ defmodule Bourse.WS.Channels do
   end
 
   defp skip_symbol_append?(template, method, {pattern, _sub_config}) do
-    String.contains?(template, "{symbol}") or method in @private_methods or
+    String.contains?(template, "{symbol}") or String.contains?(template, "{subaccount_id}") or
+      method in @private_methods or
       pattern in @no_symbol_append_patterns
   end
 

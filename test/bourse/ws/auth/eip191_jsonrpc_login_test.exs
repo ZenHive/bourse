@@ -71,11 +71,24 @@ defmodule Bourse.WS.Auth.Eip191JsonrpcLoginTest do
     end
 
     test "unregistered signer is auth_failed from the venue's JSON-RPC 403" do
-      # Observed live 2026-08-28 on wss://api-demo.lyra.finance/ws public/login.
-      response = %{"error" => %{"code" => 403, "data" => nil, "message" => "Unauthorized or Forbidden"}}
+      # Observed live 2026-11-25 on wss://testnet.api.derive.xyz/v3/ws public/login.
+      response = %{"error" => %{"code" => 403, "data" => "Forbidden", "message" => "Forbidden"}}
 
-      assert {:error, {:auth_failed, %{"code" => 403, "message" => "Unauthorized or Forbidden"}}} =
+      assert {:error, {:auth_failed, %{"code" => 403, "message" => "Forbidden"}}} =
                Eip191JsonrpcLogin.handle_auth_response(response, %{})
+    end
+
+    test "unknown session key is auth_failed from the venue's 14026" do
+      # Observed live 2026-11-25 on wss://testnet.api.derive.xyz/v3/ws public/login.
+      response = %{
+        "error" => %{
+          "code" => 14_026,
+          "data" => "address: 0x620a0e4708ae1af912d9c00a23e1bdf0b68dcad9",
+          "message" => "Session key not found"
+        }
+      }
+
+      assert {:error, {:auth_failed, %{"code" => 14_026}}} = Eip191JsonrpcLogin.handle_auth_response(response, %{})
     end
 
     test "rejects an unrecognised frame" do
