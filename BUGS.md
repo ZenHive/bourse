@@ -114,6 +114,22 @@ roadmap.
 
 ---
 
+## 2026-11-25 — binancecoinm has no client slot for the venue's algo order history
+
+**Status:** Recorded, not routed (task 713 review, measured live 2026-11-25).
+
+A signed `GET https://demo-dapi.binance.com/dapi/v1/allAlgoOrders?symbol=BTCUSD_PERP`
+answers 200 with 63 rows, all `symbol: "BTCUSD_PERP"` and each carrying `algoId`. The
+authored `binancecoinm` `fetchOrders` / `fetchClosedOrders` / `fetchCanceledOrders` list
+only `dapiPrivateGetAllOrders`, and `raw.json` has no `allAlgoOrders` endpoint, so a
+COIN-M conditional order is unreachable through any history read once it leaves the open
+book. `fetch_orders(endpoint_index: 0)` is the regular history (index 0 is the algo slot
+only on `fetch_open_orders`). Expected: an authored algo-history slot, selected
+explicitly like USD-M's `endpoint_index: 2`, with the `updateTime` window semantics
+measured on USD-M re-proved on demo-dapi.
+
+---
+
 ## 2026-11-25 — binancecoinm classifies the 7-day window error `-4165` as `:exchange_not_available`, binanceusdm as `:bad_request`
 
 **Status:** Recorded, not routed (task 713 implementer, measured live 2026-11-25).
@@ -480,7 +496,9 @@ consumer-reported. · **2026-11-25:** routed — task 713 (decision: the unquali
 > twice in a row on demo-fapi / demo-dapi (a resting limit is in the unqualified open and
 > history reads and absent from the algo slot; a STOP_MARKET algo order only in the algo
 > slot; both canceled by id). COIN-M had the same merge on `fetchOpenOrders` and is fixed the
-> same way; it has no all-algo history endpoint, so its `fetch_orders` was already single-book.
+> same way for open orders. *(Corrected the same day after review: COIN-M does serve
+> `GET /dapi/v1/allAlgoOrders`; what is missing is the client's slot for it — see the
+> 2026-11-25 COIN-M algo-history entry. COIN-M `fetch_orders` reads the regular book only.)*
 
 The calls, against `demo-fapi.binance.com` with the shared futures demo key:
 

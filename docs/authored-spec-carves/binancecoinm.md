@@ -13,8 +13,13 @@ indexed by `priv/venues/binancecoinm/authority/manifest.json`.
 authored unified list. Outcome: DIVERGE from the previous `book_routes` merge;
 same rule as binanceusdm C-T713a.**
 
-COIN-M publishes no all-algo-orders history operation, so `fetch_orders` was
-already regular-book only. Measured live on `demo-dapi.binance.com`,
+This selection covers open orders only. COIN-M does serve algo history
+(`GET /dapi/v1/allAlgoOrders`: 63 BTCUSD_PERP rows, each with `algoId`, signed
+read on demo-dapi 2026-11-25), but the authored `fetchOrders` /
+`fetchClosedOrders` / `fetchCanceledOrders` carry only `dapiPrivateGetAllOrders`,
+so the client has **no COIN-M algo-history slot**: `fetch_orders(endpoint_index:
+0)` reads the regular history, not the algo book. That gap is recorded in
+BUGS.md (2026-11-25). Measured live on `demo-dapi.binance.com`,
 2026-11-25: before the change the merged read held both a resting limit and a
 resting STOP_MARKET algo order; after it, the limit is in the unqualified read
 and absent from the algo slot, and the algo order only in the algo slot.

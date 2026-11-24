@@ -15,7 +15,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   symbols), and `fetch_open_orders` on COIN-M, answer from the regular order book
   (`openOrders` / `allOrders`) only. Before, they merged the regular and algo books.
   A conditional order placed with `trigger_price` is now read with
-  `endpoint_index: 2` (USD-M, binance linear) or `endpoint_index: 0` (COIN-M).
+  `endpoint_index: 2` (USD-M, binance linear; open orders and history) or
+  `fetch_open_orders(endpoint_index: 0)` (COIN-M open orders). COIN-M has no
+  algo-history read.
   `fetch_order`, `fetch_open_order`, `cancel_order` and `cancel_all_orders` still
   cover both books.
 

@@ -63,10 +63,12 @@ Pinned in `test/bourse/unified/order_options_test.exs`,
 ## Binance-family conditional book is an explicit read, 2026-11-25
 
 On binance, binanceusdm and binancecoinm, the unqualified `fetch_open_orders` /
-`fetch_orders` answer from the regular book. A resting trigger order is read
-from the algo book with `endpoint_index: 2` (USD-M, binance linear) or
-`endpoint_index: 0` (COIN-M). `allAlgoOrders` bounds its time window on
-`updateTime`. See carve C-T713a in `docs/authored-spec-carves/binanceusdm.md`.
+`fetch_orders` answer from the regular book. On USD-M and binance linear, the
+algo book is `endpoint_index: 2` on both `fetch_open_orders` and `fetch_orders`;
+`allAlgoOrders` bounds both `since` and `until` on `updateTime`, not on the
+creation timestamp. On COIN-M, `fetch_open_orders(endpoint_index: 0)` is the open
+algo book, but there is no algo-history slot: every COIN-M history read,
+`endpoint_index: 0` included, is the regular book (BUGS.md, 2026-11-25). See carve C-T713a in `docs/authored-spec-carves/binanceusdm.md`.
 
 ## Sandbox incident during regression development, 2026-09-15
 
