@@ -45,6 +45,26 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `liquidation` field; it used to return every public trade on the tape. The
   method's verification state is `:unverified` until a marked trade has been
   observed surviving the parse.
+- `Bourse.WS.watch_orders/2` on OKX subscribes to the provider's
+  `{"channel": "orders", "instType": "ANY"}` arg. It previously sent
+  `{"channel": "orders"}` without the required `instType`, which OKX rejects with
+  code `60018`, so the call returned `{:error, {:subscription_rejected, _}}`.
+  The stream is account-wide.
+
+### Removed
+
+- Authored `websocket.subscribe.channels` entries that no `Bourse.WS.watch_*`
+  function reads (binance, binanceusdm, bybit, deribit, hyperliquid, okx) —
+  among them `watchMyTrades`, `watchOHLCV*`, `watchLiquidations*`,
+  `watchMarkPrice*`, `watchBidsAsks`, `watchPositions` and hyperliquid's
+  `watchOrders`. No client call could subscribe through them. Callers reading
+  these keys from `exchange.spec` no longer find them.
+
+### Added
+
+- `Bourse.WS.Channels.dispatch_keys/0` lists the authored channel keys the
+  unified watch methods read. Authored channel templates may be complete
+  provider channel objects for object-arg venues.
 
 ## [0.10.0] - 2026-11-25
 

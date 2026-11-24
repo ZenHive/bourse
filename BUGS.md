@@ -437,7 +437,16 @@ and say so in the criterion. Not ours to pick.
 ## 2026-09-15 — 23 authored WebSocket `watch*` channel entries across seven venues name methods the client has no function for
 
 **Status:** routed 2026-11-25 — task 712 (decision: trim the authored set to the dispatchable surface). Original: 🆕 measured live (orchestrator, landed-base review of task 702, shipped
-`c18a0a7bd16d`) — not routed.
+`c18a0a7bd16d`) — not routed. · **2026-11-25:** ✅ fixed on branch `task-712` — every undispatchable
+key deleted from binance, binanceusdm, bybit, deribit, hyperliquid and okx (including both
+`watchMyTrades` `":{symbol}"` hashes, the shadowed fallbacks, and hyperliquid `watchOrders`,
+which has no private WS URL to be sent on); derive's `watchMyTrades` stays for its v3
+re-authoring and is pinned exactly. `test/bourse/ws/authored_channel_keys_test.exs` fails on
+any new undispatchable key or message-hash template. The trim surfaced one retained template
+that was not a provider channel: OKX `watchOrders` `"ANY"` rendered `{"channel":"orders"}`,
+rejected live with `60018`; it is now `{"channel":"orders","instType":"ANY"}` and proven by the
+okx trader journey (carve C-T712). Deleted keys are listed in
+`docs/public-ws-channel-confrontation.md` § 2026-11-25.
 
 `Bourse.WS.Channels` dispatches exactly four unified methods plus three fallbacks, so every
 other authored `websocket.subscribe.channels` key answers `{:error, :unsupported_method}`

@@ -270,3 +270,36 @@ red, for one reason outside this confrontation: binancecoinm authors no
 `channels` map at all, so `Bourse.WS.Channels` answers
 `:no_channel_templates` for every method on that venue. That gap is carried in
 [the verification ledger](prod-verification-ledger.md#task-702--public-ws-template-audit-delivery-gaps-2026-09-15).
+
+## 2026-11-25 — trim to the dispatchable set
+
+`Bourse.WS.Channels` reads only the keys in `Bourse.WS.Channels.dispatch_keys/0`:
+`watchTicker`, `watchOrderBook`, `watchTrades`, `watchOrders`, and the fallbacks
+`watchTickers`, `watchOrderBookForSymbols`, `watchTradesForSymbols` — each fallback
+only when its primary key is absent. Every other authored key answered
+`:unsupported_method` before its template was read, so it was a claim about a venue
+channel that no client call could send and no live lane could prove. Task 712 deleted
+them. Derive is re-authored separately and keeps its `watchMyTrades` entry, pinned
+exactly by the test below.
+
+| Venue | Deleted keys |
+|---|---|
+| Binance | `watchMultiTickerHelper`, `watchOHLCVForSymbols`; shadowed fallbacks `watchOrderBookForSymbols`, `watchTickers`, `watchTradesForSymbols` |
+| Binance USD-M | `watchLiquidationsForSymbols`, `watchMarkPrices`, `watchMultiTickerHelper`, `watchOHLCVForSymbols`; shadowed fallbacks `watchOrderBookForSymbols`, `watchTickers`, `watchTradesForSymbols` |
+| Bybit | `watchLiquidations`, `watchMyTrades` (`:{symbol}`), `watchOHLCVForSymbols`; shadowed fallback `watchTickers` |
+| Deribit | `watchBidsAsks`, `watchMyTrades`; shadowed fallback `watchTickers` |
+| Hyperliquid | `watchMyTrades` (`:{symbol}`, `userFills`), `watchOHLCV`; `watchOrders` (`orderUpdates`) — a private method on a venue with no private WS URL, so `watch_orders/2` can never send it |
+| OKX | `watchBidsAsks`, `watchMarkPrice`, `watchMarkPrices`, `watchMyTrades`, `watchOHLCV`, `watchOHLCVForSymbols`, `watchPositions`; shadowed fallback `watchTickers` |
+
+The 2026-09-15 rows above for deleted keys are history: their provider evidence stands,
+but no authored entry carries them now.
+
+One retained template was not a provider channel: OKX `watchOrders` was the sentinel
+`"ANY"`, rendered as `{"channel":"orders"}` without the required `instType` and rejected
+live with code `60018`. It is now the provider's own arg object; the confrontation and
+live delivery are in [C-T712](authored-spec-carves/okx.md#2026-11-25--private-order-channel-object-task-712).
+
+`test/bourse/ws/authored_channel_keys_test.exs` reads every runtime venue's authored
+document from disk and fails when a key outside the dispatchable set appears, when a
+private-method key is authored for a venue without a private WS URL, or when a template
+has a message-hash shape (leading `:`/`.` or a doubled separator).

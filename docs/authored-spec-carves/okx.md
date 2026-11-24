@@ -236,3 +236,28 @@ live funding-rate surface. Outcome: CONFIRM provider arithmetic (task 671).**
 <!-- carve-evidence-status
 {"carve_id":"C-T671f","date":"2026-08-23","semantic_source":{"kind":"provider_owned","reference":"OKX v5 funding-rate-history contract + funding FAQ arithmetic"},"observed_evidence":null,"compatibility_reference":null,"resolved_tier":null,"known_gap_reason":null}
 -->
+
+## 2026-11-25 — private order channel object (Task 712)
+**C-T712 — `websocket.subscribe.channels.watchOrders` is the provider's own channel arg
+`{"channel": "orders", "instType": "ANY"}`. Outcome: DIVERGE (task 712).**
+
+- *Exchange semantics:* the Order channel arg is `channel` = `orders` with `instType`
+  **required** (`SPOT` / `MARGIN` / `SWAP` / `FUTURES` / `OPTION` / `EVENTS` / `ANY`);
+  `instFamily` and `instId` are optional. Data is not pushed on subscribe, only on new orders
+  or order updates. [Order channel](https://www.okx.com/docs-v5/en/#order-book-trading-trade-ws-order-channel)
+- *Previous carve:* the template was the bare string `"ANY"`, a local sentinel the formatter
+  turned into `{"channel": "orders"}` — the instType value lost, the required field missing.
+  Observed live 2026-11-25 on `wss://wspap.okx.com:8443/ws/v5/private` after login,
+  `Bourse.WS.watch_orders/2` answered `{:error, {:subscription_rejected, frame}}` with
+  `{"event":"error","code":"60018","msg":"Subscribe failed, wrong URL or channel:orders doesn't exist. Please use the correct URL, channel and parameters referring to API document."}`.
+- *Our carve:* the template is authored as the complete object and sent as authored
+  (`Bourse.WS.Channels` object templates; only `{symbol}` values are interpolated). The stream
+  is account-wide; a `symbol:` option does not narrow it. Live 2026-11-25: `watch_orders/2`
+  was acknowledged, and a far-from-market BTC-USDT-SWAP limit buy placed and canceled through
+  REST arrived on it as `state: "live"` then `state: "canceled"` (`cancelSource: "1"`) rows for
+  the same `ordId` — `test/live/journeys/trader/okx_test.exs`, "the order's own lifecycle
+  arrives on the stream", which also pins the 60018 rejection of the instType-less arg.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T712","date":"2026-11-25","semantic_source":{"kind":"provider_owned","reference":"OKX v5 WS Order channel contract (instType required)"},"observed_evidence":"wspap.okx.com private: instType-less arg rejected 60018; authored object acknowledged and delivered live/canceled rows for an own order, 2026-11-25","compatibility_reference":null,"resolved_tier":null,"known_gap_reason":null}
+-->
