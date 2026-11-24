@@ -194,7 +194,7 @@ defmodule Bourse.MixProject do
       {:dialyzer_json, "~> 0.2.1", only: [:dev, :test], runtime: false},
       {:styler, "~> 1.12.2", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7.19", only: [:dev, :test], runtime: false},
-      {:sobelow, "~> 0.15.0", only: [:dev, :test], runtime: false},
+      {:sobelow, "~> 0.15", only: [:dev, :test], runtime: false},
       # CVE tripwire: `mix deps.audit` checks mix.lock against the advisory DB
       # (hex.audit only catches retired packages). Wired into precommit.full + ci.
       {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
@@ -205,12 +205,12 @@ defmodule Bourse.MixProject do
 
       # Tidewave for Claude Code MCP integration (non-Phoenix needs bandit)
       {:tidewave, "~> 0.9.0", only: :dev},
-      {:bandit, "~> 1.12.0", only: :dev},
+      {:bandit, "~> 1.12", only: :dev},
 
       # Code analysis tools
       {:ex_dna, "~> 1.5.3", only: [:dev, :test], runtime: false},
-      # reach 2.8.1 pins ex_ast ~> 0.12.0; override verified against mix reach.check
-      {:ex_ast, "~> 0.13.0", only: [:dev, :test], runtime: false, override: true},
+      # reach 2.8.4 pins ex_ast ~> 0.12.0; override: 0.16 runs reach.check green in onchain-stack
+      {:ex_ast, "~> 0.13", only: [:dev, :test], runtime: false, override: true},
       {:ex_slop, "~> 0.4.2", only: [:dev, :test], runtime: false},
       # Mutation testing, hand-run audit only — never a gate. hex carries every
       # fix our fork held, and the fork branch is deleted, so the old git pin no
@@ -223,6 +223,7 @@ defmodule Bourse.MixProject do
       # Still run `--no-filter --no-optimize`: a module with >= 3 @callback plus
       # its own logic is filtered out regardless, and the optimizer can reduce
       # the mutation set to 0 and still exit 0.
+      # The measurements above were taken on 0.9.x; re-baseline on newer muex.
       # 🚨 A single run is NOT evidence — verdicts flicker even at
       # --concurrency 1, always toward false green. Repeat a measurement before
       # quoting a score, and re-baseline rather than reading a drop against the
@@ -231,7 +232,7 @@ defmodule Bourse.MixProject do
       # --test-paths the sandbox fixture path is a symlink into this checkout,
       # so a test writing inside test/ would mutate real files — today every
       # writing test targets System.tmp_dir!(); keep it that way.
-      {:muex, "~> 0.9.1", only: [:dev, :test], runtime: false},
+      {:muex, "~> 0.9", only: [:dev, :test], runtime: false},
       {:reach, "~> 2.8.1", only: [:dev, :test], runtime: false},
       # reach references Boxart.Render.* unconditionally; boxart is
       # `optional: true` in reach's hex manifest, so we pull it in here.
@@ -259,7 +260,7 @@ defmodule Bourse.MixProject do
       # Solidity ABI encoding (Derive order / trade-module tuples).
       # msgpax — canonical MessagePack for Hyperliquid L1 action packing
       # (venue payload construction; not a shared EVM primitive).
-      {:onchain, "~> 0.16.0"},
+      {:onchain, "~> 0.16"},
       {:msgpax, "~> 2.4"},
 
       # WebSocket client (Gun-based, 5-function API + Deribit heartbeat + reconnection)

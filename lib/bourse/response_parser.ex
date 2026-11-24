@@ -1011,7 +1011,7 @@ defmodule Bourse.ResponseParser do
   defp round(value, precision) when is_integer(precision) and precision >= 0 do
     value
     |> Decimal.new()
-    |> Decimal.round(precision, :half_even)
+    |> Precise.round_places(precision, :half_even)
     |> Decimal.to_string(:normal)
   end
 
@@ -1022,7 +1022,7 @@ defmodule Bourse.ResponseParser do
   defp truncate(value, precision) when is_integer(precision) and precision >= 0 do
     value
     |> Decimal.new()
-    |> Decimal.round(precision, :down)
+    |> Precise.round_places(precision, :down)
     |> Decimal.to_string(:normal)
   end
 

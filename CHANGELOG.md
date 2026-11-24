@@ -10,13 +10,18 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Changed
 
 - The EVM signing primitives (keccak, secp256k1 sign/recover, EIP-712 typed
-  encoding, Solidity ABI encoding) now come from `{:onchain, "~> 0.16.0"}`,
+  encoding, Solidity ABI encoding) now come from `{:onchain, "~> 0.16"}`,
   replacing `cartouche` and `hieroglyph`; `curvy` leaves the tree with them.
   onchain's precompiled NIF targets macOS and Linux only — Windows hosts are no
   longer supported.
+- Dependencies refreshed: onchain 0.17.0, decimal 3.2.0, cowlib 2.22.0, gun
+  2.8.0, req 0.7.5, telemetry 1.4.3.
 
 ### Fixed
 
+- `Bourse.Precise.string_div/3` and the response parser's precision
+  rounding/truncation no longer raise under decimal 3.2, whose `Decimal.round/3`
+  rejects results wider than the context precision (28 digits by default).
 - `Bourse.Signing.Hyperliquid.action_hash/4` encodes `nonce` and
   `expires_after` as 8-byte big-endian words. The hex-string build was only
   correct for 11-hex-digit values (ms timestamps) and raised or hashed wrong

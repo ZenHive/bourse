@@ -82,7 +82,7 @@ defmodule Bourse.Precise do
       string1
       |> decimal()
       |> div_with_context(divisor)
-      |> Decimal.round(precision, :down)
+      |> round_places(precision, :down)
       |> to_plain_string()
     end
   end
@@ -93,6 +93,17 @@ defmodule Bourse.Precise do
 
   defp div_with_context(numerator, divisor) do
     Decimal.Context.with(@div_context, fn -> Decimal.div(numerator, divisor) end)
+  end
+
+  @doc false
+  # Decimal.round/3 quantizes against the context precision (it signals
+  # :invalid_operation when the result needs more digits), so size the context
+  # to exactly the digits the rounded result can carry.
+  @spec round_places(Decimal.t(), integer(), Decimal.rounding()) :: Decimal.t()
+  def round_places(%Decimal{coef: coef, exp: exp} = decimal, places, mode) when is_integer(coef) do
+    digits = length(Integer.digits(coef)) + exp + places + 1
+    context = %Decimal.Context{precision: max(digits, 1), rounding: mode}
+    Decimal.Context.with(context, fn -> Decimal.round(decimal, places, mode) end)
   end
 
   defp to_plain_string(%Decimal{} = decimal) do
