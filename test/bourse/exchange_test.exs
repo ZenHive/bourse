@@ -698,6 +698,9 @@ defmodule Bourse.ExchangeTest do
       # now carries a complete mapping while staying provider-emulated
       assert Exchange.mapping_complete?(deribit, "fetchLiquidations")
       assert Exchange.has?(deribit, "fetchLiquidations")
+      # No liquidation-marked trade has yet survived parsing live (task 710,
+      # docs/prod-verification-ledger.md), so the positive branch stays unverified.
+      assert Exchange.verification_state(deribit, "fetchLiquidations") == :unverified
       refute Exchange.has?(deribit, "fetchCurrenciesWs")
     end
 
