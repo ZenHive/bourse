@@ -711,6 +711,24 @@ to a nil key. All 41 `test/live/deribit/rest_read_contract_test.exs` cases pass 
 **Status:** 🆕 reported 2026-09-15 — mechanisch verifiziert · **2026-11-25:** routed — task 715. Kein aktueller Verstoß,
 also kein Defekt der gelandeten Arbeit; die Frage ist, ob die Invariante erzwungen wird.
 
+**2026-11-25 (task 715):** erzwungen. Der Graph ist deklariert, nicht extrahiert:
+`Bourse.Emulation.Delegations` (`lib/bourse/emulation/delegations.ex`) führt je Handler-Methode
+alle Methoden, die sie aufrufen darf. `Bourse.Emulation.call_method/5` und
+`call_optional_method/6` prüfen jede verschachtelte Kante gegen diese Tabelle, *vor* der
+Endpoint-Verfügbarkeit, und werfen bei einer undeklarierten Kante — die Tabelle kann also nicht
+kleiner sein als der Code (die bestehenden Emulationstests durchlaufen alle 38 deklarierten
+Kanten). `Bourse.Spec.Schema.validate!/2` lehnt beim Laden ein Dokument ab, dessen emulierte
+Methoden (Vereinigung aus `emulated_methods` mit `scope: "rest"` und `capabilities.has ==
+"emulated"`) einen Zyklus bilden, mit `owned spec "<venue>" gap emulated_methods: emulation
+delegation cycle fetchFundingRate -> fetchFundingRates -> fetchFundingRate`. Tests:
+`test/bourse/emulation/delegations_test.exs`; alle elf Runtime-Venues bestehen.
+Korrektur zur Schwere, aus dem Code gelesen: die verschachtelte Ebene geht über
+`Unified.call_dispatch/6`, das `Emulation.dispatch/4` nicht erneut betritt (einziger Einstieg ist
+`Unified.call/5`), und emulierte Methoden tragen keinen nativen Endpoint. Ein Dokument mit beiden
+Hälften `emulated` hätte im Standardpfad also nicht unbegrenzt rekursiert, sondern mit
+`not_supported` aus `validate_endpoint_available` geendet — die Emulation wäre trotzdem tot.
+Unbegrenzt wird es nur mit einem `caller`, der wieder über `Unified.call/5` läuft.
+
 Task 692 hat `fetchFundingRates` als Emulation über den singulären Read ergänzt
 (`handle_fetch_funding_rates` → `call_method(:fetch_funding_rate)`, über den Helfer
 `collect_funding_rates_from_singular/5`). Die Gegenrichtung existierte schon

@@ -8,6 +8,8 @@ defmodule Bourse.Spec.Schema do
   non-empty slots reject all three incomplete states by naming the exact path.
   """
 
+  alias Bourse.Emulation.Delegations
+
   @version 3
 
   @required_non_empty_maps [
@@ -143,6 +145,7 @@ defmodule Bourse.Spec.Schema do
     validate_symbol_patterns!(spec, exchange_id)
     validate_field_rule_sources!(spec, exchange_id)
     validate_emulated_methods!(spec, exchange_id)
+    validate_emulation_acyclic!(spec, exchange_id)
     validate_runtime_error_contract!(spec, exchange_id)
     validate_support!(spec, exchange_id)
     validate_endpoint_selection!(spec, exchange_id)
@@ -344,6 +347,30 @@ defmodule Bourse.Spec.Schema do
         gap!(exchange_id, path, "must name a rest/ws method with string reasons")
       end
     end)
+  end
+
+  # A method counts as emulated when either declaration says so: the
+  # `emulated_methods` slice drives runtime dispatch, `capabilities.has`
+  # states the provider fact, and a cycle through either is an authoring error.
+  defp validate_emulation_acyclic!(spec, exchange_id) do
+    declared =
+      for %{"scope" => "rest", "name" => name} <- Map.fetch!(spec, "emulated_methods"), do: name
+
+    from_support =
+      for {name, "emulated"} <- get_in(spec, ["capabilities", "has"]) || %{}, do: name
+
+    case Delegations.find_cycle(Enum.uniq(declared ++ from_support)) do
+      nil ->
+        :ok
+
+      cycle ->
+        gap!(
+          exchange_id,
+          "emulated_methods",
+          "emulation delegation cycle #{Enum.join(cycle, " -> ")}: each emulated method " <>
+            "delegates to the next, so none of them reaches a native route"
+        )
+    end
   end
 
   defp validate_runtime_error_contract!(spec, exchange_id) do
