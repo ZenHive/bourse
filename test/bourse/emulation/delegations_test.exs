@@ -50,7 +50,7 @@ defmodule Bourse.Emulation.DelegationsTest do
       spec = put_in(Spec.load!("bybit"), ["capabilities", "has", "fetchFundingRates"], "emulated")
 
       assert_raise ArgumentError,
-                   ~r/owned spec "bybit" gap emulated_methods: emulation delegation cycle fetchFundingRate -> fetchFundingRates -> fetchFundingRate/,
+                   ~r/owned spec "bybit" gap emulated_methods: emulation delegation cycle fetchFundingRate -> fetchFundingRates -> fetchFundingRate$/,
                    fn -> Spec.validate_schema!(spec, "bybit") end
     end
 
@@ -61,7 +61,7 @@ defmodule Bourse.Emulation.DelegationsTest do
         end)
 
       assert_raise ArgumentError,
-                   ~r/owned spec "deribit" gap emulated_methods: emulation delegation cycle fetchFundingRate -> fetchFundingRates -> fetchFundingRate/,
+                   ~r/owned spec "deribit" gap emulated_methods: emulation delegation cycle fetchFundingRate -> fetchFundingRates -> fetchFundingRate$/,
                    fn -> Spec.validate_schema!(spec, "deribit") end
     end
   end

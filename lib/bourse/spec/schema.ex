@@ -367,8 +367,7 @@ defmodule Bourse.Spec.Schema do
         gap!(
           exchange_id,
           "emulated_methods",
-          "emulation delegation cycle #{Enum.join(cycle, " -> ")}: each emulated method " <>
-            "delegates to the next, so none of them reaches a native route"
+          "emulation delegation cycle #{Enum.join(cycle, " -> ")}"
         )
     end
   end

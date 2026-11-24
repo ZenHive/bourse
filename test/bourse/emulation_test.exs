@@ -233,12 +233,15 @@ defmodule Bourse.EmulationTest do
     test "every handler's declared targets equal the methods its reachable call sites delegate to" do
       ast = emulation_ast()
       definitions = function_definitions(ast)
-      dispatch_handlers = module_attribute!(ast, :dispatch_handlers)
+      routed = dispatch_handler_routes(ast)
       declared = Delegations.edges()
 
-      assert MapSet.new(Map.keys(declared)) == MapSet.new(Map.keys(dispatch_handlers))
+      assert routed == module_attribute!(ast, :dispatch_handlers),
+             "dispatch_handler/5 clauses and @dispatch_handlers route different method => handler pairs"
 
-      for {method, handler} <- dispatch_handlers do
+      assert MapSet.new(Map.keys(declared)) == MapSet.new(Map.keys(routed))
+
+      for {method, handler} <- routed do
         assert Map.has_key?(definitions, handler), "#{method} routes to #{handler}, which is not defined"
 
         reachable = MapSet.new(literal_delegation_targets(definitions, handler))
@@ -588,6 +591,30 @@ defmodule Bourse.EmulationTest do
         is_atom(method),
         uniq: true,
         do: method
+  end
+
+  # The method => handler pairs runtime dispatch actually takes: one literal
+  # dispatch_handler/5 clause per emulated method, whose body calls its handler.
+  defp dispatch_handler_routes(ast) do
+    {_ast, routes} =
+      Macro.prewalk(ast, [], fn
+        {:defp, _, [{:dispatch_handler, _, [_exchange, _module, method, _params, _opts]}, [do: body]]} = node, routes
+        when is_atom(method) ->
+          {node, [{method, clause_handler!(method, body)} | routes]}
+
+        node, routes ->
+          {node, routes}
+      end)
+
+    assert routes != [], "no literal dispatch_handler/5 clauses found in #{@emulation_path}"
+    assert length(routes) == length(Enum.uniq_by(routes, &elem(&1, 0))), "duplicate dispatch_handler/5 clause"
+    Map.new(routes)
+  end
+
+  defp clause_handler!(_method, {handler, _, args}) when is_atom(handler) and is_list(args), do: handler
+
+  defp clause_handler!(method, body) do
+    flunk("dispatch_handler/5 clause for #{method} does not call a single handler: #{Macro.to_string(body)}")
   end
 
   # call_optional_method/6 forwards its method argument to call_method/5; its
