@@ -4,6 +4,111 @@ Provider authority: [`priv/venues/deribit/authority/manifest.json`](../../priv/v
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 
+## 2026-11-25 — funding interval, ticker volumes, liquidation filter (Task 710)
+
+**C-T710a — `fetchFundingRate` interval is the requested accrual window.
+Outcome: DIVERGE from C-T535a's history-spacing `"1h"`.**
+
+- *Exchange semantics:* `public/get_funding_rate_value` "retrieves the funding
+  rate (interest rate) value for a perpetual instrument over a specified time
+  period" bounded by the required `start_timestamp`/`end_timestamp`; the history
+  endpoint names its per-row fields "1hour interest rate" (`interest_1h`) and
+  "8hour interest rate" (`interest_8h`).
+  [get_funding_rate_value](https://docs.deribit.com/api-reference/market-data/public-get_funding_rate_value)
+  [get_funding_rate_history](https://docs.deribit.com/api-reference/market-data/public-get_funding_rate_history)
+- *Why C-T535a was wrong:* hourly *history* spacing is the settlement cadence of
+  the history rows. It was applied to a different read, whose value is whatever
+  the request window accrued. That window is 8h by default, so the value was an 8h
+  rate labelled `"1h"`.
+- *Our carve:* authored default `interval: "8h"` (the default request window);
+  `Bourse.Unified.ReadParse` replaces it with the caller's span when the caller
+  sets both window ends, and with nil when only one end is set (the other end is
+  the request clock, which the parse does not see).
+- *Live evidence (2026-11-25, test.deribit.com, BTC-PERPETUAL):* with
+  hour-aligned end `T = 1795561200000`, the `[T-8h, T]` value was
+  `8.666511141627127e-08`, the history row at `T` had `interest_8h
+  8.666511141627128e-08`, the sum of the eight `interest_1h` rows was
+  `8.6657e-08`, and the `[T-1h, T]` value was `0.0`. Window values at an
+  unaligned end: 1h/2h/4h `0.0`, 8h `-4.0168e-08`, 16h `-8.27e-06`. Before the fix
+  unified returned `-4.0167563995206885e-8` with `interval: "1h"`, and after it
+  the same value with `"8h"`. Error: a dated future answers `-32602`, reason
+  `"instrument is not perpetual"`.
+  Pinned in `test/live/deribit/deribit_value_semantics_test.exs`. The test reads
+  provider window values at several spans and asserts that the unified value
+  matches exactly one, and that the interval names that span.
+
+**C-T710b — ticker `baseVolume` ← `stats.volume`, `quoteVolume` ←
+`volume_notional`, with `volume_usd` only where no notional is published.
+Outcome: DIVERGE from `quoteVolume ← stats.volume`. The task premise held in
+part: `volume_usd` is not the quote figure on every kind.**
+
+- *Exchange semantics:* ticker `stats.volume` is "Volume during last 24h in base
+  currency"; `stats.volume_notional` is "24-hour volume in quote currency;
+  omitted when base and quote currencies are equal or for Coinbase-routed spot";
+  `stats.volume_usd` is "Volume in usd (futures only)". Book summary has the same
+  fields: `volume` "(in base currency)", `volume_notional` "Volume in quote
+  currency (futures and spots only)", and `volume_usd` "Volume in USD".
+  [ticker](https://docs.deribit.com/api-reference/market-data/public-ticker)
+  [get_book_summary_by_currency](https://docs.deribit.com/api-reference/market-data/public-get_book_summary_by_currency)
+- *Per kind, live 2026-11-25 (test.deribit.com):*
+
+  | Kind | Instrument | `volume` | `volume_notional` | `volume_usd` | Unified quote |
+  |---|---|---|---|---|---|
+  | inverse perpetual | BTC-PERPETUAL | 99875.29 (BTC) | 6.0098e9 | 6.0098e9 | USD → notional |
+  | linear perpetual | BTC_USDC-PERPETUAL | 839.80 (BTC) | 50547243.09 (USDC) | 50538761.5 (USD) | USDC → notional, not USD |
+  | spot | BTC_USDC | 196259.23 (BTC) | absent | absent | USDC → nil, no figure published |
+  | inverse option | BTC-24SEP27-45000-P | 8979.0 (BTC) | absent (provider quote = base, BTC) | 254152171.59 | USD (`counter_currency`) → `volume_usd` |
+  | linear option | BTC_USDC-25DEC26-20000-P | 2600.03 | 78024.85 (USDC) | 78016.11 | USDC → notional |
+
+  For every kind, `volume` × the instrument price lands on the notional
+  (99875 BTC × ~60.2k ≈ 6.0e9), so `volume` is the base figure. The linear-USDC
+  rows show why `volume_usd` cannot be the unified quote: there it is USD, not
+  the USDC quote.
+- *Our carve:* `baseVolume` = `stats.volume` (falling back to the book-summary
+  `volume`); `quoteVolume` = `stats.volume_notional`, then `volume_notional`,
+  then `stats.volume_usd` / `volume_usd`. The `volume_usd` fallback is reached
+  only where no notional is published, which is the inverse option, whose
+  unified quote is USD. Spot publishes neither, so `quoteVolume` stays nil and
+  is not computed from price.
+- *Open edge:* if a linear-USDC future ever omitted `volume_notional`, the
+  fallback would report its USD figure. No live row omits it.
+- Pinned in `test/live/deribit/deribit_value_semantics_test.exs`. For each of
+  the five kinds the test compares both volumes with the same response's
+  `stats`, and with an independent `public/ticker` call within 1%. It also
+  checks the denomination (`quote/base` ≈ index for perpetuals, premium below
+  underlying for options), so swapped volumes fail.
+
+**C-T710c — `fetchLiquidations` keeps only tape rows with a `liquidation`
+marker. Outcome: DIVERGE from returning every public trade.**
+
+- *Exchange semantics:* `public/get_last_trades_by_instrument` trade rows carry
+  `liquidation`, documented as "Optional field (only for trades caused by liquidation)":
+  `"M"`, `"T"` or `"MT"` for which side was under liquidation.
+  [get_last_trades_by_instrument](https://docs.deribit.com/api-reference/market-data/public-get_last_trades_by_instrument)
+- *Our carve:* `response_envelopes.liquidation.fetchLiquidations.row_filter =
+  {"key": "liquidation", "present": true}`, applied by
+  `Bourse.Unified.Envelope.filter_rows/4` before parsing. `fetchMyLiquidations`
+  (settlement history) has no filter.
+- *Live evidence (2026-11-25):* none of the 1000 newest trades on test.deribit.com
+  BTC-PERPETUAL, ETH-PERPETUAL, BTC/ETH/SOL/XRP_USDC-PERPETUAL carried
+  `liquidation`; the same held for 1000-trade windows ending 0–30 days back.
+  Production public BTC/ETH-PERPETUAL windows 0–7 days back were also unmarked.
+  Before the fix `fetch_liquidations("BTC/USDC:USDC")` returned 10 rows; after it,
+  `[]`. Error: unknown instrument `BTC-31DEC99` (`BTC/USD:BTC-991231`) answers `-32602` `"instrument not
+  found"`. The positive branch (a marked row surviving the filter) has not been
+  observed live; see `docs/prod-verification-ledger.md`. The REST-read case now
+  declares `empty_collection: allowed`.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T710a","date":"2026-11-25","semantic_source":{"kind":"provider_owned","reference":"Deribit public/get_funding_rate_value window semantics and get_funding_rate_history interest_1h/interest_8h"},"observed_evidence":{"kind":"live_venue","reference":"2026-11-25 test.deribit.com BTC-PERPETUAL [T-8h,T] value 8.666511141627127e-08 == history interest_8h at T; window values distinct per span; -32602 instrument is not perpetual on a dated future"},"compatibility_reference":null,"resolved_tier":1}
+-->
+<!-- carve-evidence-status
+{"carve_id":"C-T710b","date":"2026-11-25","semantic_source":{"kind":"provider_owned","reference":"Deribit public/ticker stats.volume / volume_notional / volume_usd and get_book_summary_by_currency volume fields"},"observed_evidence":{"kind":"live_venue","reference":"2026-11-25 test.deribit.com inverse perp, linear perp, spot, inverse option, linear option stats table in C-T710b"},"compatibility_reference":null,"resolved_tier":1}
+-->
+<!-- carve-evidence-status
+{"carve_id":"C-T710c","date":"2026-11-25","semantic_source":{"kind":"provider_owned","reference":"Deribit public/get_last_trades_by_instrument optional liquidation field"},"observed_evidence":{"kind":"live_venue","reference":"2026-11-25 test.deribit.com unmarked tapes filter to []; marked-row branch not observed live"},"compatibility_reference":null,"resolved_tier":null,"known_gap_reason":"no liquidation-marked trade found on testnet or production public tapes; the positive branch is ledgered"}
+-->
+
 ## 2026-09-15 — order trigger_price and reduce_only round-trip (Task 700)
 
 **C-T700 — Deribit order objects publish `trigger_price` and `reduce_only`.

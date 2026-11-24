@@ -218,6 +218,21 @@ test code. Edit the fence when adding a ledgered case.
 
 ## Open
 
+### deribit — fetchLiquidations with a liquidation-marked trade on the tape (task 710, C-T710c, filed 2026-11-25)
+
+- Authored slices: `deribit:normalization.response_envelopes.liquidation.fetchLiquidations.row_filter`
+- Blocked by: market state. On 2026-11-25 no testnet perpetual (BTC, ETH, BTC/ETH/SOL/XRP_USDC)
+  had a `liquidation`-marked trade in any 1000-trade window ending 0–30 days back, and
+  production public BTC/ETH-PERPETUAL had none in windows 0–7 days back.
+- The open question: whether a marked row survives the filter and parses into
+  `%Bourse.Liquidation{}` with its `liquidation` marker in `info`. The empty branch (an
+  unmarked tape filters to `[]`) is verified live in
+  `test/live/deribit/deribit_value_semantics_test.exs`.
+- Exact call: `Bourse.fetch_liquidations(ex, "BTC/USD:BTC")` against a tape whose raw
+  `public/get_last_trades_by_instrument` rows include `"liquidation": "M" | "T" | "MT"`.
+- Expected evidence: the unified rows are exactly the marked raw rows (same `trade_id`s
+  in order), each with `info["liquidation"]` set.
+
 ### derive — keyless order preparation pins v2 identities the v3 migration replaces (task 148, filed 2026-09-29; superseded by task 709, 2026-10-01)
 
 - Authored slices: none — `Bourse.Signing.Derive.PreparedOrder` is a signing boundary,

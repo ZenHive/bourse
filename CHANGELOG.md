@@ -26,6 +26,19 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - binanceusdm `fetch_orders(until: t)` no longer drops orders near `t`. The merged
   algo history filters its time window on update time, not creation time, so it
   silently omitted conditional orders created before `until` and updated after it.
+- Deribit `fetch_funding_rate` now labels its value with the window it was
+  accrued over: `interval: "8h"` for the default request (was `"1h"`, which
+  overstated annualized funding 8×), the caller's span when both
+  `start_timestamp`/`since` and `end_timestamp`/`until` are passed, and `nil`
+  when only one end is passed.
+- Deribit `fetch_ticker` / `fetch_tickers` fill `base_volume` from
+  `stats.volume` (base currency) and `quote_volume` from `volume_notional`
+  (quote currency), falling back to `volume_usd` for inverse options. Before,
+  the base-currency figure was reported as `quote_volume` and `base_volume` was
+  nil. Spot instruments, which publish no quote figure, now report
+  `quote_volume: nil`.
+- Deribit `fetch_liquidations` returns only trades the venue marks with a
+  `liquidation` field; it used to return every public trade on the tape.
 
 ## [0.10.0] - 2026-11-25
 

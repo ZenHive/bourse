@@ -179,7 +179,7 @@ race remains open upstream. No credential values are included in this report.
 
 ## 2026-09-29 — deribit: three value defects the REST-read contract lane passes green (found by a ccxt differential)
 
-**Status:** 🆕 reported · **2026-11-25:** routed — task 710.
+**Status:** ✅ fixed (task 710) · **2026-11-25:** routed — task 710. **2026-11-25:** all three corrected against test.deribit.com and Deribit's docs (carves C-T710a/b/c in `docs/authored-spec-carves/deribit.md`, pinned in `test/live/deribit/deribit_value_semantics_test.exs`). (1) `interval` is now the accrual window: `"8h"` by default, the caller's span when both ends are given, nil when one is. (2) `base_volume ← stats.volume`, `quote_volume ← volume_notional` with `volume_usd` used only for inverse options; the premise did not fully hold: on USDC-linear instruments `volume_usd` is USD, not the USDC quote, and spot publishes no quote figure. (3) `fetch_liquidations` keeps only `liquidation`-marked rows. A marked row has not been seen live, so that branch is ledgered in `docs/prod-verification-ledger.md`. Found while running the lane: `deribit:fetchTicker:error:invalid_symbol` had drifted, because `ZZZ-PERPETUAL` now answers `-32602 "wrong format"` rather than `"instrument not found"`. The case's literal was changed to a well-formed unknown instrument (`BTC/USD:BTC-991231`), which still answers `"instrument not found"`.
 
 **Reported by:** operator-requested experiment: the deribit contract cases run against ccxt 4.5.84 (JS) on `test.deribit.com`, then bourse and ccxt compared value by value on the same symbols. Each disagreement was settled against the raw provider response, not against either client.
 
