@@ -880,10 +880,22 @@ defmodule Bourse.Unified do
     )
   end
 
+  # Deribit accrues the funding value over the two bounds it is sent. Resolving
+  # them here, once, hands the request and the parse the same integers, so the
+  # reported interval is the span the provider actually accrued over.
+  defp resolve_request_window(%Exchange{id: "deribit"}, "fetchFundingRate", params, opts) do
+    now_ms = Keyword.get(opts, :timestamp_ms_override, System.os_time(:millisecond))
+    RequestShape.resolve_deribit_funding_window(params, now_ms)
+  end
+
+  defp resolve_request_window(_exchange, _capability_name, params, _opts), do: params
+
   @doc "Dispatches a unified method to HTTP without checking emulation."
   @spec call_dispatch(Exchange.t(), module(), atom(), String.t(), map(), keyword()) ::
           {:ok, map() | list()} | {:error, Error.t() | term()}
   def call_dispatch(%Exchange{} = exchange, module, method_atom, capability_name, params, opts) do
+    params = resolve_request_window(exchange, capability_name, params, opts)
+
     case resolve_dispatch_plan(exchange, module, method_atom, capability_name, params, opts) do
       {:error, _} = error ->
         error

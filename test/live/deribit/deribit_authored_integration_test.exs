@@ -16,6 +16,8 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
   @moduletag :network
 
   @deribit_testnet_url "https://test.deribit.com"
+  @funding_history_window_ms 12 * 60 * 60 * 1000
+  @milliseconds_per_hour 60 * 60 * 1000
   @ohlcv_window_ms 300_000
   @option_probe_price 0.0001
   @order_poll_attempts 20
@@ -675,6 +677,40 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
     end
   end
 
+  # The history sampling interval: `public/get_funding_rate_history` publishes
+  # one row per hour. Deribit credits funding continuously and settles it daily
+  # (https://support.deribit.com/hc/en-us/articles/31424939178397), so this
+  # spacing is how the history is sampled, not a payment cadence — and it is not
+  # the interval `fetch_funding_rate` reports, which is its request window.
+  test "unified funding history keeps the provider's hourly history rows" do
+    exchange = build_exchange(:deribit, sandbox: true)
+    end_timestamp = div(System.system_time(:millisecond), @milliseconds_per_hour) * @milliseconds_per_hour
+    start_timestamp = end_timestamp - @funding_history_window_ms
+
+    assert {:ok, %{body: %{"result" => [_, _ | _] = raw_rows}}} =
+             Bourse.Deribit.public_get_get_funding_rate_history(exchange, %{
+               "instrument_name" => "BTC-PERPETUAL",
+               "start_timestamp" => start_timestamp,
+               "end_timestamp" => end_timestamp
+             })
+
+    assert {:ok, [_, _ | _] = history} =
+             Bourse.fetch_funding_rate_history(exchange, "BTC/USD:BTC",
+               since: start_timestamp,
+               end_timestamp: end_timestamp
+             )
+
+    raw_by_timestamp = Map.new(raw_rows, &{&1["timestamp"], &1["interest_1h"]})
+
+    assert history |> Enum.map(& &1.timestamp) |> Enum.sort() == raw_by_timestamp |> Map.keys() |> Enum.sort()
+    assert history_sampling_interval!(history) == @milliseconds_per_hour
+    assert history_sampling_interval!(Enum.map(raw_rows, &%{timestamp: &1["timestamp"]})) == @milliseconds_per_hour
+
+    for row <- history do
+      assert row.funding_rate == Map.fetch!(raw_by_timestamp, row.timestamp)
+    end
+  end
+
   # Task 692: Deribit exposes only a singular funding read, so the plural is
   # authored as a bridge over an explicit symbols list. It must key the result
   # by the symbols the caller asked for and refuse to invent a universe.
@@ -867,6 +903,19 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
 
   defp instrument_name(%{"instrument_name" => value}), do: value
   defp instrument_name(%{"result" => %{"instrument_name" => value}}), do: value
+
+  defp history_sampling_interval!(rows) do
+    gaps =
+      rows
+      |> Enum.map(& &1.timestamp)
+      |> Enum.sort()
+      |> Enum.chunk_every(2, 1, :discard)
+      |> Enum.map(fn [left, right] -> right - left end)
+      |> Enum.uniq()
+
+    assert [gap_ms] = gaps, "history rows are not evenly spaced: #{inspect(gaps)}"
+    gap_ms
+  end
 
   defp poll_open_position!(exchange, instrument_name, code, attempts \\ @order_poll_attempts)
 

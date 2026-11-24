@@ -1067,8 +1067,11 @@ defmodule Bourse.Unified.ReadParse do
   defp stamp_deribit_transaction_type(parsed, _exchange, _js_name), do: parsed
 
   # `public/get_funding_rate_value` returns the rate accrued over the requested
-  # window, so the interval is that window — not the venue's hourly settlement
-  # cadence. A window the parse cannot reconstruct gets no interval claim.
+  # window, so the interval is that window's span. It is not the hourly spacing
+  # of `public/get_funding_rate_history` — that is the history sampling
+  # interval; Deribit credits funding continuously and settles it daily.
+  # `Unified.call_dispatch/6` resolves both bounds before dispatch, so the span
+  # read here is the one the provider was sent.
   defp stamp_deribit_funding_interval(%{interval: _} = rate, %Exchange{id: "deribit"}, "fetchFundingRate", params) do
     interval =
       case RequestShape.deribit_funding_window_ms(params) do
@@ -1081,15 +1084,14 @@ defmodule Bourse.Unified.ReadParse do
 
   defp stamp_deribit_funding_interval(parsed, _exchange, _js_name, _params), do: parsed
 
-  @ms_per_hour 3_600_000
-  @ms_per_minute 60_000
+  # The largest unit the span divides into exactly, down to milliseconds, so a
+  # non-round window keeps its full precision instead of losing its label.
+  @duration_units [{"d", 86_400_000}, {"h", 3_600_000}, {"m", 60_000}, {"s", 1_000}, {"ms", 1}]
 
-  defp duration_label(ms) when is_integer(ms) and ms > 0 and rem(ms, @ms_per_hour) == 0, do: "#{div(ms, @ms_per_hour)}h"
-
-  defp duration_label(ms) when is_integer(ms) and ms > 0 and rem(ms, @ms_per_minute) == 0,
-    do: "#{div(ms, @ms_per_minute)}m"
-
-  defp duration_label(_ms), do: nil
+  defp duration_label(ms) when is_integer(ms) and ms > 0 do
+    {suffix, size} = Enum.find(@duration_units, fn {_suffix, size} -> rem(ms, size) == 0 end)
+    "#{div(ms, size)}#{suffix}"
+  end
 
   defp normalize_lighter_order_sides(orders, %Exchange{id: "lighter"}, "order") when is_list(orders) do
     Enum.map(orders, &normalize_lighter_order_side/1)

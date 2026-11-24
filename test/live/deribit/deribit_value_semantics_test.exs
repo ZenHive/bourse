@@ -55,17 +55,39 @@ defmodule Bourse.DeribitValueSemanticsTest do
       assert interval == "#{hours}h"
 
       four_hour_start = end_ms - 4 * @ms_per_hour
+      four_hour_value = Map.fetch!(raw_by_hours, 4)
 
-      assert {:ok, %Bourse.FundingRate{funding_rate: caller_rate, interval: "4h"}} =
-               Bourse.fetch_funding_rate(exchange, "BTC/USD:BTC",
-                 params: %{"start_timestamp" => four_hour_start, "end_timestamp" => end_ms}
-               )
+      # Every caller spelling of the same [T-4h, T] window must reach the
+      # provider as that window and be labelled with its span.
+      for {spelling, opts} <- [
+            integer_bounds: [params: %{"start_timestamp" => four_hour_start, "end_timestamp" => end_ms}],
+            string_bounds: [
+              params: %{
+                "start_timestamp" => Integer.to_string(four_hour_start),
+                "end_timestamp" => Integer.to_string(end_ms)
+              }
+            ],
+            start_only_on_request_clock: [since: four_hour_start, timestamp_ms_override: end_ms]
+          ] do
+        assert {:ok, %Bourse.FundingRate{funding_rate: caller_rate, interval: caller_interval}} =
+                 with_rate_limit_retry(fn -> Bourse.fetch_funding_rate(exchange, "BTC/USD:BTC", opts) end)
 
-      assert_in_delta caller_rate, Map.fetch!(raw_by_hours, 4), @value_tolerance
+        assert caller_interval == "4h", "#{spelling}: interval #{inspect(caller_interval)}"
+        assert_window_value(caller_rate, four_hour_value, "#{spelling} rate")
+      end
 
-      # One caller-set end leaves the other on the request clock: no interval claim.
-      assert {:ok, %Bourse.FundingRate{interval: nil}} =
-               Bourse.fetch_funding_rate(exchange, "BTC/USD:BTC", params: %{"start_timestamp" => four_hour_start})
+      # A span that is not a whole number of hours keeps its exact length.
+      odd_start = four_hour_start + 123
+      odd_value = raw_window_value!(exchange, "BTC-PERPETUAL", odd_start, end_ms)
+
+      assert {:ok, %Bourse.FundingRate{funding_rate: odd_rate, interval: "14399877ms"}} =
+               with_rate_limit_retry(fn ->
+                 Bourse.fetch_funding_rate(exchange, "BTC/USD:BTC",
+                   params: %{"start_timestamp" => odd_start, "end_timestamp" => end_ms}
+                 )
+               end)
+
+      assert_window_value(odd_rate, odd_value, "non-round window rate")
     end
 
     test "a dated future is refused by the provider as not perpetual" do
@@ -99,6 +121,8 @@ defmodule Bourse.DeribitValueSemanticsTest do
         # stats.volume: "Volume during last 24h in base currency".
         assert base == stats["volume"], "#{kind}: base_volume #{inspect(base)} vs stats #{inspect(stats)}"
         assert_close(base, independent["volume"], "#{kind} base vs independent raw call")
+
+        assert_spot_quote_publication(kind, stats)
 
         case expected_quote(stats) do
           nil ->
@@ -204,6 +228,10 @@ defmodule Bourse.DeribitValueSemanticsTest do
 
   defp same_value?(a, b), do: abs(a - b) <= max(abs(a), abs(b)) * @value_tolerance
 
+  defp assert_window_value(rate, expected, label) do
+    assert is_number(rate) and same_value?(rate, expected), "#{label}: #{inspect(rate)} vs provider #{inspect(expected)}"
+  end
+
   defp with_rate_limit_retry(fun, attempts \\ 4) do
     case fun.() do
       {:error, %Error{type: :rate_limit_exceeded}} when attempts > 1 ->
@@ -215,12 +243,11 @@ defmodule Bourse.DeribitValueSemanticsTest do
     end
   end
 
-  defp raw_funding_value!(exchange, instrument, end_ms, hours) do
-    params = %{
-      "instrument_name" => instrument,
-      "start_timestamp" => end_ms - hours * @ms_per_hour,
-      "end_timestamp" => end_ms
-    }
+  defp raw_funding_value!(exchange, instrument, end_ms, hours),
+    do: raw_window_value!(exchange, instrument, end_ms - hours * @ms_per_hour, end_ms)
+
+  defp raw_window_value!(exchange, instrument, start_ms, end_ms) when start_ms < end_ms do
+    params = %{"instrument_name" => instrument, "start_timestamp" => start_ms, "end_timestamp" => end_ms}
 
     assert {:ok, %{body: %{"result" => value}}} =
              with_rate_limit_retry(fn -> Bourse.Deribit.public_get_get_funding_rate_value(exchange, params) end)
@@ -243,10 +270,28 @@ defmodule Bourse.DeribitValueSemanticsTest do
     [
       {:inverse_perpetual, "BTC-PERPETUAL"},
       {:linear_perpetual, "BTC_USDC-PERPETUAL"},
-      {:spot, "BTC_USDC"},
+      {:native_spot, spot_instrument!(exchange, "BTC_USDT", :native)},
+      {:routed_spot, spot_instrument!(exchange, "BTC_USDC", :routed)},
       {:inverse_option, most_traded_option!(exchange, "BTC", "BTC-")},
       {:linear_option, most_traded_option!(exchange, "USDC", "BTC_USDC-")}
     ]
+  end
+
+  # https://docs.deribit.com/articles/spot-trading-venues: natively matched spot
+  # publishes full `stats`; Coinbase-routed spot (flagged `is_cbe_routed: true`,
+  # the flag absent on native pairs) omits `volume_notional` and `volume_usd`.
+  # Routing is provider configuration, so the venue is read, not assumed.
+  defp spot_instrument!(exchange, instrument, venue) do
+    assert {:ok, %{body: %{"result" => rows}}} =
+             with_rate_limit_retry(fn ->
+               Bourse.Deribit.public_get_get_instruments(exchange, %{"currency" => "any", "kind" => "spot"})
+             end)
+
+    assert %{} = meta = Enum.find(rows, &(&1["instrument_name"] == instrument)), "#{instrument} is not listed as spot"
+
+    routed? = Map.get(meta, "is_cbe_routed", false)
+    assert routed? == (venue == :routed), "#{instrument} is_cbe_routed=#{inspect(routed?)}, expected #{venue} spot"
+    instrument
   end
 
   defp most_traded_option!(exchange, currency, prefix) do
@@ -283,9 +328,24 @@ defmodule Bourse.DeribitValueSemanticsTest do
     assert abs(left - right) <= max(abs(right), 1.0) * @volume_drift, "#{label}: #{left} vs #{right}"
   end
 
-  defp assert_quote_denomination(kind, base, quote, info) when kind in [:inverse_perpetual, :linear_perpetual] do
+  defp assert_spot_quote_publication(:native_spot, stats) do
+    assert is_number(stats["volume"]) and stats["volume"] > 0,
+           "native spot needs traded volume to exercise its quote figure: #{inspect(stats)}"
+
+    assert is_number(stats["volume_notional"]), "native spot publishes volume_notional: #{inspect(stats)}"
+  end
+
+  defp assert_spot_quote_publication(:routed_spot, stats) do
+    refute Map.has_key?(stats, "volume_notional") or Map.has_key?(stats, "volume_usd"),
+           "routed spot omits volume_notional and volume_usd: #{inspect(stats)}"
+  end
+
+  defp assert_spot_quote_publication(_kind, _stats), do: :ok
+
+  defp assert_quote_denomination(kind, base, quote, info)
+       when kind in [:inverse_perpetual, :linear_perpetual, :native_spot] do
     per_base = quote / base
-    index = info["index_price"]
+    index = info["index_price"] || info["last_price"]
     assert per_base > index / 2 and per_base < index * 2, "#{kind}: quote/base #{per_base} vs index #{index}"
   end
 
