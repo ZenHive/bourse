@@ -40,9 +40,8 @@ defmodule Bourse.BinanceFamilyOrderBookSelectionTest do
   @usdm_conditional_amount 0.25
   @coinm_symbol "BTC/USD:BTC"
   @coinm_amount 1
-  @resting_ratio 0.9
+  @resting_ratio "0.9"
   @trigger_ratio "0.85"
-  @price_decimals 1
   # Binance futures error -4165: "Maximum time interval is 7 days."
   @interval_error_code -4165
   @eight_days_ms 8 * 86_400_000
@@ -105,20 +104,26 @@ defmodule Bourse.BinanceFamilyOrderBookSelectionTest do
       assert {:ok, %Order{status: "canceled"}} = Bourse.cancel_order(exchange, id, symbol: @usdm_conditional_symbol)
       poll_gone!(exchange, id, algo)
 
-      # allAlgoOrders bounds startTime on creation time but endTime on update
-      # time: the canceled row is outside [createTime, createTime] and inside
-      # [createTime, updateTime]. Both edges are sent because an endTime-only
-      # algo read pages from the oldest rows of the window, not the newest.
+      # allAlgoOrders bounds BOTH startTime and endTime on the row's updateTime,
+      # not on createTime (the unified timestamp). Both edges are sent because an
+      # endTime-only algo read pages from the oldest rows of the window.
       row = history_row!(exchange, id, algo)
       created = row.info["createTime"]
       updated = row.info["updateTime"]
       assert row.timestamp == created
       assert updated > created
 
-      history_row!(exchange, id, algo ++ [since: created, until: updated])
-
       assert {:ok, by_created} = Bourse.fetch_orders(exchange, algo ++ [since: created, until: created])
       refute Enum.any?(by_created, &(&1.id == id))
+      history_row!(exchange, id, algo ++ [since: created, until: updated])
+
+      # The unified read also drops rows whose creation timestamp is below
+      # `since`, which hides the venue's lower bound; it is pinned on the raw
+      # endpoint, where startTime = updateTime keeps the row and one ms later
+      # drops it.
+      market_id = Enum.find(exchange.markets, &(&1.symbol == @usdm_conditional_symbol)).id
+      assert raw_algo_history_has?(exchange, market_id, id, updated, updated)
+      refute raw_algo_history_has?(exchange, market_id, id, updated + 1, updated + 1_000)
     end
 
     test "an order-history window wider than seven days is the venue's -4165" do
@@ -176,10 +181,26 @@ defmodule Bourse.BinanceFamilyOrderBookSelectionTest do
     end
   end
 
+  # Float arithmetic leaves sub-tick digits that the venue rejects with -1111,
+  # so prices are floored onto the market's tick in Decimal.
+  defp tick_floor(exchange, symbol, reference, ratio) do
+    market = Enum.find(exchange.markets, &(&1.symbol == symbol))
+    tick = Decimal.new(to_string(market.precision["price"]))
+
+    reference
+    |> to_string()
+    |> Decimal.new()
+    |> Decimal.mult(Decimal.new(ratio))
+    |> Decimal.div(tick)
+    |> Decimal.round(0, :floor)
+    |> Decimal.mult(tick)
+    |> Decimal.to_float()
+  end
+
   defp place_resting_limit!(exchange, symbol, amount) do
     assert {:ok, book} = Bourse.fetch_order_book(exchange, symbol)
     assert [[best_bid, _size] | _] = book.bids
-    price = Float.round(best_bid * @resting_ratio, @price_decimals)
+    price = tick_floor(exchange, symbol, best_bid, @resting_ratio)
 
     assert {:ok, %Order{id: id} = placed} =
              Bourse.create_order(exchange, symbol, "limit", "buy", amount,
@@ -196,18 +217,7 @@ defmodule Bourse.BinanceFamilyOrderBookSelectionTest do
   # so a request that would reach the regular book as a market order never leaves.
   defp place_conditional!(exchange, symbol, amount) do
     assert {:ok, ticker} = Bourse.fetch_ticker(exchange, symbol)
-    market = Enum.find(exchange.markets, &(&1.symbol == symbol))
-    tick = Decimal.new(to_string(market.precision["price"]))
-
-    trigger =
-      (ticker.mark_price || ticker.last)
-      |> to_string()
-      |> Decimal.new()
-      |> Decimal.mult(Decimal.new(@trigger_ratio))
-      |> Decimal.div(tick)
-      |> Decimal.round(0, :floor)
-      |> Decimal.mult(tick)
-      |> Decimal.to_float()
+    trigger = tick_floor(exchange, symbol, ticker.mark_price || ticker.last, @trigger_ratio)
 
     extras = [trigger_price: trigger, reduce_only: false]
     params = Unified.build_params([:symbol, :type, :side, :amount], [symbol, "market", "sell", amount], extras)
@@ -251,6 +261,13 @@ defmodule Bourse.BinanceFamilyOrderBookSelectionTest do
     else
       :ok
     end
+  end
+
+  defp raw_algo_history_has?(exchange, market_id, id, start_time, end_time) do
+    params = %{"symbol" => market_id, "startTime" => start_time, "endTime" => end_time, "limit" => 100}
+    assert {:ok, %{body: rows}} = Bourse.Binanceusdm.fapiPrivate_get_allalgoorders(exchange, params)
+    assert is_list(rows), "allAlgoOrders answered #{inspect(rows)}"
+    Enum.any?(rows, &(to_string(&1["algoId"]) == id))
   end
 
   # Order history trails cancels and time filters by a moment, so poll until
