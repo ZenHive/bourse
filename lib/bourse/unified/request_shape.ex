@@ -7,7 +7,6 @@ defmodule Bourse.Unified.RequestShape do
   alias Bourse.Error
   alias Bourse.Exchange
   alias Bourse.Order.Sanity
-  alias Bourse.Safe
   alias Bourse.Spec
   alias Bourse.Symbol
   alias Bourse.Timestamp
@@ -823,43 +822,45 @@ defmodule Bourse.Unified.RequestShape do
 
   @deribit_funding_window_ms 8 * 60 * 60 * 1000
 
-  @deribit_funding_start_keys ["start_timestamp", "since"]
-  @deribit_funding_end_keys ["end_timestamp", "until"]
-
   @doc """
-  Resolves both bounds of the deribit `fetchFundingRate` window once, before
-  dispatch, so the request and the parse read the same two integers: the
-  caller's bounds (integer or numeric string) where given, `now_ms` for a
-  missing end, and `end - 8h` for a missing start.
+  The span, in milliseconds, between the `start_timestamp` and `end_timestamp`
+  of a dispatched deribit `fetchFundingRate` request. A bound is read only when
+  it is an integer or a string that is entirely an integer; anything else is
+  left for the provider to reject and yields `:unknown`.
   """
-  @spec resolve_deribit_funding_window(map(), integer()) :: map()
-  def resolve_deribit_funding_window(params, now_ms) when is_map(params) and is_integer(now_ms) do
-    finish = timestamp_bound(params, @deribit_funding_end_keys) || now_ms
-    start = timestamp_bound(params, @deribit_funding_start_keys) || finish - @deribit_funding_window_ms
-
-    params
-    |> Map.drop(@deribit_funding_start_keys ++ @deribit_funding_end_keys)
-    |> Map.merge(%{"start_timestamp" => start, "end_timestamp" => finish})
-  end
-
-  @doc "The span the provider accrued the funding value over, read from the resolved bounds."
-  @spec deribit_funding_window_ms(map()) :: {:ok, integer()} | :unknown
-  def deribit_funding_window_ms(params) when is_map(params) do
-    case {timestamp_bound(params, @deribit_funding_start_keys), timestamp_bound(params, @deribit_funding_end_keys)} do
+  @spec deribit_funding_window_ms(map()) :: {:ok, pos_integer()} | :unknown
+  def deribit_funding_window_ms(dispatched) when is_map(dispatched) do
+    case {strict_integer(dispatched["start_timestamp"]), strict_integer(dispatched["end_timestamp"])} do
       {start, finish} when is_integer(start) and is_integer(finish) and finish > start -> {:ok, finish - start}
       _ -> :unknown
     end
   end
 
-  defp timestamp_bound(params, keys), do: Enum.find_value(keys, &Safe.integer(params[&1]))
+  defp strict_integer(value) when is_integer(value), do: value
+
+  defp strict_integer(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {integer, ""} -> integer
+      _ -> nil
+    end
+  end
+
+  defp strict_integer(_value), do: nil
 
   defp deribit_funding_start_timestamp(params, context) do
-    timestamp_bound(params, @deribit_funding_start_keys) ||
-      deribit_funding_end_timestamp(params, context) - @deribit_funding_window_ms
+    cond do
+      is_integer(params["start_timestamp"]) -> params["start_timestamp"]
+      is_integer(params["since"]) -> params["since"]
+      true -> Map.fetch!(context, :now_ms) - @deribit_funding_window_ms
+    end
   end
 
   defp deribit_funding_end_timestamp(params, context) do
-    timestamp_bound(params, @deribit_funding_end_keys) || Map.fetch!(context, :now_ms)
+    cond do
+      is_integer(params["end_timestamp"]) -> params["end_timestamp"]
+      is_integer(params["until"]) -> params["until"]
+      true -> Map.fetch!(context, :now_ms)
+    end
   end
 
   defp dynamic_context(_js_name, opts) do

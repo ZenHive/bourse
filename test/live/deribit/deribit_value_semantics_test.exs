@@ -88,6 +88,52 @@ defmodule Bourse.DeribitValueSemanticsTest do
                end)
 
       assert_window_value(odd_rate, odd_value, "non-round window rate")
+
+      # End-only: the start stays on the request clock (clock - 8h), so the
+      # dispatched window is [clock - 8h, end] and the label names that span.
+      early_end = end_ms - @ms_per_hour
+      end_only_value = raw_window_value!(exchange, "BTC-PERPETUAL", end_ms - 8 * @ms_per_hour, early_end)
+
+      assert {:ok, %Bourse.FundingRate{funding_rate: end_only_rate, interval: "7h"}} =
+               with_rate_limit_retry(fn ->
+                 Bourse.fetch_funding_rate(exchange, "BTC/USD:BTC",
+                   params: %{"end_timestamp" => early_end},
+                   timestamp_ms_override: end_ms
+                 )
+               end)
+
+      assert_window_value(end_only_rate, end_only_value, "end-only window rate")
+
+      # An unset clock override falls back to the system clock, like the request shaper.
+      assert {:ok, %Bourse.FundingRate{interval: "8h", funding_rate: clock_rate}} =
+               with_rate_limit_retry(fn ->
+                 Bourse.fetch_funding_rate(exchange, "BTC/USD:BTC", timestamp_ms_override: nil)
+               end)
+
+      assert is_number(clock_rate)
+    end
+
+    test "a malformed bound reaches the provider and is refused as not an integer" do
+      exchange = build_exchange(:deribit, sandbox: true)
+      end_ms = div(System.system_time(:millisecond), @ms_per_hour) * @ms_per_hour
+
+      # Observed live 2026-11-25: -32602 Invalid params, reason "integer required".
+      for {param, value} <- [
+            {"start_timestamp", "oops"},
+            {"start_timestamp", Integer.to_string(end_ms - 4 * @ms_per_hour) <> "oops"},
+            {"end_timestamp", "oops"}
+          ] do
+        assert {:error, %Error{type: :bad_request, code: -32_602, raw: raw}} =
+                 with_rate_limit_retry(fn ->
+                   Bourse.fetch_funding_rate(exchange, "BTC/USD:BTC",
+                     params: %{param => value},
+                     timestamp_ms_override: end_ms
+                   )
+                 end)
+
+        assert raw["error"]["data"] == %{"param" => param, "reason" => "integer required"},
+               "#{param}=#{inspect(value)}: #{inspect(raw)}"
+      end
     end
 
     test "a dated future is refused by the provider as not perpetual" do

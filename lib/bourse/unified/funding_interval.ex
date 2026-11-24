@@ -7,6 +7,7 @@ defmodule Bourse.Unified.FundingInterval do
   alias Bourse.Safe
   alias Bourse.Symbol
   alias Bourse.Unified
+  alias Bourse.Unified.RequestShape
 
   @binance_family ~w(binance binancecoinm binanceusdm)
   @binance_default_interval "8h"
@@ -39,7 +40,33 @@ defmodule Bourse.Unified.FundingInterval do
     end
   end
 
+  # `public/get_funding_rate_value` returns the rate accrued over the window it
+  # is sent, so the interval is the span of the bounds the dispatch put on the
+  # wire, re-derived from the same request shape and pinned clock. It is not the
+  # hourly spacing of `public/get_funding_rate_history`, which is the history
+  # sampling interval; Deribit pays funding continuously and settles it daily.
+  def enrich({:ok, %FundingRate{} = funding_rate}, %Exchange{id: "deribit"} = exchange, :fetch_funding_rate, params, opts) do
+    with {:ok, [dispatched]} <- Unified.request_param_shapes(exchange, :fetch_funding_rate, params, opts) do
+      interval =
+        case RequestShape.deribit_funding_window_ms(dispatched) do
+          {:ok, window_ms} -> duration_label(window_ms)
+          :unknown -> nil
+        end
+
+      {:ok, %{funding_rate | interval: interval}}
+    end
+  end
+
   def enrich(result, _exchange, _method, _params, _opts), do: result
+
+  # The largest unit the span divides into exactly, down to milliseconds, so a
+  # non-round window keeps its full precision.
+  @duration_units [{"d", 86_400_000}, {"h", 3_600_000}, {"m", 60_000}, {"s", 1_000}, {"ms", 1}]
+
+  defp duration_label(ms) do
+    {suffix, size} = Enum.find(@duration_units, fn {_suffix, size} -> rem(ms, size) == 0 end)
+    "#{div(ms, size)}#{suffix}"
+  end
 
   defp funding_intervals(exchange, params, opts) do
     with {:ok, %{body: body}} <- Unified.raw_call(exchange, :fetch_funding_intervals, params, opts) do

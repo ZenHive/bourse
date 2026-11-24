@@ -18,7 +18,6 @@ defmodule Bourse.Unified.ReadParse do
   alias Bourse.Unified.Envelope
   alias Bourse.Unified.FieldMaps
   alias Bourse.Unified.OptionQuantity
-  alias Bourse.Unified.RequestShape
   alias Bourse.Unified.RequestShape.Deribit, as: DeribitRequestShape
   alias Bourse.VolatilityHistory
 
@@ -544,7 +543,6 @@ defmodule Bourse.Unified.ReadParse do
            # carried in `info`, which enrich/3 is what populates.
            |> enrich_deposit_address(exchange, parse_type, params)
            |> stamp_deribit_transaction_type(exchange, js_name)
-           |> stamp_deribit_funding_interval(exchange, js_name, params)
            |> normalize_lighter_order_sides(exchange, parse_type),
          parsed = backfill_bybit_requested_tickers(parsed, exchange, js_name, params),
          parsed = stamp_bybit_fetch_position_timestamp(parsed, body, exchange, js_name),
@@ -1065,33 +1063,6 @@ defmodule Bourse.Unified.ReadParse do
   end
 
   defp stamp_deribit_transaction_type(parsed, _exchange, _js_name), do: parsed
-
-  # `public/get_funding_rate_value` returns the rate accrued over the requested
-  # window, so the interval is that window's span. It is not the hourly spacing
-  # of `public/get_funding_rate_history` — that is the history sampling
-  # interval; Deribit credits funding continuously and settles it daily.
-  # `Unified.call_dispatch/6` resolves both bounds before dispatch, so the span
-  # read here is the one the provider was sent.
-  defp stamp_deribit_funding_interval(%{interval: _} = rate, %Exchange{id: "deribit"}, "fetchFundingRate", params) do
-    interval =
-      case RequestShape.deribit_funding_window_ms(params) do
-        {:ok, window_ms} -> duration_label(window_ms)
-        :unknown -> nil
-      end
-
-    %{rate | interval: interval}
-  end
-
-  defp stamp_deribit_funding_interval(parsed, _exchange, _js_name, _params), do: parsed
-
-  # The largest unit the span divides into exactly, down to milliseconds, so a
-  # non-round window keeps its full precision instead of losing its label.
-  @duration_units [{"d", 86_400_000}, {"h", 3_600_000}, {"m", 60_000}, {"s", 1_000}, {"ms", 1}]
-
-  defp duration_label(ms) when is_integer(ms) and ms > 0 do
-    {suffix, size} = Enum.find(@duration_units, fn {_suffix, size} -> rem(ms, size) == 0 end)
-    "#{div(ms, size)}#{suffix}"
-  end
 
   defp normalize_lighter_order_sides(orders, %Exchange{id: "lighter"}, "order") when is_list(orders) do
     Enum.map(orders, &normalize_lighter_order_side/1)
