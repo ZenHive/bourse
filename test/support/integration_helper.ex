@@ -117,6 +117,28 @@ defmodule Bourse.IntegrationHelper do
   end
 
   @doc """
+  The Derive v3 testnet subaccount id `test_helper.exs` read from the owner
+  wallet (`public/get_subaccounts`). Flunks with the operator step when the
+  wallet owns no v3 subaccount — v3 creates one only on an L1 deposit.
+  """
+  @spec derive_subaccount_id!() :: pos_integer()
+  def derive_subaccount_id! do
+    case System.get_env("DERIVE_TESTNET_SUBACCOUNT_ID") do
+      id when is_binary(id) and id != "" ->
+        String.to_integer(id)
+
+      _missing ->
+        flunk("""
+        The Derive owner wallet (DERIVE_TESTNET_API_KEY) owns no v3 testnet subaccount.
+        Operator step: on https://testnet.app.derive.xyz connect the owner wallet, mint
+        testnet USDC and deposit it (this creates the account and subaccount), then
+        register a session key via private/set_session_key or export the owner key as
+        DERIVE_TESTNET_API_SECRET.
+        """)
+    end
+  end
+
+  @doc """
   Returns the human-readable "missing testnet credentials" message that
   `require_credentials!/2` flunks with. Exposed so generators (e.g. the per-
   exchange `setup_all` gates in `RawEndpointProbe`) can `raise` it from outside an `ExUnit.Case`

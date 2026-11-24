@@ -257,7 +257,7 @@ defmodule Bourse.RequestShapeSweepTest do
     Exchange.put_markets(exchange, [
       %Market{
         id: "ETH-PERP",
-        symbol: "ETH/USD:USDC",
+        symbol: "ETH/USDC:USDC",
         info: %{
           "base_asset_address" => "0x0000000000000000000000000000000000000001",
           "base_asset_sub_id" => "0"
@@ -287,7 +287,7 @@ defmodule Bourse.RequestShapeSweepTest do
   defp params_for("derive", js_name) when js_name in ["createOrder", "editOrder"] do
     %{
       "id" => "order-1",
-      "symbol" => "ETH/USD:USDC",
+      "symbol" => "ETH/USDC:USDC",
       "type" => "limit",
       "side" => "buy",
       "amount" => 1,
@@ -296,7 +296,7 @@ defmodule Bourse.RequestShapeSweepTest do
     }
   end
 
-  defp params_for("derive", "cancelOrder"), do: %{"id" => "order-1", "symbol" => "ETH/USD:USDC"}
+  defp params_for("derive", "cancelOrder"), do: %{"id" => "order-1", "symbol" => "ETH/USDC:USDC"}
 
   # cancel_order's unified required set is only [:id]; Lighter's builder also
   # needs symbol + a caller-supplied nonce (zk write path).

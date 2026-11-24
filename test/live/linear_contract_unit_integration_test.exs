@@ -86,14 +86,14 @@ defmodule Bourse.LinearContractUnitIntegrationTest do
     assert {:ok, markets} = Bourse.fetch_markets(Exchange.new!("derive"))
 
     assert %Market{
-             symbol: "BTC/USD:USDC",
+             symbol: "BTC/USDC:USDC",
              contract: true,
              linear: true,
              inverse: false,
              option: false,
              contract_size: 1,
              quantity_unit: "base"
-           } = Enum.find(markets, &(&1.symbol == "BTC/USD:USDC"))
+           } = Enum.find(markets, &(&1.symbol == "BTC/USDC:USDC"))
 
     option = Enum.find(markets, &(&1.option == true))
     assert option

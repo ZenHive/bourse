@@ -953,10 +953,10 @@
     }
   ],
   "symbols": {
-    "spot": "BTC/USD:USDC",
-    "linear": "BTC/USD:USDC",
-    "inverse": "BTC/USD:USDC",
-    "option": "BTC/USD:USDC"
+    "spot": "BTC/USDC:USDC",
+    "linear": "BTC/USDC:USDC",
+    "inverse": "BTC/USDC:USDC",
+    "option": "BTC/USDC:USDC"
   },
   "currency": "USDC",
   "error_cases": [
@@ -970,16 +970,16 @@
         {
           "name": "symbol",
           "strategy": "literal",
-          "value": "ZZZ/USD:USDC"
+          "value": "ZZZ/USDC:USDC"
         }
       ],
       "options": [],
       "expected_error": {
         "type": "invalid_order",
-        "code": 12001,
-        "message_contains": "Instrument not found"
+        "code": -32602,
+        "message_contains": "Ticker not found for instrument"
       },
-      "observed_at": "2026-08-23"
+      "observed_at": "2026-11-25"
     }
   ],
   "provider_operation_prefixes": [

@@ -1,6 +1,8 @@
 defmodule Bourse.LiveErrors.DeriveTest do
   use ExUnit.Case, async: false
 
+  import Bourse.IntegrationHelper, only: [derive_subaccount_id!: 0]
+
   alias Bourse.Error
 
   @moduletag :integration
@@ -13,8 +15,7 @@ defmodule Bourse.LiveErrors.DeriveTest do
   # file carries only errors neither of those exercises. fetchOrder is not
   # offered on derive, so the unknown-id probe is cancel_order.
 
-  @symbol "BTC/USD:USDC"
-  @subaccount_id 144_422
+  @symbol "BTC/USDC:USDC"
   @unknown_order_id "00000000-dead-beef-0000-000000000000"
 
   test "an order id the venue has never seen is rejected" do
@@ -24,7 +25,7 @@ defmodule Bourse.LiveErrors.DeriveTest do
       Bourse.Exchange.new("derive",
         credentials: credentials,
         sandbox: true,
-        options: %{"subaccount_id" => @subaccount_id}
+        options: %{"subaccount_id" => derive_subaccount_id!()}
       )
 
     {:ok, exchange} = Bourse.load_markets(exchange)
@@ -32,7 +33,8 @@ defmodule Bourse.LiveErrors.DeriveTest do
     assert {:error, %Error{} = error} =
              Bourse.cancel_order(exchange, @unknown_order_id, symbol: @symbol)
 
-    # Observed live 2026-08-28: code 11006, "Order does not exist."
+    # Observed live 2026-08-28 (v2); 11006 is in the v3 catalog
+    # (https://docs.derive.xyz/error-codes.md). Re-proved once the v3 account exists.
     assert error.type == :order_not_found
     assert error.code == 11_006
     assert error.message =~ "Order does not exist"

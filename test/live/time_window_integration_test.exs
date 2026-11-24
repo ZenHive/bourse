@@ -167,7 +167,7 @@ defmodule Bourse.Test.TimeWindowProbeMatrix do
     %{
       venue: :derive,
       method: :fetch_trades,
-      args: ["BTC/USD:USDC"],
+      args: ["BTC/USDC:USDC"],
       opts: [],
       exchange_opts: [sandbox: true],
       credentials: false,

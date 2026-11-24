@@ -2,14 +2,15 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
   @moduledoc """
   Live Derive testnet pins for task 210 (authored/frozen derive slice).
 
-  Authority: api-demo.lyra.finance + Derive REST auth (X-Lyra* header trio).
-  Edge semantics (verified live): proxy verifies recovered signer against
-  X-LyraWallet / session-key registry before the app — owner EOA is not
-  auto-registered; mismatch is nginx HTML 403 (no JSON envelope).
+  Authority: https://testnet.api.derive.xyz/v3 + Derive REST session auth
+  (X-DeriveWallet / X-DeriveTimestamp / X-DeriveSignature,
+  https://docs.derive.xyz/authentication/session-login.md). A signer that is
+  neither the wallet nor a registered session key is answered in JSON with
+  14026 "Session key not found" (observed live 2026-11-25).
   """
   use ExUnit.Case, async: false
 
-  import Bourse.IntegrationHelper, only: [build_exchange: 2, require_credentials!: 2]
+  import Bourse.IntegrationHelper, only: [build_exchange: 2, derive_subaccount_id!: 0, require_credentials!: 2]
 
   alias Bourse.Balance
   alias Bourse.Credentials
@@ -27,12 +28,11 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
   @moduletag :integration
   @moduletag :network
 
-  @derive_testnet_url "https://api-demo.lyra.finance"
-  @perp_symbol "BTC/USD:USDC"
+  @derive_testnet_url "https://testnet.app.derive.xyz"
+  @perp_symbol "BTC/USDC:USDC"
   @perp_instrument_name "BTC-PERP"
   @minimum_trade_to_ticker_ratio 0.5
   @maximum_trade_to_ticker_ratio 1.5
-  @derive_subaccount_id 144_422
   @far_perp_limit_price 100
   @far_option_limit_price 0.1
   @order_max_fee "200"
@@ -66,7 +66,9 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
     exchange = build_exchange(:derive, sandbox: true)
 
     assert {:ok, %Ticker{} = ticker} = Bourse.fetch_ticker(exchange, @perp_symbol)
-    assert ticker.info["instrument_name"] == @perp_instrument_name
+    # The v3 slim ticker carries no instrument field; the trade-price ratio below
+    # is what witnesses that the BTC-PERP book (not another market) answered.
+    refute Map.has_key?(ticker.info, "instrument_name")
     ticker_price = ticker.last || ticker.mark_price
     assert is_number(ticker_price)
 
@@ -97,7 +99,7 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
 
     portfolio =
       Enum.find(balance.info["result"], fn portfolio ->
-        portfolio["subaccount_id"] == @derive_subaccount_id
+        portfolio["subaccount_id"] == derive_subaccount_id!()
       end)
 
     assert %{"margin_type" => "SM"} = portfolio
@@ -115,7 +117,7 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
       build_exchange(:derive,
         credentials: credentials,
         sandbox: true,
-        options: %{"subaccount_id" => @derive_subaccount_id}
+        options: %{"subaccount_id" => derive_subaccount_id!()}
       )
 
     assert {:ok, transfers} = Bourse.fetch_transfers(exchange)
@@ -123,9 +125,9 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
     assert Enum.all?(transfers, &match?(%TransferEntry{}, &1))
   end
 
-  test "unregistered session key yields edge HTML 403 (access_restricted)" do
-    # Wrong secret for a real-looking wallet: edge recovers a different signer
-    # that is not registered for the wallet → nginx HTML 403 (no JSON envelope).
+  test "a signer that is neither the wallet nor its session key is refused with 14026" do
+    # Observed live 2026-11-25 on testnet.api.derive.xyz/v3: the recovered signer
+    # is named in `data`; v2's nginx HTML 403 for this case is gone.
     credentials =
       Credentials.new!(
         api_key: "0x05Fd3d190C176eB58cC4DDf38bFD1848a9786238",
@@ -135,7 +137,11 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
 
     exchange = build_exchange(:derive, credentials: credentials, sandbox: true)
 
-    assert {:error, %Error{type: :access_restricted, code: 403}} = Bourse.fetch_balance(exchange)
+    assert {:error, %Error{type: :authentication_error, code: 14_026, message: message}} =
+             Bourse.fetch_balance(exchange)
+
+    assert message =~ "Session key not found"
+    assert message =~ String.downcase(Bourse.Signing.Derive.signer_address(credentials.secret))
   end
 
   @tag :dangerous
@@ -146,7 +152,7 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
       build_exchange(:derive,
         credentials: credentials,
         sandbox: true,
-        options: %{"subaccount_id" => @derive_subaccount_id}
+        options: %{"subaccount_id" => derive_subaccount_id!()}
       )
 
     assert {:ok, exchange} = Bourse.load_markets(base)
@@ -186,7 +192,7 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
           "amount" => invalid_amount,
           "price" => @far_option_limit_price,
           "max_fee" => @order_max_fee,
-          "subaccount_id" => @derive_subaccount_id,
+          "subaccount_id" => derive_subaccount_id!(),
           "clientOrderId" => "task397-invalid-quantity"
         },
         "createOrder",
@@ -207,7 +213,7 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
       build_exchange(:derive,
         credentials: credentials,
         sandbox: true,
-        options: %{"subaccount_id" => @derive_subaccount_id}
+        options: %{"subaccount_id" => derive_subaccount_id!()}
       )
 
     assert {:ok, exchange} = Bourse.load_markets(base)

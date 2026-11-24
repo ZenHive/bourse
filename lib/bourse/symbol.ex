@@ -955,8 +955,8 @@ defmodule Bourse.Symbol do
   # The discriminator is quote == "USD", NOT the separator char — deribit's
   # separator is "_" (for the linear form), so gating base-only on
   # `separator == "-"` produced "BTC_USD-PERPETUAL" against the real spec and
-  # the live API rejected it ("instrument is not open"). Same rule applies to
-  # `:suffix_perp` (Derive's `-PERP` family).
+  # the live API rejected it ("instrument is not open"). Derive's `-PERP`
+  # family (`:suffix_perp`) is base-only for its USDC quote instead.
   defp apply_swap_pattern(parsed, config) do
     quote_currency = native_quote_currency(parsed, config)
 
@@ -965,7 +965,10 @@ defmodule Bourse.Symbol do
         :implicit ->
           apply_case("#{parsed.base}#{config.separator}#{quote_currency}", config.case)
 
-        pattern when pattern in [:suffix_perpetual, :suffix_perp] and parsed.quote == "USD" ->
+        :suffix_perpetual when parsed.quote == "USD" ->
+          apply_case("#{parsed.base}#{config.suffix}", config.case)
+
+        :suffix_perp when parsed.quote == "USDC" ->
           apply_case("#{parsed.base}#{config.suffix}", config.case)
 
         _suffix_pattern ->
@@ -1148,7 +1151,7 @@ defmodule Bourse.Symbol do
       else
         case String.split(id_without_suffix, sep) do
           [b, q] -> {b, q}
-          [b] -> {b, "USD"}
+          [b] -> {b, implicit_swap_quote(config.pattern)}
           _ -> {id_without_suffix, ""}
         end
       end
@@ -1170,9 +1173,14 @@ defmodule Bourse.Symbol do
     end
   end
 
+  # Derive v3 instruments report `quote_currency: "USDC"` for the BASE-PERP
+  # family (public/get_instrument); deribit's bare BASE-PERPETUAL is USD-quoted.
+  defp implicit_swap_quote(:suffix_perp), do: "USDC"
+  defp implicit_swap_quote(_pattern), do: "USD"
+
   # Deribit's inverse USD perps (BTC-PERPETUAL) settle in base. Its linear
   # USDC perps (1000BONK_USDC-PERPETUAL) settle in quote. Derive's BASE-PERP
-  # family is linear USDC-settled with a USD quote (BTC/USD:USDC).
+  # family is linear USDC-quoted and USDC-settled (BTC/USDC:USDC).
   defp swap_settle(:suffix_perp, _base, _quote), do: "USDC"
   defp swap_settle(_pattern, base, "USD"), do: base
   defp swap_settle(_pattern, _base, quote), do: quote

@@ -1,6 +1,8 @@
 defmodule Bourse.Journeys.Trader.DeriveTest do
   use Bourse.Test.Journeys.Case, async: false
 
+  import Bourse.IntegrationHelper, only: [derive_subaccount_id!: 0]
+
   alias Bourse.Error
   alias Bourse.Order
   alias Bourse.Signing.Derive, as: DeriveSigning
@@ -10,13 +12,12 @@ defmodule Bourse.Journeys.Trader.DeriveTest do
   @moduletag :exchange_derive
 
   @venue :derive
-  @symbol "BTC/USD:USDC"
-  @subaccount_id 144_422
+  @symbol "BTC/USDC:USDC"
   @amount 0.1
   @resting_price 100.0
   @max_fee "200"
-  # Provider channel is `{subaccount_id}.orders` (docs.derive.xyz).
-  @order_channel "#{@subaccount_id}.orders"
+  # Provider channel is `{subaccount_id}.orders`
+  # (https://docs.derive.xyz/subscriptions.md); the id is read from the wallet.
   @frame_timeout_ms 20_000
 
   describe "a trader's day" do
@@ -47,7 +48,7 @@ defmodule Bourse.Journeys.Trader.DeriveTest do
             "amount" => @amount,
             "price" => @resting_price,
             "max_fee" => @max_fee,
-            "subaccount_id" => @subaccount_id,
+            "subaccount_id" => derive_subaccount_id!(),
             "clientOrderId" => client_order_id
           },
           "createOrder",
@@ -57,9 +58,10 @@ defmodule Bourse.Journeys.Trader.DeriveTest do
       # RequestShape.build signs Derive's eight-field order tuple via sign_order
       # (max_fee, signer, nonce, signature_expiry_sec are part of that envelope).
       assert request["max_fee"] == @max_fee
-      assert request["subaccount_id"] == @subaccount_id
-      assert is_integer(request["nonce"])
-      assert request["signature_expiry_sec"] > div(request["nonce"], 1_000)
+      assert request["subaccount_id"] == derive_subaccount_id!()
+      # v3 nonce: milliseconds x 1e6 plus a random suffix, sent as a decimal string.
+      assert {nonce, ""} = Integer.parse(request["nonce"])
+      assert request["signature_expiry_sec"] > div(nonce, 1_000_000_000)
       assert request["signer"] == DeriveSigning.signer_address(exchange.credentials.secret)
       assert is_binary(request["signature"]) and request["signature"] != ""
 
@@ -111,15 +113,16 @@ defmodule Bourse.Journeys.Trader.DeriveTest do
       try do
         assert is_nil(ws.auth)
 
-        # Observed live 2026-08-28 against wss://api-demo.lyra.finance/ws:
+        # Observed live 2026-11-25 against wss://testnet.api.derive.xyz/v3/ws:
         # `{subaccount_id}.orders` before public/login is rejected with envelope
-        # code 13000 wrapping 14022 "Subscription to a private channel failed".
-        # Authority: https://docs.derive.xyz/reference/authentication
+        # code 13000, "Subscription to a private channel failed" (v2 also named
+        # 14022 inside `data`; v3 does not).
+        # Authority: https://docs.derive.xyz/authentication/session-login.md
         assert {:error, {:subscription_rejected, unauthorized}} =
-                 WS.subscribe(ws, [@order_channel], ack_timeout_ms: 8_000)
+                 WS.subscribe(ws, [order_channel()], ack_timeout_ms: 8_000)
 
         assert get_in(unauthorized, ["error", "code"]) == 13_000
-        assert get_in(unauthorized, ["error", "data"]) =~ "14022"
+        assert get_in(unauthorized, ["error", "data"]) =~ "Subscription to a private channel failed"
       after
         WS.close(ws)
       end
@@ -131,8 +134,8 @@ defmodule Bourse.Journeys.Trader.DeriveTest do
 
       try do
         assert %{pattern: :eip191_jsonrpc_login, meta: %{subaccounts: subaccounts}} = ws.auth
-        assert @subaccount_id in subaccounts
-        assert :ok = WS.subscribe(ws, [@order_channel], ack_timeout_ms: 8_000)
+        assert derive_subaccount_id!() in subaccounts
+        assert :ok = WS.subscribe(ws, [order_channel()], ack_timeout_ms: 8_000)
 
         client_order_id = unique_client_order_id("trader-derive-ws")
 
@@ -145,7 +148,7 @@ defmodule Bourse.Journeys.Trader.DeriveTest do
               "amount" => @amount,
               "price" => @resting_price,
               "max_fee" => @max_fee,
-              "subaccount_id" => @subaccount_id,
+              "subaccount_id" => derive_subaccount_id!(),
               "clientOrderId" => client_order_id
             },
             "createOrder",
@@ -158,8 +161,9 @@ defmodule Bourse.Journeys.Trader.DeriveTest do
         assert is_binary(placed_id) and placed_id != ""
 
         try do
-          # Observed live 2026-08-28: method "subscription", channel
-          # "144422.orders", data[0] order_status "open", cancel_reason "".
+          # Frame shape (v2 observation 2026-08-28, re-proved only once the v3
+          # account exists): method "subscription", channel
+          # "{subaccount_id}.orders", data[0] order_status "open", cancel_reason "".
           placed_event = await_order_event!(placed_id, "open")
 
           assert placed_event["instrument_name"] == "BTC-PERP"
@@ -168,7 +172,7 @@ defmodule Bourse.Journeys.Trader.DeriveTest do
           assert placed_event["time_in_force"] == "gtc"
           assert placed_event["label"] == client_order_id
           assert placed_event["cancel_reason"] == ""
-          assert placed_event["subaccount_id"] == @subaccount_id
+          assert placed_event["subaccount_id"] == derive_subaccount_id!()
 
           assert {event_price, ""} = Float.parse(placed_event["limit_price"])
           assert_in_delta event_price, @resting_price, 1.0e-9
@@ -241,21 +245,21 @@ defmodule Bourse.Journeys.Trader.DeriveTest do
   end
 
   defp match_order_event(
-         %{"method" => "subscription", "params" => %{"channel" => @order_channel, "data" => data}},
+         %{"method" => "subscription", "params" => %{"channel" => channel, "data" => data}},
          order_id,
          status,
          deadline
        )
        when is_list(data) do
-    case Enum.find(data, &(&1["order_id"] == order_id and &1["order_status"] == status)) do
-      nil -> await_order_event!(order_id, status, deadline)
-      event -> event
-    end
+    event = channel == order_channel() && Enum.find(data, &(&1["order_id"] == order_id and &1["order_status"] == status))
+    event || await_order_event!(order_id, status, deadline)
   end
 
   defp match_order_event(_frame, order_id, status, deadline) do
     await_order_event!(order_id, status, deadline)
   end
+
+  defp order_channel, do: "#{derive_subaccount_id!()}.orders"
 
   defp derive_exchange! do
     credentials = Bourse.Testnet.creds!(@venue)
@@ -264,7 +268,7 @@ defmodule Bourse.Journeys.Trader.DeriveTest do
       Bourse.Exchange.new(to_string(@venue),
         credentials: credentials,
         sandbox: true,
-        options: %{"subaccount_id" => @subaccount_id}
+        options: %{"subaccount_id" => derive_subaccount_id!()}
       )
 
     {:ok, exchange} = Bourse.load_markets(exchange)

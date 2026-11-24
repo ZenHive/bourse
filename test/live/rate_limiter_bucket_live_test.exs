@@ -19,7 +19,7 @@ defmodule Bourse.Live.RateLimiterBucketTest do
     "bybit" => "BTC/USDT",
     "coinbaseexchange" => "ETH/USD",
     "deribit" => "BTC/USD:BTC",
-    "derive" => "BTC/USD:USDC",
+    "derive" => "BTC/USDC:USDC",
     "hyperliquid" => "BTC/USDC:USDC",
     "lighter" => "BTC/USDC:USDC",
     "okx" => "BTC/USDT"
