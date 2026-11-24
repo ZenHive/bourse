@@ -28,17 +28,22 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   silently omitted conditional orders created before `until` and updated after it.
 - Deribit `fetch_funding_rate` now labels its value with the window it was
   accrued over: `interval: "8h"` for the default request (was `"1h"`, which
-  overstated annualized funding 8×), the caller's span when both
-  `start_timestamp`/`since` and `end_timestamp`/`until` are passed, and `nil`
-  when only one end is passed.
+  overstated annualized funding 8×), otherwise the span between the two bounds
+  actually sent. A missing end resolves to the request clock and a missing start
+  to eight hours before the end; integer and numeric-string bounds are both
+  honoured, and a span that is not a whole number of hours keeps its exact
+  length (e.g. `"14399877ms"`).
 - Deribit `fetch_ticker` / `fetch_tickers` fill `base_volume` from
   `stats.volume` (base currency) and `quote_volume` from `volume_notional`
   (quote currency), falling back to `volume_usd` for inverse options. Before,
   the base-currency figure was reported as `quote_volume` and `base_volume` was
-  nil. Spot instruments, which publish no quote figure, now report
+  nil. Natively matched spot reports its `volume_notional`; Coinbase-routed
+  spot (`is_cbe_routed`), which omits both quote figures, reports
   `quote_volume: nil`.
 - Deribit `fetch_liquidations` returns only trades the venue marks with a
-  `liquidation` field; it used to return every public trade on the tape.
+  `liquidation` field; it used to return every public trade on the tape. The
+  method's verification state is `:unverified` until a marked trade has been
+  observed surviving the parse.
 
 ## [0.10.0] - 2026-11-25
 

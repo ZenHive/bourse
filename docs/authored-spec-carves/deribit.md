@@ -16,14 +16,30 @@ Outcome: DIVERGE from C-T535a's history-spacing `"1h"`.**
   "8hour interest rate" (`interest_8h`).
   [get_funding_rate_value](https://docs.deribit.com/api-reference/market-data/public-get_funding_rate_value)
   [get_funding_rate_history](https://docs.deribit.com/api-reference/market-data/public-get_funding_rate_history)
-- *Why C-T535a was wrong:* hourly *history* spacing is the settlement cadence of
-  the history rows. It was applied to a different read, whose value is whatever
+- *Why C-T535a was wrong:* hourly *history* spacing is the history sampling
+  interval — how often `get_funding_rate_history` publishes a row — not a payment
+  cadence: Deribit calculates and pays funding continuously into the realised
+  session PnL and moves it to cash at the daily settlement, 08:00 UTC
+  ([Funding Specifications](https://support.deribit.com/hc/en-us/articles/31424939178397-Funding-Specifications)).
+  The sampling interval was applied to a different read, whose value is whatever
   the request window accrued. That window is 8h by default, so the value was an 8h
   rate labelled `"1h"`.
-- *Our carve:* authored default `interval: "8h"` (the default request window);
-  `Bourse.Unified.ReadParse` replaces it with the caller's span when the caller
-  sets both window ends, and with nil when only one end is set (the other end is
-  the request clock, which the parse does not see).
+- *Our carve:* `Bourse.Unified.call_dispatch/6` resolves both bounds before
+  dispatch — caller bounds (integer or numeric string, unified or native key),
+  a missing end on the request clock, a missing start eight hours before the
+  end — and the parse labels the value with the span between those two sent
+  bounds, in the largest unit that divides it exactly (`"8h"`, `"90m"`,
+  `"14399877ms"`). The authored default `"8h"` documents the default window.
+- *Review round (2026-11-25):* the first cut read only integer bounds from the
+  unified params, so string bounds `[T-4h, T]` were sent but labelled `"8h"`, a
+  start-only window was labelled nil, and a 4h−123ms span was labelled nil.
+  Live after the fix, at `T = 1795561200000`: string bounds and start-only on
+  the request clock both answer `{0.0, "4h"}` (raw `[T-4h, T]` = `0.0`), and the
+  4h−123ms span answers `{0.0, "14399877ms"}` against raw `0.0`.
+- *History sampling interval:* pinned separately in
+  `test/live/deribit/deribit_authored_integration_test.exs` — unified
+  `fetch_funding_rate_history` rows carry exactly the raw history timestamps,
+  spaced one hour apart, with `funding_rate` equal to each row's `interest_1h`.
 - *Live evidence (2026-11-25, test.deribit.com, BTC-PERPETUAL):* with
   hour-aligned end `T = 1795561200000`, the `[T-8h, T]` value was
   `8.666511141627127e-08`, the history row at `T` had `interest_8h
@@ -56,7 +72,8 @@ part: `volume_usd` is not the quote figure on every kind.**
   |---|---|---|---|---|---|
   | inverse perpetual | BTC-PERPETUAL | 99875.29 (BTC) | 6.0098e9 | 6.0098e9 | USD → notional |
   | linear perpetual | BTC_USDC-PERPETUAL | 839.80 (BTC) | 50547243.09 (USDC) | 50538761.5 (USD) | USDC → notional, not USD |
-  | spot | BTC_USDC | 196259.23 (BTC) | absent | absent | USDC → nil, no figure published |
+  | Coinbase-routed spot | BTC_USDC | 196259.23 (BTC) | absent | absent | USDC → nil, no figure published |
+  | native spot | BTC_USDT | 7.5713 (BTC) | 514458.4 (USDT) | 513891.63 | USDT → notional |
   | inverse option | BTC-24SEP27-45000-P | 8979.0 (BTC) | absent (provider quote = base, BTC) | 254152171.59 | USD (`counter_currency`) → `volume_usd` |
   | linear option | BTC_USDC-25DEC26-20000-P | 2600.03 | 78024.85 (USDC) | 78016.11 | USDC → notional |
 
@@ -68,15 +85,19 @@ part: `volume_usd` is not the quote figure on every kind.**
   `volume`); `quoteVolume` = `stats.volume_notional`, then `volume_notional`,
   then `stats.volume_usd` / `volume_usd`. The `volume_usd` fallback is reached
   only where no notional is published, which is the inverse option, whose
-  unified quote is USD. Spot publishes neither, so `quoteVolume` stays nil and
-  is not computed from price.
+  unified quote is USD. Natively matched spot publishes full `stats`, so its
+  quote is the notional; Coinbase-routed spot (`is_cbe_routed: true` on
+  `get_instruments`) omits both quote figures, so `quoteVolume` stays nil and is
+  not computed from price. Routing is provider configuration that can change
+  ([spot trading venues](https://docs.deribit.com/articles/spot-trading-venues)),
+  so the test reads the flag rather than assuming it.
 - *Open edge:* if a linear-USDC future ever omitted `volume_notional`, the
   fallback would report its USD figure. No live row omits it.
 - Pinned in `test/live/deribit/deribit_value_semantics_test.exs`. For each of
-  the five kinds the test compares both volumes with the same response's
+  the six kinds (native and routed spot separately) the test compares both volumes with the same response's
   `stats`, and with an independent `public/ticker` call within 1%. It also
-  checks the denomination (`quote/base` ≈ index for perpetuals, premium below
-  underlying for options), so swapped volumes fail.
+  checks the denomination (`quote/base` ≈ index for perpetuals and native spot,
+  premium below underlying for options), so swapped volumes fail.
 
 **C-T710c — `fetchLiquidations` keeps only tape rows with a `liquidation`
 marker. Outcome: DIVERGE from returning every public trade.**
@@ -97,13 +118,14 @@ marker. Outcome: DIVERGE from returning every public trade.**
   `[]`. Error: unknown instrument `BTC-31DEC99` (`BTC/USD:BTC-991231`) answers `-32602` `"instrument not
   found"`. The positive branch (a marked row surviving the filter) has not been
   observed live; see `docs/prod-verification-ledger.md`. The REST-read case now
-  declares `empty_collection: allowed`.
+  declares `empty_collection: allowed`, and `fetchLiquidations` is authored
+  `verification: "unverified"` until a marked trade survives parsing live.
 
 <!-- carve-evidence-status
 {"carve_id":"C-T710a","date":"2026-11-25","semantic_source":{"kind":"provider_owned","reference":"Deribit public/get_funding_rate_value window semantics and get_funding_rate_history interest_1h/interest_8h"},"observed_evidence":{"kind":"live_venue","reference":"2026-11-25 test.deribit.com BTC-PERPETUAL [T-8h,T] value 8.666511141627127e-08 == history interest_8h at T; window values distinct per span; -32602 instrument is not perpetual on a dated future"},"compatibility_reference":null,"resolved_tier":1}
 -->
 <!-- carve-evidence-status
-{"carve_id":"C-T710b","date":"2026-11-25","semantic_source":{"kind":"provider_owned","reference":"Deribit public/ticker stats.volume / volume_notional / volume_usd and get_book_summary_by_currency volume fields"},"observed_evidence":{"kind":"live_venue","reference":"2026-11-25 test.deribit.com inverse perp, linear perp, spot, inverse option, linear option stats table in C-T710b"},"compatibility_reference":null,"resolved_tier":1}
+{"carve_id":"C-T710b","date":"2026-11-25","semantic_source":{"kind":"provider_owned","reference":"Deribit public/ticker stats.volume / volume_notional / volume_usd and get_book_summary_by_currency volume fields"},"observed_evidence":{"kind":"live_venue","reference":"2026-11-25 test.deribit.com inverse perp, linear perp, native spot BTC_USDT, Coinbase-routed spot BTC_USDC, inverse option, linear option stats table in C-T710b"},"compatibility_reference":null,"resolved_tier":1}
 -->
 <!-- carve-evidence-status
 {"carve_id":"C-T710c","date":"2026-11-25","semantic_source":{"kind":"provider_owned","reference":"Deribit public/get_last_trades_by_instrument optional liquidation field"},"observed_evidence":{"kind":"live_venue","reference":"2026-11-25 test.deribit.com unmarked tapes filter to []; marked-row branch not observed live"},"compatibility_reference":null,"resolved_tier":null,"known_gap_reason":"no liquidation-marked trade found on testnet or production public tapes; the positive branch is ledgered"}
