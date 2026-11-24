@@ -114,9 +114,34 @@ roadmap.
 
 ---
 
+## 2026-10-01 — WS.get_state/1 exits during Deribit graceful logout
+
+**Status:** 🆕 reported by zen_mm task 8; bourse 0.9.1 / zen_websocket 0.9.0. · **2026-11-25:** routed to zen_websocket — `Bourse.WS.get_state/1` delegates straight to `ZenWebsocket.Client.get_state/1`, so the fallback lives in that library's `CallFacade`; filed in zen_websocket's roadmap. bourse consumes the fix by a dependency bump after its release.
+
+**Call/repro:** Connect to Deribit testnet with reconnect_on_error: false, enable
+connection-scoped COD, place a resting order, send private/logout, then immediately
+call Bourse.WS.get_state(ws). Logout itself closes without a JSON-RPC response and
+send_message returns {:error, :disconnected}, as expected for this method.
+
+**Observed:** get_state exits from GenServer.call with
+{{:gun_down, gun_pid, :ws, :normal, [stream_ref]}, {GenServer, :call, [...]}}
+when the request races transport termination. The public accessor's process-down
+fallback only recognizes noproc/normal/shutdown; CallFacade.process_down_exit?/1
+does not recognize the gun_down termination tuple.
+
+**Expected:** A transport terminating on a normal peer close should yield the
+accessor's disconnected fallback, including when get_state races that termination.
+
+**Consumer impact:** zen_mm's SAFE-2 / DERIBIT-2 live test failed before checking
+that graceful logout preserves the order. It now monitors transport termination
+before checking the surviving order through a separate authenticated connection;
+it does not swallow accessor exits or change library internals. The dependency
+race remains open upstream. No credential values are included in this report.
+
+
 ## 2026-09-29 — deribit: three value defects the REST-read contract lane passes green (found by a ccxt differential)
 
-**Status:** 🆕 reported — not routed.
+**Status:** 🆕 reported · **2026-11-25:** routed — task 710.
 
 **Reported by:** operator-requested experiment: the deribit contract cases run against ccxt 4.5.84 (JS) on `test.deribit.com`, then bourse and ccxt compared value by value on the same symbols. Each disagreement was settled against the raw provider response, not against either client.
 
@@ -209,7 +234,7 @@ and neither is obviously right; the operator routes this.
 
 ## 2026-09-16 — okx demo answers the missing-algo-order cancel with transient infrastructure codes instead of the 51400 business error, reddening `mix ci`
 
-**Status:** 🆕 reported — venue-side, unrouted. Not a bourse defect; awaiting operator routing (ledger it, or wait the venue out).
+**Status:** 🆕 reported — venue-side, unrouted. Not a bourse defect; awaiting operator routing (ledger it, or wait the venue out). · **2026-11-25:** reviewed in the routing pass, no task filed — still venue-side.
 
 **Call:** `Bourse.cancel_order(exchange, "999999999999999999", symbol: "BTC/USDT:USDT", stop: true)`
 against okx international demo (`www.okx.com` + `x-simulated-trading: 1`).
@@ -298,7 +323,7 @@ well-formed, plausible, and wrong, with no error to notice. `fetch_canceled_orde
 
 ## 2026-09-15 — every venue's contract `symbols.option` names a non-option symbol, so each option branch is proven against an arbitrarily-picked illiquid strike
 
-**Status:** 🆕 measured live (orchestrator, landed-base review) — not routed.
+**Status:** 🆕 measured live (orchestrator, landed-base review) · **2026-11-25:** routed — task 711.
 
 `Bourse.Test.RestReadContractScenario.market_symbol!/2` prefers
 `venue_contract["symbols"][kind]`, then falls back to the first active market whose symbol
@@ -329,7 +354,7 @@ that drew a dead strike, because both report the same "did not exercise the read
 
 ## 2026-09-15 — swapping the DEX signing primitives onto Cartouche/Hieroglyph moved keccak and secp256k1 off Rust NIFs onto pure Elixir, costing ~50x more CPU per signed request
 
-**Status:** 🆕 measured live (orchestrator, landed-base review of task 703, shipped
+**Status:** ✅ resolved 2026-11-25 by the onchain migration (0.10.0): keccak and secp256k1 run on Rust NIFs again (`ex_keccak`, onchain's precompiled NIF); not re-measured. Original: 🆕 measured live (orchestrator, landed-base review of task 703, shipped
 `434c97988d6a`) — not routed. The migration is **correct**: hyperliquid and derive both
 accept the new signatures live, so this is a cost finding, not a correctness one.
 
@@ -373,7 +398,7 @@ and say so in the criterion. Not ours to pick.
 
 ## 2026-09-15 — 23 authored WebSocket `watch*` channel entries across seven venues name methods the client has no function for
 
-**Status:** 🆕 measured live (orchestrator, landed-base review of task 702, shipped
+**Status:** routed 2026-11-25 — task 712 (decision: trim the authored set to the dispatchable surface). Original: 🆕 measured live (orchestrator, landed-base review of task 702, shipped
 `c18a0a7bd16d`) — not routed.
 
 `Bourse.WS.Channels` dispatches exactly four unified methods plus three fallbacks, so every
@@ -416,7 +441,7 @@ of magnitude); the venue's own drift between two HTTP calls no longer can. Re-ru
 ## 2026-09-15 — `fetch_open_orders` and `fetch_orders` on binanceusdm resolve to the ALGO book by default, so a resting limit order is invisible to a consumer that asks for its open orders
 
 **Status:** 🆕 measured live (orchestrator, landed-base gate run on `44edfaa`) — not
-consumer-reported. · **Unrouted, awaiting the operator's routing decision.**
+consumer-reported. · **2026-11-25:** routed — task 713 (decision: the unqualified read answers from the regular book).
 
 The calls, against `demo-fapi.binance.com` with the shared futures demo key:
 
@@ -467,7 +492,7 @@ read should refuse to guess the way deribit's plural funding read does.
 
 ## 2026-09-15 — five live deribit tests grade against the PRODUCTION host, so a venue maintenance window reds the suite
 
-**Status:** 🆕 reported 2026-09-15 — unrouted, awaiting the operator's routing decision.
+**Status:** 🆕 reported 2026-09-15 · **2026-11-25:** routed — task 714.
 Found by the landed-base gate while verifying task 704.
 
 **What it is.** `test/live/read_parse_slots_test.exs` (4 tests) and
@@ -683,7 +708,7 @@ to a nil key. All 41 `test/live/deribit/rest_read_contract_test.exs` cases pass 
 **Exchange:** venue-generisch (Kandidaten heute: bybit, deribit, hyperliquid, lighter) ·
 **Severity:** mittel (latent — kein Venue verletzt es heute; die Verletzung wäre aber unbegrenzte Netzwerkverstärkung ohne Signal)
 
-**Status:** 🆕 reported 2026-09-15 — mechanisch verifiziert, **nicht geroutet**. Kein aktueller Verstoß,
+**Status:** 🆕 reported 2026-09-15 — mechanisch verifiziert · **2026-11-25:** routed — task 715. Kein aktueller Verstoß,
 also kein Defekt der gelandeten Arbeit; die Frage ist, ob die Invariante erzwungen wird.
 
 Task 692 hat `fetchFundingRates` als Emulation über den singulären Read ergänzt
@@ -811,7 +836,7 @@ grüne lighter-Zeile im First-Frame-Report ist die falsche Angabe, nicht umgekeh
 **Exchange:** derive (demo, `wss://api-demo.lyra.finance/ws`) · **Severity:** hoch
 (`watch_ticker` ist auf derive vollständig tot; die beiden privaten Kanäle können nie ackn)
 
-**Status:** 🆕 reported 2026-09-15 — live-verifiziert in beide Richtungen, noch nicht geroutet.
+**Status:** 🆕 reported 2026-09-15 — live-verifiziert in beide Richtungen · **2026-11-25:** routed — folded into task 709 (v3 migration) as an acceptance criterion; the v2 socket is retired.
 
 Gefunden beim Landed-Base-Gate nach Task 697: `mix bourse.verify_ws_first_frame` ist auf
 derive rot. Die Ursache ist nicht der Lane-Probe, sondern die authored Kanalliste.
@@ -872,7 +897,7 @@ binancecoinm-`:no_channel_templates`-Rest aus 618 gehört in dieselbe Klasse.
 **Severity:** mittel (false-RED-Generator in einem Gate, das per Doktrin verlässlich sein muss)
 
 **Status:** 🆕 reported 2026-09-15 — Mechanismus **nicht** gefunden, Symptom reproduziert und
-eingegrenzt. Noch nicht geroutet.
+eingegrenzt. · **2026-11-25:** routed — task 716.
 
 **🚨 Korrektur einer früheren Fassung dieses Eintrags (2026-09-15, gleicher Tag):** die
 erste Version behauptete, der Demo-Host acke jede Subscription und liefere nie ein Frame.
@@ -1014,7 +1039,7 @@ side by side, which no run has done.
 
 ## 2026-09-15 — binanceusdm merged order history stops ~5.3 s short of the requested `until` boundary, past the probe's 1 s tolerance
 
-**Status:** Recorded, not routed (post-merge audit of `de6916d`, 2026-09-15). No task filed — one observation, and it is not yet settled whether the client selects the boundary wrongly or the probe's tolerance is too tight for a merged read.
+**Status:** Recorded, not routed (post-merge audit of `de6916d`, 2026-09-15). No task filed — one observation, and it is not yet settled whether the client selects the boundary wrongly or the probe's tolerance is too tight for a merged read. · **2026-11-25:** routed — task 713 (second facet).
 
 Preserved from the task 693 run journal before that journal was rewritten as
 `docs/conditional-order-controls.md`; measured by the task 693 implementer
@@ -4675,7 +4700,7 @@ Betroffene Exchange: deribit.
 
 ## 2026-09-30 — Bybit: `Exchange.new` ignores `urls.demotrading`, so demo-trading keys cannot reach `api-demo.bybit.com`
 
-**Status:** open
+**Status:** open · **2026-11-25:** routed — task 717.
 
 Call (bourse 0.9.0): `Bourse.Exchange.new("bybit", api_key: ..., secret: ...)` with Bybit **demo-trading** keys (created under Demo Trading on the mainnet account; these are neither mainnet nor testnet keys). `sandbox: true` selects `urls.test` (`api-testnet.bybit.com`); nothing selects `urls.demotrading`.
 
@@ -4685,3 +4710,18 @@ Expected: an option (e.g. `demo_trading: true`, mirroring CCXT's `enable_demo_tr
 
 Konsument-Handling (trading_dashboard, 2026-09-30, task 295): `TradingDashboard.Exchange.Edge.Session.maybe_demo/2` rewrites `base_urls` to `https://api-demo.bybit.com` after the session is built when the credential config says `demo_trading: true`. The rewrite goes away once bourse honours the option.
 Betroffene Exchange: bybit.
+
+---
+
+## 2026-11-20 — Derive: adapter still targets the retired v2 host `api.lyra.finance`; every call fails
+
+**Status:** open · **2026-11-25:** already filed — task 709 (v2 to v3 migration).
+
+Call (via trading_dashboard, Tidewave `project_eval`): `{:ok, ex} = Bourse.exchange(:derive)`, then `Bourse.fetch_ticker(ex, "BTC/USDC:USDC")` and `Bourse.fetch_markets(ex)`.
+
+Observed (2026-11-20 20:10 UTC): `fetch_ticker` returns `%Bourse.Error{type: :exchange_not_available, http_status: 521, message: "error code: 521\n"}`; `fetch_markets` returns `%Bourse.Error{type: :exchange_error, message: "Multi-endpoint dispatch failed for derive"}`. A direct `POST https://api.lyra.finance/public/get_time` answers Cloudflare 521; `api-demo.lyra.finance` answers 530 / error 1016.
+
+Expected: Derive serves its API at `https://api.derive.xyz/v3` (testnet `https://testnet.api.derive.xyz/v3`), stated in https://docs.derive.xyz/getting-started/introduction.md and in the OpenAPI at https://docs.derive.xyz/openapi.json. Probed live the same minute: `POST https://api.derive.xyz/v3/public/get_live_incidents` → 200 `{"incidents": []}`; `public/get_all_live_instruments` and `public/get_tickers` answer 200. v3 is not a host swap only: option `get_tickers` now requires `expiry_date` (YYYYMMDD) next to `currency` and returns a map of instrument name → compact ticker (`I` index, `M` mark, `option_pricing.{i,d,g,v,t,f}`, `stats.oi`), so the request shapes and field maps need re-authoring against the v3 spec.
+
+Konsument-Handling (trading_dashboard, 2026-11-20): none in app code. A trader session read option IV and skew with direct `Req.post!` calls against `api.derive.xyz/v3/public/get_tickers` while Deribit was in maintenance.
+Betroffene Exchange: derive.

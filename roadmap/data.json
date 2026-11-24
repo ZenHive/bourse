@@ -30318,7 +30318,7 @@
       },
       "eff": 1.06,
       "dep_layer": 0,
-      "unlocks": 5,
+      "unlocks": 4,
       "markers": [],
       "depends_on": [],
       "assignee": "codex",
@@ -30371,7 +30371,7 @@
       },
       "eff": 1.0,
       "dep_layer": 2,
-      "unlocks": 2,
+      "unlocks": 1,
       "markers": [],
       "depends_on": [
         667,
@@ -30421,7 +30421,7 @@
       },
       "eff": 1.06,
       "dep_layer": 3,
-      "unlocks": 1,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [
         668
@@ -30468,11 +30468,11 @@
         "u": 9
       },
       "eff": 1.36,
-      "dep_layer": 4,
+      "dep_layer": 1,
       "unlocks": 0,
       "markers": [],
       "depends_on": [
-        669
+        "709"
       ],
       "assignee": "codex",
       "model": "gpt-6-astra",
@@ -30516,7 +30516,7 @@
       },
       "eff": 1.11,
       "dep_layer": 1,
-      "unlocks": 4,
+      "unlocks": 3,
       "markers": [],
       "depends_on": [
         667
@@ -32440,8 +32440,8 @@
       "unlocks": 0,
       "markers": [],
       "depends_on": [],
-      "assignee": "codex",
-      "model": "gpt-6-astra",
+      "assignee": "claude",
+      "model": "claude-opus-5-5",
       "acceptance_criteria": [
         "Observe owned algo-order creation and the corresponding USD-M/COIN-M detail reads live; determine whether propagation, identifier selection, or another provider behavior causes order_not_found.",
         "Repair the demonstrated cause with bounded state-aware setup and guaranteed cleanup. A never-readable order or unexpected provider error must fail; do not add fixed sleeps, catch-all passes, skips, or blanket retries that hide semantic failures.",
@@ -32474,8 +32474,8 @@
       "unlocks": 0,
       "markers": [],
       "depends_on": [],
-      "assignee": "codex",
-      "model": "gpt-6-astra",
+      "assignee": "claude",
+      "model": "claude-opus-5-5",
       "acceptance_criteria": [
         "For every venue whose authored orderbook_semantics has apply_mode incremental or both, a delta whose continuity id does not follow the previous one causes the book to be invalidated and resynced; it is never merged",
         "The consumer receives an explicit gap/resync signal (event or error tuple) and no book snapshot is broadcast between the gap and the completed resync",
@@ -32508,11 +32508,11 @@
       },
       "eff": 0.81,
       "dep_layer": 0,
-      "unlocks": 0,
+      "unlocks": 1,
       "markers": [],
       "depends_on": [],
-      "assignee": "codex",
-      "model": "gpt-6-astra",
+      "assignee": "claude",
+      "model": "claude-opus-5-5",
       "acceptance_criteria": [
         "Derive's authored spec targets the v3 hosts (https://api.derive.xyz/v3, https://testnet.api.derive.xyz/v3 and their WebSocket endpoints); no lyra.finance host remains in runtime specs or tests",
         "Signed actions follow v3: nanosecond nonces within the per-action windows, the per-chain EIP-712 domain separator (mainnet chainId 1, testnet 11155111) and the owner EOA/multisig as wallet; a live v3 testnet order is accepted and cancelled, and a deliberately wrong signature or nonce is rejected with the provider's documented error",
@@ -32527,7 +32527,8 @@
         "Bourse.Signing.Derive.PreparedOrder migrates with the signer: its chain ids, Matching address and Trade module address are the v3 constants (Trade module 0xB8D20c2B7a1Ad2EE33Bc50eF10876eD3035b5e7b on both networks) and its domain separators equal the provider-published values (mainnet 0xda616dfabb88681b08e1592820a41d55ddc62d68de110e327ae99d734506fe19, testnet 0x24d674cd5f2b9d564691c51e9d88f649b99246a2244dd74ce27b96578d773e85); the docs/prod-verification-ledger.md derive PreparedOrder entry is closed by an accepted v3 order prepared through it plus one rejection naming a deliberately changed term",
         "Raw endpoints v3 removed (private/get_orders, public/get_instruments, private/create_subaccount, private/deposit, private/transfer_erc20, private/algo_order, private/trigger_order, public/get_spot_feed_history*, public/get_asset(s), the v2 session-key registration family) are deleted from raw.json, and every remaining raw method exists in the pinned openapi.json or websocket.asyncapi.json",
         "The provider authority corpus under priv/venues/derive/authority/ pins the v3 openapi.json, websocket.asyncapi.json and subscriptions.asyncapi.json with URL, retrieval date and SHA-256, and rest_read_contract.json is re-authored against them with every derive case green on the v3 testnet host",
-        "CLAUDE.md's Derive credential section and venue-index row describe the v3 credential shape (owner EOA or multisig as wallet, session key registered through private/set_session_key, testnet host); if the v3 testnet account or its funding requires an operator step, the run stops and reports it as a blocker naming the exact step instead of committing a workaround"
+        "CLAUDE.md's Derive credential section and venue-index row describe the v3 credential shape (owner EOA or multisig as wallet, session key registered through private/set_session_key, testnet host); if the v3 testnet account or its funding requires an operator step, the run stops and reports it as a blocker naming the exact step instead of committing a workaround",
+        "Every authored derive WebSocket channel template is a channel the v3 host serves: watch_ticker subscribes the provider's current ticker channel (v2 rejected `ticker` as deprecated in favour of `ticker_slim`, whose payload nests under instrument_ticker) with its dispatch entry and field mapping re-authored against the live payload; watch_orders and watch_my_trades carry provider channel names, not a CCXT message hash; each is proven by a live subscribe that delivers a frame (BUGS.md 2026-09-15 derive WS channel entry)"
       ],
       "checks": [
         "grep -rn -E \"lyra\\\\.finance|X-Lyra\" priv lib test  # expect no hits",
@@ -32557,6 +32558,273 @@
       "body": "Derive (formerly Lyra) is replacing API v2 with v3, and bourse 0.9.0 still speaks v2 (`priv/venues/derive/authored/venue.json` points at api.lyra.finance / api-demo.lyra.finance). Verified 2026-10-01 from Derive's docs: v3 runs on testnet (Ethereum Sepolia), and the \"Coming soon\" page lists v2 methods still to arrive \"before v3 mainnet launch\". The breaking changes that matter here: new hosts, nanosecond nonces with per-action validity windows, a domain separator recomputed per chain, no separate \"Derive Wallet\" (every wallet field is the owner EOA or multisig), `private/set_session_key` replacing the v2 registration calls, and a single `private/set_cancel_on_disconnect` replacing the v2 enable/disable family. Sources: https://docs.derive.xyz/migrating/breaking-changes.md, https://docs.derive.xyz/migrating/coming-soon.md, https://docs.derive.xyz/trading/cancel-on-disconnect.md, https://docs.derive.xyz/integrators/trading/market-maker-protections.md.\n\nConsumer: zen_mm wants Derive as a second market-making venue (zen_mm roadmap) and is blocked on a bourse release that carries this. Its needs set the minimum surface: MMP config and reset, cancel-on-disconnect, mmp-flagged limit orders with replace/cancel, partial fills, and the private order/trade streams across reconnects.\n\nAuthority: Derive's v3 docs and machine-readable specs (https://docs.derive.xyz/openapi.json, websocket.asyncapi.json, subscriptions.asyncapi.json) plus live v3 testnet traffic. Derive's official SDKs (derive-py, derive-ts, derive-rs) are provider-owned reference for signing. CCXT is reference only. A 2026-07-19 sweep found all ATM option books empty on the v2 demo; if the v3 testnet is equally empty, prove fills with a self-cross or a perp and record the limitation.\n\nReview 2026-10-01 against the live docs (llms.txt index, breaking-changes.md, the three machine specs; openapi.json info.version 0.2.0). Facts the original body missed, each confirmed by reading the cited page or spec:\n- Auth headers are renamed X-Lyra* → X-Derive*; X-LyraScope is deprecated (breaking-changes.md § Auth headers). bourse's venue.json still authors all three X-Lyra names.\n- v3 removed private/get_orders (absent from openapi.json; the docs say use get_open_orders / get_order_history). bourse routes fetchOrders, fetchOpenOrders, fetchClosedOrders and fetchCanceledOrders through it, so four unified reads break on the v3 host, not just the MM surface.\n- public/get_ticker now returns the slim ticker; full-ticker fields and the ticker.{instrument}.{interval} channel are gone. fetchTicker and fetchGreeks both read public/get_ticker.\n- tx_status → batch_status, transaction_id → op_uuid; get_subaccount.currency became string[]; get_currency is restructured around risk universes (spot is a list).\n- Module addresses are now identical on testnet and mainnet; only the chain id (1 / 11155111) changes the domain separator, and the docs publish both separator values — an independent oracle for the signer test, unlike the v2 vector that came from the same SDK as the address.\n- v3 rejects encodings v2 accepted (sub-1e12 precision, dirty address padding, non-canonical int256) with 14014; public/decode_action names the broken field. Use it when a ported order fails as a bad signature.\n- Session-auth headers still carry a millisecond timestamp (cancel-on-disconnect.md cURL example); only action nonces moved to nanoseconds.\n- Provider docs disagree with themselves on private/set_cancel_on_disconnect: the page shows a REST cURL call, while openapi.json lacks the method and websocket.asyncapi.json lists it as WS-only. Settle it with a live call and record the discrepancy in the carve register.\n- The private channels to pin are {subaccount_id}.orders and {subaccount_id}.trades; {subaccount_id}.trades.{tx_status} was removed.\n- Mainnet is still listed as \"coming soon\" on getting-started/introduction.md; WS hosts are wss://api.derive.xyz/v3/ws and wss://testnet.api.derive.xyz/v3/ws.\n- Premise unverified — confirm before building on it: whether the existing DERIVE_TESTNET_* pair works on the v3 testnet. v3 testnet is a Sepolia deployment and the env var currently holds a v2 smart-contract wallet; v3 wants the owner EOA, and deposits now happen on L1. If a fresh testnet account, Sepolia funding or a session-key registration needs the operator, that is a blocker to report, not something to work around.\n\nScope note: D raised 7 → 8 for the order-read rewiring, the ticker reshape and the PreparedOrder migration. These stay in one task because they share the host, header and signing change and none can land green on its own against the v3 host.",
       "created_at": "2026-10-01",
       "scored_at": "2026-10-01",
+      "cross_repo": []
+    },
+    {
+      "id": "710",
+      "phase": 14,
+      "bundle": "authored_specs",
+      "status": "pending",
+      "title": "Correct three deribit value defects the contract lane passes green: funding interval label, ticker volumes, unfiltered liquidations",
+      "scores": {
+        "d": 4,
+        "b": 8,
+        "u": 7
+      },
+      "eff": 1.88,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "claude",
+      "model": "claude-opus-5-5",
+      "acceptance_criteria": [
+        "On test.deribit.com, fetch_funding_rate returns an interval that matches the window its value was accrued over, as stated by Deribit's documentation for the endpoint used; the live test derives its expectation from a provider-owned source (raw responses and documented semantics), not from a constant shared with the client code",
+        "fetch_ticker on deribit returns base_volume and quote_volume whose denominations match the raw provider stats for each instrument kind the client serves; a live test compares both against the raw response of the same instrument and would fail if the two were swapped",
+        "fetch_liquidations on deribit returns only trades the provider marks as liquidations; against a live tape containing no marked trade it returns an empty list, and the live test asserts the filter against the raw tape rather than row shape",
+        "Each touched read has one live success and one relevant live provider error pinned in test/live/deribit",
+        "docs/authored-spec-carves/deribit.md records the three confrontations with the provider doc each rests on, and the BUGS.md entry carries a dated status note"
+      ],
+      "out_of_scope": [
+        "Strengthening RestReadContractScenario beyond non-nil checks for all venues",
+        "The ccxt-side defects listed in the entry"
+      ],
+      "body": "Source: BUGS.md entry \"2026-09-29 — deribit: three value defects the REST-read contract lane passes green\". Read it first; it carries the raw provider values each defect was settled against.\n\nThree unified reads on deribit return well-formed rows with wrong meaning. (1) fetch_funding_rate requests a rate accrued over an 8h window and labels it interval \"1h\", so a consumer annualizing through interval overstates funding 8x. (2) fetch_ticker maps the base-currency volume (stats.volume) into quote_volume and leaves base_volume nil, while the provider publishes the quote figure separately (stats.volume_usd). (3) fetch_liquidations returns every public trade as a liquidation; the provider marks liquidations with a `liquidation` field on the trade.\n\nAuthority: test.deribit.com live responses plus Deribit's own API docs (https://docs.deribit.com/) for what each field means. CCXT is not an authority; the entry's ccxt comparison only located the disagreements. Start with live calls against test.deribit.com (one success and one relevant provider error per touched read), then author the correction in the deribit authored documents and record each decision in docs/authored-spec-carves/deribit.md.\n\nPremise unverified — confirm before building on it: that stats.volume is base-denominated and stats.volume_usd quote-denominated for every deribit instrument kind the client serves (inverse perpetual, linear USDC perpetual, option, spot). Confront it per kind against the provider docs and live values; where a kind differs, author what the provider states.\n",
+      "created_at": "2026-11-24",
+      "scored_at": "2026-11-24",
+      "cross_repo": []
+    },
+    {
+      "id": "711",
+      "phase": 16,
+      "bundle": "live_e2e",
+      "status": "pending",
+      "title": "Contract lane option branches run against an arbitrary untraded strike because every venue's symbols.option names a non-option symbol",
+      "scores": {
+        "d": 5,
+        "b": 7,
+        "u": 6
+      },
+      "eff": 1.3,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "claude",
+      "model": "claude-opus-5-5",
+      "acceptance_criteria": [
+        "No rest_read_contract.json declares a non-option symbol in its option slot; the loader rejects one that does",
+        "Option branches select their instrument at run time from live venue data appropriate to the read, and the selection is venue-generic rather than a per-venue literal that expires",
+        "okx:fetchTrades:2:publicGetPublicOptionTrades passes live on okx demo when the venue's option tape carries trades, verified in the task's run",
+        "When a venue has no option instrument that exercises the read, the case fails with a message that distinguishes 'no traded option instrument on this venue now' from a broken read",
+        "The full option-branch subset of the contract lane is run live for every venue that has option branches and the executed/denominator counts are reported; no case is removed from a denominator"
+      ],
+      "out_of_scope": [
+        "Populating or ledgering binance:fetchOrderList (no OCO list on the spot testnet account)",
+        "Derive, whose host is retired until task 709"
+      ],
+      "body": "Source: BUGS.md entries \"2026-09-15 — every venue's contract `symbols.option` names a non-option symbol\" and the okx rows of \"2026-09-15 — live contract cases red on unpopulated sandbox state with no ledger row to explain them\". Read both first.\n\nThe REST-read contract lane picks the instrument for option branches by preferring the contract file's symbols.option, which in all eleven rest_read_contract.json files is a swap or spot symbol, then falling back to the first active BTC market. Option branches therefore run against whichever option sorts first, usually a strike nothing trades, and a genuinely broken option branch is indistinguishable from one that drew a dead strike. Live evidence in the entry: okx demo option trades exist on 30 instruments while the lane's case reports the read as unexercised.\n\nA literal option symbol in the contract file is not the fix: option instruments expire. The lane needs a selection that resolves, at run time and from the venue's own live data, an option instrument that currently has what the branch reads (trades for a trade tape, open interest for an OI read, a quoted book for a ticker). Keep the failure loud when the venue truly has none.\n",
+      "created_at": "2026-11-24",
+      "scored_at": "2026-11-24",
+      "cross_repo": []
+    },
+    {
+      "id": "712",
+      "phase": 7,
+      "bundle": "ws_unified",
+      "status": "pending",
+      "title": "Authored WebSocket watch* channel entries name methods the client cannot dispatch; trim the authored set to the dispatchable surface",
+      "scores": {
+        "d": 4,
+        "b": 5,
+        "u": 5
+      },
+      "eff": 1.25,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "claude",
+      "model": "claude-opus-5-5",
+      "acceptance_criteria": [
+        "Every authored websocket.subscribe.channels key in every runtime venue corresponds to a watch method the client dispatches; a test over all authored documents fails when an undispatchable key is added",
+        "No remaining channel template is a CCXT message hash; each corrected template is cited to the venue's WebSocket documentation in the venue's carve register",
+        "Each corrected template is proven by a live subscribe on the venue's sandbox that is acknowledged and delivers a frame on that channel, plus one live rejection of a deliberately wrong channel showing the venue's error",
+        "mix bourse.verify_ws_first_frame is run and its per-venue result reported",
+        "The BUGS.md entry carries a dated status note"
+      ],
+      "out_of_scope": [
+        "Derive channel templates (task 709 owns them on the v3 host)",
+        "Adding new unified watch_* methods"
+      ],
+      "body": "Source: BUGS.md entry \"2026-09-15 — 23 authored WebSocket `watch*` channel entries across seven venues name methods the client has no function for\". Read it first.\n\nBourse.WS.Channels dispatches a small fixed set of unified watch methods; every other authored websocket.subscribe.channels key answers unsupported_method before its template is read. Those entries are claims about venue channels that nothing can send and no live lane can prove, and several still carry CCXT message hashes (\":{symbol}\") instead of provider channel names.\n\nDecision (operator-vetoable, recorded here so the implementer does not re-open it): trim. An authored channel entry exists only for a watch method the client dispatches; entries without a dispatching function are deleted from the authored documents rather than kept as unverifiable claims. Adding new watch_* methods is separate work. For the entries that remain, any template that is a CCXT message hash rather than a provider channel is corrected against the venue's own WebSocket documentation and proven by a live subscribe that delivers a frame.\n",
+      "created_at": "2026-11-24",
+      "scored_at": "2026-11-24",
+      "cross_repo": []
+    },
+    {
+      "id": "713",
+      "phase": 8,
+      "bundle": "polish",
+      "status": "pending",
+      "title": "binanceusdm fetch_open_orders and fetch_orders answer from the algo book by default, hiding resting limit orders; settle the default book and the merged-history until boundary",
+      "scores": {
+        "d": 5,
+        "b": 9,
+        "u": 8
+      },
+      "eff": 1.7,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "claude",
+      "model": "claude-opus-5-5",
+      "acceptance_criteria": [
+        "On demo-fapi.binance.com, a resting far-from-market GTC limit order placed by the test appears in unqualified fetch_open_orders and in unqualified fetch_orders, and disappears from open orders after cancel; the test cleans up its order",
+        "A resting conditional order placed by the test is returned through the explicit conditional selector and is not silently mixed into the unqualified read unless the authored carve says so; the carve register records the decision and the Binance doc it rests on",
+        "COIN-M is measured live for the same defect and either fixed the same way or recorded as not affected with the evidence",
+        "The until-boundary shortfall is explained by a live read of the underlying endpoints against one window, the wrong side is fixed, and test/live/time_window_integration_test.exs passes its binanceusdm fetch_orders probe in three consecutive runs",
+        "One relevant live provider error on the changed read path is pinned",
+        "The REST-read contract cases for binanceusdm and binancecoinm are run live and their executed/denominator counts reported; both BUGS.md entries carry a dated status note"
+      ],
+      "out_of_scope": [
+        "Algo-order contract setup propagation (task 707)"
+      ],
+      "body": "Source: BUGS.md entries \"2026-09-15 — `fetch_open_orders` and `fetch_orders` on binanceusdm resolve to the ALGO book by default\" and \"2026-09-15 — binanceusdm merged order history stops ~5.3 s short of the requested `until` boundary\". Read both first, including the update notes.\n\nOn USD-M the unqualified fetch_open_orders / fetch_orders is served by the conditional (algo) book, so a resting GTC limit order reads as absent to a consumer reconciling its own orders. The list is well-formed, so nothing signals that a different book was read.\n\nDecision (operator-vetoable): the unqualified read answers from the regular order book (Binance's openOrders / allOrders), because that is what the provider calls open orders; the algo book stays reachable through the explicit conditional-order selector the client already exposes. Confirm from the code which selector that is and keep it working. Check COIN-M for the same shape and apply the same rule where it holds.\n\nSecond facet, same read path: the time-window probe for binanceusdm fetch_orders ends short of the requested until boundary by a varying amount in every full run. Nobody has yet read both underlying endpoints against the same window. Do that live, decide whether the client picks the boundary wrongly or the probe tolerance is wrong for this read, and fix the side that is wrong; state the evidence.\n\nAuthority: demo-fapi.binance.com / demo-dapi.binance.com live behavior plus Binance's USD-M and COIN-M futures docs.\n",
+      "created_at": "2026-11-24",
+      "scored_at": "2026-11-24",
+      "cross_repo": []
+    },
+    {
+      "id": "714",
+      "phase": 16,
+      "bundle": "live_e2e",
+      "status": "pending",
+      "title": "Five live deribit tests grade against the production host; measure the testnet books and move them to test.deribit.com",
+      "scores": {
+        "d": 3,
+        "b": 6,
+        "u": 6
+      },
+      "eff": 2.0,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "claude",
+      "model": "claude-opus-5-5",
+      "acceptance_criteria": [
+        "No test under test/live constructs a credentialed venue against its production host; a guard test fails when one is added (Coinbase Exchange excepted)",
+        "For each of the five tests the task reports the live testnet measurement that shows the asserted state exists there, or the ledger row that records why it does not",
+        "The moved tests pass in three consecutive live runs against test.deribit.com and still fail on an empty success",
+        "The BUGS.md entry carries a dated status note"
+      ],
+      "body": "Source: BUGS.md entry \"2026-09-15 — five live deribit tests grade against the PRODUCTION host, so a venue maintenance window reds the suite\". Read it first.\n\ntest/live/read_parse_slots_test.exs and test/live/ws/canary_test.exs construct deribit without sandbox: true and therefore run against www.deribit.com, while the repo reserves the production host for public-only Coinbase Exchange. Moving them blindly can turn a loud outage into a thin-book flake: one of them asserts a populated USDC-settled option chain with non-empty IV and guards against an empty success. Measure first whether test.deribit.com carries what each test reads, then move each test. Where testnet does not carry the state, do not weaken the assertion: pick a testnet instrument or currency that does carry it, or record the case in docs/prod-verification-ledger.md as unverified with the measurement.\n",
+      "created_at": "2026-11-24",
+      "scored_at": "2026-11-24",
+      "cross_repo": []
+    },
+    {
+      "id": "715",
+      "phase": 8,
+      "bundle": "polish",
+      "status": "pending",
+      "title": "Enforce that no venue authors both fetchFundingRate and fetchFundingRates as emulated, which would loop real venue calls without bound",
+      "scores": {
+        "d": 2,
+        "b": 5,
+        "u": 4
+      },
+      "eff": 2.25,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "claude",
+      "model": "claude-opus-5-5",
+      "acceptance_criteria": [
+        "A venue document declaring both halves of a mutually delegating emulation pair as emulated is rejected with a message naming the venue and the cycle; a test proves the rejection with a deliberately cyclic document",
+        "The check derives the delegation edges from the emulation code or one declared table that a test keeps in sync with it, not from a hand list of the funding pair alone",
+        "All eleven runtime venues pass the check"
+      ],
+      "body": "Source: BUGS.md entry \"2026-09-15 — die Emulations-Brücke `fetchFundingRate` ⇄ `fetchFundingRates` ist ein echter Zyklus im Delegationsgraphen\". Read it first.\n\nThe two funding emulations delegate to each other. Only the capability data keeps them apart: no venue currently declares both as emulated, and nothing checks that. A document that did would recurse with a real venue call at every level. Make the invariant mechanical and general: the emulation delegation graph must be acyclic for every venue's authored capability data, checked where an authored document is loaded or in a test over all runtime venues, so a future emulation pair is covered without naming it.\n",
+      "created_at": "2026-11-24",
+      "scored_at": "2026-11-24",
+      "cross_repo": []
+    },
+    {
+      "id": "716",
+      "phase": 16,
+      "bundle": "live_e2e",
+      "status": "pending",
+      "title": "The binanceusdm WebSocket first-frame probe times out intermittently in the lane while the same stream delivers in direct probes; find the mechanism",
+      "scores": {
+        "d": 4,
+        "b": 5,
+        "u": 5
+      },
+      "eff": 1.25,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "claude",
+      "model": "claude-opus-5-5",
+      "acceptance_criteria": [
+        "The task reports a reproduction of the failing lane run with the captured difference from a passing run, or states precisely which hypotheses were measured and excluded with their data",
+        "The demonstrated cause is fixed; mix bourse.verify_ws_first_frame passes binanceusdm in ten consecutive runs, and the run log is reported",
+        "The probe still fails when the stream genuinely delivers nothing, shown by one deliberate negative run (for example a wrong stream name)",
+        "The BUGS.md entry carries a dated status note with the mechanism"
+      ],
+      "body": "Source: BUGS.md entry \"2026-09-15 — die WS-First-Frame-Probe für binanceusdm ist intermittierend\". Read it in full, including the correction of its first version and the list of causes already excluded.\n\nmix bourse.verify_ws_first_frame reports binanceusdm as connected-without-data in some runs and passed in others, while direct repetitions of the same watch_ticker path deliver within seconds. The mechanism is unknown. Reproduce the lane's exact sequence repeatedly until the failure is observed, capture what differs between a failing and a passing run (ordering against other venues' probes, connection reuse, subscribe acknowledgement timing, host, rate limits), and fix the cause. A longer timeout or a retry is not a fix unless the evidence shows the venue's delivery interval for that stream exceeds the budget, in which case cite the provider's documented update interval.\n",
+      "created_at": "2026-11-24",
+      "scored_at": "2026-11-24",
+      "cross_repo": []
+    },
+    {
+      "id": "717",
+      "phase": 8,
+      "bundle": "polish",
+      "status": "pending",
+      "title": "Bybit demo-trading keys cannot be used: Exchange.new offers no way to select the demo-trading host",
+      "scores": {
+        "d": 3,
+        "b": 7,
+        "u": 7
+      },
+      "eff": 2.33,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "bug"
+      ],
+      "depends_on": [],
+      "assignee": "claude",
+      "model": "claude-opus-5-5",
+      "acceptance_criteria": [
+        "With the new option and the demo key pair, a private read against Bybit's demo host succeeds live and the test asserts account semantics from the response, not shape alone",
+        "The same demo key without the option is rejected by the venue with its documented invalid-key error, pinned live; the option on a venue without demo-trading hosts, or combined with sandbox, returns a specific error",
+        "Private WebSocket for the demo environment either authenticates live through the option or is recorded in docs/prod-verification-ledger.md as unverified with the provider doc that states the demo stream host",
+        "README or the Exchange constructor docs describe the option; CHANGELOG has an Unreleased entry; the BUGS.md entry carries a dated status note"
+      ],
+      "body": "Source: BUGS.md entry \"2026-09-30 — Bybit: `Exchange.new` ignores `urls.demotrading`\". Reported by trading_dashboard, which works around it by rewriting base_urls after construction.\n\nBybit demo-trading keys are neither mainnet nor testnet keys and are served on Bybit's demo host (https://bybit-exchange.github.io/docs/v5/demo). The authored bybit document carries the demo-trading URL map, but the constructor only accepts sandbox and hostname, so nothing selects it. Add a constructor option that selects the venue's demo-trading hosts for REST and, where the provider serves demo streams, WebSocket. It is an error on a venue that authors no demo-trading hosts, and it cannot be combined with sandbox. Demo credentials are provisioned as BYBIT_DEMO_API_KEY / BYBIT_DEMO_API_SECRET; a missing pair fails the test loudly with setup text.\n\nAuthority: live calls against api-demo.bybit.com and Bybit's demo-trading documentation, including which endpoints the demo environment does not serve.\n",
+      "created_at": "2026-11-24",
+      "scored_at": "2026-11-24",
       "cross_repo": []
     }
   ]

@@ -237,7 +237,8 @@ Real-time market data and order updates. ZenWebsocket, three-layer architecture.
 | Task 631 | ✅ | 🎁 **live_triage** · 🐛 Mixed-host WS subscribe must not leave a live half when the other host fails [D:4/B:6/U:4 → Eff:1.25?] 📋 |
 | Task 632 | ✅ | 🎁 **live_triage** · 🐛 Binance-family order-type reads are not the inverse of the writes: every conditional type collapses to market or limit [D:5/B:7/U:6 → Eff:1.3?] 📋 |
 | Task 634 | ✅ | 🎁 **live_triage** · 🐛 Deribit shipped release 2.1.1 during a maintenance window: re-bind the current-REST corpus to the republished OpenAPI [D:5/B:8/U:8 → Eff:1.6?] 🚀 |
-| Task 708 | ⬜ | 🎁 **ws_unified** · Incremental order books never check sequence continuity, so a dropped delta silently corrupts the book [D:5/B:9/U:8 → Eff:1.7] 🚀 |
+| Task 708 | ⬜ | 🎁 **ws_unified** · Incremental order books never check sequence continuity, so a dropped delta silently corrupts the book [D:5/B:9/U:8 → Eff:1.7?] 🚀 |
+| Task 712 | ⬜ | 🎁 **ws_unified** · 🐛 Authored WebSocket watch* channel entries name methods the client cannot dispatch; trim the authored set to the dispatchable surface [D:4/B:5/U:5 → Eff:1.25] 📋 |
 <!-- TASKS:END -->
 
 ## Phase 8: Polish (Hex Publishing)
@@ -270,9 +271,12 @@ Production-ready for Hex.pm publication.
 | Task 215 | ✅ | 🎁 **polish** · Cache market data for symbol->market_id resolution (loadMarkets equivalent) instead of re-fetching per call [D:5/B:6/U:5 → Eff:1.1?] 📋 |
 | Task 447 `[P]` | ✅ | 🎁 **polish** · Reduce the warm offline test suite to at most 60 seconds without losing coverage [D:7/B:9/U:8 → Eff:1.21?] 📋 |
 | Task 448 `[P]` | ✅ | 🎁 **polish** · Reduce the full seven-venue fixture-replay gate to at most 60 seconds [D:6/B:9/U:7 → Eff:1.33?] 📋 |
-| Task 705 | ✅ | 🎁 **polish** · Separate focused dispatch aliases from complete post-merge QA [D:3/B:7/U:7 → Eff:2.33] 🎯 |
-| Task 706 | ⛔ | 🎁 **polish** · Repair intermittent Binance USD-M order time-window boundary failure [D:4/B:5/U:5 → Eff:1.25] 📋 |
-| Task 707 | ⬜ | 🎁 **polish** · Make Binance algo-order contract setup reliably readable before assertion [D:4/B:6/U:5 → Eff:1.38] 📋 |
+| Task 705 | ✅ | 🎁 **polish** · Separate focused dispatch aliases from complete post-merge QA [D:3/B:7/U:7 → Eff:2.33?] 🎯 |
+| Task 706 | ⛔ | 🎁 **polish** · Repair intermittent Binance USD-M order time-window boundary failure [D:4/B:5/U:5 → Eff:1.25?] 📋 |
+| Task 707 | ⬜ | 🎁 **polish** · Make Binance algo-order contract setup reliably readable before assertion [D:4/B:6/U:5 → Eff:1.38?] 📋 |
+| Task 713 | ⬜ | 🎁 **polish** · 🐛 binanceusdm fetch_open_orders and fetch_orders answer from the algo book by default, hiding resting limit orders; settle the default book and the merged-history until boundary [D:5/B:9/U:8 → Eff:1.7] 🚀 |
+| Task 715 | ⬜ | 🎁 **polish** · 🐛 Enforce that no venue authors both fetchFundingRate and fetchFundingRates as emulated, which would loop real venue calls without bound [D:2/B:5/U:4 → Eff:2.25] 🎯 |
+| Task 717 | ⬜ | 🎁 **polish** · 🐛 Bybit demo-trading keys cannot be used: Exchange.new offers no way to select the demo-trading host [D:3/B:7/U:7 → Eff:2.33] 🎯 |
 <!-- TASKS:END -->
 
 ## Phase 9: Trading Utilities
@@ -365,8 +369,8 @@ Tasks triggered by upcoming ccxt-distill changes. Two sub-bundles:
 | Task 183 | ✅ | 🎁 **integration_tests** · 🚀 **v1_0** · Recalibrate integration-helper: request-malformation 4xx must FAIL, not pass inconclusive [D:4/B:6/U:6 → Eff:1.5?] 🚀 |
 | Task 198 | ✅ | 🎁 **signing_v4** · Spike: native lighter zk_schnorr signer WITHOUT QuickBEAM (cgo C-lib port vs pure-Rust NIF) [D:6/B:4/U:4 → Eff:0.67?] ⚠️ |
 | Task 470 `[P]` | ✅ | 🎁 **signing_v4** · 🐛 Lighter test helper crashes with :epipe on normal Port teardown, polluting every check run [D:2/B:4/U:4 → Eff:2.0?] 🎯 |
-| Task 703 | ✅ | 🎁 **signing** · Reuse Cartouche and Hieroglyph for DEX EVM signing primitives [D:6/B:8/U:5 → Eff:1.08] 📋 |
-| Task 704 | ✅ | 🎁 **signing** · Lighter order signing is dead against the venue's four-digit market ids — bump the pinned zk SDK and make time-in-force carry its own expiry [D:6/B:9/U:9 → Eff:1.5] 🚀 |
+| Task 703 | ✅ | 🎁 **signing** · Reuse Cartouche and Hieroglyph for DEX EVM signing primitives [D:6/B:8/U:5 → Eff:1.08?] 📋 |
+| Task 704 | ✅ | 🎁 **signing** · Lighter order signing is dead against the venue's four-digit market ids — bump the pinned zk SDK and make time-in-force carry its own expiry [D:6/B:9/U:9 → Eff:1.5?] 🚀 |
 <!-- TASKS:END -->
 
 ## Phase 12: WebSocket Track (Unnormalized)
@@ -887,7 +891,8 @@ The authored-specs pivot workstream (see [docs/authored-specs.md](docs/authored-
 | Task 664 | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · 🐛 Unified `notional` is authored nil for every non-future deribit position kind, so an open option contributes nothing to a size fold [D:4/B:6/U:5 → Eff:1.38?] 📋 |
 | Task 665 `[P]` | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · 🐛 🔒 A side that is not exactly "buy" or "sell" still becomes a direction on every batch write path [D:3/B:7/U:6 → Eff:2.17?] 🎯 |
 | Task 666 `[P]` | ✅ | 🎁 **live_triage** · 🚀 **v1_1** · 🐛 Option position notional is derived per venue with no shared rule, so the same field carries a different unit on each one [D:4/B:6/U:3 → Eff:1.12?] 📋 |
-| Task 709 | ⬜ | 🎁 **authored_specs** · Migrate the Derive venue from API v2 to v3 [D:8/B:7/U:6 → Eff:0.81] ⚠️ |
+| Task 709 | ⬜ | 🎁 **authored_specs** · Migrate the Derive venue from API v2 to v3 [D:8/B:7/U:6 → Eff:0.81?] ⚠️ |
+| Task 710 | ⬜ | 🎁 **authored_specs** · 🐛 Correct three deribit value defects the contract lane passes green: funding interval label, ticker volumes, unfiltered liquidations [D:4/B:8/U:7 → Eff:1.88] 🚀 |
 <!-- TASKS:END -->
 
 ## Phase 15: Options Execution
