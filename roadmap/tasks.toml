@@ -24400,7 +24400,7 @@ scored_at = "2026-11-24"
 id = "712"
 phase = 7
 bundle = "ws_unified"
-status = "pending"
+status = "in_progress"
 title = "Authored WebSocket watch* channel entries name methods the client cannot dispatch; trim the authored set to the dispatchable surface"
 scores = { d = 4, b = 5, u = 5 }
 markers = ["bug"]
@@ -24416,6 +24416,7 @@ Bourse.WS.Channels dispatches a small fixed set of unified watch methods; every 
 Decision (operator-vetoable, recorded here so the implementer does not re-open it): trim. An authored channel entry exists only for a watch method the client dispatches; entries without a dispatching function are deleted from the authored documents rather than kept as unverifiable claims. Adding new watch_* methods is separate work. For the entries that remain, any template that is a CCXT message hash rather than a provider channel is corrected against the venue's own WebSocket documentation and proven by a live subscribe that delivers a frame.
 """
 created_at = "2026-11-24"
+started_at = "2026-11-24"
 scored_at = "2026-11-24"
 
 [[task]]
@@ -24495,7 +24496,7 @@ shipped_in = "9e89a86ed6f23a13e5cb17245968ab753d89096f"
 id = "716"
 phase = 16
 bundle = "live_e2e"
-status = "pending"
+status = "in_progress"
 title = "The binanceusdm WebSocket first-frame probe times out intermittently in the lane while the same stream delivers in direct probes; find the mechanism"
 scores = { d = 4, b = 5, u = 5 }
 markers = ["bug"]
@@ -24508,6 +24509,7 @@ Source: BUGS.md entry "2026-09-15 — die WS-First-Frame-Probe für binanceusdm 
 mix bourse.verify_ws_first_frame reports binanceusdm as connected-without-data in some runs and passed in others, while direct repetitions of the same watch_ticker path deliver within seconds. The mechanism is unknown. Reproduce the lane's exact sequence repeatedly until the failure is observed, capture what differs between a failing and a passing run (ordering against other venues' probes, connection reuse, subscribe acknowledgement timing, host, rate limits), and fix the cause. A longer timeout or a retry is not a fix unless the evidence shows the venue's delivery interval for that stream exceeds the budget, in which case cite the provider's documented update interval.
 """
 created_at = "2026-11-24"
+started_at = "2026-11-24"
 scored_at = "2026-11-24"
 
 [[task]]
