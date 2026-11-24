@@ -60,6 +60,14 @@ Pinned in `test/bourse/unified/order_options_test.exs`,
 `test/live/conditional_order_options_integration_test.exs` and
 `test/live/order_api_boundary_integration_test.exs`.
 
+## Binance-family conditional book is an explicit read, 2026-11-25
+
+On binance, binanceusdm and binancecoinm, the unqualified `fetch_open_orders` /
+`fetch_orders` answer from the regular book. A resting trigger order is read
+from the algo book with `endpoint_index: 2` (USD-M, binance linear) or
+`endpoint_index: 0` (COIN-M). `allAlgoOrders` bounds its time window on
+`updateTime`. See carve C-T713a in `docs/authored-spec-carves/binanceusdm.md`.
+
 ## Sandbox incident during regression development, 2026-09-15
 
 An earlier request-shape assertion checked the trigger field but not the Binance

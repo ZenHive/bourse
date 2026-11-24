@@ -5,6 +5,27 @@ Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 indexed by `priv/venues/binancecoinm/authority/manifest.json`.
 
+## 2026-11-25 — unqualified open orders answer from the regular book (Task 713)
+
+**C-T713b — `fetch_open_orders` on an inverse symbol reads `GET
+/dapi/v1/openOrders` only; the conditional book (`GET
+/dapi/v1/openAlgoOrders`) is reached with `endpoint_index: 0`, its slot in the
+authored unified list. Outcome: DIVERGE from the previous `book_routes` merge;
+same rule as binanceusdm C-T713a.**
+
+COIN-M publishes no all-algo-orders history operation, so `fetch_orders` was
+already regular-book only. Measured live on `demo-dapi.binance.com`,
+2026-11-25: before the change the merged read held both a resting limit and a
+resting STOP_MARKET algo order; after it, the limit is in the unqualified read
+and absent from the algo slot, and the algo order only in the algo slot.
+[COIN-M trade API](https://developers.binance.com/docs/derivatives/coin-margined-futures/trade/rest-api),
+[developer docs export](https://developers.binance.com/en/docs/llms-full.txt)
+(section "New CM Algo Order endpoints": `GET /dapi/v1/openAlgoOrders` lists open algo orders).
+
+<!-- carve-evidence-status
+{"carve_id":"C-T713b","date":"2026-11-25","semantic_source":{"kind":"provider_owned","reference":"Binance COIN-M openOrders vs openAlgoOrders, developers.binance.com"},"observed_evidence":{"kind":"live_venue","reference":"2026-11-25 demo-dapi.binance.com resting limit vs STOP_MARKET algo order in binance_family_order_book_selection_test.exs"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-09-15 — stopLossPrice / takeProfitPrice have no distinct order field (Task 700)
 
 **C-T700a — COIN-M algo and regular orders publish `triggerPrice`; STOP vs

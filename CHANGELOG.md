@@ -7,6 +7,24 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Changed
+
+- **binance, binanceusdm, binancecoinm: the unqualified order-list reads no longer
+  include conditional (algo) orders.** `fetch_open_orders`, `fetch_orders`,
+  `fetch_closed_orders` and `fetch_canceled_orders` on USD-M (and binance linear
+  symbols), and `fetch_open_orders` on COIN-M, answer from the regular order book
+  (`openOrders` / `allOrders`) only. Before, they merged the regular and algo books.
+  A conditional order placed with `trigger_price` is now read with
+  `endpoint_index: 2` (USD-M, binance linear) or `endpoint_index: 0` (COIN-M).
+  `fetch_order`, `fetch_open_order`, `cancel_order` and `cancel_all_orders` still
+  cover both books.
+
+### Fixed
+
+- binanceusdm `fetch_orders(until: t)` no longer drops orders near `t`. The merged
+  algo history filters its time window on update time, not creation time, so it
+  silently omitted conditional orders created before `until` and updated after it.
+
 ## [0.10.0] - 2026-11-25
 
 ### Known issues

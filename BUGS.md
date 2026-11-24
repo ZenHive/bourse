@@ -114,6 +114,28 @@ roadmap.
 
 ---
 
+## 2026-11-25 — binancecoinm classifies the 7-day window error `-4165` as `:exchange_not_available`, binanceusdm as `:bad_request`
+
+**Status:** Recorded, not routed (task 713 implementer, measured live 2026-11-25).
+
+The same provider error gets two different types on the two Binance futures venues:
+
+```elixir
+# 8-day span, demo-fapi / demo-dapi
+Bourse.fetch_orders(usdm, symbol: "BTC/USDT:USDT", since: now - 8 * day, until: now)
+#=> {:error, %Bourse.Error{type: :bad_request, code: -4165, message: "Maximum time interval is 7 days."}}
+
+Bourse.fetch_orders(coinm, symbol: "BTC/USD:BTC", since: now - 8 * day, until: now)
+#=> {:error, %Bourse.Error{type: :exchange_not_available, code: -4165, ...}}
+```
+
+Expected on COIN-M: `:bad_request` (non-retryable caller error). `:exchange_not_available`
+reads as a transient venue outage, so a consumer that retries on that class retries a request
+that can never succeed. Likely an authored `errors.json` mapping gap on `binancecoinm`; not
+fixed in task 713 (outside its read-path scope).
+
+---
+
 ## 2026-10-01 — WS.get_state/1 exits during Deribit graceful logout
 
 **Status:** 🆕 reported by zen_mm task 8; bourse 0.9.1 / zen_websocket 0.9.0. · **2026-11-25:** routed to zen_websocket — `Bourse.WS.get_state/1` delegates straight to `ZenWebsocket.Client.get_state/1`, so the fallback lives in that library's `CallFacade`; filed in zen_websocket's roadmap. bourse consumes the fix by a dependency bump after its release.
@@ -442,6 +464,23 @@ of magnitude); the venue's own drift between two HTTP calls no longer can. Re-ru
 
 **Status:** 🆕 measured live (orchestrator, landed-base gate run on `44edfaa`) — not
 consumer-reported. · **2026-11-25:** routed — task 713 (decision: the unqualified read answers from the regular book).
+
+> **2026-11-25 — fixed, task 713; the premise above was wrong.** The unqualified read was
+> never served by the algo book alone. Since before this entry was written
+> (`git show 44edfaa`), the authored `endpoint_selection.book_routes` routed
+> `fetchOpenOrders` / `fetchOrders` / `fetchClosedOrders` / `fetchCanceledOrders` through a
+> `merge` of both books, and the 2026-09-15 read was that merge over an empty regular book.
+> Measured on `main` 2026-11-25: a resting GTC limit *was* in the unqualified read, beside 35
+> algo rows (default 199 rows = 35 algo + 164 regular). The real defect was the merge itself:
+> it mixed `orderId` and `algoId` rows under one list, and it caused the `until` shortfall
+> below. Fix: the merge routes are deleted on `binance`, `binanceusdm` and `binancecoinm`, so
+> the unqualified reads answer from `openOrders` / `allOrders`, and the conditional book is
+> reached with `endpoint_index: 2` (USD-M, binance linear) or `0` (COIN-M). Carves C-T713a /
+> C-T713b. Evidence: `test/live/binance_family_order_book_selection_test.exs`, 4/4 green
+> twice in a row on demo-fapi / demo-dapi (a resting limit is in the unqualified open and
+> history reads and absent from the algo slot; a STOP_MARKET algo order only in the algo
+> slot; both canceled by id). COIN-M had the same merge on `fetchOpenOrders` and is fixed the
+> same way; it has no all-algo history endpoint, so its `fetch_orders` was already single-book.
 
 The calls, against `demo-fapi.binance.com` with the shared futures demo key:
 
@@ -1062,6 +1101,22 @@ side by side, which no run has done.
 ## 2026-09-15 — binanceusdm merged order history stops ~5.3 s short of the requested `until` boundary, past the probe's 1 s tolerance
 
 **Status:** Recorded, not routed (post-merge audit of `de6916d`, 2026-09-15). No task filed — one observation, and it is not yet settled whether the client selects the boundary wrongly or the probe's tolerance is too tight for a merged read. · **2026-11-25:** routed — task 713 (second facet).
+
+> **2026-11-25 — settled and fixed, task 713: the client side was wrong, not the
+> tolerance.** Live read of both endpoints against one window on `demo-fapi.binance.com`:
+> `GET /fapi/v1/allOrders` bounds `startTime`/`endTime` on the creation `time`, but
+> `GET /fapi/v1/allAlgoOrders` bounds *both* on the row's `updateTime`. For one algo row
+> (created c, canceled at u > c): `endTime=c` excludes it, `endTime=u` includes it,
+> `startTime=u` includes it, `startTime=u+1` excludes it. The unified `timestamp` is the
+> creation time, so the algo half of the merged read dropped every conditional order created
+> before `until` and updated after it; the shortfall was the gap back to the previous kept row,
+> which is why it ranged from seconds to 22 minutes. An `endTime`-only algo read also pages
+> from the oldest rows of the 7-day window. The provider docs do not name the filter field
+> for `allAlgoOrders`; the live calls are the evidence. Fix: the unqualified history no longer
+> merges the algo book (see the 2026-09-15 algo-book entry). The probe stays at 1 s and passed
+> three consecutive runs after the change (`--only 'test:test binanceusdm fetch_orders honors
+> since and until in returned rows' --no-retry`). The updateTime filter on the explicit algo
+> history is pinned live in `binance_family_order_book_selection_test.exs`.
 
 Preserved from the task 693 run journal before that journal was rewritten as
 `docs/conditional-order-controls.md`; measured by the task 693 implementer

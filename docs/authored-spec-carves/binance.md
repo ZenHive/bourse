@@ -4,6 +4,19 @@ Provider authority: [`priv/venues/binance/authority/manifest.json`](../../priv/v
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 
+## 2026-11-25 — linear order lists answer from the regular book (Task 713)
+
+**C-T713c — On linear symbols, `fetch_open_orders` / `fetch_orders` /
+`fetch_closed_orders` / `fetch_canceled_orders` read `GET /fapi/v1/openOrders` /
+`GET /fapi/v1/allOrders` only; the algo book is `endpoint_index: 2`. Outcome:
+DIVERGE from the previous `book_routes` merge.** Same endpoints and evidence as
+binanceusdm C-T713a.
+[USD-M trade REST API](https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api)
+
+<!-- carve-evidence-status
+{"carve_id":"C-T713c","date":"2026-11-25","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M Current All Open Orders vs Current All Algo Open Orders, developers.binance.com"},"observed_evidence":{"kind":"live_venue","reference":"2026-11-25 demo-fapi.binance.com via binanceusdm C-T713a; binance linear routes author the same fapi endpoints"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-09-15 — stopLossPrice / takeProfitPrice have no distinct order field (Task 700)
 
 **C-T700a — Binance-family order objects publish `stopPrice` / `triggerPrice`;

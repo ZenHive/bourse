@@ -4,6 +4,50 @@ Provider authority: [`priv/venues/binanceusdm/authority/manifest.json`](../../pr
 Machine-read register: `test/bourse/authored_rate_unit_confrontation_test.exs`
 parses the `rate-unit` markers and unit tables below against the public structs.
 
+## 2026-11-25 — unqualified order lists answer from the regular book (Task 713)
+
+**C-T713a — `fetch_open_orders` / `fetch_orders` / `fetch_closed_orders` /
+`fetch_canceled_orders` on a linear symbol read the regular book only
+(`GET /fapi/v1/openOrders`, `GET /fapi/v1/allOrders`). The conditional book
+(`openAlgoOrders`, `allAlgoOrders`) is reached explicitly with
+`endpoint_index: 2`, its slot in the authored unified list. Outcome: DIVERGE
+from the previous authored `book_routes` merge of both books.**
+
+- *Exchange semantics:* Binance documents the books as separate operations.
+  `openOrders` is "Current All Open Orders"; `openAlgoOrders` is "Current All
+  Algo Open Orders", "all open algo (conditional) orders ... including TP/SL
+  ... and trailing stop orders"; `allAlgoOrders` is "Query All Algo Orders".
+  [USD-M trade REST API](https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api),
+  [All Orders](https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/All-Orders),
+  [developer docs export](https://developers.binance.com/en/docs/llms-full.txt)
+  (operations `currentAllOpenOrders`, `currentAllAlgoOpenOrders`, `queryAllAlgoOrders`).
+- *Why not merge:* the two history endpoints bound time on different fields.
+  Observed live on `demo-fapi.binance.com`, 2026-11-25: `allOrders` applies
+  `startTime`/`endTime` to the order's creation `time`; `allAlgoOrders` applies
+  both to the row's `updateTime` (a row with `createTime` c and `updateTime` u
+  is absent for `endTime = c`, present for `endTime = u`, present for
+  `startTime = u`, absent for `startTime = u + 1`). The unified `timestamp` is
+  the creation time, so the algo half of a merged read silently drops every
+  conditional order created before `until` and updated after it. That is the
+  `until`-boundary shortfall recorded in BUGS.md (2026-09-15). The provider
+  docs and the official Postman collection state no filter field for
+  `allAlgoOrders`; the live behaviour is the evidence. An `endTime`-only algo
+  read also pages from the oldest rows of its window, not the newest.
+- *Decision:* operator decision recorded in task 713 — the unqualified read is
+  what the provider calls open orders. Merged reads also mixed two id spaces
+  (`orderId`, `algoId`) under one list with nothing marking the book.
+- *Consequence:* a conditional order placed through `create_order` with
+  `trigger_price` is not in the unqualified `fetch_open_orders`; read it with
+  `endpoint_index: 2`. `fetch_order` / `fetch_open_order` / `cancel_order` keep
+  their `first_success` routes over both books, and `cancel_all_orders` keeps
+  its broadcast.
+- *Verification:* `test/live/binance_family_order_book_selection_test.exs`.
+  The same rule is authored on the `binance` venue's linear routes.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T713a","date":"2026-11-25","semantic_source":{"kind":"provider_owned","reference":"Binance USD-M Current All Open Orders vs Current All Algo Open Orders / Query All Algo Orders, developers.binance.com"},"observed_evidence":{"kind":"live_venue","reference":"2026-11-25 demo-fapi.binance.com: resting GTC limit in unqualified fetch_open_orders/fetch_orders and absent from the algo slot; STOP_MARKET algo order only in endpoint_index 2; allAlgoOrders endTime bounds updateTime; fetch_orders 8-day window -4165"},"compatibility_reference":null,"resolved_tier":1}
+-->
+
 ## 2026-09-15 — stopLossPrice / takeProfitPrice have no distinct order field (Task 700)
 
 **C-T700a — USD-M algo and regular orders publish `triggerPrice`; STOP vs
