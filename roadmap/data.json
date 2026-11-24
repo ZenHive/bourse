@@ -32675,7 +32675,7 @@
       "id": "713",
       "phase": 8,
       "bundle": "polish",
-      "status": "in_progress",
+      "status": "done",
       "title": "binanceusdm fetch_open_orders and fetch_orders answer from the algo book by default, hiding resting limit orders; settle the default book and the merged-history until boundary",
       "scores": {
         "d": 5,
@@ -32702,10 +32702,17 @@
       "out_of_scope": [
         "Algo-order contract setup propagation (task 707)"
       ],
+      "shipped_in": "53b927b530869230714d2a3900f43a163d80f166",
       "body": "Source: BUGS.md entries \"2026-09-15 — `fetch_open_orders` and `fetch_orders` on binanceusdm resolve to the ALGO book by default\" and \"2026-09-15 — binanceusdm merged order history stops ~5.3 s short of the requested `until` boundary\". Read both first, including the update notes.\n\nOn USD-M the unqualified fetch_open_orders / fetch_orders is served by the conditional (algo) book, so a resting GTC limit order reads as absent to a consumer reconciling its own orders. The list is well-formed, so nothing signals that a different book was read.\n\nDecision (operator-vetoable): the unqualified read answers from the regular order book (Binance's openOrders / allOrders), because that is what the provider calls open orders; the algo book stays reachable through the explicit conditional-order selector the client already exposes. Confirm from the code which selector that is and keep it working. Check COIN-M for the same shape and apply the same rule where it holds.\n\nSecond facet, same read path: the time-window probe for binanceusdm fetch_orders ends short of the requested until boundary by a varying amount in every full run. Nobody has yet read both underlying endpoints against the same window. Do that live, decide whether the client picks the boundary wrongly or the probe tolerance is wrong for this read, and fix the side that is wrong; state the evidence.\n\nAuthority: demo-fapi.binance.com / demo-dapi.binance.com live behavior plus Binance's USD-M and COIN-M futures docs.\n",
       "created_at": "2026-11-24",
       "started_at": "2026-11-24",
+      "done_at": "2026-11-24",
       "scored_at": "2026-11-24",
+      "implemented": "Unqualified order-list reads on binance, binanceusdm and binancecoinm answer from the regular book only (the regular+algo merge routes are removed); conditional orders are read via endpoint_index. Live tests pin book selection, the allAlgoOrders updateTime bounds and the 7-day window error.",
+      "delivered_by": "claude",
+      "verified": true,
+      "verified_by": "codex",
+      "verification_ref": "herdr codex review, 2 rounds, approve at a101853 (rebased 53b927b)",
       "cross_repo": []
     },
     {

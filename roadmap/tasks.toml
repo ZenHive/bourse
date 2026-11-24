@@ -24423,7 +24423,7 @@ scored_at = "2026-11-24"
 id = "713"
 phase = 8
 bundle = "polish"
-status = "in_progress"
+status = "done"
 title = "binanceusdm fetch_open_orders and fetch_orders answer from the algo book by default, hiding resting limit orders; settle the default book and the merged-history until boundary"
 scores = { d = 5, b = 9, u = 8 }
 markers = ["bug"]
@@ -24442,9 +24442,16 @@ Second facet, same read path: the time-window probe for binanceusdm fetch_orders
 
 Authority: demo-fapi.binance.com / demo-dapi.binance.com live behavior plus Binance's USD-M and COIN-M futures docs.
 """
+implemented = "Unqualified order-list reads on binance, binanceusdm and binancecoinm answer from the regular book only (the regular+algo merge routes are removed); conditional orders are read via endpoint_index. Live tests pin book selection, the allAlgoOrders updateTime bounds and the 7-day window error."
+delivered_by = "claude"
+verified = true
+verified_by = "codex"
+verification_ref = "herdr codex review, 2 rounds, approve at a101853 (rebased 53b927b)"
 created_at = "2026-11-24"
 started_at = "2026-11-24"
 scored_at = "2026-11-24"
+done_at = "2026-11-24"
+shipped_in = "53b927b530869230714d2a3900f43a163d80f166"
 
 [[task]]
 id = "714"
