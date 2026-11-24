@@ -32499,7 +32499,7 @@
       "id": "709",
       "phase": 14,
       "bundle": "authored_specs",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Migrate the Derive venue from API v2 to v3",
       "scores": {
         "d": 8,
@@ -32557,6 +32557,7 @@
       ],
       "body": "Derive (formerly Lyra) is replacing API v2 with v3, and bourse 0.9.0 still speaks v2 (`priv/venues/derive/authored/venue.json` points at api.lyra.finance / api-demo.lyra.finance). Verified 2026-10-01 from Derive's docs: v3 runs on testnet (Ethereum Sepolia), and the \"Coming soon\" page lists v2 methods still to arrive \"before v3 mainnet launch\". The breaking changes that matter here: new hosts, nanosecond nonces with per-action validity windows, a domain separator recomputed per chain, no separate \"Derive Wallet\" (every wallet field is the owner EOA or multisig), `private/set_session_key` replacing the v2 registration calls, and a single `private/set_cancel_on_disconnect` replacing the v2 enable/disable family. Sources: https://docs.derive.xyz/migrating/breaking-changes.md, https://docs.derive.xyz/migrating/coming-soon.md, https://docs.derive.xyz/trading/cancel-on-disconnect.md, https://docs.derive.xyz/integrators/trading/market-maker-protections.md.\n\nConsumer: zen_mm wants Derive as a second market-making venue (zen_mm roadmap) and is blocked on a bourse release that carries this. Its needs set the minimum surface: MMP config and reset, cancel-on-disconnect, mmp-flagged limit orders with replace/cancel, partial fills, and the private order/trade streams across reconnects.\n\nAuthority: Derive's v3 docs and machine-readable specs (https://docs.derive.xyz/openapi.json, websocket.asyncapi.json, subscriptions.asyncapi.json) plus live v3 testnet traffic. Derive's official SDKs (derive-py, derive-ts, derive-rs) are provider-owned reference for signing. CCXT is reference only. A 2026-07-19 sweep found all ATM option books empty on the v2 demo; if the v3 testnet is equally empty, prove fills with a self-cross or a perp and record the limitation.\n\nReview 2026-10-01 against the live docs (llms.txt index, breaking-changes.md, the three machine specs; openapi.json info.version 0.2.0). Facts the original body missed, each confirmed by reading the cited page or spec:\n- Auth headers are renamed X-Lyra* → X-Derive*; X-LyraScope is deprecated (breaking-changes.md § Auth headers). bourse's venue.json still authors all three X-Lyra names.\n- v3 removed private/get_orders (absent from openapi.json; the docs say use get_open_orders / get_order_history). bourse routes fetchOrders, fetchOpenOrders, fetchClosedOrders and fetchCanceledOrders through it, so four unified reads break on the v3 host, not just the MM surface.\n- public/get_ticker now returns the slim ticker; full-ticker fields and the ticker.{instrument}.{interval} channel are gone. fetchTicker and fetchGreeks both read public/get_ticker.\n- tx_status → batch_status, transaction_id → op_uuid; get_subaccount.currency became string[]; get_currency is restructured around risk universes (spot is a list).\n- Module addresses are now identical on testnet and mainnet; only the chain id (1 / 11155111) changes the domain separator, and the docs publish both separator values — an independent oracle for the signer test, unlike the v2 vector that came from the same SDK as the address.\n- v3 rejects encodings v2 accepted (sub-1e12 precision, dirty address padding, non-canonical int256) with 14014; public/decode_action names the broken field. Use it when a ported order fails as a bad signature.\n- Session-auth headers still carry a millisecond timestamp (cancel-on-disconnect.md cURL example); only action nonces moved to nanoseconds.\n- Provider docs disagree with themselves on private/set_cancel_on_disconnect: the page shows a REST cURL call, while openapi.json lacks the method and websocket.asyncapi.json lists it as WS-only. Settle it with a live call and record the discrepancy in the carve register.\n- The private channels to pin are {subaccount_id}.orders and {subaccount_id}.trades; {subaccount_id}.trades.{tx_status} was removed.\n- Mainnet is still listed as \"coming soon\" on getting-started/introduction.md; WS hosts are wss://api.derive.xyz/v3/ws and wss://testnet.api.derive.xyz/v3/ws.\n- Premise unverified — confirm before building on it: whether the existing DERIVE_TESTNET_* pair works on the v3 testnet. v3 testnet is a Sepolia deployment and the env var currently holds a v2 smart-contract wallet; v3 wants the owner EOA, and deposits now happen on L1. If a fresh testnet account, Sepolia funding or a session-key registration needs the operator, that is a blocker to report, not something to work around.\n\nScope note: D raised 7 → 8 for the order-read rewiring, the ticker reshape and the PreparedOrder migration. These stay in one task because they share the host, header and signing change and none can land green on its own against the v3 host.",
       "created_at": "2026-10-01",
+      "started_at": "2026-11-24",
       "scored_at": "2026-10-01",
       "cross_repo": []
     },
@@ -32564,7 +32565,7 @@
       "id": "710",
       "phase": 14,
       "bundle": "authored_specs",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Correct three deribit value defects the contract lane passes green: funding interval label, ticker volumes, unfiltered liquidations",
       "scores": {
         "d": 4,
@@ -32593,6 +32594,7 @@
       ],
       "body": "Source: BUGS.md entry \"2026-09-29 — deribit: three value defects the REST-read contract lane passes green\". Read it first; it carries the raw provider values each defect was settled against.\n\nThree unified reads on deribit return well-formed rows with wrong meaning. (1) fetch_funding_rate requests a rate accrued over an 8h window and labels it interval \"1h\", so a consumer annualizing through interval overstates funding 8x. (2) fetch_ticker maps the base-currency volume (stats.volume) into quote_volume and leaves base_volume nil, while the provider publishes the quote figure separately (stats.volume_usd). (3) fetch_liquidations returns every public trade as a liquidation; the provider marks liquidations with a `liquidation` field on the trade.\n\nAuthority: test.deribit.com live responses plus Deribit's own API docs (https://docs.deribit.com/) for what each field means. CCXT is not an authority; the entry's ccxt comparison only located the disagreements. Start with live calls against test.deribit.com (one success and one relevant provider error per touched read), then author the correction in the deribit authored documents and record each decision in docs/authored-spec-carves/deribit.md.\n\nPremise unverified — confirm before building on it: that stats.volume is base-denominated and stats.volume_usd quote-denominated for every deribit instrument kind the client serves (inverse perpetual, linear USDC perpetual, option, spot). Confront it per kind against the provider docs and live values; where a kind differs, author what the provider states.\n",
       "created_at": "2026-11-24",
+      "started_at": "2026-11-24",
       "scored_at": "2026-11-24",
       "cross_repo": []
     },
@@ -32672,7 +32674,7 @@
       "id": "713",
       "phase": 8,
       "bundle": "polish",
-      "status": "pending",
+      "status": "in_progress",
       "title": "binanceusdm fetch_open_orders and fetch_orders answer from the algo book by default, hiding resting limit orders; settle the default book and the merged-history until boundary",
       "scores": {
         "d": 5,
@@ -32701,6 +32703,7 @@
       ],
       "body": "Source: BUGS.md entries \"2026-09-15 — `fetch_open_orders` and `fetch_orders` on binanceusdm resolve to the ALGO book by default\" and \"2026-09-15 — binanceusdm merged order history stops ~5.3 s short of the requested `until` boundary\". Read both first, including the update notes.\n\nOn USD-M the unqualified fetch_open_orders / fetch_orders is served by the conditional (algo) book, so a resting GTC limit order reads as absent to a consumer reconciling its own orders. The list is well-formed, so nothing signals that a different book was read.\n\nDecision (operator-vetoable): the unqualified read answers from the regular order book (Binance's openOrders / allOrders), because that is what the provider calls open orders; the algo book stays reachable through the explicit conditional-order selector the client already exposes. Confirm from the code which selector that is and keep it working. Check COIN-M for the same shape and apply the same rule where it holds.\n\nSecond facet, same read path: the time-window probe for binanceusdm fetch_orders ends short of the requested until boundary by a varying amount in every full run. Nobody has yet read both underlying endpoints against the same window. Do that live, decide whether the client picks the boundary wrongly or the probe tolerance is wrong for this read, and fix the side that is wrong; state the evidence.\n\nAuthority: demo-fapi.binance.com / demo-dapi.binance.com live behavior plus Binance's USD-M and COIN-M futures docs.\n",
       "created_at": "2026-11-24",
+      "started_at": "2026-11-24",
       "scored_at": "2026-11-24",
       "cross_repo": []
     },
@@ -32739,7 +32742,7 @@
       "id": "715",
       "phase": 8,
       "bundle": "polish",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Enforce that no venue authors both fetchFundingRate and fetchFundingRates as emulated, which would loop real venue calls without bound",
       "scores": {
         "d": 2,
@@ -32762,6 +32765,7 @@
       ],
       "body": "Source: BUGS.md entry \"2026-09-15 — die Emulations-Brücke `fetchFundingRate` ⇄ `fetchFundingRates` ist ein echter Zyklus im Delegationsgraphen\". Read it first.\n\nThe two funding emulations delegate to each other. Only the capability data keeps them apart: no venue currently declares both as emulated, and nothing checks that. A document that did would recurse with a real venue call at every level. Make the invariant mechanical and general: the emulation delegation graph must be acyclic for every venue's authored capability data, checked where an authored document is loaded or in a test over all runtime venues, so a future emulation pair is covered without naming it.\n",
       "created_at": "2026-11-24",
+      "started_at": "2026-11-24",
       "scored_at": "2026-11-24",
       "cross_repo": []
     },
@@ -32800,7 +32804,7 @@
       "id": "717",
       "phase": 8,
       "bundle": "polish",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Bybit demo-trading keys cannot be used: Exchange.new offers no way to select the demo-trading host",
       "scores": {
         "d": 3,
@@ -32824,6 +32828,7 @@
       ],
       "body": "Source: BUGS.md entry \"2026-09-30 — Bybit: `Exchange.new` ignores `urls.demotrading`\". Reported by trading_dashboard, which works around it by rewriting base_urls after construction.\n\nBybit demo-trading keys are neither mainnet nor testnet keys and are served on Bybit's demo host (https://bybit-exchange.github.io/docs/v5/demo). The authored bybit document carries the demo-trading URL map, but the constructor only accepts sandbox and hostname, so nothing selects it. Add a constructor option that selects the venue's demo-trading hosts for REST and, where the provider serves demo streams, WebSocket. It is an error on a venue that authors no demo-trading hosts, and it cannot be combined with sandbox. Demo credentials are provisioned as BYBIT_DEMO_API_KEY / BYBIT_DEMO_API_SECRET; a missing pair fails the test loudly with setup text.\n\nAuthority: live calls against api-demo.bybit.com and Bybit's demo-trading documentation, including which endpoints the demo environment does not serve.\n",
       "created_at": "2026-11-24",
+      "started_at": "2026-11-24",
       "scored_at": "2026-11-24",
       "cross_repo": []
     }
