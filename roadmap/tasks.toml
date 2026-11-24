@@ -24468,7 +24468,7 @@ scored_at = "2026-11-24"
 id = "715"
 phase = 8
 bundle = "polish"
-status = "in_progress"
+status = "done"
 title = "Enforce that no venue authors both fetchFundingRate and fetchFundingRates as emulated, which would loop real venue calls without bound"
 scores = { d = 2, b = 5, u = 4 }
 markers = ["bug"]
@@ -24480,9 +24480,16 @@ Source: BUGS.md entry "2026-09-15 — die Emulations-Brücke `fetchFundingRate` 
 
 The two funding emulations delegate to each other. Only the capability data keeps them apart: no venue currently declares both as emulated, and nothing checks that. A document that did would recurse with a real venue call at every level. Make the invariant mechanical and general: the emulation delegation graph must be acyclic for every venue's authored capability data, checked where an authored document is loaded or in a test over all runtime venues, so a future emulation pair is covered without naming it.
 """
+implemented = "Declared emulation delegation graph (Bourse.Emulation.Delegations); Spec.Schema rejects any authored document whose emulated methods close a delegation cycle, naming venue and path; a test pins the table to the dispatch_handler clauses and reachable call sites."
+delivered_by = "claude"
+verified = true
+verified_by = "codex"
+verification_ref = "herdr codex review, 3 rounds, approve at d4e9f72 (rebased 9e89a86)"
 created_at = "2026-11-24"
 started_at = "2026-11-24"
 scored_at = "2026-11-24"
+done_at = "2026-11-24"
+shipped_in = "9e89a86ed6f23a13e5cb17245968ab753d89096f"
 
 [[task]]
 id = "716"

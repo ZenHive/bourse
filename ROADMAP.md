@@ -275,7 +275,7 @@ Production-ready for Hex.pm publication.
 | Task 706 | ⛔ | 🎁 **polish** · Repair intermittent Binance USD-M order time-window boundary failure [D:4/B:5/U:5 → Eff:1.25?] 📋 |
 | Task 707 | ⬜ | 🎁 **polish** · Make Binance algo-order contract setup reliably readable before assertion [D:4/B:6/U:5 → Eff:1.38?] 📋 |
 | Task 713 | 🔄 | 🎁 **polish** · 🐛 binanceusdm fetch_open_orders and fetch_orders answer from the algo book by default, hiding resting limit orders; settle the default book and the merged-history until boundary [D:5/B:9/U:8 → Eff:1.7] 🚀 |
-| Task 715 | 🔄 | 🎁 **polish** · 🐛 Enforce that no venue authors both fetchFundingRate and fetchFundingRates as emulated, which would loop real venue calls without bound [D:2/B:5/U:4 → Eff:2.25] 🎯 |
+| Task 715 | ✅ | 🎁 **polish** · 🐛 Enforce that no venue authors both fetchFundingRate and fetchFundingRates as emulated, which would loop real venue calls without bound [D:2/B:5/U:4 → Eff:2.25] 🎯 |
 | Task 717 | 🔄 | 🎁 **polish** · 🐛 Bybit demo-trading keys cannot be used: Exchange.new offers no way to select the demo-trading host [D:3/B:7/U:7 → Eff:2.33] 🎯 |
 <!-- TASKS:END -->
 
