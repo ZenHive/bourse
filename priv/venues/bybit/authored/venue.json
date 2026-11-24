@@ -750,15 +750,6 @@
     "subscribe": {
       "args_key": "args",
       "channels": {
-        "watchLiquidations": [
-          "allLiquidation.{symbol}"
-        ],
-        "watchMyTrades": [
-          ":{symbol}"
-        ],
-        "watchOHLCVForSymbols": [
-          "kline.{timeframe}.{symbol}"
-        ],
         "watchOrderBookForSymbols": [
           "orderbook.50.{symbol}"
         ],
@@ -766,9 +757,6 @@
           "order"
         ],
         "watchTicker": [
-          "tickers"
-        ],
-        "watchTickers": [
           "tickers"
         ],
         "watchTradesForSymbols": [

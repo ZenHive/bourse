@@ -289,16 +289,7 @@
     "subscribe": {
       "args_key": null,
       "channels": {
-        "watchBidsAsks": [
-          "quote.{symbol}"
-        ],
-        "watchMyTrades": [
-          "user.trades.any.any.{timeframe}"
-        ],
         "watchTicker": [
-          "ticker.{symbol}.{timeframe}"
-        ],
-        "watchTickers": [
           "ticker.{symbol}.{timeframe}"
         ]
       },

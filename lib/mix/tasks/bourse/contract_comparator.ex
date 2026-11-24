@@ -542,6 +542,7 @@ defmodule Mix.Tasks.Bourse.ContractComparator do
     channels
     |> Map.values()
     |> List.flatten()
+    |> Enum.map(&authored_channel_name/1)
     |> Enum.filter(&is_binary/1)
     |> Enum.uniq()
     |> Enum.flat_map(fn channel ->
@@ -549,6 +550,9 @@ defmodule Mix.Tasks.Bourse.ContractComparator do
     end)
     |> Enum.sort_by(& &1["key"])
   end
+
+  defp authored_channel_name(%{"channel" => channel}), do: channel
+  defp authored_channel_name(channel), do: channel
 
   defp authored_websocket_operation(channel, method) do
     %{

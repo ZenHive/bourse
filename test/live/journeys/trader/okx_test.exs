@@ -15,10 +15,9 @@ defmodule Bourse.Journeys.Trader.OkxTest do
   @price_decimals 1
   @resting_ratio 0.9
 
-  # OKX's private orders channel is `{channel: "orders", instType: ...}`. The
-  # authored `websocket.subscribe.channels.watchOrders` template is `["ANY"]` —
-  # the instType value alone, with no channel name — so the journey names the
-  # whole arg itself. `ANY` is the account-wide instType (www.okx.com/docs-v5).
+  # OKX's private orders channel arg is `{channel: "orders", instType: ...}`,
+  # instType required; `ANY` is the account-wide value. Authority: OKX API v5
+  # Order channel (https://www.okx.com/docs-v5/en/#order-book-trading-trade-ws-order-channel).
   @order_channel %{"channel" => "orders", "instType" => "ANY"}
   @frame_timeout_ms 20_000
 
@@ -120,7 +119,16 @@ defmodule Bourse.Journeys.Trader.OkxTest do
         # is accepted by OKX and then rejects the private subscribe (60011).
         assert %{pattern: :iso_passphrase} = ws.auth
         assert ws.url =~ "wspap.okx.com"
-        assert :ok = WS.subscribe(ws, [@order_channel])
+
+        # Observed live 2026-11-25 on wss://wspap.okx.com:8443/ws/v5/private:
+        # the arg without its required instType is refused with code 60018.
+        assert {:error, {:subscription_rejected, %{"event" => "error", "code" => "60018", "msg" => msg}}} =
+                 WS.subscribe(ws, [%{"channel" => "orders"}])
+
+        assert msg =~ "channel:orders doesn't exist"
+
+        assert {:ok, handle} = WS.watch_orders(ws)
+        assert handle.channels == [@order_channel]
 
         {:ok, book} = Bourse.fetch_order_book(exchange, @symbol)
         assert [[best_bid, _bid_size] | _] = book.bids

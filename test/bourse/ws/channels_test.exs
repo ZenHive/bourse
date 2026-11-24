@@ -13,7 +13,7 @@ defmodule Bourse.WS.ChannelsTest do
       {"coinbaseexchange", :watch_trades, %{symbol: "ETH/USD"}, "ETH-USD"},
       {"okx", :watch_ticker, %{symbol: "BTC/USDT"}, %{"channel" => "tickers", "instId" => "BTC-USDT"}},
       {"okx", :watch_trades, %{symbol: "BTC/USDT"}, %{"channel" => "trades", "instId" => "BTC-USDT"}},
-      {"okx", :watch_orders, %{}, %{"channel" => "orders"}},
+      {"okx", :watch_orders, %{}, %{"channel" => "orders", "instType" => "ANY"}},
       {"deribit", :watch_ticker, %{symbol: "BTC-PERPETUAL"}, "ticker.BTC-PERPETUAL.100ms"},
       {"binance", :watch_ticker, %{symbol: "BTC/USDT"}, "btcusdt@miniTicker"},
       {"binance", :watch_order_book, %{symbol: "BTC/USDT"}, "btcusdt@depth20@100ms"},
@@ -25,7 +25,6 @@ defmodule Bourse.WS.ChannelsTest do
       {"derive", :watch_trades, %{symbol: "BTC/USDT"}, "trades.BTC-USDT"},
       {"hyperliquid", :watch_order_book, %{symbol: "BTC"}, %{"type" => "l2Book", "coin" => "BTC"}},
       {"hyperliquid", :watch_trades, %{symbol: "BTC"}, %{"type" => "trades", "coin" => "BTC"}},
-      {"hyperliquid", :watch_orders, %{}, "orderUpdates"},
       {"bybit", :watch_orders, %{}, "order"}
     ]
 
@@ -33,9 +32,29 @@ defmodule Bourse.WS.ChannelsTest do
       test "#{exchange_id} #{method}" do
         exchange = Exchange.new!(unquote(exchange_id))
 
-        assert {:ok, unquote(Macro.escape(expected))} =
+        assert {:ok, channel} =
                  Channels.build(exchange, unquote(method), unquote(Macro.escape(params)), [])
+
+        assert channel == unquote(Macro.escape(expected))
       end
+    end
+
+    test "hyperliquid authors no watch_orders template: it has no private section to send it on" do
+      assert {:error, :no_channel_templates} =
+               Channels.build(Exchange.new!("hyperliquid"), :watch_orders, %{}, [])
+    end
+
+    test "an object template is sent as authored, its {symbol} values interpolated" do
+      exchange = Exchange.new!("okx")
+      template = %{"channel" => "orders", "instType" => "SWAP", "instId" => "{symbol}"}
+      spec = put_in(exchange.spec, ["websocket", "subscribe", "channels", "watchOrders"], [template])
+      exchange = %{exchange | spec: spec}
+
+      assert {:ok, %{"channel" => "orders", "instType" => "SWAP", "instId" => "BTC-USDT-SWAP"} = channel} =
+               Channels.build(exchange, :watch_orders, %{symbol: "BTC/USDT:USDT"}, [])
+
+      assert map_size(channel) == 3
+      assert {:error, :missing_symbol} = Channels.build(exchange, :watch_orders, %{}, [])
     end
   end
 

@@ -3,7 +3,13 @@ defmodule Bourse.WS.Channels do
   Spec-driven WebSocket channel formatting from `websocket.subscribe.channels`.
 
   Maps unified `watch_*` methods to exchange-native channel strings (or OKX-style
-  channel objects) using authored template strings.
+  channel objects) using authored templates. A template is a string with
+  `{symbol}` / `{limit}` / `{timeframe}` placeholders, or — for object-arg
+  venues — a complete provider channel object sent as authored after
+  `{symbol}` interpolation of its values.
+
+  Only the keys in `dispatch_keys/0` are ever read: an authored entry under any
+  other key is a claim nothing can send.
 
   When a method has no resolvable templates or carries a non-nil
   `_unresolved_reason`, pass the pre-formatted channel via `channel:` in opts
@@ -27,16 +33,12 @@ defmodule Bourse.WS.Channels do
     "watchTrades" => ["watchTradesForSymbols"]
   }
 
-  @any_channels %{
-    watch_orders: "orders",
-    watch_trades: "trades"
-  }
-
   @private_methods [:watch_orders]
 
   @no_symbol_append_patterns [:op_subscribe_objects, :method_subscription]
 
   @type channel :: String.t() | map()
+  @type template :: String.t() | map()
   @type params :: %{
           optional(:symbol) => String.t(),
           optional(:limit) => non_neg_integer(),
@@ -48,6 +50,19 @@ defmodule Bourse.WS.Channels do
           | :missing_symbol
           | :no_channel_templates
           | {:unresolved, String.t()}
+
+  @doc """
+  Authored channel keys this module reads, per unified method.
+
+  Each entry is `{method, primary_key, fallback_keys}`. A fallback key is read
+  only when the document authors no usable primary key.
+  """
+  @spec dispatch_keys() :: [{atom(), String.t(), [String.t()]}]
+  def dispatch_keys do
+    @js_methods
+    |> Enum.map(fn {method, js} -> {method, js, Map.get(@method_fallbacks, js, [])} end)
+    |> Enum.sort()
+  end
 
   @doc "Returns whether the unified watch method requires a private WS connection."
   @spec private?(atom()) :: boolean()
@@ -89,7 +104,7 @@ defmodule Bourse.WS.Channels do
   end
 
   @spec lookup_templates(Exchange.t(), String.t()) ::
-          {:ok, [String.t()]} | {:error, :no_channel_templates | {:unresolved, String.t()}}
+          {:ok, [template()]} | {:error, :no_channel_templates | {:unresolved, String.t()}}
   defp lookup_templates(%Exchange{spec: spec}, js_method) do
     channels = get_in(spec, ["websocket", "subscribe", "channels"]) || %{}
 
@@ -101,7 +116,7 @@ defmodule Bourse.WS.Channels do
   end
 
   @spec template_entry(map(), String.t()) ::
-          {:ok, [String.t()]} | :missing | {:unresolved, String.t()}
+          {:ok, [template()]} | :missing | {:unresolved, String.t()}
   defp template_entry(channels, js_method) do
     case Map.get(channels, js_method) do
       %{"_unresolved_reason" => reason} when is_binary(reason) ->
@@ -119,7 +134,7 @@ defmodule Bourse.WS.Channels do
     end
   end
 
-  @spec fallback_templates(map(), String.t()) :: [String.t()] | nil | {:unresolved, String.t()}
+  @spec fallback_templates(map(), String.t()) :: [template()] | nil | {:unresolved, String.t()}
   defp fallback_templates(channels, js_method) do
     @method_fallbacks
     |> Map.get(js_method, [])
@@ -132,7 +147,9 @@ defmodule Bourse.WS.Channels do
     end)
   end
 
-  @spec pick_template([String.t()], params(), keyword(), Exchange.t()) :: String.t()
+  @spec pick_template([template()], params(), keyword(), Exchange.t()) :: template()
+  defp pick_template([%{} = object | _], _params, _opts, _exchange), do: object
+
   defp pick_template(templates, params, opts, exchange) do
     templates
     |> Enum.map(&{score_template(&1, templates, params, opts, exchange), &1})
@@ -159,8 +176,7 @@ defmodule Bourse.WS.Channels do
       score_limit_placeholder(limit?, template),
       score_timeframe_placeholder(timeframe?, template),
       score_default_timeframe(template),
-      score_missing_symbol(symbol?, template),
-      score_any_with_symbol(template, symbol?)
+      score_missing_symbol(symbol?, template)
     ]
   end
 
@@ -203,22 +219,17 @@ defmodule Bourse.WS.Channels do
   defp score_missing_symbol(false, template), do: if(String.contains?(template, "{symbol}"), do: -10, else: 0)
   defp score_missing_symbol(true, _template), do: 0
 
-  defp score_any_with_symbol("ANY", true), do: -5
-  defp score_any_with_symbol(_template, _symbol?), do: 0
-
   @spec static_channel_base?(String.t()) :: boolean()
   defp static_channel_base?(template) do
-    template not in ["ANY"] and not String.contains?(template, "{") and
+    not String.contains?(template, "{") and
       Regex.match?(~r/^[A-Za-z0-9_.-]+$/, template)
   end
 
-  @spec format_template(Exchange.t(), atom(), String.t(), params(), keyword()) ::
+  @spec format_template(Exchange.t(), atom(), template(), params(), keyword()) ::
           {:ok, channel()} | {:error, :missing_symbol}
-  defp format_template(exchange, method, "ANY", _params, _opts) do
-    case Map.fetch(@any_channels, method) do
-      {:ok, channel_name} -> wrap_channel(exchange, method, channel_name, nil)
-      :error -> {:error, :missing_symbol}
-    end
+  defp format_template(exchange, _method, %{} = object, params, _opts) do
+    {:ok, market_id} = market_id(exchange, params)
+    format_object(object, market_id)
   end
 
   defp format_template(exchange, method, template, params, opts) do
@@ -229,6 +240,26 @@ defmodule Bourse.WS.Channels do
       wrap_channel(exchange, method, channel, market_id)
     end
   end
+
+  @spec format_object(map(), String.t() | nil) :: {:ok, map()} | {:error, :missing_symbol}
+  defp format_object(object, market_id) do
+    Enum.reduce_while(object, {:ok, %{}}, fn {key, value}, {:ok, acc} ->
+      case interpolate_value(value, market_id) do
+        {:ok, formatted} -> {:cont, {:ok, Map.put(acc, key, formatted)}}
+        {:error, _} = error -> {:halt, error}
+      end
+    end)
+  end
+
+  defp interpolate_value(value, market_id) when is_binary(value) do
+    cond do
+      not String.contains?(value, "{symbol}") -> {:ok, value}
+      is_binary(market_id) and market_id != "" -> {:ok, String.replace(value, "{symbol}", market_id)}
+      true -> {:error, :missing_symbol}
+    end
+  end
+
+  defp interpolate_value(value, _market_id), do: {:ok, value}
 
   @spec require_symbol_for_template(String.t(), params()) :: :ok | {:error, :missing_symbol}
   defp require_symbol_for_template(_template, %{symbol: symbol}) when is_binary(symbol), do: :ok
@@ -329,7 +360,7 @@ defmodule Bourse.WS.Channels do
   @spec object_channel_templates?(map() | nil) :: boolean()
   defp object_channel_templates?(channels) when is_map(channels) do
     Enum.any?(channels, fn
-      {_method, ["ANY" | _]} -> true
+      {_method, [%{} | _]} -> true
       {_method, [template | _]} when is_binary(template) -> String.contains?(template, "{")
       _ -> false
     end)
@@ -354,7 +385,7 @@ defmodule Bourse.WS.Channels do
   end
 
   defp skip_symbol_append?(template, method, {pattern, _sub_config}) do
-    template in ["ANY"] or String.contains?(template, "{symbol}") or method in @private_methods or
+    String.contains?(template, "{symbol}") or method in @private_methods or
       pattern in @no_symbol_append_patterns
   end
 
@@ -378,7 +409,7 @@ defmodule Bourse.WS.Channels do
 
   defp symbol_placement(_), do: {".", :suffix}
 
-  @spec validate_channel(channel(), String.t(), params()) ::
+  @spec validate_channel(channel(), template(), params()) ::
           {:ok, channel()} | {:error, :missing_symbol}
   defp validate_channel("", _template, _params), do: {:error, :missing_symbol}
   defp validate_channel(channel, _template, _params), do: {:ok, channel}
@@ -393,7 +424,7 @@ defmodule Bourse.WS.Channels do
 
   @spec wrap_channel(Exchange.t(), atom(), String.t(), String.t() | nil) ::
           {:ok, channel()} | {:error, :missing_symbol}
-  defp wrap_channel(%Exchange{} = exchange, method, channel, market_id) do
+  defp wrap_channel(%Exchange{} = exchange, _method, channel, market_id) do
     case subscription_settings(exchange) do
       # Hyperliquid's method_subscription frame is `%{"type" => channel, "coin" => id}`.
       # A bare `"l2Book"` / `"trades"` string is the documented type, not a complete
@@ -402,13 +433,7 @@ defmodule Bourse.WS.Channels do
         wrap_coin_channel(channel, market_id)
 
       {:op_subscribe_objects, _} ->
-        channel_name =
-          case channel do
-            "ANY" -> Map.get(@any_channels, method, "orders")
-            other -> other
-          end
-
-        base = %{"channel" => channel_name}
+        base = %{"channel" => channel}
 
         wrapped =
           if is_binary(market_id) and market_id != "" do

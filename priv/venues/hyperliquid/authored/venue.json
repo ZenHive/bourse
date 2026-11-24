@@ -269,18 +269,8 @@
     "subscribe": {
       "args_key": null,
       "channels": {
-        "watchMyTrades": [
-          ":{symbol}",
-          "userFills"
-        ],
-        "watchOHLCV": [
-          "candle"
-        ],
         "watchOrderBook": [
           "l2Book"
-        ],
-        "watchOrders": [
-          "orderUpdates"
         ],
         "watchTrades": [
           "trades"

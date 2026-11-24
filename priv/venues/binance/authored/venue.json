@@ -1279,28 +1279,13 @@
     "subscribe": {
       "args_key": "params",
       "channels": {
-        "watchMultiTickerHelper": [
-          "{symbol}@ticker"
-        ],
-        "watchOHLCVForSymbols": [
-          "{symbol}@kline_1m"
-        ],
         "watchOrderBook": [
-          "{symbol}@depth20@100ms"
-        ],
-        "watchOrderBookForSymbols": [
           "{symbol}@depth20@100ms"
         ],
         "watchTicker": [
           "{symbol}@miniTicker"
         ],
-        "watchTickers": [
-          "{symbol}@miniTicker"
-        ],
         "watchTrades": [
-          "{symbol}@trade"
-        ],
-        "watchTradesForSymbols": [
           "{symbol}@trade"
         ]
       },

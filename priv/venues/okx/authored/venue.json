@@ -524,35 +524,13 @@
     "subscribe": {
       "args_key": "args",
       "channels": {
-        "watchBidsAsks": [
-          "tickers"
-        ],
-        "watchMarkPrice": [
-          "mark-price"
-        ],
-        "watchMarkPrices": [
-          "mark-price"
-        ],
-        "watchMyTrades": [
-          "ANY"
-        ],
-        "watchOHLCV": [
-          "candle{timeframe}"
-        ],
-        "watchOHLCVForSymbols": [
-          "candle{timeframe}"
-        ],
         "watchOrders": [
-          "ANY"
-        ],
-        "watchPositions": [
-          "ANY",
-          "positions"
+          {
+            "channel": "orders",
+            "instType": "ANY"
+          }
         ],
         "watchTicker": [
-          "tickers"
-        ],
-        "watchTickers": [
           "tickers"
         ],
         "watchTradesForSymbols": [
