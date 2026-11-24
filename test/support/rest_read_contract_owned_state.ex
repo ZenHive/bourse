@@ -54,7 +54,7 @@ defmodule Bourse.Test.RestReadContractOwnedState do
   defp place_and_register_order(argument, contract_case, context, placement) do
     with {:ok, placed} <- placement.(contract_case, context) do
       register_cleanup!(context.exchange, placed)
-      await_readable(context.exchange, placed, argument, contract_case)
+      await_readable(context.exchange, placed, argument)
       field = field_from(placed, argument["field"])
 
       if is_nil(field), do: {:error, {:missing_field, argument["field"], placed}}, else: {:ok, field}
@@ -71,27 +71,13 @@ defmodule Bourse.Test.RestReadContractOwnedState do
   # Waiting out the lag is this function's job; deciding what an exhausted wait
   # means is not. On timeout the id is handed over anyway and the case's own
   # assertion fails with the venue's answer, which is the message worth reading.
-  # An algo id resolves only on the algo branches, so it is probed through the
-  # case's own read and algo slot (`GET /fapi/v1/algoOrder` / `/dapi/v1/algoOrder`
-  # answer -2013 for a just-placed algo id).
-  defp await_readable(exchange, %Order{id: id, symbol: symbol}, %{"source_kind" => "algo"}, contract_case)
-       when is_binary(id) and is_binary(symbol) do
-    read = contract_case["method"] |> Macro.underscore() |> String.to_existing_atom()
-    opts = [symbol: symbol, endpoint_index: contract_case["endpoint_index"]]
-    await_poll(id, symbol, fn -> apply(Bourse, read, [exchange, id, opts]) end)
-  end
+  # An algo id resolves only on the algo branches, so it is not probed here.
+  defp await_readable(_exchange, _placed, %{"source_kind" => "algo"}), do: :ok
 
-  defp await_readable(exchange, %Order{id: id, symbol: symbol}, _argument, _contract_case)
-       when is_binary(id) and is_binary(symbol) do
-    await_poll(id, symbol, fn -> Bourse.fetch_order(exchange, id, symbol: symbol) end)
-  end
-
-  defp await_readable(_exchange, _placed, _argument, _contract_case), do: :ok
-
-  defp await_poll(id, symbol, read) do
+  defp await_readable(exchange, %Order{id: id, symbol: symbol}, _argument) when is_binary(id) and is_binary(symbol) do
     poll =
       Journey.poll_until(fn ->
-        case read.() do
+        case Bourse.fetch_order(exchange, id, symbol: symbol) do
           {:ok, %Order{}} -> {:ok, :readable}
           _unreadable -> :retry
         end
@@ -103,6 +89,8 @@ defmodule Bourse.Test.RestReadContractOwnedState do
 
     :ok
   end
+
+  defp await_readable(_exchange, _placed, _argument), do: :ok
 
   defp own_canceled_order(argument, contract_case, context) do
     # Register cleanup before cancelling: a cancel that raises would otherwise
