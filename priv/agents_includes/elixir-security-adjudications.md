@@ -25,53 +25,73 @@ Removing `mix_audit` does **not** silence the `mix deps.get` output — that is 
 every fresh harness worktree runs `deps.get`. That is precisely why every dispatched
 agent sees it.
 
-**The verdict — cowlib reached only via `gun` as a WebSocket client (the
-`zen_websocket` stack): not reachable.** Evidence is a call-graph fact, not a judgment
-call:
-
-| Advisory | Vulnerable function | Reachability |
-|---|---|---|
-| `EEF-CVE-2026-43966` (alias `GHSA-w4f7-4cxr-rv3c`, `CVE-2026-43966`) | `cow_http_struct_hd:escape_string/2` | **0 references** in `deps/gun/src/` |
-
-**Fixed upstream — bump, never re-ignore.** These were removed from the global Hex
-ignore list once a fixed cowlib shipped. If one reappears, the repo is on an older
-cowlib: bump it.
+**Every cowlib EEF-CVE is fixed upstream — bump, never ignore.** cowlib 2.22.0 fixes the
+last two (OSV, verified 2026-11-25). The global Hex ignore list is empty again
+(`ignore_advisories` removed from `~/.hex/hex.config` 2026-11-25). If one of these ids
+appears, the repo locks an older cowlib: `mix deps.update cowlib gun` (and `cowboy` where
+present — cowboy 2.21.0 fixes HIGH `EEF-CVE-2026-115701`).
 
 | Advisory | Function | Fixed in (OSV range) | Removed from ignore list |
 |---|---|---|---|
 | `EEF-CVE-2026-43971` | `cow_link:link/1` | cowlib 2.20.0 (`>= 2.9.0 < 2.20.0`) | 2026-09-24 |
 | `EEF-CVE-2026-43969` | `cow_cookie:cookie/1` | cowlib 2.21.0 (`>= 2.9.0 < 2.21.0`) | 2026-10-31 |
+| `EEF-CVE-2026-43966` (alias `GHSA-w4f7-4cxr-rv3c`) | `cow_http_struct_hd:escape_string/2` | cowlib 2.22.0 (`>= 2.9.0 < 2.22.0`) | 2026-11-25 |
+| `EEF-CVE-2026-113431` (HIGH) | `cow_http2_machine:headers_decode/4` | cowlib 2.22.0 (`>= 2.7.0 < 2.22.0`) | 2026-11-25 (never globally ignored) |
 
-43966 is still reported against cowlib 2.21.0 / gun 2.7.0 (verified 2026-10-31,
-`mix hex.audit` in mpp); no fixed release exists, so reachability is the only available
-adjudication. Re-check at the next cowlib release. `hex.audit` in a repo without cowlib
-(e.g. harness) warns the ignore "matches no advisory" — that is expected, not a sign it
-is resolved.
+The former reachability verdict (gun as an HTTP/1.1-only WebSocket client never calls the
+struct-header serializers or `cow_http2_machine`) is history; it applied only while no
+fixed cowlib existed. Do not resurrect it as a reason to ignore instead of bumping.
 
-**The separate `gun 2.5.0` line is a mirror bug, already reported upstream.** gun's real
-vulnerable range is `< 2.4.0`; gun 2.5.0 is patched. The mirego importer groups by
-`ghsaId` alone, collapsing a two-package advisory into `packages/gun/…yml` carrying
-**cowboy's** `< 2.16.0` range, so gun 2.5.0 matches a range that was never gun's. There
-is no gun 2.16.x. Filed as **`mirego/elixir-security-advisories#8`** (issue + PR open);
-`zen_websocket/.mix_audit_ignore` carries the full write-up and the removal condition.
-That gun never calls `cow_http_struct_hd` at all corroborates it independently.
+**The separate `gun` line from `mix deps.audit` is a mirror bug, still open.** gun's real
+vulnerable range for `GHSA-w4f7-4cxr-rv3c` is `< 2.4.0`. The mirego importer groups by
+`ghsaId` alone, collapsing a two-package advisory into `packages/gun/GHSA-w4f7-4cxr-rv3c.yml`
+carrying **cowboy's** `< 2.16.0` range as well, so every real gun release (latest 2.8.0)
+matches a range that was never gun's. There is no gun 2.16.x. Filed as
+**`mirego/elixir-security-advisories#8`** (issue) and **#9** (PR), both still open as of
+2026-11-25 with the mirror at upstream tip. Repos suppress exactly that one id via
+`.mix_audit_ignore`; remove it once the mirror splits the advisory. This is a `mix_audit`
+(mirego) finding only — Hex/OSV does not report it.
 
 **🚨 `bandit` is NOT in this adjudication — it has a real fix.** `EEF-CVE-2026-74836`
 (HIGH) and `EEF-CVE-2026-75484` on bandit 1.12.4 are genuine; **1.12.5 (2026-08-20) is
 the fix**. Bump the dependency; never add a bandit id to an ignore list. Blanket-ignoring
-"all the CVE noise" buries a HIGH — suppress **per id**, only after the reachability
-argument above has been made for that specific id.
+"all the CVE noise" buries a HIGH — suppress **per id**, only after a reachability
+argument has been made for that specific id and no fixed release exists.
 
-**What invalidates this verdict — re-adjudicate if any becomes true:** a repo takes
-`cowboy` as a **runtime** (not `only: :test`) dependency; gun's `cookie_store` option is
-enabled anywhere; gun is used as a general HTTP client with caller-supplied header
-values; or a new cowlib advisory appears that is not the id above.
+**cowlib in the lock (2026-11-25):** 2.22.0 in `mpp`, `onchain-stack`, `tapakly`,
+`trading_dashboard`, `zen_websocket`. Older (will report 43966 and 113431 on `deps.get`
+until bumped): `bourse`, `zen_mm` (2.21), `aave_sim`, `bourse_trading`, `zen_macro`,
+`zen_quant` (2.20), and several dormant repos below that. Suppression of the gun mirror bug
+is inconsistent: most carry `.mix_audit_ignore`, bourse uses an `--ignore-advisory-ids`
+alias in `mix.exs`. Standardize on `.mix_audit_ignore` when you touch one.
 
-**Affected repos (cowlib in the lock):** `bourse`, `mpp`, `zen_mm`, `zen_websocket`. As
-of 2026-10-31 `mpp` and `zen_websocket` lock cowlib 2.21.0; `bourse` and `zen_mm` still
-lock 2.20.0 and will now report 43969 on `deps.get` until bumped. The `onchain*` repos no longer lock cowlib. Suppression is inconsistent across them — most carry
-`.mix_audit_ignore`, bourse uses an `--ignore-advisory-ids` alias in
-`mix.exs`. Standardize on `.mix_audit_ignore` when you touch one.
+**tapakly is the exception on the Hex side — global ignores do not reach its gate.**
+`mix tapakly.deps.audit` runs `hex.audit` in a throwaway project with a fresh `HEX_HOME`
+and empty `HEX_IGNORE_*`, so `mix hex.config ignore_advisories` and the env var have no
+effect there. Its only suppression is the committed `.hex_audit_adjudications.json`: one
+entry per advisory id + package + exact locked version, with `reason` and `remove_when`.
+The gate fails when an id is reported for a locked package the file does not name, or
+when a named package no longer carries it at that version (bump / fix / withdrawal) —
+so a stale entry re-reds the gate instead of silently lingering. Edit that file, not the
+global config, when tapakly's gate reports an adjudicated id.
+
+## ADJUDICATED: assent `EEF-CVE-2026-117656` — not reachable in password-only apps
+
+`EEF-CVE-2026-117656` (CRITICAL; aliases `CVE-2026-117656`, `GHSA-9fr5-g44g-9526`):
+`Assent.Strategy.Apple.callback/2` merges the client-controlled `user` callback parameter
+over the verified ID-token claims (Sign in with Apple). Affected `>= 0.1.25 < 0.3.2`;
+fixed in **assent 0.3.2** (2026-10-28). <https://osv.dev/vulnerability/EEF-CVE-2026-117656>
+
+assent arrives transitively through `ash_authentication`, and **ash_authentication 4.15.1
+pins assent `> 0.2.0 and < 0.3.0`**, so the fix is not resolvable (verified 2026-11-07).
+The vulnerable code runs only behind an Apple strategy. **Verdict for a repo whose
+AshAuthentication config has only the `password` strategy and no direct Assent call
+(tapakly, `lib/tapakly/accounts/user.ex`): not reachable.** Do not `override:` assent to
+0.3.x under 4.15.1.
+
+**Invalidated when:** the repo adds any `apple` / `oauth2` / `oidc` (or other Assent-backed)
+strategy — then the finding is real. **Remove when** an ash_authentication release accepts
+assent `>= 0.3.2`: bump both and delete the adjudication entry.
 
 **The meta-lesson this section encodes:** the analysis had in fact been done correctly —
 it lived in `zen_websocket/mix.exs` and `.mix_audit_ignore`, where no other repo's agent
@@ -79,43 +99,34 @@ ever looks. A verdict that isn't written where the *next* agent reads it gets re
 forever. Adjudicate once, then put it in `CLAUDE.md` (which flows into `AGENTS.md` for
 the cross-family reviewers) — not only in the repo that happened to notice.
 
-## Suppressing Sobelow False Positives — Use `.sobelow-skips`, NOT Inline Comments
+## Suppressing Sobelow False Positives — Annotation for Source, `.sobelow-skips` for Config
 
-When the PostToolUse hook flags a Sobelow false positive (e.g. `Traversal.FileModule`
-on an operator-supplied CLI path, not web input), the **inline `# sobelow_skip
-["FindingType"]` comment does NOT suppress it** under this host's hook invocation —
-verified on tapakly 2026-06: comments placed correctly above both the `def` (with
-`@spec` between) and a bare `defp` still re-flagged at the same lines. The hook
-honors only the **hash-based `.sobelow-skips` file**, read via `mix sobelow --skip`.
+Two mechanisms, both honored by `mix sobelow --skip` (sobelow 0.18, verified on tapakly
+2026-11-07):
 
-The failure mode many instances hit: add inline comment → hook re-flags → add
-another → loop. Stop. The working mechanism:
+- **Source findings → inline annotation.** `# sobelow_skip ["Check.Module"]` immediately
+  above the `def`/`defp`, after any `@doc`/`@spec`, with the trust-boundary reason beside
+  it. It moves with the function, so line shifts don't re-red it. (An older note here
+  claimed inline comments were ignored, from a 2026-06 hook run; that does not hold for
+  `--skip` on sobelow 0.18.)
+- **Findings with no function to annotate (e.g. `Config.Secrets` in `config/*.exs`) →
+  `.sobelow-skips`**, lines of `FindingType,file:line,HASH`. Commit it with the code.
 
-1. **Confirm the finding is genuinely a false positive** (path is operator/CLI-derived
-   or a fixed dir + content hash, never untrusted/web input). Real traversal risk → fix the code.
-2. **Check the total outstanding count** — `mix sobelow --format compact`. `--mark-skip-all`
-   marks *every* current finding as skipped, so it's only safe when the outstanding set
-   IS exactly the false positives you intend to skip. Otherwise you'd silently bury a real one.
-3. **Generate the skip file:** `mix sobelow --mark-skip-all` → writes `.sobelow-skips`
-   (lines of `FindingType,file:line,HASH`).
-4. **Verify suppression with the flag the hook uses:** `mix sobelow --skip --format compact`
-   — a plain `mix sobelow` (no `--skip`) still prints them; that's expected, not a failure.
-5. **Commit `.sobelow-skips`** alongside the code (it's not gitignored — it's the
-   persisted project suppression record so CI / other devs don't re-flag).
+Before suppressing either way, confirm the finding is a genuine false positive (path is
+operator/CLI-derived or a fixed dir + content hash, never untrusted/web input). Real
+traversal risk → fix the code.
 
-**Line shifts INVALIDATE skips, and `--mark-skip-all` never prunes — regenerate, don't accumulate.**
-Each entry pins `FindingType,file:line,HASH`, and the line number feeds the hash:
-deleting or inserting lines *above* a suppressed finding re-reds the gate even though the
-flagged code never changed. Re-running `--mark-skip-all` leaves the dead entry behind
-forever — sobelow ≤0.14 appends a new generation; 0.15+ rewrites merged+deduped+sorted
-(`--legacy-skips` restores append) but still keeps entries with no live finding
-(observed ccxt_client 2026-07-22 under 0.14: 57 entries on file, 9 live findings —
-48 stale). The cadence: whenever a skip-related
-re-red appears (or an audit notices bloat), **regenerate wholesale** — confirm every
-currently-outstanding finding (`mix sobelow --no-skip --format compact`) is a genuine
-false positive per step 1, then `rm .sobelow-skips && mix sobelow --mark-skip-all`,
-verify zero with `--skip`, commit. Never regenerate while an unconfirmed finding is
-outstanding — that buries it.
+**Line shifts INVALIDATE `.sobelow-skips` entries** — the line number feeds the hash, so
+inserting or deleting lines above a skipped finding re-reds the gate.
+
+**🚨 `--mark-skip-all` ignores inline annotations — it marks EVERY finding.** Observed
+tapakly 2026-11-07: `rm .sobelow-skips && mix sobelow --mark-skip-all` wrote 86 entries,
+including every annotated source finding — a wholesale suppression that would survive
+annotation removal. It also never prunes stale entries. So never commit its raw output.
+Regenerate like this: run `mix sobelow --skip --format compact` to see what is actually
+outstanding, then `--mark-skip-all` into the file and **cut it down to exactly the
+intended entries** (e.g. `grep '^Config.Secrets: '`), verify zero findings with
+`mix sobelow --skip --exit low`, and review the diff before committing.
 
 Pairs with `critical-rules.md` § FIX HOOK-FLAGGED ISSUES: suppression IS the fix for a
 documented false positive — but via the file, not a comment the hook ignores.

@@ -15,8 +15,8 @@
     },
     "~/.claude/includes/elixir-security-adjudications.md": {
       "path": "priv/agents_includes/elixir-security-adjudications.md",
-      "sha256": "63fee6abfc945756149fb81228d1cf764793dceebf387b7fc70abf6058f3a8c7",
-      "bytes": 7908
+      "sha256": "8e6f2a7ec89ef24437e6b33a32c0f0c480c8eca1ab7993a5e311314a30ba9d6d",
+      "bytes": 8835
     },
     "~/.claude/includes/ex-unit-json.md": {
       "path": "priv/agents_includes/ex-unit-json.md",
