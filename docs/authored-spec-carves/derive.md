@@ -103,3 +103,50 @@ production wait had been idle; the later probe received this actual trade):
 <!-- carve-evidence-status
 {"carve_id":"C-T702","date":"2026-09-15","semantic_source":{"kind":"provider_owned","reference":"Derive ticker_slim, trades-by-instrument, subaccount orders and subaccount trades channel docs linked above"},"observed_evidence":{"kind":"live_venue","reference":"2026-09-15 api-demo.lyra.finance ticker_slim.ETH-PERP.100 instrument_ticker frame; production trades.ETH-PERP trade_id f69d1a1d-5c4f-4f7b-b66a-1234838364ee; deprecated ticker and :ETH-PERP rejection frames in this carve"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Demo trades.ETH-PERP acknowledged without a data frame in repeated 60s waits; private {subaccount_id}.orders/.trades not proven in this public audit"}
 -->
+
+## 2026-11-25 — API v2 → v3 confrontation (Task 709)
+
+Provider sources (all retrieved 2026-11-25, pinned in the authority manifest):
+[introduction](https://docs.derive.xyz/getting-started/introduction.md),
+[breaking changes](https://docs.derive.xyz/migrating/breaking-changes.md),
+[action signing](https://docs.derive.xyz/authentication/action-signing.md),
+[session login](https://docs.derive.xyz/authentication/session-login.md),
+[error codes](https://docs.derive.xyz/error-codes.md),
+[OpenAPI](https://docs.derive.xyz/openapi.json),
+[WS AsyncAPI](https://docs.derive.xyz/websocket.asyncapi.json),
+[subscriptions AsyncAPI](https://docs.derive.xyz/subscriptions.asyncapi.json).
+Live host: `https://testnet.api.derive.xyz/v3` and `wss://testnet.api.derive.xyz/v3/ws`.
+
+**C-T709 — DIVERGE on hosts, auth, signing domain, order reads, ticker and symbols. Public
+surface is CONFIRMED live. Private surface is unverified: the testnet wallet owns no v3
+subaccount.**
+
+| Slot | v2 authoring | v3 provider contract | Outcome and evidence |
+|---|---|---|---|
+| Hosts | `api.lyra.finance`, `api-demo.lyra.finance` | `api.derive.xyz/v3`, `testnet.api.derive.xyz/v3`, WS `/v3/ws` | DIVERGE. The v2 hosts answer Cloudflare 521/530. 12/12 public REST-read contract cases are green on the v3 testnet. |
+| Session headers | `X-LyraWallet/Timestamp/Signature` | `X-DeriveWallet/Timestamp/Signature`, same EIP-191 primitive | DIVERGE. An unknown session key answers JSON `14026` "Session key not found" and names the recovered address. v2's nginx HTML 403 is gone. |
+| Wallet identity | smart-contract "Derive Wallet" | owner EOA or multisig | DIVERGE. The wallet that owned 144422 on v2 returns `subaccount_ids: []` on the v3 testnet and on mainnet. |
+| EIP-712 domain | chainId 957 / 901, fixed separators | `Matching` / `1.0` / chainId 1 / 11155111 / `0xeB8d…DeAD` | DIVERGE. The separators `0xda616dfa…fe19` and `0x24d674cd…3e85` were reproduced independently with ethers 6.13.4 `TypedDataEncoder.hashDomain`. |
+| Trade module | per-network v2 addresses | `0xB8D20c2B7a1Ad2EE33Bc50eF10876eD3035b5e7b` on both networks | DIVERGE. The digests in `prepared_order_test.exs` match ethers byte-for-byte. A venue-accepted order is still unverified. |
+| Order nonce | ms + 3-digit suffix, integer | `ms × 1e6` + random 6 digits, decimal string | DIVERGE. **The provider docs disagree on the window:** breaking-changes.md says "90 days before → 1 hour after", action-signing.md says "± 5 minutes when placed". The live window is not yet measured; the nonce is always "now". |
+| Price/amount precision | unrestricted 1e-18 | values below `1e-12` are rejected (`14014`) | DIVERGE. `PreparedOrder.scaled/2` refuses them before signing. |
+| Perp symbols | `BTC/USD:USDC` | instruments report `quote_currency: "USDC"` | DIVERGE. The unified symbol is `BTC/USDC:USDC` ↔ `BTC-PERP`, and `Bourse.Symbol` `:suffix_perp` now implies a USDC quote. Live: `load_markets` on the testnet listed 21 perps, all `*/USDC:USDC`. |
+| fetchOpenOrders / fetchOrders | `private/get_orders` + status filter | `private/get_open_orders`, `private/get_order_history` (`result.orders` + pagination) | DIVERGE. v3 removed `get_orders`. fetchClosedOrders / fetchCanceledOrders delegate to fetchOrders (history only). |
+| fetchTicker / fetchGreeks | long-name ticker | slim ticker (`a/A/b/B/I/M/t/f`, `stats{h,l,c,v,…}`, `option_pricing{d,g,v,t,r,i,ai,bi,m}`) | DIVERGE. Live: BTC-PERP bid/ask/high/low parse, and `fetch_greeks` on a live testnet option returned delta, gamma, theta, vega and rho. The slim ticker carries no instrument field. Instrument metadata comes from `public/get_instrument`. |
+| Currency precision | from decimals | `get_all_currencies` gives `spot[{erc20{decimals}}]` | Mapped `null`: the nested-list index reach needs a shared parser change, which is out of this venue's scope. |
+| Transaction/transfer status | `status` string | `batch_status` PascalCase (`Batching … Settled`, `*Error`), `operation_id` | DIVERGE. Mapped to `pending` / `ok` / `failed`. A live row is unverified (no account). |
+| `get_subaccount.currency` | string | `string[]` | DIVERGE (OpenAPI). A live row is unverified. |
+| `private/set_cancel_on_disconnect` | REST | WS-only (`websocket.asyncapi.json` `privateSetCancelOnDisconnect`) | DIVERGE. REST answers 404 even though trading/cancel-on-disconnect.md shows a cURL example. Not authored as a REST raw. |
+| Session keys | `register_session_key`, … | `private/set_session_key` (owner-signed), `edit_session_key`, `session_keys` | DIVERGE. The removed v2 methods are not authored. |
+| WS private channels (C-T702 gap) | unresolved | `{subaccount_id}.orders`, `{subaccount_id}.trades` | Templates authored. The unauthenticated subscribe is rejected live with `13000` "Subscription to a private channel failed". Authenticated delivery is **unverified** (no account). |
+
+### C-T709f — fetchFundingRate reads the slim ticker f
+
+`fetchFundingRate` routes to `public/get_ticker` and reads `f`, which the OpenAPI describes as
+"Current hourly funding rate (perpetuals only; `null` otherwise)". `breaking-changes.md` gives the
+same meaning ("`f`, the hourly funding rate"). The authored `interval` default is therefore `"1h"`.
+Live 2026-11-25: BTC-PERP `f` parsed to `1.25e-5`, with mark and index from the same ticker.
+
+<!-- carve-evidence-status
+{"carve_id":"C-T709","date":"2026-11-25","semantic_source":{"kind":"provider_owned","reference":"Derive v3 OpenAPI, AsyncAPI, breaking-changes, action-signing, session-login and error-codes pages pinned in priv/venues/derive/authority/manifest.json"},"observed_evidence":{"kind":"live_venue","reference":"2026-11-25 testnet.api.derive.xyz/v3 public REST-read contract cases 12/12; ticker_slim.ETH-PERP.100 and trades.ETH-PERP frames on /v3/ws; 14026 and 13000 rejections"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Owner wallet has no v3 testnet subaccount: private reads, order accept/reject, MMP, cancel-on-disconnect and private channel delivery unproven pending the operator's L1 deposit"}
+-->

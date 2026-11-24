@@ -308,6 +308,29 @@ first) and passes only when a successful open-algo read no longer lists the id.
 
 ---
 
+## 2026-11-25 — `zen_websocket` 0.9.0 crashes its client on a bare `:ping` frame; Derive v3 sends them
+
+**Method:** any `Bourse.WS` connection whose server sends an empty-payload WebSocket ping ·
+**Exchange:** derive (`wss://testnet.api.derive.xyz/v3/ws`) · **Severity:** mittel
+
+**Status:** 🆕 reported 2026-11-25 (task 709, unrouted). Fix belongs in `zen_websocket`, released and consumed by version.
+
+Observed during task 709 on `wss://testnet.api.derive.xyz/v3/ws`, about 30 s after a public `ticker_slim.ETH-PERP.100` subscribe:
+
+```
+[error] GenServer #PID<...> terminating
+** (stop) {:protocol_error, "Unknown frame type: :ping"}
+Last message: {:gun_ws, #PID<...>, #Reference<...>, :ping}
+```
+
+gun delivers an empty ping as the bare atom `ping`, not `{ping, Payload}`. `ZenWebsocket.Frame.decode/1` (0.9.0,
+`deps/zen_websocket/lib/zen_websocket/frame.ex`) matches only `{:ws, :ping, data}` and `{:ping, data}`, so it falls
+through to `{:error, "Unknown frame type: :ping"}`, and `MessageHandler` classifies that as a fatal protocol error.
+The client reconnects and restores its subscriptions, so in a 60 s measurement frames kept arriving (8–13 per 5 s
+bucket). Expected: decode bare `:ping` / `:pong` as control frames, the same as the tuple forms.
+
+---
+
 ## 2026-11-25 — binancecoinm has no client slot for the venue's algo order history
 
 **Status:** Recorded, not routed (task 713 review, measured live 2026-11-25).
@@ -1120,7 +1143,7 @@ grüne lighter-Zeile im First-Frame-Report ist die falsche Angabe, nicht umgekeh
 **Exchange:** derive (demo, `wss://api-demo.lyra.finance/ws`) · **Severity:** hoch
 (`watch_ticker` ist auf derive vollständig tot; die beiden privaten Kanäle können nie ackn)
 
-**Status:** 🆕 reported 2026-09-15 — live-verifiziert in beide Richtungen · **2026-11-25:** routed — folded into task 709 (v3 migration) as an acceptance criterion; the v2 socket is retired.
+**Status:** 🆕 reported 2026-09-15 — live-verifiziert in beide Richtungen · **2026-11-25:** routed — folded into task 709 (v3 migration) as an acceptance criterion; the v2 socket is retired. · **2026-11-25 (task 709):** templates re-authored to the provider names on the v3 socket. `watchTicker` → `ticker_slim.{symbol}.100` delivers live on `wss://testnet.api.derive.xyz/v3/ws` (`test/live/ws/derive_watch_frame_delivery_test.exs`; `mix bourse.verify_ws_first_frame` passes for derive). `watchOrders` / `watchMyTrades` → `{subaccount_id}.orders` / `{subaccount_id}.trades`, filled from `options: %{"subaccount_id" => id}`. The unauthenticated private subscribe is rejected live with `13000`. The authenticated delivery is **unverified**: the v3 testnet wallet has no subaccount yet (operator step in CLAUDE.md, Derive credentials).
 
 Gefunden beim Landed-Base-Gate nach Task 697: `mix bourse.verify_ws_first_frame` ist auf
 derive rot. Die Ursache ist nicht der Lane-Probe, sondern die authored Kanalliste.
@@ -3477,7 +3500,7 @@ shape, since any venue that stamps at the envelope has the same problem.
 
 ## 2026-08-05 — `fetch_ticker/2` on derive maps `high`/`low`/`change`/`percentage` from a `stats` object the venue no longer returns — four fields permanently nil
 
-**Status (2026-08-05):** ✅ **fixed** (workbench task 560). The four `stats.*` sources are recorded
+**Status (2026-08-05):** ✅ **fixed** (workbench task 560). · **2026-11-25 (task 709):** superseded on v3 — the slim ticker carries `stats` again (`h`, `l`, `c`, `v`), so `high` / `low` / volumes are mapped from it; `change` / `percentage` stay unmapped. The four `stats.*` sources are recorded
 as `null` in the authored derive ticker field map, and the absence is registered as carve
 **C-T560d** in `docs/authored-spec-carves/derive.md` citing derive's own `public/get_ticker`
 reference. Re-verified live before the change on both hosts: `BTC-PERP` returned 36 result keys
@@ -5040,7 +5063,7 @@ Betroffene Exchange: bybit.
 
 ## 2026-11-20 — Derive: adapter still targets the retired v2 host `api.lyra.finance`; every call fails
 
-**Status:** open · **2026-11-25:** already filed — task 709 (v2 to v3 migration).
+**Status:** open · **2026-11-25:** already filed — task 709 (v2 to v3 migration). · **2026-11-25 (task 709):** hosts moved to `api.derive.xyz/v3` / `testnet.api.derive.xyz/v3` (REST and WS), auth headers moved to `X-Derive*`, and the v3 action-signing domain is in place. Public surface verified live on the v3 testnet: markets, `fetch_ticker("BTC/USDC:USDC")`, greeks, funding rate, funding history and trades (12/12 public REST-read contract cases green). Private calls stay red until the operator funds a v3 testnet account (see task 709 report).
 
 Call (via trading_dashboard, Tidewave `project_eval`): `{:ok, ex} = Bourse.exchange(:derive)`, then `Bourse.fetch_ticker(ex, "BTC/USDC:USDC")` and `Bourse.fetch_markets(ex)`.
 

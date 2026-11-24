@@ -255,6 +255,14 @@ test code. Edit the fence when adding a ledgered case.
 
 ### derive — keyless order preparation pins v2 identities the v3 migration replaces (task 148, filed 2026-09-29; superseded by task 709, 2026-10-01)
 
+- **Status 2026-11-25 (task 709): migrated to v3, still unverified.** `PreparedOrder` now pins
+  chainId 1 / 11155111, Matching `0xeB8d770ec18DB98Db922E9D83260A585b9F0DeAD` and the single Trade
+  module `0xB8D20c2B7a1Ad2EE33Bc50eF10876eD3035b5e7b`. Its domain separators equal the published
+  `0xda616dfa…fe19` / `0x24d674cd…3e85`, and its digests match ethers 6.13.4 byte-for-byte.
+  Part 1 of the question below is therefore answered by the published constants. Part 2 (venue
+  acceptance plus rejection of a changed term) is **blocked**: the testnet owner wallet has no v3
+  subaccount, so there is no account to sign for. It closes with the exact call below once the
+  operator's L1 deposit creates one. Mainnet stays unverified.
 - Authored slices: none — `Bourse.Signing.Derive.PreparedOrder` is a signing boundary,
   not an authored field map. It ships the chain id and the Matching and Trade module
   addresses for both Derive environments.

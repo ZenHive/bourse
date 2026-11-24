@@ -46,6 +46,12 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   algo-history read.
   `fetch_order`, `fetch_open_order`, `cancel_order` and `cancel_all_orders` still
   cover both books.
+- **derive:** migrated to Derive API v3. REST `https://api.derive.xyz/v3` and `https://testnet.api.derive.xyz/v3`, WS `/v3/ws`. Session auth uses the `X-DeriveWallet` / `X-DeriveTimestamp` / `X-DeriveSignature` headers. Credentials are the owner wallet plus its key or a session key registered through `private/set_session_key`.
+- **derive:** v3 action signing. The EIP-712 domain uses chainId 1 / 11155111. The Trade module is `0xB8D20c2B7a1Ad2EE33Bc50eF10876eD3035b5e7b` on both networks. Nonces are `ms × 1e6` plus a suffix and are sent as strings. `PreparedOrder` refuses precision below `1e-12`.
+- **derive:** unified perp symbols are now USDC-quoted (`BTC/USDC:USDC`), matching the `quote_currency` of v3 instruments. `BTC/USD:USDC` no longer resolves.
+- **derive:** order reads route to `private/get_open_orders` and `private/get_order_history`, and `fetchClosedOrders` / `fetchCanceledOrders` delegate to `fetchOrders`. Ticker and greeks parse the v3 slim ticker. Transactions and transfers read `operation_id` and `batch_status`.
+- **derive:** WS `watch_orders` resolves to `{subaccount_id}.orders` from `options: %{"subaccount_id" => id}`. The `watchMyTrades` template is now `{subaccount_id}.trades`.
+- **derive:** raw endpoints removed in v3 are deleted; every remaining raw method is in the pinned v3 OpenAPI. The error catalog is rebuilt from the v3 error-code page.
 
 ### Fixed
 
