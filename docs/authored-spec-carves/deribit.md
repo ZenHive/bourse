@@ -24,18 +24,27 @@ Outcome: DIVERGE from C-T535a's history-spacing `"1h"`.**
   The sampling interval was applied to a different read, whose value is whatever
   the request window accrued. That window is 8h by default, so the value was an 8h
   rate labelled `"1h"`.
-- *Our carve:* `Bourse.Unified.call_dispatch/6` resolves both bounds before
-  dispatch — caller bounds (integer or numeric string, unified or native key),
-  a missing end on the request clock, a missing start eight hours before the
-  end — and the parse labels the value with the span between those two sent
-  bounds, in the largest unit that divides it exactly (`"8h"`, `"90m"`,
-  `"14399877ms"`). The authored default `"8h"` documents the default window.
-- *Review round (2026-11-25):* the first cut read only integer bounds from the
-  unified params, so string bounds `[T-4h, T]` were sent but labelled `"8h"`, a
-  start-only window was labelled nil, and a 4h−123ms span was labelled nil.
-  Live after the fix, at `T = 1795561200000`: string bounds and start-only on
-  the request clock both answer `{0.0, "4h"}` (raw `[T-4h, T]` = `0.0`), and the
-  4h−123ms span answers `{0.0, "14399877ms"}` against raw `0.0`.
+- *Our carve:* the label never changes which bounds go on the wire. The request
+  shaper sends what it always sent — a caller bound as given (integer or
+  string), otherwise `end_timestamp` = request clock and `start_timestamp` =
+  request clock − 8h. `Bourse.Unified.call_dispatch/6` pins that clock once, and
+  `Bourse.Unified.FundingInterval` re-derives the same dispatched shape and
+  labels the value with the span between its two bounds, in the largest unit
+  that divides it exactly (`"8h"`, `"7h"`, `"14399877ms"`). A bound counts only
+  when it is an integer or a string that is entirely an integer; a malformed one
+  is sent unchanged and Deribit answers `-32602` `"integer required"`. The
+  authored default `"8h"` documents the default window.
+- *Review rounds (2026-11-25):* the first cut read only integer bounds from the
+  unified params, so string bounds `[T-4h, T]` were sent but labelled `"8h"` and
+  a start-only window or a 4h−123ms span got nil. A second cut rewrote the
+  bounds before dispatch, which made `"oops"` silently default and moved an
+  end-only request's start from clock − 8h to end − 8h; it was replaced by the
+  label-only derivation above. Live at `T = 1795561200000`
+  (`timestamp_ms_override: T`): string bounds, start-only and integer bounds on
+  `[T-4h, T]` answer `{0.0, "4h"}`; end-only `T-1h` answers the
+  `[T-8h, T-1h]` value with `"7h"`; the 4h−123ms span answers
+  `"14399877ms"`; `"oops"` and `"<digits>oops"` answer `-32602` `"integer
+  required"` for the named param.
 - *History sampling interval:* pinned separately in
   `test/live/deribit/deribit_authored_integration_test.exs` — unified
   `fetch_funding_rate_history` rows carry exactly the raw history timestamps,

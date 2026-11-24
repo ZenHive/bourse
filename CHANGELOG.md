@@ -29,10 +29,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Deribit `fetch_funding_rate` now labels its value with the window it was
   accrued over: `interval: "8h"` for the default request (was `"1h"`, which
   overstated annualized funding 8×), otherwise the span between the two bounds
-  actually sent. A missing end resolves to the request clock and a missing start
-  to eight hours before the end; integer and numeric-string bounds are both
-  honoured, and a span that is not a whole number of hours keeps its exact
-  length (e.g. `"14399877ms"`).
+  the request sends — unchanged from before: a missing end is the request
+  clock and a missing start is the request clock minus eight hours. A span that
+  is not a whole number of hours keeps its exact length (e.g. `"14399877ms"`);
+  a malformed bound is sent as given and the provider's `-32602 "integer
+  required"` is returned.
 - Deribit `fetch_ticker` / `fetch_tickers` fill `base_volume` from
   `stats.volume` (base currency) and `quote_volume` from `volume_notional`
   (quote currency), falling back to `volume_usd` for inverse options. Before,
