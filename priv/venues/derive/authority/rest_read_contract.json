@@ -2,53 +2,23 @@
   "host_mode": "sandbox",
   "authority_sources": [
     {
-      "id": "liquidation-history",
-      "kind": "official-api-documentation",
-      "source_url": "https://docs.derive.xyz/reference/post_public-get-liquidation-history.md",
-      "sha256": "f22abc5f034d2dbad6e0ec3202e27372a15039cf76bd847ed035476728619087",
+      "id": "openapi",
+      "kind": "openapi-json",
+      "source_url": "https://docs.derive.xyz/openapi.json",
+      "sha256": "5d88da6a9f592f2eaf2f8f25499dd1237e1a343719fb083db40177e069f049be",
       "upstream_pin": {
-        "type": "retrieval_date",
-        "value": "2026-08-10"
-      }
-    },
-    {
-      "id": "erc20-transfer-history",
-      "kind": "official-api-documentation",
-      "source_url": "https://docs.derive.xyz/reference/post_private-get-erc20-transfer-history.md",
-      "sha256": "1b6ca15ce4485a47f6a85354e230fa4b4888b25347bda08a1830c90dbc9d040d",
-      "upstream_pin": {
-        "type": "retrieval_date",
-        "value": "2026-08-10"
-      }
-    },
-    {
-      "id": "interest-history",
-      "kind": "official-api-documentation",
-      "source_url": "https://docs.derive.xyz/reference/post_private-get-interest-history.md",
-      "sha256": "fdcfa12ec45ecc0ed29f44c8d486fe1e461634b0ca702e8cb9832fe90ccc51be",
-      "upstream_pin": {
-        "type": "retrieval_date",
-        "value": "2026-08-10"
-      }
-    },
-    {
-      "id": "option-settlement-history",
-      "kind": "official-api-documentation",
-      "source_url": "https://docs.derive.xyz/reference/post_public-get-option-settlement-history.md",
-      "sha256": "5034d181522e292a2dbd6729cb646764af5eb3b46a246538118d665b9610fc16",
-      "upstream_pin": {
-        "type": "retrieval_date",
-        "value": "2026-08-10"
+        "type": "document_version_http_etag",
+        "value": "0.2.0; W/\"z6Ip46XPYxqgZg-c\""
       }
     },
     {
       "id": "error-codes",
       "kind": "official-errors-markdown",
-      "source_url": "https://docs.derive.xyz/reference/error-codes.md",
-      "sha256": "6bf4d73b421038b1e9d76ddda31d9401a3251516f0afebbfe4b311233b5d041d",
+      "source_url": "https://docs.derive.xyz/error-codes.md",
+      "sha256": "ce94ec1f7b3d2a326ae60a9738be4ca725b5da389e07d0779d71960ab9b22349",
       "upstream_pin": {
-        "type": "http_etag",
-        "value": "W/\"48d908492c3fde72b067df39a32ff43095073003:expanded|ced1e0b9\""
+        "type": "retrieval_date",
+        "value": "2026-11-25"
       }
     }
   ],
@@ -72,8 +42,7 @@
           "options": [
             {
               "name": "subaccount_id",
-              "strategy": "literal",
-              "value": 144422
+              "strategy": "credential_uid"
             }
           ]
         }
@@ -92,16 +61,16 @@
         ]
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
       "method": "fetchCanceledOrders",
       "branches": [
         {
-          "provider_operation": "privatePostGetOrders",
+          "provider_operation": "privatePostGetOrderHistory",
           "http_method": "POST",
-          "path": "get_orders",
+          "path": "get_order_history",
           "authenticated": true,
           "market_kind": "linear",
           "options": [
@@ -112,8 +81,7 @@
             },
             {
               "name": "subaccount_id",
-              "strategy": "literal",
-              "value": 144422
+              "strategy": "credential_uid"
             }
           ]
         }
@@ -135,16 +103,16 @@
         "empty_collection": "allowed"
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
       "method": "fetchClosedOrders",
       "branches": [
         {
-          "provider_operation": "privatePostGetOrders",
+          "provider_operation": "privatePostGetOrderHistory",
           "http_method": "POST",
-          "path": "get_orders",
+          "path": "get_order_history",
           "authenticated": true,
           "market_kind": "linear",
           "options": [
@@ -159,8 +127,7 @@
             },
             {
               "name": "subaccount_id",
-              "strategy": "literal",
-              "value": 144422
+              "strategy": "credential_uid"
             }
           ]
         }
@@ -182,15 +149,15 @@
         "empty_collection": "allowed"
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
       "method": "fetchCurrencies",
       "branches": [
         {
-          "provider_operation": "publicGetGetAllCurrencies",
-          "http_method": "GET",
+          "provider_operation": "publicPostGetAllCurrencies",
+          "http_method": "POST",
           "path": "get_all_currencies",
           "authenticated": false,
           "market_kind": "linear",
@@ -212,7 +179,7 @@
         ]
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
@@ -236,8 +203,7 @@
             },
             {
               "name": "subaccount_id",
-              "strategy": "literal",
-              "value": 144422
+              "strategy": "credential_uid"
             }
           ]
         }
@@ -259,7 +225,7 @@
         "empty_collection": "allowed"
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
@@ -283,8 +249,7 @@
             },
             {
               "name": "subaccount_id",
-              "strategy": "literal",
-              "value": 144422
+              "strategy": "credential_uid"
             }
           ]
         }
@@ -310,16 +275,16 @@
         "empty_collection": "allowed"
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
       "method": "fetchFundingRate",
       "branches": [
         {
-          "provider_operation": "publicPostGetFundingRateHistory",
+          "provider_operation": "publicPostGetTicker",
           "http_method": "POST",
-          "path": "get_funding_rate_history",
+          "path": "get_ticker",
           "authenticated": false,
           "market_kind": "linear",
           "options": []
@@ -345,7 +310,7 @@
         ]
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
@@ -385,7 +350,7 @@
         ]
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
@@ -421,7 +386,7 @@
         ]
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
@@ -453,7 +418,7 @@
         ]
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
@@ -477,8 +442,7 @@
             },
             {
               "name": "subaccount_id",
-              "strategy": "literal",
-              "value": 144422
+              "strategy": "credential_uid"
             }
           ]
         }
@@ -501,16 +465,16 @@
         "empty_collection": "allowed"
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
       "method": "fetchOpenOrders",
       "branches": [
         {
-          "provider_operation": "privatePostGetOrders",
+          "provider_operation": "privatePostGetOpenOrders",
           "http_method": "POST",
-          "path": "get_orders",
+          "path": "get_open_orders",
           "authenticated": true,
           "market_kind": "linear",
           "options": [
@@ -525,8 +489,7 @@
             },
             {
               "name": "subaccount_id",
-              "strategy": "literal",
-              "value": 144422
+              "strategy": "credential_uid"
             }
           ]
         }
@@ -548,7 +511,7 @@
         "empty_collection": "allowed"
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
@@ -580,7 +543,7 @@
         ]
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
@@ -600,8 +563,7 @@
             },
             {
               "name": "subaccount_id",
-              "strategy": "literal",
-              "value": 144422
+              "strategy": "credential_uid"
             }
           ]
         }
@@ -632,16 +594,16 @@
         "empty_collection": "allowed"
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
       "method": "fetchOrders",
       "branches": [
         {
-          "provider_operation": "privatePostGetOrders",
+          "provider_operation": "privatePostGetOrderHistory",
           "http_method": "POST",
-          "path": "get_orders",
+          "path": "get_order_history",
           "authenticated": true,
           "market_kind": "linear",
           "options": [
@@ -656,8 +618,7 @@
             },
             {
               "name": "subaccount_id",
-              "strategy": "literal",
-              "value": 144422
+              "strategy": "credential_uid"
             }
           ]
         }
@@ -679,7 +640,7 @@
         "empty_collection": "allowed"
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
@@ -694,8 +655,7 @@
           "options": [
             {
               "name": "subaccount_id",
-              "strategy": "literal",
-              "value": 144422
+              "strategy": "credential_uid"
             }
           ]
         }
@@ -716,7 +676,7 @@
         "empty_collection": "allowed"
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
@@ -748,7 +708,7 @@
         ]
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
@@ -780,7 +740,7 @@
         ]
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
@@ -819,7 +779,7 @@
         ]
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
@@ -849,7 +809,7 @@
         ]
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
@@ -896,7 +856,7 @@
         ]
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     },
     {
@@ -920,8 +880,7 @@
             },
             {
               "name": "subaccount_id",
-              "strategy": "literal",
-              "value": 144422
+              "strategy": "credential_uid"
             }
           ]
         }
@@ -943,7 +902,7 @@
         "empty_collection": "allowed"
       },
       "authority_source_ids": [
-        "erc20-transfer-history"
+        "openapi"
       ]
     },
     {
@@ -967,8 +926,7 @@
             },
             {
               "name": "subaccount_id",
-              "strategy": "literal",
-              "value": 144422
+              "strategy": "credential_uid"
             }
           ]
         }
@@ -990,7 +948,7 @@
         "empty_collection": "allowed"
       },
       "authority_source_ids": [
-        "liquidation-history"
+        "openapi"
       ]
     }
   ],

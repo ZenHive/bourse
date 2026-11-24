@@ -2,7 +2,7 @@
   "schema_version": 2,
   "venue": "derive",
   "official_docs_url": "https://docs.derive.xyz/",
-  "selection_reason": "Rank 1: Derive's official documentation advertises its llms.txt as the machine-readable index for pages and API endpoints. No separately downloadable first-party OpenAPI document is exposed, so llms.txt is the canonical available artifact.",
+  "selection_reason": "Rank 1: Derive publishes a first-party OpenAPI document for its v3 JSON-RPC API (applies to HTTP and WebSocket) plus two AsyncAPI documents for WebSocket-only methods and subscriptions; the OpenAPI document is the REST completeness gate.",
   "fetch_script": "scripts/fetch_authority.sh",
   "artifacts": [
     {
@@ -11,31 +11,31 @@
       "source_url": "https://docs.derive.xyz/llms.txt",
       "fetch_url": "https://docs.derive.xyz/llms.txt",
       "filename": "llms.txt",
-      "retrieved_at": "2026-07-22",
+      "retrieved_at": "2026-11-25",
       "upstream_pin": {
-        "type": "http_etag",
-        "value": "W/\"bb8b-gqrLspQKr4Q0pahN1J+ExPNcs3o\""
+        "type": "retrieval_date",
+        "value": "2026-11-25"
       },
-      "sha256": "943424e372a0fa7a6a05835ad20438d742763fd05b8c806b054a899023002ded",
-      "bytes": 48011,
+      "sha256": "273b5a4aade9c86c9fa99953bb794c530c3267060f1c17a3291c0c27f1b23d38",
+      "bytes": 67833,
       "storage": "reference_only",
       "path": null,
       "license": {
         "status": "unclear",
-        "license": "No artifact-specific license published",
+        "license": "No artifact-specific redistribution license published",
         "evidence_url": "https://www.derive.xyz/terms",
         "handling": "reference_only",
-        "reason": "The public docs index contains no redistribution grant, so only provenance and its content hash are committed."
+        "reason": "The provider publishes no redistribution grant for this artifact, so only its provenance and content hash are committed."
       },
       "drift": {
         "mode": "sha256",
         "url": "https://docs.derive.xyz/llms.txt"
       },
       "freshness": {
-        "status": "drift_detected",
-        "checked_at": "2026-08-18",
+        "status": "initial_baseline",
+        "checked_at": "2026-11-25",
         "mutable": true,
-        "notes": "Upstream re-published. The artifact is a discovery index (llms.txt), explicitly not a contract completeness source, so drift changes what is discoverable, not what is contracted. Re-baselined 2026-08-18."
+        "notes": "Re-baselined for the v3 documentation set (task 709)."
       },
       "expressiveness": {
         "level": "documentation_index",
@@ -59,18 +59,18 @@
       }
     },
     {
-      "id": "liquidation-history",
-      "kind": "official-api-documentation",
-      "source_url": "https://docs.derive.xyz/reference/post_public-get-liquidation-history.md",
-      "fetch_url": "https://docs.derive.xyz/reference/post_public-get-liquidation-history.md",
-      "filename": "post_public-get-liquidation-history.md",
-      "retrieved_at": "2026-08-10",
+      "id": "openapi",
+      "kind": "openapi-json",
+      "source_url": "https://docs.derive.xyz/openapi.json",
+      "fetch_url": "https://docs.derive.xyz/openapi.json",
+      "filename": "openapi.json",
+      "retrieved_at": "2026-11-25",
       "upstream_pin": {
-        "type": "retrieval_date",
-        "value": "2026-08-10"
+        "type": "document_version_http_etag",
+        "value": "0.2.0; W/\"z6Ip46XPYxqgZg-c\""
       },
-      "sha256": "f22abc5f034d2dbad6e0ec3202e27372a15039cf76bd847ed035476728619087",
-      "bytes": 10896,
+      "sha256": "5d88da6a9f592f2eaf2f8f25499dd1237e1a343719fb083db40177e069f049be",
+      "bytes": 676596,
       "storage": "reference_only",
       "path": null,
       "license": {
@@ -78,30 +78,83 @@
         "license": "No artifact-specific redistribution license published",
         "evidence_url": "https://www.derive.xyz/terms",
         "handling": "reference_only",
-        "reason": "The official operation reference is hash-pinned rather than redistributed because no artifact-specific license is published."
+        "reason": "The provider publishes no redistribution grant for this artifact, so only its provenance and content hash are committed."
       },
       "drift": {
         "mode": "sha256",
-        "url": "https://docs.derive.xyz/reference/post_public-get-liquidation-history.md"
+        "url": "https://docs.derive.xyz/openapi.json"
       },
       "freshness": {
         "status": "initial_baseline",
-        "checked_at": "2026-08-10",
+        "checked_at": "2026-11-25",
         "mutable": true,
-        "notes": "This provider operation page entered the corpus as an implementation-time baseline."
+        "notes": "v3 baseline (info.version 0.2.0). Every authored raw endpoint resolves to a path in this document."
       },
       "expressiveness": {
         "level": "typed_openapi",
         "limitations": [
-          "The page covers one REST operation."
+          "The document models every JSON-RPC method with HTTP POST paths; WebSocket-only methods and subscription channels live in the two AsyncAPI documents."
         ]
       },
       "scope": [
         {
           "surface": "current_rest",
+          "coverage": "complete",
+          "limitations": [
+            "Completeness applies to the v3 JSON-RPC method inventory under /v3/public and /v3/private."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": true
+      }
+    },
+    {
+      "id": "websocket-asyncapi",
+      "kind": "asyncapi-json",
+      "source_url": "https://docs.derive.xyz/websocket.asyncapi.json",
+      "fetch_url": "https://docs.derive.xyz/websocket.asyncapi.json",
+      "filename": "websocket.asyncapi.json",
+      "retrieved_at": "2026-11-25",
+      "upstream_pin": {
+        "type": "document_version_http_etag",
+        "value": "0.2.0; W/\"g19NYAlM9ysqLIev\""
+      },
+      "sha256": "d77698045f9feb82bbbbdd9b75e77fb60946bcf58ce28bf4a76bdc28bc240478",
+      "bytes": 17808,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific redistribution license published",
+        "evidence_url": "https://www.derive.xyz/terms",
+        "handling": "reference_only",
+        "reason": "The provider publishes no redistribution grant for this artifact, so only its provenance and content hash are committed."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.derive.xyz/websocket.asyncapi.json"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-11-25",
+        "mutable": true,
+        "notes": "v3 baseline (info.version 0.2.0)."
+      },
+      "expressiveness": {
+        "level": "typed_asyncapi",
+        "limitations": [
+          "The document covers the WebSocket-only RPC methods: public/login, subscribe, unsubscribe and private/set_cancel_on_disconnect."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_websocket",
           "coverage": "partial",
           "limitations": [
-            "The page covers one REST operation."
+            "WebSocket-only RPC methods; subscription channels are in subscriptions.asyncapi.json."
           ]
         }
       ],
@@ -112,18 +165,18 @@
       }
     },
     {
-      "id": "erc20-transfer-history",
-      "kind": "official-api-documentation",
-      "source_url": "https://docs.derive.xyz/reference/post_private-get-erc20-transfer-history.md",
-      "fetch_url": "https://docs.derive.xyz/reference/post_private-get-erc20-transfer-history.md",
-      "filename": "post_private-get-erc20-transfer-history.md",
-      "retrieved_at": "2026-08-10",
+      "id": "subscriptions-asyncapi",
+      "kind": "asyncapi-json",
+      "source_url": "https://docs.derive.xyz/subscriptions.asyncapi.json",
+      "fetch_url": "https://docs.derive.xyz/subscriptions.asyncapi.json",
+      "filename": "subscriptions.asyncapi.json",
+      "retrieved_at": "2026-11-25",
       "upstream_pin": {
-        "type": "retrieval_date",
-        "value": "2026-08-10"
+        "type": "document_version_http_etag",
+        "value": "0.2.0; W/\"z6Ip46XPYxqgZg-c\""
       },
-      "sha256": "1b6ca15ce4485a47f6a85354e230fa4b4888b25347bda08a1830c90dbc9d040d",
-      "bytes": 5835,
+      "sha256": "2a0080c50406141bbc8c14f17bb561b24aae38795f1c15e23d5f0919b3a95a95",
+      "bytes": 79831,
       "storage": "reference_only",
       "path": null,
       "license": {
@@ -131,136 +184,30 @@
         "license": "No artifact-specific redistribution license published",
         "evidence_url": "https://www.derive.xyz/terms",
         "handling": "reference_only",
-        "reason": "The official operation reference is hash-pinned rather than redistributed because no artifact-specific license is published."
+        "reason": "The provider publishes no redistribution grant for this artifact, so only its provenance and content hash are committed."
       },
       "drift": {
         "mode": "sha256",
-        "url": "https://docs.derive.xyz/reference/post_private-get-erc20-transfer-history.md"
+        "url": "https://docs.derive.xyz/subscriptions.asyncapi.json"
       },
       "freshness": {
         "status": "initial_baseline",
-        "checked_at": "2026-08-10",
+        "checked_at": "2026-11-25",
         "mutable": true,
-        "notes": "This provider operation page entered the corpus as an implementation-time baseline."
+        "notes": "v3 baseline (info.version 0.2.0)."
       },
       "expressiveness": {
-        "level": "typed_openapi",
+        "level": "typed_asyncapi",
         "limitations": [
-          "The page covers one REST operation."
+          "The document covers subscription channels and their notification payloads, not request/response RPC methods."
         ]
       },
       "scope": [
         {
-          "surface": "current_rest",
-          "coverage": "partial",
+          "surface": "current_websocket",
+          "coverage": "complete",
           "limitations": [
-            "The page covers one REST operation."
-          ]
-        }
-      ],
-      "authority": {
-        "classification": "provider_owned",
-        "semantic_authority": true,
-        "completeness_gate": false
-      }
-    },
-    {
-      "id": "interest-history",
-      "kind": "official-api-documentation",
-      "source_url": "https://docs.derive.xyz/reference/post_private-get-interest-history.md",
-      "fetch_url": "https://docs.derive.xyz/reference/post_private-get-interest-history.md",
-      "filename": "post_private-get-interest-history.md",
-      "retrieved_at": "2026-08-10",
-      "upstream_pin": {
-        "type": "retrieval_date",
-        "value": "2026-08-10"
-      },
-      "sha256": "fdcfa12ec45ecc0ed29f44c8d486fe1e461634b0ca702e8cb9832fe90ccc51be",
-      "bytes": 4748,
-      "storage": "reference_only",
-      "path": null,
-      "license": {
-        "status": "unclear",
-        "license": "No artifact-specific redistribution license published",
-        "evidence_url": "https://www.derive.xyz/terms",
-        "handling": "reference_only",
-        "reason": "The official operation reference is hash-pinned rather than redistributed because no artifact-specific license is published."
-      },
-      "drift": {
-        "mode": "sha256",
-        "url": "https://docs.derive.xyz/reference/post_private-get-interest-history.md"
-      },
-      "freshness": {
-        "status": "initial_baseline",
-        "checked_at": "2026-08-10",
-        "mutable": true,
-        "notes": "This provider operation page entered the corpus as an implementation-time baseline."
-      },
-      "expressiveness": {
-        "level": "typed_openapi",
-        "limitations": [
-          "The page covers one REST operation."
-        ]
-      },
-      "scope": [
-        {
-          "surface": "current_rest",
-          "coverage": "partial",
-          "limitations": [
-            "The page covers one REST operation."
-          ]
-        }
-      ],
-      "authority": {
-        "classification": "provider_owned",
-        "semantic_authority": true,
-        "completeness_gate": false
-      }
-    },
-    {
-      "id": "option-settlement-history",
-      "kind": "official-api-documentation",
-      "source_url": "https://docs.derive.xyz/reference/post_public-get-option-settlement-history.md",
-      "fetch_url": "https://docs.derive.xyz/reference/post_public-get-option-settlement-history.md",
-      "filename": "post_public-get-option-settlement-history.md",
-      "retrieved_at": "2026-08-10",
-      "upstream_pin": {
-        "type": "retrieval_date",
-        "value": "2026-08-10"
-      },
-      "sha256": "5034d181522e292a2dbd6729cb646764af5eb3b46a246538118d665b9610fc16",
-      "bytes": 6395,
-      "storage": "reference_only",
-      "path": null,
-      "license": {
-        "status": "unclear",
-        "license": "No artifact-specific redistribution license published",
-        "evidence_url": "https://www.derive.xyz/terms",
-        "handling": "reference_only",
-        "reason": "The official operation reference is hash-pinned rather than redistributed because no artifact-specific license is published."
-      },
-      "drift": {
-        "mode": "sha256",
-        "url": "https://docs.derive.xyz/reference/post_public-get-option-settlement-history.md"
-      },
-      "freshness": {
-        "status": "initial_baseline",
-        "checked_at": "2026-08-10",
-        "mutable": true,
-        "notes": "This provider operation page entered the corpus as an implementation-time baseline."
-      },
-      "expressiveness": {
-        "level": "typed_openapi",
-        "limitations": [
-          "The page covers one REST operation."
-        ]
-      },
-      "scope": [
-        {
-          "surface": "current_rest",
-          "coverage": "partial",
-          "limitations": [
-            "The page covers one REST operation."
+            "Completeness applies to the v3 subscription channel inventory."
           ]
         }
       ],
@@ -273,39 +220,92 @@
     {
       "id": "error-codes",
       "kind": "official-errors-markdown",
-      "source_url": "https://docs.derive.xyz/reference/error-codes.md",
-      "fetch_url": "https://docs.derive.xyz/reference/error-codes.md",
-      "filename": "errors.md",
-      "retrieved_at": "2026-07-22",
+      "source_url": "https://docs.derive.xyz/error-codes.md",
+      "fetch_url": "https://docs.derive.xyz/error-codes.md",
+      "filename": "error-codes.md",
+      "retrieved_at": "2026-11-25",
       "upstream_pin": {
-        "type": "http_etag",
-        "value": "W/\"48d908492c3fde72b067df39a32ff43095073003:expanded|ced1e0b9\""
+        "type": "retrieval_date",
+        "value": "2026-11-25"
       },
-      "sha256": "6bf4d73b421038b1e9d76ddda31d9401a3251516f0afebbfe4b311233b5d041d",
-      "bytes": 45164,
+      "sha256": "ce94ec1f7b3d2a326ae60a9738be4ca725b5da389e07d0779d71960ab9b22349",
+      "bytes": 20987,
       "storage": "reference_only",
       "path": null,
       "license": {
         "status": "unclear",
-        "license": "No artifact-specific license published",
+        "license": "No artifact-specific redistribution license published",
         "evidence_url": "https://www.derive.xyz/terms",
         "handling": "reference_only",
-        "reason": "The official error reference publishes no redistribution grant; only its normalized facts are committed."
+        "reason": "The provider publishes no redistribution grant for this artifact, so only its provenance and content hash are committed."
       },
       "drift": {
         "mode": "sha256",
-        "url": "https://docs.derive.xyz/reference/error-codes.md"
+        "url": "https://docs.derive.xyz/error-codes.md"
       },
       "freshness": {
-        "status": "drift_detected",
-        "checked_at": "2026-08-10",
+        "status": "initial_baseline",
+        "checked_at": "2026-11-25",
         "mutable": true,
-        "notes": "The mutable error page differs from the retained pin; semantic review is required before refresh."
+        "notes": "v3 catalog; the v2 page at /reference/error-codes.md answers 404."
       },
       "expressiveness": {
         "level": "prose_documentation",
         "limitations": [
-          "The source is not a typed operation inventory."
+          "The catalog is a Markdown table; codes carry a message and a firing condition but no typed schema."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "complete",
+          "limitations": [
+            "Completeness applies to the documented v3 error catalog."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
+    },
+    {
+      "id": "breaking-changes",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.derive.xyz/migrating/breaking-changes.md",
+      "fetch_url": "https://docs.derive.xyz/migrating/breaking-changes.md",
+      "filename": "breaking-changes.md",
+      "retrieved_at": "2026-11-25",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-11-25"
+      },
+      "sha256": "db0a531fa8d940eb6e96da341e6418f548a030833f62076b4a9c48c68e43f19b",
+      "bytes": 16787,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific redistribution license published",
+        "evidence_url": "https://www.derive.xyz/terms",
+        "handling": "reference_only",
+        "reason": "The provider publishes no redistribution grant for this artifact, so only its provenance and content hash are committed."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.derive.xyz/migrating/breaking-changes.md"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-11-25",
+        "mutable": true,
+        "notes": "v3 migration guide."
+      },
+      "expressiveness": {
+        "level": "prose_documentation",
+        "limitations": [
+          "Prose migration guide; it names v2→v3 changes but carries no typed schema."
         ]
       },
       "scope": [
@@ -313,7 +313,60 @@
           "surface": "current_rest",
           "coverage": "partial",
           "limitations": [
-            "The artifact enumerates errors and does not inventory operations."
+            "Covers the v2→v3 deltas only."
+          ]
+        }
+      ],
+      "authority": {
+        "classification": "provider_owned",
+        "semantic_authority": true,
+        "completeness_gate": false
+      }
+    },
+    {
+      "id": "action-signing",
+      "kind": "official-api-documentation",
+      "source_url": "https://docs.derive.xyz/authentication/action-signing.md",
+      "fetch_url": "https://docs.derive.xyz/authentication/action-signing.md",
+      "filename": "action-signing.md",
+      "retrieved_at": "2026-11-25",
+      "upstream_pin": {
+        "type": "retrieval_date",
+        "value": "2026-11-25"
+      },
+      "sha256": "3b9cfc7aae08142ef3109c04a798f7f3c6dc940122eb4ed074d3dde658e65c56",
+      "bytes": 16022,
+      "storage": "reference_only",
+      "path": null,
+      "license": {
+        "status": "unclear",
+        "license": "No artifact-specific redistribution license published",
+        "evidence_url": "https://www.derive.xyz/terms",
+        "handling": "reference_only",
+        "reason": "The provider publishes no redistribution grant for this artifact, so only its provenance and content hash are committed."
+      },
+      "drift": {
+        "mode": "sha256",
+        "url": "https://docs.derive.xyz/authentication/action-signing.md"
+      },
+      "freshness": {
+        "status": "initial_baseline",
+        "checked_at": "2026-11-25",
+        "mutable": true,
+        "notes": "v3 action-signing reference; the source of the pinned domain separators and module addresses."
+      },
+      "expressiveness": {
+        "level": "prose_documentation",
+        "limitations": [
+          "Prose with published constants (typehash, domain separators, module addresses, nonce and expiry windows)."
+        ]
+      },
+      "scope": [
+        {
+          "surface": "current_rest",
+          "coverage": "partial",
+          "limitations": [
+            "Covers signed-action construction only."
           ]
         }
       ],
@@ -327,10 +380,10 @@
   "error_enumeration": {
     "path": "errors.json",
     "source_artifact_id": "error-codes",
-    "source_url": "https://docs.derive.xyz/reference/error-codes.md",
-    "retrieved_at": "2026-07-22",
-    "sha256": "d947833818d94bd3d9bb1018b3573688affcb2f033f2876e83b7adbdee28cf7e",
-    "bytes": 19286
+    "source_url": "https://docs.derive.xyz/error-codes.md",
+    "retrieved_at": "2026-11-25",
+    "sha256": "4174bde007b24ee0b73617c40f5b8f67676c405ea07ab42487d61bd571f6b7ca",
+    "bytes": 15837
   },
   "rejected_candidates": []
 }

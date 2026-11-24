@@ -52,8 +52,6 @@ env_registrations = [
   {:binance, [testnet: true]},
   {:binance, :futures, [testnet: true]},
   {:deribit, [testnet: true]},
-  # Task 210 — Derive testnet (X-Lyra* session-key auth; wallet = api_key)
-  {:derive, [testnet: true]},
   # Task 339 — Hyperliquid testnet (EVM wallet: api_key=address, secret=private key)
   {:hyperliquid, [testnet: true]}
 ]
@@ -81,8 +79,48 @@ lighter_verdict =
     CredentialCheck.run(sandbox: true, account_index: account_index)
   end
 
+# Derive v3 subaccounts are created by an L1 deposit and numbered by the venue,
+# so the id is read from the owner wallet here rather than configured. It rides
+# on the credential `uid` and is exported for the integration tests.
+derive_wallet = System.get_env("DERIVE_TESTNET_API_KEY")
+
+derive_subaccount_id =
+  with wallet when is_binary(wallet) and wallet != "" <- derive_wallet,
+       {:ok, exchange} <- Bourse.Exchange.new("derive", sandbox: true),
+       {:ok, %{"result" => %{"subaccount_ids" => [id | _]}}} <-
+         Bourse.Derive.public_post_get_subaccounts(exchange, %{"wallet" => wallet}) do
+    System.put_env("DERIVE_TESTNET_SUBACCOUNT_ID", Integer.to_string(id))
+    Integer.to_string(id)
+  else
+    other ->
+      IO.puts(:stderr, """
+
+      ======== DERIVE HAS NO v3 TESTNET SUBACCOUNT — every private Derive case will fail ========
+
+      public/get_subaccounts for DERIVE_TESTNET_API_KEY=#{inspect(derive_wallet)} answered:
+        #{inspect(other, limit: 8)}
+
+      v3 creates the account and its first subaccount on an L1 deposit (there is no
+      private/create_subaccount). Operator step: on https://testnet.app.derive.xyz connect
+      the owner wallet, mint testnet USDC and deposit it (Sepolia ETH for gas), then
+      register a session key with private/set_session_key or sign with the owner key.
+      DERIVE_TESTNET_API_KEY = owner wallet address, DERIVE_TESTNET_API_SECRET = its key
+      or the registered session key.
+      ===========================================================================================
+      """)
+
+      nil
+  end
+
 explicit_registrations =
   [
+    {:derive,
+     [
+       api_key: derive_wallet,
+       secret: System.get_env("DERIVE_TESTNET_API_SECRET"),
+       uid: derive_subaccount_id,
+       sandbox: true
+     ]},
     {:alpaca,
      [
        api_key: System.get_env("ALPACA_API_KEY"),

@@ -1,402 +1,440 @@
 {
   "authority": {
-    "retrieved_at": "2026-07-22",
+    "retrieved_at": "2026-11-25",
     "source_artifact_id": "error-codes",
-    "source_sha256": "6bf4d73b421038b1e9d76ddda31d9401a3251516f0afebbfe4b311233b5d041d",
-    "source_url": "https://docs.derive.xyz/reference/error-codes.md"
+    "source_sha256": "ce94ec1f7b3d2a326ae60a9738be4ca725b5da389e07d0779d71960ab9b22349",
+    "source_url": "https://docs.derive.xyz/error-codes.md"
   },
   "codes": {
-    "-32000": [
-      "Rate limit exceeded\" — Check per IP rate limits for non-auth requests or your account details for auth requests"
-    ],
-    "-32100": [
-      "Number of concurrent websocket clients limit exceeded\" — Check per IP max concurrent clients for non-auth requests or your account details for auth requests"
-    ],
-    "-32600": [
-      "Invalid Request\" — The JSON sent is not a valid Request object."
-    ],
-    "-32601": [
-      "Method not found\" — The method does not exist / is not available."
-    ],
-    "-32602": [
-      "Invalid params\" — Invalid method parameter(s)."
+    "-32700": [
+      "Error parsing message — Request body is not valid JSON"
     ],
     "-32603": [
-      "Internal error\" — Internal JSON-RPC error."
+      "Internal error — Any uncaught or internal server failure"
     ],
-    "-32700": [
-      "Parse error\" — Invalid JSON was received by the server. An error occurred on the server while parsing the JSON text."
+    "-32602": [
+      "Invalid params — Params fail validation"
     ],
-    "0": [
-      "— No error (typically omitted from a successful response)"
+    "-32601": [
+      "Method not found — Unknown RPC method"
     ],
-    "10000": [
-      "Manager not found\" — The requested margin type does not exist."
+    "-32600": [
+      "Invalid Request — Not a valid JSON-RPC request object"
     ],
-    "10001": [
-      "Asset is not an ERC20 token\" — The requested asset is not an ERC20 token and therefore cannot be deposited/withdrawn/transferred."
+    "-32100": [
+      "Number of concurrent websocket clients limit exceeded — Too many concurrent WebSocket connections"
     ],
-    "10002": [
-      "Sender and recipient wallet do not match\" — Transfers can only be made to subaccounts under the same wallet."
+    "-32000": [
+      "Rate limit exceeded — Per-wallet or per-instrument limit hit",
+      "*(caller-supplied)* — A method-specific rate-limit rejection"
     ],
-    "10003": [
-      "Sender and recipient subaccount IDs are the same\" — Transfers can only be made to a different subaccount id."
+    "401": [
+      "Unauthorized — Missing or invalid authentication"
     ],
-    "10004": [
-      "Multiple currencies not supported\" — Only standard margin accounts may hold assets of multiple currencies."
-    ],
-    "10005": [
-      "Maximum number of subaccounts per wallet reached\" — Withdraw any unused subaccounts to add new ones."
-    ],
-    "10006": [
-      "Maximum number of session keys per wallet reached\" — Deactivate any unused session keys to add new ones."
-    ],
-    "10007": [
-      "Maximum number of assets per subaccount reached\" — Number of assets in a subaccount is limited by the on-chain constraints."
-    ],
-    "10008": [
-      "Maximum number of expiries per subaccount reached\" — Number of expiries in a portfolio margin subaccount is limited by the on-chain constraints."
-    ],
-    "10009": [
-      "Recipient subaccount ID of the transfer cannot be 0\" — Transfers must be made to registerred non-zero subaccounts."
-    ],
-    "10010": [
-      "PMRM only supports USDC asset collateral. Cannot trade spot markets.\" — PMRM only supports USDC asset collateral. Cannot trade spot markets."
-    ],
-    "10011": [
-      "ERC20 allowance is insufficient\" — ERC20 allowance is insufficient for the requested action."
-    ],
-    "10012": [
-      "ERC20 balance is less than transfer amount\" — ERC20 balance is insufficient for the requested action."
-    ],
-    "10013": [
-      "There is a pending deposit for this asset\" — There is a pending deposit for this asset within the last 15 minutes. Please wait and try again."
-    ],
-    "10014": [
-      "There is a pending withdrawal for this asset\" — There is a pending withdrawal for this asset within the last 15 minutes. Please wait and try again."
-    ],
-    "10015": [
-      "PortfolioMargin2 supports multiple collaterals but only options and perps of the same currency\" — PortfolioMargin2 supports multiple collaterals but only options and perps of the same currency"
-    ],
-    "10016": [
-      "PortfolioMargin2 does not support this collateral. Please use a subaccount with Portfolio Manager that supports this currency or Standard Manager.\" — PortfolioMargin2 does not support this collateral. Please use a subaccount with Portfolio Manager that supports this currency or Standard Manager."
-    ],
-    "11000": [
-      "Insufficient funds\" — Insufficient funds to place order."
-    ],
-    "11002": [
-      "Order rejected from queue\" — Order did not reach the queue, matching engine might be down, or order was in the queue for too long."
-    ],
-    "11003": [
-      "Already cancelled\" — Order is already cancelled."
-    ],
-    "11004": [
-      "Already filled\" — Order is already filled."
-    ],
-    "11005": [
-      "Already expired\" — Order is already expired."
-    ],
-    "11006": [
-      "Does not exist\" — Order does not exist."
-    ],
-    "11007": [
-      "Self-crossing disallowed\" — Order was rejected because it crossed with another order placed by the same user."
-    ],
-    "11008": [
-      "Post only order cannot cross the market\" — A post-only order was rejected because it would have matched with an existing order."
-    ],
-    "11009": [
-      "Zero liquidity for market or IOC/FOK order\" — A market or an IOC/FOK order was rejected because there was no liquidity within the provided limit price."
-    ],
-    "11010": [
-      "Post-only invalid order type\" — A post-only order was rejected because it was not a limit order."
-    ],
-    "11011": [
-      "Invalid signature expiry\" — Order expiry is above or below the min/max validity or is beyond expiry (for options only)."
-    ],
-    "11012": [
-      "Invalid amount\" — Order amount is invalid, see data for details."
-    ],
-    "11013": [
-      "Invalid limit price\" — Order limit price is invalid, see data for details."
-    ],
-    "11014": [
-      "Fill-or-kill not filled\" — A fill-or-kill order was not filled."
-    ],
-    "11015": [
-      "MMP frozen\" — An order was rejected because the market maker protections were triggered."
-    ],
-    "11016": [
-      "Already consumed\" — Order is already consumed (Filled/expired/rejected)."
-    ],
-    "11017": [
-      "Non unique nonce\" — This nonce has already been used, please use a new nonce."
-    ],
-    "11018": [
-      "Invalid nonce date\" — First 10 digits of nonce must be a UTC sec timestamp within 1 hour of the true UTC timestamp."
-    ],
-    "11019": [
-      "Open orders limit exceeded\" — Too many open orders for this subaccount."
-    ],
-    "11020": [
-      "Negative ERC20 balance\" — Wrapped ERC20 balances cannot be negative."
-    ],
-    "11021": [
-      "Instrument is not live\" — Instrument has either been deactivated or expired (if an Option)"
-    ],
-    "11022": [
-      "Reject timestamp exceeded\" — Order was rejected because it reached the engine after the supplied reject_timestamp."
-    ],
-    "11023": [
-      "Max fee order param is too low\" — Max fee order param must always be >= 2 x max(taker, maker) x spot\\_price. If the order crosses the book, it must be >= 2 x max(taker, maker) x spot\\_price + base\\_fee / fill\\_amount."
-    ],
-    "11024": [
-      "Reduce only not supported with this time in force\" — Reduce only orders have to be market orders or non-resting limit orders (IOC or FOK)."
-    ],
-    "11025": [
-      "Reduce only reject\" — A reduce-only order was rejected because it would have increased position size."
-    ],
-    "11026": [
-      "Transfer reject\" — A transfer was rejected because it would have increased a subaccount position size."
-    ],
-    "11027": [
-      "Subaccount undergoing liquidation\" — A trade or order was rejected because the subaccount is undergoing a liquidation."
-    ],
-    "11028": [
-      "Replaced order filled amount does not match expected state.\" — New create order was reverted as the filled amount of the old order does not match the expected filled amount."
-    ],
-    "11029": [
-      "Trade or transfer rejected: open interest cap would be exceeded\" — The trade or transfer was rejected because it would cause the open interest to exceed the cap for either sender or recipients manager."
-    ],
-    "11050": [
-      "Trigger order was cancelled between the time worker sent order and engine processed order\" — Trigger order was not placed as it was cancelled right before entering engine"
-    ],
-    "11051": [
-      "Trigger price must be higher than the current price for stop orders and vice versa for take orders\" — Make sure the trigger price is properly set"
-    ],
-    "11052": [
-      "Trigger order limit exceeded (separate limit from regular orders)\" — Too many trigger orders for this subaccount."
-    ],
-    "11053": [
-      "Index and last-trade trigger price types not supported yet\" — Only mark price is supported for now"
-    ],
-    "11054": [
-      "Trigger orders cannot replace or be replaced\" — Trigger orders cannot replace or be replaced"
-    ],
-    "11055": [
-      "Market order limit_price is unfillable at the given trigger price\" — For market trigger orders, make sure limit price is crossable"
-    ],
-    "11100": [
-      "Leg instruments are not unique\" — Leg provided in the RFQ or Quote parameter must not have repeated instrument names."
-    ],
-    "11101": [
-      "RFQ not found\" — RFQ query or cancellation failed because nothing was found with the given filters."
-    ],
-    "11102": [
-      "Quote not found\" — Quote query or cancellation failed because nothing was found with the given filters."
-    ],
-    "11103": [
-      "Quote leg does not match RFQ leg\" — Legs provided in quote parameters must match the legs in the RFQ."
-    ],
-    "11104": [
-      "Requested quote or RFQ is not open\" — Quote submission failed because the RFQ is either expired, filled or cancelled."
-    ],
-    "11105": [
-      "Requested quote ID references a different RFQ ID\" — Quote execution failed because the RFQ ID parameter does not match the RFQ ID in the quote."
-    ],
-    "11106": [
-      "Invalid RFQ counterparty\" — RFQ submission failed because the counterparty is not authorized to act as an RFQ maker or does not exist."
-    ],
-    "11107": [
-      "Quote maker total cost too high\" — Quote submission failed because the maker total cost exceeded price bandwidth."
-    ],
-    "11108": [
-      "RFQ partial fill percentage too high\" — Attemted to fill an RFQ above the requested total size."
-    ],
-    "11109": [
-      "RFQ filled direction cannot be changed\" — RFQ filled direction cannot be changed after the RFQ is partially filled."
-    ],
-    "11110": [
-      "Quote taker total cost too high\" — Quote submission failed because the taker total cost exceeded orderbook execution price."
-    ],
-    "11111": [
-      "RFQ functionality is disabled for this account\" — RFQ functionality is disabled for this account due to suspicious activity or violation of terms of service."
-    ],
-    "11200": [
-      "Auction not ongoing\" — Supplied liquidated subaccount has no ongoing auction."
-    ],
-    "11201": [
-      "Open orders not allowed\" — Bidding subaccount is not allowed to have open orders."
-    ],
-    "11202": [
-      "Price limit exceeded\" — Supplied bid price limit is too low for this auction."
-    ],
-    "11203": [
-      "Last trade ID mismatch\" — Liquidated subaccount has a different last trade ID."
-    ],
-    "12000": [
-      "Asset not found\" — Requested asset does not exist."
-    ],
-    "12001": [
-      "Instrument not found\" — Requested instrument does not exist."
-    ],
-    "12002": [
-      "Currency not found\" — Requested currency does not exist."
-    ],
-    "12003": [
-      "USDC does not have asset caps per manager\" — USDC does not have asset caps per manager"
-    ],
-    "13000": [
-      "Invalid channels\" — All channels in the subscribe request were invalid."
-    ],
-    "14000": [
-      "Account not found\" — Requested wallet does not exist."
-    ],
-    "14001": [
-      "Subaccount not found\" — Requested subaccount does not belong to a registered wallet."
-    ],
-    "14002": [
-      "Subaccount was withdrawn\" — Requested subaccount was withdrawn. Please re-deposit subaccount."
-    ],
-    "14008": [
-      "Cannot reduce expiry using registerSessionKey RPC route\" — Must use the deregisterSessionKey RPC route to reduce expiry."
-    ],
-    "14009": [
-      "Session key expiry must be > utc_now + 10 min\" — Increase the expiry\\_sec."
-    ],
-    "14010": [
-      "Session key already registered for this account\" — Requested session key is already registered for this account."
-    ],
-    "14011": [
-      "Session key already registered with another account\" — Requested session key is already registered with another account."
-    ],
-    "14012": [
-      "Address must be checksummed\" — Requested address must be checksumed"
-    ],
-    "14013": [
-      "String is not a valid ethereum address\" — String must be a valid ethereum address: e.g. 0xd3cda913deb6f67967b99d67acdfa1712c293601"
-    ],
-    "14014": [
-      "Signature invalid for message or transaction\" — Address recovered from message and signature does not match the signer"
-    ],
-    "14015": [
-      "Transaction count for given wallet does not match provided nonce\" — Ensure the nonce is set correctly"
-    ],
-    "14016": [
-      "The provided signed raw transaction contains function name that does not match the expected function name\" — Ensure that the right contract abi was used when generating the transaction"
-    ],
-    "14017": [
-      "The provided signed raw transaction contains contract address that does not match the expected contract address\" — Ensure that the right contract address was used when generating the transaction"
-    ],
-    "14018": [
-      "The provided signed raw transaction contains function params that do not match any expected function params\" — Ensure that the right contract abi was used when generating the transaction"
-    ],
-    "14019": [
-      "The provided signed raw transaction contains function param values that do not match the expected values\" — Ensure that the signed function inputs match the ones provided in the request"
-    ],
-    "14020": [
-      "The X-LyraWallet header does not match the requested subaccount_id or wallet\" — Ensure the X-LyraWallet header is set to match the requested subaccount\\_id or wallet"
-    ],
-    "14021": [
-      "The X-LyraWallet header not provided\" — Ensure the X-LyraWallet header is included in the request"
-    ],
-    "14022": [
-      "Subscription to a private channel failed\" — A private channel is not authorized for this websocket connection, or it was requested over a public method"
-    ],
-    "14023": [
-      "Signer in on-chain related request is not wallet owner or registered session key\" — Address of the signer must be a wallet owner or registered session key"
-    ],
-    "14024": [
-      "Chain ID must match the current roll up chain id\" — Refer to v2-docs for chain id for each deployment"
-    ],
-    "14025": [
-      "The private request is missing a wallet or subaccount_id param\" — Ensure request params include a subaccount\\_id or wallet"
-    ],
-    "14026": [
-      "Session key not found\" — Requested session key does not exist."
-    ],
-    "14027": [
-      "Unauthorized as RFQ maker\" — The account is not authorized to act as an RFQ maker."
-    ],
-    "14028": [
-      "Cross currency RFQ not supported\" — RFQs only support same-currency legs at this moment."
-    ],
-    "14029": [
-      "Session key IP not whitelisted\" — IP address of the request is not whitelisted for the session key."
-    ],
-    "14030": [
-      "Session key expired\" — Session key has expired."
-    ],
-    "14031": [
-      "Unauthorized key scope\" — The key scope provided does not meet the minimum required scope."
-    ],
-    "14032": [
-      "Scope should not be changed\" — The key scope of the registered session key is not admin. It should not be elevated for security purposes"
-    ],
-    "14033": [
-      "Account not whitelisted for atomic orders\" — Account not whitelisted for atomic orders while trying to submit an atomic order."
-    ],
-    "14034": [
-      "Referral code not found. Codes are case sensitive.\" — Referral code not found. Codes are case sensitive."
-    ],
-    "16000": [
-      "You are in a restricted region that violates our terms of service.\" — You are in a restricted region that violates our terms of service. You may withdraw funds any time but deposits, transfers, orders are blocked"
-    ],
-    "16001": [
-      "Account is disabled due to compliance violations, please contact support to enable it.\" — Account is disabled due to compliance violations, please contact support to enable it."
-    ],
-    "16002": [
-      "Account is blocked due to OFAC compliance violations.\" — Account is blocked due to OFAC compliance violations."
-    ],
-    "16100": [
-      "Sentinel authorization is invalid\" — The sentinel authorization is invalid"
-    ],
-    "18000": [
-      "Invalid block number\" — Invalid block number"
-    ],
-    "18001": [
-      "Failed to estimate block number. Please try again later.\" — Failed to estimate block number. Please try again later."
-    ],
-    "18002": [
-      "The provided smart contract owner does not match the wallet in LightAccountFactory.getAddress()\" — The provided smart contract owner does not match the wallet in LightAccountFactory.getAddress()"
-    ],
-    "18003": [
-      "Vault ERC20 asset does not exist\" — Vault ERC20 asset does not exist"
-    ],
-    "18004": [
-      "Vault ERC20 pool does not exist\" — Vault ERC20 pool does not exist"
-    ],
-    "18005": [
-      "Must add asset to pool before getting balances\" — Must add asset to pool before getting balances"
-    ],
-    "18006": [
-      "Invalid Swell season. Swell seasons are in the form 'swell_season_X'.\" — Invalid Swell season. Swell seasons are in the form 'swell\\_season\\_X'."
-    ],
-    "18007": [
-      "Vault not found\" — Vault not found"
-    ],
-    "19000": [
-      "Maker program not found\" — Maker program not found"
+    "403": [
+      "Forbidden — Authenticated but not permitted",
+      "You are in a restricted region that violates our terms of service. — Request originates from a geoblocked region"
     ],
     "9000": [
-      "Order confirmation timeout\" — Order confirmation timed out but order status is unknown. Please check status of open orders."
+      "Order confirmation timeout — Order confirmation timed out"
     ],
     "9001": [
-      "Engine confirmation timeout\" — Order confirmation timed out while processing within the matching engine. The order has been dropped"
+      "Engine confirmation timeout — Matching-engine confirmation timed out; order dropped"
     ],
     "9002": [
-      "Cache connection error\" — Cache connection error, see data for details."
+      "Backend temporarily unavailable, retry — A read backend is restarting, catching up on prices, or at capacity. Nothing was executed; retry shortly"
+    ],
+    "9003": [
+      "Settlement is too far behind, retry later — The exchange paused new requests while on-chain settlement catches up. Nothing was executed; retry shortly"
+    ],
+    "10001": [
+      "Asset is not an ERC20 token — Deposit/withdraw/transfer of a non-ERC20 asset"
+    ],
+    "10003": [
+      "Sender and recipient subaccount IDs are the same — Self-transfer"
+    ],
+    "10004": [
+      "Multiple currencies not supported — Mixed-currency request rejected"
+    ],
+    "10006": [
+      "Maximum number of session keys per wallet reached — Session-key cap reached"
+    ],
+    "10007": [
+      "Maximum number of assets per subaccount reached — Per-subaccount asset cap reached"
+    ],
+    "10010": [
+      "PMRM only supports USDC asset collateral. Cannot trade spot markets. — PMRM subaccount tried to trade spot"
+    ],
+    "10015": [
+      "PortfolioMargin2 supports multiple collaterals but only options and perps of the same currency — PM2 cross-currency options/perps"
+    ],
+    "10016": [
+      "PortfolioMargin2 does not support this collateral — PM2 unsupported collateral"
+    ],
+    "11000": [
+      "Insufficient funds — Insufficient margin/funds for the order"
+    ],
+    "11006": [
+      "Does not exist — Cancel/query of an unknown order"
+    ],
+    "11007": [
+      "Self-crossing disallowed — Order would cross your own resting order"
+    ],
+    "11008": [
+      "Post only order cannot cross the market — Post-only order would match immediately"
+    ],
+    "11009": [
+      "Zero liquidity for market or IOC/FOK order — No liquidity within the limit price"
+    ],
+    "11011": [
+      "Invalid signature expiry — Expiry outside the allowed validity window"
+    ],
+    "11012": [
+      "Invalid amount — Order amount invalid"
+    ],
+    "11013": [
+      "Invalid limit price — Limit price invalid"
+    ],
+    "11014": [
+      "Fill-or-kill not filled — FOK order could not be fully filled"
+    ],
+    "11015": [
+      "MMP frozen — Market-maker protection frozen for the subaccount/currency"
+    ],
+    "11017": [
+      "Non unique nonce — Nonce already used"
+    ],
+    "11018": [
+      "Invalid nonce date — Leading nonce digits are not a valid UTC-second timestamp"
+    ],
+    "11019": [
+      "Open orders limit exceeded — Open-order cap per subaccount reached"
+    ],
+    "11020": [
+      "Negative ERC20 balance — Wrapped ERC20 balance would go negative"
+    ],
+    "11021": [
+      "Instrument is not live — Instrument deactivated or expired"
+    ],
+    "11022": [
+      "Reject timestamp exceeded — Order arrived after its `reject_timestamp`"
+    ],
+    "11023": [
+      "Max fee order param is too low — `max_fee` below the required minimum"
+    ],
+    "11024": [
+      "Reduce only not supported with this time in force — Reduce-only requires market/IOC/FOK"
+    ],
+    "11025": [
+      "Reduce only reject — Reduce-only order would increase the position"
+    ],
+    "11027": [
+      "Subaccount undergoing liquidation — Subaccount is being liquidated"
+    ],
+    "11028": [
+      "Replaced order filled amount does not match expected state. — Replace saw an unexpected filled amount"
+    ],
+    "11029": [
+      "Trade or transfer rejected: open interest cap would be exceeded — Open-interest cap for the manager exceeded"
+    ],
+    "11030": [
+      "Fee consumes entire amount — Fee is ≥ the transfer/withdraw amount"
+    ],
+    "11031": [
+      "Withdrawal rounds to zero — Net withdrawal rounds to zero in native decimals"
+    ],
+    "11032": [
+      "Transfer below minimum — New-subaccount funding below the minimum"
+    ],
+    "11033": [
+      "Transfer recipient not whitelisted — Recipient not on the sender's whitelist"
+    ],
+    "11034": [
+      "Withdrawals blocked by insolvent auction — Withdrawals paused during an insolvent auction"
+    ],
+    "11035": [
+      "Non increasing nonce — Signed-action nonce is not strictly increasing"
+    ],
+    "11039": [
+      "Lending pool borrows exceed supply — Pool has lent out more than it holds; debit uncoverable"
+    ],
+    "11046": [
+      "Withdrawals are not forwarded to this chain — `register_withdraw_address` for a chain with no route"
+    ],
+    "11047": [
+      "Recipient is not a valid address on the destination chain — Bad recipient, or an EVM recipient that is not the wallet"
+    ],
+    "11050": [
+      "Trigger order was cancelled between the time worker sent order and engine processed order — Trigger cancelled before it could be processed"
+    ],
+    "11051": [
+      "Trigger price must be higher than current price for stop orders and vice versa — Trigger price on the wrong side"
+    ],
+    "11052": [
+      "Trigger order limit exceeded (separate limit from regular orders) — Trigger-order cap reached"
+    ],
+    "11053": [
+      "Index and last-trade trigger price types not supported yet — Only mark-price triggers are supported"
+    ],
+    "11054": [
+      "Trigger orders cannot replace or be replaced — Replace involving a trigger order"
+    ],
+    "11055": [
+      "Market order limit\\_price is unfillable at the given trigger price — Market trigger would not be crossable"
+    ],
+    "11100": [
+      "Leg instruments are not unique — Repeated instrument across RFQ/quote legs"
+    ],
+    "11101": [
+      "RFQ not found — RFQ query/cancel matched nothing"
+    ],
+    "11102": [
+      "Quote not found — Quote query/cancel matched nothing"
+    ],
+    "11103": [
+      "Quote leg does not match RFQ leg — Quote legs differ from RFQ legs"
+    ],
+    "11104": [
+      "Requested quote or RFQ is not open — RFQ expired, filled, or cancelled"
+    ],
+    "11105": [
+      "Quote references a different RFQ than requested — Quote's RFQ id differs from the one provided"
+    ],
+    "11106": [
+      "Invalid RFQ counterparty — Counterparty unauthorized or nonexistent"
+    ],
+    "11107": [
+      "Quote maker total cost too high — Maker cost exceeded the price bandwidth"
+    ],
+    "11108": [
+      "RFQ partial fill percentage too high — Fill exceeds the requested total size"
+    ],
+    "11109": [
+      "RFQ filled direction cannot be changed — A later fill would flip the direction"
+    ],
+    "11110": [
+      "Quote taker total cost too high — Taker cost exceeded the orderbook execution price"
+    ],
+    "11111": [
+      "RFQ functionality is disabled for this account — RFQ disabled for the account"
+    ],
+    "11112": [
+      "RFQ has too many legs — Leg count over the maximum"
+    ],
+    "11113": [
+      "RFQ has too many counterparties — Counterparty count over the maximum"
+    ],
+    "11114": [
+      "Vault subaccounts cannot trade blocks — A block-trade side is a vault subaccount"
+    ],
+    "11115": [
+      "Both sides of a block trade have the same owner — Both block-trade sides belong to one wallet"
+    ],
+    "11116": [
+      "Block trade not found — No trade of the wallet or subaccount has the id"
+    ],
+    "11117": [
+      "Block proposal not found — Unknown id, or the caller cannot use the proposal"
+    ],
+    "11118": [
+      "Block proposal is not open — The proposal ended, or an accept is in progress"
+    ],
+    "11123": [
+      "Block trade price is too far from mark — Total cost is outside the RFQ price band of a side"
+    ],
+    "11124": [
+      "Block trades are not available for this currency — The currency has no RFQ price band"
+    ],
+    "12001": [
+      "Instrument not found — Unknown instrument"
+    ],
+    "12002": [
+      "Currency not found — Unknown currency"
+    ],
+    "12003": [
+      "Asset not found — Unknown asset"
+    ],
+    "13000": [
+      "Invalid channels — Unknown or malformed subscription channel"
+    ],
+    "14000": [
+      "Account not found — Account does not exist"
+    ],
+    "14001": [
+      "Subaccount not found — Subaccount not owned by a registered wallet"
+    ],
+    "14013": [
+      "String is not a valid ethereum address — Malformed address"
+    ],
+    "14014": [
+      "Signature invalid for message or transaction — Recovered signer does not match the expected signer"
+    ],
+    "14020": [
+      "The X-DeriveWallet header does not match the requested subaccount\\_id or wallet — Auth header subject mismatch"
+    ],
+    "14021": [
+      "IP not whitelisted — Request IP not on the whitelist"
+    ],
+    "14023": [
+      "Signer in on-chain related request is not wallet owner or registered session key — Signer is neither the owner nor a registered session key"
+    ],
+    "14026": [
+      "Session key not found — Unknown session key"
+    ],
+    "14027": [
+      "Unauthorized as RFQ maker — Account is not an RFQ maker"
+    ],
+    "14028": [
+      "Cross currency RFQ not supported — RFQ legs span multiple currencies"
+    ],
+    "14030": [
+      "Session key expired — Session key is past its expiry"
+    ],
+    "14031": [
+      "Unauthorized Key Scope — Session-key scope insufficient for the action"
+    ],
+    "14033": [
+      "Account not whitelisted for atomic orders — Atomic order from a non-whitelisted account"
+    ],
+    "14035": [
+      "Session key already registered — Session key already belongs to another wallet"
+    ],
+    "16001": [
+      "Account is disabled due to compliance violations — Account disabled by compliance"
+    ],
+    "16002": [
+      "Account is blocked due to OFAC compliance violations. — Account blocked under OFAC screening"
+    ],
+    "17000": [
+      "Instrument not supported by this manager / risk universe — Participants belong to different risk universes"
+    ],
+    "17001": [
+      "Unknown risk universe — Referenced risk universe does not exist"
+    ],
+    "17002": [
+      "Risk manager has no configuration for this currency — Trading or holding a currency the subaccount's manager cannot price"
+    ],
+    "17003": [
+      "Asset is not registered in the destination risk universe — Depositing or transferring an asset the destination cannot hold"
+    ],
+    "18007": [
+      "Vault not found — Subaccount is not a vault"
+    ],
+    "18008": [
+      "Exceeded maximum number of pending vault requests — Too many pending deposit/withdraw requests"
+    ],
+    "18009": [
+      "Exceeded maximum number of shareholder vaults — Shareholder-vault cap reached"
+    ],
+    "18010": [
+      "Vault is closed — Vault has been fully withdrawn/closed"
+    ],
+    "18011": [
+      "Vault withdrawal cooldown active — Deposit→withdraw cooldown not elapsed"
+    ],
+    "18012": [
+      "Vault creation deposit below minimum — Curator's initial deposit below the minimum"
+    ],
+    "18013": [
+      "Curator stake below minimum — Withdrawal would drop curator stake below the floor"
+    ],
+    "18014": [
+      "Vault quote outside slippage band — Share price outside the accepted band"
+    ],
+    "18015": [
+      "Vault amount below minimum — Deposit/withdraw below the per-asset minimum"
+    ],
+    "18016": [
+      "Vault signature expiry too far out — Expiry more than 30 days out"
+    ],
+    "18017": [
+      "Vault HWM benchmark price unavailable — High-water-mark benchmark has no feed"
+    ],
+    "18018": [
+      "Vault initial share price too far from benchmark — Initial price too far from the benchmark"
+    ],
+    "18019": [
+      "Insufficient margin for vault deposit — Source subaccount cannot back the deposit"
+    ],
+    "19000": [
+      "Subaccount is not liquidatable — Starting an auction on an account whose maintenance margin is intact"
+    ],
+    "19001": [
+      "Auction already ongoing — Starting an auction on an account that already has one"
+    ],
+    "19002": [
+      "No ongoing auction — Bidding on an account with no open auction"
+    ],
+    "19003": [
+      "Invalid liquidation portion — `percent_of_acc` outside `(0, 1]`"
+    ],
+    "19004": [
+      "Solvent auction expired — Solvent discount decayed to zero; a new start converts it"
+    ],
+    "19005": [
+      "Liquidation cannot transfer a subaccount to itself — Liquidatee and portion recipient are the same"
+    ],
+    "19006": [
+      "Bid would leave the bidder below initial margin — Bidder cannot carry the portion it would absorb"
+    ],
+    "19007": [
+      "Auction price limit violated — Current auction price is above the bid's `price_limit`"
+    ],
+    "19008": [
+      "Subaccount has no margin override — `public/margin_watch` or `private/get_margin` with `is_delayed_liquidation` on a subaccount without a delayed-liquidation override"
     ]
   },
   "dropped_non_authoritative_identifiers": [
-    "17000",
-    "17001",
-    "17002",
-    "17003",
+    "10000",
+    "10002",
+    "10005",
+    "10008",
+    "10009",
+    "10011",
+    "10012",
+    "10013",
+    "10014",
+    "11002",
+    "11003",
+    "11004",
+    "11005",
+    "11010",
+    "11016",
+    "11026",
+    "11200",
+    "11201",
+    "11202",
+    "11203",
+    "12000",
+    "14002",
+    "14008",
+    "14009",
+    "14010",
+    "14011",
+    "14012",
+    "14015",
+    "14016",
+    "14017",
+    "14018",
+    "14019",
+    "14022",
+    "14024",
+    "14025",
+    "14029",
+    "14032",
+    "16000",
+    "16100",
     "17004",
     "17005",
     "17006",
-    "17007"
+    "17007",
+    "18000",
+    "18001",
+    "18002",
+    "18003",
+    "18004",
+    "18005",
+    "18006"
   ],
   "exact_messages": {},
   "live_probe": {
@@ -410,12 +448,12 @@
   "unmapped_code_disposition": "exchange_error",
   "venue": "derive",
   "maintenance_adjudication": {
-    "adjudicated_at": "2026-07-22",
+    "adjudicated_at": "2026-11-25",
     "ccxt_class": "OnMaintenance",
     "ccxt_type": "exchange_not_available",
     "identifiers": [],
-    "source": "Derive API error enumeration",
-    "finding": "Official Derive error enumeration documents no dedicated system-maintenance or service-shutting-down code.",
+    "source": "Derive v3 error catalog (https://docs.derive.xyz/error-codes.md)",
+    "finding": "The v3 catalog documents no dedicated system-maintenance code. 9002 (read backend restarting) and 9003 (settlement too far behind) are documented as transient retry-shortly conditions and are authored as exchange_not_available.",
     "status": "no_documented_maintenance_code"
   }
 }
