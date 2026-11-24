@@ -2,11 +2,13 @@ defmodule Bourse.Signing.DeriveTest do
   @moduledoc """
   Deterministic cryptographic regression vectors for `Bourse.Signing.Derive`.
 
-  Provenance: the pinned signatures were originally produced by running CCXT
-  JS `signOrder` / `signMessage` (repo `../ccxt`) with the fixed test private
-  key — an unverified authoring reference, not a semantic authority. They are
-  kept as frozen regression vectors; venue semantics are established by the
-  live Derive acceptance evidence, never by these vectors.
+  Provenance: the v3 action digests and signatures were produced independently
+  with ethers 6.13.4 (`AbiCoder`, `TypedDataEncoder.hashDomain`, `SigningKey`)
+  from the domain fields Derive publishes at
+  https://docs.derive.xyz/authentication/action-signing.md, with the fixed test
+  private key; the EIP-191 session-login vectors with ethers `hashMessage` /
+  `Wallet.signMessage`. They are regression vectors for our own encoding; venue
+  acceptance is established by live Derive evidence, never here.
   """
   use ExUnit.Case, async: true
 
@@ -23,30 +25,33 @@ defmodule Bourse.Signing.DeriveTest do
   @order [
     @action_typehash,
     1,
-    1_700_000_000_000,
+    1_700_000_000_000_000_123,
     @trade_module,
     @data_hash,
     1_737_200_000,
     @wallet,
     @wallet
   ]
-  @order_signature "0xad87490af8285ace67d6de949932cd4e2eea83a824811e0ddf8af6b606c4116f53ffc10544a4e775552b8f09d1e96eebc4b80dc4836f52b50ec558915e374a661c"
+  @order_signature "0x456581bc160d0c95ef9fe19fa98061245c0b62676039d39993d470610e895d8f33b9b721d7c7add7e484c03d77902a2a42e622e73fe48ec4bafe1aecc58f62371b"
 
   describe "hash_order_message/2" do
-    test "retains compatibility with CCXT hashOrderMessage" do
+    test "mainnet digest matches an independent ethers encoding under chainId 1" do
       assert @order |> Derive.hash_order_message() |> Base.encode16(case: :lower) ==
-               "4b5d5fc519a09174ca351f0e2105c31094aff13748e5ecdd1aaab08286b5b9d3"
+               "70dd676b5743cb7337c3bf68bd5c71f11f8a45606aef016f5cf61c4a79e26ca9"
     end
 
-    test "sandbox uses a different domain separator" do
-      refute Derive.hash_order_message(@order, testnet: true) ==
-               Derive.hash_order_message(@order, testnet: false)
+    test "testnet digest matches an independent ethers encoding under chainId 11155111" do
+      assert @order |> Derive.hash_order_message(testnet: true) |> Base.encode16(case: :lower) ==
+               "71ce696220d54997754c0e7ed7f8f71fc2a68ca2dff98a87d9a5fac9ae9b0550"
     end
   end
 
   describe "sign_order/2" do
     test "byte-equal packed signature" do
       assert Derive.sign_order(@order, private_key: @private_key) == @order_signature
+
+      assert Derive.sign_order(@order, private_key: @private_key, testnet: true) ==
+               "0xf01d25bf6c981a71335cc52f2c94e573b9e6dff28454fd69e0a7135999d17c5b48ced351b666d789db4aff9de69ea0f2f3be4b21638974ff52e7702dd28ae7271c"
     end
 
     test "raises without a private key" do
@@ -57,12 +62,12 @@ defmodule Bourse.Signing.DeriveTest do
   end
 
   describe "hash_message/1 and sign_message/2 (EIP-191 personal signing)" do
-    test "hash_message retains compatibility with CCXT hashMessage" do
+    test "hash_message matches ethers hashMessage" do
       assert "1700000000000" |> Derive.hash_message() |> Base.encode16(case: :lower) ==
                "1362375365df31a82fb5331c8b5ae150f25d8ee09c8431ae46bac7625862136a"
     end
 
-    test "sign_message retains compatibility with CCXT signMessage" do
+    test "sign_message matches ethers Wallet.signMessage" do
       assert Derive.sign_message("1700000000000", private_key: @private_key) ==
                "0xe65c3e066894a1631220983b5da8617e21512ead950bb3ec6f38899349ebbe8d5f9111ffd4fa1bdfde707eae5f752ccdf11f3b5911ba014e92c2b9a50140b6a71b"
     end
@@ -73,7 +78,7 @@ defmodule Bourse.Signing.DeriveTest do
       raw_order = [
         Base.decode16!("4d7a9f27c403ff9c0f19bce61d76d82f9aa29f8d6d4b0c5474607d9770d1af17", case: :lower),
         1,
-        1_700_000_000_000,
+        1_700_000_000_000_000_123,
         @trade_module,
         Base.decode16!("aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899", case: :lower),
         1_737_200_000,
@@ -165,7 +170,7 @@ defmodule Bourse.Signing.DeriveTest do
 
       request = %{
         method: :post,
-        path: "https://api.lyra.finance/private/order",
+        path: "https://api.derive.xyz/v3/private/order",
         body: nil,
         params: %{order: @order, instrument_name: "ETH-PERP"}
       }
@@ -178,10 +183,10 @@ defmodule Bourse.Signing.DeriveTest do
       signed = Derive.sign(request, ctx.credentials, %{timestamp_ms_override: 1_700_000_000_000})
 
       assert {"Content-Type", "application/json"} in signed.headers
-      assert {"X-LyraWallet", @wallet} in signed.headers
-      assert {"X-LyraTimestamp", "1700000000000"} in signed.headers
+      assert {"X-DeriveWallet", @wallet} in signed.headers
+      assert {"X-DeriveTimestamp", "1700000000000"} in signed.headers
 
-      sig = signed.headers |> Map.new() |> Map.fetch!("X-LyraSignature")
+      sig = signed.headers |> Map.new() |> Map.fetch!("X-DeriveSignature")
       assert sig == Derive.sign_message("1700000000000", private_key: @private_key)
       assert Jason.decode!(signed.body) == %{"wallet" => @wallet}
     end
@@ -192,7 +197,7 @@ defmodule Bourse.Signing.DeriveTest do
 
       signed = Derive.sign(request, ctx.credentials, %{timestamp_ms_override: 1_700_000_000_000})
 
-      assert {"X-LyraWallet", @wallet} in signed.headers
+      assert {"X-DeriveWallet", @wallet} in signed.headers
       assert signed.body == body
     end
 
@@ -200,14 +205,14 @@ defmodule Bourse.Signing.DeriveTest do
       request = %{ctx.request | params: %{}, body: nil}
       signed = Derive.sign(request, ctx.credentials, %{timestamp_ms_override: 1_700_000_000_000})
       assert signed.body == "{}"
-      assert {"X-LyraSignature", _} = List.keyfind(signed.headers, "X-LyraSignature", 0)
+      assert {"X-DeriveSignature", _} = List.keyfind(signed.headers, "X-DeriveSignature", 0)
     end
 
     test "order EIP-712 signature is additive — injects body signature and drops :order", ctx do
       signed = Derive.sign(ctx.request, ctx.credentials, %{timestamp_ms_override: 1_700_000_000_000})
 
-      assert {"X-LyraWallet", @wallet} in signed.headers
-      assert {"X-LyraTimestamp", "1700000000000"} in signed.headers
+      assert {"X-DeriveWallet", @wallet} in signed.headers
+      assert {"X-DeriveTimestamp", "1700000000000"} in signed.headers
       body = Jason.decode!(signed.body)
       assert body["signature"] == @order_signature
       assert body["instrument_name"] == "ETH-PERP"
@@ -224,13 +229,13 @@ defmodule Bourse.Signing.DeriveTest do
     test "routes through Bourse.Signing.sign/4 for the :derive pattern", ctx do
       signed = Signing.sign(:derive, ctx.request, ctx.credentials, %{timestamp_ms_override: 1_700_000_000_000})
       assert Jason.decode!(signed.body)["signature"] == @order_signature
-      assert {"X-LyraSignature", _} = List.keyfind(signed.headers, "X-LyraSignature", 0)
+      assert {"X-DeriveSignature", _} = List.keyfind(signed.headers, "X-DeriveSignature", 0)
     end
 
-    test "raises without credentials.api_key (X-LyraWallet)", ctx do
+    test "raises without credentials.api_key (X-DeriveWallet)", ctx do
       credentials = %Credentials{api_key: nil, secret: @private_key}
 
-      assert_raise ArgumentError, ~r/credentials\.api_key \(X-LyraWallet\)/, fn ->
+      assert_raise ArgumentError, ~r/credentials\.api_key \(X-DeriveWallet\)/, fn ->
         Derive.sign(ctx.request, credentials, %{})
       end
     end

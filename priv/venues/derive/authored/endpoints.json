@@ -369,18 +369,14 @@
   },
   "fetchCanceledOrders": {
     "unified": [
-      "privatePostGetOrders"
+      "privatePostGetOrderHistory"
     ],
     "has": true,
     "mapping_complete": true,
-    "verification": "verified",
+    "verification": "unverified",
     "request": {
       "defaults": {
-        "subaccount_id": {
-          "kind": "unresolved",
-          "reason": "identifier_reference",
-          "value": null
-        }
+        "_delegate": "fetchOrders"
       }
     },
     "transaction_classification": {
@@ -390,7 +386,7 @@
   },
   "fetchClosedOrders": {
     "unified": [
-      "privatePostGetOrders"
+      "privatePostGetOrderHistory"
     ],
     "has": true,
     "mapping_complete": true,
@@ -444,11 +440,7 @@
     },
     "request": {
       "defaults": {
-        "subaccount_id": {
-          "kind": "unresolved",
-          "reason": "identifier_reference",
-          "value": null
-        }
+        "_delegate": "fetchOrders"
       }
     },
     "parse": [
@@ -461,7 +453,7 @@
   },
   "fetchCurrencies": {
     "unified": [
-      "publicGetGetAllCurrencies"
+      "publicPostGetAllCurrencies"
     ],
     "has": true,
     "mapping_complete": true,
@@ -598,7 +590,7 @@
   },
   "fetchFundingRate": {
     "unified": [
-      "publicPostGetFundingRateHistory"
+      "publicPostGetTicker"
     ],
     "has": true,
     "mapping_complete": true,
@@ -741,11 +733,11 @@
   },
   "fetchOpenOrders": {
     "unified": [
-      "privatePostGetOrders"
+      "privatePostGetOpenOrders"
     ],
     "has": true,
     "mapping_complete": true,
-    "verification": "verified",
+    "verification": "unverified",
     "descriptor": {
       "async": true,
       "description": "fetches information on multiple orders made by the user",
@@ -795,11 +787,6 @@
     },
     "request": {
       "defaults": {
-        "status": {
-          "kind": "literal",
-          "reason": null,
-          "value": "open"
-        },
         "subaccount_id": {
           "kind": "unresolved",
           "reason": "identifier_reference",
@@ -899,7 +886,7 @@
   },
   "fetchOrders": {
     "unified": [
-      "privatePostGetOrders"
+      "privatePostGetOrderHistory"
     ],
     "has": true,
     "mapping_complete": true,

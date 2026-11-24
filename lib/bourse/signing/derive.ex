@@ -1,15 +1,15 @@
 defmodule Bourse.Signing.Derive do
   @moduledoc """
-  First-party signing for Derive (Lyra v2, on Optimism).
+  First-party signing for Derive (API v3).
 
   Derive has **two** signature paths, both secp256k1 over a Keccak-256 digest:
 
-  - **REST auth headers** (every private request) — EIP-191 personal-message
-    signing of the millisecond timestamp. Emits the header trio:
-    `X-LyraWallet` (smart-contract wallet = `credentials.api_key`),
-    `X-LyraTimestamp`, `X-LyraSignature` (session-key = `credentials.secret`).
-  - **Order signing** (`sign_order/2`) — EIP-712 typed data with a *fixed*
-    domain separator. Additive on order endpoints only: when `:order` is in
+  - **Session login** (every private REST request) — EIP-191 personal-message
+    signing of the millisecond timestamp string. Emits the header trio
+    `X-DeriveWallet` (the owner wallet = `credentials.api_key`),
+    `X-DeriveTimestamp`, `X-DeriveSignature` (signed with `credentials.secret`).
+  - **Action signing** (`sign_order/2`) — EIP-712 typed data under the fixed
+    `Matching` domain. Additive on order endpoints only: when `:order` is in
     params, the packed signature is injected into the JSON body under
     `"signature"`. Never a precondition for private reads.
 
@@ -17,12 +17,20 @@ defmodule Bourse.Signing.Derive do
 
   ## Credentials
 
-  - `credentials.api_key` — Derive smart-contract wallet address (`X-LyraWallet`).
-    Not the owner EOA unless that address is also a registered session key.
-  - `credentials.secret` — private key of a **registered** session key (or the
-    wallet itself when it signs). Edge proxy verifies recovered signer against
-    the wallet / session-key registry before the app runs; owner EOA is not
-    auto-registered on UI onboarding.
+  - `credentials.api_key` — the wallet that owns the subaccounts: the owner EOA
+    or multisig (`X-DeriveWallet`, and the action's `owner`).
+  - `credentials.secret` — the private key of that wallet, or of a session key
+    the wallet registered through `private/set_session_key`. The venue recovers
+    the signer and answers `14026 "Session key not found"` when it is neither.
+
+  ## Domain
+
+  `name "Matching"`, `version "1.0"`, `verifyingContract
+  0xeB8d770ec18DB98Db922E9D83260A585b9F0DeAD` on every network; only `chainId`
+  differs (`1` mainnet, `11155111` testnet). The two separators below are the
+  values Derive publishes at
+  https://docs.derive.xyz/authentication/action-signing.md, and the test suite
+  recomputes them from those domain fields.
   """
 
   @behaviour Bourse.Signing.Behaviour
@@ -33,9 +41,9 @@ defmodule Bourse.Signing.Derive do
   alias Onchain.ABI.FunctionSelector
   alias Onchain.ABI.TypeEncoder
 
-  # Derive trade-module domain separators (Optimism mainnet / testnet).
-  @domain_separator_prod "d96e5f90797da7ec8dc4e276260c7f3f87fedf68775fbe1ef116e996fc60441b"
-  @domain_separator_sandbox "9bcf4dc06df5d8bf23af818d5716491b995020f377d3b7b64c29ed14e3dd1105"
+  # Published v3 `Matching` domain separators (chainId 1 / 11155111).
+  @domain_separator_prod "da616dfabb88681b08e1592820a41d55ddc62d68de110e327ae99d734506fe19"
+  @domain_separator_sandbox "24d674cd5f2b9d564691c51e9d88f649b99246a2244dd74ce27b96578d773e85"
 
   # ABI types for Derive's eight-field order tuple.
   @order_types ~w(bytes32 uint256 uint256 address bytes32 uint256 address address)
@@ -109,7 +117,7 @@ defmodule Bourse.Signing.Derive do
     abi_encode_static([base_asset, sub_id, price, amount, max_fee, subaccount_id, is_bid], @trade_module_data_types)
   end
 
-  @doc "Derives the session-key EOA address used by Derive's order envelope."
+  @doc "Derives the signer address (owner wallet or session key) used by Derive's action envelope."
   @spec signer_address(String.t()) :: String.t()
   def signer_address(private_key) when is_binary(private_key) do
     Crypto.address_from_private_key(private_key)
@@ -135,8 +143,8 @@ defmodule Bourse.Signing.Derive do
   @doc """
   `Bourse.Signing.Behaviour` entry point.
 
-  Always emits the REST auth-header trio (`X-LyraWallet` / `X-LyraTimestamp` /
-  `X-LyraSignature`) for private requests. When `:order` (or `"order"`) is
+  Always emits the REST auth-header trio (`X-DeriveWallet` / `X-DeriveTimestamp` /
+  `X-DeriveSignature`) for private requests. When `:order` (or `"order"`) is
   present in params, also injects the EIP-712 packed order signature into the
   JSON body under `"signature"` and drops the order tuple. Order signing is
   additive — private reads with only a JSON body (or empty params) succeed
@@ -156,9 +164,9 @@ defmodule Bourse.Signing.Derive do
 
     headers = [
       {"Content-Type", "application/json"},
-      {"X-LyraWallet", wallet},
-      {"X-LyraTimestamp", timestamp},
-      {"X-LyraSignature", auth_signature}
+      {"X-DeriveWallet", wallet},
+      {"X-DeriveTimestamp", timestamp},
+      {"X-DeriveSignature", auth_signature}
     ]
 
     body = build_body(request, credentials, config)
@@ -241,6 +249,6 @@ defmodule Bourse.Signing.Derive do
   end
 
   defp require_wallet!(_credentials) do
-    raise ArgumentError, "Derive signing requires credentials.api_key (X-LyraWallet)"
+    raise ArgumentError, "Derive signing requires credentials.api_key (X-DeriveWallet)"
   end
 end

@@ -35,10 +35,7 @@
           "coercion": "safeString",
           "key": "currency"
         },
-        "precision": {
-          "coercion": "safeNumber",
-          "key": "erc20_details.decimals"
-        },
+        "precision": null,
         "limits": {
           "default": {
             "deposit": {
@@ -89,26 +86,33 @@
       "field_map": {
         "datetime": null,
         "estimatedSettlePrice": null,
-        "fundingDatetime": {
-          "coercion": "iso8601",
-          "format": "ms",
-          "key": "timestamp"
-        },
+        "fundingDatetime": null,
         "fundingRate": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "funding_rate"
+          "key": "f"
         },
-        "fundingTimestamp": {
-          "coercion": "safeInteger",
-          "format": "ms",
-          "key": "timestamp"
+        "fundingTimestamp": null,
+        "indexPrice": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "I"
         },
-        "indexPrice": null,
         "info": null,
         "interestRate": null,
-        "interval": null,
-        "markPrice": null,
+        "interval": {
+          "default": "1h",
+          "evidence": {
+            "carve_id": "C-T709f",
+            "derivation": "provider_documented_hourly_cadence",
+            "source": "docs/authored-spec-carves/derive.md#c-t709f--fetchfundingrate-reads-the-slim-ticker-f"
+          }
+        },
+        "markPrice": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "M"
+        },
         "nextFundingDatetime": null,
         "nextFundingRate": null,
         "nextFundingTimestamp": null,
@@ -116,7 +120,11 @@
         "previousFundingRate": null,
         "previousFundingTimestamp": null,
         "symbol": null,
-        "timestamp": null
+        "timestamp": {
+          "coercion": "safeInteger",
+          "format": "ms",
+          "key": "t"
+        }
       }
     },
     "funding_rate_history": {
@@ -149,81 +157,81 @@
         "askImpliedVolatility": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "option_pricing.ask_iv"
+          "key": "option_pricing.ai"
         },
         "askPrice": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "best_ask_price"
+          "key": "a"
         },
         "askSize": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "best_ask_amount"
+          "key": "A"
         },
         "bidImpliedVolatility": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "option_pricing.bid_iv"
+          "key": "option_pricing.bi"
         },
         "bidPrice": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "best_bid_price"
+          "key": "b"
         },
         "bidSize": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "best_bid_amount"
+          "key": "B"
         },
         "datetime": null,
         "delta": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "option_pricing.delta"
+          "key": "option_pricing.d"
         },
         "gamma": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "option_pricing.gamma"
+          "key": "option_pricing.g"
         },
         "info": null,
         "lastPrice": null,
         "markImpliedVolatility": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "option_pricing.iv"
+          "key": "option_pricing.i"
         },
         "markPrice": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "option_pricing.mark_price"
+          "key": "option_pricing.m"
         },
         "rho": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "option_pricing.rho"
+          "key": "option_pricing.r"
         },
         "symbol": null,
         "theta": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "option_pricing.theta"
+          "key": "option_pricing.t"
         },
         "timestamp": {
           "coercion": "safeInteger",
           "format": "ms",
-          "key": "timestamp"
+          "key": "t"
         },
         "underlyingPrice": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "index_price"
+          "key": "I"
         },
         "vega": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "option_pricing.vega"
+          "key": "option_pricing.v"
         }
       }
     },
@@ -681,7 +689,7 @@
         "ask": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "best_ask_price",
+          "key": "a",
           "fallback_keys": [
             "instrument_ticker.a"
           ]
@@ -689,17 +697,24 @@
         "askVolume": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "best_ask_amount",
+          "key": "A",
           "fallback_keys": [
             "instrument_ticker.A"
           ]
         },
         "average": null,
-        "baseVolume": null,
+        "baseVolume": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "stats.c",
+          "fallback_keys": [
+            "instrument_ticker.stats.c"
+          ]
+        },
         "bid": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "best_bid_price",
+          "key": "b",
           "fallback_keys": [
             "instrument_ticker.b"
           ]
@@ -707,7 +722,7 @@
         "bidVolume": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "best_bid_amount",
+          "key": "B",
           "fallback_keys": [
             "instrument_ticker.B"
           ]
@@ -715,22 +730,36 @@
         "change": null,
         "close": null,
         "datetime": null,
-        "high": null,
+        "high": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "stats.h",
+          "fallback_keys": [
+            "instrument_ticker.stats.h"
+          ]
+        },
         "indexPrice": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "index_price",
+          "key": "I",
           "fallback_keys": [
             "instrument_ticker.I"
           ]
         },
         "info": null,
         "last": null,
-        "low": null,
+        "low": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "stats.l",
+          "fallback_keys": [
+            "instrument_ticker.stats.l"
+          ]
+        },
         "markPrice": {
           "coercion": "safeNumber",
           "format": null,
-          "key": "mark_price",
+          "key": "M",
           "fallback_keys": [
             "instrument_ticker.M"
           ]
@@ -738,12 +767,19 @@
         "open": null,
         "percentage": null,
         "previousClose": null,
-        "quoteVolume": null,
+        "quoteVolume": {
+          "coercion": "safeNumber",
+          "format": null,
+          "key": "stats.v",
+          "fallback_keys": [
+            "instrument_ticker.stats.v"
+          ]
+        },
         "symbol": null,
         "timestamp": {
           "coercion": "safeInteger",
           "format": "ms",
-          "key": "timestamp",
+          "key": "t",
           "fallback_keys": [
             "instrument_ticker.t"
           ]
@@ -845,18 +881,26 @@
         "id": {
           "coercion": "safeString",
           "format": null,
-          "key": "transaction_id"
+          "key": "operation_id"
         },
         "info": null,
         "network": null,
         "status": {
           "enum_map": {
-            "cancelled": "canceled",
-            "failed": "failed",
-            "pending": "pending",
-            "settled": "ok"
+            "Batching": "pending",
+            "Executing": "pending",
+            "Da": "pending",
+            "Proving": "pending",
+            "Settling": "pending",
+            "Settled": "ok",
+            "BatchingError": "failed",
+            "ExecutingError": "failed",
+            "DaError": "failed",
+            "ProvingError": "failed",
+            "SettlingError": "failed",
+            "SettledError": "failed"
           },
-          "key": "tx_status"
+          "key": "batch_status"
         },
         "tag": null,
         "tagFrom": null,
@@ -891,46 +935,42 @@
         },
         "datetime": null,
         "fromAccount": {
-          "else": {
-            "coercion": "safeString",
-            "key": "counterparty_subaccount_id"
-          },
-          "guard": {
-            "equals": true,
-            "field": "is_outgoing"
-          },
-          "kind": "when",
-          "then": {
-            "coercion": "safeString",
-            "key": "subaccount_id"
-          }
+          "coercion": "safeString",
+          "format": null,
+          "key": "from_subaccount_id"
         },
         "id": {
           "coercion": "safeString",
           "format": null,
-          "key": "tx_hash"
+          "key": "operation_id"
         },
         "info": null,
-        "status": null,
+        "status": {
+          "enum_map": {
+            "Batching": "pending",
+            "Executing": "pending",
+            "Da": "pending",
+            "Proving": "pending",
+            "Settling": "pending",
+            "Settled": "ok",
+            "BatchingError": "failed",
+            "ExecutingError": "failed",
+            "DaError": "failed",
+            "ProvingError": "failed",
+            "SettlingError": "failed",
+            "SettledError": "failed"
+          },
+          "key": "batch_status"
+        },
         "timestamp": {
           "coercion": "safeInteger",
           "format": "ms",
           "key": "timestamp"
         },
         "toAccount": {
-          "else": {
-            "coercion": "safeString",
-            "key": "subaccount_id"
-          },
-          "guard": {
-            "equals": true,
-            "field": "is_outgoing"
-          },
-          "kind": "when",
-          "then": {
-            "coercion": "safeString",
-            "key": "counterparty_subaccount_id"
-          }
+          "coercion": "safeString",
+          "format": null,
+          "key": "to_subaccount_id"
         }
       }
     }
@@ -968,9 +1008,9 @@
     },
     "funding_rate": {
       "fetchFundingRate": {
-        "default": [],
+        "default": null,
         "fallback_keys": [],
-        "key": "result.funding_rate_history"
+        "key": "result"
       }
     },
     "funding_rate_history": {

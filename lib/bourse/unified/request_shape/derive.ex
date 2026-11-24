@@ -2,11 +2,10 @@ defmodule Bourse.Unified.RequestShape.Derive do
   @moduledoc false
   # Derive request mechanics the generic authored-entry machinery cannot express.
   #
-  # Private methods require a numeric `subaccount_id` on the wire (venue docs:
-  # https://docs.derive.xyz/reference/post_private-get-positions). Resolve it
-  # from per-call params or
-  # `exchange.options["subaccount_id"]` (not `deriveWalletAddress`, which is the
-  # smart-contract wallet for X-LyraWallet headers). Mirror that ergonomics here:
+  # Private methods require a numeric `subaccount_id` on the wire (openapi.json,
+  # https://docs.derive.xyz/openapi.json). Resolve it from per-call params or
+  # `exchange.options["subaccount_id"]` (not the owner wallet, which travels in
+  # the X-DeriveWallet header). Mirror that ergonomics here:
   # inject the construction-time option with put_new so an explicit per-call param
   # still wins, and leave the generic identifier_reference raise when neither is set.
 
@@ -16,9 +15,13 @@ defmodule Bourse.Unified.RequestShape.Derive do
   alias Bourse.Unified.RequestShape
 
   @action_typehash "4d7a9f27c403ff9c0f19bce61d76d82f9aa29f8d6d4b0c5474607d9770d1af17"
-  @sandbox_trade_module "0x87F2863866D85E3192a35A73b388BD625D83f2be"
-  @production_trade_module "0xB8D20c2B7a1Ad2EE33Bc50eF10876eD3035b5e7b"
+  # One Trade module on both networks (https://docs.derive.xyz/authentication/action-signing.md).
+  @trade_module "0xB8D20c2B7a1Ad2EE33Bc50eF10876eD3035b5e7b"
+  # Order expiry must lie 10 s .. 120 days out, and within 15 minutes for an MMP order.
   @signature_validity_seconds 7_776_000
+  @mmp_signature_validity_seconds 600
+  # v3 nonces are nanosecond UTC timestamps; a ms clock gains a random 6-digit suffix.
+  @nonce_suffix_range 1_000_000
 
   @doc "Builds a Derive request shape without a clock override."
   @spec build(map(), String.t(), Exchange.t()) :: map()
@@ -61,8 +64,13 @@ defmodule Bourse.Unified.RequestShape.Derive do
     requested = Map.fetch!(params, "instrument_name")
     market = find_market!(exchange, requested)
     info = market_info!(market, requested)
-    nonce = Keyword.get(opts, :timestamp_ms_override, System.system_time(:millisecond))
-    expiry = signature_expiry(params, nonce)
+    now_ms = Keyword.get(opts, :timestamp_ms_override, System.system_time(:millisecond))
+
+    nonce =
+      now_ms * @nonce_suffix_range +
+        Keyword.get_lazy(opts, :nonce_suffix, fn -> :rand.uniform(@nonce_suffix_range) - 1 end)
+
+    expiry = signature_expiry(params, now_ms)
     amount = number_string(Map.fetch!(params, "amount"))
     price = number_string(Map.fetch!(params, "price"))
     max_fee = number_string(Map.fetch!(params, "max_fee"))
@@ -88,7 +96,7 @@ defmodule Bourse.Unified.RequestShape.Derive do
       @action_typehash,
       subaccount_id,
       nonce,
-      if(exchange.sandbox, do: @sandbox_trade_module, else: @production_trade_module),
+      @trade_module,
       trade_hash,
       expiry,
       wallet,
@@ -99,7 +107,7 @@ defmodule Bourse.Unified.RequestShape.Derive do
       "instrument_name" => market_field(market, :id),
       "direction" => side,
       "order_type" => params |> Map.fetch!("type") |> String.downcase(),
-      "nonce" => nonce,
+      "nonce" => Integer.to_string(nonce),
       "amount" => amount,
       "limit_price" => price,
       "max_fee" => max_fee,
@@ -112,6 +120,7 @@ defmodule Bourse.Unified.RequestShape.Derive do
     |> copy_optional(params, "reduce_only")
     |> copy_optional(params, "time_in_force")
     |> copy_optional(params, "label")
+    |> copy_optional(params, "mmp")
   end
 
   defp find_market!(%Exchange{markets: markets}, symbol) when is_list(markets) do
@@ -189,16 +198,19 @@ defmodule Bourse.Unified.RequestShape.Derive do
 
   defp buy_or_sell!(side), do: RequestShape.refuse_uninterpretable_side!(side)
 
-  defp signature_expiry(%{"signature_expiry_sec" => value}, _nonce) when is_integer(value), do: value
+  defp signature_expiry(%{"signature_expiry_sec" => value}, _now_ms) when is_integer(value), do: value
 
-  defp signature_expiry(%{"signature_expiry_sec" => value}, nonce) when is_binary(value) do
+  defp signature_expiry(%{"signature_expiry_sec" => value} = params, now_ms) when is_binary(value) do
     case Integer.parse(value) do
       {expiry, ""} -> expiry
-      _ -> div(nonce, 1_000) + @signature_validity_seconds
+      _ -> default_expiry(params, now_ms)
     end
   end
 
-  defp signature_expiry(_params, nonce), do: div(nonce, 1_000) + @signature_validity_seconds
+  defp signature_expiry(params, now_ms), do: default_expiry(params, now_ms)
+
+  defp default_expiry(%{"mmp" => true}, now_ms), do: div(now_ms, 1_000) + @mmp_signature_validity_seconds
+  defp default_expiry(_params, now_ms), do: div(now_ms, 1_000) + @signature_validity_seconds
 
   defp maybe_put_subaccount_id(params, js_name, %Exchange{request_param_shape: shape} = exchange) when is_map(shape) do
     case Map.get(shape, js_name) do

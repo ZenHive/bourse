@@ -1,6 +1,6 @@
 defmodule Bourse.Signing.Derive.PreparedOrder do
   @moduledoc """
-  Keyless Derive v2 order preparation for customer-local EIP-712 authorization.
+  Keyless Derive v3 order preparation for customer-local EIP-712 authorization.
 
   `prepare/2` is pure: it takes no keys, reads no clock, allocates no nonce and
   performs no network call. It answers what a customer's own wallet needs to
@@ -16,17 +16,19 @@ defmodule Bourse.Signing.Derive.PreparedOrder do
   value against the constant the provider publishes, so editing the field list
   fails loudly instead of quietly changing what customers sign.
 
-  `@deployments` carries the chain id and the Matching and Trade module
-  addresses for both environments, read from `derivexyz/v2-matching`. The chain
-  ids and Matching addresses are corroborated inside this repo: hashed as an
-  EIP-712 domain they reproduce `Bourse.Signing.Derive`'s independently pinned
-  `@domain_separator_prod` / `@domain_separator_sandbox`, and the test asserts
-  exactly that. **The Trade module addresses have no such independent check** —
-  they enter the digest as the `module` field, and the only thing grading them
-  is a vector from the same provider SDK that supplied them, so a wrong address
-  would be baked into the oracle too. That gap and the absent end-to-end
-  submission proof are recorded in `docs/prod-verification-ledger.md`: this
-  module prepares a signature, it does not establish that the venue accepts one.
+  `@deployments` carries the chain id, the `Matching` verifying contract and the
+  Trade module address per environment, as published at
+  https://docs.derive.xyz/authentication/action-signing.md: chain ids `1` and
+  `11155111`, one verifying contract and one Trade module on both networks.
+  Hashed as an EIP-712 domain, the chain ids and verifying contract reproduce
+  the separators Derive publishes for each network, and the test asserts
+  exactly that. Whether the venue *accepts* a signature built here is a live
+  claim, tracked in `docs/prod-verification-ledger.md`.
+
+  The nonce is the caller's: v3 reads it as a nanosecond UTC timestamp with a
+  random six-digit suffix, and rejects a millisecond-scale one. Amount, price
+  and fee are refused when they carry more than twelve decimals, which v3
+  rejects as error `14014`.
 
   ## Scope
 
@@ -59,10 +61,12 @@ defmodule Bourse.Signing.Derive.PreparedOrder do
   @action_type "Action(" <> Enum.map_join(@action_fields, ",", fn {name, type} -> type <> " " <> name end) <> ")"
   @action_typehash Crypto.keccak256(@action_type)
 
-  @deployments %{
-    mainnet: {957, "0xeB8d770ec18DB98Db922E9D83260A585b9F0DeAD", "0xB8D20c2B7a1Ad2EE33Bc50eF10876eD3035b5e7b"},
-    testnet: {901, "0x3cc154e220c2197c5337b7Bd13363DD127Bc0C6E", "0x87F2863866D85E3192a35A73b388BD625D83f2be"}
-  }
+  @matching "0xeB8d770ec18DB98Db922E9D83260A585b9F0DeAD"
+  @trade_module "0xB8D20c2B7a1Ad2EE33Bc50eF10876eD3035b5e7b"
+  @deployments %{mainnet: {1, @matching, @trade_module}, testnet: {11_155_111, @matching, @trade_module}}
+
+  # v3 accepts 1e-12 resolution: the 1e18-scaled word must be a multiple of 1e6.
+  @precision_step 1_000_000
 
   @order_type "limit"
   @time_in_force "gtc"
@@ -160,7 +164,7 @@ defmodule Bourse.Signing.Derive.PreparedOrder do
       "order_type" => @order_type,
       "time_in_force" => @time_in_force,
       "subaccount_id" => subaccount,
-      "nonce" => nonce,
+      "nonce" => to_string(nonce),
       "signature_expiry_sec" => expiry,
       "signer" => hex(signer),
       "amount" => decimal(amount),
@@ -242,9 +246,10 @@ defmodule Bourse.Signing.Derive.PreparedOrder do
     scaled = Decimal.mult(number, Decimal.new("1e18"))
     valid_sign = Decimal.positive?(number) or (zero? and Decimal.equal?(number, 0))
 
-    if valid_sign and Decimal.integer?(scaled) and Decimal.compare(scaled, Decimal.new(:erlang.bsl(1, 255))) == :lt,
-      do: {:ok, Decimal.to_integer(scaled)},
-      else: :error
+    if valid_sign and Decimal.integer?(scaled) and Decimal.compare(scaled, Decimal.new(:erlang.bsl(1, 255))) == :lt and
+         rem(Decimal.to_integer(scaled), @precision_step) == 0,
+       do: {:ok, Decimal.to_integer(scaled)},
+       else: :error
   end
 
   defp tag({:ok, value}, _key), do: {:ok, value}

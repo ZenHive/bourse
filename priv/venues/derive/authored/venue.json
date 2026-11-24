@@ -19,15 +19,15 @@
   "urls": {
     "api": {
       "ws": {
-        "private": "wss://api.lyra.finance/ws",
-        "public": "wss://api.lyra.finance/ws",
-        "sandbox_private": "wss://api-demo.lyra.finance/ws",
-        "sandbox_public": "wss://api-demo.lyra.finance/ws"
+        "private": "wss://api.derive.xyz/v3/ws",
+        "public": "wss://api.derive.xyz/v3/ws",
+        "sandbox_private": "wss://testnet.api.derive.xyz/v3/ws",
+        "sandbox_public": "wss://testnet.api.derive.xyz/v3/ws"
       }
     },
     "api_management": "__undefined",
-    "doc": "https://docs.derive.xyz/docs/",
-    "fees": "https://docs.derive.xyz/reference/fees-1/",
+    "doc": "https://docs.derive.xyz/",
+    "fees": "https://docs.derive.xyz/integrators/trading/trading-fees.md",
     "logo": "https://github.com/user-attachments/assets/f835b95f-033a-43dd-b6bb-24e698fc498c",
     "www": "https://www.derive.xyz/"
   },
@@ -36,8 +36,8 @@
     "sandbox_flag_field": null,
     "unresolved_reason": null,
     "urls": {
-      "private": "https://api-demo.lyra.finance/private",
-      "public": "https://api-demo.lyra.finance/public"
+      "private": "https://testnet.api.derive.xyz/v3/private",
+      "public": "https://testnet.api.derive.xyz/v3/public"
     }
   },
   "auth": {
@@ -50,15 +50,15 @@
       "private": {
         "auth_headers": [
           {
-            "name": "X-LyraWallet",
+            "name": "X-DeriveWallet",
             "source": "api_key"
           },
           {
-            "name": "X-LyraTimestamp",
+            "name": "X-DeriveTimestamp",
             "source": "timestamp"
           },
           {
-            "name": "X-LyraSignature",
+            "name": "X-DeriveSignature",
             "source": "signature"
           }
         ],
@@ -80,21 +80,21 @@
             "eip712"
           ],
           "rest_auth": {
-            "signature_header": "X-LyraSignature",
+            "signature_header": "X-DeriveSignature",
             "signature_message": "timestamp_ms_string",
             "signature_scheme": "eip191_personal_sign",
-            "signer": "credentials.secret (registered session key)",
-            "timestamp_header": "X-LyraTimestamp",
+            "signer": "credentials.secret (owner EOA key or a session key registered through private/set_session_key)",
+            "timestamp_header": "X-DeriveTimestamp",
             "timestamp_unit": "ms",
-            "wallet_header": "X-LyraWallet",
+            "wallet_header": "X-DeriveWallet",
             "wallet_source": "credentials.api_key"
           },
           "signals": [
             "signMessage",
             "signOrder",
-            "X-LyraWallet",
-            "X-LyraTimestamp",
-            "X-LyraSignature"
+            "X-DeriveWallet",
+            "X-DeriveTimestamp",
+            "X-DeriveSignature"
           ]
         },
         "custom_signing_scheme": "eip191_headers_plus_eip712_order",
@@ -102,7 +102,7 @@
         "patch_count": 0,
         "pre_sign_transforms": null,
         "signature_placement": {
-          "key": "X-LyraSignature",
+          "key": "X-DeriveSignature",
           "location": "header"
         },
         "timestamp": {
@@ -332,10 +332,10 @@
       "update_model": "append"
     },
     "urls": {
-      "private": "wss://api.lyra.finance/ws",
-      "public": "wss://api.lyra.finance/ws",
-      "sandbox_private": "wss://api-demo.lyra.finance/ws",
-      "sandbox_public": "wss://api-demo.lyra.finance/ws",
+      "private": "wss://api.derive.xyz/v3/ws",
+      "public": "wss://api.derive.xyz/v3/ws",
+      "sandbox_private": "wss://testnet.api.derive.xyz/v3/ws",
+      "sandbox_public": "wss://testnet.api.derive.xyz/v3/ws",
       "unresolved_reason": null
     }
   },
@@ -345,6 +345,20 @@
       "scope": "rest",
       "reasons": [
         "has_emulated"
+      ]
+    },
+    {
+      "name": "fetchClosedOrders",
+      "scope": "rest",
+      "reasons": [
+        "authored_delegate"
+      ]
+    },
+    {
+      "name": "fetchCanceledOrders",
+      "scope": "rest",
+      "reasons": [
+        "authored_delegate"
       ]
     }
   ],
@@ -376,15 +390,12 @@
       "fetchLiquidations": {
         "carve": "C-T549a",
         "endpoints": [
-          "publicPostGetLiquidationHistory",
-          "privatePostGetLiquidationHistory",
-          "privatePostGetLiquidatorHistory"
+          "publicPostGetLiquidationHistory"
         ]
       },
       "fetchSettlementHistory": {
         "carve": "C-T549d",
         "endpoints": [
-          "publicPostGetOptionSettlementHistory",
           "privatePostGetOptionSettlementHistory"
         ]
       }
