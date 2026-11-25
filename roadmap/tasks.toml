@@ -24520,13 +24520,14 @@ shipped_in = "9e89a86ed6f23a13e5cb17245968ab753d89096f"
 id = "716"
 phase = 16
 bundle = "live_e2e"
-status = "in_progress"
+status = "blocked"
 title = "The binanceusdm WebSocket first-frame probe times out intermittently in the lane while the same stream delivers in direct probes; find the mechanism"
 scores = { d = 4, b = 5, u = 5 }
 markers = ["bug"]
 acceptance_criteria = ["The task reports a reproduction of the failing lane run with the captured difference from a passing run, or states precisely which hypotheses were measured and excluded with their data", "The demonstrated cause is fixed; mix bourse.verify_ws_first_frame passes binanceusdm in ten consecutive runs, and the run log is reported", "The probe still fails when the stream genuinely delivers nothing, shown by one deliberate negative run (for example a wrong stream name)", "The BUGS.md entry carries a dated status note with the mechanism"]
 assignee = "claude"
 model = "claude-opus-5-5"
+blocked_reason = "Not reproduced in 66 lane runs on 2026-11-25 (incl. 15 at the revision that failed); no code changed, measurements recorded in BUGS.md. Unblocks when the binanceusdm first-frame failure recurs and a timestamped frame capture exists."
 body = """
 Source: BUGS.md entry "2026-09-15 — die WS-First-Frame-Probe für binanceusdm ist intermittierend". Read it in full, including the correction of its first version and the list of causes already excluded.
 

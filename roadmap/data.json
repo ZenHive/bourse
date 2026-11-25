@@ -32805,7 +32805,7 @@
       "id": "716",
       "phase": 16,
       "bundle": "live_e2e",
-      "status": "in_progress",
+      "status": "blocked",
       "title": "The binanceusdm WebSocket first-frame probe times out intermittently in the lane while the same stream delivers in direct probes; find the mechanism",
       "scores": {
         "d": 4,
@@ -32831,6 +32831,7 @@
       "created_at": "2026-11-24",
       "started_at": "2026-11-24",
       "scored_at": "2026-11-24",
+      "blocked_reason": "Not reproduced in 66 lane runs on 2026-11-25 (incl. 15 at the revision that failed); no code changed, measurements recorded in BUGS.md. Unblocks when the binanceusdm first-frame failure recurs and a timestamped frame capture exists.",
       "cross_repo": []
     },
     {
