@@ -218,7 +218,7 @@ test code. Edit the fence when adding a ledgered case.
 
 ## Open
 
-### bybit — u+1 continuity on the depth-1/50/200/1000 order book topics (task 708, filed 2026-11-25)
+### bybit — u+1 continuity on the order book depth topics, observed on depths 50 and 1000 (task 708, filed 2026-11-25)
 
 - Authored slices: `bybit:websocket.orderbook_semantics.continuity.rule`
 - Blocked by: provider documentation. The live lane can observe the rule; only Bybit can state it.
@@ -226,6 +226,9 @@ test code. Edit the fence when adding a ledgered case.
   `u` for `orderbook.full.{symbol}`; [orderbook](https://bybit-exchange.github.io/docs/v5/websocket/public/orderbook)
   documents `u=1` as a restart snapshot and a reset on every snapshot, and says nothing about the
   step between deltas on the depth topics (both read 2026-11-25).
+- Observed: `orderbook.1000.BTCUSDT` (the live lane below) and `orderbook.50.BTCUSDT` (consecutive
+  deltas, 2026-11-25) on linear testnet. Not exercised: depth 200. Depth 1 is documented as
+  snapshot-only and may repeat `u`; snapshots are not chained, so the rule does not apply there.
 - The open question: whether `u` on `orderbook.{depth}.{symbol}` is guaranteed to advance by exactly
   one per pushed frame, or only happens to in what we observe. If Bybit ever conflates frames on a
   depth topic, the `increment` rule reports a gap that is not one (a loud resync, not a corrupt book).

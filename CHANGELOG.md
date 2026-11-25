@@ -18,11 +18,22 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   the book or `nil`.
 - **`Bourse.WS.Adapter` owns its transport's lifecycle.** It connects with
   `reconnect_on_error: false` and monitors every transport it adopts. When a transport goes
-  down, each maintained book is invalidated with `{:connection_lost, reason}`, the adapter
-  dials a new connection, restores its subscriptions, and every book starts again from a
-  fresh snapshot. Before, zen_websocket redialled under the same handler, so the adapter
-  kept the old book across the new connection.
-- `Bourse.WS.transport_pids/1` lists the transport processes behind a connection.
+  down, each maintained book is invalidated with `{:connection_lost, reason}`, every socket
+  of the lost connection is closed and its authentication retired (`auth_state/1` is
+  `:unauthenticated`, no renewal stays armed), and the adapter dials a new connection —
+  at once after a connection that stayed up, otherwise after a pause that doubles per
+  consecutive short-lived connection or failed dial, up to 30 s. Each accepted
+  `subscribe/3` call is replayed on the new connection as it was made, with its own
+  options; a call the new connection refuses is logged and retried with the same backoff
+  until accepted. Every book starts again from a fresh snapshot. Before, zen_websocket
+  redialled under the same handler, so the adapter kept the old book across the new
+  connection. `Adapter` state `subscriptions` is now a list of `{channels, opts}` calls.
+- `Bourse.WS.transport_pids/1` lists the live transport processes a connection owns; a
+  closed connection answers `[]`.
+- **Order book continuity spec fields:** `continuity.snapshot_channel` (`path`, `pattern`,
+  `doc`) names the documented snapshot-only channels of a `both` book, and is required by
+  `unmarked_frames: "snapshot"` there; an `incremental` book with
+  `unmarked_frames: "snapshot"` must author `partial_depth_channel`.
 
 - **binance, binanceusdm, binancecoinm: the unqualified order-list reads no longer
   include conditional (algo) orders.** `fetch_open_orders`, `fetch_orders`,
@@ -40,8 +51,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - **WS order books check sequence continuity and resync on a gap.** `Bourse.WS.Adapter`
   checks every delta of an incremental book (binance, binanceusdm, okx, deribit, bybit)
-  against the venue's documented continuity rule, authored as
-  `websocket.orderbook_semantics.continuity` with the provider doc URL. A delta that does
+  against the venue's continuity rule, authored as
+  `websocket.orderbook_semantics.continuity` with the provider doc URL. The rule is
+  documented by binance, binanceusdm, okx and deribit; bybit's on its depth topics is
+  observed live on depths 50 and 1000 and recorded as a `limitation`
+  (`docs/prod-verification-ledger.md`). A delta that does
   not follow the previous one is never merged: the book is discarded, subscribers receive
   `{:bourse_ws, {:order_book_invalidated, channel, market_id, reason}}` on the
   `:watch_order_book` topics, routed frames carry a `nil` book until the resync completes,
@@ -69,7 +83,19 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `bids`, `asks`, no event fields), so a `depthUpdate` without `u` is no longer merged as one.
 - **Two depth streams of one market on a socket whose frames carry no stream name are
   reported unavailable** (binanceusdm two diff speeds, or two partial depths), instead of
-  feeding one chain from both.
+  feeding one chain from both. binance spot partial-depth frames carry no symbol: one
+  partial stream on a socket is keyed by its stream name and reported under its market;
+  two or more are reported `{:unavailable, :ambiguous_depth_streams}`.
+- **A frame without a type marker no longer replaces a `both` book.** On okx and deribit
+  an unmarked frame is a snapshot only on the documented snapshot-only channels (okx
+  `books5`/`bbo-tbt`/`bbo-rpi-tbt`, deribit grouped `book.*.*.*.*`); elsewhere it, and a
+  type value the spec does not name, invalidates the book.
+- **A REST order book snapshot missing either side is not installed**, even at a current
+  id; it is retried like any unusable snapshot. Malformed deltas while a snapshot request
+  is in flight keep that one request instead of starting another per frame.
+- **Transport termination reports redact URLs.** `Bourse.Application` installs
+  `Bourse.LogRedaction` as a primary `:logger` filter that cuts every `ws://`/`wss://` URL
+  in OTP termination reports down to its scheme and host.
 - **Order book invalidations name the instrument that broke.** The market comes from the
   frame's authored `market_path`, so two instruments on one okx socket are told apart; it
   was `nil`.
