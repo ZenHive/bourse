@@ -7,6 +7,15 @@ defmodule LogRedactionUnrelatedWorker do
   def handle_cast(:die, state), do: {:stop, {:transport_closed, state.url}, state}
 end
 
+defmodule LogRedactionConsumerWorker do
+  @moduledoc false
+  # A host process outside Bourse whose state is a `Bourse.WS` struct.
+  use GenServer
+
+  def init(url), do: {:ok, %Bourse.WS{exchange: nil, zen_client: nil, section: :public, url: url}}
+  def handle_cast(:die, state), do: {:stop, :closed, state}
+end
+
 defmodule Bourse.LogRedactionTest do
   # The default handler is VM-global, so this cannot run concurrently with
   # tests that log.
@@ -53,6 +62,16 @@ defmodule Bourse.LogRedactionTest do
 
     GenServer.cast(pid, :die)
     assert_receive {:DOWN, ^ref, :process, ^pid, {:transport_closed, @url}}
+
+    assert read_flushed(path, "terminating") =~ @url
+  end
+
+  test "a host process holding a Bourse struct as its state is the host's, not Bourse's", %{path: path} do
+    {:ok, pid} = GenServer.start(LogRedactionConsumerWorker, @url)
+    ref = Process.monitor(pid)
+
+    GenServer.cast(pid, :die)
+    assert_receive {:DOWN, ^ref, :process, ^pid, :closed}
 
     assert read_flushed(path, "terminating") =~ @url
   end

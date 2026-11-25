@@ -14,10 +14,12 @@ defmodule Bourse.LogRedaction do
       filter with id `Bourse.LogRedaction`, rewrites an OTP termination report
       (`gen_server`, `gen_statem`, `proc_lib`, `supervisor`) of a `Bourse.*` or
       `ZenWebsocket.*` process that contains such a value. A process is
-      identified by the module in the report: the state struct, the
-      `initial_call`, a supervisor report's offender `mfargs`, or the reporting
-      process's own initial call. Every other event, and every report it leaves
-      unchanged, gets `:ignore`.
+      identified by its own identity first: a supervisor report's offender
+      (`mfargs`), a crash report's `initial_call`, the reporting process's own
+      initial call, or its registered name. The state struct decides only when
+      none of these is available, so a host process that merely holds a
+      `Bourse.WS` struct as its state is the host's, not Bourse's. Every other
+      event, and every report it leaves unchanged, gets `:ignore`.
 
       OTP's `:logger` treats a filter that returns an event as passing it, so
       **a rewritten report passes a primary `filter_default: :stop`** that would
@@ -103,27 +105,39 @@ defmodule Bourse.LogRedaction do
 
   def filter(_event, _config), do: :ignore
 
-  # Primary filters run in the process that logs, so a gen_server or
-  # gen_statem terminate report without a struct state still names its module
-  # through that process's initial call.
+  # Who a report belongs to is the identity of the process it is about; the
+  # data that process holds only decides when it has none. Primary filters run
+  # in the process that logs, so a gen_server or gen_statem terminate report is
+  # identified by that process's initial call.
   defp owned?(report) do
-    Enum.any?([report_module(report), initial_call_module(Process.get(:"$initial_call"))], &own_module?/1)
+    case identity(report) do
+      nil -> own_module?(state_module(report))
+      module -> own_module?(module)
+    end
   end
 
-  defp report_module(%{state: %module{}}), do: module
-  defp report_module(%{data: %module{}}), do: module
-
-  defp report_module(%{label: {:proc_lib, _}, report: [info | _]}) when is_list(info),
-    do: initial_call_module(info[:initial_call])
-
-  defp report_module(%{label: {:supervisor, _}, report: report}) when is_list(report) do
+  defp identity(%{label: {:supervisor, _}, report: report}) when is_list(report) do
     case report[:offender] do
       offender when is_list(offender) -> mfa_module(offender[:mfargs] || offender[:start])
       _ -> nil
     end
   end
 
-  defp report_module(_report), do: nil
+  defp identity(%{label: {:proc_lib, _}, report: [info | _]}) when is_list(info),
+    do: initial_call_module(info[:initial_call]) || process_identity(nil)
+
+  defp identity(report), do: process_identity(report[:name])
+
+  defp process_identity(name) do
+    initial_call_module(Process.get(:"$initial_call")) || registered_module(name)
+  end
+
+  defp registered_module(name) when is_atom(name) and not is_nil(name), do: name
+  defp registered_module(_name), do: nil
+
+  defp state_module(%{state: %module{}}), do: module
+  defp state_module(%{data: %module{}}), do: module
+  defp state_module(_report), do: nil
 
   defp initial_call_module({:supervisor, module, _arity}) when is_atom(module), do: module
   defp initial_call_module(mfa), do: mfa_module(mfa)
