@@ -349,6 +349,7 @@ defmodule Bourse.WS.Semantics.Orderbook do
   end
 
   def apply(%__MODULE__{} = state, key, payload, frame) when is_map(payload) do
+    state = observe(state, key, payload)
     entry = Map.get(state.books, key) || new_entry()
 
     if entry.status == :unavailable do
@@ -371,6 +372,21 @@ defmodule Bourse.WS.Semantics.Orderbook do
   end
 
   def apply(%__MODULE__{} = state, _key, _payload, _frame), do: {state, :none}
+
+  # A REST-bootstrapped book's high-water mark (`mark`): the highest sequence
+  # id any of its frames carried, whether the frame was then applied,
+  # buffered, dropped or rejected as unreadable. `put_entry/3` never lowers
+  # it, so every invalidation, restart and replay keeps it while the stream
+  # stays subscribed on this connection, and a rebuilt book is published only
+  # once it has reached it.
+  defp observe(%__MODULE__{continuity: %{snapshot_source: "rest", fields: fields}} = state, key, payload) do
+    case fields |> Map.values() |> Enum.map(&to_int(payload[&1])) |> Enum.filter(&is_integer/1) do
+      [] -> state
+      ids -> put_entry(state, key, %{(Map.get(state.books, key) || new_entry()) | mark: Enum.max(ids)})
+    end
+  end
+
+  defp observe(state, _key, _payload), do: state
 
   # Two subscribed depth streams of one market deliver frames that cannot be
   # told apart, so neither can be maintained.
@@ -454,17 +470,12 @@ defmodule Bourse.WS.Semantics.Orderbook do
   # A book already waiting for its snapshot keeps the request (or scheduled
   # retry) it has: the bridge rules decide whether that snapshot still fits
   # the deltas buffered after this point.
-  # Every update the discarded state had seen is behind the break, so the
-  # rebuilt book is published only once it is past them (`floor`).
-  defp invalidate(%__MODULE__{continuity: %{snapshot_source: "rest"} = c} = state, key, payload, reason) do
-    previous = Map.get(state.books, key) || new_entry()
-    seen = [previous.floor, previous.id | Enum.map(previous.buffer, &to_int(&1[c.fields["last"]]))]
-    floor = seen |> Enum.reject(&is_nil/1) |> Enum.max(fn -> nil end)
-
+  # The rebuilt book is held back until it reaches the high-water mark.
+  defp invalidate(%__MODULE__{continuity: %{snapshot_source: "rest"}} = state, key, payload, reason) do
     entry =
-      case previous do
-        %{status: :bootstrapping} -> %{previous | buffer: List.wrap(payload), floor: floor}
-        _ -> %{new_entry() | status: :bootstrapping, buffer: List.wrap(payload), floor: floor}
+      case Map.get(state.books, key) do
+        %{status: :bootstrapping} = bootstrapping -> %{bootstrapping | buffer: List.wrap(payload)}
+        _ -> %{new_entry() | status: :bootstrapping, buffer: List.wrap(payload)}
       end
 
     {put_entry(state, key, entry), {:invalidated, reason}}
@@ -576,13 +587,13 @@ defmodule Bourse.WS.Semantics.Orderbook do
   defp bridge(state, key, entry, payload) do
     case check(state.continuity, entry, payload) do
       :apply ->
-        publish_past_floor(state, key, merge(next_id(state.continuity, entry, payload), payload))
+        publish_at_mark(state, key, merge(next_id(state.continuity, entry, payload), payload))
 
       :stale ->
         {state, :pending}
 
       {:gap, _reason} ->
-        restart = %{new_entry() | status: :bootstrapping, buffer: [payload], attempts: entry.attempts, floor: entry.floor}
+        restart = %{new_entry() | status: :bootstrapping, buffer: [payload], attempts: entry.attempts}
         {put_entry(state, key, restart), {:fetch_snapshot, key}}
     end
   end
@@ -591,7 +602,7 @@ defmodule Bourse.WS.Semantics.Orderbook do
   defp drop_predating("first_follows_last", f, id, buffer), do: Enum.drop_while(buffer, &(to_int(&1[f["last"]]) <= id))
   defp drop_predating("previous_last", f, id, buffer), do: Enum.drop_while(buffer, &(to_int(&1[f["last"]]) < id))
 
-  defp replay(state, key, entry, []), do: publish_past_floor(state, key, entry)
+  defp replay(state, key, entry, []), do: publish_at_mark(state, key, entry)
 
   defp replay(state, key, entry, [delta | rest]) do
     case check(state.continuity, entry, delta) do
@@ -604,7 +615,7 @@ defmodule Bourse.WS.Semantics.Orderbook do
 
       {:gap, _reason} ->
         buffer = Enum.reverse([delta | rest])
-        restart = %{new_entry() | status: :bootstrapping, buffer: buffer, attempts: entry.attempts, floor: entry.floor}
+        restart = %{new_entry() | status: :bootstrapping, buffer: buffer, attempts: entry.attempts}
         {put_entry(state, key, restart), {:fetch_snapshot, key}}
     end
   end
@@ -701,7 +712,7 @@ defmodule Bourse.WS.Semantics.Orderbook do
       buffer: [],
       fetch_ref: nil,
       attempts: 0,
-      floor: nil
+      mark: nil
     }
   end
 
@@ -755,12 +766,12 @@ defmodule Bourse.WS.Semantics.Orderbook do
     {put_entry(state, key, entry), {:book, render(entry)}}
   end
 
-  # A rebuilt book that has not yet passed every update seen before the break
-  # would show a state already superseded; it waits for further deltas.
-  defp publish_past_floor(state, key, %{floor: floor, id: id} = entry) when is_integer(floor) and id <= floor,
+  # A rebuilt book behind the high-water mark would show a state the stream
+  # has already moved past; it waits for further deltas.
+  defp publish_at_mark(state, key, %{mark: mark, id: id} = entry) when is_integer(mark) and id < mark,
     do: {put_entry(state, key, %{entry | status: :bridging}), :pending}
 
-  defp publish_past_floor(state, key, entry), do: publish(state, key, %{entry | status: :live})
+  defp publish_at_mark(state, key, entry), do: publish(state, key, %{entry | status: :live})
 
   defp render(%{raw: raw}), do: %{"payload" => raw}
 
@@ -773,7 +784,15 @@ defmodule Bourse.WS.Semantics.Orderbook do
 
   defp level({price, size}), do: [price, size]
 
-  defp put_entry(state, key, entry), do: %{state | books: Map.put(state.books, key, entry)}
+  defp put_entry(state, key, entry) do
+    mark =
+      case Map.get(state.books, key) do
+        %{mark: previous} when is_integer(previous) and (is_nil(entry.mark) or previous > entry.mark) -> previous
+        _ -> entry.mark
+      end
+
+    %{state | books: Map.put(state.books, key, %{entry | mark: mark})}
+  end
 
   defp path_value(_frame, nil), do: nil
 

@@ -79,6 +79,38 @@ defmodule Bourse.WS.Semantics.OrderbookContinuityTest do
       end
     end
 
+    test "an unreadable delta still raises the point a rebuilt book must reach" do
+      # Each malformed frame carries one readable id past the buffered 105.
+      for {broken, high} <- [{Map.delete(spot_delta(150, 200), "U"), 200}, {Map.delete(spot_delta(150, 200), "u"), 150}] do
+        st = state("binance")
+        assert {st, {:fetch_snapshot, _}} = Orderbook.apply(st, "BTCUSDT", spot_delta(100, 105, [["101", "1"]]))
+        ref = make_ref()
+        st = Orderbook.fetch_started(st, "BTCUSDT", ref)
+        assert {st, {:invalidated, {:missing_sequence, _}}} = Orderbook.apply(st, "BTCUSDT", broken, broken)
+
+        body = %{"lastUpdateId" => 105, "bids" => [["90", "7"]], "asks" => [["95", "2"]]}
+        assert {st, :pending} = Orderbook.apply_rest_snapshot(st, "BTCUSDT", ref, body)
+        assert {st, :pending} = Orderbook.apply(st, "BTCUSDT", spot_delta(106, 110, [["13", "1"]]))
+        refute Orderbook.live?(st, "BTCUSDT")
+
+        # Control: a delta that reaches the readable id publishes the book.
+        assert {_st, {:book, _}} = Orderbook.apply(st, "BTCUSDT", spot_delta(111, high, [["14", "1"]]))
+      end
+
+      # Control: a snapshot at the readable id goes live on the next delta.
+      st = state("binance")
+      assert {st, {:fetch_snapshot, _}} = Orderbook.apply(st, "BTCUSDT", spot_delta(100, 105))
+      ref = make_ref()
+      st = Orderbook.fetch_started(st, "BTCUSDT", ref)
+      broken = Map.delete(spot_delta(150, 200), "U")
+      assert {st, {:invalidated, _}} = Orderbook.apply(st, "BTCUSDT", broken, broken)
+      body = %{"lastUpdateId" => 200, "bids" => [["90", "7"]], "asks" => [["95", "2"]]}
+      assert {st, :pending} = Orderbook.apply_rest_snapshot(st, "BTCUSDT", ref, body)
+
+      assert {_st, {:book, %{"bids" => [["90", "7"], ["13", "1"]]}}} =
+               Orderbook.apply(st, "BTCUSDT", spot_delta(201, 201, [["13", "1"]]))
+    end
+
     test "subscribing again to a tracked stream keeps its book" do
       for {venue, channel, frame} <- [
             {"binance", "btcusdt@depth@100ms", spot_delta(1, 5)},
@@ -315,6 +347,46 @@ defmodule Bourse.WS.Semantics.OrderbookContinuityTest do
 
       assert {_st, {:invalidated, {:expected_previous, 130, 135}}} =
                Orderbook.apply(st, "BTCUSDT", usdm_delta(140, 150, 135))
+    end
+
+    test "a replay that breaks after advancing keeps what it validated as the point to reach" do
+      for duplicate? <- [true, false] do
+        st = state("binanceusdm")
+
+        assert {st, _, {:book, _}} =
+                 bootstrap(st, "BTCUSDT", [usdm_delta(100, 105, 99)], %{
+                   "lastUpdateId" => 100,
+                   "bids" => [["90", "2"]],
+                   "asks" => []
+                 })
+
+        assert {st, {:book, _}} = Orderbook.apply(st, "BTCUSDT", usdm_delta(106, 107, 105))
+        w1 = usdm_delta(109, 110, 108, [["110", "1"]])
+        w2 = usdm_delta(111, 115, 110, [["115", "1"]])
+        w3 = usdm_delta(116, 205, 115, [["205", "1"]])
+        assert {st, {:invalidated, _}} = Orderbook.apply(st, "BTCUSDT", w1)
+        ref = make_ref()
+        st = Orderbook.fetch_started(st, "BTCUSDT", ref)
+        {st, :pending} = Orderbook.apply(st, "BTCUSDT", w2)
+        {st, :pending} = Orderbook.apply(st, "BTCUSDT", w3)
+        body = %{"lastUpdateId" => 109, "bids" => [["90", "2"]], "asks" => []}
+
+        if duplicate? do
+          # The replay chains 110, 115 and 205, then meets the duplicate of 110.
+          {st, :pending} = Orderbook.apply(st, "BTCUSDT", w1)
+          assert {st, {:fetch_snapshot, "BTCUSDT"}} = Orderbook.apply_rest_snapshot(st, "BTCUSDT", ref, body)
+          ref = make_ref()
+          st = Orderbook.fetch_started(st, "BTCUSDT", ref)
+          body = %{"lastUpdateId" => 110, "bids" => [["90", "2"]], "asks" => []}
+          assert {st, :pending} = Orderbook.apply_rest_snapshot(st, "BTCUSDT", ref, body)
+          assert {st, :pending} = Orderbook.apply(st, "BTCUSDT", w2)
+          refute Orderbook.live?(st, "BTCUSDT")
+        else
+          # Control: the same replay without the duplicate publishes at 205.
+          assert {_st, {:book, %{"bids" => [["205", "1"], ["115", "1"], ["110", "1"], ["90", "2"]]}}} =
+                   Orderbook.apply_rest_snapshot(st, "BTCUSDT", ref, body)
+        end
+      end
     end
 
     test "a first event that starts after the snapshot id cannot bridge it" do
