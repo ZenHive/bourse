@@ -10,6 +10,15 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   book is published until the resync completes, and that the resynced book
   matches the venue's own REST depth snapshot.
 
+  Every venue runs against its testnet/demo host (`sandbox: true`), measured
+  2026-11-25 to serve the same depth frames and sequence fields as production:
+
+    * binance — `wss://stream.testnet.binance.vision/ws`, `U`/`u`, REST `testnet.binance.vision`
+    * binanceusdm — `wss://demo-fstream.binance.com/public/ws`, `U`/`u`/`pu`, REST `demo-fapi.binance.com`
+    * okx — `wss://wspap.okx.com:8443/ws/v5/public`, `prevSeqId`/`seqId`, REST with `x-simulated-trading: 1`
+    * deribit — `wss://test.deribit.com/ws/api/v2`, `type` + `change_id`/`prev_change_id`, REST `test.deribit.com`
+    * bybit — `wss://stream-testnet.bybit.com/v5/public/linear`, `u` incrementing by one
+
   REST snapshot alignment: the REST snapshot carries a sequence id `R`. The WS
   book compared against it is the one published after the frame whose id range
   covers `R`. Prices touched by that frame are excluded because the frame may
@@ -131,6 +140,8 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
 
   # -- setup ------------------------------------------------------------------
 
+  defp sandbox(venue), do: Exchange.new!(venue, sandbox: true)
+
   defp start(venue, config) do
     test_pid = self()
     drop = :atomics.new(1, [])
@@ -145,7 +156,7 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       end
     end
 
-    {:ok, adapter} = Adapter.start_link(Exchange.new!(venue), :public, connect_fun: connect_fun)
+    {:ok, adapter} = Adapter.start_link(sandbox(venue), :public, connect_fun: connect_fun)
     assert_receive {:connected, _ws}, @receive_timeout
     assert :ok = Adapter.subscribe(adapter, [config.channel])
     {adapter, drop}
@@ -257,7 +268,7 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   @rest_attempts 3
 
   defp compare_with_rest(venue, config, initial) do
-    exchange = Exchange.new!(venue)
+    exchange = sandbox(venue)
 
     1..@rest_attempts
     |> Enum.reduce_while({initial, []}, fn _attempt, {history, mismatches} ->
