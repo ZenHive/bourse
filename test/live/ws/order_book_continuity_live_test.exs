@@ -3,7 +3,8 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   Provider-live evidence that incremental order books check continuity
   (task 708).
 
-  Each venue's public diff stream is consumed through `Bourse.WS.Adapter`. The
+  Each venue's diff stream is consumed through `Bourse.WS.Adapter`: the public
+  one, except deribit's `book.BTC-PERPETUAL.raw` on an authenticated socket. The
   test observes real deltas chaining under the venue's documented rule, then
   breaks the stream two ways:
 
@@ -23,7 +24,9 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
     * binance — `wss://stream.testnet.binance.vision/ws`, `U`/`u`, REST `testnet.binance.vision`
     * binanceusdm — `wss://demo-fstream.binance.com/public/ws`, `U`/`u`/`pu`, REST `demo-fapi.binance.com`
     * okx — `wss://wspap.okx.com:8443/ws/v5/public`, `prevSeqId`/`seqId`, REST with `x-simulated-trading: 1`
-    * deribit — `wss://test.deribit.com/ws/api/v2`, `type` + `change_id`/`prev_change_id`, REST `test.deribit.com`
+    * deribit — `wss://test.deribit.com/ws/api/v2` private section (`public/auth` with the
+      `DERIBIT_TESTNET_*` pair), `book.BTC-PERPETUAL.raw`, `type` + `change_id`/`prev_change_id`,
+      REST `test.deribit.com`
     * bybit — `wss://stream-testnet.bybit.com/v5/public/linear`, `orderbook.1000`, `u` incrementing by one,
       REST `/v5/market/orderbook` carrying the same `u`
 
@@ -31,12 +34,20 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   book compared against it is the one published after the frame whose id range
   covers `R`. When `R` is that frame's own end id the two books describe the
   same state and are compared in full; otherwise the prices the frame touched
-  are excluded, because it also carries updates past `R`. okx is compared only
-  where `R` is a frame's own end id: its push may omit a change that reverses
-  within the interval (https://www.okx.com/docs-v5/trick_en/#market-data), so
-  a state inside a frame is not a prefix of the frame's end state. A REST
-  snapshot no WS frame aligns with is fetched again; an aligned snapshot that
-  disagrees fails the test.
+  are excluded, because it also carries updates past `R`. okx and deribit are
+  compared only where `R` is a frame's own end id: an aggregated push may omit
+  a change that reverses within its interval
+  (https://www.okx.com/docs-v5/trick_en/#market-data), so a state inside a
+  frame is not a prefix of the frame's end state. deribit runs on `raw`, its
+  finest granularity ("events are aggregated over a 1 millisecond interval",
+  "only available to authorized users" —
+  https://docs.deribit.com/subscriptions/orderbook/bookinstrument_nameinterval.md;
+  an unauthenticated subscribe is refused live with error 13778
+  `raw_subscriptions_not_available_for_unauthorized`), where a REST
+  `change_id` lands on a frame's own id often enough to align within the
+  bound; on `100ms` it did not in five reads. A REST snapshot no WS frame
+  aligns with is fetched again, up to `@rest_attempts` reads and a hard
+  deadline; an aligned snapshot that disagrees fails the test.
 
   bybit documents consecutive `u` only for its full-ob topic; on the depth
   topics the `increment` rule is the observation this test makes, recorded as
@@ -109,11 +120,13 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       resync: {:stream, &__MODULE__.okx_snapshot_id/1, &__MODULE__.okx_payload_id/1}
     },
     "deribit" => %{
-      channel: "book.BTC-PERPETUAL.100ms",
+      channel: "book.BTC-PERPETUAL.raw",
+      section: :private,
       delta?: &__MODULE__.deribit_delta?/1,
       chained?: &__MODULE__.deribit_chained?/2,
       range: &__MODULE__.deribit_range/1,
       rest: &__MODULE__.deribit_rest/1,
+      rest_alignment: :end_id,
       payload: &__MODULE__.deribit_payload/1,
       resync: {:stream, &__MODULE__.deribit_snapshot_id/1, &__MODULE__.deribit_payload_id/1}
     },
@@ -180,6 +193,11 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
 
   defp sandbox(venue), do: Exchange.new!(venue, sandbox: true)
 
+  defp sandbox(venue, %{section: :private}),
+    do: Exchange.new!(venue, sandbox: true, credentials: Bourse.Testnet.creds!(String.to_existing_atom(venue)))
+
+  defp sandbox(venue, _config), do: sandbox(venue)
+
   defp start(venue, config) do
     test_pid = self()
     drop = :atomics.new(1, [])
@@ -194,7 +212,9 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       end
     end
 
-    {:ok, adapter} = Adapter.start_link(sandbox(venue), :public, connect_fun: connect_fun)
+    {:ok, adapter} =
+      Adapter.start_link(sandbox(venue, config), Map.get(config, :section, :public), connect_fun: connect_fun)
+
     if match?({:rest, _}, config.resync), do: trace_rest_snapshots(adapter)
     assert_receive {:connected, _ws}, @receive_timeout
     assert :ok = Adapter.subscribe(adapter, [config.channel])
@@ -440,19 +460,29 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
 
   # Only a REST snapshot that no WS frame covers is fetched again: its id fell
   # between frames the test did not keep, so nothing was compared. A snapshot
-  # that is aligned and disagrees fails at once.
-  @rest_attempts 5
+  # that is aligned and disagrees fails at once. A read takes about 2.5 s; the
+  # deadline keeps the loop well inside the module's test timeout. On deribit
+  # testnet (2026-11-25) between 1 in 5 and 1 in 2 REST reads landed on a raw
+  # frame's own change_id.
+  @rest_attempts 40
+  @rest_deadline_ms 100_000
 
   defp compare_with_rest(venue, config, initial) do
     exchange = sandbox(venue)
+    deadline = System.monotonic_time(:millisecond) + @rest_deadline_ms
 
     1..@rest_attempts
     |> Enum.reduce_while({initial, []}, fn _attempt, {history, unaligned} ->
-      Process.sleep(1_000)
+      if System.monotonic_time(:millisecond) > deadline,
+        do:
+          flunk(
+            "no WS frame aligned with a REST snapshot within #{@rest_deadline_ms}ms: #{inspect(Enum.reverse(unaligned))}"
+          )
+
       task = Task.async(fn -> config.rest.(exchange) end)
-      history = collect_for(3_000, history)
+      history = collect_for(1_000, history)
       {rest_id, rest_bids, rest_asks} = Task.await(task, 15_000)
-      history = collect_for(4_000, history)
+      history = collect_for(1_500, history)
 
       case covering_frame(history, config, rest_id) do
         nil ->
@@ -464,8 +494,16 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       end
     end)
     |> case do
-      :ok -> :ok
-      {_history, unaligned} -> flunk("no WS frame covers any REST snapshot id: #{inspect(Enum.reverse(unaligned))}")
+      :ok ->
+        :ok
+
+      {history, unaligned} ->
+        ends = history |> Enum.map(&elem(config.range.(elem(&1, 0)) || {nil, nil}, 1)) |> Enum.reject(&is_nil/1)
+
+        flunk(
+          "no WS frame covers any REST snapshot id: #{inspect(Enum.reverse(unaligned))}; " <>
+            "#{length(history)} WS frames kept, end ids #{inspect(Enum.min(ends, fn -> nil end))}..#{inspect(Enum.max(ends, fn -> nil end))}"
+        )
     end
   end
 

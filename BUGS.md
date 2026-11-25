@@ -114,19 +114,33 @@ roadmap.
 
 ---
 
-## 2026-11-25 — deribit's REST comparison in the order book continuity live test can fail a correct book
+## 2026-11-25 — deribit's REST comparison in the order book continuity live test failed a correct book
 
-**Status:** 🆕 reported (found during task 708 review round 4; not routed).
+**Status:** Fixed inline (task 708 review round 4).
 
-`test/live/ws/order_book_continuity_live_test.exs` aligns a deribit REST snapshot with the
+`test/live/ws/order_book_continuity_live_test.exs` aligned a deribit REST snapshot with the
 `book.BTC-PERPETUAL.100ms` frame whose `prev_change_id..change_id` range covers the REST
 `change_id`, excluding the prices that frame touches. A 100 ms frame aggregates its
 interval, so a level added and removed inside it is in the interior REST state and in no
 frame: on test.deribit.com (2026-11-25) both deribit cases failed with
 `only in REST: %{58673.0 => 2500.0}` and `%{58602.0 => 170.0, …}` outside the touched
-prices. Expected: the comparison certifies only states the frame describes. Aligning on
-the frame's own end id only (as okx now does) found no exact match in five REST reads,
-so it needs a different channel (`book.….raw` is authenticated) or another alignment.
+prices. On `100ms`, no REST `change_id` equalled a frame's own id in five reads.
+
+Fix: deribit now runs the whole continuity case on `book.BTC-PERPETUAL.raw` over the
+authenticated private section, and compares only where the REST `change_id` is a raw
+frame's own `change_id` (up to 40 reads under a 100 s deadline; an exact-id disagreement
+fails at once). Measured on test.deribit.com 2026-11-25:
+
+- an unauthenticated `book.BTC-PERPETUAL.raw` subscribe is refused with error 13778
+  `raw_subscriptions_not_available_for_unauthorized`; the docs say raw is "only available to
+  authorized users" and aggregates over 1 ms
+  (https://docs.deribit.com/subscriptions/orderbook/bookinstrument_nameinterval.md);
+- raw frames chain by `prev_change_id` (104 of 105 consecutive pairs in one window, the
+  first frame being the snapshot);
+- between 1 in 5 and 1 in 2 REST `get_order_book` reads carried a `change_id` equal to a raw
+  frame's, with or without a reconnect before; a read whose id fell between two frames
+  equalled the book at the earlier frame in all 12 sampled cases (top 25 levels per side),
+  so the REST `change_id` also advances without a book change.
 
 ## 2026-11-25 — binance-family subscribe acks are not correlated to their request
 
