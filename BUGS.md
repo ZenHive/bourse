@@ -114,6 +114,25 @@ roadmap.
 
 ---
 
+## 2026-11-25 — Binance futures algo-order detail reads answer `-2013` for up to ~1.3 s after the create
+
+**Status:** Fixed in the REST-read contract lane by task 707 (measured live 2026-11-25).
+
+The algo-detail contract cases (binanceusdm `fetchOrder:2` / `fetchOpenOrder:1`, binancecoinm
+`fetchOrder:0` / `fetchOpenOrder:0`, all `GET /{f,d}api/v1/algoOrder`) intermittently failed with
+`order_not_found: Order does not exist.` on an algo order the lane had just placed. Measured over
+20 creates on demo-fapi and demo-dapi: `GET /{f,d}api/v1/openAlgoOrders` listed the new `algoId`
+on the first read every time (85–176 ms after the ack), while `algoOrder` answered
+`-2013 "Order does not exist."` until a first success at (sorted ms) USD-M 177, 179, 194, 227,
+294, 416, 425, 1020, 1037, 1243 and COIN-M 177, 180, 185, 189, 209, 216, 270, 368, 610, 1053,
+and never regressed afterwards (25 reads per create). A never-issued `algoId` gets the identical
+`-2013` on the same branches. Binance's docs for these endpoints say nothing about visibility
+latency. The lane now treats `-2013` as propagation only while the id is listed on the open-algo
+book, waits at most 5 s, and fails on any other answer; the contract's own read stays the
+assertion.
+
+---
+
 ## 2026-11-25 — binancecoinm has no client slot for the venue's algo order history
 
 **Status:** Recorded, not routed (task 713 review, measured live 2026-11-25).
