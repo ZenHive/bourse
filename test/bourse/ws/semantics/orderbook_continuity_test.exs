@@ -39,6 +39,45 @@ defmodule Bourse.WS.Semantics.OrderbookContinuityTest do
   end
 
   describe "binance spot (first_follows_last, REST bootstrap)" do
+    test "a snapshot answered after the buffered deltas were lost waits for a delta that bridges it" do
+      st = state("binance")
+      assert {st, {:fetch_snapshot, "BTCUSDT"}} = Orderbook.apply(st, "BTCUSDT", spot_delta(100, 105, [["101", "1"]]))
+      ref = make_ref()
+      st = Orderbook.fetch_started(st, "BTCUSDT", ref)
+
+      unsequenced = Map.delete(spot_delta(106, 0), "u")
+      assert {st, {:invalidated, _}} = Orderbook.apply(st, "BTCUSDT", unsequenced, unsequenced)
+
+      body = %{"lastUpdateId" => 90, "bids" => [["90", "7"]], "asks" => [["95", "2"]]}
+      assert {st, :pending} = Orderbook.apply_rest_snapshot(st, "BTCUSDT", ref, body)
+      refute Orderbook.live?(st, "BTCUSDT")
+
+      # A delta the snapshot already contains publishes nothing.
+      assert {st, :pending} = Orderbook.apply(st, "BTCUSDT", spot_delta(89, 90, [["13", "1"]]))
+      # The next delta starts past the snapshot: it is fetched again.
+      assert {st, {:fetch_snapshot, "BTCUSDT"}} = Orderbook.apply(st, "BTCUSDT", spot_delta(107, 110))
+      refute Orderbook.live?(st, "BTCUSDT")
+    end
+
+    test "a snapshot whose bridging delta arrives after it goes live on that delta" do
+      st = state("binance")
+      assert {st, {:fetch_snapshot, "BTCUSDT"}} = Orderbook.apply(st, "BTCUSDT", spot_delta(1, 5))
+      ref = make_ref()
+      st = Orderbook.fetch_started(st, "BTCUSDT", ref)
+
+      assert {st, :pending} =
+               Orderbook.apply_rest_snapshot(st, "BTCUSDT", ref, %{
+                 "lastUpdateId" => 10,
+                 "bids" => [["9", "1"]],
+                 "asks" => []
+               })
+
+      assert {st, {:book, %{"bids" => [["9", "1"], ["8", "2"]]}}} =
+               Orderbook.apply(st, "BTCUSDT", spot_delta(9, 12, [["8", "2"]]))
+
+      assert Orderbook.live?(st, "BTCUSDT")
+    end
+
     test "buffers deltas until the REST snapshot, drops those it covers, and chains U == u + 1" do
       st = state("binance")
       assert Orderbook.key(st, spot_delta(1, 2), "depthUpdate", nil) == "BTCUSDT"
@@ -163,9 +202,10 @@ defmodule Bourse.WS.Semantics.OrderbookContinuityTest do
       ref = make_ref()
       st = Orderbook.fetch_started(st, "BTCUSDT", ref)
 
-      assert {_st, {:book, %{"bids" => bids}}} =
+      assert {st, :pending} =
                Orderbook.apply_rest_snapshot(st, "BTCUSDT", ref, %{"lastUpdateId" => 11, "bids" => [], "asks" => []})
 
+      assert {_st, {:book, %{"bids" => bids}}} = Orderbook.apply(st, "BTCUSDT", spot_delta(12, 13), spot_delta(12, 13))
       assert bids == []
       assert before["bids"] == [["90", "4"], ["80", "5"]]
     end
@@ -244,11 +284,12 @@ defmodule Bourse.WS.Semantics.OrderbookContinuityTest do
     test "a first event that starts after the snapshot id cannot bridge it" do
       st = state("binanceusdm")
 
-      {st, _o, {:book, _}} =
+      {st, _o, :pending} =
         bootstrap(st, "BTCUSDT", [usdm_delta(1, 5, 0)], %{"lastUpdateId" => 50, "bids" => [], "asks" => []})
 
-      assert {_st, {:invalidated, {:snapshot_not_spanned, 50, 60}}} =
-               Orderbook.apply(st, "BTCUSDT", usdm_delta(60, 70, 59))
+      # The snapshot is fetched again; nothing was published from it.
+      assert {st, {:fetch_snapshot, "BTCUSDT"}} = Orderbook.apply(st, "BTCUSDT", usdm_delta(60, 70, 59))
+      assert Orderbook.needs_fetch?(st, "BTCUSDT")
     end
 
     test "partial-depth subscriptions replace the book; mixing them with a diff stream is refused" do

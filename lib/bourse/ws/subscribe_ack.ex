@@ -80,8 +80,11 @@ defmodule Bourse.WS.SubscribeAck do
   defp classify_okx(%{"event" => "subscribe"}), do: :success
   defp classify_okx(_), do: :not_ack
 
-  # Hyperliquid: channel "subscriptionResponse" | "error"
+  # Hyperliquid: channel "subscriptionResponse" | "error". An unsubscribe is
+  # answered on the same channel with `data.method` "unsubscribe" (observed on
+  # api.hyperliquid-testnet.xyz 2026-11-25); it is not this subscribe's outcome.
   defp classify_hyperliquid(%{"channel" => "error"} = frame), do: {:rejected, frame}
+  defp classify_hyperliquid(%{"channel" => "subscriptionResponse", "data" => %{"method" => "unsubscribe"}}), do: :not_ack
   defp classify_hyperliquid(%{"channel" => "subscriptionResponse"}), do: :success
   defp classify_hyperliquid(_), do: :not_ack
 

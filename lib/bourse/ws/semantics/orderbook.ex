@@ -10,8 +10,9 @@ defmodule Bourse.WS.Semantics.Orderbook do
   ## Outcomes
 
     * `{:book, book}` — the book is valid after this frame.
-    * `:pending` — no valid book exists yet (awaiting a snapshot, or buffering
-      deltas while a REST snapshot is fetched). Nothing should be published.
+    * `:pending` — no valid book exists yet (awaiting a snapshot, buffering
+      deltas while a REST snapshot is fetched, or holding a REST snapshot until
+      a delta bridges it). Nothing should be published.
     * `{:fetch_snapshot, market}` — a REST-bootstrapped book needs its snapshot;
       the caller fetches it with `rest_snapshot_request/2` and hands the body to
       `apply_rest_snapshot/4`.
@@ -193,30 +194,34 @@ defmodule Bourse.WS.Semantics.Orderbook do
   apart. Only venues with an authored `partial_depth_channel` need this: their
   partial-depth snapshots and diff deltas share one frame shape, and so do two
   diff streams of one market at different speeds.
+
+  A book whose frames a new subscription makes indistinguishable is
+  discarded; the caller compares `books` before and after to announce it.
   """
   @spec track_subscriptions(t(), [String.t() | map()]) :: t()
   def track_subscriptions(%__MODULE__{continuity: %{partial_depth_channel: %Regex{} = re} = c} = state, channels) do
     Enum.reduce(channels, state, fn
-      channel, acc when is_binary(channel) ->
-        case depth_stream(re, channel) do
-          nil ->
-            acc
-
-          # Partial frames that carry no symbol are keyed by their stream name.
-          {market, :partial} when c.unmarked_frames == "snapshot" ->
-            %{acc | anonymous_partials: Map.put(acc.anonymous_partials, channel, market)}
-
-          {market, kind} ->
-            streams = Map.update(acc.depth_streams, market, %{channel => kind}, &Map.put(&1, channel, kind))
-            %{acc | depth_streams: streams, books: Map.delete(acc.books, market)}
-        end
-
-      _channel, acc ->
-        acc
+      channel, acc when is_binary(channel) -> track_stream(acc, c, channel, depth_stream(re, channel))
+      _channel, acc -> acc
     end)
   end
 
   def track_subscriptions(%__MODULE__{} = state, _channels), do: state
+
+  defp track_stream(state, _continuity, _channel, nil), do: state
+
+  # Partial frames that carry no symbol are keyed by their stream name; once a
+  # second one is tracked, no book of them can be attributed.
+  defp track_stream(state, %{unmarked_frames: "snapshot"}, channel, {market, :partial}) do
+    partials = Map.put(state.anonymous_partials, channel, market)
+    books = if map_size(partials) > 1, do: Map.drop(state.books, Map.keys(partials)), else: state.books
+    %{state | anonymous_partials: partials, books: books}
+  end
+
+  defp track_stream(state, _continuity, channel, {market, kind}) do
+    streams = Map.update(state.depth_streams, market, %{channel => kind}, &Map.put(&1, channel, kind))
+    %{state | depth_streams: streams, books: Map.delete(state.books, market)}
+  end
 
   defp depth_stream(re, channel) do
     case Regex.named_captures(re, channel) do
@@ -261,6 +266,10 @@ defmodule Bourse.WS.Semantics.Orderbook do
       _ -> state
     end
   end
+
+  @doc "Returns whether the book under `key` is live."
+  @spec live?(t(), key()) :: boolean()
+  def live?(%__MODULE__{} = state, key), do: match?(%{status: :live}, Map.get(state.books, key))
 
   @doc "Returns whether `key` is waiting for a REST snapshot and no fetch or retry is scheduled for it."
   @spec needs_fetch?(t(), key()) :: boolean()
@@ -396,6 +405,9 @@ defmodule Bourse.WS.Semantics.Orderbook do
 
       {"rest", :bootstrapping} ->
         buffer_delta(state, key, entry, payload)
+
+      {"rest", :bridging} ->
+        bridge(state, key, entry, payload)
 
       {"stream", :awaiting_snapshot} ->
         {state, :pending}
@@ -536,8 +548,29 @@ defmodule Bourse.WS.Semantics.Orderbook do
 
         # `attempts` stays until the replay succeeds: a gap inside the buffer
         # sends the book back to bootstrapping as the same failed attempt.
+        case drop_predating(rule, f, id, buffer) do
+          # Nothing buffered shows the snapshot reaches the stream; the next
+          # delta must bridge it before the book is published.
+          [] -> {put_entry(state, key, %{live | status: :bridging}), :pending}
+          deltas -> replay(state, key, live, deltas)
+        end
+    end
+  end
 
-        replay(state, key, live, drop_predating(rule, f, id, buffer))
+  # The provider's bootstrap check on the first delta after a snapshot that no
+  # buffered delta bridged: it must follow the snapshot, or the snapshot is too
+  # old and is fetched again.
+  defp bridge(state, key, entry, payload) do
+    case check(state.continuity, entry, payload) do
+      :apply ->
+        merge_and_publish(state, key, %{next_id(state.continuity, entry, payload) | status: :live}, payload)
+
+      :stale ->
+        {state, :pending}
+
+      {:gap, _reason} ->
+        restart = %{new_entry() | status: :bootstrapping, buffer: [payload], attempts: entry.attempts}
+        {put_entry(state, key, restart), {:fetch_snapshot, key}}
     end
   end
 

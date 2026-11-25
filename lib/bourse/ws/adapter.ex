@@ -48,10 +48,12 @@ defmodule Bourse.WS.Adapter do
   use GenServer
 
   alias Bourse.Exchange
+  alias Bourse.LogRedaction
   alias Bourse.WS
   alias Bourse.WS.Auth.Expiry
   alias Bourse.WS.Broadcast
   alias Bourse.WS.Config
+  alias Bourse.WS.ConnectionOwner
   alias Bourse.WS.Envelope
   alias Bourse.WS.ListenKey
   alias Bourse.WS.MessageRouter
@@ -180,12 +182,15 @@ defmodule Bourse.WS.Adapter do
   def handle_call({:subscribe, channels, sub_opts}, _from, %{ws: ws} = state) do
     case WS.subscribe(ws, channels, sub_opts) do
       :ok ->
-        {:reply, :ok,
-         monitor_transports(%{
-           state
-           | subscriptions: merge_subscriptions(state.subscriptions, {channels, sub_opts}),
-             orderbook: Orderbook.track_subscriptions(state.orderbook, channels)
-         })}
+        books_before = state.orderbook.books
+
+        state = %{
+          state
+          | subscriptions: merge_subscriptions(state.subscriptions, {channels, sub_opts}),
+            orderbook: Orderbook.track_subscriptions(state.orderbook, channels)
+        }
+
+        {:reply, :ok, state |> retire_unattributable_books(books_before) |> monitor_transports()}
 
       {:error, _} = error ->
         {:reply, error, state}
@@ -249,7 +254,7 @@ defmodule Bourse.WS.Adapter do
         {:noreply, replace_connection(connected, ws)}
 
       {:error, reason} ->
-        Logger.warning("WS connect for #{state.exchange.id} (#{state.section}) failed: #{inspect(reason)}")
+        Logger.warning("WS connect for #{state.exchange.id} (#{state.section}) failed: #{LogRedaction.inspect(reason)}")
         {:noreply, schedule_connect(state, @failed_dial_min_ms)}
     end
   end
@@ -258,44 +263,25 @@ defmodule Bourse.WS.Adapter do
 
   # Each accepted subscribe call is replayed on its own: some venues accept one
   # channel map per call, so a merged call would be refused.
-  def handle_info({:restore_subscriptions, ref}, %{ws: %WS{} = ws, connection_ref: current} = state)
+  def handle_info({:restore_subscriptions, ref}, %{ws: %WS{}, connection_ref: current} = state)
       when is_nil(ref) or ref == current do
-    failed =
-      for {channels, opts} = group <- state.subscriptions,
-          {:error, reason} <- [WS.subscribe(ws, channels, opts)] do
-        {group, reason}
-      end
-
-    state = monitor_transports(state)
-
-    case failed do
-      [] ->
-        {:noreply, %{state | restore_attempts: 0}}
-
-      _ ->
-        delay = backoff_ms(state.restore_attempts + 1)
-
-        Logger.warning(
-          "WS #{state.exchange.id} (#{state.section}) could not restore #{inspect(failed)}; retrying in #{delay}ms"
-        )
-
-        Process.send_after(self(), {:restore_failed, current, Enum.map(failed, &elem(&1, 0))}, delay)
-        {:noreply, %{state | restore_attempts: state.restore_attempts + 1}}
-    end
+    {:noreply, restore(state, Enum.map(state.subscriptions, &{&1, nil}))}
   end
 
   def handle_info({:restore_subscriptions, _ref}, state), do: {:noreply, state}
 
-  def handle_info({:restore_failed, ref, groups}, %{ws: %WS{}, connection_ref: ref} = state) do
-    pending = %{state | subscriptions: Enum.filter(state.subscriptions, &(&1 in groups))}
-    {:noreply, merged} = handle_info({:restore_subscriptions, ref}, pending)
-    {:noreply, %{merged | subscriptions: state.subscriptions}}
+  def handle_info({:restore_failed, ref, failed}, %{ws: %WS{}, connection_ref: ref} = state) do
+    {:noreply, restore(state, Enum.filter(failed, fn {group, _reason} -> group in state.subscriptions end))}
   end
 
-  def handle_info({:restore_failed, _ref, _groups}, state), do: {:noreply, state}
+  def handle_info({:restore_failed, _ref, _failed}, state), do: {:noreply, state}
 
   def handle_info({:DOWN, monitor, :process, _pid, reason}, %{monitors: monitors} = state)
       when is_map_key(monitors, monitor) do
+    {:noreply, transport_lost(state, reason)}
+  end
+
+  def handle_info({:bourse_ws_transport_down, owner, _pid, reason}, %{ws: %WS{connection_owner: owner}} = state) do
     {:noreply, transport_lost(state, reason)}
   end
 
@@ -312,7 +298,7 @@ defmodule Bourse.WS.Adapter do
         # The socket stays open and stops delivering. Nothing downstream can
         # tell that apart from a quiet market, so say it here.
         Logger.warning(
-          "WS auth renewal failed for #{state.exchange.id} (#{state.section}): #{inspect(reason)} — " <>
+          "WS auth renewal failed for #{state.exchange.id} (#{state.section}): #{LogRedaction.inspect(reason)} — " <>
             "the connection is open but no longer authenticated"
         )
 
@@ -328,9 +314,13 @@ defmodule Bourse.WS.Adapter do
     route_and_broadcast(decoded, state)
   end
 
-  def handle_info({:order_book_resync, key}, state) do
+  # Resync work belongs to the connection whose book broke; a book that has
+  # recovered, or a later connection, has nothing for it to do.
+  def handle_info({:order_book_resync, key, ref}, %{connection_ref: ref} = state) do
     {:noreply, resync_order_book(state, key)}
   end
+
+  def handle_info({:order_book_resync, _key, _ref}, state), do: {:noreply, state}
 
   def handle_info({:order_book_snapshot, key, ref, result}, state) do
     {:noreply, apply_order_book_snapshot(state, key, ref, result)}
@@ -345,6 +335,9 @@ defmodule Bourse.WS.Adapter do
   end
 
   def handle_info(_msg, state), do: {:noreply, state}
+
+  @impl true
+  def format_status(status), do: LogRedaction.format_status(status)
 
   @impl true
   def terminate(_reason, %{ws: nil}), do: :ok
@@ -370,11 +363,11 @@ defmodule Bourse.WS.Adapter do
         market_id = MessageRouter.extract_market_id(channel)
         key = market_id || channel
 
-        {state, book} =
+        {state, book, market_id} =
           if family == :watch_order_book do
             apply_order_book(state, decoded, payload, channel, market_id)
           else
-            {state, nil}
+            {state, nil, market_id}
           end
 
         {trades_state, _} =
@@ -487,7 +480,9 @@ defmodule Bourse.WS.Adapter do
   end
 
   defp transport_lost(state, reason) do
-    Logger.warning("WS transport for #{state.exchange.id} (#{state.section}) lost: #{inspect(reason)} — reconnecting")
+    Logger.warning(
+      "WS transport for #{state.exchange.id} (#{state.section}) lost: #{LogRedaction.inspect(reason)} — reconnecting"
+    )
 
     Enum.each(state.book_routes, fn {_key, {channel, market}} ->
       broadcast_invalidated(state, channel, market, {:connection_lost, reason})
@@ -537,8 +532,11 @@ defmodule Bourse.WS.Adapter do
     WS.close(ws)
   end
 
+  # The owner reports every routed socket it loses, including one that died
+  # before the adapter could monitor it.
   defp attach_owner(%{ws: %WS{connection_owner: pid}} = state) when is_pid(pid) do
     Process.link(pid)
+    _ = ConnectionOwner.watch(pid, self())
     state
   end
 
@@ -635,27 +633,45 @@ defmodule Bourse.WS.Adapter do
 
     case outcome do
       {:book, book} ->
-        {state, book}
+        {state, book, market}
 
       {:fetch_snapshot, _market} ->
-        {%{state | orderbook: start_snapshot_fetch(state, key, key)}, nil}
+        {%{state | orderbook: start_snapshot_fetch(state, key, key)}, nil, market}
 
       {:invalidated, reason} ->
         broadcast_invalidated(state, channel, market, reason)
-        send(self(), {:order_book_resync, key})
-        {state, nil}
+        send(self(), {:order_book_resync, key, state.connection_ref})
+        {state, nil, market}
 
       {:unavailable, reason} ->
         broadcast_invalidated(state, channel, market, reason)
-        {state, nil}
+        {state, nil, market}
 
       _pending_or_none ->
-        {state, nil}
+        {state, nil, market}
     end
   end
 
+  # A subscription that makes an existing book's frames indistinguishable from
+  # another stream's ends that book: its subscribers are told which one.
+  defp retire_unattributable_books(state, books_before) do
+    {retired, kept} =
+      Map.split_with(state.book_routes, fn {key, _route} ->
+        Map.has_key?(books_before, key) and not Map.has_key?(state.orderbook.books, key)
+      end)
+
+    Enum.each(retired, fn {_key, {channel, market}} ->
+      broadcast_invalidated(state, channel, market, :ambiguous_depth_streams)
+    end)
+
+    %{state | book_routes: kept}
+  end
+
   defp broadcast_invalidated(state, channel, market_id, reason) do
-    Logger.warning("WS order book #{state.exchange.id} #{inspect(channel)} invalidated: #{inspect(reason)}")
+    Logger.warning(
+      "WS order book #{state.exchange.id} #{LogRedaction.inspect(channel)} invalidated: #{LogRedaction.inspect(reason)}"
+    )
+
     message = {:bourse_ws, {:order_book_invalidated, channel, market_id, reason}}
     Broadcast.broadcast(Broadcast.topic(state.exchange.id, :watch_order_book, channel), message)
     Broadcast.broadcast(Broadcast.topic(state.exchange.id, :watch_order_book, nil), message)
@@ -670,7 +686,7 @@ defmodule Bourse.WS.Adapter do
           else: state
 
       {:resubscribe, subscription} ->
-        resubscribe(state, subscription)
+        if Orderbook.live?(state.orderbook, key), do: state, else: resubscribe(state, subscription)
 
       :none ->
         state
@@ -688,10 +704,10 @@ defmodule Bourse.WS.Adapter do
 
       {:error, reason} ->
         Logger.warning(
-          "WS order book resubscribe #{state.exchange.id} #{inspect(subscription)} failed: #{inspect(reason)}"
+          "WS order book resubscribe #{state.exchange.id} #{LogRedaction.inspect(subscription)} failed: #{LogRedaction.inspect(reason)}"
         )
 
-        Process.send_after(self(), {:order_book_resync, subscription}, 1_000)
+        Process.send_after(self(), {:order_book_resync, subscription, state.connection_ref}, 1_000)
         state
     end
   end
@@ -746,7 +762,7 @@ defmodule Bourse.WS.Adapter do
     case Orderbook.fetch_retry(state.orderbook, key, token) do
       {orderbook, delay_ms} ->
         Logger.warning(
-          "WS order book snapshot #{state.exchange.id} #{inspect(key)} not usable (#{inspect(reason)}); " <>
+          "WS order book snapshot #{state.exchange.id} #{LogRedaction.inspect(key)} not usable (#{LogRedaction.inspect(reason)}); " <>
             "retrying in #{delay_ms}ms"
         )
 
@@ -757,6 +773,42 @@ defmodule Bourse.WS.Adapter do
         state
     end
   end
+
+  # A call whose ack never arrived may have been accepted after all: the venue
+  # then refuses a second subscribe for it. It is unsubscribed before it is
+  # sent again, so the retry's outcome is the venue's answer to this call alone.
+  defp restore(%{ws: ws} = state, groups) do
+    failed =
+      for {{channels, opts} = group, previous} <- groups,
+          {:error, reason} <- [restore_group(ws, channels, opts, previous)] do
+        {group, reason}
+      end
+
+    state = monitor_transports(state)
+
+    case failed do
+      [] ->
+        %{state | restore_attempts: 0}
+
+      _ ->
+        delay = backoff_ms(state.restore_attempts + 1)
+
+        Logger.warning(
+          "WS #{state.exchange.id} (#{state.section}) could not restore #{LogRedaction.inspect(failed)}; " <>
+            "retrying in #{delay}ms"
+        )
+
+        Process.send_after(self(), {:restore_failed, state.connection_ref, failed}, delay)
+        %{state | restore_attempts: state.restore_attempts + 1}
+    end
+  end
+
+  defp restore_group(ws, channels, opts, :subscription_ack_timeout) do
+    _ = WS.unsubscribe(WS.Handle.new(ws, nil, channels, opts))
+    WS.subscribe(ws, channels, opts)
+  end
+
+  defp restore_group(ws, channels, opts, _previous), do: WS.subscribe(ws, channels, opts)
 
   defp merge_subscriptions(existing, group) do
     if group in existing, do: existing, else: existing ++ [group]

@@ -7,6 +7,10 @@ defmodule Bourse.WS.ConnectionOwner do
   crashing an owner closes every socket it still holds, so a dead owner cannot
   leave an unreachable routed host, and an owner whose process dies is visible
   to its dependents.
+
+  A process registered with `watch/2` is sent
+  `{:bourse_ws_transport_down, owner, client_pid, reason}` when a held client
+  exits. A loss that happens before any process watches is delivered on `watch/2`.
   """
 
   use GenServer
@@ -59,6 +63,14 @@ defmodule Bourse.WS.ConnectionOwner do
     GenServer.call(owner, :snapshot, timeout)
   end
 
+  @doc "Registers `pid` to be told about every held client that exits."
+  @spec watch(pid(), pid(), timeout()) :: :ok | {:error, term()}
+  def watch(owner, pid, timeout \\ 5_000) do
+    GenServer.call(owner, {:watch, pid}, timeout)
+  catch
+    :exit, reason -> {:error, {:connection_owner_down, reason}}
+  end
+
   @doc "Stops the owner. Remaining clients are closed from `terminate/2`."
   @spec stop(pid(), timeout()) :: :ok
   def stop(owner, timeout) do
@@ -71,7 +83,7 @@ defmodule Bourse.WS.ConnectionOwner do
   def init({url, zen_client}) do
     Process.flag(:trap_exit, true)
     link_client(zen_client)
-    {:ok, %{closed?: false, connections: %{url => zen_client}}}
+    {:ok, %{closed?: false, connections: %{url => zen_client}, watchers: [], losses: []}}
   end
 
   @impl true
@@ -84,6 +96,11 @@ defmodule Bourse.WS.ConnectionOwner do
       {:ok, zen_client} -> {:reply, {:ok, zen_client}, state}
       :error -> connect_and_store(state, connect_fun, url, opts)
     end
+  end
+
+  def handle_call({:watch, pid}, _from, state) do
+    Enum.each(Enum.reverse(state.losses), &send(pid, &1))
+    {:reply, :ok, %{state | watchers: Enum.uniq([pid | state.watchers]), losses: []}}
   end
 
   def handle_call(:snapshot, _from, %{closed?: true} = state) do
@@ -100,11 +117,26 @@ defmodule Bourse.WS.ConnectionOwner do
   end
 
   @impl true
-  def handle_info({:EXIT, pid, _reason}, state) do
-    {:noreply, %{state | connections: drop_client(state.connections, pid)}}
+  def handle_info({:EXIT, pid, reason}, state) do
+    remaining = drop_client(state.connections, pid)
+
+    cond do
+      map_size(remaining) == map_size(state.connections) ->
+        {:noreply, state}
+
+      state.watchers == [] ->
+        {:noreply, %{state | connections: remaining, losses: [loss(pid, reason) | state.losses]}}
+
+      true ->
+        Enum.each(state.watchers, &send(&1, loss(pid, reason)))
+        {:noreply, %{state | connections: remaining}}
+    end
   end
 
   def handle_info(_msg, state), do: {:noreply, state}
+
+  @impl true
+  def format_status(status), do: Bourse.LogRedaction.format_status(status)
 
   @impl true
   def terminate(_reason, state) do
@@ -124,6 +156,8 @@ defmodule Bourse.WS.ConnectionOwner do
         {:reply, {:error, reason}, state}
     end
   end
+
+  defp loss(pid, reason), do: {:bourse_ws_transport_down, self(), pid, reason}
 
   defp drop_client(connections, pid) do
     connections

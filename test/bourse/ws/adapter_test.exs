@@ -62,7 +62,8 @@ defmodule Bourse.WS.AdapterTest do
       accepted = :atomics.get(gate, 1) == 0
       send(owner, {:transport_sent, self(), message, accepted})
 
-      if message["op"] == "subscribe",
+      # 2 leaves the subscribe unanswered.
+      if message["op"] == "subscribe" and :atomics.get(gate, 1) != 2,
         do: handler.({:message, %{"op" => "subscribe", "success" => accepted, "ret_msg" => "probe"}})
 
       {:reply, :ok, state}
@@ -642,7 +643,7 @@ defmodule Bourse.WS.AdapterTest do
       assert log =~ "retrying in 1000ms"
 
       # Neither the result nor a further resync request starts a fetch now.
-      assert {:noreply, ^state} = Adapter.handle_info({:order_book_resync, key}, state)
+      assert {:noreply, ^state} = Adapter.handle_info({:order_book_resync, key, state.connection_ref}, state)
       refute_receive {:order_book_snapshot, ^key, _, _}, 500
 
       assert_receive {:order_book_fetch_retry, ^key, token}, 1_000
@@ -651,6 +652,85 @@ defmodule Bourse.WS.AdapterTest do
       # A retry the book no longer waits for is ignored.
       assert {:noreply, ^state} = Adapter.handle_info({:order_book_fetch_retry, key, make_ref()}, state)
     end
+  end
+
+  describe "order book recovery" do
+    setup do
+      test_pid = self()
+      Broadcast.subscribe(Broadcast.topic("bybit", :watch_order_book, nil))
+      on_exit(fn -> Broadcast.unsubscribe(Broadcast.topic("bybit", :watch_order_book, nil)) end)
+
+      zen_connect = fn url, opts ->
+        {:ok, pid} = GenServer.start(AckingTransport, {test_pid, Keyword.fetch!(opts, :handler)})
+        {:ok, %Client{server_pid: pid, state: :connected, url: url}}
+      end
+
+      connect_fun = fn ex, section, opts -> WS.connect(ex, section, Keyword.put(opts, :connect_fun, zen_connect)) end
+      {:ok, adapter} = Adapter.start_link(Exchange.new!("bybit"), :public, connect_fun: connect_fun)
+      on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter) end)
+      _ = :sys.get_state(adapter)
+      %{adapter: adapter}
+    end
+
+    test "a resync runs only for the connection and the book that asked for it", %{adapter: adapter} do
+      channel = "orderbook.50.BTCUSDT"
+      assert :ok = Adapter.subscribe(adapter, [channel])
+      assert_receive {:transport_sent, _, %{"op" => "subscribe"}}
+      ref = :sys.get_state(adapter).connection_ref
+
+      # From a connection that is gone: nothing is sent on this one.
+      send(adapter, {:order_book_resync, channel, make_ref()})
+      _ = :sys.get_state(adapter)
+      refute_received {:transport_sent, _, _}
+
+      # For a book that is live again: nothing is sent either.
+      snapshot = %{"topic" => channel, "type" => "snapshot", "data" => %{"s" => "BTCUSDT", "u" => 7, "b" => [["1", "2"]]}}
+      send(adapter, {:ws_frame, ref, snapshot})
+      assert_receive {:bourse_ws, {:routed, :watch_order_book, _, ^channel, _, %{}}}
+      send(adapter, {:order_book_resync, channel, ref})
+      _ = :sys.get_state(adapter)
+      refute_received {:transport_sent, _, _}
+
+      # A broken book on the current connection is resubscribed.
+      gap = %{"topic" => channel, "type" => "delta", "data" => %{"s" => "BTCUSDT", "u" => 9, "b" => []}}
+
+      ExUnit.CaptureLog.capture_log(fn ->
+        send(adapter, {:ws_frame, ref, %{gap | "data" => Map.put(gap["data"], "u", 7)}})
+        _ = :sys.get_state(adapter)
+      end)
+
+      assert_receive {:bourse_ws, {:order_book_invalidated, ^channel, "BTCUSDT", _}}
+      assert_receive {:transport_sent, _, %{"op" => "unsubscribe", "args" => [^channel]}}
+      assert_receive {:transport_sent, _, %{"op" => "subscribe", "args" => [^channel]}}
+    end
+  end
+
+  test "a single partial-depth book names its instrument; a second partial retires it" do
+    exchange = Exchange.new!("binance")
+    Broadcast.subscribe(Broadcast.topic("binance", :watch_order_book, nil))
+    on_exit(fn -> Broadcast.unsubscribe(Broadcast.topic("binance", :watch_order_book, nil)) end)
+
+    zen_connect = fn url, _opts ->
+      {:ok, pid} = Transport.start_link(self())
+      {:ok, %Client{server_pid: pid, state: :connected, url: url}}
+    end
+
+    connect_fun = fn ex, section, opts -> WS.connect(ex, section, Keyword.put(opts, :connect_fun, zen_connect)) end
+    {:ok, adapter} = Adapter.start_link(exchange, :public, connect_fun: connect_fun)
+    on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter) end)
+    _ = :sys.get_state(adapter)
+
+    assert :ok = Adapter.subscribe(adapter, ["btcusdt@depth20"], ack_timeout_ms: 0)
+    ref = :sys.get_state(adapter).connection_ref
+    partial = %{"lastUpdateId" => 5, "bids" => [["1", "2"]], "asks" => []}
+    send(adapter, {:ws_frame, ref, partial})
+    assert_receive {:bourse_ws, {:routed, :watch_order_book, ^partial, "depthUpdate", "BTCUSDT", %{}}}
+
+    ExUnit.CaptureLog.capture_log(fn ->
+      assert :ok = Adapter.subscribe(adapter, ["ethusdt@depth20"], ack_timeout_ms: 0)
+    end)
+
+    assert_receive {:bourse_ws, {:order_book_invalidated, "depthUpdate", "BTCUSDT", :ambiguous_depth_streams}}
   end
 
   test "an owner crash is visible to the adapter" do
@@ -849,6 +929,39 @@ defmodule Bourse.WS.AdapterTest do
         end)
 
       assert log =~ "could not restore"
+      assert :sys.get_state(adapter).restore_attempts == 0
+    end
+
+    test "a call whose ack never arrived is unsubscribed before it is sent again" do
+      test_pid = self()
+      gate = :atomics.new(1, [])
+
+      zen_connect = fn url, opts ->
+        {:ok, pid} = GenServer.start(GatedTransport, {test_pid, Keyword.fetch!(opts, :handler), gate})
+        {:ok, %Client{server_pid: pid, state: :connected, url: url}}
+      end
+
+      connect_fun = fn ex, section, opts -> WS.connect(ex, section, Keyword.put(opts, :connect_fun, zen_connect)) end
+      {:ok, adapter} = Adapter.start_link(Exchange.new!("bybit"), :public, connect_fun: connect_fun)
+      on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter) end)
+      _ = :sys.get_state(adapter)
+
+      assert :ok = Adapter.subscribe(adapter, ["publicTrade.BTCUSDT"], ack_timeout_ms: 100)
+      assert_receive {:transport_sent, first, %{"op" => "subscribe"}, true}
+
+      ExUnit.CaptureLog.capture_log(fn ->
+        :atomics.put(gate, 1, 2)
+        GenServer.stop(first, {:shutdown, :closed})
+        assert_receive {:transport_sent, second, %{"op" => "subscribe"}, false}, 1_000
+        :atomics.put(gate, 1, 0)
+
+        assert_receive {:transport_sent, ^second, %{"op" => "unsubscribe", "args" => ["publicTrade.BTCUSDT"]}, true},
+                       2_000
+
+        assert_receive {:transport_sent, ^second, %{"op" => "subscribe", "args" => ["publicTrade.BTCUSDT"]}, true}, 500
+        _ = :sys.get_state(adapter)
+      end)
+
       assert :sys.get_state(adapter).restore_attempts == 0
     end
   end

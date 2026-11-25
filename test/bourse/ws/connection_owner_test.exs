@@ -49,6 +49,33 @@ defmodule Bourse.WS.ConnectionOwnerTest do
     assert :ok = ConnectionOwner.stop(owner, 1_000)
   end
 
+  test "a held client's exit reaches the watcher, also when it happened before the watch" do
+    {:ok, primary} = Agent.start(fn -> :ok end)
+    {:ok, routed} = Agent.start(fn -> :ok end)
+    {:ok, owner} = ConnectionOwner.start("wss://a.test", %Client{server_pid: primary, url: "wss://a.test"})
+    on_exit(fn -> if Process.alive?(owner), do: GenServer.stop(owner) end)
+
+    routed_client = %Client{server_pid: routed, url: "wss://b.test"}
+    assert {:ok, _} = ConnectionOwner.checkout(owner, fn _, _ -> {:ok, routed_client} end, "wss://b.test", [], 1_000)
+
+    # Dies after it was handed out and before anyone watches.
+    Agent.stop(routed, :closed)
+    _ = :sys.get_state(owner)
+    refute_received {:bourse_ws_transport_down, _, _, _}
+
+    assert :ok = ConnectionOwner.watch(owner, self())
+    assert_receive {:bourse_ws_transport_down, ^owner, ^routed, :closed}
+
+    Agent.stop(primary, :closed)
+    assert_receive {:bourse_ws_transport_down, ^owner, ^primary, :closed}
+
+    # A process the owner never held is no loss.
+    {:ok, stranger} = Agent.start(fn -> :ok end)
+    send(owner, {:EXIT, stranger, :closed})
+    _ = :sys.get_state(owner)
+    refute_received {:bourse_ws_transport_down, _, _, _}
+  end
+
   test "a client without a server pid still starts" do
     client = %Client{state: :disconnected}
     {:ok, owner} = ConnectionOwner.start("wss://a.test", client)

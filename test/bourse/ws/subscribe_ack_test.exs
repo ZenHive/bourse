@@ -59,6 +59,11 @@ defmodule Bourse.WS.SubscribeAckTest do
                })
 
       assert :not_ack = SubscribeAck.classify("hyperliquid", %{"channel" => "allMids"})
+
+      unsubscribed = %{"method" => "unsubscribe", "subscription" => %{"type" => "trades", "coin" => "BTC"}}
+
+      assert :not_ack =
+               SubscribeAck.classify("hyperliquid", %{"channel" => "subscriptionResponse", "data" => unsubscribed})
     end
 
     test "derive and deribit JSON-RPC envelopes" do
