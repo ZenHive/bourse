@@ -24275,7 +24275,7 @@ scored_at = "2026-09-22"
 id = "707"
 phase = 8
 bundle = "polish"
-status = "in_progress"
+status = "done"
 title = "Make Binance algo-order contract setup reliably readable before assertion"
 scores = { d = 4, b = 6, u = 5 }
 acceptance_criteria = ["Observe owned algo-order creation and the corresponding USD-M/COIN-M detail reads live; determine whether propagation, identifier selection, or another provider behavior causes order_not_found.", "Repair the demonstrated cause with bounded state-aware setup and guaranteed cleanup. A never-readable order or unexpected provider error must fail; do not add fixed sleeps, catch-all passes, skips, or blanket retries that hide semantic failures.", "An independent reviewer exercises affected algo-order contracts repeatedly against the real provider, including the relevant error path and cleanup, and records the full contract-lane result."]
@@ -24283,9 +24283,16 @@ touches = ["test/support/rest_read_contract_owned_state.ex", "test/support/rest_
 assignee = "claude"
 model = "claude-opus-5-5"
 body = "Audit of 21c9a4e on 2026-09-22: the 410-case REST-read lane failed binancecoinm:fetchOpenOrder:0:dapiPrivateGetAlgoOrder with order_not_found (409 passed, seed recorded in .audit/21c9a4e.md). The earlier full suite had retry-cleared failures for COIN-M fetchOrder and USD-M fetchOpenOrder algo detail reads. RestReadContractScenario already creates an owned algo order, but RestReadContractOwnedState.await_readable explicitly returns :ok for source_kind algo; ordinary orders poll readability. This is a diagnostic lead, not proof of eventual consistency. Existing completed tasks 576/580 concern routing; task 670 is broad suite convergence. This task owns the observed recurring setup/read failure. Routing trigger: live sandbox order lifecycle and independent review."
+implemented = "Cause: Binance's algo detail endpoint lags the create (and a cancel) by up to ~1.3 s while the open-algo list is immediate. The contract lane's owned-state setup now waits only while the id is listed, retries only -2013, checks a 5 s deadline before every request, re-checks membership after each detail, cancels on the explicit algo slot and requires confirmed absence; fetchOpenOrder requires status open via a validated field_values key; exact-slot unknown-id error probes added."
+delivered_by = "claude"
+verified = true
+verified_by = "codex"
+verification_ref = "herdr codex review rounds 1-3 (707.md): lanes 3x unmodified, USD-M 61/61, COIN-M 32/32; final doc-only wording fix applied by orchestrator per round-3 finding"
 created_at = "2026-09-22"
 started_at = "2026-11-24"
 scored_at = "2026-09-22"
+done_at = "2026-11-25"
+shipped_in = "f158a6cb7895e07a2734ef6b78a64d2670f8b681"
 
 [[task]]
 id = "708"
