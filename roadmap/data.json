@@ -32728,7 +32728,7 @@
       "id": "714",
       "phase": 16,
       "bundle": "live_e2e",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Five live deribit tests grade against the production host; measure the testnet books and move them to test.deribit.com",
       "scores": {
         "d": 3,
@@ -32752,6 +32752,7 @@
       ],
       "body": "Source: BUGS.md entry \"2026-09-15 — five live deribit tests grade against the PRODUCTION host, so a venue maintenance window reds the suite\". Read it first.\n\ntest/live/read_parse_slots_test.exs and test/live/ws/canary_test.exs construct deribit without sandbox: true and therefore run against www.deribit.com, while the repo reserves the production host for public-only Coinbase Exchange. Moving them blindly can turn a loud outage into a thin-book flake: one of them asserts a populated USDC-settled option chain with non-empty IV and guards against an empty success. Measure first whether test.deribit.com carries what each test reads, then move each test. Where testnet does not carry the state, do not weaken the assertion: pick a testnet instrument or currency that does carry it, or record the case in docs/prod-verification-ledger.md as unverified with the measurement.\n",
       "created_at": "2026-11-24",
+      "started_at": "2026-11-25",
       "scored_at": "2026-11-24",
       "cross_repo": []
     },
