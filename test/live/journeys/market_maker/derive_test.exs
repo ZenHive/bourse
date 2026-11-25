@@ -8,8 +8,12 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
 
   Every mutation is undone and checked: a fill is traded back to the position
   recorded before it, and the MMP config and the cancel-on-disconnect account
-  setting are restored to the values read before the test. A failed restore is
-  reported alongside, never instead of, the failure that preceded it.
+  setting are restored to the values read before the test, a freeze the test
+  induced is reset and the account proven unfrozen again. Every cleanup step
+  runs even when an earlier one failed, and a failed restore is reported
+  alongside, never instead of, the failure that preceded it. The freeze test
+  refuses to run while the subaccount carries open BTC MMP orders or quotes,
+  which a tripped threshold would cancel.
 
   The freeze is tripped by one taker IOC fill carrying `mmp: true`. The provider
   page counts fills from "orders and quotes submitted with the per-order `mmp`
@@ -144,6 +148,7 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
       subaccount = derive_subaccount_id!()
       original = mmp_config!(exchange)
       refute original["is_frozen"] == true, "BTC MMP is already frozen before the test: #{inspect(original)}"
+      refuse_mmp_exposure!(exchange)
 
       market = Enum.find(exchange.markets, &(&1.symbol == @symbol))
       min_amount = market.limits["amount"]["min"]
@@ -243,8 +248,10 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
           assert canceled.info["cancel_reason"] == "cancel_on_disconnect"
         end,
         fn ->
-          if id = Process.get(placed), do: release_order!(exchange, id, @symbol)
-          restore_cod!(exchange, original)
+          MM.cleanup_all([
+            fn -> if id = Process.get(placed), do: release_order!(exchange, id, @symbol) end,
+            fn -> restore_cod!(exchange, original) end
+          ])
         end
       )
     end
@@ -411,28 +418,54 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
     Enum.find(configs, &(&1["currency"] == @currency))
   end
 
-  # No prior BTC config is restored as disabled (mmp_interval 0), the
-  # provider's own "MMP off" state.
+  # Undoes a freeze the test induced (mmp_frozen_time 0 stays frozen until a
+  # manual reset), rewrites the original config, then proves both the config
+  # and the freeze state match what was read before the test. Each step runs
+  # even when an earlier one failed.
   defp restore_mmp_config!(exchange, original) do
-    fields = ~w(mmp_interval mmp_frozen_time mmp_amount_limit mmp_delta_limit)
+    target = MM.mmp_restore_target(original)
+    account = %{"subaccount_id" => derive_subaccount_id!(), "currency" => @currency}
 
-    restore =
-      case original do
-        nil -> %{"mmp_interval" => 0, "mmp_frozen_time" => 0, "mmp_amount_limit" => "0", "mmp_delta_limit" => "0"}
-        %{} -> Map.take(original, fields)
+    MM.cleanup_all([
+      fn ->
+        if MM.mmp_needs_reset?(target, mmp_config!(exchange)) do
+          assert {:ok, %{body: %{"result" => "ok"}}} = Bourse.Derive.private_post_reset_mmp(exchange, account)
+        end
+      end,
+      fn ->
+        assert {:ok, %{body: %{"result" => _}}} =
+                 Bourse.Derive.private_post_set_mmp_config(exchange, Map.merge(Map.delete(target, "is_frozen"), account))
+      end,
+      fn ->
+        poll_until!("BTC MMP back at #{inspect(target)}", fn ->
+          current = mmp_config!(exchange)
+          if MM.mmp_mismatches(target, current) == [], do: {:ok, current}, else: :retry
+        end)
       end
+    ])
+  end
 
-    assert {:ok, %{body: %{"result" => _}}} =
-             Bourse.Derive.private_post_set_mmp_config(
-               exchange,
-               Map.merge(restore, %{"subaccount_id" => derive_subaccount_id!(), "currency" => @currency})
-             )
+  # A deliberate freeze cancels every open MMP order and quote on the currency,
+  # so the test refuses to run on an account that carries any.
+  defp refuse_mmp_exposure!(exchange) do
+    account = %{"subaccount_id" => derive_subaccount_id!()}
 
-    after_restore = mmp_config!(exchange)
-    assert after_restore["mmp_interval"] == restore["mmp_interval"]
-    assert after_restore["mmp_frozen_time"] == restore["mmp_frozen_time"]
-    assert decimal_equal?(after_restore["mmp_amount_limit"], restore["mmp_amount_limit"])
-    assert decimal_equal?(after_restore["mmp_delta_limit"], restore["mmp_delta_limit"])
+    assert {:ok, %{body: %{"result" => %{"orders" => orders}}}} =
+             Bourse.Derive.private_post_get_open_orders(exchange, account)
+
+    assert {:ok, %{body: %{"result" => %{"quotes" => quotes}}}} =
+             Bourse.Derive.private_post_get_quotes(exchange, Map.put(account, "status", "open"))
+
+    case MM.mmp_exposure(orders, quotes, @currency) do
+      [] ->
+        :ok
+
+      ids ->
+        flunk("""
+        subaccount #{derive_subaccount_id!()} carries open #{@currency} MMP orders or quotes #{inspect(ids)}.
+        Tripping the freeze would cancel them; cancel them or run on a subaccount without MMP exposure.
+        """)
+    end
   end
 
   # The persisted account setting, from private/get_account

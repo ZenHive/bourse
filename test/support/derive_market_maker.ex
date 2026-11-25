@@ -92,15 +92,23 @@ defmodule Bourse.Test.DeriveMarketMaker do
     if missing == [] do
       found
     else
-      left = max(deadline - System.monotonic_time(:millisecond), 0)
+      # The absolute deadline is checked before every receive: a frame still
+      # queued once it has passed is not accepted.
+      left = deadline - System.monotonic_time(:millisecond)
 
-      receive do
-        frame -> await_all(wanted, absorb(frame, wanted, found), deadline, timeout_ms)
-      after
-        left -> flunk("within #{timeout_ms}ms no frame carried #{inspect(missing)}")
+      if left <= 0 do
+        flunk_missing(missing, timeout_ms)
+      else
+        receive do
+          frame -> await_all(wanted, absorb(frame, wanted, found), deadline, timeout_ms)
+        after
+          left -> flunk_missing(missing, timeout_ms)
+        end
       end
     end
   end
+
+  defp flunk_missing(missing, timeout_ms), do: flunk("within #{timeout_ms}ms no frame carried #{inspect(missing)}")
 
   @doc """
   Runs `body`, then `cleanup`, whatever `body` did. Returns `body`'s value when
@@ -131,6 +139,95 @@ defmodule Bourse.Test.DeriveMarketMaker do
           #{Exception.format(c_kind, c_reason, c_stack)}\
           """
     end
+  end
+
+  @doc """
+  Runs every cleanup step, each one whether or not an earlier one failed.
+  Returns `:ok` when all succeed; one failure is re-raised as is, several are
+  raised together in step order.
+  """
+  @spec cleanup_all([(-> term())]) :: :ok
+  def cleanup_all(steps) when is_list(steps) do
+    case for step <- steps, outcome = capture(step), elem(outcome, 0) != :ok, do: outcome do
+      [] ->
+        :ok
+
+      [{kind, reason, stack}] ->
+        :erlang.raise(kind, reason, stack)
+
+      failures ->
+        raise ExUnit.AssertionError,
+          message:
+            Enum.map_join(failures, "\nanother cleanup step also failed:\n", fn {k, r, st} ->
+              Exception.format(k, r, st)
+            end)
+    end
+  end
+
+  @mmp_fields ~w(mmp_interval mmp_frozen_time mmp_amount_limit mmp_delta_limit)
+
+  @doc """
+  The MMP state cleanup must leave behind, from the config read
+  before the test (`nil` when none existed): the four config fields, and the
+  freeze state. No prior config restores as disabled (`mmp_interval 0`), the
+  provider's own "MMP off" state.
+  """
+  @spec mmp_restore_target(map() | nil) :: map()
+  def mmp_restore_target(nil),
+    do: %{
+      "mmp_interval" => 0,
+      "mmp_frozen_time" => 0,
+      "mmp_amount_limit" => "0",
+      "mmp_delta_limit" => "0",
+      "is_frozen" => false
+    }
+
+  def mmp_restore_target(%{} = original),
+    do: original |> Map.take(@mmp_fields) |> Map.put("is_frozen", original["is_frozen"] == true)
+
+  @doc "True when `current` is frozen and the target state is not, so cleanup must call `reset_mmp`."
+  @spec mmp_needs_reset?(map(), map() | nil) :: boolean()
+  def mmp_needs_reset?(target, current), do: current["is_frozen"] == true and target["is_frozen"] != true
+
+  @doc """
+  The fields where `current` differs from `target`, freeze state included;
+  amount and delta limits compare as decimals. `[]` means restored.
+  """
+  @spec mmp_mismatches(map(), map() | nil) :: [String.t()]
+  def mmp_mismatches(_target, nil), do: ["config missing"]
+
+  def mmp_mismatches(target, %{} = current) do
+    for field <- ["is_frozen" | @mmp_fields], not same?(field, target[field], current[field]), do: field
+  end
+
+  defp same?("is_frozen", target, current), do: target == (current == true)
+
+  defp same?(field, target, current) when field in ~w(mmp_amount_limit mmp_delta_limit),
+    do: not is_nil(current) and Decimal.equal?(Decimal.new(to_string(target)), Decimal.new(to_string(current)))
+
+  defp same?(_field, target, current), do: target == current
+
+  @doc """
+  Ids of open MMP orders and quotes on `currency`'s instruments: the provider
+  cancels them when the threshold trips, so a deliberate freeze must not run
+  while any exist. Orders are `private/get_open_orders` rows, quotes
+  `private/get_quotes` rows (instruments in `legs`).
+  """
+  @spec mmp_exposure([map()], [map()], String.t()) :: [String.t()]
+  def mmp_exposure(orders, quotes, currency) do
+    on_currency? = &String.starts_with?(to_string(&1), currency <> "-")
+
+    order_ids =
+      for %{"mmp" => true, "order_status" => "open", "instrument_name" => name} = o <- orders,
+          on_currency?.(name),
+          do: o["order_id"]
+
+    quote_ids =
+      for %{"mmp" => true, "status" => "open"} = q <- quotes,
+          Enum.any?(q["legs"] || [], &on_currency?.(&1["instrument_name"])),
+          do: q["quote_id"]
+
+    order_ids ++ quote_ids
   end
 
   defp capture(fun) do

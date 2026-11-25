@@ -64,12 +64,15 @@ defmodule Bourse.DeriveMarketMakerTest do
       send(self(), :unrelated)
       send(self(), {:websocket_message, %{"result" => "ok"}})
       send(self(), trade_frame("o1"))
-      send(self(), {:websocket_unmatched_response, elem(order_frame("o1"), 1)})
 
+      # The duplicate is queued while the order event is still pending, so the
+      # collector reads it before the pair completes.
       send(
         self(),
         "o1" |> trade_frame() |> put_in([Access.elem(1), "params", "data"], [%{"order_id" => "o1", "trade_id" => "late"}])
       )
+
+      send(self(), {:websocket_unmatched_response, elem(order_frame("o1"), 1)})
 
       assert %{order: %{"order_id" => "o1"}, trade: %{"trade_id" => "t-o1"}} = MM.await_all!(wanted("o1"), 200)
     end
@@ -79,6 +82,48 @@ defmodule Bourse.DeriveMarketMakerTest do
       error = assert_raise ExUnit.AssertionError, fn -> MM.await_all!(wanted("o1"), 50) end
       assert error.message =~ ~s(order: "42.orders")
       refute error.message =~ "42.trades"
+    end
+
+    test "a frame that arrives after the deadline is not accepted, even when it completes the pair" do
+      test = self()
+
+      spawn(fn ->
+        Process.sleep(80)
+        send(test, order_frame("o1"))
+      end)
+
+      send(self(), trade_frame("o1"))
+
+      error = assert_raise ExUnit.AssertionError, fn -> MM.await_all!(wanted("o1"), 30) end
+      assert error.message =~ ~s(order: "42.orders")
+    end
+
+    test "a frame already queued when a slow predicate runs past the deadline is not accepted" do
+      send(self(), trade_frame("o1"))
+      send(self(), order_frame("o1"))
+
+      slow = [
+        {:trade, @trades, fn row -> Process.sleep(40) && row["order_id"] == "o1" end},
+        {:order, @orders, &(&1["order_id"] == "o1")}
+      ]
+
+      error = assert_raise ExUnit.AssertionError, fn -> MM.await_all!(slow, 15) end
+      assert error.message =~ ~s(order: "42.orders")
+    end
+
+    test "noise arriving while an event is pending does not extend the deadline" do
+      # The trade completes at once; then twenty foreign order frames, each
+      # costing ~10ms in the predicate, precede the owned order. It is reached
+      # only if every frame restarted the clock.
+      send(self(), trade_frame("o1"))
+      for n <- 1..20, do: send(self(), order_frame("other-#{n}"))
+      send(self(), order_frame("o1"))
+
+      slow_order = fn row -> Process.sleep(10) && row["order_id"] == "o1" end
+      wanted = [{:order, @orders, slow_order}, {:trade, @trades, &(&1["order_id"] == "o1")}]
+
+      error = assert_raise ExUnit.AssertionError, fn -> MM.await_all!(wanted, 50) end
+      assert error.message =~ ~s(order: "42.orders")
     end
   end
 
@@ -121,6 +166,7 @@ defmodule Bourse.DeriveMarketMakerTest do
     test "returns the body's value and runs cleanup once" do
       assert MM.run_with_cleanup(fn -> :value end, fn -> send(self(), :cleaned) end) == :value
       assert_received :cleaned
+      refute_received :cleaned
     end
 
     test "a body failure survives a successful cleanup unchanged" do
@@ -132,6 +178,7 @@ defmodule Bourse.DeriveMarketMakerTest do
       assert error.message == "body broke"
 
       assert_received :cleaned
+      refute_received :cleaned
     end
 
     test "a cleanup failure after a passing body is raised" do
@@ -154,6 +201,104 @@ defmodule Bourse.DeriveMarketMakerTest do
     test "exits and throws in the body are kept as well" do
       assert catch_exit(MM.run_with_cleanup(fn -> exit(:gone) end, fn -> :ok end)) == :gone
       assert catch_throw(MM.run_with_cleanup(fn -> throw(:thrown) end, fn -> :ok end)) == :thrown
+    end
+  end
+
+  describe "cleanup_all/1" do
+    test "a failed order release does not stop the original COD value being restored" do
+      {:ok, cod} = Agent.start_link(fn -> true end)
+      original = false
+
+      error =
+        assert_raise RuntimeError, "cancel timed out", fn ->
+          MM.cleanup_all([
+            fn -> raise "cancel timed out" end,
+            fn -> Agent.update(cod, fn _ -> original end) end
+          ])
+        end
+
+      assert error.message == "cancel timed out"
+      assert Agent.get(cod, & &1) == original
+    end
+
+    test "every step runs once and every failure is reported in step order" do
+      error =
+        assert_raise ExUnit.AssertionError, fn ->
+          MM.cleanup_all([
+            fn -> flunk("first broke") end,
+            fn -> send(self(), :second) end,
+            fn -> raise "third broke" end
+          ])
+        end
+
+      assert_received :second
+      refute_received :second
+      assert [first, third] = String.split(error.message, "another cleanup step also failed:")
+      assert first =~ "first broke"
+      assert third =~ "third broke"
+    end
+
+    test "returns :ok when every step succeeds" do
+      assert MM.cleanup_all([fn -> :a end, fn -> nil end]) == :ok
+    end
+  end
+
+  describe "MMP cleanup" do
+    @original %{
+      "currency" => "BTC",
+      "is_frozen" => false,
+      "mmp_interval" => 5_000,
+      "mmp_frozen_time" => 60_000,
+      "mmp_amount_limit" => "2",
+      "mmp_delta_limit" => "0.5"
+    }
+
+    test "a freeze the test induced needs a reset; an unfrozen account does not" do
+      target = MM.mmp_restore_target(@original)
+      assert MM.mmp_needs_reset?(target, %{@original | "is_frozen" => true})
+      refute MM.mmp_needs_reset?(target, @original)
+      refute MM.mmp_needs_reset?(target, nil)
+      assert MM.mmp_needs_reset?(MM.mmp_restore_target(nil), %{"is_frozen" => true})
+    end
+
+    test "a restored config that is still frozen is not restored" do
+      target = MM.mmp_restore_target(@original)
+      assert MM.mmp_mismatches(target, %{@original | "is_frozen" => true}) == ["is_frozen"]
+      assert MM.mmp_mismatches(target, %{@original | "mmp_amount_limit" => "2.000"}) == []
+      assert MM.mmp_mismatches(target, %{@original | "mmp_delta_limit" => "0"}) == ["mmp_delta_limit"]
+      assert MM.mmp_mismatches(target, Map.delete(@original, "mmp_amount_limit")) == ["mmp_amount_limit"]
+      assert MM.mmp_mismatches(target, nil) == ["config missing"]
+    end
+
+    test "no prior config restores as MMP off and unfrozen" do
+      target = MM.mmp_restore_target(nil)
+      assert %{"mmp_interval" => 0, "is_frozen" => false} = target
+      off = %{"mmp_interval" => 0, "mmp_frozen_time" => 0, "mmp_amount_limit" => "0", "mmp_delta_limit" => "0"}
+      assert MM.mmp_mismatches(target, Map.put(off, "is_frozen", false)) == []
+      assert MM.mmp_mismatches(target, Map.put(off, "is_frozen", true)) == ["is_frozen"]
+    end
+
+    test "open MMP orders and quotes on the currency are exposure; others are not" do
+      orders = [
+        %{"order_id" => "o1", "mmp" => true, "order_status" => "open", "instrument_name" => "BTC-PERP"},
+        %{"order_id" => "o2", "mmp" => false, "order_status" => "open", "instrument_name" => "BTC-PERP"},
+        %{"order_id" => "o3", "mmp" => true, "order_status" => "open", "instrument_name" => "ETH-PERP"},
+        %{"order_id" => "o4", "mmp" => true, "order_status" => "filled", "instrument_name" => "BTC-PERP"}
+      ]
+
+      quotes = [
+        %{
+          "quote_id" => "q1",
+          "mmp" => true,
+          "status" => "open",
+          "legs" => [%{"instrument_name" => "BTC-20261231-100000-C"}]
+        },
+        %{"quote_id" => "q2", "mmp" => true, "status" => "open", "legs" => [%{"instrument_name" => "ETH-PERP"}]},
+        %{"quote_id" => "q3", "mmp" => false, "status" => "open", "legs" => [%{"instrument_name" => "BTC-PERP"}]}
+      ]
+
+      assert MM.mmp_exposure(orders, quotes, "BTC") == ["o1", "q1"]
+      assert MM.mmp_exposure([], [], "BTC") == []
     end
   end
 end
