@@ -131,8 +131,10 @@ latency. The lane now treats `-2013` as propagation only while the id is still l
 open-algo book and fails on any other answer, including a detail whose status is not `open`.
 The list is re-checked after every detail answer, a success included: the detail read also lags a
 cancel, answering `status: "open"` for 300–1,000 ms after one (measured on both venues), while
-the list drops the id on its next read. It starts no read after a 5 s deadline, so the wait ends within 5 s
-plus one detail and one list request. The contract's own read stays the assertion, and
+the list drops the id on its next read. Every list and detail request checks a 5 s deadline
+immediately before it starts and fails the case as never readable once it has passed, so the
+wait ends within 5 s plus the one request already in flight. The contract's own read stays the
+assertion, and
 `fetchOpenOrder` now also requires `status: "open"`. Cleanup cancels on the explicit algo slot
 (USD-M `cancel_order` index 2, COIN-M index 0 — the unqualified cancel tries the regular book
 first) and passes only when a successful open-algo read no longer lists the id.
