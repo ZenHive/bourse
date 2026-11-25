@@ -148,8 +148,6 @@ defmodule Bourse.WS.Channels do
   end
 
   @spec pick_template([template()], params(), keyword(), Exchange.t()) :: template()
-  defp pick_template([%{} = object | _], _params, _opts, _exchange), do: object
-
   defp pick_template(templates, params, opts, exchange) do
     templates
     |> Enum.map(&{score_template(&1, templates, params, opts, exchange), &1})
@@ -157,14 +155,25 @@ defmodule Bourse.WS.Channels do
     |> elem(1)
   end
 
-  @spec score_template(String.t(), [String.t()], params(), keyword(), Exchange.t()) :: integer()
+  @spec score_template(template(), [template()], params(), keyword(), Exchange.t()) :: integer()
+  defp score_template(%{} = object, _templates, params, _opts, _exchange) do
+    symbol? = is_binary(params[:symbol])
+    placeholder? = Enum.any?(Map.values(object), &(is_binary(&1) and String.contains?(&1, "{symbol}")))
+
+    case {symbol?, placeholder?} do
+      {true, true} -> 10
+      {false, true} -> -10
+      _ -> 0
+    end
+  end
+
   defp score_template(template, templates, params, opts, exchange) do
     template
     |> template_score(templates, params, opts, exchange)
     |> Enum.sum()
   end
 
-  @spec template_score(String.t(), [String.t()], params(), keyword(), Exchange.t()) :: [integer()]
+  @spec template_score(String.t(), [template()], params(), keyword(), Exchange.t()) :: [integer()]
   defp template_score(template, templates, params, opts, exchange) do
     symbol? = is_binary(params[:symbol])
     limit? = is_integer(params[:limit])
@@ -197,10 +206,12 @@ defmodule Bourse.WS.Channels do
 
   defp score_static(false, _template, _templates, _exchange), do: 0
 
-  @spec valid_symbol_template?(String.t()) :: boolean()
-  defp valid_symbol_template?(template) do
+  @spec valid_symbol_template?(template()) :: boolean()
+  defp valid_symbol_template?(template) when is_binary(template) do
     String.contains?(template, "{symbol}") and template not in [".{symbol}", ":{symbol}"]
   end
+
+  defp valid_symbol_template?(_object), do: false
 
   defp score_symbol_placeholder(true, template), do: if(String.contains?(template, "{symbol}"), do: 10, else: 0)
   defp score_symbol_placeholder(false, _template), do: 0

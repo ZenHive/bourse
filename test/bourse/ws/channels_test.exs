@@ -56,6 +56,24 @@ defmodule Bourse.WS.ChannelsTest do
       assert map_size(channel) == 3
       assert {:error, :missing_symbol} = Channels.build(exchange, :watch_orders, %{}, [])
     end
+
+    test "a list mixing string and object templates picks the same channel in either order" do
+      exchange = Exchange.new!("okx")
+      object = %{"channel" => "tickers", "instId" => "{symbol}"}
+
+      built =
+        for templates <- [["tickers", object], [object, "tickers"]] do
+          spec = put_in(exchange.spec, ["websocket", "subscribe", "channels", "watchTicker"], templates)
+          mixed = %{exchange | spec: spec}
+
+          {Channels.build(mixed, :watch_ticker, %{symbol: "BTC/USDT"}, []), Channels.build(mixed, :watch_ticker, %{}, [])}
+        end
+
+      assert built == [
+               {{:ok, %{"channel" => "tickers", "instId" => "BTC-USDT"}}, {:ok, %{"channel" => "tickers"}}},
+               {{:ok, %{"channel" => "tickers", "instId" => "BTC-USDT"}}, {:ok, %{"channel" => "tickers"}}}
+             ]
+    end
   end
 
   describe "build/4 errors and pass-through" do
