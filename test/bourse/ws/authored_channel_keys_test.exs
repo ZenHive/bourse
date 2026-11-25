@@ -10,6 +10,7 @@ defmodule Bourse.WS.AuthoredChannelKeysTest do
 
   use ExUnit.Case, async: true
 
+  alias Bourse.Exchange
   alias Bourse.Spec
   alias Bourse.WS.Channels
   alias Bourse.WS.Config
@@ -22,7 +23,7 @@ defmodule Bourse.WS.AuthoredChannelKeysTest do
   test "every runtime venue authors only channel keys the client dispatches" do
     offenders =
       for venue <- Spec.exchanges(),
-          undispatchable = undispatchable_keys(venue),
+          undispatchable = undispatchable_keys(venue, venue |> Spec.load!() |> channels()),
           undispatchable != Map.get(@pinned_undispatchable, venue, []),
           into: %{},
           do: {venue, undispatchable}
@@ -35,13 +36,7 @@ defmodule Bourse.WS.AuthoredChannelKeysTest do
 
   test "no authored channel template is a message-hash shape instead of a provider channel" do
     hashes =
-      for venue <- Spec.exchanges(),
-          {key, templates} <- channels(Spec.load!(venue)),
-          is_list(templates),
-          template <- templates,
-          is_binary(template),
-          message_hash?(template),
-          do: {venue, key, template}
+      for venue <- Spec.exchanges(), hash <- venue |> Spec.load!() |> channels() |> message_hashes(), do: {venue, hash}
 
     assert hashes == []
   end
@@ -50,23 +45,54 @@ defmodule Bourse.WS.AuthoredChannelKeysTest do
     assert Enum.all?(Map.keys(@pinned_undispatchable), &(&1 in Spec.exchanges()))
   end
 
-  defp undispatchable_keys(venue) do
-    spec = Spec.load!(venue)
-    authored = spec |> channels() |> Map.keys() |> MapSet.new()
-    readable = readable_keys(venue, authored)
+  describe "the guard mirrors what the builder reads" do
+    test "an empty primary leaves its fallback readable, exactly as the builder resolves it" do
+      exchange = Exchange.new!("bybit")
+      authored = exchange.spec |> channels() |> Map.put("watchTrades", [])
+      exchange = %{exchange | spec: put_in(exchange.spec, ~w(websocket subscribe channels), authored)}
 
-    authored |> MapSet.difference(readable) |> Enum.sort()
+      assert {:ok, "publicTrade.BTCUSDT"} = Channels.build(exchange, :watch_trades, %{symbol: "BTC/USDT"}, [])
+      assert undispatchable_keys("bybit", authored) == ["watchTrades"]
+    end
+
+    test "a fallback behind a usable primary is unreadable" do
+      authored = "bybit" |> Spec.load!() |> channels() |> Map.put("watchTrades", ["publicTrade.{symbol}"])
+
+      assert undispatchable_keys("bybit", authored) == ["watchTradesForSymbols"]
+    end
+
+    test "a message-hash channel name inside an object template is caught" do
+      authored =
+        "okx"
+        |> Spec.load!()
+        |> channels()
+        |> Map.put("watchOrders", [%{"channel" => "orders::{symbol}", "instType" => "ANY"}])
+
+      assert message_hashes(authored) == [{"watchOrders", "orders::{symbol}"}]
+    end
   end
 
+  defp undispatchable_keys(venue, authored) do
+    readable = readable_keys(venue, authored)
+
+    authored |> Map.keys() |> MapSet.new() |> MapSet.difference(readable) |> Enum.sort()
+  end
+
+  # Same resolution as `Bourse.WS.Channels`: the primary key when it carries
+  # templates or an unresolved reason, otherwise the first fallback that does.
   defp readable_keys(venue, authored) do
     private_section? = private_section?(venue)
 
     for {method, primary, fallbacks} <- Channels.dispatch_keys(),
         private_section? or not Channels.private?(method),
-        key <- if(primary in authored, do: [primary], else: fallbacks),
+        key <- List.wrap(Enum.find([primary | fallbacks], &usable?(authored[&1]))),
         into: MapSet.new(),
         do: key
   end
+
+  defp usable?(%{"_unresolved_reason" => reason}) when is_binary(reason), do: true
+  defp usable?([_ | _]), do: true
+  defp usable?(_entry), do: false
 
   # A private watch method is sent only on a `:private` connection; a venue
   # without a private WS URL in either environment can never open one.
@@ -76,6 +102,20 @@ defmodule Bourse.WS.AuthoredChannelKeysTest do
   end
 
   defp channels(spec), do: get_in(spec, ["websocket", "subscribe", "channels"]) || %{}
+
+  # Every string an authored template sends: the template itself, or each
+  # string value of an object template.
+  defp message_hashes(authored) do
+    for {key, templates} <- authored,
+        is_list(templates),
+        template <- templates,
+        value <- sent_strings(template),
+        message_hash?(value),
+        do: {key, value}
+  end
+
+  defp sent_strings(template) when is_binary(template), do: [template]
+  defp sent_strings(%{} = object), do: object |> Map.values() |> Enum.filter(&is_binary/1)
 
   # Leading-separator and doubled-separator shapes (`:{symbol}`, `.{symbol}`,
   # `trade::{symbol}`) are client-side routing keys, never a provider channel.
