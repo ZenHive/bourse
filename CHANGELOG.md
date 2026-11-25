@@ -146,6 +146,16 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   end. A hyperliquid acceptance is taken only for the subscription it echoes
   (`classify/3`), so a late acceptance of one group no longer settles another, and
   hyperliquid's `unsubscribe` replies are no longer read as a subscribe ack.
+- **A subscribe or unsubscribe reply is matched to the request that caused it.** bybit
+  requests carry a fresh `req_id`, binance, binanceusdm, binancecoinm and okx requests a
+  fresh `id`, and only the reply echoing it is the request's outcome; every other reply
+  stays in the mailbox as an ordinary frame (`Bourse.WS.SubscribeAck.classify/4`). A
+  caller may pass `request_id:` to choose the id. The wait for a reply correlated by
+  zen_websocket is bounded by `ack_timeout_ms` instead of exiting the caller after 5 s. A
+  hyperliquid refusal is taken only for the subscription it echoes. Before, a late reply to
+  one request could settle another, so a refused restore could be recorded as restored.
+  binancecoinm subscribe acceptances are recognised; before, every COIN-M subscribe that
+  waited for one timed out.
 - **Subscribing again to an order book stream already tracked keeps its book**; the
   ambiguity invalidation is announced only when a distinct stream is added.
 - **A routed connection that closes right after a subscription is accepted is noticed.**

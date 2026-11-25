@@ -116,19 +116,26 @@ roadmap.
 
 ## 2026-11-26 — a bybit restore can take a late acceptance of another group for its own
 
-**Status:** 🆕 reported (found during task 708 review round 5; not routed).
+**Status:** Fixed inline (task 708 review round 6).
 
 bybit's subscribe acceptance (`{"op":"subscribe","success":true}`) names no topic, and the
-adapter's restore does not send a `req_id`, so `Bourse.WS.SubscribeAck.classify/3` cannot
-tell whose acceptance it is. Repro (api-testnet, 2026-11-25, reviewer probe): two groups,
+adapter's restore sent no `req_id`, so `Bourse.WS.SubscribeAck` could not tell whose
+acceptance it was. Repro (api-testnet, 2026-11-25, reviewer probe): two groups,
 `publicTrade.BTCUSDT` (ack wait 800 ms) and `orderbook.50.BTCUSDT`, accepted; after a
 reconnect the trades acceptance was held 1 s and the book request answered
 `error:handler not found`. The book's restore took the late trades acceptance as its own:
-`restore_attempts` 0, two groups recorded, trades flowing, zero books. Expected: the book
-stays pending until its own acceptance. A bybit request may carry `req_id`, which bybit's
-V5 WebSocket docs describe as echoed in the reply (not yet verified live); correlating on
-it would match each reply to its request. hyperliquid had
-the same shape and was fixed in task 708 by matching the echoed subscription.
+`restore_attempts` 0, two groups recorded, trades flowing, zero books.
+
+Fix: every bybit subscribe and unsubscribe carries a fresh `req_id`, and only the reply
+echoing it is the request's outcome; any other reply stays in the mailbox as an ordinary
+frame. Measured on stream-testnet.bybit.com 2026-11-26: the acceptance, the refusals
+(`error:already subscribed,topic:…`, `error:handler not found,topic:…`) and the unsubscribe
+reply all echo the request's `req_id`. bybit's docs show `req_id` on the request without
+stating the echo (https://bybit-exchange.github.io/docs/v5/ws/connect). Live, a trades
+subscribe given a 1 ms wait followed by a refused `orderbook.123456.BTCUSDT` request: before
+the fix the refused request returned `:ok` on the trades acceptance and the next valid
+request returned the refusal; after it, the refused request returns its refusal, the next
+valid request `:ok`, and both late trades replies stay in the mailbox.
 
 ## 2026-11-25 — deribit's REST comparison in the order book continuity live test failed a correct book
 
@@ -160,20 +167,61 @@ fails at once). Measured on test.deribit.com 2026-11-25:
 
 ## 2026-11-25 — binance-family subscribe acks are not correlated to their request
 
-**Status:** 🆕 reported (found during task 708 review round 3; not routed).
+**Status:** Fixed inline (task 708 review round 6).
 
-`Bourse.WS.SubscribeAck.classify/2` accepts any binance / binanceusdm frame carrying
-`"result"` as the subscribe ack, without matching the request `id`. An `UNSUBSCRIBE` sent
-just before a `SUBSCRIBE` (as the adapter's restore does after an ack timeout) is answered
-`{"result": null, "id": n}` too, so the subscribe can return `:ok` on the unsubscribe's
-reply. Expected: the ack is the reply whose `id` is the subscribe's. Any earlier
-reply still pending on the socket can be consumed the same way, so a genuine refusal of
-the subscribe itself can be read as success; the call's own reply then arrives as an
-unrouted system frame. (An earlier version of this entry claimed no refusal is lost —
-review round 4 of task 708 showed it on spot testnet, through the unsubscribe the restore
-then sent before re-subscribing; task 708 removed that unsubscribe.) hyperliquid had the same shape for unsubscribe replies and
-was fixed in task 708 (its unsubscribe reply carries `data.method: "unsubscribe"`,
-observed on api.hyperliquid-testnet.xyz 2026-11-25).
+`Bourse.WS.SubscribeAck.classify/2` accepted any binance / binanceusdm frame carrying
+`"result"` as the subscribe ack, and the requests carried no `id`, so the venue answered
+`{"result": null, "id": null}` to all of them. A reply to an earlier request still pending
+on the socket was taken for the current one: review round 4 showed a genuine refusal read
+as success on spot testnet, through the unsubscribe the restore then sent before
+re-subscribing (task 708 removed that unsubscribe). binancecoinm had no classifier clause
+at all, so its acceptance was never recognised and every COIN-M subscribe that waited for
+an ack timed out (measured on demo-dstream 2026-11-26).
+
+Fix: every binance, binanceusdm and binancecoinm subscribe and unsubscribe carries a fresh
+integer `id`; zen_websocket hands back only the reply carrying it, and a reply read from the
+mailbox must carry it too. The wait for that reply is bounded by the ack timeout instead of
+the 5 s `GenServer.call` default. Measured 2026-11-26 on stream.testnet.binance.vision,
+demo-fstream.binance.com/public and demo-dstream.binance.com: acceptance
+(`{"result": null, "id": n}`), refusal (`{"error": {"code": 2, "msg": "Invalid request:
+invalid stream"}, "id": n}`) and unsubscribe all echo the request's `id`; binance documents
+the field as identifying "the messages going back and forth"
+(https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md). The
+live cross-request probe (a 1 ms wait, then an invalid stream) returned the refusal for the
+refused request on all three, where before the fix spot returned `:ok` and handed the
+refusal to the next request. Observed in passing, not changed: spot and COIN-M close the
+socket after answering an `invalid stream` subscribe (the next request found it
+reconnecting); USD-M keeps it open.
+
+## 2026-11-26 — subscribe replies that identify no request (residual after task 708)
+
+**Status:** 🆕 reported (task 708 review round 6; not routed).
+
+After task 708 the venues correlate a subscribe reply to its request as follows:
+
+- **bybit** `req_id`, **binance / binanceusdm / binancecoinm** `id`, **okx** `id` — a fresh
+  id per request, echoed on acceptance, refusal and unsubscribe (live, 2026-11-26; okx on
+  wspap.okx.com, documented at https://www.okx.com/docs-v5/en/#overview-websocket-subscribe).
+- **deribit** — JSON-RPC `id`, already sent and correlated before task 708.
+- **hyperliquid** — no id; the acceptance echoes the subscription, and both refusals echo it
+  too (`Already subscribed: <subscription>`, `Error parsing JSON into valid websocket
+  request: <request>`, api.hyperliquid-testnet.xyz 2026-11-26). Matched on the echo since
+  round 6; a refusal echoing nothing readable is still taken as the waiting request's.
+- **alpaca** — the `T: subscription` reply lists the connection's whole subscription set and
+  the `T: error` reply names no request: neither identifies the request it answers.
+- **coinbaseexchange** — `type: subscriptions` lists the connection's whole set and
+  `type: error` names no request; a request carrying an `id` is not answered with it (no
+  echo on ws-feed.exchange.coinbase.com 2026-11-26: no reply carrying that id arrived within
+  5 s).
+- **lighter** — the `subscribed/<channel>` acceptance carries `channel` (`market_stats:0` for
+  a `market_stats/0` request in earlier observations), which could match it to its request,
+  but the testnet stream answered HTTP 502 on 2026-11-26, so the echo could not be
+  re-verified and is not used; the error frame names no request.
+- **derive** — JSON-RPC, but its subscribe frames carry no `id`; task 708 stays out of
+  Derive-specific code, so this is unchanged.
+
+On alpaca, coinbaseexchange, lighter and derive, a late reply to an earlier request can
+still be taken as a later request's outcome.
 
 ## 2026-11-25 — `WS.subscribe/3` reorders frames that arrive during the ack wait
 
