@@ -276,7 +276,7 @@ red, for one reason outside this confrontation: binancecoinm authors no
 `Bourse.WS.Channels` reads only the keys in `Bourse.WS.Channels.dispatch_keys/0`:
 `watchTicker`, `watchOrderBook`, `watchTrades`, `watchOrders`, and the fallbacks
 `watchTickers`, `watchOrderBookForSymbols`, `watchTradesForSymbols` — each fallback
-only when its primary key is absent. Every other authored key answered
+only when its primary has neither a nonempty template list nor an unresolved reason. Every other authored key answered
 `:unsupported_method` before its template was read, so it was a claim about a venue
 channel that no client call could send and no live lane could prove. Task 712 deleted
 them. Derive is re-authored separately and keeps its `watchMyTrades` entry, pinned
