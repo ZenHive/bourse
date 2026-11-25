@@ -300,6 +300,10 @@ live with code `60018`. It is now the provider's own arg object; the confrontati
 live delivery are in [C-T712](authored-spec-carves/okx.md#2026-11-25--private-order-channel-object-task-712).
 
 `test/bourse/ws/authored_channel_keys_test.exs` reads every runtime venue's authored
-document from disk and fails when a key outside the dispatchable set appears, when a
-private-method key is authored for a venue without a private WS URL, or when a template
-has a message-hash shape (leading `:`/`.` or a doubled separator).
+document from disk and fails when it authors a key the builder would not read — outside
+the dispatchable set, a fallback behind a usable primary, or a private-method key on a venue
+without a private WS URL — or when any string a template sends (a string template, or a
+string value of an object template) starts with `:`/`.` or contains `::`/`..`. Other
+message-hash shapes are not detected. The
+[Hyperliquid candle](#hyperliquid) delivery stays covered as a raw `Bourse.WS.subscribe/3`
+test; only its authored `watchOHLCV` key is gone.

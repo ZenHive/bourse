@@ -442,7 +442,9 @@ key deleted from binance, binanceusdm, bybit, deribit, hyperliquid and okx (incl
 `watchMyTrades` `":{symbol}"` hashes, the shadowed fallbacks, and hyperliquid `watchOrders`,
 which has no private WS URL to be sent on); derive's `watchMyTrades` stays for its v3
 re-authoring and is pinned exactly. `test/bourse/ws/authored_channel_keys_test.exs` fails on
-any new undispatchable key or message-hash template. The trim surfaced one retained template
+any key the builder would not read and on any sent template string (a string template, or a
+string value of an object template) with a leading `:`/`.` or a doubled `::`/`..` separator;
+other message-hash shapes are not detected. The trim surfaced one retained template
 that was not a provider channel: OKX `watchOrders` `"ANY"` rendered `{"channel":"orders"}`,
 rejected live with `60018`; it is now `{"channel":"orders","instType":"ANY"}` and proven by the
 okx trader journey (carve C-T712). Deleted keys are listed in
