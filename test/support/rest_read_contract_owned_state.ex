@@ -7,6 +7,7 @@ defmodule Bourse.Test.RestReadContractOwnedState do
   History windows that the venue itself expires are not manufactured here.
   """
 
+  alias Bourse.Error
   alias Bourse.Order
   alias Bourse.Test.Journeys.Case, as: Journey
 
@@ -36,29 +37,32 @@ defmodule Bourse.Test.RestReadContractOwnedState do
     end
   end
 
-  defp own_resting_order(argument, contract_case, context) do
-    # `source_kind: "algo"` names a venue's algo book, whose ids only the
-    # `algoOrder` read branches accept. A plain GTC limit would yield an
-    # `orderId` that endpoint answers `order_not_found` for, so the algo case
-    # needs a conditional order of its own. The kind is declared rather than
-    # inferred from `source_endpoint_index`, which other venues use to select an
-    # ordinary book.
-    placement =
-      if argument["source_kind"] == "algo",
-        do: &place_algo_order/2,
-        else: &place_resting_order/2
-
-    place_and_register_order(argument, contract_case, context, placement)
+  # `source_kind: "algo"` names a venue's algo book, whose ids only the
+  # `algoOrder` read branches accept. A plain GTC limit would yield an
+  # `orderId` that endpoint answers `order_not_found` for, so the algo case
+  # needs a conditional order of its own. The kind is declared rather than
+  # inferred from `source_endpoint_index`, which other venues use to select an
+  # ordinary book.
+  defp own_resting_order(%{"source_kind" => "algo"} = argument, contract_case, context) do
+    with {:ok, placed} <- place_algo_order(contract_case, context),
+         :ok <- register_algo_cleanup!(context.exchange, placed, argument),
+         :ok <- await_algo_readable(context.exchange, placed, argument, contract_case) do
+      owned_field(placed, argument)
+    end
   end
 
-  defp place_and_register_order(argument, contract_case, context, placement) do
-    with {:ok, placed} <- placement.(contract_case, context) do
+  defp own_resting_order(argument, contract_case, context) do
+    with {:ok, placed} <- place_resting_order(contract_case, context) do
       register_cleanup!(context.exchange, placed)
-      await_readable(context.exchange, placed, argument)
-      field = field_from(placed, argument["field"])
-
-      if is_nil(field), do: {:error, {:missing_field, argument["field"], placed}}, else: {:ok, field}
+      await_readable(context.exchange, placed)
+      owned_field(placed, argument)
     end
+  end
+
+  defp owned_field(placed, argument) do
+    field = field_from(placed, argument["field"])
+
+    if is_nil(field), do: {:error, {:missing_field, argument["field"], placed}}, else: {:ok, field}
   end
 
   # A venue indexes a create into its order-read surface a beat after the create
@@ -71,10 +75,7 @@ defmodule Bourse.Test.RestReadContractOwnedState do
   # Waiting out the lag is this function's job; deciding what an exhausted wait
   # means is not. On timeout the id is handed over anyway and the case's own
   # assertion fails with the venue's answer, which is the message worth reading.
-  # An algo id resolves only on the algo branches, so it is not probed here.
-  defp await_readable(_exchange, _placed, %{"source_kind" => "algo"}), do: :ok
-
-  defp await_readable(exchange, %Order{id: id, symbol: symbol}, _argument) when is_binary(id) and is_binary(symbol) do
+  defp await_readable(exchange, %Order{id: id, symbol: symbol}) when is_binary(id) and is_binary(symbol) do
     poll =
       Journey.poll_until(fn ->
         case Bourse.fetch_order(exchange, id, symbol: symbol) do
@@ -90,7 +91,56 @@ defmodule Bourse.Test.RestReadContractOwnedState do
     :ok
   end
 
-  defp await_readable(_exchange, _placed, _argument), do: :ok
+  defp await_readable(_exchange, _placed), do: :ok
+
+  # Binance futures serve a new algo order from the open-algo list at once, while
+  # the single-order `algoOrder` detail read answers -2013 "Order does not exist."
+  # for up to ~1.3 s after the create (measured 2026-11-25 on demo-fapi and
+  # demo-dapi; once it answers, it keeps answering). -2013 is also what an id the
+  # venue never issued gets, so the miss alone proves nothing. It counts as
+  # propagation only while the id is listed on the open-algo book: anything else
+  # — an unlisted id, another error, another id, a miss outliving the bound —
+  # fails the case here rather than being waited out. The contract's own read
+  # stays the assertion; this wait only decides when to make it.
+  @propagation_miss_code -2013
+
+  defp await_algo_readable(exchange, %Order{id: id, symbol: symbol}, argument, contract_case)
+       when is_binary(id) and is_binary(symbol) do
+    with :ok <- listed_on_algo_book(exchange, id, symbol, argument),
+         {:ok, read} <- algo_detail_read(contract_case) do
+      opts = [symbol: symbol, endpoint_index: contract_case["endpoint_index"]]
+      poll = Journey.poll_until(fn -> classify_algo_detail(read.(exchange, id, opts), id) end)
+      algo_wait_outcome(poll, id, contract_case)
+    end
+  end
+
+  defp await_algo_readable(_exchange, placed, _argument, _contract_case), do: {:error, {:algo_order_without_id, placed}}
+
+  defp classify_algo_detail({:ok, %Order{id: id}}, id), do: {:ok, :readable}
+  defp classify_algo_detail({:error, %Error{type: :order_not_found, code: @propagation_miss_code}}, _id), do: :retry
+  defp classify_algo_detail(other, id), do: {:ok, {:unexpected_algo_detail, id, other}}
+
+  defp algo_wait_outcome({:ok, :readable}, _id, _contract_case), do: :ok
+  defp algo_wait_outcome({:ok, unexpected}, _id, _contract_case), do: {:error, unexpected}
+
+  defp algo_wait_outcome(:timeout, id, contract_case),
+    do: {:error, {:algo_order_never_readable, id, contract_case["method"]}}
+
+  defp listed_on_algo_book(exchange, id, symbol, argument) do
+    case Bourse.fetch_open_orders(exchange, symbol: symbol, endpoint_index: argument["source_endpoint_index"]) do
+      {:ok, rows} when is_list(rows) ->
+        if Enum.any?(rows, &match?(%Order{id: ^id}, &1)),
+          do: :ok,
+          else: {:error, {:algo_order_not_listed, id, Enum.map(rows, & &1.id)}}
+
+      other ->
+        {:error, {:algo_book_unreadable, other}}
+    end
+  end
+
+  defp algo_detail_read(%{"method" => "fetchOrder"}), do: {:ok, &Bourse.fetch_order/3}
+  defp algo_detail_read(%{"method" => "fetchOpenOrder"}), do: {:ok, &Bourse.fetch_open_order/3}
+  defp algo_detail_read(%{"method" => method}), do: {:error, {:no_algo_detail_read, method}}
 
   defp own_canceled_order(argument, contract_case, context) do
     # Register cleanup before cancelling: a cancel that raises would otherwise
@@ -246,6 +296,32 @@ defmodule Bourse.Test.RestReadContractOwnedState do
 
     :ok
   end
+
+  # `release_order!` reads `order_not_found` as already gone. For an algo id that
+  # is also what a cancel routed to the wrong book answers, so the cleanup checks
+  # the open-algo book instead of trusting the miss.
+  defp register_algo_cleanup!(exchange, %Order{id: id, symbol: symbol}, argument) do
+    ExUnit.Callbacks.on_exit(fn ->
+      release_algo_order!(Bourse.cancel_order(exchange, id, symbol: symbol), exchange, id, symbol, argument)
+    end)
+
+    :ok
+  end
+
+  defp release_algo_order!({:ok, %Order{id: id}}, _exchange, id, _symbol, _argument), do: :ok
+
+  defp release_algo_order!({:error, %Error{type: :order_not_found}} = miss, exchange, id, symbol, argument) do
+    if listed_on_algo_book(exchange, id, symbol, argument) == :ok do
+      ExUnit.Assertions.flunk(
+        "cleanup for algo order #{id} answered #{inspect(miss)} while it still rests on the algo book"
+      )
+    end
+
+    :ok
+  end
+
+  defp release_algo_order!(other, _exchange, id, _symbol, _argument),
+    do: ExUnit.Assertions.flunk("cleanup for algo order #{id} failed: #{inspect(other)}")
 
   defp min_amount(%{limits: %{"amount" => %{"min" => min}}}) when is_number(min) and min > 0, do: min
   defp min_amount(_market), do: 0.001
