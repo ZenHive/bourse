@@ -8,6 +8,11 @@ defmodule Bourse.Spec.Schema.OrderbookContinuity do
   therefore author a rule whose fields are exactly its `sequence_fields`, or
   declare `"rule": "none"` with a reason and the provider document that shows
   the venue publishes no continuity id.
+
+  `unmarked_frames: "snapshot"` takes a frame without a type marker for a
+  snapshot only on the venue's documented snapshot-only channels, so it must
+  name them: `snapshot_channel` (`path`, `pattern`, `doc`) for a `both` book,
+  `partial_depth_channel` for an `incremental` one.
   """
 
   @incremental_modes ~w(incremental both)
@@ -61,6 +66,7 @@ defmodule Bourse.Spec.Schema.OrderbookContinuity do
 
       %{"rule" => rule} = continuity when is_map_key(@rule_roles, rule) ->
         validate_rule!(continuity, rule, sequence_fields, exchange_id)
+        validate_unmarked!(continuity, Map.get(semantics, "apply_mode"), exchange_id)
 
       nil ->
         gap!(
@@ -115,6 +121,47 @@ defmodule Bourse.Spec.Schema.OrderbookContinuity do
     validate_optional_string!(continuity, "limitation", exchange_id)
     validate_partial_depth_channel!(continuity, exchange_id)
     validate_snapshot_source!(continuity, exchange_id)
+  end
+
+  defp validate_unmarked!(%{"unmarked_frames" => "snapshot"} = continuity, "both", exchange_id) do
+    case Map.get(continuity, "snapshot_channel") do
+      %{"path" => path, "pattern" => pattern} = channel when is_binary(pattern) ->
+        require_string!(channel, "doc", exchange_id)
+        require_doc!(channel, exchange_id)
+
+        if !(non_empty?(path) and match?({:ok, _}, Regex.compile(pattern))) do
+          gap!(exchange_id, "continuity snapshot_channel", "path must be a string and pattern a valid regex")
+        end
+
+        :ok
+
+      other ->
+        gap!(
+          exchange_id,
+          "continuity snapshot_channel",
+          "unmarked_frames \"snapshot\" names the documented snapshot-only channels, got #{inspect(other)}"
+        )
+    end
+  end
+
+  defp validate_unmarked!(%{"unmarked_frames" => "snapshot"} = continuity, "incremental", exchange_id) do
+    if !is_binary(Map.get(continuity, "partial_depth_channel")) do
+      gap!(
+        exchange_id,
+        "continuity partial_depth_channel",
+        "unmarked_frames \"snapshot\" names the documented partial-depth channels"
+      )
+    end
+
+    :ok
+  end
+
+  defp validate_unmarked!(continuity, _mode, exchange_id) do
+    if Map.get(continuity, "snapshot_channel") != nil do
+      gap!(exchange_id, "continuity snapshot_channel", "only unmarked_frames \"snapshot\" on a both book reads it")
+    end
+
+    :ok
   end
 
   defp validate_snapshot_source!(%{"snapshot_source" => "rest"} = continuity, exchange_id) do

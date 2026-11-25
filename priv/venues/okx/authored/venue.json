@@ -513,6 +513,11 @@
         "partial_depth_channel": null,
         "rest_snapshot": null,
         "rule": "previous_current",
+        "snapshot_channel": {
+          "doc": "https://www.okx.com/docs-v5/en/#order-book-trading-market-data-ws-order-book-channel",
+          "path": "arg.channel",
+          "pattern": "^(?:books5|bbo-tbt|bbo-rpi-tbt)$"
+        },
         "snapshot_source": "stream",
         "subscription_path": "arg",
         "unmarked_frames": "snapshot"

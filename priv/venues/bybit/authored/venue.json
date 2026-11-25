@@ -739,7 +739,7 @@
         "fields": {
           "current": "u"
         },
-        "limitation": "Bybit documents consecutive u (each u is the previous u + 1) only for the full-ob topic orderbook.full.{symbol} (https://bybit-exchange.github.io/docs/v5/websocket/public/full-ob, read 2026-11-25). The depth-1/50/200/1000 topics this rule is applied to are documented to reset the book on every snapshot and to send u=1 after a service restart, but not to increment u by one. The increment rule on those topics is observed live, not documented: test/live/ws/order_book_continuity_live_test.exs chains orderbook.1000.BTCUSDT by one and matches REST /v5/market/orderbook at the aligned u. See docs/prod-verification-ledger.md.",
+        "limitation": "Bybit documents consecutive u (each u is the previous u + 1) only for the full-ob topic orderbook.full.{symbol} (https://bybit-exchange.github.io/docs/v5/websocket/public/full-ob, read 2026-11-25). For the depth topics orderbook.{depth}.{symbol} it documents a reset on every snapshot and u=1 after a service restart, not a step of one. The increment rule is observed, not documented, and only on the depths exercised: orderbook.1000.BTCUSDT (test/live/ws/order_book_continuity_live_test.exs, chained by one and matched against REST /v5/market/orderbook at the aligned u) and orderbook.50.BTCUSDT (consecutive deltas, 2026-11-25). Depth 200 is not exercised. The depth-1 topic is documented as snapshot-only and may repeat u; its snapshots are not chained. See docs/prod-verification-ledger.md.",
         "market_path": "data.s",
         "partial_depth_channel": null,
         "rest_snapshot": null,

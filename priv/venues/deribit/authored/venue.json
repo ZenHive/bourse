@@ -285,6 +285,11 @@
         "partial_depth_channel": null,
         "rest_snapshot": null,
         "rule": "previous_current",
+        "snapshot_channel": {
+          "doc": "https://docs.deribit.com/subscriptions/orderbook/bookinstrument_namegroupdepthinterval.md",
+          "path": "params.channel",
+          "pattern": "^book\\.[^.]+\\.[^.]+\\.[^.]+\\.[^.]+$"
+        },
         "snapshot_source": "stream",
         "subscription_path": "params.channel",
         "unmarked_frames": "snapshot"

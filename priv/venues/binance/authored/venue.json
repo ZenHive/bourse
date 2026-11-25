@@ -1267,7 +1267,7 @@
           "last": "u"
         },
         "market_path": "s",
-        "partial_depth_channel": null,
+        "partial_depth_channel": "^(?<market>[a-z0-9_]+)@depth(?:5|10|20)(?:@\\d+ms)?$",
         "rest_snapshot": {
           "function": "public_get_depth",
           "id_field": "lastUpdateId",

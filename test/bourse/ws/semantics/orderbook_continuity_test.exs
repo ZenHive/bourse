@@ -111,11 +111,39 @@ defmodule Bourse.WS.Semantics.OrderbookContinuityTest do
       assert {^st, :pending} = Orderbook.apply_rest_snapshot(st, "BTCUSDT", make_ref(), %{"lastUpdateId" => 1})
     end
 
-    test "a partial-depth frame carrying lastUpdateId is a self-contained snapshot" do
+    test "a partial-depth frame is a snapshot keyed by the one partial stream subscribed" do
       frame = %{"lastUpdateId" => 5, "bids" => [["1", "2"]], "asks" => [["3", "4"]]}
+      st = Orderbook.track_subscriptions(state("binance"), ["btcusdt@depth20@100ms"])
 
-      assert {_st, {:book, %{"bids" => [["1", "2"]], "asks" => [["3", "4"]]}}} =
-               Orderbook.apply(state("binance"), "depthUpdate", frame, frame)
+      key = Orderbook.key(st, frame, "depthUpdate", nil)
+      assert key == "btcusdt@depth20@100ms"
+      assert Orderbook.market(st, frame) == "BTCUSDT"
+      assert Orderbook.resync_action(st, key) == :none
+
+      assert {st, {:book, %{"bids" => [["1", "2"]], "asks" => [["3", "4"]]}}} = Orderbook.apply(st, key, frame, frame)
+      assert st.books[key].id == 5
+    end
+
+    test "two partial streams on one socket are reported unavailable, not merged under one identity" do
+      btc = %{"lastUpdateId" => 5, "bids" => [["59566", "1"]], "asks" => []}
+      eth = %{"lastUpdateId" => 9, "bids" => [["1670", "1"]], "asks" => []}
+      st = Orderbook.track_subscriptions(state("binance"), ["btcusdt@depth20@100ms", "ethusdt@depth20@100ms"])
+
+      key = Orderbook.key(st, btc, "depthUpdate", nil)
+      assert key == Orderbook.key(st, eth, "depthUpdate", nil)
+      assert Orderbook.market(st, btc) == nil
+
+      assert {st, {:unavailable, :ambiguous_depth_streams}} = Orderbook.apply(st, key, btc, btc)
+      assert {_st, :pending} = Orderbook.apply(st, key, eth, eth)
+    end
+
+    test "a partial stream and the diff stream of one market are kept apart" do
+      partial = %{"lastUpdateId" => 5, "bids" => [["1", "2"]], "asks" => []}
+      st = Orderbook.track_subscriptions(state("binance"), ["btcusdt@depth20", "btcusdt@depth@100ms"])
+
+      assert Orderbook.key(st, partial, "depthUpdate", nil) == "btcusdt@depth20"
+      assert Orderbook.key(st, spot_delta(1, 2), "depthUpdate", nil) == "BTCUSDT"
+      assert {_st, {:fetch_snapshot, "BTCUSDT"}} = Orderbook.apply(st, "BTCUSDT", spot_delta(1, 2), spot_delta(1, 2))
     end
 
     test "a delta without its last update id is rejected, not taken for a partial snapshot" do
@@ -142,15 +170,55 @@ defmodule Bourse.WS.Semantics.OrderbookContinuityTest do
       assert before["bids"] == [["90", "4"], ["80", "5"]]
     end
 
-    test "a partial snapshot is recognised by its shape and carries its lastUpdateId" do
+    test "a partial snapshot is recognised by its shape, and only while a partial stream is subscribed" do
       partial = %{"lastUpdateId" => 5, "bids" => [["1", "2"]], "asks" => [["3", "4"]]}
-      {st, {:book, _}} = Orderbook.apply(state("binance"), "BTCUSDT", partial, partial)
-      assert st.books["BTCUSDT"].id == 5
+      tracked = Orderbook.track_subscriptions(state("binance"), ["btcusdt@depth5"])
+      {st, {:book, _}} = Orderbook.apply(tracked, "btcusdt@depth5", partial, partial)
+      assert st.books["btcusdt@depth5"].id == 5
+
+      # Without a partial subscription the same shape is an unsequenced delta.
+      assert {_st, {:invalidated, {:missing_sequence, _}}} =
+               Orderbook.apply(state("binance"), "BTCUSDT", partial, partial)
 
       # bids/asks alone, or a frame that also carries event fields, is not one.
       for frame <- [%{"bids" => [], "asks" => []}, Map.put(partial, "U", 6)] do
-        assert {_st, {:invalidated, {:missing_sequence, _}}} = Orderbook.apply(state("binance"), "BTCUSDT", frame, frame)
+        assert {_st, {:invalidated, {:missing_sequence, _}}} = Orderbook.apply(tracked, "BTCUSDT", frame, frame)
       end
+    end
+
+    test "a REST snapshot missing either side is not installed, even at a current id" do
+      for body <- [
+            %{"lastUpdateId" => 10},
+            %{"lastUpdateId" => 10, "bids" => []},
+            %{"lastUpdateId" => 10, "bids" => [], "asks" => "x"}
+          ] do
+        {st, _outcomes, result} = bootstrap(state("binance"), "BTCUSDT", [spot_delta(10, 11)], body)
+        assert result == {:fetch_snapshot, "BTCUSDT"}
+        assert Orderbook.needs_fetch?(st, "BTCUSDT")
+        assert {_st, :pending} = Orderbook.apply(st, "BTCUSDT", spot_delta(12, 12, [["9", "1"]]))
+      end
+    end
+
+    test "malformed deltas while a snapshot is in flight keep that one request" do
+      {st, {:fetch_snapshot, "BTCUSDT"}} = Orderbook.apply(state("binance"), "BTCUSDT", spot_delta(100, 105))
+      ref = make_ref()
+      st = Orderbook.fetch_started(st, "BTCUSDT", ref)
+      malformed = Map.delete(spot_delta(106, 107), "u")
+
+      st =
+        Enum.reduce(1..12, st, fn _, st ->
+          {st, {:invalidated, {:missing_sequence, _}}} = Orderbook.apply(st, "BTCUSDT", malformed, malformed)
+          refute Orderbook.needs_fetch?(st, "BTCUSDT")
+          assert Orderbook.fetch_in_flight?(st, "BTCUSDT", ref)
+          st
+        end)
+
+      # The snapshot that was in flight is reconciled against what followed the
+      # malformed delta; the skipped range shows up as a gap, not a merge.
+      {st, :pending} = Orderbook.apply(st, "BTCUSDT", spot_delta(110, 111))
+
+      assert {_st, {:fetch_snapshot, "BTCUSDT"}} =
+               Orderbook.apply_rest_snapshot(st, "BTCUSDT", ref, %{"lastUpdateId" => 105, "bids" => [], "asks" => []})
     end
 
     test "the REST snapshot request is the authored depth call" do
@@ -282,6 +350,17 @@ defmodule Bourse.WS.Semantics.OrderbookContinuityTest do
       assert Orderbook.market(st, %{"arg" => %{}}) == nil
     end
 
+    test "an update without action on the incremental books channel invalidates instead of replacing the book" do
+      {st, {:book, _}} = apply_okx(state("okx"), okx("snapshot", -1, 10, [["100", "1", "0", "1"]]))
+      unmarked = Map.delete(okx("update", -666, 11, [["1", "1", "0", "1"]]), "action")
+
+      assert {st, {:invalidated, {:unmarked_frame, "action"}}} = apply_okx(st, unmarked)
+      assert {st, :pending} = apply_okx(st, okx("update", 11, 12))
+
+      assert {_st, {:invalidated, {:unknown_frame_type, "action", "partial"}}} =
+               apply_okx(elem(apply_okx(st, okx("snapshot", -1, 20)), 0), okx("partial", 20, 21))
+    end
+
     test "a frame without action (books5) is a self-contained snapshot" do
       frame = %{
         "arg" => %{"channel" => "books5", "instId" => "BTC-USDT"},
@@ -329,6 +408,15 @@ defmodule Bourse.WS.Semantics.OrderbookContinuityTest do
       {st, {:book, _}} = apply_deribit(state("deribit"), deribit("snapshot", 100, nil, [["new", 10.0, 5.0]]))
       frame = update_in(deribit("change", 0, 100, [["new", 9.0, 1.0]]), ["params", "data"], &Map.delete(&1, "change_id"))
       assert {_st, {:invalidated, {:missing_sequence, _}}} = apply_deribit(st, frame)
+    end
+
+    test "a change without type on the incremental channel invalidates instead of replacing the book" do
+      {st, {:book, _}} = apply_deribit(state("deribit"), deribit("snapshot", 100, nil, [["new", 10.0, 5.0]]))
+
+      sentinel =
+        update_in(deribit("change", 101, 7, [["new", 99_999.0, 1.0]]), ["params", "data"], &Map.delete(&1, "type"))
+
+      assert {_st, {:invalidated, {:unmarked_frame, "params.data.type"}}} = apply_deribit(st, sentinel)
     end
 
     test "a grouped-book frame without type is a self-contained snapshot" do
