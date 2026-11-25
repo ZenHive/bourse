@@ -24355,7 +24355,7 @@ scored_at = "2026-10-01"
 id = "710"
 phase = 14
 bundle = "authored_specs"
-status = "in_progress"
+status = "done"
 title = "Correct three deribit value defects the contract lane passes green: funding interval label, ticker volumes, unfiltered liquidations"
 scores = { d = 4, b = 8, u = 7 }
 markers = ["bug"]
@@ -24372,9 +24372,16 @@ Authority: test.deribit.com live responses plus Deribit's own API docs (https://
 
 Premise unverified — confirm before building on it: that stats.volume is base-denominated and stats.volume_usd quote-denominated for every deribit instrument kind the client serves (inverse perpetual, linear USDC perpetual, option, spot). Confront it per kind against the provider docs and live values; where a kind differs, author what the provider states.
 """
+implemented = "Deribit fetch_funding_rate labels its value with the dispatched accrual window (8h default, exact span otherwise; wire bounds unchanged); ticker base/quote volumes map from stats.volume / volume_notional; fetch_liquidations returns only venue-marked trades and is marked unverified until a marked trade is observed live."
+delivered_by = "claude"
+verified = true
+verified_by = "codex"
+verification_ref = "herdr codex review, 4 rounds, approve at cc76ddd (rebased cabf4d4)"
 created_at = "2026-11-24"
 started_at = "2026-11-24"
 scored_at = "2026-11-24"
+done_at = "2026-11-25"
+shipped_in = "cabf4d496a710f51c4352496ea97db1cae3414b6"
 
 [[task]]
 id = "711"

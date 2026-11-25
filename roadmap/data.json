@@ -32567,7 +32567,7 @@
       "id": "710",
       "phase": 14,
       "bundle": "authored_specs",
-      "status": "in_progress",
+      "status": "done",
       "title": "Correct three deribit value defects the contract lane passes green: funding interval label, ticker volumes, unfiltered liquidations",
       "scores": {
         "d": 4,
@@ -32594,10 +32594,17 @@
         "Strengthening RestReadContractScenario beyond non-nil checks for all venues",
         "The ccxt-side defects listed in the entry"
       ],
+      "shipped_in": "cabf4d496a710f51c4352496ea97db1cae3414b6",
       "body": "Source: BUGS.md entry \"2026-09-29 — deribit: three value defects the REST-read contract lane passes green\". Read it first; it carries the raw provider values each defect was settled against.\n\nThree unified reads on deribit return well-formed rows with wrong meaning. (1) fetch_funding_rate requests a rate accrued over an 8h window and labels it interval \"1h\", so a consumer annualizing through interval overstates funding 8x. (2) fetch_ticker maps the base-currency volume (stats.volume) into quote_volume and leaves base_volume nil, while the provider publishes the quote figure separately (stats.volume_usd). (3) fetch_liquidations returns every public trade as a liquidation; the provider marks liquidations with a `liquidation` field on the trade.\n\nAuthority: test.deribit.com live responses plus Deribit's own API docs (https://docs.deribit.com/) for what each field means. CCXT is not an authority; the entry's ccxt comparison only located the disagreements. Start with live calls against test.deribit.com (one success and one relevant provider error per touched read), then author the correction in the deribit authored documents and record each decision in docs/authored-spec-carves/deribit.md.\n\nPremise unverified — confirm before building on it: that stats.volume is base-denominated and stats.volume_usd quote-denominated for every deribit instrument kind the client serves (inverse perpetual, linear USDC perpetual, option, spot). Confront it per kind against the provider docs and live values; where a kind differs, author what the provider states.\n",
       "created_at": "2026-11-24",
       "started_at": "2026-11-24",
+      "done_at": "2026-11-25",
       "scored_at": "2026-11-24",
+      "implemented": "Deribit fetch_funding_rate labels its value with the dispatched accrual window (8h default, exact span otherwise; wire bounds unchanged); ticker base/quote volumes map from stats.volume / volume_notional; fetch_liquidations returns only venue-marked trades and is marked unverified until a marked trade is observed live.",
+      "delivered_by": "claude",
+      "verified": true,
+      "verified_by": "codex",
+      "verification_ref": "herdr codex review, 4 rounds, approve at cc76ddd (rebased cabf4d4)",
       "cross_repo": []
     },
     {
