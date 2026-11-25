@@ -59,6 +59,7 @@ defmodule Bourse.WS.HandlerMappings do
     :watch_order_book,
     :watch_ohlcv,
     :watch_orders,
+    :watch_my_trades,
     :watch_balance,
     :watch_positions
   ]

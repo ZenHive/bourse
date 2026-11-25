@@ -24,7 +24,8 @@ defmodule Bourse.WS.Channels do
     watch_ticker: "watchTicker",
     watch_order_book: "watchOrderBook",
     watch_trades: "watchTrades",
-    watch_orders: "watchOrders"
+    watch_orders: "watchOrders",
+    watch_my_trades: "watchMyTrades"
   }
 
   @method_fallbacks %{
@@ -33,7 +34,7 @@ defmodule Bourse.WS.Channels do
     "watchTrades" => ["watchTradesForSymbols"]
   }
 
-  @private_methods [:watch_orders]
+  @private_methods [:watch_orders, :watch_my_trades]
 
   @no_symbol_append_patterns [:op_subscribe_objects, :method_subscription]
 

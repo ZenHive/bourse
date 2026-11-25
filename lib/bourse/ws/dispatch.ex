@@ -1,6 +1,12 @@
 defmodule Bourse.WS.Dispatch do
   @moduledoc """
   Spec-driven channel → handler resolution from `websocket.dispatch.entries`.
+
+  An entry may carry `"channel_pattern"` (an anchored regex) instead of a
+  literal `"channel"`, and `"family"` to name the watch family directly. Pattern
+  entries are tried first: they exist to separate channels that share a
+  segment, such as derive's account-scoped `{subaccount_id}.trades` and its
+  public `trades.{instrument}`.
   """
 
   alias Bourse.Exchange
@@ -18,10 +24,29 @@ defmodule Bourse.WS.Dispatch do
     match_type = Envelope.match_type(envelope)
     prefix_channels = Envelope.prefix_channels(envelope)
 
-    case find_handler(entries, channel_name, match_type, prefix_channels) do
-      nil -> :not_found
-      handler -> HandlerMappings.resolve_handler(handler)
+    case pattern_entry(entries, channel_name) do
+      %{"family" => family} when is_binary(family) ->
+        {:family, String.to_existing_atom(family)}
+
+      %{"handler" => handler} ->
+        HandlerMappings.resolve_handler(handler)
+
+      nil ->
+        case find_handler(entries, channel_name, match_type, prefix_channels) do
+          nil -> :not_found
+          handler -> HandlerMappings.resolve_handler(handler)
+        end
     end
+  end
+
+  defp pattern_entry(entries, channel_name) do
+    Enum.find(entries, fn
+      %{"channel_pattern" => pattern} when is_binary(pattern) ->
+        Regex.match?(Regex.compile!(pattern), channel_name)
+
+      _entry ->
+        false
+    end)
   end
 
   @doc "Returns dispatch entries from the exchange spec."

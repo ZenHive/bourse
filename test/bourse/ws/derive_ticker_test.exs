@@ -59,6 +59,33 @@ defmodule Bourse.WS.DeriveTickerTest do
     assert {:routed, :watch_orders, [%{"order_id" => "x"}], "7.orders"} = MessageRouter.route(frame, exchange)
   end
 
+  test "account-scoped trades build on the private path and route apart from public trades" do
+    exchange = Exchange.new!("derive", options: %{"subaccount_id" => 42})
+
+    assert Channels.private?(:watch_my_trades)
+    assert {:ok, "42.trades"} = Channels.build(exchange, :watch_my_trades, %{})
+    assert {:ok, "42.orders"} = Channels.build(exchange, :watch_orders, %{})
+
+    assert {:error, {:unresolved, reason}} = Channels.build(Exchange.new!("derive"), :watch_my_trades, %{})
+    assert reason =~ "{subaccount_id}.trades"
+
+    fill = %{"trade_id" => "t1", "subaccount_id" => 42}
+    mine = %{"method" => "subscription", "params" => %{"channel" => "42.trades", "data" => [fill]}}
+    assert {:routed, :watch_my_trades, [^fill], "42.trades"} = MessageRouter.route(mine, exchange)
+
+    public = %{"method" => "subscription", "params" => %{"channel" => "trades.BTC-PERP", "data" => [fill]}}
+    assert {:routed, :watch_trades, [^fill], "trades.BTC-PERP"} = MessageRouter.route(public, exchange)
+
+    order = %{"method" => "subscription", "params" => %{"channel" => "42.orders", "data" => []}}
+    assert {:routed, :watch_orders, [], "42.orders"} = MessageRouter.route(order, exchange)
+  end
+
+  test "the private trade watch refuses a public connection before subscribing" do
+    exchange = Exchange.new!("derive", options: %{"subaccount_id" => 42})
+    ws = %Bourse.WS{exchange: exchange, section: :public, zen_client: nil, url: "wss://testnet.api.derive.xyz/v3/ws"}
+    assert {:error, :private_section_required} = Bourse.WS.watch_my_trades(ws)
+  end
+
   defp parse(exchange, data) do
     exchange.module.parse_ticker(data)
   end

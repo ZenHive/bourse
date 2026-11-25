@@ -15,16 +15,11 @@ defmodule Bourse.WS.AuthoredChannelKeysTest do
   alias Bourse.WS.Channels
   alias Bourse.WS.Config
 
-  # Derive's channel map is being re-authored for its v3 host in separate work.
-  # Its one undispatchable key is pinned exactly, so this goes red both when
-  # another key appears and when the re-authoring removes this one.
-  @pinned_undispatchable %{"derive" => ["watchMyTrades"]}
-
   test "every runtime venue authors only channel keys the client dispatches" do
     offenders =
       for venue <- Spec.exchanges(),
           undispatchable = undispatchable_keys(venue, venue |> Spec.load!() |> channels()),
-          undispatchable != Map.get(@pinned_undispatchable, venue, []),
+          undispatchable != [],
           into: %{},
           do: {venue, undispatchable}
 
@@ -41,8 +36,11 @@ defmodule Bourse.WS.AuthoredChannelKeysTest do
     assert hashes == []
   end
 
-  test "the pinned exception names only runtime venues" do
-    assert Enum.all?(Map.keys(@pinned_undispatchable), &(&1 in Spec.exchanges()))
+  test "derive's account-scoped trade key is read by the private watch_my_trades" do
+    assert {:watch_my_trades, "watchMyTrades", []} in Channels.dispatch_keys()
+    assert Channels.private?(:watch_my_trades)
+    assert private_section?("derive")
+    assert "watchMyTrades" in readable_keys("derive", "derive" |> Spec.load!() |> channels())
   end
 
   describe "the guard mirrors what the builder reads" do

@@ -203,6 +203,16 @@
       "discriminators": [],
       "entries": [
         {
+          "channel_pattern": "^[0-9]+\\.trades$",
+          "family": "watch_my_trades",
+          "handler": "handleMyTrade"
+        },
+        {
+          "channel_pattern": "^[0-9]+\\.orders$",
+          "family": "watch_orders",
+          "handler": "handleOrder"
+        },
+        {
           "channel": "orderbook",
           "handler": "handleOrderBook"
         },
@@ -217,10 +227,6 @@
         {
           "channel": "orders",
           "handler": "handleOrder"
-        },
-        {
-          "channel": "mytrades",
-          "handler": "handleMyTrade"
         },
         {
           "channel": "public/login",

@@ -14,7 +14,7 @@ defmodule Bourse.WS.Handle do
   @enforce_keys [:ws, :exchange, :method, :channels]
   defstruct [:ws, :exchange, :method, :channels, opts: []]
 
-  @type method :: :watch_ticker | :watch_order_book | :watch_trades | :watch_orders
+  @type method :: :watch_ticker | :watch_order_book | :watch_trades | :watch_orders | :watch_my_trades
 
   @type t :: %__MODULE__{
           ws: WS.t(),

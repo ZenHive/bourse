@@ -646,6 +646,25 @@ defmodule Bourse.WS do
   end
 
   @doc """
+  Subscribes to the account's own fills.
+
+  Requires a `:private` connection. The channel comes from the authored
+  `watchMyTrades` template; derive's is account-scoped (`{subaccount_id}.trades`)
+  and reads the id from the exchange's `options["subaccount_id"]`. Fills route
+  to the `:watch_my_trades` family, separate from public trades.
+  """
+  @spec watch_my_trades(t(), keyword()) :: {:ok, Handle.t()} | {:error, term()}
+  def watch_my_trades(%__MODULE__{} = ws, opts \\ []) do
+    params =
+      case Keyword.get(opts, :symbol) do
+        symbol when is_binary(symbol) -> %{symbol: symbol}
+        _ -> %{}
+      end
+
+    watch(ws, :watch_my_trades, params, opts)
+  end
+
+  @doc """
   Unsubscribes using a handle from `watch_*/3`.
 
   Sends the exchange-native unsubscribe frame built from the stored channels.
