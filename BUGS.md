@@ -114,6 +114,20 @@ roadmap.
 
 ---
 
+## 2026-11-25 — deribit's REST comparison in the order book continuity live test can fail a correct book
+
+**Status:** 🆕 reported (found during task 708 review round 4; not routed).
+
+`test/live/ws/order_book_continuity_live_test.exs` aligns a deribit REST snapshot with the
+`book.BTC-PERPETUAL.100ms` frame whose `prev_change_id..change_id` range covers the REST
+`change_id`, excluding the prices that frame touches. A 100 ms frame aggregates its
+interval, so a level added and removed inside it is in the interior REST state and in no
+frame: on test.deribit.com (2026-11-25) both deribit cases failed with
+`only in REST: %{58673.0 => 2500.0}` and `%{58602.0 => 170.0, …}` outside the touched
+prices. Expected: the comparison certifies only states the frame describes. Aligning on
+the frame's own end id only (as okx now does) found no exact match in five REST reads,
+so it needs a different channel (`book.….raw` is authenticated) or another alignment.
+
 ## 2026-11-25 — binance-family subscribe acks are not correlated to their request
 
 **Status:** 🆕 reported (found during task 708 review round 3; not routed).
@@ -122,11 +136,14 @@ roadmap.
 `"result"` as the subscribe ack, without matching the request `id`. An `UNSUBSCRIBE` sent
 just before a `SUBSCRIBE` (as the adapter's restore does after an ack timeout) is answered
 `{"result": null, "id": n}` too, so the subscribe can return `:ok` on the unsubscribe's
-reply. Expected: the ack is the reply whose `id` is the subscribe's. Impact is bounded —
-binance accepts a subscribe for a stream already subscribed, so no refusal is lost; the
-call's own reply then arrives as an unrouted system frame. hyperliquid had the same
-shape and was fixed in task 708 (its unsubscribe reply carries `data.method:
-"unsubscribe"`, observed on api.hyperliquid-testnet.xyz 2026-11-25).
+reply. Expected: the ack is the reply whose `id` is the subscribe's. Any earlier
+reply still pending on the socket can be consumed the same way, so a genuine refusal of
+the subscribe itself can be read as success; the call's own reply then arrives as an
+unrouted system frame. (An earlier version of this entry claimed no refusal is lost —
+review round 4 of task 708 showed it on spot testnet, through the restore's unsubscribe,
+which task 708 then removed.) hyperliquid had the same shape for unsubscribe replies and
+was fixed in task 708 (its unsubscribe reply carries `data.method: "unsubscribe"`,
+observed on api.hyperliquid-testnet.xyz 2026-11-25).
 
 ## 2026-11-25 — `WS.subscribe/3` reorders frames that arrive during the ack wait
 

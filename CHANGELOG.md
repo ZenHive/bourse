@@ -103,11 +103,17 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   the adapter's warning lines, and by a primary `:logger` filter.
   The filter is registered by `Bourse.Application` start under the id
   `Bourse.LogRedaction`. It rewrites only an OTP termination report
-  (`gen_server`, `gen_statem`, `proc_lib`, `supervisor`) that it actually changes and
-  returns `:ignore` for every other event, so the host's `filter_default` still decides
-  what is logged. When the id is already taken by another filter, that filter is left in
-  place and a warning is logged; application stop removes the filter only while it is
-  still the one Bourse installed. `install/0`, `uninstall/0` and `installed?/0` are public.
+  (`gen_server`, `gen_statem`, `proc_lib`, `supervisor`) of a `Bourse.*` or
+  `ZenWebsocket.*` process — identified by the state struct, initial call or supervisor
+  offender module — and only when redaction changes it; every other event gets `:ignore`.
+  OTP counts a filter that returns an event as passing it, so **such a rewritten report
+  passes a primary `filter_default: :stop`**. The filter is on by default because these
+  reports print a connection's URL and session state whole and a credential in a log
+  cannot be taken back; `config :bourse, :redact_termination_reports, false` leaves it
+  uninstalled, and `format_status/1` and the warning lines still redact. When the id is
+  already taken by another filter, that filter is left in place and a warning is logged;
+  application stop removes the filter only while it is still the one Bourse installed.
+  `install/0`, `uninstall/0` and `installed?/0` are public.
 - **Order book invalidations name the instrument that broke.** The market comes from the
   frame's authored `market_path`, so two instruments on one okx socket are told apart; it
   was `nil`.
@@ -119,17 +125,25 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   no buffered delta follows the snapshot (for example after a malformed delta cleared the
   buffer while the request was in flight), the book waits for the next delta to satisfy
   the venue's first-event rule; a delta that starts past the snapshot fetches it again.
-  Before, such a snapshot was published at once, possibly older than the gap.
+  Before, such a snapshot was published at once, possibly older than the gap. A book
+  rebuilt after an invalidation is published only once its last update id is past every
+  update id seen before the break, so a snapshot requested earlier and a repeated or
+  delayed delta cannot publish a state the feed had already moved past.
 - **Order book resync work is bound to the connection it was scheduled on** and is
   skipped for a book that is live again, so a retry from a lost connection no longer
   unsubscribes the replacement connection's healthy feed.
-- **A subscription restore whose ack never arrived is unsubscribed before it is sent
-  again**, so the retry is answered for that call instead of being refused as already
-  subscribed. hyperliquid's `unsubscribe` replies are no longer read as a subscribe ack.
+- **A subscription restore whose ack never arrived is sent again as it is, and a refusal
+  naming exactly that call's channels as already subscribed restores it**
+  (`Bourse.WS.SubscribeAck.already_subscribed?/3`, bybit and hyperliquid). Before, the
+  retry was refused and retried without end. hyperliquid's `unsubscribe` replies are no
+  longer read as a subscribe ack.
+- **Subscribing again to an order book stream already tracked keeps its book**; the
+  ambiguity invalidation is announced only when a distinct stream is added.
 - **A routed connection that closes right after a subscription is accepted is noticed.**
   `Bourse.WS.ConnectionOwner.watch/3` registers a process for
-  `{:bourse_ws_transport_down, owner, client_pid, reason}` on every held client's exit,
-  replaying losses that happened before the watch; the adapter reconnects on it.
+  `{:bourse_ws_transport_down, owner, client_pid, reason}` on every held client's exit;
+  losses before the watch are reported on `watch/3` as one notification, and only that
+  one is retained. The adapter reconnects on it.
 - **The continuity schema refuses a rule paired with a snapshot source it is not
   implemented for** (`first_follows_last`/`previous_last` need `rest`,
   `previous_current`/`increment` need `stream`). A spec may record a `limitation` where the
