@@ -4,7 +4,7 @@ defmodule Bourse.Application do
 
   Starts the rate limiter, rate limit state store, native signer supervisor,
   WS broadcast registry, and WS connection-owner supervisor, and installs
-  `Bourse.LogRedaction` to redact URLs in transport termination reports.
+  `Bourse.LogRedaction`'s primary `:logger` filter (see that module).
 
   `Bourse.Testnet` is deliberately NOT a child here. It is a sandbox credential
   registry that only test and recording harnesses use, so a consumer application
@@ -15,9 +15,13 @@ defmodule Bourse.Application do
 
   alias Bourse.WS.Broadcast
 
+  require Logger
+
   @impl true
   def start(_type, _args) do
-    :ok = Bourse.LogRedaction.install()
+    with {:error, reason} <- Bourse.LogRedaction.install() do
+      Logger.warning("Bourse.LogRedaction not installed: #{inspect(reason)}")
+    end
 
     children = [
       Bourse.RateLimiter,
