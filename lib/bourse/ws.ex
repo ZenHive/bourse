@@ -366,6 +366,9 @@ defmodule Bourse.WS do
         {:ws_frame, frame} = msg when is_map(frame) or is_list(frame) ->
           handle_auth_frame(pattern, deadline, requeue, msg, frame)
 
+        {:ws_frame, _connection, frame} = msg when is_map(frame) or is_list(frame) ->
+          handle_auth_frame(pattern, deadline, requeue, msg, frame)
+
         other ->
           do_await_auth_ack(pattern, deadline, [other | requeue])
       after
@@ -903,8 +906,11 @@ defmodule Bourse.WS do
         {:websocket_unmatched_response, frame} = msg when is_map(frame) or is_list(frame) ->
           handle_ack_frame(exchange_id, deadline, requeue, msg, frame)
 
-        # Adapter injects a custom handler that tags frames as {:ws_frame, _}.
+        # The adapter's handler delivers frames as {:ws_frame, connection, _}.
         {:ws_frame, frame} = msg when is_map(frame) or is_list(frame) ->
+          handle_ack_frame(exchange_id, deadline, requeue, msg, frame)
+
+        {:ws_frame, _connection, frame} = msg when is_map(frame) or is_list(frame) ->
           handle_ack_frame(exchange_id, deadline, requeue, msg, frame)
 
         other ->
@@ -936,11 +942,24 @@ defmodule Bourse.WS do
     end
   end
 
+  # Re-sending appends to the mailbox, behind any frame that arrived after the
+  # held ones but has not been received yet. Frames still waiting are drained
+  # and re-sent behind the held ones so the caller sees arrival order — an
+  # order book checks each delta against the one before it.
   defp requeue_messages(messages) do
-    # Preserve original arrival order (requeue is newest-first).
-    messages
-    |> Enum.reverse()
-    |> Enum.each(&send(self(), &1))
+    Enum.each(Enum.reverse(messages, drain_frames([])), &send(self(), &1))
+  end
+
+  defp drain_frames(acc) do
+    receive do
+      {tag, _frame} = msg when tag in [:websocket_message, :websocket_unmatched_response, :ws_frame] ->
+        drain_frames([msg | acc])
+
+      {:ws_frame, _connection, _frame} = msg ->
+        drain_frames([msg | acc])
+    after
+      0 -> Enum.reverse(acc)
+    end
   end
 
   defp send_payload(zen_client, frames) when is_list(frames) do

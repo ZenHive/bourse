@@ -196,6 +196,32 @@ defmodule Bourse.WS.SubscribeReturnShapeTest do
     assert_receive {:websocket_message, ^data}, 50
   end
 
+  test "frames held during the await window keep arrival order with frames still queued behind the ack" do
+    transport = start_supervised!({Transport, owner: self(), reply: :ok})
+    client = %Client{server_pid: transport, state: :connected}
+    ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
+
+    connection = make_ref()
+    frame = fn u -> {:ws_frame, connection, %{"topic" => "orderbook.50.BTCUSDT", "data" => %{"u" => u}}} end
+
+    send(self(), frame.(1))
+    send(self(), {:ws_frame, connection, %{"op" => "subscribe", "success" => true}})
+    send(self(), frame.(2))
+    send(self(), {:websocket_message, %{"topic" => "orderbook.50.BTCUSDT", "data" => %{"u" => 3}}})
+
+    assert :ok = WS.subscribe(ws, ["orderbook.50.BTCUSDT"], ack_timeout_ms: 200)
+
+    # An order book checks every delta against the one before it, so the
+    # held frame must come back ahead of the ones that arrived after it.
+    {:messages, messages} = Process.info(self(), :messages)
+
+    assert [
+             {:ws_frame, ^connection, %{"data" => %{"u" => 1}}},
+             {:ws_frame, ^connection, %{"data" => %{"u" => 2}}},
+             {:websocket_message, %{"data" => %{"u" => 3}}}
+           ] = Enum.reject(messages, &match?({:transport_sent, _}, &1))
+  end
+
   test "channel shape errors from pattern modules propagate as {:error, atom}" do
     transport = start_supervised!({Transport, owner: self(), reply: :ok})
     client = %Client{server_pid: transport, state: :connected}
