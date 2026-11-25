@@ -245,6 +245,8 @@ defmodule Bourse.Test.RestReadContractScenario do
 
   defp credential_uid!(%{exchange: %{credentials: %{uid: uid}}}) when is_binary(uid), do: String.to_integer(uid)
 
+  defp credential_uid!(%{venue: "derive"}), do: flunk(Bourse.Test.DeriveAccount.setup_message())
+
   defp credential_uid!(context),
     do: flunk("#{context.venue}: provider contract requires a numeric credential account index")
 
