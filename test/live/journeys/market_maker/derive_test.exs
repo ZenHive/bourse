@@ -407,7 +407,9 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
     MM.signed_size(positions, @instrument)
   end
 
-  defp mmp_config!(exchange) do
+  defp mmp_config!(exchange), do: MM.mmp_config_row!(mmp_configs!(exchange), @currency)
+
+  defp mmp_configs!(exchange) do
     assert {:ok, %{body: %{"result" => configs}}} =
              Bourse.Derive.private_post_get_mmp_config(exchange, %{
                "subaccount_id" => derive_subaccount_id!(),
@@ -415,7 +417,7 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
              })
 
     assert is_list(configs)
-    MM.mmp_config_row!(configs, @currency)
+    configs
   end
 
   # Undoes a freeze the test induced (mmp_frozen_time 0 stays frozen until a
@@ -426,23 +428,17 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
     target = MM.mmp_restore_target(original)
     account = %{"subaccount_id" => derive_subaccount_id!(), "currency" => @currency}
 
-    MM.cleanup_all([
-      fn ->
-        if MM.mmp_needs_reset?(target, mmp_config!(exchange)) do
-          assert {:ok, %{body: %{"result" => "ok"}}} = Bourse.Derive.private_post_reset_mmp(exchange, account)
-        end
+    MM.restore_mmp!(target, @currency, %{
+      read: fn -> mmp_configs!(exchange) end,
+      reset: fn ->
+        assert {:ok, %{body: %{"result" => "ok"}}} = Bourse.Derive.private_post_reset_mmp(exchange, account)
       end,
-      fn ->
+      write: fn ->
         assert {:ok, %{body: %{"result" => _}}} =
                  Bourse.Derive.private_post_set_mmp_config(exchange, Map.merge(Map.delete(target, "is_frozen"), account))
       end,
-      fn ->
-        poll_until!("BTC MMP back at #{inspect(target)}", fn ->
-          current = mmp_config!(exchange)
-          if MM.mmp_mismatches(target, current) == [], do: {:ok, current}, else: :retry
-        end)
-      end
-    ])
+      poll: &poll_until!("BTC MMP back at #{inspect(target)}", &1)
+    })
   end
 
   # A deliberate freeze cancels every open MMP order and quote on the currency,
@@ -458,7 +454,7 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
     # get_quotes is paginated (Pagination.num_pages, default page size 20);
     # get_open_orders returns every open order in one result.
     quotes =
-      MM.read_all_pages!("quotes", fn page ->
+      MM.read_all_pages!("quotes", "quote_id", fn page ->
         case Bourse.Derive.private_post_get_quotes(exchange, Map.merge(account, %{"status" => "open", "page" => page})) do
           {:ok, %{body: %{"result" => result}}} -> {:ok, result}
           other -> other

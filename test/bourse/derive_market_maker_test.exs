@@ -345,54 +345,228 @@ defmodule Bourse.DeriveMarketMakerTest do
     end
   end
 
-  describe "read_all_pages!/2" do
-    defp pages(pages_by_number) do
+  describe "read_all_pages!/3" do
+    # A provider that pages a list of quotes 20 at a time. Each call serves the
+    # next snapshot in `snapshots` (the last one repeats), so a test can change
+    # the open set between two page reads.
+    defp provider(snapshots) do
+      {:ok, calls} = Agent.start_link(fn -> 0 end)
       test = self()
 
       fn page ->
+        n = Agent.get_and_update(calls, &{&1, &1 + 1})
         send(test, {:page, page})
-        Map.fetch!(pages_by_number, page)
+        quotes = Enum.at(snapshots, n, List.last(snapshots))
+        num_pages = div(length(quotes) + 19, 20)
+
+        {:ok,
+         %{
+           "quotes" => Enum.slice(quotes, (page - 1) * 20, 20),
+           "pagination" => %{"count" => length(quotes), "num_pages" => num_pages}
+         }}
       end
     end
 
-    defp page(rows, num_pages), do: {:ok, %{"quotes" => rows, "pagination" => %{"count" => 0, "num_pages" => num_pages}}}
+    defp quote_row(id, instrument),
+      do: %{"quote_id" => id, "mmp" => true, "status" => "open", "legs" => [%{"instrument_name" => instrument}]}
 
-    @btc_quote %{"quote_id" => "q-btc", "mmp" => true, "status" => "open", "legs" => [%{"instrument_name" => "BTC-PERP"}]}
-    @eth_quote %{"quote_id" => "q-eth", "mmp" => true, "status" => "open", "legs" => [%{"instrument_name" => "ETH-PERP"}]}
+    defp eth_quotes(range), do: Enum.map(range, &quote_row("q#{&1}", "ETH-PERP"))
 
-    test "reads through the last page, so a BTC MMP quote on page two is exposure" do
-      quotes = MM.read_all_pages!("quotes", pages(%{1 => page([@eth_quote], 2), 2 => page([@btc_quote], 2)}))
-      assert quotes == [@eth_quote, @btc_quote]
-      assert MM.mmp_exposure([], quotes, "BTC") == ["q-btc"]
-      assert_received {:page, 1}
-      assert_received {:page, 2}
-      refute_received {:page, _}
+    defp page_requests do
+      receive do
+        {:page, page} -> [page | page_requests()]
+      after
+        0 -> []
+      end
     end
 
-    test "a single page and an empty result read one page each" do
-      assert MM.read_all_pages!("quotes", pages(%{1 => page([@eth_quote], 1)})) == [@eth_quote]
-      assert_received {:page, 1}
-      refute_received {:page, _}
-      assert MM.read_all_pages!("quotes", pages(%{1 => page([], 0)})) == []
-      assert_received {:page, 1}
-      refute_received {:page, _}
+    defp fixed(pages_by_number), do: fn page -> Map.fetch!(pages_by_number, page) end
+
+    defp page(rows, count, num_pages),
+      do: {:ok, %{"quotes" => rows, "pagination" => %{"count" => count, "num_pages" => num_pages}}}
+
+    test "a BTC MMP quote on page three is read and counted as exposure" do
+      quotes = eth_quotes(1..44) ++ [quote_row("q-btc", "BTC-PERP")]
+      read = MM.read_all_pages!("quotes", "quote_id", provider([quotes]))
+      assert length(read) == 45
+      assert MM.mmp_exposure([], read, "BTC") == ["q-btc"]
+      assert page_requests() == [1, 2, 3, 1, 2, 3]
     end
 
-    test "an incomplete read flunks instead of reading as empty" do
+    test "a single page and an empty result each read one page per pass" do
+      assert MM.read_all_pages!("quotes", "quote_id", provider([eth_quotes(1..3)])) == eth_quotes(1..3)
+      assert page_requests() == [1, 1]
+      assert MM.read_all_pages!("quotes", "quote_id", provider([[]])) == []
+      assert page_requests() == [1, 1]
+    end
+
+    test "a quote closing between pages changes the count and the read is refused" do
+      # 22 open quotes, BTC at position 21. After page one, q1 closes: page two
+      # reports 21 quotes on two pages and BTC has moved onto page one.
+      before = eth_quotes(1..20) ++ [quote_row("q-btc", "BTC-PERP"), quote_row("q22", "ETH-PERP")]
+      after_close = tl(before)
+
+      error =
+        assert_raise ExUnit.AssertionError, fn ->
+          MM.read_all_pages!("quotes", "quote_id", provider([before, after_close]))
+        end
+
+      assert error.message =~ "set changed mid-read"
+    end
+
+    test "a quote closing while another opens keeps both figures, and the second pass refuses it" do
+      before = eth_quotes(1..20) ++ [quote_row("q-btc", "BTC-PERP"), quote_row("q22", "ETH-PERP")]
+      swapped = tl(before) ++ [quote_row("q-new", "ETH-PERP")]
+
+      error =
+        assert_raise ExUnit.AssertionError, fn ->
+          MM.read_all_pages!("quotes", "quote_id", provider([before, swapped]))
+        end
+
+      assert error.message =~ "changed between two complete reads"
+    end
+
+    test "a page count that changes while the count holds is refused" do
+      responses = fixed(%{1 => page(eth_quotes(1..20), 22, 2), 2 => page(eth_quotes(21..22), 22, 3)})
+
+      assert_raise ExUnit.AssertionError, ~r/set changed mid-read/, fn ->
+        MM.read_all_pages!("quotes", "quote_id", responses)
+      end
+    end
+
+    test "distinct ids that do not account for the advertised count are refused" do
+      duplicated = fixed(%{1 => page(eth_quotes(1..20), 22, 2), 2 => page(eth_quotes(20..21), 22, 2)})
+
+      assert_raise ExUnit.AssertionError, ~r/read 21 distinct quote_ids/, fn ->
+        MM.read_all_pages!("quotes", "quote_id", duplicated)
+      end
+
+      short = fixed(%{1 => page(eth_quotes(1..2), 3, 1)})
+      assert_raise ExUnit.AssertionError, ~r/read 2 distinct/, fn -> MM.read_all_pages!("quotes", "quote_id", short) end
+
+      no_id = fixed(%{1 => page([%{"mmp" => true}], 1, 1)})
+      assert_raise ExUnit.AssertionError, ~r/without quote_id/, fn -> MM.read_all_pages!("quotes", "quote_id", no_id) end
+    end
+
+    test "an incomplete read flunks, naming why, instead of reading as empty" do
+      btc = [quote_row("q-btc", "BTC-PERP")]
+      first = ~r/page 1 of quotes is not a complete paginated result/
+      later = ~r/page 2 of 2 of quotes failed or the set changed mid-read/
+      no_list = ~r/carries no quotes list/
+
       incomplete = [
-        %{1 => {:error, :timeout}},
-        %{1 => {:ok, %{"quotes" => [@btc_quote]}}},
-        %{1 => {:ok, %{"quotes" => [], "pagination" => %{"num_pages" => nil}}}},
-        %{1 => {:ok, %{"quotes" => [], "pagination" => %{"num_pages" => -1}}}},
-        %{1 => {:ok, %{"pagination" => %{"num_pages" => 1}}}},
-        %{1 => page([@eth_quote], 2), 2 => {:error, :timeout}},
-        %{1 => page([@eth_quote], 2), 2 => page([@btc_quote], 3)},
-        %{1 => page([@eth_quote], 2), 2 => {:ok, %{"quotes" => nil, "pagination" => %{"num_pages" => 2}}}}
+        {%{1 => {:error, :timeout}}, first},
+        {%{1 => {:ok, %{"quotes" => btc}}}, first},
+        {%{1 => {:ok, %{"quotes" => btc, "pagination" => %{"num_pages" => 1}}}}, first},
+        {%{1 => {:ok, %{"quotes" => btc, "pagination" => %{"count" => 1}}}}, first},
+        {%{1 => {:ok, %{"quotes" => btc, "pagination" => %{"count" => 1, "num_pages" => nil}}}}, first},
+        {%{1 => {:ok, %{"quotes" => btc, "pagination" => %{"count" => nil, "num_pages" => 1}}}}, first},
+        {%{1 => {:ok, %{"quotes" => btc, "pagination" => %{"count" => 1.0, "num_pages" => 1}}}}, first},
+        {%{1 => {:ok, %{"quotes" => [], "pagination" => %{"count" => 0, "num_pages" => -1}}}}, first},
+        {%{1 => {:ok, %{"quotes" => [], "pagination" => %{"count" => -1, "num_pages" => 0}}}}, first},
+        {%{1 => {:ok, %{"pagination" => %{"count" => 0, "num_pages" => 0}}}}, no_list},
+        {%{1 => page(eth_quotes(1..20), 21, 2), 2 => {:error, :timeout}}, later},
+        {%{
+           1 => page(eth_quotes(1..20), 21, 2),
+           2 => {:ok, %{"quotes" => nil, "pagination" => %{"count" => 21, "num_pages" => 2}}}
+         }, no_list}
       ]
 
-      for responses <- incomplete do
-        assert_raise ExUnit.AssertionError, fn -> MM.read_all_pages!("quotes", pages(responses)) end
+      for {responses, reason} <- incomplete do
+        assert_raise ExUnit.AssertionError, reason, fn -> MM.read_all_pages!("quotes", "quote_id", fixed(responses)) end
       end
+    end
+  end
+
+  describe "restore_mmp!/3" do
+    @target %{
+      "mmp_interval" => 5_000,
+      "mmp_frozen_time" => 60_000,
+      "mmp_amount_limit" => "2",
+      "mmp_delta_limit" => "0.5",
+      "is_frozen" => false
+    }
+
+    # Serves each read from `reads` in turn (the last repeats) and records
+    # the calls cleanup makes.
+    defp mmp_ops(reads) do
+      {:ok, served} = Agent.start_link(fn -> reads end)
+      test = self()
+
+      %{
+        read: fn ->
+          send(test, :read)
+
+          Agent.get_and_update(served, fn
+            [only] -> {only, [only]}
+            [next | rest] -> {next, rest}
+          end)
+        end,
+        reset: fn -> send(test, :reset) end,
+        write: fn -> send(test, :write) end,
+        poll: fn fun ->
+          case fun.() do
+            {:ok, value} -> value
+            :retry -> flunk("not restored")
+          end
+        end
+      }
+    end
+
+    defp calls do
+      receive do
+        call when call in [:read, :reset, :write] -> [call | calls()]
+      after
+        0 -> []
+      end
+    end
+
+    defp btc(frozen), do: [Map.merge(Map.delete(@target, "is_frozen"), %{"currency" => "BTC", "is_frozen" => frozen})]
+
+    test "an unknown freeze flag on the cleanup read attempts the reset, and a malformed final read still fails" do
+      for flag <- [nil, "true", :missing] do
+        malformed = if flag == :missing, do: [Map.delete(hd(btc(false)), "is_frozen")], else: btc(flag)
+
+        assert_raise ExUnit.AssertionError, ~r/no boolean is_frozen/, fn ->
+          MM.restore_mmp!(@target, "BTC", mmp_ops([malformed]))
+        end
+
+        assert calls() == [:read, :reset, :write, :read], inspect(flag)
+      end
+    end
+
+    test "an unknown flag is reset and passes once the final read is a literal false" do
+      assert MM.restore_mmp!(@target, "BTC", mmp_ops([btc(nil), btc(false)])) == :ok
+      assert calls() == [:read, :reset, :write, :read]
+    end
+
+    test "a known frozen row is reset; an unfrozen or absent one is not" do
+      assert MM.restore_mmp!(@target, "BTC", mmp_ops([btc(true), btc(false)])) == :ok
+      assert calls() == [:read, :reset, :write, :read]
+
+      assert MM.restore_mmp!(@target, "BTC", mmp_ops([btc(false)])) == :ok
+      assert calls() == [:read, :write, :read]
+
+      assert MM.restore_mmp!(@target, "BTC", mmp_ops([[%{"currency" => "ETH", "is_frozen" => true}], btc(false)])) == :ok
+      assert calls() == [:read, :write, :read]
+    end
+
+    test "a final read still frozen or with a changed field fails" do
+      assert_raise ExUnit.AssertionError, ~r/not restored/, fn ->
+        MM.restore_mmp!(@target, "BTC", mmp_ops([btc(false), btc(true)]))
+      end
+
+      changed = [%{hd(btc(false)) | "mmp_interval" => 0}]
+
+      assert_raise ExUnit.AssertionError, ~r/not restored/, fn ->
+        MM.restore_mmp!(@target, "BTC", mmp_ops([btc(false), changed]))
+      end
+    end
+
+    test "a failed reset still writes the config and verifies" do
+      ops = %{mmp_ops([btc(true), btc(false)]) | reset: fn -> raise "reset timed out" end}
+      assert_raise RuntimeError, "reset timed out", fn -> MM.restore_mmp!(@target, "BTC", ops) end
+      assert calls() == [:read, :write, :read]
     end
   end
 end

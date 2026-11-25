@@ -235,36 +235,79 @@ defmodule Bourse.Test.DeriveMarketMaker do
   defp same?(_field, target, current), do: target === current
 
   @doc """
-  Reads every page of a paginated private RPC. `fetch_page` gets a 1-based
-  page number and returns `{:ok, result}`, where `result` carries the rows
-  under `key` and `pagination.num_pages`. Flunks on any failed page, a
-  missing page count, or a count that changes during the read: an incomplete
-  read is never treated as an empty one.
+  Reads every page of a paginated private RPC and proves the read complete.
+  `fetch_page` gets a 1-based page number and returns `{:ok, result}`, where
+  `result` carries the rows under `key` and `pagination.count` /
+  `pagination.num_pages`.
+
+  Flunks, never answering an incomplete read as a smaller one, when any page
+  fails, a page lacks either pagination figure or its rows, either figure
+  changes between pages, or the distinct `id_key` values collected do not
+  account for the advertised `count`: a row that shifted across a page
+  boundary while the set changed is otherwise never read.
+
+  The whole traversal runs twice and both must return the same ids: a quote
+  closing and another opening between two pages keeps both figures and the
+  distinct total intact while still hiding a row, and only a second pass
+  over a stable set shows it.
   """
-  @spec read_all_pages!(String.t(), (pos_integer() -> {:ok, map()} | term())) :: [map()]
-  def read_all_pages!(key, fetch_page) do
-    {rows, num_pages} = read_page!(key, fetch_page, 1)
-    rest = for page <- 2..num_pages//1, do: read_page!(key, fetch_page, page, num_pages)
-    rows ++ Enum.flat_map(rest, & &1)
-  end
+  @spec read_all_pages!(String.t(), String.t(), (pos_integer() -> {:ok, map()} | term())) :: [map()]
+  def read_all_pages!(key, id_key, fetch_page) do
+    first = traverse!(key, id_key, fetch_page)
+    second = traverse!(key, id_key, fetch_page)
+    ids = &MapSet.new(&1, fn row -> row[id_key] end)
 
-  defp read_page!(key, fetch_page, page) do
-    case fetch_page.(page) do
-      {:ok, %{"pagination" => %{"num_pages" => n}} = result} when is_integer(n) and n >= 0 ->
-        {page_rows!(result, key, page), n}
-
-      other ->
-        flunk("page #{page} of #{key} is not a complete paginated result: #{inspect(other)}")
+    if MapSet.equal?(ids.(first), ids.(second)) do
+      second
+    else
+      flunk(
+        "#{key} changed between two complete reads: #{inspect(Enum.map(first, & &1[id_key]))} then #{inspect(Enum.map(second, & &1[id_key]))}"
+      )
     end
   end
 
-  defp read_page!(key, fetch_page, page, num_pages) do
+  defp traverse!(key, id_key, fetch_page) do
+    {rows, totals} = read_first_page!(key, fetch_page)
+    {count, num_pages} = totals
+    rest = for page <- 2..num_pages//1, do: read_later_page!(key, fetch_page, page, totals)
+    all = rows ++ Enum.concat(rest)
+    ids = Enum.map(all, & &1[id_key])
+
+    cond do
+      Enum.any?(ids, &is_nil/1) ->
+        flunk("#{key} rows without #{id_key}: #{inspect(Enum.reject(all, & &1[id_key]))}")
+
+      length(Enum.uniq(ids)) != count ->
+        flunk(
+          "#{key}: read #{length(Enum.uniq(ids))} distinct #{id_key}s over #{num_pages} page(s), provider advertised #{count}"
+        )
+
+      true ->
+        all
+    end
+  end
+
+  defp read_first_page!(key, fetch_page) do
+    case fetch_page.(1) do
+      {:ok, %{"pagination" => %{"count" => count, "num_pages" => n}} = result}
+      when is_integer(count) and count >= 0 and is_integer(n) and n >= 0 ->
+        {page_rows!(result, key, 1), {count, n}}
+
+      other ->
+        flunk("page 1 of #{key} is not a complete paginated result: #{inspect(other)}")
+    end
+  end
+
+  defp read_later_page!(key, fetch_page, page, {count, num_pages}) do
     case fetch_page.(page) do
-      {:ok, %{"pagination" => %{"num_pages" => ^num_pages}} = result} ->
+      {:ok, %{"pagination" => %{"count" => ^count, "num_pages" => ^num_pages}} = result} ->
         page_rows!(result, key, page)
 
       other ->
-        flunk("page #{page} of #{num_pages} of #{key} failed or changed page count mid-read: #{inspect(other)}")
+        flunk("""
+        page #{page} of #{num_pages} of #{key} failed or the set changed mid-read \
+        (first page: count #{count}, num_pages #{num_pages}): #{inspect(other)}
+        """)
     end
   end
 
@@ -273,6 +316,40 @@ defmodule Bourse.Test.DeriveMarketMaker do
       rows when is_list(rows) -> rows
       other -> flunk("page #{page} of #{key} carries no #{key} list: #{inspect(other)}")
     end
+  end
+
+  @doc """
+  Restores `currency`'s MMP state to `target` as three independent cleanup
+  steps (see `cleanup_all/1`), with the provider calls passed in:
+
+    * `read.()` returns the raw `private/get_mmp_config` result list;
+    * `reset.()` calls `private/reset_mmp`; `write.()` rewrites the config;
+    * `poll.(fun)` repeats `fun` (`{:ok, value}` or `:retry`) until it settles.
+
+  The reset decision reads leniently: an existing row whose freeze flag is
+  unknown is treated as possibly frozen and reset, because configuration
+  replacement does not clear a freeze. The final verification stays strict
+  and fails on a malformed row.
+  """
+  @spec restore_mmp!(map(), String.t(), %{
+          read: (-> [map()]),
+          reset: (-> term()),
+          write: (-> term()),
+          poll: ((-> {:ok, term()} | :retry) -> term())
+        }) :: :ok
+  def restore_mmp!(target, currency, %{read: read, reset: reset, write: write, poll: poll}) do
+    cleanup_all([
+      fn ->
+        if mmp_needs_reset?(target, Enum.find(read.(), &(&1["currency"] == currency))), do: reset.()
+      end,
+      write,
+      fn ->
+        poll.(fn ->
+          current = mmp_config_row!(read.(), currency)
+          if mmp_mismatches(target, current) == [], do: {:ok, current}, else: :retry
+        end)
+      end
+    ])
   end
 
   @doc """
