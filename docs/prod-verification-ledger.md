@@ -218,6 +218,23 @@ test code. Edit the fence when adding a ledgered case.
 
 ## Open
 
+### bybit — u+1 continuity on the depth-1/50/200/1000 order book topics (task 708, filed 2026-11-25)
+
+- Authored slices: `bybit:websocket.orderbook_semantics.continuity.rule`
+- Blocked by: provider documentation. The live lane can observe the rule; only Bybit can state it.
+  [full-ob](https://bybit-exchange.github.io/docs/v5/websocket/public/full-ob) documents consecutive
+  `u` for `orderbook.full.{symbol}`; [orderbook](https://bybit-exchange.github.io/docs/v5/websocket/public/orderbook)
+  documents `u=1` as a restart snapshot and a reset on every snapshot, and says nothing about the
+  step between deltas on the depth topics (both read 2026-11-25).
+- The open question: whether `u` on `orderbook.{depth}.{symbol}` is guaranteed to advance by exactly
+  one per pushed frame, or only happens to in what we observe. If Bybit ever conflates frames on a
+  depth topic, the `increment` rule reports a gap that is not one (a loud resync, not a corrupt book).
+- Exact call: `test/live/ws/order_book_continuity_live_test.exs` bybit cases on
+  `orderbook.1000.BTCUSDT` against `stream-testnet.bybit.com`, compared with
+  `Bourse.Bybit.public_get_v5_market_orderbook(ex, %{"category" => "linear", "symbol" => "BTCUSDT", "limit" => 200})`.
+- Expected evidence: a provider statement of consecutive `u` for the depth topics, or a change to
+  the full-ob topic with a REST bootstrap.
+
 ### deribit — fetchLiquidations with a liquidation-marked trade on the tape (task 710, C-T710c, filed 2026-11-25)
 
 - Authored slices: `deribit:normalization.response_envelopes.liquidation.fetchLiquidations.row_filter`

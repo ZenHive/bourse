@@ -5,10 +5,17 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
 
   Each venue's public diff stream is consumed through `Bourse.WS.Adapter`. The
   test observes real deltas chaining under the venue's documented rule, then
-  creates a gap the way a network loses one: a real delta is dropped between
-  the socket and the adapter. It asserts that the book is invalidated, that no
-  book is published until the resync completes, and that the resynced book
-  matches the venue's own REST depth snapshot.
+  breaks the stream two ways:
+
+    * a real delta is dropped between the socket and the adapter, the gap a
+      lost frame leaves;
+    * the live transport goes down (`gun_down`, as when the venue closes the
+      socket) and a new one is dialled.
+
+  After each break it asserts that the book is invalidated, that every routed
+  frame carries no book until the resync is independently observed — a frame
+  the venue itself marks as a snapshot, or a REST depth response — and that
+  the resynced book matches the venue's own REST depth snapshot.
 
   Every venue runs against its testnet/demo host (`sandbox: true`), measured
   2026-11-25 to serve the same depth frames and sequence fields as production:
@@ -17,12 +24,20 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
     * binanceusdm — `wss://demo-fstream.binance.com/public/ws`, `U`/`u`/`pu`, REST `demo-fapi.binance.com`
     * okx — `wss://wspap.okx.com:8443/ws/v5/public`, `prevSeqId`/`seqId`, REST with `x-simulated-trading: 1`
     * deribit — `wss://test.deribit.com/ws/api/v2`, `type` + `change_id`/`prev_change_id`, REST `test.deribit.com`
-    * bybit — `wss://stream-testnet.bybit.com/v5/public/linear`, `u` incrementing by one
+    * bybit — `wss://stream-testnet.bybit.com/v5/public/linear`, `orderbook.1000`, `u` incrementing by one,
+      REST `/v5/market/orderbook` carrying the same `u`
 
   REST snapshot alignment: the REST snapshot carries a sequence id `R`. The WS
   book compared against it is the one published after the frame whose id range
-  covers `R`. Prices touched by that frame are excluded because the frame may
-  also carry updates past `R`.
+  covers `R`. When `R` is that frame's own end id the two books describe the
+  same state and are compared in full; otherwise the prices the frame touched
+  are excluded, because it also carries updates past `R`. A REST snapshot no
+  WS frame covers cannot be aligned and is fetched again; an aligned snapshot
+  that disagrees fails the test.
+
+  bybit documents consecutive `u` only for its full-ob topic; on the depth
+  topics the `increment` rule is the observation this test makes, recorded as
+  the spec's `continuity.limitation` and in `docs/prod-verification-ledger.md`.
 
   Sequence contracts (provider documents, also authored as
   `continuity.doc` in each venue spec):
@@ -55,35 +70,40 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       delta?: &__MODULE__.binance_delta?/1,
       chained?: &__MODULE__.binance_chained?/2,
       range: &__MODULE__.binance_range/1,
-      rest: &__MODULE__.binance_rest/1
+      rest: &__MODULE__.binance_rest/1,
+      resync: :rest
     },
     "binanceusdm" => %{
       channel: "btcusdt@depth@100ms",
       delta?: &__MODULE__.binance_delta?/1,
       chained?: &__MODULE__.usdm_chained?/2,
       range: &__MODULE__.usdm_range/1,
-      rest: &__MODULE__.usdm_rest/1
+      rest: &__MODULE__.usdm_rest/1,
+      resync: :rest
     },
     "okx" => %{
       channel: %{"channel" => "books", "instId" => "BTC-USDT"},
       delta?: &__MODULE__.okx_delta?/1,
       chained?: &__MODULE__.okx_chained?/2,
       range: &__MODULE__.okx_range/1,
-      rest: &__MODULE__.okx_rest/1
+      rest: &__MODULE__.okx_rest/1,
+      resync: {:stream, &__MODULE__.okx_snapshot_id/1, &__MODULE__.okx_payload_id/1}
     },
     "deribit" => %{
       channel: "book.BTC-PERPETUAL.100ms",
       delta?: &__MODULE__.deribit_delta?/1,
       chained?: &__MODULE__.deribit_chained?/2,
       range: &__MODULE__.deribit_range/1,
-      rest: &__MODULE__.deribit_rest/1
+      rest: &__MODULE__.deribit_rest/1,
+      resync: {:stream, &__MODULE__.deribit_snapshot_id/1, &__MODULE__.deribit_payload_id/1}
     },
     "bybit" => %{
-      channel: "orderbook.50.BTCUSDT",
+      channel: "orderbook.1000.BTCUSDT",
       delta?: &__MODULE__.bybit_delta?/1,
       chained?: &__MODULE__.bybit_chained?/2,
-      range: nil,
-      rest: nil
+      range: &__MODULE__.bybit_range/1,
+      rest: &__MODULE__.bybit_rest/1,
+      resync: {:stream, &__MODULE__.bybit_snapshot_id/1, &__MODULE__.bybit_payload_id/1}
     }
   }
 
@@ -103,35 +123,28 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
         reason = await_invalidation()
         assert gap_reason?(reason), "expected a continuity gap, got #{inspect(reason)}"
 
-        # After the invalidation no book is published until the resync is done.
-        [{_payload, resynced} | _] = after_resync = await_books(1, [])
-        assert resynced["bids"] != [] and resynced["asks"] != []
-
-        if config.rest do
-          compare_with_rest(venue, config, after_resync)
-        else
-          # bybit's REST depth carries a different update id than the WS
-          # level-50 stream, so it cannot be aligned to a WS frame. The resync
-          # is proved by the book chaining again after the fresh snapshot.
-          assert_chained(await_books(@chained_books, []), config)
-        end
+        resynced = await_resynced_book(config)
+        compare_with_rest(venue, config, resynced)
 
         GenServer.stop(adapter)
       end
 
       @tag venue: venue
-      test "after a reconnect the first book comes from a fresh snapshot", %{venue: venue} do
+      test "after the live transport drops, the first book comes from a fresh snapshot", %{venue: venue} do
         config = Map.fetch!(@venues, venue)
         {adapter, _drop} = start(venue, config)
         _history = await_books(3, [])
 
-        send(adapter, :connect)
-        discard_until_connected()
+        old = transport(adapter)
+        send(old.server, {:gun_down, old.gun, :http, :closed, []})
 
-        [{payload, book} | _] = first = await_books(1, [])
-        assert book["bids"] != [] and book["asks"] != []
+        assert {:connection_lost, {:gun_down, _, :http, :closed, []}} = await_invalidation()
+        assert_receive {:connected, ws}, @receive_timeout
+        refute ws.zen_client.server_pid == old.server
+        refute Process.alive?(old.server)
 
-        assert_fresh_snapshot(venue, config, payload, first)
+        resynced = await_resynced_book(config)
+        compare_with_rest(venue, config, resynced)
 
         GenServer.stop(adapter)
       end
@@ -146,6 +159,7 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
     test_pid = self()
     drop = :atomics.new(1, [])
     Broadcast.subscribe(Broadcast.topic(venue, :watch_order_book, nil))
+    report_rest_depth(venue, test_pid)
 
     connect_fun = fn exchange, section, opts ->
       filtered = dropping_handler(Keyword.fetch!(opts, :handler), config, drop, test_pid)
@@ -162,11 +176,42 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
     {adapter, drop}
   end
 
+  # Every REST depth response the adapter receives is reported, so the test
+  # sees a REST bridge without asking the adapter.
+  defp report_rest_depth(venue, test_pid) do
+    id = {__MODULE__, venue, test_pid}
+
+    :telemetry.attach(
+      id,
+      Bourse.Telemetry.request_stop(),
+      fn _event, _measurements, meta, _config ->
+        if meta.exchange == venue and String.contains?(to_string(meta.path), "depth"),
+          do: send(test_pid, {:rest_depth, meta.status})
+      end,
+      nil
+    )
+
+    on_exit(fn -> :telemetry.detach(id) end)
+  end
+
+  defp transport(adapter) do
+    server = :sys.get_state(adapter).ws.zen_client.server_pid
+    %{server: server, gun: :sys.get_state(server).gun_pid}
+  end
+
   # Sits between the socket and the adapter. While `drop` is armed, the next
-  # real delta is taken out of the stream — the gap a lost frame leaves.
+  # real delta is taken out of the stream — the gap a lost frame leaves. A
+  # frame the venue marks as a snapshot is reported before the adapter sees
+  # it, so the test knows independently where a fresh book starts.
   defp dropping_handler(handler, config, drop, test_pid) do
     fn
       {:message, data} = message ->
+        with {:stream, snapshot_id, _payload_id} <- config.resync,
+             true <- is_map(data),
+             id when not is_nil(id) <- snapshot_id.(data) do
+          send(test_pid, {:snapshot_frame, id})
+        end
+
         if is_map(data) and config.delta?.(data) and :atomics.compare_exchange(drop, 1, 1, 0) == :ok do
           send(test_pid, {:dropped_delta, data})
         else
@@ -199,27 +244,73 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
     end
   end
 
-  # Routed books that were already queued when the dropped delta was taken
-  # out are valid; anything carrying a book after the invalidation is not.
+  # Routed books that were already queued when the break happened are valid,
+  # and so are snapshot markers and REST responses from before it; all of them
+  # are consumed in arrival order up to the invalidation.
   defp await_invalidation do
     receive do
-      {:bourse_ws, {:order_book_invalidated, _channel, _market, reason}} -> reason
-      {:bourse_ws, {:routed, :watch_order_book, _, _, _, _}} -> await_invalidation()
+      {:bourse_ws, {:order_book_invalidated, _channel, "BTC" <> _, reason}} ->
+        reason
+
+      {:bourse_ws, {:order_book_invalidated, _channel, market, reason}} ->
+        flunk("invalidation for #{inspect(market)}: #{inspect(reason)}")
+
+      {:bourse_ws, {:routed, :watch_order_book, _, _, _, _}} ->
+        await_invalidation()
+
+      {:snapshot_frame, _id} ->
+        await_invalidation()
+
+      {:rest_depth, _status} ->
+        await_invalidation()
     after
-      @receive_timeout -> flunk("a dropped delta did not invalidate the book")
+      @receive_timeout -> flunk("the break did not invalidate the book")
     end
   end
 
-  # Books routed before the new connection was adopted were built on the old
-  # one. The adapter sends `{:connected, ws}` while it adopts the new
-  # connection, so everything ahead of it in the mailbox is older.
-  defp discard_until_connected do
+  # After an invalidation every routed frame must carry no book until the
+  # resync is observed independently of the adapter: a frame the venue marks
+  # as a snapshot (and the first book must be that snapshot), or a REST depth
+  # response for a REST-bootstrapped venue. Returns the books routed from
+  # there, newest first.
+  defp await_resynced_book(config, seen \\ nil) do
     receive do
-      {:connected, _ws} -> :ok
-      {:bourse_ws, {:routed, :watch_order_book, _, _, _, _}} -> discard_until_connected()
+      {:snapshot_frame, id} ->
+        await_resynced_book(config, {:snapshot, id})
+
+      {:rest_depth, 200} ->
+        await_resynced_book(config, :rest)
+
+      {:rest_depth, _status} ->
+        await_resynced_book(config, seen)
+
+      {:connected, _ws} ->
+        await_resynced_book(config, seen)
+
+      {:bourse_ws, {:routed, :watch_order_book, _payload, _channel, _market, nil}} ->
+        await_resynced_book(config, seen)
+
+      {:bourse_ws, {:routed, :watch_order_book, payload, _channel, _market, book}} ->
+        assert_fresh(config, seen, payload)
+        assert book["bids"] != [] and book["asks"] != []
+        [{payload, book}]
+
+      {:bourse_ws, {:order_book_invalidated, _channel, _market, reason}} ->
+        flunk("invalidated again before the resync: #{inspect(reason)}")
     after
-      @receive_timeout -> flunk("the adapter did not reconnect")
+      @receive_timeout -> flunk("no resynced book within #{@receive_timeout}ms (resync seen: #{inspect(seen)})")
     end
+  end
+
+  defp assert_fresh(%{resync: :rest}, :rest, _payload), do: :ok
+
+  defp assert_fresh(%{resync: {:stream, _snapshot_id, payload_id}}, {:snapshot, id}, payload) do
+    assert payload_id.(payload) == id,
+           "the first book after the resync is not the venue's snapshot #{id}: #{inspect(ids(payload))}"
+  end
+
+  defp assert_fresh(_config, seen, payload) do
+    flunk("a book was published before the resync was observed (#{inspect(seen)}): #{inspect(ids(payload))}")
   end
 
   defp gap_reason?({:expected_first_at_most, _, _}), do: true
@@ -238,68 +329,52 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
     end
   end
 
-  defp ids(payload), do: Map.take(payload, ~w(U u pu seqId prevSeqId change_id prev_change_id))
-
-  # A REST-bootstrapped book is published on the first delta after its REST
-  # snapshot; it is checked against a fresh REST snapshot.
-  defp assert_fresh_snapshot(venue, config, _payload, first) when venue in ~w(binance binanceusdm),
-    do: compare_with_rest(venue, config, first)
-
-  # Stream venues: the first book must be the snapshot the venue sends on
-  # subscribe, not a delta continued from the old connection.
-  defp assert_fresh_snapshot("okx", _config, payload, _first),
-    do: assert(payload["prevSeqId"] == -1, inspect(ids(payload)))
-
-  defp assert_fresh_snapshot("deribit", _config, payload, _first),
-    do: assert(payload["type"] == "snapshot", inspect(ids(payload)))
-
-  # bybit puts `type` on the frame, not the payload; its level-50 snapshot
-  # carries 50 levels per side, a delta only the changed ones.
-  defp assert_fresh_snapshot("bybit", _config, payload, _first),
-    do: assert(length(payload["b"]) == 50 and length(payload["a"]) == 50, inspect(ids(payload)))
+  defp ids(payload), do: Map.take(payload, ~w(U u pu seqId prevSeqId change_id prev_change_id type))
 
   # -- REST comparison --------------------------------------------------------
 
-  # A REST snapshot is a separate request to a separate service, and one
-  # observed okx REST snapshot carried a level its own seqId did not account
-  # for (2026-11-25). A WS book that is wrong stays wrong against every later
-  # snapshot, so up to three snapshots are compared and every mismatch is
-  # reported when none of them agrees.
-  @rest_attempts 3
+  # Only a REST snapshot that no WS frame covers is fetched again: its id fell
+  # between frames the test did not keep, so nothing was compared. A snapshot
+  # that is aligned and disagrees fails at once.
+  @rest_attempts 5
 
   defp compare_with_rest(venue, config, initial) do
     exchange = sandbox(venue)
 
     1..@rest_attempts
-    |> Enum.reduce_while({initial, []}, fn _attempt, {history, mismatches} ->
+    |> Enum.reduce_while({initial, []}, fn _attempt, {history, unaligned} ->
       Process.sleep(1_000)
       task = Task.async(fn -> config.rest.(exchange) end)
       history = collect_for(3_000, history)
       {rest_id, rest_bids, rest_asks} = Task.await(task, 15_000)
       history = collect_for(4_000, history)
 
-      case rest_mismatch(history, config, rest_id, rest_bids, rest_asks) do
-        nil -> {:halt, :ok}
-        mismatch -> {:cont, {history, ["REST id #{rest_id}: " <> mismatch | mismatches]}}
+      case covering_frame(history, config, rest_id) do
+        nil ->
+          {:cont, {history, [rest_id | unaligned]}}
+
+        {payload, book} ->
+          assert_matches_rest(config, rest_id, {payload, book}, rest_bids, rest_asks)
+          {:halt, :ok}
       end
     end)
     |> case do
       :ok -> :ok
-      {_history, mismatches} -> flunk(Enum.join(Enum.reverse(mismatches), "\n"))
+      {_history, unaligned} -> flunk("no WS frame covers any REST snapshot id: #{inspect(Enum.reverse(unaligned))}")
     end
   end
 
-  defp rest_mismatch(history, config, rest_id, rest_bids, rest_asks) do
-    case covering_frame(history, config, rest_id) do
-      nil ->
-        "no WS frame covers it"
+  defp assert_matches_rest(config, rest_id, {payload, book}, rest_bids, rest_asks) do
+    {_first, last} = config.range.(payload)
+    touched = if rest_id == last, do: MapSet.new(), else: touched_prices(payload)
 
-      {payload, book} ->
-        touched = touched_prices(payload)
+    mismatch =
+      side_mismatch("bids", rest_bids, book["bids"], touched, :desc) ||
+        side_mismatch("asks", rest_asks, book["asks"], touched, :asc)
 
-        side_mismatch("bids", rest_bids, book["bids"], touched, :desc) ||
-          side_mismatch("asks", rest_asks, book["asks"], touched, :asc)
-    end
+    assert mismatch == nil,
+           "REST id #{rest_id}, aligned with WS frame #{inspect(ids(payload))}" <>
+             if(rest_id == last, do: " (same state)", else: " (touched prices excluded)") <> ": " <> to_string(mismatch)
   end
 
   defp covering_frame(history, config, rest_id) do
@@ -342,6 +417,8 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       ws_levels |> Enum.map(&level/1) |> Enum.filter(fn {price, _} -> in_range?.(price) end) |> Map.new() |> untouched.()
 
     rest = untouched.(rest)
+
+    assert map_size(rest) > 0, "#{side}: no REST level outside the frame's touched prices is left to compare"
 
     if ws != rest do
       "#{side} differ outside the covering frame's touched prices; " <>
@@ -419,6 +496,35 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
     {result["change_id"], result["bids"], result["asks"]}
   end
 
+  def okx_snapshot_id(%{"action" => "snapshot", "data" => [%{"seqId" => id}]}), do: id
+  def okx_snapshot_id(_), do: nil
+  def okx_payload_id(payload), do: payload["seqId"]
+
+  def deribit_snapshot_id(frame) do
+    case get_in(frame, ["params", "data"]) do
+      %{"type" => "snapshot", "change_id" => id} -> id
+      _ -> nil
+    end
+  end
+
+  def deribit_payload_id(payload), do: payload["change_id"]
+
   def bybit_delta?(frame), do: frame["type"] == "delta"
   def bybit_chained?(prev, next), do: next["u"] == prev["u"] + 1
+  def bybit_range(%{"u" => current}), do: {current - 1, current}
+  def bybit_range(_), do: nil
+  def bybit_snapshot_id(%{"type" => "snapshot", "data" => %{"u" => id}}), do: id
+  def bybit_snapshot_id(_), do: nil
+  def bybit_payload_id(payload), do: payload["u"]
+
+  def bybit_rest(exchange) do
+    {:ok, %{status: 200, body: %{"retCode" => 0, "result" => result}}} =
+      Bourse.Bybit.public_get_v5_market_orderbook(exchange, %{
+        "category" => "linear",
+        "symbol" => "BTCUSDT",
+        "limit" => 200
+      })
+
+    {result["u"], result["b"], result["a"]}
+  end
 end
