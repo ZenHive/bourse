@@ -24409,7 +24409,7 @@ scored_at = "2026-11-24"
 id = "712"
 phase = 7
 bundle = "ws_unified"
-status = "in_progress"
+status = "done"
 title = "Authored WebSocket watch* channel entries name methods the client cannot dispatch; trim the authored set to the dispatchable surface"
 scores = { d = 4, b = 5, u = 5 }
 markers = ["bug"]
@@ -24424,9 +24424,16 @@ Bourse.WS.Channels dispatches a small fixed set of unified watch methods; every 
 
 Decision (operator-vetoable, recorded here so the implementer does not re-open it): trim. An authored channel entry exists only for a watch method the client dispatches; entries without a dispatching function are deleted from the authored documents rather than kept as unverifiable claims. Adding new watch_* methods is separate work. For the entries that remain, any template that is a CCXT message hash rather than a provider channel is corrected against the venue's own WebSocket documentation and proven by a live subscribe that delivers a frame.
 """
+implemented = "Authored WS watch channel keys trimmed to the dispatchable set on six venues with a guard test against re-additions; channel templates may be full provider objects; okx watch_orders sends the required instType and is live-proven on the demo private socket."
+delivered_by = "claude"
+verified = true
+verified_by = "codex"
+verification_ref = "herdr codex review, 3 rounds, approve at c1436c3 (rebased aa46319)"
 created_at = "2026-11-24"
 started_at = "2026-11-24"
 scored_at = "2026-11-24"
+done_at = "2026-11-25"
+shipped_in = "aa46319bde4904b1e2afcd4eb9f105fd6fdda2f7"
 
 [[task]]
 id = "713"
