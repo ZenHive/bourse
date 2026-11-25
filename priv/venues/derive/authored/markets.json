@@ -41,7 +41,7 @@
   "greeks_conventions": {
     "delta": {
       "supported": true,
-      "native_field": "option_pricing.delta",
+      "native_field": "option_pricing.d",
       "denomination": "underlying",
       "unit": "ratio",
       "bump_size": 1.0,
@@ -49,7 +49,7 @@
     },
     "gamma": {
       "supported": true,
-      "native_field": "option_pricing.gamma",
+      "native_field": "option_pricing.g",
       "denomination": "delta",
       "unit": "delta_per_underlying_unit",
       "bump_size": 1.0,
@@ -57,7 +57,7 @@
     },
     "vega": {
       "supported": true,
-      "native_field": "option_pricing.vega",
+      "native_field": "option_pricing.v",
       "denomination": "option_premium",
       "unit": "premium_per_vol_point",
       "bump_size": 0.01,
@@ -65,7 +65,7 @@
     },
     "theta": {
       "supported": true,
-      "native_field": "option_pricing.theta",
+      "native_field": "option_pricing.t",
       "denomination": "option_premium",
       "unit": "premium_per_day",
       "bump_size": 1.0,
@@ -73,7 +73,7 @@
     },
     "rho": {
       "supported": true,
-      "native_field": "option_pricing.rho",
+      "native_field": "option_pricing.r",
       "denomination": "option_premium",
       "unit": "premium_per_interest_point",
       "bump_size": 0.01,
@@ -734,5 +734,12 @@
       "separator": "-",
       "suffix": "-PERP"
     }
+  },
+  "greeks_identity": {
+    "source": "instrument_endpoint",
+    "raw": "publicPostGetInstrument",
+    "param": "instrument_name",
+    "field": "instrument_name",
+    "authority": "https://docs.derive.xyz/openapi.json (public/get_instrument; get_ticker result carries no instrument field)"
   }
 }

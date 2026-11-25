@@ -317,7 +317,7 @@ defmodule Bourse.Unified.OptionSurface do
     observed_at = observation_time(opts, greeks.observed_at)
 
     with :ok <- validate_greeks_symbol(greeks, market),
-         :ok <- validate_native_identity(greeks.info, market),
+         :ok <- validate_native_identity(exchange, greeks.info, market),
          :ok <- validate_convention_values(greeks, conventions),
          :ok <- reject_stale(greeks.timestamp, observed_at, opts[:max_age_ms]) do
       {:ok, join_greeks(exchange, market, greeks, conventions, observed_at)}
@@ -334,23 +334,42 @@ defmodule Bourse.Unified.OptionSurface do
     {:error, Error.operation_failed(message: "greeks symbol mismatch: expected #{expected}, got #{inspect(actual)}")}
   end
 
-  defp validate_native_identity(info, %Market{id: expected}) when is_map(info) do
-    case Enum.find_value(@native_id_fields, &native_identity(info, &1)) do
-      {_field, ^expected} ->
-        :ok
-
-      {field, actual} ->
-        {:error,
-         Error.operation_failed(
-           message: "greeks native instrument mismatch: expected #{expected}, got #{inspect(actual)} from #{field}"
-         )}
-
-      nil ->
-        {:error, Error.operation_failed(message: "greeks response missing native instrument identity for #{expected}")}
+  defp validate_native_identity(exchange, info, %Market{id: expected} = market) do
+    case is_map(info) && Enum.find_value(@native_id_fields, &native_identity(info, &1)) do
+      {_field, ^expected} -> :ok
+      {field, actual} -> identity_mismatch(expected, actual, field)
+      _absent -> instrument_identity(exchange, market)
     end
   end
 
-  defp validate_native_identity(_info, %Market{id: expected}) do
+  # Venues whose Greeks body carries no instrument field (derive v3 slim ticker)
+  # author `markets.greeks_identity`: the provider instrument endpoint, queried
+  # with the requested market id, must name that same instrument.
+  defp instrument_identity(%Exchange{config: config, module: module} = exchange, %Market{id: expected}) do
+    case Map.get(config || %{}, "greeks_identity") do
+      %{"source" => "instrument_endpoint", "raw" => raw, "param" => param, "field" => field} ->
+        fun = raw |> Macro.underscore() |> String.to_existing_atom()
+
+        case apply(module, fun, [exchange, %{param => expected}]) do
+          {:ok, %{body: %{"result" => %{^field => ^expected}}}} -> :ok
+          {:ok, %{body: %{"result" => %{^field => actual}}}} -> identity_mismatch(expected, actual, raw <> "." <> field)
+          {:ok, other} -> missing_identity(expected, other)
+          {:error, _} = error -> error
+        end
+
+      _unauthored ->
+        missing_identity(expected, nil)
+    end
+  end
+
+  defp identity_mismatch(expected, actual, field) do
+    {:error,
+     Error.operation_failed(
+       message: "greeks native instrument mismatch: expected #{expected}, got #{inspect(actual)} from #{field}"
+     )}
+  end
+
+  defp missing_identity(expected, _response) do
     {:error, Error.operation_failed(message: "greeks response missing native instrument identity for #{expected}")}
   end
 
