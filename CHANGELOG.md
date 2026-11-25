@@ -50,7 +50,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **derive:** v3 action signing. The EIP-712 domain uses chainId 1 / 11155111. The Trade module is `0xB8D20c2B7a1Ad2EE33Bc50eF10876eD3035b5e7b` on both networks. Nonces are `ms × 1e6` plus a suffix and are sent as strings. `PreparedOrder` refuses precision below `1e-12`.
 - **derive:** unified perp symbols are now USDC-quoted (`BTC/USDC:USDC`), matching the `quote_currency` of v3 instruments. `BTC/USD:USDC` no longer resolves.
 - **derive:** order reads route to `private/get_open_orders` and `private/get_order_history`, and `fetchClosedOrders` / `fetchCanceledOrders` delegate to `fetchOrders`. Ticker and greeks parse the v3 slim ticker. Transactions and transfers read `operation_id` and `batch_status`.
-- **derive:** WS `watch_orders` resolves to `{subaccount_id}.orders` from `options: %{"subaccount_id" => id}`. The `watchMyTrades` template is now `{subaccount_id}.trades`.
+- **derive:** WS `watch_orders` resolves to `{subaccount_id}.orders` from `options: %{"subaccount_id" => id}`. New `Bourse.WS.watch_my_trades/2` subscribes to `{subaccount_id}.trades` on the private section, and those fills route to the `:watch_my_trades` family instead of `:watch_trades`. WS dispatch entries can carry `channel_pattern` and `family`.
+- **derive:** `OptionSurface.instrument_greeks/3` checks instrument identity through `public/get_instrument` (authored `markets.greeks_identity`), because the v3 slim ticker carries no instrument field. Greek conventions name the `option_pricing.d/g/v/t/r` fields.
+- **derive:** deposit, withdrawal and transfer history read `result.deposits`, `result.withdrawals` and `result.transfers`; they previously read `result.events`, which v3 does not return.
 - **derive:** raw endpoints removed in v3 are deleted; every remaining raw method is in the pinned v3 OpenAPI. The error catalog is rebuilt from the v3 error-code page.
 
 ### Fixed

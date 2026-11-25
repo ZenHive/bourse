@@ -274,10 +274,8 @@ test code. Edit the fence when adding a ledgered case.
   A `POST /order` accepted on `api-demo.lyra.finance` would therefore prove a host, a
   digest and a module address that all three cease to exist. The gap closes when 709
   migrates this boundary to v3 and pins a live v3 order, not before.
-- 🚨 Task 709's acceptance criteria do not name `PreparedOrder`. Its keyless prepare path
-  carries its own copy of the chain id, the Matching address and the Trade module address,
-  so a v3 migration that only touches the authored spec and `Derive.sign_order/2` leaves
-  this module silently emitting v2 digests against v3 hosts. Migrating it belongs in 709.
+- Reconciled 2026-11-25: task 709's criterion 11 names `PreparedOrder`, and 709 migrated it to
+  the v3 identities above, so it no longer emits v2 digests against v3 hosts.
 - The open question, in two parts:
   1. **Is the Trade module address right?** It enters the digest as the `module` field,
      and the only thing grading it is the stored vector
@@ -292,14 +290,23 @@ test code. Edit the fence when adding a ledgered case.
      with that body, is accepted — the encoding was compared against
      `derivexyz/v2-action-signing-python` and ethers `TypedDataEncoder`, which are
      compatibility evidence, never venue semantics.
-- Exact call: on v3, under task 709 — prepare with a real testnet subaccount, sign the
-  digest with the session key registered through `private/set_session_key`, and POST the
-  returned `body` plus that signature to the v3 host.
+- Exact call: `mix test.json --quiet --include dangerous test/live/journeys/market_maker/derive_test.exs`,
+  case "a customer-signed PreparedOrder". It prepares against the resolved testnet subaccount,
+  signs the digest with `DERIVE_TESTNET_API_SECRET`, and POSTs the body to `private/order`
+  twice: once with `limit_price` altered (expects `14014`), once as signed (expects acceptance).
+  Today it fails in setup with the operator step.
 - Expected evidence: an accepted v3 testnet `POST private/order` whose response echoes the
   submitted `limit_price` / `amount` / `max_fee`, plus one rejection whose code names a
   term we changed on purpose — success alone cannot tell a correct digest from an ignored
   one. Mainnet stays unverified until v3 mainnet is live; never claimed from testnet
   evidence.
+
+### derive — populated v3 transfer and withdrawal history rows (task 709, filed 2026-11-25)
+- Authored slices: `derive:normalization.envelopes.transfer.fetchTransfers`, `derive:normalization.envelopes.transaction.fetchWithdrawals`, `derive:normalization.field_maps.transfer`, `derive:normalization.field_maps.transaction`.
+- Blocked by: the owner wallet has no v3 testnet subaccount yet. Once the deposit exists, `fetchDeposits` has a row by construction. Transfers and withdrawals have a row only after the account moves funds.
+- The open question: do populated `result.transfers` and `result.withdrawals` rows parse `operation_id` to `id` and `batch_status` to the authored `pending` / `ok` / `failed` status?
+- Exact call: `mix test.json --quiet test/live/derive/derive_authored_integration_test.exs`, case "transfer history rows parse with their operation id and batch status". It flunks naming this entry while the history is empty. To produce a row, run `private/transfer_erc20` between two subaccounts of the owner wallet.
+- Expected evidence: a transfer row whose `id` equals its raw `operation_id`, whose status follows `batch_status`, and whose `from_account` equals `from_subaccount_id`. Withdrawals need the same evidence from one testnet withdrawal.
 
 ### lighter — L1 ChangePubKey signing migration (task 703, filed 2026-09-15)
 

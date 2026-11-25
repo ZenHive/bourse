@@ -117,9 +117,11 @@ Provider sources (all retrieved 2026-11-25, pinned in the authority manifest):
 [subscriptions AsyncAPI](https://docs.derive.xyz/subscriptions.asyncapi.json).
 Live host: `https://testnet.api.derive.xyz/v3` and `wss://testnet.api.derive.xyz/v3/ws`.
 
-**C-T709 — DIVERGE on hosts, auth, signing domain, order reads, ticker and symbols. Public
-surface is CONFIRMED live. Private surface is unverified: the testnet wallet owns no v3
-subaccount.**
+**C-T709 — DIVERGE on hosts, auth, signing domain, order reads, ticker and symbols. CONFIRMED
+live: the 12 public REST-read contract cases, the public `ticker_slim` and `trades` frames, and
+the option-surface Greeks join (`test/live/option_surface_integration_test.exs`, both derive
+cases green 2026-11-25 once identity moved to `public/get_instrument`). Everything private is
+unverified: the testnet wallet owns no v3 subaccount.**
 
 | Slot | v2 authoring | v3 provider contract | Outcome and evidence |
 |---|---|---|---|
@@ -132,13 +134,13 @@ subaccount.**
 | Price/amount precision | unrestricted 1e-18 | values below `1e-12` are rejected (`14014`) | DIVERGE. `PreparedOrder.scaled/2` refuses them before signing. |
 | Perp symbols | `BTC/USD:USDC` | instruments report `quote_currency: "USDC"` | DIVERGE. The unified symbol is `BTC/USDC:USDC` ↔ `BTC-PERP`, and `Bourse.Symbol` `:suffix_perp` now implies a USDC quote. Live: `load_markets` on the testnet listed 21 perps, all `*/USDC:USDC`. |
 | fetchOpenOrders / fetchOrders | `private/get_orders` + status filter | `private/get_open_orders`, `private/get_order_history` (`result.orders` + pagination) | DIVERGE. v3 removed `get_orders`. fetchClosedOrders / fetchCanceledOrders delegate to fetchOrders (history only). |
-| fetchTicker / fetchGreeks | long-name ticker | slim ticker (`a/A/b/B/I/M/t/f`, `stats{h,l,c,v,…}`, `option_pricing{d,g,v,t,r,i,ai,bi,m}`) | DIVERGE. Live: BTC-PERP bid/ask/high/low parse, and `fetch_greeks` on a live testnet option returned delta, gamma, theta, vega and rho. The slim ticker carries no instrument field. Instrument metadata comes from `public/get_instrument`. |
+| fetchTicker / fetchGreeks | long-name ticker | slim ticker (`a/A/b/B/I/M/t/f`, `stats{h,l,c,v,…}`, `option_pricing{d,g,v,t,r,i,ai,bi,m}`) | DIVERGE. Live: BTC-PERP bid/ask/high/low parse, and `fetch_greeks` on a live testnet option returned delta, gamma, theta, vega and rho. The slim ticker carries no instrument field, which broke the option-surface identity check in round 1. `markets.greeks_identity` now names `public/get_instrument`: `OptionSurface` queries it with the requested market id and still rejects a mismatch. `greeks_conventions` native fields are `option_pricing.d/g/v/t/r`. |
 | Currency precision | from decimals | `get_all_currencies` gives `spot[{erc20{decimals}}]` | Mapped `null`: the nested-list index reach needs a shared parser change, which is out of this venue's scope. |
-| Transaction/transfer status | `status` string | `batch_status` PascalCase (`Batching … Settled`, `*Error`), `operation_id` | DIVERGE. Mapped to `pending` / `ok` / `failed`. A live row is unverified (no account). |
+| Transaction/transfer status | `status` string | `batch_status` PascalCase (`Batching … Settled`, `*Error`), `operation_id` | DIVERGE. Mapped to `pending` / `ok` / `failed`. Envelopes are `result.deposits`, `result.withdrawals`, `result.transfers` (OpenAPI `*HistoryResult`; round 1 read `result.events` for all three). A live row is unverified (no account). |
 | `get_subaccount.currency` | string | `string[]` | DIVERGE (OpenAPI). A live row is unverified. |
 | `private/set_cancel_on_disconnect` | REST | WS-only (`websocket.asyncapi.json` `privateSetCancelOnDisconnect`) | DIVERGE. REST answers 404 even though trading/cancel-on-disconnect.md shows a cURL example. Not authored as a REST raw. |
 | Session keys | `register_session_key`, … | `private/set_session_key` (owner-signed), `edit_session_key`, `session_keys` | DIVERGE. The removed v2 methods are not authored. |
-| WS private channels (C-T702 gap) | unresolved | `{subaccount_id}.orders`, `{subaccount_id}.trades` | Templates authored. The unauthenticated subscribe is rejected live with `13000` "Subscription to a private channel failed". Authenticated delivery is **unverified** (no account). |
+| WS private channels (C-T702 gap) | unresolved | `{subaccount_id}.orders`, `{subaccount_id}.trades` | Templates authored. `Bourse.WS.watch_my_trades/2` builds `{subaccount_id}.trades` on the private section. Inbound, authored `channel_pattern` dispatch entries send `^[0-9]+\.trades$` to `:watch_my_trades` and `^[0-9]+\.orders$` to `:watch_orders`, so public `trades.{instrument}` stays `:watch_trades`. The unauthenticated subscribe is rejected live with `13000` "Subscription to a private channel failed". Authenticated delivery is **unverified** (no account). |
 
 ### C-T709f — fetchFundingRate reads the slim ticker f
 
@@ -148,5 +150,5 @@ same meaning ("`f`, the hourly funding rate"). The authored `interval` default i
 Live 2026-11-25: BTC-PERP `f` parsed to `1.25e-5`, with mark and index from the same ticker.
 
 <!-- carve-evidence-status
-{"carve_id":"C-T709","date":"2026-11-25","semantic_source":{"kind":"provider_owned","reference":"Derive v3 OpenAPI, AsyncAPI, breaking-changes, action-signing, session-login and error-codes pages pinned in priv/venues/derive/authority/manifest.json"},"observed_evidence":{"kind":"live_venue","reference":"2026-11-25 testnet.api.derive.xyz/v3 public REST-read contract cases 12/12; ticker_slim.ETH-PERP.100 and trades.ETH-PERP frames on /v3/ws; 14026 and 13000 rejections"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Owner wallet has no v3 testnet subaccount: private reads, order accept/reject, MMP, cancel-on-disconnect and private channel delivery unproven pending the operator's L1 deposit"}
+{"carve_id":"C-T709","date":"2026-11-25","semantic_source":{"kind":"provider_owned","reference":"Derive v3 OpenAPI, AsyncAPI, breaking-changes, action-signing, session-login and error-codes pages pinned in priv/venues/derive/authority/manifest.json"},"observed_evidence":{"kind":"live_venue","reference":"2026-11-25 testnet.api.derive.xyz/v3 public REST-read contract cases 12/12; ticker_slim.ETH-PERP.100 and trades.ETH-PERP frames on /v3/ws; option-surface call/put Greeks join; 14026 and 13000 rejections"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Owner wallet has no v3 testnet subaccount: private reads, order accept/reject, MMP, cancel-on-disconnect and private channel delivery unproven pending the operator's L1 deposit"}
 -->
