@@ -2,9 +2,19 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
   @moduledoc """
   A market maker's day on the Derive v3 testnet, against an order or fill each
   test creates and cleans up itself: the four unified order reads, both private
-  feeds through a real fill, market-maker protection, cancel-on-disconnect, and
-  a customer-signed `PreparedOrder` — accepted as signed, refused once a signed
-  term is altered.
+  feeds through a real fill, a market-maker-protection freeze and its reset,
+  cancel-on-disconnect, and a customer-signed `PreparedOrder` — accepted as
+  signed, refused once a signed term is altered.
+
+  Every mutation is undone and checked: a fill is traded back to the position
+  recorded before it, and the MMP config and the cancel-on-disconnect account
+  setting are restored to the values read before the test. A failed restore is
+  reported alongside, never instead of, the failure that preceded it.
+
+  The freeze is tripped by one taker IOC fill carrying `mmp: true`. The provider
+  page counts fills from "orders and quotes submitted with the per-order `mmp`
+  flag"; whether a taker fill trips the window has not been observed live. If it
+  does not, the MMP evidence is set/read and the reset acknowledgement only.
 
   Every case needs the v3 testnet account (owner wallet funded, subaccount
   created by a deposit, session key registered); without it each one fails in
@@ -26,6 +36,7 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
   alias Bourse.Signing.Crypto
   alias Bourse.Signing.Derive, as: DeriveSigning
   alias Bourse.Signing.Derive.PreparedOrder
+  alias Bourse.Test.DeriveMarketMaker, as: MM
   alias Bourse.Unified.RequestShape.Derive, as: DeriveRequestShape
   alias Bourse.WS
 
@@ -72,9 +83,9 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
         release_order!(exchange, placed_id, @symbol)
       end
 
-      filled_id = fill!(exchange, "buy", "mm-derive-closed")
+      with_position_restored(exchange, fn ->
+        filled_id = fill!(exchange, "buy", "mm-derive-closed")
 
-      try do
         closed =
           poll_until!("order #{filled_id} in closed history", fn ->
             {:ok, orders} = Bourse.fetch_closed_orders(exchange, symbol: @symbol)
@@ -82,10 +93,8 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
           end)
 
         assert closed.status == "closed"
-        assert closed.filled > 0
-      after
-        flatten!(exchange)
-      end
+        assert is_number(closed.filled) and closed.filled > 0
+      end)
     end
   end
 
@@ -98,24 +107,31 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
         assert {:ok, %WS.Handle{method: :watch_orders}} = WS.watch_orders(ws, ack_timeout_ms: 8_000)
         assert {:ok, %WS.Handle{method: :watch_my_trades}} = WS.watch_my_trades(ws, ack_timeout_ms: 8_000)
 
-        filled_id = fill!(exchange, "buy", "mm-derive-feeds")
+        with_position_restored(exchange, fn ->
+          filled_id = fill!(exchange, "buy", "mm-derive-feeds")
 
-        try do
-          order_event = await_event!(orders_channel(), &(&1["order_id"] == filled_id and &1["order_status"] == "filled"))
+          # The two channels carry no cross-channel ordering guarantee: collect
+          # both events from whichever frame arrives first, under one deadline.
+          %{order: order_event, trade: trade_event} =
+            MM.await_all!(
+              [
+                {:order, orders_channel(), &(&1["order_id"] == filled_id and &1["order_status"] == "filled")},
+                {:trade, trades_channel(), &(&1["order_id"] == filled_id)}
+              ],
+              @frame_timeout_ms
+            )
+
           assert order_event["instrument_name"] == @instrument
           assert order_event["direction"] == "buy"
 
-          trade_event = await_event!(trades_channel(), &(&1["order_id"] == filled_id))
           assert trade_event["instrument_name"] == @instrument
           assert trade_event["subaccount_id"] == derive_subaccount_id!()
           assert {qty, ""} = Float.parse(trade_event["trade_amount"])
           assert qty > 0
 
-          {:ok, trades} = Bourse.fetch_my_trades(exchange, @symbol)
+          {:ok, trades} = Bourse.fetch_my_trades(exchange, symbol: @symbol)
           assert Enum.any?(trades, &(&1.order == filled_id)), "fill #{filled_id} missing from fetch_my_trades"
-        after
-          flatten!(exchange)
-        end
+        end)
       after
         WS.close(ws)
       end
@@ -123,81 +139,114 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
   end
 
   describe "market-maker protection" do
-    test "set, read back and reset the BTC config, then disable it" do
+    test "an mmp fill over the amount limit freezes BTC; reset_mmp clears the freeze" do
       exchange = derive_exchange!()
       subaccount = derive_subaccount_id!()
+      original = mmp_config!(exchange)
+      refute original["is_frozen"] == true, "BTC MMP is already frozen before the test: #{inspect(original)}"
 
+      market = Enum.find(exchange.markets, &(&1.symbol == @symbol))
+      min_amount = market.limits["amount"]["min"]
+
+      # Fixed freeze (mmp_frozen_time 0 = frozen until reset), tripped by one
+      # mmp fill of the minimum size against a limit half that size.
       config = %{
         "subaccount_id" => subaccount,
         "currency" => @currency,
-        "mmp_interval" => 5_000,
-        "mmp_frozen_time" => 60_000,
-        "mmp_amount_limit" => "1",
+        "mmp_interval" => 60_000,
+        "mmp_frozen_time" => 0,
+        "mmp_amount_limit" => to_string(min_amount / 2),
         "mmp_delta_limit" => "0"
       }
 
-      try do
-        assert {:ok, %{body: %{"result" => stored}}} = Bourse.Derive.private_post_set_mmp_config(exchange, config)
-        assert stored["currency"] == @currency
-        assert stored["mmp_interval"] == 5_000
-        assert stored["mmp_frozen_time"] == 60_000
-        assert decimal_equal?(stored["mmp_amount_limit"], "1")
+      MM.run_with_cleanup(
+        fn ->
+          assert {:ok, %{body: %{"result" => stored}}} = Bourse.Derive.private_post_set_mmp_config(exchange, config)
+          assert stored["mmp_interval"] == 60_000
+          assert stored["mmp_frozen_time"] == 0
+          assert decimal_equal?(stored["mmp_amount_limit"], config["mmp_amount_limit"])
 
-        assert {:ok, %{body: %{"result" => configs}}} =
-                 Bourse.Derive.private_post_get_mmp_config(exchange, %{
-                   "subaccount_id" => subaccount,
-                   "currency" => @currency
-                 })
+          with_position_restored(exchange, fn ->
+            fill!(exchange, "buy", "mm-derive-mmp", %{"mmp" => true})
 
-        assert %{"is_frozen" => false, "mmp_interval" => 5_000} = Enum.find(configs, &(&1["currency"] == @currency))
+            frozen =
+              poll_until!("BTC MMP frozen after the mmp fill", fn ->
+                case mmp_config!(exchange) do
+                  %{"is_frozen" => true} = frozen -> {:ok, frozen}
+                  _ -> :retry
+                end
+              end)
 
-        assert {:ok, %{body: %{"result" => "ok"}}} =
-                 Bourse.Derive.private_post_reset_mmp(exchange, %{"subaccount_id" => subaccount, "currency" => @currency})
-      after
-        # mmp_interval 0 disables MMP for the (subaccount, currency).
-        {:ok, %{body: %{"result" => %{"mmp_interval" => 0}}}} =
-          Bourse.Derive.private_post_set_mmp_config(exchange, %{config | "mmp_interval" => 0})
-      end
+            assert frozen["mmp_interval"] == 60_000
+
+            assert {:ok, %{body: %{"result" => "ok"}}} =
+                     Bourse.Derive.private_post_reset_mmp(exchange, %{
+                       "subaccount_id" => subaccount,
+                       "currency" => @currency
+                     })
+
+            assert %{"is_frozen" => false} =
+                     poll_until!("BTC MMP cleared by reset_mmp", fn ->
+                       case mmp_config!(exchange) do
+                         %{"is_frozen" => false} = cleared -> {:ok, cleared}
+                         _ -> :retry
+                       end
+                     end)
+          end)
+        end,
+        fn -> restore_mmp_config!(exchange, original) end
+      )
     end
   end
 
   describe "cancel-on-disconnect" do
-    test "an mmp order placed on the socket is canceled when that socket drops" do
+    test "an open mmp order placed on the socket is canceled for cancel_on_disconnect when that socket drops" do
       exchange = derive_exchange!()
-      {:ok, ws} = WS.connect(exchange, :private)
+      original = cod_setting!(exchange)
+      placed = make_ref()
 
-      set_cod!(ws, exchange, true)
-      request = resting_order(exchange, "mm-derive-cod", %{"mmp" => true})
+      MM.run_with_cleanup(
+        fn ->
+          {:ok, ws} = WS.connect(exchange, :private)
 
-      placed_id =
-        try do
-          assert {:ok, %{"result" => %{"order" => %{"order_id" => id, "mmp" => true}}}} =
-                   WS.send_message(ws, rpc("private/order", request))
+          placed_id =
+            MM.run_with_cleanup(
+              fn ->
+                set_cod!(ws, exchange, true)
+                assert cod_setting!(exchange) == true
 
-          id
-        after
-          WS.close(ws)
+                request = resting_order(exchange, "mm-derive-cod", %{"mmp" => true})
+
+                assert {:ok, %{"result" => %{"order" => %{"order_id" => id, "mmp" => true}}}} =
+                         WS.send_message(ws, rpc("private/order", request))
+
+                Process.put(placed, id)
+
+                assert %Order{status: "open"} =
+                         poll_until!("order #{id} open before the disconnect", fn ->
+                           {:ok, orders} = Bourse.fetch_open_orders(exchange, symbol: @symbol)
+                           find_order(orders, id)
+                         end)
+
+                id
+              end,
+              fn -> WS.close(ws) end
+            )
+
+          canceled =
+            poll_until!("order #{placed_id} canceled by the disconnect", fn ->
+              {:ok, orders} = Bourse.fetch_canceled_orders(exchange, symbol: @symbol)
+              find_order(orders, placed_id)
+            end)
+
+          assert canceled.status == "canceled"
+          assert canceled.info["cancel_reason"] == "cancel_on_disconnect"
+        end,
+        fn ->
+          if id = Process.get(placed), do: release_order!(exchange, id, @symbol)
+          restore_cod!(exchange, original)
         end
-
-      try do
-        canceled =
-          poll_until!("order #{placed_id} canceled by the disconnect", fn ->
-            {:ok, orders} = Bourse.fetch_canceled_orders(exchange, symbol: @symbol)
-            find_order(orders, placed_id)
-          end)
-
-        assert canceled.status == "canceled"
-        refute canceled.info["cancel_reason"] in [nil, "", "user_request"]
-      after
-        release_order!(exchange, placed_id, @symbol)
-        {:ok, cleanup_ws} = WS.connect(exchange, :private)
-
-        try do
-          set_cod!(cleanup_ws, exchange, false)
-        after
-          WS.close(cleanup_ws)
-        end
-      end
+      )
     end
   end
 
@@ -326,13 +375,81 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
     id
   end
 
-  defp flatten!(exchange) do
-    {:ok, positions} = Bourse.fetch_positions(exchange, [@symbol])
+  # Records the instrument's signed position, runs `fun`, then trades the
+  # exact difference back and proves the account holds the recorded size again.
+  defp with_position_restored(exchange, fun) do
+    start = position_size!(exchange)
 
-    case Enum.find(positions, &(&1.symbol == @symbol and is_number(&1.contracts) and &1.contracts != 0)) do
-      nil -> :ok
-      %{side: "long"} -> fill!(exchange, "sell", "mm-derive-flatten", %{"reduce_only" => true})
-      %{side: "short"} -> fill!(exchange, "buy", "mm-derive-flatten", %{"reduce_only" => true})
+    MM.run_with_cleanup(fun, fn ->
+      case MM.restore_order(start, position_size!(exchange)) do
+        :none ->
+          :ok
+
+        {side, amount, reduce_only} ->
+          fill!(exchange, side, "mm-derive-restore", %{"amount" => Decimal.to_float(amount), "reduce_only" => reduce_only})
+
+          poll_until!("#{@instrument} position back at #{start}", fn ->
+            if Decimal.equal?(position_size!(exchange), start), do: {:ok, start}, else: :retry
+          end)
+      end
+    end)
+  end
+
+  defp position_size!(exchange) do
+    assert {:ok, positions} = Bourse.fetch_positions(exchange)
+    MM.signed_size(positions, @instrument)
+  end
+
+  defp mmp_config!(exchange) do
+    assert {:ok, %{body: %{"result" => configs}}} =
+             Bourse.Derive.private_post_get_mmp_config(exchange, %{
+               "subaccount_id" => derive_subaccount_id!(),
+               "currency" => @currency
+             })
+
+    assert is_list(configs)
+    Enum.find(configs, &(&1["currency"] == @currency))
+  end
+
+  # No prior BTC config is restored as disabled (mmp_interval 0), the
+  # provider's own "MMP off" state.
+  defp restore_mmp_config!(exchange, original) do
+    fields = ~w(mmp_interval mmp_frozen_time mmp_amount_limit mmp_delta_limit)
+
+    restore =
+      case original do
+        nil -> %{"mmp_interval" => 0, "mmp_frozen_time" => 0, "mmp_amount_limit" => "0", "mmp_delta_limit" => "0"}
+        %{} -> Map.take(original, fields)
+      end
+
+    assert {:ok, %{body: %{"result" => _}}} =
+             Bourse.Derive.private_post_set_mmp_config(
+               exchange,
+               Map.merge(restore, %{"subaccount_id" => derive_subaccount_id!(), "currency" => @currency})
+             )
+
+    after_restore = mmp_config!(exchange)
+    assert after_restore["mmp_interval"] == restore["mmp_interval"]
+    assert after_restore["mmp_frozen_time"] == restore["mmp_frozen_time"]
+    assert decimal_equal?(after_restore["mmp_amount_limit"], restore["mmp_amount_limit"])
+    assert decimal_equal?(after_restore["mmp_delta_limit"], restore["mmp_delta_limit"])
+  end
+
+  # The persisted account setting, from private/get_account
+  # (PrivateGetAccountResponse.cancel_on_disconnect).
+  defp cod_setting!(exchange) do
+    assert {:ok, %{body: %{"result" => %{"cancel_on_disconnect" => enabled}}}} =
+             Bourse.Derive.private_post_get_account(exchange, %{"wallet" => exchange.credentials.api_key})
+
+    assert is_boolean(enabled)
+    enabled
+  end
+
+  defp restore_cod!(exchange, original) do
+    if cod_setting!(exchange) != original do
+      {:ok, ws} = WS.connect(exchange, :private)
+      MM.run_with_cleanup(fn -> set_cod!(ws, exchange, original) end, fn -> WS.close(ws) end)
+      assert cod_setting!(exchange) == original
     end
   end
 
@@ -340,25 +457,6 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
     case Enum.find(orders, &(&1.id == id)) do
       nil -> :retry
       order -> {:ok, order}
-    end
-  end
-
-  defp await_event!(channel, match?) do
-    await_event!(channel, match?, System.monotonic_time(:millisecond) + @frame_timeout_ms)
-  end
-
-  defp await_event!(channel, match?, deadline) do
-    left = deadline - System.monotonic_time(:millisecond)
-
-    receive do
-      {tag, %{"params" => %{"channel" => ^channel, "data" => data}}}
-      when tag in [:websocket_message, :websocket_unmatched_response] and is_list(data) ->
-        Enum.find(data, match?) || await_event!(channel, match?, deadline)
-
-      _other ->
-        await_event!(channel, match?, deadline)
-    after
-      max(left, 0) -> flunk("no matching frame on #{channel} within #{@frame_timeout_ms}ms")
     end
   end
 

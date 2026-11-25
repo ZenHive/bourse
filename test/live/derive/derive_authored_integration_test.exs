@@ -124,9 +124,10 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
     assert {:ok, [%Bourse.Transaction{} | _] = deposits} = Bourse.fetch_deposits(exchange)
 
     for deposit <- deposits do
-      assert is_binary(deposit.id) and deposit.id == deposit.info["operation_id"]
+      assert %Bourse.Transaction{} = deposit
+      assert is_binary(deposit.id) and deposit.id != "" and deposit.id == deposit.info["operation_id"]
       assert deposit.status == settlement_status(deposit.info["batch_status"])
-      assert deposit.amount > 0
+      assert is_number(deposit.amount) and deposit.amount > 0
       assert is_binary(deposit.currency) and deposit.currency != ""
     end
   end
@@ -138,8 +139,9 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
     # (https://docs.derive.xyz/openapi.json).
     case Bourse.fetch_transfers(exchange) do
       {:ok, [_ | _] = transfers} ->
-        for %TransferEntry{} = transfer <- transfers do
-          assert transfer.id == transfer.info["operation_id"]
+        for transfer <- transfers do
+          assert %TransferEntry{} = transfer
+          assert is_binary(transfer.id) and transfer.id != "" and transfer.id == transfer.info["operation_id"]
           assert transfer.status == settlement_status(transfer.info["batch_status"])
           assert transfer.from_account == to_string(transfer.info["from_subaccount_id"])
         end
@@ -149,7 +151,7 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
         Derive transfer history is empty for subaccount #{derive_subaccount_id!()}: no row to
         prove the parser on. State-dependent, ledgered in docs/prod-verification-ledger.md
         ("derive — populated v3 transfer and withdrawal history rows"). Produce one with a
-        private/transfer_erc20 between two subaccounts of the owner wallet.
+        private/transfer_spot from this subaccount to another subaccount of the owner wallet.
         """)
 
       other ->

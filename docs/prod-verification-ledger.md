@@ -305,8 +305,8 @@ test code. Edit the fence when adding a ledgered case.
 - Authored slices: `derive:normalization.envelopes.transfer.fetchTransfers`, `derive:normalization.envelopes.transaction.fetchWithdrawals`, `derive:normalization.field_maps.transfer`, `derive:normalization.field_maps.transaction`.
 - Blocked by: the owner wallet has no v3 testnet subaccount yet. Once the deposit exists, `fetchDeposits` has a row by construction. Transfers and withdrawals have a row only after the account moves funds.
 - The open question: do populated `result.transfers` and `result.withdrawals` rows parse `operation_id` to `id` and `batch_status` to the authored `pending` / `ok` / `failed` status?
-- Exact call: `mix test.json --quiet test/live/derive/derive_authored_integration_test.exs`, case "transfer history rows parse with their operation id and batch status". It flunks naming this entry while the history is empty. To produce a row, run `private/transfer_erc20` between two subaccounts of the owner wallet.
-- Expected evidence: a transfer row whose `id` equals its raw `operation_id`, whose status follows `batch_status`, and whose `from_account` equals `from_subaccount_id`. Withdrawals need the same evidence from one testnet withdrawal.
+- Exact call: `mix test.json --quiet test/live/derive/derive_authored_integration_test.exs`, case "transfer history rows parse with their operation id and batch status". It flunks naming this entry while the history is empty. To produce a row, run `private/transfer_spot` (v3's replacement for v2 `private/transfer_erc20`) from this subaccount to another subaccount of the owner wallet.
+- Expected evidence: a transfer row whose `id` equals its raw `operation_id`, whose status follows `batch_status`, and whose `from_account` equals `from_subaccount_id`. Withdrawals need the same evidence from one testnet withdrawal; no test asserts a withdrawal row, so `fetchWithdrawals` stays `unverified`.
 
 ### lighter — L1 ChangePubKey signing migration (task 703, filed 2026-09-15)
 
