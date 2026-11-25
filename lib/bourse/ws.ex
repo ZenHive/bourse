@@ -346,47 +346,17 @@ defmodule Bourse.WS do
 
   defp await_auth_ack(pattern, timeout_ms) do
     deadline = System.monotonic_time(:millisecond) + timeout_ms
-    do_await_auth_ack(pattern, deadline, [])
-  end
 
-  defp do_await_auth_ack(pattern, deadline, requeue) do
-    left = deadline - System.monotonic_time(:millisecond)
-
-    if left <= 0 do
-      requeue_messages(requeue)
-      {:error, :auth_ack_timeout}
-    else
-      receive do
-        {:websocket_message, frame} = msg when is_map(frame) or is_list(frame) ->
-          handle_auth_frame(pattern, deadline, requeue, msg, frame)
-
-        {:websocket_unmatched_response, frame} = msg when is_map(frame) or is_list(frame) ->
-          handle_auth_frame(pattern, deadline, requeue, msg, frame)
-
-        {:ws_frame, frame} = msg when is_map(frame) or is_list(frame) ->
-          handle_auth_frame(pattern, deadline, requeue, msg, frame)
-
-        {:ws_frame, _connection, frame} = msg when is_map(frame) or is_list(frame) ->
-          handle_auth_frame(pattern, deadline, requeue, msg, frame)
-
-        other ->
-          do_await_auth_ack(pattern, deadline, [other | requeue])
-      after
-        max(left, 0) ->
-          requeue_messages(requeue)
-          {:error, :auth_ack_timeout}
+    classify = fn frame ->
+      case AuthAck.classify(pattern, frame) do
+        :auth_response -> {:take, :auth_response}
+        :not_auth -> :skip
       end
     end
-  end
 
-  defp handle_auth_frame(pattern, deadline, requeue, msg, frame) do
-    case AuthAck.classify(pattern, frame) do
-      :auth_response ->
-        requeue_messages(requeue)
-        adjudicate_auth(pattern, frame)
-
-      :not_auth ->
-        do_await_auth_ack(pattern, deadline, [msg | requeue])
+    case await_in_mailbox(classify, deadline) do
+      {:auth_response, frame} -> adjudicate_auth(pattern, frame)
+      :timeout -> {:error, :auth_ack_timeout}
     end
   end
 
@@ -541,6 +511,27 @@ defmodule Bourse.WS do
       end
     end
   end
+
+  @doc """
+  Returns the process of every socket this connection still owns — the primary
+  one and each routed host — so a supervising process can monitor them.
+  """
+  @spec transport_pids(t()) :: [pid()]
+  def transport_pids(%__MODULE__{} = ws) do
+    owned =
+      case ws.connection_owner && snapshot_owned_connections(ws) do
+        {:ok, connections} -> Map.values(connections)
+        _ -> []
+      end
+
+    [ws.zen_client | owned]
+    |> Enum.map(&client_server_pid/1)
+    |> Enum.filter(&is_pid/1)
+    |> Enum.uniq()
+  end
+
+  defp client_server_pid(%ZenClient{server_pid: pid}), do: pid
+  defp client_server_pid(_client), do: nil
 
   @doc "Returns the resolved WS URL this connection is using."
   @spec get_url(t()) :: String.t()
@@ -883,84 +874,99 @@ defmodule Bourse.WS do
     end
   end
 
-  # Wait for an async subscribe ack/reject. Non-ack frames are re-queued so
-  # the caller's existing {:websocket_message, _} receive loop still sees them.
+  # Wait for an async subscribe ack/reject without disturbing the caller's
+  # mailbox: the ack is taken out where it sits and every other message stays in
+  # arrival order.
   defp await_subscribe_ack(_exchange_id, 0), do: :ok
 
   defp await_subscribe_ack(exchange_id, timeout_ms) do
     deadline = System.monotonic_time(:millisecond) + timeout_ms
-    do_await_subscribe_ack(exchange_id, deadline, [])
-  end
 
-  defp do_await_subscribe_ack(exchange_id, deadline, requeue) do
-    left = deadline - System.monotonic_time(:millisecond)
-
-    if left <= 0 do
-      requeue_messages(requeue)
-      {:error, :subscription_ack_timeout}
-    else
-      receive do
-        {:websocket_message, frame} = msg when is_map(frame) or is_list(frame) ->
-          handle_ack_frame(exchange_id, deadline, requeue, msg, frame)
-
-        {:websocket_unmatched_response, frame} = msg when is_map(frame) or is_list(frame) ->
-          handle_ack_frame(exchange_id, deadline, requeue, msg, frame)
-
-        # The adapter's handler delivers frames as {:ws_frame, connection, _}.
-        {:ws_frame, frame} = msg when is_map(frame) or is_list(frame) ->
-          handle_ack_frame(exchange_id, deadline, requeue, msg, frame)
-
-        {:ws_frame, _connection, frame} = msg when is_map(frame) or is_list(frame) ->
-          handle_ack_frame(exchange_id, deadline, requeue, msg, frame)
-
-        other ->
-          do_await_subscribe_ack(exchange_id, deadline, [other | requeue])
-      after
-        max(left, 0) ->
-          requeue_messages(requeue)
-          {:error, :subscription_ack_timeout}
+    classify = fn frame ->
+      case SubscribeAck.classify(exchange_id, frame) do
+        :success -> {:take, :success}
+        # The ack is also data: it stays in the mailbox for the caller.
+        {:success, :data} -> {:leave, :success}
+        {:rejected, rejected} -> {:take, {:rejected, rejected}}
+        :not_ack -> :skip
       end
     end
-  end
 
-  defp handle_ack_frame(exchange_id, deadline, requeue, msg, frame) do
-    case SubscribeAck.classify(exchange_id, frame) do
-      :success ->
-        requeue_messages(requeue)
-        :ok
-
-      {:success, :data} ->
-        requeue_messages([msg | requeue])
-        :ok
-
-      {:rejected, rejected} ->
-        requeue_messages(requeue)
-        {:error, {:subscription_rejected, rejected}}
-
-      :not_ack ->
-        do_await_subscribe_ack(exchange_id, deadline, [msg | requeue])
+    case await_in_mailbox(classify, deadline) do
+      {:success, _frame} -> :ok
+      {{:rejected, rejected}, _frame} -> {:error, {:subscription_rejected, rejected}}
+      :timeout -> {:error, :subscription_ack_timeout}
     end
   end
 
-  # Re-sending appends to the mailbox, behind any frame that arrived after the
-  # held ones but has not been received yet. Frames still waiting are drained
-  # and re-sent behind the held ones so the caller sees arrival order — an
-  # order book checks each delta against the one before it.
-  defp requeue_messages(messages) do
-    Enum.each(Enum.reverse(messages, drain_frames([])), &send(self(), &1))
+  # Finds the first frame message `classify` recognises and removes only that
+  # message (or none, for `{:leave, _}`). Receiving everything and re-sending
+  # what was not the ack cannot keep arrival order: a frame sent while the
+  # re-send runs lands between re-sent ones, and messages that are not frames
+  # move behind them. An order book checks each delta against the one before it.
+  @ack_poll_ms 5
+
+  defp await_in_mailbox(classify, deadline), do: await_in_mailbox(classify, deadline, 0)
+
+  defp await_in_mailbox(classify, deadline, scanned) do
+    case scan_mailbox(classify, scanned) do
+      {:found, verdict, message, frame} ->
+        take_message(verdict, message)
+        {elem(verdict, 1), frame}
+
+      {:not_found, scanned} ->
+        left = deadline - System.monotonic_time(:millisecond)
+
+        if left <= 0 do
+          :timeout
+        else
+          receive do
+          after
+            min(left, @ack_poll_ms) -> await_in_mailbox(classify, deadline, scanned)
+          end
+        end
+    end
   end
 
-  defp drain_frames(acc) do
+  # Nothing ahead of `scanned` is ever removed while waiting, so already
+  # classified messages are not classified again.
+  defp scan_mailbox(classify, scanned) do
+    {:message_queue_len, queued} = Process.info(self(), :message_queue_len)
+
+    if queued <= scanned do
+      {:not_found, scanned}
+    else
+      {:messages, messages} = Process.info(self(), :messages)
+
+      messages
+      |> Enum.drop(scanned)
+      |> Enum.find_value({:not_found, length(messages)}, &classify_message(classify, &1))
+    end
+  end
+
+  defp classify_message(classify, message) do
+    with frame when is_map(frame) or is_list(frame) <- frame_of(message),
+         verdict when verdict != :skip <- classify.(frame) do
+      {:found, verdict, message, frame}
+    else
+      _ -> nil
+    end
+  end
+
+  defp frame_of({tag, frame}) when tag in [:websocket_message, :websocket_unmatched_response, :ws_frame], do: frame
+  # The adapter's handler delivers frames as {:ws_frame, connection, _}.
+  defp frame_of({:ws_frame, _connection, frame}), do: frame
+  defp frame_of(_message), do: nil
+
+  # A pinned receive removes the first equal message, which is the one found:
+  # an equal message earlier in the mailbox would have been found first.
+  defp take_message({:take, _}, message) do
     receive do
-      {tag, _frame} = msg when tag in [:websocket_message, :websocket_unmatched_response, :ws_frame] ->
-        drain_frames([msg | acc])
-
-      {:ws_frame, _connection, _frame} = msg ->
-        drain_frames([msg | acc])
-    after
-      0 -> Enum.reverse(acc)
+      ^message -> :ok
     end
   end
+
+  defp take_message({:leave, _}, _message), do: :ok
 
   defp send_payload(zen_client, frames) when is_list(frames) do
     Enum.reduce_while(frames, :ok, fn frame, _acc ->

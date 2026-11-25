@@ -179,7 +179,7 @@ defmodule Bourse.WS.SubscribeReturnShapeTest do
     assert :ok = WS.subscribe(ws, ["ticker.BTC-PERPETUAL.100ms"])
   end
 
-  test "non-ack data frames are re-queued during the await window" do
+  test "non-ack data frames stay in the mailbox during the await window" do
     transport = start_supervised!({Transport, owner: self(), reply: :ok})
     client = %Client{server_pid: transport, state: :connected}
     ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
@@ -220,6 +220,96 @@ defmodule Bourse.WS.SubscribeReturnShapeTest do
              {:ws_frame, ^connection, %{"data" => %{"u" => 2}}},
              {:websocket_message, %{"data" => %{"u" => 3}}}
            ] = Enum.reject(messages, &match?({:transport_sent, _}, &1))
+  end
+
+  test "frames that arrive while the ack is awaited keep arrival order" do
+    transport = start_supervised!({Transport, owner: self(), reply: :ok})
+    client = %Client{server_pid: transport, state: :connected}
+    ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
+    test_pid = self()
+    frame = fn u -> {:websocket_message, %{"topic" => "orderbook.50.BTCUSDT", "data" => %{"u" => u}}} end
+
+    receiver =
+      spawn(fn ->
+        receive do
+          :go -> :ok
+        end
+
+        send(test_pid, {:subscribed, WS.subscribe(ws, ["orderbook.50.BTCUSDT"], ack_timeout_ms: 5_000)})
+
+        receive do
+          :report -> :ok
+        end
+
+        {:messages, messages} = Process.info(self(), :messages)
+        send(test_pid, {:ids, for({:websocket_message, %{"data" => %{"u" => u}}} <- messages, do: u)})
+      end)
+
+    # A frame that arrives at the moment the wait hands frames back to the
+    # mailbox. A wait that re-sends held frames lets it land among them.
+    tracer =
+      spawn(fn ->
+        receive do
+          {:trace, ^receiver, :send, {:websocket_message, %{"data" => %{"u" => 1}}}, ^receiver} ->
+            send(receiver, frame.(5_001))
+        end
+      end)
+
+    :erlang.trace(receiver, true, [:send, {:tracer, tracer}])
+
+    for u <- 1..5_000, do: send(receiver, frame.(u))
+    send(receiver, {:websocket_message, %{"op" => "subscribe", "success" => true}})
+
+    # A second sender keeps delivering while the wait runs.
+    {:ok, _sender} = Task.start(fn -> for u <- 5_002..6_000, do: send(receiver, frame.(u)) end)
+    send(receiver, :go)
+
+    assert_receive {:subscribed, :ok}, 5_000
+    Process.sleep(100)
+    send(receiver, :report)
+    assert_receive {:ids, ids}, 5_000
+
+    out_of_order = Enum.find(Enum.zip(ids, tl(ids)), fn {a, b} -> a > b end)
+    assert out_of_order == nil, "frames left arrival order at #{inspect(out_of_order)}"
+    assert Enum.take(ids, 5_000) == Enum.to_list(1..5_000)
+  end
+
+  test "messages that are not frames keep their place relative to frames" do
+    transport = start_supervised!({Transport, owner: self(), reply: :ok})
+    client = %Client{server_pid: transport, state: :connected}
+    ws = %WS{exchange: Exchange.new!("alpaca"), zen_client: client, url: "wss://offline.test", section: :public}
+    trade = [%{"T" => "t", "S" => "FAKEPACA"}]
+
+    send(self(), {:websocket_message, [%{"T" => "subscription", "trades" => ["FAKEPACA"]}]})
+    send(self(), {:websocket_message, trade})
+    send(self(), :market_timeout)
+
+    assert :ok = WS.subscribe(ws, ["trades:FAKEPACA"], ack_timeout_ms: 1_000)
+
+    {:messages, messages} = Process.info(self(), :messages)
+
+    assert [{:websocket_message, ^trade}, :market_timeout] =
+             Enum.reject(messages, &match?({:transport_sent, _}, &1))
+  end
+
+  test "the auth wait leaves every other message where it arrived" do
+    transport = start_supervised!({Transport, owner: self(), reply: :ok})
+    client = %Client{server_pid: transport, state: :connected}
+    exchange = Exchange.new!("bybit", api_key: "key", secret: "secret")
+    ws = %WS{exchange: exchange, zen_client: client, url: "wss://offline.test", section: :private}
+    data = {:websocket_message, %{"topic" => "order", "data" => [%{"orderId" => "1"}]}}
+
+    send(self(), data)
+    send(self(), {:websocket_message, %{"op" => "auth", "success" => true}})
+    send(self(), :tick)
+    send(self(), {:websocket_message, %{"topic" => "order", "data" => [%{"orderId" => "2"}]}})
+
+    assert {:ok, _meta} = WS.authenticate(ws)
+
+    {:messages, messages} = Process.info(self(), :messages)
+
+    assert [^data, :tick, {:websocket_message, %{"data" => [%{"orderId" => "2"}]}}] =
+             Enum.reject(messages, &match?({:transport_sent, _}, &1))
   end
 
   test "channel shape errors from pattern modules propagate as {:error, atom}" do
