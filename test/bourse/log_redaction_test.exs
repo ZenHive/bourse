@@ -1,3 +1,12 @@
+defmodule LogRedactionUnrelatedWorker do
+  @moduledoc false
+  # A host process outside the Bourse and ZenWebsocket namespaces.
+  use GenServer
+
+  def init(state), do: {:ok, state}
+  def handle_cast(:die, state), do: {:stop, {:transport_closed, state.url}, state}
+end
+
 defmodule Bourse.LogRedactionTest do
   # The default handler is VM-global, so this cannot run concurrently with
   # tests that log.
@@ -10,14 +19,6 @@ defmodule Bourse.LogRedactionTest do
   @secret "k9QwE7redactionprobe0000000000000000000000000000000000000000000"
   @url "wss://fstream.example.test/ws/" <> @secret
   @handler :bourse_log_redaction_probe
-
-  defmodule Holder do
-    @moduledoc false
-    use GenServer
-
-    def init(state), do: {:ok, state}
-    def handle_cast(:die, state), do: {:stop, {:transport_closed, state.url}, state}
-  end
 
   setup do
     path = Path.join(System.tmp_dir!(), "bourse_log_redaction_#{System.unique_integer([:positive])}.log")
@@ -46,18 +47,43 @@ defmodule Bourse.LogRedactionTest do
     assert Keyword.has_key?(:logger.get_primary_config().filters, Bourse.LogRedaction.filter_id())
   end
 
-  test "a termination report names the transport host and not the credential in its URL", %{path: path} do
-    state = %{url: @url, config: %ZenWebsocket.Config{url: @url}, headers: [{"x", ~c"" ++ @url}]}
-    {:ok, pid} = GenServer.start(Holder, state)
+  test "a termination report of a process outside Bourse and ZenWebsocket is left as it is", %{path: path} do
+    {:ok, pid} = GenServer.start(LogRedactionUnrelatedWorker, %{url: @url})
     ref = Process.monitor(pid)
 
     GenServer.cast(pid, :die)
     assert_receive {:DOWN, ^ref, :process, ^pid, {:transport_closed, @url}}
 
-    log = read_flushed(path, "terminating")
+    assert read_flushed(path, "terminating") =~ @url
+  end
 
-    assert log =~ "wss://fstream.example.test/[REDACTED]"
-    refute log =~ @secret
+  test "the filter rewrites only reports that name a Bourse or ZenWebsocket process" do
+    terminate = fn state -> event(%{label: {:gen_server, :terminate}, state: state, reason: :closed}) end
+    assert Bourse.LogRedaction.filter(terminate.(%{url: @url}), []) == :ignore
+
+    assert %{msg: {:report, %{state: own}}} =
+             Bourse.LogRedaction.filter(
+               terminate.(%Bourse.WS{exchange: nil, zen_client: nil, section: :public, url: @url}),
+               []
+             )
+
+    assert own.url == "wss://fstream.example.test/[REDACTED]"
+    assert %{msg: {:report, _}} = Bourse.LogRedaction.filter(terminate.(%ZenWebsocket.Config{url: @url}), [])
+
+    crash = fn module ->
+      event(%{label: {:proc_lib, :crash}, report: [[initial_call: {module, :init, 1}, error_info: @url], []]})
+    end
+
+    assert %{msg: {:report, _}} = Bourse.LogRedaction.filter(crash.(Adapter), [])
+    assert Bourse.LogRedaction.filter(crash.(LogRedactionUnrelatedWorker), []) == :ignore
+
+    child = fn module ->
+      offender = [pid: self(), id: :child, mfargs: {module, :start_link, [@url]}]
+      event(%{label: {:supervisor, :child_terminated}, report: [supervisor: :sup, reason: :closed, offender: offender]})
+    end
+
+    assert %{msg: {:report, _}} = Bourse.LogRedaction.filter(child.(ConnectionOwner), [])
+    assert Bourse.LogRedaction.filter(child.(LogRedactionUnrelatedWorker), []) == :ignore
   end
 
   test "the filter leaves every event it does not rewrite to the host's filtering policy" do
@@ -65,7 +91,31 @@ defmodule Bourse.LogRedactionTest do
 
     progress = %{label: {:supervisor, :progress}, report: [started: [id: :child, pid: self()]]}
     assert Bourse.LogRedaction.filter(%{level: :info, msg: {:report, progress}, meta: %{}}, []) == :ignore
+
+    unchanged =
+      event(%{
+        label: {:gen_server, :terminate},
+        state: %Bourse.WS{exchange: nil, zen_client: nil, section: :public, url: "/no-scheme"},
+        reason: :normal
+      })
+
+    assert Bourse.LogRedaction.filter(unchanged, []) == :ignore
   end
+
+  test "config :bourse, :redact_termination_reports, false leaves the filter uninstalled" do
+    on_exit(fn ->
+      Application.delete_env(:bourse, :redact_termination_reports)
+      :ok = Application.stop(:bourse)
+      {:ok, _} = Application.ensure_all_started(:bourse)
+    end)
+
+    Application.put_env(:bourse, :redact_termination_reports, false)
+    :ok = Application.stop(:bourse)
+    {:ok, _} = Application.ensure_all_started(:bourse)
+    refute Bourse.LogRedaction.installed?()
+  end
+
+  defp event(report), do: %{level: :error, msg: {:report, report}, meta: %{}}
 
   test "redact/1 keeps scheme and host and walks structs, tuples and improper lists" do
     term = {[@url | "tail " <> @url], %ZenWebsocket.Config{url: @url <> "?listenKey=" <> @secret}}

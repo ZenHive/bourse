@@ -12,9 +12,25 @@ defmodule Bourse.LogRedaction do
 
     * `filter/2`, installed by `Bourse.Application` as the primary `:logger`
       filter with id `Bourse.LogRedaction`, rewrites an OTP termination report
-      that contains such a value and returns `:ignore` for every other event,
-      so it never decides whether an event is logged. Application stop removes
-      it only while it is still the filter this module installed.
+      (`gen_server`, `gen_statem`, `proc_lib`, `supervisor`) of a `Bourse.*` or
+      `ZenWebsocket.*` process that contains such a value. A process is
+      identified by the module in the report: the state struct, the
+      `initial_call`, a supervisor report's offender `mfargs`, or the reporting
+      process's own initial call. Every other event, and every report it leaves
+      unchanged, gets `:ignore`.
+
+      OTP's `:logger` treats a filter that returns an event as passing it, so
+      **a rewritten report passes a primary `filter_default: :stop`** that would
+      otherwise have dropped it. The filter is on by default because these
+      reports are the ones that print a connection's URL and session state
+      whole, and a credential leaked to a log is not recoverable, while the cost
+      of the default is that a host dropping all unfiltered events still sees
+      Bourse's and ZenWebsocket's own termination reports (redacted). A host
+      that wants its `:stop` default to hold for them sets
+      `config :bourse, :redact_termination_reports, false`, which leaves the
+      filter uninstalled; `format_status/1` and the warning lines below still
+      redact. Application stop removes the filter only while it is still the
+      filter this module installed.
     * `format_status/1` on Bourse's own long-lived processes passes their
       state, reason and last message through `redact/1`.
     * Bourse's warnings render terms with `inspect/1` from this module.
@@ -72,17 +88,59 @@ defmodule Bourse.LogRedaction do
 
   @doc """
   `:logger` filter callback. Returns the event with its report rewritten when an
-  OTP termination report contains a credential-bearing value, `:ignore` otherwise.
+  OTP termination report of a Bourse or ZenWebsocket process contains a
+  credential-bearing value, `:ignore` otherwise.
   """
   @spec filter(:logger.log_event(), term()) :: :logger.log_event() | :ignore
   def filter(%{msg: {:report, %{label: {kind, _}} = report}} = event, _config) when kind in @labels do
-    case redact(report) do
-      ^report -> :ignore
-      redacted -> %{event | msg: {:report, redacted}}
+    with true <- owned?(report),
+         redacted when redacted != report <- redact(report) do
+      %{event | msg: {:report, redacted}}
+    else
+      _ -> :ignore
     end
   end
 
   def filter(_event, _config), do: :ignore
+
+  # Primary filters run in the process that logs, so a gen_server or
+  # gen_statem terminate report without a struct state still names its module
+  # through that process's initial call.
+  defp owned?(report) do
+    Enum.any?([report_module(report), initial_call_module(Process.get(:"$initial_call"))], &own_module?/1)
+  end
+
+  defp report_module(%{state: %module{}}), do: module
+  defp report_module(%{data: %module{}}), do: module
+
+  defp report_module(%{label: {:proc_lib, _}, report: [info | _]}) when is_list(info),
+    do: initial_call_module(info[:initial_call])
+
+  defp report_module(%{label: {:supervisor, _}, report: report}) when is_list(report) do
+    case report[:offender] do
+      offender when is_list(offender) -> mfa_module(offender[:mfargs] || offender[:start])
+      _ -> nil
+    end
+  end
+
+  defp report_module(_report), do: nil
+
+  defp initial_call_module({:supervisor, module, _arity}) when is_atom(module), do: module
+  defp initial_call_module(mfa), do: mfa_module(mfa)
+
+  defp mfa_module({module, _function, _args}) when is_atom(module), do: module
+  defp mfa_module(_other), do: nil
+
+  defp own_module?(module) when is_atom(module) and not is_nil(module) do
+    case Atom.to_string(module) do
+      "Elixir.Bourse" -> true
+      "Elixir.Bourse." <> _ -> true
+      "Elixir.ZenWebsocket." <> _ -> true
+      _ -> false
+    end
+  end
+
+  defp own_module?(_other), do: false
 
   @doc "`Kernel.inspect/1` with `redact/1` applied to the term and to its rendering."
   @spec inspect(term()) :: String.t()

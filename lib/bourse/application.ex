@@ -4,7 +4,8 @@ defmodule Bourse.Application do
 
   Starts the rate limiter, rate limit state store, native signer supervisor,
   WS broadcast registry, and WS connection-owner supervisor, and installs
-  `Bourse.LogRedaction`'s primary `:logger` filter (see that module).
+  `Bourse.LogRedaction`'s primary `:logger` filter unless
+  `config :bourse, :redact_termination_reports, false` (see that module).
 
   `Bourse.Testnet` is deliberately NOT a child here. It is a sandbox credential
   registry that only test and recording harnesses use, so a consumer application
@@ -19,8 +20,10 @@ defmodule Bourse.Application do
 
   @impl true
   def start(_type, _args) do
-    with {:error, reason} <- Bourse.LogRedaction.install() do
-      Logger.warning("Bourse.LogRedaction not installed: #{inspect(reason)}")
+    if Application.get_env(:bourse, :redact_termination_reports, true) do
+      with {:error, reason} <- Bourse.LogRedaction.install() do
+        Logger.warning("Bourse.LogRedaction not installed: #{inspect(reason)}")
+      end
     end
 
     children = [
