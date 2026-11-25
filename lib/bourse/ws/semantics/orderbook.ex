@@ -210,15 +210,22 @@ defmodule Bourse.WS.Semantics.Orderbook do
 
   defp track_stream(state, _continuity, _channel, nil), do: state
 
+  # Subscribing again to a stream already tracked changes nothing.
+  defp track_stream(state, continuity, channel, {market, _kind} = stream) do
+    if Map.has_key?(state.anonymous_partials, channel) or Map.has_key?(Map.get(state.depth_streams, market, %{}), channel),
+      do: state,
+      else: track_new_stream(state, continuity, channel, stream)
+  end
+
   # Partial frames that carry no symbol are keyed by their stream name; once a
   # second one is tracked, no book of them can be attributed.
-  defp track_stream(state, %{unmarked_frames: "snapshot"}, channel, {market, :partial}) do
+  defp track_new_stream(state, %{unmarked_frames: "snapshot"}, channel, {market, :partial}) do
     partials = Map.put(state.anonymous_partials, channel, market)
     books = if map_size(partials) > 1, do: Map.drop(state.books, Map.keys(partials)), else: state.books
     %{state | anonymous_partials: partials, books: books}
   end
 
-  defp track_stream(state, _continuity, channel, {market, kind}) do
+  defp track_new_stream(state, _continuity, channel, {market, kind}) do
     streams = Map.update(state.depth_streams, market, %{channel => kind}, &Map.put(&1, channel, kind))
     %{state | depth_streams: streams, books: Map.delete(state.books, market)}
   end
@@ -447,11 +454,17 @@ defmodule Bourse.WS.Semantics.Orderbook do
   # A book already waiting for its snapshot keeps the request (or scheduled
   # retry) it has: the bridge rules decide whether that snapshot still fits
   # the deltas buffered after this point.
-  defp invalidate(%__MODULE__{continuity: %{snapshot_source: "rest"}} = state, key, payload, reason) do
+  # Every update the discarded state had seen is behind the break, so the
+  # rebuilt book is published only once it is past them (`floor`).
+  defp invalidate(%__MODULE__{continuity: %{snapshot_source: "rest"} = c} = state, key, payload, reason) do
+    previous = Map.get(state.books, key) || new_entry()
+    seen = [previous.floor, previous.id | Enum.map(previous.buffer, &to_int(&1[c.fields["last"]]))]
+    floor = seen |> Enum.reject(&is_nil/1) |> Enum.max(fn -> nil end)
+
     entry =
-      case Map.get(state.books, key) do
-        %{status: :bootstrapping} = bootstrapping -> %{bootstrapping | buffer: List.wrap(payload)}
-        _ -> %{new_entry() | status: :bootstrapping, buffer: List.wrap(payload)}
+      case previous do
+        %{status: :bootstrapping} -> %{previous | buffer: List.wrap(payload), floor: floor}
+        _ -> %{new_entry() | status: :bootstrapping, buffer: List.wrap(payload), floor: floor}
       end
 
     {put_entry(state, key, entry), {:invalidated, reason}}
@@ -563,13 +576,13 @@ defmodule Bourse.WS.Semantics.Orderbook do
   defp bridge(state, key, entry, payload) do
     case check(state.continuity, entry, payload) do
       :apply ->
-        merge_and_publish(state, key, %{next_id(state.continuity, entry, payload) | status: :live}, payload)
+        publish_past_floor(state, key, merge(next_id(state.continuity, entry, payload), payload))
 
       :stale ->
         {state, :pending}
 
       {:gap, _reason} ->
-        restart = %{new_entry() | status: :bootstrapping, buffer: [payload], attempts: entry.attempts}
+        restart = %{new_entry() | status: :bootstrapping, buffer: [payload], attempts: entry.attempts, floor: entry.floor}
         {put_entry(state, key, restart), {:fetch_snapshot, key}}
     end
   end
@@ -578,7 +591,7 @@ defmodule Bourse.WS.Semantics.Orderbook do
   defp drop_predating("first_follows_last", f, id, buffer), do: Enum.drop_while(buffer, &(to_int(&1[f["last"]]) <= id))
   defp drop_predating("previous_last", f, id, buffer), do: Enum.drop_while(buffer, &(to_int(&1[f["last"]]) < id))
 
-  defp replay(state, key, entry, []), do: publish(state, key, entry)
+  defp replay(state, key, entry, []), do: publish_past_floor(state, key, entry)
 
   defp replay(state, key, entry, [delta | rest]) do
     case check(state.continuity, entry, delta) do
@@ -591,7 +604,7 @@ defmodule Bourse.WS.Semantics.Orderbook do
 
       {:gap, _reason} ->
         buffer = Enum.reverse([delta | rest])
-        restart = %{new_entry() | status: :bootstrapping, buffer: buffer, attempts: entry.attempts}
+        restart = %{new_entry() | status: :bootstrapping, buffer: buffer, attempts: entry.attempts, floor: entry.floor}
         {put_entry(state, key, restart), {:fetch_snapshot, key}}
     end
   end
@@ -687,7 +700,8 @@ defmodule Bourse.WS.Semantics.Orderbook do
       asks: %{},
       buffer: [],
       fetch_ref: nil,
-      attempts: 0
+      attempts: 0,
+      floor: nil
     }
   end
 
@@ -740,6 +754,13 @@ defmodule Bourse.WS.Semantics.Orderbook do
   defp publish(state, key, entry) do
     {put_entry(state, key, entry), {:book, render(entry)}}
   end
+
+  # A rebuilt book that has not yet passed every update seen before the break
+  # would show a state already superseded; it waits for further deltas.
+  defp publish_past_floor(state, key, %{floor: floor, id: id} = entry) when is_integer(floor) and id <= floor,
+    do: {put_entry(state, key, %{entry | status: :bridging}), :pending}
+
+  defp publish_past_floor(state, key, entry), do: publish(state, key, %{entry | status: :live})
 
   defp render(%{raw: raw}), do: %{"payload" => raw}
 

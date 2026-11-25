@@ -62,9 +62,21 @@ defmodule Bourse.WS.AdapterTest do
       accepted = :atomics.get(gate, 1) == 0
       send(owner, {:transport_sent, self(), message, accepted})
 
-      # 2 leaves the subscribe unanswered.
-      if message["op"] == "subscribe" and :atomics.get(gate, 1) != 2,
-        do: handler.({:message, %{"op" => "subscribe", "success" => accepted, "ret_msg" => "probe"}})
+      # 2 leaves the subscribe unanswered; 3 refuses it as already subscribed.
+      case {message["op"], :atomics.get(gate, 1)} do
+        {"subscribe", 2} ->
+          :ok
+
+        {"subscribe", 3} ->
+          ret_msg = "error:already subscribed,topic:" <> Enum.join(message["args"], ",")
+          handler.({:message, %{"op" => "subscribe", "success" => false, "ret_msg" => ret_msg}})
+
+        {"subscribe", _} ->
+          handler.({:message, %{"op" => "subscribe", "success" => accepted, "ret_msg" => "probe"}})
+
+        _ ->
+          :ok
+      end
 
       {:reply, :ok, state}
     end
@@ -932,37 +944,40 @@ defmodule Bourse.WS.AdapterTest do
       assert :sys.get_state(adapter).restore_attempts == 0
     end
 
-    test "a call whose ack never arrived is unsubscribed before it is sent again" do
-      test_pid = self()
-      gate = :atomics.new(1, [])
+    # The unanswered subscribe either never reached the venue (the retry is
+    # accepted) or was accepted with its ack lost (the retry is refused as
+    # already subscribed). Both restore the group without further attempts.
+    for {retry_gate, outcome} <- [{0, "accepted"}, {3, "refused as already subscribed"}] do
+      test "a restore whose ack never arrived is restored when its retry is #{outcome}" do
+        retry_gate = unquote(retry_gate)
+        test_pid = self()
+        gate = :atomics.new(1, [])
 
-      zen_connect = fn url, opts ->
-        {:ok, pid} = GenServer.start(GatedTransport, {test_pid, Keyword.fetch!(opts, :handler), gate})
-        {:ok, %Client{server_pid: pid, state: :connected, url: url}}
-      end
+        zen_connect = fn url, opts ->
+          {:ok, pid} = GenServer.start(GatedTransport, {test_pid, Keyword.fetch!(opts, :handler), gate})
+          {:ok, %Client{server_pid: pid, state: :connected, url: url}}
+        end
 
-      connect_fun = fn ex, section, opts -> WS.connect(ex, section, Keyword.put(opts, :connect_fun, zen_connect)) end
-      {:ok, adapter} = Adapter.start_link(Exchange.new!("bybit"), :public, connect_fun: connect_fun)
-      on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter) end)
-      _ = :sys.get_state(adapter)
-
-      assert :ok = Adapter.subscribe(adapter, ["publicTrade.BTCUSDT"], ack_timeout_ms: 100)
-      assert_receive {:transport_sent, first, %{"op" => "subscribe"}, true}
-
-      ExUnit.CaptureLog.capture_log(fn ->
-        :atomics.put(gate, 1, 2)
-        GenServer.stop(first, {:shutdown, :closed})
-        assert_receive {:transport_sent, second, %{"op" => "subscribe"}, false}, 1_000
-        :atomics.put(gate, 1, 0)
-
-        assert_receive {:transport_sent, ^second, %{"op" => "unsubscribe", "args" => ["publicTrade.BTCUSDT"]}, true},
-                       2_000
-
-        assert_receive {:transport_sent, ^second, %{"op" => "subscribe", "args" => ["publicTrade.BTCUSDT"]}, true}, 500
+        connect_fun = fn ex, section, opts -> WS.connect(ex, section, Keyword.put(opts, :connect_fun, zen_connect)) end
+        {:ok, adapter} = Adapter.start_link(Exchange.new!("bybit"), :public, connect_fun: connect_fun)
+        on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter) end)
         _ = :sys.get_state(adapter)
-      end)
 
-      assert :sys.get_state(adapter).restore_attempts == 0
+        assert :ok = Adapter.subscribe(adapter, ["publicTrade.BTCUSDT"], ack_timeout_ms: 100)
+        assert_receive {:transport_sent, first, %{"op" => "subscribe"}, true}
+
+        ExUnit.CaptureLog.capture_log(fn ->
+          :atomics.put(gate, 1, 2)
+          GenServer.stop(first, {:shutdown, :closed})
+          assert_receive {:transport_sent, second, %{"op" => "subscribe"}, false}, 1_000
+          :atomics.put(gate, 1, retry_gate)
+          assert_receive {:transport_sent, ^second, %{"op" => "subscribe", "args" => ["publicTrade.BTCUSDT"]}, _}, 2_000
+          _ = :sys.get_state(adapter)
+        end)
+
+        assert :sys.get_state(adapter).restore_attempts == 0
+        refute_receive {:transport_sent, _, _, _}, 2_500
+      end
     end
   end
 

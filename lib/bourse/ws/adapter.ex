@@ -60,6 +60,7 @@ defmodule Bourse.WS.Adapter do
   alias Bourse.WS.Semantics.Ohlcv
   alias Bourse.WS.Semantics.Orderbook
   alias Bourse.WS.Semantics.Trades
+  alias Bourse.WS.SubscribeAck
 
   require Logger
 
@@ -265,13 +266,13 @@ defmodule Bourse.WS.Adapter do
   # channel map per call, so a merged call would be refused.
   def handle_info({:restore_subscriptions, ref}, %{ws: %WS{}, connection_ref: current} = state)
       when is_nil(ref) or ref == current do
-    {:noreply, restore(state, Enum.map(state.subscriptions, &{&1, nil}))}
+    {:noreply, restore(state, state.subscriptions)}
   end
 
   def handle_info({:restore_subscriptions, _ref}, state), do: {:noreply, state}
 
   def handle_info({:restore_failed, ref, failed}, %{ws: %WS{}, connection_ref: ref} = state) do
-    {:noreply, restore(state, Enum.filter(failed, fn {group, _reason} -> group in state.subscriptions end))}
+    {:noreply, restore(state, Enum.filter(failed, &(&1 in state.subscriptions)))}
   end
 
   def handle_info({:restore_failed, _ref, _failed}, state), do: {:noreply, state}
@@ -774,13 +775,10 @@ defmodule Bourse.WS.Adapter do
     end
   end
 
-  # A call whose ack never arrived may have been accepted after all: the venue
-  # then refuses a second subscribe for it. It is unsubscribed before it is
-  # sent again, so the retry's outcome is the venue's answer to this call alone.
   defp restore(%{ws: ws} = state, groups) do
     failed =
-      for {{channels, opts} = group, previous} <- groups,
-          {:error, reason} <- [restore_group(ws, channels, opts, previous)] do
+      for {channels, opts} = group <- groups,
+          {:error, reason} <- [restore_group(ws, channels, opts)] do
         {group, reason}
       end
 
@@ -798,17 +796,23 @@ defmodule Bourse.WS.Adapter do
             "retrying in #{delay}ms"
         )
 
-        Process.send_after(self(), {:restore_failed, state.connection_ref, failed}, delay)
+        Process.send_after(self(), {:restore_failed, state.connection_ref, Enum.map(failed, &elem(&1, 0))}, delay)
         %{state | restore_attempts: state.restore_attempts + 1}
     end
   end
 
-  defp restore_group(ws, channels, opts, :subscription_ack_timeout) do
-    _ = WS.unsubscribe(WS.Handle.new(ws, nil, channels, opts))
-    WS.subscribe(ws, channels, opts)
-  end
+  # A call whose ack never arrived may have been accepted after all. The venue
+  # then refuses the retry as already subscribed to exactly this call's
+  # channels, which means the group is active.
+  defp restore_group(ws, channels, opts) do
+    case WS.subscribe(ws, channels, opts) do
+      {:error, {:subscription_rejected, frame}} = error ->
+        if SubscribeAck.already_subscribed?(ws.exchange.id, frame, channels), do: :ok, else: error
 
-  defp restore_group(ws, channels, opts, _previous), do: WS.subscribe(ws, channels, opts)
+      result ->
+        result
+    end
+  end
 
   defp merge_subscriptions(existing, group) do
     if group in existing, do: existing, else: existing ++ [group]

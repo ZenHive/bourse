@@ -63,8 +63,26 @@ defmodule Bourse.WS.ConnectionOwnerTest do
     _ = :sys.get_state(owner)
     refute_received {:bourse_ws_transport_down, _, _, _}
 
+    # Later pre-watch exits are not retained one by one.
+    for _ <- 1..12 do
+      {:ok, churn} = Agent.start(fn -> :ok end)
+
+      assert {:ok, _} =
+               ConnectionOwner.checkout(
+                 owner,
+                 fn _, _ -> {:ok, %Client{server_pid: churn}} end,
+                 "wss://c.test",
+                 [],
+                 1_000
+               )
+
+      Agent.stop(churn, :closed)
+      _ = :sys.get_state(owner)
+    end
+
     assert :ok = ConnectionOwner.watch(owner, self())
     assert_receive {:bourse_ws_transport_down, ^owner, ^routed, :closed}
+    refute_received {:bourse_ws_transport_down, _, _, _}
 
     Agent.stop(primary, :closed)
     assert_receive {:bourse_ws_transport_down, ^owner, ^primary, :closed}

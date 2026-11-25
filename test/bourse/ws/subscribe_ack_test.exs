@@ -45,6 +45,35 @@ defmodule Bourse.WS.SubscribeAckTest do
       assert :not_ack = SubscribeAck.classify("okx", %{"event" => "notice"})
     end
 
+    test "a refusal is read as already subscribed only when it names exactly the call's channels" do
+      bybit = %{
+        "op" => "subscribe",
+        "success" => false,
+        "ret_msg" => "error:already subscribed,topic:publicTrade.BTCUSDT"
+      }
+
+      assert SubscribeAck.already_subscribed?("bybit", bybit, ["publicTrade.BTCUSDT"])
+      refute SubscribeAck.already_subscribed?("bybit", bybit, ["publicTrade.ETHUSDT"])
+
+      refute SubscribeAck.already_subscribed?("bybit", %{bybit | "ret_msg" => "error:handler not found"}, [
+               "publicTrade.BTCUSDT"
+             ])
+
+      sub = %{"type" => "trades", "coin" => "BTC"}
+      hl = %{"channel" => "error", "data" => ~s(Already subscribed: {"type":"trades","coin":"BTC"})}
+      assert SubscribeAck.already_subscribed?("hyperliquid", hl, [sub])
+      refute SubscribeAck.already_subscribed?("hyperliquid", hl, [%{sub | "coin" => "ETH"}])
+
+      # As observed on testnet: the echo carries l2Book's optional fields at their defaults.
+      book = %{"type" => "l2Book", "coin" => "BTC"}
+      echo = ~s(Already subscribed: {"type":"l2Book","coin":"BTC","nSigFigs":null,"mantissa":null,"fast":false})
+      assert SubscribeAck.already_subscribed?("hyperliquid", %{hl | "data" => echo}, [book])
+      other = ~s(Already subscribed: {"type":"l2Book","coin":"BTC","nSigFigs":5,"mantissa":null,"fast":false})
+      refute SubscribeAck.already_subscribed?("hyperliquid", %{hl | "data" => other}, [book])
+      refute SubscribeAck.already_subscribed?("hyperliquid", %{hl | "data" => "Already unsubscribed: x"}, [sub])
+      refute SubscribeAck.already_subscribed?("okx", %{"event" => "error"}, ["x"])
+    end
+
     test "hyperliquid success and rejection" do
       assert :success =
                SubscribeAck.classify("hyperliquid", %{

@@ -10,7 +10,9 @@ defmodule Bourse.WS.ConnectionOwner do
 
   A process registered with `watch/2` is sent
   `{:bourse_ws_transport_down, owner, client_pid, reason}` when a held client
-  exits. A loss that happens before any process watches is delivered on `watch/2`.
+  exits. Losses that happen before any process watches are reported on `watch/2`
+  as one notification, the first of them: a watcher learns that the group
+  suffered a loss, not each exit.
   """
 
   use GenServer
@@ -83,7 +85,7 @@ defmodule Bourse.WS.ConnectionOwner do
   def init({url, zen_client}) do
     Process.flag(:trap_exit, true)
     link_client(zen_client)
-    {:ok, %{closed?: false, connections: %{url => zen_client}, watchers: [], losses: []}}
+    {:ok, %{closed?: false, connections: %{url => zen_client}, watchers: [], lost: nil}}
   end
 
   @impl true
@@ -99,8 +101,8 @@ defmodule Bourse.WS.ConnectionOwner do
   end
 
   def handle_call({:watch, pid}, _from, state) do
-    Enum.each(Enum.reverse(state.losses), &send(pid, &1))
-    {:reply, :ok, %{state | watchers: Enum.uniq([pid | state.watchers]), losses: []}}
+    if state.lost, do: send(pid, state.lost)
+    {:reply, :ok, %{state | watchers: Enum.uniq([pid | state.watchers]), lost: nil}}
   end
 
   def handle_call(:snapshot, _from, %{closed?: true} = state) do
@@ -125,7 +127,7 @@ defmodule Bourse.WS.ConnectionOwner do
         {:noreply, state}
 
       state.watchers == [] ->
-        {:noreply, %{state | connections: remaining, losses: [loss(pid, reason) | state.losses]}}
+        {:noreply, %{state | connections: remaining, lost: state.lost || loss(pid, reason)}}
 
       true ->
         Enum.each(state.watchers, &send(&1, loss(pid, reason)))

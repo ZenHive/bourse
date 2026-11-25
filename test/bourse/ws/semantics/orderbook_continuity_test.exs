@@ -59,6 +59,42 @@ defmodule Bourse.WS.Semantics.OrderbookContinuityTest do
       refute Orderbook.live?(st, "BTCUSDT")
     end
 
+    test "after a break, a rebuilt book is not published until it passes every update seen before it" do
+      for {snapshot_id, late} <- [{100, spot_delta(100, 105, [["101", "1"]])}, {90, spot_delta(91, 91, [["13", "1"]])}] do
+        st = state("binance")
+        assert {st, {:fetch_snapshot, _}} = Orderbook.apply(st, "BTCUSDT", spot_delta(100, 105, [["101", "1"]]))
+        ref = make_ref()
+        st = Orderbook.fetch_started(st, "BTCUSDT", ref)
+
+        unsequenced = Map.delete(spot_delta(106, 0), "u")
+        assert {st, {:invalidated, _}} = Orderbook.apply(st, "BTCUSDT", unsequenced, unsequenced)
+
+        body = %{"lastUpdateId" => snapshot_id, "bids" => [["90", "7"]], "asks" => [["95", "2"]]}
+        assert {st, :pending} = Orderbook.apply_rest_snapshot(st, "BTCUSDT", ref, body)
+
+        # A duplicate of a delta from before the break, or one delayed from
+        # before it, bridges the snapshot but ends at or before update 105.
+        assert {st, :pending} = Orderbook.apply(st, "BTCUSDT", late)
+        refute Orderbook.live?(st, "BTCUSDT")
+      end
+    end
+
+    test "subscribing again to a tracked stream keeps its book" do
+      for {venue, channel, frame} <- [
+            {"binance", "btcusdt@depth@100ms", spot_delta(1, 5)},
+            {"binanceusdm", "btcusdt@depth@100ms", usdm_delta(1, 5, 0)},
+            {"binance", "btcusdt@depth20", %{"lastUpdateId" => 5, "bids" => [["1", "2"]], "asks" => []}}
+          ] do
+        st = Orderbook.track_subscriptions(state(venue), [channel])
+        key = Orderbook.key(st, frame, "depthUpdate", nil)
+        {st, _} = Orderbook.apply(st, key, frame, frame)
+        books = st.books
+        assert books != %{}
+
+        assert Orderbook.track_subscriptions(st, [channel]).books == books
+      end
+    end
+
     test "a snapshot whose bridging delta arrives after it goes live on that delta" do
       st = state("binance")
       assert {st, {:fetch_snapshot, "BTCUSDT"}} = Orderbook.apply(st, "BTCUSDT", spot_delta(1, 5))

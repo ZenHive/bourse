@@ -55,6 +55,37 @@ defmodule Bourse.WS.SubscribeAck do
   def to_result(:not_ack), do: {:error, :unexpected_subscription_response}
   def to_result({:rejected, frame}), do: {:error, {:subscription_rejected, frame}}
 
+  @doc """
+  Whether a rejected subscribe was refused because exactly `channels` are
+  already subscribed on this connection. Replies observed 2026-11-25:
+  bybit `ret_msg: "error:already subscribed,topic:<topics>"` (api-testnet),
+  hyperliquid `"Already subscribed: <subscription JSON>"` (testnet), whose
+  JSON echoes the request with its omitted optional fields at their defaults. No other
+  venue's refusal is read this way.
+  """
+  @spec already_subscribed?(String.t(), map(), [String.t() | map()]) :: boolean()
+  def already_subscribed?("bybit", %{"ret_msg" => "error:already subscribed,topic:" <> topics}, channels),
+    do: Enum.sort(String.split(topics, ",")) == Enum.sort(channels)
+
+  def already_subscribed?("hyperliquid", %{"channel" => "error", "data" => "Already subscribed: " <> json}, [channel])
+      when is_map(channel) do
+    case Jason.decode(json) do
+      {:ok, %{} = echoed} -> same_hyperliquid_subscription?(echoed, channel)
+      _ -> false
+    end
+  end
+
+  def already_subscribed?(_exchange_id, _frame, _channels), do: false
+
+  # The echo fills every optional field the request left out with its default
+  # (`"nSigFigs": null, "mantissa": null, "fast": false` on l2Book); a field set
+  # to anything else names a different subscription.
+  defp same_hyperliquid_subscription?(echoed, channel) do
+    Enum.all?(echoed, fn {field, value} ->
+      if Map.has_key?(channel, field), do: channel[field] == value, else: value in [nil, false]
+    end) and Enum.all?(channel, fn {field, _} -> Map.has_key?(echoed, field) end)
+  end
+
   # ---------------------------------------------------------------------------
   # Per-venue
   # ---------------------------------------------------------------------------
