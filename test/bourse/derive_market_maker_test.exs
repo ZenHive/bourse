@@ -158,6 +158,11 @@ defmodule Bourse.DeriveMarketMakerTest do
       assert {"buy", amount, false} = MM.restore_order(d.("0.3"), d.("0.1"))
       assert Decimal.equal?(amount, d.("0.2"))
 
+      # Growing by less than the current size is still not a reduction.
+      assert {"buy", amount, false} = MM.restore_order(d.("0.15"), d.("0.1"))
+      assert Decimal.equal?(amount, d.("0.05"))
+      assert {"sell", _, false} = MM.restore_order(d.("-0.15"), d.("-0.1"))
+
       assert {"buy", _, false} = MM.restore_order(d.("0.1"), d.("0"))
     end
   end
@@ -268,6 +273,41 @@ defmodule Bourse.DeriveMarketMakerTest do
       assert MM.mmp_mismatches(target, %{@original | "mmp_delta_limit" => "0"}) == ["mmp_delta_limit"]
       assert MM.mmp_mismatches(target, Map.delete(@original, "mmp_amount_limit")) == ["mmp_amount_limit"]
       assert MM.mmp_mismatches(target, nil) == ["config missing"]
+      assert MM.mmp_mismatches(target, %{@original | "mmp_interval" => 0}) == ["mmp_interval"]
+      assert MM.mmp_mismatches(target, %{@original | "mmp_frozen_time" => 0}) == ["mmp_frozen_time"]
+      assert MM.mmp_mismatches(target, %{@original | "mmp_amount_limit" => "3"}) == ["mmp_amount_limit"]
+      assert MM.mmp_mismatches(target, Map.delete(@original, "mmp_delta_limit")) == ["mmp_delta_limit"]
+      assert MM.mmp_mismatches(target, @original) == []
+    end
+
+    test "only a literal false readback verifies an unfrozen restore" do
+      target = MM.mmp_restore_target(@original)
+
+      for flag <- [nil, "true", "false", 0] do
+        assert MM.mmp_mismatches(target, %{@original | "is_frozen" => flag}) == ["is_frozen"], inspect(flag)
+        assert MM.mmp_needs_reset?(target, %{@original | "is_frozen" => flag}), inspect(flag)
+      end
+
+      assert MM.mmp_mismatches(target, Map.delete(@original, "is_frozen")) == ["is_frozen"]
+      assert MM.mmp_needs_reset?(target, Map.delete(@original, "is_frozen"))
+      refute MM.mmp_needs_reset?(%{target | "is_frozen" => true}, %{@original | "is_frozen" => true})
+    end
+
+    test "a returned config row without a boolean is_frozen is refused; no row is nil" do
+      assert MM.mmp_config_row!([@original, %{"currency" => "ETH"}], "BTC") == @original
+      assert MM.mmp_config_row!([%{"currency" => "ETH", "is_frozen" => false}], "BTC") == nil
+      assert MM.mmp_config_row!([], "BTC") == nil
+
+      for row <- [
+            Map.delete(@original, "is_frozen"),
+            %{@original | "is_frozen" => nil},
+            %{@original | "is_frozen" => "true"}
+          ] do
+        assert_raise ExUnit.AssertionError, ~r/no boolean is_frozen/, fn -> MM.mmp_config_row!([row], "BTC") end
+        assert_raise ExUnit.AssertionError, ~r/no boolean is_frozen/, fn -> MM.mmp_restore_target(row) end
+      end
+
+      assert MM.mmp_restore_target(%{@original | "is_frozen" => true})["is_frozen"] == true
     end
 
     test "no prior config restores as MMP off and unfrozen" do
@@ -283,7 +323,8 @@ defmodule Bourse.DeriveMarketMakerTest do
         %{"order_id" => "o1", "mmp" => true, "order_status" => "open", "instrument_name" => "BTC-PERP"},
         %{"order_id" => "o2", "mmp" => false, "order_status" => "open", "instrument_name" => "BTC-PERP"},
         %{"order_id" => "o3", "mmp" => true, "order_status" => "open", "instrument_name" => "ETH-PERP"},
-        %{"order_id" => "o4", "mmp" => true, "order_status" => "filled", "instrument_name" => "BTC-PERP"}
+        %{"order_id" => "o4", "mmp" => true, "order_status" => "filled", "instrument_name" => "BTC-PERP"},
+        %{"order_id" => "o5", "mmp" => true, "order_status" => "open", "instrument_name" => "BTCDOM-PERP"}
       ]
 
       quotes = [
@@ -294,11 +335,64 @@ defmodule Bourse.DeriveMarketMakerTest do
           "legs" => [%{"instrument_name" => "BTC-20261231-100000-C"}]
         },
         %{"quote_id" => "q2", "mmp" => true, "status" => "open", "legs" => [%{"instrument_name" => "ETH-PERP"}]},
-        %{"quote_id" => "q3", "mmp" => false, "status" => "open", "legs" => [%{"instrument_name" => "BTC-PERP"}]}
+        %{"quote_id" => "q3", "mmp" => false, "status" => "open", "legs" => [%{"instrument_name" => "BTC-PERP"}]},
+        %{"quote_id" => "q4", "mmp" => true, "status" => "filled", "legs" => [%{"instrument_name" => "BTC-PERP"}]},
+        %{"quote_id" => "q5", "mmp" => true, "status" => "open", "legs" => [%{"instrument_name" => "BTCDOM-PERP"}]}
       ]
 
       assert MM.mmp_exposure(orders, quotes, "BTC") == ["o1", "q1"]
       assert MM.mmp_exposure([], [], "BTC") == []
+    end
+  end
+
+  describe "read_all_pages!/2" do
+    defp pages(pages_by_number) do
+      test = self()
+
+      fn page ->
+        send(test, {:page, page})
+        Map.fetch!(pages_by_number, page)
+      end
+    end
+
+    defp page(rows, num_pages), do: {:ok, %{"quotes" => rows, "pagination" => %{"count" => 0, "num_pages" => num_pages}}}
+
+    @btc_quote %{"quote_id" => "q-btc", "mmp" => true, "status" => "open", "legs" => [%{"instrument_name" => "BTC-PERP"}]}
+    @eth_quote %{"quote_id" => "q-eth", "mmp" => true, "status" => "open", "legs" => [%{"instrument_name" => "ETH-PERP"}]}
+
+    test "reads through the last page, so a BTC MMP quote on page two is exposure" do
+      quotes = MM.read_all_pages!("quotes", pages(%{1 => page([@eth_quote], 2), 2 => page([@btc_quote], 2)}))
+      assert quotes == [@eth_quote, @btc_quote]
+      assert MM.mmp_exposure([], quotes, "BTC") == ["q-btc"]
+      assert_received {:page, 1}
+      assert_received {:page, 2}
+      refute_received {:page, _}
+    end
+
+    test "a single page and an empty result read one page each" do
+      assert MM.read_all_pages!("quotes", pages(%{1 => page([@eth_quote], 1)})) == [@eth_quote]
+      assert_received {:page, 1}
+      refute_received {:page, _}
+      assert MM.read_all_pages!("quotes", pages(%{1 => page([], 0)})) == []
+      assert_received {:page, 1}
+      refute_received {:page, _}
+    end
+
+    test "an incomplete read flunks instead of reading as empty" do
+      incomplete = [
+        %{1 => {:error, :timeout}},
+        %{1 => {:ok, %{"quotes" => [@btc_quote]}}},
+        %{1 => {:ok, %{"quotes" => [], "pagination" => %{"num_pages" => nil}}}},
+        %{1 => {:ok, %{"quotes" => [], "pagination" => %{"num_pages" => -1}}}},
+        %{1 => {:ok, %{"pagination" => %{"num_pages" => 1}}}},
+        %{1 => page([@eth_quote], 2), 2 => {:error, :timeout}},
+        %{1 => page([@eth_quote], 2), 2 => page([@btc_quote], 3)},
+        %{1 => page([@eth_quote], 2), 2 => {:ok, %{"quotes" => nil, "pagination" => %{"num_pages" => 2}}}}
+      ]
+
+      for responses <- incomplete do
+        assert_raise ExUnit.AssertionError, fn -> MM.read_all_pages!("quotes", pages(responses)) end
+      end
     end
   end
 end

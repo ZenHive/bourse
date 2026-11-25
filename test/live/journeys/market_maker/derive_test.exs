@@ -415,7 +415,7 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
              })
 
     assert is_list(configs)
-    Enum.find(configs, &(&1["currency"] == @currency))
+    MM.mmp_config_row!(configs, @currency)
   end
 
   # Undoes a freeze the test induced (mmp_frozen_time 0 stays frozen until a
@@ -453,8 +453,17 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
     assert {:ok, %{body: %{"result" => %{"orders" => orders}}}} =
              Bourse.Derive.private_post_get_open_orders(exchange, account)
 
-    assert {:ok, %{body: %{"result" => %{"quotes" => quotes}}}} =
-             Bourse.Derive.private_post_get_quotes(exchange, Map.put(account, "status", "open"))
+    assert is_list(orders)
+
+    # get_quotes is paginated (Pagination.num_pages, default page size 20);
+    # get_open_orders returns every open order in one result.
+    quotes =
+      MM.read_all_pages!("quotes", fn page ->
+        case Bourse.Derive.private_post_get_quotes(exchange, Map.merge(account, %{"status" => "open", "page" => page})) do
+          {:ok, %{body: %{"result" => result}}} -> {:ok, result}
+          other -> other
+        end
+      end)
 
     case MM.mmp_exposure(orders, quotes, @currency) do
       [] ->

@@ -48,8 +48,7 @@ defmodule Bourse.Test.DeriveMarketMaker do
       amount = Decimal.abs(delta)
 
       reduce_only =
-        not Decimal.equal?(current, 0) and Decimal.lt?(Decimal.mult(delta, current), 0) and
-          not Decimal.gt?(amount, Decimal.abs(current))
+        Decimal.lt?(Decimal.mult(delta, current), 0) and not Decimal.gt?(amount, Decimal.abs(current))
 
       {side, amount, reduce_only}
     end
@@ -182,12 +181,40 @@ defmodule Bourse.Test.DeriveMarketMaker do
       "is_frozen" => false
     }
 
-  def mmp_restore_target(%{} = original),
-    do: original |> Map.take(@mmp_fields) |> Map.put("is_frozen", original["is_frozen"] == true)
+  def mmp_restore_target(%{} = original) do
+    original |> mmp_frozen!() |> then(&Map.put(Map.take(original, @mmp_fields), "is_frozen", &1))
+  end
 
-  @doc "True when `current` is frozen and the target state is not, so cleanup must call `reset_mmp`."
+  @doc """
+  The config row for `currency` from a `private/get_mmp_config` result, or
+  `nil` when none exists. A returned row must carry a boolean `is_frozen`:
+  a missing, null or string flag is not evidence of either state.
+  """
+  @spec mmp_config_row!([map()], String.t()) :: map() | nil
+  def mmp_config_row!(configs, currency) when is_list(configs) do
+    case Enum.find(configs, &(&1["currency"] == currency)) do
+      nil ->
+        nil
+
+      row ->
+        mmp_frozen!(row)
+        row
+    end
+  end
+
+  defp mmp_frozen!(%{"is_frozen" => frozen}) when is_boolean(frozen), do: frozen
+
+  defp mmp_frozen!(row),
+    do: flunk("MMP config row carries no boolean is_frozen, so its freeze state is unknown: #{inspect(row)}")
+
+  @doc """
+  True when cleanup must call `reset_mmp`: a config exists whose freeze flag is
+  anything but literal `false` while the target state is unfrozen.
+  """
   @spec mmp_needs_reset?(map(), map() | nil) :: boolean()
-  def mmp_needs_reset?(target, current), do: current["is_frozen"] == true and target["is_frozen"] != true
+  def mmp_needs_reset?(_target, nil), do: false
+  def mmp_needs_reset?(%{"is_frozen" => false}, %{} = current), do: current["is_frozen"] !== false
+  def mmp_needs_reset?(_target, _current), do: false
 
   @doc """
   The fields where `current` differs from `target`, freeze state included;
@@ -200,12 +227,53 @@ defmodule Bourse.Test.DeriveMarketMaker do
     for field <- ["is_frozen" | @mmp_fields], not same?(field, target[field], current[field]), do: field
   end
 
-  defp same?("is_frozen", target, current), do: target == (current == true)
+  defp same?("is_frozen", target, current), do: is_boolean(current) and current === target
 
   defp same?(field, target, current) when field in ~w(mmp_amount_limit mmp_delta_limit),
     do: not is_nil(current) and Decimal.equal?(Decimal.new(to_string(target)), Decimal.new(to_string(current)))
 
-  defp same?(_field, target, current), do: target == current
+  defp same?(_field, target, current), do: target === current
+
+  @doc """
+  Reads every page of a paginated private RPC. `fetch_page` gets a 1-based
+  page number and returns `{:ok, result}`, where `result` carries the rows
+  under `key` and `pagination.num_pages`. Flunks on any failed page, a
+  missing page count, or a count that changes during the read: an incomplete
+  read is never treated as an empty one.
+  """
+  @spec read_all_pages!(String.t(), (pos_integer() -> {:ok, map()} | term())) :: [map()]
+  def read_all_pages!(key, fetch_page) do
+    {rows, num_pages} = read_page!(key, fetch_page, 1)
+    rest = for page <- 2..num_pages//1, do: read_page!(key, fetch_page, page, num_pages)
+    rows ++ Enum.flat_map(rest, & &1)
+  end
+
+  defp read_page!(key, fetch_page, page) do
+    case fetch_page.(page) do
+      {:ok, %{"pagination" => %{"num_pages" => n}} = result} when is_integer(n) and n >= 0 ->
+        {page_rows!(result, key, page), n}
+
+      other ->
+        flunk("page #{page} of #{key} is not a complete paginated result: #{inspect(other)}")
+    end
+  end
+
+  defp read_page!(key, fetch_page, page, num_pages) do
+    case fetch_page.(page) do
+      {:ok, %{"pagination" => %{"num_pages" => ^num_pages}} = result} ->
+        page_rows!(result, key, page)
+
+      other ->
+        flunk("page #{page} of #{num_pages} of #{key} failed or changed page count mid-read: #{inspect(other)}")
+    end
+  end
+
+  defp page_rows!(result, key, page) do
+    case result[key] do
+      rows when is_list(rows) -> rows
+      other -> flunk("page #{page} of #{key} carries no #{key} list: #{inspect(other)}")
+    end
+  end
 
   @doc """
   Ids of open MMP orders and quotes on `currency`'s instruments: the provider
