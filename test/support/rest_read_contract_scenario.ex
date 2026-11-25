@@ -593,9 +593,20 @@ defmodule Bourse.Test.RestReadContractScenario do
         assert is_map(map) and map_size(map) > 0,
                "#{contract_case["id"]}: #{field} must be a non-empty map, got #{inspect(map)}"
       end)
+
+      assert_field_values!(contract_case, semantic_value, success["field_values"] || %{})
     end)
 
     assert_symbol_meaning!(contract_case, values, resolved)
+  end
+
+  defp assert_field_values!(contract_case, semantic_value, field_values) do
+    Enum.each(field_values, fn {field, allowed} ->
+      value = field_value(semantic_value, field)
+
+      assert value in allowed,
+             "#{contract_case["id"]}: #{field} is #{inspect(value)}, expected one of #{inspect(allowed)}"
+    end)
   end
 
   defp assert_provider_meaning_keys!(contract_case, value, keys) do

@@ -44,8 +44,9 @@ defmodule Bourse.Test.RestReadContractOwnedState do
   # inferred from `source_endpoint_index`, which other venues use to select an
   # ordinary book.
   defp own_resting_order(%{"source_kind" => "algo"} = argument, contract_case, context) do
-    with {:ok, placed} <- place_algo_order(contract_case, context),
-         :ok <- register_algo_cleanup!(context.exchange, placed, argument),
+    with {:ok, cancel_index} <- algo_cancel_index(context.exchange),
+         {:ok, placed} <- place_algo_order(contract_case, context),
+         :ok <- register_algo_cleanup!(context.exchange, placed, cancel_index, argument),
          :ok <- await_algo_readable(context.exchange, placed, argument, contract_case) do
       owned_field(placed, argument)
     end
@@ -98,44 +99,87 @@ defmodule Bourse.Test.RestReadContractOwnedState do
   # for up to ~1.3 s after the create (measured 2026-11-25 on demo-fapi and
   # demo-dapi; once it answers, it keeps answering). -2013 is also what an id the
   # venue never issued gets, so the miss alone proves nothing. It counts as
-  # propagation only while the id is listed on the open-algo book: anything else
-  # — an unlisted id, another error, another id, a miss outliving the bound —
-  # fails the case here rather than being waited out. The contract's own read
-  # stays the assertion; this wait only decides when to make it.
+  # propagation only while the id is still listed on the open-algo book, checked
+  # again after every detail answer. Anything else — an unlisted id, an id that left the
+  # book, another error, another id, a non-open detail, a miss outliving the
+  # deadline — fails the case here rather than being waited out. The contract's
+  # own read stays the assertion; this wait only decides when to make it.
+  #
+  # No read starts once @algo_wait_ms has elapsed, so the wait ends within that
+  # deadline plus one detail and one list request.
   @propagation_miss_code -2013
+  @algo_wait_ms 5_000
+  @algo_poll_ms 250
 
   defp await_algo_readable(exchange, %Order{id: id, symbol: symbol}, argument, contract_case)
        when is_binary(id) and is_binary(symbol) do
-    with :ok <- listed_on_algo_book(exchange, id, symbol, argument),
+    deadline = System.monotonic_time(:millisecond) + @algo_wait_ms
+
+    with :ok <- still_listed(exchange, id, symbol, argument),
          {:ok, read} <- algo_detail_read(contract_case) do
       opts = [symbol: symbol, endpoint_index: contract_case["endpoint_index"]]
-      poll = Journey.poll_until(fn -> classify_algo_detail(read.(exchange, id, opts), id) end)
-      algo_wait_outcome(poll, id, contract_case)
+      relisted = fn -> still_listed(exchange, id, symbol, argument) end
+      poll_algo_detail(fn -> read.(exchange, id, opts) end, relisted, id, contract_case, deadline)
     end
   end
 
   defp await_algo_readable(_exchange, placed, _argument, _contract_case), do: {:error, {:algo_order_without_id, placed}}
 
-  defp classify_algo_detail({:ok, %Order{id: id}}, id), do: {:ok, :readable}
-  defp classify_algo_detail({:error, %Error{type: :order_not_found, code: @propagation_miss_code}}, _id), do: :retry
-  defp classify_algo_detail(other, id), do: {:ok, {:unexpected_algo_detail, id, other}}
+  defp poll_algo_detail(read, relisted, id, contract_case, deadline) do
+    with {:ok, :miss} <- algo_detail_step(classify_algo_detail(read.(), id), relisted),
+         :ok <- before_deadline(deadline, id, contract_case) do
+      Process.sleep(@algo_poll_ms)
+      poll_algo_detail(read, relisted, id, contract_case, deadline)
+    end
+  end
 
-  defp algo_wait_outcome({:ok, :readable}, _id, _contract_case), do: :ok
-  defp algo_wait_outcome({:ok, unexpected}, _id, _contract_case), do: {:error, unexpected}
+  # Either answer is only trusted while the list still carries the id: the
+  # detail read lags a cancel too, answering "open" for up to ~1 s after it.
+  defp algo_detail_step(:ok, relisted), do: relisted.()
 
-  defp algo_wait_outcome(:timeout, id, contract_case),
-    do: {:error, {:algo_order_never_readable, id, contract_case["method"]}}
+  defp algo_detail_step(:miss, relisted) do
+    with :ok <- relisted.(), do: {:ok, :miss}
+  end
 
-  defp listed_on_algo_book(exchange, id, symbol, argument) do
+  defp algo_detail_step(error, _relisted), do: error
+
+  defp classify_algo_detail({:ok, %Order{id: id, status: "open"}}, id), do: :ok
+  defp classify_algo_detail({:error, %Error{type: :order_not_found, code: @propagation_miss_code}}, _id), do: :miss
+  defp classify_algo_detail(other, id), do: {:error, {:unexpected_algo_detail, id, other}}
+
+  defp before_deadline(deadline, id, contract_case) do
+    if System.monotonic_time(:millisecond) + @algo_poll_ms < deadline,
+      do: :ok,
+      else: {:error, {:algo_order_never_readable, id, contract_case["method"], @algo_wait_ms}}
+  end
+
+  defp still_listed(exchange, id, symbol, argument) do
+    case algo_book_membership(exchange, id, symbol, argument) do
+      {:ok, :listed} -> :ok
+      {:ok, :absent} -> {:error, {:algo_order_not_listed, id}}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp algo_book_membership(exchange, id, symbol, argument) do
     case Bourse.fetch_open_orders(exchange, symbol: symbol, endpoint_index: argument["source_endpoint_index"]) do
       {:ok, rows} when is_list(rows) ->
-        if Enum.any?(rows, &match?(%Order{id: ^id}, &1)),
-          do: :ok,
-          else: {:error, {:algo_order_not_listed, id, Enum.map(rows, & &1.id)}}
+        if Enum.any?(rows, &match?(%Order{id: ^id}, &1)), do: {:ok, :listed}, else: {:ok, :absent}
 
       other ->
         {:error, {:algo_book_unreadable, other}}
     end
+  end
+
+  # The unqualified cancel tries the regular book's `orderId` delete before the
+  # algo book's, so the cleanup names the algo delete slot explicitly.
+  defp algo_cancel_index(%{module: module}) do
+    index =
+      Enum.find_index(module.__unified_endpoints__()[:cancel_order] || [], fn config ->
+        config.method == :delete and config.path == "algoOrder"
+      end)
+
+    if is_integer(index), do: {:ok, index}, else: {:error, {:no_algo_cancel_slot, module}}
   end
 
   defp algo_detail_read(%{"method" => "fetchOrder"}), do: {:ok, &Bourse.fetch_order/3}
@@ -297,31 +341,39 @@ defmodule Bourse.Test.RestReadContractOwnedState do
     :ok
   end
 
-  # `release_order!` reads `order_not_found` as already gone. For an algo id that
-  # is also what a cancel routed to the wrong book answers, so the cleanup checks
-  # the open-algo book instead of trusting the miss.
-  defp register_algo_cleanup!(exchange, %Order{id: id, symbol: symbol}, argument) do
+  # A cancel answer is not proof the order is gone: `order_not_found` is also
+  # what a delete aimed at the wrong book gets. The cleanup passes only when a
+  # successful open-algo read no longer lists the id (the list reflects a cancel
+  # on its next read, measured 2026-11-25).
+  defp register_algo_cleanup!(exchange, %Order{id: id, symbol: symbol}, cancel_index, argument) do
     ExUnit.Callbacks.on_exit(fn ->
-      release_algo_order!(Bourse.cancel_order(exchange, id, symbol: symbol), exchange, id, symbol, argument)
+      cancel = Bourse.cancel_order(exchange, id, symbol: symbol, endpoint_index: cancel_index)
+      accept_algo_cancel!(cancel, id)
+      confirm_algo_absent!(algo_book_membership(exchange, id, symbol, argument), id, cancel)
     end)
 
     :ok
   end
 
-  defp release_algo_order!({:ok, %Order{id: id}}, _exchange, id, _symbol, _argument), do: :ok
+  defp accept_algo_cancel!({:ok, %Order{id: id, status: "canceled"}}, id), do: :ok
+  defp accept_algo_cancel!({:error, %Error{type: :order_not_found}}, _id), do: :ok
 
-  defp release_algo_order!({:error, %Error{type: :order_not_found}} = miss, exchange, id, symbol, argument) do
-    if listed_on_algo_book(exchange, id, symbol, argument) == :ok do
-      ExUnit.Assertions.flunk(
-        "cleanup for algo order #{id} answered #{inspect(miss)} while it still rests on the algo book"
-      )
-    end
-
-    :ok
-  end
-
-  defp release_algo_order!(other, _exchange, id, _symbol, _argument),
+  defp accept_algo_cancel!(other, id),
     do: ExUnit.Assertions.flunk("cleanup for algo order #{id} failed: #{inspect(other)}")
+
+  defp confirm_algo_absent!({:ok, :absent}, _id, _cancel), do: :ok
+
+  defp confirm_algo_absent!({:ok, :listed}, id, cancel),
+    do:
+      ExUnit.Assertions.flunk(
+        "cleanup for algo order #{id} answered #{inspect(cancel)} but it still rests on the algo book"
+      )
+
+  defp confirm_algo_absent!({:error, reason}, id, cancel),
+    do:
+      ExUnit.Assertions.flunk(
+        "cleanup for algo order #{id} answered #{inspect(cancel)} and its absence could not be confirmed: #{inspect(reason)}"
+      )
 
   defp min_amount(%{limits: %{"amount" => %{"min" => min}}}) when is_number(min) and min > 0, do: min
   defp min_amount(_market), do: 0.001

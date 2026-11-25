@@ -1164,7 +1164,12 @@
           "status",
           "type",
           "side"
-        ]
+        ],
+        "field_values": {
+          "status": [
+            "open"
+          ]
+        }
       },
       "authority_source_ids": [
         "developer-docs-full"
