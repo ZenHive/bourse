@@ -105,31 +105,41 @@ defmodule Bourse.Test.RestReadContractOwnedState do
   # deadline — fails the case here rather than being waited out. The contract's
   # own read stays the assertion; this wait only decides when to make it.
   #
-  # No read starts once @algo_wait_ms has elapsed, so the wait ends within that
-  # deadline plus one detail and one list request.
+  # Every list and detail request checks the clock immediately before it starts,
+  # and none starts once @algo_wait_ms has elapsed: the wait then fails as
+  # never readable. It ends within that deadline plus the one request already
+  # in flight when the deadline passed.
   @propagation_miss_code -2013
   @algo_wait_ms 5_000
   @algo_poll_ms 250
 
   defp await_algo_readable(exchange, %Order{id: id, symbol: symbol}, argument, contract_case)
        when is_binary(id) and is_binary(symbol) do
-    deadline = System.monotonic_time(:millisecond) + @algo_wait_ms
+    guarded = algo_wait_guard(System.monotonic_time(:millisecond) + @algo_wait_ms, id, contract_case)
+    relisted = fn -> guarded.(fn -> still_listed(exchange, id, symbol, argument) end) end
 
-    with :ok <- still_listed(exchange, id, symbol, argument),
-         {:ok, read} <- algo_detail_read(contract_case) do
+    with {:ok, read} <- algo_detail_read(contract_case),
+         :ok <- relisted.() do
       opts = [symbol: symbol, endpoint_index: contract_case["endpoint_index"]]
-      relisted = fn -> still_listed(exchange, id, symbol, argument) end
-      poll_algo_detail(fn -> read.(exchange, id, opts) end, relisted, id, contract_case, deadline)
+      detail_request = fn -> classify_algo_detail(read.(exchange, id, opts), id) end
+      poll_algo_detail(fn -> guarded.(detail_request) end, relisted)
     end
   end
 
   defp await_algo_readable(_exchange, placed, _argument, _contract_case), do: {:error, {:algo_order_without_id, placed}}
 
-  defp poll_algo_detail(read, relisted, id, contract_case, deadline) do
-    with {:ok, :miss} <- algo_detail_step(classify_algo_detail(read.(), id), relisted),
-         :ok <- before_deadline(deadline, id, contract_case) do
+  defp algo_wait_guard(deadline, id, contract_case) do
+    fn request ->
+      if System.monotonic_time(:millisecond) < deadline,
+        do: request.(),
+        else: {:error, {:algo_order_never_readable, id, contract_case["method"], @algo_wait_ms}}
+    end
+  end
+
+  defp poll_algo_detail(detail, relisted) do
+    with {:ok, :miss} <- algo_detail_step(detail.(), relisted) do
       Process.sleep(@algo_poll_ms)
-      poll_algo_detail(read, relisted, id, contract_case, deadline)
+      poll_algo_detail(detail, relisted)
     end
   end
 
@@ -146,12 +156,6 @@ defmodule Bourse.Test.RestReadContractOwnedState do
   defp classify_algo_detail({:ok, %Order{id: id, status: "open"}}, id), do: :ok
   defp classify_algo_detail({:error, %Error{type: :order_not_found, code: @propagation_miss_code}}, _id), do: :miss
   defp classify_algo_detail(other, id), do: {:error, {:unexpected_algo_detail, id, other}}
-
-  defp before_deadline(deadline, id, contract_case) do
-    if System.monotonic_time(:millisecond) + @algo_poll_ms < deadline,
-      do: :ok,
-      else: {:error, {:algo_order_never_readable, id, contract_case["method"], @algo_wait_ms}}
-  end
 
   defp still_listed(exchange, id, symbol, argument) do
     case algo_book_membership(exchange, id, symbol, argument) do

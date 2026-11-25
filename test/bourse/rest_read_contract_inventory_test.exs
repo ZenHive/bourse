@@ -66,6 +66,64 @@ defmodule Bourse.RestReadContractInventoryTest do
              )
   end
 
+  describe "field_values" do
+    defp open_order_case(success_overrides) do
+      %{
+        "id" => "binanceusdm:fetchOpenOrder:1:fapiPrivateGetAlgoOrder",
+        "method" => "fetchOpenOrder",
+        "venue" => "binanceusdm",
+        "success" =>
+          Map.merge(
+            %{
+              "representation" => "parsed",
+              "collection" => "single",
+              "module" => "Bourse.Order",
+              "required_fields" => ["id"],
+              "any_fields" => ["symbol", "status", "type", "side"]
+            },
+            success_overrides
+          )
+      }
+    end
+
+    test "an absent declaration constrains nothing" do
+      assert :ok = RestReadContracts.validate_field_values!(open_order_case(%{}))
+    end
+
+    test "a map from field names to allowed values is accepted" do
+      assert :ok = RestReadContracts.validate_field_values!(open_order_case(%{"field_values" => %{"status" => ["open"]}}))
+    end
+
+    for {label, malformed} <- [
+          false: false,
+          null: nil,
+          empty_list: [],
+          non_map: "status",
+          empty_map: %{},
+          empty_allowed_list: %{"status" => []},
+          non_list_allowed: %{"status" => "open"}
+        ] do
+      test "a #{label} declaration is rejected" do
+        contract_case = open_order_case(%{"field_values" => unquote(Macro.escape(malformed))})
+
+        assert_raise ArgumentError, ~r/field_values must map field names to non-empty lists/, fn ->
+          RestReadContracts.validate_field_values!(contract_case)
+        end
+      end
+    end
+
+    test "a declared status rejects an order outside the allowed values" do
+      contract_case = open_order_case(%{"field_values" => %{"status" => ["open"]}})
+      canceled = %Bourse.Order{id: "1", symbol: "BTC/USDT:USDT", status: "canceled"}
+
+      assert_raise ExUnit.AssertionError, ~r/status is "canceled", expected one of \["open"\]/, fn ->
+        RestReadContractScenario.assert_live_value!(contract_case, canceled)
+      end
+
+      assert :ok = RestReadContractScenario.assert_live_value!(contract_case, %{canceled | status: "open"})
+    end
+  end
+
   test "nested map contracts keep a false provider boolean as meaning" do
     contract_case = %{
       "id" => "binancecoinm:fetchPositionMode:0:dapiPrivateGetPositionSideDual",

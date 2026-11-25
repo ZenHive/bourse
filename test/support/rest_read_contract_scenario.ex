@@ -594,13 +594,13 @@ defmodule Bourse.Test.RestReadContractScenario do
                "#{contract_case["id"]}: #{field} must be a non-empty map, got #{inspect(map)}"
       end)
 
-      assert_field_values!(contract_case, semantic_value, success["field_values"] || %{})
+      assert_field_values!(contract_case, semantic_value, Map.get(success, "field_values", %{}))
     end)
 
     assert_symbol_meaning!(contract_case, values, resolved)
   end
 
-  defp assert_field_values!(contract_case, semantic_value, field_values) do
+  defp assert_field_values!(contract_case, semantic_value, field_values) when is_map(field_values) do
     Enum.each(field_values, fn {field, allowed} ->
       value = field_value(semantic_value, field)
 

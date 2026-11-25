@@ -123,6 +123,30 @@ defmodule Bourse.Test.RestReadContracts do
     :ok
   end
 
+  @doc """
+  Validates a success case's optional `field_values` declaration.
+
+  Absent means no value constraint. Present must be a non-empty map from field
+  names to non-empty lists of allowed values; any other shape raises instead of
+  silently constraining nothing.
+  """
+  @spec validate_field_values!(map()) :: :ok
+  def validate_field_values!(%{"success" => success} = contract_case) when is_map(success) do
+    case Map.fetch(success, "field_values") do
+      :error ->
+        :ok
+
+      {:ok, field_values} ->
+        ensure!(
+          is_map(field_values) and map_size(field_values) > 0 and Enum.all?(field_values, &allowed_values?/1),
+          "#{contract_case["id"]}: field_values must map field names to non-empty lists of allowed values, " <>
+            "got #{inspect(field_values)}"
+        )
+    end
+  end
+
+  defp allowed_values?({field, allowed}), do: is_binary(field) and field != "" and is_list(allowed) and allowed != []
+
   defp validate_sources!(document) do
     Enum.each(document["venues"], fn {venue, contract} ->
       sources = contract["authority_sources"]
@@ -172,6 +196,7 @@ defmodule Bourse.Test.RestReadContracts do
       ensure!(is_binary(contract_case["path"]), "#{contract_case["id"]}: provider path missing")
       ensure!(is_map(contract_case["success"]), "#{contract_case["id"]}: success meaning missing")
       ensure!(is_list(contract_case["arguments"]), "#{contract_case["id"]}: argument data missing")
+      validate_field_values!(contract_case)
     end)
 
     expanded
