@@ -802,12 +802,17 @@ defmodule Bourse.WS.Adapter do
   end
 
   # A call whose ack never arrived may have been accepted after all. The venue
-  # then refuses the retry as already subscribed to exactly this call's
-  # channels, which means the group is active.
+  # then refuses the retry as already subscribed, naming the channels that are
+  # active; the rest of the group is subscribed again on its own until each
+  # channel is accepted or confirmed active, or the venue refuses it.
   defp restore_group(ws, channels, opts) do
     case WS.subscribe(ws, channels, opts) do
       {:error, {:subscription_rejected, frame}} = error ->
-        if SubscribeAck.already_subscribed?(ws.exchange.id, frame, channels), do: :ok, else: error
+        case SubscribeAck.already_subscribed(ws.exchange.id, frame, channels) do
+          [] -> error
+          active when length(active) == length(channels) -> :ok
+          active -> restore_group(ws, channels -- active, opts)
+        end
 
       result ->
         result

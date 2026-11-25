@@ -17,6 +17,8 @@ defmodule Bourse.WS.SubscribeAck do
   on reject.
   """
 
+  alias Bourse.WS.Subscription.MethodSubscription
+
   @type classification :: :success | {:success, :data} | :not_ack | {:rejected, map()}
 
   @doc """
@@ -43,6 +45,30 @@ defmodule Bourse.WS.SubscribeAck do
   def classify(exchange_id, frame) when is_binary(exchange_id) and is_map(frame), do: classify_generic(frame)
 
   @doc """
+  Classifies a frame as the outcome of subscribing `channels`.
+
+  Hyperliquid answers each subscribe with the subscription it accepted
+  (`data.subscription`, observed on api.hyperliquid-testnet.xyz 2026-11-25), so
+  an acceptance of some other subscription — a late reply to an earlier call —
+  is not this call's outcome. Every other venue is classified as by `classify/2`.
+  """
+  @spec classify(String.t(), map() | [map()], [String.t() | map()]) :: classification()
+  def classify("hyperliquid", %{"channel" => "subscriptionResponse", "data" => data} = frame, channels) do
+    case data do
+      %{"method" => "subscribe", "subscription" => %{} = echoed} ->
+        if same_hyperliquid_subscription?(echoed, wire_subscription(channels)), do: :success, else: :not_ack
+
+      _ ->
+        "hyperliquid" |> classify(frame) |> unconfirmed()
+    end
+  end
+
+  def classify(exchange_id, frame, _channels), do: classify(exchange_id, frame)
+
+  defp unconfirmed(:success), do: :not_ack
+  defp unconfirmed(other), do: other
+
+  @doc """
   Turns a classification into the public `subscribe/3` return value.
 
   A non-ack correlated reply is an unexpected protocol response, not evidence
@@ -56,34 +82,51 @@ defmodule Bourse.WS.SubscribeAck do
   def to_result({:rejected, frame}), do: {:error, {:subscription_rejected, frame}}
 
   @doc """
-  Whether a rejected subscribe was refused because exactly `channels` are
-  already subscribed on this connection. Replies observed 2026-11-25:
-  bybit `ret_msg: "error:already subscribed,topic:<topics>"` (api-testnet),
-  hyperliquid `"Already subscribed: <subscription JSON>"` (testnet), whose
-  JSON echoes the request with its omitted optional fields at their defaults. No other
-  venue's refusal is read this way.
+  The channels of a refused subscribe that the refusal reports as already
+  subscribed on this connection; any channel not returned may not be active.
+  Replies observed 2026-11-25: bybit `ret_msg: "error:already subscribed,topic:<topic>"`
+  (api-testnet), which names only the first already-subscribed topic of the
+  request and subscribes none of its other topics, and hyperliquid
+  `"Already subscribed: <subscription JSON>"` (testnet), whose JSON echoes the
+  request with its omitted optional fields at their defaults. No other venue's
+  refusal is read this way.
   """
-  @spec already_subscribed?(String.t(), map(), [String.t() | map()]) :: boolean()
-  def already_subscribed?("bybit", %{"ret_msg" => "error:already subscribed,topic:" <> topics}, channels),
-    do: Enum.sort(String.split(topics, ",")) == Enum.sort(channels)
+  @spec already_subscribed(String.t(), map(), [String.t() | map()]) :: [String.t() | map()]
+  def already_subscribed("bybit", %{"ret_msg" => "error:already subscribed,topic:" <> topics}, channels) do
+    named = String.split(topics, ",")
+    Enum.filter(channels, &(&1 in named))
+  end
 
-  def already_subscribed?("hyperliquid", %{"channel" => "error", "data" => "Already subscribed: " <> json}, [channel])
-      when is_map(channel) do
-    case Jason.decode(json) do
-      {:ok, %{} = echoed} -> same_hyperliquid_subscription?(echoed, channel)
-      _ -> false
+  def already_subscribed("hyperliquid", %{"channel" => "error", "data" => "Already subscribed: " <> json}, channels) do
+    with {:ok, %{} = echoed} <- Jason.decode(json),
+         true <- same_hyperliquid_subscription?(echoed, wire_subscription(channels)) do
+      channels
+    else
+      _ -> []
     end
   end
 
-  def already_subscribed?(_exchange_id, _frame, _channels), do: false
+  def already_subscribed(_exchange_id, _frame, _channels), do: []
 
   # The echo fills every optional field the request left out with its default
   # (`"nSigFigs": null, "mantissa": null, "fast": false` on l2Book); a field set
   # to anything else names a different subscription.
-  defp same_hyperliquid_subscription?(echoed, channel) do
+  defp same_hyperliquid_subscription?(echoed, %{} = sent) do
     Enum.all?(echoed, fn {field, value} ->
-      if Map.has_key?(channel, field), do: channel[field] == value, else: value in [nil, false]
-    end) and Enum.all?(channel, fn {field, _} -> Map.has_key?(echoed, field) end)
+      if Map.has_key?(sent, field), do: sent[field] == value, else: value in [nil, false]
+    end) and Enum.all?(sent, fn {field, _} -> Map.has_key?(echoed, field) end)
+  end
+
+  defp same_hyperliquid_subscription?(_echoed, _sent), do: false
+
+  # The subscription object exactly as the subscribe frame carries it on the
+  # wire: built by the venue's frame builder, then JSON-encoded, so a string
+  # channel and atom keys compare as the venue sees them.
+  defp wire_subscription(channels) do
+    case MethodSubscription.subscribe(channels, %{}) do
+      %{"subscription" => subscription} -> subscription |> Jason.encode!() |> Jason.decode!()
+      _ -> nil
+    end
   end
 
   # ---------------------------------------------------------------------------

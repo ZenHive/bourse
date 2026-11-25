@@ -45,33 +45,61 @@ defmodule Bourse.WS.SubscribeAckTest do
       assert :not_ack = SubscribeAck.classify("okx", %{"event" => "notice"})
     end
 
-    test "a refusal is read as already subscribed only when it names exactly the call's channels" do
+    test "a refusal confirms only the channels it names as already subscribed" do
       bybit = %{
         "op" => "subscribe",
         "success" => false,
         "ret_msg" => "error:already subscribed,topic:publicTrade.BTCUSDT"
       }
 
-      assert SubscribeAck.already_subscribed?("bybit", bybit, ["publicTrade.BTCUSDT"])
-      refute SubscribeAck.already_subscribed?("bybit", bybit, ["publicTrade.ETHUSDT"])
+      assert ["publicTrade.BTCUSDT"] = SubscribeAck.already_subscribed("bybit", bybit, ["publicTrade.BTCUSDT"])
+      assert [] = SubscribeAck.already_subscribed("bybit", bybit, ["publicTrade.ETHUSDT"])
+      # Bybit names only the first active topic of a multi-topic request.
+      assert ["publicTrade.BTCUSDT"] =
+               SubscribeAck.already_subscribed("bybit", bybit, ["orderbook.50.BTCUSDT", "publicTrade.BTCUSDT"])
 
-      refute SubscribeAck.already_subscribed?("bybit", %{bybit | "ret_msg" => "error:handler not found"}, [
-               "publicTrade.BTCUSDT"
-             ])
+      assert [] =
+               SubscribeAck.already_subscribed("bybit", %{bybit | "ret_msg" => "error:handler not found"}, [
+                 "publicTrade.BTCUSDT"
+               ])
 
       sub = %{"type" => "trades", "coin" => "BTC"}
       hl = %{"channel" => "error", "data" => ~s(Already subscribed: {"type":"trades","coin":"BTC"})}
-      assert SubscribeAck.already_subscribed?("hyperliquid", hl, [sub])
-      refute SubscribeAck.already_subscribed?("hyperliquid", hl, [%{sub | "coin" => "ETH"}])
+      assert [^sub] = SubscribeAck.already_subscribed("hyperliquid", hl, [sub])
+      assert [] = SubscribeAck.already_subscribed("hyperliquid", hl, [%{sub | "coin" => "ETH"}])
 
       # As observed on testnet: the echo carries l2Book's optional fields at their defaults.
       book = %{"type" => "l2Book", "coin" => "BTC"}
       echo = ~s(Already subscribed: {"type":"l2Book","coin":"BTC","nSigFigs":null,"mantissa":null,"fast":false})
-      assert SubscribeAck.already_subscribed?("hyperliquid", %{hl | "data" => echo}, [book])
+      assert [^book] = SubscribeAck.already_subscribed("hyperliquid", %{hl | "data" => echo}, [book])
       other = ~s(Already subscribed: {"type":"l2Book","coin":"BTC","nSigFigs":5,"mantissa":null,"fast":false})
-      refute SubscribeAck.already_subscribed?("hyperliquid", %{hl | "data" => other}, [book])
-      refute SubscribeAck.already_subscribed?("hyperliquid", %{hl | "data" => "Already unsubscribed: x"}, [sub])
-      refute SubscribeAck.already_subscribed?("okx", %{"event" => "error"}, ["x"])
+      assert [] = SubscribeAck.already_subscribed("hyperliquid", %{hl | "data" => other}, [book])
+      assert [] = SubscribeAck.already_subscribed("hyperliquid", %{hl | "data" => "Already unsubscribed: x"}, [sub])
+      assert [] = SubscribeAck.already_subscribed("okx", %{"event" => "error"}, ["x"])
+
+      # Compared as sent on the wire: atom keys and a plain string channel.
+      atom_book = %{type: "l2Book", coin: "BTC"}
+      assert [^atom_book] = SubscribeAck.already_subscribed("hyperliquid", %{hl | "data" => echo}, [atom_book])
+      mids = %{hl | "data" => ~s(Already subscribed: {"type":"allMids"})}
+      assert ["allMids"] = SubscribeAck.already_subscribed("hyperliquid", mids, ["allMids"])
+    end
+
+    test "a hyperliquid acceptance is the outcome only of the subscription it echoes" do
+      accepted = fn subscription ->
+        %{"channel" => "subscriptionResponse", "data" => %{"method" => "subscribe", "subscription" => subscription}}
+      end
+
+      trades = %{"type" => "trades", "coin" => "BTC"}
+      book = %{"type" => "l2Book", "coin" => "BTC"}
+      assert :success = SubscribeAck.classify("hyperliquid", accepted.(trades), [trades])
+      assert :not_ack = SubscribeAck.classify("hyperliquid", accepted.(trades), [book])
+      assert :success = SubscribeAck.classify("hyperliquid", accepted.(trades), [%{type: "trades", coin: "BTC"}])
+      assert :success = SubscribeAck.classify("hyperliquid", accepted.(%{"type" => "allMids"}), ["allMids"])
+
+      assert {:rejected, %{"channel" => "error"}} =
+               SubscribeAck.classify("hyperliquid", %{"channel" => "error", "data" => "Error parsing JSON"}, [book])
+
+      assert :success = SubscribeAck.classify("bybit", %{"op" => "subscribe", "success" => true}, ["x"])
     end
 
     test "hyperliquid success and rejection" do

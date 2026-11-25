@@ -427,7 +427,7 @@ defmodule Bourse.WS do
     emit_ws_send(ws.exchange, ws.section)
 
     with {:ok, payload} <- subscription_payload(ws.exchange, channels, opts, &Subscription.build_subscribe/3) do
-      confirm_subscribe(ws.zen_client, payload, ws.exchange.id, ack_timeout_ms(opts))
+      confirm_subscribe(ws.zen_client, payload, ws.exchange.id, channels, ack_timeout_ms(opts))
     end
   end
 
@@ -869,14 +869,14 @@ defmodule Bourse.WS do
     |> Map.delete("ack_timeout_ms")
   end
 
-  defp confirm_subscribe(zen_client, payload, exchange_id, ack_timeout_ms) do
+  defp confirm_subscribe(zen_client, payload, exchange_id, channels, ack_timeout_ms) do
     case send_payload(zen_client, payload) do
       :ok ->
-        await_subscribe_ack(exchange_id, ack_timeout_ms)
+        await_subscribe_ack(exchange_id, channels, ack_timeout_ms)
 
       {:ok, response} when is_map(response) ->
         response
-        |> then(&SubscribeAck.classify(exchange_id, &1))
+        |> then(&SubscribeAck.classify(exchange_id, &1, channels))
         |> SubscribeAck.to_result()
 
       {:error, _} = err ->
@@ -887,13 +887,13 @@ defmodule Bourse.WS do
   # Wait for an async subscribe ack/reject without disturbing the caller's
   # mailbox: the ack is taken out where it sits and every other message stays in
   # arrival order.
-  defp await_subscribe_ack(_exchange_id, 0), do: :ok
+  defp await_subscribe_ack(_exchange_id, _channels, 0), do: :ok
 
-  defp await_subscribe_ack(exchange_id, timeout_ms) do
+  defp await_subscribe_ack(exchange_id, channels, timeout_ms) do
     deadline = System.monotonic_time(:millisecond) + timeout_ms
 
     classify = fn frame ->
-      case SubscribeAck.classify(exchange_id, frame) do
+      case SubscribeAck.classify(exchange_id, frame, channels) do
         :success -> {:take, :success}
         # The ack is also data: it stays in the mailbox for the caller.
         {:success, :data} -> {:leave, :success}

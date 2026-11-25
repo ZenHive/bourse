@@ -84,6 +84,63 @@ defmodule Bourse.WS.AdapterTest do
     def handle_call(:get_state, _from, state), do: {:reply, :connected, state}
   end
 
+  defmodule ScriptedTransport do
+    @moduledoc false
+    # Answers each frame with the replies `script.(epoch, message)` returns,
+    # as `{delay_ms, frame}`, and reports every frame sent.
+    use GenServer
+
+    @impl true
+    def init({owner, handler, epoch, script}), do: {:ok, {owner, handler, epoch, script}}
+
+    @impl true
+    def handle_call({:send_message, payload}, _from, {owner, handler, epoch, script} = state) do
+      message = Jason.decode!(payload)
+      send(owner, {:sent, epoch, message})
+
+      Enum.each(script.(epoch, message), &deliver(handler, &1))
+      {:reply, :ok, state}
+    end
+
+    def handle_call(:get_state, _from, state), do: {:reply, :connected, state}
+
+    defp deliver(handler, {0, frame}), do: handler.({:message, frame})
+    defp deliver(handler, {delay, frame}), do: spawn(fn -> Process.sleep(delay) && handler.({:message, frame}) end)
+  end
+
+  # Starts an adapter whose every connection is a ScriptedTransport numbered
+  # from 1, and returns it with that connection's pid lookup.
+  defp scripted_adapter(venue, script) do
+    test_pid = self()
+    epochs = :atomics.new(1, [])
+
+    zen_connect = fn url, opts ->
+      epoch = :atomics.add_get(epochs, 1, 1)
+      {:ok, pid} = GenServer.start(ScriptedTransport, {test_pid, Keyword.fetch!(opts, :handler), epoch, script})
+      send(test_pid, {:connected, epoch, pid})
+      {:ok, %Client{server_pid: pid, state: :connected, url: url}}
+    end
+
+    connect_fun = fn ex, section, opts -> WS.connect(ex, section, Keyword.put(opts, :connect_fun, zen_connect)) end
+    {:ok, adapter} = Adapter.start_link(Exchange.new!(venue), :public, connect_fun: connect_fun)
+    on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter) end)
+    _ = :sys.get_state(adapter)
+    adapter
+  end
+
+  defp drop_connection(epoch) do
+    assert_receive {:connected, ^epoch, pid}
+    ExUnit.CaptureLog.capture_log(fn -> GenServer.stop(pid, {:shutdown, :closed}) end)
+  end
+
+  defp sent(epoch, acc, window_ms) do
+    receive do
+      {:sent, ^epoch, message} -> sent(epoch, acc ++ [message], window_ms)
+    after
+      window_ms -> acc
+    end
+  end
+
   setup do
     topic = Broadcast.topic("bybit", :watch_ticker, "tickers.BTCUSDT")
     Broadcast.subscribe(topic)
@@ -977,6 +1034,126 @@ defmodule Bourse.WS.AdapterTest do
 
         assert :sys.get_state(adapter).restore_attempts == 0
         refute_receive {:transport_sent, _, _, _}, 2_500
+      end
+    end
+
+    # Hyperliquid's acceptance echoes the subscription it accepted. Here the
+    # trades ack arrives late, while the book's restore is waiting for its own
+    # answer, which is a refusal.
+    test "a late acceptance of one group is not taken for another group's" do
+      hl_accept = fn sub ->
+        %{"channel" => "subscriptionResponse", "data" => %{"method" => "subscribe", "subscription" => sub}}
+      end
+
+      book_sends = :atomics.new(2, [])
+
+      script = fn
+        1, %{"method" => "subscribe", "subscription" => sub} ->
+          [{0, hl_accept.(sub)}]
+
+        2, %{"method" => "subscribe", "subscription" => %{"type" => "trades"} = sub} ->
+          if :atomics.add_get(book_sends, 2, 1) == 1,
+            do: [{200, hl_accept.(sub)}],
+            else: [{0, %{"channel" => "error", "data" => ~s(Already subscribed: {"type":"trades","coin":"BTC"})}}]
+
+        2, %{"method" => "subscribe", "subscription" => %{"type" => "l2Book"} = sub} ->
+          if :atomics.add_get(book_sends, 1, 1) == 1,
+            do: [{400, %{"channel" => "error", "data" => "Error parsing JSON into valid websocket request"}}],
+            else: [{0, hl_accept.(sub)}]
+
+        _, _ ->
+          []
+      end
+
+      adapter = scripted_adapter("hyperliquid", script)
+      trades = %{"type" => "trades", "coin" => "BTC"}
+      book = %{"type" => "l2Book", "coin" => "BTC"}
+      assert :ok = Adapter.subscribe(adapter, [trades], ack_timeout_ms: 100)
+      assert :ok = Adapter.subscribe(adapter, [book], ack_timeout_ms: 1_000)
+
+      ExUnit.CaptureLog.capture_log(fn ->
+        drop_connection(1)
+        sends = sent(2, [], 2_500)
+        assert Enum.count(sends, &(&1["subscription"] == book)) == 2
+        _ = :sys.get_state(adapter)
+      end)
+
+      assert :sys.get_state(adapter).restore_attempts == 0
+    end
+
+    # Bybit names only the first already-subscribed topic of a refused request
+    # and subscribes none of the others (api-testnet, 2026-11-25).
+    for {mode, outcome} <- [{:both_active, "already subscribed"}, {:second_new, "accepted"}] do
+      test "a multi-topic retry whose refusal names one topic resends the rest, which is #{outcome}" do
+        mode = unquote(mode)
+        retries = :atomics.new(1, [])
+
+        refusal = fn topic ->
+          %{"op" => "subscribe", "success" => false, "ret_msg" => "error:already subscribed,topic:" <> topic}
+        end
+
+        script = fn
+          1, %{"op" => "subscribe"} ->
+            [{0, %{"op" => "subscribe", "success" => true}}]
+
+          2, %{"op" => "subscribe", "args" => [first | _] = args} ->
+            case {:atomics.add_get(retries, 1, 1), mode, args} do
+              {1, _, _} -> []
+              {_, :second_new, ["publicTrade.BTCUSDT"]} -> [{0, %{"op" => "subscribe", "success" => true}}]
+              _ -> [{0, refusal.(first)}]
+            end
+
+          _, _ ->
+            []
+        end
+
+        adapter = scripted_adapter("bybit", script)
+        topics = ["orderbook.50.BTCUSDT", "publicTrade.BTCUSDT"]
+        assert :ok = Adapter.subscribe(adapter, topics, ack_timeout_ms: 100)
+
+        ExUnit.CaptureLog.capture_log(fn ->
+          drop_connection(1)
+          sends = sent(2, [], 3_000)
+          assert Enum.map(sends, & &1["args"]) == [topics, topics, ["publicTrade.BTCUSDT"]]
+        end)
+
+        assert :sys.get_state(adapter).restore_attempts == 0
+      end
+    end
+
+    # The venue echoes the subscription as it was serialized, so a string
+    # channel or atom keys must compare in that form.
+    for {label, channel, echo} <- [
+          {"an atom-keyed map", Macro.escape(%{type: "l2Book", coin: "BTC"}),
+           ~s({"type":"l2Book","coin":"BTC","nSigFigs":null,"mantissa":null,"fast":false})},
+          {"a string channel", "allMids", ~s({"type":"allMids"})}
+        ] do
+      test "a lost acceptance of #{label} is confirmed by the already-subscribed refusal" do
+        echo = unquote(echo)
+        retries = :atomics.new(1, [])
+
+        script = fn
+          1, %{"method" => "subscribe", "subscription" => sub} ->
+            [{0, %{"channel" => "subscriptionResponse", "data" => %{"method" => "subscribe", "subscription" => sub}}}]
+
+          2, %{"method" => "subscribe"} ->
+            if :atomics.add_get(retries, 1, 1) == 1,
+              do: [],
+              else: [{0, %{"channel" => "error", "data" => "Already subscribed: " <> echo}}]
+
+          _, _ ->
+            []
+        end
+
+        adapter = scripted_adapter("hyperliquid", script)
+        assert :ok = Adapter.subscribe(adapter, [unquote(channel)], ack_timeout_ms: 100)
+
+        ExUnit.CaptureLog.capture_log(fn ->
+          drop_connection(1)
+          assert 2 |> sent([], 3_000) |> Enum.filter(&(&1["method"] == "subscribe")) |> length() == 2
+        end)
+
+        assert :sys.get_state(adapter).restore_attempts == 0
       end
     end
   end
