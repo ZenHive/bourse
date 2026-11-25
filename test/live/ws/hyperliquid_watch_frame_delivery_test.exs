@@ -2,7 +2,9 @@ defmodule Bourse.WS.HyperliquidWatchFrameDeliveryTest do
   @moduledoc """
   Provider-live delivery for Hyperliquid's authored public watch channels (task 702).
 
-  Book and trade probes use testnet. Native coin ids (`BTC`) are required; unified `BTC/USDT` is not treated as proof.
+  Book and trade probes use testnet. The raw candle probe uses the production
+  public socket because testnet `candle` acknowledges without a data frame
+  (ledgered). Native coin ids (`BTC`) are required; unified `BTC/USDT` is not treated as proof.
   """
 
   use Bourse.Test.Case, async: false
@@ -39,6 +41,20 @@ defmodule Bourse.WS.HyperliquidWatchFrameDeliveryTest do
     assert {_, ""} = Float.parse(price)
     assert {_, ""} = Float.parse(size)
     assert is_integer(id)
+  end
+
+  test "a raw candle subscription delivers a candle with its required interval" do
+    # No unified watch method sends `candle`; this is the raw Bourse.WS.subscribe/3
+    # path with the provider's own object. Testnet candle is ledgered idle, so the
+    # production public socket is the live proof host.
+    assert {:ok, ws} = WS.connect(Exchange.new!("hyperliquid", sandbox: false), :public)
+    on_exit(fn -> WS.close(ws) end)
+    assert :ok = WS.subscribe(ws, [%{"type" => "candle", "coin" => "BTC", "interval" => "1m"}])
+    frame = await_channel("candle", System.monotonic_time(:millisecond) + 45_000)
+    assert %{"s" => "BTC", "i" => "1m", "o" => open, "c" => close, "t" => timestamp} = frame["data"]
+    assert {_, ""} = Float.parse(open)
+    assert {_, ""} = Float.parse(close)
+    assert is_integer(timestamp)
   end
 
   defp await_channel(channel, deadline) do
