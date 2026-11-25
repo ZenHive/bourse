@@ -31,9 +31,12 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   book compared against it is the one published after the frame whose id range
   covers `R`. When `R` is that frame's own end id the two books describe the
   same state and are compared in full; otherwise the prices the frame touched
-  are excluded, because it also carries updates past `R`. A REST snapshot no
-  WS frame covers cannot be aligned and is fetched again; an aligned snapshot
-  that disagrees fails the test.
+  are excluded, because it also carries updates past `R`. okx is compared only
+  where `R` is a frame's own end id: its push may omit a change that reverses
+  within the interval (https://www.okx.com/docs-v5/trick_en/#market-data), so
+  a state inside a frame is not a prefix of the frame's end state. A REST
+  snapshot no WS frame aligns with is fetched again; an aligned snapshot that
+  disagrees fails the test.
 
   bybit documents consecutive `u` only for its full-ob topic; on the depth
   topics the `increment` rule is the observation this test makes, recorded as
@@ -101,6 +104,7 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       chained?: &__MODULE__.okx_chained?/2,
       range: &__MODULE__.okx_range/1,
       rest: &__MODULE__.okx_rest/1,
+      rest_alignment: :end_id,
       payload: &__MODULE__.okx_payload/1,
       resync: {:stream, &__MODULE__.okx_snapshot_id/1, &__MODULE__.okx_payload_id/1}
     },
@@ -356,11 +360,13 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   defp assert_fresh(%{resync: {:rest, rules}}, {:rest, body}, payload, book, deltas) do
     id = body["lastUpdateId"]
     published = payload["u"]
-    through = Enum.take_while(deltas, &(&1["u"] != published))
-    chain = Enum.reject(through ++ [payload], &rules.stale?.(&1, id))
+    {through, rest} = Enum.split_while(deltas, &(&1["u"] != published))
 
-    assert Enum.any?(deltas, &(&1["u"] == published)),
-           "the published delta #{inspect(ids(payload))} was not forwarded by the venue"
+    # The chain ends in the frame the venue sent, captured before the adapter
+    # saw it; the routed payload must be that frame.
+    assert [terminal | _] = rest, "the published delta #{inspect(ids(payload))} was not forwarded by the venue"
+    assert payload == terminal, "the routed payload differs from the venue's frame #{inspect(ids(terminal))}"
+    chain = Enum.reject(through ++ [terminal], &rules.stale?.(&1, id))
 
     assert [first | _] = chain
     assert rules.bridges?.(first, id), "REST snapshot #{id} is not bridged by #{inspect(ids(first))}"
@@ -479,8 +485,11 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   end
 
   defp covering_frame(history, config, rest_id) do
+    end_id_only? = Map.get(config, :rest_alignment) == :end_id
+
     Enum.find(history, fn {payload, _book} ->
       case config.range.(payload) do
+        {_lo, hi} when end_id_only? -> rest_id == hi
         {lo, hi} when is_integer(lo) and is_integer(hi) -> lo < rest_id and rest_id <= hi
         _ -> false
       end
