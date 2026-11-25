@@ -17,9 +17,10 @@ defmodule Bourse.WS.Semantics.Orderbook do
       `apply_rest_snapshot/4`.
     * `{:invalidated, reason}` — continuity broke. The book was discarded and
       the caller must resync with `resync_action/2`.
-    * `{:unavailable, reason}` — the frames for this key cannot be maintained
-      (two depth streams of one market on one socket whose frames are
-      indistinguishable). Reported once per key.
+    * `{:unavailable, reason}` — the frames for this key cannot be maintained:
+      two depth streams of one market on one socket whose frames carry no
+      stream name (two diff speeds, two partial depths, or a partial and a
+      diff stream). Reported once per key.
     * `:none` — not an order book this state maintains.
 
   ## Continuity rules
@@ -38,9 +39,23 @@ defmodule Bourse.WS.Semantics.Orderbook do
     * `previous_current` — OKX, Deribit: `previous` must equal the prior
       frame's `current`.
     * `increment` — Bybit: `current` must be the prior frame's `current` + 1.
+      Bybit documents consecutive ids only for its full-ob topic; on the
+      depth-1/50/200/1000 topics the rule is observed live, not documented.
+      The spec records this as `continuity.limitation`.
+
+  A delta that lacks any authored field is never merged: it invalidates the
+  book. A snapshot that lacks its id is not published, because nothing after
+  it could be chained.
 
   The provider document behind each venue's rule is its authored
-  `continuity.doc`.
+  `continuity.doc`; where that document does not establish the rule, the
+  authored `continuity.limitation` says what does.
+
+  ## Changed in task 708
+
+  `apply/3,4` returns `{state, outcome}`. It returned `{state, book_or_nil}`
+  before; `{:book, book}` carries what was the book, and every other outcome
+  is what was `nil`.
   """
 
   alias Bourse.Exchange
@@ -64,7 +79,7 @@ defmodule Bourse.WS.Semantics.Orderbook do
           sequence_fields: [String.t()],
           checksum_present: boolean(),
           continuity: map() | nil,
-          depth_streams: %{String.t() => MapSet.t()},
+          depth_streams: %{String.t() => %{String.t() => :partial | :diff}},
           books: %{key() => map()}
         }
 
@@ -133,10 +148,22 @@ defmodule Bourse.WS.Semantics.Orderbook do
 
   def key(%__MODULE__{}, _frame, channel, market_id), do: market_id || channel
 
+  @doc "Returns the instrument a frame's book belongs to, read from the authored `market_path`."
+  @spec market(t(), map() | nil) :: String.t() | nil
+  def market(%__MODULE__{continuity: %{market_path: path}}, frame) when is_map(frame) do
+    case path_value(frame, path) do
+      market when is_binary(market) -> market
+      _ -> nil
+    end
+  end
+
+  def market(%__MODULE__{}, _frame), do: nil
+
   @doc """
   Records depth subscriptions so frames that carry no stream name can be told
   apart. Only venues with an authored `partial_depth_channel` need this: their
-  partial-depth snapshots and diff deltas share one frame shape.
+  partial-depth snapshots and diff deltas share one frame shape, and so do two
+  diff streams of one market at different speeds.
   """
   @spec track_subscriptions(t(), [String.t() | map()]) :: t()
   def track_subscriptions(%__MODULE__{continuity: %{partial_depth_channel: %Regex{} = re}} = state, channels) do
@@ -147,7 +174,7 @@ defmodule Bourse.WS.Semantics.Orderbook do
             acc
 
           {market, kind} ->
-            streams = Map.update(acc.depth_streams, market, MapSet.new([kind]), &MapSet.put(&1, kind))
+            streams = Map.update(acc.depth_streams, market, %{channel => kind}, &Map.put(&1, channel, kind))
             %{acc | depth_streams: streams, books: Map.delete(acc.books, market)}
         end
 
@@ -199,6 +226,32 @@ defmodule Bourse.WS.Semantics.Orderbook do
     end
   end
 
+  @doc "Returns whether `key` is waiting for a REST snapshot and no fetch or retry is scheduled for it."
+  @spec needs_fetch?(t(), key()) :: boolean()
+  def needs_fetch?(%__MODULE__{} = state, key) do
+    match?(%{status: :bootstrapping, fetch_ref: nil}, Map.get(state.books, key))
+  end
+
+  @max_retry_delay_ms 30_000
+
+  @doc """
+  Reserves the next REST snapshot attempt for `key` under `token` after an
+  unusable or failed one, and returns how long to wait before it. The delay
+  doubles per consecutive failure, from one second up to thirty. Only one
+  attempt is reserved per book: a later invalidation or reset drops `token`.
+  """
+  @spec fetch_retry(t(), key(), reference()) :: {t(), non_neg_integer()} | :none
+  def fetch_retry(%__MODULE__{} = state, key, token) do
+    case Map.get(state.books, key) do
+      %{status: :bootstrapping, attempts: attempts} = entry ->
+        delay = min(1_000 * Integer.pow(2, attempts), @max_retry_delay_ms)
+        {put_entry(state, key, %{entry | fetch_ref: token, attempts: attempts + 1}), delay}
+
+      _ ->
+        :none
+    end
+  end
+
   @doc "Returns whether `ref` is the REST snapshot fetch currently awaited for `key`."
   @spec fetch_in_flight?(t(), key(), reference()) :: boolean()
   def fetch_in_flight?(%__MODULE__{} = state, key, ref) do
@@ -245,42 +298,54 @@ defmodule Bourse.WS.Semantics.Orderbook do
   def apply(%__MODULE__{} = state, key, payload, frame) when is_map(payload) do
     entry = Map.get(state.books, key) || new_entry()
 
-    cond do
-      entry.status == :unavailable ->
-        {state, :pending}
+    if entry.status == :unavailable do
+      {state, :pending}
+    else
+      case depth_stream_kind(state, key) do
+        :ambiguous ->
+          {put_entry(state, key, %{new_entry() | status: :unavailable}), {:unavailable, :ambiguous_depth_streams}}
 
-      partial_market?(state, key) ->
-        apply_partial(state, key, payload)
+        :partial ->
+          publish(state, key, snapshot_entry(payload, nil))
 
-      true ->
-        apply_continuous(state, key, entry, classify(state, payload, frame || payload), payload)
+        _diff_or_untracked ->
+          apply_continuous(state, key, entry, classify(state, payload, frame || payload), payload)
+      end
     end
   end
 
   def apply(%__MODULE__{} = state, _key, _payload, _frame), do: {state, :none}
 
-  defp partial_market?(%__MODULE__{depth_streams: streams}, key) when is_binary(key) do
+  # Two subscribed depth streams of one market deliver frames that cannot be
+  # told apart, so neither can be maintained.
+  defp depth_stream_kind(%__MODULE__{depth_streams: streams}, key) when is_binary(key) do
     case Map.get(streams, key) do
-      nil -> false
-      kinds -> MapSet.member?(kinds, :partial)
+      nil -> nil
+      channels when map_size(channels) > 1 -> :ambiguous
+      channels -> channels |> Map.values() |> hd()
     end
   end
 
-  defp partial_market?(_state, _key), do: false
-
-  defp apply_partial(state, key, payload) do
-    if MapSet.size(Map.fetch!(state.depth_streams, key)) > 1 do
-      {put_entry(state, key, %{new_entry() | status: :unavailable}), {:unavailable, :ambiguous_depth_streams}}
-    else
-      publish(state, key, snapshot_entry(payload, nil))
-    end
-  end
+  defp depth_stream_kind(_state, _key), do: nil
 
   defp apply_continuous(state, key, _entry, :snapshot, payload) do
-    publish(state, key, snapshot_entry(payload, current_id(state, payload)))
+    case current_id(state, payload) do
+      nil -> invalidate(state, key, nil, {:missing_sequence, snapshot_id_field(state)})
+      id -> publish(state, key, snapshot_entry(payload, id))
+    end
   end
 
-  defp apply_continuous(state, key, entry, :delta, payload) do
+  defp apply_continuous(%__MODULE__{continuity: c} = state, key, entry, :delta, payload) do
+    if sequenced?(c, payload) do
+      apply_sequenced(state, key, entry, payload)
+    else
+      invalidate(state, key, nil, {:missing_sequence, c.fields})
+    end
+  end
+
+  defp apply_continuous(state, _key, _entry, _unknown, _payload), do: {state, :none}
+
+  defp apply_sequenced(state, key, entry, payload) do
     case {state.continuity.snapshot_source, entry.status} do
       {"rest", :awaiting_snapshot} ->
         bootstrapping = %{entry | status: :bootstrapping, buffer: [payload]}
@@ -297,7 +362,11 @@ defmodule Bourse.WS.Semantics.Orderbook do
     end
   end
 
-  defp apply_continuous(state, _key, _entry, _unknown, _payload), do: {state, :none}
+  # Every field the venue's rule names must be present: a delta merged without
+  # its ids could neither be checked nor chained from.
+  defp sequenced?(%{fields: fields}, payload) do
+    Enum.all?(fields, fn {_role, field} -> is_integer(to_int(payload[field])) end)
+  end
 
   defp buffer_delta(state, key, entry, payload) do
     if length(entry.buffer) >= @max_buffered_deltas do
@@ -319,8 +388,9 @@ defmodule Bourse.WS.Semantics.Orderbook do
 
   # A REST-bootstrapped book keeps the delta that broke the chain: it is valid
   # data, and the next snapshot is reconciled against it.
+  # A frame that cannot be checked is not kept (`payload` is nil).
   defp invalidate(%__MODULE__{continuity: %{snapshot_source: "rest"}} = state, key, payload, reason) do
-    entry = %{new_entry() | status: :bootstrapping, buffer: [payload]}
+    entry = %{new_entry() | status: :bootstrapping, buffer: List.wrap(payload)}
     {put_entry(state, key, entry), {:invalidated, reason}}
   end
 
@@ -377,7 +447,17 @@ defmodule Bourse.WS.Semantics.Orderbook do
     %{entry | id: to_int(payload[f["last"] || f["current"]]), awaiting_first: false}
   end
 
-  defp current_id(%__MODULE__{continuity: %{fields: f}}, payload), do: to_int(payload[f["current"] || f["last"]])
+  # A partial depth snapshot (Binance spot `lastUpdateId` + `bids`/`asks`)
+  # carries the REST snapshot's id field instead of the event fields.
+  defp current_id(%__MODULE__{} = state, payload), do: to_int(payload[snapshot_id_field(state)])
+
+  defp snapshot_id_field(%__MODULE__{continuity: %{fields: f} = c}) do
+    cond do
+      f["current"] -> f["current"]
+      c.rest_snapshot -> c.rest_snapshot["id_field"]
+      true -> f["last"]
+    end
+  end
 
   defp bootstrap(%__MODULE__{continuity: %{rule: rule, fields: f}} = state, key, entry, id, levels, buffer) do
     first_buffered = buffer |> List.first() |> then(&(&1 && to_int(&1[f["first"]])))
@@ -403,6 +483,9 @@ defmodule Bourse.WS.Semantics.Orderbook do
             awaiting_first: rule == "previous_last"
         }
 
+        # `attempts` stays until the replay succeeds: a gap inside the buffer
+        # sends the book back to bootstrapping as the same failed attempt.
+
         replay(state, key, live, drop_predating(rule, f, id, buffer))
     end
   end
@@ -423,7 +506,8 @@ defmodule Bourse.WS.Semantics.Orderbook do
         replay(state, key, entry, rest)
 
       {:gap, _reason} ->
-        restart = %{new_entry() | status: :bootstrapping, buffer: Enum.reverse([delta | rest])}
+        buffer = Enum.reverse([delta | rest])
+        restart = %{new_entry() | status: :bootstrapping, buffer: buffer, attempts: entry.attempts}
         {put_entry(state, key, restart), {:fetch_snapshot, key}}
     end
   end
@@ -453,11 +537,22 @@ defmodule Bourse.WS.Semantics.Orderbook do
 
   defp classify_both(%__MODULE__{}, _frame), do: :unknown
 
-  defp classify_incremental(%__MODULE__{continuity: %{fields: f}} = state, payload) when is_map(payload) do
-    if Map.has_key?(payload, f["last"] || f["current"]), do: :delta, else: unmarked(state)
+  # An event carries its sequence fields; a partial depth snapshot is told apart
+  # by its own shape — the REST snapshot id field plus `bids` and `asks`, and
+  # none of the event fields. Anything else is a delta, and one without its
+  # ids is rejected by the continuity check rather than taken for a snapshot.
+  defp classify_incremental(%__MODULE__{continuity: %{fields: f} = c}, payload) when is_map(payload) do
+    if c.unmarked_frames == "snapshot" and partial_snapshot?(c, f, payload), do: :snapshot, else: :delta
   end
 
   defp classify_incremental(%__MODULE__{}, _payload), do: :delta
+
+  defp partial_snapshot?(%{rest_snapshot: %{"id_field" => id_field}}, fields, payload) do
+    Map.has_key?(payload, id_field) and is_list(payload["bids"]) and is_list(payload["asks"]) and
+      not Enum.any?(fields, fn {_role, field} -> Map.has_key?(payload, field) end)
+  end
+
+  defp partial_snapshot?(_continuity, _fields, _payload), do: false
 
   defp unmarked(%__MODULE__{continuity: nil, snapshot_values: snapshots}),
     do: if(snapshots == [], do: :unknown, else: :delta)
@@ -466,7 +561,16 @@ defmodule Bourse.WS.Semantics.Orderbook do
   defp unmarked(%__MODULE__{}), do: :unknown
 
   defp new_entry do
-    %{status: :awaiting_snapshot, id: nil, awaiting_first: false, bids: %{}, asks: %{}, buffer: [], fetch_ref: nil}
+    %{
+      status: :awaiting_snapshot,
+      id: nil,
+      awaiting_first: false,
+      bids: %{},
+      asks: %{},
+      buffer: [],
+      fetch_ref: nil,
+      attempts: 0
+    }
   end
 
   defp snapshot_entry(payload, id) when is_map(payload) do

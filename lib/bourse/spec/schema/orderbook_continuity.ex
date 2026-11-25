@@ -20,11 +20,25 @@ defmodule Bourse.Spec.Schema.OrderbookContinuity do
   }
 
   @snapshot_sources ~w(rest stream)
+
+  # The bootstrap each rule is implemented with. A REST snapshot is reconciled
+  # against buffered deltas by the rule's documented bridge, which exists only
+  # for the Binance rules; the other rules start from a snapshot the stream sends.
+  @rule_sources %{
+    "first_follows_last" => "rest",
+    "previous_last" => "rest",
+    "previous_current" => "stream",
+    "increment" => "stream"
+  }
   @unmarked_frames ~w(snapshot reject)
 
   @doc "Returns the continuity rules the runtime implements, mapped to the field roles each reads."
   @spec rule_roles() :: %{String.t() => [String.t()]}
   def rule_roles, do: @rule_roles
+
+  @doc "Returns the snapshot source each continuity rule is implemented with."
+  @spec rule_sources() :: %{String.t() => String.t()}
+  def rule_sources, do: @rule_sources
 
   @doc "Raises `ArgumentError` naming the gap when an incremental book's continuity contract is incomplete."
   @spec validate!(map(), String.t()) :: :ok
@@ -96,7 +110,9 @@ defmodule Bourse.Spec.Schema.OrderbookContinuity do
     require_doc!(continuity, exchange_id)
     require_member!(continuity, "unmarked_frames", @unmarked_frames, exchange_id)
     require_member!(continuity, "snapshot_source", @snapshot_sources, exchange_id)
+    require_rule_source!(continuity, rule, exchange_id)
     validate_optional_string!(continuity, "market_path", exchange_id)
+    validate_optional_string!(continuity, "limitation", exchange_id)
     validate_partial_depth_channel!(continuity, exchange_id)
     validate_snapshot_source!(continuity, exchange_id)
   end
@@ -121,6 +137,21 @@ defmodule Bourse.Spec.Schema.OrderbookContinuity do
 
   defp validate_snapshot_source!(%{"snapshot_source" => "stream"} = continuity, exchange_id) do
     require_string!(continuity, "subscription_path", exchange_id)
+  end
+
+  defp require_rule_source!(continuity, rule, exchange_id) do
+    expected = Map.fetch!(@rule_sources, rule)
+
+    if continuity["snapshot_source"] != expected do
+      gap!(
+        exchange_id,
+        "continuity snapshot_source",
+        "rule #{inspect(rule)} is implemented with snapshot_source #{inspect(expected)}, " <>
+          "got #{inspect(continuity["snapshot_source"])}"
+      )
+    end
+
+    :ok
   end
 
   defp validate_partial_depth_channel!(continuity, exchange_id) do
