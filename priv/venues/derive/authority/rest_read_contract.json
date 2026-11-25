@@ -5,10 +5,10 @@
       "id": "openapi",
       "kind": "openapi-json",
       "source_url": "https://docs.derive.xyz/openapi.json",
-      "sha256": "5d88da6a9f592f2eaf2f8f25499dd1237e1a343719fb083db40177e069f049be",
+      "sha256": "dae4bbfd468ff0ea128aa1c8bed360f46579015555bd9a9ce26755f4664bbfa3",
       "upstream_pin": {
         "type": "document_version_http_etag",
-        "value": "0.2.0; W/\"z6Ip46XPYxqgZg-c\""
+        "value": "0.2.0; W/\"PwelFNhsYt18CDAZ\""
       }
     },
     {
