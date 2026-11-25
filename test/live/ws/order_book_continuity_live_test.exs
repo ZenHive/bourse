@@ -71,7 +71,8 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       chained?: &__MODULE__.binance_chained?/2,
       range: &__MODULE__.binance_range/1,
       rest: &__MODULE__.binance_rest/1,
-      resync: :rest
+      payload: &Function.identity/1,
+      resync: {:rest, &__MODULE__.binance_keeps?/2}
     },
     "binanceusdm" => %{
       channel: "btcusdt@depth@100ms",
@@ -79,7 +80,8 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       chained?: &__MODULE__.usdm_chained?/2,
       range: &__MODULE__.usdm_range/1,
       rest: &__MODULE__.usdm_rest/1,
-      resync: :rest
+      payload: &Function.identity/1,
+      resync: {:rest, &__MODULE__.usdm_keeps?/2}
     },
     "okx" => %{
       channel: %{"channel" => "books", "instId" => "BTC-USDT"},
@@ -87,6 +89,7 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       chained?: &__MODULE__.okx_chained?/2,
       range: &__MODULE__.okx_range/1,
       rest: &__MODULE__.okx_rest/1,
+      payload: &__MODULE__.okx_payload/1,
       resync: {:stream, &__MODULE__.okx_snapshot_id/1, &__MODULE__.okx_payload_id/1}
     },
     "deribit" => %{
@@ -95,6 +98,7 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       chained?: &__MODULE__.deribit_chained?/2,
       range: &__MODULE__.deribit_range/1,
       rest: &__MODULE__.deribit_rest/1,
+      payload: &__MODULE__.deribit_payload/1,
       resync: {:stream, &__MODULE__.deribit_snapshot_id/1, &__MODULE__.deribit_payload_id/1}
     },
     "bybit" => %{
@@ -103,6 +107,7 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       chained?: &__MODULE__.bybit_chained?/2,
       range: &__MODULE__.bybit_range/1,
       rest: &__MODULE__.bybit_rest/1,
+      payload: &__MODULE__.bybit_payload/1,
       resync: {:stream, &__MODULE__.bybit_snapshot_id/1, &__MODULE__.bybit_payload_id/1}
     }
   }
@@ -120,10 +125,13 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
         :atomics.put(drop, 1, 1)
         assert_receive {:dropped_delta, _frame}, @receive_timeout
 
-        reason = await_invalidation()
+        # The delta after the dropped one reveals the gap. It must not be
+        # published, neither before nor after the invalidation.
+        assert_receive {:offending_delta, offending}, @receive_timeout
+        {reason, deltas} = await_invalidation(offending)
         assert gap_reason?(reason), "expected a continuity gap, got #{inspect(reason)}"
 
-        resynced = await_resynced_book(config)
+        resynced = await_resynced_book(config, offending, deltas)
         compare_with_rest(venue, config, resynced)
 
         GenServer.stop(adapter)
@@ -138,12 +146,13 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
         old = transport(adapter)
         send(old.server, {:gun_down, old.gun, :http, :closed, []})
 
-        assert {:connection_lost, {:gun_down, _, :http, :closed, []}} = await_invalidation()
+        assert {{:connection_lost, {:gun_down, _, :http, :closed, []}}, _deltas} = await_invalidation(nil)
         assert_receive {:connected, ws}, @receive_timeout
         refute ws.zen_client.server_pid == old.server
         refute Process.alive?(old.server)
 
-        resynced = await_resynced_book(config)
+        # Deltas from the lost connection cannot bridge the new snapshot.
+        resynced = await_resynced_book(config, nil, [])
         compare_with_rest(venue, config, resynced)
 
         GenServer.stop(adapter)
@@ -159,7 +168,6 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
     test_pid = self()
     drop = :atomics.new(1, [])
     Broadcast.subscribe(Broadcast.topic(venue, :watch_order_book, nil))
-    report_rest_depth(venue, test_pid)
 
     connect_fun = fn exchange, section, opts ->
       filtered = dropping_handler(Keyword.fetch!(opts, :handler), config, drop, test_pid)
@@ -171,27 +179,18 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
     end
 
     {:ok, adapter} = Adapter.start_link(sandbox(venue), :public, connect_fun: connect_fun)
+    if match?({:rest, _}, config.resync), do: trace_rest_snapshots(adapter)
     assert_receive {:connected, _ws}, @receive_timeout
     assert :ok = Adapter.subscribe(adapter, [config.channel])
     {adapter, drop}
   end
 
-  # Every REST depth response the adapter receives is reported, so the test
-  # sees a REST bridge without asking the adapter.
-  defp report_rest_depth(venue, test_pid) do
-    id = {__MODULE__, venue, test_pid}
-
-    :telemetry.attach(
-      id,
-      Bourse.Telemetry.request_stop(),
-      fn _event, _measurements, meta, _config ->
-        if meta.exchange == venue and String.contains?(to_string(meta.path), "depth"),
-          do: send(test_pid, {:rest_depth, meta.status})
-      end,
-      nil
-    )
-
-    on_exit(fn -> :telemetry.detach(id) end)
+  # The REST snapshot the adapter receives is the one its bridge is built on;
+  # tracing its mailbox lets the test rebuild that bridge on its own.
+  defp trace_rest_snapshots(adapter) do
+    :erlang.trace_pattern(:receive, [{[:_, :_, {:order_book_snapshot, :_, :_, :_}], [], []}], [])
+    :erlang.trace(adapter, true, [:receive])
+    on_exit(fn -> :erlang.trace_pattern(:receive, true, []) end)
   end
 
   defp transport(adapter) do
@@ -203,24 +202,42 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   # real delta is taken out of the stream — the gap a lost frame leaves. A
   # frame the venue marks as a snapshot is reported before the adapter sees
   # it, so the test knows independently where a fresh book starts.
+  # Every forwarded delta of a REST-bootstrapped venue is reported, so the
+  # test can rebuild the book from the REST snapshot and the deltas after it.
+  # After a drop, the next delta is reported as the one that reveals the gap.
   defp dropping_handler(handler, config, drop, test_pid) do
     fn
       {:message, data} = message ->
-        with {:stream, snapshot_id, _payload_id} <- config.resync,
-             true <- is_map(data),
-             id when not is_nil(id) <- snapshot_id.(data) do
-          send(test_pid, {:snapshot_frame, id})
-        end
+        report_snapshot(data, config, test_pid)
+        delta? = is_map(data) and config.delta?.(data)
 
-        if is_map(data) and config.delta?.(data) and :atomics.compare_exchange(drop, 1, 1, 0) == :ok do
-          send(test_pid, {:dropped_delta, data})
-        else
-          handler.(message)
-        end
+        if delta? and :atomics.compare_exchange(drop, 1, 1, 2) == :ok,
+          do: send(test_pid, {:dropped_delta, data}),
+          else: forward(message, delta?, config, drop, test_pid, handler)
 
       message ->
         handler.(message)
     end
+  end
+
+  defp report_snapshot(data, config, test_pid) do
+    with {:stream, snapshot_id, _payload_id} <- config.resync,
+         true <- is_map(data),
+         id when not is_nil(id) <- snapshot_id.(data) do
+      send(test_pid, {:snapshot_frame, id, config.payload.(data)})
+    end
+  end
+
+  defp forward({:message, data} = message, delta?, config, drop, test_pid, handler) do
+    if delta?, do: report_delta(data, config, drop, test_pid)
+    handler.(message)
+  end
+
+  defp report_delta(data, config, drop, test_pid) do
+    if :atomics.compare_exchange(drop, 1, 2, 0) == :ok,
+      do: send(test_pid, {:offending_delta, config.payload.(data)})
+
+    if match?({:rest, _}, config.resync), do: send(test_pid, {:delta_frame, data})
   end
 
   # -- observation ------------------------------------------------------------
@@ -247,51 +264,68 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   # Routed books that were already queued when the break happened are valid,
   # and so are snapshot markers and REST responses from before it; all of them
   # are consumed in arrival order up to the invalidation.
-  defp await_invalidation do
+  # Returns the reason and the forwarded deltas seen so far, oldest first.
+  defp await_invalidation(offending, deltas \\ []) do
     receive do
       {:bourse_ws, {:order_book_invalidated, _channel, "BTC" <> _, reason}} ->
-        reason
+        {reason, Enum.reverse(deltas)}
 
       {:bourse_ws, {:order_book_invalidated, _channel, market, reason}} ->
         flunk("invalidation for #{inspect(market)}: #{inspect(reason)}")
 
-      {:bourse_ws, {:routed, :watch_order_book, _, _, _, _}} ->
-        await_invalidation()
+      {:bourse_ws, {:routed, :watch_order_book, payload, _, _, book}} ->
+        refute_offending(offending, payload, book, "before")
+        await_invalidation(offending, deltas)
 
-      {:snapshot_frame, _id} ->
-        await_invalidation()
+      {:delta_frame, delta} ->
+        await_invalidation(offending, [delta | deltas])
 
-      {:rest_depth, _status} ->
-        await_invalidation()
+      {:snapshot_frame, _id, _payload} ->
+        await_invalidation(offending, deltas)
+
+      {:trace, _pid, :receive, {:order_book_snapshot, _, _, _}} ->
+        await_invalidation(offending, deltas)
     after
       @receive_timeout -> flunk("the break did not invalidate the book")
     end
   end
 
+  defp refute_offending(nil, _payload, _book, _side), do: :ok
+  defp refute_offending(_offending, _payload, nil, _side), do: :ok
+
+  defp refute_offending(offending, payload, _book, side) do
+    refute payload == offending, "the delta that revealed the gap was published #{side} the invalidation"
+  end
+
   # After an invalidation every routed frame must carry no book until the
   # resync is observed independently of the adapter: a frame the venue marks
-  # as a snapshot (and the first book must be that snapshot), or a REST depth
-  # response for a REST-bootstrapped venue. Returns the books routed from
-  # there, newest first.
-  defp await_resynced_book(config, seen \\ nil) do
+  # as a snapshot, or a REST depth body the adapter received. The first book
+  # must then equal that snapshot's levels — or, for a REST venue, the REST
+  # snapshot with every later delta applied in order, as the venue documents.
+  # Returns the books routed from there, newest first.
+  defp await_resynced_book(config, offending, deltas, seen \\ nil) do
     receive do
-      {:snapshot_frame, id} ->
-        await_resynced_book(config, {:snapshot, id})
+      {:snapshot_frame, id, payload} ->
+        await_resynced_book(config, offending, deltas, {:snapshot, id, payload})
 
-      {:rest_depth, 200} ->
-        await_resynced_book(config, :rest)
+      {:trace, _pid, :receive, {:order_book_snapshot, _key, _ref, {:ok, %{status: 200, body: body}}}} ->
+        await_resynced_book(config, offending, deltas, {:rest, body})
 
-      {:rest_depth, _status} ->
-        await_resynced_book(config, seen)
+      {:trace, _pid, :receive, {:order_book_snapshot, _key, _ref, _failed}} ->
+        await_resynced_book(config, offending, deltas, seen)
+
+      {:delta_frame, delta} ->
+        await_resynced_book(config, offending, deltas ++ [delta], seen)
 
       {:connected, _ws} ->
-        await_resynced_book(config, seen)
+        await_resynced_book(config, offending, deltas, seen)
 
       {:bourse_ws, {:routed, :watch_order_book, _payload, _channel, _market, nil}} ->
-        await_resynced_book(config, seen)
+        await_resynced_book(config, offending, deltas, seen)
 
       {:bourse_ws, {:routed, :watch_order_book, payload, _channel, _market, book}} ->
-        assert_fresh(config, seen, payload)
+        refute_offending(offending, payload, book, "after")
+        assert_fresh(config, seen, payload, book, deltas)
         assert book["bids"] != [] and book["asks"] != []
         [{payload, book}]
 
@@ -302,15 +336,42 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
     end
   end
 
-  defp assert_fresh(%{resync: :rest}, :rest, _payload), do: :ok
+  defp assert_fresh(%{resync: {:rest, keeps?}}, {:rest, body}, _payload, book, deltas) do
+    id = body["lastUpdateId"]
+    bridged = Enum.filter(deltas, &keeps?.(&1, id))
+    assert bridged != [], "the first book after REST snapshot #{id} follows none of the deltas after it"
 
-  defp assert_fresh(%{resync: {:stream, _snapshot_id, payload_id}}, {:snapshot, id}, payload) do
-    assert payload_id.(payload) == id,
-           "the first book after the resync is not the venue's snapshot #{id}: #{inspect(ids(payload))}"
+    expected =
+      Enum.reduce(bridged, {levels(body["bids"]), levels(body["asks"])}, fn delta, {bids, asks} ->
+        {apply_levels(bids, delta["b"]), apply_levels(asks, delta["a"])}
+      end)
+
+    assert {levels(book["bids"]), levels(book["asks"])} == expected,
+           "the first book is not REST snapshot #{id} with its #{length(bridged)} bridging deltas"
   end
 
-  defp assert_fresh(_config, seen, payload) do
+  defp assert_fresh(%{resync: {:stream, _snapshot_id, payload_id}}, {:snapshot, id, snapshot}, payload, book, _deltas) do
+    assert payload_id.(payload) == id,
+           "the first book after the resync is not the venue's snapshot #{id}: #{inspect(ids(payload))}"
+
+    assert {levels(book["bids"]), levels(book["asks"])} ==
+             {levels(snapshot["bids"] || snapshot["b"]), levels(snapshot["asks"] || snapshot["a"])},
+           "the first book after the resync does not carry snapshot #{id}'s levels"
+  end
+
+  defp assert_fresh(_config, seen, payload, _book, _deltas) do
     flunk("a book was published before the resync was observed (#{inspect(seen)}): #{inspect(ids(payload))}")
+  end
+
+  defp levels(raw), do: apply_levels(%{}, raw)
+
+  defp apply_levels(book, raw) do
+    Enum.reduce(raw || [], book, fn lvl, acc ->
+      case level(lvl) do
+        {price, size} when size == 0 -> Map.delete(acc, price)
+        {price, size} -> Map.put(acc, price, size)
+      end
+    end)
   end
 
   defp gap_reason?({:expected_first_at_most, _, _}), do: true
@@ -451,6 +512,11 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   def binance_range(%{"U" => first, "u" => last}), do: {first - 1, last}
   def binance_range(_), do: nil
 
+  # The venue's documented bridge: Binance spot drops u <= lastUpdateId,
+  # USDⓈ-M drops u < lastUpdateId.
+  def binance_keeps?(delta, id), do: delta["u"] > id
+  def usdm_keeps?(delta, id), do: delta["u"] >= id
+
   def binance_rest(exchange) do
     {:ok, %{status: 200, body: body}} =
       Bourse.Binance.public_get_depth(exchange, %{"symbol" => "BTCUSDT", "limit" => 100})
@@ -499,6 +565,7 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   def okx_snapshot_id(%{"action" => "snapshot", "data" => [%{"seqId" => id}]}), do: id
   def okx_snapshot_id(_), do: nil
   def okx_payload_id(payload), do: payload["seqId"]
+  def okx_payload(%{"data" => [data]}), do: data
 
   def deribit_snapshot_id(frame) do
     case get_in(frame, ["params", "data"]) do
@@ -508,6 +575,7 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   end
 
   def deribit_payload_id(payload), do: payload["change_id"]
+  def deribit_payload(frame), do: get_in(frame, ["params", "data"])
 
   def bybit_delta?(frame), do: frame["type"] == "delta"
   def bybit_chained?(prev, next), do: next["u"] == prev["u"] + 1
@@ -516,6 +584,7 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   def bybit_snapshot_id(%{"type" => "snapshot", "data" => %{"u" => id}}), do: id
   def bybit_snapshot_id(_), do: nil
   def bybit_payload_id(payload), do: payload["u"]
+  def bybit_payload(frame), do: frame["data"]
 
   def bybit_rest(exchange) do
     {:ok, %{status: 200, body: %{"retCode" => 0, "result" => result}}} =
