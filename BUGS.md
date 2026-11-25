@@ -127,9 +127,15 @@ on the first read every time (85–176 ms after the ack), while `algoOrder` answ
 294, 416, 425, 1020, 1037, 1243 and COIN-M 177, 180, 185, 189, 209, 216, 270, 368, 610, 1053,
 and never regressed afterwards (25 reads per create). A never-issued `algoId` gets the identical
 `-2013` on the same branches. Binance's docs for these endpoints say nothing about visibility
-latency. The lane now treats `-2013` as propagation only while the id is listed on the open-algo
-book, waits at most 5 s, and fails on any other answer; the contract's own read stays the
-assertion.
+latency. The lane now treats `-2013` as propagation only while the id is still listed on the
+open-algo book and fails on any other answer, including a detail whose status is not `open`.
+The list is re-checked after every detail answer, a success included: the detail read also lags a
+cancel, answering `status: "open"` for 300–1,000 ms after one (measured on both venues), while
+the list drops the id on its next read. It starts no read after a 5 s deadline, so the wait ends within 5 s
+plus one detail and one list request. The contract's own read stays the assertion, and
+`fetchOpenOrder` now also requires `status: "open"`. Cleanup cancels on the explicit algo slot
+(USD-M `cancel_order` index 2, COIN-M index 0 — the unqualified cancel tries the regular book
+first) and passes only when a successful open-algo read no longer lists the id.
 
 ---
 
