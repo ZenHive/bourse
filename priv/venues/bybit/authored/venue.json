@@ -734,8 +734,23 @@
         "field": null,
         "present": false
       },
+      "continuity": {
+        "doc": "https://bybit-exchange.github.io/docs/v5/websocket/public/orderbook",
+        "fields": {
+          "current": "u"
+        },
+        "market_path": "data.s",
+        "partial_depth_channel": null,
+        "rest_snapshot": null,
+        "rule": "increment",
+        "snapshot_source": "stream",
+        "subscription_path": "topic",
+        "unmarked_frames": "reject"
+      },
       "discriminator": {
-        "delta_values": [],
+        "delta_values": [
+          "delta"
+        ],
         "field": "type",
         "snapshot_values": [
           "snapshot"
@@ -743,7 +758,9 @@
       },
       "handle_orderbook_defined": true,
       "resolved_from": "self",
-      "sequence_fields": [],
+      "sequence_fields": [
+        "u"
+      ],
       "source": "pro_handle_orderbook",
       "unresolved_reason": null
     },

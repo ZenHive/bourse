@@ -126,7 +126,12 @@ defmodule Bourse.WS.AdapterTest do
 
     send(
       adapter,
-      {:ws_frame, %{"topic" => "orderbook.500.BTCUSDT", "data" => %{"type" => "snapshot", "b" => [["1", "2"]]}}}
+      {:ws_frame,
+       %{
+         "topic" => "orderbook.500.BTCUSDT",
+         "type" => "snapshot",
+         "data" => %{"s" => "BTCUSDT", "u" => 1, "b" => [["1", "2"]]}
+       }}
     )
 
     assert_receive {:bourse_ws, {:routed, :watch_order_book, _payload, "orderbook.500.BTCUSDT", "BTCUSDT", book}}
@@ -329,22 +334,28 @@ defmodule Bourse.WS.AdapterTest do
     # The facade authenticates the private section and records the outcome on
     # the connection, so the adapter no longer opts out and re-runs it.
     assert_receive {:connector_opts, [handler: handler]}
+    ref = connected.connection_ref
+    assert is_reference(ref)
 
     assert {:ok, _pid} =
              Task.start(fn -> handler.({:message, %{"topic" => "tickers.BTCUSDT"}}) end)
 
-    assert_receive {:ws_frame, %{"topic" => "tickers.BTCUSDT"}}
+    assert_receive {:ws_frame, ^ref, %{"topic" => "tickers.BTCUSDT"}}
 
     assert {:ok, _pid} =
              Task.start(fn -> handler.({:binary, %{"topic" => "tickers.BTCUSDT"}}) end)
 
-    assert_receive {:ws_frame, %{"topic" => "tickers.BTCUSDT"}}
+    assert_receive {:ws_frame, ^ref, %{"topic" => "tickers.BTCUSDT"}}
 
     assert {:ok, _pid} =
              Task.start(fn -> handler.({:unmatched_response, %{"error" => %{"code" => -1}}}) end)
 
-    assert_receive {:ws_frame, %{"error" => %{"code" => -1}}}
+    assert_receive {:ws_frame, ^ref, %{"error" => %{"code" => -1}}}
     assert :ok = handler.(:ignored)
+
+    # A frame still queued from a replaced connection is not routed.
+    assert {:noreply, ^connected} =
+             Adapter.handle_info({:ws_frame, make_ref(), %{"topic" => "tickers.BTCUSDT"}}, connected)
 
     assert {:noreply, ^connected} = Adapter.handle_info(:restore_subscriptions, connected)
 

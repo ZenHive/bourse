@@ -9,6 +9,7 @@ defmodule Bourse.Spec.Schema do
   """
 
   alias Bourse.Emulation.Delegations
+  alias Bourse.Spec.Schema.OrderbookContinuity
 
   @version 3
 
@@ -154,6 +155,7 @@ defmodule Bourse.Spec.Schema do
     validate_greeks_conventions!(spec, exchange_id)
     validate_ledger_type_policy!(spec, exchange_id)
     validate_order_status_policy!(spec, exchange_id)
+    OrderbookContinuity.validate!(spec, exchange_id)
     spec
   end
 

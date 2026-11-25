@@ -4,6 +4,20 @@ defmodule Bourse.WS.Adapter do
 
   Manages connection lifecycle, auth state machine, subscription restoration,
   spec-driven message routing, semantics state, and Registry broadcast.
+
+  ## Broadcasts
+
+  Every routed frame is published as
+  `{:bourse_ws, {:routed, family, payload, channel, market_id, book}}` on the
+  family's channel topic and on its `nil` topic. `book` is the maintained order
+  book for `:watch_order_book` and `nil` for other families.
+
+  An order book whose continuity breaks (see `Bourse.WS.Semantics.Orderbook`)
+  is announced with `{:bourse_ws, {:order_book_invalidated, channel, market_id,
+  reason}}` on the same topics. Until the adapter has resynced it — from the
+  venue's REST depth snapshot or by resubscribing for a fresh stream snapshot —
+  routed frames for that book carry `book: nil`. After a reconnect every book
+  starts again from a fresh snapshot.
   """
 
   use GenServer
@@ -36,6 +50,7 @@ defmodule Bourse.WS.Adapter do
           auth_state: auth_state(),
           auth_context: map() | nil,
           auth_timer_ref: reference() | nil,
+          connection_ref: reference() | nil,
           connect_fun: (Exchange.t(), section(), keyword() -> {:ok, WS.t()} | {:error, term()}),
           subscriptions: [String.t() | map()],
           orderbook: Orderbook.t(),
@@ -50,6 +65,7 @@ defmodule Bourse.WS.Adapter do
     auth_state: :unauthenticated,
     auth_context: nil,
     auth_timer_ref: nil,
+    connection_ref: nil,
     connect_fun: &WS.connect/3,
     subscriptions: [],
     orderbook: %Orderbook{},
@@ -123,7 +139,12 @@ defmodule Bourse.WS.Adapter do
   def handle_call({:subscribe, channels, sub_opts}, _from, %{ws: ws} = state) do
     case WS.subscribe(ws, channels, sub_opts) do
       :ok ->
-        {:reply, :ok, %{state | subscriptions: merge_subscriptions(state.subscriptions, channels)}}
+        {:reply, :ok,
+         %{
+           state
+           | subscriptions: merge_subscriptions(state.subscriptions, channels),
+             orderbook: Orderbook.track_subscriptions(state.orderbook, channels)
+         }}
 
       {:error, _} = error ->
         {:reply, error, state}
@@ -162,11 +183,14 @@ defmodule Bourse.WS.Adapter do
   @impl true
   def handle_info(:connect, state) do
     adapter_pid = self()
+    # Frames carry the connection they arrived on, so frames still queued from
+    # a replaced connection are not applied to books rebuilt on the new one.
+    connection_ref = make_ref()
 
     handler = fn
-      {:message, data} -> send(adapter_pid, {:ws_frame, data})
-      {:binary, data} -> send(adapter_pid, {:ws_frame, data})
-      {:unmatched_response, data} -> send(adapter_pid, {:ws_frame, data})
+      {:message, data} -> send(adapter_pid, {:ws_frame, connection_ref, data})
+      {:binary, data} -> send(adapter_pid, {:ws_frame, connection_ref, data})
+      {:unmatched_response, data} -> send(adapter_pid, {:ws_frame, connection_ref, data})
       _ -> :ok
     end
 
@@ -176,7 +200,7 @@ defmodule Bourse.WS.Adapter do
     # key is part of the URL, so there is no connection to authenticate later.
     case state.connect_fun.(state.exchange, state.section, handler: handler) do
       {:ok, ws} ->
-        {:noreply, replace_connection(state, ws)}
+        {:noreply, replace_connection(%{state | connection_ref: connection_ref}, ws)}
 
       {:error, _} ->
         Process.send_after(self(), :connect, 5_000)
@@ -214,6 +238,18 @@ defmodule Bourse.WS.Adapter do
     route_and_broadcast(decoded, state)
   end
 
+  def handle_info({:ws_frame, ref, decoded}, %{connection_ref: ref} = state) when is_map(decoded) do
+    route_and_broadcast(decoded, state)
+  end
+
+  def handle_info({:order_book_resync, key}, state) do
+    {:noreply, resync_order_book(state, key)}
+  end
+
+  def handle_info({:order_book_snapshot, key, ref, result}, state) do
+    {:noreply, apply_order_book_snapshot(state, key, ref, result)}
+  end
+
   def handle_info(_msg, state), do: {:noreply, state}
 
   @impl true
@@ -242,7 +278,7 @@ defmodule Bourse.WS.Adapter do
 
         {orderbook, book} =
           if family == :watch_order_book do
-            Orderbook.apply(state.orderbook, key, payload)
+            apply_order_book(state, decoded, payload, channel, market_id)
           else
             {state.orderbook, nil}
           end
@@ -306,8 +342,17 @@ defmodule Bourse.WS.Adapter do
 
     if state.auth_timer_ref, do: Process.cancel_timer(state.auth_timer_ref)
 
+    # Books built on the previous connection cannot be continued: every book
+    # restarts from a fresh snapshot.
     new_state =
-      %{state | ws: ws, auth_state: :unauthenticated, auth_context: nil, auth_timer_ref: nil}
+      %{
+        state
+        | ws: ws,
+          auth_state: :unauthenticated,
+          auth_context: nil,
+          auth_timer_ref: nil,
+          orderbook: Orderbook.reset(state.orderbook)
+      }
       |> adopt_connection()
       |> attach_owner()
 
@@ -408,6 +453,116 @@ defmodule Bourse.WS.Adapter do
       nil -> Config.missing_config_error(exchange.id)
       config -> {:ok, config}
     end
+  end
+
+  # Order book maintenance. Continuity is checked in `Orderbook`; this side
+  # performs what a broken or missing book needs — a REST snapshot or a
+  # resubscribe — and tells subscribers when a book they hold is no longer valid.
+  defp apply_order_book(state, decoded, payload, channel, market_id) do
+    key = Orderbook.key(state.orderbook, decoded, channel, market_id)
+    {orderbook, outcome} = Orderbook.apply(state.orderbook, key, payload, decoded)
+
+    case outcome do
+      {:book, book} ->
+        {orderbook, book}
+
+      {:fetch_snapshot, market} ->
+        {start_snapshot_fetch(%{state | orderbook: orderbook}, key, market), nil}
+
+      {:invalidated, reason} ->
+        broadcast_invalidated(state, channel, market_id, reason)
+        send(self(), {:order_book_resync, key})
+        {orderbook, nil}
+
+      {:unavailable, reason} ->
+        broadcast_invalidated(state, channel, market_id, reason)
+        {orderbook, nil}
+
+      _pending_or_none ->
+        {orderbook, nil}
+    end
+  end
+
+  defp broadcast_invalidated(state, channel, market_id, reason) do
+    Logger.warning("WS order book #{state.exchange.id} #{inspect(channel)} invalidated: #{inspect(reason)}")
+    message = {:bourse_ws, {:order_book_invalidated, channel, market_id, reason}}
+    Broadcast.broadcast(Broadcast.topic(state.exchange.id, :watch_order_book, channel), message)
+    Broadcast.broadcast(Broadcast.topic(state.exchange.id, :watch_order_book, nil), message)
+  end
+
+  defp resync_order_book(state, key) do
+    case Orderbook.resync_action(state.orderbook, key) do
+      {:rest_snapshot, market} ->
+        %{state | orderbook: start_snapshot_fetch(state, key, market)}
+
+      {:resubscribe, subscription} ->
+        resubscribe(state, subscription)
+
+      :none ->
+        state
+    end
+  end
+
+  defp resubscribe(%{ws: nil} = state, _subscription), do: state
+
+  defp resubscribe(%{ws: ws} = state, subscription) do
+    _ = WS.unsubscribe(WS.Handle.new(ws, :watch_order_book, [subscription]))
+
+    case WS.subscribe(ws, [subscription]) do
+      :ok ->
+        state
+
+      {:error, reason} ->
+        Logger.warning(
+          "WS order book resubscribe #{state.exchange.id} #{inspect(subscription)} failed: #{inspect(reason)}"
+        )
+
+        Process.send_after(self(), {:order_book_resync, subscription}, 1_000)
+        state
+    end
+  end
+
+  defp start_snapshot_fetch(state, key, market) do
+    # The authored function name resolves to an existing atom only once the
+    # generated venue module is loaded.
+    Code.ensure_loaded!(state.exchange.module)
+    {function, params} = Orderbook.rest_snapshot_request(state.orderbook, market)
+    ref = make_ref()
+    adapter = self()
+    exchange = state.exchange
+
+    {:ok, _pid} =
+      Task.start(fn ->
+        result =
+          try do
+            apply(exchange.module, function, [exchange, params])
+          rescue
+            error -> {:error, error}
+          end
+
+        send(adapter, {:order_book_snapshot, key, ref, result})
+      end)
+
+    Orderbook.fetch_started(state.orderbook, key, ref)
+  end
+
+  defp apply_order_book_snapshot(state, key, ref, {:ok, %{status: 200, body: body}}) when is_map(body) do
+    {orderbook, outcome} = Orderbook.apply_rest_snapshot(state.orderbook, key, ref, body)
+    state = %{state | orderbook: orderbook}
+
+    case outcome do
+      {:fetch_snapshot, market} -> %{state | orderbook: start_snapshot_fetch(state, key, market)}
+      _book_or_pending -> state
+    end
+  end
+
+  defp apply_order_book_snapshot(state, key, ref, result) do
+    if Orderbook.fetch_in_flight?(state.orderbook, key, ref) do
+      Logger.warning("WS order book snapshot fetch #{state.exchange.id} #{inspect(key)} failed: #{inspect(result)}")
+      Process.send_after(self(), {:order_book_resync, key}, 1_000)
+    end
+
+    state
   end
 
   defp merge_subscriptions(existing, channels) do

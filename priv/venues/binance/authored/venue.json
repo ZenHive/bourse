@@ -1260,6 +1260,27 @@
         "field": null,
         "present": false
       },
+      "continuity": {
+        "doc": "https://developers.binance.com/docs/binance-spot-api-docs/web-socket-streams#how-to-manage-a-local-order-book-correctly",
+        "fields": {
+          "first": "U",
+          "last": "u"
+        },
+        "market_path": "s",
+        "partial_depth_channel": null,
+        "rest_snapshot": {
+          "function": "public_get_depth",
+          "id_field": "lastUpdateId",
+          "params": {
+            "limit": 1000
+          },
+          "symbol_param": "symbol"
+        },
+        "rule": "first_follows_last",
+        "snapshot_source": "rest",
+        "subscription_path": null,
+        "unmarked_frames": "snapshot"
+      },
       "discriminator": {
         "delta_values": [],
         "field": null,
@@ -1269,8 +1290,6 @@
       "resolved_from": "self",
       "sequence_fields": [
         "U",
-        "nonce",
-        "pu",
         "u"
       ],
       "source": "pro_handle_orderbook",

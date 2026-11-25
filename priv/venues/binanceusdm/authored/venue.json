@@ -1243,6 +1243,28 @@
         "field": null,
         "present": false
       },
+      "continuity": {
+        "doc": "https://developers.binance.com/docs/derivatives/usds-margined-futures/websocket-market-streams/How-to-manage-a-local-order-book-correctly",
+        "fields": {
+          "first": "U",
+          "last": "u",
+          "previous": "pu"
+        },
+        "market_path": "s",
+        "partial_depth_channel": "^(?<market>[a-z0-9_]+)@depth(?:5|10|20)(?:@\\d+ms)?$",
+        "rest_snapshot": {
+          "function": "fapiPublic_get_depth",
+          "id_field": "lastUpdateId",
+          "params": {
+            "limit": 1000
+          },
+          "symbol_param": "symbol"
+        },
+        "rule": "previous_last",
+        "snapshot_source": "rest",
+        "subscription_path": null,
+        "unmarked_frames": "reject"
+      },
       "discriminator": {
         "delta_values": [],
         "field": null,
@@ -1252,7 +1274,6 @@
       "resolved_from": "binance",
       "sequence_fields": [
         "U",
-        "nonce",
         "pu",
         "u"
       ],

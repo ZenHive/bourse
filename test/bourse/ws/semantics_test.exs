@@ -10,41 +10,42 @@ defmodule Bourse.WS.SemanticsTest do
     exchange = Exchange.new!("bybit")
     state = Orderbook.new(exchange)
 
-    snapshot = %{"b" => [["42000", "1"]], "a" => [["42001", "1"]], "type" => "snapshot"}
-    {state, book} = Orderbook.apply(state, "BTCUSDT", snapshot)
+    snapshot = %{"b" => [["42000", "1"]], "a" => [["42001", "1"]], "u" => 10, "type" => "snapshot"}
+    {state, {:book, book}} = Orderbook.apply(state, "BTCUSDT", snapshot)
     assert book["bids"] == [["42000", "1"]]
 
-    delta = %{"b" => [["42000", "0"]], "a" => [["42002", "2"]], "type" => "delta"}
-    {_state, book} = Orderbook.apply(state, "BTCUSDT", delta)
+    delta = %{"b" => [["42000", "0"]], "a" => [["42002", "2"]], "u" => 11, "type" => "delta"}
+    {_state, {:book, book}} = Orderbook.apply(state, "BTCUSDT", delta)
     assert book["bids"] == []
     assert book["asks"] == [["42001", "1"], ["42002", "2"]]
   end
 
-  test "orderbook preserves the existing book for an unknown update" do
+  test "orderbook reports no book for an unknown apply mode" do
     state = %Orderbook{apply_mode: "unknown", books: %{"BTCUSDT" => %{"bids" => [["1", "2"]]}}}
 
-    assert {^state, %{"bids" => [["1", "2"]]}} = Orderbook.apply(state, "BTCUSDT", %{})
+    assert {^state, :none} = Orderbook.apply(state, "BTCUSDT", %{})
   end
 
   test "orderbook replaces, accepts raw snapshots, and ignores malformed delta levels" do
     state = %Orderbook{apply_mode: "replace"}
-    {_state, book} = Orderbook.apply(state, "BTCUSDT", %{bids: []})
+    {_state, {:book, book}} = Orderbook.apply(state, "BTCUSDT", %{bids: []})
     assert book == %{"bids" => [], "asks" => []}
 
-    delta_state = %Orderbook{apply_mode: "delta", books: %{"BTCUSDT" => %{"bids" => [["1", "1"]], "asks" => []}}}
-    {_state, delta_book} = Orderbook.apply(delta_state, "BTCUSDT", %{"bids" => [["1", "3"], ["bad"]]})
+    delta_state = %Orderbook{apply_mode: "delta"}
+    {delta_state, _} = Orderbook.apply(delta_state, "BTCUSDT", %{"bids" => [["1", "1"]]})
+    {_state, {:book, delta_book}} = Orderbook.apply(delta_state, "BTCUSDT", %{"bids" => [["1", "3"], ["bad"]]})
     assert delta_book["bids"] == [["1", "3"]]
 
-    {_state, raw_book} = Orderbook.apply(%Orderbook{apply_mode: "snapshot"}, "BTCUSDT", :raw)
+    {_state, {:book, raw_book}} = Orderbook.apply(%Orderbook{apply_mode: "snapshot"}, "BTCUSDT", :raw)
     assert raw_book == %{"payload" => :raw}
   end
 
   test "orderbook both mode recognizes snapshots and defaults to delta when configured" do
     state = %Orderbook{apply_mode: "both", discriminator_field: "type", snapshot_values: ["snapshot"]}
-    {state, snapshot} = Orderbook.apply(state, "BTCUSDT", %{"type" => "snapshot", "b" => [["1", "1"]]})
+    {state, {:book, snapshot}} = Orderbook.apply(state, "BTCUSDT", %{"type" => "snapshot", "b" => [["1", "1"]]})
     assert snapshot["bids"] == [["1", "1"]]
 
-    {_state, delta} = Orderbook.apply(state, "BTCUSDT", %{"type" => "update", "b" => [["1", "0"]]})
+    {_state, {:book, delta}} = Orderbook.apply(state, "BTCUSDT", %{"type" => "update", "b" => [["1", "0"]]})
     assert delta["bids"] == []
   end
 

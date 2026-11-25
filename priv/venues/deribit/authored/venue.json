@@ -269,20 +269,41 @@
       "update_model": "replace_latest_then_append"
     },
     "orderbook_semantics": {
-      "apply_mode": "incremental",
+      "apply_mode": "both",
       "checksum": {
         "algorithm": null,
         "field": null,
         "present": false
       },
+      "continuity": {
+        "doc": "https://docs.deribit.com/subscriptions/orderbook/bookinstrument_nameinterval.md",
+        "fields": {
+          "current": "change_id",
+          "previous": "prev_change_id"
+        },
+        "market_path": "params.data.instrument_name",
+        "partial_depth_channel": null,
+        "rest_snapshot": null,
+        "rule": "previous_current",
+        "snapshot_source": "stream",
+        "subscription_path": "params.channel",
+        "unmarked_frames": "snapshot"
+      },
       "discriminator": {
-        "delta_values": [],
-        "field": null,
-        "snapshot_values": []
+        "delta_values": [
+          "change"
+        ],
+        "field": "params.data.type",
+        "snapshot_values": [
+          "snapshot"
+        ]
       },
       "handle_orderbook_defined": true,
       "resolved_from": "self",
-      "sequence_fields": [],
+      "sequence_fields": [
+        "change_id",
+        "prev_change_id"
+      ],
       "source": "pro_handle_orderbook",
       "unresolved_reason": null
     },

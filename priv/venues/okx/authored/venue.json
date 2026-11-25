@@ -503,6 +503,20 @@
         "field": null,
         "present": false
       },
+      "continuity": {
+        "doc": "https://www.okx.com/docs-v5/en/#order-book-trading-market-data-ws-order-book-channel",
+        "fields": {
+          "current": "seqId",
+          "previous": "prevSeqId"
+        },
+        "market_path": "arg.instId",
+        "partial_depth_channel": null,
+        "rest_snapshot": null,
+        "rule": "previous_current",
+        "snapshot_source": "stream",
+        "subscription_path": "arg",
+        "unmarked_frames": "snapshot"
+      },
       "discriminator": {
         "delta_values": [
           "update"

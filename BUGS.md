@@ -114,6 +114,20 @@ roadmap.
 
 ---
 
+## 2026-11-25 — `WS.subscribe/3` reorders frames that arrive during the ack wait
+
+**Status:** Fixed inline (task 708).
+
+`do_await_subscribe_ack` held non-ack frames and re-sent them to the caller's mailbox once
+the ack arrived. Re-sending appends, so frames that had already arrived behind the held
+ones came out first. Observed live on bybit `orderbook.50.BTCUSDT` (public, 2026-11-25):
+deltas `u …89`–`…92` were delivered before the snapshot `u …84` they follow, which an order
+book with a continuity check reads as a gap. Fix: on completion the still-queued frames
+are drained and re-sent behind the held ones (`requeue_messages/1` in `lib/bourse/ws.ex`);
+`test/bourse/ws/subscribe_return_shape_test.exs` pins the order.
+
+---
+
 ## 2026-11-25 — Binance futures algo-order detail reads answer `-2013` for up to ~1.3 s after the create
 
 **Status:** Fixed in the REST-read contract lane by task 707 (measured live 2026-11-25).

@@ -23,6 +23,30 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- **WS order books check sequence continuity and resync on a gap.** `Bourse.WS.Adapter`
+  checks every delta of an incremental book (binance, binanceusdm, okx, deribit, bybit)
+  against the venue's documented continuity rule, authored as
+  `websocket.orderbook_semantics.continuity` with the provider doc URL. A delta that does
+  not follow the previous one is never merged: the book is discarded, subscribers receive
+  `{:bourse_ws, {:order_book_invalidated, channel, market_id, reason}}` on the
+  `:watch_order_book` topics, routed frames carry a `nil` book until the resync completes,
+  and the adapter resyncs — binance and binanceusdm from the venue's REST depth snapshot
+  (bootstrap rule per the venue's "manage a local order book" procedure), the others by
+  resubscribing for a fresh stream snapshot. After a reconnect every book starts again
+  from a fresh snapshot, and frames still queued from the replaced connection are
+  discarded. An incremental book whose spec carries no continuity rule fails at spec load
+  unless it declares `"rule": "none"` with a doc-cited reason.
+- **WS order books for binance, binanceusdm, okx and deribit were not maintained
+  correctly before.** binance/binanceusdm (`incremental`) were never classified and
+  carried no book; okx (4-element levels) and deribit (`[action, price, amount]` levels)
+  merged no levels; okx and bybit snapshots were read as deltas because the
+  discriminator lives on the frame, not the payload; binance and okx books were keyed by
+  the event or channel name instead of the market. deribit is now `both`, keyed on
+  `params.data.type`, with `change_id` / `prev_change_id` as its sequence fields.
+- **`Bourse.WS.subscribe/3` no longer reorders frames that arrive while it waits for the
+  ack.** Frames held during the wait were re-sent behind frames still queued, so a
+  consumer could see a delta before the snapshot it follows.
+
 - binanceusdm `fetch_orders(until: t)` no longer drops orders near `t`. The merged
   algo history filters its time window on update time, not creation time, so it
   silently omitted conditional orders created before `until` and updated after it.
