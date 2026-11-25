@@ -132,8 +132,9 @@ open-algo book and fails on any other answer, including a detail whose status is
 The list is re-checked after every detail answer, a success included: the detail read also lags a
 cancel, answering `status: "open"` for 300–1,000 ms after one (measured on both venues), while
 the list drops the id on its next read. Every list and detail request checks a 5 s deadline
-immediately before it starts and fails the case as never readable once it has passed, so the
-wait ends within 5 s plus the one request already in flight. The contract's own read stays the
+immediately before it starts and fails the case as never readable once it has passed; that
+timeout is reported within 5 s plus the one request already in flight and one 250 ms poll
+interval (measured 5,172 ms). The contract's own read stays the
 assertion, and
 `fetchOpenOrder` now also requires `status: "open"`. Cleanup cancels on the explicit algo slot
 (USD-M `cancel_order` index 2, COIN-M index 0 — the unqualified cancel tries the regular book

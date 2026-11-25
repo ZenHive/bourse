@@ -107,8 +107,8 @@ defmodule Bourse.Test.RestReadContractOwnedState do
   #
   # Every list and detail request checks the clock immediately before it starts,
   # and none starts once @algo_wait_ms has elapsed: the wait then fails as
-  # never readable. It ends within that deadline plus the one request already
-  # in flight when the deadline passed.
+  # never readable. Reporting that timeout can trail the deadline by the one
+  # request already in flight plus one poll interval (@algo_poll_ms).
   @propagation_miss_code -2013
   @algo_wait_ms 5_000
   @algo_poll_ms 250
