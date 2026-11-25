@@ -114,6 +114,22 @@ roadmap.
 
 ---
 
+## 2026-11-26 — a bybit restore can take a late acceptance of another group for its own
+
+**Status:** 🆕 reported (found during task 708 review round 5; not routed).
+
+bybit's subscribe acceptance (`{"op":"subscribe","success":true}`) names no topic, and the
+adapter's restore does not send a `req_id`, so `Bourse.WS.SubscribeAck.classify/3` cannot
+tell whose acceptance it is. Repro (api-testnet, 2026-11-25, reviewer probe): two groups,
+`publicTrade.BTCUSDT` (ack wait 800 ms) and `orderbook.50.BTCUSDT`, accepted; after a
+reconnect the trades acceptance was held 1 s and the book request answered
+`error:handler not found`. The book's restore took the late trades acceptance as its own:
+`restore_attempts` 0, two groups recorded, trades flowing, zero books. Expected: the book
+stays pending until its own acceptance. A bybit request may carry `req_id`, which bybit's
+V5 WebSocket docs describe as echoed in the reply (not yet verified live); correlating on
+it would match each reply to its request. hyperliquid had
+the same shape and was fixed in task 708 by matching the echoed subscription.
+
 ## 2026-11-25 — deribit's REST comparison in the order book continuity live test failed a correct book
 
 **Status:** Fixed inline (task 708 review round 4).
@@ -154,8 +170,8 @@ reply. Expected: the ack is the reply whose `id` is the subscribe's. Any earlier
 reply still pending on the socket can be consumed the same way, so a genuine refusal of
 the subscribe itself can be read as success; the call's own reply then arrives as an
 unrouted system frame. (An earlier version of this entry claimed no refusal is lost —
-review round 4 of task 708 showed it on spot testnet, through the restore's unsubscribe,
-which task 708 then removed.) hyperliquid had the same shape for unsubscribe replies and
+review round 4 of task 708 showed it on spot testnet, through the unsubscribe the restore
+then sent before re-subscribing; task 708 removed that unsubscribe.) hyperliquid had the same shape for unsubscribe replies and
 was fixed in task 708 (its unsubscribe reply carries `data.method: "unsubscribe"`,
 observed on api.hyperliquid-testnet.xyz 2026-11-25).
 

@@ -74,6 +74,8 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   @moduletag :integration
   @moduletag timeout: 180_000
 
+  # Each phase (initial books, invalidation, resync) has this much time in all,
+  # however many frames arrive meanwhile.
   @receive_timeout 20_000
   @chained_books 8
   @compare_levels 25
@@ -146,9 +148,9 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       @tag venue: venue
       test "chains real deltas, invalidates on a dropped delta, and resyncs", %{venue: venue} do
         config = Map.fetch!(@venues, venue)
-        {adapter, drop} = start(venue, config)
+        {_adapter, drop} = start(venue, config)
 
-        history = await_books(@chained_books, [])
+        history = await_books(@chained_books, [], deadline())
         assert_chained(history, config)
 
         :atomics.put(drop, 1, 1)
@@ -157,34 +159,31 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
         # The delta after the dropped one reveals the gap. It must not be
         # published, neither before nor after the invalidation.
         assert_receive {:offending_delta, offending}, @receive_timeout
-        {reason, deltas} = await_invalidation(offending)
+        {reason, deltas} = await_invalidation(offending, [], deadline())
         assert gap_reason?(reason), "expected a continuity gap, got #{inspect(reason)}"
 
-        resynced = await_resynced_book(config, offending, deltas)
+        resynced = await_resynced_book(config, offending, deltas, nil, deadline())
         compare_with_rest(venue, config, resynced)
-
-        GenServer.stop(adapter)
       end
 
       @tag venue: venue
       test "after the live transport drops, the first book comes from a fresh snapshot", %{venue: venue} do
         config = Map.fetch!(@venues, venue)
         {adapter, _drop} = start(venue, config)
-        _history = await_books(3, [])
+        _history = await_books(3, [], deadline())
 
         old = transport(adapter)
         send(old.server, {:gun_down, old.gun, :http, :closed, []})
 
-        assert {{:connection_lost, {:gun_down, _, :http, :closed, []}}, _deltas} = await_invalidation(nil)
+        {reason, _deltas} = await_invalidation(nil, [], deadline())
+        assert {:connection_lost, {:gun_down, _, :http, :closed, []}} = reason
         assert_receive {:connected, ws}, @receive_timeout
         refute ws.zen_client.server_pid == old.server
         refute Process.alive?(old.server)
 
         # Deltas from the lost connection cannot bridge the new snapshot.
-        resynced = await_resynced_book(config, nil, [])
+        resynced = await_resynced_book(config, nil, [], nil, deadline())
         compare_with_rest(venue, config, resynced)
-
-        GenServer.stop(adapter)
       end
     end
   end
@@ -202,11 +201,13 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
     test_pid = self()
     drop = :atomics.new(1, [])
     Broadcast.subscribe(Broadcast.topic(venue, :watch_order_book, nil))
+    handles = own_handles()
 
     connect_fun = fn exchange, section, opts ->
       filtered = dropping_handler(Keyword.fetch!(opts, :handler), config, drop, test_pid)
 
       with {:ok, ws} <- WS.connect(exchange, section, Keyword.put(opts, :handler, filtered)) do
+        Agent.update(handles, &[ws | &1])
         send(test_pid, {:connected, ws})
         {:ok, ws}
       end
@@ -215,11 +216,48 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
     {:ok, adapter} =
       Adapter.start_link(sandbox(venue, config), Map.get(config, :section, :public), connect_fun: connect_fun)
 
+    Agent.update(handles, &[adapter | &1])
+
     if match?({:rest, _}, config.resync), do: trace_rest_snapshots(adapter)
     assert_receive {:connected, _ws}, @receive_timeout
     assert :ok = Adapter.subscribe(adapter, [config.channel])
     {adapter, drop}
   end
+
+  # Every adapter and connection a case opens, the replacements after a
+  # reconnect included, is closed when the case ends — also when it fails or
+  # times out, which kills the test process but not the connection owner, the
+  # client or its transport. The registry is not linked to the test process,
+  # so it outlives it until the cleanup has run.
+  defp own_handles do
+    {:ok, handles} = Agent.start(fn -> [] end)
+
+    on_exit(fn ->
+      for handle <- Agent.get(handles, & &1), do: close_handle(handle)
+      Agent.stop(handles)
+    end)
+
+    handles
+  end
+
+  defp close_handle(%WS{} = ws) do
+    WS.close(ws)
+  catch
+    :exit, _ -> :ok
+  end
+
+  defp close_handle(adapter) when is_pid(adapter) do
+    if Process.alive?(adapter), do: GenServer.stop(adapter)
+  catch
+    :exit, _ -> :ok
+  end
+
+  defp deadline, do: System.monotonic_time(:millisecond) + @receive_timeout
+  defp left(deadline), do: max(deadline - System.monotonic_time(:millisecond), 0)
+
+  # A receive takes a queued message even when its timeout has passed, so a
+  # steady stream would never reach `after`; the deadline is checked first.
+  defp within!(deadline, message), do: if(left(deadline) == 0, do: flunk(message))
 
   # The REST snapshot the adapter receives is the one its bridge is built on;
   # tracing its mailbox lets the test rebuild that bridge on its own.
@@ -280,20 +318,23 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
 
   # Collects `count` routed frames that carry a book, newest first. A routed
   # frame with a nil book is a frame received while no valid book exists.
-  defp await_books(0, acc), do: acc
+  defp await_books(0, acc, _deadline), do: acc
 
-  defp await_books(count, acc) do
+  defp await_books(count, acc, deadline) do
+    timeout = "#{count} of the order books still expected after #{@receive_timeout}ms"
+    within!(deadline, timeout)
+
     receive do
       {:bourse_ws, {:routed, :watch_order_book, payload, _channel, _market, %{"bids" => _} = book}} ->
-        await_books(count - 1, [{payload, book} | acc])
+        await_books(count - 1, [{payload, book} | acc], deadline)
 
       {:bourse_ws, {:routed, :watch_order_book, _payload, _channel, _market, nil}} ->
-        await_books(count, acc)
+        await_books(count, acc, deadline)
 
       {:bourse_ws, {:order_book_invalidated, _channel, _market, reason}} ->
         flunk("book invalidated while chaining live deltas: #{inspect(reason)}")
     after
-      @receive_timeout -> flunk("no order book within #{@receive_timeout}ms (#{count} still expected)")
+      left(deadline) -> flunk(timeout)
     end
   end
 
@@ -301,7 +342,9 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   # and so are snapshot markers and REST responses from before it; all of them
   # are consumed in arrival order up to the invalidation.
   # Returns the reason and the forwarded deltas seen so far, oldest first.
-  defp await_invalidation(offending, deltas \\ []) do
+  defp await_invalidation(offending, deltas, deadline) do
+    within!(deadline, "the break did not invalidate the book within #{@receive_timeout}ms")
+
     receive do
       {:bourse_ws, {:order_book_invalidated, _channel, "BTC" <> _, reason}} ->
         {reason, Enum.reverse(deltas)}
@@ -311,18 +354,18 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
 
       {:bourse_ws, {:routed, :watch_order_book, payload, _, _, book}} ->
         refute_offending(offending, payload, book, "before")
-        await_invalidation(offending, deltas)
+        await_invalidation(offending, deltas, deadline)
 
       {:delta_frame, delta} ->
-        await_invalidation(offending, [delta | deltas])
+        await_invalidation(offending, [delta | deltas], deadline)
 
       {:snapshot_frame, _id, _payload} ->
-        await_invalidation(offending, deltas)
+        await_invalidation(offending, deltas, deadline)
 
       {:trace, _pid, :receive, {:order_book_snapshot, _, _, _}} ->
-        await_invalidation(offending, deltas)
+        await_invalidation(offending, deltas, deadline)
     after
-      @receive_timeout -> flunk("the break did not invalidate the book")
+      left(deadline) -> flunk("the break did not invalidate the book within #{@receive_timeout}ms")
     end
   end
 
@@ -339,25 +382,28 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   # must then equal that snapshot's levels — or, for a REST venue, the REST
   # snapshot with every later delta applied in order, as the venue documents.
   # Returns the books routed from there, newest first.
-  defp await_resynced_book(config, offending, deltas, seen \\ nil) do
+  defp await_resynced_book(config, offending, deltas, seen, deadline) do
+    timeout = "no resynced book within #{@receive_timeout}ms (resync seen: #{inspect(seen)})"
+    within!(deadline, timeout)
+
     receive do
       {:snapshot_frame, id, payload} ->
-        await_resynced_book(config, offending, deltas, {:snapshot, id, payload})
+        await_resynced_book(config, offending, deltas, {:snapshot, id, payload}, deadline)
 
       {:trace, _pid, :receive, {:order_book_snapshot, _key, _ref, {:ok, %{status: 200, body: body}}}} ->
-        await_resynced_book(config, offending, deltas, {:rest, body})
+        await_resynced_book(config, offending, deltas, {:rest, body}, deadline)
 
       {:trace, _pid, :receive, {:order_book_snapshot, _key, _ref, _failed}} ->
-        await_resynced_book(config, offending, deltas, seen)
+        await_resynced_book(config, offending, deltas, seen, deadline)
 
       {:delta_frame, delta} ->
-        await_resynced_book(config, offending, deltas ++ [delta], seen)
+        await_resynced_book(config, offending, deltas ++ [delta], seen, deadline)
 
       {:connected, _ws} ->
-        await_resynced_book(config, offending, deltas, seen)
+        await_resynced_book(config, offending, deltas, seen, deadline)
 
       {:bourse_ws, {:routed, :watch_order_book, _payload, _channel, _market, nil}} ->
-        await_resynced_book(config, offending, deltas, seen)
+        await_resynced_book(config, offending, deltas, seen, deadline)
 
       {:bourse_ws, {:routed, :watch_order_book, payload, _channel, _market, book}} ->
         refute_offending(offending, payload, book, "after")
@@ -368,7 +414,7 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       {:bourse_ws, {:order_book_invalidated, _channel, _market, reason}} ->
         flunk("invalidated again before the resync: #{inspect(reason)}")
     after
-      @receive_timeout -> flunk("no resynced book within #{@receive_timeout}ms (resync seen: #{inspect(seen)})")
+      left(deadline) -> flunk(timeout)
     end
   end
 
@@ -480,9 +526,9 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
           )
 
       task = Task.async(fn -> config.rest.(exchange) end)
-      history = collect_for(1_000, history)
-      {rest_id, rest_bids, rest_asks} = Task.await(task, 15_000)
-      history = collect_for(1_500, history)
+      history = collect_for(1_000, history, deadline)
+      {rest_id, rest_bids, rest_asks} = await_rest(task, deadline)
+      history = collect_for(1_500, history, deadline)
 
       case covering_frame(history, config, rest_id) do
         nil ->
@@ -534,22 +580,33 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
     end)
   end
 
-  defp collect_for(ms, acc) do
-    deadline = System.monotonic_time(:millisecond) + ms
+  defp await_rest(task, deadline) do
+    case Task.yield(task, min(15_000, left(deadline))) || Task.shutdown(task, :brutal_kill) do
+      {:ok, snapshot} -> snapshot
+      {:exit, reason} -> flunk("the REST snapshot read failed: #{inspect(reason)}")
+      nil -> flunk("the REST snapshot read did not answer within the #{@rest_deadline_ms}ms comparison deadline")
+    end
+  end
+
+  # Collects for `ms`, and never past the comparison's `limit`.
+  defp collect_for(ms, acc, limit) do
+    deadline = min(System.monotonic_time(:millisecond) + ms, limit)
     do_collect(deadline, acc)
   end
 
   defp do_collect(deadline, acc) do
-    left = max(deadline - System.monotonic_time(:millisecond), 0)
+    if left(deadline) == 0 do
+      acc
+    else
+      receive do
+        {:bourse_ws, {:routed, :watch_order_book, payload, _, _, %{"bids" => _} = book}} ->
+          do_collect(deadline, [{payload, book} | acc])
 
-    receive do
-      {:bourse_ws, {:routed, :watch_order_book, payload, _, _, %{"bids" => _} = book}} ->
-        do_collect(deadline, [{payload, book} | acc])
-
-      {:bourse_ws, {:order_book_invalidated, _, _, reason}} ->
-        flunk("book invalidated after resync: #{inspect(reason)}")
-    after
-      left -> acc
+        {:bourse_ws, {:order_book_invalidated, _, _, reason}} ->
+          flunk("book invalidated after resync: #{inspect(reason)}")
+      after
+        left(deadline) -> acc
+      end
     end
   end
 

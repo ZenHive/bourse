@@ -104,8 +104,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   The filter is registered by `Bourse.Application` start under the id
   `Bourse.LogRedaction`. It rewrites only an OTP termination report
   (`gen_server`, `gen_statem`, `proc_lib`, `supervisor`) of a `Bourse.*` or
-  `ZenWebsocket.*` process — identified by the state struct, initial call or supervisor
-  offender module — and only when redaction changes it; every other event gets `:ignore`.
+  `ZenWebsocket.*` process — identified by the process's own identity (supervisor offender,
+  crash report initial call, the reporting process's initial call or registered name),
+  and by the state struct only when none is available, so a host process holding a
+  `Bourse.WS` struct is left to the host — and only when redaction changes it; every other
+  event gets `:ignore`.
   OTP counts a filter that returns an event as passing it, so **such a rewritten report
   passes a primary `filter_default: :stop`**. The filter is on by default because these
   reports print a connection's URL and session state whole and a credential in a log
@@ -125,18 +128,24 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   no buffered delta follows the snapshot (for example after a malformed delta cleared the
   buffer while the request was in flight), the book waits for the next delta to satisfy
   the venue's first-event rule; a delta that starts past the snapshot fetches it again.
-  Before, such a snapshot was published at once, possibly older than the gap. A book
-  rebuilt after an invalidation is published only once its last update id is past every
-  update id seen before the break, so a snapshot requested earlier and a repeated or
-  delayed delta cannot publish a state the feed had already moved past.
+  Before, such a snapshot was published at once, possibly older than the gap. Each book
+  keeps a high-water mark — the highest sequence id read from any of its frames, applied,
+  buffered, dropped or unreadable — that no invalidation, replay restart or refetch lowers
+  while the stream stays subscribed on the connection; a rebuilt book is published only
+  once it reaches that mark, so a snapshot requested earlier and a repeated or delayed
+  delta cannot publish a state the feed had already moved past.
 - **Order book resync work is bound to the connection it was scheduled on** and is
   skipped for a book that is live again, so a retry from a lost connection no longer
   unsubscribes the replacement connection's healthy feed.
 - **A subscription restore whose ack never arrived is sent again as it is, and a refusal
-  naming exactly that call's channels as already subscribed restores it**
-  (`Bourse.WS.SubscribeAck.already_subscribed?/3`, bybit and hyperliquid). Before, the
-  retry was refused and retried without end. hyperliquid's `unsubscribe` replies are no
-  longer read as a subscribe ack.
+  reporting its channels as already subscribed restores them**
+  (`Bourse.WS.SubscribeAck.already_subscribed/3`, bybit and hyperliquid). bybit names only
+  the first active topic of a multi-topic request, so the remaining topics are sent again
+  on their own; hyperliquid's echo is compared with the subscription as serialized on the
+  wire (atom keys, string channels). Before, the retry was refused and retried without
+  end. A hyperliquid acceptance is taken only for the subscription it echoes
+  (`classify/3`), so a late acceptance of one group no longer settles another, and
+  hyperliquid's `unsubscribe` replies are no longer read as a subscribe ack.
 - **Subscribing again to an order book stream already tracked keeps its book**; the
   ambiguity invalidation is announced only when a distinct stream is added.
 - **A routed connection that closes right after a subscription is accepted is noticed.**
