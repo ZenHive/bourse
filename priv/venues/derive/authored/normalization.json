@@ -1115,19 +1115,19 @@
       "fetchDeposits": {
         "default": null,
         "fallback_keys": [],
-        "key": "result.events"
+        "key": "result.deposits"
       },
       "fetchWithdrawals": {
         "default": null,
         "fallback_keys": [],
-        "key": "result.events"
+        "key": "result.withdrawals"
       }
     },
     "transfer": {
       "fetchTransfers": {
         "default": [],
         "fallback_keys": [],
-        "key": "result.events"
+        "key": "result.transfers"
       }
     }
   }

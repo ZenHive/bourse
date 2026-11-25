@@ -322,7 +322,7 @@
     ],
     "has": true,
     "mapping_complete": true,
-    "verification": "verified",
+    "verification": "unverified",
     "descriptor": {
       "async": true,
       "description": "query for balance and get the amount of funds available for trading or funds locked in orders",
@@ -713,7 +713,7 @@
     ],
     "has": true,
     "mapping_complete": true,
-    "verification": "verified",
+    "verification": "unverified",
     "request": {
       "defaults": {
         "subaccount_id": {
@@ -963,7 +963,7 @@
     ],
     "has": true,
     "mapping_complete": true,
-    "verification": "verified",
+    "verification": "unverified",
     "descriptor": {
       "async": true,
       "description": "fetch all open positions",

@@ -92,6 +92,7 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
   end
 
   test "signed get_all_portfolios preserves the SM collateral amount without inventing free or used" do
+    subaccount = derive_subaccount_id!()
     credentials = require_credentials!(:derive, url: @derive_testnet_url)
     exchange = build_exchange(:derive, credentials: credentials, sandbox: true)
 
@@ -99,31 +100,79 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
 
     portfolio =
       Enum.find(balance.info["result"], fn portfolio ->
-        portfolio["subaccount_id"] == derive_subaccount_id!()
+        portfolio["subaccount_id"] == subaccount
       end)
 
     assert %{"margin_type" => "SM"} = portfolio
-    eth = Enum.find(portfolio["collaterals"], &(&1["currency"] == "ETH"))
+    # The operator funds the v3 account with a testnet USDC deposit.
+    usdc = Enum.find(portfolio["collaterals"], &(&1["currency"] == "USDC"))
+    assert usdc, "no USDC collateral on subaccount #{subaccount}: #{inspect(portfolio["collaterals"])}"
 
-    assert balance.total["ETH"] == Safe.number(eth["amount"])
-    assert balance.free["ETH"] == nil
-    assert balance.used["ETH"] == nil
+    assert balance.total["USDC"] == Safe.number(usdc["amount"])
+    assert balance.total["USDC"] > 0
+    assert balance.free["USDC"] == nil
+    assert balance.used["USDC"] == nil
   end
 
-  test "signed transfer history reaches live demo and returns typed entries" do
+  test "the deposit that created the v3 subaccount parses with its operation id and batch status" do
+    exchange = settlement_exchange!()
+
+    # v3 creates the subaccount on its first L1 deposit, so a provisioned account
+    # always carries at least one row. Envelope `result.deposits`, row id
+    # `operation_id`, lifecycle `batch_status` (https://docs.derive.xyz/openapi.json,
+    # DepositHistoryResult / DepositEntry / BatchStatus).
+    assert {:ok, [%Bourse.Transaction{} | _] = deposits} = Bourse.fetch_deposits(exchange)
+
+    for deposit <- deposits do
+      assert is_binary(deposit.id) and deposit.id == deposit.info["operation_id"]
+      assert deposit.status == settlement_status(deposit.info["batch_status"])
+      assert deposit.amount > 0
+      assert is_binary(deposit.currency) and deposit.currency != ""
+    end
+  end
+
+  test "transfer history rows parse with their operation id and batch status" do
+    exchange = settlement_exchange!()
+
+    # Envelope `result.transfers`, row TransferEntry
+    # (https://docs.derive.xyz/openapi.json).
+    case Bourse.fetch_transfers(exchange) do
+      {:ok, [_ | _] = transfers} ->
+        for %TransferEntry{} = transfer <- transfers do
+          assert transfer.id == transfer.info["operation_id"]
+          assert transfer.status == settlement_status(transfer.info["batch_status"])
+          assert transfer.from_account == to_string(transfer.info["from_subaccount_id"])
+        end
+
+      {:ok, []} ->
+        flunk("""
+        Derive transfer history is empty for subaccount #{derive_subaccount_id!()}: no row to
+        prove the parser on. State-dependent, ledgered in docs/prod-verification-ledger.md
+        ("derive — populated v3 transfer and withdrawal history rows"). Produce one with a
+        private/transfer_erc20 between two subaccounts of the owner wallet.
+        """)
+
+      other ->
+        flunk("fetch_transfers failed: #{inspect(other)}")
+    end
+  end
+
+  defp settlement_exchange! do
     credentials = require_credentials!(:derive, url: @derive_testnet_url)
 
-    exchange =
-      build_exchange(:derive,
-        credentials: credentials,
-        sandbox: true,
-        options: %{"subaccount_id" => derive_subaccount_id!()}
-      )
-
-    assert {:ok, transfers} = Bourse.fetch_transfers(exchange)
-    assert is_list(transfers)
-    assert Enum.all?(transfers, &match?(%TransferEntry{}, &1))
+    build_exchange(:derive,
+      credentials: credentials,
+      sandbox: true,
+      options: %{"subaccount_id" => derive_subaccount_id!()}
+    )
   end
+
+  # The authored BatchStatus enum map (normalization.json): Settled -> ok, any
+  # `...Error` stage -> failed, every other stage -> pending.
+  defp settlement_status("Settled"), do: "ok"
+
+  defp settlement_status(status) when is_binary(status),
+    do: if(String.ends_with?(status, "Error"), do: "failed", else: "pending")
 
   test "a signer that is neither the wallet nor its session key is refused with 14026" do
     # Observed live 2026-11-25 on testnet.api.derive.xyz/v3: the recovered signer
