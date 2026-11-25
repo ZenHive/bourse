@@ -6,6 +6,7 @@ defmodule Bourse.WS.AdapterTest do
   alias Bourse.WS.Adapter
   alias Bourse.WS.Broadcast
   alias Bourse.WS.MessageRouter
+  alias Bourse.WS.Semantics.Orderbook
   alias ZenWebsocket.Client
 
   @moduletag trace_messages: 200
@@ -26,6 +27,25 @@ defmodule Bourse.WS.AdapterTest do
     end
 
     def handle_call(:get_state, _from, owner), do: {:reply, :connected, owner}
+  end
+
+  # Answers every subscribe with the venue's ack through the connection's own
+  # handler, the way a live socket delivers it.
+  defmodule AckingTransport do
+    @moduledoc false
+    use GenServer
+
+    @impl true
+    def init({owner, handler}), do: {:ok, {owner, handler}}
+
+    @impl true
+    def handle_call({:send_message, payload}, _from, {owner, handler} = state) do
+      send(owner, {:transport_sent, self(), Jason.decode!(payload)})
+      if Jason.decode!(payload)["op"] == "subscribe", do: handler.({:message, %{"op" => "subscribe", "success" => true}})
+      {:reply, :ok, state}
+    end
+
+    def handle_call(:get_state, _from, state), do: {:reply, :connected, state}
   end
 
   setup do
@@ -333,7 +353,7 @@ defmodule Bourse.WS.AdapterTest do
     assert_receive :restore_subscriptions
     # The facade authenticates the private section and records the outcome on
     # the connection, so the adapter no longer opts out and re-runs it.
-    assert_receive {:connector_opts, [handler: handler]}
+    assert_receive {:connector_opts, [handler: handler, reconnect_on_error: false]}
     ref = connected.connection_ref
     assert is_reference(ref)
 
@@ -482,6 +502,125 @@ defmodule Bourse.WS.AdapterTest do
     final_owner = final.ws.connection_owner
     assert :ok = WS.close(final.ws)
     refute Process.alive?(final_owner)
+  end
+
+  test "a lost transport invalidates every book and reconnects with a fresh connection and its subscriptions" do
+    test_pid = self()
+    exchange = Exchange.new!("bybit")
+    channel = "orderbook.50.BTCUSDT"
+    Broadcast.subscribe(Broadcast.topic("bybit", :watch_order_book, nil))
+
+    zen_connect = fn url, opts ->
+      send(test_pid, {:zen_opts, opts})
+      {:ok, pid} = GenServer.start(AckingTransport, {test_pid, Keyword.fetch!(opts, :handler)})
+      {:ok, %Client{server_pid: pid, state: :connected, url: url}}
+    end
+
+    connect_fun = fn ex, section, opts -> WS.connect(ex, section, Keyword.put(opts, :connect_fun, zen_connect)) end
+    {:ok, adapter} = Adapter.start_link(exchange, :public, connect_fun: connect_fun)
+    on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter, :normal) end)
+
+    # The transport must not redial underneath the adapter.
+    assert_receive {:zen_opts, opts}
+    assert opts[:reconnect_on_error] == false
+    # Lets the adapter finish adopting the connection (and its empty restore).
+    _ = :sys.get_state(adapter)
+
+    assert :ok = Adapter.subscribe(adapter, [channel])
+    assert_receive {:transport_sent, first_transport, %{"op" => "subscribe", "args" => [^channel]}}
+
+    first = :sys.get_state(adapter)
+
+    snapshot = fn u ->
+      %{"topic" => channel, "type" => "snapshot", "data" => %{"s" => "BTCUSDT", "u" => u, "b" => [["1", "2"]]}}
+    end
+
+    delta = fn u ->
+      %{"topic" => channel, "type" => "delta", "data" => %{"s" => "BTCUSDT", "u" => u, "b" => [["1", "3"]]}}
+    end
+
+    send(adapter, {:ws_frame, first.connection_ref, snapshot.(7)})
+    assert_receive {:bourse_ws, {:routed, :watch_order_book, _, ^channel, _, %{"bids" => [["1", "2"]]}}}
+
+    GenServer.stop(first_transport, {:shutdown, :closed})
+
+    assert_receive {:bourse_ws, {:order_book_invalidated, ^channel, "BTCUSDT", {:connection_lost, {:shutdown, :closed}}}}
+    assert_receive {:zen_opts, _opts}
+    assert_receive {:transport_sent, second_transport, %{"op" => "subscribe", "args" => [^channel]}}
+    refute second_transport == first_transport
+
+    second = :sys.get_state(adapter)
+    refute second.connection_ref == first.connection_ref
+    assert second.orderbook.books == %{}
+
+    # A frame still queued from the lost connection is not applied, and a delta
+    # on the new one does not continue the old book.
+    send(adapter, {:ws_frame, first.connection_ref, delta.(8)})
+    send(adapter, {:ws_frame, second.connection_ref, delta.(8)})
+    assert_receive {:bourse_ws, {:routed, :watch_order_book, %{"u" => 8}, ^channel, _, nil}}
+    refute_receive {:bourse_ws, {:routed, :watch_order_book, _, _, _, _}}, 50
+
+    send(adapter, {:ws_frame, second.connection_ref, snapshot.(20)})
+    assert_receive {:bourse_ws, {:routed, :watch_order_book, %{"u" => 20}, ^channel, _, %{"bids" => [["1", "2"]]}}}
+
+    # The new transport is watched as well.
+    GenServer.stop(second_transport, {:shutdown, :closed})
+    assert_receive {:bourse_ws, {:order_book_invalidated, ^channel, "BTCUSDT", {:connection_lost, _}}}
+    assert_receive {:transport_sent, third_transport, %{"op" => "subscribe"}}
+    refute third_transport in [first_transport, second_transport]
+  end
+
+  test "an invalidation names the instrument of the book that broke, per instrument on one socket" do
+    exchange = Exchange.new!("okx")
+    state = %Adapter{exchange: exchange, orderbook: Orderbook.new(exchange)}
+    Broadcast.subscribe(Broadcast.topic("okx", :watch_order_book, nil))
+
+    frame = fn market, action, current, previous ->
+      %{
+        "arg" => %{"channel" => "books", "instId" => market},
+        "action" => action,
+        "data" => [%{"seqId" => current, "prevSeqId" => previous, "bids" => [["1", "1", "0", "1"]], "asks" => []}]
+      }
+    end
+
+    state =
+      Enum.reduce(["BTC-USDT", "ETH-USDT"], state, fn market, st ->
+        {:noreply, st} = Adapter.handle_info({:ws_frame, frame.(market, "snapshot", 42, -1)}, st)
+        st
+      end)
+
+    ExUnit.CaptureLog.capture_log(fn ->
+      {:noreply, _} = Adapter.handle_info({:ws_frame, frame.("ETH-USDT", "update", 50, 49)}, state)
+    end)
+
+    assert_receive {:bourse_ws, {:order_book_invalidated, "books", "ETH-USDT", {:expected_previous, 42, 49}}}
+    refute_receive {:bourse_ws, {:order_book_invalidated, _, "BTC-USDT", _}}, 50
+  end
+
+  test "an unusable or failed REST snapshot is retried after a pause, one attempt per book" do
+    exchange = Exchange.new!("binance", sandbox: true)
+    key = "BTCUSDT"
+    {ob, {:fetch_snapshot, ^key}} = Orderbook.apply(Orderbook.new(exchange), key, %{"U" => 100, "u" => 105})
+
+    for result <- [{:ok, %{status: 200, body: %{"lastUpdateId" => 9, "bids" => [], "asks" => []}}}, {:error, :timeout}] do
+      ref = make_ref()
+      state = %Adapter{exchange: exchange, orderbook: Orderbook.fetch_started(ob, key, ref)}
+
+      {{:noreply, state}, log} =
+        ExUnit.CaptureLog.with_log(fn -> Adapter.handle_info({:order_book_snapshot, key, ref, result}, state) end)
+
+      assert log =~ "retrying in 1000ms"
+
+      # Neither the result nor a further resync request starts a fetch now.
+      assert {:noreply, ^state} = Adapter.handle_info({:order_book_resync, key}, state)
+      refute_receive {:order_book_snapshot, ^key, _, _}, 500
+
+      assert_receive {:order_book_fetch_retry, ^key, token}, 1_000
+      assert Orderbook.fetch_in_flight?(state.orderbook, key, token)
+
+      # A retry the book no longer waits for is ignored.
+      assert {:noreply, ^state} = Adapter.handle_info({:order_book_fetch_retry, key, make_ref()}, state)
+    end
   end
 
   test "an owner crash is visible to the adapter" do
