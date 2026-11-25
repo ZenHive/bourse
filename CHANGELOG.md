@@ -84,18 +84,30 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **Two depth streams of one market on a socket whose frames carry no stream name are
   reported unavailable** (binanceusdm two diff speeds, or two partial depths), instead of
   feeding one chain from both. binance spot partial-depth frames carry no symbol: one
-  partial stream on a socket is keyed by its stream name and reported under its market;
-  two or more are reported `{:unavailable, :ambiguous_depth_streams}`.
+  partial stream on a socket is keyed by its stream name and its routed frames and books
+  carry its market; two or more are reported `{:unavailable, :ambiguous_depth_streams}`,
+  and a book that was already served is invalidated with that reason when the
+  subscription that makes it ambiguous is accepted.
 - **A frame without a type marker no longer replaces a `both` book.** On okx and deribit
   an unmarked frame is a snapshot only on the documented snapshot-only channels (okx
-  `books5`/`bbo-tbt`/`bbo-rpi-tbt`, deribit grouped `book.*.*.*.*`); elsewhere it, and a
+  `books5` and `bbo-tbt`, deribit grouped `book.*.*.*.*`); elsewhere it, and a
   type value the spec does not name, invalidates the book.
 - **A REST order book snapshot missing either side is not installed**, even at a current
   id; it is retried like any unusable snapshot. Malformed deltas while a snapshot request
   is in flight keep that one request instead of starting another per frame.
-- **Transport termination reports redact URLs.** `Bourse.Application` installs
-  `Bourse.LogRedaction` as a primary `:logger` filter that cuts every `ws://`/`wss://` URL
-  in OTP termination reports down to its scheme and host.
+- **Credential-bearing values are redacted from Bourse's log output.**
+  `Bourse.LogRedaction.redact/1` cuts `ws://`, `wss://`,
+  `http://` and `https://` URLs down to scheme and host (binaries, charlists, map keys,
+  `URI` structs) and blanks credential fields such as `listen_key` and `secret`. It is
+  applied by `format_status/1` on `Bourse.WS.Adapter` and `Bourse.WS.ConnectionOwner`, by
+  the adapter's warning lines, and by a primary `:logger` filter.
+  The filter is registered by `Bourse.Application` start under the id
+  `Bourse.LogRedaction`. It rewrites only an OTP termination report
+  (`gen_server`, `gen_statem`, `proc_lib`, `supervisor`) that it actually changes and
+  returns `:ignore` for every other event, so the host's `filter_default` still decides
+  what is logged. When the id is already taken by another filter, that filter is left in
+  place and a warning is logged; application stop removes the filter only while it is
+  still the one Bourse installed. `install/0`, `uninstall/0` and `installed?/0` are public.
 - **Order book invalidations name the instrument that broke.** The market comes from the
   frame's authored `market_path`, so two instruments on one okx socket are told apart; it
   was `nil`.
@@ -103,6 +115,21 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   request, is retried after a pause** (1 s, doubling to 30 s), one attempt in flight per
   book; a further resync request while one is reserved starts nothing. Before, every
   unusable 200 response refetched at once.
+- **A binance/binanceusdm REST snapshot is published only once a delta bridges it.** When
+  no buffered delta follows the snapshot (for example after a malformed delta cleared the
+  buffer while the request was in flight), the book waits for the next delta to satisfy
+  the venue's first-event rule; a delta that starts past the snapshot fetches it again.
+  Before, such a snapshot was published at once, possibly older than the gap.
+- **Order book resync work is bound to the connection it was scheduled on** and is
+  skipped for a book that is live again, so a retry from a lost connection no longer
+  unsubscribes the replacement connection's healthy feed.
+- **A subscription restore whose ack never arrived is unsubscribed before it is sent
+  again**, so the retry is answered for that call instead of being refused as already
+  subscribed. hyperliquid's `unsubscribe` replies are no longer read as a subscribe ack.
+- **A routed connection that closes right after a subscription is accepted is noticed.**
+  `Bourse.WS.ConnectionOwner.watch/3` registers a process for
+  `{:bourse_ws_transport_down, owner, client_pid, reason}` on every held client's exit,
+  replaying losses that happened before the watch; the adapter reconnects on it.
 - **The continuity schema refuses a rule paired with a snapshot source it is not
   implemented for** (`first_follows_last`/`previous_last` need `rest`,
   `previous_current`/`increment` need `stream`). A spec may record a `limitation` where the

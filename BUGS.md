@@ -114,6 +114,20 @@ roadmap.
 
 ---
 
+## 2026-11-25 — binance-family subscribe acks are not correlated to their request
+
+**Status:** 🆕 reported (found during task 708 review round 3; not routed).
+
+`Bourse.WS.SubscribeAck.classify/2` accepts any binance / binanceusdm frame carrying
+`"result"` as the subscribe ack, without matching the request `id`. An `UNSUBSCRIBE` sent
+just before a `SUBSCRIBE` (as the adapter's restore does after an ack timeout) is answered
+`{"result": null, "id": n}` too, so the subscribe can return `:ok` on the unsubscribe's
+reply. Expected: the ack is the reply whose `id` is the subscribe's. Impact is bounded —
+binance accepts a subscribe for a stream already subscribed, so no refusal is lost; the
+call's own reply then arrives as an unrouted system frame. hyperliquid had the same
+shape and was fixed in task 708 (its unsubscribe reply carries `data.method:
+"unsubscribe"`, observed on api.hyperliquid-testnet.xyz 2026-11-25).
+
 ## 2026-11-25 — `WS.subscribe/3` reorders frames that arrive during the ack wait
 
 **Status:** Fixed inline (task 708).
