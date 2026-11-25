@@ -9,6 +9,21 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+- **Breaking: `Bourse.WS.Semantics.Orderbook.apply/3,4` returns `{state, outcome}`.** It
+  returned `{state, book_or_nil}`. `{:book, book}` carries what was the book; every other
+  outcome (`:pending`, `{:fetch_snapshot, market}`, `{:invalidated, reason}`,
+  `{:unavailable, reason}`, `:none`) is what was `nil`. Migrate a caller with
+  `case Orderbook.apply(state, key, frame) do {state, {:book, book}} -> … ; {state, _} -> … end`.
+  Consumers of `Bourse.WS.Adapter` broadcasts are unaffected: routed frames still carry
+  the book or `nil`.
+- **`Bourse.WS.Adapter` owns its transport's lifecycle.** It connects with
+  `reconnect_on_error: false` and monitors every transport it adopts. When a transport goes
+  down, each maintained book is invalidated with `{:connection_lost, reason}`, the adapter
+  dials a new connection, restores its subscriptions, and every book starts again from a
+  fresh snapshot. Before, zen_websocket redialled under the same handler, so the adapter
+  kept the old book across the new connection.
+- `Bourse.WS.transport_pids/1` lists the transport processes behind a connection.
+
 - **binance, binanceusdm, binancecoinm: the unqualified order-list reads no longer
   include conditional (algo) orders.** `fetch_open_orders`, `fetch_orders`,
   `fetch_closed_orders` and `fetch_canceled_orders` on USD-M (and binance linear
@@ -43,9 +58,29 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   discriminator lives on the frame, not the payload; binance and okx books were keyed by
   the event or channel name instead of the market. deribit is now `both`, keyed on
   `params.data.type`, with `change_id` / `prev_change_id` as its sequence fields.
-- **`Bourse.WS.subscribe/3` no longer reorders frames that arrive while it waits for the
-  ack.** Frames held during the wait were re-sent behind frames still queued, so a
-  consumer could see a delta before the snapshot it follows.
+- **`Bourse.WS.subscribe/3` and `Bourse.WS.authenticate/2` no longer reorder the caller's
+  mailbox while they wait for the ack.** Frames held during the wait were re-sent behind
+  frames still queued, so a consumer could see a delta before the snapshot it follows.
+  The ack is now taken out where it sits; no other message is held or re-sent.
+- **An order book delta or snapshot with missing sequence data is never published.** A
+  delta that lacks any authored sequence field invalidates the book with
+  `{:missing_sequence, fields}`; a snapshot without its id is not published. A binance spot
+  frame is a partial snapshot only when it has the snapshot's shape (`lastUpdateId`,
+  `bids`, `asks`, no event fields), so a `depthUpdate` without `u` is no longer merged as one.
+- **Two depth streams of one market on a socket whose frames carry no stream name are
+  reported unavailable** (binanceusdm two diff speeds, or two partial depths), instead of
+  feeding one chain from both.
+- **Order book invalidations name the instrument that broke.** The market comes from the
+  frame's authored `market_path`, so two instruments on one okx socket are told apart; it
+  was `nil`.
+- **A REST order book snapshot that cannot bridge the buffered deltas, or a failed
+  request, is retried after a pause** (1 s, doubling to 30 s), one attempt in flight per
+  book; a further resync request while one is reserved starts nothing. Before, every
+  unusable 200 response refetched at once.
+- **The continuity schema refuses a rule paired with a snapshot source it is not
+  implemented for** (`first_follows_last`/`previous_last` need `rest`,
+  `previous_current`/`increment` need `stream`). A spec may record a `limitation` where the
+  provider document does not establish its rule; bybit's does for the depth topics.
 
 - binanceusdm `fetch_orders(until: t)` no longer drops orders near `t`. The merged
   algo history filters its time window on update time, not creation time, so it

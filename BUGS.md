@@ -122,9 +122,15 @@ roadmap.
 the ack arrived. Re-sending appends, so frames that had already arrived behind the held
 ones came out first. Observed live on bybit `orderbook.50.BTCUSDT` (public, 2026-11-25):
 deltas `u …89`–`…92` were delivered before the snapshot `u …84` they follow, which an order
-book with a continuity check reads as a gap. Fix: on completion the still-queued frames
-are drained and re-sent behind the held ones (`requeue_messages/1` in `lib/bourse/ws.ex`);
-`test/bourse/ws/subscribe_return_shape_test.exs` pins the order.
+book with a continuity check reads as a gap. Fix (review round 1 of task 708, which found
+the first fix — draining the still-queued frames and re-sending them behind the held ones —
+still reordered: a frame that arrived during the re-send landed among the re-sent ones, and
+non-frame messages such as a `:market_timeout` moved behind them): the auth and subscribe
+waits no longer take any message out of the mailbox except the ack itself. They scan the
+queue in place, remove only the ack with a pinned `receive`, and hold or re-send nothing
+(`await_in_mailbox/2` in `lib/bourse/ws.ex`). `test/bourse/ws/subscribe_return_shape_test.exs`
+pins arrival order under a concurrent sender, the position of non-frame messages, and the
+same for the auth wait.
 
 ---
 
