@@ -989,6 +989,31 @@ binancecoinm-`:no_channel_templates`-Rest aus 618 gehört in dieselbe Klasse.
 **Status:** 🆕 reported 2026-09-15 — Mechanismus **nicht** gefunden, Symptom reproduziert und
 eingegrenzt. · **2026-11-25:** routed — task 716.
 
+**2026-11-25 (task 716): not reproduced in 66 lane runs. The mechanism is still unproven and
+no code was changed.** Measured against `demo-fstream.binance.com` from this host:
+
+| Run set | Runs | binanceusdm |
+|---|---|---|
+| `mix bourse.verify_ws_first_frame`, HEAD `f87e6f9`, sequential | 1 + 20 | all passed |
+| Same lane via `FirstFrame.run/1` with a frame-timestamping handler, sequential | 20 | all passed: ack 85–197 ms, first `24hrMiniTicker` 683–2122 ms after subscribe |
+| The lane at `f053323` (the task 697 landed base that went red on 2026-09-15), on its own lock | 15 | all passed |
+| Five instrumented lanes in parallel, two rounds | 10 | all passed |
+
+Hypotheses measured and excluded *today*:
+
+1. **Stream cadence.** 300 s on `/market/ws` delivered 150 `24hrMiniTicker` frames: p50 gap 2001 ms, max 2097 ms, no gap above 10 s. That matches the documented "Update Speed: 2s" (binance-connector-js `derivatives-trading-usds-futures/src/websocket-streams/modules/market-api.ts`, `individualSymbolMiniTickerStream`, commit `fd6cce8`).
+2. **Wrong host.** The lane's subscribe lands on `/market/ws` on every run. The demo `/public/ws` also delivers miniTicker now (10 frames in 20 s), so a mis-route would not be silent here.
+3. **Lane ordering / mailbox.** Each probe owns its task, socket and routed connection, and the order-dependent lane ran green 55 times.
+4. **Code revision.** The 2026-09-15 revision is green today.
+5. **Concurrent lanes from one IP.** Green with five lanes running in parallel.
+
+What the measurements do establish:
+
+- The 2026-09-15 signature (`first_frame: acknowledgement`, then `no data frame within 15000ms`) is exactly what the demo host does with a stream it acks but never publishes. A deliberate `zzzusdt@miniTicker` subscribe is acked with `{"result": null}`, then stays silent, and the lane fails it with that message.
+- The 2026-09-15 direct probes took 2.8 s and 5.6 s to the first frame, against ≤ 2.1 s today.
+
+Both point at a venue-side publishing stall on the demo stream that day, limited in time. Nothing kept from that day can prove it. The gate stays loud as it is. If the failure recurs, capture frame timestamps (ack time and every frame on the routed socket) before changing anything.
+
 **🚨 Korrektur einer früheren Fassung dieses Eintrags (2026-09-15, gleicher Tag):** die
 erste Version behauptete, der Demo-Host acke jede Subscription und liefere nie ein Frame.
 Das ist **widerlegt**. Die Behauptung stützte sich auf eine einzige Probe, deren
