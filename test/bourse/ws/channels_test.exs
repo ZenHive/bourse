@@ -57,6 +57,24 @@ defmodule Bourse.WS.ChannelsTest do
       assert {:error, :missing_symbol} = Channels.build(exchange, :watch_orders, %{}, [])
     end
 
+    test "a symbol-bearing object beats a market-wide string for a symbol request, in either order" do
+      exchange = Exchange.new!("hyperliquid")
+      object = %{"type" => "activeAssetCtx", "coin" => "{symbol}"}
+
+      built =
+        for templates <- [["allMids", object], [object, "allMids"]] do
+          spec = put_in(exchange.spec, ["websocket", "subscribe", "channels", "watchTicker"], templates)
+          mixed = %{exchange | spec: spec}
+
+          {Channels.build(mixed, :watch_ticker, %{symbol: "BTC"}, []), Channels.build(mixed, :watch_ticker, %{}, [])}
+        end
+
+      assert built == [
+               {{:ok, %{"type" => "activeAssetCtx", "coin" => "BTC"}}, {:ok, "allMids"}},
+               {{:ok, %{"type" => "activeAssetCtx", "coin" => "BTC"}}, {:ok, "allMids"}}
+             ]
+    end
+
     test "a list mixing string and object templates picks the same channel in either order" do
       exchange = Exchange.new!("okx")
       object = %{"channel" => "tickers", "instId" => "{symbol}"}

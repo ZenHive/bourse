@@ -158,9 +158,8 @@ defmodule Bourse.WS.Channels do
   @spec score_template(template(), [template()], params(), keyword(), Exchange.t()) :: integer()
   defp score_template(%{} = object, _templates, params, _opts, _exchange) do
     symbol? = is_binary(params[:symbol])
-    placeholder? = Enum.any?(Map.values(object), &(is_binary(&1) and String.contains?(&1, "{symbol}")))
 
-    case {symbol?, placeholder?} do
+    case {symbol?, object_symbol?(object)} do
       {true, true} -> 10
       {false, true} -> -10
       _ -> 0
@@ -211,7 +210,12 @@ defmodule Bourse.WS.Channels do
     String.contains?(template, "{symbol}") and template not in [".{symbol}", ":{symbol}"]
   end
 
-  defp valid_symbol_template?(_object), do: false
+  defp valid_symbol_template?(%{} = object), do: object_symbol?(object)
+
+  @spec object_symbol?(map()) :: boolean()
+  defp object_symbol?(object) do
+    Enum.any?(Map.values(object), &(is_binary(&1) and String.contains?(&1, "{symbol}")))
+  end
 
   defp score_symbol_placeholder(true, template), do: if(String.contains?(template, "{symbol}"), do: 10, else: 0)
   defp score_symbol_placeholder(false, _template), do: 0
