@@ -515,20 +515,30 @@ defmodule Bourse.WS do
   @doc """
   Returns the process of every socket this connection still owns — the primary
   one and each routed host — so a supervising process can monitor them.
+
+  A closed connection owns nothing and answers `[]`; so does one whose sockets
+  have all exited.
   """
   @spec transport_pids(t()) :: [pid()]
-  def transport_pids(%__MODULE__{} = ws) do
-    owned =
-      case ws.connection_owner && snapshot_owned_connections(ws) do
-        {:ok, connections} -> Map.values(connections)
-        _ -> []
-      end
-
-    [ws.zen_client | owned]
-    |> Enum.map(&client_server_pid/1)
-    |> Enum.filter(&is_pid/1)
-    |> Enum.uniq()
+  def transport_pids(%__MODULE__{connection_owner: nil} = ws) do
+    [ws.zen_client] |> Enum.map(&client_server_pid/1) |> Enum.filter(&live_pid?/1)
   end
+
+  def transport_pids(%__MODULE__{} = ws) do
+    case snapshot_owned_connections(ws) do
+      {:ok, connections} ->
+        connections
+        |> Map.values()
+        |> Enum.map(&client_server_pid/1)
+        |> Enum.filter(&live_pid?/1)
+        |> Enum.uniq()
+
+      {:error, _reason} ->
+        []
+    end
+  end
+
+  defp live_pid?(pid), do: is_pid(pid) and Process.alive?(pid)
 
   defp client_server_pid(%ZenClient{server_pid: pid}), do: pid
   defp client_server_pid(_client), do: nil

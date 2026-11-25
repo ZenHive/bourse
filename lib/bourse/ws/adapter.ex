@@ -26,9 +26,21 @@ defmodule Bourse.WS.Adapter do
   The adapter owns reconnection. Its sockets are opened with
   `reconnect_on_error: false` and monitored, so a lost transport — on the
   primary socket or a routed host — ends the connection instead of being redialed
-  underneath it. The adapter then announces every book it held as invalidated
-  with reason `{:connection_lost, reason}`, discards the books and any REST
-  snapshot in flight, opens a new connection and restores its subscriptions.
+  underneath it. The adapter then:
+
+    * announces every book it held as invalidated with reason
+      `{:connection_lost, reason}` and discards the books and any REST snapshot
+      in flight;
+    * closes every socket of the lost connection and retires its
+      authentication — `auth_state/1` is `:unauthenticated` and no renewal stays
+      armed — until a new connection establishes its own;
+    * dials a new connection, immediately after a connection that stayed up,
+      otherwise after a delay that doubles per consecutive short-lived
+      connection or failed dial (up to 30 s);
+    * restores each accepted `subscribe/3` call as it was made, with its own
+      options. A call the new connection refuses is logged and retried with
+      the same backoff until it is accepted.
+
   Every book starts again from a fresh snapshot; frames still queued from the
   old connection are ignored.
   """
@@ -53,6 +65,12 @@ defmodule Bourse.WS.Adapter do
   # handshake the facade is still waiting on.
   @auth_call_timeout_ms 15_000
 
+  # A connection that stayed up this long resets the reconnect backoff.
+  @stable_connection_ms 10_000
+  @reconnect_base_ms 500
+  @reconnect_max_ms 30_000
+  @failed_dial_min_ms 5_000
+
   @type section :: WS.section()
   @type auth_state :: :unauthenticated | :authenticating | :authenticated | :expired
 
@@ -64,10 +82,13 @@ defmodule Bourse.WS.Adapter do
           auth_context: map() | nil,
           auth_timer_ref: reference() | nil,
           connection_ref: reference() | nil,
+          connected_at: integer() | nil,
+          reconnect_attempts: non_neg_integer(),
+          restore_attempts: non_neg_integer(),
           monitors: %{reference() => pid()},
           book_routes: %{Orderbook.key() => {String.t() | map(), String.t() | nil}},
           connect_fun: (Exchange.t(), section(), keyword() -> {:ok, WS.t()} | {:error, term()}),
-          subscriptions: [String.t() | map()],
+          subscriptions: [{[String.t() | map()], keyword() | map()}],
           orderbook: Orderbook.t(),
           trades: Trades.t(),
           ohlcv: Ohlcv.t()
@@ -81,6 +102,9 @@ defmodule Bourse.WS.Adapter do
     auth_context: nil,
     auth_timer_ref: nil,
     connection_ref: nil,
+    connected_at: nil,
+    reconnect_attempts: 0,
+    restore_attempts: 0,
     monitors: %{},
     book_routes: %{},
     connect_fun: &WS.connect/3,
@@ -159,7 +183,7 @@ defmodule Bourse.WS.Adapter do
         {:reply, :ok,
          monitor_transports(%{
            state
-           | subscriptions: merge_subscriptions(state.subscriptions, channels),
+           | subscriptions: merge_subscriptions(state.subscriptions, {channels, sub_opts}),
              orderbook: Orderbook.track_subscriptions(state.orderbook, channels)
          })}
 
@@ -221,27 +245,63 @@ defmodule Bourse.WS.Adapter do
     # transport is not allowed to reconnect itself (see "Transport lifecycle").
     case state.connect_fun.(state.exchange, state.section, handler: handler, reconnect_on_error: false) do
       {:ok, ws} ->
-        {:noreply, replace_connection(%{state | connection_ref: connection_ref}, ws)}
+        connected = %{state | connection_ref: connection_ref, connected_at: System.monotonic_time(:millisecond)}
+        {:noreply, replace_connection(connected, ws)}
 
-      {:error, _} ->
-        Process.send_after(self(), :connect, 5_000)
-        {:noreply, state}
+      {:error, reason} ->
+        Logger.warning("WS connect for #{state.exchange.id} (#{state.section}) failed: #{inspect(reason)}")
+        {:noreply, schedule_connect(state, @failed_dial_min_ms)}
     end
   end
 
-  def handle_info(:restore_subscriptions, %{subscriptions: []} = state) do
-    {:noreply, state}
+  def handle_info(:restore_subscriptions, state), do: handle_info({:restore_subscriptions, nil}, state)
+
+  # Each accepted subscribe call is replayed on its own: some venues accept one
+  # channel map per call, so a merged call would be refused.
+  def handle_info({:restore_subscriptions, ref}, %{ws: %WS{} = ws, connection_ref: current} = state)
+      when is_nil(ref) or ref == current do
+    failed =
+      for {channels, opts} = group <- state.subscriptions,
+          {:error, reason} <- [WS.subscribe(ws, channels, opts)] do
+        {group, reason}
+      end
+
+    state = monitor_transports(state)
+
+    case failed do
+      [] ->
+        {:noreply, %{state | restore_attempts: 0}}
+
+      _ ->
+        delay = backoff_ms(state.restore_attempts + 1)
+
+        Logger.warning(
+          "WS #{state.exchange.id} (#{state.section}) could not restore #{inspect(failed)}; retrying in #{delay}ms"
+        )
+
+        Process.send_after(self(), {:restore_failed, current, Enum.map(failed, &elem(&1, 0))}, delay)
+        {:noreply, %{state | restore_attempts: state.restore_attempts + 1}}
+    end
   end
 
-  def handle_info(:restore_subscriptions, %{ws: ws, subscriptions: subs} = state) do
-    WS.subscribe(ws, subs)
-    {:noreply, monitor_transports(state)}
+  def handle_info({:restore_subscriptions, _ref}, state), do: {:noreply, state}
+
+  def handle_info({:restore_failed, ref, groups}, %{ws: %WS{}, connection_ref: ref} = state) do
+    pending = %{state | subscriptions: Enum.filter(state.subscriptions, &(&1 in groups))}
+    {:noreply, merged} = handle_info({:restore_subscriptions, ref}, pending)
+    {:noreply, %{merged | subscriptions: state.subscriptions}}
   end
+
+  def handle_info({:restore_failed, _ref, _groups}, state), do: {:noreply, state}
 
   def handle_info({:DOWN, monitor, :process, _pid, reason}, %{monitors: monitors} = state)
       when is_map_key(monitors, monitor) do
     {:noreply, transport_lost(state, reason)}
   end
+
+  # A renewal timer that fired before a lost connection cancelled it has
+  # nothing left to renew.
+  def handle_info(:auth_expired, %{auth_context: nil} = state), do: {:noreply, state}
 
   def handle_info(:auth_expired, state) do
     case renew_auth(%{state | auth_state: :expired}) do
@@ -386,7 +446,8 @@ defmodule Bourse.WS.Adapter do
           auth_context: nil,
           auth_timer_ref: nil,
           orderbook: Orderbook.reset(state.orderbook),
-          book_routes: %{}
+          book_routes: %{},
+          restore_attempts: 0
       }
       |> demonitor_transports()
       |> adopt_connection()
@@ -394,17 +455,21 @@ defmodule Bourse.WS.Adapter do
       |> monitor_transports()
 
     close_previous(previous)
-    send(self(), :restore_subscriptions)
+    send(self(), {:restore_subscriptions, new_state.connection_ref})
     new_state
   end
 
   # Every socket the connection owns — the primary one and each routed host —
-  # is monitored once; losing any of them loses the frames it carried.
+  # is monitored once; losing any of them loses the frames it carried. The
+  # primary socket is monitored even when it already died: the owner drops a
+  # dead socket from its inventory, and the monitor still reports it.
   defp monitor_transports(%{ws: %WS{} = ws, monitors: monitors} = state) do
     watched = MapSet.new(Map.values(monitors))
 
     new =
-      for pid <- WS.transport_pids(ws), not MapSet.member?(watched, pid), into: %{} do
+      for pid <- Enum.uniq(primary_pid(ws) ++ WS.transport_pids(ws)),
+          not MapSet.member?(watched, pid),
+          into: %{} do
         {Process.monitor(pid), pid}
       end
 
@@ -412,6 +477,9 @@ defmodule Bourse.WS.Adapter do
   end
 
   defp monitor_transports(state), do: state
+
+  defp primary_pid(%WS{zen_client: %{server_pid: pid}}) when is_pid(pid), do: [pid]
+  defp primary_pid(_ws), do: []
 
   defp demonitor_transports(%{monitors: monitors} = state) do
     Enum.each(Map.keys(monitors), &Process.demonitor(&1, [:flush]))
@@ -425,15 +493,42 @@ defmodule Bourse.WS.Adapter do
       broadcast_invalidated(state, channel, market, {:connection_lost, reason})
     end)
 
-    send(self(), :connect)
+    # The rest of the connection goes with the lost socket, and so does its
+    # authentication: a replacement establishes its own.
+    state = demonitor_transports(state)
+    if state.ws, do: close_previous(state.ws)
+    if state.auth_timer_ref, do: Process.cancel_timer(state.auth_timer_ref)
 
-    %{
-      demonitor_transports(state)
-      | orderbook: Orderbook.reset(state.orderbook),
-        book_routes: %{},
-        connection_ref: nil
-    }
+    schedule_connect(
+      %{
+        state
+        | ws: nil,
+          auth_state: :unauthenticated,
+          auth_context: nil,
+          auth_timer_ref: nil,
+          orderbook: Orderbook.reset(state.orderbook),
+          book_routes: %{},
+          connection_ref: nil,
+          reconnect_attempts: if(stable?(state), do: 0, else: state.reconnect_attempts)
+      },
+      0
+    )
   end
+
+  defp stable?(%{connected_at: at}) when is_integer(at),
+    do: System.monotonic_time(:millisecond) - at >= @stable_connection_ms
+
+  defp stable?(_state), do: false
+
+  defp schedule_connect(state, min_delay_ms) do
+    attempts = state.reconnect_attempts
+    delay = max(min_delay_ms, backoff_ms(attempts))
+    Process.send_after(self(), :connect, delay)
+    %{state | reconnect_attempts: attempts + 1, connected_at: nil}
+  end
+
+  defp backoff_ms(0), do: 0
+  defp backoff_ms(attempts), do: min(@reconnect_base_ms * Integer.pow(2, attempts - 1), @reconnect_max_ms)
 
   defp close_previous(nil), do: :ok
 
@@ -663,7 +758,7 @@ defmodule Bourse.WS.Adapter do
     end
   end
 
-  defp merge_subscriptions(existing, channels) do
-    Enum.uniq(existing ++ channels)
+  defp merge_subscriptions(existing, group) do
+    if group in existing, do: existing, else: existing ++ [group]
   end
 end

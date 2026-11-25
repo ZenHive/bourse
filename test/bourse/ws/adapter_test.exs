@@ -48,6 +48,29 @@ defmodule Bourse.WS.AdapterTest do
     def handle_call(:get_state, _from, state), do: {:reply, :connected, state}
   end
 
+  defmodule GatedTransport do
+    @moduledoc false
+    # Acks a subscribe unless the shared gate is closed, and reports each one.
+    use GenServer
+
+    @impl true
+    def init({owner, handler, gate}), do: {:ok, {owner, handler, gate}}
+
+    @impl true
+    def handle_call({:send_message, payload}, _from, {owner, handler, gate} = state) do
+      message = Jason.decode!(payload)
+      accepted = :atomics.get(gate, 1) == 0
+      send(owner, {:transport_sent, self(), message, accepted})
+
+      if message["op"] == "subscribe",
+        do: handler.({:message, %{"op" => "subscribe", "success" => accepted, "ret_msg" => "probe"}})
+
+      {:reply, :ok, state}
+    end
+
+    def handle_call(:get_state, _from, state), do: {:reply, :connected, state}
+  end
+
   setup do
     topic = Broadcast.topic("bybit", :watch_ticker, "tickers.BTCUSDT")
     Broadcast.subscribe(topic)
@@ -350,7 +373,7 @@ defmodule Bourse.WS.AdapterTest do
     state = %Adapter{exchange: exchange, section: :public, subscriptions: [], connect_fun: connector}
     assert {:noreply, connected} = Adapter.handle_info(:connect, state)
     assert connected.ws == ws
-    assert_receive :restore_subscriptions
+    assert_receive {:restore_subscriptions, _}
     # The facade authenticates the private section and records the outcome on
     # the connection, so the adapter no longer opts out and re-runs it.
     assert_receive {:connector_opts, [handler: handler, reconnect_on_error: false]}
@@ -379,8 +402,9 @@ defmodule Bourse.WS.AdapterTest do
 
     assert {:noreply, ^connected} = Adapter.handle_info(:restore_subscriptions, connected)
 
-    restored = %{connected | subscriptions: ["tickers.BTCUSDT"]}
-    assert {:noreply, ^restored} = Adapter.handle_info(:restore_subscriptions, restored)
+    # A restore queued for a replaced connection does nothing.
+    restored = %{connected | subscriptions: [{["tickers.BTCUSDT"], []}]}
+    assert {:noreply, ^restored} = Adapter.handle_info({:restore_subscriptions, make_ref()}, restored)
   end
 
   test "adopts a listen-key connection and arms the refresh the venue requires" do
@@ -482,14 +506,14 @@ defmodule Bourse.WS.AdapterTest do
 
     state = %Adapter{exchange: exchange, section: :public, subscriptions: [], connect_fun: connect_fun}
     assert {:noreply, connected} = Adapter.handle_info(:connect, state)
-    assert_receive :restore_subscriptions
+    assert_receive {:restore_subscriptions, _}
     first_owner = connected.ws.connection_owner
     assert Process.alive?(first_owner)
 
     final =
       Enum.reduce(1..5, connected, fn _n, previous ->
         assert {:noreply, next} = Adapter.handle_info(:connect, previous)
-        assert_receive :restore_subscriptions
+        assert_receive {:restore_subscriptions, _}
         refute Process.alive?(previous.ws.connection_owner)
         assert Process.alive?(next.ws.connection_owner)
         next
@@ -500,8 +524,12 @@ defmodule Bourse.WS.AdapterTest do
     assert Enum.count([first_owner, final.ws.connection_owner], &Process.alive?/1) == 1
 
     final_owner = final.ws.connection_owner
+    assert WS.transport_pids(final.ws) == [final.ws.zen_client.server_pid]
     assert :ok = WS.close(final.ws)
     refute Process.alive?(final_owner)
+    # A closed connection owns no transport.
+    assert WS.transport_pids(final.ws) == []
+    assert WS.transport_pids(%{final.ws | connection_owner: nil}) == []
   end
 
   test "a lost transport invalidates every book and reconnects with a fresh connection and its subscriptions" do
@@ -563,10 +591,12 @@ defmodule Bourse.WS.AdapterTest do
     send(adapter, {:ws_frame, second.connection_ref, snapshot.(20)})
     assert_receive {:bourse_ws, {:routed, :watch_order_book, %{"u" => 20}, ^channel, _, %{"bids" => [["1", "2"]]}}}
 
-    # The new transport is watched as well.
+    # The new transport is watched as well. It was short-lived, so the next
+    # dial waits.
     GenServer.stop(second_transport, {:shutdown, :closed})
     assert_receive {:bourse_ws, {:order_book_invalidated, ^channel, "BTCUSDT", {:connection_lost, _}}}
-    assert_receive {:transport_sent, third_transport, %{"op" => "subscribe"}}
+    refute_receive {:transport_sent, _, %{"op" => "subscribe"}}, 300
+    assert_receive {:transport_sent, third_transport, %{"op" => "subscribe"}}, 1_000
     refute third_transport in [first_transport, second_transport]
   end
 
@@ -643,5 +673,194 @@ defmodule Bourse.WS.AdapterTest do
     Process.exit(owner, :kill)
     assert_receive {:EXIT, ^adapter, :killed}
     refute Process.alive?(owner)
+  end
+
+  describe "transport loss" do
+    test "a transport that dies as soon as it opens is redialed with growing pauses" do
+      test_pid = self()
+
+      connect_fun = fn ex, section, _opts ->
+        send(test_pid, {:dial, System.monotonic_time(:millisecond)})
+        dead = spawn(fn -> :ok end)
+        {:ok, %WS{exchange: ex, section: section, url: "wss://offline.test", zen_client: %Client{server_pid: dead}}}
+      end
+
+      {:ok, adapter} = Adapter.start_link(Exchange.new!("deribit"), :public, connect_fun: connect_fun)
+      on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter) end)
+
+      dials = collect_dials([], 1_800)
+      gaps = dials |> Enum.chunk_every(2, 1, :discard) |> Enum.map(fn [a, b] -> b - a end)
+
+      # 0, 500 and 1000 ms: three or four dials in 1.8 s, not a tight loop.
+      assert length(dials) in 3..4, "dials at #{inspect(dials)}"
+      assert Enum.all?(Enum.drop(gaps, 1), &(&1 >= 450)), "gaps #{inspect(gaps)}"
+    end
+
+    test "a failed replacement leaves no connection or authentication behind" do
+      test_pid = self()
+      exchange = Exchange.new!("binanceusdm", api_key: "key", secret: "secret")
+      dials = :atomics.new(1, [])
+      listen_key_session = %{keepalive_endpoint: :fapiPrivate_put_listenkey, keepalive_ms: 60_000}
+
+      connect_fun = fn ex, section, _opts ->
+        if :atomics.add_get(dials, 1, 1) == 1 do
+          {:ok, transport} = Agent.start(fn -> :ok end)
+          {:ok, owner} = Agent.start(fn -> :ok end)
+          send(test_pid, {:transport, transport, owner})
+
+          {:ok,
+           %WS{
+             exchange: ex,
+             section: section,
+             url: "wss://offline.test/ws/issued-key",
+             zen_client: %Client{server_pid: transport, state: :connected},
+             auth: %{pattern: :listen_key, meta: listen_key_session}
+           }}
+        else
+          {:error, :refused}
+        end
+      end
+
+      {:ok, adapter} = Adapter.start_link(exchange, :private, connect_fun: connect_fun)
+      on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter) end)
+
+      assert_receive {:transport, transport, _owner}
+      assert Adapter.auth_state(adapter) == :authenticated
+      timer = :sys.get_state(adapter).auth_timer_ref
+      assert is_reference(timer)
+
+      ExUnit.CaptureLog.capture_log(fn ->
+        Agent.stop(transport)
+        # The redial fails; the state the adapter keeps is what it reports.
+        Process.sleep(100)
+        state = :sys.get_state(adapter)
+
+        assert state.ws == nil
+        assert state.auth_context == nil
+        assert state.auth_timer_ref == nil
+        assert Process.read_timer(timer) == false
+        assert state.monitors == %{}
+        assert :atomics.get(dials, 1) == 2
+      end)
+
+      assert Adapter.connection_state(adapter) == :disconnected
+      assert Adapter.auth_state(adapter) == :unauthenticated
+      assert Adapter.authenticate(adapter) == {:error, :not_connected}
+    end
+
+    test "losing a routed socket closes the primary one too" do
+      test_pid = self()
+
+      zen_connect = fn url, opts ->
+        {:ok, pid} = GenServer.start(AckingTransport, {test_pid, Keyword.fetch!(opts, :handler)})
+        send(test_pid, {:transport_up, url, pid})
+        {:ok, %Client{server_pid: pid, state: :connected, url: url}}
+      end
+
+      dials = :atomics.new(1, [])
+
+      connect_fun = fn ex, section, opts ->
+        if :atomics.add_get(dials, 1, 1) == 1,
+          do: WS.connect(ex, section, Keyword.put(opts, :connect_fun, zen_connect)),
+          else: {:error, :refused}
+      end
+
+      {:ok, adapter} = Adapter.start_link(Exchange.new!("binanceusdm"), :public, connect_fun: connect_fun)
+      on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter) end)
+
+      assert_receive {:transport_up, primary_url, primary}
+      _ = :sys.get_state(adapter)
+      owner = :sys.get_state(adapter).ws.connection_owner
+
+      # ticker is routed to the market host on USDⓈ-M.
+      assert :ok = Adapter.subscribe(adapter, ["btcusdt@ticker"], ack_timeout_ms: 0)
+      assert_receive {:transport_up, routed_url, routed}
+      refute routed_url == primary_url
+
+      ExUnit.CaptureLog.capture_log(fn ->
+        GenServer.stop(routed, {:shutdown, :closed})
+        Process.sleep(100)
+      end)
+
+      refute Process.alive?(primary)
+      refute Process.alive?(owner)
+      assert Adapter.connection_state(adapter) == :disconnected
+    end
+  end
+
+  describe "subscription restore" do
+    test "each accepted call is replayed on its own, with its own options" do
+      test_pid = self()
+      gate = :atomics.new(1, [])
+
+      zen_connect = fn url, opts ->
+        {:ok, pid} = GenServer.start(GatedTransport, {test_pid, Keyword.fetch!(opts, :handler), gate})
+        {:ok, %Client{server_pid: pid, state: :connected, url: url}}
+      end
+
+      connect_fun = fn ex, section, opts -> WS.connect(ex, section, Keyword.put(opts, :connect_fun, zen_connect)) end
+      {:ok, adapter} = Adapter.start_link(Exchange.new!("bybit"), :public, connect_fun: connect_fun)
+      on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter) end)
+      _ = :sys.get_state(adapter)
+
+      assert :ok = Adapter.subscribe(adapter, ["orderbook.50.BTCUSDT"])
+      assert :ok = Adapter.subscribe(adapter, ["publicTrade.BTCUSDT"], ack_timeout_ms: 4_000)
+      assert_receive {:transport_sent, first, %{"args" => ["orderbook.50.BTCUSDT"]}, true}
+      assert_receive {:transport_sent, ^first, %{"args" => ["publicTrade.BTCUSDT"]}, true}
+
+      assert :sys.get_state(adapter).subscriptions == [
+               {["orderbook.50.BTCUSDT"], []},
+               {["publicTrade.BTCUSDT"], [ack_timeout_ms: 4_000]}
+             ]
+
+      ExUnit.CaptureLog.capture_log(fn -> GenServer.stop(first, {:shutdown, :closed}) end)
+
+      assert_receive {:transport_sent, second, %{"args" => ["orderbook.50.BTCUSDT"]}, true}, 1_000
+      assert_receive {:transport_sent, ^second, %{"args" => ["publicTrade.BTCUSDT"]}, true}, 1_000
+      refute second == first
+    end
+
+    test "a call the new connection refuses is logged and retried until it is accepted" do
+      test_pid = self()
+      gate = :atomics.new(1, [])
+
+      zen_connect = fn url, opts ->
+        {:ok, pid} = GenServer.start(GatedTransport, {test_pid, Keyword.fetch!(opts, :handler), gate})
+        {:ok, %Client{server_pid: pid, state: :connected, url: url}}
+      end
+
+      connect_fun = fn ex, section, opts -> WS.connect(ex, section, Keyword.put(opts, :connect_fun, zen_connect)) end
+      {:ok, adapter} = Adapter.start_link(Exchange.new!("bybit"), :public, connect_fun: connect_fun)
+      on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter) end)
+      _ = :sys.get_state(adapter)
+
+      assert :ok = Adapter.subscribe(adapter, ["publicTrade.BTCUSDT"])
+      assert_receive {:transport_sent, first, %{"op" => "subscribe"}, true}
+
+      log =
+        ExUnit.CaptureLog.capture_log(fn ->
+          :atomics.put(gate, 1, 1)
+          GenServer.stop(first, {:shutdown, :closed})
+          assert_receive {:transport_sent, second, %{"args" => ["publicTrade.BTCUSDT"]}, false}, 1_000
+
+          :atomics.put(gate, 1, 0)
+          assert_receive {:transport_sent, ^second, %{"args" => ["publicTrade.BTCUSDT"]}, true}, 2_000
+          _ = :sys.get_state(adapter)
+        end)
+
+      assert log =~ "could not restore"
+      assert :sys.get_state(adapter).restore_attempts == 0
+    end
+  end
+
+  defp collect_dials(acc, window_ms) do
+    started = List.last(acc) || System.monotonic_time(:millisecond)
+    remaining = window_ms - (System.monotonic_time(:millisecond) - (List.first(acc) || started))
+
+    receive do
+      {:dial, at} -> collect_dials(acc ++ [at], window_ms)
+    after
+      max(remaining, 0) -> acc
+    end
   end
 end

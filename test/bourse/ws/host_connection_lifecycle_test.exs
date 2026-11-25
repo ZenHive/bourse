@@ -153,7 +153,7 @@ defmodule Bourse.WS.HostConnectionLifecycleTest do
     assert_receive {:transport_connected, ^market_url, market_pid, _opts}, @assert_timeout_ms
     assert_receive {:transport_sent, ^public_url, %{"params" => ["btcusdt@bookTicker"]}}, @assert_timeout_ms
     assert_receive {:transport_sent, ^market_url, %{"params" => ["btcusdt@ticker"]}}, @assert_timeout_ms
-    assert :sys.get_state(adapter).subscriptions == ["btcusdt@bookTicker", "btcusdt@ticker"]
+    assert [{["btcusdt@bookTicker", "btcusdt@ticker"], _opts}] = :sys.get_state(adapter).subscriptions
 
     public_ref = Process.monitor(public_pid)
     market_ref = Process.monitor(market_pid)
