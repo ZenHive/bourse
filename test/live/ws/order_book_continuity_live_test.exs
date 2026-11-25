@@ -72,7 +72,13 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       range: &__MODULE__.binance_range/1,
       rest: &__MODULE__.binance_rest/1,
       payload: &Function.identity/1,
-      resync: {:rest, &__MODULE__.binance_keeps?/2}
+      resync:
+        {:rest,
+         %{
+           stale?: &__MODULE__.binance_stale?/2,
+           bridges?: &__MODULE__.binance_bridges?/2,
+           follows?: &__MODULE__.binance_chained?/2
+         }}
     },
     "binanceusdm" => %{
       channel: "btcusdt@depth@100ms",
@@ -81,7 +87,13 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       range: &__MODULE__.usdm_range/1,
       rest: &__MODULE__.usdm_rest/1,
       payload: &Function.identity/1,
-      resync: {:rest, &__MODULE__.usdm_keeps?/2}
+      resync:
+        {:rest,
+         %{
+           stale?: &__MODULE__.usdm_stale?/2,
+           bridges?: &__MODULE__.usdm_bridges?/2,
+           follows?: &__MODULE__.usdm_chained?/2
+         }}
     },
     "okx" => %{
       channel: %{"channel" => "books", "instId" => "BTC-USDT"},
@@ -336,25 +348,41 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
     end
   end
 
-  defp assert_fresh(%{resync: {:rest, keeps?}}, {:rest, body}, _payload, book, deltas) do
+  # The book is rebuilt as the provider documents it, through the delta it was
+  # published with: drop the deltas the snapshot already contains, require the
+  # first one left to bridge the snapshot id, require every later one to follow
+  # its predecessor, and stop at the published delta. Deltas after it are not
+  # part of that book.
+  defp assert_fresh(%{resync: {:rest, rules}}, {:rest, body}, payload, book, deltas) do
     id = body["lastUpdateId"]
-    bridged = Enum.filter(deltas, &keeps?.(&1, id))
-    assert bridged != [], "the first book after REST snapshot #{id} follows none of the deltas after it"
+    published = payload["u"]
+    through = Enum.take_while(deltas, &(&1["u"] != published))
+    chain = Enum.reject(through ++ [payload], &rules.stale?.(&1, id))
+
+    assert Enum.any?(deltas, &(&1["u"] == published)),
+           "the published delta #{inspect(ids(payload))} was not forwarded by the venue"
+
+    assert [first | _] = chain
+    assert rules.bridges?.(first, id), "REST snapshot #{id} is not bridged by #{inspect(ids(first))}"
+
+    for {prev, next} <- Enum.zip(chain, tl(chain)) do
+      assert rules.follows?.(prev, next), "the bridge skips from #{inspect(ids(prev))} to #{inspect(ids(next))}"
+    end
 
     expected =
-      Enum.reduce(bridged, {levels(body["bids"]), levels(body["asks"])}, fn delta, {bids, asks} ->
+      Enum.reduce(chain, {levels(body["bids"]), levels(body["asks"])}, fn delta, {bids, asks} ->
         {apply_levels(bids, delta["b"]), apply_levels(asks, delta["a"])}
       end)
 
-    assert {levels(book["bids"]), levels(book["asks"])} == expected,
-           "the first book is not REST snapshot #{id} with its #{length(bridged)} bridging deltas"
+    assert book_levels(book) == expected,
+           "the first book is not REST snapshot #{id} with its #{length(chain)} bridging deltas"
   end
 
   defp assert_fresh(%{resync: {:stream, _snapshot_id, payload_id}}, {:snapshot, id, snapshot}, payload, book, _deltas) do
     assert payload_id.(payload) == id,
            "the first book after the resync is not the venue's snapshot #{id}: #{inspect(ids(payload))}"
 
-    assert {levels(book["bids"]), levels(book["asks"])} ==
+    assert book_levels(book) ==
              {levels(snapshot["bids"] || snapshot["b"]), levels(snapshot["asks"] || snapshot["a"])},
            "the first book after the resync does not carry snapshot #{id}'s levels"
   end
@@ -364,6 +392,16 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   end
 
   defp levels(raw), do: apply_levels(%{}, raw)
+
+  # A published book side lists each price once, best first.
+  defp book_levels(book), do: {ordered_levels(book, "bids", :desc), ordered_levels(book, "asks", :asc)}
+
+  defp ordered_levels(book, side, order) do
+    prices = Enum.map(book[side], &elem(level(&1), 0))
+    sorted = prices |> Enum.uniq() |> Enum.sort(order)
+    assert prices == sorted, "#{side} are not unique and ordered #{order}: #{inspect(Enum.take(prices, 10))}"
+    levels(book[side])
+  end
 
   defp apply_levels(book, raw) do
     Enum.reduce(raw || [], book, fn lvl, acc ->
@@ -428,6 +466,8 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   defp assert_matches_rest(config, rest_id, {payload, book}, rest_bids, rest_asks) do
     {_first, last} = config.range.(payload)
     touched = if rest_id == last, do: MapSet.new(), else: touched_prices(payload)
+
+    _ = book_levels(book)
 
     mismatch =
       side_mismatch("bids", rest_bids, book["bids"], touched, :desc) ||
@@ -512,10 +552,13 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   def binance_range(%{"U" => first, "u" => last}), do: {first - 1, last}
   def binance_range(_), do: nil
 
-  # The venue's documented bridge: Binance spot drops u <= lastUpdateId,
-  # USDⓈ-M drops u < lastUpdateId.
-  def binance_keeps?(delta, id), do: delta["u"] > id
-  def usdm_keeps?(delta, id), do: delta["u"] >= id
+  # The venues' documented bridge. Binance spot: drop u <= lastUpdateId; the
+  # first event left has U <= lastUpdateId + 1 <= u. USDⓈ-M: drop
+  # u < lastUpdateId; the first event left has U <= lastUpdateId <= u.
+  def binance_stale?(delta, id), do: delta["u"] <= id
+  def binance_bridges?(delta, id), do: delta["U"] <= id + 1 and id + 1 <= delta["u"]
+  def usdm_stale?(delta, id), do: delta["u"] < id
+  def usdm_bridges?(delta, id), do: delta["U"] <= id and id <= delta["u"]
 
   def binance_rest(exchange) do
     {:ok, %{status: 200, body: body}} =
