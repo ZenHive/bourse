@@ -3,7 +3,8 @@ defmodule Bourse.Application do
   OTP Application for Bourse.
 
   Starts the rate limiter, rate limit state store, native signer supervisor,
-  WS broadcast registry, and WS connection-owner supervisor.
+  WS broadcast registry, and WS connection-owner supervisor, and installs
+  `Bourse.LogRedaction` to redact URLs in transport termination reports.
 
   `Bourse.Testnet` is deliberately NOT a child here. It is a sandbox credential
   registry that only test and recording harnesses use, so a consumer application
@@ -16,6 +17,8 @@ defmodule Bourse.Application do
 
   @impl true
   def start(_type, _args) do
+    :ok = Bourse.LogRedaction.install()
+
     children = [
       Bourse.RateLimiter,
       Bourse.RateLimiter.State,
@@ -27,4 +30,7 @@ defmodule Bourse.Application do
     opts = [strategy: :one_for_one, name: Bourse.Supervisor]
     Supervisor.start_link(children, opts)
   end
+
+  @impl true
+  def stop(_state), do: Bourse.LogRedaction.uninstall()
 end
