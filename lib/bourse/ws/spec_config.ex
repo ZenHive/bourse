@@ -63,7 +63,7 @@ defmodule Bourse.WS.SpecConfig do
       private_url_sandbox: "wss://ws-api.testnet.binance.vision/ws-api/v3",
       heartbeat: %{type: :ping_pong, interval: 180_000},
       subscription_pattern: :method_subscribe,
-      subscription_config: %{separator: "@", market_id_format: :lowercase},
+      subscription_config: %{separator: "@", market_id_format: :lowercase, request_id_field: "id"},
       auth_pattern: :ws_api_signature,
       auth_config: %{method: "userDataStream.subscribe.signature"}
     },
@@ -76,7 +76,7 @@ defmodule Bourse.WS.SpecConfig do
       private_url_sandbox: "wss://demo-fstream.binance.com/private/ws",
       heartbeat: %{type: :ping_pong, interval: 180_000},
       subscription_pattern: :method_subscribe,
-      subscription_config: %{separator: "@", market_id_format: :lowercase},
+      subscription_config: %{separator: "@", market_id_format: :lowercase, request_id_field: "id"},
       auth_pattern: :listen_key,
       auth_config: %{
         listen_key_url: %{
@@ -104,7 +104,7 @@ defmodule Bourse.WS.SpecConfig do
       private_url_sandbox: "wss://demo-dstream.binance.com/ws",
       heartbeat: %{type: :ping_pong, interval: 180_000},
       subscription_pattern: :method_subscribe,
-      subscription_config: %{separator: "@", market_id_format: :lowercase},
+      subscription_config: %{separator: "@", market_id_format: :lowercase, request_id_field: "id"},
       auth_pattern: :listen_key,
       auth_config: %{
         listen_key_url: %{placement: :path},
@@ -126,7 +126,7 @@ defmodule Bourse.WS.SpecConfig do
       private_url_sandbox: "wss://stream-testnet.{hostname}/v5/private",
       heartbeat: :disabled,
       subscription_pattern: :op_subscribe,
-      subscription_config: %{separator: "."},
+      subscription_config: %{separator: ".", request_id_field: "req_id"},
       auth_pattern: :direct_hmac_expiry,
       auth_config: %{
         op_field: "op",
@@ -162,7 +162,7 @@ defmodule Bourse.WS.SpecConfig do
       private_url_sandbox: "wss://wspap.okx.com:8443/ws/v5/private",
       heartbeat: :disabled,
       subscription_pattern: :op_subscribe_objects,
-      subscription_config: %{},
+      subscription_config: %{request_id_field: "id"},
       auth_pattern: :iso_passphrase,
       auth_config: %{timestamp_unit: :seconds}
     },

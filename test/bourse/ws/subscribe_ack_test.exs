@@ -84,6 +84,35 @@ defmodule Bourse.WS.SubscribeAckTest do
       assert ["allMids"] = SubscribeAck.already_subscribed("hyperliquid", mids, ["allMids"])
     end
 
+    # Replies observed 2026-11-26 on stream-testnet.bybit.com,
+    # stream.testnet.binance.vision, demo-fstream, demo-dstream and wspap.okx.com.
+    test "a reply is the outcome only of the request whose id it echoes" do
+      bybit_ok = %{"op" => "subscribe", "req_id" => "7", "success" => true, "ret_msg" => ""}
+      bybit_refused = %{bybit_ok | "success" => false, "ret_msg" => "error:handler not found,topic:x"}
+      assert :success = SubscribeAck.classify("bybit", bybit_ok, ["x"], {"req_id", "7"})
+      assert {:rejected, ^bybit_refused} = SubscribeAck.classify("bybit", bybit_refused, ["x"], {"req_id", "7"})
+      assert :not_ack = SubscribeAck.classify("bybit", bybit_ok, ["x"], {"req_id", "8"})
+      assert :not_ack = SubscribeAck.classify("bybit", bybit_refused, ["x"], {"req_id", "8"})
+      assert :not_ack = SubscribeAck.classify("bybit", Map.delete(bybit_ok, "req_id"), ["x"], {"req_id", "7"})
+
+      for venue <- ["binance", "binanceusdm", "binancecoinm"] do
+        refused = %{"id" => 7, "error" => %{"code" => 2, "msg" => "Invalid request: invalid stream"}}
+        assert :success = SubscribeAck.classify(venue, %{"id" => 7, "result" => nil}, ["x"], {"id", 7})
+        assert {:rejected, ^refused} = SubscribeAck.classify(venue, refused, ["x"], {"id", 7})
+        assert :not_ack = SubscribeAck.classify(venue, %{"id" => 6, "result" => nil}, ["x"], {"id", 7})
+        assert :not_ack = SubscribeAck.classify(venue, %{refused | "id" => 6}, ["x"], {"id", 7})
+      end
+
+      okx_error = %{"event" => "error", "code" => "60018", "id" => "7", "msg" => "Subscribe failed"}
+      assert :success = SubscribeAck.classify("okx", %{"event" => "subscribe", "id" => "7"}, [], {"id", "7"})
+      assert {:rejected, ^okx_error} = SubscribeAck.classify("okx", okx_error, [], {"id", "7"})
+      assert :not_ack = SubscribeAck.classify("okx", %{"event" => "subscribe", "id" => "6"}, [], {"id", "7"})
+    end
+
+    test "binance COIN-M acceptance is read as the binance family's" do
+      assert :success = SubscribeAck.classify("binancecoinm", %{"id" => 1, "result" => nil})
+    end
+
     test "a hyperliquid acceptance is the outcome only of the subscription it echoes" do
       accepted = fn subscription ->
         %{"channel" => "subscriptionResponse", "data" => %{"method" => "subscribe", "subscription" => subscription}}
@@ -100,6 +129,24 @@ defmodule Bourse.WS.SubscribeAckTest do
                SubscribeAck.classify("hyperliquid", %{"channel" => "error", "data" => "Error parsing JSON"}, [book])
 
       assert :success = SubscribeAck.classify("bybit", %{"op" => "subscribe", "success" => true}, ["x"])
+    end
+
+    # Both refusals echo what they refuse (api.hyperliquid-testnet.xyz, 2026-11-26).
+    test "a hyperliquid refusal is the outcome only of the subscription it echoes" do
+      trades = %{"type" => "trades", "coin" => "BTC"}
+      eth = %{"type" => "trades", "coin" => "ETH"}
+      already = %{"channel" => "error", "data" => ~s(Already subscribed: {"type":"trades","coin":"BTC"})}
+
+      unparsable = %{
+        "channel" => "error",
+        "data" =>
+          ~s(Error parsing JSON into valid websocket request: {"method":"subscribe","subscription":{"type":"nope"}})
+      }
+
+      assert {:rejected, ^already} = SubscribeAck.classify("hyperliquid", already, [trades])
+      assert :not_ack = SubscribeAck.classify("hyperliquid", already, [eth])
+      assert {:rejected, ^unparsable} = SubscribeAck.classify("hyperliquid", unparsable, [%{"type" => "nope"}])
+      assert :not_ack = SubscribeAck.classify("hyperliquid", unparsable, [eth])
     end
 
     test "hyperliquid success and rejection" do

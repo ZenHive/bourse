@@ -24,14 +24,16 @@ defmodule Bourse.WS.SubscribeReturnShapeTest do
       {:ok,
        %{
          owner: Keyword.fetch!(opts, :owner),
-         reply: Keyword.get(opts, :reply, :ok)
+         reply: Keyword.get(opts, :reply, :ok),
+         # A venue that never answers a correlated request: the call is held.
+         block: Keyword.get(opts, :block, false)
        }}
     end
 
     @impl true
     def handle_call({:send_message, message}, _from, state) do
       send(state.owner, {:transport_sent, message})
-      {:reply, state.reply, state}
+      if state.block, do: {:noreply, state}, else: {:reply, state.reply, state}
     end
 
     def handle_call(:get_state, _from, state), do: {:reply, :connected, state}
@@ -54,6 +56,7 @@ defmodule Bourse.WS.SubscribeReturnShapeTest do
     reject = %{
       "op" => "subscribe",
       "success" => false,
+      "req_id" => "7",
       "ret_msg" => "error:handler not found,topic:not.a.real.channel"
     }
 
@@ -61,7 +64,7 @@ defmodule Bourse.WS.SubscribeReturnShapeTest do
     send(self(), {:websocket_message, reject})
 
     assert {:error, {:subscription_rejected, ^reject}} =
-             WS.subscribe(ws, ["not.a.real.channel"], ack_timeout_ms: 200)
+             WS.subscribe(ws, ["not.a.real.channel"], ack_timeout_ms: 200, request_id: 7)
 
     assert_receive {:transport_sent, _}
   end
@@ -103,9 +106,9 @@ defmodule Bourse.WS.SubscribeReturnShapeTest do
     ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
 
     send(self(), :unrelated)
-    send(self(), {:websocket_message, %{"op" => "subscribe", "success" => true}})
+    send(self(), {:websocket_message, %{"op" => "subscribe", "success" => true, "req_id" => "7"}})
 
-    assert :ok = WS.subscribe(ws, ["tickers.BTCUSDT"], ack_timeout_ms: 200)
+    assert :ok = WS.subscribe(ws, ["tickers.BTCUSDT"], ack_timeout_ms: 200, request_id: 7)
     assert_receive :unrelated
   end
 
@@ -113,12 +116,65 @@ defmodule Bourse.WS.SubscribeReturnShapeTest do
     transport = start_supervised!({Transport, owner: self(), reply: :ok})
     client = %Client{server_pid: transport, state: :connected}
     ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
-    reject = %{"op" => "subscribe", "success" => false, "ret_msg" => "bad topic"}
+    reject = %{"op" => "subscribe", "success" => false, "req_id" => "7", "ret_msg" => "bad topic"}
 
     send(self(), {:ws_frame, reject})
 
     assert {:error, {:subscription_rejected, ^reject}} =
-             WS.subscribe(ws, ["not.a.real.channel"], ack_timeout_ms: 200)
+             WS.subscribe(ws, ["not.a.real.channel"], ack_timeout_ms: 200, request_id: 7)
+  end
+
+  test "a reply to another request is not this request's outcome and stays in the mailbox" do
+    transport = start_supervised!({Transport, owner: self(), reply: :ok})
+    client = %Client{server_pid: transport, state: :connected}
+    ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
+    late = {:websocket_message, %{"op" => "subscribe", "success" => true, "req_id" => "6"}}
+    refused = {:websocket_message, %{"op" => "subscribe", "success" => false, "req_id" => "5", "ret_msg" => "x"}}
+    unechoed = {:websocket_message, %{"op" => "subscribe", "success" => true}}
+
+    send(self(), late)
+    send(self(), refused)
+    send(self(), unechoed)
+
+    assert {:error, :subscription_ack_timeout} =
+             WS.subscribe(ws, ["tickers.BTCUSDT"], ack_timeout_ms: 50, request_id: 7)
+
+    assert_received ^late
+    assert_received ^refused
+    assert_received ^unechoed
+  end
+
+  test "a binance-family reply is matched by the id it echoes" do
+    transport = start_supervised!({Transport, owner: self(), reply: :ok})
+    client = %Client{server_pid: transport, state: :connected}
+
+    for venue <- ["binance", "binanceusdm", "binancecoinm"] do
+      ws = %WS{exchange: Exchange.new!(venue), zen_client: client, url: "wss://offline.test", section: :public}
+      late = {:websocket_message, %{"id" => 6, "result" => nil}}
+      refused = %{"id" => 7, "error" => %{"code" => 2, "msg" => "Invalid request: invalid stream"}}
+
+      send(self(), late)
+      send(self(), {:websocket_message, refused})
+
+      assert {:error, {:subscription_rejected, ^refused}} =
+               WS.subscribe(ws, ["btcusdt@depth"], ack_timeout_ms: 200, request_id: 7)
+
+      assert_received ^late
+      assert_receive {:transport_sent, payload}
+      assert %{"id" => 7, "method" => "SUBSCRIBE", "params" => ["btcusdt@depth"]} = Jason.decode!(payload)
+    end
+  end
+
+  test "a correlated reply that never comes times out at the acknowledgement deadline" do
+    transport = start_supervised!({Transport, owner: self(), reply: :ok, block: true})
+    client = %Client{server_pid: transport, state: :connected}
+    ws = %WS{exchange: Exchange.new!("okx"), zen_client: client, url: "wss://offline.test", section: :public}
+
+    {elapsed_us, result} = :timer.tc(fn -> WS.subscribe(ws, [%{"channel" => "tickers"}], ack_timeout_ms: 100) end)
+
+    assert {:error, :subscription_ack_timeout} = result
+    assert elapsed_us < 1_000_000
+    refute_received {:DOWN, _, _, _, _}
   end
 
   test "a missing async acknowledgement returns a named timeout instead of success" do
@@ -185,13 +241,13 @@ defmodule Bourse.WS.SubscribeReturnShapeTest do
     ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
 
     data = %{"topic" => "tickers.BTCUSDT", "data" => %{"lastPrice" => "1"}}
-    reject = %{"op" => "subscribe", "success" => false, "ret_msg" => "nope"}
+    reject = %{"op" => "subscribe", "success" => false, "req_id" => "7", "ret_msg" => "nope"}
 
     send(self(), {:websocket_message, data})
     send(self(), {:websocket_message, reject})
 
     assert {:error, {:subscription_rejected, ^reject}} =
-             WS.subscribe(ws, ["x"], ack_timeout_ms: 200)
+             WS.subscribe(ws, ["x"], ack_timeout_ms: 200, request_id: 7)
 
     assert_receive {:websocket_message, ^data}, 50
   end
@@ -205,11 +261,11 @@ defmodule Bourse.WS.SubscribeReturnShapeTest do
     frame = fn u -> {:ws_frame, connection, %{"topic" => "orderbook.50.BTCUSDT", "data" => %{"u" => u}}} end
 
     send(self(), frame.(1))
-    send(self(), {:ws_frame, connection, %{"op" => "subscribe", "success" => true}})
+    send(self(), {:ws_frame, connection, %{"op" => "subscribe", "success" => true, "req_id" => "7"}})
     send(self(), frame.(2))
     send(self(), {:websocket_message, %{"topic" => "orderbook.50.BTCUSDT", "data" => %{"u" => 3}}})
 
-    assert :ok = WS.subscribe(ws, ["orderbook.50.BTCUSDT"], ack_timeout_ms: 200)
+    assert :ok = WS.subscribe(ws, ["orderbook.50.BTCUSDT"], ack_timeout_ms: 200, request_id: 7)
 
     # An order book checks every delta against the one before it, so the
     # held frame must come back ahead of the ones that arrived after it.
@@ -235,7 +291,7 @@ defmodule Bourse.WS.SubscribeReturnShapeTest do
           :go -> :ok
         end
 
-        send(test_pid, {:subscribed, WS.subscribe(ws, ["orderbook.50.BTCUSDT"], ack_timeout_ms: 5_000)})
+        send(test_pid, {:subscribed, WS.subscribe(ws, ["orderbook.50.BTCUSDT"], ack_timeout_ms: 5_000, request_id: 7)})
 
         receive do
           :report -> :ok
@@ -258,7 +314,7 @@ defmodule Bourse.WS.SubscribeReturnShapeTest do
     :erlang.trace(receiver, true, [:send, {:tracer, tracer}])
 
     for u <- 1..5_000, do: send(receiver, frame.(u))
-    send(receiver, {:websocket_message, %{"op" => "subscribe", "success" => true}})
+    send(receiver, {:websocket_message, %{"op" => "subscribe", "success" => true, "req_id" => "7"}})
 
     # A second sender keeps delivering while the wait runs.
     {:ok, _sender} = Task.start(fn -> for u <- 5_002..6_000, do: send(receiver, frame.(u)) end)

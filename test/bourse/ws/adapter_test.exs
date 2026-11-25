@@ -11,6 +11,17 @@ defmodule Bourse.WS.AdapterTest do
 
   @moduletag trace_messages: 200
 
+  defmodule Echo do
+    @moduledoc false
+    # A reply carries the request id of the frame it answers, as bybit (`req_id`)
+    # and the binance family (`id`) echo it (observed 2026-11-26). A delayed reply
+    # keeps the id of the request that caused it.
+    def reply(%{"op" => _} = reply, %{"req_id" => id}), do: Map.put_new(reply, "req_id", id)
+    def reply(%{"result" => _} = reply, %{"id" => id}), do: Map.put_new(reply, "id", id)
+    def reply(%{"error" => _} = reply, %{"id" => id}), do: Map.put_new(reply, "id", id)
+    def reply(reply, _request), do: reply
+  end
+
   defmodule Transport do
     @moduledoc false
     use GenServer
@@ -40,8 +51,12 @@ defmodule Bourse.WS.AdapterTest do
 
     @impl true
     def handle_call({:send_message, payload}, _from, {owner, handler} = state) do
-      send(owner, {:transport_sent, self(), Jason.decode!(payload)})
-      if Jason.decode!(payload)["op"] == "subscribe", do: handler.({:message, %{"op" => "subscribe", "success" => true}})
+      message = Jason.decode!(payload)
+      send(owner, {:transport_sent, self(), message})
+
+      if message["op"] == "subscribe",
+        do: handler.({:message, Echo.reply(%{"op" => "subscribe", "success" => true}, message)})
+
       {:reply, :ok, state}
     end
 
@@ -69,10 +84,10 @@ defmodule Bourse.WS.AdapterTest do
 
         {"subscribe", 3} ->
           ret_msg = "error:already subscribed,topic:" <> Enum.join(message["args"], ",")
-          handler.({:message, %{"op" => "subscribe", "success" => false, "ret_msg" => ret_msg}})
+          handler.({:message, Echo.reply(%{"op" => "subscribe", "success" => false, "ret_msg" => ret_msg}, message)})
 
         {"subscribe", _} ->
-          handler.({:message, %{"op" => "subscribe", "success" => accepted, "ret_msg" => "probe"}})
+          handler.({:message, Echo.reply(%{"op" => "subscribe", "success" => accepted, "ret_msg" => "probe"}, message)})
 
         _ ->
           :ok
@@ -98,7 +113,7 @@ defmodule Bourse.WS.AdapterTest do
       message = Jason.decode!(payload)
       send(owner, {:sent, epoch, message})
 
-      Enum.each(script.(epoch, message), &deliver(handler, &1))
+      Enum.each(script.(epoch, message), fn {delay, frame} -> deliver(handler, {delay, Echo.reply(frame, message)}) end)
       {:reply, :ok, state}
     end
 
@@ -126,6 +141,37 @@ defmodule Bourse.WS.AdapterTest do
     on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter) end)
     _ = :sys.get_state(adapter)
     adapter
+  end
+
+  # The frames of a two-group restore, as each venue answers them
+  # (stream-testnet.bybit.com and stream.testnet.binance.vision, 2026-11-26).
+  defp two_groups("bybit") do
+    %{
+      first: "publicTrade.BTCUSDT",
+      second: "tickers.BTCUSDT",
+      channel: fn
+        %{"op" => "subscribe", "args" => [ch]} -> ch
+        _ -> nil
+      end,
+      accept: %{"op" => "subscribe", "success" => true, "ret_msg" => ""},
+      refuse: %{"op" => "subscribe", "success" => false, "ret_msg" => "error:handler not found,topic:tickers.BTCUSDT"},
+      again: %{"op" => "subscribe", "success" => false, "ret_msg" => "error:already subscribed,topic:publicTrade.BTCUSDT"}
+    }
+  end
+
+  defp two_groups("binance") do
+    %{
+      first: "btcusdt@trade",
+      second: "btcusdt@aggTrade",
+      channel: fn
+        %{"method" => "SUBSCRIBE", "params" => [ch]} -> ch
+        _ -> nil
+      end,
+      accept: %{"result" => nil},
+      refuse: %{"error" => %{"code" => 2, "msg" => "Invalid request: invalid stream"}},
+      # Binance accepts a stream the connection already has.
+      again: %{"result" => nil}
+    }
   end
 
   defp drop_connection(epoch) do
@@ -283,9 +329,15 @@ defmodule Bourse.WS.AdapterTest do
     on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter, :normal) end)
 
     subscribe = Task.async(fn -> Adapter.subscribe(adapter, ["not.a.real.channel"], ack_timeout_ms: 200) end)
-    assert_receive {:transport_sent, _payload}
+    assert_receive {:transport_sent, payload}
 
-    rejection = %{"op" => "subscribe", "success" => false, "ret_msg" => "bad topic"}
+    rejection = %{
+      "op" => "subscribe",
+      "success" => false,
+      "ret_msg" => "bad topic",
+      "req_id" => Jason.decode!(payload)["req_id"]
+    }
+
     send(adapter, {:ws_frame, rejection})
 
     assert {:error, {:subscription_rejected, ^rejection}} = Task.await(subscribe)
@@ -1079,6 +1131,46 @@ defmodule Bourse.WS.AdapterTest do
       end)
 
       assert :sys.get_state(adapter).restore_attempts == 0
+    end
+
+    # Each reply echoes the id of the request it answers (Echo), so the late
+    # acceptance of the first group carries the first group's id.
+    for venue <- ["bybit", "binance"] do
+      test "a late #{venue} acceptance of one group is not taken for another group's" do
+        %{first: first, second: second, channel: channel, accept: accept, refuse: refuse, again: again} =
+          two_groups(unquote(venue))
+
+        second_sends = :atomics.new(2, [])
+
+        script = fn epoch, message ->
+          case {epoch, channel.(message)} do
+            {1, ch} when ch in [first, second] ->
+              [{0, accept}]
+
+            {2, ^first} ->
+              if :atomics.add_get(second_sends, 2, 1) == 1, do: [{200, accept}], else: [{0, again}]
+
+            {2, ^second} ->
+              if :atomics.add_get(second_sends, 1, 1) == 1, do: [{400, refuse}], else: [{0, accept}]
+
+            _ ->
+              []
+          end
+        end
+
+        adapter = scripted_adapter(unquote(venue), script)
+        assert :ok = Adapter.subscribe(adapter, [first], ack_timeout_ms: 100)
+        assert :ok = Adapter.subscribe(adapter, [second], ack_timeout_ms: 1_000)
+
+        ExUnit.CaptureLog.capture_log(fn ->
+          drop_connection(1)
+          sends = sent(2, [], 2_500)
+          assert Enum.count(sends, &(channel.(&1) == second)) == 2
+          _ = :sys.get_state(adapter)
+        end)
+
+        assert :sys.get_state(adapter).restore_attempts == 0
+      end
     end
 
     # Bybit names only the first already-subscribed topic of a refused request

@@ -4,13 +4,26 @@ defmodule Bourse.WS.SubscribeAck do
 
   Venues deliver subscribe outcomes in two ways:
 
-  1. **Correlated** (deribit JSON-RPC) — `ZenWebsocket.Client.send_message/2`
-     returns `{:ok, envelope}` because the outbound frame carries an `id`.
-  2. **Asynchronous** (alpaca, bybit, okx, hyperliquid, derive, binance,
-     lighter, coinbaseexchange) — send
+  1. **Correlated** (deribit JSON-RPC, the binance family, okx) —
+     `ZenWebsocket.Client.send_message/2` returns `{:ok, envelope}` because the
+     outbound frame carries an `id` the venue echoes.
+  2. **Asynchronous** (alpaca, bybit, hyperliquid, derive, lighter,
+     coinbaseexchange) — send
      returns `:ok` and the venue reply arrives as
      `{:websocket_message, frame}` or `{:websocket_unmatched_response, frame}`
      (derive replies with a JSON-RPC envelope even when the request had no id).
+
+  A venue that echoes a request id answers only the request carrying it, so a
+  reply naming another id — a late reply to an earlier request — is never this
+  request's outcome (`classify/4`). Observed 2026-11-26: bybit echoes `req_id`
+  on acceptance, refusal and unsubscribe (stream-testnet); binance spot, USD-M
+  and COIN-M echo `id` on acceptance, refusal and unsubscribe
+  (stream.testnet.binance.vision, demo-fstream, demo-dstream); okx echoes `id`
+  on acceptance, error and unsubscribe (wspap). Binance documents `id` at
+  <https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md>
+  and okx at <https://www.okx.com/docs-v5/en/#overview-websocket-subscribe>;
+  bybit's subscribe example carries `req_id` without stating the echo
+  (<https://bybit-exchange.github.io/docs/v5/ws/connect>).
 
   `Bourse.WS.subscribe/3` uses this module so both paths resolve to the same
   caller contract: `:ok` on accept, `{:error, {:subscription_rejected, frame}}`
@@ -20,6 +33,9 @@ defmodule Bourse.WS.SubscribeAck do
   alias Bourse.WS.Subscription.MethodSubscription
 
   @type classification :: :success | {:success, :data} | :not_ack | {:rejected, map()}
+
+  @typedoc "The field a venue echoes the request id in, and the id as the request carried it."
+  @type request_id :: {String.t(), term()} | nil
 
   @doc """
   Classifies a subscribe outcome frame for `exchange_id`.
@@ -40,6 +56,7 @@ defmodule Bourse.WS.SubscribeAck do
   def classify("deribit", frame) when is_map(frame), do: classify_jsonrpc(frame)
   def classify("binance", frame) when is_map(frame), do: classify_binance(frame)
   def classify("binanceusdm", frame) when is_map(frame), do: classify_binance(frame)
+  def classify("binancecoinm", frame) when is_map(frame), do: classify_binance(frame)
   def classify("lighter", frame) when is_map(frame), do: classify_lighter(frame)
   def classify("coinbaseexchange", frame) when is_map(frame), do: classify_coinbase(frame)
   def classify(exchange_id, frame) when is_binary(exchange_id) and is_map(frame), do: classify_generic(frame)
@@ -53,7 +70,24 @@ defmodule Bourse.WS.SubscribeAck do
   is not this call's outcome. Every other venue is classified as by `classify/2`.
   """
   @spec classify(String.t(), map() | [map()], [String.t() | map()]) :: classification()
-  def classify("hyperliquid", %{"channel" => "subscriptionResponse", "data" => data} = frame, channels) do
+  def classify(exchange_id, frame, channels), do: classify(exchange_id, frame, channels, nil)
+
+  @doc """
+  Classifies a frame as the outcome of the request that subscribed `channels`
+  and carried `request_id` — `{field, id}`, the field the venue echoes it in
+  and the id as sent, or nil when the venue echoes none.
+
+  A frame whose `field` holds any other value is `:not_ack`: it answers a
+  different request, or none.
+  """
+  @spec classify(String.t(), map() | [map()], [String.t() | map()], request_id()) :: classification()
+  def classify(exchange_id, frame, channels, request_id)
+
+  def classify(exchange_id, %{} = frame, channels, {field, id}) do
+    if Map.get(frame, field) == id, do: classify(exchange_id, frame, channels, nil), else: :not_ack
+  end
+
+  def classify("hyperliquid", %{"channel" => "subscriptionResponse", "data" => data} = frame, channels, nil) do
     case data do
       %{"method" => "subscribe", "subscription" => %{} = echoed} ->
         if same_hyperliquid_subscription?(echoed, wire_subscription(channels)), do: :success, else: :not_ack
@@ -63,7 +97,35 @@ defmodule Bourse.WS.SubscribeAck do
     end
   end
 
-  def classify(exchange_id, frame, _channels), do: classify(exchange_id, frame)
+  # Both refusals observed on api.hyperliquid-testnet.xyz echo what they refuse
+  # (2026-11-26): `"Already subscribed: <subscription>"` and `"Error parsing JSON
+  # into valid websocket request: <request>"`. A refusal echoing some other
+  # subscription answers another request. One that echoes nothing readable is
+  # still taken as this request's.
+  def classify("hyperliquid", %{"channel" => "error", "data" => data} = frame, channels, nil) when is_binary(data) do
+    case refused_subscription(data) do
+      nil ->
+        {:rejected, frame}
+
+      echoed ->
+        if same_hyperliquid_subscription?(echoed, wire_subscription(channels)), do: {:rejected, frame}, else: :not_ack
+    end
+  end
+
+  def classify(exchange_id, frame, _channels, _request_id), do: classify(exchange_id, frame)
+
+  defp refused_subscription(data) do
+    with [_reason, json] <- String.split(data, ": ", parts: 2),
+         {:ok, %{} = echoed} <- Jason.decode(json) do
+      case echoed do
+        %{"method" => "subscribe", "subscription" => %{} = subscription} -> subscription
+        %{"method" => _} -> nil
+        subscription -> subscription
+      end
+    else
+      _ -> nil
+    end
+  end
 
   defp unconfirmed(:success), do: :not_ack
   defp unconfirmed(other), do: other

@@ -10,20 +10,24 @@ defmodule Bourse.WS.FacadeTest do
     @moduledoc false
     use GenServer
 
-    def start_link(owner), do: GenServer.start_link(__MODULE__, owner)
+    # `echo` builds the venue's reply from the decoded frame, delivered to the
+    # owner after the send, as the venue's reply would be.
+    def start_link({owner, echo}), do: GenServer.start_link(__MODULE__, {owner, echo})
+    def start_link(owner), do: start_link({owner, nil})
 
     @impl true
-    def init(owner), do: {:ok, owner}
+    def init({owner, echo}), do: {:ok, %{owner: owner, echo: echo}}
 
     @impl true
-    def handle_call({:send_message, message}, _from, owner) do
+    def handle_call({:send_message, message}, _from, %{owner: owner} = state) do
       send(owner, {:transport_sent, message})
-      {:reply, :ok, owner}
+      if state.echo, do: Enum.each(List.wrap(state.echo.(Jason.decode!(message))), &send(owner, &1))
+      {:reply, :ok, state}
     end
 
-    def handle_call(:get_state, _from, owner), do: {:reply, :connected, owner}
+    def handle_call(:get_state, _from, state), do: {:reply, :connected, state}
 
-    def handle_call(:get_heartbeat_health, _from, owner) do
+    def handle_call(:get_heartbeat_health, _from, state) do
       {:reply,
        %{
          active_heartbeats: [],
@@ -31,7 +35,7 @@ defmodule Bourse.WS.FacadeTest do
          failure_count: 0,
          config: :disabled,
          timer_active: false
-       }, owner}
+       }, state}
     end
   end
 
@@ -59,7 +63,9 @@ defmodule Bourse.WS.FacadeTest do
     # Offline transport never emits an ack; skip the await window.
     assert :ok = WS.subscribe(ws, ["tickers.BTCUSDT"], ack_timeout_ms: 0)
     assert_receive {:transport_sent, payload}
-    assert Jason.decode!(payload) == %{"args" => ["tickers.BTCUSDT"], "op" => "subscribe"}
+    assert %{"args" => ["tickers.BTCUSDT"], "op" => "subscribe", "req_id" => req_id} = Jason.decode!(payload)
+    assert map_size(Jason.decode!(payload)) == 3
+    assert is_binary(req_id)
 
     assert :ok = WS.send_message(ws, "ping")
     assert_receive {:transport_sent, "ping"}
@@ -106,7 +112,12 @@ defmodule Bourse.WS.FacadeTest do
 
     assert :ok = WS.unsubscribe(handle)
     assert_receive {:transport_sent, unsubscribe_payload}
-    assert Jason.decode!(unsubscribe_payload) == %{"args" => ["tickers.BTCUSDT"], "op" => "unsubscribe"}
+
+    assert %{"args" => ["tickers.BTCUSDT"], "op" => "unsubscribe", "req_id" => unsubscribe_id} =
+             Jason.decode!(unsubscribe_payload)
+
+    # Every request carries its own id.
+    refute unsubscribe_id == Jason.decode!(subscribe_payload)["req_id"]
     assert Process.alive?(client.server_pid)
   end
 
@@ -146,14 +157,18 @@ defmodule Bourse.WS.FacadeTest do
     assert_receive {:transport_sent, _}
     assert {:ok, _} = WS.watch_orders(private_ws, ack_timeout_ms: 0)
     assert_receive {:transport_sent, payload}
-    assert Jason.decode!(payload) == %{"op" => "subscribe", "args" => ["order"]}
+    assert %{"op" => "subscribe", "args" => ["order"], "req_id" => _} = Jason.decode!(payload)
     assert :ok = WS.subscribe(public_ws, ["tickers.BTCUSDT"], %{ack_timeout_ms: 0})
     assert_receive {:transport_sent, _}
   end
 
-  test "default order-book options wait for an acceptance frame", %{client: client} do
-    ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
-    send(self(), {:websocket_message, %{"op" => "subscribe", "success" => true}})
+  test "default order-book options wait for an acceptance frame" do
+    ws = %WS{
+      exchange: Exchange.new!("bybit"),
+      zen_client: accepting_client(),
+      url: "wss://offline.test",
+      section: :public
+    }
 
     assert {:ok, %Handle{channels: ["orderbook.50.BTCUSDT"]}} = WS.watch_order_book(ws, "BTC/USDT")
     assert_receive {:transport_sent, _}
@@ -169,17 +184,29 @@ defmodule Bourse.WS.FacadeTest do
     assert_received :unrelated
   end
 
-  test "default watch options wait for and consume acceptance frames", %{client: client} do
-    ws = %WS{exchange: Exchange.new!("bybit"), zen_client: client, url: "wss://offline.test", section: :public}
-    accepted = {:websocket_message, %{"op" => "subscribe", "success" => true}}
+  test "default watch options wait for and consume acceptance frames" do
+    ws = %WS{
+      exchange: Exchange.new!("bybit"),
+      zen_client: accepting_client(),
+      url: "wss://offline.test",
+      section: :public
+    }
 
-    send(self(), accepted)
     assert {:ok, _handle} = WS.watch_ticker(ws, "BTC/USDT")
     assert_receive {:transport_sent, _}
 
-    send(self(), accepted)
     assert {:ok, _handle} = WS.watch_trades(ws, "BTC/USDT")
     assert_receive {:transport_sent, _}
+    refute_received {:websocket_message, %{"op" => "subscribe"}}
+  end
+
+  # A transport whose venue accepts every bybit subscribe, echoing its req_id.
+  defp accepting_client do
+    echo = fn %{"op" => "subscribe", "req_id" => id} ->
+      {:websocket_message, %{"op" => "subscribe", "success" => true, "req_id" => id}}
+    end
+
+    %Client{server_pid: start_supervised!({Transport, {self(), echo}}, id: :accepting), state: :connected}
   end
 
   test "closes a supervised transport", %{client: client} do

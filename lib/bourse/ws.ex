@@ -411,6 +411,12 @@ defmodule Bourse.WS do
   override the atom-keyed base config; string-keyed maps coexist rather than
   override.
 
+  On a venue that echoes a request id in its reply (bybit `req_id`, the binance
+  family and okx `id`), every request carries a fresh id unless `request_id:`
+  supplies one, and only the reply echoing that id is the request's outcome —
+  any other reply stays in the mailbox as an ordinary frame. The wait for a
+  correlated reply is bounded by `ack_timeout_ms` too.
+
   Per-frame auth injection (`Bourse.WS.Auth.build_subscribe_auth/5`, used by the
   `:rest_token` and `:inline_subscribe` patterns) is not called here. No runtime
   venue uses either pattern — both belong to exchanges outside the supported eleven
@@ -426,28 +432,46 @@ defmodule Bourse.WS do
   defp subscribe_on(ws, channels, opts) do
     emit_ws_send(ws.exchange, ws.section)
 
-    with {:ok, payload} <- subscription_payload(ws.exchange, channels, opts, &Subscription.build_subscribe/3) do
-      confirm_subscribe(ws.zen_client, payload, ws.exchange.id, channels, ack_timeout_ms(opts))
+    with {:ok, payload, request_id} <-
+           subscription_payload(ws.exchange, channels, opts, &Subscription.build_subscribe/3) do
+      confirm_subscribe(ws.zen_client, payload, ws.exchange.id, {channels, request_id}, ack_timeout_ms(opts))
     end
   end
 
   defp unsubscribe_on(ws, channels, opts) do
     emit_ws_send(ws.exchange, ws.section)
 
-    with {:ok, payload} <- subscription_payload(ws.exchange, channels, opts, &Subscription.build_unsubscribe/3) do
-      send_payload(ws.zen_client, payload)
+    with {:ok, payload, _request_id} <-
+           subscription_payload(ws.exchange, channels, opts, &Subscription.build_unsubscribe/3) do
+      send_request(ws.zen_client, payload, ack_timeout_ms(opts))
     end
   end
 
+  # A venue that echoes a request id in its reply (`request_id_field` in its
+  # subscription config) gets a fresh one on every request, so the reply to this
+  # request can be told from a late reply to an earlier one; a caller-supplied
+  # `request_id:` is sent as given. Returns the field and the id as the frame
+  # carries it, or nil.
   defp subscription_payload(exchange, channels, opts, builder) do
     with {:ok, config} <- fetch_config(exchange) do
-      builder.(
-        config.subscription_pattern,
-        channels,
-        merge_subscription_config(config, strip_ack_opts(opts))
-      )
+      sub_config = config |> merge_subscription_config(strip_ack_opts(opts)) |> with_request_id()
+
+      with {:ok, payload} <- builder.(config.subscription_pattern, channels, sub_config) do
+        {:ok, payload, sent_request_id(payload, sub_config)}
+      end
     end
   end
+
+  defp with_request_id(%{request_id_field: field} = sub_config) when is_binary(field) do
+    Map.put_new_lazy(sub_config, :request_id, fn -> System.unique_integer([:positive, :monotonic]) end)
+  end
+
+  defp with_request_id(sub_config), do: sub_config
+
+  defp sent_request_id(%{} = payload, %{request_id_field: field}) when is_binary(field),
+    do: {field, Map.get(payload, field)}
+
+  defp sent_request_id(_payload, _sub_config), do: nil
 
   @doc "Sends a raw (already-encoded or map) payload. Delegates to zen_websocket."
   @spec send_message(t(), String.t() | map()) :: :ok | {:ok, map()} | {:error, term()}
@@ -869,14 +893,14 @@ defmodule Bourse.WS do
     |> Map.delete("ack_timeout_ms")
   end
 
-  defp confirm_subscribe(zen_client, payload, exchange_id, channels, ack_timeout_ms) do
-    case send_payload(zen_client, payload) do
+  defp confirm_subscribe(zen_client, payload, exchange_id, {channels, request_id}, ack_timeout_ms) do
+    case send_request(zen_client, payload, ack_timeout_ms) do
       :ok ->
-        await_subscribe_ack(exchange_id, channels, ack_timeout_ms)
+        await_subscribe_ack(exchange_id, {channels, request_id}, ack_timeout_ms)
 
       {:ok, response} when is_map(response) ->
         response
-        |> then(&SubscribeAck.classify(exchange_id, &1, channels))
+        |> then(&SubscribeAck.classify(exchange_id, &1, channels, request_id))
         |> SubscribeAck.to_result()
 
       {:error, _} = err ->
@@ -887,13 +911,13 @@ defmodule Bourse.WS do
   # Wait for an async subscribe ack/reject without disturbing the caller's
   # mailbox: the ack is taken out where it sits and every other message stays in
   # arrival order.
-  defp await_subscribe_ack(_exchange_id, _channels, 0), do: :ok
+  defp await_subscribe_ack(_exchange_id, _request, 0), do: :ok
 
-  defp await_subscribe_ack(exchange_id, channels, timeout_ms) do
+  defp await_subscribe_ack(exchange_id, {channels, request_id}, timeout_ms) do
     deadline = System.monotonic_time(:millisecond) + timeout_ms
 
     classify = fn frame ->
-      case SubscribeAck.classify(exchange_id, frame, channels) do
+      case SubscribeAck.classify(exchange_id, frame, channels, request_id) do
         :success -> {:take, :success}
         # The ack is also data: it stays in the mailbox for the caller.
         {:success, :data} -> {:leave, :success}
@@ -977,6 +1001,34 @@ defmodule Bourse.WS do
   end
 
   defp take_message({:leave, _}, _message), do: :ok
+
+  # zen_websocket correlates a frame carrying an `"id"`: the send blocks until
+  # the reply with that id arrives, and only that reply answers it. The block is
+  # a GenServer.call under its default 5-second timeout, so it runs in a
+  # monitored process: the wait ends at `timeout_ms`, and a venue that never
+  # answers cannot exit the caller. A reply arriving after that is dropped by
+  # zen_websocket with the abandoned call. `timeout_ms` 0 sends without waiting.
+  defp send_request(zen_client, %{"id" => id} = payload, timeout_ms) when not is_nil(id) do
+    {pid, ref} = spawn_monitor(fn -> exit({:sent, send_payload(zen_client, payload)}) end)
+
+    if timeout_ms == 0 do
+      Process.demonitor(ref, [:flush])
+      :ok
+    else
+      receive do
+        {:DOWN, ^ref, :process, ^pid, {:sent, result}} -> result
+        {:DOWN, ^ref, :process, ^pid, {:timeout, _call}} -> {:error, :subscription_ack_timeout}
+        {:DOWN, ^ref, :process, ^pid, reason} -> {:error, {:send_failed, reason}}
+      after
+        timeout_ms ->
+          Process.demonitor(ref, [:flush])
+          Process.exit(pid, :kill)
+          {:error, :subscription_ack_timeout}
+      end
+    end
+  end
+
+  defp send_request(zen_client, payload, _timeout_ms), do: send_payload(zen_client, payload)
 
   defp send_payload(zen_client, frames) when is_list(frames) do
     Enum.reduce_while(frames, :ok, fn frame, _acc ->

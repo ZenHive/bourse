@@ -5,7 +5,9 @@ defmodule Bourse.WS.Subscription.MethodSubscribe do
       %{"method" => "SUBSCRIBE", "params" => ["btcusdt@ticker", "btcusdt@depth"]}
 
   Config keys: `:op_field` (default `"method"`), `:args_field`
-  (default `"params"`). Action strings are upper-case per Binance convention.
+  (default `"params"`), and `:request_id_field` with `:request_id` — when both
+  are set the frame carries the id the venue echoes in its reply. Action strings
+  are upper-case per Binance convention.
   """
 
   @behaviour Bourse.WS.Subscription.Behaviour
@@ -23,6 +25,6 @@ defmodule Bourse.WS.Subscription.MethodSubscribe do
   defp build(channels, config, action) do
     method = Map.get(config, :op_field, "method")
     params = Map.get(config, :args_field, "params")
-    %{method => action, params => channels}
+    Bourse.WS.Subscription.Behaviour.put_request_id(%{method => action, params => channels}, config, & &1)
   end
 end

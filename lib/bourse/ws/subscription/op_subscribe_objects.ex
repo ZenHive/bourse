@@ -13,7 +13,8 @@ defmodule Bourse.WS.Subscription.OpSubscribeObjects do
   Callers pass pre-built channel objects (maps). Same frame shape as
   `OpSubscribe`; the difference is that `args` contains maps instead of
   strings. Config keys: `:op_field` (default `"op"`), `:args_field`
-  (default `"args"`).
+  (default `"args"`), and `:request_id_field` with `:request_id` — when both
+  are set the frame carries the id, as a string, that the venue echoes.
   """
 
   @behaviour Bourse.WS.Subscription.Behaviour
@@ -31,7 +32,8 @@ defmodule Bourse.WS.Subscription.OpSubscribeObjects do
   defp build(channels, config, action) do
     op = Map.get(config, :op_field, "op")
     args = Map.get(config, :args_field, "args")
-    %{op => action, args => Enum.map(channels, &coerce_object/1)}
+    frame = %{op => action, args => Enum.map(channels, &coerce_object/1)}
+    Bourse.WS.Subscription.Behaviour.put_request_id(frame, config, &to_string/1)
   end
 
   # Strings are tolerated for callers that prefer the plain form —

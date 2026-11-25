@@ -91,6 +91,18 @@ defmodule Bourse.WS.Subscription.Behaviour do
   end
 
   @doc """
+  Adds the request id to `frame` under `config[:request_id_field]`, formatted
+  by `format`, when the config carries both the field and a `:request_id`.
+  """
+  @spec put_request_id(frame(), config(), (term() -> term())) :: frame()
+  def put_request_id(frame, %{request_id_field: field, request_id: id}, format)
+      when is_binary(field) and not is_nil(id) and is_function(format, 1) do
+    Map.put(frame, field, format.(id))
+  end
+
+  def put_request_id(frame, _config, _format), do: frame
+
+  @doc """
   Classifies a channel list by element shape.
 
   Empty lists classify as `:strings`, preserving the default-frame behavior in
