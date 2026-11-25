@@ -687,11 +687,20 @@ defmodule Bourse.DeribitAuthoredIntegrationTest do
     end_timestamp = div(System.system_time(:millisecond), @milliseconds_per_hour) * @milliseconds_per_hour
     start_timestamp = end_timestamp - @funding_history_window_ms
 
+    # The raw read uses the exact bounds the unified request dispatches
+    # (`since` is authored with a 1 ms decrement; the provider's start is exclusive).
+    assert {:ok, [%{"start_timestamp" => dispatched_start, "end_timestamp" => dispatched_end}]} =
+             Unified.request_param_shapes(exchange, :fetch_funding_rate_history, %{
+               "symbol" => "BTC/USD:BTC",
+               "since" => start_timestamp,
+               "end_timestamp" => end_timestamp
+             })
+
     assert {:ok, %{body: %{"result" => [_, _ | _] = raw_rows}}} =
              Bourse.Deribit.public_get_get_funding_rate_history(exchange, %{
                "instrument_name" => "BTC-PERPETUAL",
-               "start_timestamp" => start_timestamp,
-               "end_timestamp" => end_timestamp
+               "start_timestamp" => dispatched_start,
+               "end_timestamp" => dispatched_end
              })
 
     assert {:ok, [_, _ | _] = history} =

@@ -828,10 +828,10 @@ defmodule Bourse.Unified.RequestShape do
   it is an integer or a string that is entirely an integer; anything else is
   left for the provider to reject and yields `:unknown`.
   """
-  @spec deribit_funding_window_ms(map()) :: {:ok, pos_integer()} | :unknown
+  @spec deribit_funding_window_ms(map()) :: {:ok, non_neg_integer()} | :unknown
   def deribit_funding_window_ms(dispatched) when is_map(dispatched) do
     case {strict_integer(dispatched["start_timestamp"]), strict_integer(dispatched["end_timestamp"])} do
-      {start, finish} when is_integer(start) and is_integer(finish) and finish > start -> {:ok, finish - start}
+      {start, finish} when is_integer(start) and is_integer(finish) and finish >= start -> {:ok, finish - start}
       _ -> :unknown
     end
   end

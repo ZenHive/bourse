@@ -104,6 +104,16 @@ defmodule Bourse.DeribitValueSemanticsTest do
 
       assert_window_value(end_only_rate, end_only_value, "end-only window rate")
 
+      # Equal bounds: Deribit accepts the empty window and accrues 0 over it.
+      assert {:ok, %Bourse.FundingRate{funding_rate: empty_rate, interval: "0ms"}} =
+               with_rate_limit_retry(fn ->
+                 Bourse.fetch_funding_rate(exchange, "BTC/USD:BTC",
+                   params: %{"start_timestamp" => end_ms, "end_timestamp" => end_ms}
+                 )
+               end)
+
+      assert empty_rate == 0
+
       # An unset clock override falls back to the system clock, like the request shaper.
       assert {:ok, %Bourse.FundingRate{interval: "8h", funding_rate: clock_rate}} =
                with_rate_limit_retry(fn ->

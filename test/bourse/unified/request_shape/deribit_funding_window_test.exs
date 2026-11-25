@@ -27,6 +27,10 @@ defmodule Bourse.Unified.RequestShape.DeribitFundingWindowTest do
       end
     end
 
+    test "equal bounds are a known zero-length span" do
+      assert RequestShape.deribit_funding_window_ms(%{"start_timestamp" => @now, "end_timestamp" => @now}) == {:ok, 0}
+    end
+
     test "a missing or inverted bound is unknown" do
       assert :unknown = RequestShape.deribit_funding_window_ms(%{"start_timestamp" => 0})
       assert :unknown = RequestShape.deribit_funding_window_ms(%{"start_timestamp" => @hour, "end_timestamp" => 0})

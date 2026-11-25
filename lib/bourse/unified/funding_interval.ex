@@ -63,6 +63,8 @@ defmodule Bourse.Unified.FundingInterval do
   # non-round window keeps its full precision.
   @duration_units [{"d", 86_400_000}, {"h", 3_600_000}, {"m", 60_000}, {"s", 1_000}, {"ms", 1}]
 
+  defp duration_label(0), do: "0ms"
+
   defp duration_label(ms) do
     {suffix, size} = Enum.find(@duration_units, fn {_suffix, size} -> rem(ms, size) == 0 end)
     "#{div(ms, size)}#{suffix}"
