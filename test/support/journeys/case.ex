@@ -77,10 +77,16 @@ defmodule Bourse.Test.Journeys.Case do
   Live sandboxes propagate writes with a small lag, so journeys poll for the
   state they just created instead of asserting on the first read.
   """
-  def poll_until!(label, fun) do
-    case poll_until(fun) do
+  def poll_until!(label, fun), do: poll_until!(label, fun, @poll_attempts * @poll_interval_ms)
+
+  @doc """
+  `poll_until!/2` with a caller-chosen budget, for a venue read whose documented
+  or observed propagation is slower than the default five seconds.
+  """
+  def poll_until!(label, fun, budget_ms) do
+    case poll_until(fun, max(div(budget_ms, @poll_interval_ms), 1)) do
       {:ok, value} -> value
-      :timeout -> flunk("gave up polling: #{label}")
+      :timeout -> flunk("gave up polling after #{budget_ms} ms: #{label}")
     end
   end
 

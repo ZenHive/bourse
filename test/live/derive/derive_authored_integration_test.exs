@@ -207,7 +207,11 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
       )
 
     assert {:ok, exchange} = Bourse.load_markets(base)
-    option = Enum.find(exchange.markets, &(&1.option and &1.active))
+    # The subaccount trades only inside one risk universe; take an option from the perp's.
+    %{info: %{"risk_universe_id" => universe}} = Enum.find(exchange.markets, &(&1.symbol == @perp_symbol))
+
+    option =
+      Enum.find(exchange.markets, &(&1.option and &1.active and &1.info["risk_universe_id"] == universe))
 
     assert %Bourse.Market{
              quantity_unit: "base",
@@ -232,7 +236,13 @@ defmodule Bourse.DeriveAuthoredIntegrationTest do
 
     assert_order_lifecycle(exchange, option.symbol, @option_amount, @far_option_limit_price, option.symbol)
 
-    invalid_amount = option.limits["amount"]["min"] + amount_step / 2
+    # Half a step off the grid, added in decimal: a float sum carries more than the
+    # twelve fractional digits the venue parses (-32602) and never reaches 11012.
+    invalid_amount =
+      option.limits["amount"]["min"]
+      |> Decimal.from_float()
+      |> Decimal.add(Decimal.div(Decimal.from_float(amount_step), 2))
+      |> Decimal.to_float()
 
     request =
       DeriveRequestShape.build(

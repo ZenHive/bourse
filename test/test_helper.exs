@@ -85,7 +85,7 @@ lighter_verdict =
 # shell export must not answer instead of the venue, so it is dropped.
 System.delete_env("DERIVE_TESTNET_SUBACCOUNT_ID")
 derive_wallet = System.get_env("DERIVE_TESTNET_API_KEY")
-derive_verdict = DeriveAccount.resolve(derive_wallet)
+derive_verdict = DeriveAccount.resolve(derive_wallet, System.get_env("DERIVE_TESTNET_API_SECRET"))
 DeriveAccount.put_verdict(derive_verdict)
 
 derive_subaccount_id =
