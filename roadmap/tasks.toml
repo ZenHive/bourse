@@ -24401,7 +24401,7 @@ shipped_in = "cabf4d496a710f51c4352496ea97db1cae3414b6"
 id = "711"
 phase = 16
 bundle = "live_e2e"
-status = "pending"
+status = "in_progress"
 title = "Contract lane option branches run against an arbitrary untraded strike because every venue's symbols.option names a non-option symbol"
 scores = { d = 5, b = 7, u = 6 }
 markers = ["bug"]
@@ -24417,6 +24417,7 @@ The REST-read contract lane picks the instrument for option branches by preferri
 A literal option symbol in the contract file is not the fix: option instruments expire. The lane needs a selection that resolves, at run time and from the venue's own live data, an option instrument that currently has what the branch reads (trades for a trade tape, open interest for an OI read, a quoted book for a ticker). Keep the failure loud when the venue truly has none.
 """
 created_at = "2026-11-24"
+started_at = "2026-11-26"
 scored_at = "2026-11-24"
 
 [[task]]

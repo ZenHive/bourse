@@ -32625,7 +32625,7 @@
       "id": "711",
       "phase": 16,
       "bundle": "live_e2e",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Contract lane option branches run against an arbitrary untraded strike because every venue's symbols.option names a non-option symbol",
       "scores": {
         "d": 5,
@@ -32654,6 +32654,7 @@
       ],
       "body": "Source: BUGS.md entries \"2026-09-15 — every venue's contract `symbols.option` names a non-option symbol\" and the okx rows of \"2026-09-15 — live contract cases red on unpopulated sandbox state with no ledger row to explain them\". Read both first.\n\nThe REST-read contract lane picks the instrument for option branches by preferring the contract file's symbols.option, which in all eleven rest_read_contract.json files is a swap or spot symbol, then falling back to the first active BTC market. Option branches therefore run against whichever option sorts first, usually a strike nothing trades, and a genuinely broken option branch is indistinguishable from one that drew a dead strike. Live evidence in the entry: okx demo option trades exist on 30 instruments while the lane's case reports the read as unexercised.\n\nA literal option symbol in the contract file is not the fix: option instruments expire. The lane needs a selection that resolves, at run time and from the venue's own live data, an option instrument that currently has what the branch reads (trades for a trade tape, open interest for an OI read, a quoted book for a ticker). Keep the failure loud when the venue truly has none.\n",
       "created_at": "2026-11-24",
+      "started_at": "2026-11-26",
       "scored_at": "2026-11-24",
       "cross_repo": []
     },
