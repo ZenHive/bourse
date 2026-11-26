@@ -114,6 +114,38 @@ roadmap.
 
 ---
 
+## 2026-11-26 — derive v3 drops cancelled mmp orders and filled mmp maker orders from every read
+
+**Status:** 🆕 measured live (Derive v3 testnet journeys). Not routed. Provider divergence, so it is not a bourse bug.
+
+**The call:** `Bourse.Derive.private_post_get_order(ex, %{"subaccount_id" => id, "order_id" => oid})`
+for an `mmp: true` order after cancel-on-disconnect cancelled it, after `cancel` released it, or
+after it filled as the maker.
+
+**Observed (2026-11-26, `testnet.api.derive.xyz/v3`):** `{:error, %Bourse.Error{code: 11006}}`
+"Order does not exist". The order is also missing from `get_order_history`. Orders without mmp
+in the same flows stay readable by id and appear in history.
+
+**Expected:** the provider docs say terminal orders stay queryable. The journeys therefore assert
+11006 for the COD case, and the MMP case uses the freeze itself as proof of the fill.
+
+**Related observation:** only a MAKER fill of an mmp order counts toward the MMP amount limit. An
+mmp IOC taker fill over the limit left the subaccount unfrozen. A BTC option maker fill trips
+the BTC MMP.
+
+## 2026-11-26 — derive `load_markets` saw only the first 100 options, and `fetch_balance` summed or picked the wrong subaccount
+
+**Status:** ✅ fixed inline 2026-11-26.
+
+**Observed:** `get_all_instruments` pages, with 100 rows per page by default and a cap of 1000.
+`load_markets` read page 1 only: 100 of 4317 testnet options. With a second funded subaccount,
+the collaterals parse in `fetch_balance` read across subaccounts instead of the selected one.
+
+**Fix:** the authored `page_size` is 1000, and `Bourse.Unified` walks every page up to
+`pagination.num_pages`. A page with no rows is an error. The balance parse reads the subaccount
+given by `subaccount_id` (param, then option, then credential `uid`). Without one, it sums per
+currency.
+
 ## 2026-11-26 — okx `fetch_option_chain` refuses every USD-margined option family (`*-USD_UM`), so HYPE, SOL, XAU and the `_UM` halves of BTC and ETH have no chain
 
 **Status:** 🆕 measured live (task 711 review round, outside its scope). Not routed.
