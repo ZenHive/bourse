@@ -177,7 +177,8 @@ defmodule Bourse.RestReadContractInventoryTest do
         %Bourse.OptionData{symbol: @quoted_btc, bid_price: 0.0, ask_price: 5.0}
       ]
 
-      assert {:unresolved, 1} = RestReadContractScenario.option_group_verdict(rows, listed, eligible, "quoted")
+      assert {:unresolved, %{identity: 1}} =
+               RestReadContractScenario.option_group_verdict(rows, listed, eligible, "quoted")
     end
 
     test "an identified qualifying row is selected beside many unreconciled rows" do
@@ -210,7 +211,7 @@ defmodule Bourse.RestReadContractInventoryTest do
 
       rows = [
         %Bourse.OptionData{symbol: @dead_btc, bid_price: 0.0, ask_price: 0.0},
-        %Bourse.OptionData{symbol: nil, bid_price: nil, ask_price: 2.0}
+        %Bourse.OptionData{symbol: nil, bid_price: 0.0, ask_price: nil}
       ]
 
       assert {:absent, 2} = RestReadContractScenario.option_group_verdict(rows, listed, eligible, "quoted")
@@ -238,7 +239,7 @@ defmodule Bourse.RestReadContractInventoryTest do
           cutoff
         )
 
-      assert state =~ "no quoted option instrument on bybit now"
+      assert state =~ "no eligible quoted option instrument on bybit now"
       assert state =~ "BTC: 824 rows, none quoted; ETH: 618 rows, none quoted"
       assert state =~ "options expiring before 2026-11-26T"
       assert state =~ "current market state"
@@ -250,7 +251,7 @@ defmodule Bourse.RestReadContractInventoryTest do
           "quoted",
           "fetchOptionChain",
           [
-            {"BTC", {:unresolved, 8}},
+            {"BTC", {:unresolved, %{:identity => 8, {:missing, [:bid_price]} => 55}}},
             {"ETH", :no_rows},
             {"HYPE", {:source_error, "[okx] invalid_parameters: unsupported OKX option underlying"}},
             {"LTC", {:absent, 62}}
@@ -259,12 +260,75 @@ defmodule Bourse.RestReadContractInventoryTest do
         )
 
       assert unverified =~ "absence of a quoted option instrument on okx not established"
-      assert unverified =~ "BTC: 8 quoted rows of unknown identity"
+      assert unverified =~ "BTC: 8 quoted rows of unknown identity, 55 rows with missing bid_price measurement"
       assert unverified =~ "ETH: source returned no rows; market state unverified"
       assert unverified =~ "HYPE: source error [okx] invalid_parameters"
       assert unverified =~ "Market state unverified: the branch was not called"
       refute unverified =~ "current market state"
       refute unverified =~ "broken"
+    end
+
+    test "a missing bid on two-sided rows leaves absence unestablished and names the field" do
+      {listed, eligible} = btc_listings()
+
+      rows = [
+        %Bourse.OptionData{symbol: @quoted_btc, bid_price: nil, ask_price: 1900.0},
+        %Bourse.OptionData{symbol: @dead_btc, bid_price: nil, ask_price: 5.0}
+      ]
+
+      assert {:unresolved, %{{:missing, [:bid_price]} => 2} = reasons} =
+               RestReadContractScenario.option_group_verdict(rows, listed, eligible, "quoted")
+
+      message =
+        RestReadContractScenario.option_absence_message(
+          "bybit:fetchOption:0:publicGetV5MarketTickers",
+          "bybit",
+          "quoted",
+          "fetchOptionChain",
+          [{"BTC", {:unresolved, reasons}}],
+          1_795_660_000_000
+        )
+
+      assert message =~ "absence of a quoted option instrument on bybit not established"
+      assert message =~ "BTC: 2 rows with missing bid_price measurement"
+    end
+
+    test "quoted requirement truth table" do
+      for {bid, ask, expected} <- [
+            {1.0, 2.0, :yes},
+            {0.0, 2.0, :no},
+            {1.0, 0.0, :no},
+            {0.0, 0.0, :no},
+            {-1.0, 2.0, :no},
+            {0.0, nil, :no},
+            {nil, 0.0, :no},
+            {"0", 0.0, :no},
+            {nil, 2.0, {:unknown, [:bid_price]}},
+            {1.0, nil, {:unknown, [:ask_price]}},
+            {nil, nil, {:unknown, [:bid_price, :ask_price]}},
+            {"1.5", 2.0, {:unknown, [:bid_price]}}
+          ] do
+        row = %Bourse.OptionData{bid_price: bid, ask_price: ask}
+
+        assert RestReadContractScenario.requirement_check(row, "quoted") == expected,
+               "bid #{inspect(bid)}, ask #{inspect(ask)}"
+      end
+    end
+
+    test "traded requirement reads the volume fields as alternatives" do
+      for {base, quote, expected} <- [
+            {5.0, nil, :yes},
+            {nil, 5.0, :yes},
+            {0.0, 5.0, :yes},
+            {0.0, 0.0, :no},
+            {0.0, nil, {:unknown, [:quote_volume]}},
+            {nil, nil, {:unknown, [:base_volume, :quote_volume]}}
+          ] do
+        row = %Bourse.OptionData{base_volume: base, quote_volume: quote}
+
+        assert RestReadContractScenario.requirement_check(row, "traded") == expected,
+               "base #{inspect(base)}, quote #{inspect(quote)}"
+      end
     end
 
     test "option symbols are recognised by their expiry, strike and right" do

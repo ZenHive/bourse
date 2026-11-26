@@ -69,15 +69,22 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   The lane searches each listed underlying in turn, BTC first. It classifies every source row
   against that underlying's own listings:
   - **Candidate:** the row meets the requirement and names an eligible listing.
-  - **Unresolved:** the row meets the requirement but names no listing, or has no identity.
-  - **Irrelevant:** every other row.
+  - **Unresolved:** the row meets the requirement but names no listing or has no identity, or
+    a measurement the requirement needs is missing.
+  - **Irrelevant:** a present measurement decides against the requirement, or the row names a
+    listing that only the expiry cutoff excludes.
+
+  The requirement check has three values, so a missing measurement is never read as a
+  negative one. `quoted` needs bid and ask; a known zero on either decides against.
+  `traded` treats base and quote volume as alternatives: any positive value qualifies, and
+  only both present and zero decide against.
 
   The candidate with the highest 24-hour volume is selected, whatever the other rows say.
   Without a candidate, the case fails without calling the branch, in one of two ways:
   - **Absence not established, market state unverified:** some underlying had unresolved
     rows, a source error, or no rows.
-  - **No such option on the venue now:** every underlying answered rows that are all
-    identified, and none qualifies.
+  - **No eligible option on the venue now:** every underlying answered rows, and every row
+    is irrelevant.
 
   Both messages name each underlying's outcome and the expiry cutoff. An empty answer for a
   selected instrument fails as a broken read.

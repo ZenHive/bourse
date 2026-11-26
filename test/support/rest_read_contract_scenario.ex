@@ -344,43 +344,93 @@ defmodule Bourse.Test.RestReadContractScenario do
   @doc """
   Judges one underlying's selection-source rows for an option requirement.
 
-  Every row is classified by the read's criterion against that underlying's
-  own listings. A row that meets the requirement and names an eligible listing
-  (active, not expiring within the hour) is a candidate. A row that meets it
-  but names no listing of the underlying, or carries no identity, is
-  unresolved. A row that does not meet it is irrelevant, whatever its
-  identity, and so is a qualifying row for a listing excluded by the cutoff.
+  Every row is classified against that underlying's own listings, using the
+  three-valued `requirement_check/2`:
+
+    * candidate — `:yes` and names an eligible listing (active, not expiring
+      within the hour)
+    * unresolved, unknown identity — `:yes` but names no listing of the
+      underlying, or is not a `Bourse.OptionData` row
+    * unresolved, missing measurement — `:unknown`, identified or not
+    * irrelevant — `:no`, whatever its identity, and any row naming a listing
+      that only the expiry cutoff excludes
+
+  Verdicts:
 
     * `{:selected, row}` — the candidate with the highest 24-hour volume,
       regardless of any other row
-    * `{:unresolved, count}` — no candidate, `count` qualifying rows of unknown identity
+    * `{:unresolved, reasons}` — no candidate; `reasons` counts unresolved rows
+      by `:identity` or `{:missing, fields}`
     * `:no_rows` — the source answered successfully with nothing
-    * `{:absent, count}` — `count` rows, all identified or irrelevant, none a candidate
+    * `{:absent, count}` — `count` rows, every one irrelevant
   """
   @spec option_group_verdict([term()], MapSet.t(), MapSet.t(), String.t()) ::
-          {:selected, struct()} | {:unresolved, pos_integer()} | :no_rows | {:absent, pos_integer()}
+          {:selected, struct()} | {:unresolved, map()} | :no_rows | {:absent, pos_integer()}
   def option_group_verdict([], _listed, _eligible, _requirement), do: :no_rows
 
   def option_group_verdict(rows, listed, eligible, requirement) do
-    classified = Enum.group_by(rows, &classify_option_row(&1, listed, eligible, requirement))
+    classified = Enum.map(rows, &{classify_option_row(&1, listed, eligible, requirement), &1})
+    candidates = for {:candidate, row} <- classified, do: row
+    unresolved = for {{:unresolved, reason}, _row} <- classified, do: reason
 
-    case {Map.get(classified, :candidate, []), Map.get(classified, :unresolved, [])} do
-      {[_ | _] = candidates, _unresolved} -> {:selected, Enum.min_by(candidates, &{-option_volume(&1), &1.symbol})}
-      {[], [_ | _] = unresolved} -> {:unresolved, length(unresolved)}
-      {[], []} -> {:absent, length(rows)}
+    cond do
+      candidates != [] -> {:selected, Enum.min_by(candidates, &{-option_volume(&1), &1.symbol})}
+      unresolved != [] -> {:unresolved, Enum.frequencies(unresolved)}
+      true -> {:absent, length(rows)}
     end
   end
+
+  @doc """
+  Decides whether one source row meets an option requirement.
+
+  A missing measurement is never read as a negative one. A measurement is
+  present when it is a number.
+
+    * `quoted` reads `bid_price` and `ask_price`. Either one present and at or
+      below zero answers `:no`, even when the other is missing. Both present and
+      above zero answers `:yes`. Anything else answers `{:unknown, missing}`.
+    * `traded` reads `base_volume` and `quote_volume`, which are alternatives.
+      Either one present and above zero answers `:yes`. Both present and at or
+      below zero answers `:no`. Anything else answers `{:unknown, missing}`,
+      including a zero on one field when the other is missing.
+  """
+  @spec requirement_check(struct(), String.t()) :: :yes | :no | {:unknown, [atom()]}
+  def requirement_check(row, "quoted") do
+    values = [bid_price: row.bid_price, ask_price: row.ask_price]
+
+    cond do
+      Enum.any?(values, fn {_field, value} -> is_number(value) and value <= 0 end) -> :no
+      Enum.all?(values, fn {_field, value} -> is_number(value) end) -> :yes
+      true -> {:unknown, missing_fields(values)}
+    end
+  end
+
+  def requirement_check(row, "traded") do
+    values = [base_volume: row.base_volume, quote_volume: row.quote_volume]
+
+    cond do
+      Enum.any?(values, fn {_field, value} -> positive?(value) end) -> :yes
+      Enum.all?(values, fn {_field, value} -> is_number(value) end) -> :no
+      true -> {:unknown, missing_fields(values)}
+    end
+  end
+
+  defp missing_fields(values), do: for({field, value} <- values, not is_number(value), do: field)
 
   defp classify_option_row(%Bourse.OptionData{} = row, listed, eligible, requirement) do
-    cond do
-      not option_meets?(row, requirement) -> :irrelevant
-      MapSet.member?(eligible, row.symbol) -> :candidate
-      MapSet.member?(listed, row.symbol) -> :irrelevant
-      true -> :unresolved
+    identified? = MapSet.member?(listed, row.symbol)
+    eligible? = MapSet.member?(eligible, row.symbol)
+
+    case {identified? and not eligible?, requirement_check(row, requirement)} do
+      {true, _check} -> :irrelevant
+      {false, :no} -> :irrelevant
+      {false, {:unknown, fields}} -> {:unresolved, {:missing, fields}}
+      {false, :yes} when eligible? -> :candidate
+      {false, :yes} -> {:unresolved, :identity}
     end
   end
 
-  defp classify_option_row(_row, _listed, _eligible, _requirement), do: :unresolved
+  defp classify_option_row(_row, _listed, _eligible, _requirement), do: {:unresolved, :identity}
 
   @doc """
   Renders the failure for a selection that found no candidate.
@@ -395,7 +445,7 @@ defmodule Bourse.Test.RestReadContractScenario do
     scope = "underlyings searched via #{source} (options expiring before #{iso8601(cutoff)} excluded): #{summary}"
 
     if Enum.all?(searched, &match?({_base, {:absent, _}}, &1)) do
-      "#{case_id}: no #{requirement} option instrument on #{venue} now — none has " <>
+      "#{case_id}: no eligible #{requirement} option instrument on #{venue} now — none has " <>
         "#{requirement_meaning(requirement)}. #{scope}. This is the venue's current market state, not a " <>
         "broken read: the branch was not called. Re-run when the venue's options are #{requirement} again."
     else
@@ -406,7 +456,16 @@ defmodule Bourse.Test.RestReadContractScenario do
   end
 
   defp group_detail({:absent, count}, requirement), do: "#{count} rows, none #{requirement}"
-  defp group_detail({:unresolved, count}, requirement), do: "#{count} #{requirement} rows of unknown identity"
+
+  defp group_detail({:unresolved, reasons}, requirement) do
+    reasons
+    |> Enum.sort()
+    |> Enum.map_join(", ", fn
+      {:identity, count} -> "#{count} #{requirement} rows of unknown identity"
+      {{:missing, fields}, count} -> "#{count} rows with missing #{Enum.join(fields, " and ")} measurement"
+    end)
+  end
+
   defp group_detail(:no_rows, _requirement), do: "source returned no rows; market state unverified"
   defp group_detail({:source_error, reason}, _requirement), do: "source error #{reason}"
 
@@ -470,9 +529,6 @@ defmodule Bourse.Test.RestReadContractScenario do
       other -> {:error, "returned #{inspect(other, limit: 5)}"}
     end
   end
-
-  defp option_meets?(row, "quoted"), do: positive?(row.bid_price) and positive?(row.ask_price)
-  defp option_meets?(row, "traded"), do: positive?(row.base_volume) or positive?(row.quote_volume)
 
   defp positive?(value), do: is_number(value) and value > 0
 

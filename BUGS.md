@@ -652,14 +652,19 @@ well-formed, plausible, and wrong, with no error to notice. `fetch_canceled_orde
 > in turn, BTC first. It classifies every row against that underlying's own listings:
 > - **Candidate:** it meets the requirement (best bid and ask above zero, or 24h volume above
 >   zero) and names an eligible listing.
-> - **Unresolved:** it meets the requirement but its identity is missing or unlisted.
-> - **Irrelevant:** every other row.
+> - **Unresolved:** it meets the requirement but its identity is missing or unlisted, or a
+>   measurement the requirement needs is missing.
+> - **Irrelevant:** a present measurement decides against the requirement, or the row names a
+>   listing that only the expiry cutoff excludes.
+>
+> A missing measurement is never read as a negative one. Quoted needs bid and ask, and a known
+> zero on either decides against. Traded treats base and quote volume as alternatives.
 >
 > The highest-volume candidate is selected regardless of the other rows. Without a candidate:
 > - If any underlying had unresolved rows, a source error or no rows, the case fails as
 >   "absence … not established … Market state unverified".
-> - Only when every underlying answered rows that are all identified, with none qualifying, does
->   it fail as market state ("no <requirement> option instrument on <venue> now").
+> - Only when every underlying answered rows and every row is irrelevant does it fail as market
+>   state ("no eligible <requirement> option instrument on <venue> now").
 >
 > Both messages name each underlying's outcome and the expiry cutoff. An empty answer for a
 > selected instrument fails as a broken read. None of these failures calls the branch.
