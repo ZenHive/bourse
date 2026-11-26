@@ -19,6 +19,7 @@ defmodule Bourse.Test.RestReadContracts do
 
   @policy_path "priv/venues/rest_read_contracts_policy.json"
   @option_requirements ~w(listed quoted traded)
+  @traded_volume_fields ~w(base_volume quote_volume)
   @option_symbol ~r/^[^\/]+\/[^:]+:[^-]+-\d{6}-[0-9.]+-[CP]$/
   @external_resource @policy_path
   @runtime_venues ~w(
@@ -163,7 +164,11 @@ defmodule Bourse.Test.RestReadContracts do
 
   Any requirement beyond `listed` is resolved from the venue's own live data
   through `option_selection`, a unified read plus its options, which the venue
-  contract must then declare.
+  contract must then declare. A `traded` branch additionally needs
+  `option_selection.traded_volume_fields`: the volume measurements that source
+  publishes for the venue, drawn from #{inspect(@traded_volume_fields)}. Which
+  ones a venue publishes is authored venue knowledge, never inferred from a
+  response.
   """
   @spec validate_option_selection!(String.t(), map()) :: :ok
   def validate_option_selection!(venue, contract) do
@@ -177,6 +182,8 @@ defmodule Bourse.Test.RestReadContracts do
     if Enum.any?(requirements, &(&1 not in [nil, "listed"])) do
       validate_selection_source!(venue, contract["option_selection"])
     end
+
+    validate_volume_fields!(venue, contract["option_selection"], "traded" in requirements)
 
     :ok
   end
@@ -233,6 +240,28 @@ defmodule Bourse.Test.RestReadContracts do
     raise ArgumentError,
           "#{venue}: option branches need a quoted or traded instrument, so the contract must declare " <>
             "option_selection with a source_method and options, got #{inspect(other)}"
+  end
+
+  defp validate_volume_fields!(venue, selection, traded?) do
+    fields = (selection || %{})["traded_volume_fields"]
+
+    cond do
+      is_nil(fields) and traded? ->
+        raise ArgumentError,
+              "#{venue}: a traded option branch needs option_selection.traded_volume_fields, the volume " <>
+                "measurements the selection source publishes, drawn from #{inspect(@traded_volume_fields)}"
+
+      is_nil(fields) ->
+        :ok
+
+      true ->
+        ensure!(
+          is_list(fields) and fields != [] and fields == Enum.uniq(fields) and
+            Enum.all?(fields, &(&1 in @traded_volume_fields)),
+          "#{venue}: option_selection.traded_volume_fields must be a non-empty list of distinct fields drawn " <>
+            "from #{inspect(@traded_volume_fields)}, got #{inspect(fields)}"
+        )
+    end
   end
 
   defp allowed_values?({field, allowed}), do: is_binary(field) and field != "" and is_list(allowed) and allowed != []

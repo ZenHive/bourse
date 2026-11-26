@@ -658,7 +658,14 @@ well-formed, plausible, and wrong, with no error to notice. `fetch_canceled_orde
 >   listing that only the expiry cutoff excludes.
 >
 > A missing measurement is never read as a negative one. Quoted needs bid and ask, and a known
-> zero on either decides against. Traded treats base and quote volume as alternatives.
+> zero on either decides against. Traded reads exactly the venue's declared
+> `option_selection.traded_volume_fields`, as alternatives. Which volume fields a chain
+> publishes is authored venue knowledge. okx declares `["base_volume"]`: a live okx demo BTC
+> chain on 2026-11-26 returned 1146 rows, all with a numeric `base_volume` (from `volCcy24h`,
+> "24h trading volume … the number of base currency" for derivatives per
+> https://www.okx.com/docs-v5/en/ `GET /api/v5/market/tickers`) and none with a
+> `quote_volume`. Without the declaration, traded absence could never be established there.
+> The loader rejects a traded branch whose venue declares no volume fields, and unknown names.
 >
 > The highest-volume candidate is selected regardless of the other rows. Without a candidate:
 > - If any underlying had unresolved rows, a source error or no rows, the case fails as

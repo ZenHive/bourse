@@ -3063,6 +3063,9 @@
         "strategy": "literal",
         "value": "OPTION"
       }
+    ],
+    "traded_volume_fields": [
+      "base_volume"
     ]
   },
   "currency": "USDT",

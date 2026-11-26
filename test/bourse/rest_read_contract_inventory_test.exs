@@ -51,7 +51,8 @@ defmodule Bourse.RestReadContractInventoryTest do
           ],
           "option_selection" => %{
             "source_method" => "fetchOptionChain",
-            "options" => [%{"name" => "instType", "strategy" => "literal", "value" => "OPTION"}]
+            "options" => [%{"name" => "instType", "strategy" => "literal", "value" => "OPTION"}],
+            "traded_volume_fields" => ["base_volume"]
           }
         },
         overrides
@@ -113,6 +114,41 @@ defmodule Bourse.RestReadContractInventoryTest do
 
       assert :ok =
                RestReadContracts.validate_option_selection!("derive", Map.merge(contract, with_requirement("listed")))
+    end
+
+    test "a traded requirement needs declared volume fields drawn from the known set" do
+      selection = option_contract(%{})["option_selection"]
+
+      for fields <- [:delete, [], ["base_volume", "base_volume"], ["open_interest"], ["vol24h"], "base_volume"] do
+        selection =
+          if fields == :delete,
+            do: Map.delete(selection, "traded_volume_fields"),
+            else: Map.put(selection, "traded_volume_fields", fields)
+
+        assert_raise ArgumentError, ~r/traded_volume_fields/, fn ->
+          RestReadContracts.validate_option_selection!("okx", option_contract(%{"option_selection" => selection}))
+        end
+      end
+
+      for fields <- [["base_volume"], ["quote_volume"], ["base_volume", "quote_volume"]] do
+        selection = Map.put(selection, "traded_volume_fields", fields)
+
+        assert :ok =
+                 RestReadContracts.validate_option_selection!("okx", option_contract(%{"option_selection" => selection}))
+      end
+
+      quoted_only = Map.merge(option_contract(%{}), with_requirement("quoted"))
+      unknown = Map.put(selection, "traded_volume_fields", ["mark_price"])
+
+      assert_raise ArgumentError, ~r/traded_volume_fields/, fn ->
+        RestReadContracts.validate_option_selection!("bybit", %{quoted_only | "option_selection" => unknown})
+      end
+
+      assert :ok =
+               RestReadContracts.validate_option_selection!(
+                 "bybit",
+                 %{quoted_only | "option_selection" => Map.delete(selection, "traded_volume_fields")}
+               )
     end
 
     test "a venue with no listed option fails as market state before the branch is called" do
@@ -178,7 +214,7 @@ defmodule Bourse.RestReadContractInventoryTest do
       ]
 
       assert {:unresolved, %{identity: 1}} =
-               RestReadContractScenario.option_group_verdict(rows, listed, eligible, "quoted")
+               RestReadContractScenario.option_group_verdict(rows, listed, eligible, "quoted", [])
     end
 
     test "an identified qualifying row is selected beside many unreconciled rows" do
@@ -187,7 +223,9 @@ defmodule Bourse.RestReadContractInventoryTest do
       qualifying = %Bourse.OptionData{symbol: @quoted_btc, base_volume: 1.0}
 
       assert {:selected, ^qualifying} =
-               RestReadContractScenario.option_group_verdict([qualifying | noise], listed, eligible, "traded")
+               RestReadContractScenario.option_group_verdict([qualifying | noise], listed, eligible, "traded", [
+                 :base_volume
+               ])
     end
 
     test "the highest-volume candidate wins and a listing excluded by the cutoff is irrelevant" do
@@ -200,10 +238,12 @@ defmodule Bourse.RestReadContractInventoryTest do
       ]
 
       assert {:selected, %Bourse.OptionData{symbol: @quoted_btc}} =
-               RestReadContractScenario.option_group_verdict(rows, listed, eligible, "traded")
+               RestReadContractScenario.option_group_verdict(rows, listed, eligible, "traded", [:base_volume])
 
       assert {:absent, 1} =
-               RestReadContractScenario.option_group_verdict(Enum.take(rows, -1), listed, eligible, "traded")
+               RestReadContractScenario.option_group_verdict(Enum.take(rows, -1), listed, eligible, "traded", [
+                 :base_volume
+               ])
     end
 
     test "rows that are all identified and none qualifying establish absence" do
@@ -214,12 +254,12 @@ defmodule Bourse.RestReadContractInventoryTest do
         %Bourse.OptionData{symbol: nil, bid_price: 0.0, ask_price: nil}
       ]
 
-      assert {:absent, 2} = RestReadContractScenario.option_group_verdict(rows, listed, eligible, "quoted")
+      assert {:absent, 2} = RestReadContractScenario.option_group_verdict(rows, listed, eligible, "quoted", [])
     end
 
     test "an empty successful response leaves absence unestablished" do
       {listed, eligible} = btc_listings()
-      assert :no_rows = RestReadContractScenario.option_group_verdict([], listed, eligible, "quoted")
+      assert :no_rows = RestReadContractScenario.option_group_verdict([], listed, eligible, "quoted", [])
     end
 
     test "absence is market state only when every underlying answered identified rows without a candidate" do
@@ -277,7 +317,7 @@ defmodule Bourse.RestReadContractInventoryTest do
       ]
 
       assert {:unresolved, %{{:missing, [:bid_price]} => 2} = reasons} =
-               RestReadContractScenario.option_group_verdict(rows, listed, eligible, "quoted")
+               RestReadContractScenario.option_group_verdict(rows, listed, eligible, "quoted", [])
 
       message =
         RestReadContractScenario.option_absence_message(
@@ -310,25 +350,53 @@ defmodule Bourse.RestReadContractInventoryTest do
           ] do
         row = %Bourse.OptionData{bid_price: bid, ask_price: ask}
 
-        assert RestReadContractScenario.requirement_check(row, "quoted") == expected,
+        assert RestReadContractScenario.requirement_check(row, "quoted", [:base_volume]) == expected,
                "bid #{inspect(bid)}, ask #{inspect(ask)}"
       end
     end
 
-    test "traded requirement reads the volume fields as alternatives" do
-      for {base, quote, expected} <- [
-            {5.0, nil, :yes},
-            {nil, 5.0, :yes},
-            {0.0, 5.0, :yes},
-            {0.0, 0.0, :no},
-            {0.0, nil, {:unknown, [:quote_volume]}},
-            {nil, nil, {:unknown, [:base_volume, :quote_volume]}}
+    test "traded requirement reads exactly the declared volume fields, as alternatives" do
+      both = [:base_volume, :quote_volume]
+
+      for {fields, base, quote, expected} <- [
+            {both, 5.0, nil, :yes},
+            {both, nil, 5.0, :yes},
+            {both, 0.0, 5.0, :yes},
+            {both, 0.0, 0.0, :no},
+            {both, -1.0, 0.0, :no},
+            {both, 0.0, nil, {:unknown, [:quote_volume]}},
+            {both, nil, nil, {:unknown, [:base_volume, :quote_volume]}},
+            {[:base_volume], 5.0, nil, :yes},
+            {[:base_volume], 0.0, nil, :no},
+            {[:base_volume], 0.0, 9.0, :no},
+            {[:base_volume], nil, 9.0, {:unknown, [:base_volume]}},
+            {[:base_volume], "4", nil, {:unknown, [:base_volume]}},
+            {[:quote_volume], 9.0, 0.0, :no},
+            {[:quote_volume], 9.0, nil, {:unknown, [:quote_volume]}}
           ] do
         row = %Bourse.OptionData{base_volume: base, quote_volume: quote}
 
-        assert RestReadContractScenario.requirement_check(row, "traded") == expected,
-               "base #{inspect(base)}, quote #{inspect(quote)}"
+        assert RestReadContractScenario.requirement_check(row, "traded", fields) == expected,
+               "fields #{inspect(fields)}, base #{inspect(base)}, quote #{inspect(quote)}"
       end
+    end
+
+    test "a venue publishing only base volume can establish traded absence" do
+      {listed, eligible} = btc_listings()
+
+      rows = [
+        %Bourse.OptionData{symbol: @quoted_btc, base_volume: 0.0, quote_volume: nil},
+        %Bourse.OptionData{symbol: @dead_btc, base_volume: 0.0, quote_volume: nil}
+      ]
+
+      assert {:absent, 2} =
+               RestReadContractScenario.option_group_verdict(rows, listed, eligible, "traded", [:base_volume])
+
+      assert {:unresolved, %{{:missing, [:quote_volume]} => 2}} =
+               RestReadContractScenario.option_group_verdict(rows, listed, eligible, "traded", [
+                 :base_volume,
+                 :quote_volume
+               ])
     end
 
     test "option symbols are recognised by their expiry, strike and right" do

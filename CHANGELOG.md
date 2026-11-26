@@ -76,8 +76,13 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
   The requirement check has three values, so a missing measurement is never read as a
   negative one. `quoted` needs bid and ask; a known zero on either decides against.
-  `traded` treats base and quote volume as alternatives: any positive value qualifies, and
-  only both present and zero decide against.
+  `traded` reads exactly the volume fields the venue's `option_selection` declares in
+  `traded_volume_fields`, as alternatives: any declared field above zero qualifies, and only
+  every declared field present and at or below zero decides against. okx declares
+  `["base_volume"]`: its option `market/tickers` rows carry 24h volume (`volCcy24h`, base
+  currency for derivatives) and no quote volume, so an okx row with zero base volume now
+  decides against instead of staying unresolved. The loader rejects a `traded` branch on a
+  venue that declares no volume fields, and any field outside `base_volume` / `quote_volume`.
 
   The candidate with the highest 24-hour volume is selected, whatever the other rows say.
   Without a candidate, the case fails without calling the branch, in one of two ways:
