@@ -63,9 +63,8 @@ defmodule Bourse.WS.FacadeTest do
     # Offline transport never emits an ack; skip the await window.
     assert :ok = WS.subscribe(ws, ["tickers.BTCUSDT"], ack_timeout_ms: 0)
     assert_receive {:transport_sent, payload}
-    assert %{"args" => ["tickers.BTCUSDT"], "op" => "subscribe", "req_id" => req_id} = Jason.decode!(payload)
-    assert map_size(Jason.decode!(payload)) == 3
-    assert is_binary(req_id)
+    # Nothing waits for the reply, so the frame carries no generated id.
+    assert Jason.decode!(payload) == %{"args" => ["tickers.BTCUSDT"], "op" => "subscribe"}
 
     assert :ok = WS.send_message(ws, "ping")
     assert_receive {:transport_sent, "ping"}
@@ -113,11 +112,10 @@ defmodule Bourse.WS.FacadeTest do
     assert :ok = WS.unsubscribe(handle)
     assert_receive {:transport_sent, unsubscribe_payload}
 
-    assert %{"args" => ["tickers.BTCUSDT"], "op" => "unsubscribe", "req_id" => unsubscribe_id} =
-             Jason.decode!(unsubscribe_payload)
-
-    # Every request carries its own id.
-    refute unsubscribe_id == Jason.decode!(subscribe_payload)["req_id"]
+    # The handle keeps the subscribe's `ack_timeout_ms: 0`, so neither frame
+    # carries a generated id.
+    assert Jason.decode!(unsubscribe_payload) == %{"args" => ["tickers.BTCUSDT"], "op" => "unsubscribe"}
+    refute Map.has_key?(Jason.decode!(subscribe_payload), "req_id")
     assert Process.alive?(client.server_pid)
   end
 
@@ -157,7 +155,7 @@ defmodule Bourse.WS.FacadeTest do
     assert_receive {:transport_sent, _}
     assert {:ok, _} = WS.watch_orders(private_ws, ack_timeout_ms: 0)
     assert_receive {:transport_sent, payload}
-    assert %{"op" => "subscribe", "args" => ["order"], "req_id" => _} = Jason.decode!(payload)
+    assert Jason.decode!(payload) == %{"op" => "subscribe", "args" => ["order"]}
     assert :ok = WS.subscribe(public_ws, ["tickers.BTCUSDT"], %{ack_timeout_ms: 0})
     assert_receive {:transport_sent, _}
   end

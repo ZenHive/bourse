@@ -415,9 +415,16 @@ defmodule Bourse.WS do
   family and okx `id`), every request carries a fresh id unless `request_id:`
   supplies one, and only the reply echoing that id is the request's outcome —
   any other reply stays in the mailbox as an ordinary frame. The wait for a
-  correlated reply is bounded by `ack_timeout_ms` too. With `ack_timeout_ms: 0`
-  the call returns the send's own result, and the reply reaches the
-  connection's handler as an ordinary frame.
+  correlated reply is bounded by `ack_timeout_ms` too.
+
+  With `ack_timeout_ms: 0` nothing waits for the reply, so no id is generated:
+  the frame is sent as given and the call returns the send's own result. A
+  `request_id:` passed anyway is put on the frame, and the reply is then
+  delivered however zen_websocket delivers that frame: a `req_id` (bybit)
+  reply reaches the handler as an ordinary frame, while an `id` (the binance
+  family, okx) is correlated by zen_websocket itself, which holds the send
+  until the reply with that id arrives and returns it as the call's outcome —
+  exiting the caller after its 5-second call timeout when no reply comes.
 
   Per-frame auth injection (`Bourse.WS.Auth.build_subscribe_auth/5`, used by the
   `:rest_token` and `:inline_subscribe` patterns) is not called here. No runtime
@@ -434,18 +441,22 @@ defmodule Bourse.WS do
   defp subscribe_on(ws, channels, opts) do
     emit_ws_send(ws.exchange, ws.section)
 
+    timeout = ack_timeout_ms(opts)
+
     with {:ok, payload, request_id} <-
-           subscription_payload(ws.exchange, channels, opts, &Subscription.build_subscribe/3) do
-      confirm_subscribe(ws, payload, {channels, request_id}, ack_timeout_ms(opts))
+           subscription_payload(ws.exchange, channels, opts, timeout, &Subscription.build_subscribe/3) do
+      confirm_subscribe(ws, payload, {channels, request_id}, timeout)
     end
   end
 
   defp unsubscribe_on(ws, channels, opts) do
     emit_ws_send(ws.exchange, ws.section)
 
+    timeout = ack_timeout_ms(opts)
+
     with {:ok, payload, _request_id} <-
-           subscription_payload(ws.exchange, channels, opts, &Subscription.build_unsubscribe/3) do
-      send_request(ws, payload, ack_timeout_ms(opts))
+           subscription_payload(ws.exchange, channels, opts, timeout, &Subscription.build_unsubscribe/3) do
+      send_request(ws, payload, timeout)
     end
   end
 
@@ -454,9 +465,9 @@ defmodule Bourse.WS do
   # request can be told from a late reply to an earlier one; a caller-supplied
   # `request_id:` is sent as given. Returns the field and the id as the frame
   # carries it, or nil.
-  defp subscription_payload(exchange, channels, opts, builder) do
+  defp subscription_payload(exchange, channels, opts, timeout, builder) do
     with {:ok, config} <- fetch_config(exchange) do
-      sub_config = config |> merge_subscription_config(strip_ack_opts(opts)) |> with_request_id()
+      sub_config = config |> merge_subscription_config(strip_ack_opts(opts)) |> with_request_id(timeout)
 
       with {:ok, payload} <- builder.(config.subscription_pattern, channels, sub_config) do
         {:ok, payload, sent_request_id(payload, sub_config)}
@@ -464,11 +475,11 @@ defmodule Bourse.WS do
     end
   end
 
-  defp with_request_id(%{request_id_field: field} = sub_config) when is_binary(field) do
+  defp with_request_id(%{request_id_field: field} = sub_config, timeout) when is_binary(field) and timeout != 0 do
     Map.put_new_lazy(sub_config, :request_id, fn -> System.unique_integer([:positive, :monotonic]) end)
   end
 
-  defp with_request_id(sub_config), do: sub_config
+  defp with_request_id(sub_config, _timeout), do: sub_config
 
   defp sent_request_id(%{} = payload, %{request_id_field: field}) when is_binary(field),
     do: {field, Map.get(payload, field)}
@@ -1006,93 +1017,28 @@ defmodule Bourse.WS do
 
   # zen_websocket correlates a frame carrying an `"id"`: the send blocks until
   # the reply with that id arrives, and only that reply answers it. The block is
-  # a GenServer.call under its default 5-second timeout, so it runs in a
-  # monitored process: the wait ends at `timeout_ms`, and a venue that never
-  # answers cannot exit the caller. A reply arriving after that is dropped by
-  # zen_websocket with the abandoned call. `timeout_ms` 0 does not wait for the
-  # reply (`send_unawaited/3`).
-  defp send_request(%__MODULE__{zen_client: zen_client} = ws, %{"id" => id} = payload, timeout_ms) when not is_nil(id) do
-    if timeout_ms == 0 do
-      send_unawaited(zen_client, Jason.encode!(payload), Keyword.get(ws.connect_opts, :handler))
-    else
-      {pid, ref} = spawn_monitor(fn -> exit({:sent, send_payload(zen_client, payload)}) end)
+  # a GenServer.call under its default 5-second timeout, so an awaited request
+  # runs it in a monitored process: the wait ends at `timeout_ms`, and a venue
+  # that never answers cannot exit the caller. A reply arriving after that is
+  # dropped by zen_websocket with the abandoned call. A request nothing waits
+  # for (`timeout_ms` 0) is sent the plain way.
+  defp send_request(%__MODULE__{zen_client: zen_client}, %{"id" => id} = payload, timeout_ms)
+       when not is_nil(id) and timeout_ms != 0 do
+    {pid, ref} = spawn_monitor(fn -> exit({:sent, send_payload(zen_client, payload)}) end)
 
-      receive do
-        {:DOWN, ^ref, :process, ^pid, {:sent, result}} -> result
-        {:DOWN, ^ref, :process, ^pid, {:timeout, _call}} -> {:error, :subscription_ack_timeout}
-        {:DOWN, ^ref, :process, ^pid, reason} -> {:error, {:send_failed, reason}}
-      after
-        timeout_ms ->
-          Process.demonitor(ref, [:flush])
-          Process.exit(pid, :kill)
-          {:error, :subscription_ack_timeout}
-      end
+    receive do
+      {:DOWN, ^ref, :process, ^pid, {:sent, result}} -> result
+      {:DOWN, ^ref, :process, ^pid, {:timeout, _call}} -> {:error, :subscription_ack_timeout}
+      {:DOWN, ^ref, :process, ^pid, reason} -> {:error, {:send_failed, reason}}
+    after
+      timeout_ms ->
+        Process.demonitor(ref, [:flush])
+        Process.exit(pid, :kill)
+        {:error, :subscription_ack_timeout}
     end
   end
 
   defp send_request(%__MODULE__{zen_client: zen_client}, payload, _timeout_ms), do: send_payload(zen_client, payload)
-
-  # A caller that does not wait still gets what an uncorrelated send gives: the
-  # send's own result (a closed connection's error) at once, and the venue's
-  # reply later as an ordinary frame. zen_websocket hands a correlated reply to
-  # the send call instead of the connection's handler, so a relay process makes
-  # the call and passes the reply to the handler as the unmatched response it
-  # would have been without the id.
-  defp send_unawaited(%ZenClient{server_pid: server}, message, handler) when is_pid(server) do
-    caller = self()
-    ref = make_ref()
-    {pid, monitor} = spawn_monitor(fn -> relay_send(caller, ref, server, message, handler) end)
-
-    receive do
-      {^ref, result} ->
-        Process.demonitor(monitor, [:flush])
-        result
-
-      {:DOWN, ^monitor, :process, ^pid, reason} ->
-        {:error, {:send_failed, reason}}
-    end
-  end
-
-  defp send_unawaited(zen_client, message, _handler), do: ZenClient.send_message(zen_client, message)
-
-  # The client handles one process's calls in the order they are sent, so once
-  # the second call returns the send has been handled: a reply already present
-  # is the send's immediate result, and none means the request is parked until
-  # the venue answers it (or zen_websocket's request timeout fires). The first
-  # look is `wait_response/2`: `receive_response/2` abandons the request when it
-  # times out, and the venue's reply would then be dropped.
-  defp relay_send(caller, ref, server, message, handler) do
-    request = :gen_server.send_request(server, {:send_message, message})
-
-    try do
-      GenServer.call(server, :get_state)
-    catch
-      :exit, _reason -> :down
-    end
-
-    case :gen_server.wait_response(request, 0) do
-      {:reply, {:ok, response}} ->
-        send(caller, {ref, :ok})
-        deliver_reply(handler, response)
-
-      {:reply, result} ->
-        send(caller, {ref, result})
-
-      {:error, {_reason, _server}} ->
-        send(caller, {ref, {:error, {:not_connected, :process_down}}})
-
-      :timeout ->
-        send(caller, {ref, :ok})
-
-        case :gen_server.receive_response(request, :infinity) do
-          {:reply, {:ok, response}} -> deliver_reply(handler, response)
-          _no_reply -> :ok
-        end
-    end
-  end
-
-  defp deliver_reply(handler, response) when is_function(handler, 1), do: handler.({:unmatched_response, response})
-  defp deliver_reply(_handler, _response), do: :ok
 
   defp send_payload(zen_client, frames) when is_list(frames) do
     Enum.reduce_while(frames, :ok, fn frame, _acc ->

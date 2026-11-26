@@ -262,10 +262,13 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
     observed
   end
 
-  defp count_incoming(observed, data, delta?) do
+  # The sequence ids sit in the venue's payload, nested on okx, deribit and bybit.
+  defp count_incoming(observed, data, config, delta?) do
+    last = if delta?, do: ids(config.payload.(data))
+
     Agent.cast(observed, fn seen ->
       if delta?,
-        do: %{seen | frames: seen.frames + 1, deltas: seen.deltas + 1, last: ids(data)},
+        do: %{seen | frames: seen.frames + 1, deltas: seen.deltas + 1, last: last},
         else: %{seen | frames: seen.frames + 1}
     end)
   end
@@ -323,7 +326,7 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
       {:message, data} = message ->
         report_snapshot(data, config, test_pid)
         delta? = is_map(data) and config.delta?.(data)
-        count_incoming(observed, data, delta?)
+        count_incoming(observed, data, config, delta?)
 
         if delta? and :atomics.compare_exchange(drop, 1, 1, 2) == :ok,
           do: send(test_pid, {:dropped_delta, data}),
@@ -384,8 +387,8 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
   # and so are snapshot markers and REST responses from before it; all of them
   # are consumed in arrival order up to the invalidation.
   # Returns the reason and the forwarded deltas seen so far, oldest first.
-  defp await_invalidation(offending, deltas, deadline) do
-    expired!(deadline, &invalidation_timeout/0)
+  defp await_invalidation(offending, deltas, deadline, routed \\ published()) do
+    expired!(deadline, fn -> invalidation_timeout(routed) end)
 
     receive do
       {:bourse_ws, {:order_book_invalidated, _channel, "BTC" <> _, reason}} ->
@@ -396,23 +399,23 @@ defmodule Bourse.WS.OrderBookContinuityLiveTest do
 
       {:bourse_ws, {:routed, :watch_order_book, payload, _, _, book}} ->
         refute_offending(offending, payload, book, "before")
-        await_invalidation(offending, deltas, deadline)
+        await_invalidation(offending, deltas, deadline, published(routed, book && payload))
 
       {:delta_frame, delta} ->
-        await_invalidation(offending, [delta | deltas], deadline)
+        await_invalidation(offending, [delta | deltas], deadline, routed)
 
       {:snapshot_frame, _id, _payload} ->
-        await_invalidation(offending, deltas, deadline)
+        await_invalidation(offending, deltas, deadline, routed)
 
       {:trace, _pid, :receive, {:order_book_snapshot, _, _, _}} ->
-        await_invalidation(offending, deltas, deadline)
+        await_invalidation(offending, deltas, deadline, routed)
     after
-      left(deadline) -> flunk(invalidation_timeout())
+      left(deadline) -> flunk(invalidation_timeout(routed))
     end
   end
 
-  defp invalidation_timeout,
-    do: "the break did not invalidate the book within #{@receive_timeout}ms; #{stream_report(published())}"
+  defp invalidation_timeout(routed),
+    do: "the break did not invalidate the book within #{@receive_timeout}ms; #{stream_report(routed)}"
 
   defp refute_offending(nil, _payload, _book, _side), do: :ok
   defp refute_offending(_offending, _payload, nil, _side), do: :ok
