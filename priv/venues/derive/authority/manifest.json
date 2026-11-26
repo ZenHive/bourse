@@ -67,10 +67,10 @@
       "retrieved_at": "2026-11-26",
       "upstream_pin": {
         "type": "document_version_http_etag",
-        "value": "0.2.0; W/\"PwelFNhsYt18CDAZ\""
+        "value": "0.2.0; W/\"YsgyDi_noDYlrlM3\""
       },
-      "sha256": "dae4bbfd468ff0ea128aa1c8bed360f46579015555bd9a9ce26755f4664bbfa3",
-      "bytes": 676889,
+      "sha256": "47021314ae54000303574d4ae65ea91b170bf73644d2e44381ee6fc28f612e80",
+      "bytes": 677107,
       "storage": "reference_only",
       "path": null,
       "license": {
@@ -88,7 +88,7 @@
         "status": "reviewed_current",
         "checked_at": "2026-11-26",
         "mutable": true,
-        "notes": "v3 (info.version 0.2.0). Re-pinned 2026-11-26 after upstream changed public/get_pending_deposits and PendingDepositEntry, neither authored here; every authored raw endpoint still resolves to a path in this document, and Pagination, GetQuotesRequest, AggregatedOrdersResult, MmpConfigResult and PrivateGetAccountResponse are unchanged."
+        "notes": "v3 (info.version 0.2.0). Re-pinned twice on 2026-11-26 after upstream changed public/get_pending_deposits, PendingDepositEntry and PendingDepositBridgeOrigin, none authored here (the second change touched only those two schemas, all paths identical); every authored raw endpoint still resolves to a path in this document, and Pagination, GetQuotesRequest, AggregatedOrdersResult, MmpConfigResult and PrivateGetAccountResponse are unchanged."
       },
       "expressiveness": {
         "level": "typed_openapi",

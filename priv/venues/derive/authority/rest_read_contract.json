@@ -5,7 +5,7 @@
       "id": "openapi",
       "kind": "openapi-json",
       "source_url": "https://docs.derive.xyz/openapi.json",
-      "sha256": "dae4bbfd468ff0ea128aa1c8bed360f46579015555bd9a9ce26755f4664bbfa3",
+      "sha256": "47021314ae54000303574d4ae65ea91b170bf73644d2e44381ee6fc28f612e80",
       "upstream_pin": {
         "type": "document_version_http_etag",
         "value": "0.2.0; W/\"PwelFNhsYt18CDAZ\""
