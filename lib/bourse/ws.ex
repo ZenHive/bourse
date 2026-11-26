@@ -415,7 +415,9 @@ defmodule Bourse.WS do
   family and okx `id`), every request carries a fresh id unless `request_id:`
   supplies one, and only the reply echoing that id is the request's outcome —
   any other reply stays in the mailbox as an ordinary frame. The wait for a
-  correlated reply is bounded by `ack_timeout_ms` too.
+  correlated reply is bounded by `ack_timeout_ms` too. With `ack_timeout_ms: 0`
+  the call returns the send's own result, and the reply reaches the
+  connection's handler as an ordinary frame.
 
   Per-frame auth injection (`Bourse.WS.Auth.build_subscribe_auth/5`, used by the
   `:rest_token` and `:inline_subscribe` patterns) is not called here. No runtime
