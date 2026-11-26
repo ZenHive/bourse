@@ -193,6 +193,25 @@ refusal to the next request. Observed in passing, not changed: spot and COIN-M c
 socket after answering an `invalid stream` subscribe (the next request found it
 reconnecting); USD-M keeps it open.
 
+Review round 7 (two regressions of that fix, both fixed inline):
+
+- With the ack wait disabled (`ack_timeout_ms: 0`) the id-carrying send returned `:ok` as
+  soon as it was handed to a process, so a closed connection answered `:ok` and the venue's
+  refusal never reached the consumer: zen_websocket returns a correlated reply to the send
+  call, not to the handler. Reviewer probe on stream.testnet.binance.vision and
+  wspap.okx.com: main returned `{:error, {:not_connected, :process_down}}` and delivered the
+  refusal; round 6 returned `:ok` and delivered nothing. Now a relay makes the call, returns
+  the immediate result, and hands a later reply to the connection's handler as
+  `{:unmatched_response, reply}`; the same probe after the fix returns the transport error
+  and delivers the refusal on both venues. One caveat measured in passing: right after an
+  invalid-request refusal binance spot closes the socket, and a no-wait send made while
+  zen_websocket redials is lost with that socket — the same as on main.
+- The adapter replayed each group's stored options, so a caller's `request_id:` was reused
+  by every restore attempt, and two groups subscribed under one id took each other's
+  replies after a redial (reviewer probe on stream-testnet.bybit.com: the refused book was
+  never retried). Restore attempts now always use a fresh id; the same probe retries the
+  refused book with fresh ids.
+
 ## 2026-11-26 — subscribe replies that identify no request (residual after task 708)
 
 **Status:** 🆕 reported (task 708 review round 6; not routed).
