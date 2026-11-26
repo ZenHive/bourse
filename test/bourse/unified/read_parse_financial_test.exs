@@ -1213,6 +1213,34 @@ defmodule Bourse.Unified.ReadParseFinancialTest do
       assert total["ETH"] == 2.0
     end
 
+    test "derive collaterals sum per currency across subaccounts, or read the selected one" do
+      body = %{
+        "result" => [
+          %{"subaccount_id" => 7, "collaterals" => [%{"currency" => "USDC", "amount" => "10.5"}]},
+          %{"subaccount_id" => 8, "collaterals" => [%{"currency" => "USDC", "amount" => "2.25"}]}
+        ]
+      }
+
+      parse = fn exchange, params ->
+        ReadParse.parse(
+          exchange,
+          CollateralsBalanceParser,
+          :fetch_balance,
+          "fetchBalance",
+          body,
+          params,
+          :parse_balance,
+          false
+        )
+      end
+
+      assert {:ok, %Bourse.Balance{total: %{"USDC" => 12.75}}} = parse.(Exchange.new!("derive"), %{})
+      assert {:ok, %Bourse.Balance{total: %{"USDC" => 2.25}}} = parse.(Exchange.new!("derive"), %{"subaccount_id" => 8})
+
+      assert {:ok, %Bourse.Balance{total: %{"USDC" => 10.5}}} =
+               parse.(Exchange.new!("derive", options: %{"subaccount_id" => 7}), %{})
+    end
+
     # Binance portfolio-margin (`GET /papi/v1/balance`) answers with a bare JSON
     # array. Envelope `time` is a map-only concept; reading it off a list body
     # raised a BadMapError before task 297.

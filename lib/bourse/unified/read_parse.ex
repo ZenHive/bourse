@@ -310,7 +310,7 @@ defmodule Bourse.Unified.ReadParse do
   # by currency. `info` keeps the full raw body.
   defp do_parse("balance", exchange, module, js_name, body, params, parser, _list_return?) do
     with :ok <- reject_error_envelope(body, exchange),
-         payload = balance_parse_payload(body, module, js_name, params),
+         payload = balance_parse_payload(body, module, js_name, Map.put(params, :exchange, exchange)),
          {:ok, parsed} <- invoke_parser(module, parser, payload, envelope: body) do
       {:ok, put_balance_info(parsed, body)}
     end
@@ -1727,10 +1727,12 @@ defmodule Bourse.Unified.ReadParse do
       [%{"coin" => coin} | _] = rows when is_binary(coin) ->
         %{"balance" => rows}
 
-      # Derive get_all_portfolios: multi-subaccount list, currency rows under
-      # each account's `collaterals` — flatten so keyed_collection can index.
+      # Derive get_all_portfolios: one entry per subaccount of the wallet, each
+      # its own margin account. A selected subaccount reads its own collaterals;
+      # without one, the wallet balance sums each currency across subaccounts.
+      # (Flattening let the last subaccount's row overwrite the others.)
       [%{"collaterals" => _} | _] = accounts ->
-        %{"collaterals" => Enum.flat_map(accounts, &List.wrap(&1["collaterals"]))}
+        derive_balance_payload(accounts, derive_balance_subaccount(params))
 
       [_ | _] = rows ->
         %{"details" => annotate_binance_papi_balance_rows(rows, params)}
@@ -1744,6 +1746,38 @@ defmodule Bourse.Unified.ReadParse do
       # `%{"details" => []}` would strip the scalar rows and yield empty maps.
       _ ->
         body
+    end
+  end
+
+  defp derive_balance_subaccount(params) do
+    exchange = params[:exchange] || %{}
+    options = Map.get(exchange, :options) || %{}
+    credentials = Map.get(exchange, :credentials) || %{}
+
+    to_subaccount_id(params["subaccount_id"] || options["subaccount_id"] || Map.get(credentials, :uid))
+  end
+
+  defp to_subaccount_id(id) when is_integer(id), do: id
+  defp to_subaccount_id(id) when is_binary(id) and id != "", do: String.to_integer(id)
+  defp to_subaccount_id(_), do: nil
+
+  defp derive_balance_payload(accounts, nil) do
+    rows =
+      accounts
+      |> Enum.flat_map(&List.wrap(&1["collaterals"]))
+      |> Enum.group_by(&(&1["currency"] || &1["asset_name"]))
+      |> Enum.map(fn {_code, [first | _] = rows} ->
+        total = Enum.reduce(rows, Decimal.new(0), &Decimal.add(&2, Decimal.new(to_string(&1["amount"]))))
+        first |> Map.take(["currency", "asset_name"]) |> Map.put("amount", Decimal.to_string(total, :normal))
+      end)
+
+    %{"collaterals" => rows}
+  end
+
+  defp derive_balance_payload(accounts, subaccount) do
+    case Enum.find(accounts, &(&1["subaccount_id"] == subaccount)) do
+      nil -> %{"collaterals" => []}
+      account -> %{"collaterals" => List.wrap(account["collaterals"])}
     end
   end
 

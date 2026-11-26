@@ -840,6 +840,11 @@
           "kind": "literal",
           "reason": null,
           "value": "option"
+        },
+        "page_size": {
+          "kind": "literal",
+          "reason": "provider maximum (1..1000, observed -32602 above); every page is walked",
+          "value": 1000
         }
       }
     },
@@ -1052,6 +1057,11 @@
           "kind": "literal",
           "reason": null,
           "value": "erc20"
+        },
+        "page_size": {
+          "kind": "literal",
+          "reason": "provider maximum (1..1000, observed -32602 above); every page is walked",
+          "value": 1000
         }
       }
     },
@@ -1101,6 +1111,11 @@
           "kind": "literal",
           "reason": null,
           "value": "perp"
+        },
+        "page_size": {
+          "kind": "literal",
+          "reason": "provider maximum (1..1000, observed -32602 above); every page is walked",
+          "value": 1000
         }
       }
     },

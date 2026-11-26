@@ -1264,6 +1264,9 @@ defmodule Bourse.Unified do
 
   defp dispatch_and_paginate(exchange, capability_name, config, final_params, dispatch_opts) do
     case Dispatch.call(exchange, config, final_params, dispatch_opts) do
+      {:ok, response} when exchange.id == "derive" and capability_name == "fetchMarkets" ->
+        paginate_derive_instruments(exchange, config, final_params, response, dispatch_opts)
+
       {:ok, response} when capability_name in @bybit_paginated_instruments_methods ->
         maybe_paginate_bybit_instruments(exchange, config, final_params, response, dispatch_opts)
 
@@ -1305,6 +1308,44 @@ defmodule Bourse.Unified do
 
     collect_fan_out_responses(results, [config], exchange)
   end
+
+  # Derive get_all_instruments pages at most 1000 rows and reports
+  # `pagination.num_pages`; the testnet option wave alone is 4317 rows over five
+  # pages (observed 2026-11-26). Walk every page into the first envelope; a page
+  # that fails or answers without rows fails the load rather than truncating it.
+  defp paginate_derive_instruments(
+         exchange,
+         config,
+         params,
+         %{body: %{"result" => %{"instruments" => first, "pagination" => %{"num_pages" => pages}}}} = response,
+         dispatch_opts
+       )
+       when is_list(first) and is_integer(pages) do
+    2..pages//1
+    |> Enum.reduce_while({:ok, first}, fn page, {:ok, acc} ->
+      case Dispatch.call(exchange, config, Map.put(params, "page", page), dispatch_opts) do
+        {:ok, %{body: %{"result" => %{"instruments" => [_ | _] = rows}}}} ->
+          {:cont, {:ok, acc ++ rows}}
+
+        {:error, _} = error ->
+          {:halt, error}
+
+        other ->
+          {:halt,
+           {:error,
+            Error.exchange_error("Derive instruments page #{page} of #{pages} answered no rows",
+              exchange: "derive",
+              raw: other
+            )}}
+      end
+    end)
+    |> case do
+      {:ok, rows} -> {:ok, put_in(response, [:body, "result", "instruments"], rows)}
+      error -> error
+    end
+  end
+
+  defp paginate_derive_instruments(_exchange, _config, _params, response, _dispatch_opts), do: {:ok, response}
 
   # Follow Bybit instruments-info `nextPageCursor` until empty (fetchFutureMarkets /
   # fetchMarkets linear|inverse waves). Merges list rows into the first response.
