@@ -1119,8 +1119,7 @@
   "symbols": {
     "spot": "BTC/USD:BTC",
     "linear": "BTC/USD:BTC",
-    "inverse": "BTC/USD:BTC",
-    "option": "BTC/USD:BTC"
+    "inverse": "BTC/USD:BTC"
   },
   "currency": "BTC",
   "error_cases": [

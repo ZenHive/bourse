@@ -18,6 +18,8 @@ defmodule Bourse.Test.RestReadContracts do
   alias Bourse.UnifiedMethod
 
   @policy_path "priv/venues/rest_read_contracts_policy.json"
+  @option_requirements ~w(listed quoted traded)
+  @option_symbol ~r/^[^\/]+\/[^:]+:[^-]+-\d{6}-[0-9.]+-[CP]$/
   @external_resource @policy_path
   @runtime_venues ~w(
     alpaca
@@ -118,6 +120,7 @@ defmodule Bourse.Test.RestReadContracts do
 
     ensure!(venues() == @runtime_venues, "REST-read inventory must cover all eleven runtime venues")
     validate_sources!(document)
+    Enum.each(document["venues"], fn {venue, contract} -> validate_option_selection!(venue, contract) end)
     validate_cases!()
     validate_runtime_surface!()
     :ok
@@ -143,6 +146,93 @@ defmodule Bourse.Test.RestReadContracts do
             "got #{inspect(field_values)}"
         )
     end
+  end
+
+  @doc """
+  Validates how a venue contract resolves option instruments.
+
+  Option instruments expire, so a contract never names one: the `symbols` map
+  carries no `option` slot, and a value there — a swap or spot symbol, or a
+  literal strike that would go stale — is rejected. Every option branch that
+  reads one instrument declares `option_instrument`, the state the read needs
+  that instrument to have right now:
+
+    * `listed` — an active option market (greeks, chains, currency-level stats)
+    * `quoted` — a two-sided book (ticker reads)
+    * `traded` — 24-hour volume (trade tapes)
+
+  Any requirement beyond `listed` is resolved from the venue's own live data
+  through `option_selection`, a unified read plus its options, which the venue
+  contract must then declare.
+  """
+  @spec validate_option_selection!(String.t(), map()) :: :ok
+  def validate_option_selection!(venue, contract) do
+    validate_option_slot!(venue, get_in(contract, ["symbols", "option"]))
+
+    requirements =
+      Enum.flat_map(contract["operations"], fn operation ->
+        Enum.map(operation["branches"], &validate_option_requirement!(venue, operation, &1))
+      end)
+
+    if Enum.any?(requirements, &(&1 not in [nil, "listed"])) do
+      validate_selection_source!(venue, contract["option_selection"])
+    end
+
+    :ok
+  end
+
+  @doc "Returns true when `symbol` is a unified option symbol (`BASE/QUOTE:SETTLE-YYMMDD-STRIKE-C|P`)."
+  @spec option_symbol?(term()) :: boolean()
+  def option_symbol?(symbol) when is_binary(symbol), do: Regex.match?(@option_symbol, symbol)
+  def option_symbol?(_symbol), do: false
+
+  defp validate_option_slot!(_venue, nil), do: :ok
+
+  defp validate_option_slot!(venue, symbol) do
+    if option_symbol?(symbol) do
+      raise ArgumentError,
+            "#{venue}: symbols.option names the literal option #{inspect(symbol)}; option instruments expire, " <>
+              "so declare option_instrument on the branch and let the lane select one from live venue data"
+    else
+      raise ArgumentError,
+            "#{venue}: symbols.option names #{inspect(symbol)}, which is not an option symbol; " <>
+              "remove the slot and declare option_instrument on each option branch"
+    end
+  end
+
+  defp validate_option_requirement!(venue, operation, branch) do
+    requirement = branch["option_instrument"]
+    id = "#{venue}.#{operation["method"]}.#{branch["provider_operation"]}"
+
+    if branch["market_kind"] == "option" and reads_one_instrument?(operation, branch) do
+      ensure!(
+        requirement in @option_requirements,
+        "#{id}: option branch must declare option_instrument as one of #{inspect(@option_requirements)}, " <>
+          "got #{inspect(requirement)}"
+      )
+    else
+      ensure!(is_nil(requirement), "#{id}: option_instrument is only meaningful on an option branch that takes a symbol")
+    end
+
+    requirement
+  end
+
+  defp reads_one_instrument?(operation, branch) do
+    Enum.any?(operation["arguments"] ++ (branch["options"] || []), &(&1["strategy"] == "market_symbol"))
+  end
+
+  defp validate_selection_source!(venue, %{"source_method" => method, "options" => options})
+       when is_binary(method) and is_list(options) do
+    ensure!(
+      Enum.all?(options, &(is_map(&1) and is_binary(&1["name"]) and is_binary(&1["strategy"]))),
+      "#{venue}: option_selection options must be named strategies"
+    )
+  end
+
+  defp validate_selection_source!(venue, other) do
+    raise ArgumentError,
+          "#{venue}: option branches need a quoted or traded instrument, so the contract must declare " <>
+            "option_selection with a source_method and options, got #{inspect(other)}"
   end
 
   defp allowed_values?({field, allowed}), do: is_binary(field) and field != "" and is_list(allowed) and allowed != []

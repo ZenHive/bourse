@@ -114,6 +114,27 @@ roadmap.
 
 ---
 
+## 2026-11-26 — okx demo answers the convert estimate-quote contract case with "Service temporarily unavailable", and no ledger row covers it
+
+**Status:** 🆕 measured live (task 711 run, outside its scope). Not routed.
+
+**The call:** the contract case `okx:fetchConvertQuote:0:privatePostAssetConvertEstimateQuote`,
+`Bourse.fetch_convert_quote(okx, "USDC", "BTC", 1, instType: "SPOT", endpoint_index: 0)`
+on okx international demo (`sandbox: true`, `x-simulated-trading: 1`),
+`POST /api/v5/asset/convert/estimate-quote`.
+
+**Observed (2026-11-26):** `{:error, %Bourse.Error{type: :exchange_not_available, message:
+"Service temporarily unavailable. Please try again later."}}`. It came back on two runs about
+twenty minutes apart: an okx option-subset baseline and `mix bourse.verify_rest_read_contracts --venue okx`
+(denominator=84, executed=84, failures=1). It is the only genuine red in the okx lane.
+
+**Expected:** an estimate quote, or, if okx demo does not host the convert service, a
+demo-unavailable row in `docs/prod-verification-ledger.md` beside the other okx
+funding-account reads that demo does not serve. Nobody has checked whether this is a
+transient outage or demo not hosting the service. Production behavior is unverified.
+
+---
+
 ## 2026-11-26 — a bybit restore can take a late acceptance of another group for its own
 
 **Status:** Fixed inline (task 708 review round 6).
@@ -578,7 +599,21 @@ well-formed, plausible, and wrong, with no error to notice. `fetch_canceled_orde
 
 ## 2026-09-15 — every venue's contract `symbols.option` names a non-option symbol, so each option branch is proven against an arbitrarily-picked illiquid strike
 
-**Status:** 🆕 measured live (orchestrator, landed-base review) · **2026-11-25:** routed — task 711.
+**Status:** 🆕 measured live (orchestrator, landed-base review) · **2026-11-25:** routed — task 711 · **2026-11-26:** ✅ fixed in task 711.
+
+> **Resolution (2026-11-26, task 711).** No contract carries a `symbols.option` slot any more,
+> and `Bourse.Test.RestReadContracts.validate_option_selection!/2` rejects one, whether it
+> names a non-option symbol or a literal strike. Each option branch that reads one instrument
+> declares `option_instrument` (`listed` / `quoted` / `traded`). The scenario resolves it at run
+> time: `listed` from `load_markets` (no expiry within the hour), `quoted` and `traded` from the
+> venue's declared `option_selection` source (`fetchOptionChain` on okx, bybit, deribit),
+> filtered by best bid and ask above zero or by 24h volume above zero, highest volume first.
+> When no option meets the requirement, the case fails with "no <requirement> option instrument
+> on <venue> now … not a broken read: the branch was not called". An empty answer for a
+> selected instrument fails as a broken read and names the source's evidence. Live on
+> 2026-11-26, the option subsets passed: okx 6/6, deribit 4/4, bybit 7/7, derive 2/2.
+> `okx:fetchTrades:2:publicGetPublicOptionTrades` passed against the highest-volume BTC option
+> from okx demo `market/tickers`.
 
 `Bourse.Test.RestReadContractScenario.market_symbol!/2` prefers
 `venue_contract["symbols"][kind]`, then falls back to the first active market whose symbol
@@ -1593,6 +1628,17 @@ not an unprovisioned account, and provisioning was the thing making it recur —
 resolution note on the entry above. They are green as of 2026-09-15. Only the two
 unpopulated-state cases remain in this class. Same routing question, same operator
 decision; nothing new to file.
+
+**Update 2026-11-26 (task 711), okx rows:**
+- `okx:fetchTrades:2:publicGetPublicOptionTrades` — ✅ fixed. The branch drew an untraded
+  strike, not empty demo state. The lane now picks a traded option from okx's own
+  `market/tickers` 24h volume, and the case passes live on okx demo.
+- `okx:fetchOpenInterestHistory:1:publicGetRubikStatOptionOpenInterestVolume` — already
+  fenced in `docs/prod-verification-ledger.md` as demo-unavailable. The demo host serves the
+  rubik stat empty, and production answers it with rows. The read takes only `ccy`
+  (okx docs: `ccy` required, `period` optional), so no choice of instrument could populate it.
+  It runs with `option_instrument: "listed"` and stays in the denominator as a ledgered case.
+- `binance:fetchOrderList` is out of task 711's scope and unchanged.
 
 ---
 ## 2026-09-01 — `fetch_funding_rate/2` is unavailable on hyperliquid while `fetch_funding_rates/2` serves the same number, so a per-symbol consumer gets `not_supported` for a rate the venue publishes hourly

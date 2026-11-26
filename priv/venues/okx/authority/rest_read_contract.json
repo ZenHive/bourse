@@ -1137,6 +1137,7 @@
           "path": "public/opt-summary",
           "authenticated": false,
           "market_kind": "option",
+          "option_instrument": "listed",
           "options": []
         }
       ],
@@ -1883,6 +1884,7 @@
           "path": "rubik/stat/option/open-interest-volume",
           "authenticated": false,
           "market_kind": "option",
+          "option_instrument": "listed",
           "options": [
             {
               "name": "limit",
@@ -2035,6 +2037,7 @@
           "path": "market/ticker",
           "authenticated": false,
           "market_kind": "option",
+          "option_instrument": "quoted",
           "options": [
             {
               "name": "instType",
@@ -2076,6 +2079,7 @@
           "path": "market/tickers",
           "authenticated": false,
           "market_kind": "option",
+          "option_instrument": "listed",
           "options": [
             {
               "name": "instType",
@@ -2758,6 +2762,7 @@
           "path": "public/option-trades",
           "authenticated": false,
           "market_kind": "option",
+          "option_instrument": "traded",
           "options": [
             {
               "name": "symbol",
@@ -3048,8 +3053,17 @@
   "symbols": {
     "spot": "BTC/USDT",
     "linear": "BTC/USDT:USDT",
-    "inverse": "BTC/USD:BTC",
-    "option": "BTC/USDT:USDT"
+    "inverse": "BTC/USD:BTC"
+  },
+  "option_selection": {
+    "source_method": "fetchOptionChain",
+    "options": [
+      {
+        "name": "instType",
+        "strategy": "literal",
+        "value": "OPTION"
+      }
+    ]
   },
   "currency": "USDT",
   "error_cases": [

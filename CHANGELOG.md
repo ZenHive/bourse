@@ -57,6 +57,19 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- **REST-read contract option branches select a live instrument.** Every venue contract's
+  `symbols.option` named a swap or spot symbol, so option branches fell back to the first
+  listed BTC option — usually an untraded strike — and a broken option read looked the same
+  as one that drew a dead strike. The slot is gone, and the loader rejects one, whether it
+  names a non-option symbol or a literal strike that would expire. Each option branch that
+  reads one instrument declares `option_instrument` (`listed`, `quoted` or `traded`), and
+  the lane picks that instrument at run time from the venue's live data: `listed` from
+  `load_markets`, `quoted` and `traded` from the venue's `option_selection` source
+  (`fetchOptionChain` on okx, bybit and deribit), ranked by 24-hour volume. When no option
+  meets the requirement, the case fails as current market state without calling the branch.
+  An empty answer for an instrument the venue reported as traded or quoted fails as a broken
+  read. `okx:fetchTrades:2:publicGetPublicOptionTrades` passes live on okx demo again.
+  Contract cases carry a `market_kind` tag (`--only market_kind:option`).
 - **WS order books check sequence continuity and resync on a gap.** `Bourse.WS.Adapter`
   checks every delta of an incremental book (binance, binanceusdm, okx, deribit, bybit)
   against the venue's continuity rule, authored as

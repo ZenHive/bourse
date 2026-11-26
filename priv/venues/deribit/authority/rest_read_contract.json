@@ -387,6 +387,7 @@
           "path": "ticker",
           "authenticated": false,
           "market_kind": "option",
+          "option_instrument": "listed",
           "options": []
         }
       ],
@@ -820,6 +821,7 @@
           "path": "get_book_summary_by_instrument",
           "authenticated": false,
           "market_kind": "option",
+          "option_instrument": "quoted",
           "options": []
         }
       ],
@@ -855,6 +857,7 @@
           "path": "get_book_summary_by_currency",
           "authenticated": false,
           "market_kind": "option",
+          "option_instrument": "listed",
           "options": [
             {
               "name": "code",
@@ -1373,6 +1376,7 @@
           "path": "get_historical_volatility",
           "authenticated": false,
           "market_kind": "option",
+          "option_instrument": "listed",
           "options": [
             {
               "name": "limit",
@@ -1460,8 +1464,20 @@
   "symbols": {
     "spot": "BTC/USD:BTC",
     "linear": "BTC/USD:BTC",
-    "inverse": "BTC/USD:BTC",
-    "option": "BTC/USD:BTC"
+    "inverse": "BTC/USD:BTC"
+  },
+  "option_selection": {
+    "source_method": "fetchOptionChain",
+    "options": [
+      {
+        "name": "code",
+        "strategy": "venue_currency"
+      },
+      {
+        "name": "currency",
+        "strategy": "venue_currency"
+      }
+    ]
   },
   "currency": "BTC",
   "error_cases": [

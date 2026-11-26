@@ -690,8 +690,7 @@
   "symbols": {
     "spot": "BTC/USDC:USDC",
     "linear": "BTC/USDC:USDC",
-    "inverse": "BTC/USDC:USDC",
-    "option": "BTC/USDC:USDC"
+    "inverse": "BTC/USDC:USDC"
   },
   "currency": "USDC",
   "error_cases": [

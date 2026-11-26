@@ -39,6 +39,7 @@ defmodule Bourse.Test.Generator.RestReadContract do
       @tag unquote(method_tag)
       @tag contract_kind: unquote(contract_case["kind"])
       @tag provider_operation: unquote(contract_case["provider_operation"])
+      @tag market_kind: unquote(contract_case["market_kind"])
       test unquote(contract_case["id"]), %{context: context} do
         RestReadContractScenario.assert_case!(unquote(escaped), context)
       end

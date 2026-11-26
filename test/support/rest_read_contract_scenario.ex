@@ -54,6 +54,7 @@ defmodule Bourse.Test.RestReadContractScenario do
   end
 
   def assert_case!(contract_case, context) do
+    contract_case = with_selected_option(contract_case, context)
     method = existing_method_atom!(contract_case["method"])
     {args, resolved} = resolve_arguments!(contract_case, context)
     opts = case_options(contract_case, context, resolved)
@@ -250,7 +251,16 @@ defmodule Bourse.Test.RestReadContractScenario do
   defp credential_uid!(context),
     do: flunk("#{context.venue}: provider contract requires a numeric credential account index")
 
+  defp market_symbol!(_context, %{"selected_option" => %{symbol: symbol}}), do: symbol
+
   defp market_symbol!(_context, %{"symbol" => symbol}) when is_binary(symbol) and symbol != "", do: symbol
+
+  defp market_symbol!(context, %{"market_kind" => "option"} = contract_case) do
+    flunk(
+      "#{contract_case["id"]}: option branch reached symbol resolution without an option_instrument " <>
+        "selection on #{context.venue}; declare option_instrument on the branch"
+    )
+  end
 
   defp market_symbol!(%{markets: []} = context, contract_case) do
     kind = contract_case["market_kind"]
@@ -273,6 +283,123 @@ defmodule Bourse.Test.RestReadContractScenario do
       do: market.symbol,
       else: flunk("#{context.venue}: no active #{kind} market can exercise the provider branch")
   end
+
+  # Option instruments expire, so none is named in a contract file. The branch's
+  # `option_instrument` says what the read needs the instrument to have now, and
+  # the instrument is chosen from the venue's own live data at run time.
+  @listed_horizon_ms 3_600_000
+
+  defp with_selected_option(%{"option_instrument" => requirement} = contract_case, context) do
+    Map.put(contract_case, "selected_option", select_option!(requirement, contract_case, context))
+  end
+
+  defp with_selected_option(contract_case, _context), do: contract_case
+
+  defp select_option!("listed", contract_case, context) do
+    market = listed_option!(contract_case, context)
+    %{symbol: market.symbol, requirement: "listed", source: "load_markets", evidence: "an active listed option"}
+  end
+
+  defp select_option!(requirement, contract_case, context) do
+    listed = listed_options(context)
+    seed = listed_option!(contract_case, context)
+    selection = context.venue_contract["option_selection"]
+    source = selection["source_method"]
+    rows = selection_rows!(source, seed.symbol, selection, contract_case, context)
+    listed_symbols = MapSet.new(listed, & &1.symbol)
+
+    candidates =
+      rows
+      |> Enum.filter(&(MapSet.member?(listed_symbols, &1.symbol) and option_meets?(&1, requirement)))
+      |> Enum.sort_by(&{-option_volume(&1), &1.symbol})
+
+    case candidates do
+      [row | _] ->
+        %{symbol: row.symbol, requirement: requirement, source: source, evidence: option_evidence(row)}
+
+      [] ->
+        flunk(
+          "#{contract_case["id"]}: no #{requirement} option instrument on #{context.venue} now. " <>
+            "#{source} answered #{length(rows)} option rows for #{length(listed)} listed options and none " <>
+            "has #{requirement_meaning(requirement)}. This is the venue's current market state, not a broken " <>
+            "read: the branch was not called. Re-run when the venue's options are #{requirement} again."
+        )
+    end
+  end
+
+  defp listed_option!(contract_case, context) do
+    case listed_options(context) do
+      [market | _] ->
+        market
+
+      [] ->
+        flunk(
+          "#{contract_case["id"]}: no listed option instrument on #{context.venue} now — load_markets " <>
+            "returned no active option expiring more than an hour from now, so the branch was not called"
+        )
+    end
+  end
+
+  defp listed_options(context) do
+    horizon = System.system_time(:millisecond) + @listed_horizon_ms
+
+    context.markets
+    |> Enum.filter(&(market_kind?(&1, "option") and &1.active != false and outlives?(&1, horizon)))
+    |> Enum.sort_by(&(not String.starts_with?(&1.symbol || "", "BTC")))
+  end
+
+  defp outlives?(%{expiry: expiry}, horizon) when is_integer(expiry), do: expiry > horizon
+  defp outlives?(_market, _horizon), do: true
+
+  defp selection_rows!(source, seed, selection, contract_case, context) do
+    method = existing_method_atom!(source)
+
+    options =
+      Enum.map(selection["options"], fn option ->
+        {option_atom!(option["name"], contract_case), option_value!(option, contract_case, context)}
+      end)
+
+    case apply(Bourse, method, [context.exchange, seed, options]) do
+      {:ok, rows} when is_map(rows) and not is_struct(rows) ->
+        selection_rows_shape!(Map.values(rows), source, contract_case)
+
+      {:ok, rows} when is_list(rows) ->
+        selection_rows_shape!(rows, source, contract_case)
+
+      {:error, reason} ->
+        flunk(
+          "#{contract_case["id"]}: option instrument selection could not read #{source} on #{context.venue}: " <>
+            "#{format_reason(reason)}. The selection source failed, so the branch was not called"
+        )
+
+      other ->
+        flunk("#{contract_case["id"]}: option selection source #{source} returned #{inspect(other)}")
+    end
+  end
+
+  defp selection_rows_shape!(rows, source, contract_case) do
+    assert Enum.all?(rows, &is_struct(&1, Bourse.OptionData)),
+           "#{contract_case["id"]}: option selection source #{source} must answer Bourse.OptionData rows"
+
+    rows
+  end
+
+  defp option_meets?(row, "quoted"), do: positive?(row.bid_price) and positive?(row.ask_price)
+  defp option_meets?(row, "traded"), do: positive?(row.base_volume) or positive?(row.quote_volume)
+
+  defp positive?(value), do: is_number(value) and value > 0
+
+  defp option_volume(row) do
+    Enum.find([row.base_volume, row.quote_volume], 0, &positive?/1)
+  end
+
+  defp option_evidence(row) do
+    "24h base volume #{inspect(row.base_volume)}, quote volume #{inspect(row.quote_volume)}, " <>
+      "bid #{inspect(row.bid_price)}, ask #{inspect(row.ask_price)}"
+  end
+
+  defp requirement_meaning("quoted"), do: "a two-sided book (bid and ask above zero)"
+  defp requirement_meaning("traded"), do: "24-hour trading volume above zero"
 
   defp market_kind?(market, "spot"), do: market.spot == true or market.type == "spot"
   defp market_kind?(market, "option"), do: market.option == true or market.type in ["option", "option_combo"]
@@ -530,6 +657,17 @@ defmodule Bourse.Test.RestReadContractScenario do
 
   defp empty_unexercised?(contract_case) do
     contract_case["success"]["empty_collection"] != "allowed"
+  end
+
+  defp unexercised_message(%{"selected_option" => %{source: "load_markets"} = selected} = contract_case) do
+    "#{contract_case["id"]}: the read returned nothing for the listed option #{selected.symbol}. " <>
+      "A listed instrument is all this branch needs, so an empty answer is a broken read, not market state."
+  end
+
+  defp unexercised_message(%{"selected_option" => selected} = contract_case) do
+    "#{contract_case["id"]}: the read returned nothing for #{selected.symbol}, which #{selected.source} " <>
+      "reported as #{selected.requirement} (#{selected.evidence}). The venue publishes what this branch " <>
+      "reads, so the empty answer is a broken read, not market state."
   end
 
   defp unexercised_message(contract_case) do

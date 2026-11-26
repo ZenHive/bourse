@@ -148,8 +148,7 @@
   "symbols": {
     "spot": "ETH/USD",
     "linear": "ETH/USD",
-    "inverse": "ETH/USD",
-    "option": "ETH/USD"
+    "inverse": "ETH/USD"
   },
   "currency": "USD",
   "error_cases": [

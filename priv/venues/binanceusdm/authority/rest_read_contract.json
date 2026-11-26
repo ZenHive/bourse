@@ -1860,8 +1860,7 @@
   "symbols": {
     "spot": "BTC/USDT:USDT",
     "linear": "BTC/USDT:USDT",
-    "inverse": "BTC/USDT:USDT",
-    "option": "BTC/USDT:USDT"
+    "inverse": "BTC/USDT:USDT"
   },
   "currency": "USDT",
   "error_cases": [

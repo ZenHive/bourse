@@ -1054,6 +1054,7 @@
           "path": "v5/market/tickers",
           "authenticated": false,
           "market_kind": "option",
+          "option_instrument": "listed",
           "options": [
             {
               "name": "category",
@@ -1867,6 +1868,7 @@
           "path": "v5/market/tickers",
           "authenticated": false,
           "market_kind": "option",
+          "option_instrument": "quoted",
           "options": [
             {
               "name": "category",
@@ -1907,6 +1909,7 @@
           "path": "v5/market/tickers",
           "authenticated": false,
           "market_kind": "option",
+          "option_instrument": "listed",
           "options": [
             {
               "name": "baseCoin",
@@ -2854,6 +2857,7 @@
           "path": "v5/market/historical-volatility",
           "authenticated": false,
           "market_kind": "option",
+          "option_instrument": "listed",
           "options": [
             {
               "name": "limit",
@@ -2938,8 +2942,21 @@
   "symbols": {
     "spot": "BTC/USDT",
     "linear": "BTC/USDT:USDT",
-    "inverse": "BTC/USD:BTC",
-    "option": "BTC/USDT:USDT"
+    "inverse": "BTC/USD:BTC"
+  },
+  "option_selection": {
+    "source_method": "fetchOptionChain",
+    "options": [
+      {
+        "name": "baseCoin",
+        "strategy": "literal",
+        "value": "BTC"
+      },
+      {
+        "name": "category",
+        "strategy": "market_type"
+      }
+    ]
   },
   "currency": "BTC",
   "error_cases": [
