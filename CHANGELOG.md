@@ -159,9 +159,13 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   A subscribe or unsubscribe that does not wait (`ack_timeout_ms: 0`) gets no generated id
   and is sent exactly as before, with the same return value and delivery of the venue's
   reply; an explicit `request_id:` is put on the frame, and the reply is then delivered as
-  zen_websocket delivers a frame carrying that id. `Bourse.WS.Adapter` gives every restore
-  attempt a fresh id; a caller's `request_id:` applies only to the caller's own request, so
-  two groups subscribed under one id no longer take each other's replies after a reconnect.
+  zen_websocket delivers a frame carrying that id. Every `Bourse.WS.Adapter` restore
+  attempt is its own request: it carries a fresh id and waits up to the adapter's
+  `restore_ack_timeout_ms:` (a `start_link/3` option, default 3000) for the venue's
+  verdict, whatever id and wait the original call chose. Two groups subscribed under one
+  `request_id:` no longer take each other's replies after a reconnect, and a group first
+  subscribed with `ack_timeout_ms: 0` is retried when its restore is refused instead of
+  being counted as restored.
 - **Subscribing again to an order book stream already tracked keeps its book**; the
   ambiguity invalidation is announced only when a distinct stream is added.
 - **A routed connection that closes right after a subscription is accepted is noticed.**

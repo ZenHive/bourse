@@ -219,6 +219,16 @@ Review round 7 (two regressions of that fix, both fixed inline):
   replies after a redial (reviewer probe on stream-testnet.bybit.com: the refused book was
   never retried). Restore attempts now always use a fresh id; the same probe retries the
   refused book with fresh ids.
+- Round 8 found the same class through the wait: a restore inherited the caller's
+  `ack_timeout_ms: 0`, so it went out without an id, counted the sent frame as restored,
+  and the venue's later refusal left the group out of the retry set. Reviewer one-shot
+  probe on stream-testnet.bybit.com (the first replacement book request refused once):
+  before, the book was sent once without an id, refused, and never came back; after, the
+  refused request (id 3) is retried with id 4, accepted, and the replacement book arrives.
+  Restore attempts now replace the caller's wait with the adapter's
+  `restore_ack_timeout_ms` (default 3000) and drop the caller's request ids
+  (`request_id:`, and `id:` for the JSON-RPC venues); every other option shapes the
+  subscription frame itself and is kept.
 
 ## 2026-11-26 — subscribe replies that identify no request (residual after task 708)
 
