@@ -159,35 +159,112 @@ defmodule Bourse.RestReadContractInventoryTest do
                    fn -> RestReadContractScenario.assert_live_value!(contract_case, []) end
     end
 
-    test "source rows whose symbols do not name listed options make the source unusable, not market state" do
-      listed = MapSet.new(["BTC/USD:BTC-270625-200000-P", "BTC/USD:BTC-261218-50000-P"])
+    @quoted_btc "BTC/USDT:USDT-270326-10000-P"
+    @dead_btc "BTC/USDT:USDT-270924-10000-P"
+    @expiring_btc "BTC/USDT:USDT-261126-60000-C"
 
-      cleared = [
-        %Bourse.OptionData{symbol: nil, base_volume: 22_906.84, bid_price: 2.3, ask_price: 2.4},
-        %Bourse.OptionData{symbol: nil, base_volume: 122.67, bid_price: 0.011, ask_price: 0.012}
-      ]
-
-      assert {:unusable, "only 0 of 2 rows name a listed option market"} =
-               RestReadContractScenario.option_group_verdict(cleared, listed, listed, "traded")
-
-      assert {:unusable, "answered no rows"} = RestReadContractScenario.option_group_verdict([], listed, listed, "traded")
+    defp btc_listings do
+      listed = MapSet.new([@quoted_btc, @dead_btc, @expiring_btc])
+      {listed, MapSet.delete(listed, @expiring_btc)}
     end
 
-    test "a usable source selects the highest-volume eligible instrument or reports absence" do
-      listed = MapSet.new(["BTC/USD:BTC-270625-200000-P", "BTC/USD:BTC-261218-50000-P", "BTC/USD:BTC-261126-60000-C"])
-      eligible = MapSet.delete(listed, "BTC/USD:BTC-261126-60000-C")
+    test "clearing only the qualifying rows' identities leaves absence unestablished" do
+      {listed, eligible} = btc_listings()
 
       rows = [
-        %Bourse.OptionData{symbol: "BTC/USD:BTC-261218-50000-P", base_volume: 122.67},
-        %Bourse.OptionData{symbol: "BTC/USD:BTC-270625-200000-P", base_volume: 22_906.84},
-        %Bourse.OptionData{symbol: "BTC/USD:BTC-261126-60000-C", base_volume: 99_999.0}
+        %Bourse.OptionData{symbol: nil, bid_price: 1890.0, ask_price: 1900.0},
+        %Bourse.OptionData{symbol: @dead_btc, bid_price: 0.0, ask_price: 0.0},
+        %Bourse.OptionData{symbol: @quoted_btc, bid_price: 0.0, ask_price: 5.0}
       ]
 
-      assert {:selected, %Bourse.OptionData{symbol: "BTC/USD:BTC-270625-200000-P"}} =
+      assert {:unresolved, 1} = RestReadContractScenario.option_group_verdict(rows, listed, eligible, "quoted")
+    end
+
+    test "an identified qualifying row is selected beside many unreconciled rows" do
+      {listed, eligible} = btc_listings()
+      noise = for _ <- 1..50, do: %Bourse.OptionData{symbol: "DOGE-25DEC26-0.045-P-USDT", base_volume: 9.0e6}
+      qualifying = %Bourse.OptionData{symbol: @quoted_btc, base_volume: 1.0}
+
+      assert {:selected, ^qualifying} =
+               RestReadContractScenario.option_group_verdict([qualifying | noise], listed, eligible, "traded")
+    end
+
+    test "the highest-volume candidate wins and a listing excluded by the cutoff is irrelevant" do
+      {listed, eligible} = btc_listings()
+
+      rows = [
+        %Bourse.OptionData{symbol: @dead_btc, base_volume: 2.0},
+        %Bourse.OptionData{symbol: @quoted_btc, base_volume: 22_906.84},
+        %Bourse.OptionData{symbol: @expiring_btc, base_volume: 99_999.0}
+      ]
+
+      assert {:selected, %Bourse.OptionData{symbol: @quoted_btc}} =
                RestReadContractScenario.option_group_verdict(rows, listed, eligible, "traded")
 
-      assert {:absent, "3 rows, none quoted"} =
-               RestReadContractScenario.option_group_verdict(rows, listed, eligible, "quoted")
+      assert {:absent, 1} =
+               RestReadContractScenario.option_group_verdict(Enum.take(rows, -1), listed, eligible, "traded")
+    end
+
+    test "rows that are all identified and none qualifying establish absence" do
+      {listed, eligible} = btc_listings()
+
+      rows = [
+        %Bourse.OptionData{symbol: @dead_btc, bid_price: 0.0, ask_price: 0.0},
+        %Bourse.OptionData{symbol: nil, bid_price: nil, ask_price: 2.0}
+      ]
+
+      assert {:absent, 2} = RestReadContractScenario.option_group_verdict(rows, listed, eligible, "quoted")
+    end
+
+    test "an empty successful response leaves absence unestablished" do
+      {listed, eligible} = btc_listings()
+      assert :no_rows = RestReadContractScenario.option_group_verdict([], listed, eligible, "quoted")
+    end
+
+    test "absence is market state only when every underlying answered identified rows without a candidate" do
+      cutoff = 1_795_660_000_000
+      id = "bybit:fetchOption:0:publicGetV5MarketTickers"
+
+      state =
+        RestReadContractScenario.option_absence_message(
+          id,
+          "bybit",
+          "quoted",
+          "fetchOptionChain",
+          [
+            {"BTC", {:absent, 824}},
+            {"ETH", {:absent, 618}}
+          ],
+          cutoff
+        )
+
+      assert state =~ "no quoted option instrument on bybit now"
+      assert state =~ "BTC: 824 rows, none quoted; ETH: 618 rows, none quoted"
+      assert state =~ "options expiring before 2026-11-26T"
+      assert state =~ "current market state"
+
+      unverified =
+        RestReadContractScenario.option_absence_message(
+          id,
+          "okx",
+          "quoted",
+          "fetchOptionChain",
+          [
+            {"BTC", {:unresolved, 8}},
+            {"ETH", :no_rows},
+            {"HYPE", {:source_error, "[okx] invalid_parameters: unsupported OKX option underlying"}},
+            {"LTC", {:absent, 62}}
+          ],
+          cutoff
+        )
+
+      assert unverified =~ "absence of a quoted option instrument on okx not established"
+      assert unverified =~ "BTC: 8 quoted rows of unknown identity"
+      assert unverified =~ "ETH: source returned no rows; market state unverified"
+      assert unverified =~ "HYPE: source error [okx] invalid_parameters"
+      assert unverified =~ "Market state unverified: the branch was not called"
+      refute unverified =~ "current market state"
+      refute unverified =~ "broken"
     end
 
     test "option symbols are recognised by their expiry, strike and right" do

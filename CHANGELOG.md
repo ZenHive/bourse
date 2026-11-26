@@ -66,17 +66,21 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   the lane picks that instrument at run time from the venue's live data. `listed` comes from
   `load_markets`, excluding options that expire within the hour. `quoted` and `traded` come
   from the venue's `option_selection` source (`fetchOptionChain` on okx, bybit and deribit).
-  The lane searches each listed underlying in turn, BTC first, and takes the eligible option
-  with the highest 24-hour volume. There are three distinct failures, and none of them calls
-  the branch:
-  - **Unusable source:** an underlying whose source rows are empty, or fewer than half of which
-    name a listed option market, makes the source unusable. If no other underlying yields an
-    instrument, the case fails as a broken selection source.
-  - **No such option:** when every underlying was searched cleanly and none has a qualifying
-    option, the case fails as current market state. The message names the underlyings
-    searched and the expiry cutoff.
-  - **Empty read:** an empty answer for an instrument the venue reported as traded or quoted
-    fails as a broken read.
+  The lane searches each listed underlying in turn, BTC first. It classifies every source row
+  against that underlying's own listings:
+  - **Candidate:** the row meets the requirement and names an eligible listing.
+  - **Unresolved:** the row meets the requirement but names no listing, or has no identity.
+  - **Irrelevant:** every other row.
+
+  The candidate with the highest 24-hour volume is selected, whatever the other rows say.
+  Without a candidate, the case fails without calling the branch, in one of two ways:
+  - **Absence not established, market state unverified:** some underlying had unresolved
+    rows, a source error, or no rows.
+  - **No such option on the venue now:** every underlying answered rows that are all
+    identified, and none qualifies.
+
+  Both messages name each underlying's outcome and the expiry cutoff. An empty answer for a
+  selected instrument fails as a broken read.
 
   `okx:fetchTrades:2:publicGetPublicOptionTrades` passes live on okx demo again.
   `okx:fetchOpenInterestHistory:1:publicGetRubikStatOptionOpenInterestVolume` runs and confirms

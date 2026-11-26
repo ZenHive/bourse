@@ -130,8 +130,8 @@ XAU (146).
 
 **Expected:** a chain for the instrument's own family, `instFamily=HYPE-USD_UM`, as okx
 publishes it in `public/instruments`. The REST-read lane is unaffected while BTC or ETH
-qualifies. If the lane ever has to reach these underlyings, it now reports them as an
-unusable selection source.
+qualifies. If the lane ever has to reach these underlyings, they count as source errors and
+leave absence unestablished.
 
 ---
 
@@ -649,13 +649,19 @@ well-formed, plausible, and wrong, with no error to notice. `fetch_canceled_orde
 > time. `listed` comes from `load_markets`, excluding options that expire within the hour.
 > `quoted` and `traded` come from the venue's declared `option_selection` source
 > (`fetchOptionChain` on okx, bybit and deribit). The scenario searches each listed underlying
-> in turn, BTC first, and takes the eligible option with the highest 24h volume, requiring
-> either best bid and ask above zero or 24h volume above zero.
-> An underlying whose source rows are empty, or fewer than half of which name a listed option
-> market, makes the source unusable. If nothing else qualifies, the case fails as a broken
-> selection source. When every underlying was searched cleanly and none qualifies, the case fails
-> as market state ("no <requirement> option instrument on <venue> now … not a broken read"), and
-> the message names the underlyings searched and the expiry cutoff. An empty answer for a
+> in turn, BTC first. It classifies every row against that underlying's own listings:
+> - **Candidate:** it meets the requirement (best bid and ask above zero, or 24h volume above
+>   zero) and names an eligible listing.
+> - **Unresolved:** it meets the requirement but its identity is missing or unlisted.
+> - **Irrelevant:** every other row.
+>
+> The highest-volume candidate is selected regardless of the other rows. Without a candidate:
+> - If any underlying had unresolved rows, a source error or no rows, the case fails as
+>   "absence … not established … Market state unverified".
+> - Only when every underlying answered rows that are all identified, with none qualifying, does
+>   it fail as market state ("no <requirement> option instrument on <venue> now").
+>
+> Both messages name each underlying's outcome and the expiry cutoff. An empty answer for a
 > selected instrument fails as a broken read. None of these failures calls the branch.
 > Live on 2026-11-26 with `--no-retry`, the in-scope subset executed 17 of 17: okx 6, bybit 7,
 > deribit 4. `okx:fetchTrades:2:publicGetPublicOptionTrades` passed against the highest-volume

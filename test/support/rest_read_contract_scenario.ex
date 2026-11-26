@@ -304,30 +304,29 @@ defmodule Bourse.Test.RestReadContractScenario do
   end
 
   # The source answers one underlying per call, so venue-wide absence is only
-  # established after every listed underlying was searched. A source whose rows
-  # do not name listed instruments cannot speak for market state at all.
+  # established after every listed underlying answered with rows, all of them
+  # identified and none qualifying. Anything less leaves market state unverified.
   defp select_option!(requirement, contract_case, context) do
     cutoff = listed_cutoff()
     eligible = listed_options(context, cutoff)
     listed_option!(contract_case, context, eligible, cutoff)
     selection = context.venue_contract["option_selection"]
     source = selection["source_method"]
-    listed_symbols = context.markets |> Enum.filter(&active_option?/1) |> MapSet.new(& &1.symbol)
-    eligible_symbols = MapSet.new(eligible, & &1.symbol)
 
     searched =
-      eligible
-      |> option_groups()
-      |> Enum.reduce_while([], fn {base, seed}, searched ->
+      context.markets
+      |> Enum.filter(&active_option?/1)
+      |> option_groups(eligible)
+      |> Enum.reduce_while([], fn group, searched ->
         verdict =
-          case selection_rows(source, seed.symbol, base, selection, contract_case, context) do
-            {:ok, rows} -> option_group_verdict(rows, listed_symbols, eligible_symbols, requirement)
-            {:error, reason} -> {:unusable, "#{source} failed: #{reason}"}
+          case selection_rows(source, group.seed.symbol, group.base, selection, contract_case, context) do
+            {:ok, rows} -> option_group_verdict(rows, group.listed, group.eligible, requirement)
+            {:error, reason} -> {:source_error, reason}
           end
 
         case verdict do
           {:selected, row} -> {:halt, {:selected, row}}
-          other -> {:cont, [{base, other} | searched]}
+          other -> {:cont, [{group.base, other} | searched]}
         end
       end)
 
@@ -336,60 +335,95 @@ defmodule Bourse.Test.RestReadContractScenario do
         %{symbol: row.symbol, requirement: requirement, source: source, evidence: option_evidence(row)}
 
       searched ->
-        flunk(option_absence_message(contract_case, context, requirement, source, Enum.reverse(searched), cutoff))
+        flunk(
+          option_absence_message(contract_case["id"], context.venue, requirement, source, Enum.reverse(searched), cutoff)
+        )
     end
   end
 
   @doc """
   Judges one underlying's selection-source rows for an option requirement.
 
-  Rows must identify listed instruments before their liquidity means anything:
-  a group is `:unusable` when it answered no rows, or when fewer than half of
-  its rows name an active listed option market. Otherwise the eligible row
-  (listed, not expiring within the hour) that meets the requirement with the
-  highest 24-hour volume is `:selected`, and a group with none is `:absent`.
+  Every row is classified by the read's criterion against that underlying's
+  own listings. A row that meets the requirement and names an eligible listing
+  (active, not expiring within the hour) is a candidate. A row that meets it
+  but names no listing of the underlying, or carries no identity, is
+  unresolved. A row that does not meet it is irrelevant, whatever its
+  identity, and so is a qualifying row for a listing excluded by the cutoff.
+
+    * `{:selected, row}` — the candidate with the highest 24-hour volume,
+      regardless of any other row
+    * `{:unresolved, count}` — no candidate, `count` qualifying rows of unknown identity
+    * `:no_rows` — the source answered successfully with nothing
+    * `{:absent, count}` — `count` rows, all identified or irrelevant, none a candidate
   """
-  @spec option_group_verdict([struct()], MapSet.t(), MapSet.t(), String.t()) ::
-          {:selected, struct()} | {:absent, String.t()} | {:unusable, String.t()}
-  def option_group_verdict([], _listed, _eligible, _requirement), do: {:unusable, "answered no rows"}
+  @spec option_group_verdict([term()], MapSet.t(), MapSet.t(), String.t()) ::
+          {:selected, struct()} | {:unresolved, pos_integer()} | :no_rows | {:absent, pos_integer()}
+  def option_group_verdict([], _listed, _eligible, _requirement), do: :no_rows
 
   def option_group_verdict(rows, listed, eligible, requirement) do
-    reconciled = Enum.count(rows, &(is_struct(&1, Bourse.OptionData) and MapSet.member?(listed, &1.symbol)))
+    classified = Enum.group_by(rows, &classify_option_row(&1, listed, eligible, requirement))
 
-    if reconciled * 2 < length(rows) do
-      {:unusable, "only #{reconciled} of #{length(rows)} rows name a listed option market"}
-    else
-      rows
-      |> Enum.filter(&(MapSet.member?(eligible, &1.symbol) and option_meets?(&1, requirement)))
-      |> Enum.sort_by(&{-option_volume(&1), &1.symbol})
-      |> case do
-        [row | _] -> {:selected, row}
-        [] -> {:absent, "#{length(rows)} rows, none #{requirement}"}
-      end
+    case {Map.get(classified, :candidate, []), Map.get(classified, :unresolved, [])} do
+      {[_ | _] = candidates, _unresolved} -> {:selected, Enum.min_by(candidates, &{-option_volume(&1), &1.symbol})}
+      {[], [_ | _] = unresolved} -> {:unresolved, length(unresolved)}
+      {[], []} -> {:absent, length(rows)}
     end
   end
 
-  defp option_absence_message(contract_case, context, requirement, source, searched, cutoff) do
-    summary = Enum.map_join(searched, "; ", fn {base, {_verdict, detail}} -> "#{base}: #{detail}" end)
-    unusable = for {base, {:unusable, _}} <- searched, do: base
+  defp classify_option_row(%Bourse.OptionData{} = row, listed, eligible, requirement) do
+    cond do
+      not option_meets?(row, requirement) -> :irrelevant
+      MapSet.member?(eligible, row.symbol) -> :candidate
+      MapSet.member?(listed, row.symbol) -> :irrelevant
+      true -> :unresolved
+    end
+  end
+
+  defp classify_option_row(_row, _listed, _eligible, _requirement), do: :unresolved
+
+  @doc """
+  Renders the failure for a selection that found no candidate.
+
+  It states market-state absence only when every searched underlying answered
+  `{:absent, _}`. Otherwise absence is not established.
+  """
+  @spec option_absence_message(String.t(), String.t(), String.t(), String.t(), [{String.t(), term()}], integer()) ::
+          String.t()
+  def option_absence_message(case_id, venue, requirement, source, searched, cutoff) do
+    summary = Enum.map_join(searched, "; ", fn {base, verdict} -> "#{base}: #{group_detail(verdict, requirement)}" end)
     scope = "underlyings searched via #{source} (options expiring before #{iso8601(cutoff)} excluded): #{summary}"
 
-    if unusable == [] do
-      "#{contract_case["id"]}: no #{requirement} option instrument on #{context.venue} now — none has " <>
+    if Enum.all?(searched, &match?({_base, {:absent, _}}, &1)) do
+      "#{case_id}: no #{requirement} option instrument on #{venue} now — none has " <>
         "#{requirement_meaning(requirement)}. #{scope}. This is the venue's current market state, not a " <>
         "broken read: the branch was not called. Re-run when the venue's options are #{requirement} again."
     else
-      "#{contract_case["id"]}: option selection source unusable on #{context.venue} for " <>
-        "#{Enum.join(unusable, ", ")}, and no usable underlying has a #{requirement} option. #{scope}. " <>
-        "This is a broken selection source, not market state: the branch was not called."
+      "#{case_id}: absence of a #{requirement} option instrument on #{venue} not " <>
+        "established — no identified candidate was found, and not every underlying answered with identified " <>
+        "rows. #{scope}. Market state unverified: the branch was not called."
     end
   end
 
-  defp option_groups(eligible) do
+  defp group_detail({:absent, count}, requirement), do: "#{count} rows, none #{requirement}"
+  defp group_detail({:unresolved, count}, requirement), do: "#{count} #{requirement} rows of unknown identity"
+  defp group_detail(:no_rows, _requirement), do: "source returned no rows; market state unverified"
+  defp group_detail({:source_error, reason}, _requirement), do: "source error #{reason}"
+
+  defp option_groups(listed, eligible) do
+    listed_by_base = Enum.group_by(listed, & &1.base)
+
     eligible
     |> Enum.group_by(& &1.base)
-    |> Enum.map(fn {base, [seed | _]} -> {base, seed} end)
-    |> Enum.sort_by(fn {base, _seed} -> {base != "BTC", base} end)
+    |> Enum.map(fn {base, [seed | _] = markets} ->
+      %{
+        base: base,
+        seed: seed,
+        listed: MapSet.new(Map.get(listed_by_base, base, []), & &1.symbol),
+        eligible: MapSet.new(markets, & &1.symbol)
+      }
+    end)
+    |> Enum.sort_by(&{&1.base != "BTC", &1.base})
   end
 
   defp listed_option!(contract_case, context, eligible, cutoff) do
