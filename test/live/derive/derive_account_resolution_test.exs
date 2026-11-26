@@ -36,8 +36,14 @@ defmodule Bourse.Live.Derive.AccountResolutionTest do
         assert {:ok, %{body: %{"result" => %{"risk_universe_id" => universe}}}} =
                  Bourse.Derive.public_post_get_instrument(public, %{"instrument_name" => "BTC-PERP"})
 
-        assert {:ok, %{body: %{"result" => %{"risk_universe_id" => ^universe, "subaccount_id" => ^id}}}} =
+        assert {:ok, %{body: %{"result" => %{"risk_universe_id" => ^universe, "subaccount_id" => ^id} = subaccount}}} =
                  Bourse.Derive.private_post_get_subaccount(exchange, %{"subaccount_id" => id})
+
+        # v3 changed `currency` from one string to the list of collateral
+        # currencies the subaccount accepts (OpenAPI `Subaccount.currency: string[]`).
+        assert [_ | _] = currencies = subaccount["currency"]
+        assert Enum.all?(currencies, &is_binary/1)
+        assert "USDC" in currencies
 
       {:error, {:no_subaccount, ^wallet}} = verdict ->
         assert DeriveAccount.verdict() == verdict

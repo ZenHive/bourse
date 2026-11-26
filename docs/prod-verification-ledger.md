@@ -253,53 +253,43 @@ test code. Edit the fence when adding a ledgered case.
 - Expected evidence: the unified rows are exactly the marked raw rows (same `trade_id`s
   in order), each with `info["liquidation"]` set.
 
-### derive — keyless order preparation pins v2 identities the v3 migration replaces (task 148, filed 2026-09-29; superseded by task 709, 2026-10-01)
+### derive — keyless order preparation: v3 testnet verified, mainnet open (task 148, filed 2026-09-29; superseded by task 709, 2026-10-01)
 
-- **Status 2026-11-25 (task 709): migrated to v3, still unverified.** `PreparedOrder` now pins
-  chainId 1 / 11155111, Matching `0xeB8d770ec18DB98Db922E9D83260A585b9F0DeAD` and the single Trade
-  module `0xB8D20c2B7a1Ad2EE33Bc50eF10876eD3035b5e7b`. Its domain separators equal the published
+- **Status 2026-11-26: testnet closed, mainnet unverified.** `PreparedOrder` pins chainId
+  1 / 11155111, Matching `0xeB8d770ec18DB98Db922E9D83260A585b9F0DeAD` and the single Trade
+  module `0xB8D20c2B7a1Ad2EE33Bc50eF10876eD3035b5e7b`; its domain separators equal the published
   `0xda616dfa…fe19` / `0x24d674cd…3e85`, and its digests match ethers 6.13.4 byte-for-byte.
-  Part 1 of the question below is therefore answered by the published constants. Part 2 (venue
-  acceptance plus rejection of a changed term) is **blocked**: the testnet owner wallet has no v3
-  subaccount, so there is no account to sign for. It closes with the exact call below once the
-  operator's L1 deposit creates one. Mainnet stays unverified.
 - Authored slices: none — `Bourse.Signing.Derive.PreparedOrder` is a signing boundary,
   not an authored field map. It ships the chain id and the Matching and Trade module
   addresses for both Derive environments.
-- Blocked by: **do not close this with a v2 order.** Derive is replacing API v2 with v3
-  (task 709, premise verified 2026-10-01 from https://docs.derive.xyz/migrating/breaking-changes.md),
-  and v3 changes the exact identities this module pins: chain ids 1 / 11155111 instead of
-  957 / 901, a domain separator recomputed per chain instead of v2's two fixed constants,
-  and no separate "Derive Wallet" — every wallet field becomes the owner EOA or multisig.
-  A `POST /order` accepted on `api-demo.lyra.finance` would therefore prove a host, a
-  digest and a module address that all three cease to exist. The gap closes when 709
-  migrates this boundary to v3 and pins a live v3 order, not before.
-- Reconciled 2026-11-25: task 709's criterion 11 names `PreparedOrder`, and 709 migrated it to
-  the v3 identities above, so it no longer emits v2 digests against v3 hosts.
-- The open question, in two parts:
-  1. **Is the Trade module address right?** It enters the digest as the `module` field,
-     and the only thing grading it is the stored vector
-     `0x40b6c7a8cee212dbf762eaaa850beaf9d4f8b52e4931db666cc48269eeba1896`, which came
-     from the same provider SDK that supplied the address — so a wrong address would be
-     baked into the oracle too and the test would stay green. The chain ids and Matching
-     addresses do **not** share this gap: hashed as an EIP-712 domain they reproduce
-     `Bourse.Signing.Derive`'s independently pinned `@domain_separator_prod` /
-     `@domain_separator_sandbox`, and `prepared_order_test.exs` asserts that.
-  2. **Does the venue accept what this prepares?** `prepare/2` returns typed data, wire
-     terms and a digest. Nothing here proves that a signature over that digest, sent
-     with that body, is accepted — the encoding was compared against
-     `derivexyz/v2-action-signing-python` and ethers `TypedDataEncoder`, which are
-     compatibility evidence, never venue semantics.
-- Exact call: `mix test.json --quiet --include dangerous test/live/journeys/market_maker/derive_test.exs`,
-  case "a customer-signed PreparedOrder". It prepares against the resolved testnet subaccount,
-  signs the digest with `DERIVE_TESTNET_API_SECRET`, and POSTs the body to `private/order`
-  twice: once with `limit_price` altered (expects `14014`), once as signed (expects acceptance).
-  Today it fails in setup with the operator step.
-- Expected evidence: an accepted v3 testnet `POST private/order` whose response echoes the
-  submitted `limit_price` / `amount` / `max_fee`, plus one rejection whose code names a
-  term we changed on purpose — success alone cannot tell a correct digest from an ignored
-  one. Mainnet stays unverified until v3 mainnet is live; never claimed from testnet
-  evidence.
+- Testnet evidence (2026-11-26, `https://testnet.api.derive.xyz/v3`, subaccount resolved by
+  `test/test_helper.exs`): `test/live/derive/prepared_order_live_test.exs` prepares a BTC-PERP
+  GTC buy (`amount 0.1`, `max_fee 200`, limit on tick ten ticks above the ticker's `minp`)
+  through `PreparedOrder.prepare(params, :testnet)`, signs the digest with the owner key and
+  POSTs the body to `private/order`.
+  - **Accepted:** `order_status: "open"`, echoing the submitted `limit_price` / `amount` /
+    `max_fee` / `nonce` / `signer`; cancelled in `on_exit`.
+  - **Rejected:** the same signature over `limit_price` + one tick, and separately over
+    `max_fee "201"`, answers `14014` "Signature invalid for message or transaction"
+    (https://docs.derive.xyz/reference/error-codes.md), with `data.expected_signer` the
+    owner, a different `data.recovered_signer`, `data.module`
+    `0xb8d20c2b7a1ad2ee33bc50ef10876ed3035b5e7b` and `data.domain_separator`
+    `0x24d674cd5f2b9d564691c51e9d88f649b99246a2244dd74ce27b96578d773e85`.
+- Part 1 (is the Trade module address right?) is **now graded by the venue on testnet**. The
+  `private/order` body carries no `module`, chain id or verifying contract, so the venue
+  rebuilds the digest from its own deployment
+  (https://docs.derive.xyz/authentication/action-signing.md); a signature over a digest
+  containing our module recovers to the owner only if the module matches, and the rejection
+  echoes the venue's module, equal to ours. That grading is no longer the provider SDK's
+  stored vector alone.
+- Still open — mainnet: chainId 1 and the mainnet domain separator `0xda616dfa…fe19` are not
+  exercised by any venue-accepted order. The open question is unchanged: does
+  `api.derive.xyz/v3` accept what `prepare(params, :mainnet)` returns? Never claimed from
+  testnet evidence.
+- Exact call (mainnet): the same flow as `prepared_order_live_test.exs` with `:mainnet`
+  against `https://api.derive.xyz/v3`, which needs a funded mainnet subaccount.
+- Expected evidence: an accepted mainnet `POST private/order` echoing the signed terms, plus
+  one `14014` for a term altered after signing.
 
 ### derive — populated v3 transfer and withdrawal history rows (task 709, filed 2026-11-25)
 - Authored slices: `derive:normalization.envelopes.transfer.fetchTransfers`, `derive:normalization.envelopes.transaction.fetchWithdrawals`, `derive:normalization.field_maps.transfer`, `derive:normalization.field_maps.transaction`.

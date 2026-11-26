@@ -137,7 +137,7 @@ unverified: the testnet wallet owns no v3 subaccount.**
 | fetchTicker / fetchGreeks | long-name ticker | slim ticker (`a/A/b/B/I/M/t/f`, `stats{h,l,c,v,…}`, `option_pricing{d,g,v,t,r,i,ai,bi,m}`) | DIVERGE. Live: BTC-PERP bid/ask/high/low parse, and `fetch_greeks` on a live testnet option returned delta, gamma, theta, vega and rho. The slim ticker carries no instrument field, which broke the option-surface identity check in round 1. `markets.greeks_identity` now names `public/get_instrument`: `OptionSurface` queries it with the requested market id and still rejects a mismatch. `greeks_conventions` native fields are `option_pricing.d/g/v/t/r`. |
 | Currency precision | from decimals | `get_all_currencies` gives `spot[{erc20{decimals}}]` | Mapped `null`: the nested-list index reach needs a shared parser change, which is out of this venue's scope. |
 | Transaction/transfer status | `status` string | `batch_status` PascalCase (`Batching … Settled`, `*Error`), `operation_id` | DIVERGE. Mapped to `pending` / `ok` / `failed`. Envelopes are `result.deposits`, `result.withdrawals`, `result.transfers` (OpenAPI `*HistoryResult`; round 1 read `result.events` for all three). A live row is unverified (no account). |
-| `get_subaccount.currency` | string | `string[]` | DIVERGE (OpenAPI). A live row is unverified. |
+| `get_subaccount.currency` | string | `string[]` | DIVERGE (OpenAPI). Confirmed live on 2026-11-26, see C-T709p. |
 | `private/set_cancel_on_disconnect` | REST | WS-only (`websocket.asyncapi.json` `privateSetCancelOnDisconnect`) | DIVERGE. REST answers 404 even though trading/cancel-on-disconnect.md shows a cURL example. Not authored as a REST raw. |
 | Session keys | `register_session_key`, … | `private/set_session_key` (owner-signed), `edit_session_key`, `session_keys` | DIVERGE. The removed v2 methods are not authored. |
 | WS private channels (C-T702 gap) | unresolved | `{subaccount_id}.orders`, `{subaccount_id}.trades` | Templates authored. `Bourse.WS.watch_my_trades/2` builds `{subaccount_id}.trades` on the private section. Inbound, authored `channel_pattern` dispatch entries send `^[0-9]+\.trades$` to `:watch_my_trades` and `^[0-9]+\.orders$` to `:watch_orders`, so public `trades.{instrument}` stays `:watch_trades`. The unauthenticated subscribe is rejected live with `13000` "Subscription to a private channel failed". Authenticated delivery is **unverified** (no account). |
@@ -151,4 +151,35 @@ Live 2026-11-25: BTC-PERP `f` parsed to `1.25e-5`, with mark and index from the 
 
 <!-- carve-evidence-status
 {"carve_id":"C-T709","date":"2026-11-25","semantic_source":{"kind":"provider_owned","reference":"Derive v3 OpenAPI, AsyncAPI, breaking-changes, action-signing, session-login and error-codes pages pinned in priv/venues/derive/authority/manifest.json"},"observed_evidence":{"kind":"live_venue","reference":"2026-11-25 testnet.api.derive.xyz/v3 public REST-read contract cases 12/12; ticker_slim.ETH-PERP.100 and trades.ETH-PERP frames on /v3/ws; option-surface call/put Greeks join; 14026 and 13000 rejections"},"compatibility_reference":null,"resolved_tier":2,"known_gap_reason":"Owner wallet has no v3 testnet subaccount: private reads, order accept/reject, MMP, cancel-on-disconnect and private channel delivery unproven pending the operator's L1 deposit"}
+-->
+
+### 2026-11-26 — v3 private surface on a funded testnet account (Task 709, supersedes the C-T709 known gap)
+
+The operator funded the owner EOA on 2026-11-26 through a Sepolia `ACTION_MANAGER`
+`depositToNewSubaccount` call with manager 1. Subaccount 88405 is SM in risk universe 1, the
+universe of BTC-PERP and the BTC/ETH options. The same deposit left an empty universe-0
+fallback, 88404. A second universe-1 subaccount, 88406, was created with a signed
+`private/transfer_spot` carrying `new_subaccount_manager: 1`. The private C-T709 slots
+above are now observed live on `testnet.api.derive.xyz/v3`.
+
+**C-T709p — CONFIRMED live: session headers, order lifecycle, the four order reads, MMP,
+cancel-on-disconnect, private channels, balance and `get_subaccount`. DIVERGE from the provider
+docs on how cancelled and maker-filled mmp orders read back.**
+
+| Slot | Observation (2026-11-26) | Evidence |
+|---|---|---|
+| Session headers | `X-DeriveWallet/Timestamp/Signature` signed by the owner key is accepted on every private call | every private case of `mix bourse.verify_rest_read_contracts --venue derive` (24/24) |
+| Order lifecycle | A signed `private/order` rests, a cancel releases it, and an IOC fills. Prices must sit on tick and inside the ticker band `minp`/`maxp` (`11013` otherwise) | `test/live/journeys/trader/derive_test.exs`, `test/live/journeys/market_maker/derive_test.exs` |
+| fetchOpenOrders / fetchOrders / fetchClosedOrders / fetchCanceledOrders | each returns an order placed in the same test. `get_order_history` lags by more than 5 s, so the journeys poll it for up to 30 s | market-maker journey, four-reads test |
+| `get_subaccount.currency` | CONFIRMED `string[]`: 88405 answered 18 entries (`["AUSD", "BTC", …, "WSTETH"]`), `margin_type "SM"`, `risk_universe_id 1` | live `private/get_subaccount` 2026-11-26 |
+| fetchBalance | `get_all_collaterals` (an owner-level read) returns collaterals for every subaccount; the parse reads the selected one (`subaccount_id` param, then option, then credential `uid`) or sums per currency | `test/bourse/unified/read_parse_financial_test.exs`, contract lane |
+| fetchMarkets | `get_all_instruments` pages, with 100 rows by default and at most 1000 (`-32602` above). Every page is walked: 4351 testnet markets, including 4317 options | `Bourse.Unified` derive instruments pagination; `load_markets` live |
+| MMP | `set_mmp_config` / `get_mmp_config` / `reset_mmp` round-trip. With `mmp_frozen_time 0` a freeze holds until reset (`mmp_unfreeze_time` 9223372036854775807). **Only a MAKER fill of an mmp order counts**: an mmp IOC taker fill over the limit left the subaccount unfrozen. A BTC option maker fill trips the BTC MMP | market-maker journey MMP test |
+| Cancel-on-disconnect | WS `private/set_cancel_on_disconnect`; closing the socket removes the resting mmp order from open orders | market-maker journey COD test |
+| WS private channels (C-T702 gap) | CONFIRMED: an authenticated `public/login` then `{subaccount_id}.orders` and `{subaccount_id}.trades` deliver frames for an owned order and its fill | market-maker journey feeds test |
+| Trade module / domain (PreparedOrder) | CONFIRMED: an order prepared by `PreparedOrder.prepare/2` and signed by the owner is accepted (`open`), then cancelled. The same signature over a changed `limit_price` or `max_fee` is rejected with `14014`, and the rejection names module `0xb8d2…5e7b` and domain separator `0x24d674cd…3e85`, which equal ours. The order body carries neither value, so the venue grades the Trade module | `test/live/derive/prepared_order_live_test.exs` |
+| Cancelled / maker-filled mmp orders | **DIVERGE from the docs.** After a COD cancel, a plain cancel or a maker fill, `get_order` answers `11006` "Does not exist" and no `get_order_history` row exists, although the provider docs say terminal orders stay queryable. Orders without mmp in the same flows stay readable | BUGS.md 2026-11-26 derive mmp entry; the COD test pins `11006` |
+
+<!-- carve-evidence-status
+{"carve_id":"C-T709p","date":"2026-11-26","semantic_source":{"kind":"provider_owned","reference":"Derive v3 OpenAPI and AsyncAPI (private/order, get_open_orders, get_order_history, get_subaccount, get_all_collaterals, set_mmp_config, reset_mmp, set_cancel_on_disconnect, {subaccount_id}.orders/.trades), trading/market-maker-protection.md, trading/cancel-on-disconnect.md, pinned in priv/venues/derive/authority/manifest.json"},"observed_evidence":{"kind":"live_venue","reference":"2026-11-26 testnet.api.derive.xyz/v3 subaccount 88405 (counterparty 88406): derive REST-read contract lane 24/24; market-maker and trader journeys plus test/live/derive 46/46; live get_subaccount currency string[]"},"compatibility_reference":null,"resolved_tier":1}
 -->

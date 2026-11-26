@@ -3,8 +3,8 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
   A market maker's day on the Derive v3 testnet, against an order or fill each
   test creates and cleans up itself: the four unified order reads, both private
   feeds through a real fill, a market-maker-protection freeze and its reset,
-  cancel-on-disconnect, and a customer-signed `PreparedOrder` — accepted as
-  signed, refused once a signed term is altered.
+  and cancel-on-disconnect. The customer-signed `PreparedOrder` case lives in
+  `test/live/derive/prepared_order_live_test.exs`.
 
   Every mutation is undone and checked: a fill is traded back to the position
   recorded before it, and the MMP config and the cancel-on-disconnect account
@@ -29,7 +29,6 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
   https://docs.derive.xyz/subscriptions.asyncapi.json,
   https://docs.derive.xyz/trading/market-maker-protection.md,
   https://docs.derive.xyz/trading/cancel-on-disconnect.md,
-  https://docs.derive.xyz/authentication/action-signing.md,
   https://docs.derive.xyz/reference/error-codes.md.
   """
   use Bourse.Test.Journeys.Case, async: false
@@ -37,9 +36,6 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
   import Bourse.IntegrationHelper, only: [derive_subaccount_id!: 0]
 
   alias Bourse.Order
-  alias Bourse.Signing.Crypto
-  alias Bourse.Signing.Derive, as: DeriveSigning
-  alias Bourse.Signing.Derive.PreparedOrder
   alias Bourse.Test.DeriveMarketMaker, as: MM
   alias Bourse.Unified.RequestShape.Derive, as: DeriveRequestShape
   alias Bourse.WS
@@ -315,72 +311,11 @@ defmodule Bourse.Journeys.MarketMaker.DeriveTest do
     end
   end
 
-  describe "a customer-signed PreparedOrder" do
-    test "the signed terms are accepted; the same signature over an altered price is refused" do
-      exchange = derive_exchange!()
-      prepared = prepare!(exchange)
-      signature = sign_digest(prepared.digest, exchange.credentials.secret)
-
-      # Provider error table: 14014 invalid_signature, "Recovered signer does not
-      # match the expected signer". Not yet observed live on v3.
-      altered = Map.put(%{prepared.body | "limit_price" => "101"}, "signature", signature)
-      assert {:error, error} = Bourse.Derive.private_post_order(exchange, altered)
-      assert error.code == 14_014
-
-      body = Map.put(prepared.body, "signature", signature)
-
-      assert {:ok, %{body: %{"result" => %{"order" => %{"order_id" => placed_id} = order}}}} =
-               Bourse.Derive.private_post_order(exchange, body)
-
-      try do
-        assert decimal_equal?(order["limit_price"], prepared.body["limit_price"])
-        assert to_string(order["nonce"]) == prepared.body["nonce"]
-      after
-        release_order!(exchange, placed_id, @symbol)
-      end
-    end
-  end
-
   defp place!(exchange, request) do
     assert {:ok, %{body: %{"result" => %{"order" => %{"order_id" => id}}}}} =
              Bourse.Derive.private_post_order(exchange, request)
 
     id
-  end
-
-  defp prepare!(exchange) do
-    {:ok, %{body: %{"result" => instrument}}} =
-      Bourse.Derive.public_post_get_instrument(exchange, %{"instrument_name" => @instrument})
-
-    now_ms = System.system_time(:millisecond)
-
-    {:ok, prepared} =
-      PreparedOrder.prepare(
-        %{
-          "subaccount_id" => derive_subaccount_id!(),
-          "nonce" => now_ms * 1_000_000 + :rand.uniform(899_999) + 100_000,
-          "signature_expiry_sec" => div(now_ms, 1_000) + 3_600,
-          "owner" => exchange.credentials.api_key,
-          "signer" => DeriveSigning.signer_address(exchange.credentials.secret),
-          "base_asset_address" => instrument["base_asset_address"],
-          "base_asset_sub_id" => instrument["base_asset_sub_id"],
-          "instrument_name" => @instrument,
-          "direction" => "buy",
-          "amount" => "0.1",
-          "limit_price" => "100",
-          "max_fee" => @max_fee
-        },
-        :testnet
-      )
-
-    prepared
-  end
-
-  defp sign_digest("0x" <> hex, secret) do
-    hex
-    |> Base.decode16!(case: :mixed)
-    |> Crypto.sign_hash(Crypto.decode_private_key(secret))
-    |> Crypto.packed_signature()
   end
 
   defp set_cod!(ws, exchange, enabled) do
