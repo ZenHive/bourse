@@ -235,6 +235,8 @@ defmodule Bourse.Test.RestReadContractScenario do
   defp option_value!(%{"strategy" => "current_time_ms"}, _contract_case, _context), do: System.system_time(:millisecond)
   defp option_value!(%{"strategy" => "literal", "value" => value}, _contract_case, _context), do: value
 
+  defp option_value!(%{"strategy" => "selection_base"}, %{"selection_base" => base}, _context), do: base
+
   # Per-credential values the venue publishes about the live account (e.g.
   # lighter's l1_address) resolve through the same live resource machinery
   # the argument strategies use — never through an operator-specific literal.
@@ -296,92 +298,143 @@ defmodule Bourse.Test.RestReadContractScenario do
   defp with_selected_option(contract_case, _context), do: contract_case
 
   defp select_option!("listed", contract_case, context) do
-    market = listed_option!(contract_case, context)
+    cutoff = listed_cutoff()
+    market = listed_option!(contract_case, context, listed_options(context, cutoff), cutoff)
     %{symbol: market.symbol, requirement: "listed", source: "load_markets", evidence: "an active listed option"}
   end
 
+  # The source answers one underlying per call, so venue-wide absence is only
+  # established after every listed underlying was searched. A source whose rows
+  # do not name listed instruments cannot speak for market state at all.
   defp select_option!(requirement, contract_case, context) do
-    listed = listed_options(context)
-    seed = listed_option!(contract_case, context)
+    cutoff = listed_cutoff()
+    eligible = listed_options(context, cutoff)
+    listed_option!(contract_case, context, eligible, cutoff)
     selection = context.venue_contract["option_selection"]
     source = selection["source_method"]
-    rows = selection_rows!(source, seed.symbol, selection, contract_case, context)
-    listed_symbols = MapSet.new(listed, & &1.symbol)
+    listed_symbols = context.markets |> Enum.filter(&active_option?/1) |> MapSet.new(& &1.symbol)
+    eligible_symbols = MapSet.new(eligible, & &1.symbol)
 
-    candidates =
-      rows
-      |> Enum.filter(&(MapSet.member?(listed_symbols, &1.symbol) and option_meets?(&1, requirement)))
-      |> Enum.sort_by(&{-option_volume(&1), &1.symbol})
+    searched =
+      eligible
+      |> option_groups()
+      |> Enum.reduce_while([], fn {base, seed}, searched ->
+        verdict =
+          case selection_rows(source, seed.symbol, base, selection, contract_case, context) do
+            {:ok, rows} -> option_group_verdict(rows, listed_symbols, eligible_symbols, requirement)
+            {:error, reason} -> {:unusable, "#{source} failed: #{reason}"}
+          end
 
-    case candidates do
-      [row | _] ->
+        case verdict do
+          {:selected, row} -> {:halt, {:selected, row}}
+          other -> {:cont, [{base, other} | searched]}
+        end
+      end)
+
+    case searched do
+      {:selected, row} ->
         %{symbol: row.symbol, requirement: requirement, source: source, evidence: option_evidence(row)}
 
-      [] ->
-        flunk(
-          "#{contract_case["id"]}: no #{requirement} option instrument on #{context.venue} now. " <>
-            "#{source} answered #{length(rows)} option rows for #{length(listed)} listed options and none " <>
-            "has #{requirement_meaning(requirement)}. This is the venue's current market state, not a broken " <>
-            "read: the branch was not called. Re-run when the venue's options are #{requirement} again."
-        )
+      searched ->
+        flunk(option_absence_message(contract_case, context, requirement, source, Enum.reverse(searched), cutoff))
     end
   end
 
-  defp listed_option!(contract_case, context) do
-    case listed_options(context) do
+  @doc """
+  Judges one underlying's selection-source rows for an option requirement.
+
+  Rows must identify listed instruments before their liquidity means anything:
+  a group is `:unusable` when it answered no rows, or when fewer than half of
+  its rows name an active listed option market. Otherwise the eligible row
+  (listed, not expiring within the hour) that meets the requirement with the
+  highest 24-hour volume is `:selected`, and a group with none is `:absent`.
+  """
+  @spec option_group_verdict([struct()], MapSet.t(), MapSet.t(), String.t()) ::
+          {:selected, struct()} | {:absent, String.t()} | {:unusable, String.t()}
+  def option_group_verdict([], _listed, _eligible, _requirement), do: {:unusable, "answered no rows"}
+
+  def option_group_verdict(rows, listed, eligible, requirement) do
+    reconciled = Enum.count(rows, &(is_struct(&1, Bourse.OptionData) and MapSet.member?(listed, &1.symbol)))
+
+    if reconciled * 2 < length(rows) do
+      {:unusable, "only #{reconciled} of #{length(rows)} rows name a listed option market"}
+    else
+      rows
+      |> Enum.filter(&(MapSet.member?(eligible, &1.symbol) and option_meets?(&1, requirement)))
+      |> Enum.sort_by(&{-option_volume(&1), &1.symbol})
+      |> case do
+        [row | _] -> {:selected, row}
+        [] -> {:absent, "#{length(rows)} rows, none #{requirement}"}
+      end
+    end
+  end
+
+  defp option_absence_message(contract_case, context, requirement, source, searched, cutoff) do
+    summary = Enum.map_join(searched, "; ", fn {base, {_verdict, detail}} -> "#{base}: #{detail}" end)
+    unusable = for {base, {:unusable, _}} <- searched, do: base
+    scope = "underlyings searched via #{source} (options expiring before #{iso8601(cutoff)} excluded): #{summary}"
+
+    if unusable == [] do
+      "#{contract_case["id"]}: no #{requirement} option instrument on #{context.venue} now — none has " <>
+        "#{requirement_meaning(requirement)}. #{scope}. This is the venue's current market state, not a " <>
+        "broken read: the branch was not called. Re-run when the venue's options are #{requirement} again."
+    else
+      "#{contract_case["id"]}: option selection source unusable on #{context.venue} for " <>
+        "#{Enum.join(unusable, ", ")}, and no usable underlying has a #{requirement} option. #{scope}. " <>
+        "This is a broken selection source, not market state: the branch was not called."
+    end
+  end
+
+  defp option_groups(eligible) do
+    eligible
+    |> Enum.group_by(& &1.base)
+    |> Enum.map(fn {base, [seed | _]} -> {base, seed} end)
+    |> Enum.sort_by(fn {base, _seed} -> {base != "BTC", base} end)
+  end
+
+  defp listed_option!(contract_case, context, eligible, cutoff) do
+    case eligible do
       [market | _] ->
         market
 
       [] ->
         flunk(
           "#{contract_case["id"]}: no listed option instrument on #{context.venue} now — load_markets " <>
-            "returned no active option expiring more than an hour from now, so the branch was not called"
+            "returned no active option expiring after #{iso8601(cutoff)}, so the branch was not called"
         )
     end
   end
 
-  defp listed_options(context) do
-    horizon = System.system_time(:millisecond) + @listed_horizon_ms
+  defp listed_cutoff, do: System.system_time(:millisecond) + @listed_horizon_ms
 
+  defp listed_options(context, cutoff) do
     context.markets
-    |> Enum.filter(&(market_kind?(&1, "option") and &1.active != false and outlives?(&1, horizon)))
+    |> Enum.filter(&(active_option?(&1) and outlives?(&1, cutoff)))
     |> Enum.sort_by(&(not String.starts_with?(&1.symbol || "", "BTC")))
   end
+
+  defp active_option?(market), do: market_kind?(market, "option") and market.active != false
+
+  defp iso8601(ms), do: ms |> DateTime.from_unix!(:millisecond) |> DateTime.to_iso8601()
 
   defp outlives?(%{expiry: expiry}, horizon) when is_integer(expiry), do: expiry > horizon
   defp outlives?(_market, _horizon), do: true
 
-  defp selection_rows!(source, seed, selection, contract_case, context) do
+  defp selection_rows(source, seed, base, selection, contract_case, context) do
     method = existing_method_atom!(source)
+    selection_case = Map.put(contract_case, "selection_base", base)
 
     options =
       Enum.map(selection["options"], fn option ->
-        {option_atom!(option["name"], contract_case), option_value!(option, contract_case, context)}
+        {option_atom!(option["name"], contract_case), option_value!(option, selection_case, context)}
       end)
 
     case apply(Bourse, method, [context.exchange, seed, options]) do
-      {:ok, rows} when is_map(rows) and not is_struct(rows) ->
-        selection_rows_shape!(Map.values(rows), source, contract_case)
-
-      {:ok, rows} when is_list(rows) ->
-        selection_rows_shape!(rows, source, contract_case)
-
-      {:error, reason} ->
-        flunk(
-          "#{contract_case["id"]}: option instrument selection could not read #{source} on #{context.venue}: " <>
-            "#{format_reason(reason)}. The selection source failed, so the branch was not called"
-        )
-
-      other ->
-        flunk("#{contract_case["id"]}: option selection source #{source} returned #{inspect(other)}")
+      {:ok, rows} when is_map(rows) and not is_struct(rows) -> {:ok, Map.values(rows)}
+      {:ok, rows} when is_list(rows) -> {:ok, rows}
+      {:error, reason} -> {:error, format_reason(reason)}
+      other -> {:error, "returned #{inspect(other, limit: 5)}"}
     end
-  end
-
-  defp selection_rows_shape!(rows, source, contract_case) do
-    assert Enum.all?(rows, &is_struct(&1, Bourse.OptionData)),
-           "#{contract_case["id"]}: option selection source #{source} must answer Bourse.OptionData rows"
-
-    rows
   end
 
   defp option_meets?(row, "quoted"), do: positive?(row.bid_price) and positive?(row.ask_price)

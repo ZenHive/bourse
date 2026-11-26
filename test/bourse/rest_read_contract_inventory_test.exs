@@ -159,6 +159,37 @@ defmodule Bourse.RestReadContractInventoryTest do
                    fn -> RestReadContractScenario.assert_live_value!(contract_case, []) end
     end
 
+    test "source rows whose symbols do not name listed options make the source unusable, not market state" do
+      listed = MapSet.new(["BTC/USD:BTC-270625-200000-P", "BTC/USD:BTC-261218-50000-P"])
+
+      cleared = [
+        %Bourse.OptionData{symbol: nil, base_volume: 22_906.84, bid_price: 2.3, ask_price: 2.4},
+        %Bourse.OptionData{symbol: nil, base_volume: 122.67, bid_price: 0.011, ask_price: 0.012}
+      ]
+
+      assert {:unusable, "only 0 of 2 rows name a listed option market"} =
+               RestReadContractScenario.option_group_verdict(cleared, listed, listed, "traded")
+
+      assert {:unusable, "answered no rows"} = RestReadContractScenario.option_group_verdict([], listed, listed, "traded")
+    end
+
+    test "a usable source selects the highest-volume eligible instrument or reports absence" do
+      listed = MapSet.new(["BTC/USD:BTC-270625-200000-P", "BTC/USD:BTC-261218-50000-P", "BTC/USD:BTC-261126-60000-C"])
+      eligible = MapSet.delete(listed, "BTC/USD:BTC-261126-60000-C")
+
+      rows = [
+        %Bourse.OptionData{symbol: "BTC/USD:BTC-261218-50000-P", base_volume: 122.67},
+        %Bourse.OptionData{symbol: "BTC/USD:BTC-270625-200000-P", base_volume: 22_906.84},
+        %Bourse.OptionData{symbol: "BTC/USD:BTC-261126-60000-C", base_volume: 99_999.0}
+      ]
+
+      assert {:selected, %Bourse.OptionData{symbol: "BTC/USD:BTC-270625-200000-P"}} =
+               RestReadContractScenario.option_group_verdict(rows, listed, eligible, "traded")
+
+      assert {:absent, "3 rows, none quoted"} =
+               RestReadContractScenario.option_group_verdict(rows, listed, eligible, "quoted")
+    end
+
     test "option symbols are recognised by their expiry, strike and right" do
       assert RestReadContracts.option_symbol?("BTC/USD:BTC-260925-100000-C")
       assert RestReadContracts.option_symbol?("ETH/USDC:USDC-250131-2500.5-P")

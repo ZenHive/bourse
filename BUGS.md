@@ -114,6 +114,47 @@ roadmap.
 
 ---
 
+## 2026-11-26 — okx `fetch_option_chain` refuses every USD-margined option family (`*-USD_UM`), so HYPE, SOL, XAU and the `_UM` halves of BTC and ETH have no chain
+
+**Status:** 🆕 measured live (task 711 review round, outside its scope). Not routed.
+
+**The call:** `Bourse.fetch_option_chain(okx, "HYPE/USD:USD-261126-57-C", instType: "OPTION")`
+on okx demo (`sandbox: true`). The same happens with `SOL/USD:USD-261127-70-C` and
+`XAU/USD:USD-261126-3600-C`.
+
+**Observed (2026-11-26):** `{:error, %Bourse.Error{type: :invalid_parameters, message:
+"unsupported OKX option underlying \"HYPE-USD_UM-261126-57-C\"; expected a bare base or BASE-USD family
+(registered settle is USD)"}}`. The error is raised client-side; no request is sent. `load_markets` lists these markets:
+okx demo carries USD-settled option groups for BTC (308), ETH (162), HYPE (188), SOL (124) and
+XAU (146).
+
+**Expected:** a chain for the instrument's own family, `instFamily=HYPE-USD_UM`, as okx
+publishes it in `public/instruments`. The REST-read lane is unaffected while BTC or ETH
+qualifies. If the lane ever has to reach these underlyings, it now reports them as an
+unusable selection source.
+
+---
+
+## 2026-11-26 — bybit option markets on DOGE, MNT and XRP keep the venue id as their unified symbol
+
+**Status:** 🆕 measured live (task 711 review round, outside its scope). Not routed.
+
+**The call:** `Bourse.load_markets(bybit)` on bybit testnet (public), then the option markets
+with base `DOGE`, `MNT` or `XRP`.
+
+**Observed (2026-11-26):** `symbol` is the raw instrument id, for example
+`"DOGE-25DEC26-0.045-P-USDT"`, `"MNT-25DEC26-0.32-P-USDT"` or `"XRP-25DEC26-0.95-P-USDT"`.
+`fetch_option_chain(bybit, …, category: "option", baseCoin: "DOGE")` rows carry the same raw ids.
+BTC, ETH and SOL options normalize, as in `"ETH/USDT:USDT-270625-4000-C"`. A few MNT and XRP
+rows normalize as well: 2 MNT and 16 XRP of the chain rows have a parsed `MNT`/`XRP` base.
+The strikes on these underlyings are fractional (`0.045`), which suggests the option-symbol
+pattern rejects a decimal strike. That cause is not confirmed.
+
+**Expected:** `"DOGE/USDT:USDT-261225-0.045-P"`, the same unified form as the integer-strike
+underlyings.
+
+---
+
 ## 2026-11-26 — okx demo answers the convert estimate-quote contract case with "Service temporarily unavailable", and no ledger row covers it
 
 **Status:** 🆕 measured live (task 711 run, outside its scope). Not routed.
@@ -605,15 +646,23 @@ well-formed, plausible, and wrong, with no error to notice. `fetch_canceled_orde
 > and `Bourse.Test.RestReadContracts.validate_option_selection!/2` rejects one, whether it
 > names a non-option symbol or a literal strike. Each option branch that reads one instrument
 > declares `option_instrument` (`listed` / `quoted` / `traded`). The scenario resolves it at run
-> time: `listed` from `load_markets` (no expiry within the hour), `quoted` and `traded` from the
-> venue's declared `option_selection` source (`fetchOptionChain` on okx, bybit, deribit),
-> filtered by best bid and ask above zero or by 24h volume above zero, highest volume first.
-> When no option meets the requirement, the case fails with "no <requirement> option instrument
-> on <venue> now … not a broken read: the branch was not called". An empty answer for a
-> selected instrument fails as a broken read and names the source's evidence. Live on
-> 2026-11-26, the option subsets passed: okx 6/6, deribit 4/4, bybit 7/7, derive 2/2.
-> `okx:fetchTrades:2:publicGetPublicOptionTrades` passed against the highest-volume BTC option
-> from okx demo `market/tickers`.
+> time. `listed` comes from `load_markets`, excluding options that expire within the hour.
+> `quoted` and `traded` come from the venue's declared `option_selection` source
+> (`fetchOptionChain` on okx, bybit and deribit). The scenario searches each listed underlying
+> in turn, BTC first, and takes the eligible option with the highest 24h volume, requiring
+> either best bid and ask above zero or 24h volume above zero.
+> An underlying whose source rows are empty, or fewer than half of which name a listed option
+> market, makes the source unusable. If nothing else qualifies, the case fails as a broken
+> selection source. When every underlying was searched cleanly and none qualifies, the case fails
+> as market state ("no <requirement> option instrument on <venue> now … not a broken read"), and
+> the message names the underlyings searched and the expiry cutoff. An empty answer for a
+> selected instrument fails as a broken read. None of these failures calls the branch.
+> Live on 2026-11-26 with `--no-retry`, the in-scope subset executed 17 of 17: okx 6, bybit 7,
+> deribit 4. `okx:fetchTrades:2:publicGetPublicOptionTrades` passed against the highest-volume
+> BTC option from okx demo `market/tickers`.
+> `okx:fetchOpenInterestHistory:1:publicGetRubikStatOptionOpenInterestVolume` executed and
+> confirmed its existing demo-unavailable ledger entry. Its populated open-interest semantics
+> remain unverified. Derive is out of scope; its two option cases were run but are not counted.
 
 `Bourse.Test.RestReadContractScenario.market_symbol!/2` prefers
 `venue_contract["symbols"][kind]`, then falls back to the first active market whose symbol
@@ -1637,7 +1686,8 @@ decision; nothing new to file.
   fenced in `docs/prod-verification-ledger.md` as demo-unavailable. The demo host serves the
   rubik stat empty, and production answers it with rows. The read takes only `ccy`
   (okx docs: `ccy` required, `period` optional), so no choice of instrument could populate it.
-  It runs with `option_instrument: "listed"` and stays in the denominator as a ledgered case.
+  It runs with `option_instrument: "listed"`, executes, and confirms that ledger entry. It
+  stays in the denominator, and its populated open-interest semantics remain unverified.
 - `binance:fetchOrderList` is out of task 711's scope and unchanged.
 
 ---

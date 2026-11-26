@@ -2949,8 +2949,7 @@
     "options": [
       {
         "name": "baseCoin",
-        "strategy": "literal",
-        "value": "BTC"
+        "strategy": "selection_base"
       },
       {
         "name": "category",

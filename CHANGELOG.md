@@ -63,12 +63,25 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   as one that drew a dead strike. The slot is gone, and the loader rejects one, whether it
   names a non-option symbol or a literal strike that would expire. Each option branch that
   reads one instrument declares `option_instrument` (`listed`, `quoted` or `traded`), and
-  the lane picks that instrument at run time from the venue's live data: `listed` from
-  `load_markets`, `quoted` and `traded` from the venue's `option_selection` source
-  (`fetchOptionChain` on okx, bybit and deribit), ranked by 24-hour volume. When no option
-  meets the requirement, the case fails as current market state without calling the branch.
-  An empty answer for an instrument the venue reported as traded or quoted fails as a broken
-  read. `okx:fetchTrades:2:publicGetPublicOptionTrades` passes live on okx demo again.
+  the lane picks that instrument at run time from the venue's live data. `listed` comes from
+  `load_markets`, excluding options that expire within the hour. `quoted` and `traded` come
+  from the venue's `option_selection` source (`fetchOptionChain` on okx, bybit and deribit).
+  The lane searches each listed underlying in turn, BTC first, and takes the eligible option
+  with the highest 24-hour volume. There are three distinct failures, and none of them calls
+  the branch:
+  - **Unusable source:** an underlying whose source rows are empty, or fewer than half of which
+    name a listed option market, makes the source unusable. If no other underlying yields an
+    instrument, the case fails as a broken selection source.
+  - **No such option:** when every underlying was searched cleanly and none has a qualifying
+    option, the case fails as current market state. The message names the underlyings
+    searched and the expiry cutoff.
+  - **Empty read:** an empty answer for an instrument the venue reported as traded or quoted
+    fails as a broken read.
+
+  `okx:fetchTrades:2:publicGetPublicOptionTrades` passes live on okx demo again.
+  `okx:fetchOpenInterestHistory:1:publicGetRubikStatOptionOpenInterestVolume` runs and confirms
+  its existing demo-unavailable ledger entry. Its populated open-interest semantics stay
+  unverified.
   Contract cases carry a `market_kind` tag (`--only market_kind:option`).
 - **WS order books check sequence continuity and resync on a gap.** `Bourse.WS.Adapter`
   checks every delta of an incremental book (binance, binanceusdm, okx, deribit, bybit)

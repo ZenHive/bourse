@@ -1471,11 +1471,11 @@
     "options": [
       {
         "name": "code",
-        "strategy": "venue_currency"
+        "strategy": "selection_base"
       },
       {
         "name": "currency",
-        "strategy": "venue_currency"
+        "strategy": "selection_base"
       }
     ]
   },
