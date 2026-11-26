@@ -1173,6 +1173,49 @@ defmodule Bourse.WS.AdapterTest do
       end
     end
 
+    # The caller's id names only the caller's request: two groups subscribed
+    # under one id must not take each other's replies when they are restored.
+    for venue <- ["bybit", "binance"] do
+      test "a late #{venue} acceptance is not taken for another group's when both used the caller's id" do
+        %{first: first, second: second, channel: channel, accept: accept, refuse: refuse, again: again} =
+          two_groups(unquote(venue))
+
+        sends_of = :atomics.new(2, [])
+
+        script = fn epoch, message ->
+          case {epoch, channel.(message)} do
+            {1, ch} when ch in [first, second] ->
+              [{0, accept}]
+
+            {2, ^first} ->
+              if :atomics.add_get(sends_of, 2, 1) == 1, do: [{200, accept}], else: [{0, again}]
+
+            {2, ^second} ->
+              if :atomics.add_get(sends_of, 1, 1) == 1, do: [{400, refuse}], else: [{0, accept}]
+
+            _ ->
+              []
+          end
+        end
+
+        adapter = scripted_adapter(unquote(venue), script)
+        assert :ok = Adapter.subscribe(adapter, [first], ack_timeout_ms: 100, request_id: 42)
+        assert :ok = Adapter.subscribe(adapter, [second], ack_timeout_ms: 1_000, request_id: 42)
+
+        ExUnit.CaptureLog.capture_log(fn ->
+          drop_connection(1)
+          sends = sent(2, [], 2_500)
+          assert Enum.count(sends, &(channel.(&1) == second)) == 2
+          ids = Enum.map(sends, &(&1["req_id"] || &1["id"]))
+          assert Enum.uniq(ids) == ids
+          refute Enum.any?(ids, &(&1 in [42, "42"]))
+          _ = :sys.get_state(adapter)
+        end)
+
+        assert :sys.get_state(adapter).restore_attempts == 0
+      end
+    end
+
     # Bybit names only the first already-subscribed topic of a refused request
     # and subscribes none of the others (api-testnet, 2026-11-25).
     for {mode, outcome} <- [{:both_active, "already subscribed"}, {:second_new, "accepted"}] do

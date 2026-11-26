@@ -805,8 +805,12 @@ defmodule Bourse.WS.Adapter do
   # then refuses the retry as already subscribed, naming the channels that are
   # active; the rest of the group is subscribed again on its own until each
   # channel is accepted or confirmed active, or the venue refuses it.
+  #
+  # A caller's `request_id:` names the caller's own request. Every restore
+  # attempt is a new request and gets a fresh id, or two groups subscribed under
+  # the same id would take each other's replies after a redial.
   defp restore_group(ws, channels, opts) do
-    case WS.subscribe(ws, channels, opts) do
+    case WS.subscribe(ws, channels, without_request_id(opts)) do
       {:error, {:subscription_rejected, frame}} = error ->
         case SubscribeAck.already_subscribed(ws.exchange.id, frame, channels) do
           [] -> error
@@ -818,6 +822,9 @@ defmodule Bourse.WS.Adapter do
         result
     end
   end
+
+  defp without_request_id(opts) when is_list(opts), do: Keyword.delete(opts, :request_id)
+  defp without_request_id(opts) when is_map(opts), do: Map.drop(opts, [:request_id, "request_id"])
 
   defp merge_subscriptions(existing, group) do
     if group in existing, do: existing, else: existing ++ [group]

@@ -26,17 +26,38 @@ defmodule Bourse.WS.SubscribeReturnShapeTest do
          owner: Keyword.fetch!(opts, :owner),
          reply: Keyword.get(opts, :reply, :ok),
          # A venue that never answers a correlated request: the call is held.
-         block: Keyword.get(opts, :block, false)
+         block: Keyword.get(opts, :block, false),
+         # A venue that answers a correlated request after `delay` ms with the
+         # reply built from the sent frame.
+         later: Keyword.get(opts, :later)
        }}
     end
 
     @impl true
-    def handle_call({:send_message, message}, _from, state) do
+    def handle_call({:send_message, message}, from, state) do
       send(state.owner, {:transport_sent, message})
-      if state.block, do: {:noreply, state}, else: {:reply, state.reply, state}
+
+      cond do
+        state.block ->
+          {:noreply, state}
+
+        state.later ->
+          {delay, build} = state.later
+          Process.send_after(self(), {:answer, from, build.(Jason.decode!(message))}, delay)
+          {:noreply, state}
+
+        true ->
+          {:reply, state.reply, state}
+      end
     end
 
     def handle_call(:get_state, _from, state), do: {:reply, :connected, state}
+
+    @impl true
+    def handle_info({:answer, from, reply}, state) do
+      GenServer.reply(from, {:ok, reply})
+      {:noreply, state}
+    end
   end
 
   test "subscribe return type is always :ok or {:error, _} — never {:ok, map}" do
@@ -175,6 +196,76 @@ defmodule Bourse.WS.SubscribeReturnShapeTest do
     assert {:error, :subscription_ack_timeout} = result
     assert elapsed_us < 1_000_000
     refute_received {:DOWN, _, _, _, _}
+  end
+
+  describe "a subscribe that does not wait for the acknowledgement" do
+    # The venues whose reply carries the frame's own `id`: zen_websocket answers
+    # the send with that reply instead of handing it to the connection's handler.
+    @refusals %{
+      "binance" => {["btcusdt@nope"], &__MODULE__.binance_refusal/1},
+      "okx" => {[%{"channel" => "reviewInvalid", "instId" => "BTC-USDT"}], &__MODULE__.okx_refusal/1}
+    }
+
+    for venue <- Map.keys(@refusals) do
+      test "#{venue} returns a closed connection's error instead of :ok" do
+        {channels, _refusal} = @refusals[unquote(venue)]
+        dead = spawn(fn -> :ok end)
+        ref = Process.monitor(dead)
+        assert_receive {:DOWN, ^ref, :process, ^dead, _}
+
+        ws = %WS{
+          exchange: Exchange.new!(unquote(venue)),
+          zen_client: %Client{server_pid: dead, state: :connected},
+          url: "wss://offline.test",
+          section: :public,
+          connect_opts: [handler: handler()]
+        }
+
+        assert {:error, {:not_connected, :process_down}} = WS.subscribe(ws, channels, ack_timeout_ms: 0)
+      end
+
+      test "#{venue} returns the transport's immediate refusal of the send" do
+        {channels, _refusal} = @refusals[unquote(venue)]
+        transport = start_supervised!({Transport, owner: self(), reply: {:error, {:not_connected, :disconnected}}})
+        ws = no_wait_ws(unquote(venue), transport)
+
+        assert {:error, {:not_connected, :disconnected}} = WS.subscribe(ws, channels, ack_timeout_ms: 0)
+      end
+
+      test "#{venue} delivers the venue's later refusal to the consumer as an ordinary frame" do
+        {channels, refusal} = @refusals[unquote(venue)]
+        transport = start_supervised!({Transport, owner: self(), later: {150, refusal}})
+        ws = no_wait_ws(unquote(venue), transport)
+
+        {elapsed_us, result} = :timer.tc(fn -> WS.subscribe(ws, channels, ack_timeout_ms: 0) end)
+
+        assert :ok = result
+        assert elapsed_us < 100_000
+        assert_receive {:transport_sent, payload}
+        sent_id = Jason.decode!(payload)["id"]
+        assert_receive {:handled, {:unmatched_response, %{"id" => ^sent_id} = frame}}, 1_000
+        assert frame == refusal.(Jason.decode!(payload))
+      end
+    end
+  end
+
+  def binance_refusal(%{"id" => id}), do: %{"id" => id, "error" => %{"code" => 2, "msg" => "Invalid request"}}
+
+  def okx_refusal(%{"id" => id}), do: %{"id" => id, "event" => "error", "code" => "60018", "msg" => "doesn't exist"}
+
+  defp no_wait_ws(venue, transport) do
+    %WS{
+      exchange: Exchange.new!(venue),
+      zen_client: %Client{server_pid: transport, state: :connected},
+      url: "wss://offline.test",
+      section: :public,
+      connect_opts: [handler: handler()]
+    }
+  end
+
+  defp handler do
+    test_pid = self()
+    fn message -> send(test_pid, {:handled, message}) end
   end
 
   test "a missing async acknowledgement returns a named timeout instead of success" do
