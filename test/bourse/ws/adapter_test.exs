@@ -124,8 +124,9 @@ defmodule Bourse.WS.AdapterTest do
   end
 
   # Starts an adapter whose every connection is a ScriptedTransport numbered
-  # from 1, and returns it with that connection's pid lookup.
-  defp scripted_adapter(venue, script) do
+  # from 1, and returns it with that connection's pid lookup. Restore attempts
+  # wait `restore_ack_timeout_ms` (300 here) for the scripted verdict.
+  defp scripted_adapter(venue, script, restore_ack_timeout_ms \\ 300) do
     test_pid = self()
     epochs = :atomics.new(1, [])
 
@@ -137,7 +138,13 @@ defmodule Bourse.WS.AdapterTest do
     end
 
     connect_fun = fn ex, section, opts -> WS.connect(ex, section, Keyword.put(opts, :connect_fun, zen_connect)) end
-    {:ok, adapter} = Adapter.start_link(Exchange.new!(venue), :public, connect_fun: connect_fun)
+
+    {:ok, adapter} =
+      Adapter.start_link(Exchange.new!(venue), :public,
+        connect_fun: connect_fun,
+        restore_ack_timeout_ms: restore_ack_timeout_ms
+      )
+
     on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter) end)
     _ = :sys.get_state(adapter)
     adapter
@@ -1068,7 +1075,10 @@ defmodule Bourse.WS.AdapterTest do
         end
 
         connect_fun = fn ex, section, opts -> WS.connect(ex, section, Keyword.put(opts, :connect_fun, zen_connect)) end
-        {:ok, adapter} = Adapter.start_link(Exchange.new!("bybit"), :public, connect_fun: connect_fun)
+
+        {:ok, adapter} =
+          Adapter.start_link(Exchange.new!("bybit"), :public, connect_fun: connect_fun, restore_ack_timeout_ms: 100)
+
         on_exit(fn -> if Process.alive?(adapter), do: GenServer.stop(adapter) end)
         _ = :sys.get_state(adapter)
 
@@ -1105,12 +1115,12 @@ defmodule Bourse.WS.AdapterTest do
 
         2, %{"method" => "subscribe", "subscription" => %{"type" => "trades"} = sub} ->
           if :atomics.add_get(book_sends, 2, 1) == 1,
-            do: [{200, hl_accept.(sub)}],
+            do: [{400, hl_accept.(sub)}],
             else: [{0, %{"channel" => "error", "data" => ~s(Already subscribed: {"type":"trades","coin":"BTC"})}}]
 
         2, %{"method" => "subscribe", "subscription" => %{"type" => "l2Book"} = sub} ->
           if :atomics.add_get(book_sends, 1, 1) == 1,
-            do: [{400, %{"channel" => "error", "data" => "Error parsing JSON into valid websocket request"}}],
+            do: [{250, %{"channel" => "error", "data" => "Error parsing JSON into valid websocket request"}}],
             else: [{0, hl_accept.(sub)}]
 
         _, _ ->
@@ -1148,10 +1158,10 @@ defmodule Bourse.WS.AdapterTest do
               [{0, accept}]
 
             {2, ^first} ->
-              if :atomics.add_get(second_sends, 2, 1) == 1, do: [{200, accept}], else: [{0, again}]
+              if :atomics.add_get(second_sends, 2, 1) == 1, do: [{400, accept}], else: [{0, again}]
 
             {2, ^second} ->
-              if :atomics.add_get(second_sends, 1, 1) == 1, do: [{400, refuse}], else: [{0, accept}]
+              if :atomics.add_get(second_sends, 1, 1) == 1, do: [{250, refuse}], else: [{0, accept}]
 
             _ ->
               []
@@ -1173,6 +1183,54 @@ defmodule Bourse.WS.AdapterTest do
       end
     end
 
+    # A caller that did not wait for its own acknowledgement does not decide
+    # how a restore is confirmed: the restore waits for the venue's verdict.
+    test "a group subscribed without waiting is retried when its restore is refused, and its book returns" do
+      topic = "orderbook.50.BTCUSDT"
+      Broadcast.subscribe(Broadcast.topic("bybit", :watch_order_book, topic))
+      book_sends = :atomics.new(1, [])
+      accept = %{"op" => "subscribe", "success" => true, "ret_msg" => ""}
+      refuse = %{"op" => "subscribe", "success" => false, "ret_msg" => "error:handler not found,topic:" <> topic}
+
+      snapshot = fn u ->
+        %{
+          "topic" => topic,
+          "type" => "snapshot",
+          "data" => %{"s" => "BTCUSDT", "u" => u, "b" => [["1", "2"]], "a" => [["3", "4"]]}
+        }
+      end
+
+      script = fn
+        1, %{"op" => "subscribe"} ->
+          [{0, accept}, {20, snapshot.(1)}]
+
+        2, %{"op" => "subscribe"} ->
+          if :atomics.add_get(book_sends, 1, 1) == 1,
+            do: [{0, refuse}],
+            else: [{0, accept}, {20, snapshot.(2)}]
+
+        _, _ ->
+          []
+      end
+
+      adapter = scripted_adapter("bybit", script)
+      assert :ok = Adapter.subscribe(adapter, [topic], ack_timeout_ms: 0)
+      assert_receive {:bourse_ws, {:routed, :watch_order_book, %{"u" => 1}, ^topic, "BTCUSDT", %{"bids" => _}}}, 1_000
+
+      ExUnit.CaptureLog.capture_log(fn ->
+        drop_connection(1)
+        sends = sent(2, [], 2_500)
+        assert [%{"req_id" => first_id}, %{"req_id" => retry_id}] = sends
+        refute first_id == retry_id
+
+        assert_receive {:bourse_ws,
+                        {:routed, :watch_order_book, %{"u" => 2}, ^topic, "BTCUSDT", %{"bids" => [["1", "2"]]}}},
+                       1_000
+      end)
+
+      assert :sys.get_state(adapter).restore_attempts == 0
+    end
+
     # The caller's id names only the caller's request: two groups subscribed
     # under one id must not take each other's replies when they are restored.
     for venue <- ["bybit", "binance"] do
@@ -1188,10 +1246,10 @@ defmodule Bourse.WS.AdapterTest do
               [{0, accept}]
 
             {2, ^first} ->
-              if :atomics.add_get(sends_of, 2, 1) == 1, do: [{200, accept}], else: [{0, again}]
+              if :atomics.add_get(sends_of, 2, 1) == 1, do: [{400, accept}], else: [{0, again}]
 
             {2, ^second} ->
-              if :atomics.add_get(sends_of, 1, 1) == 1, do: [{400, refuse}], else: [{0, accept}]
+              if :atomics.add_get(sends_of, 1, 1) == 1, do: [{250, refuse}], else: [{0, accept}]
 
             _ ->
               []

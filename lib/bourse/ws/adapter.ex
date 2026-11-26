@@ -37,9 +37,13 @@ defmodule Bourse.WS.Adapter do
     * dials a new connection, immediately after a connection that stayed up,
       otherwise after a delay that doubles per consecutive short-lived
       connection or failed dial (up to 30 s);
-    * restores each accepted `subscribe/3` call as it was made, with its own
-      options. A call the new connection refuses is logged and retried with
-      the same backoff until it is accepted.
+    * restores each accepted `subscribe/3` call with its own channels and
+      subscription options. Every restore attempt is a new request: it carries
+      a fresh request id and waits up to `:restore_ack_timeout_ms` (a
+      `start_link/3` option, default 3000) for the venue's verdict, whatever
+      wait and id the original call chose, so a refusal is seen and not taken
+      for success. A call the new connection refuses, or does not confirm in
+      time, is logged and retried with the same backoff until it is accepted.
 
   Every book starts again from a fresh snapshot; frames still queued from the
   old connection are ignored.
@@ -88,6 +92,7 @@ defmodule Bourse.WS.Adapter do
           connected_at: integer() | nil,
           reconnect_attempts: non_neg_integer(),
           restore_attempts: non_neg_integer(),
+          restore_ack_timeout_ms: pos_integer(),
           monitors: %{reference() => pid()},
           book_routes: %{Orderbook.key() => {String.t() | map(), String.t() | nil}},
           connect_fun: (Exchange.t(), section(), keyword() -> {:ok, WS.t()} | {:error, term()}),
@@ -108,6 +113,7 @@ defmodule Bourse.WS.Adapter do
     connected_at: nil,
     reconnect_attempts: 0,
     restore_attempts: 0,
+    restore_ack_timeout_ms: 3_000,
     monitors: %{},
     book_routes: %{},
     connect_fun: &WS.connect/3,
@@ -163,6 +169,7 @@ defmodule Bourse.WS.Adapter do
         section: section,
         ws: Keyword.get(opts, :ws),
         connect_fun: Keyword.get(opts, :connect_fun, &WS.connect/3),
+        restore_ack_timeout_ms: restore_ack_timeout_ms(opts),
         orderbook: Orderbook.new(exchange),
         trades: Trades.new(exchange),
         ohlcv: Ohlcv.new(exchange)
@@ -778,7 +785,7 @@ defmodule Bourse.WS.Adapter do
   defp restore(%{ws: ws} = state, groups) do
     failed =
       for {channels, opts} = group <- groups,
-          {:error, reason} <- [restore_group(ws, channels, opts)] do
+          {:error, reason} <- [restore_group(ws, channels, restore_opts(opts, state.restore_ack_timeout_ms))] do
         {group, reason}
       end
 
@@ -806,11 +813,8 @@ defmodule Bourse.WS.Adapter do
   # active; the rest of the group is subscribed again on its own until each
   # channel is accepted or confirmed active, or the venue refuses it.
   #
-  # A caller's `request_id:` names the caller's own request. Every restore
-  # attempt is a new request and gets a fresh id, or two groups subscribed under
-  # the same id would take each other's replies after a redial.
   defp restore_group(ws, channels, opts) do
-    case WS.subscribe(ws, channels, without_request_id(opts)) do
+    case WS.subscribe(ws, channels, opts) do
       {:error, {:subscription_rejected, frame}} = error ->
         case SubscribeAck.already_subscribed(ws.exchange.id, frame, channels) do
           [] -> error
@@ -823,8 +827,27 @@ defmodule Bourse.WS.Adapter do
     end
   end
 
-  defp without_request_id(opts) when is_list(opts), do: Keyword.delete(opts, :request_id)
-  defp without_request_id(opts) when is_map(opts), do: Map.drop(opts, [:request_id, "request_id"])
+  # What the caller chose for its own request is not inherited by a restore:
+  # its request id (`request_id:`, and `id:` for a JSON-RPC venue) would make
+  # two groups subscribed under one id take each other's replies, and its wait —
+  # `0` above all — would count a sent frame as restored however the venue
+  # answers. Everything else shapes the subscription itself and is kept.
+  @caller_request_keys [:request_id, "request_id", :id, :ack_timeout_ms, "ack_timeout_ms"]
+
+  defp restore_opts(opts, timeout) when is_list(opts) do
+    opts |> Enum.reject(fn {key, _} -> key in @caller_request_keys end) |> Keyword.put(:ack_timeout_ms, timeout)
+  end
+
+  defp restore_opts(opts, timeout) when is_map(opts) do
+    opts |> Map.drop(@caller_request_keys) |> Map.put(:ack_timeout_ms, timeout)
+  end
+
+  defp restore_ack_timeout_ms(opts) do
+    case Keyword.get(opts, :restore_ack_timeout_ms, 3_000) do
+      timeout when is_integer(timeout) and timeout > 0 -> timeout
+      other -> raise ArgumentError, "restore_ack_timeout_ms must be a positive integer, got: #{inspect(other)}"
+    end
+  end
 
   defp merge_subscriptions(existing, group) do
     if group in existing, do: existing, else: existing ++ [group]
