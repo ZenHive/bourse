@@ -156,13 +156,12 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   one request could settle another, so a refused restore could be recorded as restored.
   binancecoinm subscribe acceptances are recognised; before, every COIN-M subscribe that
   waited for one timed out.
-  A subscribe or unsubscribe that does not wait (`ack_timeout_ms: 0`) still returns the
-  send's own result — a closed connection's `{:error, {:not_connected, :process_down}}` —
-  and the venue's later reply reaches the connection's handler as an ordinary frame, on the
-  venues whose reply zen_websocket correlates by `id` as on bybit. `Bourse.WS.Adapter`
-  gives every restore attempt a fresh id; a caller's `request_id:` applies only to the
-  caller's own request, so two groups subscribed under one id no longer take each other's
-  replies after a reconnect.
+  A subscribe or unsubscribe that does not wait (`ack_timeout_ms: 0`) gets no generated id
+  and is sent exactly as before, with the same return value and delivery of the venue's
+  reply; an explicit `request_id:` is put on the frame, and the reply is then delivered as
+  zen_websocket delivers a frame carrying that id. `Bourse.WS.Adapter` gives every restore
+  attempt a fresh id; a caller's `request_id:` applies only to the caller's own request, so
+  two groups subscribed under one id no longer take each other's replies after a reconnect.
 - **Subscribing again to an order book stream already tracked keeps its book**; the
   ambiguity invalidation is announced only when a distinct stream is added.
 - **A routed connection that closes right after a subscription is accepted is noticed.**

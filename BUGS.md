@@ -195,17 +195,25 @@ reconnecting); USD-M keeps it open.
 
 Review round 7 (two regressions of that fix, both fixed inline):
 
-- With the ack wait disabled (`ack_timeout_ms: 0`) the id-carrying send returned `:ok` as
-  soon as it was handed to a process, so a closed connection answered `:ok` and the venue's
-  refusal never reached the consumer: zen_websocket returns a correlated reply to the send
-  call, not to the handler. Reviewer probe on stream.testnet.binance.vision and
-  wspap.okx.com: main returned `{:error, {:not_connected, :process_down}}` and delivered the
-  refusal; round 6 returned `:ok` and delivered nothing. Now a relay makes the call, returns
-  the immediate result, and hands a later reply to the connection's handler as
-  `{:unmatched_response, reply}`; the same probe after the fix returns the transport error
-  and delivers the refusal on both venues. One caveat measured in passing: right after an
-  invalid-request refusal binance spot closes the socket, and a no-wait send made while
-  zen_websocket redials is lost with that socket — the same as on main.
+- With the ack wait disabled (`ack_timeout_ms: 0`) the generated id made zen_websocket
+  correlate the frame, so the send returned `:ok` at once, a closed connection answered
+  `:ok`, and the venue's refusal never reached the consumer (zen_websocket returns a
+  correlated reply to the send call, not to the handler). Reviewer probe on
+  stream.testnet.binance.vision and wspap.okx.com: main returned `{:error, {:not_connected,
+  :process_down}}` and delivered the refusal; round 6 returned `:ok` and delivered nothing.
+  A relay process (round 7) restored both but reported `:ok` on a stalled connection
+  process and changed okx's refusal tag to `{:websocket_unmatched_response, _}`. Final fix
+  (round 8): a request nothing waits for gets no generated id and takes main's send path.
+  The same live probe — refusal return and delivery tag, closed connection, a suspended
+  connection process — prints identical output on HEAD and on main for binance spot and
+  okx: `:ok`, refusal as `:websocket_unmatched_response` (binance, whose reply carries
+  `"id": null`) and `:websocket_message` (okx), `{:error, {:not_connected, :process_down}}`,
+  and the transport call's 5 s timeout exit with the send still queued. A caller that
+  passes `request_id:` to a no-wait call gets the id on the frame; on binance and okx
+  zen_websocket then holds the call until the reply with that id, as for any id frame.
+  One caveat measured in passing: right after an invalid-request refusal binance spot
+  closes the socket, and a no-wait send made while zen_websocket redials is lost with that
+  socket — the same as on main.
 - The adapter replayed each group's stored options, so a caller's `request_id:` was reused
   by every restore attempt, and two groups subscribed under one id took each other's
   replies after a redial (reviewer probe on stream-testnet.bybit.com: the refused book was
