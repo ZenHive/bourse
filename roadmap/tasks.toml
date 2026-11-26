@@ -24298,7 +24298,7 @@ shipped_in = "f158a6cb7895e07a2734ef6b78a64d2670f8b681"
 id = "708"
 phase = 7
 bundle = "ws_unified"
-status = "in_progress"
+status = "done"
 title = "Incremental order books never check sequence continuity, so a dropped delta silently corrupts the book"
 scores = { d = 5, b = 9, u = 8 }
 acceptance_criteria = ["For every venue whose authored orderbook_semantics has apply_mode incremental or both, a delta whose continuity id does not follow the previous one causes the book to be invalidated and resynced; it is never merged", "The consumer receives an explicit gap/resync signal (event or error tuple) and no book snapshot is broadcast between the gap and the completed resync", "Deltas older than the snapshot are dropped according to each venue's documented bootstrap rule, cited in the code or spec by doc URL", "After a reconnect, the first book broadcast for a symbol comes from a fresh snapshot, never from deltas applied to the pre-disconnect book", "An incremental/both venue whose authored sequence_fields are empty fails loudly at spec load unless the spec records an explicit, doc-cited reason the venue has no continuity id; deribit's authored spec is corrected or carries that reason", "Live test per affected venue (binance, binanceusdm, okx, deribit): subscribe, observe real deltas chaining correctly, then inject a synthetic gap into the live stream and observe invalidate plus resync to a book matching a fresh REST snapshot", "A test that fails if sequence_fields is read from the spec but unused again (e.g. every declared field is consumed by the continuity check for at least one venue)"]
@@ -24316,9 +24316,16 @@ Authority: each venue's official WebSocket documentation plus observed live fram
 
 Note 2026-09-29 — CCXT comparison (read at ccxt commit a0b76fa, not executed): ccxt-pro Go and Rust DO check continuity for binance (`U`/`u`/`pu` bootstrap + chain, raises ChecksumError — Rust via `panic!`) and okx (`prevSeqId` vs stored nonce, rejects with InvalidNonce and drops the book). They do NOT check deribit (uses the timestamp as nonce and ignores `prev_change_id`, although CCXT's own example frame shows it). bourse's authored `sequence_fields` use CCXT's names, so the data was carried over from CCXT but the check logic was lost in the port. Implication: CCXT is a useful reference for binance/okx, but offers no guidance for deribit — derive those rules from the venue docs. The deribit premise above is thereby half-confirmed (`prev_change_id` exists in real frames per CCXT's example); still confirm live. Do not copy CCXT's behavior of only detecting the gap and leaving resync to the caller, or of panicking.
 """
+implemented = "Incremental order books verify sequence continuity per venue rule (binance spot/USD-M, okx, deribit, bybit): a gap invalidates the book, signals the consumer and resyncs from a fresh snapshot; a per-book high-water mark keeps rebuilt books from regressing. Reconnects restore subscriptions with adapter-owned bounded acknowledgement waits and fresh request ids, refused groups are retried. Subscribe acknowledgements are correlated by request id where the venue echoes one. Termination reports are redacted in the default log."
+delivered_by = "claude"
+verified = true
+verified_by = "codex"
+verification_ref = "codex review round 9, approve, at 2267fe9"
 created_at = "2026-09-28"
 started_at = "2026-11-24"
 scored_at = "2026-09-28"
+done_at = "2026-11-26"
+shipped_in = "2267fe9acbac50162d983ece669ebd644612f439"
 
 [[task]]
 id = "709"
