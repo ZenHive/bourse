@@ -114,6 +114,18 @@ roadmap.
 
 ---
 
+## 2026-11-26 — derive JSON-RPC errors carry the inspected error map as `Bourse.Error.message`
+
+**Status:** 🆕 observed (task 709 PreparedOrder live test). Not routed.
+
+**The call:** any rejected Derive v3 call, e.g. `private/order` with a signature over changed terms.
+
+**Observed:** `%Bourse.Error{code: 14014, message: "%{\"code\" => 14014, \"data\" => ..., \"message\" => \"Signature invalid for message or transaction\"}"}`.
+The message holds the whole inspected error map.
+
+**Expected:** `message` is the provider's `error.message` (optionally with `data`), and the full map stays in `raw`.
+Substring asserts still pass, but logs and user-facing messages are noisy.
+
 ## 2026-11-26 — derive v3 drops cancelled mmp orders and filled mmp maker orders from every read
 
 **Status:** 🆕 measured live (Derive v3 testnet journeys). Not routed. Provider divergence, so it is not a bourse bug.
